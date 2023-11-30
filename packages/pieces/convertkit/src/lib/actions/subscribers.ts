@@ -33,7 +33,7 @@ import {
 export const getSubscriberById = createAction({
   auth: convertkitAuth,
   name: 'subscribers_get_subscriber_by_id',
-  displayName: 'Subscriber: Get Subscriber By Id',
+  displayName: 'Get Subscriber By Id',
   description: 'Returns data for a single subscriber',
   props: {
     subscriberId,
@@ -47,7 +47,7 @@ export const getSubscriberById = createAction({
 export const getSubscriberByEmail = createAction({
   auth: convertkitAuth,
   name: 'subscribers_get_subscriber_by_email',
-  displayName: 'Subscriber: Get Subscriber By Email',
+  displayName: 'Get Subscriber By Email',
   description: 'Returns data for a single subscriber',
   props: {
     email_address: subscriberEmail,
@@ -61,7 +61,7 @@ export const getSubscriberByEmail = createAction({
 export const listSubscribers = createAction({
   auth: convertkitAuth,
   name: 'subscribers_list_subscribers',
-  displayName: 'Subscriber: List Subscribers',
+  displayName: 'List Subscribers',
   description: 'Returns a list of all subscribers',
   props: {
     page: subscribersPageNumber,
@@ -120,7 +120,7 @@ export const listSubscribers = createAction({
 export const updateSubscriber = createAction({
   auth: convertkitAuth,
   name: 'subscribers_update_subscriber',
-  displayName: 'Subscriber: Update Subscriber',
+  displayName: 'Update Subscriber',
   description: 'Update a subscriber',
   props: {
     subscriberId,
@@ -161,7 +161,7 @@ export const updateSubscriber = createAction({
 export const unsubscribeSubscriber = createAction({
   auth: convertkitAuth,
   name: 'subscribers_unsubscribe_subscriber',
-  displayName: 'Subscriber: Unsubscribe Subscriber',
+  displayName: 'Unsubscribe Subscriber',
   description: 'Unsubscribe a subscriber',
   props: {
     email: subscriberEmail,
@@ -193,7 +193,7 @@ export const unsubscribeSubscriber = createAction({
 export const listTagsBySubscriberId = createAction({
   auth: convertkitAuth,
   name: 'subscribers_list_tags_by_subscriber_id',
-  displayName: 'Subscriber: List Tags By Subscriber Id',
+  displayName: 'List Tags By Subscriber Id',
   description: 'Returns a list of all subscribed tags',
   props: {
     subscriberId,
@@ -207,7 +207,7 @@ export const listTagsBySubscriberId = createAction({
 export const listSubscriberTagsByEmail = createAction({
   auth: convertkitAuth,
   name: 'subscribers_list_tags_by_email',
-  displayName: 'Subscriber: List Tags By Email',
+  displayName: 'List Tags By Email',
   description: 'Returns a list of all subscribed tags',
   props: {
     email_address: subscriberEmail,

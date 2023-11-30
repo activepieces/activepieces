@@ -13,7 +13,7 @@ import { fetchCustomFields } from '../common/service';
 export const listFields = createAction({
   auth: convertkitAuth,
   name: 'custom_fields_list_fields',
-  displayName: 'Custom Fields: List Fields',
+  displayName: 'List Custom Fields',
   description: 'Returns a list of all custom fields',
   props: {},
   async run(context) {
@@ -24,7 +24,7 @@ export const listFields = createAction({
 export const createField = createAction({
   auth: convertkitAuth,
   name: 'custom_fields_create_field',
-  displayName: 'Custom Fields: Create Field',
+  displayName: 'Create Custom Field',
   description: 'Create a new custom field',
   props: {
     fields: fieldsArray,

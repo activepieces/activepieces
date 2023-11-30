@@ -14,7 +14,7 @@ import {
 export const createWebhook = createAction({
   auth: convertkitAuth,
   name: 'create_webhook',
-  displayName: 'Webhook: Add Webhook',
+  displayName: 'Add Webhook',
   description: 'Create a webhook automation',
   props: {
     targetUrl,
@@ -39,7 +39,7 @@ export const createWebhook = createAction({
 export const deleteWebhook = createAction({
   auth: convertkitAuth,
   name: 'destroy_webhook',
-  displayName: 'Webhook: Delete Webhook',
+  displayName: 'Delete Webhook',
   description: 'Delete a webhook automation',
   props: {
     webhookId,

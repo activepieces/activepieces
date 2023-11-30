@@ -16,7 +16,7 @@ import { fetchSequences } from '../common/service';
 export const listSequences = createAction({
   auth: convertkitAuth,
   name: 'sequences_list_sequences',
-  displayName: 'Sequences: List Sequences',
+  displayName: 'List Sequences',
   description: 'Returns a list of all sequences',
   props: {},
   run(context) {
@@ -27,7 +27,7 @@ export const listSequences = createAction({
 export const addSubscriberToSequence = createAction({
   auth: convertkitAuth,
   name: 'sequences_add_subscriber_to_sequence',
-  displayName: 'Sequences: Add Subscriber To Sequence',
+  displayName: 'Add Subscriber To Sequence',
   description: 'Add a subscriber to a sequence',
   props: {
     sequenceId: sequenceIdDropdown,
@@ -70,7 +70,7 @@ export const addSubscriberToSequence = createAction({
 export const listSupscriptionsToSequence = createAction({
   auth: convertkitAuth,
   name: 'sequences_list_subscriptions_to_sequence',
-  displayName: 'Sequences: List Subscriptions To Sequence',
+  displayName: 'List Subscriptions To Sequence',
   description: 'List all subscriptions to a sequence',
   props: {
     sequenceId: sequenceIdDropdown,

@@ -26,7 +26,7 @@ import { fetchBroadcasts } from '../common/service';
 export const listBroadcasts = createAction({
   auth: convertkitAuth,
   name: 'broadcasts_list_broadcasts',
-  displayName: 'Broadcast: List Broadcasts',
+  displayName: 'List Broadcasts',
   description: 'List all broadcasts',
   props: {
     page: broadcastPageNumber,
@@ -40,7 +40,7 @@ export const listBroadcasts = createAction({
 export const createBroadcast = createAction({
   auth: convertkitAuth,
   name: 'broadcasts_create_broadcast',
-  displayName: 'Broadcast: Create Broadcast',
+  displayName: 'Create Broadcast',
   description: 'Create a new broadcast',
   props: {
     content: broadcastContent,
@@ -104,7 +104,7 @@ export const createBroadcast = createAction({
 export const getBroadcastById = createAction({
   auth: convertkitAuth,
   name: 'broadcasts_get_broadcast',
-  displayName: 'Broadcast: Get Broadcast',
+  displayName: 'Get Broadcast',
   description: 'Get a broadcast',
   props: {
     broadcastId: broadcastId,
@@ -135,7 +135,7 @@ export const getBroadcastById = createAction({
 export const updateBroadcast = createAction({
   auth: convertkitAuth,
   name: 'broadcasts_update_broadcast',
-  displayName: 'Broadcast: Update Broadcast',
+  displayName: 'Update Broadcast',
   description: 'Update a broadcast',
   props: {
     broadcastId: broadcastId,
@@ -203,7 +203,7 @@ export const updateBroadcast = createAction({
 export const broadcastStats = createAction({
   auth: convertkitAuth,
   name: 'broadcasts_broadcast_stats',
-  displayName: 'Broadcast: Broadcast Stats',
+  displayName: 'Broadcast Stats',
   description: 'Get broadcast stats',
   props: {
     broadcastId: broadcastId,
@@ -234,7 +234,7 @@ export const broadcastStats = createAction({
 export const deleteBroadcast = createAction({
   auth: convertkitAuth,
   name: 'broadcasts_delete_broadcast',
-  displayName: 'Broadcast: Delete Broadcast',
+  displayName: 'Delete Broadcast',
   description: 'Delete a broadcast',
   props: {
     broadcastId: broadcastId,

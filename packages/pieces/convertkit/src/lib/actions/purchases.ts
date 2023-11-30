@@ -33,7 +33,7 @@ import { fetchPurchases } from '../common/service';
 export const listPurchases = createAction({
   auth: convertkitAuth,
   name: 'purchases_list_purchases',
-  displayName: 'Purchases: List Purchases',
+  displayName: 'List Purchases',
   description: 'Returns a list of all purchases',
   props: {
     page: purchasesPageNumber,
@@ -47,7 +47,7 @@ export const listPurchases = createAction({
 export const getPurchaseById = createAction({
   auth: convertkitAuth,
   name: 'purchases_get_purchase_by_id',
-  displayName: 'Purchases: Get Purchase By Id',
+  displayName: 'Get Purchase By Id',
   description: 'Returns data for a single purchase',
   props: {
     purchaseId,
@@ -88,7 +88,7 @@ export const getPurchaseById = createAction({
 export const createSinglePurchase = createAction({
   auth: convertkitAuth,
   name: 'purchases_create_purchase',
-  displayName: 'Purchases: Create Purchase',
+  displayName: 'Create Purchase',
   description: 'Creates a new purchase',
   props: {
     transactionId,
@@ -160,7 +160,7 @@ export const createSinglePurchase = createAction({
 export const createPurchases = createAction({
   auth: convertkitAuth,
   name: 'purchases_create_multible_purchases',
-  displayName: 'Purchases: Create Multiple Purchases',
+  displayName: 'Create Multiple Purchases',
   description: 'Creates multiple purchases',
   props: {
     transactionId,
@@ -235,7 +235,7 @@ export const createPurchases = createAction({
 export const listPurchasesForSubscriber = createAction({
   auth: convertkitAuth,
   name: 'purchases_list_purchases_for_subscriber',
-  displayName: 'Purchases: List Purchases For Subscriber',
+  displayName: 'List Purchases For Subscriber',
   description: 'Returns a list of all purchases for a subscriber',
   props: {
     subscriberId,
@@ -272,7 +272,7 @@ export const listPurchasesForSubscriber = createAction({
 export const listPurchasesForProduct = createAction({
   auth: convertkitAuth,
   name: 'purchases_list_purchases_for_product',
-  displayName: 'Purchases: List Purchases For Product',
+  displayName: 'List Purchases For Product',
   description: 'Returns a list of all purchases for a product',
   props: {
     productId,
@@ -298,7 +298,7 @@ export const listPurchasesForProduct = createAction({
 export const listPurchasesForForm = createAction({
   auth: convertkitAuth,
   name: 'purchases_list_purchases_for_form',
-  displayName: 'Purchases: List Purchases For Form',
+  displayName: 'List Purchases For Form',
   description: 'Returns a list of all purchases for a form',
   props: {
     formId,
@@ -324,7 +324,7 @@ export const listPurchasesForForm = createAction({
 export const listPurchasesForSequence = createAction({
   auth: convertkitAuth,
   name: 'purchases_list_purchases_for_sequence',
-  displayName: 'Purchases: List Purchases For Sequence',
+  displayName: 'List Purchases For Sequence',
   description: 'Returns a list of all purchases for a sequence',
   props: {
     sequenceId,

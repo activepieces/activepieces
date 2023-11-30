@@ -10,7 +10,6 @@ import {
   initiatorValue,
 } from '../common/webhooks';
 import { createWebhook, removeWebhook } from '../common/service';
-// import { log } from '../common';
 
 interface WebhookInformation {
   ruleId: number;

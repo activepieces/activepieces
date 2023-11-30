@@ -16,7 +16,7 @@ import { tags } from '../common/tags';
 export const listForms = createAction({
   auth: convertkitAuth,
   name: 'forms_list_forms',
-  displayName: 'Forms: List Forms',
+  displayName: 'List Forms',
   description: 'Returns a list of all forms',
   props: {},
   run(context) {
@@ -35,7 +35,7 @@ const allFieldsRequiredRefreshers = {
 export const addSubscriberToForm = createAction({
   auth: convertkitAuth,
   name: 'forms_add_subscriber_to_form',
-  displayName: 'Forms: Add Subscriber To Form',
+  displayName: 'Add Subscriber To Form',
   description: 'Add a subscriber to a form',
   props: {
     formId,
@@ -77,7 +77,7 @@ export const addSubscriberToForm = createAction({
 export const listFormSubscriptions = createAction({
   auth: convertkitAuth,
   name: 'forms_list_form_subscriptions',
-  displayName: 'Forms: List Form Subscriptions',
+  displayName: 'List Form Subscriptions',
   description: 'List form subscriptions',
   props: {
     formId,

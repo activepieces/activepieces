@@ -28,7 +28,7 @@ import { fetchTags } from '../common/service';
 export const listTags = createAction({
   auth: convertkitAuth,
   name: 'tags_list_tags',
-  displayName: 'Tags: List Tags',
+  displayName: 'List Tags',
   description: 'Returns a list of all tags',
   props: {},
   run(context) {
@@ -39,7 +39,7 @@ export const listTags = createAction({
 export const createTag = createAction({
   auth: convertkitAuth,
   name: 'tags_create_tag',
-  displayName: 'Tags: Create Tag',
+  displayName: 'Create Tag',
   description: 'Create a tag',
   props: {
     name,
@@ -74,7 +74,7 @@ export const createTag = createAction({
 export const tagSubscriber = createAction({
   auth: convertkitAuth,
   name: 'tags_tag_subscriber',
-  displayName: 'Tags: Tag Subscriber',
+  displayName: 'Tag Subscriber',
   description: 'Tag a subscriber',
   props: {
     email: subscriberEmail,
@@ -121,7 +121,7 @@ export const tagSubscriber = createAction({
 export const removeTagFromSubscriberByEmail = createAction({
   auth: convertkitAuth,
   name: 'tags_remove_tag_from_subscriber_by_email',
-  displayName: 'Tags: Remove Tag From Subscriber By Email',
+  displayName: 'Remove Tag From Subscriber By Email',
   description: 'Remove a tag from a subscriber by email',
   props: {
     email: subscriberEmail,
@@ -155,7 +155,7 @@ export const removeTagFromSubscriberByEmail = createAction({
 export const removeTagFromSubscriberById = createAction({
   auth: convertkitAuth,
   name: 'tags_remove_tag_from_subscriber_by_id',
-  displayName: 'Tags: Remove Tag From Subscriber By Id',
+  displayName: 'Remove Tag From Subscriber By Id',
   description: 'Remove a tag from a subscriber by id',
   props: {
     subscriberId,
@@ -189,7 +189,7 @@ export const removeTagFromSubscriberById = createAction({
 export const listSubscriptionsToATag = createAction({
   auth: convertkitAuth,
   name: 'tags_list_subscriptions_to_tag',
-  displayName: 'Tags: List Subscriptions To Tag',
+  displayName: 'List Subscriptions To Tag',
   description: 'List all subscriptions to a tag',
   props: {
     tagId: tag,
