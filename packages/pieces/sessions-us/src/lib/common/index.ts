@@ -34,8 +34,8 @@ export async function getTimezones(): Promise<string[]> {
     return timezones.body as string[]
 }
 
-export async function getEvents(auth: string): Promise<unknown[]> {
-    const response = await httpClient.sendRequest<unknown[]>({
+export async function getEvents(auth: string): Promise<{id: string, session: {name: string}}[]> {
+    const response = await httpClient.sendRequest<{id: string, session: {name: string}}[]>({
         method: HttpMethod.GET,
         url: `${baseUrl}/events`,
         headers: {
