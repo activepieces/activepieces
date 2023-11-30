@@ -34,8 +34,7 @@
       ],
       "options": {
         "lintFilePatterns": [
-          "packages/pieces/sessions-us/**/*.ts",
-          "packages/pieces/sessions-us/package.json"
+          "packages/pieces/sessions-us/**/*.ts"
         ]
       }
     }

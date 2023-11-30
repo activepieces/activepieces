@@ -34,8 +34,8 @@ export async function getTimezones(): Promise<string[]> {
     return timezones.body as string[]
 }
 
-export async function getEvents(auth: string): Promise<any[]> {
-    const response = await httpClient.sendRequest({
+export async function getEvents(auth: string): Promise<unknown[]> {
+    const response = await httpClient.sendRequest<unknown[]>({
         method: HttpMethod.GET,
         url: `${baseUrl}/events`,
         headers: {
@@ -43,7 +43,7 @@ export async function getEvents(auth: string): Promise<any[]> {
         }
     });
 
-    return response.body as any[]
+    return response.body
 }
 
 export function slugify(string: string) {
@@ -136,7 +136,7 @@ export function createSessionsUsWebhookTrigger(data: CreateWebhookTriggerDto): T
             }
         },
         async run({ payload }) {
-            const body = payload.body as { trigger: string, data: any }
+            const body = payload.body as { trigger: string, data: unknown }
             return [body.data];
         },
     });
@@ -146,7 +146,7 @@ export interface CreateWebhookTriggerDto {
     name: string
     displayName: string
     description: string
-    sampleData?: any
+    sampleData?: unknown
     trigger: SessionsUsWebhookTrigger
     storeKey: string
 }
