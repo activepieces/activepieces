@@ -265,6 +265,7 @@ export class InterpolatingTextFormControlComponent
   }
 
   async writeValue(value: string) {
+    this._value = value;
     const stepsMetaData = await firstValueFrom(
       this.store
         .select(BuilderSelectors.selectAllStepsForMentionsDropdown)
@@ -274,7 +275,6 @@ export class InterpolatingTextFormControlComponent
       const parsedTextToOps = fromTextToOps(value, stepsMetaData);
       this.editorFormControl.setValue(parsedTextToOps, { emitEvent: false });
     }
-    this._value = value;
   }
   registerOnChange(fn: (val: unknown) => void): void {
     this.onChange = fn;
