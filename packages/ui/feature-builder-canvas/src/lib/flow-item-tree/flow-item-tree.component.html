@@ -29,7 +29,9 @@
         </ng-container>
 
         <ng-container *ngFor="let button of flowDrawer.buttons; trackBy: buttonsTrackBy">
-          <app-small-add-button [left]="button.x + 'px'" [top]="button.y + 'px'"></app-small-add-button>
+          <app-small-add-button [left]="button.x + 'px'" [top]="button.y + 'px'"
+            [stepLocationRelativeToParent]="button.stepLocationRelativeToParent"
+            [stepName]="button.stepName"></app-small-add-button>
         </ng-container>
 
       </div>

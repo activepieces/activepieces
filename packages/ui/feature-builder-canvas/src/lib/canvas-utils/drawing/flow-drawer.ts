@@ -3,6 +3,7 @@ import {
   ActionType,
   BranchAction,
   LoopOnItemsAction,
+  StepLocationRelativeToParent,
   isNil,
 } from '@activepieces/shared';
 import { Trigger } from '@activepieces/shared';
@@ -157,10 +158,16 @@ export class FlowDrawer {
         flowDrawer = flowDrawer.mergeChild(branchDrawer);
         break;
       }
+
       default: {
-        const { line, button } = drawLineWithButton(centerBottom, {
-          x: centerBottom.x,
-          y: centerBottom.y + SPACE_BETWEEN_VERTICAL_STEP,
+        const { line, button } = drawLineWithButton({
+          from: centerBottom,
+          to: {
+            x: centerBottom.x,
+            y: centerBottom.y + SPACE_BETWEEN_VERTICAL_STEP,
+          },
+          stepName: step.name,
+          stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
         });
         childHeight = SPACE_BETWEEN_VERTICAL_STEP;
         flowDrawer = flowDrawer.appendButton(button).appendSvg(line);
@@ -199,10 +206,12 @@ function handleLoopAction(
   const firstLoopDrawerTopCenter =
     firstLoopDrawerDrawerWithOffset.steps[0].center('top');
 
-  const { line, button } = drawLineWithButton(
-    centerBottom,
-    firstLoopDrawerTopCenter
-  );
+  const { line, button } = drawLineWithButton({
+    from: centerBottom,
+    to: firstLoopDrawerTopCenter,
+    stepName: step.name,
+    stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP,
+  });
 
   const firstLoopStepClosingLine = SvgDrawer.empty()
     .move(
@@ -265,9 +274,18 @@ function handleBranchAction(
       y: FLOW_ITEM_HEIGHT + SPACE_BETWEEN_VERTICAL_LONG_STEP,
     };
     const sideDrawer = side.offset(stepPosition.x, stepPosition.y);
-    const { line, button } = drawLineWithButton(centerBottom, {
-      x: stepPosition.x + FLOW_ITEM_WIDTH / 2.0,
-      y: stepPosition.y,
+
+    const { line, button } = drawLineWithButton({
+      from: centerBottom,
+      to: {
+        x: stepPosition.x + FLOW_ITEM_WIDTH / 2.0,
+        y: stepPosition.y,
+      },
+      stepName: step.name,
+      stepLocationRelativeToParent:
+        index == 0
+          ? StepLocationRelativeToParent.INSIDE_TRUE_BRANCH
+          : StepLocationRelativeToParent.INSIDE_FALSE_BRANCH,
     });
     const secondLine = drawLine(
       {

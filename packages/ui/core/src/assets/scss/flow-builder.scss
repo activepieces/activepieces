@@ -11,9 +11,7 @@
   cursor: pointer;
   border-radius: 3px;
   transition: box-shadow 0.3s ease-in-out, background 0.3s ease-in-out, background-image 0.3s ease-in-out;
-  &:focus {
-    box-shadow: 0px 0px 0px 5px rgba(#fafafa, 0.6);
-  }
+
 }
 .scale-1 {
   transform: scale(1) !important;

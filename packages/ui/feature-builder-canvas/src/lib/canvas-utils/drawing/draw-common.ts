@@ -1,7 +1,11 @@
+import { StepLocationRelativeToParent } from '@activepieces/shared';
+
 export type PositionButton = {
   x: number;
   y: number;
   type: 'big' | 'small';
+  stepName: string;
+  stepLocationRelativeToParent: StepLocationRelativeToParent;
 };
 
 export const FLOW_ITEM_WIDTH = 300;

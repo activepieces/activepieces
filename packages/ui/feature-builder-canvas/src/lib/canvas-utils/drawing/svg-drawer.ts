@@ -1,3 +1,4 @@
+import { StepLocationRelativeToParent } from '@activepieces/shared';
 import {
   ARC_LENGTH,
   BUTTON_SIZE,
@@ -228,10 +229,17 @@ export function drawLine(from: Position, to: Position): SvgDrawer {
     .arrow();
 }
 
-export function drawLineWithButton(
-  from: Position,
-  to: Position
-): {
+export function drawLineWithButton({
+  from,
+  to,
+  stepName,
+  stepLocationRelativeToParent,
+}: {
+  from: Position;
+  to: Position;
+  stepName: string;
+  stepLocationRelativeToParent: StepLocationRelativeToParent;
+}): {
   line: SvgDrawer;
   button: PositionButton;
 } {
@@ -241,6 +249,8 @@ export function drawLineWithButton(
       x: to.x - BUTTON_SIZE / 2.0,
       y: to.y - SPACE_BETWEEN_BUTTON_AND_ARROW - BUTTON_SIZE / 2.0,
       type: 'small',
+      stepName,
+      stepLocationRelativeToParent,
     },
   };
 }

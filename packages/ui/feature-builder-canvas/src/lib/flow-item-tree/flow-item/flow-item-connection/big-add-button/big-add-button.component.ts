@@ -1,5 +1,5 @@
-import { Component, Input } from '@angular/core';
-import { AddButtonCore } from '../add-button-core';
+import { Component } from '@angular/core';
+import { AddButtonCoreComponent } from '../add-button-core.component';
 import { Store } from '@ngrx/store';
 
 @Component({
@@ -7,10 +7,7 @@ import { Store } from '@ngrx/store';
   templateUrl: './big-add-button.component.html',
   styleUrls: ['./big-add-button.component.scss'],
 })
-export class BigAddButtonComponent extends AddButtonCore {
-  @Input() top = '';
-  @Input() left = '';
-  @Input() showDropZoneIndicator = false;
+export class BigAddButtonComponent extends AddButtonCoreComponent {
   showBoxShadow = false;
   constructor(store: Store) {
     super(store);

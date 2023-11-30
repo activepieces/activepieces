@@ -1,18 +1,30 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { AddButtonCore } from '../add-button-core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { AddButtonCoreComponent } from '../add-button-core.component';
 import { Store } from '@ngrx/store';
+import {
+  RightSideBarType,
+  canvasActions,
+} from '@activepieces/ui/feature-builder-store';
 
 @Component({
   selector: 'app-small-add-button',
   templateUrl: './small-add-button.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SmallAddButtonComponent extends AddButtonCore {
-  @Input() left = '';
-  @Input() top = '';
-  @Input() showDropzoneIndicator = false;
-
+export class SmallAddButtonComponent extends AddButtonCoreComponent {
   constructor(store: Store) {
     super(store);
+  }
+  add() {
+    this.store.dispatch(
+      canvasActions.setRightSidebar({
+        sidebarType: RightSideBarType.STEP_TYPE,
+        props: {
+          stepLocationRelativeToParent: this.stepLocationRelativeToParent,
+          stepName: this.stepName,
+        },
+        deselectCurrentStep: true,
+      })
+    );
   }
 }
