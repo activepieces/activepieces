@@ -152,6 +152,13 @@
           <context context-type="linenumber">29,31</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="631520980743150884" datatype="html">
+        <source> OR </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ee/components/src/lib/third-party-auth/third-party-auth.component.html</context>
+          <context context-type="linenumber">29,31</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="4103400345525770187" datatype="html">
         <source>Sign up with</source>
         <context-group purpose="location">
@@ -722,14 +729,14 @@
         <source> Upgrade</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/core/src/app/app.component.html</context>
-          <context context-type="linenumber">6,7</context>
+          <context context-type="linenumber">7,8</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1234782976282586575" datatype="html">
         <source> Ignore</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/core/src/app/app.component.html</context>
-          <context context-type="linenumber">8,9</context>
+          <context context-type="linenumber">9,10</context>
         </context-group>
       </trans-unit>
       <trans-unit id="9202148072595155250" datatype="html">
@@ -931,26 +938,31 @@
           <context context-type="linenumber">4,6</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="8552587679160911578" datatype="html">
-        <source>Email is required</source>
+      <trans-unit id="9097289685105179814" datatype="html">
+        <source>
+           Email is required  Email is invalid 
+          <x id="START_TAG_NG_CONTAINER" ctype="x-ng_container" equiv-text="-container *ngIf=&quot;emailFormControl.hasError('required')&quot;>"/>
+          <x id="CLOSE_TAG_NG_CONTAINER" ctype="x-ng_container" equiv-text="&lt;/ng-container>"/>
+          <x id="START_TAG_NG_CONTAINER_1" ctype="x-ng_container_1" equiv-text="&lt;ng-container *ngIf=&quot;emailFormControl.hasError('email')&quot;>"/>
+          <x id="CLOSE_TAG_NG_CONTAINER" ctype="x-ng_container" equiv-text="&lt;/ng-container>"/>
+        </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/forgot-password/forgot-password.component.html</context>
-          <context context-type="linenumber">11</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
-          <context context-type="linenumber">11</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">39,40</context>
+          <context context-type="linenumber">12,20</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3006097408675799565" datatype="html">
         <source> Send email </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/forgot-password/forgot-password.component.html</context>
-          <context context-type="linenumber">17,19</context>
+          <context context-type="linenumber">25,27</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4939428286618017421" datatype="html">
+        <source>Back to sign in</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/forgot-password/forgot-password.component.html</context>
+          <context context-type="linenumber">31</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2668864227584228682" datatype="html">
@@ -969,6 +981,17 @@
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">33,35</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8552587679160911578" datatype="html">
+        <source>Email is required</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
+          <context context-type="linenumber">11</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
+          <context context-type="linenumber">39,40</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1431416938026210429" datatype="html">
@@ -1134,63 +1157,63 @@
         <source>Receive updates and newsletters from activepieces</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">119,122</context>
+          <context context-type="linenumber">120,123</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7203320122205058413" datatype="html">
         <source> Sign up </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">125,127</context>
+          <context context-type="linenumber">126,128</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4376281136928352035" datatype="html">
         <source>By creating an account, you agree to our </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">133</context>
+          <context context-type="linenumber">134</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5588556721941421289" datatype="html">
         <source>terms of service</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">135,136</context>
+          <context context-type="linenumber">136,137</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8826454553473999816" datatype="html">
         <source> and </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">137</context>
+          <context context-type="linenumber">138</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7880342747895814760" datatype="html">
         <source>privacy policy</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">138</context>
+          <context context-type="linenumber">139</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6207438724033771807" datatype="html">
         <source>Already have an account? </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">142</context>
+          <context context-type="linenumber">143</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4860327484616227095" datatype="html">
         <source>Signing up is disabled.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">149</context>
+          <context context-type="linenumber">150</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8502548447094943346" datatype="html">
         <source> If you are the owner, please refer to the configuration section in the documentation to learn how to enable it. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">150,153</context>
+          <context context-type="linenumber">151,154</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7028204981963450021" datatype="html">
