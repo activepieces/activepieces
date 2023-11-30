@@ -134,53 +134,40 @@ describe('Platform API', () => {
     })
 
     describe('get platform endpoint', () => {
-        it('finds a platform by id without being owner', async () => {
+        it('Returns full platform response for owner', async () => {
             // arrange
-            const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save(mockUser)
+            const mockPlatformId = apId()
 
-            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
+            const mockOwnerUser = createMockUser({ platformId: mockPlatformId })
+            await databaseConnection.getRepository('user').save(mockOwnerUser)
+
+            const mockPlatform = createMockPlatform({ ownerId: mockOwnerUser.id })
             await databaseConnection.getRepository('platform').save(mockPlatform)
 
-            const testToken = await generateMockToken({ id: mockUser.id })
-
-            // act
-            const response = await app?.inject({
-                method: 'GET',
-                url: `/v1/platforms/${mockPlatform.id}`,
-                headers: {
-                    authorization: `Bearer ${testToken}`,
+            const mockToken = await generateMockToken({
+                id: mockOwnerUser.id,
+                platform: {
+                    id: mockPlatform.id,
+                    role: 'OWNER',
                 },
             })
 
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
-        })
-
-        it('finds a platform by id', async () => {
-            // arrange
-            const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save(mockUser)
-
-            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
-
-            const testToken = await generateMockToken({ id: mockUser.id, platform: { id: mockPlatform.id, role: 'OWNER' }  })
-
             // act
             const response = await app?.inject({
                 method: 'GET',
                 url: `/v1/platforms/${mockPlatform.id}`,
                 headers: {
-                    authorization: `Bearer ${testToken}`,
+                    authorization: `Bearer ${mockToken}`,
                 },
             })
 
             // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
 
-            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(Object.keys(responseBody)).toHaveLength(22)
             expect(responseBody.id).toBe(mockPlatform.id)
-            expect(responseBody.ownerId).toBe(mockUser.id)
+            expect(responseBody.ownerId).toBe(mockOwnerUser.id)
             expect(responseBody.name).toBe(mockPlatform.name)
             expect(responseBody.primaryColor).toBe(mockPlatform.primaryColor)
             expect(responseBody.logoIconUrl).toBe(mockPlatform.logoIconUrl)
@@ -188,10 +175,80 @@ describe('Platform API', () => {
             expect(responseBody.favIconUrl).toBe(mockPlatform.favIconUrl)
         })
 
+        it('Returns basic platform response for member', async () => {
+            // arrange
+            const mockMemberUserId = apId()
+            const mockPlatformId = apId()
+
+            const mockOwnerUser = createMockUser({ platformId: mockPlatformId })
+            await databaseConnection.getRepository('user').save(mockOwnerUser)
+
+            const mockPlatform = createMockPlatform({ ownerId: mockOwnerUser.id })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
+            const mockToken = await generateMockToken({
+                id: mockMemberUserId,
+                platform: {
+                    id: mockPlatform.id,
+                    role: 'MEMBER',
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: `/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${mockToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const responseBody = response?.json()
+
+            expect(Object.keys(responseBody)).toHaveLength(3)
+            expect(responseBody.id).toBe(mockPlatform.id)
+            expect(responseBody.name).toBe(mockPlatform.name)
+            expect(responseBody.defaultLocale).toBe(mockPlatform.defaultLocale)
+        })
+
+        it('Fails if user is not a platform member', async () => {
+            // arrange
+            const mockPlatformId = apId()
+            const mockOtherPlatformId = apId()
+
+            const mockToken = await generateMockToken({
+                platform: {
+                    id: mockPlatformId,
+                    role: 'OWNER',
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: `/v1/platforms/${mockOtherPlatformId}`,
+                headers: {
+                    authorization: `Bearer ${mockToken}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR)
+            const responseBody = response?.json()
+
+            expect(responseBody?.message).toBe('userPlatformId and paramId should be equal')
+        })
+
         it('fails if platform doesn\'t exist', async () => {
             // arrange
             const randomPlatformId = apId()
-            const testToken = await generateMockToken()
+            const testToken = await generateMockToken({
+                platform: {
+                    id: randomPlatformId,
+                    role: 'OWNER',
+                },
+            })
 
             // act
             const response = await app?.inject({
@@ -203,7 +260,7 @@ describe('Platform API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
         })
     })
 })

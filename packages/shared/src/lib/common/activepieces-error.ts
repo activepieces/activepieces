@@ -76,7 +76,9 @@ ErrorCode.APP_CONNECTION_NOT_FOUND,
 
 export type AuthorizationErrorParams = BaseErrorParams<
 ErrorCode.AUTHORIZATION,
-Record<string, never>
+{
+    message?: string
+}
 >
 
 export type PermissionDeniedErrorParams = BaseErrorParams<
