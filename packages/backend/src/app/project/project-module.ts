@@ -9,7 +9,7 @@ export const projectModule: FastifyPluginAsyncTypebox = async (app) => {
 const projectController: FastifyPluginCallbackTypebox = (fastify, _opts, done) => {
     
     fastify.get('/', async (request) => {
-        return [await projectService.getUserProject(request.principal.id)]
+        return [await projectService.getUserProjectOrThrow(request.principal.id)]
     })
 
 

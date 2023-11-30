@@ -1,4 +1,4 @@
-import { KeyAlgorithm, SigningKey, Platform, OAuthApp, FilteredPieceBehavior, CustomDomain, CustomDomainStatus, OtpModel, OtpType, OtpState } from '@activepieces/ee-shared'
+import { KeyAlgorithm, SigningKey, Platform, OAuthApp, FilteredPieceBehavior, CustomDomain, CustomDomainStatus, OtpModel, OtpType, OtpState, ProjectMember } from '@activepieces/ee-shared'
 import { UserStatus, User, apId, Project, NotificationStatus, ProjectType, PieceType, PackageType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
@@ -102,6 +102,19 @@ export const createMockSigningKey = (signingKey?: Partial<SigningKey>): SigningK
         publicKey: signingKey?.publicKey ?? MOCK_SIGNING_KEY_PUBLIC_KEY,
         generatedBy: signingKey?.generatedBy ?? apId(),
         algorithm: signingKey?.algorithm ?? KeyAlgorithm.RSA,
+    }
+}
+
+export const createProjectMember = (projectMember: Partial<ProjectMember>): ProjectMember => {
+    return {
+        id: projectMember.id ?? apId(),
+        email: projectMember.email ?? faker.internet.email(),
+        projectId: projectMember.projectId ?? apId(),
+        role: projectMember.role ?? faker.helpers.enumValue(ProjectMember.Role),
+        status: projectMember.status ?? faker.helpers.enumValue(ProjectMember.Status),
+        created: projectMember.created ?? faker.date.recent().toISOString(),
+        updated: projectMember.updated ?? faker.date.recent().toISOString(),
+        userId: projectMember.userId ?? apId(),
     }
 }
 
