@@ -708,6 +708,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "yann120",
+      "name": "Yann Petitjean",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10012140?v=4",
+      "profile": "https://github.com/yann120",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
