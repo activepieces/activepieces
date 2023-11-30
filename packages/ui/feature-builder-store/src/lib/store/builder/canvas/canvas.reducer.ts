@@ -28,7 +28,6 @@ const initialState: CanvasState = {
   },
   focusedStep: undefined,
   selectedStepName: 'initialVal',
-  isGeneratingFlowComponentOpen: false,
   displayedFlowVersion: {
     flowId: '1',
     updatedBy: '',
@@ -99,20 +98,6 @@ const __CanvasReducer = createReducer(
       },
     };
   }),
-  on(canvasActions.openGenerateFlowComponent, (state): CanvasState => {
-    return {
-      ...state,
-      leftSidebar: {
-        type: LeftSideBarType.NONE,
-      },
-      rightSidebar: {
-        type: RightSideBarType.NONE,
-        props: 'NO_PROPS',
-      },
-      isGeneratingFlowComponentOpen: true,
-      selectedRun: undefined,
-    };
-  }),
   on(canvasActions.setRun, (state, { run }): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
     clonedState.selectedRun = run;
@@ -123,20 +108,6 @@ const __CanvasReducer = createReducer(
     return {
       ...clonedState,
       selectedRun: undefined,
-    };
-  }),
-  on(canvasActions.closeGenerateFlowComponent, (state): CanvasState => {
-    const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
-    return {
-      ...clonedState,
-      isGeneratingFlowComponentOpen: false,
-    };
-  }),
-  on(canvasActions.generateFlowSuccessful, (state, action): CanvasState => {
-    const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
-    return {
-      ...clonedState,
-      displayedFlowVersion: action.flow.version,
     };
   }),
   on(FlowsActions.updateAction, (state, { operation }): CanvasState => {

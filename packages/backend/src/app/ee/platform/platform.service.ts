@@ -1,13 +1,17 @@
-import { ActivepiecesError, ErrorCode, UserId, apId, isNil, spreadIfDefined } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, ProjectId, UserId, apId, isNil, spreadIfDefined } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { PlatformEntity } from './platform.entity'
-import { Platform, PlatformId, UpdatePlatformRequestBody } from '@activepieces/ee-shared'
+import { FilteredPieceBehavior, LocalesEnum, Platform, PlatformId, UpdatePlatformRequestBody } from '@activepieces/ee-shared'
 import { defaultTheme } from '../../flags/theme'
+import { userService } from '../../user/user-service'
+import { projectService } from '../../project/project-service'
 
 const repo = databaseConnection.getRepository<Platform>(PlatformEntity)
 
 export const platformService = {
-    async add({ ownerId, name, primaryColor, logoIconUrl, fullLogoUrl, favIconUrl }: AddParams): Promise<Platform> {
+    async add(params: AddParams): Promise<Platform> {
+        const { ownerId, projectId, name, primaryColor, logoIconUrl, fullLogoUrl, favIconUrl } = params
+
         const newPlatform: NewPlatform = {
             id: apId(),
             ownerId,
@@ -16,25 +20,62 @@ export const platformService = {
             logoIconUrl: logoIconUrl ?? defaultTheme.logos.logoIconUrl,
             fullLogoUrl: fullLogoUrl ?? defaultTheme.logos.fullLogoUrl,
             favIconUrl: favIconUrl ?? defaultTheme.logos.favIconUrl,
+            defaultLocale: LocalesEnum.ENGLISH,
+            filteredPieceNames: [],
+            filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
+            showPoweredBy: false,
+            cloudAuthEnabled: true,
         }
 
-        return await repo.save(newPlatform)
+        const savedPlatform = await repo.save(newPlatform)
+
+        await addOwnerToPlatform({
+            platformId: newPlatform.id,
+            ownerId,
+        })
+
+        await addProjectToPlatform({
+            platformId: newPlatform.id,
+            projectId,
+        })
+
+        return savedPlatform
     },
 
-    async update({ id, userId, name, primaryColor, logoIconUrl, fullLogoUrl, favIconUrl }: UpdateParams): Promise<Platform> {
-        const platform = await this.getOneOrThrow(id)
-        assertPlatformOwnedByUser(platform, userId)
+    async getOldestPlatform(): Promise<Platform | null> {
+        return repo.findOne({
+            where: {},
+            order: {
+                created: 'ASC',
+            },
+        })
+    },
+    async update(params: UpdateParams): Promise<Platform> {
+        const platform = await this.getOneOrThrow(params.id)
+        assertPlatformOwnedByUser(platform, params.userId)
 
         const updatedPlatform: Platform = {
             ...platform,
-            ...spreadIfDefined('name', name),
-            ...spreadIfDefined('primaryColor', primaryColor),
-            ...spreadIfDefined('logoIconUrl', logoIconUrl),
-            ...spreadIfDefined('fullLogoUrl', fullLogoUrl),
-            ...spreadIfDefined('favIconUrl', favIconUrl),
+            ...spreadIfDefined('name', params.name),
+            ...spreadIfDefined('primaryColor', params.primaryColor),
+            ...spreadIfDefined('logoIconUrl', params.logoIconUrl),
+            ...spreadIfDefined('fullLogoUrl', params.fullLogoUrl),
+            ...spreadIfDefined('favIconUrl', params.favIconUrl),
+            ...spreadIfDefined('filteredPieceNames', params.filteredPieceNames),
+            ...spreadIfDefined('filteredPieceBehavior', params.filteredPieceBehavior),
+            ...spreadIfDefined('smtpHost', params.smtpHost),
+            ...spreadIfDefined('smtpPort', params.smtpPort),
+            ...spreadIfDefined('smtpUser', params.smtpUser),
+            ...spreadIfDefined('smtpPassword', params.smtpPassword),
+            ...spreadIfDefined('smtpSenderEmail', params.smtpSenderEmail),
+            ...spreadIfDefined('smtpUseSSL', params.smtpUseSSL),
+            ...spreadIfDefined('privacyPolicyUrl', params.privacyPolicyUrl),
+            ...spreadIfDefined('termsOfServiceUrl', params.termsOfServiceUrl),
+            ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
+            ...spreadIfDefined('defaultLocale', params.defaultLocale),
         }
 
-        return await repo.save(updatedPlatform)
+        return repo.save(updatedPlatform)
     },
 
     async getOneOrThrow(id: PlatformId): Promise<Platform> {
@@ -84,8 +125,23 @@ const assertPlatformOwnedByUser = (platform: Platform, userId: UserId): void => 
     }
 }
 
+const addOwnerToPlatform = ({ platformId, ownerId }: AddOwnerToPlatformParams): Promise<void> => {
+    return userService.updatePlatformId({
+        id: ownerId,
+        platformId,
+    })
+}
+
+const addProjectToPlatform = ({ platformId, projectId }: AddProjectToPlatformParams): Promise<void> => {
+    return projectService.addProjectToPlatform({
+        projectId,
+        platformId,
+    })
+}
+
 type AddParams = {
     ownerId: UserId
+    projectId: ProjectId
     name: string
     primaryColor?: string
     logoIconUrl?: string
@@ -107,4 +163,14 @@ type GetOneByOwnerParams = {
 type CheckUserIsOwnerParams = {
     platformId: PlatformId
     userId: UserId
+}
+
+type AddOwnerToPlatformParams = {
+    platformId: PlatformId
+    ownerId: UserId
+}
+
+type AddProjectToPlatformParams = {
+    platformId: PlatformId
+    projectId: ProjectId
 }

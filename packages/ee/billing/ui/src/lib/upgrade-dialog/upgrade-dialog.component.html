@@ -5,38 +5,30 @@
       <ng-lottie [options]="options" width="100px" class="ap-text-center"></ng-lottie>
     </div>
     <div class="ap-typography-body-1 ap-text-body">
-      <div class="ap-mt-4" *ngIf="data?.limitType === 'connections'">
+      <div *ngIf="data?.limitType === 'connections'">
         You have used all of your included {{data.limit}} connections.
         <span class="ap-font-bold">Upgrade now </span> ⭐ to unlock more features.
-  
-        <div class="ap-mt-2">
-          You can manage your connections on <a class="ap-font-bold ap-typography-body-1" (click)="openConnections()">this page</a>.
+
+        <div>
+          You can manage your connections on <a class="ap-font-bold ap-typography-body-1"
+            (click)="openConnections()">this page</a>.
         </div>
-     </div>
-     <div class="ap-mt-4" *ngIf="data?.limitType !== 'connections'">
-      You have reached the limits of your current plan.
-      <span class="ap-font-bold">Upgrade now </span> ⭐ to unlock more features.
-   </div>
+      </div>
+      <div *ngIf="data?.limitType !== 'connections'" i18n>
+        You have reached the limits of your current plan.
+        <span class="ap-font-bold"> {{teamMemebersNotes[data.projectType]}} </span> ⭐ to unlock more features.
+      </div>
     </div>
   </div>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
   <div class="ap-flex ap-gap-2.5">
-    <ap-button
-      btnColor="basic"
-      mat-dialog-close
-      btnSize="default"
-      class="ap-btnColor-basic"
-    >
+    <ap-button btnColor="basic" mat-dialog-close btnSize="default" class="ap-btnColor-basic">
       Cancel
     </ap-button>
-    <ap-button
-      btnSize="default"
-      type="submit"
-      (click)="openPlans()"
-      btnColor="primary"
-    >
+    <ap-button cdkFocusInitial *ngIf="data.projectType !== ProjectType.PLATFORM_MANAGED " btnSize="default"
+      type="submit" mat-focus (click)="openPlans()" btnColor="primary">
       Upgrade
     </ap-button>
   </div>

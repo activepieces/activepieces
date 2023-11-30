@@ -1,13 +1,9 @@
-import { Static, Type } from "@sinclair/typebox";
+import { Static, Type } from '@sinclair/typebox'
+import { EmailType, PasswordType } from '../../user/user'
 
 export const SignInRequest = Type.Object({
-    email: Type.String({
-        format: 'email',
-    }),
-    password: Type.String({
-        minLength: 8,
-        maxLength: 64,
-    }),
-});
+    email: EmailType,
+    password: PasswordType,
+})
 
-export type SignInRequest = Static<typeof SignInRequest>;
+export type SignInRequest = Static<typeof SignInRequest>

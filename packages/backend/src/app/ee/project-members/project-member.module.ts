@@ -23,7 +23,7 @@ const projectMemberController: FastifyPluginAsyncTypebox = async (fastify) => {
             querystring: ListProjectMembersRequest,
         },
     }, async (request) => {
-        return await projectMemberService.list(request.principal.projectId, request.query.cursor ?? null, request.query.limit ?? DEFAULT_LIMIT_SIZE)
+        return projectMemberService.list(request.principal.projectId, request.query.cursor ?? null, request.query.limit ?? DEFAULT_LIMIT_SIZE)
     })
 
     fastify.post(
@@ -60,7 +60,11 @@ const projectMemberController: FastifyPluginAsyncTypebox = async (fastify) => {
         async (
             request,
         ) => {
-            const invitation = await projectMemberService.send(request.principal.projectId, request.body)
+            const invitation = await projectMemberService.send({
+                ...request.body,
+                projectId: request.principal.projectId,
+                platformId: request.principal.platform?.id ?? null,
+            })
             return {
                 token: await accessTokenManager.generateToken({
                     id: invitation.id,

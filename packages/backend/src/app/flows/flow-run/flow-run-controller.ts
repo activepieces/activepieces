@@ -32,7 +32,7 @@ export const flowRunController: FastifyPluginCallbackTypebox = (app, _options, d
         const { projectId } = req.principal
         const { flowVersionId } = req.body
 
-        return await flowRunService.test({
+        return flowRunService.test({
             projectId,
             flowVersionId,
         })

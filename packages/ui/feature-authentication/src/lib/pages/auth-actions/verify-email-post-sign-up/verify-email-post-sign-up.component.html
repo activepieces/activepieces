@@ -1,0 +1,22 @@
+<div class="ap-typography-headline ap-text-center ap-mb-4">{{ (actionTitle$ | async) }}</div>
+<div class="ap-mb-4">
+	<div class="ap-flex ap-justify-center ap-items-center" *ngIf="verifiedEmail === (actionTitle$ | async)">
+		<img class="ap-m-auto" src="/assets/img/custom/auth/mail_sent.png" />
+	</div>
+</div>
+<div class="ap-flex ap-items-center ap-justify-center ap-mb-2" i18n *ngIf="verifyingEmail === (actionTitle$ | async)">
+
+	<ap-loading-icon height="50px" width="50px" [whiteLoader]="false">
+	</ap-loading-icon>
+
+</div>
+<div class="ap-text-center ap-typography-body-1 ap-mb-2" i18n *ngIf="verifiedEmail === (actionTitle$ | async)">Your
+	email has
+	been verified. You will be redirected to
+	sign in<br /></div>
+<div class="ap-text-center ap-typography-body-1 ap-mb-2" i18n *ngIf="verificationFailed === (actionTitle$ | async)">This
+	invitation has expired, redirecting to sign in...<br /></div>
+<div class="ap-text-center">
+	<a class="ap-text-blueLink ap-cursor-pointer" (click)="backToSignIn()" i18n>Sign in</a>
+</div>
+<ng-container *ngIf="verifyingEmail$ | async"></ng-container>

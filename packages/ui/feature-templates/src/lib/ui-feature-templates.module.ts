@@ -9,6 +9,7 @@ import { UiCommonModule } from '@activepieces/ui/common';
 import { TemplateBlogNotificationComponent } from './template-blog-notification/template-blog-notification.component';
 import { FeaturedTemplateCardComponent } from './featured-template-card/featured-template-card.component';
 import { TimeagoModule } from 'ngx-timeago';
+import { UiFeaturePiecesModule } from 'ui-feature-pieces';
 const exportedDeclarations = [
   TemplatesDialogComponent,
   TemplatesFiltersComponent,
@@ -18,7 +19,12 @@ const exportedDeclarations = [
   TemplateBlogNotificationComponent,
 ];
 @NgModule({
-  imports: [CommonModule, UiCommonModule, TimeagoModule.forChild()],
+  imports: [
+    CommonModule,
+    UiCommonModule,
+    UiFeaturePiecesModule,
+    TimeagoModule.forChild(),
+  ],
   declarations: [...exportedDeclarations, FeaturedTemplateCardComponent],
   exports: exportedDeclarations,
 })

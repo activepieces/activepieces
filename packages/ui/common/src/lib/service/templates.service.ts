@@ -1,6 +1,10 @@
 import { Injectable } from '@angular/core';
-import { Observable, map, shareReplay, switchMap } from 'rxjs';
-import { FlowTemplate, ListFlowTemplatesRequest } from '@activepieces/shared';
+import { Observable, map, of, shareReplay, switchMap } from 'rxjs';
+import {
+  FlowTemplate,
+  ListFlowTemplatesRequest,
+  isNil,
+} from '@activepieces/shared';
 import { FlagService } from './flag.service';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../environments/environment';
@@ -27,7 +31,7 @@ export class TemplatesService {
       shareReplay(1)
     );
   }
-  getTemplates(params: ListFlowTemplatesRequest) {
+  getTemplates(params: ListFlowTemplatesRequest): Observable<FlowTemplate[]> {
     let httpParams = new HttpParams();
     if (params.pieces && params.pieces.length > 0) {
       httpParams = httpParams.appendAll({ pieces: params.pieces });
@@ -46,6 +50,9 @@ export class TemplatesService {
     }
     return this.flagsService.getTemplatesSourceUrl().pipe(
       switchMap((url) => {
+        if (isNil(url)) {
+          return of([]);
+        }
         return this.http.get<FlowTemplate[]>(url, { params: httpParams });
       })
     );

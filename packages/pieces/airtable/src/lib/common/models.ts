@@ -38,6 +38,11 @@ export interface AirtableTable {
     type: string
   }[]
 }
+
+export interface AirtableView {
+  id: string;
+  name: string;
+};
 export interface AirtableCreateRecordBody {
   records?: AirtableRecord[]
   fields?: Record<string, unknown>

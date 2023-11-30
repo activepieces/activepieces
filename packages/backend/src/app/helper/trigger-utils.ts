@@ -31,10 +31,10 @@ import { pieceMetadataService } from '../pieces/piece-metadata-service'
 import { logger } from './logger'
 import { system } from './system/system'
 import { SystemProp } from './system/system-prop'
-import { plansService } from '../ee/billing/plans/plan.service'
 import { JobType } from '../workers/flow-worker/queues/queue'
 import { getServerUrl } from './public-ip-utils'
 import { getEdition } from './secret-helper'
+import { plansService } from '../ee/billing/project-plan/project-plan.service'
 
 function constructEveryXMinuteCron(minute: number) {
     const edition = getEdition()
@@ -73,7 +73,7 @@ export const triggerUtils = {
                         handshakeConfig.paramName &&
             handshakeConfig.paramName.toLowerCase() in payload.headers
                     ) {
-                        return await executeHandshake({
+                        return executeHandshake({
                             flowVersion,
                             projectId,
                             payload,
@@ -86,7 +86,7 @@ export const triggerUtils = {
                         handshakeConfig.paramName &&
             handshakeConfig.paramName in payload.queryParams
                     ) {
-                        return await executeHandshake({
+                        return executeHandshake({
                             flowVersion,
                             projectId,
                             payload,
@@ -98,9 +98,10 @@ export const triggerUtils = {
                     if (
                         handshakeConfig.paramName &&
             typeof payload.body === 'object' &&
+            payload.body !== null &&
             handshakeConfig.paramName in payload.body
                     ) {
-                        return await executeHandshake({
+                        return executeHandshake({
                             flowVersion,
                             projectId,
                             payload,
@@ -185,7 +186,7 @@ export const triggerUtils = {
             return null
         }
 
-        return await disablePieceTrigger({
+        return disablePieceTrigger({
             projectId,
             flowVersion,
             simulate,

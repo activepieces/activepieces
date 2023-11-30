@@ -4,6 +4,7 @@ import {
     ExecutionType,
     FlowInstanceStatus,
     RunEnvironment,
+    TriggerPayload,
     TriggerType,
 } from '@activepieces/shared'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
@@ -174,7 +175,7 @@ const consumePieceTrigger = async (data: RepeatingJobData): Promise<void> => {
     const payloads: unknown[] = await triggerUtils.executeTrigger({
         projectId: data.projectId,
         flowVersion,
-        payload: {},
+        payload: {} as TriggerPayload,
         simulate: false,
     })
 

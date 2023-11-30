@@ -23,7 +23,6 @@ export interface CanvasState {
   focusedStep: FlowItem | undefined;
   selectedRun: FlowRun | undefined;
   selectedStepName: string;
-  isGeneratingFlowComponentOpen: boolean;
   displayedFlowVersion: FlowVersion;
   clickedAddBtnId?: number;
 }

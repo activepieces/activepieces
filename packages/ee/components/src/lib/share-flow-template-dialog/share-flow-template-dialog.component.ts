@@ -27,6 +27,7 @@ import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
 import { ShareFlowRequest } from '@activepieces/ee-shared';
 import {
+  ApEdition,
   ApFlagId,
   FlowTemplate,
   TelemetryEventName,
@@ -58,6 +59,7 @@ export class ShareFlowTemplateDialogComponent {
     | undefined;
   loading = false;
   isPublicTemplatesProject$: Observable<boolean>;
+  show$: Observable<boolean>;
   constructor(
     private fb: FormBuilder,
     private snackbar: MatSnackBar,
@@ -68,13 +70,16 @@ export class ShareFlowTemplateDialogComponent {
     private cd: ChangeDetectorRef,
     private telemetryService: TelemetryService
   ) {
+    this.show$ = this.flagsService
+      .getEdition()
+      .pipe(map((ed) => ed === ApEdition.CLOUD));
     this.isPublicTemplatesProject$ = combineLatest({
       templateProjectId: this.flagsService.getAllFlags().pipe(
         map((flags) => {
           return flags[ApFlagId.TEMPLATES_PROJECT_ID] as string;
         })
       ),
-      project: this.store.select(ProjectSelectors.selectProject),
+      project: this.store.select(ProjectSelectors.selectCurrentProject),
     }).pipe(
       map(({ templateProjectId, project }) => {
         return templateProjectId === project.id;

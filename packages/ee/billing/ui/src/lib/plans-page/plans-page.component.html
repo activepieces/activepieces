@@ -1,4 +1,4 @@
-<div class="ap-typography-headline-5 !ap-font-semibold ap-mb-12  ap-ml-8 ap-mt-28 lg:ap-mt-7">
+<div class="ap-typography-headline-5 !ap-font-semibold ap-mb-12  ap-ml-8 ap-mt-20">
   Subscription Settings
 </div>
 
@@ -46,8 +46,8 @@
       <ng-container *ngIf="tasksStats$ | async as stats">
         <div class="ap-flex ap-gap-6 ap-pr-12 ap-items-center">
           <div class="ap-relative">
-            <mat-progress-spinner class="progress-success-bg" [color]="'accent'" [diameter]="50" [strokeWidth]="10"
-              [mode]="'determinate'" [value]="100" style="position: absolute; top: 0; left: 0">
+            <mat-progress-spinner class="progress-success-bg !ap-absolute !ap-left-0 !ap-top-0" [color]="'accent'"
+              [diameter]="50" [strokeWidth]="10" [mode]="'determinate'" [value]="100">
             </mat-progress-spinner>
             <mat-progress-spinner [ngClass]="{
               'progress-success': stats.tasksExecuted / stats.tasksCap <= 0.8
@@ -89,7 +89,7 @@
               : response.currentPlan.connections }}
             </div>
             <div>
-              <b>Trigger Update Time:</b> {{ response.currentPlan.minimumPollingInterval }} minute{{
+              <b>Sync Time:</b> {{ response.currentPlan.minimumPollingInterval }} minute{{
               response.currentPlan.minimumPollingInterval > 1 ? 's' : ''}}
             </div>
             <div>
@@ -116,140 +116,9 @@
       Automation Plans
     </div>
     <div class="ap-flex ap-justify-start ap-gap-[50px]  ap-flex-wrap">
-      <div class="ap-py-4 ap-bg-white ap-rounded-lg ap-border-[1px] ap-border-outline ap-min-w-[350px] "
-        *ngFor="let plan of response.plans">
-
-
-        <div class="ap-mb-2 ap-w-full">
-          <div class="ap-border-b ap-border-solid ap-border-outline ap-w-full">
-            <div class="ap-px-4 ap-pb-5">
-              <div class="!ap-font-semibold ap-typography-body-1  ap-mb-1">{{ plan.name }}</div>
-              <div class="ap-text-description ap-typography-body-2">{{ plan.description }}</div>
-            </div>
-          </div>
-
-          <div class=" ap-px-4 !ap-font-semibold ap-typography-body-2  ap-mb-2 ap-mt-10 ">
-            {{ plan.selectedPrice$ | async }}
-          </div>
-        </div>
-        <div class="ap-px-4">
-          <mat-form-field appearance="outline" class="ap-w-full">
-            <mat-label>Tasks</mat-label>
-            <div class="ap-w-full" *ngIf="plan.tasks.length === 1">
-              <input matInput [readonly]="true" value="{{ plan.tasks[0].amount }} tasks / day" />
-            </div>
-            <mat-select [formControl]="plan.formControl" *ngIf="plan.tasks.length > 1">
-              <mat-select-trigger>{{ plan.selectedTasks$ | async }} tasks /
-                month</mat-select-trigger>
-              <mat-option *ngFor="let tasks of plan.tasks" [value]="tasks">
-                <div class="ap-p-2">
-                  <div class="ap-flex ap-flex-col">${{ tasks.price }}</div>
-                  <div class="ap-flex ap-flex-col">
-                    {{ formatNumberWithCommas(tasks.amount) }} tasks / month
-                  </div>
-                </div>
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-          <ap-button btnColor="primary" [disabled]="plan.formControl.value.price === '0'" [fullWidthOfContainer]="true"
-            [loading]="plan.loading" class="ap-mt-2" (buttonClicked)="openPaymentLink(plan)">
-            {{ 'Change Plan' }}</ap-button>
-          <div class="ap-typography-body-2">
-            <hr class="ap-border-gray-200 ap-mb-4 ap-mt-4" />
-            <h2 class="ap-mb-2">
-              <b> {{ plan.connections >= 100 ? 'Unlimited Connections' : plan.connections + ' Connections' }}</b>
-
-            </h2>
-            <h2 class=" ap-mb-2">
-              <b>
-                Trigger Update Time:
-              </b> {{ plan.minimumPollingInterval }} minute{{
-              plan.minimumPollingInterval > 1 ? 's' : ''
-              }}
-            </h2>
-            <h2 class="  ap-mb-2">
-              <b>
-                {{ plan.teamMembers === -1 ? 'Unlimited Team Members' : plan.teamMembers +( plan.teamMembers === 1? '
-                Team Member':' Team members') }}
-              </b>
-
-
-            </h2>
-          </div>
-
-        </div>
-
-      </div>
+      <app-automation-plan-card *ngFor="let plan of pricingPlans" [plan]="plan"
+        [loadPlans$]="loadPlans$"></app-automation-plan-card>
     </div>
-    <ng-container *ngIf="chatbotsEnabled$ | async">
-      <div class="ap-typography-headline-6 !ap-font-semibold ap-mb-5 ap-mt-12">
-        Chatbot Plans
-      </div>
-      <div class="ap-flex ap-justify-start  ap-gap-[50px]  ap-flex-wrap">
-
-        <div class="ap-py-4 ap-bg-white ap-rounded-lg ap-border-[1px] ap-border-outline ap-min-w-[350px] ">
-
-
-          <div class="ap-mb-2 ap-w-full">
-            <div class="ap-border-b ap-border-solid ap-border-outline ap-w-full">
-              <div class="ap-px-4 ap-pb-5">
-                <div class="!ap-font-semibold ap-typography-body-1  ap-mb-1">Free</div>
-                <div class="ap-text-description ap-typography-body-2">Give our bots a test!</div>
-              </div>
-            </div>
-
-          </div>
-          <div class="ap-px-4">
-
-            <div class="ap-typography-body-2">
-
-              <h2 class="ap-mb-2 ap-my-10">
-
-                <b>1 Bot</b>
-              </h2>
-              <h2 class=" ap-mb-2">
-                <b>1 Data Source </b>
-              </h2>
-              <h2 class=" ap-mb-2">
-                <b>PDF File Type</b>
-              </h2>
-            </div>
-
-          </div>
-
-        </div>
-        <div class="ap-py-4 ap-bg-white ap-rounded-lg ap-border-[1px] ap-border-outline ap-min-w-[350px] ">
-
-
-          <div class="ap-mb-2 ap-w-full">
-            <div class="ap-border-b ap-border-solid ap-border-outline ap-w-full">
-              <div class="ap-px-4 ap-pb-5">
-                <div class="!ap-font-semibold ap-typography-body-1  ap-mb-1">Custom</div>
-                <div class="ap-text-description ap-typography-body-2">Do you want to see the full capabilities <br> of
-                  our
-                  bots
-                  ?</div>
-              </div>
-            </div>
-
-          </div>
-          <div class="ap-px-4 ap-my-10">
-            <a href="mailto:sales@activepieces.com">
-              <ap-button btnColor="primary" [fullWidthOfContainer]="true">
-                Contact us
-              </ap-button>
-            </a>
-
-            <div class="ap-typography-body-2">
-
-            </div>
-
-          </div>
-
-        </div>
-      </div>
-    </ng-container>
-
 
   </div>
 </div>
@@ -258,5 +127,3 @@
     <ap-loading-icon width="50px" height="50px"></ap-loading-icon>
   </div>
 </ng-template>
-
-<ng-container *ngIf="openCheckout$ | async"></ng-container>

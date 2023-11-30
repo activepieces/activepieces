@@ -7,18 +7,19 @@ import axios from 'axios'
 import { webhookService } from '../webhooks/webhook-service'
 import { getEdition } from '../helper/secret-helper'
 import { defaultTheme } from './theme'
+import { showThirdPartyProvidersMap } from '../ee/authentication/federated-authn/authn-provider/authn-provider'
 
 const flagRepo = databaseConnection.getRepository(FlagEntity)
 
 export const flagService = {
     save: async (flag: FlagType): Promise<Flag> => {
-        return await flagRepo.save({
+        return flagRepo.save({
             id: flag.id,
             value: flag.value,
         })
     },
     async getOne(flagId: ApFlagId): Promise<Flag | null> {
-        return await flagRepo.findOneBy({
+        return flagRepo.findOneBy({
             id: flagId,
         })
     },
@@ -49,6 +50,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.SHOW_COMMUNITY_PIECES,
+                value: true,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.EDITION,
                 value: getEdition(),
                 created,
@@ -61,8 +68,14 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.SHOW_AUTH_PROVIDERS,
-                value: getEdition() === ApEdition.CLOUD,
+                id: ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
+                value: getEdition() === ApEdition.COMMUNITY ? {} : showThirdPartyProvidersMap,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
+                value: [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(getEdition()) ? this.getThirdPartyRedirectUrl() : undefined,
                 created,
                 updated,
             },
@@ -93,6 +106,18 @@ export const flagService = {
             {
                 id: ApFlagId.PRIVATE_PIECES_ENABLED,
                 value: getEdition() !== ApEdition.COMMUNITY,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.PRIVACY_POLICY_URL,
+                value: 'https://www.activepieces.com/privacy',
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.TERMS_OF_SERVICE_URL,
+                value: 'https://www.activepieces.com/terms',
                 created,
                 updated,
             },
@@ -156,11 +181,19 @@ export const flagService = {
                 created,
                 updated,
             },
+            {
+                id: ApFlagId.SHOW_POWERED_BY_AP,
+                value: false,
+                created,
+                updated,
+            },
         )
 
         return flags
     },
-
+    getThirdPartyRedirectUrl(): string {
+        return `${system.get(SystemProp.FRONTEND_URL)}/redirect`
+    },
     async getCurrentRelease(): Promise<string> {
         const packageJson = await import('package.json')
         return packageJson.version

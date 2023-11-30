@@ -322,6 +322,18 @@ class Validators {
     },
   };
 
+  static phoneNumber: TypedValidatorFn<ValidationInputType.STRING> = {
+    type: ValidationInputType.STRING,
+    fn: (property, processedValue, userInput) => {
+        const pattern = new RegExp('^\\+?\\d{1,4}?[-.\\s]?\\(?\\d{1,3}?\\)?[-.\\s]?\\d{1,4}[-.\\s]?\\d{1,4}[-.\\s]?\\d{1,9}$');
+        if (isEmpty(processedValue)) return null;
+  
+        return pattern.test(String(processedValue))
+          ? null
+          : formatErrorMessage(ErrorMessages.PHONE_NUMBER, { userInput });
+    },
+  };
+
   static oneOf(values: unknown[]): TypedValidatorFn<any> {
     return {
       type: ValidationInputType.ANY,

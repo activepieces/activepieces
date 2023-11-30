@@ -1,4 +1,4 @@
-import { webflowCommon, sitesDropdown } from '../common/common';
+import { webflowCommon } from '../common/common';
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { getAccessTokenOrThrow } from "@activepieces/pieces-common";
 import { webflowAuth } from '../..';
@@ -7,12 +7,12 @@ const triggerNameInStore = 'webflow_created_form_submissions_trigger';
 
 export const webflowNewSubmission = createTrigger({
     auth: webflowAuth,
-    
+
         name: 'new_submission',
         displayName: 'New Submission',
         description: 'Triggers when Webflow Site receives a new submission',
         props: {
-            site_id: sitesDropdown,
+            site_id: webflowCommon.sitesDropdown,
             formName: Property.ShortText({
                 displayName: 'Form Name',
                 required: false,
@@ -54,7 +54,7 @@ export const webflowNewSubmission = createTrigger({
             }
         },
         async run(context) {
-            const body = context.payload.body;
+            const body = context.payload.body as PayloadBody;
             const { formName } = context.propsValue;
             //if formName provided, trigger only required formName if it's matched; else trigger all forms in selected webflow site.
             if (formName) {
@@ -71,4 +71,8 @@ export const webflowNewSubmission = createTrigger({
 
 interface WebhookInformation {
     webhookId: string;
+}
+
+type PayloadBody = {
+    name: string;
 }

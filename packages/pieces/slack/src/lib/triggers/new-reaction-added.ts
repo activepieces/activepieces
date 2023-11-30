@@ -54,11 +54,12 @@ export const newReactionAdded = createTrigger({
         return [sampleData]
     },
     run: async (context) => {
+        const payloadBody = context.payload.body as Record<string, unknown>;
         if (context.propsValue.emoj) {
-            if (context.propsValue.emoj.includes(context.payload.body.reaction)) {
+            if (context.propsValue.emoj.includes(payloadBody.reaction)) {
                 return [];
             }
         }
-        return [context.payload.body.event]
+        return [payloadBody.event]
     }
 });

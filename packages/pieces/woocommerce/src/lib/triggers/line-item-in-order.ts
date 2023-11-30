@@ -27,8 +27,8 @@ export const lineItemInOrder = createTrigger({
         }
     },
     //Return order data
-    async run(context) {
-        return [context.payload.body.line_items];
+    async run(context) {const payloadBody = context.payload.body as PayloadBody;
+        return [payloadBody.line_items];
     },
 
     sampleData: {
@@ -53,3 +53,7 @@ export const lineItemInOrder = createTrigger({
         "variation_id": 0
     }
 })
+
+type PayloadBody = {
+    line_items: unknown[]
+}

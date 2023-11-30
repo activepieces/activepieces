@@ -48,7 +48,6 @@ import {
 import {
   jsonValidator,
   fadeInUp400ms,
-  PieceMetadataService,
   InsertMentionOperation,
   FlagService,
 } from '@activepieces/ui/common';
@@ -62,6 +61,7 @@ import { InterpolatingTextFormControlComponent } from '../interpolating-text-for
 import { PiecePropertiesFormValue } from '../models/piece-properties-form-value';
 import { AddEditConnectionButtonComponent } from '@activepieces/ui/feature-connections';
 import { PackageType, PieceType } from '@activepieces/shared';
+import { PieceMetadataService } from 'ui-feature-pieces';
 
 type ConfigKey = string;
 
@@ -236,7 +236,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
               options: [],
               disabled: true,
               placeholder:
-                'An unxpected error occured please contact our support',
+                'An unexpected error occured please contact our support',
             }
           ).pipe(
             map((res) => {
@@ -443,7 +443,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
               ? prop.defaultValue.toString()
               : '';
             controls[pk] = new UntypedFormControl(
-              propValue || defaultValue,
+              propValue ?? defaultValue,
               validators
             );
           } else {
@@ -451,7 +451,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
               ? prop.defaultValue.base64
               : '';
             controls[pk] = new UntypedFormControl(
-              propValue || defaultValue,
+              propValue ?? defaultValue,
               validators
             );
           }
@@ -464,7 +464,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
             validators.push(Validators.required);
           }
           controls[pk] = new UntypedFormControl(
-            propValue || prop.defaultValue,
+            propValue ?? prop.defaultValue,
             validators
           );
           break;
@@ -474,7 +474,10 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
           if (prop.required) {
             validators.push(Validators.required);
           }
-          controls[pk] = new UntypedFormControl(propValue, validators);
+          controls[pk] = new UntypedFormControl(
+            propValue ?? prop.defaultValue,
+            validators
+          );
           break;
         }
         case PropertyType.DYNAMIC: {
@@ -487,7 +490,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
             });
           } else {
             controls[pk] = new UntypedFormControl(
-              propValue || prop.defaultValue || '{}',
+              propValue ?? (prop.defaultValue || '{}'),
               validators
             );
           }
