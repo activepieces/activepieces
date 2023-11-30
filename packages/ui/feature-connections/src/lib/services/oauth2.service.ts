@@ -92,8 +92,8 @@ export class Oauth2Service {
           observer.next(event.data);
           popup?.close();
           observer.complete();
+          window.removeEventListener('message', handler);
         }
-        window.removeEventListener('message', handler);
       });
     }).pipe(
       map((params) => {
