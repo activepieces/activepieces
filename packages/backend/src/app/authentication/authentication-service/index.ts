@@ -1,5 +1,5 @@
 import { QueryFailedError } from 'typeorm'
-import { AuthenticationResponse, UserStatus, ActivepiecesError, ErrorCode, isNil, User, ApFlagId } from '@activepieces/shared'
+import { AuthenticationResponse, UserStatus, ActivepiecesError, ErrorCode, isNil, User, ApFlagId, Project, TelemetryEventName } from '@activepieces/shared'
 import { userService } from '../../user/user-service'
 import { passwordHasher } from '../lib/password-hasher'
 import { authenticationServiceHooks as hooks } from './hooks'
@@ -7,6 +7,8 @@ import { generateRandomPassword } from '../../helper/crypto'
 import { flagService } from '../../flags/flag.service'
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
+import { logger } from '../../helper/logger'
+import { telemetry } from '../../helper/telemetry.utils'
 
 const SIGN_UP_ENABLED = system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
 
@@ -22,6 +24,9 @@ export const authenticationService = {
 
         const userWithoutPassword = removePasswordPropFromUser(authnResponse.user)
 
+        await sendTelemetry({
+            user, project: authnResponse.project,
+        })
         return {
             ...userWithoutPassword,
             token: authnResponse.token,
@@ -47,7 +52,7 @@ export const authenticationService = {
         })
 
         const userWithoutPassword = removePasswordPropFromUser(updatedUser)
-        
+
         return {
             ...userWithoutPassword,
             token,
@@ -83,7 +88,7 @@ export const authenticationService = {
             trackEvents: true,
             newsLetter: true,
             password: await generateRandomPassword(),
-            platformId: params. platformId,
+            platformId: params.platformId,
         }
 
         return this.signUp(newUser)
@@ -158,7 +163,7 @@ const assertUserIsAllowedToSignIn: (user: User | null) => asserts user is User =
             params: null,
         })
     }
-   
+
     if (user.status === UserStatus.CREATED || user.status === UserStatus.INVITED) {
         throw new ActivepiecesError({
             code: ErrorCode.EMAIL_IS_NOT_VERIFIED,
@@ -184,6 +189,33 @@ const removePasswordPropFromUser = (user: User): Omit<User, 'password'> => {
     const { password: _, ...filteredUser } = user
     return filteredUser
 }
+
+const sendTelemetry = async ({ user, project }: SendTelemetryParams): Promise<void> => {
+    try {
+        await telemetry.identify(user, project.id)
+
+        await telemetry.trackProject(project.id, {
+            name: TelemetryEventName.SIGNED_UP,
+            payload: {
+                userId: user.id,
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                projectId: project.id,
+            },
+        })
+    }
+    catch (e) {
+        logger.warn({ name: 'AuthenticationService#sendTelemetry', error: e })
+    }
+}
+
+type SendTelemetryParams = {
+    user: User
+    project: Project
+}
+
+
 
 type NewUser = Omit<User, 'id' | 'created' | 'updated'>
 

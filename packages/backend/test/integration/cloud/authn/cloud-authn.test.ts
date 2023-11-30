@@ -3,13 +3,13 @@ import { StatusCodes } from 'http-status-codes'
 import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { createMockSignInRequest, createMockSignUpRequest } from '../../../helpers/mocks/authn'
-import { createMockCustomDomain, createMockPlatform, createMockProject, createMockUser } from '../../../helpers/mocks'
+import { createMockCustomDomain, createMockPlatform, createMockProject, createMockUser, createProjectMember } from '../../../helpers/mocks'
 import { ApFlagId, ProjectType, UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { emailService } from '../../../../src/app/ee/helper/email/email-service'
 import { stripeHelper } from '../../../../src/app/ee/billing/billing/stripe-helper'
 import { decodeToken } from '../../../helpers/auth'
-import { OtpType } from '@activepieces/ee-shared'
+import { OtpType, ProjectMemberRole, ProjectMemberStatus } from '@activepieces/ee-shared'
 
 let app: FastifyInstance | null = null
 
@@ -103,6 +103,14 @@ describe('Authentication API', () => {
             const mockProject = createMockProject({ ownerId: mockPlatformOwner.id, platformId: mockPlatformId })
             await databaseConnection.getRepository('project').save(mockProject)
 
+            const mockProjectMember = createProjectMember({
+                projectId: mockProject.id,
+                userId: mockInvitedUser.id,
+                status: ProjectMemberStatus.ACTIVE,
+                role: ProjectMemberRole.ADMIN,
+            })
+            await databaseConnection.getRepository('project_member').save(mockProjectMember)
+
             const mockCustomDomain = createMockCustomDomain({ platformId: mockPlatform.id })
             await databaseConnection.getRepository('custom_domain').save(mockCustomDomain)
 
@@ -159,7 +167,7 @@ describe('Authentication API', () => {
 
             expect(responseBody?.code).toBe('ENTITY_NOT_FOUND')
             expect(responseBody?.params?.entityType).toBe('project')
-            expect(responseBody?.params?.message).toBe(`platformId=${mockPlatformId}`)
+            expect(responseBody?.params?.message).toBe(`no projects found for the user=${mockInvitedUser.id}`)
         })
 
         it('Adds tasks for referrals', async () => {
@@ -417,7 +425,7 @@ describe('Authentication API', () => {
 
             expect(responseBody?.code).toBe('ENTITY_NOT_FOUND')
             expect(responseBody?.params?.entityType).toBe('project')
-            expect(responseBody?.params?.message).toBe(`platformId=${mockPlatformId}`)
+            expect(responseBody?.params?.message).toBe(`no projects found for the user=${mockUser.id}`)
         })
 
         it('Fails if password doesn\'t match', async () => {

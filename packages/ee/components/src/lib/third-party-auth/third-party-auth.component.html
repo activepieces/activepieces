@@ -5,7 +5,7 @@
         <ap-button type="button" *ngIf="show[ThirdPartyAuthnProvider.GOOGLE]"
             (buttonClicked)="signInWithThirdPartyProvider(ThirdPartyAuthnProvider.GOOGLE)" btnColor="basic"
             btnStyle="stroked" [fullWidthOfContainer]="true">
-            <div class="ap-flex ap-gap-2 ap-items-center ap-justify-center">
+            <div class="ap-flex ap-gap-4 ap-items-center ap-justify-center">
                 <svg-icon [svgStyle]="{ width: '15px', height: '15px' }" src="assets/img/custom/auth/google-icon.svg">
                 </svg-icon>
                 {{isForSignup? signUpText:signInText }} Google
@@ -23,10 +23,12 @@
         </ap-button>
     </div>
 
-    <div class="ap-typography-headline ap-text-center ap-mt-2 ap-mb-2 ap-flex ap-items-center ap-gap-1"
+    <div class="ap-mt-2 ap-mb-2 ap-flex ap-gap-3 ap-items-center"
         *ngIf="show[ThirdPartyAuthnProvider.GOOGLE] || show[ThirdPartyAuthnProvider.GITHUB]">
         <div class="ap-flex-grow ap-border-t ap-border-solid ap-border-dividers"></div>
-        OR
+        <div class="ap-typography-body-2  !ap-font-semibold" i18n>
+            OR
+        </div>
         <div class="ap-flex-grow ap-border-t ap-border-solid ap-border-dividers"></div>
     </div>
 
