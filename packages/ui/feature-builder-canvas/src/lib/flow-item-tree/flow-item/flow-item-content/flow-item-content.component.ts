@@ -96,7 +96,7 @@ export class FlowItemContentComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.isDragging$ = this.flowRendererService.draggingSubject.asObservable();
+    this.isDragging$ = this.flowRendererService.isDragginStep$;
     this.selectedRun$ = this.store.select(
       BuilderSelectors.selectCurrentFlowRun
     );

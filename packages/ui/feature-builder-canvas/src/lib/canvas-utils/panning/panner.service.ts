@@ -7,7 +7,7 @@ import { Subject } from 'rxjs';
 export class PannerService {
   panningOffset$: Subject<{ x: number; y: number }> = new Subject();
   isPanning$: Subject<boolean> = new Subject();
-  dragState = {
+  panningState = {
     currentOffset: {
       x: 0,
       y: 0,
@@ -19,7 +19,7 @@ export class PannerService {
     y: 0,
   };
   recenter() {
-    this.dragState = {
+    this.panningState = {
       currentOffset: {
         x: 0,
         y: 0,

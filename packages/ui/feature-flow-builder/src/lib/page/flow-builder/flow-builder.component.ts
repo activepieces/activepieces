@@ -134,7 +134,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     this.testingStepSectionIsRendered$ =
       this.testStepService.testingStepSectionIsRendered$.asObservable();
     this.isPanning$ = this.pannerService.isPanning$.asObservable();
-    this.isDragging$ = this.flowRendererService.draggingSubject.asObservable();
+    this.isDragging$ = this.flowRendererService.isDragginStep$;
     if (localStorage.getItem('newFlow')) {
       const TemplateDialogData: TemplateDialogData = {
         insideBuilder: true,

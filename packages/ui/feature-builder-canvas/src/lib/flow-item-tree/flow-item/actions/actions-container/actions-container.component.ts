@@ -22,7 +22,7 @@ export class ActionsContainerComponent {
     private store: Store,
     private flowRendererService: FlowRendererService
   ) {
-    this.isDragging$ = this.flowRendererService.draggingSubject.asObservable();
+    this.isDragging$ = this.flowRendererService.isDragginStep$;
     this.readonly$ = this.store.select(BuilderSelectors.selectReadOnly);
   }
 }

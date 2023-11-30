@@ -68,8 +68,7 @@ export class FlowItemComponent implements OnInit {
 
   ngOnInit(): void {
     this.findDraggingContainer();
-    this.anyStepIsDragged$ =
-      this.flowRendererService.draggingSubject.asObservable();
+    this.anyStepIsDragged$ = this.flowRendererService.isDragginStep$;
     this.readOnly$ = this.store.select(BuilderSelectors.selectReadOnly);
   }
 
@@ -93,7 +92,7 @@ export class FlowItemComponent implements OnInit {
   }
 
   draggingStarted() {
-    this.flowRendererService.draggingSubject.next(true);
+    this.flowRendererService.setIsDraggingStep(true);
     this.isDragging = true;
     setTimeout(() => {
       this.hideDraggableSource$.next(true);
@@ -121,7 +120,7 @@ export class FlowItemComponent implements OnInit {
   }
 
   draggingEnded() {
-    this.flowRendererService.draggingSubject.next(false);
+    this.flowRendererService.setIsDraggingStep(false);
     this.isDragging = false;
     setTimeout(() => {
       this.hideDraggableSource$.next(false);

@@ -32,7 +32,6 @@ export class DropZoneComponent {
   @Output() dropped = new EventEmitter<DropEvent<FlowItem>>();
   showDropArea$: Observable<boolean>;
   constructor(private flowRendererService: FlowRendererService) {
-    this.showDropArea$ =
-      this.flowRendererService.draggingSubject.asObservable();
+    this.showDropArea$ = this.flowRendererService.isDragginStep$;
   }
 }

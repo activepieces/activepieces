@@ -8,5 +8,14 @@ export class FlowRendererService {
   clientMouseX = 0;
   clientMouseY = 0;
   readonly INVALID_DROP_MESSAGE = $localize`Can't Move here`;
-  draggingSubject = new BehaviorSubject<boolean>(false);
+  private draggingStepSubject = new BehaviorSubject<boolean>(false);
+  get isDragginStep$() {
+    return this.draggingStepSubject.asObservable();
+  }
+  setIsDraggingStep(isDragging: boolean) {
+    this.draggingStepSubject.next(isDragging);
+  }
+  get isDraggingStateSnapshot() {
+    return this.draggingStepSubject.value;
+  }
 }
