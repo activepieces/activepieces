@@ -191,6 +191,9 @@
         "packages/pieces/sendinblue/src/index.ts"
       ],
       "@activepieces/piece-sendy": ["packages/pieces/sendy/src/index.ts"],
+      "@activepieces/piece-sessions-us": [
+        "packages/pieces/sessions-us/src/index.ts"
+      ],
       "@activepieces/piece-sftp": ["packages/pieces/sftp/src/index.ts"],
       "@activepieces/piece-shopify": ["packages/pieces/shopify/src/index.ts"],
       "@activepieces/piece-simplepdf": [
