@@ -1,6 +1,6 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces-common";
-import { mixpanelAuth } from "../../index"; // Adjust this import based on your project structure
+import { mixpanelAuth } from "../../index";
 
 const API_URL = 'https://api.mixpanel.com';
 
@@ -33,7 +33,7 @@ export const trackEvent = createAction({
         const eventPayload = [{
             event,
             properties: {
-                time: Math.floor(Date.now() / 1000), // Current Unix timestamp
+                time: Math.floor(Date.now() / 1000),
                 distinct_id,
                 ...event_properties
             }
