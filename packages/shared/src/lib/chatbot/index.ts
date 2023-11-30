@@ -1,2 +1,2 @@
-export * from "./datasource";
-export * from "./chatbot";
+export * from './datasource'
+export * from './chatbot'

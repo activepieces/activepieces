@@ -7,17 +7,11 @@ export const adminPlatformService = {
     async add({ userId, projectId, name }: AdminAddPlatformParams): Promise<Platform> {
         const project = await getProjectOrThrow(projectId)
 
-        const newPlatform = await platformService.add({
+        return platformService.add({
             ownerId: userId,
+            projectId: project.id,
             name,
         })
-
-        await projectService.addProjectToPlatform({
-            projectId: project.id,
-            platformId: newPlatform.id,
-        })
-
-        return newPlatform
     },
 }
 

@@ -9,6 +9,8 @@ import { ProjectActions } from './project.action';
 import { ProjectSelectors } from './project.selector';
 import { AuthenticationService } from '../../service/authentication.service';
 import { ProjectService } from '../../service/project.service';
+import { PlatformProjectService } from '../../service/platform-project.service';
+import { StatusCodes } from 'http-status-codes';
 
 @Injectable()
 export class ProjectEffects {
@@ -35,11 +37,14 @@ export class ProjectEffects {
             });
           }),
           catchError((error) => {
-            this.snackBar.open(
-              `Error loading projects: ${error.message}`,
-              'Dismiss'
-            );
-            this.authenticationService.logout();
+            const status = error?.status;
+            if (status === StatusCodes.UNAUTHORIZED) {
+              this.snackBar.open(
+                `Error loading projects: ${error.message}`,
+                'Dismiss'
+              );
+              this.authenticationService.logout();
+            }
             return of({ type: 'Load Projects Error' });
           })
         );
@@ -52,10 +57,10 @@ export class ProjectEffects {
       return this.actions$.pipe(
         ofType(ProjectActions.updateProject),
         concatLatestFrom(() =>
-          this.store.select(ProjectSelectors.selectProject)
+          this.store.select(ProjectSelectors.selectCurrentProject)
         ),
         switchMap(([{ notifyStatus }, project]) => {
-          return this.projectService
+          return this.platformProjectService
             .update(project.id, {
               notifyStatus: notifyStatus,
               displayName: project.displayName,
@@ -78,8 +83,9 @@ export class ProjectEffects {
   constructor(
     private actions$: Actions,
     private store: Store,
-    private authenticationService: AuthenticationService,
     private projectService: ProjectService,
+    private authenticationService: AuthenticationService,
+    private platformProjectService: PlatformProjectService,
     private snackBar: MatSnackBar
   ) {}
 }

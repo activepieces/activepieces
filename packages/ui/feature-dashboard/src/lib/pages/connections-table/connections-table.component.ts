@@ -13,7 +13,6 @@ import {
   SeekPage,
 } from '@activepieces/shared';
 import {
-  PieceMetadataService,
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
 } from '@activepieces/ui/common';
@@ -21,6 +20,7 @@ import { ConnectionsTableDataSource } from './connections-table.datasource';
 import { ApPaginatorComponent } from '@activepieces/ui/common';
 import { AppConnectionsService } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
+import { PieceMetadataService } from 'ui-feature-pieces';
 
 @Component({
   templateUrl: './connections-table.component.html',
@@ -31,6 +31,7 @@ export class ConnectionsTableComponent implements OnInit {
   paginator!: ApPaginatorComponent;
   connectionPage$: Observable<SeekPage<AppConnection>>;
   dataSource!: ConnectionsTableDataSource;
+  title = $localize`Connections`;
   displayedColumns = ['app', 'name', 'status', 'created', 'updated', 'action'];
   connectionDeleted$: Subject<boolean> = new Subject();
   deleteConnectionDialogClosed$: Observable<void>;

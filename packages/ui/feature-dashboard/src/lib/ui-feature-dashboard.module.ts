@@ -21,23 +21,20 @@ import { FoldersEffects } from './store/folders/folders.effects';
 import { RenameFolderDialogComponent } from './pages/flows-table/rename-folder-dialog/rename-folder-dialog.component';
 import { EeBillingUiModule } from '@activepieces/ee-billing-ui';
 import { UiFeatureTemplatesModule } from '@activepieces/ui/feature-templates';
-import { CommunityPiecesTableComponent } from './pages/community-pieces-table/community-pieces-table.component';
-import { InstallCommunityPieceModalComponent } from './pages/community-pieces-table/install-community-piece/install-community-piece-modal.component';
-import { EeProjectMembersModule } from '@activepieces/ee/project-members';
+import { UiFeaturePiecesModule } from 'ui-feature-pieces';
 
 @NgModule({
   imports: [
     CommonModule,
     UiCommonModule,
     EeBillingUiModule,
-    EeProjectMembersModule,
     RouterModule.forChild(DashboardLayoutRouting),
     StoreModule.forFeature(FOLDERS_STATE_NAME, foldersReducer),
     EffectsModule.forFeature([FoldersEffects]),
     UiFeatureTemplatesModule,
+    UiFeaturePiecesModule,
   ],
   declarations: [
-    InstallCommunityPieceModalComponent,
     DashboardContainerComponent,
     SidenavRoutesListComponent,
     RunsTableComponent,
@@ -45,7 +42,6 @@ import { EeProjectMembersModule } from '@activepieces/ee/project-members';
     EmptyFlowsTableComponent,
     ConnectionsTableComponent,
     FlowsTableTitleComponent,
-    CommunityPiecesTableComponent,
     FoldersListComponent,
     NewFolderDialogComponent,
     MoveFlowToFolderDialogComponent,

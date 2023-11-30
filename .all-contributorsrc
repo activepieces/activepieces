@@ -672,6 +672,51 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "fdundjer",
+      "name": "Filip Dunđer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/17405319?v=4",
+      "profile": "https://github.com/fdundjer",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "donthorp",
+      "name": "Don Thorp",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8629?v=4",
+      "profile": "http://donthorp.net",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "joeworkman",
+      "name": "Joe Workman",
+      "avatar_url": "https://avatars.githubusercontent.com/u/225628?v=4",
+      "profile": "https://joeworkman.net",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "Autumnlight02",
+      "name": "Aykut Akgün",
+      "avatar_url": "https://avatars.githubusercontent.com/u/68244453?v=4",
+      "profile": "https://github.com/Autumnlight02",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "yann120",
+      "name": "Yann Petitjean",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10012140?v=4",
+      "profile": "https://github.com/yann120",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

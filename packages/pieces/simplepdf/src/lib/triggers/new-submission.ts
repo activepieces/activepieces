@@ -47,6 +47,7 @@ export const simplePDFNewSubmission = createTrigger({
     // Empty
   },
   async run(context) {
-    return [context.payload?.body?.data ?? {}];
+    const payloadBody = context.payload.body as Record<string, unknown> | undefined
+    return [payloadBody?.['data'] ?? {}];
   },
 });

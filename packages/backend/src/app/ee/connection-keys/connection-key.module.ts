@@ -45,7 +45,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
                 Querystring: GetOrDeleteConnectionFromTokenRequest
             }>,
         ) => {
-            return await connectionKeyService.getConnection(request.query)
+            return connectionKeyService.getConnection(request.query)
         },
     )
 
@@ -62,7 +62,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
                 Body: UpsertConnectionFromToken
             }>,
         ) => {
-            return await connectionKeyService.createConnection(request.body)
+            return connectionKeyService.createConnection(request.body)
         },
     )
 
@@ -74,7 +74,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
     {
         Querystring: ListConnectionKeysRequest
     }>) => {
-        return await connectionKeyService.list(request.principal.projectId, request.query.cursor ?? null, request.query.limit ?? DEFAULT_LIMIT_SIZE)
+        return connectionKeyService.list(request.principal.projectId, request.query.cursor ?? null, request.query.limit ?? DEFAULT_LIMIT_SIZE)
     })
 
 
@@ -90,7 +90,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
                 Body: UpsertSigningKeyConnection
             }>,
         ) => {
-            return await connectionKeyService.upsert({
+            return connectionKeyService.upsert({
                 projectId: request.principal.projectId,
                 request: request.body,
             })

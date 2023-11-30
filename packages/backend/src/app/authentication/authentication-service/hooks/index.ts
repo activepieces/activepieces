@@ -1,7 +1,7 @@
 import { AuthenticationServiceHooks } from './authentication-service-hooks'
-import { defaultAuthenticationServiceHooks } from './default-authentication-service-hooks'
+import { communityAuthenticationServiceHooks } from './community-service-hooks'
 
-let hooks = defaultAuthenticationServiceHooks
+let hooks = communityAuthenticationServiceHooks
 
 export const authenticationServiceHooks = {
     set(newHooks: AuthenticationServiceHooks): void {

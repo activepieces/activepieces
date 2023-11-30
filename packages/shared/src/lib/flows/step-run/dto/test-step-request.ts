@@ -1,4 +1,4 @@
-import { Static, Type } from "@sinclair/typebox";
+import { Static, Type } from '@sinclair/typebox'
 
 export const CreateStepRunRequestBody = Type.Object({
     flowVersionId: Type.String(),

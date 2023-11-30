@@ -30,16 +30,17 @@ export const newLead = createTrigger({
         let leadPings: any[] = [];
         const leads: any[] = [];
         const form = context.propsValue.form;
+        const payloadBody = context.payload.body as PayloadBody;
 
         if (form !== undefined && form !== '' && form !== null) {
-            for (const lead of context.payload.body.entry) {
+            for (const lead of payloadBody.entry) {
                 if (form == lead.changes[0].value.form_id) {
                     leadPings.push(lead)
                 }
             }
         }
         else {
-            leadPings = context.payload.body.entry;
+            leadPings = payloadBody.entry;
         }
 
         for (const lead of leadPings) {
@@ -62,3 +63,14 @@ export const newLead = createTrigger({
         return [data.data]
     }
 })
+
+type PayloadBody = {
+    entry: {
+        changes: {
+            value: {
+                form_id: string,
+                leadgen_id: string,
+            }
+        }[]
+    }[]
+}

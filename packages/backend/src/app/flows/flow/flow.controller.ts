@@ -29,7 +29,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (fastify) => {
             },
         },
         async (request) => {
-            return await flowService.create({ projectId: request.principal.projectId, request: request.body })
+            return flowService.create({ projectId: request.principal.projectId, request: request.body })
         },
     )
 
@@ -63,7 +63,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (fastify) => {
                 return
             }
             // END EE
-            return await flowService.update({ userId: request.principal.id, flowId: request.params.flowId, request: request.body, projectId: request.principal.projectId })
+            return flowService.update({ userId: request.principal.id, flowId: request.params.flowId, request: request.body, projectId: request.principal.projectId })
         },
     )
 

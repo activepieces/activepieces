@@ -68,13 +68,15 @@
         "flows/building-flows",
         "flows/passing-data",
         "flows/publishing-flows",
-        "flows/debugging-runs"
+        "flows/debugging-runs",
+        "flows/code"
       ]
     },
     {
-      "group": "Core Pieces",
+      "group": "Security",
       "pages": [
-        "core-pieces/code"
+        "security/permissions",
+        "security/sso"
       ]
     },
     {
@@ -96,13 +98,13 @@
           "icon": "gear",
           "pages": [
             "install/configurations/environment-variables",
-            "install/configurations/error-notifications",
-            "install/configurations/troubleshooting"
+            "install/configurations/error-notifications"
           ]
         },
+        "install/setup-ssl",
         "install/architecture",
-        "install/editions",
-        "install/enterprise"
+        "install/enterprise",
+        "install/troubleshooting"
       ]
     },
     {
@@ -174,7 +176,11 @@
       "pages": [
         "platform/overview",
         "platform/appearance",
-        "platform/managed-projects",
+        "platform/manage-projects",
+        "platform/custom-domain",
+        "platform/manage-pieces",
+        "platform/manage-oauth2",
+        "platform/customize-emails",
         "platform/managed-users",
         "platform/embedding"
       ]
@@ -183,6 +189,7 @@
       "group": "Enterprise Edition",
       "pages": [
         "enterprise/whitelabel",
+        "enterprise/environments",
         {
           "group": "Connection Cards",
           "icon": "cards-blank",
@@ -198,9 +205,11 @@
     {
       "group": "About",
       "pages": [
-        "telemetry",
-        "changelog",
-        "license"
+        "about/i18n",
+        "about/editions",
+        "about/changelog",
+        "about/telemetry",
+        "about/license"
       ]
     }
   ],

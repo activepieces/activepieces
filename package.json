@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.12.2",
+  "version": "0.14.2",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve ui-core",
@@ -22,7 +22,6 @@
     "@angular/compiler": "16.2.6",
     "@angular/core": "16.2.6",
     "@angular/elements": "16.2.6",
-    "@angular/fire": "7.6.1",
     "@angular/forms": "16.2.6",
     "@angular/localize": "16.2.6",
     "@angular/material": "16.2.6",
@@ -85,9 +84,11 @@
     "drip-nodejs": "3.1.1",
     "faiss-node": "0.5.1",
     "fastify": "4.12.0",
+    "fastify-favicon": "4.3.0",
     "fastify-raw-body": "4.2.0",
     "feedparser": "2.2.10",
     "firebase-admin": "11.10.1",
+    "firebase-scrypt": "2.2.0",
     "font-awesome": "4.7.0",
     "form-data": "4.0.0",
     "google-auth-library": "8.9.0",
@@ -102,6 +103,7 @@
     "jsonrepair": "3.2.0",
     "jsonwebtoken": "9.0.1",
     "jszip": "3.10.1",
+    "jwks-rsa": "3.1.0",
     "kl-angular-mentions": "1.2.3",
     "langchain": "0.0.156",
     "lottie-web": "5.12.2",
@@ -109,6 +111,7 @@
     "marked": "4.3.0",
     "mime-types": "2.1.35",
     "monaco-editor": "0.34.1",
+    "mustache": "4.2.0",
     "nanoid": "3.3.6",
     "ngx-autosize": "2.0.4",
     "ngx-colors": "3.5.2",
@@ -120,7 +123,7 @@
     "ngx-timeago": "3.0.0",
     "nodemailer": "6.9.4",
     "object-sizeof": "2.6.3",
-    "openai": "3.3.0",
+    "openai": "4.17.5",
     "papaparse": "5.4.1",
     "pdf-parse": "1.1.1",
     "pg": "8.11.3",
@@ -141,13 +144,15 @@
     "soap": "1.0.0",
     "sqlite3": "5.1.6",
     "ssh2-sftp-client": "9.1.0",
-    "stripe": "11.18.0",
+    "stripe": "14.3.0",
     "subsink": "1.0.2",
+    "tiktoken": "1.0.11",
     "tinycolor2": "1.6.0",
     "tsconfig-paths": "4.2.0",
     "tslib": "2.6.2",
     "twitter-api-v2": "1.15.1",
     "typeorm": "0.3.17",
+    "xml2js": "0.6.2",
     "zone.js": "0.13.1"
   },
   "devDependencies": {
@@ -168,6 +173,7 @@
     "@ngrx/eslint-plugin": "16.0.1",
     "@nx/angular": "17.0.2",
     "@nx/esbuild": "17.0.2",
+    "@nx/eslint": "17.0.2",
     "@nx/eslint-plugin": "17.0.2",
     "@nx/jest": "17.0.2",
     "@nx/js": "17.0.2",
@@ -176,6 +182,8 @@
     "@nx/workspace": "17.0.2",
     "@playwright/test": "1.37.1",
     "@schematics/angular": "16.2.4",
+    "@swc-node/register": "~1.6.7",
+    "@swc/core": "~1.3.85",
     "@trumbitta/nx-plugin-unused-deps": "1.12.1",
     "@types/bcrypt": "5.0.0",
     "@types/crypto-js": "4.1.1",
@@ -190,6 +198,7 @@
     "@types/mailparser": "3.4.0",
     "@types/marked": "4.3.2",
     "@types/mime-types": "2.1.1",
+    "@types/mustache": "4.2.4",
     "@types/node": "18.7.23",
     "@types/nodemailer": "6.4.9",
     "@types/onfleet__node-onfleet": "1.3.7",
@@ -200,6 +209,7 @@
     "@types/quill": "2.0.10",
     "@types/ssh2-sftp-client": "9.0.0",
     "@types/tinycolor2": "1.4.5",
+    "@types/xml2js": "0.4.14",
     "@typescript-eslint/eslint-plugin": "5.62.0",
     "@typescript-eslint/parser": "5.62.0",
     "autoprefixer": "10.4.15",
@@ -241,11 +251,9 @@
     "typescript": "5.1.6",
     "verdaccio": "5.26.1",
     "wait-on": "7.0.1",
-    "webpack-ignore-dynamic-require": "1.0.0",
-    "@nx/eslint": "17.0.2"
+    "webpack-ignore-dynamic-require": "1.0.0"
   },
   "nx": {
     "includedScripts": []
   }
 }
-

@@ -1,6 +1,5 @@
 import { createAction, props } from '@ngrx/store';
 import {
-  Flow,
   FlowRun,
   FlowVersion,
   StepLocationRelativeToParent,
@@ -52,10 +51,6 @@ const setRightSidebar = createAction(
   }>()
 );
 
-const openGenerateFlowComponent = createAction(
-  CanvasActionType.OPEN_GENERATE_FLOW_COMPONENT
-);
-
 const selectStepByName = createAction(
   CanvasActionType.SELECT_STEP_BY_NAME,
   props<{ stepName: string }>()
@@ -68,27 +63,12 @@ const setRun = createAction(
   props<{ run: FlowRun }>()
 );
 
-const generateFlowSuccessful = createAction(
-  CanvasActionType.GENERATE_FLOW_SUCCESSFUL,
-  props<{ flow: Flow }>()
-);
-const generateFlow = createAction(
-  CanvasActionType.GENERATE_FLOW,
-  props<{ prompt: string }>()
-);
-const closeGenerateFlowComponent = createAction(
-  CanvasActionType.CLOSE_GENERATE_FLOW_COMPONENT
-);
 export const canvasActions = {
   setInitial,
   setLeftSidebar,
   setRightSidebar,
   selectStepByName,
   deselectStep,
-  openGenerateFlowComponent,
-  generateFlowSuccessful,
-  generateFlow,
-  closeGenerateFlowComponent,
   setRun,
   exitRun,
   setAddButtonId,
