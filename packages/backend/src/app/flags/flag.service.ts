@@ -38,6 +38,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.OWN_AUTH2_ENABLED,
+                value: true,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.CHATBOT_ENABLED,
                 value: getEdition() === ApEdition.ENTERPRISE ? false : system.getBoolean(SystemProp.CHATBOT_ENABLED),
                 created,
