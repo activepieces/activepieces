@@ -3,33 +3,88 @@ import { BettermodeAuthType } from "./auth";
 
 type KeyValuePair = {[key: string]: string|boolean|undefined }
 
-function performGraphQLQuery(endpoint, query, variables = {}) {
-    return fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            query: query,
-            variables: variables
+const bettermodeAPI = async (auth: BettermodeAuthType, query: string, variables: KeyValuePair = {}) => {
+	const request: HttpRequest = {
+		method  : HttpMethod.POST,
+		url     : auth.region,
+		headers : {
+			'Content-Type'  : 'application/json',
+			'Authorization' : auth.token ? `Bearer ${auth.token}` : undefined,
+		},
+		body    : JSON.stringify({
+            query     : query,
+            variables : variables
         }),
-    })
-    .then(response => response.json())
-    .then(data => data)
-    .catch(error => console.error('Error:', error));
+	};
+
+	const response = await httpClient.sendRequest(request);
+	return response.body;
 }
 
-const endpoint = 'https://your-graphql-endpoint.com/graphql';
-const query = `
+const getGuestToken = async (auth: BettermodeAuthType) => {
+	const query = `query GetGuestToken($domain: String!) {
+		tokens(networkDomain: $domain) {
+		  accessToken
+		  role {
+			name
+			scopes
+		  }
+		  member {
+			id
+			name
+		  }
+		}
+	}`;
+	const variables = {
+		domain: auth.domain,
+	};
+	const response = await bettermodeAPI(auth, query, variables);
+	return response['body'].data.tokens.accessToken;
+}
+
+const getAuthToken = async (auth: BettermodeAuthType) => {
+	const query = `mutation getAuthToken($email: String!, $password: String!) {
+		loginNetwork(input:{usernameOrEmail: $email, password: $password}) {
+			accessToken
+			role {
+				name
+				scopes
+			}
+			member {
+				id
+				name
+			}
+		}
+	}`;
+	const variables = {
+		email    : auth.email,
+		password : auth.password,
+	};
+	auth.token = await getGuestToken(auth);
+	const response = await bettermodeAPI(auth, query, variables);
+	return response['body'].data.loginNetwork.accessToken;
+}
+
+export async function listSpaces(auth: BettermodeAuthType) {
+	const query = `
     query GetUserInfo($userId: String!) {
         user(id: $userId) {
             name
             email
         }
     }
-`;
+	`;
+	const variables = {
+		email    : auth.email,
+		password : auth.password,
+	};
+	auth.token = await getAuthToken(auth);
+	const response = await bettermodeAPI(auth, query, variables);
+	return response["body"];
+}
 
-// Example variables
-const variables = { userId: '123' };
 
-// Perform the query
-performGraphQLQuery(endpoint, query, variables)
-    .then(data => console.log(data));
+// postTypes
+// memberSpaces
+// createPost
+// assignBadge
