@@ -60,7 +60,7 @@
       </p>
     </div>
   </form>
-  <a class="ap-cursor-pointer ap-mt-2" *ngIf="!dialogData.connectionToUpdate && !isTriggerAppWebhook"
+  <a class="ap-cursor-pointer ap-mt-2" *ngIf="!dialogData.connectionToUpdate && !isTriggerAppWebhook && (ownAuthEnabled$ | async)"
     (click)="useOwnCred()" i18n>I
     would like
     to use my own
