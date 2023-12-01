@@ -1,16 +1,17 @@
 import { PieceAuth, Property, Validators } from "@activepieces/pieces-framework";
-import { getLists } from "./api";
+import { getAuthToken } from "./api";
 
 export type BettermodeAuthType = {
-	region   : string,
-	domain   : string,
-	email    : string,
-	password : string,
-	token    : string|undefined,
+	region    : string,
+	domain    : string,
+	email     : string,
+	password  : string,
+	token?    : string,
+	memberId? : string,
 }
 
 export const bettermodeAuth = PieceAuth.CustomAuth({
-    description: "Your domain should be the base URL of your Bettermode community. Example: https://community.example.com",
+    description: "Your domain should be the base URL of your Bettermode community. Example: community.example.com",
     props: {
         region: Property.StaticDropdown({
 			displayName: 'Region',
@@ -58,8 +59,8 @@ export const bettermodeAuth = PieceAuth.CustomAuth({
 });
 
 const validateAuth = async (auth: BettermodeAuthType) => {
-	const response = await getLists(auth);
-	if (response.success !== true) {
-		throw new Error('Authentication failed. Please check your domain and API key and try again.');
+	const response = await getAuthToken(auth);
+	if (!response.memberId) {
+		throw new Error('Authentication failed. Please check your credentials and try again.');
 	}
 }
