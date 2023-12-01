@@ -1,7 +1,7 @@
 import { httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
 import { BettermodeAuthType } from "./auth";
 
-type KeyValuePair = {[key : string] : string|boolean|undefined }
+type KeyValuePair = {[key : string] : string|boolean|object|undefined }
 
 const bettermodeAPI = async (
 	auth      : BettermodeAuthType,
@@ -22,6 +22,11 @@ const bettermodeAPI = async (
 	};
 
 	const response = await httpClient.sendRequest(request);
+
+	if (response.body["errors"]) {
+		throw new Error(response.body["errors"][0]["message"]);
+	}
+
 	return response.body["data"];
 }
 
@@ -84,7 +89,7 @@ const getPostType = async (auth: BettermodeAuthType, postTypeName: string) => {
 }
 
 export const listMemberSpaces = async (auth: BettermodeAuthType) => {
-	const query = `query listMemberSpaces($memberId: String!) {
+	const query = `query listMemberSpaces($memberId: ID!) {
 		spaces(memberId: $memberId, limit: 100) {
 			nodes {
 				id
@@ -110,7 +115,7 @@ export const createPostOfType = async(
 	content      : string,
 	locked = false
 ) => {
-	const query = `mutation {
+	const query = `mutation createPostOfType($spaceId: ID!, $postTypeId: String!, $locked: Boolean!, $tagNames: [String!], $title: String!, $content: String!) {
 		createPost(
 		  	spaceId : $spaceId,
 			input : {
@@ -133,6 +138,7 @@ export const createPostOfType = async(
 			}
 		) {
 			url
+			createdAt
 		}
 	}`;
 
@@ -144,12 +150,12 @@ export const createPostOfType = async(
 		spaceId    : spaceId,
 		postTypeId : postType.id,
 		locked     : locked,
-		tagNames   : tagNames,
-		title      : title,
-		content    : content,
+		tagNames   : tagNames.split(',').map((tag: string) => tag.trim()),
+		title      : JSON.stringify(title),
+		content    : JSON.stringify(content),
 	};
 	const response = await bettermodeAPI(auth, query, variables);
-	return response.createPost.url;
+	return response.createPost;
 }
 
 export const createDiscussion = async (
