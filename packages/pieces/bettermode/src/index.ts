@@ -3,6 +3,8 @@ import { createPiece } from "@activepieces/pieces-framework";
 import { bettermodeAuth } from "./lib/auth";
 import { createDiscussionAction } from "./lib/actions/create-discussion";
 import { createQuestionAction } from "./lib/actions/create-question";
+import { assignBadgeAction } from "./lib/actions/assign-badge";
+import { revokeBadgeAction } from "./lib/actions/revoke-badge";
 
 export const bettermode = createPiece({
   displayName             : "Bettermode",
@@ -13,6 +15,8 @@ export const bettermode = createPiece({
   actions                 : [
 	createDiscussionAction,
 	createQuestionAction,
+	assignBadgeAction,
+	revokeBadgeAction,
   ],
   triggers: [],
 });

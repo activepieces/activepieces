@@ -88,6 +88,23 @@ const getPostType = async (auth: BettermodeAuthType, postTypeName: string) => {
 	return response.postTypes.nodes[0];
 }
 
+export const listBadges = async (auth: BettermodeAuthType) => {
+	const query = `query {
+		network {
+			badges {
+				id
+				name
+			}
+		}
+	}`;
+
+	if (!auth.memberId) auth = await getAuthToken(auth);
+
+	const response  = await bettermodeAPI(auth, query);
+
+	return response.network.badges;
+}
+
 export const listMemberSpaces = async (auth: BettermodeAuthType) => {
 	const query = `query listMemberSpaces($memberId: ID!) {
 		spaces(memberId: $memberId, limit: 100) {
@@ -104,6 +121,70 @@ export const listMemberSpaces = async (auth: BettermodeAuthType) => {
 	const response  = await bettermodeAPI(auth, query, variables);
 
 	return response.spaces.nodes;
+}
+
+const getMemberByEmail = async (auth: BettermodeAuthType, email: string) => {
+	const query = `query getMemberId($email: String!) {
+        members(limit: 1, query: $email) {
+            nodes {
+                id
+                name
+            }
+        }
+	}`;
+
+	if (!auth.memberId) auth = await getAuthToken(auth);
+
+	const variables = { email : email };
+	const response  = await bettermodeAPI(auth, query, variables);
+
+	if (response.members.nodes.length == 0) {
+		throw new Error(`Member with email ${email} not found`);
+	}
+
+	return response.members.nodes[0];
+}
+
+export const assignBadgeToMember = async (auth: BettermodeAuthType, badgeId: string, email: string) => {
+	const query = `mutation assignBadgeToMember($badgeId: String!, $memberId: String!) {
+		assignBadge(
+			id: $badgeId,
+			input: {
+				memberId: $memberId,
+			}
+		) {
+			status
+		}
+	}`;
+
+	if (!auth.memberId) auth = await getAuthToken(auth);
+
+	const member    = await getMemberByEmail(auth, email);
+	const variables = { badgeId : badgeId, memberId : member.id };
+	const response  = await bettermodeAPI(auth, query, variables);
+
+	return response.assignBadge;
+}
+
+export const revokeBadgeFromMember = async (auth: BettermodeAuthType, badgeId: string, email: string) => {
+	const query = `mutation revokeBadgeFromMember($badgeId: String!, $memberId: String!) {
+		revokeBadge(
+			id: $badgeId,
+			input: {
+				memberId: $memberId,
+			}
+		) {
+			status
+		}
+	}`;
+
+	if (!auth.memberId) auth = await getAuthToken(auth);
+
+	const member    = await getMemberByEmail(auth, email);
+	const variables = { badgeId : badgeId, memberId : member.id };
+	const response  = await bettermodeAPI(auth, query, variables);
+
+	return response.revokeBadge;
 }
 
 export const createPostOfType = async(
