@@ -4,6 +4,8 @@ import { formatDateAction } from './lib/actions/format-date';
 import { extractDateParts } from './lib/actions/extract-date-parts';
 import { dateDifferenceAction } from './lib/actions/date-difference';
 import { addSubtractDateAction } from './lib/actions/add-subtract-date';
+import { nextDayofWeek } from './lib/actions/next-day-of-week';
+import { nextDayofYear } from './lib/actions/next-day-of-year';
 
 const description = `Effortlessly manipulate, format, and extract time units for all your date and time needs.`;
 
@@ -19,6 +21,8 @@ export const utilityDate = createPiece({
     extractDateParts,
     dateDifferenceAction,
     addSubtractDateAction,
+	nextDayofWeek,
+	nextDayofYear,
   ],
   triggers: [],
   description: description,
