@@ -1,42 +1,15 @@
 import {
   Property,
   DynamicPropsValue,
-  NonAuthPieceProperty,
-  Validators,
 } from '@activepieces/pieces-framework';
 import { EventType, EventOption } from '../types';
 import { fetchTags, fetchForms, fetchSequences } from '../service';
-
-export const webhookBaseOverride = (): NonAuthPieceProperty => {
-  if (process.env['AP_ENVIRONMENT'] !== 'dev') {
-    // Returns empty property if not in dev environment
-    return {} as NonAuthPieceProperty;
-  }
-  return Property.ShortText({
-    displayName: 'Webhook Base Override (Dev mode)',
-    description:
-      'The base URL that will be used for webhooks. This is used for testing webhooks locally.',
-    required: false,
-    // defaultValue: 'https://3ee7307b6dd0.ngrok.app',
-    validators: [Validators.url],
-  });
-};
 
 export const initiatorValue = Property.ShortText({
   displayName: 'Initiator Value URL',
   description: 'The initiator value URL that will trigger the webhook',
   required: true,
 });
-
-export const prepareWebhookURL = (
-  webhookUrl: string,
-  webhookBaseOverride: string
-) => {
-  if (process.env['AP_ENVIRONMENT'] === 'dev') {
-    return webhookUrl.replace('http://localhost:3000', webhookBaseOverride);
-  }
-  return targetUrl;
-};
 
 export const webhookId = Property.Number({
   displayName: 'Webhook Id',
