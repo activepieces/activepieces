@@ -19,7 +19,12 @@ const cartloomAPI = async (api: string, auth: CartloomAuthType, body: KeyValuePa
 		throw new Error(`Cartloom API Error: ${response.status} ${response.body}`);
 	}
 
-	const data = Object.keys(response.body).map(key => response.body[key]);
+	let data = Object.keys(response.body).map(key => response.body[key]);
+
+	if (response.body['0'] !== 'undefined') {
+		// when respone is an object, it is wrapped in an array
+		data = [response.body];
+	}
 
 	return {
 		success : true,
