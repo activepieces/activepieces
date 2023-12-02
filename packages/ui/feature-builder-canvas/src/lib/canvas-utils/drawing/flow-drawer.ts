@@ -268,9 +268,13 @@ function handleBranchAction(
   const { maximumHeight, xOffset } = calculateDimensionsForBranch(sides);
 
   let leftStartingPoint = xOffset;
+  console.log(xOffset);
   sides.forEach((side, index) => {
     const stepPosition = {
-      x: leftStartingPoint,
+      x:
+        leftStartingPoint +
+        (side.boundingBox().width - FLOW_ITEM_WIDTH) / 2.0 +
+        FLOW_ITEM_WIDTH / 2.0,
       y: FLOW_ITEM_HEIGHT + SPACE_BETWEEN_VERTICAL_LONG_STEP,
     };
     const sideDrawer = side.offset(stepPosition.x, stepPosition.y);
@@ -307,13 +311,7 @@ function handleBranchAction(
       .appendSvg(secondLine)
       .appendButton(button);
 
-    if (index === 0) {
-      leftStartingPoint +=
-        side.boundingBox().width / 2.0 + FLOW_ITEM_WIDTH / 2.0;
-    } else {
-      leftStartingPoint += side.boundingBox().width;
-    }
-    leftStartingPoint += SPACE_BETWEEN_TWO_BRANCH;
+    leftStartingPoint += SPACE_BETWEEN_TWO_BRANCH + side.boundingBox().width;
   });
   return resultDrawer;
 }
@@ -331,11 +329,7 @@ function calculateDimensionsForBranch(sides: FlowDrawer[]): {
     0
   );
   const staticOffset =
-    summationWidth +
-    SPACE_BETWEEN_TWO_BRANCH * (sides.length - 1) -
-    sides[0].boundingBox().width / 2.0 -
-    sides[sides.length - 1].boundingBox().width / 2.0;
-
+    summationWidth + SPACE_BETWEEN_TWO_BRANCH * (sides.length - 1);
   return {
     maximumHeight,
     xOffset: -(staticOffset / 2.0),
