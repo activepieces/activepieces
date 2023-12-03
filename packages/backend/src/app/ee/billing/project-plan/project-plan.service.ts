@@ -23,7 +23,7 @@ export const plansService = {
     async removeDailyTasksAndUpdateTasks({ projectId, tasks }: { projectId: ProjectId, tasks: number }): Promise<void> {
         await projectPlanRepo.update({ projectId }, {
             tasks,
-            tasksPerDay: null,
+            tasksPerDay: undefined,
         })
     },
 
@@ -43,7 +43,7 @@ export const plansService = {
         const projectPlan = await plansService.getOrCreateDefaultPlan({
             projectId,
         })
-        const stripeSubscriptionId = subscription?.id ?? null
+        const stripeSubscriptionId = subscription?.id ?? undefined
         const { nickname, connections, tasks, minimumPollingInterval, teamMembers } = planLimits
         await projectPlanRepo.update(projectPlan.id, {
             ...spreadIfDefined('flowPlanName', nickname),
@@ -77,7 +77,7 @@ async function createInitialPlan({ projectId }: { projectId: ProjectId }): Promi
             minimumPollingInterval: defaultPlanFlow.minimumPollingInterval,
             teamMembers: defaultPlanFlow.teamMembers,
             stripeCustomerId,
-            stripeSubscriptionId: null,
+            stripeSubscriptionId: undefined,
             subscriptionStartDatetime: project.created,
         }, ['projectId'])
         return await projectPlanRepo.findOneByOrFail({ projectId })

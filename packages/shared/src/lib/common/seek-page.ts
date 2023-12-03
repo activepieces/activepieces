@@ -10,6 +10,6 @@ export type SeekPage<T> = {
 
 export const SeekPage = (t: TSchema): TSchema => Type.Object({
     data: Type.Array(t),
-    next: Type.Union([Type.Null(), Type.String()]),
-    previous: Type.Union([Type.Null(), Type.String()]),
+    next: Type.Optional(Type.String({ description: 'Cursor to the next page' })),
+    previous: Type.Optional(Type.String({ description: 'Cursor to the previous page' })),
 })

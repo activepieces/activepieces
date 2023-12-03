@@ -14,6 +14,9 @@ export const UpsertCustomAuthRequest = Type.Object({
         type: Type.Literal(AppConnectionType.CUSTOM_AUTH),
         props: Type.Record(Type.String(), Type.Unknown()),
     }),
+}, {
+    title: 'Custom Auth',
+    description: 'Custom Auth',
 })
 
 export const UpsertPlatformOAuth2Request = Type.Object({
@@ -30,6 +33,9 @@ export const UpsertPlatformOAuth2Request = Type.Object({
         token_url: Type.Optional(Type.String({})),
         redirect_url: Type.String({}),
     }),
+}, {
+    title: 'Platform OAuth2',
+    description: 'Platform OAuth2',
 })
 
 
@@ -46,6 +52,9 @@ export const UpsertCloudOAuth2Request = Type.Object({
         type: Type.Literal(AppConnectionType.CLOUD_OAUTH2),
         token_url: Type.Optional(Type.String({})),
     }),
+}, {
+    title: 'Cloud OAuth2',
+    description: 'Cloud OAuth2',
 })
 
 export const UpsertSecretTextRequest = Type.Object({
@@ -55,6 +64,9 @@ export const UpsertSecretTextRequest = Type.Object({
         type: Type.Literal(AppConnectionType.SECRET_TEXT),
         secret_text: Type.String({}),
     }),
+}, {
+    title: 'Secret Text',
+    description: 'Secret Text',
 })
 
 export const UpsertOAuth2Request = Type.Object({
@@ -72,6 +84,9 @@ export const UpsertOAuth2Request = Type.Object({
         redirect_url: Type.String({}),
         type: Type.Literal(AppConnectionType.OAUTH2),
     }),
+}, {
+    title: 'OAuth2',
+    description: 'OAuth2',
 })
 
 export const UpsertBasicAuthRequest = Type.Object({
@@ -82,6 +97,9 @@ export const UpsertBasicAuthRequest = Type.Object({
         password: Type.String({}),
         type: Type.Literal(AppConnectionType.BASIC_AUTH),
     }),
+}, {
+    title: 'Basic Auth',
+    description: 'Basic Auth',
 })
 
 export const UpsertAppConnectionRequestBody = Type.Union([

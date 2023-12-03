@@ -8,14 +8,14 @@ export const ProjectPlan = Type.Object({
     ...BaseModelSchema,
     projectId: Type.String(),
     stripeCustomerId: Type.String(),
-    stripeSubscriptionId: Type.Union([Type.String(), Type.Null()]),
+    stripeSubscriptionId: Type.Optional(Type.String()),
     subscriptionStartDatetime: Type.String(),
     flowPlanName: Type.String(),
     minimumPollingInterval: Type.Number(),
     connections: Type.Number(),
     teamMembers: Type.Number(),
     tasks: Type.Number(),
-    tasksPerDay: Type.Union([Type.Number(), Type.Null()]),
+    tasksPerDay: Type.Optional(Type.Number())
 })
 
 export type ProjectPlan = Static<typeof ProjectPlan>
