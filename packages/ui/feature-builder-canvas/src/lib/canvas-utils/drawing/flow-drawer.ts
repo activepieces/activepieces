@@ -9,7 +9,7 @@ import {
 import { Trigger } from '@activepieces/shared';
 import {
   SPACE_BETWEEN_VERTICAL_STEP,
-  FLOW_ITEM_HEIGHT,
+  FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING,
   FLOW_ITEM_WIDTH,
   SPACE_BETWEEN_TWO_BRANCH,
   PositionButton,
@@ -87,8 +87,8 @@ export class FlowDrawer {
     );
     const maxY = this.steps.reduce(
       (max, positionedStep) =>
-        Math.max(max, positionedStep.y + FLOW_ITEM_HEIGHT),
-      this.steps[0].y + FLOW_ITEM_HEIGHT
+        Math.max(max, positionedStep.y + FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING),
+      this.steps[0].y + FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING
     );
     return {
       width:
@@ -178,7 +178,7 @@ export class FlowDrawer {
     if (step.nextAction) {
       const nextFlowDrawer = FlowDrawer.construct(step.nextAction).offset(
         0,
-        FLOW_ITEM_HEIGHT + childHeight
+        FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING + childHeight
       );
       flowDrawer = flowDrawer.mergeChild(nextFlowDrawer);
     }
@@ -197,7 +197,7 @@ function handleLoopAction(
 
   const firstLoopOffset = {
     x: sideLength,
-    y: FLOW_ITEM_HEIGHT + SPACE_BETWEEN_VERTICAL_LONG_STEP,
+    y: FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING + SPACE_BETWEEN_VERTICAL_LONG_STEP,
   };
   const firstLoopDrawerDrawerWithOffset = firstLoopDrawer.offset(
     firstLoopOffset.x,
@@ -275,7 +275,8 @@ function handleBranchAction(
         leftStartingPoint +
         (side.boundingBox().width - FLOW_ITEM_WIDTH) / 2.0 +
         FLOW_ITEM_WIDTH / 2.0,
-      y: FLOW_ITEM_HEIGHT + SPACE_BETWEEN_VERTICAL_LONG_STEP,
+      y:
+        FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING + SPACE_BETWEEN_VERTICAL_LONG_STEP,
     };
     const sideDrawer = side.offset(stepPosition.x, stepPosition.y);
 

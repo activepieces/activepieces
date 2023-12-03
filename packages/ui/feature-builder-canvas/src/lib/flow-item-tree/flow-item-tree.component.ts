@@ -7,7 +7,7 @@ import { PositionedStep } from '../canvas-utils/drawing/step-card';
 import {
   FLOW_ITEM_WIDTH,
   PositionButton,
-  FLOW_ITEM_HEIGHT,
+  FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING,
 } from '../canvas-utils/drawing/draw-common';
 import { ZoomingService } from '../canvas-utils/zooming/zooming.service';
 import { PannerService } from '../canvas-utils/panning/panner.service';
@@ -49,7 +49,10 @@ export class FlowItemTreeComponent implements OnInit {
           steps: drawer.steps,
           centeringGraphTransform: `translate(${
             drawer.boundingBox().width / 2 - FLOW_ITEM_WIDTH / 2
-          }px,-${FLOW_ITEM_HEIGHT - GRAPH_Y_OFFSET_FROM_TEST_FLOW_WIDGET}px)`,
+          }px,-${
+            FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING -
+            GRAPH_Y_OFFSET_FROM_TEST_FLOW_WIDGET
+          }px)`,
         };
       })
     );

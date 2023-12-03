@@ -11,12 +11,14 @@ import { Store } from '@ngrx/store';
 import { PositionedStep } from '../../canvas-utils/drawing/step-card';
 import {
   FLOW_ITEM_HEIGHT,
+  FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING,
   FLOW_ITEM_WIDTH,
 } from '../../canvas-utils/drawing/draw-common';
 import {
   BuilderSelectors,
   FlowRendererService,
 } from '@activepieces/ui/feature-builder-store';
+import { flowHelper } from '@activepieces/shared';
 
 @Component({
   selector: 'app-flow-item',
@@ -28,7 +30,7 @@ export class FlowItemComponent implements OnInit {
   flowGraphContainer = {};
   transformObs$: Observable<string>;
   draggingContainer: HTMLElement;
-  @Input() trigger = false;
+  isTrigger = false;
   _flowItemData: PositionedStep;
   delayTimer: ReturnType<typeof setTimeout>;
   delayTimerSet = false;
@@ -37,6 +39,9 @@ export class FlowItemComponent implements OnInit {
   hideDraggableSource$: Subject<boolean> = new Subject();
   @Input() set flowItemData(value: PositionedStep) {
     this._flowItemData = value;
+    if (this._flowItemData.content) {
+      this.isTrigger = flowHelper.isTrigger(this._flowItemData.content.type);
+    }
     this.selected$ = this.store
       .select(BuilderSelectors.selectCurrentStepName)
       .pipe(
@@ -54,10 +59,10 @@ export class FlowItemComponent implements OnInit {
   isDragging = false;
   anyStepIsDragged$: Observable<boolean>;
 
-  readonly draggedContainer = {
+  readonly stepShadowStyling = {
     left: `calc(50% - ${(FLOW_ITEM_WIDTH - 1) / 2}px )`,
     width: FLOW_ITEM_WIDTH - 1 + 'px',
-    height: FLOW_ITEM_HEIGHT - 1 + 'px',
+    height: FLOW_ITEM_HEIGHT + 'px',
     top: '0px',
   };
   constructor(
@@ -84,7 +89,7 @@ export class FlowItemComponent implements OnInit {
     return {
       top: flowItemData.y + 'px',
       width: FLOW_ITEM_WIDTH + 'px',
-      height: FLOW_ITEM_HEIGHT - 8 * 2 + 'px',
+      height: FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING - 8 * 2 + 'px',
       left: flowItemData.x + 'px',
       'margin-top': '8px',
       position: 'absolute',

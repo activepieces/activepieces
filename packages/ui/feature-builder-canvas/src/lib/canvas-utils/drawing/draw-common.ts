@@ -9,7 +9,9 @@ export type PositionButton = {
 };
 
 export const FLOW_ITEM_WIDTH = 300;
-export const FLOW_ITEM_HEIGHT = 108;
+export const FLOW_ITEM_HEIGHT = 92;
+export const FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING = FLOW_ITEM_HEIGHT + 16;
+export const FLOW_ITEM_BOTTOM_PADDING = 16;
 export const SPACE_BETWEEN_VERTICAL_STEP = 80;
 export const SPACE_BETWEEN_VERTICAL_LONG_STEP = 120;
 export const SPACE_BETWEEN_VERTICAL_ARROW_LINE_HEIGHT = 70;

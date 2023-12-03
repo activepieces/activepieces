@@ -1,6 +1,9 @@
 import { Action } from '@activepieces/shared';
 import { Trigger } from '@activepieces/shared';
-import { FLOW_ITEM_HEIGHT, FLOW_ITEM_WIDTH } from './draw-common';
+import {
+  FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING,
+  FLOW_ITEM_WIDTH,
+} from './draw-common';
 
 export type Position = {
   x: number;
@@ -35,7 +38,7 @@ export class PositionedStep {
     } else {
       return {
         x: this.x + FLOW_ITEM_WIDTH / 2.0,
-        y: this.y + FLOW_ITEM_HEIGHT,
+        y: this.y + FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING,
       };
     }
   }
