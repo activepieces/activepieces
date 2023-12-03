@@ -1,7 +1,18 @@
-<div class="big-add-button ap-flex ap-items-center ap-justify-center ap-absolute " tabindex="1"
-    [class.ap-cursor-pointer]="showCursorOnHover$ | async" (click)="setSelectedAddBtnId()"
-    [class.big-add-button-drop-indicator]="(selectedAddBtnId$ | async) === addButtonId" (focus)="showBoxShadow = true"
-    (blur)="showBoxShadow = false" [class.box-shadow]="showBoxShadow" [style.top]="top" [style.left]="left">
-    <svg-icon *ngIf="(selectedAddBtnId$ | async) !== addButtonId" src="./assets/img/custom/plus.svg" class="add-icon"
-        [applyClass]="true"></svg-icon>
+<div class="big-add-button ap-flex ap-items-center ap-justify-center ap-absolute " tabindex="-1"
+    [class.ap-cursor-pointer]="showCursorOnHover$ | async" (click)="setSelectedAddBtnId();add()"
+    [class.big-add-button-drop-indicator]="(isInDragginStepMode$ | async) || (selectedAddBtnId$ | async) === addButtonId"
+    [class.show-shadow]="showButtonShadow || (selectedAddBtnId$ | async) === addButtonId" [style.top]="top"
+    [style.left]="left">
+    <svg-icon
+        *ngIf="(selectedAddBtnId$ | async) !== addButtonId && !showButtonShadow && (isInDragginStepMode$ | async) === false"
+        src="./assets/img/custom/plus.svg" class="add-icon" [applyClass]="true"></svg-icon>
 </div>
+
+
+
+
+
+
+<app-drop-zone [btnLeft]="left" [btnTop]="top" [btnHeight]="BIG_BUTTON_SIZE" [btnWidth]="BIG_BUTTON_SIZE"
+    (dropped)="drop($event)" (dragEnter)="toggleButtonShadow(true)" (dragLeave)="toggleButtonShadow(false)">
+</app-drop-zone>

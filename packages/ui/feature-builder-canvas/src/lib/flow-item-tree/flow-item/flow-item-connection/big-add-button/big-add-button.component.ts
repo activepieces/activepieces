@@ -3,6 +3,7 @@ import { AddButtonCoreComponent } from '../add-button-core.component';
 import { Store } from '@ngrx/store';
 import { FlowRendererService } from '@activepieces/ui/feature-builder-store';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { BIG_BUTTON_SIZE } from '../../../../canvas-utils/drawing/draw-common';
 
 @Component({
   selector: 'app-big-add-button',
@@ -10,6 +11,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
   styleUrls: ['./big-add-button.component.scss'],
 })
 export class BigAddButtonComponent extends AddButtonCoreComponent {
+  readonly BIG_BUTTON_SIZE = BIG_BUTTON_SIZE;
   showBoxShadow = false;
   constructor(
     store: Store,
