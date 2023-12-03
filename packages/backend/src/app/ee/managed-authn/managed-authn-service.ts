@@ -65,9 +65,10 @@ const getOrCreateUser = async (params: GetOrCreateUserParams): Promise<GetOrCrea
         platformId,
     })
 
-    await projectMemberService.add({
+    await projectMemberService.upsert({
         projectId: project.id,
-        userId: newUser.id,
+        email: newUser.email,
+        platformId,
         role: ProjectMemberRole.EDITOR,
         status: ProjectMemberStatus.ACTIVE,
     })

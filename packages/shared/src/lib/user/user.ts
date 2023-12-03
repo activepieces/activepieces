@@ -7,9 +7,7 @@ export type UserId = ApId
 export enum UserStatus {
     /* user registered but didn't verify their email */
     CREATED = 'CREATED',
-    /* user invited but didn't accept the invitation */
-    INVITED = 'INVITED',
-    /* user registered and verified their email or accepted the invitation */
+    /* user registered and verified their email or accepted an invitation */
     VERIFIED = 'VERIFIED',
 }
 

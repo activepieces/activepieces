@@ -1,20 +1,14 @@
 import { StatusCodes } from 'http-status-codes'
 import { ListProjectMembersRequest, SendInvitationRequest } from '@activepieces/ee-shared'
 import { projectMemberService } from './project-member.service'
-import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { logger } from '../../helper/logger'
-import { Principal } from '@activepieces/shared'
 
 export const projectMemberModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(projectMemberController, { prefix: '/v1/project-members' })
 }
 
 const DEFAULT_LIMIT_SIZE = 10
-
-type ProjectMemberToken = {
-    id: string
-}
 
 const projectMemberController: FastifyPluginAsyncTypebox = async (fastify) => {
 
@@ -40,12 +34,15 @@ const projectMemberController: FastifyPluginAsyncTypebox = async (fastify) => {
             reply,
         ) => {
             try {
-                const principal = await accessTokenManager.extractPrincipal(request.body.token) as ProjectMemberToken
-                await reply.status(StatusCodes.OK).send(await projectMemberService.accept(principal.id))
+                const userId = request.principal.id
+                return await projectMemberService.accept({
+                    userId,
+                    invitationToken: request.body.token,
+                })
             }
             catch (e) {
                 logger.error(e)
-                await reply.status(StatusCodes.UNAUTHORIZED).send()
+                return reply.status(StatusCodes.UNAUTHORIZED).send()
             }
         },
     )
@@ -60,15 +57,14 @@ const projectMemberController: FastifyPluginAsyncTypebox = async (fastify) => {
         async (
             request,
         ) => {
-            const invitation = await projectMemberService.send({
+            const { invitationToken } = await projectMemberService.upsertAndSend({
                 ...request.body,
                 projectId: request.principal.projectId,
                 platformId: request.principal.platform?.id ?? null,
             })
+
             return {
-                token: await accessTokenManager.generateToken({
-                    id: invitation.id,
-                } as Principal),
+                token: invitationToken,
             }
         },
     )

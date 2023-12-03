@@ -1,5 +1,5 @@
 import { QueryFailedError } from 'typeorm'
-import { AuthenticationResponse, UserStatus, ActivepiecesError, ErrorCode, isNil, User, ApFlagId, Project, TelemetryEventName } from '@activepieces/shared'
+import { AuthenticationResponse, UserStatus, ActivepiecesError, ErrorCode, isNil, User, ApFlagId, Project, TelemetryEventName, UserId } from '@activepieces/shared'
 import { userService } from '../../user/user-service'
 import { passwordHasher } from '../lib/password-hasher'
 import { authenticationServiceHooks as hooks } from './hooks'
@@ -17,21 +17,10 @@ export const authenticationService = {
         await assertSignUpIsEnabled(params)
         const user = await createUser(params)
 
-        const authnResponse = await hooks.get().postSignUp({
+        return this.signUpResponse({
             user,
             referringUserId: params.referringUserId,
         })
-
-        const userWithoutPassword = removePasswordPropFromUser(authnResponse.user)
-
-        await sendTelemetry({
-            user, project: authnResponse.project,
-        })
-        return {
-            ...userWithoutPassword,
-            token: authnResponse.token,
-            projectId: authnResponse.project.id,
-        }
     },
 
     async signIn(request: SignInParams): Promise<AuthenticationResponse> {
@@ -47,17 +36,10 @@ export const authenticationService = {
             userPassword: user.password,
         })
 
-        const { user: updatedUser, project, token } = await hooks.get().postSignIn({
+
+        return this.signInResponse({
             user,
         })
-
-        const userWithoutPassword = removePasswordPropFromUser(updatedUser)
-
-        return {
-            ...userWithoutPassword,
-            token,
-            projectId: project.id,
-        }
     },
 
     async federatedAuthn(params: FederatedAuthnParams): Promise<AuthenticationResponse> {
@@ -67,17 +49,9 @@ export const authenticationService = {
         })
 
         if (existingUser) {
-            const { user: updatedUser, project, token } = await hooks.get().postSignIn({
+            return this.signInResponse({
                 user: existingUser,
             })
-
-            const userWithoutPassword = removePasswordPropFromUser(updatedUser)
-
-            return {
-                ...userWithoutPassword,
-                token,
-                projectId: project.id,
-            }
         }
 
         const newUser = {
@@ -92,6 +66,39 @@ export const authenticationService = {
         }
 
         return this.signUp(newUser)
+    },
+
+    async signUpResponse({ user, referringUserId }: SignUpResponseParams): Promise<AuthenticationResponse> {
+        const authnResponse = await hooks.get().postSignUp({
+            user,
+            referringUserId,
+        })
+
+        const userWithoutPassword = removePasswordPropFromUser(authnResponse.user)
+
+        await sendTelemetry({
+            user, project: authnResponse.project,
+        })
+
+        return {
+            ...userWithoutPassword,
+            token: authnResponse.token,
+            projectId: authnResponse.project.id,
+        }
+    },
+
+    async signInResponse({ user }: SignInResponseParams): Promise<AuthenticationResponse> {
+        const authnResponse = await hooks.get().postSignIn({
+            user,
+        })
+
+        const userWithoutPassword = removePasswordPropFromUser(authnResponse.user)
+
+        return {
+            ...userWithoutPassword,
+            token: authnResponse.token,
+            projectId: authnResponse.project.id,
+        }
     },
 }
 
@@ -139,16 +146,7 @@ const createUser = async (params: SignUpParams): Promise<User> => {
 }
 
 const enablePlatformSignUpForInvitedUsersOnly = async (params: SignUpParams): Promise<void> => {
-    if (isNil(params.platformId)) {
-        return
-    }
-
-    const invitedUser = await userService.getByPlatformAndEmail({
-        platformId: params.platformId,
-        email: params.email,
-    })
-
-    if (isNil(invitedUser) || invitedUser.status !== UserStatus.INVITED) {
+    if (params.platformId) {
         throw new ActivepiecesError({
             code: ErrorCode.PLATFORM_SIGN_UP_ENABLED_FOR_INVITED_USERS_ONLY,
             params: {},
@@ -164,7 +162,7 @@ const assertUserIsAllowedToSignIn: (user: User | null) => asserts user is User =
         })
     }
 
-    if (user.status === UserStatus.CREATED || user.status === UserStatus.INVITED) {
+    if (user.status !== UserStatus.VERIFIED) {
         throw new ActivepiecesError({
             code: ErrorCode.EMAIL_IS_NOT_VERIFIED,
             params: {
@@ -248,4 +246,13 @@ type FederatedAuthnParams = {
     firstName: string
     lastName: string
     platformId: string | null
+}
+
+type SignUpResponseParams = {
+    user: User
+    referringUserId?: UserId
+}
+
+type SignInResponseParams = {
+    user: User
 }

@@ -18,7 +18,6 @@ export const userService = {
             password: hashedPassword,
         }
 
-        await continueSignUpIfInvited(user)
         return userRepo.save(user)
     },
 
@@ -91,19 +90,6 @@ export const userService = {
             platformId,
         })
     },
-}
-
-const continueSignUpIfInvited = async (newUser: NewUser): Promise<void> => {
-    const existingUser = await userService.getByPlatformAndEmail({
-        platformId: newUser.platformId,
-        email: newUser.email,
-    })
-
-    if (existingUser && existingUser.status === UserStatus.INVITED) {
-        newUser.id = existingUser.id
-        newUser.platformId = existingUser.platformId
-        newUser.status = UserStatus.VERIFIED
-    }
 }
 
 type CreateParams = SignUpRequest & {
