@@ -531,18 +531,18 @@ function createAction(
     return action
 }
 
-function isChildOf(parent: LoopOnItemsAction | BranchAction, child: Action) {
+function isChildOf(parent: LoopOnItemsAction | BranchAction, childStepName: string): boolean {
     switch (parent.type) {
         case ActionType.LOOP_ON_ITEMS: {
             const children = getAllChildSteps(parent)
-            return children.findIndex((c) => c.name === child.name) > -1
+            return children.findIndex((c) => c.name === childStepName) > -1
         }
         default: {
             const children = [
                 ...getAllChildSteps(parent),
                 ...getAllChildSteps(parent),
             ]
-            return children.findIndex((c) => c.name === child.name) > -1
+            return children.findIndex((c) => c.name === childStepName) > -1
         }
     }
 }
@@ -775,7 +775,7 @@ function duplicateStep(stepName: string, flowVersionWithArtifacts: FlowVersion):
     return finalFlow
 }
 
-function replaceOldStepNameWithNewOne({ input, oldStepName, newStepName }: { input: string, oldStepName: string, newStepName: string }) {
+function replaceOldStepNameWithNewOne({ input, oldStepName, newStepName }: { input: string, oldStepName: string, newStepName: string }): string {
     const regex = /{{(.*?)}}/g // Regular expression to match strings inside {{ }}
     return input.replace(regex, (match, content) => {
     // Replace the content inside {{ }} using the provided function
@@ -784,6 +784,11 @@ function replaceOldStepNameWithNewOne({ input, oldStepName, newStepName }: { inp
         // Reconstruct the {{ }} with the replaced content
         return `{{${replacedContent}}}`
     })
+}
+
+function doesActionHaveChildren(action: Action ): action  is (LoopOnItemsAction | BranchAction)   {
+    const actionTypesWithChildren = [ActionType.BRANCH, ActionType.LOOP_ON_ITEMS]
+    return actionTypesWithChildren.includes(action.type) 
 }
 
 
@@ -874,4 +879,5 @@ export const flowHelper = {
     getAllStepsAtFirstLevel,
     duplicateStep,
     findAvailableStepName,
+    doesActionHaveChildren,
 }

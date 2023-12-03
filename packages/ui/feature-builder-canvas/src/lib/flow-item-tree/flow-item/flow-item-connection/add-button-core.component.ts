@@ -2,17 +2,24 @@ import { Store } from '@ngrx/store';
 import { Observable, map } from 'rxjs';
 import {
   BuilderSelectors,
-  FlowItem,
   FlowRendererService,
   FlowsActions,
   RightSideBarType,
   canvasActions,
 } from '@activepieces/ui/feature-builder-store';
 import { Component, Input } from '@angular/core';
-import { StepLocationRelativeToParent } from '@activepieces/shared';
+import {
+  Action,
+  ActionType,
+  StepLocationRelativeToParent,
+  flowHelper,
+} from '@activepieces/shared';
 import { DropEvent } from 'angular-draggable-droppable';
+import { MatSnackBar } from '@angular/material/snack-bar';
 @Component({ template: '' })
 export class AddButtonCoreComponent {
+  readonly INVALID_DROP_MESSAGE = $localize`Can't move here`;
+  readonly STEPS_WITH_CHILDREN = [ActionType.BRANCH, ActionType.LOOP_ON_ITEMS];
   static id = 0;
   addButtonId = AddButtonCoreComponent.id++;
   selectedAddBtnId$: Observable<number | undefined>;
@@ -24,9 +31,11 @@ export class AddButtonCoreComponent {
     StepLocationRelativeToParent.AFTER;
   showCursorOnHover$: Observable<boolean>;
   isInDragginStepMode$: Observable<boolean>;
+  showButtonShadow = false;
   constructor(
     protected store: Store,
-    private flowRendererService: FlowRendererService
+    private flowRendererService: FlowRendererService,
+    private snackbar: MatSnackBar
   ) {
     this.selectedAddBtnId$ = this.store.select(
       BuilderSelectors.selectLastClickedAddBtnId
@@ -51,16 +60,30 @@ export class AddButtonCoreComponent {
       })
     );
   }
-  drop(event$: DropEvent<{ content: FlowItem }>) {
-    console.log(event$);
-    this.store.dispatch(
-      FlowsActions.moveAction({
-        operation: {
-          name: event$.dropData.content.name,
-          newParentStep: this.stepName,
-          stepLocationRelativeToNewParent: this.stepLocationRelativeToParent,
-        },
-      })
+  drop($event: DropEvent<{ content: Action }>) {
+    if (this.validateDrop($event)) {
+      this.store.dispatch(
+        FlowsActions.moveAction({
+          operation: {
+            name: $event.dropData.content.name,
+            newParentStep: this.stepName,
+            stepLocationRelativeToNewParent: this.stepLocationRelativeToParent,
+          },
+        })
+      );
+    } else if (flowHelper.doesActionHaveChildren($event.dropData.content)) {
+      this.snackbar.open(this.INVALID_DROP_MESSAGE);
+    }
+  }
+
+  private validateDrop($event: DropEvent<{ content: Action }>): boolean {
+    return !(
+      (flowHelper.doesActionHaveChildren($event.dropData.content) &&
+        flowHelper.isChildOf($event.dropData.content, this.stepName)) ||
+      $event.dropData.content.name === this.stepName
     );
+  }
+  toggleButtonShadow(val: boolean) {
+    this.showButtonShadow = val;
   }
 }

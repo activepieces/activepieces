@@ -1,9 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Observable, combineLatest, map, startWith } from 'rxjs';
-import {
-  BuilderSelectors,
-  FlowItem,
-} from '@activepieces/ui/feature-builder-store';
+import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
 import { FlowDrawer } from '../canvas-utils/drawing/flow-drawer';
 import { Store } from '@ngrx/store';
 import { PositionedStep } from '../canvas-utils/drawing/step-card';
@@ -26,7 +23,6 @@ const GRAPH_Y_OFFSET_FROM_TEST_FLOW_WIDGET = 45;
   templateUrl: './flow-item-tree.component.html',
 })
 export class FlowItemTreeComponent implements OnInit {
-  activePiece$: Observable<FlowItem | undefined>;
   navbarOpen = false;
   flowDrawer$: Observable<UiFlowDrawer>;
   transform$: Observable<string>;

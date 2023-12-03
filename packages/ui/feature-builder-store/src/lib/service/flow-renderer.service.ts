@@ -7,7 +7,6 @@ import { BehaviorSubject } from 'rxjs';
 export class FlowRendererService {
   clientMouseX = 0;
   clientMouseY = 0;
-  readonly INVALID_DROP_MESSAGE = $localize`Can't Move here`;
   private draggingStepSubject = new BehaviorSubject<boolean>(false);
   get isDragginStep$() {
     return this.draggingStepSubject.asObservable();
