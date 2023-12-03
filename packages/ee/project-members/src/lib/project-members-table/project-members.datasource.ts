@@ -10,16 +10,21 @@ import {
   catchError,
   of,
 } from 'rxjs';
-import { ProjectMember } from '@activepieces/ee-shared';
+import { ProjectMember, ProjectMemberStatus } from '@activepieces/ee-shared';
 import { ProjectMemberService } from '../service/project-members.service';
+import { UnhandledSwitchCaseError } from '@activepieces/shared';
 
+export type ProjectMemberWithUiData = ProjectMember & {
+  statusText: string;
+  statusTooltip: string;
+};
 /**
  * Data source for the LogsTable view. This class should
  * encapsulate all logic for fetching and manipulating the displayed data
  * (including sorting, pagination, and filtering).
  */
 export class ProjectMembersTableDataSource extends DataSource<ProjectMember> {
-  data: ProjectMember[] = [];
+  data: ProjectMemberWithUiData[] = [];
   public isLoading$ = new BehaviorSubject(false);
   constructor(
     private projectMemberService: ProjectMemberService,
@@ -33,7 +38,7 @@ export class ProjectMembersTableDataSource extends DataSource<ProjectMember> {
    * the returned stream emits new items.
    * @returns A stream of the items to be rendered.
    */
-  connect(): Observable<ProjectMember[]> {
+  connect(): Observable<ProjectMemberWithUiData[]> {
     return combineLatest({
       refresh: this.refresh$,
     }).pipe(
@@ -49,10 +54,19 @@ export class ProjectMembersTableDataSource extends DataSource<ProjectMember> {
           })
         );
       }),
-      tap((members) => {
-        this.data = members.data;
+      map((res) => {
+        const members = res.data.map((pm) => {
+          return {
+            ...pm,
+            statusText: getStatusText(pm.status),
+            statusTooltip: getStatusTooltip(pm.status),
+          };
+        });
+        return members;
       }),
-      map(() => this.data)
+      tap((members) => {
+        this.data = members;
+      })
     );
   }
 
@@ -64,3 +78,26 @@ export class ProjectMembersTableDataSource extends DataSource<ProjectMember> {
     //ignore
   }
 }
+
+const getStatusText = (status: ProjectMemberStatus) => {
+  switch (status) {
+    case ProjectMemberStatus.ACCEPTED:
+      return $localize`Accepted`;
+    case ProjectMemberStatus.ACTIVE:
+      return $localize`Active`;
+    case ProjectMemberStatus.PENDING:
+      return $localize`Pending`;
+  }
+};
+const getStatusTooltip = (status: ProjectMemberStatus) => {
+  switch (status) {
+    case ProjectMemberStatus.ACCEPTED:
+      return $localize`User has accepted your invite, and should create account`;
+    case ProjectMemberStatus.ACTIVE:
+      return $localize`User is activated as a member`;
+    case ProjectMemberStatus.PENDING:
+      return $localize`User has been invitied, awating his acceptance`;
+    default:
+      throw new UnhandledSwitchCaseError(status);
+  }
+};

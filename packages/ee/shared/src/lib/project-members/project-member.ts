@@ -6,6 +6,7 @@ export type ProjectMemberId = string;
 
 export enum ProjectMemberStatus {
     ACTIVE = "ACTIVE",
+    ACCEPTED = "ACCEPTED",
     PENDING = "PENDING",
 }
 
