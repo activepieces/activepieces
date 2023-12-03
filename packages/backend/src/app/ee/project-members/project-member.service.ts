@@ -30,8 +30,8 @@ import {
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { projectService } from '../../project/project-service'
 import { emailService } from '../helper/email/email-service'
-import { getEdition } from '../../helper/secret-helper'
 import { projectMembersLimit } from '../billing/limits/members-limit'
+import { getEdition } from '../../helper/secret-helper'
 
 const projectMemberRepo = databaseConnection.getRepository(ProjectMemberEntity)
 
