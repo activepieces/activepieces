@@ -1,6 +1,6 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { enterpriseLocalAuthnService } from './enterprise-local-authn-service'
-import { ResetPasswordRequestBody, SignUpAndAcceptRequestBody, VerifyEmailRequestBody } from '@activepieces/ee-shared'
+import { ResetPasswordRequestBody, VerifyEmailRequestBody } from '@activepieces/ee-shared'
 
 export const enterpriseLocalAuthnController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/verify-email', VerifyEmailRequest, async (req) => {
@@ -9,10 +9,6 @@ export const enterpriseLocalAuthnController: FastifyPluginAsyncTypebox = async (
 
     app.post('/reset-password', ResetPasswordRequest, async (req) => {
         await enterpriseLocalAuthnService.resetPassword(req.body)
-    })
-
-    app.post('/sign-up-and-accept', SignUpAndAcceptRequest, async (request) => {
-        return enterpriseLocalAuthnService.signUpAndAcceptInvitation(request.body)
     })
 }
 
@@ -25,11 +21,5 @@ const VerifyEmailRequest = {
 const ResetPasswordRequest = {
     schema: {
         body: ResetPasswordRequestBody,
-    },
-}
-
-const SignUpAndAcceptRequest = {
-    schema: {
-        body: SignUpAndAcceptRequestBody,
     },
 }

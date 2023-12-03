@@ -42,11 +42,11 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
             value: true,
         })
 
-        const verifiedUser = await userService.verify({ id: user.id })
+        const updatedUser = await authenticationHelper.autoVerifyUserIfEligible(user)
 
         const { project: updatedProject, token } = await authenticationHelper.getProjectAndTokenOrThrow(user)
         return {
-            user: verifiedUser,
+            user: updatedUser,
             project: updatedProject,
             token,
         }

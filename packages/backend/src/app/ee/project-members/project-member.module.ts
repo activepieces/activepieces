@@ -1,8 +1,10 @@
 import { StatusCodes } from 'http-status-codes'
-import { ListProjectMembersRequest, SendInvitationRequest } from '@activepieces/ee-shared'
+import { AcceptProjectResponse, ListProjectMembersRequest, SendInvitationRequest } from '@activepieces/ee-shared'
 import { projectMemberService } from './project-member.service'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { logger } from '../../helper/logger'
+import { userService } from '../../user/user-service'
+import { isNil } from '@activepieces/shared'
 
 export const projectMemberModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(projectMemberController, { prefix: '/v1/project-members' })
@@ -27,6 +29,9 @@ const projectMemberController: FastifyPluginAsyncTypebox = async (fastify) => {
                 body: Type.Object({
                     token: Type.String(),
                 }),
+                response: {
+                    [StatusCodes.OK]: AcceptProjectResponse,
+                },
             },
         },
         async (
@@ -34,11 +39,16 @@ const projectMemberController: FastifyPluginAsyncTypebox = async (fastify) => {
             reply,
         ) => {
             try {
-                const userId = request.principal.id
-                return await projectMemberService.accept({
-                    userId,
+                const projectMember = await projectMemberService.accept({
                     invitationToken: request.body.token,
                 })
+                const user = await userService.getByPlatformAndEmail({
+                    email: projectMember.email,
+                    platformId: request.principal.platform?.id ?? null,
+                })
+                return {
+                    registered: !isNil(user),
+                }
             }
             catch (e) {
                 logger.error(e)

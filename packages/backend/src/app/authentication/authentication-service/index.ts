@@ -14,7 +14,7 @@ const SIGN_UP_ENABLED = system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
 
 export const authenticationService = {
     async signUp(params: SignUpParams): Promise<AuthenticationResponse> {
-        await assertSignUpIsEnabled(params)
+        await assertSignUpIsEnabled()
         const user = await createUser(params)
 
         return this.signUpResponse({
@@ -73,6 +73,7 @@ export const authenticationService = {
             user,
             referringUserId,
         })
+        await flagService.save({ id: ApFlagId.USER_CREATED, value: true })
 
         const userWithoutPassword = removePasswordPropFromUser(authnResponse.user)
 
@@ -102,7 +103,7 @@ export const authenticationService = {
     },
 }
 
-const assertSignUpIsEnabled = async (params: SignUpParams): Promise<void> => {
+const assertSignUpIsEnabled = async (): Promise<void> => {
     const userCreated = await flagService.getOne(ApFlagId.USER_CREATED)
 
     if (userCreated && !SIGN_UP_ENABLED) {
@@ -112,7 +113,6 @@ const assertSignUpIsEnabled = async (params: SignUpParams): Promise<void> => {
         })
     }
 
-    await enablePlatformSignUpForInvitedUsersOnly(params)
 }
 
 const createUser = async (params: SignUpParams): Promise<User> => {
@@ -142,15 +142,6 @@ const createUser = async (params: SignUpParams): Promise<User> => {
         }
 
         throw e
-    }
-}
-
-const enablePlatformSignUpForInvitedUsersOnly = async (params: SignUpParams): Promise<void> => {
-    if (params.platformId) {
-        throw new ActivepiecesError({
-            code: ErrorCode.PLATFORM_SIGN_UP_ENABLED_FOR_INVITED_USERS_ONLY,
-            params: {},
-        })
     }
 }
 

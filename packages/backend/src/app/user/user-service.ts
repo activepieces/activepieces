@@ -44,19 +44,12 @@ export const userService = {
         return {
             id: user.id,
             email: user.email,
+            platformId: user.platformId,
             firstName: user.firstName,
             lastName: user.lastName,
             imageUrl: user.imageUrl,
             title: user.title,
         }
-    },
-
-    // TODO REMOVE after firebase migration
-    async getbyEmail({ email }: { email: string }): Promise<User | null> {
-
-        return userRepo.createQueryBuilder()
-            .andWhere('LOWER(email) = LOWER(:email)', { email })
-            .getOne()
     },
 
     async getByPlatformAndEmail({ platformId, email }: GetByPlatformAndEmailParams): Promise<User | null> {

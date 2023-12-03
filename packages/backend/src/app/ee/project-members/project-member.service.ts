@@ -9,6 +9,7 @@ import {
     Principal,
     ProjectId,
     SeekPage,
+    User,
     UserId,
     apId,
     isNil,
@@ -29,6 +30,7 @@ import { projectMembersLimit } from '../billing/limits/members-limit'
 import dayjs from 'dayjs'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { getEdition } from '../../helper/secret-helper'
+import { IsNull } from 'typeorm'
 
 const projectMemberRepo = databaseConnection.getRepository(ProjectMemberEntity)
 
@@ -38,15 +40,9 @@ export const projectMemberService = {
             projectId,
         })
 
-        const user = await userService.getByPlatformAndEmail({
-            platformId,
-            email,
-        })
-
         const projectMember: NewProjectMember = {
             id: apId(),
             updated: dayjs().toISOString(),
-            userId: user?.id ?? null,
             email,
             platformId,
             projectId,
@@ -54,7 +50,7 @@ export const projectMemberService = {
             status: status ?? getStatusFromEdition(),
         }
 
-        const upsertResult = await projectMemberRepo.upsert(projectMember, ['projectId', 'email'])
+        const upsertResult = await projectMemberRepo.upsert(projectMember, ['projectId', 'email', 'platformId'])
 
         return {
             ...projectMember,
@@ -74,7 +70,6 @@ export const projectMemberService = {
             invitationId: projectMember.id,
             projectId,
             email,
-            register: isNil(projectMember.userId),
         })
 
         const invitationToken = await accessTokenManager.generateToken({
@@ -87,22 +82,15 @@ export const projectMemberService = {
         }
     },
 
-    async accept({ invitationToken, userId }: AcceptParams): Promise<ProjectMember> {
-        const { id: projectMemberId } = await accessTokenManager.extractPrincipal(invitationToken) as ProjectMemberToken
+    async accept({ invitationToken }: AcceptParams): Promise<ProjectMember> {
+        const { id: projectMemberId } = await getByInvitationTokenOrThrow(invitationToken)
         const projectMember = await getOrThrow(projectMemberId)
 
         await projectMemberRepo.update(projectMemberId, {
-            userId,
             status: ProjectMemberStatus.ACTIVE,
         })
-
-        await userService.verify({
-            id: userId,
-        })
-
         return {
             ...projectMember,
-            userId,
             status: ProjectMemberStatus.ACTIVE,
         }
     },
@@ -134,7 +122,6 @@ export const projectMemberService = {
 
         projectMembers.push({
             id: apId(),
-            userId: project.ownerId,
             email: owner!.email,
             platformId: project.platformId ?? null,
             projectId,
@@ -152,17 +139,20 @@ export const projectMemberService = {
         if (project?.ownerId === userId) {
             return ProjectMemberRole.ADMIN
         }
+        const user = await userService.getMetaInfo({
+            id: userId,
+        })
         const member = await projectMemberRepo.findOneBy({
             projectId,
-            userId,
+            email: user?.email,
+            platformId: isNil(user?.platformId) ? IsNull() : user?.platformId,
         })
         return member?.role ?? null
     },
-    async listByUserId(userId: UserId): Promise<ProjectMemberSchema[]> {
-        return projectMemberRepo.find({
-            where: {
-                userId,
-            },
+    async listByUser(user: User): Promise<ProjectMemberSchema[]> {
+        return projectMemberRepo.findBy({
+            email: user.email,
+            platformId: isNil(user.platformId) ? IsNull() : user.platformId,
         })
     },
     async delete(
@@ -177,11 +167,11 @@ export const projectMemberService = {
             projectId,
         }) + 1
     },
+}
 
-    async getByInvitationTokenOrThrow(invitationToken: string): Promise<ProjectMember> {
-        const { id: projectMemberId } = await accessTokenManager.extractPrincipal(invitationToken) as ProjectMemberToken
-        return getOrThrow(projectMemberId)
-    },
+async function getByInvitationTokenOrThrow(invitationToken: string): Promise<ProjectMember> {
+    const { id: projectMemberId } = await accessTokenManager.extractPrincipal(invitationToken) as ProjectMemberToken
+    return getOrThrow(projectMemberId)
 }
 
 function getStatusFromEdition(): ProjectMemberStatus {
@@ -230,7 +220,6 @@ type SendParams = SendInvitationRequest & {
 
 type AcceptParams = {
     invitationToken: string
-    userId: UserId
 }
 
 type ProjectMemberToken = {

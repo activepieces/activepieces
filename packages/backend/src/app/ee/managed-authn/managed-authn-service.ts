@@ -60,7 +60,7 @@ const getOrCreateUser = async (params: GetOrCreateUserParams): Promise<GetOrCrea
         lastName: externalLastName,
         trackEvents: true,
         newsLetter: true,
-        status: UserStatus.CREATED,
+        status: UserStatus.VERIFIED,
         externalId: externalUserId,
         platformId,
     })

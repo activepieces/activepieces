@@ -15,15 +15,11 @@ export const ProjectMemberEntity = new EntitySchema<ProjectMemberSchema>({
         email: {
             type: String,
         },
+        projectId: ApIdSchema,
         platformId: {
             type: String,
             nullable: true,
         },
-        userId: {
-            ...ApIdSchema,
-            nullable: true,
-        },
-        projectId: ApIdSchema,
         role: {
             type: String,
         },
@@ -33,27 +29,13 @@ export const ProjectMemberEntity = new EntitySchema<ProjectMemberSchema>({
     },
     indices: [
         {
-            name: 'idx_project_member_project_id_user_id',
-            columns: ['projectId', 'userId'],
-            unique: true,
-        },
-        {
-            name: 'idx_project_member_project_id_email',
-            columns: ['projectId', 'email'],
+            name: 'idx_project_member_project_id_email_platform_id',
+            columns: ['projectId', 'email', 'platformId'],
             unique: true,
         },
     ],
     relations: {
-        user: {
-            type: 'many-to-one',
-            target: 'user',
-            cascade: true,
-            onDelete: 'CASCADE',
-            joinColumn: {
-                name: 'userId',
-                foreignKeyConstraintName: 'fk_project_member_user_id',
-            },
-        },
+
         project: {
             type: 'many-to-one',
             target: 'project',

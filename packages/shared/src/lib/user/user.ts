@@ -41,6 +41,7 @@ export const UserMeta = Type.Object({
     id: Type.String(),
     email: Type.String(),
     firstName: Type.String(),
+    platformId: Type.Union([ApId, Type.Null()]),
     lastName: Type.String(),
     imageUrl: Type.Optional(Type.String()),
     title: Type.Optional(Type.String()),

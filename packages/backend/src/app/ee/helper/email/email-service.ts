@@ -19,7 +19,7 @@ const EDITION_IS_NOT_PAID = ![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(ED
 const EDITION_IS_NOT_CLOUD = EDITION !== ApEdition.CLOUD
 
 export const emailService = {
-    async sendInvitation({ email, invitationId, projectId, register }: SendInvitationParams): Promise<void> {
+    async sendInvitation({ email, invitationId, projectId }: { email: string, invitationId: string, projectId: string }): Promise<void> {
         if (EDITION_IS_NOT_PAID) {
             return
         }
@@ -38,7 +38,7 @@ export const emailService = {
             template: {
                 templateName: 'invitation-email',
                 data: {
-                    setupLink: `${domain}invitation?token=${token}&email=${encodeURIComponent(email)}&register=${register}`,
+                    setupLink: `${domain}invitation?token=${token}&email=${encodeURIComponent(email)}`,
                     projectName: project.displayName,
                 },
             },
@@ -221,14 +221,3 @@ type SendOtpEmailParams = {
     user: User
 }
 
-type SendInvitationParams = {
-    email: string
-    invitationId: string
-    projectId: string
-
-    /**
-     * true if the user has to register to accept the invitation, false if the user is already registered.
-     * used to determine if the user should be redirected to the login form or the register form.
-     */
-    register: boolean
-}
