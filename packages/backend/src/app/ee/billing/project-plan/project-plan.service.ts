@@ -14,8 +14,8 @@ import { getEdition } from '../../../helper/secret-helper'
 const projectPlanRepo = databaseConnection.getRepository<ProjectPlan>(ProjectPlanEntity)
 
 export const plansService = {
-    async getBySubscriptionId({ stripeSubscriptionId }: { stripeSubscriptionId: string }): Promise<ProjectPlan> {
-        return projectPlanRepo.findOneByOrFail({ stripeSubscriptionId })
+    async getByCustomerId({ stripeCustomerId }: { stripeCustomerId: string }): Promise<ProjectPlan> {
+        return projectPlanRepo.findOneByOrFail({ stripeCustomerId })
     },
     async getByProjectId({ projectId }: { projectId: ProjectId }): Promise<ProjectPlan> {
         return projectPlanRepo.findOneByOrFail({ projectId })

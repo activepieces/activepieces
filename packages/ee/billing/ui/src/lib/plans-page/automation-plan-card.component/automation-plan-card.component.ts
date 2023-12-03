@@ -1,5 +1,9 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { FlowPricingPlan, PlanName } from '@activepieces/ee-shared';
+import {
+  FlowPricingPlan,
+  PlanName,
+  UpgradeRequest,
+} from '@activepieces/ee-shared';
 import {
   BehaviorSubject,
   Observable,
@@ -100,9 +104,15 @@ export class AutomationPlanCardComponent {
               this.loading$.next(true);
               return upgradeFromStripeWindow$;
             } else {
+              const upgradeReequest: UpgradeRequest = {
+                plan: PlanName.PRO,
+                priceId: planId,
+                extraUsers:
+                  this.usersFormControl.value - this._plan.includedUsers,
+              };
               return this.matDialog
                 .open(UpgradePlanConfirmationDialogComponent, {
-                  data: { planId: planId },
+                  data: upgradeReequest,
                 })
                 .afterClosed()
                 .pipe(

@@ -101,8 +101,19 @@ async function upgrade({
     subscriptionId,
 }: { request: UpgradeRequest, subscriptionId: string }): Promise<{ paymentLink: null }> {
     assertNotNullOrUndefined(stripe, 'Stripe is not configured')
+    const stripeSubscription = await stripe.subscriptions.retrieve(subscriptionId)
+    const products = getPlanProducts(request).map(item => {
+        const existingItem = stripeSubscription.items.data.find(f => f.price.id === item.price)
+        if (!existingItem) {
+            return item
+        }
+        return {
+            id: existingItem.id,
+            ...item,
+        }
+    })
     await stripe.subscriptions.update(subscriptionId, {
-        items: getPlanProducts(request),
+        items: products,
     })
     return {
         paymentLink: null,
@@ -173,10 +184,12 @@ function getPlanProducts(request: UpgradeRequest) {
             }
             break
         case PlanName.PRO:
-            lineItems.push({
-                price: request.priceId,
-                quantity: 1,
-            })
+            if (request.priceId && request.priceId.length > 0) {
+                lineItems.push({
+                    price: request.priceId,
+                    quantity: 1,
+                })
+            }
             if (request.extraUsers > 0) {
                 lineItems.push({
                     price: proUserPriceId,

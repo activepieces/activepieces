@@ -9,7 +9,7 @@ import { plansService } from '../project-plan/project-plan.service'
 import { captureException, logger } from '../../../helper/logger'
 import { projectUsageService } from '../project-usage/project-usage-service'
 import { defaultPlanInformation } from '../project-plan/pricing-plans'
-import { assertNotNullOrUndefined } from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 
 export const billingModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(billingController, { prefix: '/v1/billing' })
@@ -80,8 +80,8 @@ async function handleWebhook({ payload, signature }: { payload: string, signatur
     if (isSubscriptionPlatformOrCustom(subscription)) {
         return
     }
-    const projectPlan = await plansService.getBySubscriptionId({
-        stripeSubscriptionId: subscription.id,
+    const projectPlan = await plansService.getByCustomerId({
+        stripeCustomerId: subscription.customer as string,
     })
     switch (webhook.type) {
         case 'customer.subscription.deleted':
@@ -96,5 +96,8 @@ async function handleWebhook({ payload, signature }: { payload: string, signatur
 }
 
 function isSubscriptionPlatformOrCustom(subscription: Stripe.Subscription): boolean {
-    return Object.values(subscription.metadata).includes('PLATFORM') || Object.values(subscription.metadata).includes('CUSTOM')
+    const customProduct = subscription.items.data.find(item => {
+        return item.price.metadata.productType === 'CUSTOM' || item.price.metadata.productType === 'PLATFORM'
+    })
+    return !isNil(customProduct)
 }
