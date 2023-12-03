@@ -1,11 +1,10 @@
-import { ApEdition, ApFlagId, isNil } from '@activepieces/shared'
+import {  ApFlagId, isNil } from '@activepieces/shared'
 import { FlagsServiceHooks } from '../../flags/flags.hooks'
 import { apperanceHelper } from '../helper/apperance-helper'
 import { platformService } from '../platform/platform.service'
 import { ThirdPartyAuthnProviderEnum } from '@activepieces/ee-shared'
 import { resolvePlatformIdForRequest } from '../platform/lib/platform-utils'
-import { getEdition } from '../../helper/secret-helper'
-const edition = getEdition()
+
 export const enterpriseFlagsHooks: FlagsServiceHooks = {
     async modify({ flags, request }) {
         const modifiedFlags = { ...flags }
@@ -18,11 +17,10 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             modifiedFlags[ApFlagId.SHOW_COMMUNITY] = false
             modifiedFlags[ApFlagId.SHOW_DOCS] = false
             modifiedFlags[ApFlagId.SHOW_BILLING] = false
-            modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP] = edition === ApEdition.ENTERPRISE ? 
-                modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP] : {
-                    [ThirdPartyAuthnProviderEnum.GOOGLE]: false,
-                    [ThirdPartyAuthnProviderEnum.GITHUB]: false,
-                },
+            modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP] = {
+                [ThirdPartyAuthnProviderEnum.GOOGLE]: false,
+                [ThirdPartyAuthnProviderEnum.GITHUB]: false,
+            },
             modifiedFlags[ApFlagId.SHOW_BLOG_GUIDE] = false
             modifiedFlags[ApFlagId.SHOW_COMMUNITY_PIECES] = false
             modifiedFlags[ApFlagId.SHOW_POWERED_BY_AP] = platform.showPoweredBy
