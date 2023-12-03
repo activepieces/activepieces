@@ -58,7 +58,7 @@ export const projectMemberService = {
                 userId: invitedUser.id,
                 projectId,
                 role,
-                status: ProjectMemberStatus.PENDING,
+                status: getStatusFromEdition(),
             },
             ['projectId', 'userId'],
         )
@@ -89,22 +89,15 @@ export const projectMemberService = {
                 },
             })
         }
-        const user = await userService.get({ id: projectMember.userId })
-        if (isNil(user)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    message: 'user not found',
-                },
-            })
-        }
-        const memberStatus = user.status === UserStatus.INVITED ? ProjectMemberStatus.ACCEPTED : ProjectMemberStatus.ACTIVE
         await projectMemberRepo.update(projectMember.id, {
-            status: memberStatus,
+            status: ProjectMemberStatus.ACTIVE,
+        })
+        await userService.verify({
+            id: projectMember.userId,
         })
         return {
             ...projectMember,
-            status: memberStatus,
+            status: ProjectMemberStatus.ACTIVE,
         }
     },
     async list(
@@ -190,6 +183,17 @@ export const projectMemberService = {
     },
 }
 
+function getStatusFromEdition(): ProjectMemberStatus {
+    const edition = getEdition()
+    switch (edition) {
+        case ApEdition.CLOUD:
+            return ProjectMemberStatus.PENDING
+        case ApEdition.ENTERPRISE:
+            return ProjectMemberStatus.ACTIVE
+        default:
+            throw new Error('Unnkown project status ' + edition)
+    }
+}
 
 const createOrGetUser = async ({ platformId, email }: CreateOrGetUserParams): Promise<User> => {
     const user = await userService.getByPlatformAndEmail({

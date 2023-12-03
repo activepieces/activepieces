@@ -128,6 +128,15 @@ export class ProjectMembersTableComponent implements OnInit {
       );
   }
 
+  statusText(status: ProjectMemberStatus) {
+    switch (status) {
+      case ProjectMemberStatus.ACTIVE:
+        return $localize`Active`;
+      case ProjectMemberStatus.PENDING:
+        return $localize`Pending`;
+    }
+  }
+
   get projectMemberRole() {
     return ProjectMemberRole;
   }
