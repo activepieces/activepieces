@@ -23,7 +23,7 @@ export const authenticationService = {
         })
 
         const userWithoutPassword = removePasswordPropFromUser(authnResponse.user)
-
+        await flagService.save({ id: ApFlagId.USER_CREATED, value: true })
         await sendTelemetry({
             user, project: authnResponse.project,
         })
