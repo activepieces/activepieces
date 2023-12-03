@@ -29,11 +29,13 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
             type: ProjectType.STANDALONE,
         })
 
-        await platformService.add({
+        const platform = await platformService.add({
             ownerId: user.id,
             projectId: project.id,
             name: DEFAULT_PLATFORM_NAME,
         })
+
+        await userService.updatePlatformId({ id: user.id, platformId: platform.id })
 
         await flagService.save({
             id: ApFlagId.PLATFORM_CREATED,

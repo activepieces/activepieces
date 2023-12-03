@@ -7,7 +7,6 @@ import { userService } from '../../user/user-service'
 import { logger } from '../../helper/logger'
 import {
     ActivepiecesError,
-    ApEdition,
     Cursor,
     ErrorCode,
     ProjectId,
@@ -30,7 +29,6 @@ import {
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { projectService } from '../../project/project-service'
 import { emailService } from '../helper/email/email-service'
-import { getEdition } from '../../helper/secret-helper'
 import { projectMembersLimit } from '../billing/limits/members-limit'
 
 const projectMemberRepo = databaseConnection.getRepository(ProjectMemberEntity)
