@@ -1,10 +1,13 @@
 import { StepLocationRelativeToParent } from '@activepieces/shared';
 import {
   ARC_LENGTH,
+  BIG_BUTTON_SIZE,
   BUTTON_SIZE,
+  ButtonType,
+  FLOW_ITEM_HEIGHT,
   PositionButton,
   SPACE_BETWEEN_BUTTON_AND_ARROW,
-  SPACE_BETWEEN_VERTICAL_ARROW_LINE_HEIGHT,
+  VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS,
 } from './draw-common';
 import { Position } from './step-card';
 
@@ -205,7 +208,10 @@ export class SvgDrawer {
   }
 }
 
-export function drawLine(from: Position, to: Position): SvgDrawer {
+export function drawStartLineForStepWithChildren(
+  from: Position,
+  to: Position
+): SvgDrawer {
   const { x: startX, y: startY } = from;
   const { x: endX, y: endY } = to;
   const dx = endX - startX;
@@ -219,13 +225,11 @@ export function drawLine(from: Position, to: Position): SvgDrawer {
   }
 
   return svgDrawer
-    .drawVerticalLine(
-      dy - SPACE_BETWEEN_VERTICAL_ARROW_LINE_HEIGHT - ARC_LENGTH
-    )
+    .drawVerticalLine(dy - VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS - ARC_LENGTH)
     .drawArc(dx > 0, !(dx > 0))
     .drawHorizontalLine(dx + (dx < 0 ? 1 : -1) * 2 * ARC_LENGTH)
     .drawArc(dx > 0, dx > 0)
-    .drawVerticalLine(SPACE_BETWEEN_VERTICAL_ARROW_LINE_HEIGHT - ARC_LENGTH)
+    .drawVerticalLine(VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS - ARC_LENGTH)
     .arrow();
 }
 
@@ -234,23 +238,41 @@ export function drawLineWithButton({
   to,
   stepName,
   stepLocationRelativeToParent,
+  btnType,
 }: {
   from: Position;
   to: Position;
   stepName: string;
   stepLocationRelativeToParent: StepLocationRelativeToParent;
+  btnType: ButtonType;
 }): {
   line: SvgDrawer;
   button: PositionButton;
 } {
-  return {
-    line: drawLine(from, to),
-    button: {
-      x: to.x - BUTTON_SIZE / 2.0,
-      y: to.y - SPACE_BETWEEN_BUTTON_AND_ARROW - BUTTON_SIZE / 2.0,
-      type: 'small',
-      stepName,
-      stepLocationRelativeToParent,
-    },
-  };
+  switch (btnType) {
+    case 'small': {
+      return {
+        line: drawStartLineForStepWithChildren(from, to),
+        button: {
+          x: to.x - BUTTON_SIZE / 2.0,
+          y: to.y - SPACE_BETWEEN_BUTTON_AND_ARROW - BUTTON_SIZE / 2.0,
+          type: 'small',
+          stepName,
+          stepLocationRelativeToParent,
+        },
+      };
+    }
+    case 'big': {
+      return {
+        line: drawStartLineForStepWithChildren(from, to),
+        button: {
+          x: to.x - BIG_BUTTON_SIZE / 2.0,
+          y: to.y + FLOW_ITEM_HEIGHT / 2 - BIG_BUTTON_SIZE / 2,
+          type: 'big',
+          stepName,
+          stepLocationRelativeToParent,
+        },
+      };
+    }
+  }
 }

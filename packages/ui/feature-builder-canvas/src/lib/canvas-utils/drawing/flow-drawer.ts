@@ -8,16 +8,19 @@ import {
 } from '@activepieces/shared';
 import { Trigger } from '@activepieces/shared';
 import {
-  SPACE_BETWEEN_VERTICAL_STEP,
+  VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS,
   FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING,
   FLOW_ITEM_WIDTH,
-  SPACE_BETWEEN_TWO_BRANCH,
+  HORIZONTAL_SPACE_BETWEEN_BRANCHES,
   PositionButton,
-  SPACE_BETWEEN_VERTICAL_LONG_STEP,
-  SPACE_ON_EMPTY_LOOP_SIDE_HORZINTAL,
-  SPACE_BETWEEN_VERTICAL_ARROW_LINE_HEIGHT,
+  VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD,
+  HORIZONTAL_SPACE_FOR_EMPTY_SIDE_OF_LOOP,
 } from './draw-common';
-import { SvgDrawer, drawLine, drawLineWithButton } from './svg-drawer';
+import {
+  SvgDrawer,
+  drawStartLineForStepWithChildren,
+  drawLineWithButton,
+} from './svg-drawer';
 import { Position, PositionedStep } from './step-card';
 
 export const ARC_LENGTH = 15;
@@ -143,17 +146,20 @@ export class FlowDrawer {
       svg: SvgDrawer.empty(),
       steps: [currentPostionedStep],
     });
-    const centerBottom = currentPostionedStep.center('bottom');
+    const centerBottomOfCurrentStep = currentPostionedStep.center('bottom');
     let childHeight = 0;
     switch (step.type) {
       case ActionType.LOOP_ON_ITEMS: {
-        const loopDrawer = handleLoopAction(step, centerBottom);
+        const loopDrawer = handleLoopAction(step, centerBottomOfCurrentStep);
         childHeight = loopDrawer.boundingBox().height;
         flowDrawer = flowDrawer.mergeChild(loopDrawer);
         break;
       }
       case ActionType.BRANCH: {
-        const branchDrawer = handleBranchAction(step, centerBottom);
+        const branchDrawer = handleBranchAction(
+          step,
+          centerBottomOfCurrentStep
+        );
         childHeight = branchDrawer.boundingBox().height;
         flowDrawer = flowDrawer.mergeChild(branchDrawer);
         break;
@@ -161,15 +167,18 @@ export class FlowDrawer {
 
       default: {
         const { line, button } = drawLineWithButton({
-          from: centerBottom,
+          from: centerBottomOfCurrentStep,
           to: {
-            x: centerBottom.x,
-            y: centerBottom.y + SPACE_BETWEEN_VERTICAL_STEP,
+            x: centerBottomOfCurrentStep.x,
+            y:
+              centerBottomOfCurrentStep.y +
+              VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS,
           },
           stepName: step.name,
           stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+          btnType: 'small',
         });
-        childHeight = SPACE_BETWEEN_VERTICAL_STEP;
+        childHeight = VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS;
         flowDrawer = flowDrawer.appendButton(button).appendSvg(line);
         break;
       }
@@ -190,61 +199,64 @@ function handleLoopAction(
   step: LoopOnItemsAction,
   centerBottom: Position
 ): FlowDrawer {
-  const firstLoopDrawer = FlowDrawer.construct(step.firstLoopAction);
+  const firstChildActionDrawer = FlowDrawer.construct(step.firstLoopAction);
   const sideLength =
-    firstLoopDrawer.boundingBox().width / 4.0 +
-    SPACE_ON_EMPTY_LOOP_SIDE_HORZINTAL / 2.0;
+    firstChildActionDrawer.boundingBox().width / 4.0 +
+    HORIZONTAL_SPACE_FOR_EMPTY_SIDE_OF_LOOP / 2.0;
 
-  const firstLoopOffset = {
+  const firstChildActionOffset = {
     x: sideLength,
-    y: FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING + SPACE_BETWEEN_VERTICAL_LONG_STEP,
+    y:
+      FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING +
+      VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD,
   };
-  const firstLoopDrawerDrawerWithOffset = firstLoopDrawer.offset(
-    firstLoopOffset.x,
-    firstLoopOffset.y
+  const firstLoopDrawerDrawerWithOffset = firstChildActionDrawer.offset(
+    firstChildActionOffset.x,
+    firstChildActionOffset.y
   );
-  const firstLoopDrawerTopCenter =
+  const firstChildActionTopCenter =
     firstLoopDrawerDrawerWithOffset.steps[0].center('top');
 
   const { line, button } = drawLineWithButton({
     from: centerBottom,
-    to: firstLoopDrawerTopCenter,
+    to: firstChildActionTopCenter,
     stepName: step.name,
     stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP,
+    btnType: step.firstLoopAction ? 'small' : 'big',
   });
 
   const firstLoopStepClosingLine = SvgDrawer.empty()
     .move(
-      firstLoopDrawerTopCenter.x,
-      firstLoopDrawerTopCenter.y +
+      firstChildActionTopCenter.x,
+      firstChildActionTopCenter.y +
         firstLoopDrawerDrawerWithOffset.boundingBox().height
     )
-    .drawVerticalLine(SPACE_BETWEEN_VERTICAL_LONG_STEP / 2.0 - ARC_LENGTH)
+    .drawVerticalLine(VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD / 2.0 - ARC_LENGTH)
     .drawArc(false, true)
     .drawHorizontalLine(-sideLength + 2 * ARC_LENGTH)
     .drawArc(false, false)
-    .drawVerticalLine(SPACE_BETWEEN_VERTICAL_LONG_STEP / 2.0 - ARC_LENGTH);
+    .drawVerticalLine(VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD / 2.0 - ARC_LENGTH);
 
   const emptyLoopLine = SvgDrawer.empty()
     .move(centerBottom.x, centerBottom.y)
     .drawVerticalLine(
-      SPACE_BETWEEN_VERTICAL_LONG_STEP -
+      VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD -
         ARC_LENGTH -
-        SPACE_BETWEEN_VERTICAL_ARROW_LINE_HEIGHT
+        VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS
     )
     .drawArc(false, true)
-    .drawHorizontalLine(-(firstLoopOffset.x - 2 * ARC_LENGTH))
+    .drawHorizontalLine(-(firstChildActionOffset.x - 2 * ARC_LENGTH))
     .drawArc(false, false)
     .drawVerticalLine(
-      SPACE_BETWEEN_VERTICAL_ARROW_LINE_HEIGHT -
+      VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS -
         2 * ARC_LENGTH +
-        firstLoopDrawer.boundingBox().height +
-        SPACE_BETWEEN_VERTICAL_LONG_STEP / 2.0
+        firstChildActionDrawer.boundingBox().height +
+        VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD / 2.0
     )
     .drawArc(true, false)
     .drawHorizontalLine(sideLength - 2 * ARC_LENGTH)
     .drawArc(true, true)
-    .drawVerticalLine(SPACE_BETWEEN_VERTICAL_LONG_STEP / 2.0 - ARC_LENGTH);
+    .drawVerticalLine(VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD / 2.0 - ARC_LENGTH);
 
   return firstLoopDrawerDrawerWithOffset
     .appendSvg(line)
@@ -276,10 +288,14 @@ function handleBranchAction(
         (side.boundingBox().width - FLOW_ITEM_WIDTH) / 2.0 +
         FLOW_ITEM_WIDTH / 2.0,
       y:
-        FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING + SPACE_BETWEEN_VERTICAL_LONG_STEP,
+        FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING +
+        VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD,
     };
     const sideDrawer = side.offset(stepPosition.x, stepPosition.y);
-
+    const stepLocationRelativeToParent =
+      index == 0
+        ? StepLocationRelativeToParent.INSIDE_TRUE_BRANCH
+        : StepLocationRelativeToParent.INSIDE_FALSE_BRANCH;
     const { line, button } = drawLineWithButton({
       from: centerBottom,
       to: {
@@ -287,12 +303,18 @@ function handleBranchAction(
         y: stepPosition.y,
       },
       stepName: step.name,
-      stepLocationRelativeToParent:
-        index == 0
-          ? StepLocationRelativeToParent.INSIDE_TRUE_BRANCH
-          : StepLocationRelativeToParent.INSIDE_FALSE_BRANCH,
+      stepLocationRelativeToParent: stepLocationRelativeToParent,
+      btnType:
+        (stepLocationRelativeToParent ===
+          StepLocationRelativeToParent.INSIDE_TRUE_BRANCH &&
+          step.onSuccessAction) ||
+        (stepLocationRelativeToParent ===
+          StepLocationRelativeToParent.INSIDE_FALSE_BRANCH &&
+          step.onFailureAction)
+          ? 'small'
+          : 'big',
     });
-    const secondLine = drawLine(
+    const secondLine = drawStartLineForStepWithChildren(
       {
         x: sideDrawer.steps[0].center('bottom').x,
         y: sideDrawer.steps[0].y + sideDrawer.boundingBox().height,
@@ -301,9 +323,9 @@ function handleBranchAction(
         x: centerBottom.x,
         y:
           centerBottom.y +
-          SPACE_BETWEEN_VERTICAL_LONG_STEP +
+          VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD +
           maximumHeight +
-          SPACE_BETWEEN_VERTICAL_LONG_STEP,
+          VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD,
       }
     );
     resultDrawer = resultDrawer
@@ -312,7 +334,8 @@ function handleBranchAction(
       .appendSvg(secondLine)
       .appendButton(button);
 
-    leftStartingPoint += SPACE_BETWEEN_TWO_BRANCH + side.boundingBox().width;
+    leftStartingPoint +=
+      HORIZONTAL_SPACE_BETWEEN_BRANCHES + side.boundingBox().width;
   });
   return resultDrawer;
 }
@@ -330,7 +353,7 @@ function calculateDimensionsForBranch(sides: FlowDrawer[]): {
     0
   );
   const staticOffset =
-    summationWidth + SPACE_BETWEEN_TWO_BRANCH * (sides.length - 1);
+    summationWidth + HORIZONTAL_SPACE_BETWEEN_BRANCHES * (sides.length - 1);
   return {
     maximumHeight,
     xOffset: -(staticOffset / 2.0),
