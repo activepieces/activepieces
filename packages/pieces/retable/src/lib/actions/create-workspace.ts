@@ -7,7 +7,7 @@ import { retableCommon } from '../common';
 export const retableCreateWorkspaceAction = createAction({
   auth: retableAuth,
   name: 'retable_create_workspace',
-  displayName: 'Create Workspace',
+  displayName: 'Create a Workspace',
   description: 'Creates a workspace',
   props: {
     name: Property.ShortText({
