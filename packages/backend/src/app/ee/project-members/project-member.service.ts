@@ -35,7 +35,7 @@ import { IsNull } from 'typeorm'
 const projectMemberRepo = databaseConnection.getRepository(ProjectMemberEntity)
 
 export const projectMemberService = {
-    async upsert({ platformId, email, projectId, role, status }: UpsertParams): Promise<ProjectMember> {
+    async upsert({ platformId, email, projectId, role, status  }: UpsertParams): Promise<ProjectMember> {
         await projectMembersLimit.limit({
             projectId,
         })
@@ -58,19 +58,23 @@ export const projectMemberService = {
         }
     },
 
-    async upsertAndSend({ platformId, projectId, email, role }: SendParams): Promise<UpsertAndSendResponse> {
+    async upsertAndSend({ platformId, projectId, email, role, activateMembership = false }: UpsertAndSendParams): Promise<UpsertAndSendResponse> {
+
         const projectMember = await this.upsert({
             platformId,
             email,
             projectId,
             role,
+            status: activateMembership ? ProjectMemberStatus.ACTIVE : ProjectMemberStatus.PENDING,
         })
 
-        await emailService.sendInvitation({
-            invitationId: projectMember.id,
-            projectId,
-            email,
-        })
+        if (projectMember.status === ProjectMemberStatus.PENDING) {
+            await emailService.sendInvitation({
+                invitationId: projectMember.id,
+                projectId,
+                email,
+            })
+        }
 
         const invitationToken = await accessTokenManager.generateToken({
             id: projectMember.id,
@@ -213,7 +217,7 @@ type UpsertParams = {
 
 type NewProjectMember = Omit<ProjectMember, 'created'>
 
-type SendParams = SendInvitationRequest & {
+type UpsertAndSendParams = SendInvitationRequest & {
     projectId: ProjectId
     platformId: PlatformId | null
 }

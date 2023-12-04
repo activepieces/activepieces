@@ -9,6 +9,7 @@ export type AcceptInvitationRequest = Static<typeof AcceptInvitationRequest>;
 export const SendInvitationRequest = Type.Object({
     email: Type.String(),
     role: Type.Enum(ProjectMemberRole),
+    activateMembership: Type.Optional(Type.Boolean()),
 });
 
 export type SendInvitationRequest = Static<typeof SendInvitationRequest>;
