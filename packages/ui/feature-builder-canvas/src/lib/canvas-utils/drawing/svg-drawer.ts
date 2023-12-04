@@ -217,29 +217,45 @@ export class SvgDrawer {
   }
 }
 
+function extractDyDx(
+  start: Position,
+  end: Position
+): { dx: number; dy: number } {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  return { dx, dy };
+}
+
+export function drawVerticalLineToNextStep(
+  from: Position,
+  to: Position,
+  drawArrow: boolean
+): SvgDrawer {
+  const { dy } = extractDyDx(from, to);
+  const svgDrawer = SvgDrawer.empty().move(from.x, from.y);
+  if (from.x === to.x) {
+    const verticalLine = svgDrawer.drawVerticalLine(dy);
+    return drawArrow ? verticalLine.arrow() : verticalLine;
+  }
+  throw Error('to.x: ${to.x} and from.x ${from.x} aren not the same');
+}
 export function drawStartLineForStepWithChildren(
   from: Position,
-  to: Position
+  to: Position,
+  drawArrow: boolean
 ): SvgDrawer {
-  const { x: startX, y: startY } = from;
-  const { x: endX, y: endY } = to;
-  const dx = endX - startX;
-  const dy = endY - startY;
+  const { dx, dy } = extractDyDx(from, to);
   if (dy < 0) {
     throw new Error('dy should be positive');
   }
-  const svgDrawer = SvgDrawer.empty().move(startX, startY);
-  if (startX === endX) {
-    return svgDrawer.drawVerticalLine(dy).arrow();
-  }
-
-  return svgDrawer
+  const svgDrawer = SvgDrawer.empty()
+    .move(from.x, from.y)
     .drawVerticalLine(dy - VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS - ARC_LENGTH)
     .drawArc(dx > 0, !(dx > 0))
     .drawHorizontalLine(dx + (dx < 0 ? 1 : -1) * 2 * ARC_LENGTH)
     .drawArc(dx > 0, dx > 0)
-    .drawVerticalLine(VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS - ARC_LENGTH)
-    .arrow();
+    .drawVerticalLine(VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS - ARC_LENGTH);
+  return drawArrow ? svgDrawer.arrow() : svgDrawer;
 }
 
 export function drawLineWithButton({
@@ -248,12 +264,14 @@ export function drawLineWithButton({
   stepName,
   stepLocationRelativeToParent,
   btnType,
+  isLastChildStep,
 }: {
   from: Position;
   to: Position;
   stepName: string;
   stepLocationRelativeToParent: StepLocationRelativeToParent;
   btnType: ButtonType;
+  isLastChildStep: boolean;
 }): {
   line: SvgDrawer;
   button: PositionButton;
@@ -261,7 +279,10 @@ export function drawLineWithButton({
   switch (btnType) {
     case 'small': {
       return {
-        line: drawStartLineForStepWithChildren(from, to),
+        line:
+          from.x === to.x
+            ? drawVerticalLineToNextStep(from, to, !isLastChildStep)
+            : drawStartLineForStepWithChildren(from, to, !isLastChildStep),
         button: {
           x: to.x - BUTTON_SIZE / 2.0,
           y: to.y - SPACE_BETWEEN_BUTTON_AND_ARROW - BUTTON_SIZE / 2.0,
@@ -273,7 +294,7 @@ export function drawLineWithButton({
     }
     case 'big': {
       return {
-        line: drawStartLineForStepWithChildren(from, to),
+        line: drawStartLineForStepWithChildren(from, to, !isLastChildStep),
         button: {
           x: to.x - BIG_BUTTON_SIZE / 2.0,
           y: to.y + FLOW_ITEM_HEIGHT / 2 - BIG_BUTTON_SIZE / 2,

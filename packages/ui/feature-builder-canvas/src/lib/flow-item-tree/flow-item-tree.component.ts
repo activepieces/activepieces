@@ -41,6 +41,7 @@ export class FlowItemTreeComponent implements OnInit {
     );
     this.flowDrawer$ = flowVersion$.pipe(
       map((version) => {
+        FlowDrawer.trigger = version.trigger;
         const drawer = FlowDrawer.construct(version.trigger).offset(0, 40);
         return {
           svg: drawer.svg.toSvg().content,

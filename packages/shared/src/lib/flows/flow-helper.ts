@@ -236,9 +236,11 @@ function getAllSteps(trigger: Trigger): (Action | Trigger)[] {
 
 function getAllStepsAtFirstLevel(step: Trigger): (Action | Trigger)[] {
     const steps: (Action | Trigger)[] = []
-    while (step !== undefined && step !== null) {
-        steps.push(step)
-        step = step.nextAction
+    steps.push(step)
+    let nextAction: Step | undefined = step.nextAction
+    while (nextAction !== undefined) {
+        steps.push(nextAction)
+        nextAction = nextAction.nextAction
     }
     return steps
 }
@@ -538,10 +540,7 @@ function isChildOf(parent: LoopOnItemsAction | BranchAction, childStepName: stri
             return children.findIndex((c) => c.name === childStepName) > -1
         }
         default: {
-            const children = [
-                ...getAllChildSteps(parent),
-                ...getAllChildSteps(parent),
-            ]
+            const children = getAllChildSteps(parent)
             return children.findIndex((c) => c.name === childStepName) > -1
         }
     }
@@ -811,6 +810,59 @@ function findAvailableStepName(flowVersion: FlowVersion, stepPrefix: string): st
     return findUnusedName(steps, stepPrefix)
 }
 
+function getDirectParentStep(child: Step, parent: Trigger | Step | undefined): Step | Trigger | undefined {
+    if (!parent) {
+        return undefined
+    }
+    let next = parent.nextAction
+    while (next) {
+        if (next.name === child.name) {
+            return parent
+        }
+        next = next.nextAction
+    }
+   
+    if (parent.type === ActionType.BRANCH) {
+        if (parent.onFailureAction?.name === child.name) {
+            return parent
+        }
+        if (parent.onSuccessAction?.name === child.name) {
+            return parent
+        }
+        return getDirectParentStep(child, parent.onFailureAction) ?? getDirectParentStep(child, parent.onSuccessAction) ?? getDirectParentStep(child, parent.nextAction)
+    }
+    if (parent.type === ActionType.LOOP_ON_ITEMS) {
+        if (parent.firstLoopAction?.name === child.name) {
+            return parent
+        }
+        return getDirectParentStep(child, parent.firstLoopAction) ?? getDirectParentStep(child, parent.nextAction)
+    }
+    return getDirectParentStep(child, parent.nextAction)
+}
+
+function isStepLastChildOfParent(child: Step, trigger: Trigger): boolean {
+    
+    const parent = getDirectParentStep(child, trigger)
+    if (parent) {
+        if (doesStepHaveChildren(parent)) {
+            const children = getAllChildSteps(parent)
+            return children[children.length - 1]?.name === child.name
+        }
+        let next = parent.nextAction
+        while (next) {
+            if (next.nextAction === undefined && next.name === child.name) {
+                return true
+            }
+            next = next.nextAction
+        }
+    }
+
+    return false
+}
+
+function doesStepHaveChildren(step: Step): step is LoopOnItemsAction | BranchAction {
+    return step.type === ActionType.BRANCH || step.type === ActionType.LOOP_ON_ITEMS
+} 
 export const flowHelper = {
     isValid,
     apply(
@@ -865,10 +917,12 @@ export const flowHelper = {
         return clonedVersion
     },
 
+
     getStep,
     isAction,
     isTrigger,
     getAllSteps,
+    isStepLastChildOfParent,
     getUsedPieces,
     getImportOperations,
     getAllSubFlowSteps,
