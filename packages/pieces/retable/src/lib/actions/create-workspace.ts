@@ -11,16 +11,16 @@ export const retableCreateWorkspaceAction = createAction({
   description: 'Creates a workspace',
   props: {
     name: Property.ShortText({
-        displayName:'Workspace Name',
-        required:true
+      displayName: 'Workspace Name',
+      required: true,
     }),
-    desc:Property.LongText({
-        displayName:'Workspace Description',
-        required:false
-    })
+    desc: Property.LongText({
+      displayName: 'Workspace Description',
+      required: false,
+    }),
   },
   async run(context) {
-    const { name,desc } = context.propsValue;
+    const { name, desc } = context.propsValue;
     return (
       await httpClient.sendRequest({
         method: HttpMethod.POST,
@@ -28,10 +28,10 @@ export const retableCreateWorkspaceAction = createAction({
         headers: {
           ApiKey: context.auth as string,
         },
-        body:{
-            name:name,
-            description:desc
-        }
+        body: {
+          name: name,
+          description: desc,
+        },
       })
     ).body;
   },
