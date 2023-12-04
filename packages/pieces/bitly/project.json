@@ -1,0 +1,44 @@
+{
+  "name": "pieces-bitly",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/bitly/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/bitly",
+        "tsConfig": "packages/pieces/bitly/tsconfig.lib.json",
+        "packageJson": "packages/pieces/bitly/package.json",
+        "main": "packages/pieces/bitly/src/index.ts",
+        "assets": [
+          "packages/pieces/bitly/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-bitly {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/bitly/**/*.ts",
+          "packages/pieces/bitly/package.json"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
