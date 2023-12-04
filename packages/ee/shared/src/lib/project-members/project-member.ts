@@ -1,5 +1,5 @@
 import { Static, Type } from "@sinclair/typebox";
-import { BaseModelSchema } from "@activepieces/shared";
+import { ApId, BaseModelSchema } from "@activepieces/shared";
 import { ProjectMemberRole } from "./project-member-role";
 
 export type ProjectMemberId = string;
@@ -11,8 +11,8 @@ export enum ProjectMemberStatus {
 
 export const ProjectMember = Type.Object({
     ...BaseModelSchema,
-    userId: Type.String(),
     email: Type.String(),
+    platformId: Type.Union([ApId, Type.Null()]),
     projectId: Type.String(),
     role: Type.Enum(ProjectMemberRole),
     status: Type.Enum(ProjectMemberStatus),

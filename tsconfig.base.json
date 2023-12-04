@@ -60,6 +60,9 @@
       "@activepieces/piece-contiguity": [
         "packages/pieces/contiguity/src/index.ts"
       ],
+      "@activepieces/piece-convertkit": [
+        "packages/pieces/convertkit/src/index.ts"
+      ],
       "@activepieces/piece-csv": ["packages/pieces/csv/src/index.ts"],
       "@activepieces/piece-data-mapper": [
         "packages/pieces/data-mapper/src/index.ts"
@@ -156,6 +159,7 @@
         "packages/pieces/microsoft-onedrive/src/index.ts"
       ],
       "@activepieces/piece-mindee": ["packages/pieces/mindee/src/index.ts"],
+      "@activepieces/piece-mixpanel": ["packages/pieces/mixpanel/src/index.ts"],
       "@activepieces/piece-monday": ["packages/pieces/monday/src/index.ts"],
       "@activepieces/piece-moxie-crm": [
         "packages/pieces/moxie-crm/src/index.ts"
@@ -193,6 +197,9 @@
         "packages/pieces/sendinblue/src/index.ts"
       ],
       "@activepieces/piece-sendy": ["packages/pieces/sendy/src/index.ts"],
+      "@activepieces/piece-sessions-us": [
+        "packages/pieces/sessions-us/src/index.ts"
+      ],
       "@activepieces/piece-sftp": ["packages/pieces/sftp/src/index.ts"],
       "@activepieces/piece-shopify": ["packages/pieces/shopify/src/index.ts"],
       "@activepieces/piece-simplepdf": [
@@ -260,6 +267,9 @@
       ],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
       "@activepieces/ui-ee-platform": ["packages/ee/ui-platform/src/index.ts"],
+      "@activepieces/ui-feature-builder-header": [
+        "packages/ui/feature-builder-header/src/index.ts"
+      ],
       "@activepieces/ui/common": ["packages/ui/common/src/index.ts"],
       "@activepieces/ui/feature-authentication": [
         "packages/ui/feature-authentication/src/index.ts"
@@ -269,9 +279,6 @@
       ],
       "@activepieces/ui/feature-builder-form-controls": [
         "packages/ui/feature-builder-form-controls/src/index.ts"
-      ],
-      "@activepieces/ui-feature-builder-header": [
-        "packages/ui/feature-builder-header/src/index.ts"
       ],
       "@activepieces/ui/feature-builder-left-sidebar": [
         "packages/ui/feature-builder-left-sidebar/src/index.ts"
