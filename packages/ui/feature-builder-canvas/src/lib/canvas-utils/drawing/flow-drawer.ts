@@ -18,6 +18,7 @@ import {
   HORIZONTAL_SPACE_FOR_EMPTY_SIDE_OF_LOOP,
   HORIZONTAL_SPACE_BETWEEN_RETURNING_LOOP_ARROW_AND_STARTING_LOOP_ARC,
   VERTICAL_SPACE_BETWEEN_AFTERLOOP_LINE_AND_LOOP_BOTTOM,
+  BUTTON_SIZE,
 } from './draw-common';
 import {
   SvgDrawer,
@@ -274,12 +275,24 @@ function handleLoopAction(
         VERTICAL_SPACE_BETWEEN_AFTERLOOP_LINE_AND_LOOP_BOTTOM
     )
     .drawVerticalLine(VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS);
-
+  const afterLoopButton: PositionButton = {
+    stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+    stepName: step.name,
+    type: 'small',
+    x:
+      verticalLineConnectingLoopStepWithWhatComesAfter.minimumX() -
+      BUTTON_SIZE / 2.0,
+    y:
+      verticalLineConnectingLoopStepWithWhatComesAfter.maximumY() -
+      VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS / 2 -
+      BUTTON_SIZE / 2.0,
+  };
   return firstLoopDrawerDrawerWithOffset
     .appendSvg(line)
     .appendButton(button)
     .appendSvg(emptyLoopLine)
     .appendSvg(firstLoopStepClosingLine)
+    .appendButton(afterLoopButton)
     .appendSvg(
       isLastChildStep
         ? verticalLineConnectingLoopStepWithWhatComesAfter
@@ -340,7 +353,7 @@ function handleBranchAction(
         FlowDrawer.trigger
       ),
     });
-    const afterBranchComponent = drawStartLineForStepWithChildren(
+    const afterBranchLineComponent = drawStartLineForStepWithChildren(
       {
         x: branchGraphDrawer.steps[0].center('bottom').x,
         y:
@@ -356,15 +369,30 @@ function handleBranchAction(
       },
       !flowHelper.isStepLastChildOfParent(step, FlowDrawer.trigger)
     );
+
     resultDrawer = resultDrawer
       .mergeChild(branchGraphDrawer)
       .appendSvg(lineComponentAtStartOfBranch)
-      .appendSvg(afterBranchComponent)
+      .appendSvg(afterBranchLineComponent)
       .appendButton(button);
+    if (index === 1) {
+      const afterBranchButton: PositionButton = {
+        stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+        stepName: step.name,
+        type: 'small',
+        x: afterBranchLineComponent.minimumX() - BUTTON_SIZE / 2.0,
+        y:
+          afterBranchLineComponent.maximumY() -
+          VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS / 2 -
+          BUTTON_SIZE / 2.0,
+      };
+      resultDrawer = resultDrawer.appendButton(afterBranchButton);
+    }
 
     leftStartingPoint +=
       HORIZONTAL_SPACE_BETWEEN_BRANCHES + branch.boundingBox().width;
   });
+
   return resultDrawer;
 }
 
