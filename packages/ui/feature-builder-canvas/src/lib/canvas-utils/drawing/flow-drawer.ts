@@ -1,7 +1,6 @@
 import {
   Action,
   ActionType,
-  BranchAction,
   LoopOnItemsAction,
   StepLocationRelativeToParent,
   flowHelper,
@@ -12,7 +11,6 @@ import {
   VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS,
   FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING,
   FLOW_ITEM_WIDTH,
-  HORIZONTAL_SPACE_BETWEEN_BRANCHES,
   PositionButton,
   VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD,
   HORIZONTAL_SPACE_FOR_EMPTY_SIDE_OF_LOOP,
@@ -20,12 +18,9 @@ import {
   VERTICAL_SPACE_BETWEEN_AFTERLOOP_LINE_AND_LOOP_BOTTOM,
   BUTTON_SIZE,
 } from './draw-common';
-import {
-  SvgDrawer,
-  drawStartLineForStepWithChildren,
-  drawLineWithButton,
-} from './svg-drawer';
+import { SvgDrawer, drawLineComponentWithButton } from './svg-drawer';
 import { Position, PositionedStep } from './step-card';
+import { BranchDrawer } from './branch-drawer';
 
 export const ARC_LENGTH = 15;
 
@@ -34,6 +29,11 @@ export class FlowDrawer {
   readonly svg: SvgDrawer;
   readonly buttons: readonly PositionButton[];
   static trigger: Trigger;
+  static centerBottom = new PositionedStep({
+    x: 0,
+    y: 0,
+    content: null,
+  }).center('bottom');
   constructor({
     svg = SvgDrawer.empty(),
     steps = [],
@@ -160,17 +160,14 @@ export class FlowDrawer {
         break;
       }
       case ActionType.BRANCH: {
-        const branchDrawer = handleBranchAction(
-          step,
-          centerBottomOfCurrentStep
-        );
+        const branchDrawer = BranchDrawer.handleBranchAction(step);
         childHeight = branchDrawer.boundingBox().height;
         flowDrawer = flowDrawer.mergeChild(branchDrawer);
         break;
       }
 
       default: {
-        const { line, button } = drawLineWithButton({
+        const { line, button } = drawLineComponentWithButton({
           from: centerBottomOfCurrentStep,
           to: {
             x: centerBottomOfCurrentStep.x,
@@ -228,7 +225,7 @@ function handleLoopAction(
     step,
     FlowDrawer.trigger
   );
-  const { line, button } = drawLineWithButton({
+  const { line, button } = drawLineComponentWithButton({
     from: centerBottom,
     to: firstChildActionTopCenter,
     stepName: step.name,
@@ -298,120 +295,4 @@ function handleLoopAction(
         ? verticalLineConnectingLoopStepWithWhatComesAfter
         : verticalLineConnectingLoopStepWithWhatComesAfter.arrow()
     );
-}
-function handleBranchAction(
-  step: BranchAction,
-  centerBottom: Position
-): FlowDrawer {
-  let resultDrawer = new FlowDrawer({
-    buttons: [],
-    svg: SvgDrawer.empty(),
-    steps: [],
-  });
-  const actions = [step.onSuccessAction, step.onFailureAction];
-  const branchesDrawers: FlowDrawer[] = actions.map((action) =>
-    FlowDrawer.construct(action)
-  );
-  const { maximumHeight, xOffset } =
-    calculateDimensionsForBranch(branchesDrawers);
-
-  let leftStartingPoint = xOffset;
-  branchesDrawers.forEach((branch, index) => {
-    const stepPosition = {
-      x:
-        leftStartingPoint +
-        (branch.boundingBox().width - FLOW_ITEM_WIDTH) / 2.0 +
-        FLOW_ITEM_WIDTH / 2.0,
-      y:
-        FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING +
-        VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD,
-    };
-    const branchGraphDrawer = branch.offset(stepPosition.x, stepPosition.y);
-    const stepLocationRelativeToParent =
-      index == 0
-        ? StepLocationRelativeToParent.INSIDE_TRUE_BRANCH
-        : StepLocationRelativeToParent.INSIDE_FALSE_BRANCH;
-    const { line: lineComponentAtStartOfBranch, button } = drawLineWithButton({
-      from: centerBottom,
-      to: {
-        x: stepPosition.x + FLOW_ITEM_WIDTH / 2.0,
-        y: stepPosition.y,
-      },
-      stepName: step.name,
-      stepLocationRelativeToParent: stepLocationRelativeToParent,
-      btnType:
-        (stepLocationRelativeToParent ===
-          StepLocationRelativeToParent.INSIDE_TRUE_BRANCH &&
-          step.onSuccessAction) ||
-        (stepLocationRelativeToParent ===
-          StepLocationRelativeToParent.INSIDE_FALSE_BRANCH &&
-          step.onFailureAction)
-          ? 'small'
-          : 'big',
-      isLastChildStep: flowHelper.isStepLastChildOfParent(
-        step,
-        FlowDrawer.trigger
-      ),
-    });
-    const afterBranchLineComponent = drawStartLineForStepWithChildren(
-      {
-        x: branchGraphDrawer.steps[0].center('bottom').x,
-        y:
-          branchGraphDrawer.steps[0].y + branchGraphDrawer.boundingBox().height,
-      },
-      {
-        x: centerBottom.x,
-        y:
-          centerBottom.y +
-          VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD +
-          maximumHeight +
-          VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD,
-      },
-      !flowHelper.isStepLastChildOfParent(step, FlowDrawer.trigger)
-    );
-
-    resultDrawer = resultDrawer
-      .mergeChild(branchGraphDrawer)
-      .appendSvg(lineComponentAtStartOfBranch)
-      .appendSvg(afterBranchLineComponent)
-      .appendButton(button);
-    if (index === 1) {
-      const afterBranchButton: PositionButton = {
-        stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
-        stepName: step.name,
-        type: 'small',
-        x: afterBranchLineComponent.minimumX() - BUTTON_SIZE / 2.0,
-        y:
-          afterBranchLineComponent.maximumY() -
-          VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS / 2 -
-          BUTTON_SIZE / 2.0,
-      };
-      resultDrawer = resultDrawer.appendButton(afterBranchButton);
-    }
-
-    leftStartingPoint +=
-      HORIZONTAL_SPACE_BETWEEN_BRANCHES + branch.boundingBox().width;
-  });
-
-  return resultDrawer;
-}
-
-function calculateDimensionsForBranch(sides: FlowDrawer[]): {
-  maximumHeight: number;
-  xOffset: number;
-} {
-  const maximumHeight: number = sides.reduce(
-    (max: number, side: FlowDrawer) => Math.max(max, side.boundingBox().height),
-    0
-  );
-  const summationWidth: number = sides.reduce(
-    (sum: number, side: FlowDrawer) => sum + side.boundingBox().width,
-    0
-  );
-  const staticOffset =
-    summationWidth + HORIZONTAL_SPACE_BETWEEN_BRANCHES * (sides.length - 1);
-  return {
-    maximumHeight,
-    xOffset: -(staticOffset / 2.0),
-  };
 }

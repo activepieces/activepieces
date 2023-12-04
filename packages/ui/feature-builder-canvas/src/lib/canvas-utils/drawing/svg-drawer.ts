@@ -258,7 +258,7 @@ export function drawStartLineForStepWithChildren(
   return drawArrow ? svgDrawer.arrow() : svgDrawer;
 }
 
-export function drawLineWithButton({
+export function drawLineComponentWithButton({
   from,
   to,
   stepName,
