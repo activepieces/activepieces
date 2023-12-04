@@ -175,12 +175,21 @@ export class SvgDrawer {
     ]);
   }
 
-  arrow(): SvgDrawer {
+  arrow(forLoopReturningLine = false): SvgDrawer {
+    if (!forLoopReturningLine) {
+      return new SvgDrawer([
+        ...this.operations,
+        {
+          type: 'arrow',
+          content: 'm6 -6 l-6 6 m-6 -6 l6 6',
+        },
+      ]);
+    }
     return new SvgDrawer([
       ...this.operations,
       {
         type: 'arrow',
-        content: 'm6 -6 l-6 6 m-6 -6 l6 6',
+        content: ' m0 -6 l6 6  m-6 0 m6 0 l-6 6 m3.7 -6',
       },
     ]);
   }

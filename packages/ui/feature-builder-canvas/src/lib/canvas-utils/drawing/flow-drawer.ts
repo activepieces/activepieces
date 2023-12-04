@@ -15,6 +15,8 @@ import {
   PositionButton,
   VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD,
   HORIZONTAL_SPACE_FOR_EMPTY_SIDE_OF_LOOP,
+  HORIZONTAL_SPACE_BETWEEN_RETURNING_LOOP_ARROW_AND_STARTING_LOOP_ARC,
+  VERTICAL_SPACE_BETWEEN_AFTERLOOP_LINE_AND_LOOP_BOTTOM,
 } from './draw-common';
 import {
   SvgDrawer,
@@ -233,18 +235,17 @@ function handleLoopAction(
     )
     .drawVerticalLine(VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD / 2.0 - ARC_LENGTH)
     .drawArc(false, true)
-    .drawHorizontalLine(-sideLength + 2 * ARC_LENGTH)
-    .drawArc(false, false)
-    .drawVerticalLine(VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD / 2.0 - ARC_LENGTH);
+    .drawHorizontalLine(-sideLength);
 
   const emptyLoopLine = SvgDrawer.empty()
-    .move(centerBottom.x, centerBottom.y)
-    .drawVerticalLine(
-      VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD -
-        ARC_LENGTH -
-        VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS
+    .move(
+      centerBottom.x -
+        HORIZONTAL_SPACE_BETWEEN_RETURNING_LOOP_ARROW_AND_STARTING_LOOP_ARC,
+      centerBottom.y +
+        (VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD -
+          VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS)
     )
-    .drawArc(false, true)
+    .arrow(true)
     .drawHorizontalLine(-(firstChildActionOffset.x - 2 * ARC_LENGTH))
     .drawArc(false, false)
     .drawVerticalLine(
@@ -254,15 +255,24 @@ function handleLoopAction(
         VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD / 2.0
     )
     .drawArc(true, false)
-    .drawHorizontalLine(sideLength - 2 * ARC_LENGTH)
-    .drawArc(true, true)
-    .drawVerticalLine(VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD / 2.0 - ARC_LENGTH);
+    .drawHorizontalLine(sideLength);
+
+  const verticalLineConnectingLoopStepWithWhatComesAfter = SvgDrawer.empty()
+    .move(
+      firstChildActionTopCenter.x - sideLength,
+      firstChildActionTopCenter.y +
+        firstLoopDrawerDrawerWithOffset.boundingBox().height +
+        VERTICAL_SPACE_BETWEEN_AFTERLOOP_LINE_AND_LOOP_BOTTOM
+    )
+    .drawVerticalLine(VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS)
+    .arrow();
 
   return firstLoopDrawerDrawerWithOffset
     .appendSvg(line)
     .appendButton(button)
     .appendSvg(emptyLoopLine)
-    .appendSvg(firstLoopStepClosingLine);
+    .appendSvg(firstLoopStepClosingLine)
+    .appendSvg(verticalLineConnectingLoopStepWithWhatComesAfter);
 }
 function handleBranchAction(
   step: BranchAction,
