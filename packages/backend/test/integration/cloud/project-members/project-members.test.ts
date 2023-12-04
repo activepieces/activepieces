@@ -55,7 +55,7 @@ describe('Project Member API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/project-members/invite',
+                url: '/v1/project-members',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -108,7 +108,7 @@ describe('Project Member API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/project-members/invite',
+                url: '/v1/project-members',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -155,7 +155,7 @@ describe('Project Member API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/project-members/invite',
+                url: '/v1/project-members',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },

@@ -21,7 +21,7 @@ import {
     ProjectMemberId,
     ProjectMemberRole,
     ProjectMemberStatus,
-    SendInvitationRequest,
+    AddProjectMemberRequestBody,
 } from '@activepieces/ee-shared'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { projectService } from '../../project/project-service'
@@ -217,7 +217,7 @@ type UpsertParams = {
 
 type NewProjectMember = Omit<ProjectMember, 'created'>
 
-type UpsertAndSendParams = SendInvitationRequest & {
+type UpsertAndSendParams = AddProjectMemberRequestBody & {
     projectId: ProjectId
     platformId: PlatformId | null
 }
