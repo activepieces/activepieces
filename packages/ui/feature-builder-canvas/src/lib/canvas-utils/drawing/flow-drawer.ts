@@ -1,7 +1,6 @@
 import {
   Action,
   ActionType,
-  LoopOnItemsAction,
   StepLocationRelativeToParent,
   flowHelper,
   isNil,
@@ -12,15 +11,11 @@ import {
   FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING,
   FLOW_ITEM_WIDTH,
   PositionButton,
-  VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD,
-  HORIZONTAL_SPACE_FOR_EMPTY_SIDE_OF_LOOP,
-  HORIZONTAL_SPACE_BETWEEN_RETURNING_LOOP_ARROW_AND_STARTING_LOOP_ARC,
-  VERTICAL_SPACE_BETWEEN_AFTERLOOP_LINE_AND_LOOP_BOTTOM,
-  BUTTON_SIZE,
 } from './draw-common';
 import { SvgDrawer, drawLineComponentWithButton } from './svg-drawer';
-import { Position, PositionedStep } from './step-card';
+import { PositionedStep } from './step-card';
 import { BranchDrawer } from './branch-drawer';
+import { LoopDrawer } from './loop-drawer';
 
 export const ARC_LENGTH = 15;
 
@@ -154,7 +149,7 @@ export class FlowDrawer {
     let childHeight = 0;
     switch (step.type) {
       case ActionType.LOOP_ON_ITEMS: {
-        const loopDrawer = handleLoopAction(step, centerBottomOfCurrentStep);
+        const loopDrawer = LoopDrawer.handleLoopAction(step);
         childHeight = loopDrawer.boundingBox().height;
         flowDrawer = flowDrawer.mergeChild(loopDrawer);
         break;
@@ -198,101 +193,4 @@ export class FlowDrawer {
     }
     return flowDrawer;
   }
-}
-
-function handleLoopAction(
-  step: LoopOnItemsAction,
-  centerBottom: Position
-): FlowDrawer {
-  const firstChildActionDrawer = FlowDrawer.construct(step.firstLoopAction);
-  const sideLength =
-    firstChildActionDrawer.boundingBox().width / 4.0 +
-    HORIZONTAL_SPACE_FOR_EMPTY_SIDE_OF_LOOP / 2.0;
-
-  const firstChildActionOffset = {
-    x: sideLength,
-    y:
-      FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING +
-      VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD,
-  };
-  const firstLoopDrawerDrawerWithOffset = firstChildActionDrawer.offset(
-    firstChildActionOffset.x,
-    firstChildActionOffset.y
-  );
-  const firstChildActionTopCenter =
-    firstLoopDrawerDrawerWithOffset.steps[0].center('top');
-  const isLastChildStep = flowHelper.isStepLastChildOfParent(
-    step,
-    FlowDrawer.trigger
-  );
-  const { line, button } = drawLineComponentWithButton({
-    from: centerBottom,
-    to: firstChildActionTopCenter,
-    stepName: step.name,
-    stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP,
-    btnType: step.firstLoopAction ? 'small' : 'big',
-    isLastChildStep,
-  });
-
-  const firstLoopStepClosingLine = SvgDrawer.empty()
-    .move(
-      firstChildActionTopCenter.x,
-      firstChildActionTopCenter.y +
-        firstLoopDrawerDrawerWithOffset.boundingBox().height
-    )
-    .drawVerticalLine(VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD / 2.0 - ARC_LENGTH)
-    .drawArc(false, true)
-    .drawHorizontalLine(-sideLength);
-
-  const emptyLoopLine = SvgDrawer.empty()
-    .move(
-      centerBottom.x -
-        HORIZONTAL_SPACE_BETWEEN_RETURNING_LOOP_ARROW_AND_STARTING_LOOP_ARC,
-      centerBottom.y +
-        (VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD -
-          VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS)
-    )
-    .arrow(true)
-    .drawHorizontalLine(-(firstChildActionOffset.x - 2 * ARC_LENGTH))
-    .drawArc(false, false)
-    .drawVerticalLine(
-      VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS -
-        2 * ARC_LENGTH +
-        firstChildActionDrawer.boundingBox().height +
-        VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD / 2.0
-    )
-    .drawArc(true, false)
-    .drawHorizontalLine(sideLength);
-
-  const verticalLineConnectingLoopStepWithWhatComesAfter = SvgDrawer.empty()
-    .move(
-      firstChildActionTopCenter.x - sideLength,
-      firstChildActionTopCenter.y +
-        firstLoopDrawerDrawerWithOffset.boundingBox().height +
-        VERTICAL_SPACE_BETWEEN_AFTERLOOP_LINE_AND_LOOP_BOTTOM
-    )
-    .drawVerticalLine(VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS);
-  const afterLoopButton: PositionButton = {
-    stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
-    stepName: step.name,
-    type: 'small',
-    x:
-      verticalLineConnectingLoopStepWithWhatComesAfter.minimumX() -
-      BUTTON_SIZE / 2.0,
-    y:
-      verticalLineConnectingLoopStepWithWhatComesAfter.maximumY() -
-      VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS / 2 -
-      BUTTON_SIZE / 2.0,
-  };
-  return firstLoopDrawerDrawerWithOffset
-    .appendSvg(line)
-    .appendButton(button)
-    .appendSvg(emptyLoopLine)
-    .appendSvg(firstLoopStepClosingLine)
-    .appendButton(afterLoopButton)
-    .appendSvg(
-      isLastChildStep
-        ? verticalLineConnectingLoopStepWithWhatComesAfter
-        : verticalLineConnectingLoopStepWithWhatComesAfter.arrow()
-    );
 }
