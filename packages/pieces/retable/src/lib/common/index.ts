@@ -1,23 +1,19 @@
 import { Property, DynamicPropsValue } from '@activepieces/pieces-framework';
-import {
-  HttpMethod,
-  AuthenticationType,
-  httpClient,
-  HttpRequest,
-} from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
 import {
   RetableFieldMapping,
   RetableField,
-  RetableFieldType,
+  RetableNotSupportedFields,
   RetableWorkspace,
   RetableProject,
   RetableTable,
 } from './models';
+import { isNil } from 'lodash';
 
 export const retableCommon = {
   baseUrl: 'https://api.retable.io/v1/public',
-  workspaceId: (required = true) =>
+  workspace_id: (required = true) =>
     Property.Dropdown({
       displayName: 'Workspace',
       required,
@@ -30,8 +26,10 @@ export const retableCommon = {
             placeholder: 'Please connect your account',
           };
         }
-        const respone = await httpClient.sendRequest<{
-          workspaces: RetableWorkspace[];
+        const response = await httpClient.sendRequest<{
+          data: {
+            workspaces: RetableWorkspace[];
+          };
         }>({
           method: HttpMethod.GET,
           url: `${retableCommon.baseUrl}/workspace`,
@@ -41,7 +39,7 @@ export const retableCommon = {
         });
         return {
           disabled: false,
-          options: respone.body.workspaces.map((workspace) => {
+          options: response.body.data.workspaces.map((workspace) => {
             return {
               label: workspace.name,
               value: workspace.id,
@@ -50,31 +48,36 @@ export const retableCommon = {
         };
       },
     }),
-  projectId: (required = true) =>
+  project_id: (required = true) =>
     Property.Dropdown({
       displayName: 'Project',
       required,
-      refreshers: ['workspaceId'],
-      options: async ({ auth, workspaceId }) => {
-        if (!auth || !workspaceId) {
+      refreshers: ['workspace_id'],
+      options: async ({ auth, workspace_id }) => {
+        if (!auth || !workspace_id) {
           return {
             disabled: true,
             options: [],
             placeholder: 'Please connect your account and select workspace',
           };
         }
-        const respone = await httpClient.sendRequest<{
-          projects: RetableProject[];
+
+        const response = await httpClient.sendRequest<{
+          data: {
+            projects: RetableProject[];
+          };
         }>({
           method: HttpMethod.GET,
-          url: `${retableCommon.baseUrl}/workspace/${workspaceId}/project`,
+          url: `${retableCommon.baseUrl}/workspace/${
+            workspace_id as string
+          }/project`,
           headers: {
             ApiKey: auth as string,
           },
         });
         return {
           disabled: false,
-          options: respone.body.projects.map((project) => {
+          options: response.body.data.projects.map((project) => {
             return {
               label: project.name,
               value: project.id,
@@ -83,31 +86,35 @@ export const retableCommon = {
         };
       },
     }),
-  reatbleId: (required = true) =>
+  retable_id: (required = true) =>
     Property.Dropdown({
       displayName: 'Retable',
       required,
-      refreshers: ['projectId'],
-      options: async ({ auth, projectId }) => {
-        if (!auth || !projectId) {
+      refreshers: ['project_id'],
+      options: async ({ auth, project_id }) => {
+        if (!auth || !project_id) {
           return {
             disabled: true,
             options: [],
             placeholder: 'Please connect your account and select project',
           };
         }
-        const respone = await httpClient.sendRequest<{
-          retables: RetableTable[];
+        const response = await httpClient.sendRequest<{
+          data: {
+            retables: RetableTable[];
+          };
         }>({
           method: HttpMethod.GET,
-          url: `${retableCommon.baseUrl}/project/${projectId}/retable`,
+          url: `${retableCommon.baseUrl}/project/${
+            project_id as string
+          }/retable`,
           headers: {
             ApiKey: auth as string,
           },
         });
         return {
           disabled: false,
-          options: respone.body.retables.map((retable) => {
+          options: response.body.data.retables.map((retable) => {
             return {
               label: retable.title,
               value: retable.id,
@@ -120,9 +127,9 @@ export const retableCommon = {
     Property.DynamicProperties({
       displayName: 'Fields',
       required,
-      refreshers: ['retableId'],
-      props: async ({ auth, retableId }) => {
-        if (!auth || !retableId) {
+      refreshers: ['retable_id'],
+      props: async ({ auth, retable_id }) => {
+        if (!auth || !retable_id) {
           return {
             disabled: true,
             options: [],
@@ -130,22 +137,27 @@ export const retableCommon = {
           };
         }
         const fields: DynamicPropsValue = {};
-        const retable = await httpClient.sendRequest<RetableTable>({
+        const retable = await httpClient.sendRequest<{ data: RetableTable }>({
           method: HttpMethod.GET,
-          url: `${retableCommon.baseUrl}/retable/${retableId}`,
+          url: `${retableCommon.baseUrl}/retable/${retable_id}`,
           headers: {
             ApiKey: auth as unknown as string,
           },
         });
-        retable.body.columns.map((field: RetableField) => {
-          const params = {
-            displayName: field.title,
-            description: ['calender'].includes(field.type)
-              ? `${field.type ? field.type : ''}Expected format: mmmm d,yyyy`
-              : field.type,
-            required: false,
-          };
-          fields[field.column_id] = RetableFieldMapping[field.type](params);
+        retable.body.data.columns.forEach((field: RetableField) => {
+          if (!RetableNotSupportedFields.includes(field.type)) {
+            const params = {
+              displayName: field.title,
+              required: false,
+            };
+            if (isNil(RetableFieldMapping[field.type])) {
+              fields[field.column_id] = Property.ShortText({
+                ...params,
+              });
+            } else {
+              fields[field.column_id] = RetableFieldMapping[field.type](params);
+            }
+          }
         });
         return fields;
       },

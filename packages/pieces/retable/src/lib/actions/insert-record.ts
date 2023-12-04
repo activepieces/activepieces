@@ -8,11 +8,11 @@ export const retableCreateRecordAction = createAction({
   auth: retableAuth,
   name: 'retable_create_record',
   displayName: 'Create Retable Record',
-  description: 'Adds a record into a retable',
+  description: 'Add a record into a retable',
   props: {
-    workspace_id: retableCommon.workspaceId(),
-    project_id: retableCommon.projectId(),
-    retable_id: retableCommon.reatbleId(),
+    workspace_id: retableCommon.workspace_id(),
+    project_id: retableCommon.project_id(),
+    retable_id: retableCommon.retable_id(),
     fields: retableCommon.fields(),
   },
   async run(context) {
@@ -22,12 +22,8 @@ export const retableCreateRecordAction = createAction({
       .map(([column_id, cell_value]) => {
         if (cell_value !== '') {
           return {
-            columns: [
-              {
-                column_id,
-                cell_value,
-              },
-            ],
+            column_id,
+            cell_value,
           };
         }
         return null; // Skip empty cell values
@@ -41,7 +37,7 @@ export const retableCreateRecordAction = createAction({
         ApiKey: context.auth as string,
       },
       body: {
-        data: outputData,
+        data: [{ columns: outputData }],
       },
     });
   },
