@@ -8,7 +8,7 @@ export const retableCreateRecordAction = createAction({
   auth: retableAuth,
   name: 'retable_create_record',
   displayName: 'Create Retable Record',
-  description: 'Add a record into a retable',
+  description: 'Adds a record into a retable',
   props: {
     workspace_id: retableCommon.workspace_id(),
     project_id: retableCommon.project_id(),
