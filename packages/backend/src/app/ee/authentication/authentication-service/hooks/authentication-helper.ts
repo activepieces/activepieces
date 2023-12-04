@@ -1,21 +1,22 @@
-import { Platform, PlatformId } from '@activepieces/ee-shared'
-import { PrincipalType, Project, isNil, User, ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { Platform, PlatformId, ProjectMemberStatus } from '@activepieces/ee-shared'
+import { PrincipalType, Project, isNil, User, ActivepiecesError, ErrorCode, ApEdition } from '@activepieces/shared'
 import { platformService } from '../../../platform/platform.service'
 import { accessTokenManager } from '../../../../authentication/lib/access-token-manager'
 import { projectMemberService } from '../../../project-members/project-member.service'
 import { projectService } from '../../../../project/project-service'
+import { getEdition } from '../../../../helper/secret-helper'
+import { userService } from '../../../../user/user-service'
 
-
-async function getProjectForUserOrThrow(userId: string): Promise<Project> {
-    const invitedProject = await getProjectMemberOrThrow(userId)
+async function getProjectForUserOrThrow(user: User): Promise<Project> {
+    const invitedProject = await getProjectMemberOrThrow(user)
     if (isNil(invitedProject)) {
-        const ownerProject = await projectService.getUserProject(userId)
+        const ownerProject = await projectService.getUserProject(user.id)
         if (isNil(ownerProject)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
                     entityType: 'project',
-                    message: `no projects found for the user=${userId}`,
+                    message: `no projects found for the user=${user.id}`,
                 },
             })
         }
@@ -24,8 +25,8 @@ async function getProjectForUserOrThrow(userId: string): Promise<Project> {
     return invitedProject
 }
 
-const getProjectMemberOrThrow = async (userId: string): Promise<Project | null> => {
-    const platformProjects = await projectMemberService.listByUserId(userId)
+const getProjectMemberOrThrow = async (user: User): Promise<Project | null> => {
+    const platformProjects = await projectMemberService.listByUser(user)
 
     if (platformProjects.length === 0) {
         return null
@@ -63,9 +64,23 @@ type PopulateTokenWithPlatformInfoParams = {
     project: Project
 }
 
+async function autoVerifyUserIfEligible(user: User): Promise<User> {
+    const edition = getEdition()
+    if (edition === ApEdition.ENTERPRISE) {
+        return userService.verify({ id: user.id })
+    }
+    const projects = await projectMemberService.listByUser(user)
+    const activeInAnyProject = !isNil(projects.find(f => f.status === ProjectMemberStatus.ACTIVE))
+    if (activeInAnyProject) {
+        return userService.verify({
+            id: user.id,
+        })
+    }
+    return user
+}
 
 async function getProjectAndTokenOrThrow(user: User): Promise<{ project: Project, token: string }> {
-    const project = await getProjectForUserOrThrow(user.id)
+    const project = await getProjectForUserOrThrow(user)
     return {
         project,
         token: await populateTokenWithPlatformInfo({ user, project }),
@@ -74,4 +89,5 @@ async function getProjectAndTokenOrThrow(user: User): Promise<{ project: Project
 
 export const authenticationHelper = {
     getProjectAndTokenOrThrow,
+    autoVerifyUserIfEligible,
 }

@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '@activepieces/ui/common';
 import {
   AcceptInvitationRequest,
+  AcceptProjectResponse,
   ListProjectMembersRequest,
   ProjectMember,
   SendInvitationRequest,
@@ -16,8 +17,8 @@ import { SeekPage } from '@activepieces/shared';
 export class ProjectMemberService {
   constructor(private http: HttpClient) {}
 
-  accept(request: AcceptInvitationRequest): Observable<void> {
-    return this.http.post<void>(
+  accept(request: AcceptInvitationRequest): Observable<AcceptProjectResponse> {
+    return this.http.post<AcceptProjectResponse>(
       environment.apiUrl + '/project-members/accept',
       request
     );

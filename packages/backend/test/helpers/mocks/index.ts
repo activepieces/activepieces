@@ -109,12 +109,12 @@ export const createProjectMember = (projectMember: Partial<ProjectMember>): Proj
     return {
         id: projectMember.id ?? apId(),
         email: projectMember.email ?? faker.internet.email(),
+        platformId: projectMember.platformId ?? apId(),
         projectId: projectMember.projectId ?? apId(),
         role: projectMember.role ?? faker.helpers.enumValue(ProjectMember.Role),
         status: projectMember.status ?? faker.helpers.enumValue(ProjectMember.Status),
         created: projectMember.created ?? faker.date.recent().toISOString(),
         updated: projectMember.updated ?? faker.date.recent().toISOString(),
-        userId: projectMember.userId ?? apId(),
     }
 }
 

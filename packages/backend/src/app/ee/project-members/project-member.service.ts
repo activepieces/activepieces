@@ -1,20 +1,16 @@
-import {
-    ProjectMemberEntity,
-    ProjectMemberSchema,
-} from './project-member.entity'
+import { ProjectMemberEntity, ProjectMemberSchema } from './project-member.entity'
 import { databaseConnection } from '../../database/database-connection'
 import { userService } from '../../user/user-service'
-import { logger } from '../../helper/logger'
 import {
     ActivepiecesError,
     ApEdition,
     Cursor,
     ErrorCode,
+    Principal,
     ProjectId,
     SeekPage,
     User,
     UserId,
-    UserStatus,
     apId,
     isNil,
 } from '@activepieces/shared'
@@ -31,77 +27,74 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { projectService } from '../../project/project-service'
 import { emailService } from '../helper/email/email-service'
 import { projectMembersLimit } from '../billing/limits/members-limit'
+import dayjs from 'dayjs'
+import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { getEdition } from '../../helper/secret-helper'
+import { IsNull } from 'typeorm'
 
 const projectMemberRepo = databaseConnection.getRepository(ProjectMemberEntity)
 
 export const projectMemberService = {
-    async countTeamMembersIncludingOwner(projectId: ProjectId): Promise<number> {
-        return await projectMemberRepo.countBy({
-            projectId,
-        }) + 1
-    },
-
-    async send({ platformId, projectId, email, role }: SendParams): Promise<ProjectMember> {
+    async upsert({ platformId, email, projectId, role, status }: UpsertParams): Promise<ProjectMember> {
         await projectMembersLimit.limit({
             projectId,
         })
-        const invitedUser = await createOrGetUser({
+
+        const projectMember: NewProjectMember = {
+            id: apId(),
+            updated: dayjs().toISOString(),
+            email,
+            platformId,
+            projectId,
+            role,
+            status: status ?? getStatusFromEdition(),
+        }
+
+        const upsertResult = await projectMemberRepo.upsert(projectMember, ['projectId', 'email', 'platformId'])
+
+        return {
+            ...projectMember,
+            created: upsertResult.generatedMaps[0].created,
+        }
+    },
+
+    async upsertAndSend({ platformId, projectId, email, role }: SendParams): Promise<UpsertAndSendResponse> {
+        const projectMember = await this.upsert({
             platformId,
             email,
+            projectId,
+            role,
         })
 
-        logger.info({ name: 'ProjectMemberService#send', platformId, projectId, email, role })
-
-        const invitationId = apId()
-        await projectMemberRepo.upsert(
-            {
-                id: invitationId,
-                userId: invitedUser.id,
-                projectId,
-                role,
-                status: getStatusFromEdition(),
-            },
-            ['projectId', 'userId'],
-        )
-        const member = await projectMemberRepo.findOneByOrFail({
-            id: invitationId,
-        })
         await emailService.sendInvitation({
-            invitationId,
+            invitationId: projectMember.id,
             projectId,
             email,
         })
 
+        const invitationToken = await accessTokenManager.generateToken({
+            id: projectMember.id,
+        } as Principal)
+
         return {
-            ...member,
-            email,
+            projectMember,
+            invitationToken,
         }
     },
 
-    async accept(invitationId: string): Promise<ProjectMemberSchema> {
-        const projectMember = await projectMemberRepo.findOneBy({
-            id: invitationId,
-        })
-        if (isNil(projectMember)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    message: `Invitation Id ${invitationId} is not found`,
-                },
-            })
-        }
-        await projectMemberRepo.update(projectMember.id, {
+    async accept({ invitationToken }: AcceptParams): Promise<ProjectMember> {
+        const { id: projectMemberId } = await getByInvitationTokenOrThrow(invitationToken)
+        const projectMember = await getOrThrow(projectMemberId)
+
+        await projectMemberRepo.update(projectMemberId, {
             status: ProjectMemberStatus.ACTIVE,
-        })
-        await userService.verify({
-            id: projectMember.userId,
         })
         return {
             ...projectMember,
             status: ProjectMemberStatus.ACTIVE,
         }
     },
+
     async list(
         projectId: ProjectId,
         cursorRequest: Cursor | null,
@@ -122,29 +115,23 @@ export const projectMemberService = {
             .where({ projectId })
         const { data, cursor } = await paginator.paginate(queryBuilder)
         const projectMembers: ProjectMember[] = []
-        const project = (await projectService.getOne(projectId))!
+        const project = await projectService.getOneOrThrow(projectId)
         const owner = await userService.getMetaInfo({
             id: project.ownerId,
         })
+
         projectMembers.push({
             id: apId(),
-            userId: project.ownerId,
             email: owner!.email,
+            platformId: project.platformId ?? null,
             projectId,
             status: ProjectMemberStatus.ACTIVE,
             created: project.created,
             role: ProjectMemberRole.ADMIN,
             updated: project.updated,
         })
-        for (const member of data) {
-            const usermeta = await userService.getMetaInfo({
-                id: member.userId,
-            })
-            projectMembers.push({
-                ...member,
-                email: usermeta!.email,
-            })
-        }
+
+        projectMembers.push(...data)
         return paginationHelper.createPage<ProjectMember>(projectMembers, cursor)
     },
     async getRole({ userId, projectId }: { projectId: ProjectId, userId: UserId }): Promise<ProjectMemberRole | null> {
@@ -152,17 +139,20 @@ export const projectMemberService = {
         if (project?.ownerId === userId) {
             return ProjectMemberRole.ADMIN
         }
+        const user = await userService.getMetaInfo({
+            id: userId,
+        })
         const member = await projectMemberRepo.findOneBy({
             projectId,
-            userId,
+            email: user?.email,
+            platformId: isNil(user?.platformId) ? IsNull() : user?.platformId,
         })
         return member?.role ?? null
     },
-    async listByUserId(userId: UserId): Promise<ProjectMemberSchema[]> {
-        return projectMemberRepo.find({
-            where: {
-                userId,
-            },
+    async listByUser(user: User): Promise<ProjectMemberSchema[]> {
+        return projectMemberRepo.findBy({
+            email: user.email,
+            platformId: isNil(user.platformId) ? IsNull() : user.platformId,
         })
     },
     async delete(
@@ -172,17 +162,16 @@ export const projectMemberService = {
         await projectMemberRepo.delete({ projectId, id: invitationId })
     },
 
-    async add({ userId, projectId, role, status }: AddParams): Promise<ProjectMemberSchema> {
-        const newProjectMember: NewProjectMember = {
-            id: apId(),
-            userId,
+    async countTeamMembersIncludingOwner(projectId: ProjectId): Promise<number> {
+        return await projectMemberRepo.countBy({
             projectId,
-            role,
-            status,
-        }
-
-        return projectMemberRepo.save(newProjectMember)
+        }) + 1
     },
+}
+
+async function getByInvitationTokenOrThrow(invitationToken: string): Promise<ProjectMember> {
+    const { id: projectMemberId } = await accessTokenManager.extractPrincipal(invitationToken) as ProjectMemberToken
+    return getOrThrow(projectMemberId)
 }
 
 function getStatusFromEdition(): ProjectMemberStatus {
@@ -197,39 +186,47 @@ function getStatusFromEdition(): ProjectMemberStatus {
     }
 }
 
-const createOrGetUser = async ({ platformId, email }: CreateOrGetUserParams): Promise<User> => {
-    const user = await userService.getByPlatformAndEmail({
-        platformId,
-        email,
+const getOrThrow = async (id: string): Promise<ProjectMember> => {
+    const projectMember = await projectMemberRepo.findOneBy({
+        id,
     })
 
-    return user ?? await userService.create({
-        email,
-        password: apId(),
-        firstName: 'Unknown',
-        lastName: 'Unknown',
-        newsLetter: false,
-        trackEvents: true,
-        status: UserStatus.INVITED,
-        platformId,
-    })
+    if (isNil(projectMember)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: {
+                message: `Project Member Id ${id} is not found`,
+            },
+        })
+    }
+
+    return projectMember
 }
 
-type AddParams = {
-    userId: UserId
+type UpsertParams = {
+    email: string
+    platformId: PlatformId | null
     projectId: ProjectId
     role: ProjectMemberRole
-    status: ProjectMemberStatus
+    status?: ProjectMemberStatus
 }
 
-type NewProjectMember = Omit<ProjectMember, 'created' | 'updated' | 'email'>
+type NewProjectMember = Omit<ProjectMember, 'created'>
 
 type SendParams = SendInvitationRequest & {
     projectId: ProjectId
     platformId: PlatformId | null
 }
 
-type CreateOrGetUserParams = {
-    platformId: PlatformId | null
-    email: string
+type AcceptParams = {
+    invitationToken: string
+}
+
+type ProjectMemberToken = {
+    id: string
+}
+
+type UpsertAndSendResponse = {
+    projectMember: ProjectMember
+    invitationToken: string
 }

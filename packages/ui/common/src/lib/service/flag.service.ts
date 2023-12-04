@@ -44,7 +44,7 @@ export class FlagService {
   isFirstSignIn() {
     return this.getAllFlags().pipe(
       map((value) => {
-        return !value['USER_CREATED'];
+        return !value[ApFlagId.USER_CREATED];
       })
     );
   }

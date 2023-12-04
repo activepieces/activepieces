@@ -6,16 +6,12 @@ import { otpService } from '../../../otp/otp-service'
 import { referralService } from '../../../referrals/referral.service'
 import { authenticationHelper } from './authentication-helper'
 import { projectService } from '../../../../project/project-service'
-import { ProjectType, isNil } from '@activepieces/shared'
+import { ProjectType, UserStatus, isNil } from '@activepieces/shared'
 
 export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
     async postSignUp({ user, referringUserId }) {
 
-        await otpService.createAndSend({
-            platformId: user.platformId,
-            email: user.email,
-            type: OtpType.EMAIL_VERIFICATION,
-        })
+
         if (isNil(user.platformId)) {
             await projectService.create({
                 displayName: `${user.firstName}'s Project`,
@@ -30,9 +26,19 @@ export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
                 referredUserId: user.id,
             })
         }
+
+        const updatedUser = await authenticationHelper.autoVerifyUserIfEligible(user)
         const { project, token } = await authenticationHelper.getProjectAndTokenOrThrow(user)
+
+        if (updatedUser.status !== UserStatus.VERIFIED) {
+            await otpService.createAndSend({
+                platformId: updatedUser.platformId,
+                email: updatedUser.email,
+                type: OtpType.EMAIL_VERIFICATION,
+            })
+        }
         return {
-            user,
+            user: updatedUser,
             project,
             token,
         }
