@@ -68,8 +68,11 @@ export class ProjectMembersTableComponent implements OnInit {
 
         // Check if the current user is an admin
         const isAdmin =
-          members.data.find((member) => currentUser.id === member.userId)
-            ?.role === ProjectMemberRole.ADMIN;
+          members.data.find(
+            (member) =>
+              currentUser.email === member.email &&
+              member.platformId === currentUser.platformId
+          )?.role === ProjectMemberRole.ADMIN;
 
         // Check if the current user is the project owner
         const isOwner = currentUser.id === ownerId;

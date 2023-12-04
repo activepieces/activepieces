@@ -717,6 +717,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "pfernandez98",
+      "name": "pfernandez98",
+      "avatar_url": "https://avatars.githubusercontent.com/u/54374282?v=4",
+      "profile": "https://github.com/pfernandez98",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

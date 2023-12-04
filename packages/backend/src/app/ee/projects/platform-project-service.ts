@@ -1,5 +1,5 @@
 import { ActivepiecesError, ErrorCode, Project, ProjectId, ProjectType, UserId, isNil } from '@activepieces/shared'
-import { Equal, In } from 'typeorm'
+import { Equal, In, IsNull } from 'typeorm'
 import { PlatformId, ProjectMemberStatus, ProjectWithUsageAndPlan, UpdateProjectPlatformRequest } from '@activepieces/ee-shared'
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
 import { ProjectEntity } from '../../project/project-entity'
@@ -7,14 +7,17 @@ import { databaseConnection } from '../../database/database-connection'
 import { plansService } from '../billing/project-plan/project-plan.service'
 import { projectUsageService } from '../billing/project-usage/project-usage-service'
 import { platformService } from '../platform/platform.service'
+import { userService } from '../../user/user-service'
 
 const projectRepo = databaseConnection.getRepository(ProjectEntity)
 const projectMemberRepo = databaseConnection.getRepository(ProjectMemberEntity)
 
 export const platformProjectService = {
     async getAll({ ownerId, platformId }: { ownerId: UserId, platformId?: PlatformId }): Promise<ProjectWithUsageAndPlan[]> {
+        const user = await userService.getMetaInfo({ id: ownerId })
         const idsOfProjects = (await projectMemberRepo.findBy({
-            userId: ownerId,
+            email: user?.email,
+            platformId: isNil(user?.platformId) ? IsNull() : Equal(user?.platformId),
             status: Equal(ProjectMemberStatus.ACTIVE),
         })).map(member => member.projectId)
         const extraFilter = isNil(platformId) ? {} : { platformId: Equal(platformId) }

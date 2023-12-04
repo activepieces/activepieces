@@ -60,14 +60,15 @@ const getOrCreateUser = async (params: GetOrCreateUserParams): Promise<GetOrCrea
         lastName: externalLastName,
         trackEvents: true,
         newsLetter: true,
-        status: UserStatus.CREATED,
+        status: UserStatus.VERIFIED,
         externalId: externalUserId,
         platformId,
     })
 
-    await projectMemberService.add({
+    await projectMemberService.upsert({
         projectId: project.id,
-        userId: newUser.id,
+        email: newUser.email,
+        platformId,
         role: ProjectMemberRole.EDITOR,
         status: ProjectMemberStatus.ACTIVE,
     })

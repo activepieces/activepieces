@@ -221,4 +221,3 @@ type SendOtpEmailParams = {
     user: User
 }
 
-

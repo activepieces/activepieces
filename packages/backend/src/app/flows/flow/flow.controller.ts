@@ -91,7 +91,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (fastify) => {
                 Querystring: CountFlowsRequest
             }>,
         ) => {
-            return flowService.count({ ...request.query, projectId: request.principal.projectId })
+            return flowService.count({ folderId: request.query.folderId, projectId: request.principal.projectId })
         },
     )
 
