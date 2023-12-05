@@ -37,7 +37,7 @@ describe('API Key API', () => {
 
             const mockApiKeyName = faker.lorem.word()
             const response = await app?.inject({
-            method: 'POST',
+                method: 'POST',
                 url: '/v1/api-keys',
                 body: {
                     displayName: mockApiKeyName,

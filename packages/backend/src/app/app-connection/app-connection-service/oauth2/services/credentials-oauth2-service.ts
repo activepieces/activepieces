@@ -1,5 +1,5 @@
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
-import { ActivepiecesError, AppConnectionType, BaseOAuth2ConnectionValue, ErrorCode, OAuth2ConnectionValueWithApp, isNil } from '@activepieces/shared'
+import { ActivepiecesError, AppConnectionType, BaseOAuth2ConnectionValue, ErrorCode, OAuth2ConnectionValueWithApp, OAuth2GrantType, isNil } from '@activepieces/shared'
 import axios from 'axios'
 import { oauth2Util } from '../oauth2-util'
 import { logger } from '../../../../helper/logger'
@@ -14,10 +14,18 @@ export const credentialsOauth2Service: OAuth2Service<OAuth2ConnectionValueWithAp
 
 async function claim({ request }: ClaimOAuth2Request): Promise<OAuth2ConnectionValueWithApp> {
     try {
+        const grantType = request.grantType ?? OAuth2GrantType.AUTHORIZATION_CODE
         const body: Record<string, string> = {
-            redirect_uri: request.redirectUrl!,
-            grant_type: 'authorization_code',
-            code: request.code,
+            grant_type: grantType,
+        }
+        switch (grantType) {
+            case OAuth2GrantType.AUTHORIZATION_CODE: {
+                body.redirect_uri = request.redirectUrl!
+                body.code = request.code
+                break
+            }
+            case OAuth2GrantType.CLIENT_CREDENTIALS:
+                break
         }
         if (request.codeVerifier) {
             body.code_verifier = request.codeVerifier
@@ -52,6 +60,7 @@ async function claim({ request }: ClaimOAuth2Request): Promise<OAuth2ConnectionV
             client_id: request.clientId,
             client_secret: request.clientSecret!,
             redirect_url: request.redirectUrl!,
+            grant_type: grantType,
             authorization_method: authorizationMethod,
         }
     }
@@ -62,7 +71,7 @@ async function claim({ request }: ClaimOAuth2Request): Promise<OAuth2ConnectionV
             params: {
                 clientId: request.clientId,
                 tokenUrl: request.tokenUrl,
-                redirectUrl: request.redirectUrl!,
+                redirectUrl: request.redirectUrl ?? '',
             },
         })
     }
@@ -77,10 +86,21 @@ async function refresh(
     if (!oauth2Util.isExpired(appConnection)) {
         return appConnection
     }
-    const body: Record<string, string> = {
-        grant_type: 'refresh_token',
-        refresh_token: appConnection.refresh_token,
+    const body: Record<string, string> = {}
+    switch (connectionValue.grant_type) {
+        case OAuth2GrantType.AUTHORIZATION_CODE: { 
+            body.grant_type = 'refresh_token'
+            body.refresh_token = appConnection.refresh_token
+            break
+        }
+        case OAuth2GrantType.CLIENT_CREDENTIALS: {
+            body.grant_type = connectionValue.grant_type
+            break
+        }
+        default:
+            throw new Error(`Unknown grant type: ${connectionValue.grant_type}`)
     }
+
     const headers: Record<string, string> = {
         'content-type': 'application/x-www-form-urlencoded',
         accept: 'application/json',
