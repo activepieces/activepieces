@@ -81,7 +81,7 @@ describe('OAuth App API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
 
         it('Fails if user is not platform owner', async () => {
@@ -270,5 +270,5 @@ describe('OAuth App API', () => {
         })
     })
 
-    
+
 })

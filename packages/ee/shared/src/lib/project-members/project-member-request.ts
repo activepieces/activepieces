@@ -6,19 +6,20 @@ export const AcceptInvitationRequest = Type.Object({
 })
 export type AcceptInvitationRequest = Static<typeof AcceptInvitationRequest>;
 
-export const SendInvitationRequest = Type.Object({
+export const AddProjectMemberRequestBody = Type.Object({
     email: Type.String(),
     role: Type.Enum(ProjectMemberRole),
+    activateMembership: Type.Optional(Type.Boolean()),
 });
 
-export type SendInvitationRequest = Static<typeof SendInvitationRequest>;
+export type AddProjectMemberRequestBody = Static<typeof AddProjectMemberRequestBody>;
 
-export const ListProjectMembersRequest = Type.Object({
+export const ListProjectMembersRequestQuery = Type.Object({
     cursor: Type.Optional(Type.String()),
     limit: Type.Optional(Type.Number()),
 });
 
-export type ListProjectMembersRequest = Static<typeof ListProjectMembersRequest>;
+export type ListProjectMembersRequestQuery = Static<typeof ListProjectMembersRequestQuery>;
 
 export const AcceptProjectResponse = Type.Object({
     registered: Type.Boolean(),
