@@ -29,7 +29,7 @@ export class FlowDrawer {
     y: 0,
     content: null,
   }).center('bottom');
-  constructor({
+  private constructor({
     svg = SvgDrawer.empty(),
     steps = [],
     buttons = [],

@@ -21,6 +21,9 @@ import {
 import { Position } from './step-card';
 
 export class BranchDrawer {
+  private constructor() {
+    throw new Error('BranchDrawer is not meant to be instantiated');
+  }
   static handleBranchAction(branchStep: BranchAction): FlowDrawer {
     let resultDrawer = FlowDrawer.construct(undefined);
     const actions = [branchStep.onSuccessAction, branchStep.onFailureAction];

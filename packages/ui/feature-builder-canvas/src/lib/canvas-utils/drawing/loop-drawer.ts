@@ -19,6 +19,9 @@ import { SvgDrawer, drawLineComponentWithButton } from './svg-drawer';
 import { Position } from './step-card';
 
 export class LoopDrawer {
+  private constructor() {
+    throw new Error('LoopDrawer is not meant to be instantiated');
+  }
   static handleLoopAction(step: LoopOnItemsAction) {
     const firstChildActionDrawer = FlowDrawer.construct(step.firstLoopAction);
     const xPositionOfFirstChildAction =
