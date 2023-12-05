@@ -33,6 +33,9 @@ export const userService = {
     async get({ id }: IdParams): Promise<User | null> {
         return userRepo.findOneBy({ id })
     },
+    async getOneOrFail({ id }: IdParams): Promise<User> {
+        return userRepo.findOneByOrFail({ id })
+    },
 
     async getMetaInfo({ id }: IdParams): Promise<UserMeta | null> {
         const user = await this.get({ id })
