@@ -123,6 +123,8 @@ const waitForRunToComplete = async (run: FlowRun) => {
 
     while (run.status === ExecutionOutputStatus.RUNNING) {
         if (Date.now() - startTime >= POLLING_TIMEOUT_MS) {
+            run.status = ExecutionOutputStatus.TIMEOUT
+            run.terminationReason = RunTerminationReason.WEBHOOK_TIMEOUT_EXCEEDED
             break
         }
 
@@ -153,18 +155,25 @@ const getResponseForStoppedRun = async (run: FlowRun, reply: FastifyReply) => {
 
     const flowLogs: StopExecutionOutput = JSON.parse(logs.data.toString())
 
-    await reply
-        .status(flowLogs.stopResponse?.status ?? StatusCodes.OK)
-        .headers(flowLogs.stopResponse?.headers ?? {})
-        .send(flowLogs.stopResponse?.body)
+    if (flowLogs.status === ExecutionOutputStatus.FAILED) {
+        await reply
+            .status(StatusCodes.INTERNAL_SERVER_ERROR)
+            .send(flowLogs.errorMessage)
+    }
+    else {
+        await reply
+            .status(flowLogs.stopResponse?.status ?? StatusCodes.OK)
+            .headers(flowLogs.stopResponse?.headers ?? {})
+            .send(flowLogs.stopResponse?.body)
+    }
 }
 
 const handleExecutionOutputStatus = async (run: FlowRun, reply: FastifyReply) => {
-    if (run.status === ExecutionOutputStatus.SUCCEEDED && run.terminationReason === RunTerminationReason.STOPPED_BY_HOOK) {
-        await getResponseForStoppedRun(run, reply)
+    if (run.status === ExecutionOutputStatus.TIMEOUT) {
+        await reply.status(StatusCodes.REQUEST_TIMEOUT).send()
     }
     else {
-        await reply.status(StatusCodes.NO_CONTENT).send()
+        await getResponseForStoppedRun(run, reply)
     }
 }
 
