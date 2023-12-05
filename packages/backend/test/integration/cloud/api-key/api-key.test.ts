@@ -37,7 +37,7 @@ describe('API Key API', () => {
 
             const mockApiKeyName = faker.lorem.word()
             const response = await app?.inject({
-                method: 'POST',
+            method: 'POST',
                 url: '/v1/api-keys',
                 body: {
                     displayName: mockApiKeyName,
@@ -128,7 +128,7 @@ describe('API Key API', () => {
     })
 
 
-    describe('Delete Signing Key endpoint', () => {
+    describe('Delete API Key endpoint', () => {
         it('Fail if non owner', async () => {
             // arrange
             const mockUser = createMockUser()
@@ -153,7 +153,7 @@ describe('API Key API', () => {
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/signing-keys/${mockApiKey.id}`,
+                url: `/v1/api-keys/${mockApiKey.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -165,7 +165,7 @@ describe('API Key API', () => {
     })
 
 
-    describe('List Signing Keys endpoint', () => {
+    describe('List API Keys endpoint', () => {
         it('Filters Signing Keys by platform', async () => {
             // arrange
             const mockUserOne = createMockUser()

@@ -82,7 +82,7 @@ async function getAPIKeyPrincipal(rawToken: string, request: FastifyRequest): Pr
 
     return {
         id: apiKey.id,
-        type: PrincipalType.API_KEY,
+        type: PrincipalType.SERVICE,
         projectId: project.id,
         projectType: ProjectType.PLATFORM_MANAGED,
         platform: {
