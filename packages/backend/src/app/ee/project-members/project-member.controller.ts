@@ -1,11 +1,12 @@
 import { ListProjectMembersRequestQuery, AcceptProjectResponse, AddProjectMemberRequestBody } from '@activepieces/ee-shared'
-import { isNil } from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { StatusCodes } from 'http-status-codes'
 import { logger } from '../../helper/logger'
 import { userService } from '../../user/user-service'
 import { projectMemberService } from './project-member.service'
+import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 
 const DEFAULT_LIMIT_SIZE = 10
 
@@ -57,6 +58,22 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (app) =>
             request.params.id,
         )
     })
+
+    app.delete('/', DeleteProjectMemberByUserExternalIdRequest, async (request, response) => {
+        await platformMustBeOwnedByCurrentUser.call(app, request, response)
+
+        const projectId = request.principal.projectId
+        const platformId = request.principal.platform?.id
+        const userExternalId = request.query.userExternalId
+
+        assertNotNullOrUndefined(platformId, 'platformId')
+
+        await projectMemberService.deleteByUserExternalId({
+            userExternalId,
+            platformId,
+            projectId,
+        })
+    })
 }
 
 const ListProjectMembersRequestQueryOptions = {
@@ -86,6 +103,14 @@ const DeleteProjectMemberRequest = {
     schema: {
         params: Type.Object({
             id: Type.String(),
+        }),
+    },
+}
+
+const DeleteProjectMemberByUserExternalIdRequest = {
+    schema: {
+        querystring: Type.Object({
+            userExternalId: Type.String(),
         }),
     },
 }
