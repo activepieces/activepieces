@@ -6,6 +6,7 @@ import { otpService } from '../../../otp/otp-service'
 import { referralService } from '../../../referrals/referral.service'
 import { authenticationHelper } from './authentication-helper'
 import { projectService } from '../../../../project/project-service'
+import { userService } from '../../../../user/user-service'
 import { ProjectType, UserStatus, isNil } from '@activepieces/shared'
 
 export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
@@ -27,7 +28,8 @@ export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
             })
         }
 
-        const updatedUser = await authenticationHelper.autoVerifyUserIfEligible(user)
+        await authenticationHelper.autoVerifyUserIfEligible(user)
+        const updatedUser = await userService.getOneOrFail({ id: user.id })
         const { project, token } = await authenticationHelper.getProjectAndTokenOrThrow(user)
 
         if (updatedUser.status !== UserStatus.VERIFIED) {
@@ -38,7 +40,7 @@ export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
             })
         }
         return {
-            user: updatedUser,
+            user: await userService.getOneOrFail({ id: user.id }),
             project,
             token,
         }
