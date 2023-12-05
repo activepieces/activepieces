@@ -1,9 +1,10 @@
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
-import { ApId, assertNotNullOrUndefined } from '@activepieces/shared'
+import { ApId, SeekPage, assertNotNullOrUndefined } from '@activepieces/shared'
 import { apiKeyService } from './api-key-service'
-import { CreateApiKeyRequest } from '@activepieces/ee-shared'
+import { ApiKeyResponseWithoutValue, CreateApiKeyRequest } from '@activepieces/ee-shared'
 import { StatusCodes } from 'http-status-codes'
+import { ApiKeyResponseWithValue } from '@activepieces/ee-shared'
 
 export const apiKeyModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('onRequest', platformMustBeOwnedByCurrentUser)
@@ -22,10 +23,10 @@ export const apiKeyController: FastifyPluginAsyncTypebox = async (app) => {
             displayName: req.body.displayName,
         })
 
-        await res.status(StatusCodes.CREATED).send(newApiKey)
+        return res.status(StatusCodes.CREATED).send(newApiKey)
     })
 
-    app.get('/', {}, async (req) => {
+    app.get('/', ListRequest, async (req) => {
         const platformId = req.principal.platform?.id
         assertNotNullOrUndefined(platformId, 'platformId')
         return apiKeyService.list({
@@ -45,10 +46,20 @@ export const apiKeyController: FastifyPluginAsyncTypebox = async (app) => {
 }
 
 
+const ListRequest = {
+    schema: {
+        response: {
+            [StatusCodes.OK]: SeekPage(ApiKeyResponseWithoutValue),
+        },
+    },
+}
 
 const CreateRequest = {
     schema: {
         body: CreateApiKeyRequest,
+        response: {
+            [StatusCodes.CREATED]: ApiKeyResponseWithValue,
+        },
     },
 }
 

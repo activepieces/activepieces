@@ -1,5 +1,5 @@
-import { PlatformId, AddApiKeyResponse, ApiKey } from '@activepieces/ee-shared'
-import { SeekPage, UserId, assertNotNullOrUndefined, secureApId } from '@activepieces/shared'
+import { PlatformId, ApiKeyResponseWithValue, ApiKey } from '@activepieces/ee-shared'
+import { SeekPage, UserId, apId, assertNotNullOrUndefined, secureApId } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { ApiKeyEntity } from './api-key-entity'
 import { hashSHA256 } from '../../helper/crypto'
@@ -8,9 +8,10 @@ const API_KEY_TOKEN_LENGTH = 128
 const repo = databaseConnection.getRepository<ApiKey>(ApiKeyEntity)
 
 export const apiKeyService = {
-    async add({ userId, platformId, displayName }: AddParams): Promise<AddApiKeyResponse> {
+    async add({ userId, platformId, displayName }: AddParams): Promise<ApiKeyResponseWithValue> {
         const generatedApiKey = generateApiKey()
         const savedApiKey = await repo.save({
+            id: apId(),
             userId,
             platformId,
             displayName,
@@ -49,8 +50,8 @@ export const apiKeyService = {
 
 
 function generateApiKey() {
-    const randomString = secureApId(API_KEY_TOKEN_LENGTH)
-    const secretKey = `sk-${randomString}`
+    const secretValue = secureApId(API_KEY_TOKEN_LENGTH - 3)
+    const secretKey = `sk-${secretValue}`
     return {
         secret: secretKey,
         secretHashed: hashSHA256(secretKey),

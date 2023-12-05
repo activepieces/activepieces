@@ -11,9 +11,20 @@ export const ApiKey = Type.Object({
 
 export type ApiKey = Static<typeof ApiKey>
 
-export type AddApiKeyResponse = ApiKey & {
-    value: string
-}
+export const ApiKeyResponseWithValue = Type.Composite([
+    Type.Omit(ApiKey, ['hashedValue']),
+    Type.Object({
+        value: Type.String()
+    })
+])
+
+export type ApiKeyResponseWithValue = Static<typeof ApiKeyResponseWithValue>
+
+
+export const ApiKeyResponseWithoutValue = Type.Omit(ApiKey, ['hashedValue'])
+
+export type ApiKeyResponseWithoutValue = Static<typeof ApiKeyResponseWithoutValue>
+
 
 export const CreateApiKeyRequest = Type.Object({
     displayName: Type.String()
