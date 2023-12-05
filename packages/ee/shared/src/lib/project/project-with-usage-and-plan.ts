@@ -1,11 +1,11 @@
 
-import {  Static, Type } from '@sinclair/typebox'
+import { Static, Type } from '@sinclair/typebox'
 import { Project } from '@activepieces/shared';
 import { ProjectPlan, ProjectUsage } from '../billing'
 
-export const ProjectWithUsageAndPlan =  Type.Composite([Project,Type.Object({
-    plan:ProjectPlan,
+export const ProjectWithUsageAndPlanResponse = Type.Composite([Project, Type.Object({
+    plan: Type.Omit(ProjectPlan, ['stripeCustomerId']),
     usage: ProjectUsage
 })])
 
-export type ProjectWithUsageAndPlan = Static<typeof ProjectWithUsageAndPlan>
+export type ProjectWithUsageAndPlanResponse = Static<typeof ProjectWithUsageAndPlanResponse>

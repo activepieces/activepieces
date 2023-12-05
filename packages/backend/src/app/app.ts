@@ -26,7 +26,7 @@ import { stepFileModule } from './flows/step-file/step-file.module'
 import { chatbotModule } from './chatbot/chatbot.module'
 import { rbacAuthMiddleware } from './ee/authentication/rbac-auth-middleware'
 import { userModule } from './user/user.module'
-import { ApEdition, AppConnectionWithoutSensitiveData, Flow, Project } from '@activepieces/shared'
+import { ApEdition, AppConnectionWithoutSensitiveData, Flow } from '@activepieces/shared'
 import { appConnectionsHooks } from './app-connection/app-connection-service/app-connection-hooks'
 import { authenticationModule } from './authentication/authentication.module'
 import { chatbotHooks } from './chatbot/chatbot.hooks'
@@ -77,7 +77,7 @@ import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local
 import { billingModule } from './ee/billing/billing/billing.module'
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
 import fastifyFavicon from 'fastify-favicon'
-import { ProjectWithUsageAndPlan } from '@activepieces/ee-shared'
+import { ProjectWithUsageAndPlanResponse } from '@activepieces/ee-shared'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -107,7 +107,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             ],
             components: {
                 schemas: {
-                    'project': ProjectWithUsageAndPlan,
+                    'project': ProjectWithUsageAndPlanResponse,
                     'flow': Flow,
                     'app-connection': AppConnectionWithoutSensitiveData,
                 },

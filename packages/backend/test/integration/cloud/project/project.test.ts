@@ -65,9 +65,9 @@ describe('Project API', () => {
             // assert
             const responseBody = response?.json()
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(responseBody.length).toBe(2)
-            expect(responseBody[0].id).toEqual(mockProject.id)
-            expect(responseBody[1].id).toEqual(mockProject2.id)
+            expect(responseBody.data.length).toBe(2)
+            expect(responseBody.data[0].id).toEqual(mockProject.id)
+            expect(responseBody.data[1].id).toEqual(mockProject2.id)
         })
 
     })

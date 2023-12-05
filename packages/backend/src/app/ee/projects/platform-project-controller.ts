@@ -54,7 +54,7 @@ const platformProjectController: FastifyPluginCallbackTypebox = (fastify, _opts,
             const allProjects = await platformProjectService.getAll({
                 ownerId: request.principal.id,
             })
-            const project = allProjects.find((project) => project.id === request.params.projectId)
+            const project = allProjects.data.find((project) => project.id === request.params.projectId)
             if (!project) {
                 throw new ActivepiecesError({
                     code: ErrorCode.ENTITY_NOT_FOUND,

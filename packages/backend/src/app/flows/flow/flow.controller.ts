@@ -9,7 +9,6 @@ import {
     FlowVersionId,
     GetFlowQueryParamsRequest,
     ListFlowsRequest,
-    SeekPage,
 } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
@@ -147,12 +146,8 @@ export const flowController: FastifyPluginAsyncTypebox = async (fastify) => {
 
 const ListFlowByIdRequest = {
     schema: {
-        tags: ['flows'],
         description: 'List flows',
         querystring: ListFlowsRequest,
-        response: {
-            [StatusCodes.OK]: SeekPage(Flow),
-        },
     },
 }
 
