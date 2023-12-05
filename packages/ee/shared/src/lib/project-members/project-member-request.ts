@@ -19,3 +19,9 @@ export const ListProjectMembersRequest = Type.Object({
 });
 
 export type ListProjectMembersRequest = Static<typeof ListProjectMembersRequest>;
+
+export const AcceptProjectResponse = Type.Object({
+    registered: Type.Boolean(),
+});
+
+export type AcceptProjectResponse = Static<typeof AcceptProjectResponse>;

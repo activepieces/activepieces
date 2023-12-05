@@ -1,7 +1,7 @@
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { stripe, stripeHelper, stripeWebhookSecret } from './stripe-helper'
+import { stripeHelper, stripeWebhookSecret } from './stripe-helper'
 import { billingService } from './billing.service'
 import { UpgradeRequest } from '@activepieces/ee-shared'
 import Stripe from 'stripe'
@@ -74,6 +74,7 @@ const billingController: FastifyPluginAsyncTypebox = async (fastify) => {
 
 
 async function handleWebhook({ payload, signature }: { payload: string, signature: string }): Promise<void> {
+    const stripe = stripeHelper.getStripe()
     assertNotNullOrUndefined(stripe, 'Stripe is not configured')
     const webhook = stripe.webhooks.constructEvent(payload, signature, stripeWebhookSecret)
     const subscription = webhook.data.object as Stripe.Subscription

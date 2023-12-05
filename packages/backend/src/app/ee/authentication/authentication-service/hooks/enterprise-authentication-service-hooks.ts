@@ -29,22 +29,24 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
             type: ProjectType.STANDALONE,
         })
 
-        await platformService.add({
+        const platform = await platformService.add({
             ownerId: user.id,
             projectId: project.id,
             name: DEFAULT_PLATFORM_NAME,
         })
+
+        await userService.updatePlatformId({ id: user.id, platformId: platform.id })
 
         await flagService.save({
             id: ApFlagId.PLATFORM_CREATED,
             value: true,
         })
 
-        const verifiedUser = await userService.verify({ id: user.id })
+        const updatedUser = await authenticationHelper.autoVerifyUserIfEligible(user)
 
         const { project: updatedProject, token } = await authenticationHelper.getProjectAndTokenOrThrow(user)
         return {
-            user: verifiedUser,
+            user: updatedUser,
             project: updatedProject,
             token,
         }
