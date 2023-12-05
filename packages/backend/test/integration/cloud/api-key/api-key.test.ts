@@ -56,7 +56,7 @@ describe('API Key API', () => {
             expect(responseBody.hashedValue).toBeUndefined()
             expect(responseBody.displayName).toBe(mockApiKeyName)
             expect(responseBody.truncatedValue).toHaveLength(4)
-            expect(responseBody.value).toHaveLength(128)
+            expect(responseBody.value).toHaveLength(64)
             expect(responseBody.value).toContain('sk-')
         })
 

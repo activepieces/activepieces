@@ -88,6 +88,7 @@ import { AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822 } from '.
 import { MigrateEeUsersToOldestPlatform1701261357197 } from './migration/postgres/1701261357197-migrate-ee-users-to-oldest-platform'
 import { ModifyProjectMembersAndRemoveUserId1701647565290 } from './migration/postgres/1701647565290-ModifyProjectMembersAndRemoveUserId'
 import { AddApiKeys1701716639135 } from './migration/postgres/1701716639135-AddApiKeys'
+import { AddEmbeddingFeatureToPlatform1701794452891 } from './migration/postgres/1701794452891-AddEmbeddingFeatureToPlatform'
 
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -192,6 +193,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddStateToOtp1701084418793,
                 ModifyProjectMembersAndRemoveUserId1701647565290,
                 AddApiKeys1701716639135,
+                AddEmbeddingFeatureToPlatform1701794452891,
             )
             break
         case ApEdition.ENTERPRISE:
@@ -219,6 +221,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 MigrateEeUsersToOldestPlatform1701261357197,
                 ModifyProjectMembersAndRemoveUserId1701647565290,
                 AddApiKeys1701716639135,
+                AddEmbeddingFeatureToPlatform1701794452891,
             )
             break
         case ApEdition.COMMUNITY:

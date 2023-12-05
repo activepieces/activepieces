@@ -25,7 +25,7 @@ describe('Platform API', () => {
             // arrange
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save(mockUser)
-            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
+            const mockPlatform = createMockPlatform({ ownerId: mockUser.id, embeddingEnabled: true })
             await databaseConnection.getRepository('platform').save(mockPlatform)
             const testToken = await generateMockToken({
                 type: PrincipalType.USER, id: mockUser.id, platform: { id: mockPlatform.id, role: 'OWNER' },
@@ -63,7 +63,7 @@ describe('Platform API', () => {
             const responseBody = response?.json()
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(Object.keys(responseBody)).toHaveLength(22)
+            expect(Object.keys(responseBody)).toHaveLength(23)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.created).toBeDefined()
             expect(responseBody.updated).toBeDefined()
@@ -84,6 +84,7 @@ describe('Platform API', () => {
             expect(responseBody.privacyPolicyUrl).toBe('updated privacy policy url')
             expect(responseBody.termsOfServiceUrl).toBe('updated terms of service url')
             expect(responseBody.cloudAuthEnabled).toBe(false)
+            expect(responseBody.embeddingEnabled).toBe(true)
             expect(responseBody.defaultLocale).toBe(LocalesEnum.ENGLISH)
         })
 
@@ -170,7 +171,7 @@ describe('Platform API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
 
-            expect(Object.keys(responseBody)).toHaveLength(22)
+            expect(Object.keys(responseBody)).toHaveLength(23)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.ownerId).toBe(mockOwnerUser.id)
             expect(responseBody.name).toBe(mockPlatform.name)
