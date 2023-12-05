@@ -4,7 +4,7 @@ import { generateMockToken } from '../../../helpers/auth'
 import { createMockUser, createMockPlatform, createMockProject } from '../../../helpers/mocks'
 import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
-import { NotificationStatus, ProjectType } from '@activepieces/shared'
+import { NotificationStatus, PrincipalType, ProjectType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared'
 import { stripeHelper } from '../../../../src/app/ee/billing/billing/stripe-helper'
@@ -50,6 +50,7 @@ describe('Project API', () => {
 
 
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 id: mockUser.id,
                 projectId: mockProject2.id,
             })
@@ -82,6 +83,7 @@ describe('Project API', () => {
             await databaseConnection.getRepository('project').save([mockProject])
 
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 id: mockUser.id,
                 projectId: mockProject.id,
             })
@@ -137,6 +139,7 @@ describe('Project API', () => {
             await databaseConnection.getRepository('project').save([mockProject, mockProjectTwo])
 
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 id: mockUser.id,
                 projectId: mockProject.id,
                 platform: { id: mockPlatform.id, role: 'OWNER' },
@@ -194,6 +197,7 @@ describe('Project API', () => {
             await databaseConnection.getRepository('project').save([mockProject, mockProjectTwo])
 
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 id: memberUser.id,
                 projectId: mockProject.id,
                 platform: { id: mockPlatform.id, role: 'MEMBER' },

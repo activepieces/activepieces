@@ -7,6 +7,11 @@ const commonAuthProps = {
     appName: Type.String({}),
 }
 
+export enum OAuth2GrantType {
+    AUTHORIZATION_CODE = 'authorization_code',
+    CLIENT_CREDENTIALS = 'client_credentials',
+}
+
 export const UpsertCustomAuthRequest = Type.Object({
     ...commonAuthProps,
     type: Type.Literal(AppConnectionType.CUSTOM_AUTH),
@@ -75,6 +80,7 @@ export const UpsertOAuth2Request = Type.Object({
     value: Type.Object({
         client_id: Type.String({}),
         client_secret: Type.String({}),
+        grant_type: Type.Optional(Type.Enum(OAuth2GrantType)),
         token_url: Type.String({}),
         props: Type.Optional(Type.Record(Type.String(), Type.Any())),
         scope: Type.String(),

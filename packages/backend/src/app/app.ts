@@ -7,7 +7,6 @@ import { openapiModule } from './helper/openapi/openapi.module'
 import { flowModule } from './flows/flow.module'
 import { fileModule } from './file/file.module'
 import { pieceModule } from './pieces/base-piece-module'
-import { tokenVerifyMiddleware } from './authentication/token-verify-middleware'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
 import { flagModule } from './flags/flag.module'
@@ -20,7 +19,6 @@ import { logger } from './helper/logger'
 import { appEventRoutingModule } from './app-event-routing/app-event-routing.module'
 import { triggerEventModule } from './flows/trigger-events/trigger-event.module'
 import { flowInstanceModule } from './flows/flow-instance/flow-instance.module'
-import { apiKeyAuthMiddleware } from './ee/authentication/api-key-auth-middleware.ee'
 import { fastifyRawBody } from 'fastify-raw-body'
 import { stepFileModule } from './flows/step-file/step-file.module'
 import { chatbotModule } from './chatbot/chatbot.module'
@@ -78,6 +76,8 @@ import { billingModule } from './ee/billing/billing/billing.module'
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
 import fastifyFavicon from 'fastify-favicon'
 import { ProjectWithUsageAndPlanResponse } from '@activepieces/ee-shared'
+import { authorizationMiddleware } from './authentication/authorization-middleware'
+import { apiKeyModule } from './ee/api-keys/api-key-module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -165,13 +165,8 @@ export const setupApp = async (): Promise<FastifyInstance> => {
         }
     })
 
-    // BEGIN EE
-    app.addHook('onRequest', apiKeyAuthMiddleware)
-    // END EE
-    app.addHook('onRequest', tokenVerifyMiddleware)
-    // BEGIN EE
+    app.addHook('onRequest', authorizationMiddleware)
     app.addHook('onRequest', rbacAuthMiddleware)
-    // END EE
     app.setErrorHandler(errorHandler)
     await app.register(fileModule)
     await app.register(flagModule)
@@ -236,6 +231,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(otpModule)
             await app.register(enterpriseLocalAuthnModule)
             await app.register(federatedAuthModule)
+            await app.register(apiKeyModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
@@ -263,6 +259,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(otpModule)
             await app.register(enterpriseLocalAuthnModule)
             await app.register(federatedAuthModule)
+            await app.register(apiKeyModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })

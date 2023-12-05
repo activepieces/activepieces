@@ -50,8 +50,8 @@ describe('Piece Metadata API', () => {
             await databaseConnection.getRepository('project').save([mockProject])
 
             const testToken = await generateMockToken({
-                projectId: mockProject.id,
                 type: PrincipalType.USER,
+                projectId: mockProject.id,
                 id: apId(),
             })
 
@@ -149,6 +149,7 @@ describe('Piece Metadata API', () => {
             await databaseConnection.getRepository('piece_metadata').save([mockPieceMetadataA, mockPieceMetadataB, mockPieceMetadataC, mockPieceMetadataD])
 
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 projectId: mockProject.id,
                 id: mockUser.id,
                 platform: {
@@ -196,6 +197,7 @@ describe('Piece Metadata API', () => {
             await databaseConnection.getRepository('piece_metadata').save([mockPieceMetadataA, mockPieceMetadataB, mockPieceMetadataC])
 
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 projectId: mockProject.id,
                 id: mockUser.id,
             })
@@ -262,6 +264,7 @@ describe('Piece Metadata API', () => {
             await databaseConnection.getRepository('piece_metadata').save([mockPieceMetadataA, mockPieceMetadataB])
 
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 platform: {
                     id: mockPlatform.id,
                     role: 'OWNER',
@@ -303,6 +306,7 @@ describe('Piece Metadata API', () => {
             await databaseConnection.getRepository('piece_metadata').save([mockPieceMetadataA, mockPieceMetadataB])
 
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 platform: {
                     id: mockPlatform.id,
                     role: 'OWNER',
