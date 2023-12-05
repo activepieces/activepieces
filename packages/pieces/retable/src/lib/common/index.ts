@@ -123,43 +123,42 @@ export const retableCommon = {
         };
       },
     }),
-  fields: (required = true) =>
-    Property.DynamicProperties({
-      displayName: 'Fields',
-      required,
-      refreshers: ['retable_id'],
-      props: async ({ auth, retable_id }) => {
-        if (!auth || !retable_id) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Please connect your account and select retable',
+  fields: Property.DynamicProperties({
+    displayName: 'Fields',
+    required: true,
+    refreshers: ['retable_id'],
+    props: async ({ auth, retable_id }) => {
+      if (!auth || !retable_id) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please connect your account and select retable',
+        };
+      }
+      const fields: DynamicPropsValue = {};
+      const retable = await httpClient.sendRequest<{ data: RetableTable }>({
+        method: HttpMethod.GET,
+        url: `${retableCommon.baseUrl}/retable/${retable_id}`,
+        headers: {
+          ApiKey: auth as unknown as string,
+        },
+      });
+      retable.body.data.columns.forEach((field: RetableField) => {
+        if (!RetableNotSupportedFields.includes(field.type)) {
+          const params = {
+            displayName: field.title,
+            required: false,
           };
-        }
-        const fields: DynamicPropsValue = {};
-        const retable = await httpClient.sendRequest<{ data: RetableTable }>({
-          method: HttpMethod.GET,
-          url: `${retableCommon.baseUrl}/retable/${retable_id}`,
-          headers: {
-            ApiKey: auth as unknown as string,
-          },
-        });
-        retable.body.data.columns.forEach((field: RetableField) => {
-          if (!RetableNotSupportedFields.includes(field.type)) {
-            const params = {
-              displayName: field.title,
-              required: false,
-            };
-            if (isNil(RetableFieldMapping[field.type])) {
-              fields[field.column_id] = Property.ShortText({
-                ...params,
-              });
-            } else {
-              fields[field.column_id] = RetableFieldMapping[field.type](params);
-            }
+          if (isNil(RetableFieldMapping[field.type])) {
+            fields[field.column_id] = Property.ShortText({
+              ...params,
+            });
+          } else {
+            fields[field.column_id] = RetableFieldMapping[field.type](params);
           }
-        });
-        return fields;
-      },
-    }),
+        }
+      });
+      return fields;
+    },
+  }),
 };

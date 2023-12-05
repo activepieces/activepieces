@@ -13,11 +13,11 @@ export const retableCreateRecordAction = createAction({
     workspace_id: retableCommon.workspace_id(),
     project_id: retableCommon.project_id(),
     retable_id: retableCommon.retable_id(),
-    fields: retableCommon.fields(),
+    fields: retableCommon.fields,
   },
   async run(context) {
     const { retable_id } = context.propsValue;
-    const fields = context.propsValue.fields!;
+    const fields = context.propsValue.fields;
     const outputData = Object.entries(fields)
       .map(([column_id, cell_value]) => {
         if (cell_value !== '') {
