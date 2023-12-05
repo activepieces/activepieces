@@ -44,7 +44,7 @@ export class FlagService {
   isFirstSignIn() {
     return this.getAllFlags().pipe(
       map((value) => {
-        return !value['USER_CREATED'];
+        return !value[ApFlagId.USER_CREATED];
       })
     );
   }
@@ -53,7 +53,7 @@ export class FlagService {
     return this.getAllFlags().pipe(
       map((flags) => {
         const firstUser = flags['USER_CREATED'] as boolean;
-        if (!firstUser && flags['EDITION'] === ApEdition.COMMUNITY) {
+        if (!firstUser && flags['EDITION'] !== ApEdition.CLOUD) {
           return true;
         }
         return flags['SIGN_UP_ENABLED'] as boolean;

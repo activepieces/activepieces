@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable, catchError, tap } from 'rxjs';
+import { Observable, catchError, of, tap } from 'rxjs';
 
 import {
   containsSpecialCharacter,
@@ -55,12 +55,13 @@ export class ResetPasswordComponent {
           userId,
         })
         .pipe(
+          tap(() => this.router.navigate(['/sign-in'])),
           catchError((err) => {
             this.passwordResetActionError = $localize`Your password reset request has expired, please request a new one`;
+            this.resetingPassword = false;
             console.error(err);
-            throw err;
-          }),
-          tap(() => this.router.navigate(['/sign-in']))
+            return of(void 0);
+          })
         );
     }
   }
