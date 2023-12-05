@@ -57,7 +57,7 @@ describe('API Key API', () => {
             expect(responseBody.displayName).toBe(mockApiKeyName)
             expect(responseBody.truncatedValue).toHaveLength(4)
             expect(responseBody.value).toHaveLength(128)
-            expect(responseBody.value).toContain('sk_')
+            expect(responseBody.value).toContain('sk-')
         })
 
 

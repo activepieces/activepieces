@@ -9,5 +9,6 @@
     <mat-tab [label]="customDomainTabTitle">
         <app-custom-domain-table></app-custom-domain-table>
     </mat-tab>
+    <mat-tab [label]="apiKeysTabTitle"><app-api-keys-table></app-api-keys-table></mat-tab>
 </mat-tab-group>
 <ng-container *ngIf="fragmentChanged$ | async"></ng-container>

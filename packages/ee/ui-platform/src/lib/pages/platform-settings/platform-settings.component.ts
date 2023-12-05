@@ -17,6 +17,7 @@ export class PlatformSettingsComponent implements AfterViewInit {
   @ViewChild('tabs') tabGroup?: MatTabGroup;
   title = $localize`Settings`;
   fragmentChanged$: Observable<string | null>;
+  readonly apiKeysTabTitle = $localize`API Keys`;
   readonly signingKeysTabTitle = $localize`Signing Keys`;
   readonly customDomainTabTitle = $localize`Custom Domains`;
   readonly privacyAndTermsTabTitle = $localize`Privacy & Terms`;
@@ -26,6 +27,7 @@ export class PlatformSettingsComponent implements AfterViewInit {
     1: 'MailServer',
     2: 'TermsAndServices',
     3: 'CustomDomains',
+    4: 'ApiKeys',
   };
   constructor(private router: Router, private route: ActivatedRoute) {
     this.fragmentChanged$ = this.route.fragment.pipe(
