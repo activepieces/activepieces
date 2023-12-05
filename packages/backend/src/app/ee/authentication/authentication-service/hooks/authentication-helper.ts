@@ -68,7 +68,7 @@ async function autoVerifyUserIfEligible(user: User): Promise<void> {
     const edition = getEdition()
     if (edition === ApEdition.ENTERPRISE) {
         await userService.verify({ id: user.id })
-        return;
+        return
     }
     const projects = await projectMemberService.listByUser(user)
     const activeInAnyProject = !isNil(projects.find(f => f.status === ProjectMemberStatus.ACTIVE))
