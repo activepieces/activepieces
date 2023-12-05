@@ -18,13 +18,15 @@ export class Oauth2Service {
   ): Observable<OAuth2PopupResponse> {
     this.closeOpenPopup();
 
-    const url = this.constructUrl(request);
+    const pckeChallenge = nanoid();
+    const url = this.constructUrl(request, pckeChallenge);
     const popup = this.openWindow(url);
     this.currentlyOpenPopUp = popup;
 
     return this.getCodeObservable(
       request.redirect_url || environment.redirectUrl,
       request.pkce,
+      pckeChallenge,
       popup
     );
   }
@@ -36,14 +38,17 @@ export class Oauth2Service {
     const popup = this.openWindow(url);
     this.currentlyOpenPopUp = popup;
 
-    return this.getCodeObservable(redirectUrl, undefined, popup);
+    return this.getCodeObservable(redirectUrl, undefined, undefined, popup);
   }
 
   private closeOpenPopup(): void {
     this.currentlyOpenPopUp?.close();
   }
 
-  private constructUrl(request: OAuth2PopupParams): string {
+  private constructUrl(
+    request: OAuth2PopupParams,
+    pckeChallenge: string
+  ): string {
     const queryParams: Record<string, string> = {
       response_type: 'code',
       client_id: request.client_id,
@@ -56,7 +61,7 @@ export class Oauth2Service {
     };
 
     if (request.pkce) {
-      const code_challenge = nanoid();
+      const code_challenge = pckeChallenge;
       queryParams['code_challenge_method'] = 'plain';
       queryParams['code_challenge'] = code_challenge;
     }
@@ -79,6 +84,7 @@ export class Oauth2Service {
   private getCodeObservable(
     redirectUrl: string,
     pkce: boolean | undefined,
+    pckeChallenge: string | undefined,
     popup: Window | null
   ): Observable<OAuth2PopupResponse> {
     return new Observable<OAuth2PopupResponse>((observer) => {
@@ -92,15 +98,15 @@ export class Oauth2Service {
           observer.next(event.data);
           popup?.close();
           observer.complete();
+          window.removeEventListener('message', handler);
         }
-        window.removeEventListener('message', handler);
       });
     }).pipe(
       map((params) => {
         if (params != undefined && params.code != undefined) {
           return {
             code: params.code,
-            code_challenge: pkce ? nanoid() : undefined,
+            code_challenge: pkce ? pckeChallenge : undefined,
           };
         }
 
