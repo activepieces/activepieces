@@ -7,6 +7,7 @@ import { generateMockToken } from '../../../helpers/auth'
 import { stripeHelper } from '../../../../src/app/ee/billing/billing/stripe-helper'
 import { emailService } from '../../../../src/app/ee/helper/email/email-service'
 import { faker } from '@faker-js/faker'
+import { PrincipalType } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
@@ -34,6 +35,7 @@ describe('Project Member API', () => {
             await databaseConnection.getRepository('project').save(mockProject)
 
             const mockToken = await generateMockToken({
+                type: PrincipalType.USER,
                 id: mockUser.id,
                 projectId: mockProject.id,
                 platform: {

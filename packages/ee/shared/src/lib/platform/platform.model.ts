@@ -37,6 +37,7 @@ export const Platform = Type.Object({
     termsOfServiceUrl: Type.Optional(Type.String()),
     cloudAuthEnabled: Type.Boolean(),
     showPoweredBy: Type.Boolean(),
+    embeddingEnabled: Type.Boolean(),
     defaultLocale: Type.Optional(Type.Enum(LocalesEnum))
 })
 

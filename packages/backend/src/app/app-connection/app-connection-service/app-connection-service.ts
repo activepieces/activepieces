@@ -10,6 +10,7 @@ import {
     EngineResponseStatus,
     ErrorCode,
     ExecuteValidateAuthOperation,
+    OAuth2GrantType,
     ProjectId,
     SeekPage,
     UpsertAppConnectionRequestBody,
@@ -181,6 +182,7 @@ const validateConnectionValue = async (
                 projectId,
                 pieceName: connection.appName,
                 request: {
+                    grantType: OAuth2GrantType.AUTHORIZATION_CODE,
                     code: connection.value.code,
                     clientId: connection.value.client_id,
                     tokenUrl: connection.value.token_url!,
@@ -194,6 +196,7 @@ const validateConnectionValue = async (
                 projectId,
                 pieceName: connection.appName,
                 request: {
+                    grantType: OAuth2GrantType.AUTHORIZATION_CODE,
                     code: connection.value.code,
                     clientId: connection.value.client_id,
                     tokenUrl: connection.value.token_url!,
@@ -209,6 +212,7 @@ const validateConnectionValue = async (
                     code: connection.value.code,
                     clientId: connection.value.client_id,
                     tokenUrl: connection.value.token_url!,
+                    grantType: connection.value.grant_type!,
                     redirectUrl: connection.value.redirect_url,
                     clientSecret: connection.value.client_secret,
                     authorizationMethod: connection.value.authorization_method,
