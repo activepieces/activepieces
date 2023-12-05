@@ -119,9 +119,14 @@ This authentication collects OAuth2 authentication details, including the authen
 ```typescript
 PieceAuth.OAuth2({
     displayName: 'OAuth2 Authentication',
+    grantType: OAuth2GrantType.AUTHORIZATION_CODE,
     required: true,
     authUrl: 'https://example.com/auth',
     tokenUrl: 'https://example.com/token',
     scope: ['read', 'write']
 })
 ```
+
+<Tip>
+Please note `OAuth2GrantType.CLIENT_CREDENTIALS` is also supported for service-based authentication.
+</Tip>
