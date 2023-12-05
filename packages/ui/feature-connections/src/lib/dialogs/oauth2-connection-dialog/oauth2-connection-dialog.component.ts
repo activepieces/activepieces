@@ -13,6 +13,7 @@ import { catchError, map, Observable, of, take, tap } from 'rxjs';
 import {
   AppConnectionType,
   AppConnectionWithoutSensitiveData,
+  OAuth2GrantType,
   UpsertOAuth2Request,
 } from '@activepieces/shared';
 import {
@@ -60,6 +61,7 @@ export interface OAuth2ConnectionDialogData {
 export class OAuth2ConnectionDialogComponent implements OnInit {
   PropertyType = PropertyType;
   readonly FAKE_CODE = 'FAKE_CODE';
+  readonly OAuth2GrantType = OAuth2GrantType;
   settingsForm: FormGroup<OAuth2PropertySettings>;
   loading = false;
   submitted = false;
@@ -170,6 +172,9 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
         code: this.settingsForm.controls.value.value.code,
         code_challenge: this.settingsForm.controls.value.value.code_challenge,
         type: AppConnectionType.OAUTH2,
+        grant_type:
+          this.dialogData.pieceAuthProperty.grantType ??
+          OAuth2GrantType.AUTHORIZATION_CODE,
         authorization_method:
           this.dialogData.pieceAuthProperty.authorizationMethod,
         client_id: this.settingsForm.controls.client_id.value,
