@@ -73,6 +73,7 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         smtpSenderEmail: platform?.smtpSenderEmail ?? faker.internet.email(),
         privacyPolicyUrl: platform?.privacyPolicyUrl ?? faker.internet.url(),
         termsOfServiceUrl: platform?.termsOfServiceUrl ?? faker.internet.url(),
+        embeddingEnabled: platform?.embeddingEnabled ?? faker.datatype.boolean(),
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
         showPoweredBy: platform?.showPoweredBy ?? faker.datatype.boolean(),
     }
