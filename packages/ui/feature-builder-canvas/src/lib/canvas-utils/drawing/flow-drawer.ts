@@ -24,7 +24,7 @@ export class FlowDrawer {
   readonly svg: SvgDrawer;
   readonly buttons: readonly PositionButton[];
   static trigger: Trigger;
-  static centerBottom = new PositionedStep({
+  static centerBottomOfFlowItemUi = new PositionedStep({
     x: 0,
     y: 0,
     content: null,

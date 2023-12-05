@@ -22,11 +22,7 @@ import { Position } from './step-card';
 
 export class BranchDrawer {
   static handleBranchAction(branchStep: BranchAction): FlowDrawer {
-    let resultDrawer = new FlowDrawer({
-      buttons: [],
-      svg: SvgDrawer.empty(),
-      steps: [],
-    });
+    let resultDrawer = FlowDrawer.construct(undefined);
     const actions = [branchStep.onSuccessAction, branchStep.onFailureAction];
     const branchesDrawers: FlowDrawer[] = actions.map((action) =>
       FlowDrawer.construct(action)
@@ -128,7 +124,10 @@ export class BranchDrawer {
         StepLocationRelativeToParent.INSIDE_FALSE_BRANCH &&
         !!branchStep.onFailureAction);
     return drawLineComponentWithButton({
-      from: { x: FlowDrawer.centerBottom.x, y: FlowDrawer.centerBottom.y },
+      from: {
+        x: FlowDrawer.centerBottomOfFlowItemUi.x,
+        y: FlowDrawer.centerBottomOfFlowItemUi.y,
+      },
       to: {
         x: firstChildStepPosition.x + FLOW_ITEM_WIDTH / 2.0,
         y: firstChildStepPosition.y,
@@ -156,9 +155,9 @@ export class BranchDrawer {
           drawerMovedToFirstChildStep.boundingBox().height,
       },
       {
-        x: FlowDrawer.centerBottom.x,
+        x: FlowDrawer.centerBottomOfFlowItemUi.x,
         y:
-          FlowDrawer.centerBottom.y +
+          FlowDrawer.centerBottomOfFlowItemUi.y +
           VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD +
           maximumHeight +
           VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD,

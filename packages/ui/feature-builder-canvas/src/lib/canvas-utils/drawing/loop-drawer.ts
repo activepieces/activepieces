@@ -42,7 +42,7 @@ export class LoopDrawer {
       FlowDrawer.trigger
     );
     const startingLineComponent = drawLineComponentWithButton({
-      from: FlowDrawer.centerBottom,
+      from: FlowDrawer.centerBottomOfFlowItemUi,
       to: firstChildActionTopCenter,
       stepName: step.name,
       stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP,
@@ -128,9 +128,9 @@ export class LoopDrawer {
   }) {
     return SvgDrawer.empty()
       .move(
-        FlowDrawer.centerBottom.x -
+        FlowDrawer.centerBottomOfFlowItemUi.x -
           HORIZONTAL_SPACE_BETWEEN_RETURNING_LOOP_ARROW_AND_STARTING_LOOP_ARC,
-        FlowDrawer.centerBottom.y +
+        FlowDrawer.centerBottomOfFlowItemUi.y +
           (VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD -
             VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS)
       )
