@@ -11,3 +11,5 @@ export const ApId = Type.String({
 export type ApId = Static<typeof ApId>
 
 export const apId = customAlphabet(ALPHABET, ID_LENGTH)
+
+export const secureApId = (length: number) => customAlphabet(ALPHABET, length)()

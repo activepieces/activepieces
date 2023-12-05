@@ -4,7 +4,7 @@ import { generateMockToken } from '../../../helpers/auth'
 import { createMockUser, createMockPlatform } from '../../../helpers/mocks'
 import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
-import { apId } from '@activepieces/shared'
+import { PrincipalType, apId } from '@activepieces/shared'
 import { FilteredPieceBehavior, LocalesEnum, UpdatePlatformRequestBody } from '@activepieces/ee-shared'
 
 let app: FastifyInstance | null = null
@@ -27,7 +27,9 @@ describe('Platform API', () => {
             await databaseConnection.getRepository('user').save(mockUser)
             const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
             await databaseConnection.getRepository('platform').save(mockPlatform)
-            const testToken = await generateMockToken({ id: mockUser.id, platform: { id: mockPlatform.id, role: 'OWNER' } })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER, id: mockUser.id, platform: { id: mockPlatform.id, role: 'OWNER' },
+            })
             const requestBody: UpdatePlatformRequestBody = {
                 name: 'updated name',
                 primaryColor: 'updated primary color',
@@ -93,7 +95,9 @@ describe('Platform API', () => {
             const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
             await databaseConnection.getRepository('platform').save(mockPlatform)
 
-            const testToken = await generateMockToken({ id: 'random-user-id' })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER, id: 'random-user-id',
+            })
 
             // act
             const response = await app?.inject({
@@ -145,6 +149,7 @@ describe('Platform API', () => {
             await databaseConnection.getRepository('platform').save(mockPlatform)
 
             const mockToken = await generateMockToken({
+                type: PrincipalType.USER,
                 id: mockOwnerUser.id,
                 platform: {
                     id: mockPlatform.id,
@@ -187,6 +192,7 @@ describe('Platform API', () => {
             await databaseConnection.getRepository('platform').save(mockPlatform)
 
             const mockToken = await generateMockToken({
+                type: PrincipalType.USER,
                 id: mockMemberUserId,
                 platform: {
                     id: mockPlatform.id,
@@ -219,6 +225,7 @@ describe('Platform API', () => {
             const mockOtherPlatformId = apId()
 
             const mockToken = await generateMockToken({
+                type: PrincipalType.USER,
                 platform: {
                     id: mockPlatformId,
                     role: 'OWNER',
@@ -244,6 +251,7 @@ describe('Platform API', () => {
             // arrange
             const randomPlatformId = apId()
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 platform: {
                     id: randomPlatformId,
                     role: 'OWNER',
