@@ -22,7 +22,7 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
             }
         }
 
-        const project =  await  projectService.create({
+        const project = await projectService.create({
             displayName: `${user.firstName}'s Project`,
             ownerId: user.id,
             platformId: undefined,
@@ -42,8 +42,8 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
             value: true,
         })
 
-        const updatedUser = await authenticationHelper.autoVerifyUserIfEligible(user)
-
+        await authenticationHelper.autoVerifyUserIfEligible(user)
+        const updatedUser = await userService.getOneOrFail({ id: user.id })
         const { project: updatedProject, token } = await authenticationHelper.getProjectAndTokenOrThrow(user)
         return {
             user: updatedUser,

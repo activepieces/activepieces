@@ -1,4 +1,4 @@
-import { FileCompression, FileId, FileType, PieceType } from '@activepieces/shared'
+import { FileCompression, FileId, FileType, PieceType, isNil } from '@activepieces/shared'
 import { GetPieceArchivePackageParams, PieceServiceHooks } from '../../../pieces/piece-service/piece-service-hooks'
 import { fileService } from '../../../file/file.service'
 
@@ -16,10 +16,11 @@ export const cloudPieceServiceHooks: PieceServiceHooks = {
 }
 
 const saveArchive = async (params: GetPieceArchivePackageParams): Promise<FileId> => {
-    const { projectId, archive } = params
+    const { projectId, platformId, archive } = params
 
     const archiveFile = await fileService.save({
-        projectId,
+        projectId: isNil(platformId) ? projectId : undefined,
+        platformId,
         data: archive,
         type: FileType.PACKAGE_ARCHIVE,
         compression: FileCompression.NONE,

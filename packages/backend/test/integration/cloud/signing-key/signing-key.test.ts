@@ -4,7 +4,7 @@ import { generateMockToken } from '../../../helpers/auth'
 import { createMockUser, createMockPlatform, createMockSigningKey } from '../../../helpers/mocks'
 import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
-import { apId } from '@activepieces/shared'
+import { PrincipalType, apId } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 
 let app: FastifyInstance | null = null
@@ -30,6 +30,7 @@ describe('Signing Key API', () => {
             await databaseConnection.getRepository('platform').save(mockPlatform)
 
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 id: mockUser.id,
                 platform: { id: mockPlatform.id, role: 'OWNER' },
             })
@@ -64,6 +65,7 @@ describe('Signing Key API', () => {
             const nonExistentPlatformId = apId()
 
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 platform: {
                     id: nonExistentPlatformId,
                     role: 'OWNER',
@@ -103,6 +105,7 @@ describe('Signing Key API', () => {
 
             const nonOwnerUserId = apId()
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 id: nonOwnerUserId,
                 platform: { id: mockPlatform.id, role: 'OWNER' },
             })
@@ -141,6 +144,7 @@ describe('Signing Key API', () => {
             await databaseConnection.getRepository('signing_key').save(mockSigningKey)
 
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 id: mockUser.id,
                 platform: { id: mockPlatform.id, role: 'OWNER' },
             })
@@ -184,6 +188,7 @@ describe('Signing Key API', () => {
             await databaseConnection.getRepository('signing_key').save(mockSigningKey)
 
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 id: mockUserTwo.id,
                 platform: { id: mockPlatform.id, role: 'OWNER' },
             })
@@ -226,6 +231,7 @@ describe('Signing Key API', () => {
             await databaseConnection.getRepository('signing_key').save([mockSigningKeyOne, mockSigningKeyTwo])
 
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 id: mockUserOne.id,
                 platform: { id: mockPlatformOne.id, role: 'OWNER' },
             })

@@ -20,6 +20,7 @@ export const platformService = {
             logoIconUrl: logoIconUrl ?? defaultTheme.logos.logoIconUrl,
             fullLogoUrl: fullLogoUrl ?? defaultTheme.logos.fullLogoUrl,
             favIconUrl: favIconUrl ?? defaultTheme.logos.favIconUrl,
+            embeddingEnabled: true,
             defaultLocale: LocalesEnum.ENGLISH,
             filteredPieceNames: [],
             filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,

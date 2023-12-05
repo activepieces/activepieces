@@ -9,6 +9,7 @@ import { emailService } from '../../../../src/app/ee/helper/email/email-service'
 import { faker } from '@faker-js/faker'
 import { apId } from '@activepieces/shared'
 import { createMockProjectMember } from '../../../helpers/mocks/project-member-mocks'
+import { PrincipalType } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
@@ -41,6 +42,7 @@ describe('Project Member API', () => {
             await databaseConnection.getRepository('project').save(mockProject)
 
             const mockToken = await generateMockToken({
+                type: PrincipalType.USER,
                 id: mockUser.id,
                 projectId: mockProject.id,
                 platform: {

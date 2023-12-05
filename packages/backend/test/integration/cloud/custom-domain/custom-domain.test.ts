@@ -6,7 +6,7 @@ import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
 import { faker } from '@faker-js/faker'
 import { AddDomainRequest, CustomDomainStatus } from '@activepieces/ee-shared'
-import { apId } from '@activepieces/shared'
+import { PrincipalType, apId } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
@@ -31,6 +31,7 @@ describe('Custom Domain API', () => {
             await databaseConnection.getRepository('platform').save(mockPlatform)
 
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 id: mockUser.id,
                 platform: { id: mockPlatform.id, role: 'OWNER' },
             })
@@ -65,6 +66,7 @@ describe('Custom Domain API', () => {
 
             const nonOwnerUserId = apId()
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 id: nonOwnerUserId,
                 platform: { id: mockPlatform.id, role: 'MEMBER' },
             })
@@ -103,6 +105,7 @@ describe('Custom Domain API', () => {
             await databaseConnection.getRepository('platform').save(mockPlatform2)
 
             const testToken1 = await generateMockToken({
+                type: PrincipalType.USER,
                 id: mockUser1.id,
                 platform: { id: mockPlatform1.id, role: 'OWNER' },
             })
@@ -154,6 +157,7 @@ describe('Custom Domain API', () => {
             await databaseConnection.getRepository('platform').save(mockPlatform)
 
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 id: mockUser.id,
                 platform: { id: mockPlatform.id, role: 'OWNER' },
             })
@@ -187,6 +191,7 @@ describe('Custom Domain API', () => {
 
             const nonOwnerUserId = apId()
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 id: nonOwnerUserId,
                 platform: { id: mockPlatform.id, role: 'MEMBER' },
             })
