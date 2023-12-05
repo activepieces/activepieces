@@ -173,7 +173,7 @@ export class FlowDrawer {
           stepName: step.name,
           stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
           btnType: 'small',
-          isLastChildStep: flowHelper.isStepLastChildOfParent(
+          drawArrow: !flowHelper.isStepLastChildOfParent(
             step,
             FlowDrawer.trigger
           ),

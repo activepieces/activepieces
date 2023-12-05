@@ -256,6 +256,38 @@ function getAllChildSteps(action: LoopOnItemsAction | BranchAction): Action[] {
     }
 }
 
+function getAllDirectChildStepsForLoop(action: LoopOnItemsAction ): Action[] {
+    const actions: Action[] = []
+    
+    let child = action.firstLoopAction
+    while (child) {
+        actions.push(child)
+        child = child.nextAction
+    }
+   
+    return actions
+}
+
+function getAllDirectChildStepsForBranch(action: BranchAction, branch: 'success' | 'failure' ): Action[] {
+    const actions: Action[] = []
+    if (branch === 'success') {
+        let child = action.onSuccessAction
+        while (child) {
+            actions.push(child)
+            child = child.nextAction
+        }
+    }
+    else {
+        let child = action.onFailureAction
+        while (child) {
+            actions.push(child)
+            child = child.nextAction
+        }
+    }   
+    return actions
+   
+}
+
 function getStep(
     flowVersion: FlowVersion,
     stepName: string,
@@ -814,39 +846,55 @@ function getDirectParentStep(child: Step, parent: Trigger | Step | undefined): S
     if (!parent) {
         return undefined
     }
-    let next = parent.nextAction
-    while (next) {
-        if (next.name === child.name) {
-            return parent
+    if (isTrigger(parent.type)) {
+        let next = parent.nextAction
+        while (next) {
+            if (next.name === child.name) {
+                return parent
+            }
+            next = next.nextAction
         }
-        next = next.nextAction
     }
    
     if (parent.type === ActionType.BRANCH) {
-        if (parent.onFailureAction?.name === child.name) {
-            return parent
+           
+        const isChildOfBranch = isChildOf(parent, child.name)
+        if (isChildOfBranch) {
+            const directTrueBranchChildren = getAllDirectChildStepsForBranch(parent, 'success')
+            const directFalseBranchChildren = getAllDirectChildStepsForBranch(parent, 'failure')
+            if (directTrueBranchChildren.at(-1)?.name === child.name || directFalseBranchChildren.at(-1)?.name === child.name ) {
+                return parent
+            }
+           
+            return getDirectParentStep(child, parent.onSuccessAction) ?? getDirectParentStep(child, parent.onFailureAction)       
+             
         }
-        if (parent.onSuccessAction?.name === child.name) {
-            return parent
-        }
-        return getDirectParentStep(child, parent.onFailureAction) ?? getDirectParentStep(child, parent.onSuccessAction) ?? getDirectParentStep(child, parent.nextAction)
     }
     if (parent.type === ActionType.LOOP_ON_ITEMS) {
-        if (parent.firstLoopAction?.name === child.name) {
-            return parent
+        const isChildOfLoop = isChildOf(parent, child.name)
+        if ( isChildOfLoop) {
+            const directChildren = getAllDirectChildStepsForLoop(parent)
+            if (directChildren.at(-1)?.name === child.name) {
+                return parent
+            }
+            return getDirectParentStep(child, parent.firstLoopAction)
         }
-        return getDirectParentStep(child, parent.firstLoopAction) ?? getDirectParentStep(child, parent.nextAction)
     }
     return getDirectParentStep(child, parent.nextAction)
 }
 
 function isStepLastChildOfParent(child: Step, trigger: Trigger): boolean {
-    
+  
     const parent = getDirectParentStep(child, trigger)
     if (parent) {
         if (doesStepHaveChildren(parent)) {
-            const children = getAllChildSteps(parent)
-            return children[children.length - 1]?.name === child.name
+            if (parent.type === ActionType.LOOP_ON_ITEMS) {
+                const children = getAllDirectChildStepsForLoop(parent)
+                return children[children.length - 1]?.name === child.name
+            }
+            const trueBranchChildren = getAllDirectChildStepsForBranch(parent, 'success')
+            const falseBranchChildren = getAllDirectChildStepsForBranch(parent, 'failure')
+            return trueBranchChildren[trueBranchChildren.length - 1]?.name === child.name || falseBranchChildren[falseBranchChildren.length - 1]?.name === child.name
         }
         let next = parent.nextAction
         while (next) {
@@ -934,4 +982,5 @@ export const flowHelper = {
     duplicateStep,
     findAvailableStepName,
     doesActionHaveChildren,
+ 
 }

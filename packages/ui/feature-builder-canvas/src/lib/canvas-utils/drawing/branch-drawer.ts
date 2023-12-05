@@ -120,6 +120,13 @@ export class BranchDrawer {
     branchStep: BranchAction;
     stepLocationRelativeToParent: StepLocationRelativeToParent;
   }) {
+    const doesBranchHaveChildren =
+      (stepLocationRelativeToParent ===
+        StepLocationRelativeToParent.INSIDE_TRUE_BRANCH &&
+        !!branchStep.onSuccessAction) ||
+      (stepLocationRelativeToParent ===
+        StepLocationRelativeToParent.INSIDE_FALSE_BRANCH &&
+        !!branchStep.onFailureAction);
     return drawLineComponentWithButton({
       from: { x: FlowDrawer.centerBottom.x, y: FlowDrawer.centerBottom.y },
       to: {
@@ -128,19 +135,8 @@ export class BranchDrawer {
       },
       stepName: branchStep.name,
       stepLocationRelativeToParent: stepLocationRelativeToParent,
-      btnType:
-        (stepLocationRelativeToParent ===
-          StepLocationRelativeToParent.INSIDE_TRUE_BRANCH &&
-          branchStep.onSuccessAction) ||
-        (stepLocationRelativeToParent ===
-          StepLocationRelativeToParent.INSIDE_FALSE_BRANCH &&
-          branchStep.onFailureAction)
-          ? 'small'
-          : 'big',
-      isLastChildStep: flowHelper.isStepLastChildOfParent(
-        branchStep,
-        FlowDrawer.trigger
-      ),
+      btnType: doesBranchHaveChildren ? 'small' : 'big',
+      drawArrow: doesBranchHaveChildren,
     });
   }
   private static drawLineComponentAfterBranch({

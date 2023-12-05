@@ -264,14 +264,14 @@ export function drawLineComponentWithButton({
   stepName,
   stepLocationRelativeToParent,
   btnType,
-  isLastChildStep,
+  drawArrow,
 }: {
   from: Position;
   to: Position;
   stepName: string;
   stepLocationRelativeToParent: StepLocationRelativeToParent;
   btnType: ButtonType;
-  isLastChildStep: boolean;
+  drawArrow: boolean;
 }): {
   line: SvgDrawer;
   button: PositionButton;
@@ -281,8 +281,8 @@ export function drawLineComponentWithButton({
       return {
         line:
           from.x === to.x
-            ? drawVerticalLineToNextStep(from, to, !isLastChildStep)
-            : drawStartLineForStepWithChildren(from, to, !isLastChildStep),
+            ? drawVerticalLineToNextStep(from, to, drawArrow)
+            : drawStartLineForStepWithChildren(from, to, drawArrow),
         button: {
           x: to.x - BUTTON_SIZE / 2.0,
           y: to.y - SPACE_BETWEEN_BUTTON_AND_ARROW - BUTTON_SIZE / 2.0,
@@ -294,7 +294,7 @@ export function drawLineComponentWithButton({
     }
     case 'big': {
       return {
-        line: drawStartLineForStepWithChildren(from, to, !isLastChildStep),
+        line: drawStartLineForStepWithChildren(from, to, drawArrow),
         button: {
           x: to.x - BIG_BUTTON_SIZE / 2.0,
           y: to.y + FLOW_ITEM_HEIGHT / 2 - BIG_BUTTON_SIZE / 2,
