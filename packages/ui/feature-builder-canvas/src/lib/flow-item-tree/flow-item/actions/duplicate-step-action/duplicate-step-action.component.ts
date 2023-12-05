@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import {
   BuilderSelectors,
-  FlowItem,
+  Step,
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
 import { Observable, forkJoin, map, switchMap, take, tap } from 'rxjs';
@@ -15,7 +15,7 @@ import { FlowService } from '@activepieces/ui/common';
 })
 export class DuplicateStepActionComponent {
   @Input({ required: true })
-  flowItem: FlowItem;
+  flowItem: Step;
   duplicate$: Observable<void> | undefined;
   constructor(private store: Store, private flowService: FlowService) {}
   duplicateStep() {

@@ -6,7 +6,7 @@ import {
 } from '@angular/forms';
 import { ErrorStateMatcher, mixinErrorState } from '@angular/material/core';
 import { Subject } from 'rxjs';
-import { FlowItem } from '@activepieces/ui/feature-builder-store';
+import { Step } from '@activepieces/ui/feature-builder-store';
 import { InsertMentionOperation } from '@activepieces/ui/common';
 
 export const customCodeMentionDisplayName = 'Custom Code';
@@ -83,7 +83,7 @@ export class CustomErrorMatcher implements ErrorStateMatcher {
 
 export function fromTextToOps(
   text: string,
-  allStepsMetaData: (MentionListItem & { step: FlowItem })[]
+  allStepsMetaData: (MentionListItem & { step: Step })[]
 ): {
   ops: (TextInsertOperation | InsertMentionOperation)[];
 } {
@@ -146,7 +146,7 @@ export function fromTextToOps(
 
 function replaceStepNameWithDisplayName(
   stepName: string,
-  allStepsMetaData: (MentionListItem & { step: FlowItem })[]
+  allStepsMetaData: (MentionListItem & { step: Step })[]
 ) {
   const stepDisplayName = allStepsMetaData.find((s) => s.step.name === stepName)
     ?.step.displayName;

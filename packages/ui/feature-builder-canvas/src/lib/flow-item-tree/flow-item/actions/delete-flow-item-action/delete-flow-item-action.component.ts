@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { FlowItem } from '@activepieces/ui/feature-builder-store';
+import { Step } from '@activepieces/ui/feature-builder-store';
 import { DeleteStepDialogComponent } from './delete-step-dialog/delete-step-dialog.component';
 
 @Component({
@@ -10,7 +10,7 @@ import { DeleteStepDialogComponent } from './delete-step-dialog/delete-step-dial
 })
 export class DeleteFlowItemActionComponent {
   @Input()
-  flowItem: FlowItem;
+  flowItem: Step;
   constructor(private dialogService: MatDialog) {}
   deleteStep() {
     const stepName = this.flowItem.name;

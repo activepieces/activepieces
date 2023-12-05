@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import {
   BuilderSelectors,
-  FlowItem,
+  Step,
   FlowRendererService,
 } from '@activepieces/ui/feature-builder-store';
 import { Store } from '@ngrx/store';
@@ -14,7 +14,7 @@ import { Observable } from 'rxjs';
 })
 export class ActionsContainerComponent {
   @Input() trigger: boolean;
-  @Input() flowItem: FlowItem;
+  @Input() flowItem: Step;
   @Input() stepHovered: boolean;
   isDragging$: Observable<boolean>;
   readonly$: Observable<boolean>;

@@ -12,7 +12,7 @@ import {
 import { ViewModeEnum } from '../../model/enums/view-mode.enum';
 import { FlowItemsDetailsState } from '../../model/flow-items-details-state.model';
 import { ActionType, TriggerType } from '@activepieces/shared';
-import { FlowItem } from '../../model/flow-item';
+import { Step, StepWithIndex } from '../../model/step';
 import { MentionListItem } from '../../model/mention-list-item';
 import { FlowStructureUtil } from '../../utils/flowStructureUtil';
 import { ConnectionDropdownItem } from '../../model/connections-dropdown-item';
@@ -377,7 +377,7 @@ export const selectFlowItemDetailsForCustomPiecesTriggers = createSelector(
   }
 );
 
-export const selectFlowItemDetails = (flowItem: FlowItem) =>
+export const selectFlowItemDetails = (flowItem: Step) =>
   createSelector(selectAllFlowItemsDetails, (state: FlowItemsDetailsState) => {
     if (flowItem.type === ActionType.PIECE) {
       if (
@@ -491,7 +491,7 @@ const selectAllStepsForMentionsDropdown = createSelector(
     currentStep,
     flowVersion,
     flowItemDetails
-  ): (MentionListItem & { step: FlowItem })[] => {
+  ): (MentionListItem & { step: StepWithIndex })[] => {
     if (!currentStep || !flowVersion || !flowVersion.trigger) {
       return [];
     }
@@ -509,11 +509,17 @@ const selectAllStepsForMentionsDropdown = createSelector(
     });
   }
 );
+
+const selectStepIndex = (step: Step) => {
+  return createSelector(selectCurrentFlow, (flow) => {
+    return FlowStructureUtil.findStepIndex(flow.version.trigger, step.name);
+  });
+};
 const selectStepValidity = createSelector(selectCurrentStep, (step) => {
   return step?.valid || false;
 });
 function findStepLogoUrlForMentions(
-  step: FlowItem,
+  step: Step,
   flowItemsDetailsState: FlowItemsDetailsState
 ) {
   switch (step.type) {
@@ -571,7 +577,7 @@ const selectStepLogoUrl = (stepName: string) => {
     (flow, flowItemsDetails) => {
       const step = flowHelper
         .getAllSteps(flow?.version?.trigger)
-        .find((s: FlowItem) => s.name === stepName);
+        .find((s: Step) => s.name === stepName);
       if (!step) {
         throw new Error(`Couldn't find the step ${stepName}`);
       }
@@ -656,4 +662,5 @@ export const BuilderSelectors = {
   selectFlowTriggerIsTested,
   selectAppConnectionsDropdownOptionsForAppWithIds,
   selectAppConnectionsDropdownOptionsWithIds,
+  selectStepIndex,
 };

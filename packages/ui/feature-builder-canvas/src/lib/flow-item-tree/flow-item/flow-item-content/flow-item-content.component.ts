@@ -45,7 +45,7 @@ import {
 } from '@activepieces/ui/common';
 import {
   BuilderSelectors,
-  FlowItem,
+  Step,
   FlowRendererService,
   canvasActions,
 } from '@activepieces/ui/feature-builder-store';
@@ -67,7 +67,6 @@ export class FlowItemContentComponent implements OnInit {
   stepIconUrl: string;
   _flowItem: Action | Trigger;
   selectedRun$: Observable<FlowRun | undefined>;
-
   stepAppName$: Observable<string>;
   isOverflown = isOverflown;
   childStepsIconsUrls: Record<string, Observable<string>> = {};
@@ -75,14 +74,18 @@ export class FlowItemContentComponent implements OnInit {
   ExecutionOutputStatus = ExecutionOutputStatus;
   TriggerType = TriggerType;
   ActionType = ActionType;
+  stepIndex$: Observable<number>;
   @Input() selected: boolean;
   @Input() readOnly: boolean;
-  @Input() set flowItem(newFlowItem: FlowItem) {
+  @Input() set flowItem(newFlowItem: Step) {
     this._flowItem = newFlowItem;
     this.stepAppName$ = this.getStepAppName();
     this.childStepsIconsUrls = this.extractChildStepsIconsUrls();
     this.flowItemChanged$.next(true);
     this.fetchFlowItemDetailsAndLoadLogo();
+    this.stepIndex$ = this.store.select(
+      BuilderSelectors.selectStepIndex(this._flowItem)
+    );
   }
   isDragging$: Observable<boolean>;
   stepOutput: StepOutput | undefined;

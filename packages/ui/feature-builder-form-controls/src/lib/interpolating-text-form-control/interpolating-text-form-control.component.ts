@@ -42,7 +42,7 @@ import 'quill-mention';
 import { Store } from '@ngrx/store';
 import {
   BuilderSelectors,
-  FlowItem,
+  StepWithIndex,
 } from '@activepieces/ui/feature-builder-store';
 import { InsertMentionOperation } from '@activepieces/ui/common';
 
@@ -105,7 +105,7 @@ export class InterpolatingTextFormControlComponent
   private _value = '';
   stepsMetaData$: Observable<
     (MentionListItem & {
-      step: FlowItem;
+      step: StepWithIndex;
     })[]
   >;
   autofilled?: boolean | undefined = false;
