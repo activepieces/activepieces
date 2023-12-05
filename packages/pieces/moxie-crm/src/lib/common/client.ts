@@ -41,6 +41,30 @@ type ProjectCreateRequest = {
     taxable?: boolean;
   };
 };
+
+type ClientCreateRequest = {
+  name: string;
+  clientType: string;
+  initials?: string;
+  address1?: string;
+  address2?: string;
+  city?: string;
+  locality?: string;
+  postal?: string;
+  country?: string;
+  website?: string;
+  phone?: string;
+  color?: string;
+  taxId?: string;
+  leadSource?: string;
+  archive: boolean;
+  payInstructions?: string;
+  hourlyAmount?: number;
+  roundingIncrement?: number;
+  currency?: string;
+  stripeClientId?: string;
+  notes?: string;
+};
 export class MoxieCRMClient {
   constructor(private baseUrl: string, private apiKey: string) {
     // Remove trailing slash from base URL
@@ -67,6 +91,11 @@ export class MoxieCRMClient {
         '/action/contacts/create',
         request
       )
+    ).body;
+  }
+  async createClient(request: ClientCreateRequest) {
+    return (
+      await this.makeRequest(HttpMethod.POST, '/action/clients/create', request)
     ).body;
   }
   async listClients(): Promise<ClientListResponse[]> {
