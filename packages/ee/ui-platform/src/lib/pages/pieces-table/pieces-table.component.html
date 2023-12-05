@@ -26,6 +26,12 @@
 
             </td>
         </ng-container>
+        <ng-container matColumnDef="version">
+            <th mat-header-cell *matHeaderCellDef i18n>Version</th>
+            <td mat-cell *matCellDef="let piece">
+                {{ piece.version }}
+            </td>
+        </ng-container>
 
         <ng-container matColumnDef="action">
             <th mat-header-cell *matHeaderCellDef>

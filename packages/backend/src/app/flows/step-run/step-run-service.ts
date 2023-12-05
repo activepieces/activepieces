@@ -95,7 +95,6 @@ async function executePiece({ step, projectId, flowVersion, userId }: ExecutePar
             pieceType,
             pieceName,
             pieceVersion,
-            projectId,
         },
         actionName,
         input,
@@ -190,6 +189,7 @@ const executeBranch = async ({ step, flowVersion, projectId }: ExecuteParams<Bra
 
     const sandbox = await sandboxProvisioner.provision({
         type: SandBoxCacheType.NONE,
+        projectId,
     })
 
     const { status, result, standardError, standardOutput } = await engineHelper.executeTest(sandbox, testInput)
