@@ -67,7 +67,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddPlatformIdToUserSqlite1700147448410,
         AddPlatformIdToPieceMetadataSqlite1700524446967,
         AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822,
-        AddPlatformIdToFileSqlite1701808264444
+        AddPlatformIdToFileSqlite1701808264444,
     ]
     const edition = getEdition()
     if (edition !== ApEdition.COMMUNITY) {
