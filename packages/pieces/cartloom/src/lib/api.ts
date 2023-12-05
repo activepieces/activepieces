@@ -21,7 +21,8 @@ const cartloomAPI = async (api: string, auth: CartloomAuthType, body: KeyValuePa
 
 	let data = Object.keys(response.body).map(key => response.body[key]);
 
-	if (response.body['0'] !== 'undefined') {
+	const arrayTest = response.body['0'];
+	if (typeof arrayTest === 'undefined') {
 		// when respone is an object, it is wrapped in an array
 		data = [response.body];
 	}

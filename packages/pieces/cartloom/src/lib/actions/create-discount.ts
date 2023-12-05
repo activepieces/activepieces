@@ -9,6 +9,11 @@ export const createDiscountAction = createAction({
 	displayName : 'Create Discount',
 	description : 'Create a discount in Cartloom',
 	props       : {
+		title: Property.ShortText({
+			displayName  : 'Title',
+			description  : 'Enter the title of the discount',
+			required     : true,
+		}),
 		enabled: Property.Checkbox({
 			displayName  : 'Enabled',
 			description  : 'Is this discount enabled?',
@@ -27,6 +32,18 @@ export const createDiscountAction = createAction({
 			required     : true,
 			defaultValue : false
 		}),
+		selfDestruct: Property.Checkbox({
+			displayName  : 'Self Destruct',
+			description  : 'Remove the discount after use',
+			required     : true,
+			defaultValue : false
+		}),
+		applyOnce: Property.Checkbox({
+			displayName  : 'Apply Once',
+			description  : 'Apply the discount once per order',
+			required     : true,
+			defaultValue : false
+		}),
 		type: Property.StaticDropdown({
 			displayName  : 'Type of Discount',
 			description  : 'Select the type of discount',
@@ -39,11 +56,11 @@ export const createDiscountAction = createAction({
 				]
 			}
 		}),
-		amount: Property.ShortText({
+		amount: Property.Number({
 			displayName  : 'Amount',
 			description  : 'Enter the amount of the discount',
 			required     : true,
-			defaultValue : '0.00'
+			defaultValue : 0
 		}),
 		target: Property.StaticDropdown({
 			displayName  : 'Discount Target',
@@ -52,7 +69,7 @@ export const createDiscountAction = createAction({
 			required     : true,
 			options      : {
 				options: [
-					{ label: 'Product',      value: 'product' },
+					{ label: 'Selected Products', value: 'product' },
 					{ label: 'Total',        value: 'total' },
 					{ label: 'All Products', value: 'all' },
 				]
@@ -60,12 +77,12 @@ export const createDiscountAction = createAction({
 		}),
 		startDate: Property.DateTime({
 			displayName : 'Start Date',
-			description : 'The start date of the discount',
+			description : 'The start date of the discount. YYYY-MM-DD HH:MM:SS',
 			required    : true,
 		}),
 		stopDate: Property.DateTime({
 			displayName : 'Stop Date',
-			description : 'The stop date of the discount',
+			description : 'The stop date of the discount. YYYY-MM-DD HH:MM:SS',
 			required    : true,
 		}),
 		optional: Property.MarkDown({
@@ -105,6 +122,9 @@ export const createDiscountAction = createAction({
 			enabled         : context.propsValue.enabled ? 1 : 0,
 			auto            : context.propsValue.auto ? 1 : 0,
 			unlimited       : context.propsValue.unlimited ? 1 : 0,
+			self_destruct   : context.propsValue.selfDestruct ? 1 : 0,
+			apply_once      : context.propsValue.applyOnce ? 1 : 0,
+			title           : context.propsValue.title,
 			type            : context.propsValue.type,
 			amount          : context.propsValue.amount,
 			target          : context.propsValue.target,
