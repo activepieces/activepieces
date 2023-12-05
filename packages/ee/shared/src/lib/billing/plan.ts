@@ -1,4 +1,4 @@
-import { BaseModelSchema } from "@activepieces/shared";
+import { BaseModelSchema, Nullable } from "@activepieces/shared";
 import { ProjectUsage } from "./usage";
 import { Static, Type } from "@sinclair/typebox";
 
@@ -8,14 +8,14 @@ export const ProjectPlan = Type.Object({
     ...BaseModelSchema,
     projectId: Type.String(),
     stripeCustomerId: Type.String(),
-    stripeSubscriptionId: Type.Optional(Type.String()),
+    stripeSubscriptionId: Nullable(Type.String()),
     subscriptionStartDatetime: Type.String(),
     flowPlanName: Type.String(),
     minimumPollingInterval: Type.Number(),
     connections: Type.Number(),
     teamMembers: Type.Number(),
     tasks: Type.Number(),
-    tasksPerDay: Type.Optional(Type.Number())
+    tasksPerDay: Nullable(Type.Number())
 })
 
 export type ProjectPlan = Static<typeof ProjectPlan>
