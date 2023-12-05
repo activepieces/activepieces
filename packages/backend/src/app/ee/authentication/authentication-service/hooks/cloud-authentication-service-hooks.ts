@@ -40,7 +40,7 @@ export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
             })
         }
         return {
-            user: await userService.getOneOrFail({ id: user.id }),
+            user: updatedUser,
             project,
             token,
         }
