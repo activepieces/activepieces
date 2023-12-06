@@ -33,7 +33,7 @@ activepieces.configure({
 | prefix | ❌ | You can choose a URL prefix for generating URLs. URL prefixes for embedding follow this pattern: `<embedding_url_prefix>/<Activepieces_url>`. For example, if the prefix is `/automation` and the Activepieces URL is `/flows`, the corresponding vendor URL will be `/automations/flows`.
 | initialRoute | ❌ | Its value must be one of the following: `/flows`, `/runs`, `/connections`, `/flows/:id`, `/runs/:id`. Any other path will result in a 404 page. If left undefined, it will redirect to `/flows`.
 | hideSidebar | ❌ | Its value can be either false or true, and it controls the visibility of the sidebar in the dashboard, by default it is false.
-| showBackButtonAndFolderNameInBuilder | ❌ | Its value can be either false or true, and it controls the visibility of the folder name and back button in the builder, by default it is true.
+| disableNavigationInBuilder | ❌ | Its value can be either false or true, and it hide the folder name and back button in the builder, by default it is false.
 
 
 ## Step 2: Generate a JWT token

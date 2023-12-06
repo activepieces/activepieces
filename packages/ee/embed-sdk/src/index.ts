@@ -35,8 +35,8 @@ export interface ActivepiecesVendorInit {
   data: {
     prefix: string;
     initialRoute: string;
-    hideSidebar:boolean;
-    showBackButtonAndFolderNameInBuilder: boolean;
+    hideSidebar: boolean;
+    disableNavigationInBuilder: boolean;
   };
 }
 export const jwtTokenQueryParamName = "jwtToken"
@@ -45,8 +45,8 @@ export const jwtTokenQueryParamName = "jwtToken"
 class ActivepiecesEmbedded {
   _prefix = '';
   _initialRoute = '';
-  _hideSidebar=false;
-  _showBackButtonAndFolderNameInBuilder = true;
+  _hideSidebar = false;
+  _disableNavigationInBuilder = true;
   iframeParentOrigin = window.location.origin;
   handleVendorNavigation?: (data: { route: string }) => void;
   handleClientNavigation?: (data: { route: string }) => void;
@@ -55,17 +55,17 @@ class ActivepiecesEmbedded {
     prefix,
     initialRoute,
     hideSidebar,
-    showBackButtonAndFolderNameInBuilder
+    disableNavigationInBuilder
   }: {
     prefix?: string;
     initialRoute?: string;
-    hideSidebar?:boolean;
-    showBackButtonAndFolderNameInBuilder?: boolean;
+    hideSidebar?: boolean;
+    disableNavigationInBuilder?: boolean;
   }) {
     this._prefix = prefix || '/';
     this._initialRoute = initialRoute || '/';
-    this._hideSidebar= hideSidebar || false;
-    this._showBackButtonAndFolderNameInBuilder= showBackButtonAndFolderNameInBuilder=== undefined ? true : showBackButtonAndFolderNameInBuilder;
+    this._hideSidebar = hideSidebar || false;
+    this._disableNavigationInBuilder = disableNavigationInBuilder === undefined ? true : disableNavigationInBuilder;
     setIframeChecker(this);
   }
 }
@@ -87,8 +87,8 @@ const setIframeChecker = (client: ActivepiecesEmbedded) => {
                 data: {
                   prefix: client._prefix,
                   initialRoute: client._initialRoute,
-                  hideSidebar : client._hideSidebar,
-                  showBackButtonAndFolderNameInBuilder: client._showBackButtonAndFolderNameInBuilder,
+                  hideSidebar: client._hideSidebar,
+                  disableNavigationInBuilder: client._disableNavigationInBuilder,
                 },
               };
               iframeWindow.postMessage(apEvent, '*');
