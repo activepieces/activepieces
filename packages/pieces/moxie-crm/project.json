@@ -34,8 +34,7 @@
       ],
       "options": {
         "lintFilePatterns": [
-          "packages/pieces/moxie-crm/**/*.ts",
-          "packages/pieces/moxie-crm/package.json"
+          "packages/pieces/moxie-crm/**/*.ts"
         ]
       }
     }

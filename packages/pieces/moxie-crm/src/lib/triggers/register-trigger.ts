@@ -10,13 +10,13 @@ export const moxieCRMRegisterTrigger = ({
   displayName,
   description,
   eventType,
-  sampleData
+  sampleData,
 }: {
   name: string;
   displayName: string;
   description: string;
   eventType: MoxieCRMEventType;
-  sampleData:unknown;
+  sampleData: unknown;
 }) =>
   createTrigger({
     auth: moxieCRMAuth,
