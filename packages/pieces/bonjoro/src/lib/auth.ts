@@ -10,7 +10,7 @@ export const bonjoroAuth = PieceAuth.CustomAuth({
 			displayName : 'API Key',
 			description : 'The API key for your Bonjoro account',
 			required    : true,
-			validators: [Validators.pattern(/^[a-zA-Z0-9]+$/)],
+			validators: [Validators.pattern(/^\S+$/)],
         }),
     },
     validate: async ({ auth }) => {

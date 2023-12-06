@@ -4,11 +4,15 @@ import { BonjoroAuthType } from "./auth";
 export type KeyValuePair = {[key: string]: string|boolean|object|undefined }
 
 const bonjoroAPI = async (
-	api: string,
-	auth: BonjoroAuthType,
-	method: HttpMethod = HttpMethod.GET,
-	body: KeyValuePair = {}
+	api    : string,
+	auth   : BonjoroAuthType,
+	method : HttpMethod = HttpMethod.GET,
+	body   : KeyValuePair = {}
 ) => {
+
+	const {apiKey} = auth;
+
+	console.log('bonjoroAPI', api, auth, method, body);
 
 	const baseUrl = 'https://www.bonjoro.com/api/v2/';
 	const request: HttpRequest = {
@@ -17,18 +21,21 @@ const bonjoroAPI = async (
 		url     : `${baseUrl}${api}`,
 		headers : {
 			'Content-Type' : 'application/json',
-			'Authorization': `Bearer ${auth.apiKey}`,
+			'Authorization': `Bearer ${apiKey}`,
 		},
 	};
 	const response = await httpClient.sendRequest(request);
 
-	if (response.status !== 200) {
+	if (response.status > 201 || response.body["data"] === undefined) {
 		throw new Error(`Bonjoro API error: ${response.status} ${response.body}`);
 	}
 
+	let data = [];
+	data = response.body["data"];
+
 	return {
 		success : true,
-		data    : response.body["data"] as Array<KeyValuePair>,
+		data    : data,
 	};
 }
 
@@ -49,5 +56,10 @@ export async function getTemplates(auth : BonjoroAuthType) {
 
 export async function addGreet(auth : BonjoroAuthType, data: KeyValuePair ) {
 	const api = 'greets';
+	return bonjoroAPI(api, auth, HttpMethod.POST, data);
+}
+
+export async function addProfile(auth : BonjoroAuthType, data: KeyValuePair ) {
+	const api = 'profiles';
 	return bonjoroAPI(api, auth, HttpMethod.POST, data);
 }
