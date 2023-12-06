@@ -4,7 +4,7 @@ import { getCredits } from "./api";
 export type ClearoutAuthType = {apiKey: string}
 
 export const clearoutAuth = PieceAuth.CustomAuth({
-    description: "Authenticate with your Clearout account",
+    description: "Authenticate with your Clearout account. Get your API token from your Clearout account under Settings > API.",
     props: {
         apiKey: PieceAuth.SecretText({
 			displayName : 'API Token',
