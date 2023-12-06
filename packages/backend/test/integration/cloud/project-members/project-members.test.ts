@@ -10,6 +10,7 @@ import { faker } from '@faker-js/faker'
 import { apId } from '@activepieces/shared'
 import { createMockProjectMember } from '../../../helpers/mocks/project-member-mocks'
 import { PrincipalType } from '@activepieces/shared'
+import { ProjectMemberStatus } from '@activepieces/ee-shared'
 
 let app: FastifyInstance | null = null
 
@@ -69,9 +70,8 @@ describe('Project Member API', () => {
             // assert
             const responseBody = response?.json()
 
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(Object.keys(responseBody)).toHaveLength(1)
-            expect(responseBody?.token).toBeDefined()
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
+            expect(Object.keys(responseBody)).toHaveLength(8)
 
             expect(emailService.sendInvitation).toBeCalledTimes(1)
 
@@ -107,7 +107,7 @@ describe('Project Member API', () => {
             const mockInviteProjectMemberRequest = {
                 email: 'test@ap.com',
                 role: 'VIEWER',
-                activateMembership: true,
+                status: ProjectMemberStatus.ACTIVE,
             }
 
             // act
@@ -121,7 +121,7 @@ describe('Project Member API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
 
             const projectMember = await databaseConnection.getRepository('project_member').findOneBy({
                 email: mockInviteProjectMemberRequest.email,
@@ -155,7 +155,7 @@ describe('Project Member API', () => {
             const mockInviteProjectMemberRequest = {
                 email: 'test@ap.com',
                 role: 'VIEWER',
-                activateMembership: true,
+                status: ProjectMemberStatus.ACTIVE,
             }
 
             // act
@@ -169,7 +169,7 @@ describe('Project Member API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
 
             expect(emailService.sendInvitation).not.toBeCalled()
         })
@@ -220,7 +220,7 @@ describe('Project Member API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
 
             const projectMember = await databaseConnection.getRepository('project_member').findOneBy({
                 platformId: mockPlatformId,
