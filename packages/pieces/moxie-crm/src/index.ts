@@ -4,7 +4,6 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { moxieCRMTriggers } from './lib/triggers';
-import { moxieCreateContactAction } from './lib/actions/create-contact';
 import { moxieCreateProjectAction } from './lib/actions/create-project';
 import { moxieCreateClientAction } from './lib/actions/create-client';
 import { moxieCreateTaskAction } from './lib/actions/create-task';
