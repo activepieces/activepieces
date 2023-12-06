@@ -79,8 +79,6 @@ export const addGreetAction = createAction({
 		if (!greet.template_id) delete greet.template_id;
 		if (!greet.custom_attributes) delete greet.custom_attributes;
 
-		console.log("addGreetAction", greet);
-
 		return await addGreet(context.auth, greet);
 	},
 });
