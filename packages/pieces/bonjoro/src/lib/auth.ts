@@ -3,7 +3,7 @@ import { getCampaigns } from "./api";
 
 export type BonjoroAuthType = {apiKey: string}
 
-export const BonjoroAuth = PieceAuth.CustomAuth({
+export const bonjoroAuth = PieceAuth.CustomAuth({
     description: "Authenticate with your Bonjoro account",
     props: {
         apiKey: PieceAuth.SecretText({
