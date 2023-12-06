@@ -7,7 +7,7 @@ export const createMockProjectMember = (projectMember?: Partial<ProjectMember>):
         id: projectMember?.id ?? apId(),
         created: projectMember?.created ?? faker.date.recent().toISOString(),
         updated: projectMember?.updated ?? faker.date.recent().toISOString(),
-        userId: projectMember?.userId ?? apId(),
+        platformId: projectMember?.platformId ?? null,
         email: projectMember?.email ?? faker.internet.email(),
         projectId: projectMember?.projectId ?? apId(),
         role: projectMember?.role ?? faker.helpers.enumValue(ProjectMemberRole),

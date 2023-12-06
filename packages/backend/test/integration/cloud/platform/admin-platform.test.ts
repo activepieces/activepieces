@@ -47,7 +47,7 @@ describe('admin add platform endpoint', () => {
         // assert
         const responseBody = response?.json()
         expect(response?.statusCode).toBe(StatusCodes.CREATED)
-        expect(Object.keys(responseBody)).toHaveLength(22)
+        expect(Object.keys(responseBody)).toHaveLength(23)
         expect(responseBody.id).toHaveLength(21)
         expect(responseBody.created).toBeDefined()
         expect(responseBody.updated).toBeDefined()
@@ -68,6 +68,7 @@ describe('admin add platform endpoint', () => {
         expect(responseBody.privacyPolicyUrl).toBeNull()
         expect(responseBody.termsOfServiceUrl).toBeNull()
         expect(responseBody.cloudAuthEnabled).toBe(true)
+        expect(responseBody.embeddingEnabled).toBe(true)
         expect(responseBody.showPoweredBy).toBe(false)
         expect(responseBody.privacyPolicyUrl).toBeNull()
         expect(responseBody.termsOfServiceUrl).toBeNull()

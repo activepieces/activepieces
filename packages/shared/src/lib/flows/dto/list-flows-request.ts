@@ -9,9 +9,9 @@ export const ListFlowsRequest = Type.Object({
 
 export type ListFlowsRequest = Omit<Static<typeof ListFlowsRequest>, 'cursor'> & { cursor: Cursor | undefined }
 
-export const GetFlowRequest = Type.Object({
+export const GetFlowQueryParamsRequest = Type.Object({
     versionId: Type.Optional(Type.String({})),
 })
 
-export type GetFlowRequest = Static<typeof GetFlowRequest>
+export type GetFlowQueryParamsRequest = Static<typeof GetFlowQueryParamsRequest>
 

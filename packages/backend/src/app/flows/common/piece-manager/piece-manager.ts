@@ -10,7 +10,7 @@ const PACKAGE_ARCHIVE_PATH = system.getOrThrow(SystemProp.PACKAGE_ARCHIVE_PATH)
 export abstract class PieceManager {
     private readonly baseArchivePath = resolve(PACKAGE_ARCHIVE_PATH)
 
-    async install({ projectPath, pieces }: InstallParams): Promise<void> {
+    async install({ projectPath, pieces, projectId }: InstallParams): Promise<void> {
         try {
             if (isEmpty(pieces)) {
                 return
@@ -24,6 +24,7 @@ export abstract class PieceManager {
 
             await this.installDependencies({
                 projectPath,
+                projectId,
                 pieces: uniquePieces,
             })
         }
@@ -47,14 +48,14 @@ export abstract class PieceManager {
 
     protected abstract installDependencies(params: InstallParams): Promise<void>
 
-    protected pieceToDependency(piece: PiecePackage): PackageInfo {
+    protected pieceToDependency(projectId: string, piece: PiecePackage): PackageInfo {
         const packageAlias = getPackageAliasForPiece({
             pieceName: piece.pieceName,
             pieceVersion: piece.pieceVersion,
         })
 
         const projectPackageArchivePath = this.getProjectPackageArchivePath({
-            projectId: piece.projectId,
+            projectId,
         })
 
         const packageSpec = getPackageSpecForPiece({
@@ -78,6 +79,7 @@ export abstract class PieceManager {
 }
 
 type InstallParams = {
+    projectId: string
     projectPath: string
     pieces: PiecePackage[]
 }
