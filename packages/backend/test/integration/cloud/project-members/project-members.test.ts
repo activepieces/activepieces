@@ -112,7 +112,8 @@ describe('Project Member API', () => {
             const mockInviteProjectMemberRequest = {
                 email: 'test@ap.com',
                 role: 'VIEWER',
-                status: ProjectMemberStatus.ACTIVE            }
+                status: ProjectMemberStatus.ACTIVE,
+            }
 
             // act
             const response = await app?.inject({
