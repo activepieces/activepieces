@@ -1,4 +1,4 @@
-import { ListProjectMembersRequestQuery, AcceptProjectResponse, AddProjectMemberRequestBody } from '@activepieces/ee-shared'
+import { ListProjectMembersRequestQuery, AcceptProjectResponse, AddProjectMemberRequestBody, ProjectMember } from '@activepieces/ee-shared'
 import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
@@ -19,16 +19,14 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (app) =>
         )
     })
 
-    app.post('/', AddProjectMemberRequest, async (request) => {
-        const { invitationToken } = await projectMemberService.upsertAndSend({
+    app.post('/', AddProjectMemberRequest, async (request, reply) => {
+        const { projectMember } = await projectMemberService.upsertAndSend({
             ...request.body,
             projectId: request.principal.projectId,
             platformId: request.principal.platform?.id ?? null,
         })
 
-        return {
-            token: invitationToken,
-        }
+        await reply.status(StatusCodes.CREATED).send(projectMember)
     })
 
     app.post('/accept', AcceptProjectMemberRequest, async (request, reply) => {
@@ -73,6 +71,7 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (app) =>
             platformId,
             projectId,
         })
+        await response.status(StatusCodes.NO_CONTENT).send()
     })
 }
 
@@ -84,7 +83,11 @@ const ListProjectMembersRequestQueryOptions = {
 
 const AddProjectMemberRequest = {
     schema: {
+        tags: ['project-members'],
         body: AddProjectMemberRequestBody,
+        response: {
+            [StatusCodes.CREATED]: ProjectMember,
+        },
     },
 }
 
@@ -109,6 +112,10 @@ const DeleteProjectMemberRequest = {
 
 const DeleteProjectMemberByUserExternalIdRequest = {
     schema: {
+        tags: ['project-members'],
+        response: {
+            [StatusCodes.NO_CONTENT]: Type.Undefined(),
+        },
         querystring: Type.Object({
             userExternalId: Type.String(),
         }),

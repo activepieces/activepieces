@@ -42,7 +42,7 @@ export const platformProjectService = {
         return paginationHelper.createPage<ProjectWithUsageAndPlanResponse>(projects, null)
     },
 
-    async update({ userId, projectId, request, platformId }: { userId: string, projectId: ProjectId, request: UpdateProjectPlatformRequest, platformId?: PlatformId }): Promise<ProjectWithUsageAndPlanResponse | null> {
+    async update({ userId, projectId, request, platformId }: { userId: string, projectId: ProjectId, request: UpdateProjectPlatformRequest, platformId?: PlatformId }): Promise<ProjectWithUsageAndPlanResponse> {
         const project = await projectRepo.findOneBy({
             id: projectId,
         })
@@ -80,6 +80,9 @@ export const platformProjectService = {
                 subscription: null,
             })
         }
+        return this.getWithPlanAndUsageOrThrow(projectId)
+    },
+    async getWithPlanAndUsageOrThrow(projectId: string): Promise<ProjectWithUsageAndPlanResponse> {
         return enrichWithUsageAndPlan(await projectRepo.findOneByOrFail({
             id: projectId,
         }))
