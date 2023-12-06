@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, Project, ProjectType, SeekPage, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, ProjectType, SeekPage, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
 import { platformProjectService } from './platform-project-service'
 import { projectService } from '../../project/project-service'
