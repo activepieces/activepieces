@@ -38,6 +38,7 @@ import { init } from './interpolating-text-form-control/fixed-selection-mention'
 import { UiFeaturePiecesModule } from 'ui-feature-pieces';
 import { DropdownPropertyInitialValuePipe } from './piece-properties-form/dropdown-initial-value.pipe';
 import { isDropdownItemSelectedPipe } from './piece-properties-form/is-selected.pipe';
+import { MatPseudoCheckboxModule } from '@angular/material/core';
 const exportedDeclarations = [
   ArrayFormControlComponent,
   BranchConditionFormControlComponent,
@@ -62,6 +63,7 @@ const exportedDeclarations = [
     MatTreeModule,
     QuillModule.forRoot({}),
     MarkdownModule,
+    MatPseudoCheckboxModule,
   ],
   declarations: [
     ...exportedDeclarations,
