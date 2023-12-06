@@ -197,18 +197,20 @@
               (closed)="searchControl.setValue('')" [compareWith]="dropdownCompareWithFunction">
               <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
               <ng-container *ngIf="(property.value.options.options | dropdownSearch:searchControl) | async as options">
-                <cdk-virtual-scroll-viewport [itemSize]="48" minBufferPx="100" minBufferPx="200"
+                <mat-option
+                  *ngFor="let init of (property.value.options.options | dropdownInitialValue:property.key:formGroup)|async "
+                  class="!ap-hidden" [value]="init.value">
+                  {{init.label}}
+                </mat-option>
+                <cdk-virtual-scroll-viewport [itemSize]="48" minBufferPx="200" maxBufferPx="400"
                   class="ap-max-h-[195px] thin-scrollbars  ap-overflow-y-auto"
                   [class.ap-h-[50px]]="options.length === 1 " [class.ap-h-[100px]]="options.length === 2 "
-                  [class.ap-h-[150px]]="options.length === 3 " [class.ap-h-[200px]]="options.length >= 4 ">
-                  <mat-option *cdkVirtualFor="let opt of options" [value]="opt.value">
+                  [class.ap-h-[150px]]="options.length === 3 " [class.ap-h-[195px]]="options.length >= 4 ">
+                  <mat-option *cdkVirtualFor="let opt of options" [value]="opt.value"
+                    [class.mdc-list-item--selected]="opt.value| isDropdownItemSelected:property.key:formGroup ">
                     {{opt.label}}
                   </mat-option>
-                  <mat-option
-                    *ngFor="let init of (property.value.options.options | dropdownInitialValue:property.key:formGroup) "
-                    class="!ap-h-0" [value]="init.value">
-                    {{init.label}}
-                  </mat-option>
+
                 </cdk-virtual-scroll-viewport>
               </ng-container>
             </mat-select>
@@ -246,20 +248,37 @@
 
             <mat-label> {{ property.value.displayName }} </mat-label>
 
+            <mat-select [matTooltip]="property.value.description" [formControlName]="property.key"
+              (closed)="searchControl.setValue('')" [compareWith]="dropdownCompareWithFunction" multiple>
+
+              <mat-select-trigger>
+
+                <ng-container
+                  *ngIf="(property.value.options.options | dropdownInitialValue:property.key:formGroup)|async as init">
+                  <ng-container *ngFor="let opt of init;let isLast = last">
+                    {{opt.label}}<ng-container *ngIf="!isLast">,</ng-container>
+                  </ng-container>
+                </ng-container>
 
 
-            <mat-select (closed)="searchControl.setValue('')" [matTooltip]="property.value.description"
-              [formControlName]="property.key" multiple [compareWith]="dropdownCompareWithFunction">
+              </mat-select-trigger>
+
               <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
-              <div class="thin-scrollbars ap-max-h-[190px] ap-overflow-y-auto">
-                <mat-option *ngFor="let opt of (property.value.options.options | dropdownSearch:searchControl) | async">
-                  {{opt.label}}
-                </mat-option>
-              </div>
+              <ng-container *ngIf="(property.value.options.options | dropdownSearch:searchControl) | async as options">
+                <cdk-virtual-scroll-viewport [itemSize]="48" minBufferPx="200" maxBufferPx="400"
+                  class="ap-max-h-[195px] thin-scrollbars  ap-overflow-y-auto"
+                  [class.ap-h-[50px]]="options.length === 1 " [class.ap-h-[100px]]="options.length === 2"
+                  [class.ap-h-[150px]]="options.length === 3 " [class.ap-h-[195px]]="options.length >= 4">
+                  <mat-option *cdkVirtualFor="let opt of options" [value]="opt.value">
+                    {{opt.label}}
+                  </mat-option>
+                  <mat-option *ngFor=" let init of (property.value.options.options |
+                    dropdownInitialValue:property.key:formGroup)|async " class=" !ap-hidden" [value]="init.value">
+                    {{init.label}}
+                  </mat-option>
+                </cdk-virtual-scroll-viewport>
+              </ng-container>
             </mat-select>
-
-
-
 
 
           </mat-form-field>
