@@ -40,11 +40,7 @@ export const flowRunController: FastifyPluginCallbackTypebox = (app, _options, d
     )
 
     // list
-    app.get('/', {
-        schema: {
-            querystring: ListFlowRunsRequestQuery,
-        },
-    }, async (request, reply) => {
+    app.get('/', ListRequest, async (request, reply) => {
         const flowRunPage = await flowRunService.list({
             projectId: request.principal.projectId,
             flowId: request.query.flowId,
@@ -85,4 +81,10 @@ export const flowRunController: FastifyPluginCallbackTypebox = (app, _options, d
     })
 
     done()
+}
+
+const ListRequest = {
+    schema: {
+        querystring: ListFlowRunsRequestQuery,
+    },
 }

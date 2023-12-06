@@ -7,7 +7,7 @@ import {
 } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Observable, catchError, tap } from 'rxjs';
-import { ProjectWithUsageAndPlan } from '@activepieces/ee-shared';
+import { ProjectWithUsageAndPlanResponse } from '@activepieces/ee-shared';
 import { PlatformProjectService } from '@activepieces/ui/common';
 
 interface UpdateProjectForm {
@@ -16,7 +16,7 @@ interface UpdateProjectForm {
   tasks: FormControl<number>;
 }
 export type UpdateProjectDialogData = {
-  project: ProjectWithUsageAndPlan;
+  project: ProjectWithUsageAndPlanResponse;
 };
 @Component({
   selector: 'app-update-project-dialog',
@@ -26,7 +26,7 @@ export type UpdateProjectDialogData = {
 export class UpdateProjectDialogComponent {
   formGroup: FormGroup<UpdateProjectForm>;
   loading = false;
-  updateProject$?: Observable<ProjectWithUsageAndPlan>;
+  updateProject$?: Observable<ProjectWithUsageAndPlanResponse>;
 
   constructor(
     private fb: FormBuilder,

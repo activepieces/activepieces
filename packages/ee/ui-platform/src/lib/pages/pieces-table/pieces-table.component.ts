@@ -40,7 +40,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PiecesTableComponent implements OnInit {
-  displayedColumns = ['displayName', 'action'];
+  displayedColumns = ['displayName', 'version', 'action'];
   title = $localize`Pieces`;
   saving$?: Observable<void>;
   platform$!: BehaviorSubject<Platform>;
