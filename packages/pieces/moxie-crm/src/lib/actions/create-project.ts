@@ -3,14 +3,14 @@ import {
   createAction,
   PiecePropValueSchema,
 } from '@activepieces/pieces-framework';
-import { makeClient } from '../common';
+import { makeClient, reformatDate } from '../common';
 import { moxieCRMAuth } from '../..';
 
 export const moxieCreateProjectAction = createAction({
   auth: moxieCRMAuth,
-  name: 'create_project',
-  description: 'Create a new project record',
-  displayName: 'Create Project',
+  name: 'moxie_create_project',
+  description: 'Creates a new project in moxie CRM.',
+  displayName: 'Create a Project',
   props: {
     name: Property.ShortText({
       displayName: 'Project Name',
@@ -56,7 +56,9 @@ export const moxieCreateProjectAction = createAction({
     }),
     portalAccess: Property.StaticDropdown({
       displayName: 'Client Portal Access',
+      description: 'One of: None, Overview, Full access, or Read only.',
       required: true,
+      defaultValue: 'Read Only',
       options: {
         options: [
           {
@@ -85,6 +87,7 @@ export const moxieCreateProjectAction = createAction({
     }),
     feeType: Property.StaticDropdown({
       displayName: 'Fee Type',
+      description: 'One of: Hourly, Fixed Price, Retainer, Per Item.',
       required: true,
       options: {
         options: [
@@ -112,38 +115,6 @@ export const moxieCreateProjectAction = createAction({
       required: false,
       defaultValue: 0,
     }),
-    retainerSchedule: Property.StaticDropdown({
-      displayName: 'Retainer Schedule',
-      required: false,
-      options: {
-        options: [
-          {
-            label: 'Weekly',
-            value: 'WEEKLY',
-          },
-          {
-            label: 'Bi Weekly',
-            value: 'BI_WEEKLY',
-          },
-          {
-            label: 'Monthly',
-            value: 'MONTHLY',
-          },
-          {
-            label: 'Quarterly',
-            value: 'QUARTERLY',
-          },
-          {
-            label: 'Bi Annually',
-            value: 'BI_ANNUALLY',
-          },
-          {
-            label: 'Annually',
-            value: 'ANNUALLY',
-          },
-        ],
-      },
-    }),
     estimateMax: Property.Number({
       displayName: 'Estimate maximum Amount',
       required: false,
@@ -151,32 +122,6 @@ export const moxieCreateProjectAction = createAction({
     }),
     estimateMin: Property.Number({
       displayName: 'Estimate minimum Amount',
-      required: false,
-      defaultValue: 0,
-    }),
-    retainerStart: Property.DateTime({
-      displayName: 'Retainer Start Date',
-      description: 'Please enter date in YYYY-MM-DD format.',
-      required: false,
-    }),
-    retainerTiming: Property.StaticDropdown({
-      displayName: 'Retainer Timing',
-      required: false,
-      options: {
-        options: [
-          {
-            label: 'Advanced',
-            value: 'ADVANCED ',
-          },
-          {
-            label: 'Arrears',
-            value: 'ARREARS ',
-          },
-        ],
-      },
-    }),
-    retainerOverageRate: Property.Number({
-      displayName: 'Retainer Overage Rate',
       required: false,
       defaultValue: 0,
     }),
@@ -190,20 +135,16 @@ export const moxieCreateProjectAction = createAction({
     const {
       name,
       clientName,
-      startDate,
-      dueDate,
       portalAccess,
       showTimeWorkedInPortal,
       feeType,
       amount,
-      retainerSchedule,
       estimateMax,
       estimateMin,
-      retainerStart,
-      retainerTiming,
-      retainerOverageRate,
       taxable,
     } = propsValue;
+    const dueDate = reformatDate(propsValue.dueDate) as string;
+    const startDate = reformatDate(propsValue.startDate) as string;
     const client = await makeClient(auth);
     return await client.createProject({
       name,
@@ -215,12 +156,8 @@ export const moxieCreateProjectAction = createAction({
       feeSchedule: {
         feeType,
         amount,
-        retainerSchedule,
         estimateMax,
         estimateMin,
-        retainerStart,
-        retainerTiming,
-        retainerOverageRate,
         taxable,
       },
     });

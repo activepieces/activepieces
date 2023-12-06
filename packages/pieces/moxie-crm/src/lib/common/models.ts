@@ -38,12 +38,8 @@ export type ProjectCreateRequest = {
   feeSchedule: {
     feeType: string;
     amount?: number;
-    retainerSchedule?: string;
     estimateMax?: number;
     estimateMin?: number;
-    retainerStart?: string;
-    retainerTiming?: string;
-    retainerOverageRate?: number;
     taxable?: boolean;
   };
 };

@@ -6,7 +6,7 @@ export const moxieCreateClientAction = createAction({
   auth: moxieCRMAuth,
   name: 'moxie_create_client',
   displayName: 'Create a Client',
-  description: 'Create a new client record.',
+  description: 'Create a new client record in moxie CRM.',
   props: {
     name: Property.ShortText({
       displayName: 'Name',

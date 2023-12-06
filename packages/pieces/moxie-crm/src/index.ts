@@ -38,6 +38,10 @@ export const moxieCrm = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/moxie-crm.png',
   authors: ['kishanprmr'],
-  actions: [moxieCreateClientAction, moxieCreateTaskAction],
+  actions: [
+    moxieCreateClientAction,
+    moxieCreateTaskAction,
+    moxieCreateProjectAction,
+  ],
   triggers: moxieCRMTriggers,
 });
