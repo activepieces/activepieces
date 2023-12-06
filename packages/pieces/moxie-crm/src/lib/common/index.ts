@@ -9,3 +9,8 @@ export async function makeClient(
   const client = new MoxieCRMClient(auth.baseUrl, auth.apiKey);
   return client;
 }
+
+export function reformatDate(s?: string): string | undefined {
+  if (!s) return undefined;
+  return s.split('T', 2)[0];
+}

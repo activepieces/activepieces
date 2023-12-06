@@ -3,68 +3,18 @@ import {
   HttpMessageBody,
   httpClient,
   HttpResponse,
+  QueryParams,
 } from '@activepieces/pieces-common';
+import {
+  ContactCreateRequest,
+  ClientCreateRequest,
+  ClientListResponse,
+  TaskCreateRequest,
+  ProjectCreateRequest,
+  ProjectSearchResponse,
+  ProjectTaskStageListResponse,
+} from './models';
 
-type ContactCreateRequest = {
-  first: string;
-  last: string;
-  email?: string;
-  phone?: string;
-  notes?: string;
-  clientName?: string;
-  defaultContact?: boolean;
-  portalAccess?: boolean;
-  invoiceContact?: boolean;
-};
-
-type ClientListResponse = {
-  id: string;
-  name: string;
-};
-
-type ProjectCreateRequest = {
-  name: string;
-  clientName: string;
-  startDate?: string;
-  dueDate?: string;
-  portalAccess: string;
-  showTimeWorkedInPortal?: boolean;
-  feeSchedule: {
-    feeType: string;
-    amount?: number;
-    retainerSchedule?: string;
-    estimateMax?: number;
-    estimateMin?: number;
-    retainerStart?: string;
-    retainerTiming?: string;
-    retainerOverageRate?: number;
-    taxable?: boolean;
-  };
-};
-
-type ClientCreateRequest = {
-  name: string;
-  clientType: string;
-  initials?: string;
-  address1?: string;
-  address2?: string;
-  city?: string;
-  locality?: string;
-  postal?: string;
-  country?: string;
-  website?: string;
-  phone?: string;
-  color?: string;
-  taxId?: string;
-  leadSource?: string;
-  archive: boolean;
-  payInstructions?: string;
-  hourlyAmount?: number;
-  roundingIncrement?: number;
-  currency?: string;
-  stripeClientId?: string;
-  notes?: string;
-};
 export class MoxieCRMClient {
   constructor(private baseUrl: string, private apiKey: string) {
     // Remove trailing slash from base URL
@@ -73,7 +23,8 @@ export class MoxieCRMClient {
   async makeRequest<T extends HttpMessageBody>(
     method: HttpMethod,
     resourceUri: string,
-    body: any | undefined = undefined
+    body: any | undefined = undefined,
+    query?: QueryParams
   ): Promise<HttpResponse<T>> {
     return await httpClient.sendRequest<T>({
       method: method,
@@ -82,6 +33,7 @@ export class MoxieCRMClient {
         'X-API-KEY': this.apiKey,
       },
       body: body,
+      queryParams: query,
     });
   }
   async createContact(request: ContactCreateRequest) {
@@ -121,6 +73,31 @@ export class MoxieCRMClient {
         HttpMethod.POST,
         '/action/projects/create',
         request
+      )
+    ).body;
+  }
+  async createTask(request: TaskCreateRequest) {
+    return (
+      await this.makeRequest(HttpMethod.POST, '/action/tasks/create', request)
+    ).body;
+  }
+
+  async searchProjects(clientName: string): Promise<ProjectSearchResponse[]> {
+    return (
+      await this.makeRequest<ProjectSearchResponse[]>(
+        HttpMethod.GET,
+        '/action/projects/search',
+        undefined,
+        { query: clientName }
+      )
+    ).body;
+  }
+
+  async listProjectTaskStages(): Promise<ProjectTaskStageListResponse[]> {
+    return (
+      await this.makeRequest<ProjectTaskStageListResponse[]>(
+        HttpMethod.GET,
+        '/action/taskStages/list'
       )
     ).body;
   }

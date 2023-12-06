@@ -7,6 +7,7 @@ import { moxieCRMTriggers } from './lib/triggers';
 import { moxieCreateContactAction } from './lib/actions/create-contact';
 import { moxieCreateProjectAction } from './lib/actions/create-project';
 import { moxieCreateClientAction } from './lib/actions/create-client';
+import { moxieCreateTaskAction } from './lib/actions/create-task';
 export const moxieCRMAuth = PieceAuth.CustomAuth({
   required: true,
   description: `
@@ -37,6 +38,6 @@ export const moxieCrm = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/moxie-crm.png',
   authors: ['kishanprmr'],
-  actions: [moxieCreateClientAction],
+  actions: [moxieCreateClientAction, moxieCreateTaskAction],
   triggers: moxieCRMTriggers,
 });
