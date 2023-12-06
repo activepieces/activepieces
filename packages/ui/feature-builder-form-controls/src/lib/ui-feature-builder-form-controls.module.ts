@@ -36,6 +36,7 @@ import { MarkdownModule } from 'ngx-markdown';
 import { SelectedAuthConfigsPipe } from './piece-properties-form/selected-auth-config.pipe';
 import { init } from './interpolating-text-form-control/fixed-selection-mention';
 import { UiFeaturePiecesModule } from 'ui-feature-pieces';
+import { DropdownPropertyInitialValuePipe } from './piece-properties-form/dropdown-initial-value.pipe';
 const exportedDeclarations = [
   ArrayFormControlComponent,
   BranchConditionFormControlComponent,
@@ -80,6 +81,7 @@ const exportedDeclarations = [
     AutocompleteDropdownSizesButtonsComponent,
     DropdownPropertySearchPipe,
     SelectedAuthConfigsPipe,
+    DropdownPropertyInitialValuePipe,
   ],
   exports: [...exportedDeclarations],
 })
