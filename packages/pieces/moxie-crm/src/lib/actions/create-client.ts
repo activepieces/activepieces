@@ -5,8 +5,8 @@ import { moxieCRMAuth } from '../..';
 export const moxieCreateClientAction = createAction({
   auth: moxieCRMAuth,
   name: 'moxie_create_client',
-  description: 'Create a Client',
-  displayName: 'Create a new client record.',
+  displayName: 'Create a Client',
+  description: 'Create a new client record.',
   props: {
     name: Property.ShortText({
       displayName: 'Name',
