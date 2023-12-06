@@ -1,5 +1,5 @@
-import { ListProjectMembersRequestQuery, AcceptProjectResponse, AddProjectMemberRequestBody, ProjectMember } from '@activepieces/ee-shared'
-import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { ListProjectMembersRequestQuery, AcceptProjectResponse, AddProjectMemberRequestBody, ProjectMember, ProjectMemberStatus } from '@activepieces/ee-shared'
+import { ActivepiecesError, ErrorCode, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -7,6 +7,8 @@ import { logger } from '../../helper/logger'
 import { userService } from '../../user/user-service'
 import { projectMemberService } from './project-member.service'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
+import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
+import { platformService } from '../platform/platform.service'
 
 const DEFAULT_LIMIT_SIZE = 10
 
@@ -20,6 +22,10 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (app) =>
     })
 
     app.post('/', AddProjectMemberRequest, async (request, reply) => {
+        const { status } = request.body
+        if (status === ProjectMemberStatus.ACTIVE) {
+            await assertFeatureIsEnabled(app, request, reply)
+        }
         const { projectMember } = await projectMemberService.upsertAndSend({
             ...request.body,
             projectId: request.principal.projectId,
@@ -73,6 +79,20 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (app) =>
         })
         await response.status(StatusCodes.NO_CONTENT).send()
     })
+}
+
+async function assertFeatureIsEnabled(app: FastifyInstance, request: FastifyRequest, reply: FastifyReply) {
+    await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+    const platformId = request.principal.platform?.id
+    assertNotNullOrUndefined(platformId, 'platformId')
+    const platform = await platformService.getOneOrThrow(platformId)
+    // TODO CHECK WITH BUSINESS LOGIC
+    if (!platform.embeddingEnabled) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {},
+        })
+    }
 }
 
 const ListProjectMembersRequestQueryOptions = {
