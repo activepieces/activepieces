@@ -113,6 +113,7 @@ function isAuthenticatedRoute(routerPath: string, method: string): boolean {
         '/v1/pieces/stats',
         '/v1/authn/local/verify-email',
         '/v1/pieces/:name',
+        '/favicon.ico',
         '/v1/pieces/:scope/:name',
         '/v1/app-events/:pieceUrl',
         '/v1/authentication/sign-in',

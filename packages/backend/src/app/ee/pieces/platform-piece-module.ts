@@ -29,6 +29,7 @@ const platformPieceController: FastifyPluginCallbackTypebox = (app, _opts, done)
             pieceVersion,
             archive: pieceArchive as Buffer,
             projectId,
+            platformId,
         })
 
     })

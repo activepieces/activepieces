@@ -89,6 +89,7 @@ import { MigrateEeUsersToOldestPlatform1701261357197 } from './migration/postgre
 import { ModifyProjectMembersAndRemoveUserId1701647565290 } from './migration/postgres/1701647565290-ModifyProjectMembersAndRemoveUserId'
 import { AddApiKeys1701716639135 } from './migration/postgres/1701716639135-AddApiKeys'
 import { AddEmbeddingFeatureToPlatform1701794452891 } from './migration/postgres/1701794452891-AddEmbeddingFeatureToPlatform'
+import { AddPlatformIdToFile1701807681821 } from './migration/postgres/1701807681821-AddPlatformIdToFile'
 
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -155,6 +156,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddPlatformIdToUser1699901161457,
         AddPlatformIdToPieceMetadata1700522340280,
         AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822,
+        AddPlatformIdToFile1701807681821,
     ]
 
     const edition = getEdition()
