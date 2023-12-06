@@ -37,8 +37,12 @@ export const moxieCRMRegisterTrigger = ({
     },
     type: TriggerStrategy.WEBHOOK,
     sampleData: sampleData,
-    async onEnable(context) {},
-    async onDisable(context) {},
+    async onEnable(context) {
+      // Empty
+    },
+    async onDisable(context) {
+      // Empty
+    },
     async run(context) {
       return [context.payload.body];
     },
