@@ -2,10 +2,83 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Activepieces Documentation",
-    "version": "0.3.6"
+    "version": "0.14.3"
   },
   "components": {
     "schemas": {
+      "project-member": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string"
+          },
+          "updated": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "platformId": {
+            "pattern": "^[0-9a-zA-Z]{21}$",
+            "type": "string",
+            "nullable": true
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "ADMIN"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "EDITOR"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "VIEWER"
+                ]
+              }
+            ]
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "ACTIVE"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "PENDING"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "created",
+          "updated",
+          "email",
+          "platformId",
+          "projectId",
+          "role",
+          "status"
+        ]
+      },
       "project": {
         "type": "object",
         "properties": {
@@ -79,7 +152,8 @@
                 "type": "string"
               },
               "stripeSubscriptionId": {
-                "type": "string"
+                "type": "string",
+                "nullable": true
               },
               "subscriptionStartDatetime": {
                 "type": "string"
@@ -100,7 +174,8 @@
                 "type": "number"
               },
               "tasksPerDay": {
-                "type": "number"
+                "type": "number",
+                "nullable": true
               }
             },
             "required": [
@@ -108,12 +183,14 @@
               "created",
               "updated",
               "projectId",
+              "stripeSubscriptionId",
               "subscriptionStartDatetime",
               "flowPlanName",
               "minimumPollingInterval",
               "connections",
               "teamMembers",
-              "tasks"
+              "tasks",
+              "tasksPerDay"
             ]
           },
           "usage": {
@@ -188,7 +265,8 @@
             "type": "string"
           },
           "folderId": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "version": {
             "type": "object",
@@ -478,6 +556,7 @@
           "created",
           "updated",
           "projectId",
+          "folderId",
           "version",
           "status"
         ]
@@ -621,7 +700,8 @@
                       "type": "string"
                     },
                     "folderId": {
-                      "type": "string"
+                      "type": "string",
+                      "nullable": true
                     },
                     "version": {
                       "type": "object",
@@ -911,6 +991,7 @@
                     "created",
                     "updated",
                     "projectId",
+                    "folderId",
                     "version",
                     "status"
                   ]
@@ -1022,6 +1103,22 @@
                           },
                           "client_secret": {
                             "type": "string"
+                          },
+                          "grant_type": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "authorization_code"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "client_credentials"
+                                ]
+                              }
+                            ]
                           },
                           "token_url": {
                             "type": "string"
@@ -1481,15 +1578,19 @@
                     },
                     "next": {
                       "description": "Cursor to the next page",
-                      "type": "string"
+                      "type": "string",
+                      "nullable": true
                     },
                     "previous": {
                       "description": "Cursor to the previous page",
-                      "type": "string"
+                      "type": "string",
+                      "nullable": true
                     }
                   },
                   "required": [
-                    "data"
+                    "data",
+                    "next",
+                    "previous"
                   ]
                 }
               }
@@ -1546,8 +1647,182 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "Default Response"
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "created": {
+                      "type": "string"
+                    },
+                    "updated": {
+                      "type": "string"
+                    },
+                    "ownerId": {
+                      "type": "string"
+                    },
+                    "displayName": {
+                      "type": "string"
+                    },
+                    "notifyStatus": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "NEVER"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "ALWAYS"
+                          ]
+                        }
+                      ]
+                    },
+                    "type": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "PLATFORM_MANAGED"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "STANDALONE"
+                          ]
+                        }
+                      ]
+                    },
+                    "platformId": {
+                      "pattern": "^[0-9a-zA-Z]{21}$",
+                      "type": "string"
+                    },
+                    "externalId": {
+                      "type": "string"
+                    },
+                    "plan": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "created": {
+                          "type": "string"
+                        },
+                        "updated": {
+                          "type": "string"
+                        },
+                        "projectId": {
+                          "type": "string"
+                        },
+                        "stripeSubscriptionId": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "subscriptionStartDatetime": {
+                          "type": "string"
+                        },
+                        "flowPlanName": {
+                          "type": "string"
+                        },
+                        "minimumPollingInterval": {
+                          "type": "number"
+                        },
+                        "connections": {
+                          "type": "number"
+                        },
+                        "teamMembers": {
+                          "type": "number"
+                        },
+                        "tasks": {
+                          "type": "number"
+                        },
+                        "tasksPerDay": {
+                          "type": "number",
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "created",
+                        "updated",
+                        "projectId",
+                        "stripeSubscriptionId",
+                        "subscriptionStartDatetime",
+                        "flowPlanName",
+                        "minimumPollingInterval",
+                        "connections",
+                        "teamMembers",
+                        "tasks",
+                        "tasksPerDay"
+                      ]
+                    },
+                    "usage": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "created": {
+                          "type": "string"
+                        },
+                        "updated": {
+                          "type": "string"
+                        },
+                        "projectId": {
+                          "type": "string"
+                        },
+                        "consumedTasks": {
+                          "type": "number"
+                        },
+                        "connections": {
+                          "type": "number"
+                        },
+                        "teamMembers": {
+                          "type": "number"
+                        },
+                        "consumedTasksToday": {
+                          "type": "number"
+                        },
+                        "nextResetDatetime": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "created",
+                        "updated",
+                        "projectId",
+                        "consumedTasks",
+                        "connections",
+                        "teamMembers",
+                        "consumedTasksToday",
+                        "nextResetDatetime"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "created",
+                    "updated",
+                    "ownerId",
+                    "displayName",
+                    "notifyStatus",
+                    "type",
+                    "plan",
+                    "usage"
+                  ]
+                }
+              }
+            }
           }
         }
       },
@@ -1631,6 +1906,106 @@
                           },
                           "externalId": {
                             "type": "string"
+                          },
+                          "plan": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "created": {
+                                "type": "string"
+                              },
+                              "updated": {
+                                "type": "string"
+                              },
+                              "projectId": {
+                                "type": "string"
+                              },
+                              "stripeSubscriptionId": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "subscriptionStartDatetime": {
+                                "type": "string"
+                              },
+                              "flowPlanName": {
+                                "type": "string"
+                              },
+                              "minimumPollingInterval": {
+                                "type": "number"
+                              },
+                              "connections": {
+                                "type": "number"
+                              },
+                              "teamMembers": {
+                                "type": "number"
+                              },
+                              "tasks": {
+                                "type": "number"
+                              },
+                              "tasksPerDay": {
+                                "type": "number",
+                                "nullable": true
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "created",
+                              "updated",
+                              "projectId",
+                              "stripeSubscriptionId",
+                              "subscriptionStartDatetime",
+                              "flowPlanName",
+                              "minimumPollingInterval",
+                              "connections",
+                              "teamMembers",
+                              "tasks",
+                              "tasksPerDay"
+                            ]
+                          },
+                          "usage": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "created": {
+                                "type": "string"
+                              },
+                              "updated": {
+                                "type": "string"
+                              },
+                              "projectId": {
+                                "type": "string"
+                              },
+                              "consumedTasks": {
+                                "type": "number"
+                              },
+                              "connections": {
+                                "type": "number"
+                              },
+                              "teamMembers": {
+                                "type": "number"
+                              },
+                              "consumedTasksToday": {
+                                "type": "number"
+                              },
+                              "nextResetDatetime": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "created",
+                              "updated",
+                              "projectId",
+                              "consumedTasks",
+                              "connections",
+                              "teamMembers",
+                              "consumedTasksToday",
+                              "nextResetDatetime"
+                            ]
                           }
                         },
                         "required": [
@@ -1640,21 +2015,27 @@
                           "ownerId",
                           "displayName",
                           "notifyStatus",
-                          "type"
+                          "type",
+                          "plan",
+                          "usage"
                         ]
                       }
                     },
                     "next": {
                       "description": "Cursor to the next page",
-                      "type": "string"
+                      "type": "string",
+                      "nullable": true
                     },
                     "previous": {
                       "description": "Cursor to the previous page",
-                      "type": "string"
+                      "type": "string",
+                      "nullable": true
                     }
                   },
                   "required": [
-                    "data"
+                    "data",
+                    "next",
+                    "previous"
                   ]
                 }
               }
@@ -1730,6 +2111,347 @@
         ],
         "responses": {
           "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "created": {
+                      "type": "string"
+                    },
+                    "updated": {
+                      "type": "string"
+                    },
+                    "ownerId": {
+                      "type": "string"
+                    },
+                    "displayName": {
+                      "type": "string"
+                    },
+                    "notifyStatus": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "NEVER"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "ALWAYS"
+                          ]
+                        }
+                      ]
+                    },
+                    "type": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "PLATFORM_MANAGED"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "STANDALONE"
+                          ]
+                        }
+                      ]
+                    },
+                    "platformId": {
+                      "pattern": "^[0-9a-zA-Z]{21}$",
+                      "type": "string"
+                    },
+                    "externalId": {
+                      "type": "string"
+                    },
+                    "plan": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "created": {
+                          "type": "string"
+                        },
+                        "updated": {
+                          "type": "string"
+                        },
+                        "projectId": {
+                          "type": "string"
+                        },
+                        "stripeSubscriptionId": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "subscriptionStartDatetime": {
+                          "type": "string"
+                        },
+                        "flowPlanName": {
+                          "type": "string"
+                        },
+                        "minimumPollingInterval": {
+                          "type": "number"
+                        },
+                        "connections": {
+                          "type": "number"
+                        },
+                        "teamMembers": {
+                          "type": "number"
+                        },
+                        "tasks": {
+                          "type": "number"
+                        },
+                        "tasksPerDay": {
+                          "type": "number",
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "created",
+                        "updated",
+                        "projectId",
+                        "stripeSubscriptionId",
+                        "subscriptionStartDatetime",
+                        "flowPlanName",
+                        "minimumPollingInterval",
+                        "connections",
+                        "teamMembers",
+                        "tasks",
+                        "tasksPerDay"
+                      ]
+                    },
+                    "usage": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "created": {
+                          "type": "string"
+                        },
+                        "updated": {
+                          "type": "string"
+                        },
+                        "projectId": {
+                          "type": "string"
+                        },
+                        "consumedTasks": {
+                          "type": "number"
+                        },
+                        "connections": {
+                          "type": "number"
+                        },
+                        "teamMembers": {
+                          "type": "number"
+                        },
+                        "consumedTasksToday": {
+                          "type": "number"
+                        },
+                        "nextResetDatetime": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "created",
+                        "updated",
+                        "projectId",
+                        "consumedTasks",
+                        "connections",
+                        "teamMembers",
+                        "consumedTasksToday",
+                        "nextResetDatetime"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "created",
+                    "updated",
+                    "ownerId",
+                    "displayName",
+                    "notifyStatus",
+                    "type",
+                    "plan",
+                    "usage"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/project-members/": {
+      "post": {
+        "tags": [
+          "project-members"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "ADMIN"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "EDITOR"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "VIEWER"
+                        ]
+                      }
+                    ]
+                  },
+                  "status": {
+                    "default": "PENDING",
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "ACTIVE"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "PENDING"
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "email",
+                  "role"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "created": {
+                      "type": "string"
+                    },
+                    "updated": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "platformId": {
+                      "pattern": "^[0-9a-zA-Z]{21}$",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "projectId": {
+                      "type": "string"
+                    },
+                    "role": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "ADMIN"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "EDITOR"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "VIEWER"
+                          ]
+                        }
+                      ]
+                    },
+                    "status": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "ACTIVE"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "PENDING"
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "created",
+                    "updated",
+                    "email",
+                    "platformId",
+                    "projectId",
+                    "role",
+                    "status"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "project-members"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "userExternalId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
             "description": "Default Response"
           }
         }

@@ -14,7 +14,7 @@
       "dark": "#121212"
     }
   },
-  "openapi": ["./openapi.json"],
+  "openapi": ["/openapi.json"],
   "metadata": {
     "og:image": "https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/62c4ecbe6b2d76719d890ae7_Screenshot%202022-07-06%20at%2004.59.45-p-2600.png",
     "description": "Open source alternative to zapier"
@@ -34,17 +34,25 @@
       "url": "https://github.com/activepieces/activepieces"
     }
   ],
+  "anchors": [
+    {
+      "name": "Discord",
+      "icon": "discord",
+      "url": "https://discord.gg/2jUXBKDdP8"
+    },
+    {
+      "name": "Pieces",
+      "icon": "plug",
+      "url": "https://www.activepieces.com/pieces"
+    }
+  ],
   "primaryTab": {
     "name": "Learn"
   },
   "tabs": [
     {
-      "name": "Developers",
+      "name": "Develop Pieces",
       "url": "developers"
-    },
-    {
-      "name": "Pieces",
-      "url": "https://www.activepieces.com/pieces"
     },
     {
       "name": "Deploy",
@@ -52,11 +60,7 @@
     },
     {
       "name": "API",
-      "url": "api"
-    },
-    {
-      "name": "Discord",
-      "url": "https://discord.gg/2jUXBKDdP8"
+      "url": "endpoints"
     }
   ],
   "navigation": [
@@ -67,13 +71,11 @@
         "getting-started/principles"
       ]
     },
-    
-
        {
         "group": "Get Started",
         "pages": [
-          "api/overview",
-          "api/authentication"
+          "endpoints/overview",
+          "endpoints/authentication"
         ]
        },
        {
@@ -83,10 +85,20 @@
               "group": "Projects",
               "icon": "building",
               "pages": [
-                "api/projects/schema",
-                "api/projects/create",
-                "api/projects/update",
-                "api/projects/list"
+                "endpoints/projects/schema",
+                "endpoints/projects/create",
+                "endpoints/projects/update",
+                "endpoints/projects/list"
+
+              ]
+            },
+            {
+              "group": "Project Members",
+              "icon": "user",
+              "pages": [
+                "endpoints/project-members/schema",
+                "endpoints/project-members/create",
+                "endpoints/project-members/delete"
 
               ]
             },
@@ -94,19 +106,19 @@
               "group": "Connections",
               "icon": "link",
               "pages": [
-                "api/connections/schema",
-                "api/connections/upsert",
-                "api/connections/list",
-                "api/connections/delete"
+                "endpoints/connections/schema",
+                "endpoints/connections/upsert",
+                "endpoints/connections/list",
+                "endpoints/connections/delete"
               ]
             },
             {
               "group": "Flows",
               "icon": "bolt",
               "pages": [
-                "api/flows/schema",
-                "api/flows/get",
-                "api/flows/delete"
+                "endpoints/flows/schema",
+                "endpoints/flows/get",
+                "endpoints/flows/delete"
               ]
             }
           ]
