@@ -21,7 +21,7 @@ import {
     ProjectMemberId,
     ProjectMemberRole,
     ProjectMemberStatus,
-    SendInvitationRequest,
+    AddProjectMemberRequestBody,
 } from '@activepieces/ee-shared'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { projectService } from '../../project/project-service'
@@ -58,19 +58,23 @@ export const projectMemberService = {
         }
     },
 
-    async upsertAndSend({ platformId, projectId, email, role }: SendParams): Promise<UpsertAndSendResponse> {
+    async upsertAndSend({ platformId, projectId, email, role, status }: UpsertAndSendParams): Promise<UpsertAndSendResponse> {
+
         const projectMember = await this.upsert({
             platformId,
             email,
             projectId,
             role,
+            status,
         })
 
-        await emailService.sendInvitation({
-            invitationId: projectMember.id,
-            projectId,
-            email,
-        })
+        if (projectMember.status === ProjectMemberStatus.PENDING) {
+            await emailService.sendInvitation({
+                invitationId: projectMember.id,
+                projectId,
+                email,
+            })
+        }
 
         const invitationToken = await accessTokenManager.generateToken({
             id: projectMember.id,
@@ -162,6 +166,19 @@ export const projectMemberService = {
         await projectMemberRepo.delete({ projectId, id: invitationId })
     },
 
+    async deleteByUserExternalId({ userExternalId, platformId, projectId }: DeleteByUserExternalIdParams): Promise<void> {
+        const userEmail = await getUserEmailByExternalIdOrThrow({
+            userExternalId,
+            platformId,
+        })
+
+        await projectMemberRepo.delete({
+            projectId,
+            platformId,
+            email: userEmail,
+        })
+    },
+
     async countTeamMembersIncludingOwner(projectId: ProjectId): Promise<number> {
         return await projectMemberRepo.countBy({
             projectId,
@@ -203,6 +220,25 @@ const getOrThrow = async (id: string): Promise<ProjectMember> => {
     return projectMember
 }
 
+const getUserEmailByExternalIdOrThrow = async ({ userExternalId, platformId }: GetUserEmailByExternalIdOrThrowParams): Promise<string> => {
+    const user = await userService.getByPlatformAndExternalId({
+        platformId,
+        externalId: userExternalId,
+    })
+
+    if (isNil(user)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: {
+                entityType: 'User',
+                entityId: `userExternalId=${userExternalId} platformId=${platformId}`,
+            },
+        })
+    }
+
+    return user.email
+}
+
 type UpsertParams = {
     email: string
     platformId: PlatformId | null
@@ -213,7 +249,7 @@ type UpsertParams = {
 
 type NewProjectMember = Omit<ProjectMember, 'created'>
 
-type SendParams = SendInvitationRequest & {
+type UpsertAndSendParams = AddProjectMemberRequestBody & {
     projectId: ProjectId
     platformId: PlatformId | null
 }
@@ -229,4 +265,15 @@ type ProjectMemberToken = {
 type UpsertAndSendResponse = {
     projectMember: ProjectMember
     invitationToken: string
+}
+
+type DeleteByUserExternalIdParams = {
+    userExternalId: string
+    platformId: PlatformId
+    projectId: ProjectId
+}
+
+type GetUserEmailByExternalIdOrThrowParams = {
+    userExternalId: string
+    platformId: PlatformId
 }

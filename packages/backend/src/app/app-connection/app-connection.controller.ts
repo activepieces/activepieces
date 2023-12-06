@@ -1,45 +1,25 @@
 import {
-    ActivepiecesError,
     ApId,
     AppConnection,
     AppConnectionWithoutSensitiveData,
-    ErrorCode,
     ListAppConnectionsRequestQuery,
     SeekPage,
     UpsertAppConnectionRequestBody,
-    isNil,
 } from '@activepieces/shared'
 import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { appConnectionService } from './app-connection-service/app-connection-service'
 
 export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
-    app.post('/', UpsertAppConnectionRequest, async (request): Promise<AppConnectionWithoutSensitiveData> => {
+    app.post('/', UpsertAppConnectionRequest, async (request, reply) => {
         const appConnection = await appConnectionService.upsert({
             projectId: request.principal.projectId,
             request: request.body,
         })
 
-        return removeSensitiveData(appConnection)
+        await reply.status(StatusCodes.CREATED).send(removeSensitiveData(appConnection))
     })
 
-    app.get('/:connectionName', GetAppConnectionRequest, async (request): Promise<AppConnectionWithoutSensitiveData> => {
-        const appConnection = await appConnectionService.getOne({
-            projectId: request.principal.projectId,
-            name: request.params.connectionName,
-        })
-
-        if (isNil(appConnection)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.APP_CONNECTION_NOT_FOUND,
-                params: {
-                    id: request.params.connectionName,
-                },
-            })
-        }
-
-        return removeSensitiveData(appConnection)
-    })
 
     app.get('/', ListAppConnectionsRequest, async (request): Promise<SeekPage<AppConnectionWithoutSensitiveData>> => {
         const { appName, cursor, limit } = request.query
@@ -59,11 +39,12 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
         return appConnectionsWithoutSensitiveData
     })
 
-    app.delete('/:connectionId', DeleteAppConnectionRequest, async (request): Promise<void> => {
+    app.delete('/:connectionId', DeleteAppConnectionRequest, async (request, reply): Promise<void> => {
         await appConnectionService.delete({
             id: request.params.connectionId,
             projectId: request.principal.projectId,
         })
+        await reply.status(StatusCodes.NO_CONTENT).send()
     })
 
     done()
@@ -78,24 +59,20 @@ const removeSensitiveData = (appConnection: AppConnection): AppConnectionWithout
 
 const UpsertAppConnectionRequest = {
     schema: {
+        tags: ['connection'],
+        description: 'Upsert an app connection based on the app name',
         body: UpsertAppConnectionRequestBody,
-    },
-}
-
-const GetAppConnectionRequest = {
-    schema: {
-        params: Type.Object({
-            connectionName: Type.String(),
-        }),
-        response: {
-            [StatusCodes.OK]: AppConnectionWithoutSensitiveData,
+        Response: {
+            [StatusCodes.CREATED]: AppConnectionWithoutSensitiveData,
         },
     },
 }
 
 const ListAppConnectionsRequest = {
     schema: {
+        tags: ['connection'],
         querystring: ListAppConnectionsRequestQuery,
+        description: 'List app connections',
         response: {
             [StatusCodes.OK]: SeekPage(AppConnectionWithoutSensitiveData),
         },
@@ -104,8 +81,13 @@ const ListAppConnectionsRequest = {
 
 const DeleteAppConnectionRequest = {
     schema: {
+        tags: ['connection'],
+        description: 'Delete an app connection',
         params: Type.Object({
             connectionId: ApId,
         }),
+        response: {
+            [StatusCodes.NO_CONTENT]: Type.Undefined(),
+        },
     },
 }

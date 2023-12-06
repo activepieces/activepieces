@@ -2,6 +2,7 @@ import { databaseConnection } from '../../../../../src/app/database/database-con
 import { setupApp } from '../../../../../src/app/app'
 import { generateMockToken } from '../../../../helpers/auth'
 import { FastifyInstance } from 'fastify'
+import { PrincipalType } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
@@ -18,7 +19,9 @@ afterAll(async () => {
 describe('List flow runs endpoint', () => {
     it('should return 200', async () => {
         // arrange
-        const testToken = await generateMockToken()
+        const testToken = await generateMockToken({
+            type: PrincipalType.USER,
+        })
 
         // act
         const response = await app?.inject({
