@@ -9,11 +9,6 @@ const bonjoroAPI = async (
 	method : HttpMethod = HttpMethod.GET,
 	body   : KeyValuePair = {}
 ) => {
-
-	const {apiKey} = auth;
-
-	console.log('bonjoroAPI', api, auth, method, body);
-
 	const baseUrl = 'https://www.bonjoro.com/api/v2/';
 	const request: HttpRequest = {
 		body    : body,
@@ -21,7 +16,7 @@ const bonjoroAPI = async (
 		url     : `${baseUrl}${api}`,
 		headers : {
 			'Content-Type' : 'application/json',
-			'Authorization': `Bearer ${apiKey}`,
+			'Authorization': `Bearer ${auth.apiKey}`,
 		},
 	};
 	const response = await httpClient.sendRequest(request);
