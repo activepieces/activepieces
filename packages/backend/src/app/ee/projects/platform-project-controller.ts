@@ -3,7 +3,7 @@ import { FastifyPluginAsyncTypebox, FastifyPluginCallbackTypebox, Type } from '@
 import { platformProjectService } from './platform-project-service'
 import { projectService } from '../../project/project-service'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
-import { CreatePlatformProjectRequest, DEFAULT_PLATFORM_PLAN, UpdateProjectPlatformRequest } from '@activepieces/ee-shared'
+import { CreatePlatformProjectRequest, DEFAULT_PLATFORM_PLAN, ProjectWithUsageAndPlanResponse, UpdateProjectPlatformRequest } from '@activepieces/ee-shared'
 import { platformService } from '../platform/platform.service'
 import { plansService } from '../billing/project-plan/project-plan.service'
 import { StatusCodes } from 'http-status-codes'
@@ -14,7 +14,7 @@ export const platformProjectModule: FastifyPluginAsyncTypebox = async (app) => {
 
 const platformProjectController: FastifyPluginCallbackTypebox = (fastify, _opts, done) => {
 
-    fastify.post( '/', CreateProjectRequest, async (request, reply) => {
+    fastify.post('/', CreateProjectRequest, async (request, reply) => {
         const platformId = request.principal.platform?.id
         assertNotNullOrUndefined(platformId, 'platformId')
         const project = await projectService.create({
@@ -28,7 +28,8 @@ const platformProjectController: FastifyPluginCallbackTypebox = (fastify, _opts,
             subscription: null,
             planLimits: DEFAULT_PLATFORM_PLAN,
         })
-        await reply.status(StatusCodes.CREATED).send(project)
+        const projectWithUsage = await platformProjectService.getWithPlanAndUsageOrThrow(project.id)
+        await reply.status(StatusCodes.CREATED).send(projectWithUsage)
     },
     )
 
@@ -80,7 +81,7 @@ const platformProjectController: FastifyPluginCallbackTypebox = (fastify, _opts,
         },
     )
 
-    fastify.post( '/:projectId', UpdateProjectRequest, async (request) => {
+    fastify.post('/:projectId', UpdateProjectRequest, async (request) => {
         return platformProjectService.update({
             platformId: request.principal.platform?.id,
             projectId: request.params.projectId,
@@ -99,18 +100,18 @@ const UpdateProjectRequest = {
         params: Type.Object({
             projectId: Type.String(),
         }),
-        Response: {
-            [StatusCodes.OK]: Project,
+        response: {
+            [StatusCodes.OK]: ProjectWithUsageAndPlanResponse,
         },
         body: UpdateProjectPlatformRequest,
     },
 }
 
-const CreateProjectRequest =   {
+const CreateProjectRequest = {
     schema: {
         tags: ['projects'],
-        Response: {
-            [StatusCodes.OK]: Project,
+        response: {
+            [StatusCodes.CREATED]: ProjectWithUsageAndPlanResponse,
         },
         body: CreatePlatformProjectRequest,
     },
@@ -119,7 +120,7 @@ const CreateProjectRequest =   {
 const ListProjectRequest = {
     schema: {
         response: {
-            [StatusCodes.OK]: SeekPage(Project),
+            [StatusCodes.OK]: SeekPage(ProjectWithUsageAndPlanResponse),
         },
         tags: ['projects'],
         querystring: Type.Object({

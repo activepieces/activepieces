@@ -75,7 +75,7 @@ import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local
 import { billingModule } from './ee/billing/billing/billing.module'
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
 import fastifyFavicon from 'fastify-favicon'
-import { ProjectWithUsageAndPlanResponse } from '@activepieces/ee-shared'
+import { ProjectMember, ProjectWithUsageAndPlanResponse } from '@activepieces/ee-shared'
 import { authorizationMiddleware } from './authentication/authorization-middleware'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
 
@@ -107,6 +107,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             ],
             components: {
                 schemas: {
+                    'project-member': ProjectMember,
                     'project': ProjectWithUsageAndPlanResponse,
                     'flow': Flow,
                     'app-connection': AppConnectionWithoutSensitiveData,

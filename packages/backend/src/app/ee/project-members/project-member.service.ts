@@ -35,7 +35,7 @@ import { IsNull } from 'typeorm'
 const projectMemberRepo = databaseConnection.getRepository(ProjectMemberEntity)
 
 export const projectMemberService = {
-    async upsert({ platformId, email, projectId, role, status  }: UpsertParams): Promise<ProjectMember> {
+    async upsert({ platformId, email, projectId, role, status }: UpsertParams): Promise<ProjectMember> {
         await projectMembersLimit.limit({
             projectId,
         })
@@ -58,14 +58,14 @@ export const projectMemberService = {
         }
     },
 
-    async upsertAndSend({ platformId, projectId, email, role, activateMembership = false }: UpsertAndSendParams): Promise<UpsertAndSendResponse> {
+    async upsertAndSend({ platformId, projectId, email, role, status }: UpsertAndSendParams): Promise<UpsertAndSendResponse> {
 
         const projectMember = await this.upsert({
             platformId,
             email,
             projectId,
             role,
-            status: activateMembership ? ProjectMemberStatus.ACTIVE : ProjectMemberStatus.PENDING,
+            status,
         })
 
         if (projectMember.status === ProjectMemberStatus.PENDING) {
