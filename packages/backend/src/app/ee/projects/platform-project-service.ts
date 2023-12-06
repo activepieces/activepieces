@@ -1,6 +1,6 @@
-import { ActivepiecesError, ErrorCode, Project, ProjectId, ProjectType, UserId, isNil } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, Project, ProjectId, ProjectType, UserId, isNil, SeekPage } from '@activepieces/shared'
 import { Equal, In, IsNull } from 'typeorm'
-import { PlatformId, ProjectMemberStatus, ProjectWithUsageAndPlan, UpdateProjectPlatformRequest } from '@activepieces/ee-shared'
+import { PlatformId, ProjectMemberStatus, ProjectWithUsageAndPlanResponse, UpdateProjectPlatformRequest } from '@activepieces/ee-shared'
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
 import { ProjectEntity } from '../../project/project-entity'
 import { databaseConnection } from '../../database/database-connection'
@@ -8,13 +8,15 @@ import { plansService } from '../billing/project-plan/project-plan.service'
 import { projectUsageService } from '../billing/project-usage/project-usage-service'
 import { platformService } from '../platform/platform.service'
 import { userService } from '../../user/user-service'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
 
 const projectRepo = databaseConnection.getRepository(ProjectEntity)
 const projectMemberRepo = databaseConnection.getRepository(ProjectMemberEntity)
 
 export const platformProjectService = {
-    async getAll({ ownerId, platformId }: { ownerId: UserId, platformId?: PlatformId }): Promise<ProjectWithUsageAndPlan[]> {
+    async getAll({ ownerId, platformId }: { ownerId: UserId, platformId?: PlatformId }): Promise<SeekPage<ProjectWithUsageAndPlanResponse>> {
         const user = await userService.getMetaInfo({ id: ownerId })
+
         const idsOfProjects = (await projectMemberRepo.findBy({
             email: user?.email,
             platformId: isNil(user?.platformId) ? IsNull() : Equal(user?.platformId),
@@ -36,10 +38,11 @@ export const platformProjectService = {
                 ],
             )
             .getMany()
-        return Promise.all(projectPlans.map(enrichWithUsageAndPlan))
+        const projects: ProjectWithUsageAndPlanResponse[] = await Promise.all(projectPlans.map(enrichWithUsageAndPlan))
+        return paginationHelper.createPage<ProjectWithUsageAndPlanResponse>(projects, null)
     },
 
-    async update({ userId, projectId, request, platformId }: { userId: string, projectId: ProjectId, request: UpdateProjectPlatformRequest, platformId?: PlatformId }): Promise<ProjectWithUsageAndPlan | null> {
+    async update({ userId, projectId, request, platformId }: { userId: string, projectId: ProjectId, request: UpdateProjectPlatformRequest, platformId?: PlatformId }): Promise<ProjectWithUsageAndPlanResponse | null> {
         const project = await projectRepo.findOneBy({
             id: projectId,
         })
@@ -83,8 +86,8 @@ export const platformProjectService = {
     },
 }
 
-async function enrichWithUsageAndPlan(project: Project): Promise<ProjectWithUsageAndPlan> {
-    const clonedProject: ProjectWithUsageAndPlan = JSON.parse(JSON.stringify(project))
+async function enrichWithUsageAndPlan(project: Project): Promise<ProjectWithUsageAndPlanResponse> {
+    const clonedProject: ProjectWithUsageAndPlanResponse = JSON.parse(JSON.stringify(project))
 
     if (isNil(clonedProject.plan)) {
         clonedProject.plan = await plansService.getOrCreateDefaultPlan({

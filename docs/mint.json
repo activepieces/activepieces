@@ -14,6 +14,7 @@
       "dark": "#121212"
     }
   },
+  "openapi": ["./openapi.json"],
   "metadata": {
     "og:image": "https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/62c4ecbe6b2d76719d890ae7_Screenshot%202022-07-06%20at%2004.59.45-p-2600.png",
     "description": "Open source alternative to zapier"
@@ -50,6 +51,10 @@
       "url": "install"
     },
     {
+      "name": "API",
+      "url": "api"
+    },
+    {
       "name": "Discord",
       "url": "https://discord.gg/2jUXBKDdP8"
     }
@@ -62,6 +67,50 @@
         "getting-started/principles"
       ]
     },
+    
+
+       {
+        "group": "Get Started",
+        "pages": [
+          "api/overview",
+          "api/authentication"
+        ]
+       },
+       {
+          "group": "Endpoints",
+          "pages": [
+            {
+              "group": "Projects",
+              "icon": "building",
+              "pages": [
+                "api/projects/schema",
+                "api/projects/create",
+                "api/projects/update",
+                "api/projects/list"
+
+              ]
+            },
+            {
+              "group": "Connections",
+              "icon": "link",
+              "pages": [
+                "api/connections/schema",
+                "api/connections/upsert",
+                "api/connections/list",
+                "api/connections/delete"
+              ]
+            },
+            {
+              "group": "Flows",
+              "icon": "bolt",
+              "pages": [
+                "api/flows/schema",
+                "api/flows/get",
+                "api/flows/delete"
+              ]
+            }
+          ]
+        },
     {
       "group": "Flows",
       "pages": [
