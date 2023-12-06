@@ -95,6 +95,7 @@ describe('Project Member API', () => {
             await databaseConnection.getRepository('project').save(mockProject)
 
             const mockToken = await generateMockToken({
+                type: PrincipalType.USER,
                 id: mockUser.id,
                 projectId: mockProject.id,
                 platform: {
@@ -143,6 +144,7 @@ describe('Project Member API', () => {
 
             const mockToken = await generateMockToken({
                 id: mockUser.id,
+                type: PrincipalType.USER,
                 projectId: mockProject.id,
                 platform: {
                     id: mockPlatformId,
@@ -197,6 +199,7 @@ describe('Project Member API', () => {
 
             const mockToken = await generateMockToken({
                 id: mockOwnerUser.id,
+                type: PrincipalType.USER,
                 projectId: mockProject.id,
                 platform: {
                     id: mockPlatformId,
@@ -242,6 +245,7 @@ describe('Project Member API', () => {
 
             const mockToken = await generateMockToken({
                 id: mockNonOwnerUserId,
+                type: PrincipalType.USER,
                 projectId: mockProjectId,
                 platform: {
                     id: mockPlatformId,
