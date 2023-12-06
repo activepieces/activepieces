@@ -14,7 +14,6 @@ export type FlowRunId = ApId
 
 export enum RunTerminationReason {
     STOPPED_BY_HOOK = 'STOPPED_BY_HOOK',
-    WEBHOOK_TIMEOUT_EXCEEDED = 'WEBHOOK_TIMEOUT_EXCEEDED',
 }
 
 export type FlowRun = BaseModel<FlowRunId> & {

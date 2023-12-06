@@ -123,8 +123,6 @@ const waitForRunToComplete = async (run: FlowRun) => {
 
     while (run.status === ExecutionOutputStatus.RUNNING) {
         if (Date.now() - startTime >= POLLING_TIMEOUT_MS) {
-            run.status = ExecutionOutputStatus.TIMEOUT
-            run.terminationReason = RunTerminationReason.WEBHOOK_TIMEOUT_EXCEEDED
             break
         }
 
@@ -154,26 +152,35 @@ const getResponseForStoppedRun = async (run: FlowRun, reply: FastifyReply) => {
     })
 
     const flowLogs: StopExecutionOutput = JSON.parse(logs.data.toString())
-
-    if (flowLogs.status === ExecutionOutputStatus.FAILED) {
-        await reply
-            .status(StatusCodes.INTERNAL_SERVER_ERROR)
-            .send(flowLogs.errorMessage)
-    }
-    else {
-        await reply
-            .status(flowLogs.stopResponse?.status ?? StatusCodes.OK)
-            .headers(flowLogs.stopResponse?.headers ?? {})
-            .send(flowLogs.stopResponse?.body)
-    }
+    await reply
+        .status(flowLogs.stopResponse?.status ?? StatusCodes.OK)
+        .headers(flowLogs.stopResponse?.headers ?? {})
+        .send(flowLogs.stopResponse?.body)
 }
 
-const handleExecutionOutputStatus = async (run: FlowRun, reply: FastifyReply) => {
-    if (run.status === ExecutionOutputStatus.TIMEOUT) {
-        await reply.status(StatusCodes.REQUEST_TIMEOUT).send()
-    }
-    else {
+const handleExecutionOutputStatus = async (run: FlowRun, reply: FastifyReply): Promise<void> => {
+    if (run.status === ExecutionOutputStatus.SUCCEEDED && run.terminationReason === RunTerminationReason.STOPPED_BY_HOOK) {
         await getResponseForStoppedRun(run, reply)
+    } else {
+        switch (run.status) {
+            case ExecutionOutputStatus.INTERNAL_ERROR:
+                await reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send()
+                break;
+            case ExecutionOutputStatus.FAILED:
+                await reply.status(StatusCodes.BAD_REQUEST).send({
+                    message: `The flow has failed and there is no response returned`
+                })
+                break;
+            case ExecutionOutputStatus.TIMEOUT:
+            case ExecutionOutputStatus.RUNNING:
+                await reply.status(StatusCodes.REQUEST_TIMEOUT).send({
+                    message: `The request took more than ${Math.floor(POLLING_TIMEOUT_MS / 1000)} seconds`
+                })
+                break;
+            default:
+                await reply.status(StatusCodes.NO_CONTENT).send()
+                break;
+        }
     }
 }
 

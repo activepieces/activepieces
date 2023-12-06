@@ -88,8 +88,6 @@ ExecutionOutputStatus,
 
 export type StopExecutionOutput = BaseExecutionOutput<ExecutionOutputStatus.STOPPED> & {
     stopResponse?: StopResponse
-} | BaseExecutionOutput<ExecutionOutputStatus.FAILED> & {
-    errorMessage?: ExecutionError
 }
 
 export type ExecutionOutput =
