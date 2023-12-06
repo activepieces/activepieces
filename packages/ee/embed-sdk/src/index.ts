@@ -35,7 +35,8 @@ export interface ActivepiecesVendorInit {
   data: {
     prefix: string;
     initialRoute: string;
-    hideSidebar:boolean
+    hideSidebar:boolean;
+    showBackButtonAndFolderName: boolean;
   };
 }
 export const jwtTokenQueryParamName = "jwtToken"
@@ -45,6 +46,7 @@ class ActivepiecesEmbedded {
   _prefix = '';
   _initialRoute = '';
   _hideSidebar=false;
+  _showBackButtonAndFolderName = true;
   iframeParentOrigin = window.location.origin;
   handleVendorNavigation?: (data: { route: string }) => void;
   handleClientNavigation?: (data: { route: string }) => void;
@@ -52,15 +54,18 @@ class ActivepiecesEmbedded {
   configure({
     prefix,
     initialRoute,
-    hideSidebar
+    hideSidebar,
+    showBackButtonAndFolderName
   }: {
     prefix?: string;
     initialRoute?: string;
-    hideSidebar?:boolean
+    hideSidebar?:boolean;
+    showBackButtonAndFolderName?: boolean;
   }) {
     this._prefix = prefix || '/';
     this._initialRoute = initialRoute || '/';
     this._hideSidebar= hideSidebar || false;
+    this._showBackButtonAndFolderName= showBackButtonAndFolderName=== undefined ? true : showBackButtonAndFolderName;
     setIframeChecker(this);
   }
 }
@@ -82,7 +87,8 @@ const setIframeChecker = (client: ActivepiecesEmbedded) => {
                 data: {
                   prefix: client._prefix,
                   initialRoute: client._initialRoute,
-                  hideSidebar : client._hideSidebar
+                  hideSidebar : client._hideSidebar,
+                  showBackButtonAndFolderName: client._showBackButtonAndFolderName,
                 },
               };
               iframeWindow.postMessage(apEvent, '*');
