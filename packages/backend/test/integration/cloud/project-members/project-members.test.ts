@@ -83,14 +83,19 @@ describe('Project Member API', () => {
             expect(projectMember?.status).toBe('PENDING')
         })
 
-        it('Auto activates membership if `activateMembership` is set to true', async () => {
+        it('Auto activates membership if status is set to ACTIVE', async () => {
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save(mockUser)
 
-            const mockPlatformId = faker.string.nanoid(21)
+            const mockPlatform = createMockPlatform({
+                embeddingEnabled: true,
+                ownerId: mockUser.id,
+            })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
             const mockProject = createMockProject({
                 ownerId: mockUser.id,
-                platformId: mockPlatformId,
+                platformId: mockPlatform.id,
             })
             await databaseConnection.getRepository('project').save(mockProject)
 
@@ -99,7 +104,7 @@ describe('Project Member API', () => {
                 id: mockUser.id,
                 projectId: mockProject.id,
                 platform: {
-                    id: mockPlatformId,
+                    id: mockPlatform.id,
                     role: 'OWNER',
                 },
             })
@@ -135,10 +140,15 @@ describe('Project Member API', () => {
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save(mockUser)
 
-            const mockPlatformId = faker.string.nanoid(21)
+            const mockPlatform = createMockPlatform({
+                embeddingEnabled: true,
+                ownerId: mockUser.id,
+            })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
             const mockProject = createMockProject({
                 ownerId: mockUser.id,
-                platformId: mockPlatformId,
+                platformId: mockPlatform.id,
             })
             await databaseConnection.getRepository('project').save(mockProject)
 
@@ -147,7 +157,7 @@ describe('Project Member API', () => {
                 type: PrincipalType.USER,
                 projectId: mockProject.id,
                 platform: {
-                    id: mockPlatformId,
+                    id: mockPlatform.id,
                     role: 'OWNER',
                 },
             })
