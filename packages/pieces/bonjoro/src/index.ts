@@ -1,5 +1,5 @@
 
-import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
+import { createPiece } from "@activepieces/pieces-framework";
 import { addGreetAction } from "./lib/actions/add-greet";
 import { bonjoroAuth } from "./lib/auth";
 
