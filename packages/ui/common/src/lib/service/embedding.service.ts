@@ -5,7 +5,7 @@ export type EmbeddingState = {
   isEmbedded: boolean;
   hideSideNav: boolean;
   prefix: string;
-  showBackButtonAndFolderName: boolean;
+  showBackButtonAndFolderNameInBuilder: boolean;
 };
 @Injectable({
   providedIn: 'root',
@@ -17,7 +17,7 @@ export class EmbeddingService {
       isEmbedded: false,
       hideSideNav: false,
       prefix: '',
-      showBackButtonAndFolderName: true,
+      showBackButtonAndFolderNameInBuilder: true,
     });
   }
   getState() {
@@ -33,7 +33,9 @@ export class EmbeddingService {
     return this.getState$().pipe(map((res) => res.isEmbedded));
   }
   getShowFolderNameAndBackButton$() {
-    return this.getState$().pipe(map((res) => res.showBackButtonAndFolderName));
+    return this.getState$().pipe(
+      map((res) => res.showBackButtonAndFolderNameInBuilder)
+    );
   }
 
   activepiecesRouteChanged(route: string) {

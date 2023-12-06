@@ -36,7 +36,7 @@ export interface ActivepiecesVendorInit {
     prefix: string;
     initialRoute: string;
     hideSidebar:boolean;
-    showBackButtonAndFolderName: boolean;
+    showBackButtonAndFolderNameInBuilder: boolean;
   };
 }
 export const jwtTokenQueryParamName = "jwtToken"
@@ -46,7 +46,7 @@ class ActivepiecesEmbedded {
   _prefix = '';
   _initialRoute = '';
   _hideSidebar=false;
-  _showBackButtonAndFolderName = true;
+  _showBackButtonAndFolderNameInBuilder = true;
   iframeParentOrigin = window.location.origin;
   handleVendorNavigation?: (data: { route: string }) => void;
   handleClientNavigation?: (data: { route: string }) => void;
@@ -55,17 +55,17 @@ class ActivepiecesEmbedded {
     prefix,
     initialRoute,
     hideSidebar,
-    showBackButtonAndFolderName
+    showBackButtonAndFolderNameInBuilder
   }: {
     prefix?: string;
     initialRoute?: string;
     hideSidebar?:boolean;
-    showBackButtonAndFolderName?: boolean;
+    showBackButtonAndFolderNameInBuilder?: boolean;
   }) {
     this._prefix = prefix || '/';
     this._initialRoute = initialRoute || '/';
     this._hideSidebar= hideSidebar || false;
-    this._showBackButtonAndFolderName= showBackButtonAndFolderName=== undefined ? true : showBackButtonAndFolderName;
+    this._showBackButtonAndFolderNameInBuilder= showBackButtonAndFolderNameInBuilder=== undefined ? true : showBackButtonAndFolderNameInBuilder;
     setIframeChecker(this);
   }
 }
@@ -88,7 +88,7 @@ const setIframeChecker = (client: ActivepiecesEmbedded) => {
                   prefix: client._prefix,
                   initialRoute: client._initialRoute,
                   hideSidebar : client._hideSidebar,
-                  showBackButtonAndFolderName: client._showBackButtonAndFolderName,
+                  showBackButtonAndFolderNameInBuilder: client._showBackButtonAndFolderNameInBuilder,
                 },
               };
               iframeWindow.postMessage(apEvent, '*');
