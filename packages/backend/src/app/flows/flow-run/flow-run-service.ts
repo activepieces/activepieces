@@ -228,17 +228,21 @@ export const flowRunService = {
         return flowRun
     },
 
-    async getAllProdRuns(params: GetAllProdRuns): Promise<FlowRun[]> {
-        const { projectId, finishTime } = params
-
-        const query = {
-            projectId,
-            environment: RunEnvironment.PRODUCTION,
-            finishTime: MoreThanOrEqual(finishTime),
-        }
-
-        return flowRunRepo.findBy(query)
+    async getAllProdRuns(params: GetAllProdRuns): Promise<number> {
+        const { projectId, created } = params
+    
+        const sumOfTasks = await flowRunRepo.createQueryBuilder('flow_run')
+            .select('COALESCE(SUM(flow_run.tasks), 0)', 'tasks')
+            .where({
+                projectId,
+                environment: RunEnvironment.PRODUCTION,
+                created: MoreThanOrEqual(created),
+            })
+            .getRawOne()
+    
+        return sumOfTasks.tasks
     },
+    
 }
 
 type GetOrCreateParams = {
@@ -286,5 +290,5 @@ type PauseParams = {
 
 type GetAllProdRuns = {
     projectId: ProjectId
-    finishTime: string
+    created: string
 }
