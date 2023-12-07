@@ -16,7 +16,6 @@ export const cmsAuth = PieceAuth.CustomAuth({
 			displayName : 'License Key',
 			description : 'The License key for your Total CMS domain',
 			required    : true,
-			validators: [Validators.pattern(/^\S$/)],
         }),
     },
     validate: async ({ auth }) => {

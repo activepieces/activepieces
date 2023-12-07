@@ -50,6 +50,6 @@ export async function getContent(auth: TotalCMSAuthType, type: string, slug: str
 	return totalcmsAPI(auth, type, slug, query);
 }
 
-export async function getBlogPost(auth: TotalCMSAuthType, type: string, slug: string, permalink: string) {
-	return totalcmsAPI(auth, type, slug, {permalink : permalink});
+export async function getBlogPost(auth: TotalCMSAuthType, slug: string, permalink: string) {
+	return totalcmsAPI(auth, 'blog', slug, {permalink : permalink});
 }

@@ -22,19 +22,23 @@ export const getContentAction = createAction({
 					{ label: 'File', value: 'file' },
 					{ label: 'Gallery', value: 'gallery' },
 					{ label: 'Image', value: 'image' },
+					{ label: 'Ratings', value: 'ratings' },
 					{ label: 'Text', value: 'text' },
 					{ label: 'Toggle', value: 'toggle' },
+					{ label: 'Video', value: 'video' },
 				]
 			}
 		}),
 		slug: Property.ShortText({
-		displayName : 'CMS ID',
+			displayName : 'CMS ID',
 			description : 'The CMS ID of the content to retrieve',
 			required    : true,
 		}),
 	},
 	async run(context) {
-		return await getContent(context.auth, context.props['type'], context.props.slug);
+		const type = context.propsValue.type;
+		const slug = context.propsValue.slug;
+		return await getContent(context.auth, type, slug);
 	},
 });
 
