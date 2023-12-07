@@ -8,6 +8,7 @@ import { saveDateAction } from "./lib/actions/save-date";
 import { saveToggleAction } from "./lib/actions/save-toggle";
 import { saveVideoAction } from "./lib/actions/save-video";
 import { saveBlogPostAction } from "./lib/actions/save-blog-post";
+import { newBlogPost } from "./lib/triggers/new-blog-post";
 
 export const totalcms = createPiece({
   displayName             : "Totalcms",
@@ -24,5 +25,7 @@ export const totalcms = createPiece({
 	saveToggleAction,
 	saveVideoAction,
   ],
-  triggers: [],
+  triggers: [
+	newBlogPost,
+  ],
 });

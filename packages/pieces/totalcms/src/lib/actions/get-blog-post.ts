@@ -9,7 +9,7 @@ export const getBlogPostAction = createAction({
 	description : 'Get a blog post from Total CMS',
 	props       : {
 		slug: Property.ShortText({
-		displayName : 'CMS ID',
+			displayName : 'CMS ID',
 			description : 'The CMS ID of the content to retrieve',
 			required    : true,
 		}),
