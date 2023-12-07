@@ -264,7 +264,7 @@ const getFlowOrThrow = async (flowId: FlowId): Promise<Flow> => {
     // TODO FIX AND REFACTOR
     // BEGIN EE
     const edition = getEdition()
-    if (edition === ApEdition.CLOUD) {
+    if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
         try {
             await tasksLimit.limit({
                 projectId: flow.projectId,
