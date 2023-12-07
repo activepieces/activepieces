@@ -102,13 +102,6 @@ export class AuthenticationService {
     this.router.navigate(['sign-in']);
   }
 
-  // TODO - move to a separate service
-  saveNewsLetterSubscriber(email: string) {
-    return this.http.post(
-      'https://us-central1-activepieces-b3803.cloudfunctions.net/addContact',
-      { email: email }
-    );
-  }
   getDecodedToken(): Principal | null {
     const token = localStorage.getItem(environment.jwtTokenName);
     const decodedToken = this.jwtHelper.decodeToken(token || '');
