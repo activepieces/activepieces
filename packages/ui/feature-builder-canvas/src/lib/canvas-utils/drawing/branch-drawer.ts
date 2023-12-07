@@ -6,7 +6,7 @@ import {
 import { FlowDrawer } from './flow-drawer';
 import {
   SvgDrawer,
-  drawStartLineForStepWithChildren,
+  drawLineComponentForStepWithChildren,
   drawLineComponentWithButton,
 } from './svg-drawer';
 import {
@@ -65,7 +65,7 @@ export class BranchDrawer {
           branchStep,
           maximumHeight,
         });
-
+      const label = index === 0 ? $localize`True` : $localize`False`;
       resultDrawer = resultDrawer
         .mergeChild(drawerMovedToFirstChildStep)
         .appendLabel({
@@ -73,7 +73,7 @@ export class BranchDrawer {
           y:
             drawerMovedToFirstChildStep.steps[0].y -
             VERTICAL_SPACE_BETWEEN_LABEL_AND_FLOW_ITEM,
-          label: index === 0 ? $localize`True` : $localize`False`,
+          label,
         })
         .appendSvg(lineComponentAtStartOfBranch.line)
         .appendButton(lineComponentAtStartOfBranch.button)
@@ -155,7 +155,7 @@ export class BranchDrawer {
     branchStep: BranchAction;
     maximumHeight: number;
   }) {
-    return drawStartLineForStepWithChildren({
+    return drawLineComponentForStepWithChildren({
       from: {
         x: drawerMovedToFirstChildStep.steps[0].center('bottom').x,
         y:

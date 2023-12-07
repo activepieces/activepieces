@@ -240,7 +240,8 @@ export function drawVerticalLineToNextStep(
   }
   throw Error('to.x: ${to.x} and from.x ${from.x} aren not the same');
 }
-export function drawStartLineForStepWithChildren({
+/**depending of dy,dx signs we draw the arcs, so this function could be used right after parent step, or when closing its graph */
+export function drawLineComponentForStepWithChildren({
   from,
   to,
   drawArrow,
@@ -300,7 +301,7 @@ export function drawLineComponentWithButton({
         line:
           from.x === to.x
             ? drawVerticalLineToNextStep(from, to, drawArrow)
-            : drawStartLineForStepWithChildren({
+            : drawLineComponentForStepWithChildren({
                 from,
                 to,
                 drawArrow,
@@ -317,7 +318,7 @@ export function drawLineComponentWithButton({
     }
     case 'big': {
       return {
-        line: drawStartLineForStepWithChildren({
+        line: drawLineComponentForStepWithChildren({
           from,
           to,
           drawArrow,
