@@ -2,7 +2,7 @@ import { httpClient, HttpMethod, HttpRequest, QueryParams } from "@activepieces/
 import { TotalCMSAuthType } from "./auth";
 import FormData from "form-data";
 
-export type KeyValuePair = {[key: string]: string|boolean|object|undefined }
+export type KeyValuePair = {[key: string]: string|boolean|number|object|undefined }
 export type FileUpload = { filename: string, base64: string }
 
 const totalcmsAPI = async (
