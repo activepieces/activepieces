@@ -57,8 +57,9 @@ export const subscribeMultipleAction = createAction({
 		}),
 	},
 	async run(context) {
-		const returnValues = [];
-		context.propsValue.lists.forEach(async list => {
+		const returnValues: any[] = [];
+
+		for (const list of context.propsValue.lists) {
 			const rc = await subscribe(context.auth, {
 				list      : list,
 				email     : context.propsValue.email,
@@ -70,7 +71,7 @@ export const subscribeMultipleAction = createAction({
 				silent    : context.propsValue.silent,
 			});
 			returnValues.push(rc);
-		});
+		}
 		return returnValues;
 	},
 });
