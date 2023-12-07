@@ -8,7 +8,6 @@ export class TrackHoverDirective {
   isHovered = false;
 
   @HostListener('mouseenter', ['$event']) onHover() {
-    console.log(12344);
     this.isHovered = true;
   }
   @HostListener('mouseleave', ['$event']) onLoeave() {

@@ -15,6 +15,7 @@ import {
   FLOW_ITEM_WIDTH,
   HORIZONTAL_SPACE_BETWEEN_BRANCHES,
   PositionButton,
+  TEXT_HEIGHT_SPACE_UNTIL_ITEM,
   VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS,
   VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD,
 } from './draw-common';
@@ -37,10 +38,7 @@ export class BranchDrawer {
     let leftStartingPoint = xOfFartherestLeftChild;
     branchesDrawers.forEach((bd, index) => {
       const firstChildStepPosition = {
-        x:
-          leftStartingPoint +
-          (bd.boundingBox().width - FLOW_ITEM_WIDTH) / 2.0 +
-          FLOW_ITEM_WIDTH / 2.0,
+        x: leftStartingPoint + Math.abs(bd.boundingBox().leftSide),
         y:
           FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING +
           VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD,
@@ -69,6 +67,13 @@ export class BranchDrawer {
 
       resultDrawer = resultDrawer
         .mergeChild(drawerMovedToFirstChildStep)
+        .appendLabel({
+          x: drawerMovedToFirstChildStep.steps[0].center('bottom').x,
+          y:
+            drawerMovedToFirstChildStep.steps[0].y -
+            TEXT_HEIGHT_SPACE_UNTIL_ITEM,
+          label: index === 0 ? 'True' : 'False',
+        })
         .appendSvg(lineComponentAtStartOfBranch.line)
         .appendButton(lineComponentAtStartOfBranch.button)
         .appendSvg(afterBranchLineComponent);
@@ -97,16 +102,14 @@ export class BranchDrawer {
         Math.max(max, branch.boundingBox().height),
       0
     );
-    const widthOfAllChildGraph: number = branches.reduce(
-      (sum: number, branch: FlowDrawer) => sum + branch.boundingBox().width,
-      0
-    );
-    const widthOfGraph =
-      widthOfAllChildGraph +
-      HORIZONTAL_SPACE_BETWEEN_BRANCHES * (branches.length - 1);
+    const xOffset =
+      HORIZONTAL_SPACE_BETWEEN_BRANCHES * (branches.length - 1) +
+      Math.abs(branches[0].boundingBox().rightSide) +
+      Math.abs(branches[1].boundingBox().leftSide);
     return {
       maximumHeight,
-      xOfFartherestLeftChild: -(widthOfGraph / 2.0),
+      xOfFartherestLeftChild:
+        -(xOffset / 2.0) + branches[0].boundingBox().leftSide,
     };
   }
 

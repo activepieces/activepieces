@@ -37,6 +37,10 @@
             [stepName]="button.stepName"></app-big-add-button>
         </ng-container>
 
+        <ng-container *ngFor="let label of flowDrawer.labels;">
+          <div [style.left]="label.x + 'px'" [style.top]="label.y + 'px'" class="ap-absolute ap-bg-white">{{ label.label }}</div>
+        </ng-container>
+
       </div>
     </div>
 

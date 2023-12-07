@@ -25,8 +25,7 @@ export class LoopDrawer {
   static handleLoopAction(step: LoopOnItemsAction) {
     const firstChildActionDrawer = FlowDrawer.construct(step.firstLoopAction);
     const xPositionOfFirstChildAction =
-      firstChildActionDrawer.boundingBox().width / 4.0 +
-      HORIZONTAL_SPACE_FOR_EMPTY_SIDE_OF_LOOP / 2.0;
+      firstChildActionDrawer.boundingBox().width / 2.0;
 
     const firstChildActionOffset = {
       x: xPositionOfFirstChildAction,
@@ -62,8 +61,6 @@ export class LoopDrawer {
 
     const emptyLoopLine = LoopDrawer.drawEmptySideOfLoopComponent({
       firstChildActionDrawer,
-      firstChildActionOffset,
-      xPositionOfFirstChildAction,
     });
 
     const verticalLineConnectingLoopStepWithWhatComesAfter = SvgDrawer.empty()
@@ -122,12 +119,8 @@ export class LoopDrawer {
   }
   static drawEmptySideOfLoopComponent({
     firstChildActionDrawer,
-    firstChildActionOffset,
-    xPositionOfFirstChildAction,
   }: {
     firstChildActionDrawer: FlowDrawer;
-    firstChildActionOffset: Position;
-    xPositionOfFirstChildAction: number;
   }) {
     return SvgDrawer.empty()
       .move(
@@ -138,7 +131,7 @@ export class LoopDrawer {
             VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS)
       )
       .arrow(true)
-      .drawHorizontalLine(-(firstChildActionOffset.x - 2 * ARC_LENGTH))
+      .drawHorizontalLine(-HORIZONTAL_SPACE_FOR_EMPTY_SIDE_OF_LOOP)
       .drawArc(false, false)
       .drawVerticalLine(
         VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS -
@@ -147,6 +140,6 @@ export class LoopDrawer {
           VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD / 2.0
       )
       .drawArc(true, false)
-      .drawHorizontalLine(xPositionOfFirstChildAction);
+      .drawHorizontalLine(HORIZONTAL_SPACE_FOR_EMPTY_SIDE_OF_LOOP);
   }
 }

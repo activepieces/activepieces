@@ -16,7 +16,7 @@ type UiFlowDrawer = {
   centeringGraphTransform: string;
   svg: string;
   boundingBox: { width: number; height: number };
-} & Pick<FlowDrawer, 'buttons' | 'steps'>;
+} & Pick<FlowDrawer, 'buttons' | 'steps' | 'labels'>;
 const GRAPH_Y_OFFSET_FROM_TEST_FLOW_WIDGET = 45;
 @Component({
   selector: 'app-flow-item-tree',
@@ -48,6 +48,7 @@ export class FlowItemTreeComponent implements OnInit {
           boundingBox: drawer.boundingBox(),
           buttons: drawer.buttons,
           steps: drawer.steps,
+          labels: drawer.labels,
           centeringGraphTransform: `translate(${
             drawer.boundingBox().width / 2 - FLOW_ITEM_WIDTH / 2
           }px,-${

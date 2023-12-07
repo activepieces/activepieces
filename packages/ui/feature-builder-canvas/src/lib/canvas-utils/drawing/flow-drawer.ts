@@ -11,6 +11,7 @@ import {
   FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING,
   FLOW_ITEM_WIDTH,
   PositionButton,
+  PositionLabel,
 } from './draw-common';
 import { SvgDrawer, drawLineComponentWithButton } from './svg-drawer';
 import { PositionedStep } from './step-card';
@@ -23,6 +24,7 @@ export class FlowDrawer {
   readonly steps: readonly PositionedStep[];
   readonly svg: SvgDrawer;
   readonly buttons: readonly PositionButton[];
+  readonly labels: readonly PositionLabel[];
   static trigger: Trigger;
   static centerBottomOfFlowItemUi = new PositionedStep({
     x: 0,
@@ -33,14 +35,17 @@ export class FlowDrawer {
     svg = SvgDrawer.empty(),
     steps = [],
     buttons = [],
+    labels = [],
   }: {
     svg: SvgDrawer;
     steps: readonly PositionedStep[];
     buttons: readonly PositionButton[];
+    labels: readonly PositionLabel[];
   }) {
     this.svg = svg;
     this.steps = steps;
     this.buttons = buttons;
+    this.labels = labels;
   }
 
   appendSvg(svg: SvgDrawer): FlowDrawer {
@@ -48,6 +53,23 @@ export class FlowDrawer {
       buttons: [...this.buttons],
       svg: this.svg.merge(svg),
       steps: [...this.steps],
+      labels: [...this.labels],
+    });
+  }
+
+  appendLabel(label: PositionLabel): FlowDrawer {
+    return new FlowDrawer({
+      buttons: [...this.buttons],
+      svg: this.svg,
+      steps: [...this.steps],
+      labels: [
+        ...this.labels,
+        {
+          ...label,
+          // TODO - this is a hack to make the label appear in the center of the step
+          x: label.x - 17,
+        },
+      ],
     });
   }
 
@@ -56,6 +78,7 @@ export class FlowDrawer {
       buttons: [...this.buttons, button],
       svg: this.svg,
       steps: [...this.steps],
+      labels: [...this.labels],
     });
   }
 
@@ -64,14 +87,22 @@ export class FlowDrawer {
       buttons: [...this.buttons, ...child.buttons],
       svg: this.svg.merge(child.svg),
       steps: [...this.steps, ...child.steps],
+      labels: [...this.labels, ...child.labels],
     });
   }
 
-  boundingBox(): { width: number; height: number } {
+  boundingBox(): {
+    width: number;
+    height: number;
+    leftSide: number;
+    rightSide: number;
+  } {
     if (this.steps.length === 0) {
       return {
         width: 0,
         height: 0,
+        leftSide: 0,
+        rightSide: 0,
       };
     }
     const minX = this.steps.reduce(
@@ -99,6 +130,8 @@ export class FlowDrawer {
       height:
         Math.max(maxY, this.svg.maximumY()) -
         Math.min(minY, this.svg.minimumY()),
+      leftSide: Math.min(minX, this.svg.minimumX()) - FLOW_ITEM_WIDTH / 2.0,
+      rightSide: Math.max(maxX, this.svg.maximumX()) - FLOW_ITEM_WIDTH / 2.0,
     };
   }
 
@@ -108,6 +141,11 @@ export class FlowDrawer {
         ...button,
         x: button.x + x,
         y: button.y + y,
+      })),
+      labels: this.labels.map((label) => ({
+        ...label,
+        x: label.x + x,
+        y: label.y + y,
       })),
       svg: this.svg.offset(x, y),
       steps: this.steps.map(
@@ -126,6 +164,7 @@ export class FlowDrawer {
       return new FlowDrawer({
         buttons: [],
         svg: SvgDrawer.empty(),
+        labels: [],
         steps: [
           new PositionedStep({
             x: 0,
@@ -142,6 +181,7 @@ export class FlowDrawer {
     });
     let flowDrawer = new FlowDrawer({
       buttons: [],
+      labels: [],
       svg: SvgDrawer.empty(),
       steps: [currentPostionedStep],
     });
@@ -150,7 +190,9 @@ export class FlowDrawer {
     switch (step.type) {
       case ActionType.LOOP_ON_ITEMS: {
         const loopDrawer = LoopDrawer.handleLoopAction(step);
-        childHeight = loopDrawer.boundingBox().height;
+        childHeight =
+          loopDrawer.boundingBox().height +
+          FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING;
         flowDrawer = flowDrawer.mergeChild(loopDrawer);
         break;
       }
@@ -178,7 +220,9 @@ export class FlowDrawer {
             FlowDrawer.trigger
           ),
         });
-        childHeight = VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS;
+        childHeight =
+          FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING +
+          VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS;
         flowDrawer = flowDrawer.appendButton(button).appendSvg(line);
         break;
       }
@@ -187,7 +231,7 @@ export class FlowDrawer {
     if (step.nextAction) {
       const nextFlowDrawer = FlowDrawer.construct(step.nextAction).offset(
         0,
-        FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING + childHeight
+        childHeight
       );
       flowDrawer = flowDrawer.mergeChild(nextFlowDrawer);
     }
