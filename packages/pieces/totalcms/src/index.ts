@@ -13,6 +13,8 @@ import { saveImageAction } from "./lib/actions/save-image";
 import { saveBlogImageAction } from "./lib/actions/save-blog-image";
 import { saveGalleryAction } from "./lib/actions/save-gallery";
 import { saveBlogGalleryAction } from "./lib/actions/save-blog-gallery";
+import { saveFileAction } from "./lib/actions/save-file";
+import { saveDepotAction } from "./lib/actions/save-depot";
 
 import { newBlogPost } from "./lib/triggers/new-blog-post";
 
@@ -29,6 +31,8 @@ export const totalcms = createPiece({
 	saveBlogGalleryAction,
 	saveBlogImageAction,
 	saveDateAction,
+	saveDepotAction,
+	saveFileAction,
 	saveGalleryAction,
 	saveImageAction,
 	saveTextAction,

@@ -88,6 +88,14 @@ const totalcmsUploadAPI = async (
 	};
 }
 
+export async function saveFile(auth: TotalCMSAuthType, slug: string, file: FileUpload, data: KeyValuePair) {
+	return totalcmsUploadAPI(auth, "file", slug, file, data);
+}
+
+export async function saveDepot(auth: TotalCMSAuthType, slug: string, file: FileUpload, ) {
+	return totalcmsUploadAPI(auth, "depot", slug, file);
+}
+
 export async function saveImage(auth: TotalCMSAuthType, slug: string, file: FileUpload, data: KeyValuePair) {
 	return totalcmsUploadAPI(auth, "image", slug, file, data);
 }
