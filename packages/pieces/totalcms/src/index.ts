@@ -10,6 +10,9 @@ import { saveToggleAction } from "./lib/actions/save-toggle";
 import { saveVideoAction } from "./lib/actions/save-video";
 import { saveBlogPostAction } from "./lib/actions/save-blog-post";
 import { saveImageAction } from "./lib/actions/save-image";
+import { saveBlogImageAction } from "./lib/actions/save-blog-image";
+import { saveGalleryAction } from "./lib/actions/save-gallery";
+import { saveBlogGalleryAction } from "./lib/actions/save-blog-gallery";
 
 import { newBlogPost } from "./lib/triggers/new-blog-post";
 
@@ -23,7 +26,10 @@ export const totalcms = createPiece({
 	getContentAction,
 	getBlogPostAction,
 	saveBlogPostAction,
+	saveBlogGalleryAction,
+	saveBlogImageAction,
 	saveDateAction,
+	saveGalleryAction,
 	saveImageAction,
 	saveTextAction,
 	saveToggleAction,

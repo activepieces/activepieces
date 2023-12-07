@@ -63,7 +63,6 @@ const totalcmsUploadAPI = async (
 		if (fileName !== 'file') {
 			// blog post images use the format image[alt] or gallery[alt]
 			formData.append(`${fileName}[${key}]`, data[key]);
-			continue;
 		}
 		formData.append(key, data[key]);
     }
@@ -91,6 +90,18 @@ const totalcmsUploadAPI = async (
 
 export async function saveImage(auth: TotalCMSAuthType, slug: string, file: FileUpload, data: KeyValuePair) {
 	return totalcmsUploadAPI(auth, "image", slug, file, data);
+}
+
+export async function saveGallery(auth: TotalCMSAuthType, slug: string, file: FileUpload, data: KeyValuePair) {
+	return totalcmsUploadAPI(auth, "gallery", slug, file, data);
+}
+
+export async function saveBlogImage(auth: TotalCMSAuthType, slug: string, file: FileUpload, data: KeyValuePair) {
+	return totalcmsUploadAPI(auth, "blog", slug, file, data, 'image');
+}
+
+export async function saveBlogGallery(auth: TotalCMSAuthType, slug: string, file: FileUpload, data: KeyValuePair) {
+	return totalcmsUploadAPI(auth, "blog", slug, file, data, 'gallery');
 }
 
 export async function saveContent(auth: TotalCMSAuthType, type: string, slug: string, data: KeyValuePair) {
