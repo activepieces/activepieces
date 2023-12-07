@@ -6,7 +6,7 @@ on:
 jobs:
   Release:
     env:
-      MY_VERSION: beta-2
+      MY_VERSION: beta3
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
