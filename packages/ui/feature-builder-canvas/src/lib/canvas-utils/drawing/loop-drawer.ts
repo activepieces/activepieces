@@ -116,7 +116,7 @@ export class LoopDrawer {
         VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD / 2.0 - ARC_LENGTH
       )
       .drawArc(false, true)
-      .drawHorizontalLine(-xPositionOfFirstChildActionOffset);
+      .drawHorizontalLine(-xPositionOfFirstChildActionOffset - ARC_LENGTH);
   }
   static drawEmptySideOfLoopComponent({
     firstChildActionDrawer,
