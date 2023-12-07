@@ -10,7 +10,6 @@ export * from './lib/referral/referral';
 export * from './lib/project-members/project-member-request';
 export * from './lib/project-members/project-member';
 export * from './lib/flow-templates/flow-templates-requests.ee';
-export * from './lib/firebase-auth';
 export * from './lib/product-embed/app-credentials/index';
 export * from './lib/product-embed/connection-keys/index';
 export * from './lib/signing-key'
