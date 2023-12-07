@@ -61,7 +61,10 @@ export class BranchDrawer {
 
       const afterBranchLineComponent =
         BranchDrawer.drawLineComponentAfterBranch({
-          drawerMovedToFirstChildStep,
+          drawerMovedToFirstChildStep: drawerMovedToFirstChildStep.offset(
+            0,
+            -EXTRA_VERTICAL_SPACE_FOR_LINE_WITH_LABEL
+          ),
           branchStep,
           maximumHeight,
         });

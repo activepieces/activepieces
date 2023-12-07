@@ -326,7 +326,11 @@ export function drawLineComponentWithButton({
         }),
         button: {
           x: to.x - BIG_BUTTON_SIZE / 2.0,
-          y: to.y + FLOW_ITEM_HEIGHT / 2 - BIG_BUTTON_SIZE / 2,
+          y:
+            to.y +
+            (lineHasLabel ? EXTRA_VERTICAL_SPACE_FOR_LINE_WITH_LABEL / 2 : 0) +
+            FLOW_ITEM_HEIGHT / 2 -
+            BIG_BUTTON_SIZE / 2,
           type: 'big',
           stepName,
           stepLocationRelativeToParent,
