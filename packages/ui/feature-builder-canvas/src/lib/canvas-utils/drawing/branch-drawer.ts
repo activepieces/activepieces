@@ -11,11 +11,12 @@ import {
 } from './svg-drawer';
 import {
   BUTTON_SIZE,
+  EXTRA_VERTICAL_SPACE_FOR_LINE_WITH_LABEL,
   FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING,
   FLOW_ITEM_WIDTH,
   HORIZONTAL_SPACE_BETWEEN_BRANCHES,
   PositionButton,
-  TEXT_HEIGHT_SPACE_UNTIL_ITEM,
+  VERTICAL_SPACE_BETWEEN_LABEL_AND_FLOW_ITEM,
   VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS,
   VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD,
 } from './draw-common';
@@ -45,7 +46,7 @@ export class BranchDrawer {
       };
       const drawerMovedToFirstChildStep = bd.offset(
         firstChildStepPosition.x,
-        firstChildStepPosition.y
+        firstChildStepPosition.y + EXTRA_VERTICAL_SPACE_FOR_LINE_WITH_LABEL
       );
       const stepLocationRelativeToParent =
         index == 0
@@ -71,8 +72,8 @@ export class BranchDrawer {
           x: drawerMovedToFirstChildStep.steps[0].center('bottom').x,
           y:
             drawerMovedToFirstChildStep.steps[0].y -
-            TEXT_HEIGHT_SPACE_UNTIL_ITEM,
-          label: index === 0 ? 'True' : 'False',
+            VERTICAL_SPACE_BETWEEN_LABEL_AND_FLOW_ITEM,
+          label: index === 0 ? $localize`True` : $localize`False`,
         })
         .appendSvg(lineComponentAtStartOfBranch.line)
         .appendButton(lineComponentAtStartOfBranch.button)
@@ -142,6 +143,7 @@ export class BranchDrawer {
       stepLocationRelativeToParent: stepLocationRelativeToParent,
       btnType: doesBranchHaveChildren ? 'small' : 'big',
       drawArrow: doesBranchHaveChildren,
+      lineHasLabel: true,
     });
   }
   private static drawLineComponentAfterBranch({
@@ -153,23 +155,26 @@ export class BranchDrawer {
     branchStep: BranchAction;
     maximumHeight: number;
   }) {
-    return drawStartLineForStepWithChildren(
-      {
+    return drawStartLineForStepWithChildren({
+      from: {
         x: drawerMovedToFirstChildStep.steps[0].center('bottom').x,
         y:
           drawerMovedToFirstChildStep.steps[0].y +
           drawerMovedToFirstChildStep.boundingBox().height,
       },
-      {
+      to: {
         x: FlowDrawer.centerBottomOfFlowItemUi.x,
         y:
           FlowDrawer.centerBottomOfFlowItemUi.y +
-          VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD +
-          maximumHeight +
-          VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD,
+          VERTICAL_SPACE_BETWEEN_STEP_AND_CHILD * 2 +
+          maximumHeight,
       },
-      !flowHelper.isStepLastChildOfParent(branchStep, FlowDrawer.trigger)
-    );
+      drawArrow: !flowHelper.isStepLastChildOfParent(
+        branchStep,
+        FlowDrawer.trigger
+      ),
+      lineHasLabel: false,
+    });
   }
 
   private static createAfterBranchStepButton({

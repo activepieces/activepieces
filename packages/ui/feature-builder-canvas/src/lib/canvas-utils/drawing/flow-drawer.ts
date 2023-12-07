@@ -235,6 +235,7 @@ export class FlowDrawer {
             step,
             FlowDrawer.trigger
           ),
+          lineHasLabel: false,
         });
         childHeight =
           FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING +

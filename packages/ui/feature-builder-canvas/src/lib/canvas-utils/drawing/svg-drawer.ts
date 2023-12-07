@@ -4,9 +4,10 @@ import {
   BIG_BUTTON_SIZE,
   BUTTON_SIZE,
   ButtonType,
+  EXTRA_VERTICAL_SPACE_FOR_LINE_WITH_LABEL,
   FLOW_ITEM_HEIGHT,
   PositionButton,
-  SPACE_BETWEEN_BUTTON_AND_ARROW,
+  VERTICAL_SPACE_BETWEEN_LABEL_AND_BUTTON,
   VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS,
 } from './draw-common';
 import { Position } from './step-card';
@@ -239,11 +240,17 @@ export function drawVerticalLineToNextStep(
   }
   throw Error('to.x: ${to.x} and from.x ${from.x} aren not the same');
 }
-export function drawStartLineForStepWithChildren(
-  from: Position,
-  to: Position,
-  drawArrow: boolean
-): SvgDrawer {
+export function drawStartLineForStepWithChildren({
+  from,
+  to,
+  drawArrow,
+  lineHasLabel,
+}: {
+  from: Position;
+  to: Position;
+  drawArrow: boolean;
+  lineHasLabel: boolean;
+}): SvgDrawer {
   const { dx, dy } = extractDyDx(from, to);
   if (dy < 0) {
     throw new Error('dy should be positive');
@@ -254,7 +261,11 @@ export function drawStartLineForStepWithChildren(
     .drawArc(dx > 0, !(dx > 0))
     .drawHorizontalLine(dx + (dx < 0 ? 1 : -1) * 2 * ARC_LENGTH)
     .drawArc(dx > 0, dx > 0)
-    .drawVerticalLine(VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS - ARC_LENGTH);
+    .drawVerticalLine(
+      VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS -
+        ARC_LENGTH +
+        (lineHasLabel ? EXTRA_VERTICAL_SPACE_FOR_LINE_WITH_LABEL : 0)
+    );
   return drawArrow ? svgDrawer.arrow() : svgDrawer;
 }
 
@@ -265,6 +276,7 @@ export function drawLineComponentWithButton({
   stepLocationRelativeToParent,
   btnType,
   drawArrow,
+  lineHasLabel,
 }: {
   from: Position;
   to: Position;
@@ -272,20 +284,31 @@ export function drawLineComponentWithButton({
   stepLocationRelativeToParent: StepLocationRelativeToParent;
   btnType: ButtonType;
   drawArrow: boolean;
+  lineHasLabel: boolean;
 }): {
   line: SvgDrawer;
   button: PositionButton;
 } {
   switch (btnType) {
     case 'small': {
+      const btnY =
+        to.y -
+        VERTICAL_SPACE_BETWEEN_SEQUENTIAL_STEPS / 2.0 -
+        BUTTON_SIZE / 2.0 +
+        (lineHasLabel ? VERTICAL_SPACE_BETWEEN_LABEL_AND_BUTTON : 0);
       return {
         line:
           from.x === to.x
             ? drawVerticalLineToNextStep(from, to, drawArrow)
-            : drawStartLineForStepWithChildren(from, to, drawArrow),
+            : drawStartLineForStepWithChildren({
+                from,
+                to,
+                drawArrow,
+                lineHasLabel,
+              }),
         button: {
           x: to.x - BUTTON_SIZE / 2.0,
-          y: to.y - SPACE_BETWEEN_BUTTON_AND_ARROW - BUTTON_SIZE / 2.0,
+          y: btnY,
           type: 'small',
           stepName,
           stepLocationRelativeToParent,
@@ -294,7 +317,12 @@ export function drawLineComponentWithButton({
     }
     case 'big': {
       return {
-        line: drawStartLineForStepWithChildren(from, to, drawArrow),
+        line: drawStartLineForStepWithChildren({
+          from,
+          to,
+          drawArrow,
+          lineHasLabel: false,
+        }),
         button: {
           x: to.x - BIG_BUTTON_SIZE / 2.0,
           y: to.y + FLOW_ITEM_HEIGHT / 2 - BIG_BUTTON_SIZE / 2,

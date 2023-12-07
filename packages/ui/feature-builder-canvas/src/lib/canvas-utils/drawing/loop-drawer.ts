@@ -50,6 +50,7 @@ export class LoopDrawer {
       stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP,
       btnType: step.firstLoopAction ? 'small' : 'big',
       drawArrow: !!step.firstLoopAction,
+      lineHasLabel: false,
     });
 
     const firstLoopStepClosingLine =
