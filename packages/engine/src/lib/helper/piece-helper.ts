@@ -42,7 +42,7 @@ import { testExecution } from './test-execution-context'
 import { createFilesService } from '../services/files.service'
 
 const variableService = new VariableService()
-const env = process.env.AP_ENVIRONMENT
+const source = process.env.AP_PIECES_SOURCE
 
 const loadPieceOrThrow = async (
     pieceName: string,
@@ -356,7 +356,7 @@ export const pieceHelper = {
 }
 
 const getPackageAlias = ({ pieceName, pieceVersion }: GetPackageAliasParams) => {
-    if (env === 'dev') {
+    if (source === 'FILE') {
         return pieceName
     }
 
