@@ -6,7 +6,7 @@ import {
 } from '@angular/forms';
 import { ErrorStateMatcher, mixinErrorState } from '@angular/material/core';
 import { Subject } from 'rxjs';
-import { Step } from '@activepieces/ui/feature-builder-store';
+import { Step, StepWithIndex } from '@activepieces/ui/feature-builder-store';
 import { InsertMentionOperation } from '@activepieces/ui/common';
 
 export const customCodeMentionDisplayName = 'Custom Code';
@@ -83,7 +83,7 @@ export class CustomErrorMatcher implements ErrorStateMatcher {
 
 export function fromTextToOps(
   text: string,
-  allStepsMetaData: (MentionListItem & { step: Step })[]
+  allStepsMetaData: (MentionListItem & { step: StepWithIndex })[]
 ): {
   ops: (TextInsertOperation | InsertMentionOperation)[];
 } {
@@ -114,11 +114,8 @@ export function fromTextToOps(
             replaceStepNameWithDisplayName(stepName, allStepsMetaData),
             ...keys.slice(1),
           ].join(' ');
-          // TODO FIX stepMetaData?.step.
-          const indexInDfsTraversal = -1;
-          const prefix = indexInDfsTraversal
-            ? `${indexInDfsTraversal + 1}. `
-            : '';
+          const indexInDfsTraversal = stepMetaData?.step.indexInDfsTraversal;
+          const prefix = indexInDfsTraversal ? `${indexInDfsTraversal}. ` : '';
           const insertMention: InsertMentionOperation = {
             insert: {
               apMention: {

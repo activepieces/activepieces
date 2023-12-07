@@ -84,7 +84,7 @@ export class FlowItemContentComponent implements OnInit {
     this.flowItemChanged$.next(true);
     this.fetchFlowItemDetailsAndLoadLogo();
     this.stepIndex$ = this.store.select(
-      BuilderSelectors.selectStepIndex(this._flowItem)
+      BuilderSelectors.selectStepIndex(this._flowItem.name)
     );
   }
   isDragging$: Observable<boolean>;

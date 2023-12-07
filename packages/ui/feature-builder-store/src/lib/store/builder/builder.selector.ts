@@ -510,9 +510,9 @@ const selectAllStepsForMentionsDropdown = createSelector(
   }
 );
 
-const selectStepIndex = (step: Step) => {
+const selectStepIndex = (stepName: string) => {
   return createSelector(selectCurrentFlow, (flow) => {
-    return FlowStructureUtil.findStepIndex(flow.version.trigger, step.name);
+    return FlowStructureUtil.findStepIndex(flow.version.trigger, stepName);
   });
 };
 const selectStepValidity = createSelector(selectCurrentStep, (step) => {
