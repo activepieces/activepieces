@@ -1,0 +1,41 @@
+import { createAction, Property } from "@activepieces/pieces-framework";
+import { getContent } from "../api";
+import { cmsAuth } from "../auth";
+
+export const getContentAction = createAction({
+	name        : 'getContent',
+	auth        : cmsAuth,
+	displayName : 'Get Content',
+	description : 'Get content from your Total CMS website',
+	props       : {
+		type: Property.StaticDropdown({
+			displayName : 'Data Type',
+			description : 'The type of data to return',
+			required    : true,
+			options : {
+				options     : [
+					{ label: 'Blog', value: 'blog' },
+					{ label: 'Datastore', value: 'datastore' },
+					{ label: 'Date', value: 'date' },
+					{ label: 'Depot', value: 'depot' },
+					{ label: 'Feed', value: 'feed' },
+					{ label: 'File', value: 'file' },
+					{ label: 'Gallery', value: 'gallery' },
+					{ label: 'Image', value: 'image' },
+					{ label: 'Text', value: 'text' },
+					{ label: 'Toggle', value: 'toggle' },
+				]
+			}
+		}),
+		slug: Property.ShortText({
+		displayName : 'CMS ID',
+			description : 'The CMS ID of the content to retrieve',
+			required    : true,
+		}),
+	},
+	async run(context) {
+		return await getContent(context.auth, context.props['type'], context.props.slug);
+	},
+});
+
+
