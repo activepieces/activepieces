@@ -1,7 +1,9 @@
 import { httpClient, HttpMethod, HttpRequest, QueryParams } from "@activepieces/pieces-common";
 import { TotalCMSAuthType } from "./auth";
+import FormData from "form-data";
 
-type KeyValuePair = {[key: string]: string|boolean|object|undefined }
+export type KeyValuePair = {[key: string]: string|boolean|object|undefined }
+export type FileUpload = { filename: string, base64: string }
 
 const totalcmsAPI = async (
 	auth   : TotalCMSAuthType,
@@ -40,6 +42,55 @@ const totalcmsAPI = async (
 		success : true,
 		data    : response.body['data'],
 	};
+}
+
+const totalcmsUploadAPI = async (
+	auth : TotalCMSAuthType,
+	type : string,
+	slug : string,
+	file : FileUpload,
+	data : KeyValuePair = {},
+	fileName = 'file',
+) => {
+
+	const formData = new FormData();
+	formData.append('type', type);
+	formData.append('slug', slug);
+
+	formData.append(fileName, Buffer.from(file.base64, "base64"), file.filename);
+
+	for (const key in data) {
+		if (fileName !== 'file') {
+			// blog post images use the format image[alt] or gallery[alt]
+			formData.append(`${fileName}[${key}]`, data[key]);
+			continue;
+		}
+		formData.append(key, data[key]);
+    }
+
+	const request: HttpRequest = {
+		body        : formData,
+		method      : HttpMethod.POST,
+		url         : `${auth.domain}/rw_common/plugins/stacks/total-cms/totalapi.php`,
+		headers     : {
+			'Content-Type' : 'multipart/form-data',
+			'total-key'    : auth.license,
+		},
+	};
+	const response = await httpClient.sendRequest(request);
+
+	if (response.status !== 200) {
+		throw new Error(`Total CMS API error: ${response.status} ${response.body}`);
+	}
+
+	return {
+		success : true,
+		data    : response.body['data'],
+	};
+}
+
+export async function saveImage(auth: TotalCMSAuthType, slug: string, file: FileUpload, data: KeyValuePair) {
+	return totalcmsUploadAPI(auth, "image", slug, file, data);
 }
 
 export async function saveContent(auth: TotalCMSAuthType, type: string, slug: string, data: KeyValuePair) {

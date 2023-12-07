@@ -1,6 +1,7 @@
 
 import { createPiece } from "@activepieces/pieces-framework";
 import { cmsAuth } from "./lib/auth";
+
 import { getContentAction } from "./lib/actions/get-content";
 import { getBlogPostAction } from "./lib/actions/get-blog-post";
 import { saveTextAction } from "./lib/actions/save-text";
@@ -8,6 +9,8 @@ import { saveDateAction } from "./lib/actions/save-date";
 import { saveToggleAction } from "./lib/actions/save-toggle";
 import { saveVideoAction } from "./lib/actions/save-video";
 import { saveBlogPostAction } from "./lib/actions/save-blog-post";
+import { saveImageAction } from "./lib/actions/save-image";
+
 import { newBlogPost } from "./lib/triggers/new-blog-post";
 
 export const totalcms = createPiece({
@@ -21,6 +24,7 @@ export const totalcms = createPiece({
 	getBlogPostAction,
 	saveBlogPostAction,
 	saveDateAction,
+	saveImageAction,
 	saveTextAction,
 	saveToggleAction,
 	saveVideoAction,
