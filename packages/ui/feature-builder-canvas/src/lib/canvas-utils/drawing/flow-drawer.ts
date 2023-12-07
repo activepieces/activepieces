@@ -67,12 +67,28 @@ export class FlowDrawer {
         {
           ...label,
           // TODO - this is a hack to make the label appear in the center of the step
-          x: label.x - 17,
+          x: label.x - this.getLabelWidth(label.label) / 2.0,
         },
       ],
     });
   }
-
+  private getLabelWidth(label: string): number {
+    const container = document.createElement('canvas');
+    const context = container.getContext('2d');
+    if (context) {
+      context.font = window
+        .getComputedStyle(document.body)
+        .getPropertyValue('font');
+      const width = context.measureText(label).width;
+      container.remove();
+      return width;
+    }
+    // for browsers that don't support canvas 2d context
+    const fontSize = parseFloat(
+      window.getComputedStyle(document.body).getPropertyValue('font-size')
+    );
+    return fontSize * 0.45 * label.length;
+  }
   appendButton(button: PositionButton): FlowDrawer {
     return new FlowDrawer({
       buttons: [...this.buttons, button],
