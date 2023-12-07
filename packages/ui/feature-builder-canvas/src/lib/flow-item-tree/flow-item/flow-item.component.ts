@@ -141,7 +141,7 @@ export class FlowItemComponent implements OnInit {
       this.delayTimer = setTimeout(() => {
         el.dispatchEvent(new MouseEvent('mousedown', $event));
         this.delayTimerSet = false;
-      }, 50);
+      }, 100);
     }
   }
   mouseUp() {
