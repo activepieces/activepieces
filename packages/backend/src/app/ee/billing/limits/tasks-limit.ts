@@ -51,21 +51,16 @@ async function getTaskUserInUTCDay({
     const now = apDayjs()
     const startOfDay = now.startOf('day').utc()
 
-    const flowRunsInLastTwentyFourHours = await flowRunService.getAllProdRuns({
+    return flowRunService.getAllProdRuns({
         projectId,
-        finishTime: startOfDay.toISOString(),
+        created: startOfDay.toISOString(),
     })
-
-    return flowRunsInLastTwentyFourHours.reduce((totalTaskCount, flowRun) => {
-        const currentTaskCount = flowRun.tasks ?? 0
-        return totalTaskCount + currentTaskCount
-    }, 0)
 }
 
 async function limit({ projectId }: { projectId: ProjectId }): Promise<void> {
     const edition = getEdition()
 
-    if (edition !== ApEdition.CLOUD) {
+    if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
         return
     }
 
