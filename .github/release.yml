@@ -8,6 +8,9 @@ changelog:
     - title: "🧩 Pieces"
       labels:
         - "🔌 pieces"
+    - title: "🛠️ Piece Framework"
+      labels:
+        - "🛠️ piece-framework"
     - title: "🐞 Bug Fixes"
       labels:
         - "🐛 bug"

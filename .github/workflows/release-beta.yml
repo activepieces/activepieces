@@ -46,4 +46,4 @@ jobs:
             linux/arm64
           push: true
           tags: |
-            ghcr.io/activepieces/activepieces:${{ env.RELEASE }}-beta.1
+            ghcr.io/activepieces/activepieces:${{ env.RELEASE }}-next.1
