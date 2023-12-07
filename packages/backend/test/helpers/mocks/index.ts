@@ -1,4 +1,4 @@
-import { KeyAlgorithm, SigningKey, Platform, OAuthApp, FilteredPieceBehavior, CustomDomain, CustomDomainStatus, OtpModel, OtpType, OtpState, ProjectMember } from '@activepieces/ee-shared'
+import { KeyAlgorithm, SigningKey, Platform, OAuthApp, FilteredPieceBehavior, CustomDomain, CustomDomainStatus, OtpModel, OtpType, OtpState, ProjectMember, ApiKey } from '@activepieces/ee-shared'
 import { UserStatus, User, apId, Project, NotificationStatus, ProjectType, PieceType, PackageType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
@@ -73,6 +73,7 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         smtpSenderEmail: platform?.smtpSenderEmail ?? faker.internet.email(),
         privacyPolicyUrl: platform?.privacyPolicyUrl ?? faker.internet.url(),
         termsOfServiceUrl: platform?.termsOfServiceUrl ?? faker.internet.url(),
+        embeddingEnabled: platform?.embeddingEnabled ?? faker.datatype.boolean(),
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
         showPoweredBy: platform?.showPoweredBy ?? faker.datatype.boolean(),
     }
@@ -92,6 +93,18 @@ j9mmntXsa/leIwBVspiEOHYZwJOe5+goSd8K1VIQJxC1DVBxB2eHxMvuo3eyJ0HE
 DlebIeZy4zrE1LPgRic1kfdemyxvuN3iwZnPGiY79nL1ZNDM3M4ApSMCAwEAAQ==
 -----END RSA PUBLIC KEY-----`
 
+export const createMockApiKey = (apiKey?: Partial<ApiKey>): ApiKey => {
+    return {
+        id: apiKey?.id ?? apId(),
+        created: apiKey?.created ?? faker.date.recent().toISOString(),
+        updated: apiKey?.updated ?? faker.date.recent().toISOString(),
+        displayName: apiKey?.displayName ?? faker.lorem.word(),
+        platformId: apiKey?.platformId ?? apId(),
+        hashedValue: apiKey?.hashedValue ?? faker.lorem.word(),
+        truncatedValue: apiKey?.truncatedValue ?? faker.lorem.word(),
+    }
+}
+
 export const createMockSigningKey = (signingKey?: Partial<SigningKey>): SigningKey => {
     return {
         id: signingKey?.id ?? apId(),
@@ -109,12 +122,12 @@ export const createProjectMember = (projectMember: Partial<ProjectMember>): Proj
     return {
         id: projectMember.id ?? apId(),
         email: projectMember.email ?? faker.internet.email(),
+        platformId: projectMember.platformId ?? apId(),
         projectId: projectMember.projectId ?? apId(),
         role: projectMember.role ?? faker.helpers.enumValue(ProjectMember.Role),
         status: projectMember.status ?? faker.helpers.enumValue(ProjectMember.Status),
         created: projectMember.created ?? faker.date.recent().toISOString(),
         updated: projectMember.updated ?? faker.date.recent().toISOString(),
-        userId: projectMember.userId ?? apId(),
     }
 }
 

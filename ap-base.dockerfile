@@ -1,4 +1,4 @@
-FROM node:18.18.1-bullseye
+FROM node:18.18.2-bullseye
 
 COPY packages/backend/src/assets/default.cf /usr/local/etc/isolate
 

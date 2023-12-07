@@ -6,7 +6,7 @@ import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
 import { faker } from '@faker-js/faker'
 import { UpsertOAuth2AppRequest } from '@activepieces/ee-shared'
-import { apId } from '@activepieces/shared'
+import { PrincipalType, apId } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
@@ -36,6 +36,7 @@ describe('OAuth App API', () => {
             await databaseConnection.getRepository('platform').save(mockPlatform)
 
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 id: mockUser.id,
                 platform: { id: mockPlatform.id, role: 'OWNER' },
             })
@@ -64,6 +65,7 @@ describe('OAuth App API', () => {
             const nonExistentPlatformId = apId()
 
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 platform: {
                     id: nonExistentPlatformId,
                     role: 'OWNER',
@@ -79,7 +81,7 @@ describe('OAuth App API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
 
         it('Fails if user is not platform owner', async () => {
@@ -92,6 +94,7 @@ describe('OAuth App API', () => {
 
             const nonOwnerUserId = apId()
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 id: nonOwnerUserId,
                 platform: { id: mockPlatform.id, role: 'OWNER' },
             })
@@ -127,6 +130,7 @@ describe('OAuth App API', () => {
             await databaseConnection.getRepository('oauth_app').save(mockOAuthApp)
 
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 id: mockUserTwo.id,
                 platform: { id: mockPlatform.id, role: 'OWNER' },
             })
@@ -159,6 +163,7 @@ describe('OAuth App API', () => {
             await databaseConnection.getRepository('oauth_app').save(mockOAuthApp)
 
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 id: mockUser.id,
                 platform: { id: mockPlatform.id, role: 'OWNER' },
             })
@@ -199,6 +204,7 @@ describe('OAuth App API', () => {
             await databaseConnection.getRepository('oauth_app').save([mockOAuthAppsOne, mockOAuthAppsTwo])
 
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 id: mockUserOne.id,
                 platform: { id: mockPlatformOne.id, role: 'OWNER' },
             })
@@ -241,6 +247,7 @@ describe('OAuth App API', () => {
             await databaseConnection.getRepository('oauth_app').save([mockOAuthAppsOne, mockOAuthAppsTwo])
 
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 id: mockUserTwo.id,
                 platform: { id: mockPlatformOne.id, role: 'MEMBER' },
             })
@@ -263,5 +270,5 @@ describe('OAuth App API', () => {
         })
     })
 
-    
+
 })

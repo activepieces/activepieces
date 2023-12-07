@@ -85,7 +85,6 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 pieceType,
                 pieceName,
                 pieceVersion,
-                projectId,
             },
             propertyName,
             stepName,

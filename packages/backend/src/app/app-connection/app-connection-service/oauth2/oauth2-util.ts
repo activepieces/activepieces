@@ -1,4 +1,4 @@
-import { BaseOAuth2ConnectionValue, deleteProps } from '@activepieces/shared'
+import { BaseOAuth2ConnectionValue, OAuth2GrantType, deleteProps } from '@activepieces/shared'
 
 export const oauth2Util = {
     formatOAuth2Response,
@@ -7,7 +7,8 @@ export const oauth2Util = {
 
 function isExpired(connection: BaseOAuth2ConnectionValue): boolean {
     const secondsSinceEpoch = Math.round(Date.now() / 1000)
-    if (!connection.refresh_token) {
+    const grantType = connection.grant_type ?? OAuth2GrantType.AUTHORIZATION_CODE
+    if (grantType === OAuth2GrantType.AUTHORIZATION_CODE && !connection.refresh_token) {
         return false
     }
     // Salesforce doesn't provide an 'expires_in' field, as it is dynamic per organization; therefore, it's necessary for us to establish a low threshold and consistently refresh it.
@@ -20,7 +21,7 @@ function isExpired(connection: BaseOAuth2ConnectionValue): boolean {
 
 
 
-function formatOAuth2Response(response: Omit<BaseOAuth2ConnectionValue, 'claimed_at'> ): BaseOAuth2ConnectionValue {
+function formatOAuth2Response(response: Omit<BaseOAuth2ConnectionValue, 'claimed_at'>): BaseOAuth2ConnectionValue {
     const secondsSinceEpoch = Math.round(Date.now() / 1000)
     const formattedResponse: BaseOAuth2ConnectionValue = {
         ...response,

@@ -7,6 +7,7 @@ import {
 import { createWordpressPost } from './lib/actions/create-post.action';
 import { wordpressNewPost } from './lib/trigger/new-post.trigger';
 import { createWordpressPage } from './lib/actions/create-page.action';
+import { getWordpressPost } from './lib/actions/get-post.action';
 import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common';
 import { wordpressCommon } from './lib/common';
 
@@ -89,6 +90,6 @@ export const wordpress = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/wordpress.png',
   auth: wordpressAuth,
-  actions: [createWordpressPost, createWordpressPage],
+  actions: [createWordpressPost, createWordpressPage, getWordpressPost],
   triggers: [wordpressNewPost]
 });

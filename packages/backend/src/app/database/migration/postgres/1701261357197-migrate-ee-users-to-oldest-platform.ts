@@ -1,20 +1,24 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { databaseConnection } from '../../database-connection'
 import { isNil } from '@activepieces/shared'
 
 export class MigrateEeUsersToOldestPlatform1701261357197 implements MigrationInterface {
     name = 'MigrateEeUsersToOldestPlatform1701261357197'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        const result = await databaseConnection.getRepository('platform').findOne({ where: {}, order: { created: 'ASC' } })
+        const result = await queryRunner.query(`
+        SELECT *
+        FROM platform
+        ORDER BY created ASC
+        LIMIT 1;
+        `)
 
-        if (isNil(result)) {
+        if (isNil(result) || result.length == 0) {
             return
         }
 
         await queryRunner.query(`
             UPDATE "user"
-            SET "platformId" = '${result.id}'
+            SET "platformId" = '${result[0].id}'
             WHERE "platformId" IS NULL
         `)
     }
