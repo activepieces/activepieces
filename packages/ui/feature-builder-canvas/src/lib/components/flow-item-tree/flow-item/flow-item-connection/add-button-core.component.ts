@@ -25,8 +25,8 @@ export class AddButtonCoreComponent {
   selectedAddBtnId$: Observable<number | undefined>;
   @Input({ required: true })
   stepName = '';
-  @Input({ required: true }) left = '';
-  @Input({ required: true }) top = '';
+  @Input({ required: true }) left = 0;
+  @Input({ required: true }) top = 0;
   @Input({ required: true }) stepLocationRelativeToParent =
     StepLocationRelativeToParent.AFTER;
   showCursorOnHover$: Observable<boolean>;

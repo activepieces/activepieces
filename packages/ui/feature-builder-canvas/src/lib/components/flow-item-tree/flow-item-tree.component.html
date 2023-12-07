@@ -25,11 +25,11 @@
         </ng-container>
 
         <ng-container *ngFor="let button of flowDrawer.buttons; trackBy: buttonsTrackBy">
-          <app-small-add-button *ngIf="button.type === 'small'" [left]="button.x + 'px'" [top]="button.y + 'px'"
-            [stepLocationRelativeToParent]="button.stepLocationRelativeToParent"
+          <app-small-add-button *ngIf="button.type === 'small' && (readOnly$ | async) === false" [left]="button.x"
+            [top]="button.y" [stepLocationRelativeToParent]="button.stepLocationRelativeToParent"
             [stepName]="button.stepName"></app-small-add-button>
-          <app-big-add-button *ngIf="button.type === 'big'" [left]="button.x + 'px'" [top]="button.y + 'px'"
-            [stepLocationRelativeToParent]="button.stepLocationRelativeToParent"
+          <app-big-add-button [inReadOnlyMode]="(readOnly$ | async) || false" *ngIf="button.type === 'big'"
+            [left]="button.x" [top]="button.y" [stepLocationRelativeToParent]="button.stepLocationRelativeToParent"
             [stepName]="button.stepName"></app-big-add-button>
         </ng-container>
 

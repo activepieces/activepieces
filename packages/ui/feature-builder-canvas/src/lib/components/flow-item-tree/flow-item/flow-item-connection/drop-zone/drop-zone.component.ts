@@ -26,8 +26,8 @@ export class DropZoneComponent implements OnInit {
   top = '';
   left = '';
   @Input() containerClass = '';
-  @Input({ required: true }) btnTop = '';
-  @Input({ required: true }) btnLeft = '';
+  @Input({ required: true }) btnTop = 0;
+  @Input({ required: true }) btnLeft = 0;
   @Input({ required: true }) btnWidth = 0;
   @Input({ required: true }) btnHeight = 0;
   @Output() dragEnter = new EventEmitter<boolean>();
@@ -38,9 +38,7 @@ export class DropZoneComponent implements OnInit {
     this.showDropArea$ = this.flowRendererService.isDragginStep$;
   }
   ngOnInit() {
-    const topPx = Number.parseFloat(this.btnTop.slice(0, -2));
-    const leftPx = Number.parseFloat(this.btnLeft.slice(0, -2));
-    this.top = `${topPx - DROP_ZONE_HEIGHT / 2 + this.btnHeight / 2}px`;
-    this.left = `${leftPx - DROP_ZONE_WIDTH / 2 + +this.btnWidth / 2}px`;
+    this.top = `${this.btnTop - DROP_ZONE_HEIGHT / 2 + this.btnHeight / 2}px`;
+    this.left = `${this.btnLeft - DROP_ZONE_WIDTH / 2 + +this.btnWidth / 2}px`;
   }
 }

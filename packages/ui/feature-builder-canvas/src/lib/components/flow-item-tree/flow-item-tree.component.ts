@@ -26,13 +26,14 @@ export class FlowItemTreeComponent implements OnInit {
   navbarOpen = false;
   flowDrawer$: Observable<UiFlowDrawer>;
   transform$: Observable<string>;
-
+  readOnly$: Observable<boolean>;
   constructor(
     private store: Store,
     private pannerService: PannerService,
     private zoomingService: ZoomingService
   ) {
     this.transform$ = this.getTransform$();
+    this.readOnly$ = this.store.select(BuilderSelectors.selectReadOnly);
   }
 
   ngOnInit(): void {

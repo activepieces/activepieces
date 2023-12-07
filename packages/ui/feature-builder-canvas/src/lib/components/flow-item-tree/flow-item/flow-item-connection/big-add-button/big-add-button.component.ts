@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { AddButtonCoreComponent } from '../add-button-core.component';
 import { Store } from '@ngrx/store';
 import { FlowRendererService } from '@activepieces/ui/feature-builder-store';
@@ -13,6 +13,9 @@ import { BIG_BUTTON_SIZE } from '../../../../canvas-utils/drawing/draw-common';
 export class BigAddButtonComponent extends AddButtonCoreComponent {
   readonly BIG_BUTTON_SIZE = BIG_BUTTON_SIZE;
   showBoxShadow = false;
+  @Input({ required: true })
+  inReadOnlyMode = false;
+
   constructor(
     store: Store,
     flowRendererService: FlowRendererService,
