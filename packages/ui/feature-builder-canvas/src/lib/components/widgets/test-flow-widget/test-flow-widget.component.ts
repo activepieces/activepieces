@@ -50,7 +50,8 @@ export class TestFlowWidgetComponent implements OnInit {
   shouldHideTestWidget$: Observable<boolean>;
   testRunSnackbar: MatSnackBarRef<TestRunBarComponent>;
   isTriggerTested$: Observable<boolean>;
-
+  readonly testFlowText = $localize`Test flow`;
+  readonly savingText = $localize`Saving...`;
   constructor(
     private flowService: FlowService,
     private store: Store,

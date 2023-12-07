@@ -5,8 +5,8 @@ import { Store } from '@ngrx/store';
 import { fadeIn400ms } from '@activepieces/ui/common';
 
 @Component({
-  selector: 'app-view-only-mode',
-  templateUrl: './view-only-mode.component.html',
+  selector: 'app-view-only-mode-widget',
+  templateUrl: './view-only-mode-widget.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeIn400ms],
 })
