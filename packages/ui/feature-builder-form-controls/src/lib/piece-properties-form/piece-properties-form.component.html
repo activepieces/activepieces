@@ -74,29 +74,57 @@
             <mat-label> {{ (refreshableConfigsLoadingFlags$[property.key] | async)? 'Loading...' :
               property.value.displayName
               }}</mat-label>
-
-
-
-
-
-            <mat-select [formControlName]="property.key" (closed)="searchControl.setValue('')"
+            <mat-select #matSelect [formControlName]="property.key" (closed)="searchControl.setValue('')"
               [compareWith]="dropdownCompareWithFunction">
+
+
               <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
+
+
                 <ng-container
-                  *ngIf="!(state.disabled && ((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key]))">
-                  <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
+                  *ngIf="(((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key]))">
+                  <ng-container *ngIf="(state.options | dropdownSearch:searchControl) | async as options">
+                    <ng-container *ngIf="!state.disabled">
+                      <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
+                    </ng-container>
+
+                    <cdk-virtual-scroll-viewport *ngIf="matSelect.panelOpen && !state.disabled" [itemSize]="48"
+                      minBufferPx="200" maxBufferPx="400" class="ap-max-h-[195px] thin-scrollbars  ap-overflow-y-auto"
+                      [class.ap-h-[50px]]="options.length === 1 " [class.ap-h-[100px]]="options.length === 2 "
+                      [class.ap-h-[150px]]="options.length === 3 " [class.ap-h-[195px]]="options.length >= 4 ">
+
+
+                      <mat-option *cdkVirtualFor="let opt of options" [value]="opt.value"
+                        [class.mdc-list-item--selected]="(opt.value| isDropdownItemSelected:property.key:formGroup ) | async">
+                        <div class="ap-w-full ap-flex ap-justify-between ap-items-center">
+                          {{opt.label}}
+                          <mat-pseudo-checkbox
+                            *ngIf="(opt.value| isDropdownItemSelected:property.key:formGroup) | async" state="checked"
+                            aria-hidden="true" appearance="minimal"
+                            class="mat-pseudo-checkbox virtual-scroll-check-mark mat-mdc-option-pseudo-checkbox mat-pseudo-checkbox-checked mat-pseudo-checkbox-minimal"></mat-pseudo-checkbox>
+                        </div>
+                      </mat-option>
+                    </cdk-virtual-scroll-viewport>
+
+                    <mat-option
+                      *ngFor="let init of (state.options | dropdownInitialValue:property.key:formGroup)|async "
+                      class="!ap-hidden" [value]="init.value">
+                      {{init.label}}
+                    </mat-option>
+
+                    <mat-option [disabled]="true"
+                      *ngIf="state.disabled && ((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key])">
+                      <div> {{state.placeholder}} </div>
+                    </mat-option>
+
+                    <!-- need at least 1 pre-existing option to open the select -->
+                    <mat-option class="!ap-hidden"></mat-option>
+                  </ng-container>
                 </ng-container>
 
-                <div class="thin-scrollbars ap-max-h-[190px] ap-overflow-y-auto">
-                  <mat-option *ngFor="let opt of (state.options | dropdownSearch:searchControl) | async"
-                    [value]="opt.value">
-                  </mat-option>
-                </div>
-                <mat-option [disabled]="true"
-                  *ngIf="state.disabled && ((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key])">
-                  <div> {{state.placeholder}} </div>
-                </mat-option>
+
               </ng-container>
+
             </mat-select>
 
 
