@@ -168,13 +168,13 @@ const handleExecutionOutputStatus = async (run: FlowRun, reply: FastifyReply): P
                 await reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send()
                 break
             case ExecutionOutputStatus.FAILED:
-                await reply.status(StatusCodes.BAD_REQUEST).send({
+                await reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
                     message: 'The flow has failed and there is no response returned',
                 })
                 break
             case ExecutionOutputStatus.TIMEOUT:
             case ExecutionOutputStatus.RUNNING:
-                await reply.status(StatusCodes.REQUEST_TIMEOUT).send({
+                await reply.status(StatusCodes.GATEWAY_TIMEOUT).send({
                     message: `The request took more than ${Math.floor(POLLING_TIMEOUT_MS / 1000)} seconds`,
                 })
                 break
@@ -264,7 +264,7 @@ const getFlowOrThrow = async (flowId: FlowId): Promise<Flow> => {
     // TODO FIX AND REFACTOR
     // BEGIN EE
     const edition = getEdition()
-    if (edition === ApEdition.CLOUD) {
+    if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
         try {
             await tasksLimit.limit({
                 projectId: flow.projectId,
