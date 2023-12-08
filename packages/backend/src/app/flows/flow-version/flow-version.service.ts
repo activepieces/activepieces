@@ -410,9 +410,15 @@ function buildSchema(props: PiecePropertyMap): TSchema {
             case PropertyType.DYNAMIC:
                 propsSchema[name] = Type.Record(Type.String(), Type.Any())
                 break
+            case PropertyType.GROUP:
+                propsSchema[name] = Type.Record(Type.String(), buildSchema(property.props))
+                break
+            case PropertyType.SEPARATOR:
+            case PropertyType.TITLE:
+                break
         }
 
-        if (!property.required) {
+        if (!property.required && ![PropertyType.GROUP, PropertyType.SEPARATOR, PropertyType.TITLE].includes(property.type)) {
             propsSchema[name] = Type.Optional(Type.Union([Type.Null(), Type.Undefined(), propsSchema[name]]))
         }
     }

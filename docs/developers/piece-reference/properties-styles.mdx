@@ -1,0 +1,53 @@
+---
+title: "Properties Style"
+description: ""
+icon: 'pen-nib'
+---
+
+To improve the user experience, it is possible to add separation properties. These properties are used to separate the properties in the UI.
+
+## Separator
+
+```typescript
+separator: PropertyStyle.Separator()
+```
+![Separator](/resources/screenshots/property-style-separator.png)
+
+## Title
+
+```typescript
+title: PropertyStyle.Title({
+    display: "Title"
+})
+```
+![Title](/resources/screenshots/property-style-title.png)
+
+## Group
+
+```typescript
+group: PropertyStyle.Group({
+    display: "User",
+    props: {
+        name: Property.ShortText({
+            displayName: 'Name',
+            description: 'The name of the member',
+            required: true,
+        }),
+        sep: PropertyStyle.Separator(),
+        email: Property.ShortText({
+            displayName: 'Email',
+            description: 'The email of the member',
+            required: true,
+        }),
+        security: PropertyStyle.Title({
+            displayName: 'Security',
+        }),
+        password: Property.ShortText({
+            displayName: 'Password',
+            description: 'The password of the member',
+            required: true,
+        })
+    }
+})
+```
+![Group](/resources/screenshots/property-style-group.png)
