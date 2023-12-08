@@ -64,19 +64,20 @@ type PopulateTokenWithPlatformInfoParams = {
     project: Project
 }
 
-async function autoVerifyUserIfEligible(user: User): Promise<User> {
+async function autoVerifyUserIfEligible(user: User): Promise<void> {
     const edition = getEdition()
     if (edition === ApEdition.ENTERPRISE) {
-        return userService.verify({ id: user.id })
+        await userService.verify({ id: user.id })
+        return
     }
     const projects = await projectMemberService.listByUser(user)
     const activeInAnyProject = !isNil(projects.find(f => f.status === ProjectMemberStatus.ACTIVE))
     if (activeInAnyProject) {
-        return userService.verify({
+        await userService.verify({
             id: user.id,
         })
+        return
     }
-    return user
 }
 
 async function getProjectAndTokenOrThrow(user: User): Promise<{ project: Project, token: string }> {

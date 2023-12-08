@@ -98,20 +98,6 @@ export class SignUpComponent implements OnInit {
             this.authenticationService.saveUser(response);
           }
         }),
-        switchMap((response) => {
-          if (this.registrationForm.controls.newsLetter.value && response) {
-            return this.authenticationService
-              .saveNewsLetterSubscriber(request.email)
-              .pipe(
-                map(() => response),
-                catchError((err) => {
-                  console.error(err);
-                  return of(response);
-                })
-              );
-          }
-          return of(response);
-        }),
         tap((response) => {
           if (response && response.body?.status === UserStatus.VERIFIED) {
             this.redirect();

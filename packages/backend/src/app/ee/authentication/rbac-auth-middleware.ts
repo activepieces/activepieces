@@ -47,16 +47,17 @@ export const rbacAuthMiddleware = async (req: FastifyRequest): Promise<void> => 
     }
     const action = req.method
     const resource = extractResourceName(req.url)
-    const projectMemberRole = await projectMemberService.getRole({
-        projectId: req.principal.projectId,
-        userId: req.principal.id,
-    })
     if (isNil(resource)) {
         throw new Error('Internal error: resource is undefined ' + req.url)
     }
     if (!managedResources.includes(resource)) {
         return
     }
+    const projectMemberRole = await projectMemberService.getRole({
+        projectId: req.principal.projectId,
+        userId: req.principal.id,
+    })
+
     if (isNil(projectMemberRole)) {
         throw new ActivepiecesError({
             code: ErrorCode.PERMISSION_DENIED,
