@@ -21,6 +21,7 @@ import {
 import {
   ApEdition,
   ApFlagId,
+  SignUpRequest,
   UnhandledSwitchCaseError,
   UserStatus,
 } from '@activepieces/shared';
@@ -85,7 +86,12 @@ export class SignUpComponent implements OnInit {
   signUp() {
     if (this.registrationForm.valid && !this.loading) {
       this.loading = true;
-      const request = this.registrationForm.getRawValue();
+      const referringUserId =
+        this.activeRoute.snapshot.queryParamMap.get('referral') ?? undefined;
+      const request: SignUpRequest = {
+        ...this.registrationForm.getRawValue(),
+        referringUserId,
+      };
       this.signUp$ = this.authenticationService.signUp(request).pipe(
         tap((response) => {
           if (
