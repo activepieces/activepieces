@@ -1,6 +1,5 @@
 import { FastifyInstance, FastifyRequest } from 'fastify'
 import { Static, Type } from '@sinclair/typebox'
-import { plansService } from '../billing/plans/plan.service'
 import { userService } from '../../user/user-service'
 import { projectService } from '../../project/project-service'
 import { StatusCodes } from 'http-status-codes'
@@ -9,7 +8,8 @@ import { appsumoService } from './appsumo.service'
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { PlanType, defaultPlanInformation } from '../billing/plans/pricing-plans'
+import { plansService } from '../billing/project-plan/project-plan.service'
+import { defaultPlanInformation } from '../billing/project-plan/pricing-plans'
 
 export const appSumoModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(appsumoController, { prefix: '/v1/appsumo' })
@@ -88,24 +88,22 @@ const appsumoController: FastifyPluginAsyncTypebox = async (fastify: FastifyInst
             else {
                 const { plan_id, activation_email, action, uuid } = request.body
                 const appSumoPlan = appsumoService.getPlanInformation(plan_id)
-                const user = await userService.getOneByEmail({
+                const user = await userService.getByPlatformAndEmail({
+                    platformId: null,
                     email: activation_email,
                 })
                 if (!isNil(user)) {
-                    const project = (await projectService.getUserProject(user.id))
-                    const plan = await plansService.getOrCreateDefaultPlan({
-                        projectId: project.id,
-                    })
+                    const project = (await projectService.getUserProjectOrThrow(user.id))
                     if (action === 'refund') {
                         await plansService.update({
-                            projectPlanId: plan.id,
+                            projectId: project.id,
                             subscription: null,
-                            planLimits: defaultPlanInformation[PlanType.FLOWS],
+                            planLimits: defaultPlanInformation,
                         })
                     }
                     else {
                         await plansService.update({
-                            projectPlanId: plan.id,
+                            projectId: project.id,
                             subscription: null,
                             planLimits: appSumoPlan,
                         })

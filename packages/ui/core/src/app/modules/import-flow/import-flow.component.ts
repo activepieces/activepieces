@@ -7,6 +7,7 @@ import {
 import {
   FlagService,
   FlowService,
+  RedirectService,
   TelemetryService,
   TemplatesService,
 } from '@activepieces/ui/common';
@@ -44,7 +45,8 @@ export class ImportFlowComponent implements OnInit {
     private router: Router,
     private metaService: Meta,
     private telemetryService: TelemetryService,
-    private flagService: FlagService
+    private flagService: FlagService,
+    private redirectService: RedirectService
   ) {
     this.fullLogoUrl$ = this.flagService
       .getLogos()
@@ -121,11 +123,8 @@ export class ImportFlowComponent implements OnInit {
         catchError((error) => {
           console.error(error);
           if (error.status === StatusCodes.UNAUTHORIZED) {
-            this.router.navigate(['/sign-up'], {
-              queryParams: {
-                redirect_url: `${window.location.pathname}`.split('?')[0],
-              },
-            });
+            this.redirectService.setRedirectRouteToCurrentRoute();
+            this.router.navigate(['/sign-in']);
             return EMPTY;
           }
           this.router.navigate(['not-found']);

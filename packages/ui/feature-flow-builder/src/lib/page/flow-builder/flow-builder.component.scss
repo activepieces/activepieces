@@ -1,0 +1,120 @@
+@import '../../../../../core/src/assets/scss/variables.scss';
+
+
+$drawer-min-width: 25.4375rem;
+$drawers-margin: 0.625rem;
+$drawer-max-width: 47vw;
+
+.canvas {
+  background: linear-gradient(
+        90deg,
+        $white ($dot-space - $dot-size),
+        transparent 70%
+      )
+      center,
+    linear-gradient($white ($dot-space - $dot-size), transparent 70%) center,
+    rgba($dividers, 0.7);
+  background-size: $dot-space $dot-space;
+  overflow-y: scroll;
+  overflow-x: scroll;
+}
+
+.mat-drawer-content {
+  overflow: hidden;
+}
+
+.box {
+  display: flex;
+  flex-flow: column;
+  height: 100%;
+  width: 100%;
+  max-width: 100%;
+}
+
+mat-drawer[position='end'] {
+  border-left: $drawers-margin solid $header !important;
+  min-width: $drawer-min-width;
+  max-width: $drawer-max-width;
+}
+
+mat-drawer[position='start'] {
+  border-right: $drawers-margin solid $header !important;
+  min-width: $drawer-min-width;
+  max-width: $drawer-max-width;
+}
+
+.box .header {
+  flex: 0 1 auto;
+}
+
+.box .content {
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.drawer-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.side-drawer {
+  position: relative;
+}
+
+.flow-builder-resizer-handle {
+  position: absolute;
+  background-color: transparent;
+  width: 10px;
+  height: 100%;
+
+  cursor: col-resize;
+  touch-action: none;
+  transition: background-color 200ms ease 0s;
+
+  .knob {
+    background-color: $border;
+    width: $knob-width;
+    height: $knob-height;
+    border-radius: 50px;
+  }
+  &:hover,
+  &.active {
+    .knob {
+      background-color: $body;
+    }
+  }
+  z-index: $appended-to-body-z-index;
+}
+
+.no-transition {
+  transition-duration: 0ms !important;
+}
+
+.right-side-handle {
+  left: -0.625rem;
+}
+.left-side-handle {
+  right: -0.625rem;
+}
+
+:host {
+  height: 100%;
+}
+.crosshair {
+  left: calc(50% - 7.5px);
+  top: calc(50% - 7.5px);
+  background-color: red;
+  z-index: 9999;
+  text-align: center;
+}
+
+.right-side-bar-container {
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+}
+
+.transition-ease{
+  transition: width 0.2s ease, height 0.2s ease;
+}

@@ -6,9 +6,9 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { telemetry } from '../../helper/telemetry.utils'
 import { projectService } from '../../project/project-service'
-import { plansService } from '../billing/plans/plan.service'
 import { userService } from '../../user/user-service'
 import { logger } from '../../helper/logger'
+import { plansService } from '../billing/project-plan/project-plan.service'
 
 const referralRepo = databaseConnection.getRepository(ReferralEntity)
 
@@ -73,7 +73,7 @@ async function addExtraTasks(userId: string) {
     if (referralsCount > 5) {
         return
     }
-    const ownerProject = await projectService.getUserProject(userId)
+    const ownerProject = await projectService.getUserProjectOrThrow(userId)
     const projectPlan = await plansService.getOrCreateDefaultPlan({
         projectId: ownerProject.id,
     })

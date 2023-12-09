@@ -18,4 +18,5 @@ For licensing inquiries regarding the self-hosted enterprise edition, please rea
 1. Change the Docker Image to `ghcr.io/activepieces/activepieces:latest`
 2. Set the `AP_LICENSE_KEY` environment variable to your license key.
 3. Set the `AP_EDITION` environment variable to `ee`.
+4. Set the `AP_EXECUTION_MODE` to 'SANDBOXED` and ensure that the Docker containers are privileged. In the [docker-compose file](https://github.com/activepieces/activepieces/blob/main/docker-compose.yml), they are commented out by default.
 

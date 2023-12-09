@@ -19,10 +19,10 @@ import {
   DEFAULT_PAGE_SIZE,
   LIMIT_QUERY_PARAM,
   CURSOR_QUERY_PARAM,
-  PieceMetadataService,
 } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 import { Params } from '@angular/router';
+import { PieceMetadataService } from 'ui-feature-pieces';
 
 /**
  * Data source for the LogsTable view. This class should
@@ -51,7 +51,9 @@ export class ConnectionsTableDataSource extends DataSource<any> {
   connect(): Observable<any[]> {
     return combineLatest({
       queryParams: this.queryParams$,
-      project: this.store.select(ProjectSelectors.selectProject).pipe(take(1)),
+      project: this.store
+        .select(ProjectSelectors.selectCurrentProject)
+        .pipe(take(1)),
       refresh: this.refresh$,
     }).pipe(
       tap(() => {

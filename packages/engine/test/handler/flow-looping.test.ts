@@ -1,6 +1,7 @@
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { EXECUTE_CONSTANTS, buildCodeAction, buildSimpleLoopAction } from './test-helper'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
+import { LoopStepOutput } from '@activepieces/shared'
 
 
 describe('flow with looping', () => {
@@ -22,10 +23,11 @@ describe('flow with looping', () => {
             constants: EXECUTE_CONSTANTS,
         })
 
+        const loopOut = result.steps.loop as LoopStepOutput
         expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
-        expect(result.steps.loop.output.iterations.length).toBe(3)
-        expect(result.steps.loop.output.index).toBe(3)
-        expect(result.steps.loop.output.item).toBe(6)
+        expect(loopOut.output?.iterations.length).toBe(3)
+        expect(loopOut.output?.index).toBe(3)
+        expect(loopOut.output?.item).toBe(6)
     })
 
     it('should execute iterations and fail on first iteration', async () => {
@@ -49,10 +51,11 @@ describe('flow with looping', () => {
             constants: EXECUTE_CONSTANTS,
         })
 
+        const loopOut = result.steps.loop as LoopStepOutput
         expect(result.verdict).toBe(ExecutionVerdict.FAILED)
-        expect(result.steps.loop.output.iterations.length).toBe(1)
-        expect(result.steps.loop.output.index).toBe(1)
-        expect(result.steps.loop.output.item).toBe(4)
+        expect(loopOut.output?.iterations.length).toBe(1)
+        expect(loopOut.output?.index).toBe(1)
+        expect(loopOut.output?.item).toBe(4)
     })
 
 })

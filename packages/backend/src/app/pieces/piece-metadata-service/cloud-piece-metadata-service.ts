@@ -53,7 +53,7 @@ export const CloudPieceMetadataService = (): PieceMetadataService => {
         },
 
         async stats(): Promise<AllPiecesStats> {
-            return await pieceStatsService.get()
+            return pieceStatsService.get()
         },
 
         async getExactPieceVersion({ name, version, projectId }): Promise<string> {

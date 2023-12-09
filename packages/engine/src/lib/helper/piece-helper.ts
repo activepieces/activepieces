@@ -19,9 +19,8 @@ import {
 } from '@activepieces/shared'
 import { API_URL } from '../constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
-import { variableService } from '../services/variable-service'
 import { pieceLoader } from './piece-loader'
-
+import { variableService } from '../services/variable-service'
 
 
 export const pieceHelper = {
@@ -51,7 +50,7 @@ export const pieceHelper = {
 
             if (property.type === PropertyType.DYNAMIC) {
                 const dynamicProperty = property as DynamicProperties<boolean>
-                return dynamicProperty.props(resolvedInput, ctx)
+                return await dynamicProperty.props(resolvedInput, ctx)
             }
 
             if (property.type === PropertyType.MULTI_SELECT_DROPDOWN) {
@@ -59,11 +58,11 @@ export const pieceHelper = {
                 unknown,
                 boolean
                 >
-                return multiSelectProperty.options(resolvedInput, ctx)
+                return await multiSelectProperty.options(resolvedInput, ctx)
             }
 
             const dropdownProperty = property as DropdownProperty<unknown, boolean>
-            return dropdownProperty.options(resolvedInput, ctx)
+            return await dropdownProperty.options(resolvedInput, ctx)
         }
         catch (e) {
             console.error(e)

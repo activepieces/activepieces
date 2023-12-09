@@ -2,11 +2,12 @@ import { Equal, FindOperator, IsNull, LessThan, LessThanOrEqual, MoreThanOrEqual
 import { databaseConnection } from '../../database/database-connection'
 import { PieceMetadataEntity, PieceMetadataModel, PieceMetadataModelSummary, PieceMetadataSchema } from '../piece-metadata-entity'
 import { PieceMetadataService } from './piece-metadata-service'
-import { EXACT_VERSION_PATTERN, isNil } from '@activepieces/shared'
+import { EXACT_VERSION_PATTERN, PieceType, isNil } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode, apId } from '@activepieces/shared'
 import { AllPiecesStats, pieceStatsService } from './piece-stats-service'
 import * as semver from 'semver'
 import { pieceMetadataServiceHooks as hooks } from './hooks'
+import { projectService } from '../../project/project-service'
 
 const repo = databaseConnection.getRepository(PieceMetadataEntity)
 
@@ -24,11 +25,20 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                         minimumSupportedRelease: LessThanOrEqual(release),
                         maximumSupportedRelease: MoreThanOrEqual(release),
                         projectId: Equal(projectId),
+                        pieceType: Equal(PieceType.CUSTOM),
+                    },
+                    {
+                        minimumSupportedRelease: LessThanOrEqual(release),
+                        maximumSupportedRelease: MoreThanOrEqual(release),
+                        platformId: Equal(platformId),
+                        pieceType: Equal(PieceType.CUSTOM),
                     },
                     {
                         minimumSupportedRelease: LessThanOrEqual(release),
                         maximumSupportedRelease: MoreThanOrEqual(release),
                         projectId: IsNull(),
+                        platformId: IsNull(),
+                        pieceType: Equal(PieceType.OFFICIAL),
                     },
                 ])
                 .distinctOn(['name'])
@@ -45,23 +55,14 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
         },
 
         async getOrThrow({ name, version, projectId }): Promise<PieceMetadataModel> {
-            const projectPiece: Record<string, unknown> = {
+
+            const filters = await constructPieceFilters({
                 name,
-                projectId: Equal(projectId),
-            }
-            const officialPiece: Record<string, unknown> = {
-                name,
-                projectId: IsNull(),
-            }
-            if (version) {
-                projectPiece.version = findSearchOperation(version)
-                officialPiece.version = findSearchOperation(version)
-            }
+                version,
+                projectId,
+            })
             const pieceMetadataEntity = await repo.createQueryBuilder()
-                .where([
-                    projectPiece,
-                    officialPiece,
-                ])
+                .where(filters)
                 .distinctOn(['name'])
                 .orderBy({
                     name: 'ASC',
@@ -81,13 +82,13 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
             return toPieceMetadataModel(pieceMetadataEntity)
         },
 
-        async create({ pieceMetadata, projectId, packageType, pieceType, archiveId  }): Promise<PieceMetadataSchema> {
+        async create({ pieceMetadata, projectId, platformId, packageType, pieceType, archiveId }): Promise<PieceMetadataSchema> {
             const existingMetadata = await repo.findOneBy({
                 name: pieceMetadata.name,
                 version: pieceMetadata.version,
                 projectId: projectId ?? IsNull(),
+                platformId: platformId ?? IsNull(),
             })
-
             if (!isNil(existingMetadata)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.VALIDATION,
@@ -97,12 +98,13 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                 })
             }
 
-            return await repo.save({
+            return repo.save({
                 id: apId(),
                 projectId,
                 packageType,
                 pieceType,
                 archiveId,
+                platformId,
                 ...pieceMetadata,
             })
         },
@@ -127,7 +129,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
         },
 
         async stats(): Promise<AllPiecesStats> {
-            return await pieceStatsService.get()
+            return pieceStatsService.get()
         },
 
         async getExactPieceVersion({ name, version, projectId }): Promise<string> {
@@ -146,6 +148,57 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
             return pieceMetadata.version
         },
     }
+}
+
+const constructPieceFilters = async ({ name, version, projectId }: { name: string, version: string | undefined, projectId: string | undefined }): Promise<Record<string, unknown>[]> => {
+    const officialPiecesFilter = createOfficialPiecesFilter(name)
+    const filters = [officialPiecesFilter]
+
+    if (!isNil(projectId)) {
+        const projectPieceFilter = createProjectPieceFilter(name, projectId)
+        filters.push(projectPieceFilter)
+
+        // TODO: this might be database intensive, consider caching, passing platform id from caller cause major changes
+        // Don't use GetOneOrThrow Anonymouse Token generates random string for project id
+        const project = await projectService.getOne(projectId)
+        const platformId = project?.platformId
+
+        if (platformId) {
+            const platformPieceFilter = createPlatformPieceFilter(name, platformId)
+            filters.push(platformPieceFilter)
+        }
+    }
+
+    if (version) {
+        return applyVersionFilter(filters, version)
+    }
+
+    return filters
+}
+
+const createOfficialPiecesFilter = (name: string): Record<string, unknown> => ({
+    name,
+    projectId: IsNull(),
+    pieceType: Equal(PieceType.OFFICIAL),
+})
+
+const createProjectPieceFilter = (name: string, projectId: string): Record<string, unknown> => ({
+    name,
+    projectId: Equal(projectId),
+    pieceType: Equal(PieceType.CUSTOM),
+})
+
+const createPlatformPieceFilter = (name: string, platformId: string): Record<string, unknown> => ({
+    name,
+    platformId: Equal(platformId),
+    pieceType: Equal(PieceType.CUSTOM),
+})
+
+const applyVersionFilter = (filters: Record<string, unknown>[], version: string): Record<string, unknown>[] => {
+    return filters.map(filter => ({
+        ...filter,
+        version: findSearchOperation(version),
+    }))
 }
 
 const toPieceMetadataModelSummary = (pieceMetadataEntityList: PieceMetadataSchema[]): PieceMetadataModelSummary[] => {

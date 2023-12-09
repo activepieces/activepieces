@@ -1,5 +1,5 @@
-import { AppConnection, AppConnectionType, CloudOAuth2ConnectionValue, BasicAuthConnectionValue, OAuth2ConnectionValueWithApp } from '@activepieces/shared'
 import { API_URL } from '../constants'
+import { AppConnection, AppConnectionType, CloudOAuth2ConnectionValue, BasicAuthConnectionValue, OAuth2ConnectionValueWithApp } from '@activepieces/shared'
 
 export const createConnectionService = ({ projectId, workerToken }: { projectId: string, workerToken: string }) => {
     return {

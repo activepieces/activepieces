@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProjectMemberService } from '../service/project-members.service';
-import { Observable, catchError, of, switchMap, tap } from 'rxjs';
+import { Observable, catchError, map, of, switchMap, tap } from 'rxjs';
 
 @Component({
   selector: 'app-accept-invitation',
@@ -25,21 +25,29 @@ export class AcceptInvitationComponent implements OnInit {
           token: query['token'],
         });
       }),
+      tap((value) => {
+        if (!this.invalidToken) {
+          if (!value.registered) {
+            this.redirectToSignUp();
+          } else {
+            this.router.navigate(['/sign-in']);
+          }
+        }
+      }),
+      map(() => undefined),
       catchError((e) => {
         console.error(e);
         this.invalidToken = true;
         return of(undefined);
-      }),
-      tap(() => {
-        if (!this.invalidToken) {
-          this.redirectToSignUp();
-        }
       })
     );
   }
 
   redirectToSignUp() {
     // Add any necessary logic before redirecting, if needed
-    this.router.navigate(['/sign-up']); // Replace '/signup' with the actual route to your sign-up page
+    setTimeout(() => {
+      const email = this.activatedRoute.snapshot.queryParamMap.get('email');
+      this.router.navigate(['/sign-up'], { queryParams: { email } });
+    }, 3000);
   }
 }

@@ -1,5 +1,5 @@
 import { EntitySchema } from 'typeorm'
-import { FilteredPieceBehavior, Platform } from '@activepieces/ee-shared'
+import { FilteredPieceBehavior, LocalesEnum, Platform } from '@activepieces/ee-shared'
 import { ARRAY_COLUMN_TYPE, ApIdSchema, BaseColumnSchemaPart, isPostgres } from '../../database/database-common'
 import { User } from '@activepieces/shared'
 
@@ -76,6 +76,11 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             nullable: false,
             default: true,
         },
+        embeddingEnabled: {
+            type: Boolean,
+            nullable: false,
+            default: true,
+        },
         filteredPieceNames: {
             type: ARRAY_COLUMN_TYPE,
             array: isPostgres(),
@@ -85,6 +90,11 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: String,
             enum: FilteredPieceBehavior,
             nullable: false,
+        },
+        defaultLocale: {
+            type: String,
+            enum: LocalesEnum,
+            nullable: true,
         },
     },
     indices: [

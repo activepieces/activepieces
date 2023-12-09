@@ -51,7 +51,7 @@ export class RunsTableDataSource extends DataSource<FlowRun> {
       queryParams: this.queryParams$,
       //wait till projects are loaded
       project: this.store
-        .select(ProjectSelectors.selectProject)
+        .select(ProjectSelectors.selectCurrentProject)
         .pipe(filter((project) => !!project))
         .pipe(take(1)),
     }).pipe(

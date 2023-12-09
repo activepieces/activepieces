@@ -83,7 +83,7 @@ async function executePiece({ step, projectId, flowVersion, userId }: ExecutePar
         stepName: step.name,
     })
 
-    const { result, standardError, standardOutput } = await engineHelper.executeAction( {
+    const { result, standardError, standardOutput } = await engineHelper.executeAction({
         action: step,
         input,
         flowVersion,
@@ -158,53 +158,50 @@ const executeBranch = async ({ step, flowVersion, projectId }: ExecuteParams<Bra
     }
     const sandbox = await sandboxProvisioner.provision({
         type: SandBoxCacheType.NONE,
+        projectId,
     })
 
-    try {
-        const { status, result, standardError, standardOutput } = await engineHelper.executeTest(sandbox, {
-            executionType: ExecutionType.BEGIN,
-            flowRunId: apId(),
-            flowVersion: testFlowVersion,
-            projectId,
-            triggerPayload: {
-                duration: 0,
-                input: {},
-                output: flowVersion.trigger.settings?.inputUiInfo?.currentSelectedData,
-                status: StepOutputStatus.SUCCEEDED,
-            },
-            sourceFlowVersion: flowVersion,
-        })
+    const { status, result, standardError, standardOutput } = await engineHelper.executeTest(sandbox, {
+        executionType: ExecutionType.BEGIN,
+        flowRunId: apId(),
+        flowVersion: testFlowVersion,
+        projectId,
+        triggerPayload: {
+            duration: 0,
+            input: {},
+            output: flowVersion.trigger.settings?.inputUiInfo?.currentSelectedData,
+            status: StepOutputStatus.SUCCEEDED,
+        },
+        sourceFlowVersion: flowVersion,
+    })
 
-        if (status !== EngineResponseStatus.OK || result.status !== ExecutionOutputStatus.SUCCEEDED) {
-            return {
-                success: false,
-                output: null,
-                standardError,
-                standardOutput,
-            }
-        }
-        
-        // TODO FIX
-        const branchStepOutput = result.executionState.steps[branchStep.name]
-
-        if (isNil(branchStepOutput)) {
-            return {
-                success: false,
-                output: null,
-                standardError,
-                standardOutput,
-            }
-        }
-
+    if (status !== EngineResponseStatus.OK || result.status !== ExecutionOutputStatus.SUCCEEDED) {
         return {
-            success: true,
-            output: branchStepOutput.output,
+            success: false,
+            output: null,
             standardError,
             standardOutput,
         }
     }
-    finally {
-        await sandboxProvisioner.release({ sandbox })
+
+    // TODO FIX
+    const branchStepOutput = result.executionState.steps[branchStep.name]
+
+    if (isNil(branchStepOutput)) {
+        return {
+            success: false,
+            output: null,
+            standardError,
+            standardOutput,
+        }
+    }
+
+
+    return {
+        success: true,
+        output: branchStepOutput.output,
+        standardError,
+        standardOutput,
     }
 }
 

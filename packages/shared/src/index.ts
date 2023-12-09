@@ -24,7 +24,7 @@ export { ExecuteCodeRequest } from './lib/code/dto/code-request'
 export { AuthenticationResponse } from './lib/authentication/dto/authentication-response'
 export { SignUpRequest } from './lib/authentication/dto/sign-up-request'
 export { SignInRequest } from './lib/authentication/dto/sign-in-request'
-export { PrincipalType } from './lib/authentication/model/principal-type'
+export * from './lib/authentication/model/principal-type'
 export { Principal } from './lib/authentication/model/principal'
 export {
     CodeAction, PieceAction, LoopOnItemsAction,
@@ -42,7 +42,7 @@ export { FlowRun, FlowRunId, RunEnvironment, RunTerminationReason } from './lib/
 export { Project, ProjectId, ProjectType } from './lib/project/project'
 export * from './lib/flows/dto/create-flow-request'
 export { SeekPage, Cursor } from './lib/common/seek-page'
-export { apId, ApId } from './lib/common/id-generator'
+export { apId, ApId, secureApId } from './lib/common/id-generator'
 export * from './lib/flows/trigger-events/trigger-events-dto'
 export * from './lib/flows/trigger-events/trigger-event'
 export * from './lib/flows/sample-data'
@@ -55,7 +55,6 @@ export * from './lib/flows'
 export * from './lib/flows/dto/list-flows-request'
 export * from './lib/chatbot'
 export * from './lib/project/project'
-
 import { TypeSystem } from '@sinclair/typebox/system'
 // Look at https://github.com/sinclairzx81/typebox/issues/350
 TypeSystem.ExactOptionalPropertyTypes = false

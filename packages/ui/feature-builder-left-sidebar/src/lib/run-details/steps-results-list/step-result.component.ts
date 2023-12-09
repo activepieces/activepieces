@@ -72,7 +72,7 @@ export class StepResultComponent implements OnInit, AfterViewInit {
       BuilderSelectors.selectStepLogoUrl(this.stepResult.stepName)
     );
     const stepOutput = this.stepResult.output?.output as any;
-    if (stepOutput.iterations !== undefined) {
+    if (stepOutput?.iterations !== undefined) {
       this.isLoopStep = true;
       const loopOutput = this.stepResult.output as LoopStepOutput;
       loopOutput.output?.iterations.forEach((iteration) => {

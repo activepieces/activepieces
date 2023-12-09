@@ -1,92 +1,99 @@
-import { createTrigger, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createTrigger, PiecePropValueSchema } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from "@activepieces/pieces-framework";
 import { googleCalendarCommon } from '../common';
-import { getLatestEvent, stopWatchEvent, watchEvent } from '../common/helper';
-import { GoogleWatchResponse } from '../common/types';
+import { getEvents } from '../common/helper';
+import { GoogleCalendarEvent } from '../common/types';
 import { googleCalendarAuth } from '../../';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+
+const polling: Polling<PiecePropValueSchema<typeof googleCalendarAuth>, { calendarId?: string }> = {
+    strategy: DedupeStrategy.TIMEBASED,
+    items: async ({ auth, propsValue: { calendarId }, lastFetchEpochMS }) => {
+        let minUpdated = new Date(lastFetchEpochMS);
+        // Google Calendar API breaks if minUpdated is too far in the past
+        if (lastFetchEpochMS === 0) {
+            const now = new Date();
+            const yesterday = new Date();
+            yesterday.setDate(now.getDate() - 7);
+
+            minUpdated = yesterday;
+        }
+
+        const currentValues: GoogleCalendarEvent[] = await getEvents(calendarId!, auth, minUpdated) ?? [];
+        const items = currentValues.map((item) => ({
+            epochMilliSeconds: (new Date(item.updated)).getTime(),
+            data: item,
+        }));
+        return items;
+    }
+};
 
 export const calendarEventChanged = createTrigger({
-  // docs: https://developers.google.com/calendar/api/guides/push
-  auth: googleCalendarAuth,
+    // docs: https://developers.google.com/calendar/api/guides/push
+    auth: googleCalendarAuth,
     name: 'new_or_updated_event',
-    displayName: 'New Or updated Event',
-    description: 'Triggers when there is an event added or updated',
+    displayName: 'New or Updated Event',
+    description: 'Triggers when an event is added or updated',
     props: {
-      calendar_id: googleCalendarCommon.calendarDropdown(),
+        calendar_id: googleCalendarCommon.calendarDropdown(),
     },
     sampleData: {
-      kind: 'calendar#event',
-      etag: "3350849506974000",
-      id: "0nsfi5ttd2b17ac76ma2f37oi9",
-      htmlLink: 'https://www.google.com/calendar/event?eid=kgjb90uioj4klrgfmdsnjsjvlgkm',
-      summary: 'ap-event-test',
-      created: "2023-02-03T11:36:36.000Z",
-      updated: "2023-02-03T11:45:53.487Z",
-      description: 'Sample description',
-      status: 'canceled',
-      creator: {
-        email: 'test@test.com',
-        self: true
-      },
-      organizer: {
-        email: 'test@test.com',
-        self: true
-      },
-      start: {
-        dateTime: '2023-02-02T22:30:00+03:00',
-        timeZone: 'Asia/Amman',
-      },
-      end: {
-        dateTime: '2023-02-02T23:30:00+03:00',
-        timeZone: 'Asia/Amman',
-      },
-      transparency: 'transparent',
-      iCalUID: "0nsfi5ttd2b17ac76ma2f37oi9@google.com",
-      sequence: 1,
-      attendees: [
-        {
-          email: 'attende@test.com',
-          responseStatus: 'needsAction'
+        kind: 'calendar#event',
+        etag: "3350849506974000",
+        id: "0nsfi5ttd2b17ac76ma2f37oi9",
+        htmlLink: 'https://www.google.com/calendar/event?eid=kgjb90uioj4klrgfmdsnjsjvlgkm',
+        summary: 'ap-event-test',
+        created: "2023-02-03T11:36:36.000Z",
+        updated: "2023-02-03T11:45:53.487Z",
+        description: 'Sample description',
+        status: 'canceled',
+        creator: {
+            email: 'test@test.com',
+            self: true
         },
-        {
-          email: 'test@test.com',
-          organizer: true,
-          self: true,
-          responseStatus: 'accepted'
+        organizer: {
+            email: 'test@test.com',
+            self: true
         },
-      ],
-      reminders: {
-        useDefault: true
-      },
-      eventType: 'default',
+        start: {
+            dateTime: '2023-02-02T22:30:00+03:00',
+            timeZone: 'Asia/Amman',
+        },
+        end: {
+            dateTime: '2023-02-02T23:30:00+03:00',
+            timeZone: 'Asia/Amman',
+        },
+        transparency: 'transparent',
+        iCalUID: "0nsfi5ttd2b17ac76ma2f37oi9@google.com",
+        sequence: 1,
+        attendees: [
+            {
+                email: 'attende@test.com',
+                responseStatus: 'needsAction'
+            },
+            {
+                email: 'test@test.com',
+                organizer: true,
+                self: true,
+                responseStatus: 'accepted'
+            },
+        ],
+        reminders: {
+            useDefault: true
+        },
+        eventType: 'default',
     },
-    type: TriggerStrategy.WEBHOOK,
-    async onEnable(context) {
-      const authProp = context.auth as OAuth2PropertyValue;
-
-      const currentChannel = await context.store?.get<GoogleWatchResponse>('_trigger');
-      if (currentChannel?.id) {
-        await stopWatchEvent(currentChannel, authProp); // to avoid creating multiple watchers
-      }
-      const calendarId = context.propsValue['calendar_id']!;
-
-      const channel = await watchEvent(calendarId, context.webhookUrl!, authProp);
-
-      await context.store?.put<GoogleWatchResponse>('_trigger', channel);
+    type: TriggerStrategy.POLLING,
+    async test({ store, auth, propsValue }) {
+        return await pollingHelper.test(polling, { store, auth, propsValue: { calendarId: propsValue.calendar_id } });
     },
-    async onDisable(context) {
-      const authProp = context.auth as OAuth2PropertyValue;
-
-      const googleChannel = await context.store?.get<GoogleWatchResponse>('_trigger');
-      if (googleChannel?.id) await stopWatchEvent(googleChannel, authProp);
-      await context.store?.put<GoogleWatchResponse | object>('_trigger', {});
+    async onEnable({ store, auth, propsValue }) {
+        await pollingHelper.onEnable(polling, { store, auth, propsValue: { calendarId: propsValue.calendar_id } });
     },
-    async run(context) {
-      const authProp = context.auth as OAuth2PropertyValue;
-      const event = await getLatestEvent(
-        context.propsValue['calendar_id']!,
-        authProp,
-      );
-      return [event];
+    async onDisable({ store, auth, propsValue }) {
+        await pollingHelper.onDisable(polling, { store, auth, propsValue: { calendarId: propsValue.calendar_id } });
+    },
+    async run({ store, auth, propsValue }) {
+        return await pollingHelper.poll(polling, { store, auth, propsValue: { calendarId: propsValue.calendar_id } });
     },
 });

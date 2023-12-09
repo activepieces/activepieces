@@ -104,41 +104,46 @@ const execute = async <Result extends EngineHelperResult>(
     sandbox: Sandbox,
     input: EngineOperation,
 ): Promise<EngineHelperResponse<Result>> => {
-    logger.debug({ operation, sandboxId: sandbox.boxId }, '[EngineHelper#execute]')
+    try {
+        logger.debug({ operation, sandboxId: sandbox.boxId }, '[EngineHelper#execute]')
 
-    const sandboxPath = sandbox.getSandboxFolderPath()
+        const sandboxPath = sandbox.getSandboxFolderPath()
 
 
-    await fs.writeFile(`${sandboxPath}/input.json`, JSON.stringify(input))
-    const sandboxResponse = await sandbox.runOperation(operation)
+        await fs.writeFile(`${sandboxPath}/input.json`, JSON.stringify(input))
+        const sandboxResponse = await sandbox.runOperation(operation)
 
-    sandboxResponse.standardOutput.split('\n').forEach((f) => {
-        if (f.trim().length > 0) logger.debug({}, chalk.yellow(f))
-    })
-
-    sandboxResponse.standardError.split('\n').forEach((f) => {
-        if (f.trim().length > 0) logger.debug({}, chalk.red(f))
-    })
-
-    if (sandboxResponse.verdict === EngineResponseStatus.TIMEOUT) {
-        throw new ActivepiecesError({
-            code: ErrorCode.EXECUTION_TIMEOUT,
-            params: {},
+        sandboxResponse.standardOutput.split('\n').forEach((f) => {
+            if (f.trim().length > 0) logger.debug({}, chalk.yellow(f))
         })
+
+        sandboxResponse.standardError.split('\n').forEach((f) => {
+            if (f.trim().length > 0) logger.debug({}, chalk.red(f))
+        })
+
+        if (sandboxResponse.verdict === EngineResponseStatus.TIMEOUT) {
+            throw new ActivepiecesError({
+                code: ErrorCode.EXECUTION_TIMEOUT,
+                params: {},
+            })
+        }
+
+        const result = tryParseJson(sandboxResponse.output) as Result
+
+        const response = {
+            status: sandboxResponse.verdict,
+            result,
+            standardError: sandboxResponse.standardError,
+            standardOutput: sandboxResponse.standardOutput,
+        }
+
+        logger.trace(response, '[EngineHelper#response] response')
+
+        return response
     }
-
-    const result = tryParseJson(sandboxResponse.output) as Result
-
-    const response = {
-        status: sandboxResponse.verdict,
-        result,
-        standardError: sandboxResponse.standardError,
-        standardOutput: sandboxResponse.standardOutput,
+    finally {
+        await sandboxProvisioner.release({ sandbox })
     }
-
-    logger.trace(response, '[EngineHelper#response] response')
-
-    return response
 }
 
 export const engineHelper = {
@@ -183,6 +188,7 @@ export const engineHelper = {
         const sandbox = await sandboxProvisioner.provision({
             type: SandBoxCacheType.PIECE,
             pieceName,
+            projectId: operation.projectId,
             pieceVersion: exactPieceVersion,
             pieces: [
                 {
@@ -190,34 +196,28 @@ export const engineHelper = {
                     pieceType,
                     pieceName,
                     pieceVersion: exactPieceVersion,
-                    projectId: operation.projectId,
                 },
             ],
         })
 
-        try {
-
-
-            return await execute(
-                EngineOperationType.EXECUTE_TRIGGER_HOOK,
-                sandbox,
-                {
-                    ...operation,
-                    pieceVersion: exactPieceVersion,
-                    flowVersion: lockedFlowVersion,
-                    edition: getEdition(),
-                    appWebhookUrl: await appEventRoutingService.getAppWebhookUrl({
-                        appName: pieceName,
-                    }),
-                    webhookSecret: await getWebhookSecret(operation.flowVersion),
-                    serverUrl: await getServerUrl(),
-                    workerToken: await generateWorkerToken({ projectId: operation.projectId }),
-                },
-            )
+        const input = {
+            ...operation,
+            pieceVersion: exactPieceVersion,
+            flowVersion: lockedFlowVersion,
+            edition: getEdition(),
+            appWebhookUrl: await appEventRoutingService.getAppWebhookUrl({
+                appName: pieceName,
+            }),
+            serverUrl: await getServerUrl(),
+            webhookSecret: await getWebhookSecret(operation.flowVersion),
+            workerToken: await generateWorkerToken({ projectId: operation.projectId }),
         }
-        finally {
-            await sandboxProvisioner.release({ sandbox })
-        }
+
+        return execute(
+            EngineOperationType.EXECUTE_TRIGGER_HOOK,
+            sandbox,
+            input,
+        )
     },
 
     async executeProp(
@@ -234,30 +234,28 @@ export const engineHelper = {
         piece.pieceVersion = await pieceMetadataService.getExactPieceVersion({
             name: piece.pieceName,
             version: piece.pieceVersion,
-            projectId: piece.projectId,
+            projectId: operation.projectId,
         })
 
         const sandbox = await sandboxProvisioner.provision({
             type: SandBoxCacheType.PIECE,
             pieceName: piece.pieceName,
+            projectId: operation.projectId,
             pieceVersion: piece.pieceVersion,
             pieces: [piece],
         })
 
-        try {
-            return await execute(
-                EngineOperationType.EXECUTE_PROPERTY,
-                sandbox,
-                {
-                    ...operation,
-                    workerToken: await generateWorkerToken({ projectId: operation.projectId }),
-                    serverUrl: await getServerUrl(),
-                },
-            )
+        const input = {
+            ...operation,
+            serverUrl: await getServerUrl(),
+            workerToken: await generateWorkerToken({ projectId: operation.projectId }),
         }
-        finally {
-            await sandboxProvisioner.release({ sandbox })
-        }
+
+        return execute(
+            EngineOperationType.EXECUTE_PROPERTY,
+            sandbox,
+            input,
+        )
     },
 
     async executeCode(
@@ -270,6 +268,7 @@ export const engineHelper = {
 
         const sandbox = await sandboxProvisioner.provision({
             type: SandBoxCacheType.CODE,
+            projectId: operation.projectId,
             sourceCodeHash: hashObject(operation.step.settings.sourceCode),
             codeSteps: [
                 {
@@ -279,16 +278,13 @@ export const engineHelper = {
             ],
         })
 
-        try {
-            return execute(EngineOperationType.EXECUTE_CODE, sandbox, {
-                ...operation,
-                serverUrl: await getServerUrl(),
-                workerToken: await generateWorkerToken({ projectId: operation.projectId }),
-            })
+        const input = {
+            ...operation,
+            serverUrl: await getServerUrl(),
+            workerToken: await generateWorkerToken({ projectId: operation.projectId }),
         }
-        finally {
-            await sandboxProvisioner.release({ sandbox })
-        }
+
+        return execute(EngineOperationType.EXECUTE_CODE, sandbox, input)
     },
 
     async extractPieceMetadata(
@@ -303,19 +299,15 @@ export const engineHelper = {
             type: SandBoxCacheType.PIECE,
             pieceName,
             pieceVersion,
+            projectId: operation.projectId,
             pieces: [piece],
         })
 
-        try {
-            return await execute(
-                EngineOperationType.EXTRACT_PIECE_METADATA,
-                sandbox,
-                operation,
-            )
-        }
-        finally {
-            await sandboxProvisioner.release({ sandbox })
-        }
+        return execute(
+            EngineOperationType.EXTRACT_PIECE_METADATA,
+            sandbox,
+            operation,
+        )
     },
 
     async executeAction(operation: Omit<ExecuteActionOperation, EngineConstants>): Promise<EngineHelperResponse<EngineHelperActionResult>> {
@@ -335,7 +327,7 @@ export const engineHelper = {
         piece.pieceVersion = await pieceMetadataService.getExactPieceVersion({
             name: piece.pieceName,
             version: piece.pieceVersion,
-            projectId: piece.projectId,
+            projectId: operation.projectId,
         })
         operation.action.settings.pieceVersion = piece.pieceVersion
 
@@ -344,20 +336,16 @@ export const engineHelper = {
             pieceName: piece.pieceName,
             pieceVersion: piece.pieceVersion,
             pieces: [piece],
+            projectId: operation.projectId,
         })
 
-        try {
-            return await execute(EngineOperationType.EXECUTE_ACTION, sandbox, {
-                ...operation,
-                workerToken: await generateWorkerToken({ projectId: operation.projectId }),
-                serverUrl: await getServerUrl(),
-            })
+        const input = {
+            ...operation,
+            serverUrl: await getServerUrl(),
+            workerToken: await generateWorkerToken({ projectId: operation.projectId }),
         }
-        finally {
-            await sandboxProvisioner.release({
-                sandbox,
-            })
-        }
+
+        return execute(EngineOperationType.EXECUTE_ACTION, sandbox, input)
     },
 
     async executeValidateAuth(
@@ -378,22 +366,20 @@ export const engineHelper = {
             pieceName: piece.pieceName,
             pieceVersion: piece.pieceVersion,
             pieces: [piece],
+            projectId: operation.projectId,
         })
 
-        try {
-            return await execute(
-                EngineOperationType.EXECUTE_VALIDATE_AUTH,
-                sandbox,
-                {
-                    ...operation,
-                    workerToken: await generateWorkerToken({ projectId: operation.projectId }),
-                    serverUrl: await getServerUrl(),
-                },
-            )
+        const input = {
+            ...operation,
+            serverUrl: await getServerUrl(),
+            workerToken: await generateWorkerToken({ projectId: operation.projectId }),
         }
-        finally {
-            await sandboxProvisioner.release({ sandbox })
-        }
+
+        return execute(
+            EngineOperationType.EXECUTE_VALIDATE_AUTH,
+            sandbox,
+            input,
+        )
     },
 
     async executeTest(sandbox: Sandbox, operation: Omit<EngineTestOperation, EngineConstants>): Promise<EngineHelperResponse<EngineHelperFlowResult>> {
@@ -404,7 +390,7 @@ export const engineHelper = {
             executionType: operation.executionType,
         }, '[EngineHelper#executeTest]')
 
-        return await execute(EngineOperationType.EXECUTE_TEST_FLOW, sandbox, {
+        return execute(EngineOperationType.EXECUTE_TEST_FLOW, sandbox, {
             ...operation,
             serverUrl: await getServerUrl(),
             workerToken: await generateWorkerToken({ projectId: operation.projectId }),

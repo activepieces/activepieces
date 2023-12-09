@@ -13,7 +13,7 @@ import { catchError, map, Observable, of, take, tap } from 'rxjs';
 import {
   AppConnectionType,
   AppConnectionWithoutSensitiveData,
-  OAuth2AppConnection,
+  OAuth2GrantType,
   UpsertOAuth2Request,
 } from '@activepieces/shared';
 import {
@@ -48,8 +48,8 @@ export const USE_CLOUD_CREDENTIALS = 'USE_CLOUD_CREDENTIALS';
 export interface OAuth2ConnectionDialogData {
   pieceAuthProperty: OAuth2Property<boolean, OAuth2Props>;
   pieceName: string;
-  connectionToUpdate?: OAuth2AppConnection;
-  serverUrl: string;
+  connectionToUpdate?: AppConnectionWithoutSensitiveData;
+  redirectUrl: string;
 }
 
 @Component({
@@ -61,6 +61,7 @@ export interface OAuth2ConnectionDialogData {
 export class OAuth2ConnectionDialogComponent implements OnInit {
   PropertyType = PropertyType;
   readonly FAKE_CODE = 'FAKE_CODE';
+  readonly OAuth2GrantType = OAuth2GrantType;
   settingsForm: FormGroup<OAuth2PropertySettings>;
   loading = false;
   submitted = false;
@@ -97,15 +98,10 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
       );
     const propsControls = this.createPropsFormGroup();
     this.settingsForm = this.fb.group({
-      redirect_url: new FormControl(
-        this.dialogData.serverUrl
-          ? `${this.dialogData.serverUrl}/redirect`
-          : '',
-        {
-          nonNullable: true,
-          validators: [Validators.required],
-        }
-      ),
+      redirect_url: new FormControl(this.dialogData.redirectUrl, {
+        nonNullable: true,
+        validators: [Validators.required],
+      }),
       client_secret: new FormControl('', {
         nonNullable: true,
         validators: [Validators.required],
@@ -151,25 +147,7 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
       this.settingsForm.controls.name.setValue(
         this.dialogData.connectionToUpdate.name
       );
-      this.settingsForm.controls.client_id.setValue(
-        this.dialogData.connectionToUpdate.value.client_id
-      );
-      this.settingsForm.controls.client_secret.setValue(
-        this.dialogData.connectionToUpdate.value.client_secret
-      );
-      this.settingsForm.controls.redirect_url.setValue(
-        this.dialogData.connectionToUpdate.value.redirect_url
-      );
       this.settingsForm.controls.name.disable();
-      this.settingsForm.controls.redirect_url.disable();
-      this.settingsForm.controls.client_id.disable();
-      this.settingsForm.controls.client_secret.disable();
-      this.dialogData.connectionToUpdate.value.props
-        ? this.settingsForm.controls.props.setValue(
-            this.dialogData.connectionToUpdate.value.props
-          )
-        : null;
-      this.settingsForm.controls.props.disable();
       this.settingsForm.controls.value.setValue({ code: this.FAKE_CODE });
     }
   }
@@ -194,6 +172,9 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
         code: this.settingsForm.controls.value.value.code,
         code_challenge: this.settingsForm.controls.value.value.code_challenge,
         type: AppConnectionType.OAUTH2,
+        grant_type:
+          this.dialogData.pieceAuthProperty.grantType ??
+          OAuth2GrantType.AUTHORIZATION_CODE,
         authorization_method:
           this.dialogData.pieceAuthProperty.authorizationMethod,
         client_id: this.settingsForm.controls.client_id.value,

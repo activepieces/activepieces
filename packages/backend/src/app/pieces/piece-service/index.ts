@@ -6,6 +6,7 @@ import {
     PiecePackage,
     PieceType,
     ProjectId,
+    isNil,
 } from '@activepieces/shared'
 import { engineHelper } from '../../helper/engine-helper'
 import { pieceMetadataService } from '../piece-metadata-service'
@@ -14,10 +15,13 @@ import { logger } from '../../helper/logger'
 import { pieceServiceHooks } from './piece-service-hooks'
 
 export const pieceService = {
-    async add(params: AddPieceParams): Promise<PieceMetadataModel> {
+    async installPiece(params: AddPieceParams): Promise<PieceMetadataModel> {
         try {
             const piecePackage = await getPiecePackage(params)
-            const engineResponse = await engineHelper.extractPieceMetadata(piecePackage)
+            const engineResponse = await engineHelper.extractPieceMetadata({
+                ...piecePackage,
+                projectId: params.projectId,
+            })
 
             if (engineResponse.status !== EngineResponseStatus.OK) {
                 throw new Error(engineResponse.standardError)
@@ -31,8 +35,9 @@ export const pieceService = {
                     name: params.pieceName,
                     version: params.pieceVersion,
                 },
-                projectId: params.projectId,
+                projectId: isNil(params.platformId) ? params.projectId : undefined,
                 packageType: params.packageType,
+                platformId: params.platformId,
                 pieceType: PieceType.CUSTOM,
                 archiveId: piecePackage.archiveId,
             })
@@ -56,7 +61,7 @@ export const pieceService = {
 const getPiecePackage = async (params: AddPieceParams): Promise<PiecePackage> => {
     switch (params.packageType) {
         case PackageType.ARCHIVE: {
-            return await pieceServiceHooks.get().getPieceArchivePackage(params)
+            return pieceServiceHooks.get().getPieceArchivePackage(params)
         }
 
         case PackageType.REGISTRY: {
@@ -73,6 +78,7 @@ type BaseAddPieceParams<PT extends PackageType> = {
     pieceName: string
     pieceVersion: string
     projectId: ProjectId
+    platformId?: string
 }
 
 type AddRegistryPieceParams = BaseAddPieceParams<PackageType.REGISTRY>

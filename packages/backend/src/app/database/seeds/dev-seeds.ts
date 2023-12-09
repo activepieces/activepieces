@@ -8,7 +8,10 @@ import { userService } from '../../user/user-service'
 const seedDevUser = async (): Promise<void> => {
     const devEmail = 'dev@ap.com'
     const devPassword = '12345678'
-    const devUser = await userService.getOneByEmail({ email: devEmail })
+    const devUser = await userService.getByPlatformAndEmail({
+        platformId: null,
+        email: devEmail,
+    })
 
     if (!devUser) {
         await authenticationService.signUp({
@@ -19,13 +22,14 @@ const seedDevUser = async (): Promise<void> => {
             trackEvents: false,
             newsLetter: false,
             status: UserStatus.VERIFIED,
+            platformId: null,
         })
     }
 
     logger.info(`[seedDevUser] email=${devEmail} pass=${devPassword}`)
 }
 
-export const seedDevData = async () => {
+export const seedDevData = async (): Promise<void> => {
 
     const env = system.get(SystemProp.ENVIRONMENT)
 

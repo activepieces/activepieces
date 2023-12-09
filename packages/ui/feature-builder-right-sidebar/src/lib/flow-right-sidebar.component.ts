@@ -15,20 +15,19 @@ import { ActionType, ApFlagId, TriggerType } from '@activepieces/shared';
 import {
   BuilderSelectors,
   CollectionBuilderService,
-  FlowItem,
+  Step,
   RightSideBarType,
   ViewModeEnum,
 } from '@activepieces/ui/feature-builder-store';
 import { forkJoin } from 'rxjs';
 import {
   TestStepService,
-  PieceMetadataService,
   isOverflown,
-  CORE_SCHEDULE,
   FlagService,
 } from '@activepieces/ui/common';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/common';
+import { CORE_SCHEDULE, PieceMetadataService } from 'ui-feature-pieces';
 
 @Component({
   selector: 'app-flow-right-sidebar',
@@ -43,7 +42,7 @@ export class FlowRightSidebarComponent implements OnInit {
   testFormControl: FormControl<string> = new FormControl('', {
     nonNullable: true,
   });
-  currentStep$: Observable<FlowItem | null | undefined>;
+  currentStep$: Observable<Step | null | undefined>;
   editStepSectionRect: DOMRect;
   @ViewChild('editStepSection', { read: ElementRef })
   editStepSection: ElementRef;

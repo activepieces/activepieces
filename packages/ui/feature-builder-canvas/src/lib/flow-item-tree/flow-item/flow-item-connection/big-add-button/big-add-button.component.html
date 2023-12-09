@@ -1,8 +1,0 @@
-<div class="big-add-button ap-flex ap-items-center ap-justify-center ap-absolute ap-cursor-pointer" tabindex="1"
-    (click)="setSelectedAddBtnId()"
-    [class.big-add-button-drop-indicator]="showDropZoneIndicator || (selectedAddBtnId$ | async) === addButtonId"
-    (focus)="showBoxShadow = true" (blur)="showBoxShadow = false" [class.box-shadow]="showBoxShadow" [style.top]="top"
-    [style.left]="left">
-    <svg-icon *ngIf="!showDropZoneIndicator" src="./assets/img/custom/plus.svg" class="add-icon"
-        [applyClass]="true"></svg-icon>
-</div>

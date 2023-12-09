@@ -82,8 +82,8 @@ export interface GoogleCalendarEvent {
   id: string;
   status: string;
   htmlLink: string;
-  created: Date;
-  updated: Date;
+  created: string;
+  updated: string;
   summary: string;
   description: string;
   location: string;

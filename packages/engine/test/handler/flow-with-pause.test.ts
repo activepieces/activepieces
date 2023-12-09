@@ -1,4 +1,4 @@
-import { BranchOperator, ExecutionOutputStatus, ExecutionType } from '@activepieces/shared'
+import { BranchOperator, ExecutionOutputStatus, ExecutionType, LoopStepOutput } from '@activepieces/shared'
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { EXECUTE_CONSTANTS, buildActionWithOneCondition, buildCodeAction, buildPieceAction, buildSimpleLoopAction } from './test-helper'
@@ -60,7 +60,8 @@ describe('flow with pause', () => {
         })
         expect(resumeResult.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(Object.keys(resumeResult.steps)).toEqual(['loop'])
-        expect(Object.keys(resumeResult.steps.loop.output.iterations[0])).toEqual(['branch', 'approval', 'echo_step'])
+        const loopOut = resumeResult.steps.loop as LoopStepOutput
+        expect(Object.keys(loopOut.output?.iterations[0] ?? {})).toEqual(['branch', 'approval', 'echo_step'])
     })
 
     it('should pause and resume successfully', async () => {

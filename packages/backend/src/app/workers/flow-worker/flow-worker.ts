@@ -55,7 +55,7 @@ type LoadInputAndLogFileIdResponse = {
     logFileId?: FileId | undefined
 }
 
-const extractFlowPieces = async ({ flowVersion, projectId }: ExtractFlowPiecesParams): Promise<PiecePackage[]> => {
+const extractFlowPieces = async ({ flowVersion }: ExtractFlowPiecesParams): Promise<PiecePackage[]> => {
     const pieces: PiecePackage[] = []
     const steps = flowHelper.getAllSteps(flowVersion.trigger)
 
@@ -67,7 +67,6 @@ const extractFlowPieces = async ({ flowVersion, projectId }: ExtractFlowPiecesPa
                 pieceType,
                 pieceName,
                 pieceVersion,
-                projectId,
             })
         }
     }
@@ -257,9 +256,6 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             throwErrorToRetry(e as Error, jobData.runId)
         }
     }
-    finally {
-        await sandboxProvisioner.release({ sandbox })
-    }
 }
 
 function throwErrorToRetry(error: Error, runId: string): void {
@@ -308,15 +304,17 @@ const getSandbox = async ({ projectId, flowVersion, runEnvironment }: GetSandbox
     const codeSteps = getCodeSteps(flowVersion)
     switch (runEnvironment) {
         case RunEnvironment.PRODUCTION:
-            return await sandboxProvisioner.provision({
+            return sandboxProvisioner.provision({
+                projectId,
                 type: SandBoxCacheType.FLOW,
                 flowVersionId: flowVersion.id,
                 pieces,
                 codeSteps,
             })
         case RunEnvironment.TESTING:
-            return await sandboxProvisioner.provision({
+            return sandboxProvisioner.provision({
                 type: SandBoxCacheType.NONE,
+                projectId,
                 pieces,
                 codeSteps,
             })

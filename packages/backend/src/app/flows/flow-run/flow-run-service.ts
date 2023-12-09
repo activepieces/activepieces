@@ -38,7 +38,7 @@ const getFlowRunOrCreate = async (params: GetOrCreateParams): Promise<Partial<Fl
     const { id, projectId, flowId, flowVersionId, flowDisplayName, environment } = params
 
     if (id) {
-        return await flowRunService.getOneOrThrow({
+        return flowRunService.getOneOrThrow({
             id,
             projectId,
         })
@@ -207,7 +207,7 @@ export const flowRunService = {
     },
 
     async getOne({ projectId, id }: GetOneParams): Promise<FlowRun | null> {
-        return await flowRunRepo.findOneBy({
+        return flowRunRepo.findOneBy({
             projectId,
             id,
         })
@@ -228,17 +228,21 @@ export const flowRunService = {
         return flowRun
     },
 
-    async getAllProdRuns(params: GetAllProdRuns): Promise<FlowRun[]> {
-        const { projectId, finishTime } = params
-
-        const query = {
-            projectId,
-            environment: RunEnvironment.PRODUCTION,
-            finishTime: MoreThanOrEqual(finishTime),
-        }
-
-        return await flowRunRepo.findBy(query)
+    async getAllProdRuns(params: GetAllProdRuns): Promise<number> {
+        const { projectId, created } = params
+    
+        const sumOfTasks = await flowRunRepo.createQueryBuilder('flow_run')
+            .select('COALESCE(SUM(flow_run.tasks), 0)', 'tasks')
+            .where({
+                projectId,
+                environment: RunEnvironment.PRODUCTION,
+                created: MoreThanOrEqual(created),
+            })
+            .getRawOne()
+    
+        return Number(sumOfTasks.tasks)
     },
+    
 }
 
 type GetOrCreateParams = {
@@ -286,5 +290,5 @@ type PauseParams = {
 
 type GetAllProdRuns = {
     projectId: ProjectId
-    finishTime: string
+    created: string
 }
