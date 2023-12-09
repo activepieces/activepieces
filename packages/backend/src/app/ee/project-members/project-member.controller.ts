@@ -85,6 +85,7 @@ const ListProjectMembersRequestQueryOptions = {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
     },
     schema: {
+        tags: ['project-members'],
         querystring: ListProjectMembersRequestQuery,
     },
 }
