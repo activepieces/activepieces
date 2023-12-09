@@ -1,6 +1,6 @@
-import { FastifyPluginCallbackTypebox } from '@fastify/type-provider-typebox'
-import { CreateWebhookSimulationRequest, DeleteWebhookSimulationRequest, GetWebhookSimulationRequest } from './webhook-simulation-dto'
+import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
 import { webhookSimulationService } from './webhook-simulation-service'
+import { ALL_PRINICPAL_TYPES } from '@activepieces/shared'
 
 export const webhookSimulationController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
     app.post('/', CreateWebhookSimulationRequest, async (req) => {
@@ -35,3 +35,27 @@ export const webhookSimulationController: FastifyPluginCallbackTypebox = (app, _
 
     done()
 }
+
+const CreateWebhookSimulationRequest = {
+    config: {
+        allowedPrincipals: ALL_PRINICPAL_TYPES,
+    },
+    schema: {
+        body: Type.Object({
+            flowId: Type.String(),
+        }),
+    },
+}
+
+const GetWebhookSimulationRequest = {
+    config: {
+        allowedPrincipals: ALL_PRINICPAL_TYPES,
+    },
+    schema: {
+        querystring: Type.Object({
+            flowId: Type.String(),
+        }),
+    },
+}
+
+const DeleteWebhookSimulationRequest = GetWebhookSimulationRequest

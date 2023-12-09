@@ -25,7 +25,7 @@ export const authorizationMiddleware = async (request: FastifyRequest): Promise<
     }
 
     const principal = await getPrincipal(request)
-    const authenticatedRoute = isAuthenticatedRoute(request.routerPath, request.method)
+    const authenticatedRoute = isAuthenticatedRoute(request, request.routerPath)
     request.principal = principal
 
     if (principal.type === PrincipalType.UNKNOWN && authenticatedRoute) {
@@ -206,50 +206,21 @@ function getTableNameFromResource(resource: string | undefined): string | undefi
     return undefined
 }
 
-function isAuthenticatedRoute(routerPath: string, method: string): boolean {
+function isAuthenticatedRoute(fastifyRequest: FastifyRequest, routerPath: string): boolean {
+    const allowedPrincipals = fastifyRequest.routeConfig.allowedPrincipals ?? []
+    if (allowedPrincipals.includes(PrincipalType.UNKNOWN)) {
+        return false
+    }
     const ignoredRoutes = new Set([
-        // BEGIN EE
-        '/v1/connection-keys/app-connections',
-        '/v1/billing/stripe/webhook',
-        '/v1/flow-templates',
-        '/v1/appsumo/token',
-        '/v1/appsumo/action',
-        '/v1/flow-templates/:id',
-        '/v1/project-members/accept',
-        '/v1/managed-authn/external-token',
-        '/v1/otp',
-        '/v1/authn/local/reset-password',
-        '/v1/authn/federated/login',
-        '/v1/authn/federated/claim',
-        // END EE
         '/v1/chatbots/:id/ask',
         '/v1/chatbots/:id/metadata',
-        '/v1/flow-runs/:id/resume',
-        '/v1/pieces/stats',
-        '/v1/authn/local/verify-email',
-        '/v1/pieces/:name',
         '/favicon.ico',
-        '/v1/pieces/:scope/:name',
-        '/v1/app-events/:pieceUrl',
-        '/v1/authentication/sign-in',
-        '/v1/authentication/sign-up',
-        '/v1/flags',
-        '/v1/webhooks',
-        '/v1/webhooks/:flowId',
-        '/v1/webhooks/:flowId/sync',
-        '/v1/webhooks/:flowId/simulate',
         '/v1/docs',
         '/redirect',
     ])
     if (ignoredRoutes.has(routerPath) || routerPath.startsWith('/ui')) {
         return false
     }
-
-    if ((routerPath === '/v1/app-credentials' && method === 'GET') ||
-        (routerPath === '/v1/pieces' && method === 'GET')) {
-        return false
-    }
-
     return true
 }
 

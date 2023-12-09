@@ -1,5 +1,5 @@
 import { flowTemplateService } from './flow-template.service'
-import { ListFlowTemplatesRequest } from '@activepieces/shared'
+import { ListFlowTemplatesRequest, ALL_PRINICPAL_TYPES } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { ShareFlowRequest } from '@activepieces/ee-shared'
 import { flowService } from '../../flows/flow/flow.service'
@@ -18,6 +18,9 @@ type GetIdParams = Static<typeof GetIdParams>
 const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
 
     fastify.get('/:id', {
+        config: {
+            allowedPrincipals: ALL_PRINICPAL_TYPES,
+        },
         schema: {
             params: GetIdParams,
         },
@@ -26,6 +29,9 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
     })
 
     fastify.get('/', {
+        config: {
+            allowedPrincipals: ALL_PRINICPAL_TYPES,
+        },
         schema: {
             querystring: ListFlowTemplatesRequest,
         },
@@ -34,13 +40,16 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
     })
 
     fastify.post('/', {
+        config: {
+            allowedPrincipals: ALL_PRINICPAL_TYPES,
+        },
         schema: {
             body: ShareFlowRequest,
         },
     }, async (request) => {
         const flowTemplate = await flowService.getTemplate({ flowId: request.body.flowId, versionId: request.body.flowVersionId, projectId: request.principal.projectId })
         const result = await flowTemplateService.upsert(
-            { 
+            {
                 flowTemplate: {
                     ...flowTemplate,
                     description: request.body.description || '',
