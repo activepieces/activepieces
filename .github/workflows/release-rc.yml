@@ -2,18 +2,17 @@ name: Release RC
 
 on:
   pull_request:
-    types: [closed]
+    types: [opened, reopened, synchronize, closed]
     branches:
       - main
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
 
 jobs:
   Release:
     runs-on: ubuntu-latest
-    if: contains(github.event.pull_request.labels.*.name, 'release')
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
@@ -40,13 +39,13 @@ jobs:
       - name: Create release notes 
         uses: release-drafter/release-drafter@v5
         with:
-          config-name: release.yml
+          commitish: main
           prerelease: true
           tag: ${{ env.RELEASE }}
           version: ${{ env.RELEASE }}
           latest: false
-          token: ${{ secrets.GITHUB_TOKEN }} 
-          repo: ${{ github.repository }} 
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push
         uses: depot/build-push-action@v1
