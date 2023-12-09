@@ -40,7 +40,6 @@ jobs:
         uses: release-drafter/release-drafter@v5
         with:
           commitish: main
-          config-name: release.yml
           prerelease: true
           tag: ${{ env.RELEASE }}
           version: ${{ env.RELEASE }}
