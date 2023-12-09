@@ -156,6 +156,7 @@ export const projectMemberService = {
     async listByUser(user: User): Promise<ProjectMemberSchema[]> {
         return projectMemberRepo.findBy({
             email: user.email,
+            status: ProjectMemberStatus.ACTIVE,
             platformId: isNil(user.platformId) ? IsNull() : user.platformId,
         })
     },

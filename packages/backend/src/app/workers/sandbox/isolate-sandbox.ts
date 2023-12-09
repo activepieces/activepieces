@@ -58,7 +58,7 @@ export class IsolateSandbox extends AbstractSandbox {
                 '--run',
                 '--env=HOME=/tmp/',
                 '--env=NODE_OPTIONS=\'--enable-source-maps\'',
-                '--env=AP_ENVIRONMENT',
+                '--env=AP_PIECES_SOURCE',
                 `--env=AP_BASE_CODE_DIRECTORY=${IsolateSandbox.cacheBindPath}/codes`,
                 AbstractSandbox.nodeExecutablePath,
                 `${IsolateSandbox.cacheBindPath}/main.js`,
