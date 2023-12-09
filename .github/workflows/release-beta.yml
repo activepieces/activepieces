@@ -2,10 +2,18 @@ name: Release RC
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
   Release:
     runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.labels.*.name, 'release')
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
@@ -28,6 +36,12 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release notes 
+        uses: release-drafter/release-drafter@v7 
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }} 
+          repo: ${{ github.repository }} 
 
       - name: Build and push
         uses: depot/build-push-action@v1
