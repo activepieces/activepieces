@@ -1,19 +1,24 @@
 import { FastifyRequest } from 'fastify'
 import { accessTokenManager } from './lib/access-token-manager'
-import { ActivepiecesError, ErrorCode, Principal, PrincipalType, ProjectType, apId, isEmpty, isNil } from '@activepieces/shared'
+import { ActivepiecesError, EndpointScope, ErrorCode, Principal, PrincipalType, ProjectType, apId, isEmpty, isNil } from '@activepieces/shared'
 import { logger } from '@sentry/utils'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
 import { apiKeyService } from '../ee/api-keys/api-key-service'
+import { FlowEntity } from '../flows/flow/flow.entity'
+import { AppConnectionEntity } from '../app-connection/app-connection.entity'
+import { ProjectMemberEntity } from '../ee/project-members/project-member.entity'
+import { databaseConnection } from '../database/database-connection'
+import { extractResourceName } from './authorization'
 import { projectService } from '../project/project-service'
+import { nanoid } from 'nanoid'
 
 const HEADER_PREFIX = 'Bearer '
-const PLATFORM_API_PREFIX = 'sk_'
+const PLATFORM_API_PREFIX = 'sk-'
 const API_KEY = system.get(SystemProp.API_KEY)
 
 export const authorizationMiddleware = async (request: FastifyRequest): Promise<void> => {
     const isGlobalApiKeyRoute = await isGlobalApiKey(request)
-
     if (isGlobalApiKeyRoute) {
         handleGlobalApiKey(request)
         return
@@ -45,12 +50,11 @@ async function getPrincipal(request: FastifyRequest): Promise<Principal> {
     if (rawToken) {
         try {
             const token = rawToken.substring(HEADER_PREFIX.length)
-
-            if (rawToken.startsWith(PLATFORM_API_PREFIX)) {
+            if (token.startsWith(PLATFORM_API_PREFIX)) {
                 return await getAPIKeyPrincipal(token, request)
             }
             else {
-                return await accessTokenManager.extractPrincipal(token)
+                return await getJwtPrincipal(token, request)
             }
         }
         catch (e) {
@@ -66,16 +70,73 @@ async function getPrincipal(request: FastifyRequest): Promise<Principal> {
 
 }
 
+async function getJwtPrincipal(token: string, request: FastifyRequest): Promise<Principal> {
+    const principal = await accessTokenManager.extractPrincipal(token)
+
+    // TODO Merge with API key once it's specified for all routes, currenttly we ignore old routes
+    const allowedPrincipals = request.routeConfig.allowedPrincipals
+    if (!isNil(allowedPrincipals) && !allowedPrincipals.includes(principal.type)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {
+                message: 'invalid route for principal type',
+            },
+        })
+    }
+
+    const projectId = await getProjectIdFromBodyOrQuery(request)
+    if (!isNil(projectId) && principal.projectId !== projectId) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {
+                message: 'invalid project id',
+            },
+        })
+    }
+    return principal
+}
 async function getAPIKeyPrincipal(rawToken: string, request: FastifyRequest): Promise<Principal> {
     const apiKey = await apiKeyService.getByValueOrThrow(rawToken)
-    const projectId = request.headers['x-project-id'] as string
-    const project = await projectService.getOneOrThrow(projectId)
 
+    // TODO enforce in all other princpals types as well
+    const allowedPrincipals = request.routeConfig.allowedPrincipals ?? []
+    if (!allowedPrincipals.includes(PrincipalType.SERVICE)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {
+                message: 'invalid route for principal type',
+            },
+        })
+    }
+    const scope = request.routeConfig.scope
+    if (scope === EndpointScope.PLATFORM) {
+        return {
+            id: apiKey.id,
+            type: PrincipalType.SERVICE,
+            // TODO remove this
+            projectId: 'ANONYMOUSE_' + nanoid(),
+            projectType: ProjectType.PLATFORM_MANAGED,
+            platform: {
+                id: apiKey.platformId,
+                role: 'OWNER',
+            },
+        }
+    }
+    const projectId = await getProjectIdFromRequest(request)
+    if (isNil(projectId)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {
+                message: 'missing project id',
+            },
+        })
+    }
+    const project = await projectService.getOneOrThrow(projectId)
     if (project.platformId !== apiKey.platformId) {
         throw new ActivepiecesError({
-            code: ErrorCode.INVALID_BEARER_TOKEN,
+            code: ErrorCode.AUTHORIZATION,
             params: {
-                message: 'invalid access token',
+                message: 'invalid project id',
             },
         })
     }
@@ -91,6 +152,60 @@ async function getAPIKeyPrincipal(rawToken: string, request: FastifyRequest): Pr
         },
     }
 }
+
+async function getProjectIdFromRequest(request: FastifyRequest): Promise<string | undefined> {
+    if (request.routerPath.endsWith(':id') && ['GET', 'DELETE', 'POST'].includes(request.method)) {
+        const resourceName = extractResourceName(request.routerPath)
+        const { id } = request.params as { id: string }
+        return extractProjectIdFromResource(resourceName, id)
+    }
+    return getProjectIdFromBodyOrQuery(request)
+}
+
+async function getProjectIdFromBodyOrQuery(request: FastifyRequest): Promise<string | undefined> {
+    switch (request.method) {
+        case 'POST': {
+            const { projectId } = request.body as { projectId: string }
+            return projectId
+        }
+        case 'GET': {
+            if (request.routerPath.endsWith('/')) {
+                return undefined
+            }
+            const { projectId } = request.query as { projectId: string }
+            return projectId
+        }
+    }
+    return undefined
+}
+
+
+async function extractProjectIdFromResource(resource: string | undefined, id: string): Promise<string | undefined> {
+    const tableName = getTableNameFromResource(resource)
+    if (isNil(tableName)) {
+        return undefined
+    }
+    const entity = await databaseConnection.getRepository(tableName).findOneBy({
+        id,
+    })
+    return entity?.projectId
+}
+
+function getTableNameFromResource(resource: string | undefined): string | undefined {
+    if (isNil(resource)) {
+        return undefined
+    }
+    switch (resource) {
+        case 'flows':
+            return FlowEntity.options.name
+        case 'connections':
+            return AppConnectionEntity.options.name
+        case 'project-members':
+            return ProjectMemberEntity.options.name
+    }
+    return undefined
+}
+
 function isAuthenticatedRoute(routerPath: string, method: string): boolean {
     const ignoredRoutes = new Set([
         // BEGIN EE

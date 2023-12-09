@@ -7,7 +7,7 @@ import { StatusCodes } from 'http-status-codes'
 
 export const stepFileModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
-    app.addHook('onRequest', allowWorkersOnly)
+    app.addHook('preHandler', allowWorkersOnly)
     await app.register(stepFileController, { prefix: '/v1/step-files' })
 }
 
