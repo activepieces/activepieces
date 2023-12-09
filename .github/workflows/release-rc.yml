@@ -2,16 +2,13 @@ name: Release RC
 
 on:
   pull_request:
-    types: [opened, reopened, synchronize, closed]
+    types: [closed]
     branches:
       - main
 
-permissions:
-  contents: write
-  pull-requests: write
-
 jobs:
   Release:
+    if: contains(github.event.pull_request.labels.*.name, 'release')
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
@@ -35,17 +32,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create release notes 
-        uses: release-drafter/release-drafter@v5
-        with:
-          commitish: ${{ github.ref }}
-          prerelease: true
-          tag: ${{ env.RELEASE }}
-          version: ${{ env.RELEASE }}
-          latest: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push
         uses: depot/build-push-action@v1
