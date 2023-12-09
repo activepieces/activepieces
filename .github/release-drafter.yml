@@ -1,3 +1,4 @@
+include-pre-releases: true
 categories:
   - title: "✨ Exciting New Features"
     labels:
