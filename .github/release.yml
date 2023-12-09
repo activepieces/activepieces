@@ -23,3 +23,9 @@ changelog:
     - title: "Other Changes"
       labels:
         - "*"
+template: |
+
+  $CHANGES
+
+  ### Thanks ❤️
+  $CONTRIBUTORS
