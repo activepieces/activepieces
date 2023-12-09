@@ -240,7 +240,7 @@ export const flowRunService = {
             })
             .getRawOne()
     
-        return sumOfTasks.tasks
+        return Number(sumOfTasks.tasks)
     },
     
 }
