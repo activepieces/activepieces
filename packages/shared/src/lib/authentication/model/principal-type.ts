@@ -4,3 +4,7 @@ export enum PrincipalType {
     SERVICE = 'SERVICE',
     UNKNOWN = 'UNKNOWN',
 }
+export enum EndpointScope {
+    PLATFORM = 'PLATFORM',
+    PROJECT = 'PROJECT',
+}

@@ -112,6 +112,15 @@ export class AuthenticationService {
     return decodedToken;
   }
 
+  getProjectId(): string {
+    const decodedToken = this.getDecodedToken();
+    const projectId = decodedToken?.['projectId'];
+    if (!projectId) {
+      throw new Error('ProjectId not found in token');
+    }
+    return projectId;
+  }
+
   getPlatformId(): string | undefined {
     const decodedToken = this.getDecodedToken();
     return decodedToken?.platform?.id;

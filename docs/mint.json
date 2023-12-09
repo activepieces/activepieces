@@ -74,8 +74,7 @@
        {
         "group": "Get Started",
         "pages": [
-          "endpoints/overview",
-          "endpoints/authentication"
+          "endpoints/overview"
         ]
        },
        {
@@ -100,25 +99,6 @@
                 "endpoints/project-members/create",
                 "endpoints/project-members/delete"
 
-              ]
-            },
-            {
-              "group": "Connections",
-              "icon": "link",
-              "pages": [
-                "endpoints/connections/schema",
-                "endpoints/connections/upsert",
-                "endpoints/connections/list",
-                "endpoints/connections/delete"
-              ]
-            },
-            {
-              "group": "Flows",
-              "icon": "bolt",
-              "pages": [
-                "endpoints/flows/schema",
-                "endpoints/flows/get",
-                "endpoints/flows/delete"
               ]
             }
           ]

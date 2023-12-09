@@ -166,8 +166,8 @@ export const setupApp = async (): Promise<FastifyInstance> => {
         }
     })
 
-    app.addHook('onRequest', authorizationMiddleware)
-    app.addHook('onRequest', rbacAuthMiddleware)
+    app.addHook('preHandler', authorizationMiddleware)
+    app.addHook('preHandler', rbacAuthMiddleware)
     app.setErrorHandler(errorHandler)
     await app.register(fileModule)
     await app.register(flagModule)
