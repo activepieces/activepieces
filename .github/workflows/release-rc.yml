@@ -40,6 +40,11 @@ jobs:
         uses: release-drafter/release-drafter@v5
         with:
           commitish: main
+          config-name: release.yml
+          prerelease: true
+          tag: ${{ env.RELEASE }}
+          version: ${{ env.RELEASE }}
+          latest: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
