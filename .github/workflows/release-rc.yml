@@ -1,10 +1,7 @@
 name: Release RC
 
 on:
-  pull_request:
-    types: [closed]
-    branches:
-      - main
+  push:
 
 permissions:
   contents: read
@@ -13,7 +10,6 @@ permissions:
 jobs:
   Release:
     runs-on: ubuntu-latest
-    if: contains(github.event.pull_request.labels.*.name, 'release')
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
