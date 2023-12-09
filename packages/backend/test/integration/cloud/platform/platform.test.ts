@@ -119,7 +119,9 @@ describe('Platform API', () => {
         it('fails if platform doesn\'t exist', async () => {
             // arrange
             const randomPlatformId = apId()
-            const testToken = await generateMockToken()
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+            })
 
             // act
             const response = await app?.inject({
