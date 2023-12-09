@@ -38,8 +38,9 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create release notes 
-        uses: release-drafter/release-drafter@v7 
+        uses: release-drafter/release-drafter@v5
         with:
+          config-name: release.yml
           token: ${{ secrets.GITHUB_TOKEN }} 
           repo: ${{ github.repository }} 
 
