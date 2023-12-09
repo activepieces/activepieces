@@ -20,6 +20,7 @@ import {
 import deepEqual from 'deep-equal';
 import {
   AppConnectionsService,
+  AuthenticationService,
   FlagService,
   fadeInUp400ms,
 } from '@activepieces/ui/common';
@@ -80,6 +81,7 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
     public dialogRef: MatDialogRef<ManagedOAuth2ConnectionDialogComponent>,
     private appConnectionsService: AppConnectionsService,
     private flagService: FlagService,
+    private authenticationService: AuthenticationService,
     private snackbar: MatSnackBar,
     @Inject(MAT_DIALOG_DATA)
     public dialogData: ManagedOAuth2ConnectionDialogData
@@ -161,6 +163,7 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
     const { tokenUrl } = this.getTokenAndUrl();
     if (this.dialogData.connectionType === AppConnectionType.CLOUD_OAUTH2) {
       const newConnection: UpsertCloudOAuth2Request = {
+        projectId: this.authenticationService.getProjectId(),
         appName: this.dialogData.pieceName,
         type: AppConnectionType.CLOUD_OAUTH2,
         value: {
@@ -181,6 +184,7 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
       return newConnection;
     } else {
       const newConnection: UpsertPlatformOAuth2Request = {
+        projectId: this.authenticationService.getProjectId(),
         appName: this.dialogData.pieceName,
         type: AppConnectionType.PLATFORM_OAUTH2,
         value: {
