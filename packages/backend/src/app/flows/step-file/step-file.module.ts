@@ -63,7 +63,7 @@ export const stepFileController: FastifyPluginAsyncTypebox = async (app) => {
         return stepFileService.generateViewToken({
             apId: request.principal.id,
             projectId: request.principal.projectId,
-            id: request.params.id
+            id: request.params.id,
         })
     })
 }

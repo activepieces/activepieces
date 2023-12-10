@@ -67,7 +67,7 @@ export const stepFileService = {
         const file = await stepFileRepo.findOneBy({
             id,
             projectId,
-        });
+        })
         if (isNil(file)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -80,10 +80,10 @@ export const stepFileService = {
         const principal: Principal = {
             id: apId,
             projectId: projectId,
-            type: PrincipalType.USER
-        };
-        const userToken = await accessTokenManager.generateToken(principal);
+            type: PrincipalType.USER,
+        }
+        const userToken = await accessTokenManager.generateToken(principal)
 
-        return userToken;
-    }
+        return userToken
+    },
 }

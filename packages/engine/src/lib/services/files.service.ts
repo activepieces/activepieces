@@ -103,10 +103,10 @@ async function writeDbFile({ stepName, flowId, fileName, data }: { stepName: str
         headers: {
             Authorization: 'Bearer ' + globals.workerToken,
         }
-    })).text();
+    })).text()
 
     const fileUrl = `${STEP_FILE_URL}${result.id}?token=${viewToken}`
-    return fileUrl;
+    return fileUrl
 }
 
 async function readDbFile(absolutePath: string): Promise<ApFile> {
