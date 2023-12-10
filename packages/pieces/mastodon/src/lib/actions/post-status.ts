@@ -1,13 +1,11 @@
-import { Property, createAction } from "@activepieces/pieces-framework";
+import FormData from "form-data"
+import { Property, createAction, ApFile } from "@activepieces/pieces-framework";
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { mastodonAuth } from "../..";
 
-const uploadMedia = async (mediaUrl: string, baseUrl: string, token: string) => {
-    const getMediaResponse = await httpClient.sendRequest({
-        url: mediaUrl,
-        method: HttpMethod.GET,
-        responseType: 'stream',
-    })
+const uploadMedia = async (media: ApFile, baseUrl: string, token: string) => {
+    const formData = new FormData()
+    formData.append('file', Buffer.from(media.base64, "base64"), media.filename)
 
     const postMediaResponse = await httpClient.sendRequest({
         url: `${baseUrl}/api/v2/media`,
@@ -19,9 +17,7 @@ const uploadMedia = async (mediaUrl: string, baseUrl: string, token: string) => 
         headers: {
             'Content-type': 'multipart/form-data',
         },
-        body: {
-            file: getMediaResponse.body,
-        },
+        body: formData,
     })
 
     return postMediaResponse.body.id
@@ -38,8 +34,8 @@ export const postStatus = createAction({
                 description: 'The text of your status',
                 required: true,
             }),
-            media: Property.LongText({
-                displayName: 'Media URL',
+            media: Property.File({
+                displayName: 'Media URL or File',
                 description: 'The media attachement for your status',
                 required: false,
             })
@@ -47,13 +43,13 @@ export const postStatus = createAction({
         async run(context) {
             const token = context.auth.access_token;
             const status = context.propsValue.status;
-            const mediaUrl = context.propsValue.media;
+            const media = context.propsValue.media;
             // Remove trailing slash from base_url
             const baseUrl = context.auth.base_url.replace(/\/$/, "");
 
             let mediaId: string | undefined = undefined
-            if (mediaUrl) {
-                mediaId = await uploadMedia(mediaUrl, baseUrl, token)
+            if (media) {
+                mediaId = await uploadMedia(media, baseUrl, token)
             }
 
             return await httpClient.sendRequest({
