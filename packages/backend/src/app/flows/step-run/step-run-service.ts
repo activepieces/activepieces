@@ -108,10 +108,10 @@ async function executePiece({ step, projectId, flowVersion, userId }: ExecutePar
     if (result.success) {
         step.settings.inputUiInfo.currentSelectedData = result.output
         await flowService.update({
+            id: flowVersion.flowId,
             userId,
-            flowId: flowVersion.flowId,
             projectId,
-            request: {
+            operation: {
                 type: FlowOperationType.UPDATE_ACTION,
                 request: step,
             },
