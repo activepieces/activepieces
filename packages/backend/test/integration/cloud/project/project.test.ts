@@ -4,7 +4,7 @@ import { generateMockToken } from '../../../helpers/auth'
 import { createMockUser, createMockPlatform, createMockProject, createMockApiKey } from '../../../helpers/mocks'
 import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
-import { NotificationStatus, PrincipalType, Project, ProjectType, User } from '@activepieces/shared'
+import { NotificationStatus, PlatformRole, PrincipalType, Project, ProjectType, User } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { ApiKeyResponseWithValue, Platform, UpdateProjectPlatformRequest } from '@activepieces/ee-shared'
 import { stripeHelper } from '../../../../src/app/ee/billing/billing/stripe-helper'
@@ -38,7 +38,7 @@ describe('Project API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
-                platform: { id: mockPlatform.id, role: 'OWNER' },
+                platform: { id: mockPlatform.id, role: PlatformRole.OWNER },
             })
 
             const displayName = faker.animal.bird()
@@ -298,7 +298,7 @@ describe('Project API', () => {
                 type: PrincipalType.USER,
                 id: mockUser.id,
                 projectId: mockProject.id,
-                platform: { id: mockPlatform.id, role: 'OWNER' },
+                platform: { id: mockPlatform.id, role: PlatformRole.OWNER },
             })
 
 
@@ -355,7 +355,7 @@ describe('Project API', () => {
                 type: PrincipalType.USER,
                 id: memberUser.id,
                 projectId: mockProject.id,
-                platform: { id: mockPlatform.id, role: 'MEMBER' },
+                platform: { id: mockPlatform.id, role: PlatformRole.MEMBER },
             })
 
             const request: UpdateProjectPlatformRequest = {

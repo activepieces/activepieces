@@ -40,8 +40,15 @@ export const projectMemberService = {
             projectId,
         })
 
+        const existingProjectMember = await projectMemberRepo.findOneBy({
+            projectId,
+            email,
+            platformId: isNil(platformId) ? IsNull() : platformId,
+        })
+        const projectMemberId = existingProjectMember?.id ?? apId()
+
         const projectMember: NewProjectMember = {
-            id: apId(),
+            id: projectMemberId,
             updated: dayjs().toISOString(),
             email,
             platformId,
