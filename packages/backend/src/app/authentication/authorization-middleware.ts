@@ -16,7 +16,7 @@ import { nanoid } from 'nanoid'
 const HEADER_PREFIX = 'Bearer '
 const PLATFORM_API_PREFIX = 'sk-'
 const API_KEY = system.get(SystemProp.API_KEY)
-const EXEMPTED_ROUTES_FROM_PROJECT_ID_CHECK = ['/v1/users/projects/:projectId/token']
+
 export const authorizationMiddleware = async (request: FastifyRequest): Promise<void> => {
     const isGlobalApiKeyRoute = await isGlobalApiKey(request)
     if (isGlobalApiKeyRoute) {
@@ -83,16 +83,19 @@ async function getJwtPrincipal(token: string, request: FastifyRequest): Promise<
             },
         })
     }
-    if (!EXEMPTED_ROUTES_FROM_PROJECT_ID_CHECK.includes(request.routerPath)) {
-        const projectId = await getProjectIdFromBodyOrQuery(request)
-        if (!isNil(projectId) && principal.projectId !== projectId) {
-            throw new ActivepiecesError({
-                code: ErrorCode.AUTHORIZATION,
-                params: {
-                    message: 'invalid project id',
-                },
-            })
-        }
+    // TODO this is a hack to allow token generation for project id
+    const exemptedRoutesFromProjectIdCheck = ['/v1/users/projects/:projectId/token']
+    if (exemptedRoutesFromProjectIdCheck.includes(request.routerPath)) {
+        return principal
+    }
+    const projectId = await getProjectIdFromBodyOrQuery(request)
+    if (!isNil(projectId) && principal.projectId !== projectId) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {
+                message: 'invalid project id',
+            },
+        })
     }
     return principal
 }
