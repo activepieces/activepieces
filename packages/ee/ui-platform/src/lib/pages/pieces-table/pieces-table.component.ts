@@ -56,8 +56,8 @@ export class PiecesTableComponent implements OnInit {
   refresh$: Subject<true> = new Subject();
   dialogClosed$?: Observable<boolean>;
   addPackageDialogClosed$!: Observable<Record<string, string> | null>;
-  cloudAuthToggleFormControl = new FormControl(false,{ nonNullable:true });
-  toggelCloudOAuth2$: Observable<void> ;
+  cloudAuthToggleFormControl = new FormControl(false, { nonNullable: true });
+  toggelCloudOAuth2$: Observable<void>;
   constructor(
     private piecesService: PieceMetadataService,
     private route: ActivatedRoute,
@@ -76,27 +76,26 @@ export class PiecesTableComponent implements OnInit {
       this.oauth2AppsService,
       this.refresh$.asObservable().pipe(startWith(true as const))
     );
-    this.cloudAuthToggleFormControl.setValue(this.platform$.value.cloudAuthEnabled);
-
+    this.cloudAuthToggleFormControl.setValue(
+      this.platform$.value.cloudAuthEnabled
+    );
   }
 
-  getCloudOAuth2ToggleListener(){
-    
-    return this.cloudAuthToggleFormControl.valueChanges
-      .pipe(
-        tap((cloudAuthEnabled) => {
-          this.platform$.next({ ...this.platform$.value, cloudAuthEnabled })
-        }),
-        switchMap((cloudAuthEnabled) => {
-          return this.platformService.updatePlatform(
-            {
-              ...this.platform$.value,
-             cloudAuthEnabled
-            },
-            this.platform$.value.id
-          );
-        })
-      )
+  getCloudOAuth2ToggleListener() {
+    return this.cloudAuthToggleFormControl.valueChanges.pipe(
+      tap((cloudAuthEnabled) => {
+        this.platform$.next({ ...this.platform$.value, cloudAuthEnabled });
+      }),
+      switchMap((cloudAuthEnabled) => {
+        return this.platformService.updatePlatform(
+          {
+            ...this.platform$.value,
+            cloudAuthEnabled,
+          },
+          this.platform$.value.id
+        );
+      })
+    );
   }
 
   togglePiece(piece: ManagedPieceMetadataModelSummary) {
