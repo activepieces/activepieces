@@ -19,6 +19,7 @@ import {
   ThirdPartyAuthnProviderEnum,
   VerifyEmailRequestBody,
 } from '@activepieces/ee-shared';
+import { FlagService } from './flag.service';
 
 @Injectable({
   providedIn: 'root',
@@ -27,7 +28,11 @@ export class AuthenticationService {
   public currentUserSubject: BehaviorSubject<User | undefined> =
     new BehaviorSubject<User | undefined>(this.currentUser);
   private jwtHelper = new JwtHelperService();
-  constructor(private router: Router, private http: HttpClient) {}
+  constructor(
+    private router: Router,
+    private http: HttpClient,
+    private flagsService: FlagService
+  ) {}
 
   get currentUser(): User {
     return JSON.parse(
@@ -99,6 +104,7 @@ export class AuthenticationService {
     localStorage.removeItem(environment.jwtTokenName);
     localStorage.removeItem(environment.userPropertyNameInLocalStorage);
     this.currentUserSubject.next(undefined);
+    this.flagsService.reinitialiseFlags();
     this.router.navigate(['sign-in']);
   }
 
