@@ -1,5 +1,5 @@
 import { SigningKey, SigningKeyId, PlatformId, AddSigningKeyResponse } from '@activepieces/ee-shared'
-import { SeekPage, UserId, apId } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, SeekPage, UserId, apId, isNil } from '@activepieces/shared'
 import { signingKeyGenerator } from './signing-key-generator'
 import { databaseConnection } from '../../database/database-connection'
 import { SigningKeyEntity } from './signing-key-entity'
@@ -47,6 +47,18 @@ export const signingKeyService = {
     },
 
     async delete({ platformId, id }: DeleteParams): Promise<void> {
+        const entity = await repo.findOneBy({
+            platformId,
+            id,
+        })
+        if (isNil(entity)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    message: `signing key with id ${id} not found`,
+                },
+            })
+        }
         await repo.delete({
             platformId,
             id,

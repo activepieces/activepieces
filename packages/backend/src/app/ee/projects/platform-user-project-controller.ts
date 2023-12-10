@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, PrincipalType, SeekPage, isNil } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, PlatformRole, PrincipalType, SeekPage, isNil } from '@activepieces/shared'
 import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
 import { platformProjectService } from './platform-project-service'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
@@ -38,7 +38,7 @@ export const usersProjectController: FastifyPluginCallbackTypebox = (fastify, _o
                 projectType: project.type,
                 platform: isNil(platform) ? undefined : {
                     id: platform.id,
-                    role: platform.ownerId === request.principal.id ? 'OWNER' : 'MEMBER',
+                    role: platform.ownerId === request.principal.id ? PlatformRole.OWNER : PlatformRole.MEMBER,
                 },
             }),
         }

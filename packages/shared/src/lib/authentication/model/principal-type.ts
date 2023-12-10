@@ -11,3 +11,9 @@ export enum EndpointScope {
     PLATFORM = 'PLATFORM',
     PROJECT = 'PROJECT',
 }
+
+export enum PlatformRole {
+    OWNER = 'OWNER',
+    MEMBER = 'MEMBER',
+    SERVICE = 'SERVICE',
+}

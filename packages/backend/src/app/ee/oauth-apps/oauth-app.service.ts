@@ -3,8 +3,8 @@ import { OAuthAppEntity, OAuthAppWithSecret } from './oauth-app.entity'
 import { databaseConnection } from '../../database/database-connection'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
-import { SeekPage, apId, deleteProps } from '@activepieces/shared'
-import {  decryptString, encryptString } from '../../helper/encryption'
+import { ActivepiecesError, ErrorCode, SeekPage, apId, deleteProps, isNil } from '@activepieces/shared'
+import { decryptString, encryptString } from '../../helper/encryption'
 
 const oauthRepo = databaseConnection.getRepository(OAuthAppEntity)
 
@@ -39,6 +39,15 @@ export const oauthAppService = {
         )
     },
     async delete({ platformId, id }: { platformId: string, id: string }): Promise<void> {
+        const oauthApp = await oauthRepo.findOneBy({ platformId, id })
+        if (isNil(oauthApp)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    message: `OAuth with id ${id} not found`,
+                },
+            })
+        }
         await oauthRepo.delete({ platformId, id })
     },
 }

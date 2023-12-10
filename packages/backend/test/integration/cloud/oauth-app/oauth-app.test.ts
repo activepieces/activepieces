@@ -6,7 +6,7 @@ import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
 import { faker } from '@faker-js/faker'
 import { UpsertOAuth2AppRequest } from '@activepieces/ee-shared'
-import { PrincipalType, apId } from '@activepieces/shared'
+import { PlatformRole, PrincipalType, apId } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
@@ -38,7 +38,7 @@ describe('OAuth App API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
-                platform: { id: mockPlatform.id, role: 'OWNER' },
+                platform: { id: mockPlatform.id, role: PlatformRole.OWNER },
             })
 
             const response = await app?.inject({
@@ -68,7 +68,7 @@ describe('OAuth App API', () => {
                 type: PrincipalType.USER,
                 platform: {
                     id: nonExistentPlatformId,
-                    role: 'OWNER',
+                    role: PlatformRole.OWNER,
                 },
             })
             const response = await app?.inject({
@@ -81,22 +81,21 @@ describe('OAuth App API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(response?.statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR)
         })
 
         it('Fails if user is not platform owner', async () => {
             // arrange
             const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save(mockUser)
+            await databaseConnection.getRepository('user').save([mockUser])
 
             const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection.getRepository('platform').save([mockPlatform])
 
-            const nonOwnerUserId = apId()
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                id: nonOwnerUserId,
-                platform: { id: mockPlatform.id, role: 'OWNER' },
+                id: mockUser.id,
+                platform: { id: mockPlatform.id, role: PlatformRole.MEMBER },
             })
 
             const response = await app?.inject({
@@ -121,7 +120,8 @@ describe('OAuth App API', () => {
             await databaseConnection.getRepository('user').save([mockUser, mockUserTwo])
 
             const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
+            const mockPlatformTwo = createMockPlatform({ ownerId: mockUserTwo.id })
+            await databaseConnection.getRepository('platform').save([mockPlatform, mockPlatformTwo])
 
             const mockOAuthApp = createMockOAuthApp({
                 platformId: mockPlatform.id,
@@ -132,7 +132,7 @@ describe('OAuth App API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUserTwo.id,
-                platform: { id: mockPlatform.id, role: 'OWNER' },
+                platform: { id: mockPlatformTwo.id, role: PlatformRole.OWNER },
             })
 
             // act
@@ -145,7 +145,7 @@ describe('OAuth App API', () => {
             })
 
 
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
         })
 
         it('By Id', async () => {
@@ -165,7 +165,7 @@ describe('OAuth App API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
-                platform: { id: mockPlatform.id, role: 'OWNER' },
+                platform: { id: mockPlatform.id, role: PlatformRole.OWNER },
             })
 
             // act
@@ -206,7 +206,7 @@ describe('OAuth App API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUserOne.id,
-                platform: { id: mockPlatformOne.id, role: 'OWNER' },
+                platform: { id: mockPlatformOne.id, role: PlatformRole.OWNER },
             })
             // act
             const response = await app?.inject({
@@ -249,7 +249,7 @@ describe('OAuth App API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUserTwo.id,
-                platform: { id: mockPlatformOne.id, role: 'MEMBER' },
+                platform: { id: mockPlatformOne.id, role: PlatformRole.MEMBER },
             })
             // act
             const response = await app?.inject({

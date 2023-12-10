@@ -1,6 +1,6 @@
 import { FastifyRequest } from 'fastify'
 import { accessTokenManager } from './lib/access-token-manager'
-import { ActivepiecesError, EndpointScope, ErrorCode, Principal, PrincipalType, ProjectType, apId, isEmpty, isNil } from '@activepieces/shared'
+import { ActivepiecesError, EndpointScope, ErrorCode, PlatformRole, Principal, PrincipalType, ProjectType, apId, isEmpty, isNil } from '@activepieces/shared'
 import { logger } from '@sentry/utils'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
@@ -25,7 +25,7 @@ export const authorizationMiddleware = async (request: FastifyRequest): Promise<
     }
 
     const principal = await getPrincipal(request)
-    const authenticatedRoute = isAuthenticatedRoute(request, request.routerPath)
+    const authenticatedRoute = isAuthenticatedRoute(request)
     request.principal = principal
 
     if (principal.type === PrincipalType.UNKNOWN && authenticatedRoute) {
@@ -118,7 +118,7 @@ async function getAPIKeyPrincipal(rawToken: string, request: FastifyRequest): Pr
             projectType: ProjectType.PLATFORM_MANAGED,
             platform: {
                 id: apiKey.platformId,
-                role: 'OWNER',
+                role: PlatformRole.SERVICE,
             },
         }
     }
@@ -148,7 +148,7 @@ async function getAPIKeyPrincipal(rawToken: string, request: FastifyRequest): Pr
         projectType: ProjectType.PLATFORM_MANAGED,
         platform: {
             id: apiKey.platformId,
-            role: 'OWNER',
+            role: PlatformRole.SERVICE,
         },
     }
 }
@@ -169,9 +169,6 @@ async function getProjectIdFromBodyOrQuery(request: FastifyRequest): Promise<str
             return projectId
         }
         case 'GET': {
-            if (request.routerPath.endsWith('/')) {
-                return undefined
-            }
             const { projectId } = request.query as { projectId: string }
             return projectId
         }
@@ -206,7 +203,7 @@ function getTableNameFromResource(resource: string | undefined): string | undefi
     return undefined
 }
 
-function isAuthenticatedRoute(fastifyRequest: FastifyRequest, routerPath: string): boolean {
+function isAuthenticatedRoute(fastifyRequest: FastifyRequest): boolean {
     const allowedPrincipals = fastifyRequest.routeConfig.allowedPrincipals ?? []
     if (allowedPrincipals.includes(PrincipalType.UNKNOWN)) {
         return false
@@ -218,7 +215,7 @@ function isAuthenticatedRoute(fastifyRequest: FastifyRequest, routerPath: string
         '/v1/docs',
         '/redirect',
     ])
-    if (ignoredRoutes.has(routerPath) || routerPath.startsWith('/ui')) {
+    if (ignoredRoutes.has(fastifyRequest.routerPath) || fastifyRequest.routerPath.startsWith('/ui')) {
         return false
     }
     return true
