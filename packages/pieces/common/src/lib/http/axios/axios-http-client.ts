@@ -35,8 +35,7 @@ export class AxiosHttpClient extends BaseHttpClient {
 				},
 				headers,
 				data: request.body,
-				timeout,
-				responseType: request.responseType,
+				timeout
 			};
 
 			const response = await axios.request(config)
