@@ -21,10 +21,7 @@ import {
   CustomPathMentionDialogComponent,
   CustomPathMentionDialogData,
 } from '../custom-path-mention-dialog/custom-path-mention-dialog.component';
-import {
-  FlowItem,
-  canvasActions,
-} from '@activepieces/ui/feature-builder-store';
+import { Step, canvasActions } from '@activepieces/ui/feature-builder-store';
 
 @Component({
   selector: 'app-webhook-trigger-mention-item',
@@ -36,7 +33,7 @@ export class WebhookTriggerMentionItemComponent implements OnInit {
   sampleData: MentionTreeNode[] | undefined = undefined;
   nodesFilteredWithSearch$: Observable<Map<string, boolean>>;
   @Input()
-  set stepMention(val: MentionListItem & { step: FlowItem }) {
+  set stepMention(val: MentionListItem & { step: Step }) {
     if (val.step.type !== TriggerType.WEBHOOK) {
       throw new Error('Step is not a webhook trigger');
     }

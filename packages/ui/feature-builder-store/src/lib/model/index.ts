@@ -1,6 +1,6 @@
 export * from './connections-dropdown-item';
 export * from './flow-add-button';
-export * from './flow-item';
+export * from './step';
 export * from './mention-list-item';
 export * from './canvas-state';
 export * from './enums';

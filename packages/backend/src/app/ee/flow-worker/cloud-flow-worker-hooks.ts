@@ -5,10 +5,10 @@ import { captureException } from '@sentry/node'
 import { FlowWorkerHooks } from '../../workers/flow-worker/flow-worker-hooks'
 import { tasksLimit } from '../billing/limits/tasks-limit'
 
-export const cloudWorkerHooks: FlowWorkerHooks = {
+export const platformWorkerHooks: FlowWorkerHooks = {
     async preExecute({ projectId, runId }: { projectId: string, runId: string }): Promise<void> {
         const edition = getEdition()
-        if (edition === ApEdition.CLOUD) {
+        if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
             try {
                 await tasksLimit.limit({
                     projectId,

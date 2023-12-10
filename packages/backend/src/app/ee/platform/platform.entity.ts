@@ -76,6 +76,11 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             nullable: false,
             default: true,
         },
+        embeddingEnabled: {
+            type: Boolean,
+            nullable: false,
+            default: true,
+        },
         filteredPieceNames: {
             type: ARRAY_COLUMN_TYPE,
             array: isPostgres(),

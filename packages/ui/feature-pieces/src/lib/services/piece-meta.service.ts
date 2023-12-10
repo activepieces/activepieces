@@ -102,7 +102,7 @@ export class PieceMetadataService {
     },
   ];
 
-  constructor(private http: HttpClient, private flagsService: FlagService) {}
+  constructor(private http: HttpClient, private flagsService: FlagService) { }
 
   private getCacheKey(pieceName: string, pieceVersion: string): string {
     return `${pieceName}-${pieceVersion}`;
@@ -154,7 +154,9 @@ export class PieceMetadataService {
     if (params.pieceArchive) {
       formData.set('pieceArchive', params.pieceArchive);
     }
-
+    if (params.platformId) {
+      formData.set('platformId', params.platformId);
+    }
     return this.http.post<PieceMetadataModel>(
       `${environment.apiUrl}/pieces`,
       formData

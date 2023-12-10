@@ -21,7 +21,7 @@ import {
     ProjectMemberId,
     ProjectMemberRole,
     ProjectMemberStatus,
-    SendInvitationRequest,
+    AddProjectMemberRequestBody,
 } from '@activepieces/ee-shared'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { projectService } from '../../project/project-service'
@@ -58,19 +58,23 @@ export const projectMemberService = {
         }
     },
 
-    async upsertAndSend({ platformId, projectId, email, role }: SendParams): Promise<UpsertAndSendResponse> {
+    async upsertAndSend({ platformId, projectId, email, role, status }: UpsertAndSendParams): Promise<UpsertAndSendResponse> {
+
         const projectMember = await this.upsert({
             platformId,
             email,
             projectId,
             role,
+            status,
         })
 
-        await emailService.sendInvitation({
-            invitationId: projectMember.id,
-            projectId,
-            email,
-        })
+        if (projectMember.status === ProjectMemberStatus.PENDING) {
+            await emailService.sendInvitation({
+                invitationId: projectMember.id,
+                projectId,
+                email,
+            })
+        }
 
         const invitationToken = await accessTokenManager.generateToken({
             id: projectMember.id,
@@ -152,6 +156,7 @@ export const projectMemberService = {
     async listByUser(user: User): Promise<ProjectMemberSchema[]> {
         return projectMemberRepo.findBy({
             email: user.email,
+            status: ProjectMemberStatus.ACTIVE,
             platformId: isNil(user.platformId) ? IsNull() : user.platformId,
         })
     },
@@ -161,7 +166,6 @@ export const projectMemberService = {
     ): Promise<void> {
         await projectMemberRepo.delete({ projectId, id: invitationId })
     },
-
     async countTeamMembersIncludingOwner(projectId: ProjectId): Promise<number> {
         return await projectMemberRepo.countBy({
             projectId,
@@ -213,7 +217,7 @@ type UpsertParams = {
 
 type NewProjectMember = Omit<ProjectMember, 'created'>
 
-type SendParams = SendInvitationRequest & {
+type UpsertAndSendParams = AddProjectMemberRequestBody & {
     projectId: ProjectId
     platformId: PlatformId | null
 }

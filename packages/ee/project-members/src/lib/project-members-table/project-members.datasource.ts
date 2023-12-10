@@ -12,6 +12,7 @@ import {
 } from 'rxjs';
 import { ProjectMember } from '@activepieces/ee-shared';
 import { ProjectMemberService } from '../service/project-members.service';
+import { AuthenticationService } from '@activepieces/ui/common';
 
 /**
  * Data source for the LogsTable view. This class should
@@ -22,6 +23,7 @@ export class ProjectMembersTableDataSource extends DataSource<ProjectMember> {
   data: ProjectMember[] = [];
   public isLoading$ = new BehaviorSubject(false);
   constructor(
+    private authenticationService: AuthenticationService,
     private projectMemberService: ProjectMemberService,
     private refresh$: Observable<boolean>
   ) {
@@ -38,16 +40,20 @@ export class ProjectMembersTableDataSource extends DataSource<ProjectMember> {
       refresh: this.refresh$,
     }).pipe(
       switchMap(() => {
-        return this.projectMemberService.list({}).pipe(
-          catchError((e: any) => {
-            console.error(e);
-            return of({
-              next: undefined,
-              previous: undefined,
-              data: [],
-            });
+        return this.projectMemberService
+          .list({
+            projectId: this.authenticationService.getProjectId(),
           })
-        );
+          .pipe(
+            catchError((e: any) => {
+              console.error(e);
+              return of({
+                next: undefined,
+                previous: undefined,
+                data: [],
+              });
+            })
+          );
       }),
       tap((members) => {
         this.data = members.data;

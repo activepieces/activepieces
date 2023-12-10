@@ -186,6 +186,7 @@ export const engineHelper = {
         const sandbox = await sandboxProvisioner.provision({
             type: SandBoxCacheType.PIECE,
             pieceName,
+            projectId: operation.projectId,
             pieceVersion: exactPieceVersion,
             pieces: [
                 {
@@ -193,7 +194,6 @@ export const engineHelper = {
                     pieceType,
                     pieceName,
                     pieceVersion: exactPieceVersion,
-                    projectId: operation.projectId,
                 },
             ],
         })
@@ -231,12 +231,13 @@ export const engineHelper = {
         piece.pieceVersion = await pieceMetadataService.getExactPieceVersion({
             name: piece.pieceName,
             version: piece.pieceVersion,
-            projectId: piece.projectId,
+            projectId: operation.projectId,
         })
 
         const sandbox = await sandboxProvisioner.provision({
             type: SandBoxCacheType.PIECE,
             pieceName: piece.pieceName,
+            projectId: operation.projectId,
             pieceVersion: piece.pieceVersion,
             pieces: [piece],
         })
@@ -263,6 +264,7 @@ export const engineHelper = {
 
         const sandbox = await sandboxProvisioner.provision({
             type: SandBoxCacheType.CODE,
+            projectId: operation.projectId,
             sourceCodeHash: hashObject(operation.step.settings.sourceCode),
             codeSteps: [
                 {
@@ -292,6 +294,7 @@ export const engineHelper = {
             type: SandBoxCacheType.PIECE,
             pieceName,
             pieceVersion,
+            projectId: operation.projectId,
             pieces: [piece],
         })
 
@@ -314,7 +317,7 @@ export const engineHelper = {
         piece.pieceVersion = await pieceMetadataService.getExactPieceVersion({
             name: piece.pieceName,
             version: piece.pieceVersion,
-            projectId: piece.projectId,
+            projectId: operation.projectId,
         })
 
         const sandbox = await sandboxProvisioner.provision({
@@ -322,6 +325,7 @@ export const engineHelper = {
             pieceName: piece.pieceName,
             pieceVersion: piece.pieceVersion,
             pieces: [piece],
+            projectId: operation.projectId,
         })
 
         const input = {
@@ -350,6 +354,7 @@ export const engineHelper = {
             pieceName: piece.pieceName,
             pieceVersion: piece.pieceVersion,
             pieces: [piece],
+            projectId: operation.projectId,
         })
 
         const input = {

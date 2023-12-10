@@ -3,6 +3,7 @@ import { onRequestHookHandler, preSerializationHookHandler } from 'fastify'
 import { logger } from '../helper/logger'
 import { accessTokenManager } from './lib/access-token-manager'
 
+// TODO REMOVE
 export const allowWorkersOnly: onRequestHookHandler = (request, _res, done) => {
     if (request.principal.type !== PrincipalType.WORKER) {
         throw new ActivepiecesError({
@@ -26,6 +27,13 @@ export const allowWorkersOrQueryTokens: onRequestHookHandler = async (request, _
     } else if (query.token) {
         request.principal = await accessTokenManager.extractPrincipal(query.token);
     }
+}
+
+export function extractResourceName(url: string): string | undefined {
+    const resourceRegex = /\/v1\/(.+?)(\/|$)/
+    const resourceMatch = url.match(resourceRegex)
+    const resource = resourceMatch ? resourceMatch[1] : undefined
+    return resource
 }
 
 /**
