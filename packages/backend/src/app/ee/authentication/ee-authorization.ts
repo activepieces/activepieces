@@ -13,7 +13,7 @@ export const platformMustBeOwnedByCurrentUser: onRequestAsyncHookHandler = async
         throw USER_NOT_ALLOWED_TO_PERFORM_OPERATION_ERROR
     }
 
-    const canEditPlatform = request.principal.platform?.role === PlatformRole.OWNER || request.principal.platform?.role === PlatformRole.SERVICE
+    const canEditPlatform = request.principal.platform?.role === PlatformRole.OWNER
     if (!canEditPlatform) {
         throw USER_NOT_ALLOWED_TO_PERFORM_OPERATION_ERROR
     }

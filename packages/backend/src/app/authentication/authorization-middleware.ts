@@ -118,7 +118,7 @@ async function getAPIKeyPrincipal(rawToken: string, request: FastifyRequest): Pr
             projectType: ProjectType.PLATFORM_MANAGED,
             platform: {
                 id: apiKey.platformId,
-                role: PlatformRole.SERVICE,
+                role: PlatformRole.OWNER,
             },
         }
     }
@@ -148,7 +148,7 @@ async function getAPIKeyPrincipal(rawToken: string, request: FastifyRequest): Pr
         projectType: ProjectType.PLATFORM_MANAGED,
         platform: {
             id: apiKey.platformId,
-            role: PlatformRole.SERVICE,
+            role: PlatformRole.OWNER,
         },
     }
 }
