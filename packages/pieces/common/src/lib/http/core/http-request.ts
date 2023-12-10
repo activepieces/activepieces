@@ -1,3 +1,4 @@
+import type { ResponseType } from 'axios';
 import type {HttpMessageBody} from './http-message-body';
 import type {HttpMethod} from './http-method';
 import type {QueryParams} from './query-params';
@@ -12,4 +13,5 @@ export type HttpRequest<RequestBody extends HttpMessageBody = any> = {
 	authentication?: Authentication | undefined;
 	queryParams?: QueryParams | undefined;
     timeout?: number;
+    responseType?: ResponseType;
 };
