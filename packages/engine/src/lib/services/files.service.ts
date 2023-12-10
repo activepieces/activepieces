@@ -6,6 +6,7 @@ import { isString } from '@activepieces/shared'
 const DB_PREFIX_URL = 'db://'
 const FILE_PREFIX_URL = 'file://'
 const MEMORY_PREFIX_URL = 'memory://'
+const STEP_FILE_URL = `${globals.apiUrl}v1/step-files/`
 
 export type DefaultFileSystem = 'db' | 'local' | 'memory'
 
@@ -96,7 +97,16 @@ async function writeDbFile({ stepName, flowId, fileName, data }: { stepName: str
         throw new Error('Failed to store entry ' + response.body)
     }
     const result = await response.json()
-    return DB_PREFIX_URL + `${result.id}`
+
+    const viewToken = await (await fetch(STEP_FILE_URL + result.id + '/generate-view-token', {
+        method: 'GET',
+        headers: {
+            Authorization: 'Bearer ' + globals.workerToken,
+        }
+    })).text();
+
+    const fileUrl = `${STEP_FILE_URL}${result.id}?token=${viewToken}`
+    return fileUrl;
 }
 
 async function readDbFile(absolutePath: string): Promise<ApFile> {

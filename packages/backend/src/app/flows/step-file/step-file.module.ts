@@ -1,5 +1,5 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { allowWorkersOnly, entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
+import { allowWorkersOrQueryTokens, entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { Type } from '@sinclair/typebox'
 import { stepFileService } from './step-file.service'
 import { StepFileUpsert } from '@activepieces/shared'
@@ -7,7 +7,7 @@ import { StatusCodes } from 'http-status-codes'
 
 export const stepFileModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
-    app.addHook('onRequest', allowWorkersOnly)
+    app.addHook('onRequest', allowWorkersOrQueryTokens)
     await app.register(stepFileController, { prefix: '/v1/step-files' })
 }
 
@@ -33,13 +33,12 @@ export const stepFileController: FastifyPluginAsyncTypebox = async (app) => {
         schema: {
             body: StepFileUpsert,
         },
-    }, async (request) => {    
+    }, async (request) => {
         return stepFileService.upsert({
             projectId: request.principal.projectId,
             request: request.body,
         })
     })
-
 
     app.delete('/:id', {
         schema: {
@@ -51,6 +50,20 @@ export const stepFileController: FastifyPluginAsyncTypebox = async (app) => {
         return stepFileService.delete({
             projectId: request.principal.projectId,
             id: request.params.id,
+        })
+    })
+
+    app.get('/:id/generate-view-token', {
+        schema: {
+            params: Type.Object({
+                id: Type.String(),
+            }),
+        },
+    }, async (request) => {
+        return stepFileService.generateViewToken({
+            apId: request.principal.id,
+            projectId: request.principal.projectId,
+            id: request.params.id
         })
     })
 }

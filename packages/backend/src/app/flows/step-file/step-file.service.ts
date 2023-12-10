@@ -1,6 +1,7 @@
-import { ActivepiecesError, ErrorCode, StepFile, StepFileGet, StepFileUpsert, apId, isNil } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, Principal, PrincipalType, StepFile, StepFileGet, StepFileUpsert, apId, isNil } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { StepFileEntity } from './step-file.entity'
+import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 
 const stepFileRepo = databaseConnection.getRepository<StepFile>(StepFileEntity)
 
@@ -62,4 +63,27 @@ export const stepFileService = {
             stepName,
         })
     },
+    async generateViewToken({ apId, projectId, id }: { apId: string, projectId: string, id: string }): Promise<string | null> {
+        const file = await stepFileRepo.findOneBy({
+            id,
+            projectId,
+        });
+        if (isNil(file)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    message: `Step file with id ${id} not found`,
+                },
+            })
+        }
+
+        const principal: Principal = {
+            id: apId,
+            projectId: projectId,
+            type: PrincipalType.USER
+        };
+        const userToken = await accessTokenManager.generateToken(principal);
+
+        return userToken;
+    }
 }

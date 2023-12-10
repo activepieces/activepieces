@@ -6,7 +6,7 @@ export enum JwtSignAlgorithm {
     RS256 = 'RS256',
 }
 
-const ONE_WEEK = 7 * 24 * 3600 * 1000
+const ONE_WEEK = 7 * 24 * 3600
 const KEY_ID = '1'
 const ISSUER = 'activepieces'
 const ALGORITHM = JwtSignAlgorithm.HS256
@@ -15,7 +15,7 @@ export const jwtUtils = {
     async sign({
         payload,
         key,
-        expiresInMilliseconds = ONE_WEEK,
+        expiresInSeconds = ONE_WEEK,
         keyId = KEY_ID,
         algorithm = ALGORITHM,
     }: SignParams): Promise<string> {
@@ -23,7 +23,7 @@ export const jwtUtils = {
         const signOptions: SignOptions = {
             algorithm,
             keyid: keyId,
-            expiresIn: expiresInMilliseconds,
+            expiresIn: expiresInSeconds,
             issuer: ISSUER,
         }
 
@@ -77,7 +77,7 @@ export const jwtUtils = {
 type SignParams = {
     payload: Record<string, unknown>
     key: string
-    expiresInMilliseconds?: number
+    expiresInSeconds?: number
     algorithm?: JwtSignAlgorithm
     keyId?: string
 }
