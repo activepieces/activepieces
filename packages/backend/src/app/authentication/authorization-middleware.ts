@@ -83,7 +83,11 @@ async function getJwtPrincipal(token: string, request: FastifyRequest): Promise<
             },
         })
     }
-
+    // TODO this is a hack to allow token generation for project id
+    const exemptedRoutesFromProjectIdCheck = ['/v1/users/projects/:projectId/token']
+    if (exemptedRoutesFromProjectIdCheck.includes(request.routerPath)) {
+        return principal
+    }
     const projectId = await getProjectIdFromBodyOrQuery(request)
     if (!isNil(projectId) && principal.projectId !== projectId) {
         throw new ActivepiecesError({
