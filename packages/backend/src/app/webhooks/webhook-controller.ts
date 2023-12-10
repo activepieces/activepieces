@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { ActivepiecesError, ApEdition, ErrorCode, EventPayload, ExecutionOutputStatus, Flow, FlowId, FlowInstanceStatus, FlowRun, RunTerminationReason, StopExecutionOutput, WebhookUrlParams } from '@activepieces/shared'
+import { ALL_PRINICPAL_TYPES, ActivepiecesError, ApEdition, ErrorCode, EventPayload, ExecutionOutputStatus, Flow, FlowId, FlowInstanceStatus, FlowRun, RunTerminationReason, StopExecutionOutput, WebhookUrlParams } from '@activepieces/shared'
 import { webhookService } from './webhook-service'
 import { captureException, logger } from '../helper/logger'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
@@ -19,6 +19,9 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
     app.all(
         '/:flowId/sync',
         {
+            config: {
+                allowedPrincipals: ALL_PRINICPAL_TYPES,
+            },
             schema: {
                 params: WebhookUrlParams,
             },
@@ -51,6 +54,9 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
     app.all(
         '/:flowId',
         {
+            config: {
+                allowedPrincipals: ALL_PRINICPAL_TYPES,
+            },
             schema: {
                 params: WebhookUrlParams,
             },
@@ -71,6 +77,9 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
     app.all(
         '/',
         {
+            config: {
+                allowedPrincipals: ALL_PRINICPAL_TYPES,
+            },
             schema: {
                 querystring: WebhookUrlParams,
             },
@@ -91,6 +100,9 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
     app.all(
         '/:flowId/simulate',
         {
+            config: {
+                allowedPrincipals: ALL_PRINICPAL_TYPES,
+            },
             schema: {
                 params: WebhookUrlParams,
             },
