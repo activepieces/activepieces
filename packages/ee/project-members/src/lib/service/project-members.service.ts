@@ -5,9 +5,9 @@ import { environment } from '@activepieces/ui/common';
 import {
   AcceptInvitationRequest,
   AcceptProjectResponse,
-  ListProjectMembersRequest,
+  ListProjectMembersRequestQuery,
   ProjectMember,
-  SendInvitationRequest,
+  AddProjectMemberRequestBody,
 } from '@activepieces/ee-shared';
 import { SeekPage } from '@activepieces/shared';
 
@@ -24,9 +24,9 @@ export class ProjectMemberService {
     );
   }
 
-  invite(request: SendInvitationRequest): Observable<void> {
+  invite(request: AddProjectMemberRequestBody): Observable<void> {
     return this.http.post<void>(
-      environment.apiUrl + '/project-members/invite',
+      environment.apiUrl + '/project-members',
       request
     );
   }
@@ -38,11 +38,12 @@ export class ProjectMemberService {
   }
 
   list(
-    request: ListProjectMembersRequest
+    request: ListProjectMembersRequestQuery
   ): Observable<SeekPage<ProjectMember>> {
     const queryParams: { [key: string]: string | number } = {
       limit: request.limit ?? 10,
       cursor: request.cursor || '',
+      projectId: request.projectId,
     };
     return this.http.get<SeekPage<ProjectMember>>(
       environment.apiUrl + '/project-members',

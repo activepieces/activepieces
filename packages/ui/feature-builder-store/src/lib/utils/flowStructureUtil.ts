@@ -8,14 +8,14 @@ import {
   UpdateTriggerRequest,
   flowHelper,
 } from '@activepieces/shared';
-import { FlowItem } from '../model/flow-item';
+import { Step, StepWithIndex } from '../model/step';
 
 // TODO REMOVE THIS FILE AND REPLACE IT WITH FUNCTIONS IN flowHelper.ts
 export class FlowStructureUtil {
   private static _findPathToStep(
-    stepToFind: FlowItem,
-    stepToSearch: FlowItem | undefined
-  ): FlowItem[] | undefined {
+    stepToFind: Step,
+    stepToSearch: Step | undefined
+  ): Step[] | undefined {
     if (stepToSearch === undefined) {
       return undefined;
     }
@@ -61,9 +61,9 @@ export class FlowStructureUtil {
   }
 
   public static findPathToStep(
-    stepToFind: FlowItem,
+    stepToFind: Step,
     trigger: Trigger
-  ): FlowItem[] {
+  ): StepWithIndex[] {
     if (stepToFind.name === trigger.name) {
       return [];
     }
@@ -77,7 +77,7 @@ export class FlowStructureUtil {
         indexInDfsTraversal: FlowStructureUtil.findStepIndex(trigger, f.name),
       };
     });
-    return [trigger, ...pathWithIndex];
+    return [{ ...trigger, indexInDfsTraversal: 1 }, ...pathWithIndex];
   }
 
   public static findStepIndex(trigger: Trigger, stepName: string) {

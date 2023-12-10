@@ -1,5 +1,5 @@
 import { SigningKey, SigningKeyId, PlatformId, AddSigningKeyResponse } from '@activepieces/ee-shared'
-import { SeekPage, UserId, apId, spreadIfDefined } from '@activepieces/shared'
+import { SeekPage, UserId, apId } from '@activepieces/shared'
 import { signingKeyGenerator } from './signing-key-generator'
 import { databaseConnection } from '../../database/database-connection'
 import { SigningKeyEntity } from './signing-key-entity'
@@ -30,7 +30,7 @@ export const signingKeyService = {
 
     async list({ platformId }: ListParams): Promise<SeekPage<SigningKey>> {
         const data = await repo.findBy({
-            ...spreadIfDefined('platformId', platformId),
+            platformId,
         })
 
         return {

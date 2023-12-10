@@ -103,6 +103,7 @@ export const PieceMetadataEntity = new EntitySchema<PieceMetadataSchema>({
                 name: 'projectId',
                 foreignKeyConstraintName: 'fk_piece_metadata_project_id',
             },
+            nullable: true,
         },
         archiveId: {
             type: 'one-to-one',

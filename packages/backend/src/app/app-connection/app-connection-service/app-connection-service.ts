@@ -262,7 +262,6 @@ const engineValidateAuth = async (
             pieceType: pieceMetadata.pieceType,
             pieceName: pieceMetadata.name,
             pieceVersion: pieceMetadata.version,
-            projectId,
         },
         auth,
         projectId,

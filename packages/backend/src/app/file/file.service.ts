@@ -7,9 +7,10 @@ import { fileCompressor } from './utils/file-compressor'
 
 type SaveParams = {
     fileId?: FileId | undefined
-    projectId: ProjectId
+    projectId?: ProjectId
     data: Buffer
     type: FileType
+    platformId?: string
     compression: FileCompression
 }
 
@@ -25,10 +26,11 @@ type DeleteOneParams = BaseOneParams
 const fileRepo = databaseConnection.getRepository<File>(FileEntity)
 
 export const fileService = {
-    async save({ fileId, projectId, data, type, compression }: SaveParams): Promise<File> {
+    async save({ fileId, projectId, platformId, data, type, compression }: SaveParams): Promise<File> {
         const file = {
             id: fileId ?? apId(),
             projectId,
+            platformId,
             data,
             type,
             compression,

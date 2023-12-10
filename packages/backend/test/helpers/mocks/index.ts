@@ -1,4 +1,4 @@
-import { KeyAlgorithm, SigningKey, Platform, OAuthApp, FilteredPieceBehavior, CustomDomain, CustomDomainStatus, OtpModel, OtpType, OtpState, ProjectMember } from '@activepieces/ee-shared'
+import { KeyAlgorithm, SigningKey, Platform, OAuthApp, FilteredPieceBehavior, CustomDomain, CustomDomainStatus, OtpModel, OtpType, OtpState, ProjectMember, ApiKey, ProjectMemberRole, ProjectMemberStatus } from '@activepieces/ee-shared'
 import { UserStatus, User, apId, Project, NotificationStatus, ProjectType, PieceType, PackageType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
@@ -6,6 +6,7 @@ import bcrypt from 'bcrypt'
 import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oauth-app.entity'
 import { encryptString } from '../../../src/app/helper/encryption'
 import dayjs from 'dayjs'
+import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
 
 export const createMockUser = (user?: Partial<User>): User => {
     return {
@@ -73,10 +74,25 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         smtpSenderEmail: platform?.smtpSenderEmail ?? faker.internet.email(),
         privacyPolicyUrl: platform?.privacyPolicyUrl ?? faker.internet.url(),
         termsOfServiceUrl: platform?.termsOfServiceUrl ?? faker.internet.url(),
+        embeddingEnabled: platform?.embeddingEnabled ?? faker.datatype.boolean(),
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
         showPoweredBy: platform?.showPoweredBy ?? faker.datatype.boolean(),
     }
 }
+
+export const createMockProjectMember = (projectMember?: Partial<ProjectMember>): ProjectMember => {
+    return {
+        id: projectMember?.id ?? apId(),
+        created: projectMember?.created ?? faker.date.recent().toISOString(),
+        updated: projectMember?.updated ?? faker.date.recent().toISOString(),
+        platformId: projectMember?.platformId ?? null,
+        email: projectMember?.email ?? faker.internet.email(),
+        projectId: projectMember?.projectId ?? apId(),
+        role: projectMember?.role ?? faker.helpers.enumValue(ProjectMemberRole),
+        status: projectMember?.status ?? faker.helpers.enumValue(ProjectMemberStatus),
+    }
+}
+
 
 const MOCK_SIGNING_KEY_PUBLIC_KEY = `-----BEGIN RSA PUBLIC KEY-----
 MIICCgKCAgEAlnd5vGP/1bzcndN/yRD+ZTd6tuemxaJd+12bOZ2QCXcTM03AKSp3
@@ -91,6 +107,20 @@ kxbNAUSuLQESkfZq1Dw5+tdBDJr29bxjmiSggyittTYn1B3iHACNoe4zj9sMQQIf
 j9mmntXsa/leIwBVspiEOHYZwJOe5+goSd8K1VIQJxC1DVBxB2eHxMvuo3eyJ0HE
 DlebIeZy4zrE1LPgRic1kfdemyxvuN3iwZnPGiY79nL1ZNDM3M4ApSMCAwEAAQ==
 -----END RSA PUBLIC KEY-----`
+
+export const createMockApiKey = (apiKey?: Partial<Omit<ApiKey, 'hashedValue' | 'truncatedValue'>>): ApiKey & { value: string } => {
+    const { secretHashed, secretTruncated, secret } = generateApiKey()
+    return {
+        id: apiKey?.id ?? apId(),
+        created: apiKey?.created ?? faker.date.recent().toISOString(),
+        updated: apiKey?.updated ?? faker.date.recent().toISOString(),
+        displayName: apiKey?.displayName ?? faker.lorem.word(),
+        platformId: apiKey?.platformId ?? apId(),
+        hashedValue: secretHashed,
+        value: secret,
+        truncatedValue: secretTruncated,
+    }
+}
 
 export const createMockSigningKey = (signingKey?: Partial<SigningKey>): SigningKey => {
     return {
@@ -144,7 +174,7 @@ export const createMockPieceMetadata = (pieceMetadata?: Partial<Omit<PieceMetada
 
 export const createMockCustomDomain = (customDomain?: Partial<CustomDomain>): CustomDomain => {
     return {
-        id: customDomain?. id ?? apId(),
+        id: customDomain?.id ?? apId(),
         created: customDomain?.created ?? faker.date.recent().toISOString(),
         updated: customDomain?.updated ?? faker.date.recent().toISOString(),
         domain: customDomain?.domain ?? faker.internet.domainName(),
@@ -158,7 +188,7 @@ export const createMockOtp = (otp?: Partial<OtpModel>): OtpModel => {
     const twentyMinutesAgo = now.subtract(20, 'minutes')
 
     return {
-        id: otp?. id ?? apId(),
+        id: otp?.id ?? apId(),
         created: otp?.created ?? faker.date.recent().toISOString(),
         updated: otp?.updated ?? faker.date.between({ from: twentyMinutesAgo.toDate(), to: now.toDate() }).toISOString(),
         type: otp?.type ?? faker.helpers.enumValue(OtpType),
