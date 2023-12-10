@@ -102,7 +102,7 @@ async function writeDbFile({ stepName, flowId, fileName, data }: { stepName: str
         method: 'GET',
         headers: {
             Authorization: 'Bearer ' + globals.workerToken,
-        }
+        },
     })).text()
 
     const fileUrl = `${STEP_FILE_URL}${result.id}?token=${viewToken}`

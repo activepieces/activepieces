@@ -18,14 +18,15 @@ export const allowWorkersOnly: onRequestHookHandler = (request, _res, done) => {
 export const allowWorkersOrQueryTokens: onRequestHookHandler = async (request, _res) => {
     const query: {
         token: string
-    } = request.query as any;
+    } = request.query as { token: string }
     if (request.principal.type !== PrincipalType.WORKER && !query.token) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,
             params: {},
         })
-    } else if (query.token) {
-        request.principal = await accessTokenManager.extractPrincipal(query.token);
+    }
+    else if (query.token) {
+        request.principal = await accessTokenManager.extractPrincipal(query.token)
     }
 }
 

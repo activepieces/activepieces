@@ -79,7 +79,7 @@ export const stepFileService = {
 
         const principal: Principal = {
             id: apId,
-            projectId: projectId,
+            projectId,
             type: PrincipalType.USER,
         }
         const userToken = await accessTokenManager.generateToken(principal)
