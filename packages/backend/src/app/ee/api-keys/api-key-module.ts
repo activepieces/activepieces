@@ -7,7 +7,7 @@ import { StatusCodes } from 'http-status-codes'
 import { ApiKeyResponseWithValue } from '@activepieces/ee-shared'
 
 export const apiKeyModule: FastifyPluginAsyncTypebox = async (app) => {
-    app.addHook('onRequest', platformMustBeOwnedByCurrentUser)
+    app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
     await app.register(apiKeyController, { prefix: '/v1/api-keys' })
 }
 
@@ -18,7 +18,6 @@ export const apiKeyController: FastifyPluginAsyncTypebox = async (app) => {
         assertNotNullOrUndefined(platformId, 'platformId')
 
         const newApiKey = await apiKeyService.add({
-            userId: req.principal.id,
             platformId,
             displayName: req.body.displayName,
         })

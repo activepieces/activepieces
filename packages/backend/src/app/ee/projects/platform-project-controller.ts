@@ -1,24 +1,27 @@
-import { ActivepiecesError, ErrorCode, Project, ProjectType, SeekPage, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { EndpointScope, PrincipalType, ProjectType, SeekPage, assertNotNullOrUndefined } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
 import { platformProjectService } from './platform-project-service'
 import { projectService } from '../../project/project-service'
-import { accessTokenManager } from '../../authentication/lib/access-token-manager'
-import { CreatePlatformProjectRequest, DEFAULT_PLATFORM_PLAN, UpdateProjectPlatformRequest } from '@activepieces/ee-shared'
-import { platformService } from '../platform/platform.service'
+import { CreatePlatformProjectRequest, DEFAULT_PLATFORM_PLAN, ProjectWithUsageAndPlanResponse, UpdateProjectPlatformRequest } from '@activepieces/ee-shared'
 import { plansService } from '../billing/project-plan/project-plan.service'
 import { StatusCodes } from 'http-status-codes'
+import { usersProjectController } from './platform-user-project-controller'
+import { platformService } from '../platform/platform.service'
 
 export const platformProjectModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(platformProjectController, { prefix: '/v1/projects' })
+    await app.register(usersProjectController, { prefix: '/v1/users/projects' })
 }
 
 const platformProjectController: FastifyPluginCallbackTypebox = (fastify, _opts, done) => {
 
-    fastify.post( '/', CreateProjectRequest, async (request, reply) => {
+    fastify.post('/', CreateProjectRequest, async (request, reply) => {
         const platformId = request.principal.platform?.id
         assertNotNullOrUndefined(platformId, 'platformId')
+        const platform = await platformService.getOneOrThrow(platformId)
+
         const project = await projectService.create({
-            ownerId: request.principal.id,
+            ownerId: platform.ownerId,
             displayName: request.body.displayName,
             platformId,
             type: ProjectType.PLATFORM_MANAGED,
@@ -28,63 +31,33 @@ const platformProjectController: FastifyPluginCallbackTypebox = (fastify, _opts,
             subscription: null,
             planLimits: DEFAULT_PLATFORM_PLAN,
         })
-        await reply.status(StatusCodes.CREATED).send(project)
+        const projectWithUsage = await platformProjectService.getWithPlanAndUsageOrThrow(project.id)
+        await reply.status(StatusCodes.CREATED).send(projectWithUsage)
     },
     )
 
-    fastify.get('/', ListProjectRequest, async (request) => {
+    fastify.get('/', ListProjectRequestForApiKey, async (request) => {
+        const platformId = request.principal.platform?.id
+        assertNotNullOrUndefined(platformId, 'platformId')
         return platformProjectService.getAll({
-            ownerId: request.principal.id,
-            platformId: request.query.platformId,
+            platformId,
+            ownerId: undefined,
         })
     })
 
 
-
-    fastify.post(
-        '/:projectId/token',
-        {
-            schema: {
-                params: Type.Object({
-                    projectId: Type.String(),
-                }),
-            },
-        },
-        async (request) => {
-            const allProjects = await platformProjectService.getAll({
-                ownerId: request.principal.id,
-            })
-            const project = allProjects.data.find((project) => project.id === request.params.projectId)
-            if (!project) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.ENTITY_NOT_FOUND,
-                    params: {
-                        entityId: request.params.projectId,
-                        entityType: 'project',
-                    },
-                })
-            }
-            const platform = isNil(project.platformId) ? null : await platformService.getOne(project.platformId)
-            return {
-                token: await accessTokenManager.generateToken({
-                    id: request.principal.id,
-                    type: request.principal.type,
-                    projectId: request.params.projectId,
-                    projectType: project.type,
-                    platform: isNil(platform) ? undefined : {
-                        id: platform.id,
-                        role: platform.ownerId === request.principal.id ? 'OWNER' : 'MEMBER',
-                    },
-                }),
-            }
-        },
-    )
-
-    fastify.post( '/:projectId', UpdateProjectRequest, async (request) => {
+    fastify.post('/:id', UpdateProjectRequest, async (request) => {
+        let userId = request.principal.id
+        if (request.principal.type === PrincipalType.SERVICE) {
+            const platformId = request.principal.platform?.id
+            assertNotNullOrUndefined(platformId, 'platformId')
+            const platform = await platformService.getOneOrThrow(platformId)
+            userId = platform.ownerId
+        }
         return platformProjectService.update({
             platformId: request.principal.platform?.id,
-            projectId: request.params.projectId,
-            userId: request.principal.id,
+            projectId: request.params.id,
+            userId,
             request: request.body,
         })
 
@@ -93,37 +66,50 @@ const platformProjectController: FastifyPluginCallbackTypebox = (fastify, _opts,
     done()
 }
 
+
 const UpdateProjectRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        scope: EndpointScope.PLATFORM,
+    },
     schema: {
         tags: ['projects'],
         params: Type.Object({
-            projectId: Type.String(),
+            id: Type.String(),
         }),
-        Response: {
-            [StatusCodes.OK]: Project,
+        response: {
+            [StatusCodes.OK]: ProjectWithUsageAndPlanResponse,
         },
         body: UpdateProjectPlatformRequest,
     },
 }
 
-const CreateProjectRequest =   {
+const CreateProjectRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        scope: EndpointScope.PLATFORM,
+    },
     schema: {
         tags: ['projects'],
-        Response: {
-            [StatusCodes.OK]: Project,
+        response: {
+            [StatusCodes.CREATED]: ProjectWithUsageAndPlanResponse,
         },
         body: CreatePlatformProjectRequest,
     },
 }
 
-const ListProjectRequest = {
+const ListProjectRequestForApiKey = {
+    config: {
+        allowedPrincipals: [PrincipalType.SERVICE],
+        scope: EndpointScope.PLATFORM,
+    },
     schema: {
         response: {
-            [StatusCodes.OK]: SeekPage(Project),
+            [StatusCodes.OK]: SeekPage(ProjectWithUsageAndPlanResponse),
         },
-        tags: ['projects'],
         querystring: Type.Object({
-            platformId: Type.Optional(Type.String()),
+            externalId: Type.Optional(Type.String()),
         }),
+        tags: ['projects'],
     },
 }

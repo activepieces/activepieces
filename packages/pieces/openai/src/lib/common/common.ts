@@ -83,11 +83,17 @@ export const streamToBuffer = (stream: any) => {
 }
 
 export const calculateTokensFromString = (string: string, model: string) => {
-    const encoder = encoding_for_model(model as any);
-    const tokens = encoder.encode(string);
-    encoder.free();
+    try {
+        const encoder = encoding_for_model(model as any);
+        const tokens = encoder.encode(string);
+        encoder.free();
 
-    return tokens.length;
+        return tokens.length;
+    }
+    catch (e) {
+        // Model not supported by tiktoken, every 4 chars is a token
+        return Math.round(string.length / 4);
+    }
 }
 
 export const calculateMessagesTokenSize = async (messages: any[], model: string) => {

@@ -37,9 +37,9 @@ import { cloudChatbotHooks } from './ee/chatbot/cloud/cloud-chatbot.hook'
 import { cloudDatasourceHooks } from './ee/chatbot/cloud/cloud-datasources.hook'
 import { qdrantEmbeddings } from './ee/chatbot/cloud/qdrant-embeddings'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
-import { cloudRunHooks } from './ee/flow-run/cloud-flow-run-hooks'
+import { platformRunHooks } from './ee/flow-run/cloud-flow-run-hooks'
 import { flowTemplateModule } from './ee/flow-template/flow-template.module'
-import { cloudWorkerHooks } from './ee/flow-worker/cloud-flow-worker-hooks'
+import { platformWorkerHooks } from './ee/flow-worker/cloud-flow-worker-hooks'
 import { initilizeSentry } from './ee/helper/exception-handler'
 import { adminPieceModule } from './ee/pieces/admin-piece-module'
 import { cloudPieceServiceHooks } from './ee/pieces/piece-service/cloud-piece-service-hooks'
@@ -75,7 +75,7 @@ import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local
 import { billingModule } from './ee/billing/billing/billing.module'
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
 import fastifyFavicon from 'fastify-favicon'
-import { ProjectWithUsageAndPlanResponse } from '@activepieces/ee-shared'
+import { ProjectMember, ProjectWithUsageAndPlanResponse } from '@activepieces/ee-shared'
 import { authorizationMiddleware } from './authentication/authorization-middleware'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
 
@@ -107,6 +107,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             ],
             components: {
                 schemas: {
+                    'project-member': ProjectMember,
                     'project': ProjectWithUsageAndPlanResponse,
                     'flow': Flow,
                     'app-connection': AppConnectionWithoutSensitiveData,
@@ -165,8 +166,8 @@ export const setupApp = async (): Promise<FastifyInstance> => {
         }
     })
 
-    app.addHook('onRequest', authorizationMiddleware)
-    app.addHook('onRequest', rbacAuthMiddleware)
+    app.addHook('preHandler', authorizationMiddleware)
+    app.addHook('preHandler', rbacAuthMiddleware)
     app.setErrorHandler(errorHandler)
     await app.register(fileModule)
     await app.register(flagModule)
@@ -239,8 +240,8 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             datasourceHooks.setHooks(cloudDatasourceHooks)
             embeddings.set(qdrantEmbeddings)
             appConnectionsHooks.setHooks(cloudAppConnectionsHooks)
-            flowWorkerHooks.setHooks(cloudWorkerHooks)
-            flowRunHooks.setHooks(cloudRunHooks)
+            flowWorkerHooks.setHooks(platformWorkerHooks)
+            flowRunHooks.setHooks(platformRunHooks)
             pieceServiceHooks.set(cloudPieceServiceHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             flagHooks.set(enterpriseFlagsHooks)
@@ -264,6 +265,8 @@ export const setupApp = async (): Promise<FastifyInstance> => {
                 service: platformOAuth2Service,
             })
             pieceServiceHooks.set(cloudPieceServiceHooks)
+            flowRunHooks.setHooks(platformRunHooks)
+            flowWorkerHooks.setHooks(platformWorkerHooks)
             authenticationServiceHooks.set(enterpriseAuthenticationServiceHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             flagHooks.set(enterpriseFlagsHooks)

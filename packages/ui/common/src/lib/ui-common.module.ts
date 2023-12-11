@@ -64,6 +64,7 @@ import { CommaSeparatedPipe } from './pipe/comma-seperated.pipe';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { ImgFallbackDirective } from './directives/image-fallback.directive';
 import { MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -89,6 +90,7 @@ const exportedImports = [
   NgxColorsModule,
   MatSliderModule,
   MatSnackBarModule,
+  ScrollingModule,
 ];
 const exportedDeclarations = [
   UploadFileControlComponent,

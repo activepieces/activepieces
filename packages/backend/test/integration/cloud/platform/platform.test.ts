@@ -4,7 +4,7 @@ import { generateMockToken } from '../../../helpers/auth'
 import { createMockUser, createMockPlatform } from '../../../helpers/mocks'
 import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
-import { PrincipalType, apId } from '@activepieces/shared'
+import { PlatformRole, PrincipalType, apId } from '@activepieces/shared'
 import { FilteredPieceBehavior, LocalesEnum, UpdatePlatformRequestBody } from '@activepieces/ee-shared'
 
 let app: FastifyInstance | null = null
@@ -28,7 +28,7 @@ describe('Platform API', () => {
             const mockPlatform = createMockPlatform({ ownerId: mockUser.id, embeddingEnabled: true })
             await databaseConnection.getRepository('platform').save(mockPlatform)
             const testToken = await generateMockToken({
-                type: PrincipalType.USER, id: mockUser.id, platform: { id: mockPlatform.id, role: 'OWNER' },
+                type: PrincipalType.USER, id: mockUser.id, platform: { id: mockPlatform.id, role: PlatformRole.OWNER },
             })
             const requestBody: UpdatePlatformRequestBody = {
                 name: 'updated name',
@@ -119,7 +119,9 @@ describe('Platform API', () => {
         it('fails if platform doesn\'t exist', async () => {
             // arrange
             const randomPlatformId = apId()
-            const testToken = await generateMockToken()
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+            })
 
             // act
             const response = await app?.inject({
@@ -154,7 +156,7 @@ describe('Platform API', () => {
                 id: mockOwnerUser.id,
                 platform: {
                     id: mockPlatform.id,
-                    role: 'OWNER',
+                    role: PlatformRole.OWNER,
                 },
             })
 
@@ -197,7 +199,7 @@ describe('Platform API', () => {
                 id: mockMemberUserId,
                 platform: {
                     id: mockPlatform.id,
-                    role: 'MEMBER',
+                    role: PlatformRole.MEMBER,
                 },
             })
 
@@ -229,7 +231,7 @@ describe('Platform API', () => {
                 type: PrincipalType.USER,
                 platform: {
                     id: mockPlatformId,
-                    role: 'OWNER',
+                    role: PlatformRole.OWNER,
                 },
             })
 
@@ -255,7 +257,7 @@ describe('Platform API', () => {
                 type: PrincipalType.USER,
                 platform: {
                     id: randomPlatformId,
-                    role: 'OWNER',
+                    role: PlatformRole.OWNER,
                 },
             })
 

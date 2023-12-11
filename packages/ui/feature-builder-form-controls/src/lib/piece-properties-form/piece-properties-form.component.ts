@@ -348,6 +348,9 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
           }
           return JSON.stringify(prev) === JSON.stringify(curr);
         }),
+        tap(() => {
+          this.form.controls[obj.propertyKey].setValue(undefined);
+        }),
         startWith(this.form.controls[rk].value),
         tap(() => {
           this.refreshableConfigsLoadingFlags$[obj.propertyKey].next(true);

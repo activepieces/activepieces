@@ -13,7 +13,7 @@ const GetOneRequest = Type.Object({
 type GetOneRequest = Static<typeof GetOneRequest>
 
 export const customDomainModule: FastifyPluginAsyncTypebox = async (app) => {
-    app.addHook('onRequest', platformMustBeOwnedByCurrentUser)
+    app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
     await app.register(customDomainController, { prefix: '/v1/custom-domains' })
 }
 

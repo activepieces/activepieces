@@ -1,8 +1,9 @@
 import { FastifyRequest } from 'fastify'
-import { ActivepiecesError, ApEdition, ErrorCode, isNil } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ErrorCode, PrincipalType, isNil } from '@activepieces/shared'
 import { projectMemberService } from '../../ee/project-members/project-member.service'
 import { ProjectMemberPermission, ProjectMemberRole, ProjectMemberRoleToPermissions } from '@activepieces/ee-shared'
 import { getEdition } from '../../helper/secret-helper'
+import { extractResourceName } from '../../authentication/authorization'
 
 const ProjectMemberPermissionResourceAndAction = {
     [ProjectMemberPermission.READ_FLOW]: {
@@ -53,6 +54,9 @@ export const rbacAuthMiddleware = async (req: FastifyRequest): Promise<void> => 
     if (!managedResources.includes(resource)) {
         return
     }
+    if (req.principal.type === PrincipalType.SERVICE) {
+        return
+    }
     const projectMemberRole = await projectMemberService.getRole({
         projectId: req.principal.projectId,
         userId: req.principal.id,
@@ -96,12 +100,4 @@ async function hasPermission({
         return permissionResource === resource && permissionAction.includes(action)
     })
     return !!permission
-}
-
-
-function extractResourceName(url: string): string | undefined {
-    const resourceRegex = /\/v1\/(.+?)(\/|$)/
-    const resourceMatch = url.match(resourceRegex)
-    const resource = resourceMatch ? resourceMatch[1] : undefined
-    return resource
 }

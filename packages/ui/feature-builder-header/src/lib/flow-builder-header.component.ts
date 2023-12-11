@@ -44,6 +44,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
   fullLogo$: Observable<string>;
   setTitle$: Observable<void>;
   isInEmbedded$: Observable<boolean>;
+  showBackButtonAndFolderName$: Observable<boolean>;
   constructor(
     public dialogService: MatDialog,
     private store: Store,
@@ -57,6 +58,8 @@ export class FlowBuilderHeaderComponent implements OnInit {
     private navigationService: NavigationService
   ) {
     this.isInEmbedded$ = this.embeddingService.getIsInEmbedding$();
+    this.showBackButtonAndFolderName$ =
+      this.embeddingService.getShowFolderNameAndBackButton$();
     this.fullLogo$ = this.flagService
       .getLogos()
       .pipe(map((logos) => logos.fullLogoUrl));

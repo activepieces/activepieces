@@ -1,6 +1,6 @@
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { SeekPage } from '@activepieces/shared'
+import { ALL_PRINICPAL_TYPES, SeekPage } from '@activepieces/shared'
 import { appCredentialService } from './app-credentials.service'
 import { ListAppCredentialsRequest, UpsertAppCredentialRequest,  AppCredential, AppCredentialId, AppCredentialType } from '@activepieces/ee-shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
@@ -14,6 +14,9 @@ const DEFAULT_LIMIT_SIZE = 10
 const appCredentialController: FastifyPluginAsyncTypebox = async (fastify) => {
 
     fastify.get('/', {
+        config: {
+            allowedPrincipals: ALL_PRINICPAL_TYPES,
+        },
         schema: {
             querystring: ListAppCredentialsRequest,
         },

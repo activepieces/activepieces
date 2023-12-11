@@ -1,5 +1,5 @@
 import { PlatformId, ApiKeyResponseWithValue, ApiKey } from '@activepieces/ee-shared'
-import { SeekPage, UserId, apId, assertNotNullOrUndefined, secureApId } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, SeekPage, apId, assertNotNullOrUndefined, isNil, secureApId } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { ApiKeyEntity } from './api-key-entity'
 import { hashSHA256 } from '../../helper/crypto'
@@ -8,11 +8,10 @@ const API_KEY_TOKEN_LENGTH = 64
 const repo = databaseConnection.getRepository<ApiKey>(ApiKeyEntity)
 
 export const apiKeyService = {
-    async add({ userId, platformId, displayName }: AddParams): Promise<ApiKeyResponseWithValue> {
+    async add({ platformId, displayName }: AddParams): Promise<ApiKeyResponseWithValue> {
         const generatedApiKey = generateApiKey()
         const savedApiKey = await repo.save({
             id: apId(),
-            userId,
             platformId,
             displayName,
             hashedValue: generatedApiKey.secretHashed,
@@ -41,6 +40,18 @@ export const apiKeyService = {
         }
     },
     async delete({ platformId, id }: DeleteParams): Promise<void> {
+        const apiKey = await repo.findOneBy({
+            platformId,
+            id,
+        })
+        if (isNil(apiKey)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    message: `api key with id ${id} not found`,
+                },
+            })
+        }
         await repo.delete({
             platformId,
             id,
@@ -49,7 +60,7 @@ export const apiKeyService = {
 }
 
 
-function generateApiKey() {
+export function generateApiKey() {
     const secretValue = secureApId(API_KEY_TOKEN_LENGTH - 3)
     const secretKey = `sk-${secretValue}`
     return {
@@ -61,7 +72,6 @@ function generateApiKey() {
 
 
 type AddParams = {
-    userId: UserId
     platformId: PlatformId
     displayName: string
 }
