@@ -138,7 +138,7 @@ export const flowService = {
         return flow
     },
 
-    async update({ id, userId, projectId, operation, lock = true }: UpdateParams): Promise<Flow> {
+    async update({ id, userId, projectId, operation, lock = true }: UpdateParams): Promise<PopulatedFlow> {
         const flowLock = lock ? await acquireLock({
             key: id,
             timeout: 10000,
@@ -176,7 +176,10 @@ export const flowService = {
                 await flowVersionService.applyOperation(userId, projectId, lastVersion, operation)
             }
 
-            return await flowService.getOneOrThrow({ id, projectId })
+            return await flowService.getOnePopulatedOrThrow({
+                id,
+                projectId,
+            })
         }
         finally {
             await flowLock?.release()
