@@ -21,6 +21,7 @@ import {
 import {
   ApEdition,
   ApFlagId,
+  SignUpRequest,
   UnhandledSwitchCaseError,
   UserStatus,
 } from '@activepieces/shared';
@@ -85,7 +86,12 @@ export class SignUpComponent implements OnInit {
   signUp() {
     if (this.registrationForm.valid && !this.loading) {
       this.loading = true;
-      const request = this.registrationForm.getRawValue();
+      const referringUserId =
+        this.activeRoute.snapshot.queryParamMap.get('referral') ?? undefined;
+      const request: SignUpRequest = {
+        ...this.registrationForm.getRawValue(),
+        referringUserId,
+      };
       this.signUp$ = this.authenticationService.signUp(request).pipe(
         tap((response) => {
           if (
@@ -97,20 +103,6 @@ export class SignUpComponent implements OnInit {
             this.authenticationService.saveToken(response.body.token);
             this.authenticationService.saveUser(response);
           }
-        }),
-        switchMap((response) => {
-          if (this.registrationForm.controls.newsLetter.value && response) {
-            return this.authenticationService
-              .saveNewsLetterSubscriber(request.email)
-              .pipe(
-                map(() => response),
-                catchError((err) => {
-                  console.error(err);
-                  return of(response);
-                })
-              );
-          }
-          return of(response);
         }),
         tap((response) => {
           if (response && response.body?.status === UserStatus.VERIFIED) {

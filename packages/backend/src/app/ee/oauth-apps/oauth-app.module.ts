@@ -36,7 +36,7 @@ const readOauthAppController: FastifyPluginAsyncTypebox = async (app) => {
 }
 
 const writeOauthAppModule: FastifyPluginAsyncTypebox = async (app) => {
-    app.addHook('onRequest', platformMustBeOwnedByCurrentUser)
+    app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
     await app.register(oauthAppController, { prefix: '/v1/oauth-apps' })
 }
 

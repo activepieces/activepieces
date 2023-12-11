@@ -66,6 +66,7 @@ export class EmbedRedirectComponent implements OnDestroy, OnInit {
         hideSideNav: event.data.data.hideSidebar,
         isEmbedded: true,
         prefix: event.data.data.prefix,
+        disableNavigationInBuilder: event.data.data.disableNavigationInBuilder,
       });
       this.router.navigate([event.data.data.initialRoute], {
         skipLocationChange: true,

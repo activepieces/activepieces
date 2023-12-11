@@ -89,13 +89,12 @@ describe('Authentication API', () => {
             })
         })
 
-        it('Allows invited users to continue platform sign up', async () => {
+        it('auto verify invited users to continue platform sign up', async () => {
             // arrange
             const mockPlatformId = faker.string.nanoid(21)
 
             const mockPlatformOwner = createMockUser({ platformId: mockPlatformId })
-            const mockInvitedUser = createMockUser({ platformId: mockPlatformId, status: UserStatus.INVITED })
-            await databaseConnection.getRepository('user').save([mockPlatformOwner, mockInvitedUser])
+            await databaseConnection.getRepository('user').save([mockPlatformOwner])
 
             const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockPlatformOwner.id })
             await databaseConnection.getRepository('platform').save(mockPlatform)
@@ -103,18 +102,21 @@ describe('Authentication API', () => {
             const mockProject = createMockProject({ ownerId: mockPlatformOwner.id, platformId: mockPlatformId })
             await databaseConnection.getRepository('project').save(mockProject)
 
+            const mockedUpEmail = faker.internet.email()
             const mockProjectMember = createProjectMember({
                 projectId: mockProject.id,
-                userId: mockInvitedUser.id,
+                email: mockedUpEmail,
+                platformId: mockPlatform.id,
                 status: ProjectMemberStatus.ACTIVE,
                 role: ProjectMemberRole.ADMIN,
             })
             await databaseConnection.getRepository('project_member').save(mockProjectMember)
 
+
             const mockCustomDomain = createMockCustomDomain({ platformId: mockPlatform.id })
             await databaseConnection.getRepository('custom_domain').save(mockCustomDomain)
 
-            const mockSignUpRequest = createMockSignUpRequest({ email: mockInvitedUser.email })
+            const mockSignUpRequest = createMockSignUpRequest({ email: mockedUpEmail })
 
             // act
             const response = await app?.inject({
@@ -140,8 +142,7 @@ describe('Authentication API', () => {
             const mockPlatformId = faker.string.nanoid(21)
 
             const mockPlatformOwner = createMockUser({ platformId: mockPlatformId })
-            const mockInvitedUser = createMockUser({ platformId: mockPlatformId, status: UserStatus.INVITED })
-            await databaseConnection.getRepository('user').save([mockPlatformOwner, mockInvitedUser])
+            await databaseConnection.getRepository('user').save([mockPlatformOwner])
 
             const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockPlatformOwner.id })
             await databaseConnection.getRepository('platform').save(mockPlatform)
@@ -149,7 +150,8 @@ describe('Authentication API', () => {
             const mockCustomDomain = createMockCustomDomain({ platformId: mockPlatform.id })
             await databaseConnection.getRepository('custom_domain').save(mockCustomDomain)
 
-            const mockSignUpRequest = createMockSignUpRequest({ email: mockInvitedUser.email })
+            const mockedUpEmail = faker.internet.email()
+            const mockSignUpRequest = createMockSignUpRequest({ email: mockedUpEmail })
 
             // act
             const response = await app?.inject({
@@ -167,7 +169,7 @@ describe('Authentication API', () => {
 
             expect(responseBody?.code).toBe('ENTITY_NOT_FOUND')
             expect(responseBody?.params?.entityType).toBe('project')
-            expect(responseBody?.params?.message).toBe(`no projects found for the user=${mockInvitedUser.id}`)
+            expect(responseBody?.params?.message).toContain('no projects found for the user=')
         })
 
         it('Adds tasks for referrals', async () => {
@@ -251,35 +253,6 @@ describe('Authentication API', () => {
             expect(project?.platformId).toBeNull()
         })
 
-        it('Disables platform sign ups for non invited users', async () => {
-            // arrange
-            const mockPlatformOwner = createMockUser()
-            await databaseConnection.getRepository('user').save(mockPlatformOwner)
-
-            const mockPlatform = createMockPlatform({ ownerId: mockPlatformOwner.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
-
-            const mockCustomDomain = createMockCustomDomain({ platformId: mockPlatform.id })
-            await databaseConnection.getRepository('custom_domain').save(mockCustomDomain)
-
-            const mockSignUpRequest = createMockSignUpRequest()
-
-            // act
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/v1/authentication/sign-up',
-                headers: {
-                    Host: mockCustomDomain.domain,
-                },
-                body: mockSignUpRequest,
-            })
-
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
-            const responseBody = response?.json()
-
-            expect(responseBody?.code).toBe('PLATFORM_SIGN_UP_ENABLED_FOR_INVITED_USERS_ONLY')
-        })
     })
 
     describe('Sign in Endpoint', () => {
@@ -462,42 +435,6 @@ describe('Authentication API', () => {
             const responseBody = response?.json()
             expect(responseBody?.code).toBe('INVALID_CREDENTIALS')
         })
-
-        it('Disallows invited users to login', async () => {
-            // arrange
-            const mockEmail = faker.internet.email()
-            const mockPassword = 'password'
-
-            const mockUser = createMockUser({
-                email: mockEmail,
-                password: mockPassword,
-                status: UserStatus.INVITED,
-            })
-            await databaseConnection.getRepository('user').save(mockUser)
-
-            const mockProject = createMockProject({
-                ownerId: mockUser.id,
-            })
-            await databaseConnection.getRepository('project').save(mockProject)
-
-            const mockSignInRequest = createMockSignInRequest({
-                email: mockEmail,
-                password: mockPassword,
-            })
-
-            // act
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/v1/authentication/sign-in',
-                body: mockSignInRequest,
-            })
-
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
-            const responseBody = response?.json()
-            expect(responseBody?.code).toBe('EMAIL_IS_NOT_VERIFIED')
-        })
-
 
     })
 })

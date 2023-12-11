@@ -1,12 +1,12 @@
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupApp } from '../../../../src/app/app'
 import { generateMockToken } from '../../../helpers/auth'
-import { createMockUser, createMockPlatform, createMockProject } from '../../../helpers/mocks'
+import { createMockUser, createMockPlatform, createMockProject, createMockApiKey } from '../../../helpers/mocks'
 import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
-import { NotificationStatus, ProjectType } from '@activepieces/shared'
+import { NotificationStatus, PlatformRole, PrincipalType, Project, ProjectType, User } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
-import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared'
+import { ApiKeyResponseWithValue, Platform, UpdateProjectPlatformRequest } from '@activepieces/ee-shared'
 import { stripeHelper } from '../../../../src/app/ee/billing/billing/stripe-helper'
 
 let app: FastifyInstance | null = null
@@ -21,8 +21,128 @@ afterAll(async () => {
     await app?.close()
 })
 
+beforeEach(async () => {
+    stripeHelper.getOrCreateCustomer = jest.fn().mockResolvedValue(faker.string.uuid())
+})
+
 describe('Project API', () => {
-    describe('List Projects', () => {
+    describe('Create Project', () => {
+        it('it should create project by user', async () => {
+            const mockUser = createMockUser()
+            await databaseConnection.getRepository('user').save(mockUser)
+            const mockPlatform = createMockPlatform({
+                ownerId: mockUser.id,
+            })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockUser.id,
+                platform: { id: mockPlatform.id, role: PlatformRole.OWNER },
+            })
+
+            const displayName = faker.animal.bird()
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/projects',
+                body: {
+                    displayName,
+                },
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
+            const responseBody = response?.json()
+            expect(responseBody.displayName).toBe(displayName)
+            expect(responseBody.ownerId).toBe(mockUser.id)
+            expect(responseBody.platformId).toBe(mockPlatform.id)
+        })
+
+        it('it should create project by api key', async () => {
+            const mockUser = createMockUser()
+            await databaseConnection.getRepository('user').save(mockUser)
+            const mockPlatform = createMockPlatform({
+                ownerId: mockUser.id,
+            })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
+            const apiKey = createMockApiKey({
+                platformId: mockPlatform.id,
+            })
+            await databaseConnection.getRepository('api_key').save([apiKey])
+
+            const displayName = faker.animal.bird()
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/projects',
+                body: {
+                    displayName,
+                },
+                headers: {
+                    authorization: `Bearer ${apiKey.value}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
+            const responseBody = response?.json()
+            expect(responseBody.displayName).toBe(displayName)
+            expect(responseBody.ownerId).toBe(mockUser.id)
+            expect(responseBody.platformId).toBe(mockPlatform.id)
+        })
+    })
+
+
+    describe('List Projects by api key', () => {
+        it('it should list platform project', async () => {
+            const mockUser = createMockUser()
+            const mockUser2 = createMockUser()
+            await databaseConnection.getRepository('user').save([mockUser, mockUser2])
+
+            const mockPlatform = createMockPlatform({
+                ownerId: mockUser.id,
+            })
+            const mockPlatform2 = createMockPlatform({
+                ownerId: mockUser2.id,
+            })
+            await databaseConnection.getRepository('platform').save([mockPlatform, mockPlatform2])
+
+            const mockProject = createMockProject({
+                ownerId: mockUser.id,
+                platformId: mockPlatform.id,
+            })
+            const mockProject2 = createMockProject({
+                ownerId: mockUser2.id,
+                platformId: mockPlatform2.id,
+            })
+            await databaseConnection.getRepository('project').save([mockProject, mockProject2])
+
+            const apiKey = createMockApiKey({
+                platformId: mockPlatform.id,
+            })
+            await databaseConnection.getRepository('api_key').save([apiKey])
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/v1/projects',
+                headers: {
+                    authorization: `Bearer ${apiKey.value}`,
+                },
+            })
+
+            // assert
+            const responseBody = response?.json()
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(responseBody.data.length).toBe(1)
+            expect(responseBody.data[0].id).toEqual(mockProject.id)
+        })
+    })
+
+    describe('List Projects by user', () => {
+
         it('it should list owned projects', async () => {
             const mockUser = createMockUser()
             const mockUser2 = createMockUser()
@@ -46,17 +166,17 @@ describe('Project API', () => {
             await databaseConnection.getRepository('project').save([mockProject, mockProject2, mockProject3])
 
 
-            stripeHelper.getOrCreateCustomer = jest.fn().mockResolvedValue(faker.string.uuid())
 
 
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 id: mockUser.id,
                 projectId: mockProject2.id,
             })
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/projects',
+                url: '/v1/users/projects',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -65,9 +185,9 @@ describe('Project API', () => {
             // assert
             const responseBody = response?.json()
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(responseBody.length).toBe(2)
-            expect(responseBody[0].id).toEqual(mockProject.id)
-            expect(responseBody[1].id).toEqual(mockProject2.id)
+            expect(responseBody.data.length).toBe(2)
+            expect(responseBody.data[0].id).toEqual(mockProject.id)
+            expect(responseBody.data[1].id).toEqual(mockProject2.id)
         })
 
     })
@@ -82,6 +202,7 @@ describe('Project API', () => {
             await databaseConnection.getRepository('project').save([mockProject])
 
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 id: mockUser.id,
                 projectId: mockProject.id,
             })
@@ -89,7 +210,6 @@ describe('Project API', () => {
             const tasks = faker.number.int({ min: 1, max: 100000 })
             const teamMembers = faker.number.int({ min: 1, max: 100 })
 
-            stripeHelper.getOrCreateCustomer = jest.fn().mockResolvedValue(faker.string.uuid())
 
 
             const request: UpdateProjectPlatformRequest = {
@@ -118,17 +238,55 @@ describe('Project API', () => {
             expect(responseBody.notifyStatus).toBe(request.notifyStatus)
         })
 
-        it('it should update project as platform owner', async () => {
-            const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save(mockUser)
-
-            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
-
-            const mockProject = createMockProject({
-                ownerId: mockUser.id,
-                platformId: mockPlatform.id,
+        it('It should not update project if api key is not platform owner', async () => {
+            const { mockProject } = await createProjectAndPlatformAndApiKey()
+            const { mockApiKey } = await createProjectAndPlatformAndApiKey()
+            const tasks = faker.number.int({ min: 1, max: 100000 })
+            const teamMembers = faker.number.int({ min: 1, max: 100 })
+            const request = {
+                displayName: faker.animal.bird(),
+                notifyStatus: NotificationStatus.NEVER,
+                plan: {
+                    tasks,
+                    teamMembers,
+                },
+            }
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/projects/' + mockProject.id,
+                body: request,
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
             })
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('it should update project as platform owner with api key', async () => {
+            const { mockProject, mockApiKey } = await createProjectAndPlatformAndApiKey()
+            const tasks = faker.number.int({ min: 1, max: 100000 })
+            const teamMembers = faker.number.int({ min: 1, max: 100 })
+            const request = {
+                displayName: faker.animal.bird(),
+                notifyStatus: NotificationStatus.NEVER,
+                plan: {
+                    tasks,
+                    teamMembers,
+                },
+            }
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/projects/' + mockProject.id,
+                body: request,
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
+            })
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+        })
+
+        it('it should update project as platform owner', async () => {
+            const { mockProject, mockPlatform, mockUser } = await createProjectAndPlatformAndApiKey()
             const mockProjectTwo = createMockProject({
                 ownerId: mockUser.id,
                 type: ProjectType.PLATFORM_MANAGED,
@@ -137,13 +295,13 @@ describe('Project API', () => {
             await databaseConnection.getRepository('project').save([mockProject, mockProjectTwo])
 
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 id: mockUser.id,
                 projectId: mockProject.id,
-                platform: { id: mockPlatform.id, role: 'OWNER' },
+                platform: { id: mockPlatform.id, role: PlatformRole.OWNER },
             })
 
 
-            stripeHelper.getOrCreateCustomer = jest.fn().mockResolvedValue(faker.string.uuid())
 
             const tasks = faker.number.int({ min: 1, max: 100000 })
             const teamMembers = faker.number.int({ min: 1, max: 100 })
@@ -194,9 +352,10 @@ describe('Project API', () => {
             await databaseConnection.getRepository('project').save([mockProject, mockProjectTwo])
 
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 id: memberUser.id,
                 projectId: mockProject.id,
-                platform: { id: mockPlatform.id, role: 'MEMBER' },
+                platform: { id: mockPlatform.id, role: PlatformRole.MEMBER },
             })
 
             const request: UpdateProjectPlatformRequest = {
@@ -217,3 +376,31 @@ describe('Project API', () => {
 
 
 })
+
+async function createProjectAndPlatformAndApiKey(): Promise<{ mockApiKey: ApiKeyResponseWithValue, mockPlatform: Platform, mockProject: Project, mockUser: User }> {
+    const mockUser = createMockUser()
+    await databaseConnection.getRepository('user').save(mockUser)
+
+    const mockPlatform = createMockPlatform({
+        ownerId: mockUser.id,
+    })
+    await databaseConnection.getRepository('platform').save(mockPlatform)
+
+    const mockProject = createMockProject({
+        ownerId: mockUser.id,
+        platformId: mockPlatform.id,
+    })
+    await databaseConnection.getRepository('project').save(mockProject)
+
+    const mockApiKey = createMockApiKey({
+        platformId: mockPlatform.id,
+    })
+    await databaseConnection.getRepository('api_key').save(mockApiKey)
+
+    return {
+        mockApiKey,
+        mockPlatform,
+        mockProject,
+        mockUser,
+    }
+}
