@@ -11,6 +11,7 @@ export const FileEntity = new EntitySchema<FileSchema>({
     columns: {
         ...BaseColumnSchemaPart,
         projectId: { ...ApIdSchema, nullable: true },
+        platformId: { ...ApIdSchema, nullable: true },
         data: {
             type: BLOB_COLUMN_TYPE,
             nullable: false,

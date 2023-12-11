@@ -118,6 +118,26 @@ export class FlowsEffects {
       })
     );
   });
+  moveStep$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(FlowsActions.moveAction),
+      concatLatestFrom(() => [
+        this.store.select(BuilderSelectors.selectCurrentRightSideBarType),
+      ]),
+      switchMap(([{ operation }, rightSidebar]) => {
+        if (rightSidebar === RightSideBarType.EDIT_STEP) {
+          return of(
+            canvasActions.setRightSidebar({
+              sidebarType: RightSideBarType.NONE,
+              props: NO_PROPS,
+              deselectCurrentStep: true,
+            })
+          );
+        }
+        return EMPTY;
+      })
+    );
+  });
 
   addStep = createEffect(() => {
     return this.actions$.pipe(

@@ -2,7 +2,7 @@ import { Action, createReducer, on } from '@ngrx/store';
 
 import {
   CanvasState,
-  FlowItem,
+  Step,
   LeftSideBarType,
   NO_PROPS,
   RightSideBarType,
@@ -77,7 +77,7 @@ const __CanvasReducer = createReducer(
   on(canvasActions.selectStepByName, (state, { stepName }) => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
     if (clonedState.displayedFlowVersion) {
-      const step: FlowItem | undefined = flowHelper.getStep(
+      const step: Step | undefined = flowHelper.getStep(
         clonedState.displayedFlowVersion,
         stepName
       );
