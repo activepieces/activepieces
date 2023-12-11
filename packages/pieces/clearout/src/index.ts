@@ -7,7 +7,7 @@ export const clearout = createPiece({
   displayName             : "Clearout",
   auth                    : clearoutAuth,
   minimumSupportedRelease : '0.9.0',
-  logoUrl                 : "https://sandbox.joeworkman.net/clearout.png",
+  logoUrl                 : " https://cdn.activepieces.com/pieces/clearout.png",
   authors                 : ["joeworkman"],
   actions                 : [
 	instantVerifyAction,
