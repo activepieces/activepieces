@@ -3,7 +3,7 @@ import { addAnnotation } from "../api";
 import { matomoAuth } from "../auth";
 
 export const addAnnotationAction = createAction({
-	name        : 'addAnnotation',
+	name        : 'add_annotation',
 	auth        : matomoAuth,
 	displayName : 'Add Annotation',
 	description : 'Add an annotation to a Matomo site',
