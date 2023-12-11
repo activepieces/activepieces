@@ -9,7 +9,7 @@ import { plansService } from '../project-plan/project-plan.service'
 import { captureException, logger } from '../../../helper/logger'
 import { projectUsageService } from '../project-usage/project-usage-service'
 import { defaultPlanInformation } from '../project-plan/pricing-plans'
-import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { ALL_PRINICPAL_TYPES, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 
 export const billingModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(billingController, { prefix: '/v1/billing' })
@@ -48,6 +48,7 @@ const billingController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/stripe/webhook',
         {
             config: {
+                allowedPrincipals: ALL_PRINICPAL_TYPES,
                 rawBody: true,
             },
         },

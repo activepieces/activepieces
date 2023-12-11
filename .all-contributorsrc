@@ -726,6 +726,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "denieler",
+      "name": "Daniel O.",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2836281?v=4",
+      "profile": "http://denieler.com",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

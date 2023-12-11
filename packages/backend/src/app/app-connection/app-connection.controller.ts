@@ -59,7 +59,6 @@ const removeSensitiveData = (appConnection: AppConnection): AppConnectionWithout
 
 const UpsertAppConnectionRequest = {
     schema: {
-        tags: ['connection'],
         description: 'Upsert an app connection based on the app name',
         body: UpsertAppConnectionRequestBody,
         Response: {
@@ -70,7 +69,6 @@ const UpsertAppConnectionRequest = {
 
 const ListAppConnectionsRequest = {
     schema: {
-        tags: ['connection'],
         querystring: ListAppConnectionsRequestQuery,
         description: 'List app connections',
         response: {
@@ -81,7 +79,6 @@ const ListAppConnectionsRequest = {
 
 const DeleteAppConnectionRequest = {
     schema: {
-        tags: ['connection'],
         description: 'Delete an app connection',
         params: Type.Object({
             connectionId: ApId,

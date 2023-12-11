@@ -1,5 +1,5 @@
 import { QueryFailedError } from 'typeorm'
-import { AuthenticationResponse, UserStatus, ActivepiecesError, ErrorCode, isNil, User, ApFlagId, Project, TelemetryEventName, UserId } from '@activepieces/shared'
+import { AuthenticationResponse, UserStatus, ActivepiecesError, ErrorCode, isNil, User, ApFlagId, Project, TelemetryEventName, UserId, ApEnvironment } from '@activepieces/shared'
 import { userService } from '../../user/user-service'
 import { passwordHasher } from '../lib/password-hasher'
 import { authenticationServiceHooks as hooks } from './hooks'
@@ -80,6 +80,7 @@ export const authenticationService = {
         await sendTelemetry({
             user, project: authnResponse.project,
         })
+        await saveNewsLetterSubscriber(user)
 
         return {
             ...userWithoutPassword,
@@ -199,6 +200,26 @@ const sendTelemetry = async ({ user, project }: SendTelemetryParams): Promise<vo
     }
 }
 
+async function saveNewsLetterSubscriber(user: User): Promise<void> {
+    const isPlatformUserOrNotSubscribed = !isNil(user.platformId) || !user.newsLetter
+    const environment = system.get(SystemProp.ENVIRONMENT)
+    if (isPlatformUserOrNotSubscribed || environment !== ApEnvironment.PRODUCTION) {
+        return
+    }
+    try {
+        const response = await fetch('https://us-central1-activepieces-b3803.cloudfunctions.net/addContact', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email: user.email }),
+        })
+        return await response.json()
+    }
+    catch (error) {
+        logger.warn(error)
+    }
+}
 type SendTelemetryParams = {
     user: User
     project: Project

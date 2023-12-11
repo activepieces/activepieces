@@ -12,7 +12,7 @@ export class ProjectService {
 
   list(): Observable<Project[]> {
     return this.http
-      .get<SeekPage<Project>>(environment.apiUrl + `/projects`)
+      .get<SeekPage<Project>>(environment.apiUrl + `/users/projects`)
       .pipe(map((res) => res.data));
   }
 }

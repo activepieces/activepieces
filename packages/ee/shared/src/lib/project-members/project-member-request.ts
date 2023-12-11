@@ -8,6 +8,7 @@ export const AcceptInvitationRequest = Type.Object({
 export type AcceptInvitationRequest = Static<typeof AcceptInvitationRequest>;
 
 export const AddProjectMemberRequestBody = Type.Object({
+    projectId: Type.String(),
     email: Type.String(),
     role: Type.Enum(ProjectMemberRole),
     status: Type.Optional(Type.Enum(ProjectMemberStatus, { default: ProjectMemberStatus.PENDING })),
@@ -16,6 +17,7 @@ export const AddProjectMemberRequestBody = Type.Object({
 export type AddProjectMemberRequestBody = Static<typeof AddProjectMemberRequestBody>;
 
 export const ListProjectMembersRequestQuery = Type.Object({
+    projectId: Type.String(),
     cursor: Type.Optional(Type.String()),
     limit: Type.Optional(Type.Number()),
 });

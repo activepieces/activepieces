@@ -33,7 +33,7 @@ export class PlatformProjectService {
     const params: Record<string, string> = platformId ? { platformId } : {};
     return this.http
       .get<SeekPage<ProjectWithUsageAndPlanResponse>>(
-        environment.apiUrl + `/projects`,
+        environment.apiUrl + `/users/projects`,
         {
           params,
         }
@@ -45,7 +45,7 @@ export class PlatformProjectService {
     return this.http
       .post<{
         token: string;
-      }>(`${environment.apiUrl}/projects/${projectId}/token`, {
+      }>(`${environment.apiUrl}/users/projects/${projectId}/token`, {
         projectId,
       })
       .pipe(
