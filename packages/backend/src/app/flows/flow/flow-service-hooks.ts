@@ -56,13 +56,13 @@ export const flowServiceHooks = {
             })
         }
 
-        const newFlowVersion = await flowVersionService.getFlowVersion({
+        const flowVersionToPublish = await flowVersionService.getFlowVersion({
             flowId: flowToUpdate.id,
             versionId: newPublishedVersionId,
         })
 
         const enableResult = await triggerUtils.enable({
-            flowVersion: newFlowVersion,
+            flowVersion: flowVersionToPublish,
             projectId: flowToUpdate.projectId,
             simulate: false,
         })
