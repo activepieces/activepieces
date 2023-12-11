@@ -63,7 +63,6 @@ export const webhookService = {
             const flowVersion = (await flowService.getOnePopulatedOrThrow({
                 projectId,
                 id: flow.id,
-                removeSecrets: false,
             })).version
             const payloads: unknown[] = await triggerUtils.executeTrigger({
                 projectId,
@@ -166,7 +165,6 @@ const getLatestFlowVersionOrThrow = async (
     const flowVersion = await flowVersionService.getFlowVersion({
         flowId,
         versionId: undefined,
-        removeSecrets: false,
     })
 
     if (isNil(flowVersion)) {

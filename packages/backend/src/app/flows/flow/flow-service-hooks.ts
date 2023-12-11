@@ -9,7 +9,6 @@ export const flowServiceHooks = {
         const publishedFlowVersion = await flowVersionService.getFlowVersion({
             flowId: flowToUpdate.id,
             versionId: flowToUpdate.publishedVersionId,
-            removeSecrets: false,
         })
 
         let scheduleOptions: ScheduleOptions | undefined
@@ -60,7 +59,6 @@ export const flowServiceHooks = {
         const newFlowVersion = await flowVersionService.getFlowVersion({
             flowId: flowToUpdate.id,
             versionId: newPublishedVersionId,
-            removeSecrets: false,
         })
 
         const enableResult = await triggerUtils.enable({
@@ -93,7 +91,6 @@ export const flowServiceHooks = {
         const publishedFlowVersion = await flowVersionService.getFlowVersion({
             flowId: flowToDelete.id,
             versionId: flowToDelete.publishedVersionId,
-            removeSecrets: false,
         })
 
         await triggerUtils.disable({

@@ -31,7 +31,6 @@ export const triggerEventService = {
         const flow = await flowService.getOnePopulatedOrThrow({
             id: flowId,
             projectId,
-            removeSecrets: false,
         })
 
         const sourceName = getSourceName(flow.version.trigger)

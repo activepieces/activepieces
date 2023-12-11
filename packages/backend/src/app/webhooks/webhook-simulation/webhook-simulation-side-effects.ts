@@ -16,7 +16,6 @@ const getFlowOrThrow = async ({ projectId, flowId }: GetFlowParams): Promise<Pop
     return flowService.getOnePopulatedOrThrow({
         id: flowId,
         projectId,
-        removeSecrets: false,
     })
 }
 

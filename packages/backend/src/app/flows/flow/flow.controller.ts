@@ -6,6 +6,7 @@ import {
     FlowTemplate,
     GetFlowQueryParamsRequest,
     ListFlowsRequest,
+    PopulatedFlow,
 } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 import { flowService } from './flow.service'
@@ -33,7 +34,6 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         const flow = await flowService.getOnePopulatedOrThrow({
             id: request.params.id,
             projectId: request.principal.projectId,
-            removeSecrets: false,
         })
 
         // BEGIN EE
@@ -99,7 +99,6 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             id: request.params.id,
             projectId: request.principal.projectId,
             versionId: request.query.versionId,
-            removeSecrets: false,
         })
     })
 

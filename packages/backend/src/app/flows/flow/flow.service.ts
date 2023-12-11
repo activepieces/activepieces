@@ -87,7 +87,6 @@ export const flowService = {
             flowVersionsPromises.push(flowVersionService.getFlowVersion({
                 flowId: flow.id,
                 versionId: undefined,
-                removeSecrets: false,
             }))
         })
         const versions: (FlowVersion | null)[] = await Promise.all(flowVersionsPromises)
@@ -133,8 +132,8 @@ export const flowService = {
         }
     },
 
-    async getOnePopulatedOrThrow(params: GetOnePopulatedParams): Promise<PopulatedFlow> {
-        const flow = await this.getOnePopulated(params)
+    async getOnePopulatedOrThrow({ id, projectId, versionId, removeSecrets = false }: GetOnePopulatedParams): Promise<PopulatedFlow> {
+        const flow = await this.getOnePopulated({ id, projectId, versionId, removeSecrets })
         assertFlowIsNotNull(flow)
         return flow
     },
@@ -155,14 +154,12 @@ export const flowService = {
                 let lastVersion = await flowVersionService.getFlowVersion({
                     flowId: id,
                     versionId: undefined,
-                    removeSecrets: false,
                 })
 
                 if (lastVersion.state === FlowVersionState.LOCKED) {
                     const lastVersionWithArtifacts = await flowVersionService.getFlowVersion({
                         flowId: id,
                         versionId: undefined,
-                        removeSecrets: false,
                     })
 
                     lastVersion = await flowVersionService.createEmptyVersion(id, {
