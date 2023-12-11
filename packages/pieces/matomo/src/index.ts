@@ -7,7 +7,7 @@ export const matomo = createPiece({
 	displayName             : "Matomo",
 	auth                    : matomoAuth,
 	minimumSupportedRelease : '0.9.0',
-	logoUrl                 : " https://cdn.activepieces.com/pieces/matomo.png",
+	logoUrl                 : "https://cdn.activepieces.com/pieces/matomo.png",
 	authors                 : ["joeworkman"],
 	actions                 : [ addAnnotationAction ],
 	triggers                : [],
