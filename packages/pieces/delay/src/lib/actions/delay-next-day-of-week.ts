@@ -4,7 +4,7 @@ import { delayUntil } from '../common';
 
 export const delayNextDayofWeek = createAction({
 	name        : 'delay_next_day_of_week',
-	displayName : 'Next Day of Week',
+	displayName : 'Delay Until Next Day of Week',
 	description : 'Get the date and time of the next day of the week',
 	props       : {
         weekday: Property.StaticDropdown({

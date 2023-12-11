@@ -4,7 +4,7 @@ import { delayUntil } from '../common';
 
 export const delayNextDayofYear = createAction({
 	name        : 'delay_next_day_of_year',
-	displayName : 'Next Day of Year',
+	displayName : 'Delay Until Next Day of Year',
 	description : 'Get the date and time of the next day of the year',
 	props       : {
         month: Property.StaticDropdown({
