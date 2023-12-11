@@ -60,12 +60,11 @@ export const nextDayofWeek = createAction({
         const currentTime = context.propsValue.currentTime as boolean;
         let   time        = context.propsValue.time as string;
 
-        const now = new Date();
+        const nextOccurance = new Date();
 
         if (currentTime === true) {
-            time = `${now.getHours()}:${now.getMinutes()}`;
+            time = `${nextOccurance.getHours()}:${nextOccurance.getMinutes()}`;
         }
-
         const [hours, minutes] = time.split(':').map(Number);
 
         // Validate inputs
@@ -77,21 +76,22 @@ export const nextDayofWeek = createAction({
             throw new Error(`Output format is not a string \noutput format: ${JSON.stringify(timeFormat)}`);
         }
 
+		// Set the time
+		nextOccurance.setHours(hours, minutes, 0, 0);
+
         // Calculate the day difference
-        let dayDiff = dayIndex - now.getDay();
-        if (dayDiff < 0 || (dayDiff === 0 && now.getTime() > new Date().getTime())) {
+        let dayDiff = dayIndex - nextOccurance.getDay();
+		console.log("dayDiff:", dayDiff, nextOccurance, new Date());
+        if (dayDiff < 0 || (dayDiff === 0 && nextOccurance.getTime() < new Date().getTime())) {
             // If it's a past day in the week or today but past time, move to next week
             dayDiff += 7;
         }
-
         // Set the date to the next occurrence of the given day
-        now.setDate(now.getDate() + dayDiff);
+        nextOccurance.setDate(nextOccurance.getDate() + dayDiff);
 
-		// Set the time as provided
-		now.setHours(hours, minutes, 0, 0);
+		// Set the time for the timezone
+		nextOccurance.setMinutes(nextOccurance.getMinutes() + timeDiff('UTC', timeZone));
 
-        now.setMinutes(now.getMinutes() + timeDiff('UTC', timeZone));
-
-        return { result: createNewDate(now, timeFormat) };
+        return { result: createNewDate(nextOccurance, timeFormat) };
 	},
 });

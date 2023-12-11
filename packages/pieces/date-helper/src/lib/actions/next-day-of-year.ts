@@ -81,7 +81,6 @@ export const nextDayofYear = createAction({
         if (currentTime === true) {
             time = `${now.getHours()}:${now.getMinutes()}`;
         }
-
         const [hours, minutes] = time.split(':').map(Number);
 
         // Validate inputs
@@ -97,6 +96,7 @@ export const nextDayofYear = createAction({
 
 		// Create a date object for the next occurrence
 		const nextOccurrence = new Date(currentYear, month - 1, day);
+		nextOccurrence.setHours(hours, minutes, 0, 0);
 
 		// Check if the next occurrence is already past in the current year
 		if (nextOccurrence.getTime() < now.getTime()) {
@@ -104,9 +104,7 @@ export const nextDayofYear = createAction({
 			nextOccurrence.setFullYear(currentYear + 1);
 		}
 
-		// Set the time as provided
-		nextOccurrence.setHours(hours, minutes, 0, 0);
-
+		// Set the time for the timezone
         nextOccurrence.setMinutes(nextOccurrence.getMinutes() + timeDiff('UTC', timeZone));
 
         return { result: createNewDate(nextOccurrence, timeFormat) };
