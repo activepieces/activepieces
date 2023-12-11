@@ -3,7 +3,7 @@ import { Converter, Flavor } from 'showdown';
 import { JSDOM } from 'jsdom';
 
 export const htmlToMarkdown = createAction({
-	name        : 'htmlToMarkdown',
+	name        : 'html_to_markdown',
 	displayName : 'HTML to Markdown',
 	description : 'Convert HTML to Markdown',
 	props       : {

@@ -2,7 +2,7 @@ import { Property, createAction, Validators } from '@activepieces/pieces-framewo
 import { Converter, Flavor } from 'showdown';
 
 export const markdownToHTML = createAction({
-	name        : 'markdownToHTML',
+	name        : 'markdown_to_html',
 	displayName : 'Markdown to HTML',
 	description : 'Convert markdown to HTML',
 	props       : {
