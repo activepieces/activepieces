@@ -3,7 +3,7 @@ import { getProducts } from "../api";
 import { cartloomAuth } from "../auth";
 
 export const getProductsAction = createAction({
-	name        : 'getProducts',
+	name        : 'get_products',
 	auth        : cartloomAuth,
 	displayName : 'Get Products',
 	description : 'Get a list of products from Cartloom',

@@ -13,7 +13,7 @@ export const cartloom = createPiece({
 	displayName             : "Cartloom",
 	auth                    : cartloomAuth,
 	minimumSupportedRelease : '0.9.0',
-	logoUrl                 : "https://sandbox.joeworkman.net/cartloom.png",
+	logoUrl                 : " https://cdn.activepieces.com/pieces/cartloom.png",
 	authors                 : ["joeworkman"],
 	actions                 : [
 		getProductsAction,

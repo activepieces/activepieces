@@ -4,7 +4,7 @@ import { CartloomAuthType, cartloomAuth } from "../auth";
 import { buildProductsDropdown } from "../props";
 
 export const createDiscountAction = createAction({
-	name        : 'createDiscount',
+	name        : 'create_discount',
 	auth        : cartloomAuth,
 	displayName : 'Create Discount',
 	description : 'Create a discount in Cartloom',
@@ -97,7 +97,7 @@ export const createDiscountAction = createAction({
 			displayName : 'Target Products',
 			description : 'Select the products to apply the discount to',
 			required    : false,
-			refreshers  : ['auth'],
+			refreshers  : [],
 			options     : async ({auth}) => await buildProductsDropdown(auth as CartloomAuthType),
 		}),
 		targetAmount: Property.Number({

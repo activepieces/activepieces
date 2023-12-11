@@ -3,7 +3,7 @@ import { getOrdersByDate } from "../api";
 import { cartloomAuth } from "../auth";
 
 export const getOrderDateAction = createAction({
-	name        : 'getOrderDate',
+	name        : 'get_orders_by_date',
 	auth        : cartloomAuth,
 	displayName : 'Get Order by Date',
 	description : 'Get a list of orders from Cartloom within a date range',
