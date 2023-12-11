@@ -2,6 +2,7 @@ import { ActivepiecesError, ErrorCode, PrincipalType } from '@activepieces/share
 import { onRequestHookHandler, preSerializationHookHandler } from 'fastify'
 import { logger } from '../helper/logger'
 
+// TODO REMOVE
 export const allowWorkersOnly: onRequestHookHandler = (request, _res, done) => {
     if (request.principal.type !== PrincipalType.WORKER) {
         throw new ActivepiecesError({
@@ -11,6 +12,13 @@ export const allowWorkersOnly: onRequestHookHandler = (request, _res, done) => {
     }
 
     done()
+}
+
+export function extractResourceName(url: string): string | undefined {
+    const resourceRegex = /\/v1\/(.+?)(\/|$)/
+    const resourceMatch = url.match(resourceRegex)
+    const resource = resourceMatch ? resourceMatch[1] : undefined
+    return resource
 }
 
 /**

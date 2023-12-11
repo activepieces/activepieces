@@ -1,0 +1,34 @@
+include-pre-releases: true
+categories:
+  - title: "✨ Exciting New Features"
+    labels:
+      - "🌟 feature"
+  - title: "🧩 Pieces"
+    labels:
+      - "🔌 pieces"
+  - title: "🛠️ Piece Framework"
+    labels:
+      - "🛠️ piece-framework"
+  - title: "🐞 Bug Fixes"
+    labels:
+      - "🐛 bug"
+  - title: "🎨 Enhancements & Polish"
+    labels:
+      - "⭐ enhancement"
+  - title: "📚 Documentation"
+    labels:
+      - "📚 documentation"
+  - title: "🧹 Maintenance"
+    labels:
+      - "🧹 clean up"
+      - "💻 tech debt"
+  - title: "Other Changes"
+    labels:
+      - "*"
+
+template: |
+
+  $CHANGES
+
+  ## Thanks ❤️
+  $CONTRIBUTORS

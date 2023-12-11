@@ -10,6 +10,7 @@ import { SystemProp } from '../../helper/system/system-prop'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { plansService } from '../billing/project-plan/project-plan.service'
 import { defaultPlanInformation } from '../billing/project-plan/pricing-plans'
+import { ALL_PRINICPAL_TYPES } from '@activepieces/shared'
 
 export const appSumoModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(appsumoController, { prefix: '/v1/appsumo' })
@@ -43,6 +44,9 @@ const appsumoController: FastifyPluginAsyncTypebox = async (fastify: FastifyInst
     fastify.post(
         '/token',
         {
+            config: {
+                allowedPrincipals: ALL_PRINICPAL_TYPES,
+            },
             schema: {
                 body: ExchangeTokenRequest,
             },
@@ -70,6 +74,9 @@ const appsumoController: FastifyPluginAsyncTypebox = async (fastify: FastifyInst
     fastify.post(
         '/action',
         {
+            config: {
+                allowedPrincipals: ALL_PRINICPAL_TYPES,
+            },
             schema: {
                 headers: AuthorizationHeaders,
                 body: ActionRequest,

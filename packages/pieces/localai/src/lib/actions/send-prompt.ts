@@ -50,7 +50,7 @@ export const askLocalAI = createAction({
           const response = await httpClient.sendRequest<{
             data: { id: string }[];
           }>({
-            url: (<any>auth).base_url +'/v1/models',
+            url: (<any>auth).base_url +'/models',
             method: HttpMethod.GET,
             authentication: {
               type: AuthenticationType.BEARER_TOKEN,

@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
-import { TestFlowRunRequestBody, FlowRunId, ListFlowRunsRequestQuery, ApId } from '@activepieces/shared'
+import { TestFlowRunRequestBody, FlowRunId, ListFlowRunsRequestQuery, ApId, ALL_PRINICPAL_TYPES } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowRunService } from './flow-run-service'
 
@@ -17,6 +17,9 @@ const TestFlowRunRequest = {
 }
 
 const ResumeFlowRunRequest = {
+    config: {
+        allowedPrincipals: ALL_PRINICPAL_TYPES,
+    },
     schema: {
         params: Type.Object({
             id: ApId,
@@ -40,11 +43,7 @@ export const flowRunController: FastifyPluginCallbackTypebox = (app, _options, d
     )
 
     // list
-    app.get('/', {
-        schema: {
-            querystring: ListFlowRunsRequestQuery,
-        },
-    }, async (request, reply) => {
+    app.get('/', ListRequest, async (request, reply) => {
         const flowRunPage = await flowRunService.list({
             projectId: request.principal.projectId,
             flowId: request.query.flowId,
@@ -85,4 +84,10 @@ export const flowRunController: FastifyPluginCallbackTypebox = (app, _options, d
     })
 
     done()
+}
+
+const ListRequest = {
+    schema: {
+        querystring: ListFlowRunsRequestQuery,
+    },
 }

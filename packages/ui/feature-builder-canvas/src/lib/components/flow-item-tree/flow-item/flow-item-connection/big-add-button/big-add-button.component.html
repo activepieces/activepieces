@@ -1,0 +1,24 @@
+<div class="big-add-button ap-flex ap-items-center ap-justify-center ap-absolute " tabindex="-1" *ngIf="!inReadOnlyMode"
+    [class.ap-cursor-pointer]="showCursorOnHover$ | async" (click)="setSelectedAddBtnId();add()"
+    [class.big-add-button-drop-indicator]="(isInDragginStepMode$ | async) || (selectedAddBtnId$ | async) === addButtonId"
+    [class.show-shadow]="showButtonShadow || (selectedAddBtnId$ | async) === addButtonId" [style.top]="top+'px'"
+    [style.left]="left+'px'">
+    <svg-icon
+        *ngIf="(selectedAddBtnId$ | async) !== addButtonId && !showButtonShadow && (isInDragginStepMode$ | async) === false"
+        src="./assets/img/custom/plus.svg" class="add-icon" [applyClass]="true"></svg-icon>
+</div>
+
+
+
+<svg *ngIf="inReadOnlyMode" class="ap-stroke-border ap-absolute ap-overflow-visible" width="300" height="225"
+    [style.top]="top" stroke-width="2" [style.left]="left">
+    <line x1="20" y1="-40" x2="20" y2="84"></line>
+</svg>
+
+
+
+
+
+<app-drop-zone [btnLeft]="left" [btnTop]="top" [btnHeight]="BIG_BUTTON_SIZE" [btnWidth]="BIG_BUTTON_SIZE"
+    (dropped)="drop($event)" (dragEnter)="toggleButtonShadow(true)" (dragLeave)="toggleButtonShadow(false)">
+</app-drop-zone>

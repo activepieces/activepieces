@@ -29,12 +29,12 @@ export class FileSandbox extends AbstractSandbox {
 
     public override async runOperation(operation: string): Promise<ExecuteSandboxResult> {
         const startTime = Date.now()
-        const environment = system.get(SystemProp.ENVIRONMENT)
+        const pieceSources = system.get(SystemProp.PIECES_SOURCE)
 
         const command = [
             `cd ${this.getSandboxFolderPath()}`,
             '&&',
-            `env -i AP_ENVIRONMENT=${environment} NODE_OPTIONS='--enable-source-maps'`,
+            `env -i AP_PIECES_SOURCE=${pieceSources} NODE_OPTIONS='--enable-source-maps'`,
             AbstractSandbox.nodeExecutablePath,
             'main.js',
             operation,

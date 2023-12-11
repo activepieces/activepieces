@@ -1,6 +1,6 @@
 import { randomBytes as randomBytesCallback } from 'node:crypto'
 import { promisify } from 'node:util'
-import { AuthenticationResponse, PrincipalType, Project, ProjectId, ProjectType, User, UserStatus } from '@activepieces/shared'
+import { AuthenticationResponse, PlatformRole, PrincipalType, Project, ProjectId, ProjectType, User, UserStatus } from '@activepieces/shared'
 import { userService } from '../../user/user-service'
 import { PlatformId, ProjectMemberRole, ProjectMemberStatus } from '@activepieces/ee-shared'
 import { platformService } from '../platform/platform.service'
@@ -21,7 +21,7 @@ export const managedAuthnService = {
             projectType: ProjectType.PLATFORM_MANAGED,
             platform: {
                 id: externalPrincipal.platformId,
-                role: 'MEMBER',
+                role: PlatformRole.MEMBER,
             },
         })
 
@@ -60,14 +60,15 @@ const getOrCreateUser = async (params: GetOrCreateUserParams): Promise<GetOrCrea
         lastName: externalLastName,
         trackEvents: true,
         newsLetter: true,
-        status: UserStatus.CREATED,
+        status: UserStatus.VERIFIED,
         externalId: externalUserId,
         platformId,
     })
 
-    await projectMemberService.add({
+    await projectMemberService.upsert({
         projectId: project.id,
-        userId: newUser.id,
+        email: newUser.email,
+        platformId,
         role: ProjectMemberRole.EDITOR,
         status: ProjectMemberStatus.ACTIVE,
     })

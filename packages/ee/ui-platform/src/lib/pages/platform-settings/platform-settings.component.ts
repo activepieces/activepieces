@@ -1,7 +1,9 @@
+import { Platform } from '@activepieces/ee-shared';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
   Component,
+  OnInit,
   ViewChild,
 } from '@angular/core';
 import { MatTabChangeEvent, MatTabGroup } from '@angular/material/tabs';
@@ -13,10 +15,11 @@ import { Observable, tap } from 'rxjs';
   templateUrl: './platform-settings.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PlatformSettingsComponent implements AfterViewInit {
+export class PlatformSettingsComponent implements AfterViewInit, OnInit {
   @ViewChild('tabs') tabGroup?: MatTabGroup;
   title = $localize`Settings`;
   fragmentChanged$: Observable<string | null>;
+  readonly apiKeysTabTitle = $localize`API Keys`;
   readonly signingKeysTabTitle = $localize`Signing Keys`;
   readonly customDomainTabTitle = $localize`Custom Domains`;
   readonly privacyAndTermsTabTitle = $localize`Privacy & Terms`;
@@ -26,7 +29,10 @@ export class PlatformSettingsComponent implements AfterViewInit {
     1: 'MailServer',
     2: 'TermsAndServices',
     3: 'CustomDomains',
+    4: 'ApiKeys',
   };
+  platform!: Platform;
+
   constructor(private router: Router, private route: ActivatedRoute) {
     this.fragmentChanged$ = this.route.fragment.pipe(
       tap((fragment) => {
@@ -37,6 +43,9 @@ export class PlatformSettingsComponent implements AfterViewInit {
         }
       })
     );
+  }
+  ngOnInit(): void {
+    this.platform = this.route.snapshot.data['platform'];
   }
   ngAfterViewInit(): void {
     const fragment = this.route.snapshot.fragment;

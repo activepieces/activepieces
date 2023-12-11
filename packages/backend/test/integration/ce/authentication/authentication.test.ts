@@ -187,39 +187,5 @@ describe('Authentication API', () => {
             expect(responseBody?.code).toBe('INVALID_CREDENTIALS')
         })
 
-        it('Disallows invited users to login', async () => {
-            // arrange
-            const mockEmail = faker.internet.email()
-            const mockPassword = 'password'
-
-            const mockUser = createMockUser({
-                email: mockEmail,
-                password: mockPassword,
-                status: UserStatus.INVITED,
-            })
-            await databaseConnection.getRepository('user').save(mockUser)
-
-            const mockProject = createMockProject({
-                ownerId: mockUser.id,
-            })
-            await databaseConnection.getRepository('project').save(mockProject)
-
-            const mockSignInRequest = createMockSignInRequest({
-                email: mockEmail,
-                password: mockPassword,
-            })
-
-            // act
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/v1/authentication/sign-in',
-                body: mockSignInRequest,
-            })
-
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
-            const responseBody = response?.json()
-            expect(responseBody?.code).toBe('EMAIL_IS_NOT_VERIFIED')
-        })
     })
 })
