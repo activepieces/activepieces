@@ -59,7 +59,7 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
         folder: {
             type: 'many-to-one',
             target: 'folder',
-            onDelete: 'SET NULL',
+            onDelete: 'RESTRICT',
             nullable: true,
             joinColumn: {
                 name: 'folderId',
