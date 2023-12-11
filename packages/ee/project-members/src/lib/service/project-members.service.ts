@@ -43,6 +43,7 @@ export class ProjectMemberService {
     const queryParams: { [key: string]: string | number } = {
       limit: request.limit ?? 10,
       cursor: request.cursor || '',
+      projectId: request.projectId,
     };
     return this.http.get<SeekPage<ProjectMember>>(
       environment.apiUrl + '/project-members',

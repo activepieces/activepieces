@@ -19,6 +19,7 @@ import {
   ThirdPartyAuthnProviderEnum,
   VerifyEmailRequestBody,
 } from '@activepieces/ee-shared';
+import { FlagService } from './flag.service';
 
 @Injectable({
   providedIn: 'root',
@@ -27,7 +28,11 @@ export class AuthenticationService {
   public currentUserSubject: BehaviorSubject<User | undefined> =
     new BehaviorSubject<User | undefined>(this.currentUser);
   private jwtHelper = new JwtHelperService();
-  constructor(private router: Router, private http: HttpClient) {}
+  constructor(
+    private router: Router,
+    private http: HttpClient,
+    private flagsService: FlagService
+  ) {}
 
   get currentUser(): User {
     return JSON.parse(
@@ -99,16 +104,10 @@ export class AuthenticationService {
     localStorage.removeItem(environment.jwtTokenName);
     localStorage.removeItem(environment.userPropertyNameInLocalStorage);
     this.currentUserSubject.next(undefined);
+    this.flagsService.reinitialiseFlags();
     this.router.navigate(['sign-in']);
   }
 
-  // TODO - move to a separate service
-  saveNewsLetterSubscriber(email: string) {
-    return this.http.post(
-      'https://us-central1-activepieces-b3803.cloudfunctions.net/addContact',
-      { email: email }
-    );
-  }
   getDecodedToken(): Principal | null {
     const token = localStorage.getItem(environment.jwtTokenName);
     const decodedToken = this.jwtHelper.decodeToken(token || '');
@@ -117,6 +116,15 @@ export class AuthenticationService {
       this.logout();
     }
     return decodedToken;
+  }
+
+  getProjectId(): string {
+    const decodedToken = this.getDecodedToken();
+    const projectId = decodedToken?.['projectId'];
+    if (!projectId) {
+      throw new Error('ProjectId not found in token');
+    }
+    return projectId;
   }
 
   getPlatformId(): string | undefined {

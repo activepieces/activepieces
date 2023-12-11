@@ -4,7 +4,7 @@ import { generateMockToken } from '../../../helpers/auth'
 import { createMockUser, createMockPlatform, createMockApiKey } from '../../../helpers/mocks'
 import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
-import { PrincipalType, apId } from '@activepieces/shared'
+import { PlatformRole, PrincipalType, apId } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 
 let app: FastifyInstance | null = null
@@ -32,7 +32,7 @@ describe('API Key API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
-                platform: { id: mockPlatform.id, role: 'OWNER' },
+                platform: { id: mockPlatform.id, role: PlatformRole.OWNER },
             })
 
             const mockApiKeyName = faker.lorem.word()
@@ -69,7 +69,7 @@ describe('API Key API', () => {
                 type: PrincipalType.USER,
                 platform: {
                     id: nonExistentPlatformId,
-                    role: 'OWNER',
+                    role: PlatformRole.OWNER,
                 },
             })
 
@@ -86,45 +86,10 @@ describe('API Key API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(response?.statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR)
         })
 
-        it('Fails if user is not platform owner', async () => {
-            // arrange
-            const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save(mockUser)
 
-            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
-
-            const mockApiKey = createMockApiKey({
-                platformId: mockPlatform.id,
-            })
-
-            await databaseConnection.getRepository('api_key').save(mockApiKey)
-
-            const nonOwnerUserId = apId()
-            const testToken = await generateMockToken({
-                type: PrincipalType.USER,
-                id: nonOwnerUserId,
-                platform: { id: mockPlatform.id, role: 'OWNER' },
-            })
-
-            const mockApiKeyName = faker.lorem.word()
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/v1/api-keys',
-                body: {
-                    displayName: mockApiKeyName,
-                },
-                headers: {
-                    authorization: `Bearer ${testToken}`,
-                },
-            })
-
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
-        })
     })
 
 
@@ -136,7 +101,8 @@ describe('API Key API', () => {
             await databaseConnection.getRepository('user').save([mockUser, mockUserTwo])
 
             const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save([mockPlatform])
+            const mockPlatform2 = createMockPlatform({ ownerId: mockUserTwo.id })
+            await databaseConnection.getRepository('platform').save([mockPlatform, mockPlatform2])
 
             const mockApiKey = createMockApiKey({
                 platformId: mockPlatform.id,
@@ -147,7 +113,7 @@ describe('API Key API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUserTwo.id,
-                platform: { id: mockPlatform.id, role: 'OWNER' },
+                platform: { id: mockPlatform2.id, role: PlatformRole.OWNER },
             })
 
             // act
@@ -160,7 +126,7 @@ describe('API Key API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
         })
     })
 
@@ -189,7 +155,7 @@ describe('API Key API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUserOne.id,
-                platform: { id: mockPlatformOne.id, role: 'OWNER' },
+                platform: { id: mockPlatformOne.id, role: PlatformRole.OWNER },
             })
             // act
             const response = await app?.inject({

@@ -18,7 +18,7 @@ import {
 import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
 import {
   BuilderSelectors,
-  FlowItem,
+  Step,
   canvasActions,
 } from '@activepieces/ui/feature-builder-store';
 import { FlowItemDetails } from '@activepieces/ui/common';
@@ -33,7 +33,7 @@ export class PieceStepMentionItemComponent implements OnInit {
   readonly FIRST_LEVEL_PADDING_IN_MENTIONS_LIST =
     FIRST_LEVEL_PADDING_IN_MENTIONS_LIST;
   @Input()
-  set stepMention(val: MentionListItem & { step: FlowItem }) {
+  set stepMention(val: MentionListItem & { step: Step }) {
     if (val.step.type !== ActionType.PIECE) {
       throw new Error('Step is not a piece action');
     }

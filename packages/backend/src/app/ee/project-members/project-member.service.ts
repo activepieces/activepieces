@@ -40,8 +40,15 @@ export const projectMemberService = {
             projectId,
         })
 
+        const existingProjectMember = await projectMemberRepo.findOneBy({
+            projectId,
+            email,
+            platformId: isNil(platformId) ? IsNull() : platformId,
+        })
+        const projectMemberId = existingProjectMember?.id ?? apId()
+
         const projectMember: NewProjectMember = {
-            id: apId(),
+            id: projectMemberId,
             updated: dayjs().toISOString(),
             email,
             platformId,
@@ -156,6 +163,7 @@ export const projectMemberService = {
     async listByUser(user: User): Promise<ProjectMemberSchema[]> {
         return projectMemberRepo.findBy({
             email: user.email,
+            status: ProjectMemberStatus.ACTIVE,
             platformId: isNil(user.platformId) ? IsNull() : user.platformId,
         })
     },
@@ -165,20 +173,6 @@ export const projectMemberService = {
     ): Promise<void> {
         await projectMemberRepo.delete({ projectId, id: invitationId })
     },
-
-    async deleteByUserExternalId({ userExternalId, platformId, projectId }: DeleteByUserExternalIdParams): Promise<void> {
-        const userEmail = await getUserEmailByExternalIdOrThrow({
-            userExternalId,
-            platformId,
-        })
-
-        await projectMemberRepo.delete({
-            projectId,
-            platformId,
-            email: userEmail,
-        })
-    },
-
     async countTeamMembersIncludingOwner(projectId: ProjectId): Promise<number> {
         return await projectMemberRepo.countBy({
             projectId,
@@ -220,25 +214,6 @@ const getOrThrow = async (id: string): Promise<ProjectMember> => {
     return projectMember
 }
 
-const getUserEmailByExternalIdOrThrow = async ({ userExternalId, platformId }: GetUserEmailByExternalIdOrThrowParams): Promise<string> => {
-    const user = await userService.getByPlatformAndExternalId({
-        platformId,
-        externalId: userExternalId,
-    })
-
-    if (isNil(user)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.ENTITY_NOT_FOUND,
-            params: {
-                entityType: 'User',
-                entityId: `userExternalId=${userExternalId} platformId=${platformId}`,
-            },
-        })
-    }
-
-    return user.email
-}
-
 type UpsertParams = {
     email: string
     platformId: PlatformId | null
@@ -265,15 +240,4 @@ type ProjectMemberToken = {
 type UpsertAndSendResponse = {
     projectMember: ProjectMember
     invitationToken: string
-}
-
-type DeleteByUserExternalIdParams = {
-    userExternalId: string
-    platformId: PlatformId
-    projectId: ProjectId
-}
-
-type GetUserEmailByExternalIdOrThrowParams = {
-    userExternalId: string
-    platformId: PlatformId
 }
