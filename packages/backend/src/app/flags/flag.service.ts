@@ -38,6 +38,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.OWN_AUTH2_ENABLED,
+                value: true,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.CHATBOT_ENABLED,
                 value: getEdition() === ApEdition.ENTERPRISE ? false : system.getBoolean(SystemProp.CHATBOT_ENABLED),
                 created,
@@ -69,7 +75,8 @@ export const flagService = {
             },
             {
                 id: ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
-                value: getEdition() === ApEdition.COMMUNITY ? {} : showThirdPartyProvidersMap,
+                //show only for cloud and hide it for platform users in flags hook
+                value: getEdition() === ApEdition.CLOUD ? showThirdPartyProvidersMap : {},
                 created,
                 updated,
             },

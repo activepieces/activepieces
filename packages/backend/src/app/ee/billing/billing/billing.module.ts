@@ -1,7 +1,7 @@
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { stripe, stripeHelper, stripeWebhookSecret } from './stripe-helper'
+import { stripeHelper, stripeWebhookSecret } from './stripe-helper'
 import { billingService } from './billing.service'
 import { UpgradeRequest } from '@activepieces/ee-shared'
 import Stripe from 'stripe'
@@ -9,7 +9,7 @@ import { plansService } from '../project-plan/project-plan.service'
 import { captureException, logger } from '../../../helper/logger'
 import { projectUsageService } from '../project-usage/project-usage-service'
 import { defaultPlanInformation } from '../project-plan/pricing-plans'
-import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { ALL_PRINICPAL_TYPES, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 
 export const billingModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(billingController, { prefix: '/v1/billing' })
@@ -48,6 +48,7 @@ const billingController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/stripe/webhook',
         {
             config: {
+                allowedPrincipals: ALL_PRINICPAL_TYPES,
                 rawBody: true,
             },
         },
@@ -74,6 +75,7 @@ const billingController: FastifyPluginAsyncTypebox = async (fastify) => {
 
 
 async function handleWebhook({ payload, signature }: { payload: string, signature: string }): Promise<void> {
+    const stripe = stripeHelper.getStripe()
     assertNotNullOrUndefined(stripe, 'Stripe is not configured')
     const webhook = stripe.webhooks.constructEvent(payload, signature, stripeWebhookSecret)
     const subscription = webhook.data.object as Stripe.Subscription

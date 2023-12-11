@@ -1,4 +1,4 @@
-import { BaseModelSchema } from '../common/base-model'
+import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
 import { FlowVersion } from './flow-version'
 import { FlowInstanceStatus, FlowScheduleOptions } from './flow-instances'
@@ -10,7 +10,7 @@ export type FlowId = ApId
 export const Flow = Type.Object({
     ...BaseModelSchema,
     projectId: Type.String(),
-    folderId: Type.Union([Type.String(), Type.Null()]),
+    folderId: Nullable(Type.String()),
     version: FlowVersion,
     // TODO revisit this area as these filled from Instance during listing.
     status: Type.Enum(FlowInstanceStatus),

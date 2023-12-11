@@ -87,8 +87,8 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                 name: pieceMetadata.name,
                 version: pieceMetadata.version,
                 projectId: projectId ?? IsNull(),
+                platformId: platformId ?? IsNull(),
             })
-
             if (!isNil(existingMetadata)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.VALIDATION,

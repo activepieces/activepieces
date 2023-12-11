@@ -2,7 +2,7 @@ import { FastifyRequest } from 'fastify'
 import { webhookService } from '../webhooks/webhook-service'
 import { appEventRoutingService } from './app-event-routing.service'
 import { logger } from '../helper/logger'
-import { isNil } from '@activepieces/shared'
+import { ALL_PRINICPAL_TYPES, isNil } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode, EventPayload } from '@activepieces/shared'
 import { flowService } from '../flows/flow/flow.service'
 import { AppEventRouting } from './app-event-routing.entity'
@@ -35,6 +35,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (fasti
         {
             config: {
                 rawBody: true,
+                allowedPrincipals: ALL_PRINICPAL_TYPES,
             },
             logLevel: 'silent',
         },
