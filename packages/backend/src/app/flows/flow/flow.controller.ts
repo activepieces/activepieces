@@ -153,7 +153,6 @@ const ListFlowByIdRequest = {
 
 const GetFlowByIdRequest = {
     schema: {
-        tags: ['flows'],
         description: 'Get a flow by id',
         params: Type.Object({
             flowId: ApId,
@@ -167,7 +166,6 @@ const GetFlowByIdRequest = {
 
 const DeleteFlowRequest = {
     schema: {
-        tags: ['flows'],
         description: 'Delete a flow',
         params: Type.Object({
             flowId: ApId,

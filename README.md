@@ -235,6 +235,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/yann120"><img src="https://avatars.githubusercontent.com/u/10012140?v=4?s=100" width="100px;" alt="Yann Petitjean"/><br /><sub><b>Yann Petitjean</b></sub></a><br /><a href="#plugin-yann120" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/pfernandez98"><img src="https://avatars.githubusercontent.com/u/54374282?v=4?s=100" width="100px;" alt="pfernandez98"/><br /><sub><b>pfernandez98</b></sub></a><br /><a href="#plugin-pfernandez98" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://denieler.com"><img src="https://avatars.githubusercontent.com/u/2836281?v=4?s=100" width="100px;" alt="Daniel O."/><br /><sub><b>Daniel O.</b></sub></a><br /><a href="#plugin-denieler" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>

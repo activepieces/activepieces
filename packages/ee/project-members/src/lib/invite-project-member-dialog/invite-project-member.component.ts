@@ -11,6 +11,7 @@ import { ProjectMemberService } from '../service/project-members.service';
 import { DialogRef } from '@angular/cdk/dialog';
 import { HttpStatusCode } from '@angular/common/http';
 import { ProjectMemberRole } from '@activepieces/ee-shared';
+import { AuthenticationService } from '@activepieces/ui/common';
 
 @Component({
   templateUrl: './invite-project-member.component.html',
@@ -28,6 +29,7 @@ export class InviteProjectMemberDialogComponent {
     private formBuilder: FormBuilder,
     private snackbar: MatSnackBar,
     private projectMemberService: ProjectMemberService,
+    private authenticationService: AuthenticationService,
     private dialogRef: DialogRef
   ) {
     this.invitationForm = this.formBuilder.group({
@@ -47,6 +49,7 @@ export class InviteProjectMemberDialogComponent {
       this.invalidEmail = false;
       this.inviteMember$ = this.projectMemberService
         .invite({
+          projectId: this.authenticationService.getProjectId(),
           email: this.invitationForm.value['email']!,
           role: this.invitationForm.value['role']!,
         })

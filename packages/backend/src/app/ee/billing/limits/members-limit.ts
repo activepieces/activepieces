@@ -10,7 +10,7 @@ const projectMemberRepo =
 export const projectMembersLimit = {
     async limit({ projectId }: { projectId: ProjectId }): Promise<void> {
         const edition = getEdition()
-        if (edition !== ApEdition.CLOUD) {
+        if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
             return
         }
         const projectPlan = await plansService.getOrCreateDefaultPlan({

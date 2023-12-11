@@ -23,8 +23,6 @@ FROM activepieces/ap-base:7 AS run
 ARG AP_CACHE_PATH=/usr/src/cache
 ARG AP_PACKAGE_ARCHIVE_PATH=/usr/src/packages
 
-# Set default environment to "standard" if not specified
-ARG ENVIRONMENT=standard
 
 # Set up backend
 WORKDIR /usr/src/app
@@ -33,7 +31,7 @@ WORKDIR /usr/src/app
 RUN apt-get update && apt-get install -y nginx gettext
 
 # Copy Nginx configuration template
-COPY packages/ui/core/nginx.${ENVIRONMENT}.conf /etc/nginx/nginx.conf
+COPY packages/ui/core/nginx.standard.conf /etc/nginx/nginx.conf
 
 COPY --from=build /usr/src/app/LICENSE .
 

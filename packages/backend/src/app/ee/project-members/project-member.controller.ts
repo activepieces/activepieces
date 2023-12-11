@@ -1,5 +1,5 @@
 import { ListProjectMembersRequestQuery, AcceptProjectResponse, AddProjectMemberRequestBody, ProjectMember, ProjectMemberStatus } from '@activepieces/ee-shared'
-import { ActivepiecesError, ErrorCode, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { ALL_PRINICPAL_TYPES, ActivepiecesError, ErrorCode, PrincipalType, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -56,32 +56,17 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (app) =>
         }
     })
 
-    app.delete('/:id', DeleteProjectMemberRequest, async (request) => {
+    app.delete('/:id', DeleteProjectMemberRequest, async (request, reply) => {
         await projectMemberService.delete(
             request.principal.projectId,
             request.params.id,
         )
+        await reply.status(StatusCodes.NO_CONTENT).send()
     })
 
-    app.delete('/', DeleteProjectMemberByUserExternalIdRequest, async (request, response) => {
-        await platformMustBeOwnedByCurrentUser.call(app, request, response)
-
-        const projectId = request.principal.projectId
-        const platformId = request.principal.platform?.id
-        const userExternalId = request.query.userExternalId
-
-        assertNotNullOrUndefined(platformId, 'platformId')
-
-        await projectMemberService.deleteByUserExternalId({
-            userExternalId,
-            platformId,
-            projectId,
-        })
-        await response.status(StatusCodes.NO_CONTENT).send()
-    })
 }
 
-async function assertFeatureIsEnabled(app: FastifyInstance, request: FastifyRequest, reply: FastifyReply) {
+async function assertFeatureIsEnabled(app: FastifyInstance, request: FastifyRequest, reply: FastifyReply): Promise<void> {
     await platformMustBeOwnedByCurrentUser.call(app, request, reply)
     const platformId = request.principal.platform?.id
     assertNotNullOrUndefined(platformId, 'platformId')
@@ -96,12 +81,19 @@ async function assertFeatureIsEnabled(app: FastifyInstance, request: FastifyRequ
 }
 
 const ListProjectMembersRequestQueryOptions = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+    },
     schema: {
+        tags: ['project-members'],
         querystring: ListProjectMembersRequestQuery,
     },
 }
 
 const AddProjectMemberRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+    },
     schema: {
         tags: ['project-members'],
         body: AddProjectMemberRequestBody,
@@ -112,6 +104,9 @@ const AddProjectMemberRequest = {
 }
 
 const AcceptProjectMemberRequest = {
+    config: {
+        allowedPrincipals: ALL_PRINICPAL_TYPES,
+    },
     schema: {
         body: Type.Object({
             token: Type.String(),
@@ -123,21 +118,16 @@ const AcceptProjectMemberRequest = {
 }
 
 const DeleteProjectMemberRequest = {
-    schema: {
-        params: Type.Object({
-            id: Type.String(),
-        }),
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
     },
-}
-
-const DeleteProjectMemberByUserExternalIdRequest = {
     schema: {
         tags: ['project-members'],
         response: {
             [StatusCodes.NO_CONTENT]: Type.Undefined(),
         },
-        querystring: Type.Object({
-            userExternalId: Type.String(),
+        params: Type.Object({
+            id: Type.String(),
         }),
     },
 }
