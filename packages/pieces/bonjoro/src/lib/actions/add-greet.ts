@@ -4,7 +4,7 @@ import { bonjoroAuth, BonjoroAuthType } from "../auth";
 import { buildCampaignDropdown, buildTemplateDropdown, buildUserDropdown } from "../props";
 
 export const addGreetAction = createAction({
-	name        : 'addGreet',
+	name        : 'add_greet',
 	auth        : bonjoroAuth,
 	displayName : 'Create a Greet',
 	description : 'Create a new Greet in Bonjoro',
@@ -33,21 +33,21 @@ export const addGreetAction = createAction({
 			displayName : 'Assignee',
 			description : 'Who to assign the greet to',
 			required    : false,
-			refreshers  : ['auth'],
+			refreshers  : [],
 			options     : async ({auth}) => await buildUserDropdown(auth as BonjoroAuthType),
 		}),
 		campaign: Property.Dropdown({
 			displayName : 'Campaign',
 			description : 'The campaign to add the greet to',
 			required    : false,
-			refreshers  : ['auth'],
+			refreshers  : [],
 			options     : async ({auth}) => await buildCampaignDropdown(auth as BonjoroAuthType),
 		}),
 		template: Property.Dropdown({
 			displayName : 'Template',
 			description : 'The template to use for the greet',
 			required    : false,
-			refreshers  : ['auth'],
+			refreshers  : [],
 			options     : async ({auth}) => await buildTemplateDropdown(auth as BonjoroAuthType),
 		}),
 		custom: Property.Json({

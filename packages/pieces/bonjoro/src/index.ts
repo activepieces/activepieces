@@ -7,7 +7,7 @@ export const bonjoro = createPiece({
   displayName             : "Bonjoro",
   auth                    : bonjoroAuth,
   minimumSupportedRelease : '0.9.0',
-  logoUrl                 : "https://sandbox.joeworkman.net/bonjoro.png",
+  logoUrl                 : " https://cdn.activepieces.com/pieces/bonjoro.png",
   authors                 : ["joeworkman"],
   actions                 : [
 	addGreetAction,
