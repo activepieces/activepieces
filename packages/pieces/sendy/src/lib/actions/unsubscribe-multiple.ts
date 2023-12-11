@@ -4,7 +4,7 @@ import { buildListDropdown } from "../props";
 import { sendyAuth, SendyAuthType } from "../auth";
 
 export const unsubscribeMultipleAction = createAction({
-	name        : 'unsubscribeMultiple',
+	name        : 'unsubscribe_multiple',
 	auth        : sendyAuth,
 	displayName : 'Unsubscribe Multiple Lists',
 	description : 'Unsubscribe a subscriber from mulitple lists',
