@@ -39,11 +39,10 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         // BEGIN EE
         const currentTime = dayjs()
         if (!isNil(flow.version.updatedBy) &&
-              flow.version.updatedBy !== request.principal.id &&
-              currentTime.diff(dayjs(flow.version.updated), 'minute') <= 1
+            flow.version.updatedBy !== request.principal.id &&
+            currentTime.diff(dayjs(flow.version.updated), 'minute') <= 1
         ) {
-            await reply.status(StatusCodes.CONFLICT).send()
-            return
+            return reply.status(StatusCodes.CONFLICT).send()
         }
         // END EE
 
