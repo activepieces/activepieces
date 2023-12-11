@@ -10,7 +10,7 @@ export const bettermode = createPiece({
   displayName             : "Bettermode",
   auth                    : bettermodeAuth,
   minimumSupportedRelease : '0.9.0',
-  logoUrl                 : "https://sandbox.joeworkman.net/bettermode.png",
+  logoUrl                 : " https://cdn.activepieces.com/pieces/bettermode.png",
   authors                 : ["joeworkman"],
   actions                 : [
 	createDiscussionAction,

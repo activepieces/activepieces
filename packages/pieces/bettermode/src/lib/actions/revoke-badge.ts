@@ -4,7 +4,7 @@ import { buildBadgesDropdown } from "../props";
 import { bettermodeAuth, BettermodeAuthType } from "../auth";
 
 export const revokeBadgeAction = createAction({
-	name        : 'revokeBadge',
+	name        : 'revoke_badge',
 	auth        : bettermodeAuth,
 	displayName : 'Revoke Badge from Member',
 	description : 'Revoke a badge from a member by email',
@@ -13,7 +13,7 @@ export const revokeBadgeAction = createAction({
 			displayName : 'Badge',
 			description : 'The badge to revoke',
 			required    : true,
-			refreshers  : ['auth'],
+			refreshers  : [],
 			options     : async ({auth}) => await buildBadgesDropdown(auth as BettermodeAuthType),
 		}),
 		email: Property.ShortText({

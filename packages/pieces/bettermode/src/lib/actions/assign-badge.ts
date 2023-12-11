@@ -4,7 +4,7 @@ import { buildBadgesDropdown } from "../props";
 import { bettermodeAuth, BettermodeAuthType } from "../auth";
 
 export const assignBadgeAction = createAction({
-	name        : 'assignBadge',
+	name        : 'assign_badge',
 	auth        : bettermodeAuth,
 	displayName : 'Assign Badge to Member',
 	description : 'Assign an existing badge to a member by email',
@@ -13,7 +13,7 @@ export const assignBadgeAction = createAction({
 			displayName : 'Badge',
 			description : 'The badge to assign',
 			required    : true,
-			refreshers  : ['auth'],
+			refreshers  : [],
 			options     : async ({auth}) => await buildBadgesDropdown(auth as BettermodeAuthType),
 		}),
 		email: Property.ShortText({

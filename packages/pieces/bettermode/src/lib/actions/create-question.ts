@@ -4,7 +4,7 @@ import { buildMemberSpacesDropdown } from "../props";
 import { bettermodeAuth, BettermodeAuthType } from "../auth";
 
 export const createQuestionAction = createAction({
-	name        : 'createQuestion',
+	name        : 'create_question',
 	auth        : bettermodeAuth,
 	displayName : 'Create Question Post',
 	description : 'Create a new question post in a space',
@@ -13,7 +13,7 @@ export const createQuestionAction = createAction({
 			displayName : 'Space',
 			description : 'The space to create the question in',
 			required    : true,
-			refreshers  : ['auth'],
+			refreshers  : [],
 			options     : async ({auth}) => await buildMemberSpacesDropdown(auth as BettermodeAuthType),
 		}),
 		title: Property.ShortText({
