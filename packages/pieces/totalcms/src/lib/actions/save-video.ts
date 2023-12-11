@@ -3,7 +3,7 @@ import { saveContent } from "../api";
 import { cmsAuth } from "../auth";
 
 export const saveVideoAction = createAction({
-	name        : 'saveVideo',
+	name        : 'save_video',
 	auth        : cmsAuth,
 	displayName : 'Save Video Content',
 	description : 'Save video content to Total CMS',

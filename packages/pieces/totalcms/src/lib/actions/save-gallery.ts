@@ -3,7 +3,7 @@ import { saveGallery } from "../api";
 import { cmsAuth } from "../auth";
 
 export const saveGalleryAction = createAction({
-	name        : 'saveGallery',
+	name        : 'save_gallery',
 	auth        : cmsAuth,
 	displayName : 'Save Gallery Image',
 	description : 'Save image to Total CMS gallery',

@@ -22,7 +22,7 @@ export const totalcms = createPiece({
   displayName             : "Totalcms",
   auth                    : cmsAuth,
   minimumSupportedRelease : '0.9.0',
-  logoUrl                 : "https://sandbox.joeworkman.net/totalcms.png",
+  logoUrl                 : "https://cdn.activepieces.com/pieces/totalcms.png",
   authors                 : ["joeworkman"],
   actions                 : [
 	getContentAction,

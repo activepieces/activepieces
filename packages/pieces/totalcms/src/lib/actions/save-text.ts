@@ -3,7 +3,7 @@ import { saveContent } from "../api";
 import { cmsAuth } from "../auth";
 
 export const saveTextAction = createAction({
-	name        : 'saveText',
+	name        : 'save_text',
 	auth        : cmsAuth,
 	displayName : 'Save Text Content',
 	description : 'Save text content to Total CMS',

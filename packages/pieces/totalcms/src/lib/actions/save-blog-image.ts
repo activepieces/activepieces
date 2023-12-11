@@ -3,7 +3,7 @@ import { saveBlogImage } from "../api";
 import { cmsAuth } from "../auth";
 
 export const saveBlogImageAction = createAction({
-	name        : 'saveBlogImage',
+	name        : 'save_blog_image',
 	auth        : cmsAuth,
 	displayName : 'Save Blog Post Image',
 	description : 'Save image to Total CMS blog post',

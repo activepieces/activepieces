@@ -3,7 +3,7 @@ import { getBlogPost } from "../api";
 import { cmsAuth } from "../auth";
 
 export const getBlogPostAction = createAction({
-	name        : 'getBlogPost',
+	name        : 'get_blog_post',
 	auth        : cmsAuth,
 	displayName : 'Get Blog Post',
 	description : 'Get a blog post from Total CMS',

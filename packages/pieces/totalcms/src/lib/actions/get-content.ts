@@ -3,7 +3,7 @@ import { getContent } from "../api";
 import { cmsAuth } from "../auth";
 
 export const getContentAction = createAction({
-	name        : 'getContent',
+	name        : 'get_content',
 	auth        : cmsAuth,
 	displayName : 'Get Content',
 	description : 'Get content from your Total CMS website',

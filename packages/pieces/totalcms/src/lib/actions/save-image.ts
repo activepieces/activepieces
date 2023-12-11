@@ -3,7 +3,7 @@ import { saveImage } from "../api";
 import { cmsAuth } from "../auth";
 
 export const saveImageAction = createAction({
-	name        : 'saveImage',
+	name        : 'save_image',
 	auth        : cmsAuth,
 	displayName : 'Save Image',
 	description : 'Save image to Total CMS',

@@ -3,7 +3,7 @@ import { saveContent } from "../api";
 import { cmsAuth } from "../auth";
 
 export const saveToggleAction = createAction({
-	name        : 'saveToggle',
+	name        : 'save_toggle',
 	auth        : cmsAuth,
 	displayName : 'Save Toggle',
 	description : 'Save toggle content to Total CMS',

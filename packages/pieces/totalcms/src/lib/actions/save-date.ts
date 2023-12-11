@@ -3,7 +3,7 @@ import { saveContent } from "../api";
 import { cmsAuth } from "../auth";
 
 export const saveDateAction = createAction({
-	name        : 'saveDate',
+	name        : 'save_date',
 	auth        : cmsAuth,
 	displayName : 'Save Date Content',
 	description : 'Save date content to Total CMS',

@@ -3,7 +3,7 @@ import { saveDepot } from "../api";
 import { cmsAuth } from "../auth";
 
 export const saveDepotAction = createAction({
-	name        : 'saveDepot',
+	name        : 'save_depot',
 	auth        : cmsAuth,
 	displayName : 'Save Depot',
 	description : 'Save file to Total CMS depot',

@@ -17,7 +17,7 @@ const polling: Polling<PiecePropValueSchema<typeof cmsAuth>, { slug : string }> 
 }
 
 export const newBlogPost = createTrigger({
-	name        : 'newblogPost',
+	name        : 'new_blog_post',
 	displayName : 'New Blog Post',
 	description : 'Triggers when a new blog post is published',
 	type        : TriggerStrategy.POLLING,
