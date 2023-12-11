@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
-import { ProjectId } from '@activepieces/shared';
+import { ProjectId, SeekPage } from '@activepieces/shared';
 import {
   CreatePlatformProjectRequest,
-  ProjectWithUsageAndPlan,
+  ProjectWithUsageAndPlanResponse,
   UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared';
 import { Router } from '@angular/router';
@@ -22,28 +22,30 @@ export class PlatformProjectService {
   update(
     projectId: ProjectId,
     request: UpdateProjectPlatformRequest
-  ): Observable<ProjectWithUsageAndPlan> {
-    return this.http.post<ProjectWithUsageAndPlan>(
+  ): Observable<ProjectWithUsageAndPlanResponse> {
+    return this.http.post<ProjectWithUsageAndPlanResponse>(
       environment.apiUrl + '/projects/' + projectId,
       request
     );
   }
 
-  list(platformId?: string): Observable<ProjectWithUsageAndPlan[]> {
+  list(platformId?: string): Observable<ProjectWithUsageAndPlanResponse[]> {
     const params: Record<string, string> = platformId ? { platformId } : {};
-    return this.http.get<ProjectWithUsageAndPlan[]>(
-      environment.apiUrl + `/projects`,
-      {
-        params,
-      }
-    );
+    return this.http
+      .get<SeekPage<ProjectWithUsageAndPlanResponse>>(
+        environment.apiUrl + `/users/projects`,
+        {
+          params,
+        }
+      )
+      .pipe(map((res) => res.data));
   }
 
   switchProject(projectId: string, redirectHome?: boolean): Observable<void> {
     return this.http
       .post<{
         token: string;
-      }>(`${environment.apiUrl}/projects/${projectId}/token`, {
+      }>(`${environment.apiUrl}/users/projects/${projectId}/token`, {
         projectId,
       })
       .pipe(

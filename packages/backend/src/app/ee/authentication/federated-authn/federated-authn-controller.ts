@@ -1,6 +1,7 @@
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { federatedAuthnService } from './federated-authn-service'
 import { ClaimTokenRequest, ThirdPartyAuthnProviderEnum } from '@activepieces/ee-shared'
+import { ALL_PRINICPAL_TYPES } from '@activepieces/shared'
 
 export const federatedAuthnController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/login', LoginRequestSchema, async (req) => {
@@ -15,6 +16,9 @@ export const federatedAuthnController: FastifyPluginAsyncTypebox = async (app) =
 }
 
 const LoginRequestSchema = {
+    config: {
+        allowedPrincipals: ALL_PRINICPAL_TYPES,
+    },
     schema: {
         querystring: Type.Object({
             providerName: Type.Enum(ThirdPartyAuthnProviderEnum),
@@ -23,6 +27,9 @@ const LoginRequestSchema = {
 }
 
 const ClaimTokenRequestSchema = {
+    config: {
+        allowedPrincipals: ALL_PRINICPAL_TYPES,
+    },
     schema: {
         body: ClaimTokenRequest,
     },

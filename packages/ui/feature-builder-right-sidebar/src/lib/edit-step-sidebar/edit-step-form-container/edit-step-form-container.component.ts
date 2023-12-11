@@ -35,7 +35,7 @@ import { FlagService } from '@activepieces/ui/common';
 import {
   BuilderSelectors,
   CollectionBuilderService,
-  FlowItem,
+  Step,
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
 import { TriggerBase, TriggerStrategy } from '@activepieces/pieces-framework';
@@ -49,14 +49,14 @@ import { PieceMetadataService } from 'ui-feature-pieces';
 export class EditStepFormContainerComponent {
   readOnly$: Observable<boolean> = of(false);
   cancelAutoSaveListener$: Subject<boolean> = new Subject();
-  _selectedStep: FlowItem;
+  _selectedStep: Step;
   stepForm: UntypedFormGroup;
   webhookUrl$: Observable<string>;
   ActionType = ActionType;
   TriggerType = TriggerType;
   ApEdition = ApEdition;
   edition$: Observable<ApEdition>;
-  @Input() set selectedStep(step: FlowItem) {
+  @Input() set selectedStep(step: Step) {
     this._selectedStep = step;
     this.cancelAutoSaveListener$.next(true);
     this.updateFormValue(step);
@@ -95,7 +95,7 @@ export class EditStepFormContainerComponent {
     this.edition$ = this.flagService.getEdition();
   }
 
-  updateFormValue(stepSelected: FlowItem) {
+  updateFormValue(stepSelected: Step) {
     const settingsControl = this.stepForm.get('settings')!;
     settingsControl.setValue({
       ...stepSelected.settings,
@@ -173,14 +173,14 @@ export class EditStepFormContainerComponent {
       );
   }
 
-  private updateNonAppWebhookTrigger(step: FlowItem) {
+  private updateNonAppWebhookTrigger(step: Step) {
     this.store.dispatch(
       FlowsActions.updateTrigger({
         operation: this.prepareStepDataToSave(step) as UpdateTriggerRequest,
       })
     );
   }
-  private updateAppWebhookTrigger(step: FlowItem, trigger: TriggerBase) {
+  private updateAppWebhookTrigger(step: Step, trigger: TriggerBase) {
     const dataToSave: UpdateTriggerRequest = this.prepareStepDataToSave(
       step
     ) as UpdateTriggerRequest;
@@ -202,7 +202,7 @@ export class EditStepFormContainerComponent {
   }
 
   prepareStepDataToSave(
-    currentStep: FlowItem
+    currentStep: Step
   ): UpdateActionRequest | UpdateTriggerRequest {
     const stepToSave: UpdateActionRequest = JSON.parse(
       JSON.stringify(currentStep)
@@ -213,7 +213,7 @@ export class EditStepFormContainerComponent {
     return stepToSave;
   }
 
-  createNewStepSettings(currentStep: FlowItem) {
+  createNewStepSettings(currentStep: Step) {
     const inputControlValue: StepSettings =
       this.stepForm.get('settings')?.value;
     if (currentStep.type === ActionType.PIECE) {
@@ -243,7 +243,7 @@ export class EditStepFormContainerComponent {
     return inputControlValue;
   }
 
-  createPieceSettings(step: FlowItem) {
+  createPieceSettings(step: Step) {
     const inputControlValue: StepSettings =
       this.stepForm.get('settings')?.value;
     const stepSettings: PieceTriggerSettings = {

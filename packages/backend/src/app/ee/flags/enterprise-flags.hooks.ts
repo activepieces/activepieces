@@ -1,4 +1,4 @@
-import { ApFlagId, isNil } from '@activepieces/shared'
+import {  ApFlagId, isNil } from '@activepieces/shared'
 import { FlagsServiceHooks } from '../../flags/flags.hooks'
 import { apperanceHelper } from '../helper/apperance-helper'
 import { platformService } from '../platform/platform.service'
@@ -20,7 +20,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP] = {
                 [ThirdPartyAuthnProviderEnum.GOOGLE]: false,
                 [ThirdPartyAuthnProviderEnum.GITHUB]: false,
-            }
+            },
             modifiedFlags[ApFlagId.SHOW_BLOG_GUIDE] = false
             modifiedFlags[ApFlagId.SHOW_COMMUNITY_PIECES] = false
             modifiedFlags[ApFlagId.SHOW_POWERED_BY_AP] = platform.showPoweredBy

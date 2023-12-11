@@ -9,9 +9,8 @@ import { plansService } from '../project-plan/project-plan.service'
 import { getEdition } from '../../../helper/secret-helper'
 
 export const stripeWebhookSecret = system.get(SystemProp.STRIPE_WEBHOOK_SECRET)!
-export const stripe = constructStripeInstance()
 
-function constructStripeInstance(): Stripe | undefined {
+function getStripe(): Stripe | undefined {
     const edition = getEdition()
     if (edition !== ApEdition.CLOUD) {
         return undefined
@@ -30,6 +29,7 @@ enum StripeProductType {
 
 async function getOrCreateCustomer(user: UserMeta, projectId: ProjectId): Promise<string | undefined> {
     const edition = getEdition()
+    const stripe = getStripe()
     if (edition !== ApEdition.CLOUD) {
         return undefined
     }
@@ -100,6 +100,7 @@ async function upgrade({
     request,
     subscriptionId,
 }: { request: UpgradeRequest, subscriptionId: string }): Promise<{ paymentLink: null }> {
+    const stripe = getStripe()
     assertNotNullOrUndefined(stripe, 'Stripe is not configured')
     const stripeSubscription = await stripe.subscriptions.retrieve(subscriptionId)
     const products = getPlanProducts(request).map(item => {
@@ -125,6 +126,7 @@ async function createPortalSessionUrl({
 }: {
     projectId: ProjectId
 }): Promise<string> {
+    const stripe = getStripe()
     assertNotNullOrUndefined(stripe, 'Stripe is not configured')
     const plan = await plansService.getOrCreateDefaultPlan({ projectId })
     const session = await stripe.billingPortal.sessions.create({
@@ -141,6 +143,7 @@ async function createPaymentLink({
     projectId: ProjectId
     request: UpgradeRequest
 }): Promise<{ paymentLink: string }> {
+    const stripe = getStripe()
     assertNotNullOrUndefined(stripe, 'Stripe is not configured')
     try {
         const plan = await plansService.getOrCreateDefaultPlan({ projectId })
@@ -206,5 +209,6 @@ export const stripeHelper = {
     createPortalSessionUrl,
     createPaymentLink,
     upgrade,
+    getStripe,
     getOrCreateCustomer,
 }

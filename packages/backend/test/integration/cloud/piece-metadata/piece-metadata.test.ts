@@ -5,7 +5,7 @@ import { createMockPieceMetadata, createMockPlatform, createMockProject, createM
 import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
 import { FilteredPieceBehavior } from '@activepieces/ee-shared'
-import { PieceType, PrincipalType, ProjectType, apId } from '@activepieces/shared'
+import { PieceType, PlatformRole, PrincipalType, ProjectType, apId } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
@@ -50,8 +50,8 @@ describe('Piece Metadata API', () => {
             await databaseConnection.getRepository('project').save([mockProject])
 
             const testToken = await generateMockToken({
-                projectId: mockProject.id,
                 type: PrincipalType.USER,
+                projectId: mockProject.id,
                 id: apId(),
             })
 
@@ -149,11 +149,12 @@ describe('Piece Metadata API', () => {
             await databaseConnection.getRepository('piece_metadata').save([mockPieceMetadataA, mockPieceMetadataB, mockPieceMetadataC, mockPieceMetadataD])
 
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 projectId: mockProject.id,
                 id: mockUser.id,
                 platform: {
                     id: mockPlatform.id,
-                    role: 'MEMBER',
+                    role: PlatformRole.MEMBER,
                 },
             })
 
@@ -196,6 +197,7 @@ describe('Piece Metadata API', () => {
             await databaseConnection.getRepository('piece_metadata').save([mockPieceMetadataA, mockPieceMetadataB, mockPieceMetadataC])
 
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 projectId: mockProject.id,
                 id: mockUser.id,
             })
@@ -262,9 +264,10 @@ describe('Piece Metadata API', () => {
             await databaseConnection.getRepository('piece_metadata').save([mockPieceMetadataA, mockPieceMetadataB])
 
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 platform: {
                     id: mockPlatform.id,
-                    role: 'OWNER',
+                    role: PlatformRole.OWNER,
                 },
             })
 
@@ -303,9 +306,10 @@ describe('Piece Metadata API', () => {
             await databaseConnection.getRepository('piece_metadata').save([mockPieceMetadataA, mockPieceMetadataB])
 
             const testToken = await generateMockToken({
+                type: PrincipalType.USER,
                 platform: {
                     id: mockPlatform.id,
-                    role: 'OWNER',
+                    role: PlatformRole.OWNER,
                 },
             })
 

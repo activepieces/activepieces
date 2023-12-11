@@ -1,11 +1,17 @@
 <ap-page-title [title]="title">
 </ap-page-title>
 
-<div class="ap-w-[320px] ap-mb-4 ">
+<div class="ap-mb-4  ap-flex ap-items-center ap-gap-2 ap-justify-between">
+
     <mat-form-field (click)="$event.stopPropagation();" appearance="outline" subscriptSizing="dynamic">
         <mat-icon class="ap-ml-2.5" matPrefix svgIcon="search"></mat-icon>
         <input [formControl]="searchFormControl" id="searchInput" matInput placeholder="Search" autocomplete="off">
     </mat-form-field>
+
+    <mat-slide-toggle color="primary" [formControl]="cloudAuthToggleFormControl" i18n i18n-matTooltip
+        matTooltip="For pieces that use OAuth2 and don't have your own app credentials assigned to them, they will use Activepieces' apps">
+        Use Activepieces OAuth2 Apps
+    </mat-slide-toggle>
 </div>
 
 
@@ -24,6 +30,12 @@
                     {{ piece.displayName }}
                 </div>
 
+            </td>
+        </ng-container>
+        <ng-container matColumnDef="version">
+            <th mat-header-cell *matHeaderCellDef i18n class="!ap-text-center">Version</th>
+            <td mat-cell class="!ap-text-center" *matCellDef="let piece">
+                {{ piece.version }}
             </td>
         </ng-container>
 
@@ -92,5 +104,6 @@
 </div>
 
 <ng-container *ngIf="saving$ | async"></ng-container>
+<ng-container *ngIf="toggelCloudOAuth2$ | async"> </ng-container>
 <ng-container *ngIf="dialogClosed$ | async"></ng-container>
 <ng-container *ngIf="addPackageDialogClosed$ | async"></ng-container>

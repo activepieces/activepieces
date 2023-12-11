@@ -5,12 +5,18 @@ import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { generateMockExternalToken } from '../../../helpers/auth'
 import { ProjectType, apId } from '@activepieces/shared'
+import { faker } from '@faker-js/faker'
+import { stripeHelper } from '../../../../src/app/ee/billing/billing/stripe-helper'
 
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
     await databaseConnection.initialize()
     app = await setupApp()
+})
+
+beforeEach(async () => {
+    stripeHelper.getOrCreateCustomer = jest.fn().mockResolvedValue(faker.string.alphanumeric())
 })
 
 afterAll(async () => {
@@ -60,7 +66,7 @@ describe('Managed Authentication API', () => {
             expect(responseBody?.trackEvents).toBe(true)
             expect(responseBody?.newsLetter).toBe(true)
             expect(responseBody?.password).toBeUndefined()
-            expect(responseBody?.status).toBe('CREATED')
+            expect(responseBody?.status).toBe('VERIFIED')
             expect(responseBody?.externalId).toBe(mockExternalTokenPayload.externalUserId)
             expect(responseBody?.platformId).toBe(mockPlatform.id)
             expect(responseBody?.projectId).toHaveLength(21)
@@ -125,8 +131,10 @@ describe('Managed Authentication API', () => {
             })
             await databaseConnection.getRepository('signing_key').save(mockSigningKey)
 
+            const mockedEmail = faker.internet.email()
             const { mockExternalToken } = generateMockExternalToken({
                 platformId: mockPlatform.id,
+                externalEmail: mockedEmail,
                 signingKeyId: mockSigningKey.id,
             })
 
@@ -145,12 +153,14 @@ describe('Managed Authentication API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
             const generatedProjectMember = await databaseConnection.getRepository('project_member').findOneBy({
-                userId: responseBody?.id,
+                email: mockedEmail,
+                platformId: mockPlatform.id,
                 projectId: responseBody?.projectId,
             })
 
             expect(generatedProjectMember?.projectId).toBe(responseBody?.projectId)
-            expect(generatedProjectMember?.userId).toBe(responseBody?.id)
+            expect(generatedProjectMember?.email).toBe(mockedEmail)
+            expect(generatedProjectMember?.platformId).toBe(mockPlatform.id)
             expect(generatedProjectMember?.role).toBe('EDITOR')
             expect(generatedProjectMember?.status).toBe('ACTIVE')
         })
