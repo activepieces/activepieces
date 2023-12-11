@@ -2,7 +2,7 @@ import { Property, createAction, Validators } from '@activepieces/pieces-framewo
 import { optionalTimeFormats, timeFormat, timeFormatDescription, createNewDate, timeZoneOptions, timeDiff } from '../common';
 
 export const nextDayofWeek = createAction({
-	name        : 'nextDayofWeek',
+	name        : 'next_day_of_week',
 	displayName : 'Next Day of Week',
 	description : 'Get the date and time of the next day of the week',
 	props       : {

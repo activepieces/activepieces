@@ -2,7 +2,7 @@ import { Property, createAction, Validators } from '@activepieces/pieces-framewo
 import { optionalTimeFormats, timeFormat, timeFormatDescription, createNewDate, timeZoneOptions, timeDiff } from '../common';
 
 export const nextDayofYear = createAction({
-	name        : 'nextDayofYear',
+	name        : 'next_day_of_year',
 	displayName : 'Next Day of Year',
 	description : 'Get the date and time of the next day of the year',
 	props       : {
