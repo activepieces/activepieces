@@ -56,9 +56,10 @@
             <svg-icon
                 [src]="res.success?'assets/img/custom/success-step-result.svg':'assets/img/custom/failure-step-result.svg'"
                 [svgStyle]="{ width: '21px', height: '20px' }" matTooltip="Step succeeded"></svg-icon>
-            <ng-template *ngIf="res.success; else testingFailed">
+            <ng-container *ngIf="res.success; else testingFailed">
+
                 <span i18n>Tested Successfully</span>
-            </ng-template>
+            </ng-container>
             <ng-template #testingFailed>
                 <span i18n>Testing Failed</span>
             </ng-template>

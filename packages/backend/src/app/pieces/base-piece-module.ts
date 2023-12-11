@@ -1,5 +1,5 @@
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { ActivepiecesError, ApEdition, ErrorCode, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, ListPiecesRequestQuery, PieceOptionRequest, PrincipalType } from '@activepieces/shared'
+import { ALL_PRINICPAL_TYPES, ActivepiecesError, ApEdition, ErrorCode, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, ListPiecesRequestQuery, PieceOptionRequest, PrincipalType } from '@activepieces/shared'
 import { engineHelper } from '../helper/engine-helper'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
@@ -18,6 +18,9 @@ const statsEnabled = system.getBoolean(SystemProp.STATS_ENABLED)
 const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/', {
+        config: {
+            allowedPrincipals: ALL_PRINICPAL_TYPES,
+        },
         schema: {
             querystring: ListPiecesRequestQuery,
         },
@@ -36,6 +39,9 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.get('/:scope/:name', {
+        config: {
+            allowedPrincipals: ALL_PRINICPAL_TYPES,
+        },
         schema: {
             params: GetPieceRequestWithScopeParams,
             querystring: GetPieceRequestQuery,
@@ -54,6 +60,9 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.get('/:name', {
+        config: {
+            allowedPrincipals: ALL_PRINICPAL_TYPES,
+        },
         schema: {
             params: GetPieceRequestParams,
             querystring: GetPieceRequestQuery,
@@ -85,7 +94,6 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 pieceType,
                 pieceName,
                 pieceVersion,
-                projectId,
             },
             propertyName,
             stepName,
@@ -96,7 +104,11 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         return result
     })
 
-    app.get('/stats', async () => {
+    app.get('/stats', {
+        config: {
+            allowedPrincipals: ALL_PRINICPAL_TYPES,
+        },
+    }, async () => {
         if (!statsEnabled) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,

@@ -12,7 +12,7 @@ import {
   CustomPathMentionDialogData,
 } from '../custom-path-mention-dialog/custom-path-mention-dialog.component';
 import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
-import { FlowItem } from '@activepieces/ui/feature-builder-store';
+import { Step } from '@activepieces/ui/feature-builder-store';
 
 @Component({
   selector: 'app-loop-step-mention-item',
@@ -23,7 +23,7 @@ export class LoopStepMentionItemComponent implements OnInit {
     FIRST_LEVEL_PADDING_IN_MENTIONS_LIST;
   expandLoopCollapse = false;
   childrenNodes: MentionTreeNode[] = [];
-  @Input() stepMention: MentionListItem & { step: FlowItem };
+  @Input() stepMention: MentionListItem & { step: Step };
   @Input() stepIndex: number;
   @Output() mentionClicked: EventEmitter<MentionListItem> = new EventEmitter();
   mentionsItems = {

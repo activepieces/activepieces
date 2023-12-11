@@ -4,7 +4,7 @@ import {
     FlowOperationRequest,
     FlowStatus,
     FlowTemplate,
-    GetFlowRequest,
+    GetFlowQueryParamsRequest,
     ListFlowsRequest,
 } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
@@ -176,7 +176,7 @@ const GetFlowRequestOptions = {
         params: Type.Object({
             id: ApId,
         }),
-        querystring: GetFlowRequest,
+        querystring: GetFlowQueryParamsRequest,
     },
 }
 

@@ -1,0 +1,38 @@
+@import "../../../../../../../../core/src/assets/scss/variables.scss";
+@import "../../../../../../../../core/src/assets/scss/derived-variables.scss";
+
+
+.big-add-button {
+  cursor: pointer;
+  transition: box-shadow 0.3s ease-in-out, background 0.3s ease-in-out, background-image 0.3s ease-in-out;
+  background-color: #f0f1f3;
+  border-radius: 8px;
+  height: 40px;
+  width: 40px;
+  z-index: 40;
+  &:hover:not(:focus) {
+    .add-icon {
+      transform: scale(1.1);
+    }
+  }
+  &.box-shadow {
+    box-shadow: 0px 0px 0px 5px #fafafa;
+  }
+  transform: scale(1.3);
+}
+
+.big-add-button-drop-indicator {
+  background: var(--primary-palette-300);
+  box-sizing: content-box;
+  opacity:80%;
+  &.show-shadow {
+    box-shadow: 0px 0px 0px 6px var(--primary-palette-100);
+  }
+}
+.add-icon {
+  fill: #a6b1bf;
+  svg {
+    height: 12px;
+    width: 12px;
+  }
+}

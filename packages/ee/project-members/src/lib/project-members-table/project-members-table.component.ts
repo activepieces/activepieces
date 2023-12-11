@@ -50,6 +50,7 @@ export class ProjectMembersTableComponent implements OnInit {
     private authenticationService: AuthenticationService
   ) {
     this.dataSource = new ProjectMembersTableDataSource(
+      this.authenticationService,
       this.projectMemberService,
       this.refreshTableAtCurrentCursor$.asObservable().pipe(startWith(true))
     );
@@ -60,7 +61,10 @@ export class ProjectMembersTableComponent implements OnInit {
       .pipe(take(1));
     // TODO OPTMIZE THIS and use role from centerlized place
     this.isCurrentUserAdmin$ = forkJoin([
-      this.projectMemberService.list({ limit: 100 }),
+      this.projectMemberService.list({
+        limit: 100,
+        projectId: this.authenticationService.getProjectId(),
+      }),
       this.projectOwnerId$,
     ]).pipe(
       map(([members, ownerId]) => {

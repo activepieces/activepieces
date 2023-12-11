@@ -42,7 +42,7 @@ import 'quill-mention';
 import { Store } from '@ngrx/store';
 import {
   BuilderSelectors,
-  FlowItem,
+  StepWithIndex,
 } from '@activepieces/ui/feature-builder-store';
 import { InsertMentionOperation } from '@activepieces/ui/common';
 
@@ -105,7 +105,7 @@ export class InterpolatingTextFormControlComponent
   private _value = '';
   stepsMetaData$: Observable<
     (MentionListItem & {
-      step: FlowItem;
+      step: StepWithIndex;
     })[]
   >;
   autofilled?: boolean | undefined = false;
@@ -361,12 +361,12 @@ export class InterpolatingTextFormControlComponent
       const stepMetaData = allStepsMetaData.find(
         (s) => s.step.name === stepName
       );
-      if (stepMetaData?.step.indexInDfsTraversal) {
-        mentionOp.insert.apMention.value = `${
-          stepMetaData?.step.indexInDfsTraversal + 1
-        }. ${mentionOp.insert.apMention.value}`;
-      } else {
-        `${mentionOp.insert.apMention.value}`;
+
+      const indexInDfsTraversal = await firstValueFrom(
+        this.store.select(BuilderSelectors.selectStepIndex(stepName))
+      );
+      if (indexInDfsTraversal > 0) {
+        mentionOp.insert.apMention.value = `${indexInDfsTraversal}. ${mentionOp.insert.apMention.value}`;
       }
       mentionOp.insert.apMention.data = {
         logoUrl: stepMetaData?.logoUrl,

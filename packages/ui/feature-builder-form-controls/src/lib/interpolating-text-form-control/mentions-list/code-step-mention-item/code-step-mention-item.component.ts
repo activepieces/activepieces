@@ -19,7 +19,7 @@ import {
 } from '../../utils';
 import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
 
-import { FlowItem } from '@activepieces/ui/feature-builder-store';
+import { Step } from '@activepieces/ui/feature-builder-store';
 import { Store } from '@ngrx/store';
 import { canvasActions } from '@activepieces/ui/feature-builder-store';
 
@@ -32,7 +32,7 @@ export class CodeStepMentionItemComponent implements OnInit {
   readonly CHEVRON_SPACE_IN_MENTIONS_LIST = CHEVRON_SPACE_IN_MENTIONS_LIST;
   readonly FIRST_LEVEL_PADDING_IN_MENTIONS_LIST =
     FIRST_LEVEL_PADDING_IN_MENTIONS_LIST;
-  @Input() stepMention: MentionListItem & { step: FlowItem };
+  @Input() stepMention: MentionListItem & { step: Step };
   @Input() stepIndex: number;
   @Output() mentionClicked: EventEmitter<MentionListItem> = new EventEmitter();
   expandCodeCollapse = false;

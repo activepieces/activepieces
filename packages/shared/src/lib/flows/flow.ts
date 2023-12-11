@@ -1,4 +1,4 @@
-import { BaseModelSchema } from '../common/base-model'
+import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
 import { FlowVersion } from './flow-version'
 import { Type, Static } from '@sinclair/typebox'
@@ -25,10 +25,10 @@ export type FlowScheduleOptions = Static<typeof FlowScheduleOptions>
 export const Flow = Type.Object({
     ...BaseModelSchema,
     projectId: Type.String(),
-    folderId: Type.Union([Type.String(), Type.Null()]),
+    folderId: Nullable(Type.String()),
     status: Type.Enum(FlowStatus),
-    schedule: Type.Union([FlowScheduleOptions, Type.Null()]),
-    publishedVersionId: Type.Union([Type.String(), Type.Null()]),
+    schedule: Nullable(FlowScheduleOptions),
+    publishedVersionId: Nullable(Type.String()),
 })
 
 export type Flow = Static<typeof Flow>
