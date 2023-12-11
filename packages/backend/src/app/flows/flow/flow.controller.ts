@@ -148,6 +148,7 @@ const UpdateFlowPublishedVersionIdRequestOptions = {
 }
 
 const ListFlowsRequestOptions = {
+    description: 'List flows',
     schema: {
         querystring: ListFlowsRequest,
     },
@@ -171,18 +172,26 @@ const GetFlowTemplateRequestOptions = {
 }
 
 const GetFlowRequestOptions = {
+    description: 'Get a flow by id',
     schema: {
         params: Type.Object({
             id: ApId,
         }),
         querystring: GetFlowQueryParamsRequest,
     },
+    response: {
+        [StatusCodes.OK]: PopulatedFlow,
+    },
 }
 
 const DeleteFlowRequestOptions = {
     schema: {
+        description: 'Delete a flow',
         params: Type.Object({
             id: ApId,
         }),
+        response: {
+            [StatusCodes.NO_CONTENT]: Type.Undefined(),
+        },
     },
 }
