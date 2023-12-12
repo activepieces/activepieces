@@ -1,5 +1,6 @@
 export enum SystemProp {
     API_KEY = 'API_KEY',
+    APP_WEBHOOK_SECRETS = 'APP_WEBHOOK_SECRETS', // Only used in cloud edition
     CACHE_PATH = 'CACHE_PATH',
     CLOUD_AUTH_ENABLED = 'CLOUD_AUTH_ENABLED',
     CHATBOT_ENABLED = 'CHATBOT_ENABLED',
