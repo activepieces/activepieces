@@ -27,6 +27,7 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
             type: String,
             enum: FlowStatus,
             nullable: false,
+            default: FlowStatus.DISABLED,
         },
         schedule: {
             type: JSONB_COLUMN_TYPE,
