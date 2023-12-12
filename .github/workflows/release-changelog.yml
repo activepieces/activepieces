@@ -25,6 +25,7 @@ jobs:
           commitish: main
           prerelease: true
           tag: ${{ env.RELEASE }}
+          name: ${{ env.RELEASE }}
           version: ${{ env.RELEASE }}
           latest: false
         env:

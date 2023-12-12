@@ -1,4 +1,6 @@
 include-pre-releases: true
+exclude-labels:
+  - 'skip-changelog'
 categories:
   - title: "✨ Exciting New Features"
     labels:
