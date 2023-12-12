@@ -1,4 +1,4 @@
-import { ActionType, ExecutionOutput, LoopOnItemsStepOutput, MAX_LOG_SIZE, StepOutput, applyFunctionToValues } from '@activepieces/shared'
+import { ActionType, ExecutionOutput, LoopOnItemsStepOutput, MAX_LOG_SIZE, MAX_SINGLE_SIZE_FOR_SINGLE_ENTRY, StepOutput, applyFunctionToValues } from '@activepieces/shared'
 import sizeof from 'object-sizeof'
 import { isMemoryFilePath } from '../services/files.service'
 
@@ -69,7 +69,7 @@ const objectEntriesExceedMaxSize = (objectEntries: [string, unknown][]): boolean
 }
 
 const objectExceedMaxSize = (obj: unknown): boolean => {
-    return sizeof(obj) > MAX_LOG_SIZE
+    return sizeof(obj) > MAX_SINGLE_SIZE_FOR_SINGLE_ENTRY
 }
 
 const isObject = (obj: unknown): obj is Record<string, unknown> => {
