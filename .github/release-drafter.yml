@@ -18,6 +18,10 @@ categories:
   - title: "📚 Documentation"
     labels:
       - "📚 documentation"
+  - title: "🧹 Maintenance"
+    labels:
+      - "🧹 clean up"
+      - "💻 tech debt"
   - title: "Other Changes"
     labels:
       - "*"

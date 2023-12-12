@@ -2,7 +2,7 @@ name: Write release notes
 
 on:
   pull_request:
-    types: [opened, reopened, synchronize, edited, closed, labled]
+    types: [opened, reopened, synchronize, edited, closed, labeled]
 
 permissions:
   contents: write

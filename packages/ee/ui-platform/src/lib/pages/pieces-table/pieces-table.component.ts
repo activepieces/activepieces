@@ -9,7 +9,6 @@ import {
   tap,
 } from 'rxjs';
 import {
-  AuthenticationService,
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
   OAuth2AppsService,
@@ -57,9 +56,9 @@ export class PiecesTableComponent implements OnInit {
   refresh$: Subject<true> = new Subject();
   dialogClosed$?: Observable<boolean>;
   addPackageDialogClosed$!: Observable<Record<string, string> | null>;
-
+  cloudAuthToggleFormControl = new FormControl(false, { nonNullable: true });
+  toggelCloudOAuth2$: Observable<void>;
   constructor(
-    private authenticationService: AuthenticationService,
     private piecesService: PieceMetadataService,
     private route: ActivatedRoute,
     private platformService: PlatformService,
@@ -67,7 +66,7 @@ export class PiecesTableComponent implements OnInit {
     private matDialog: MatDialog,
     private oauth2AppsService: OAuth2AppsService
   ) {
-    this.authenticationService.getPlatformId();
+    this.toggelCloudOAuth2$ = this.getCloudOAuth2ToggleListener();
   }
   ngOnInit(): void {
     this.platform$ = new BehaviorSubject(this.route.snapshot.data['platform']);
@@ -76,6 +75,26 @@ export class PiecesTableComponent implements OnInit {
       this.searchFormControl.valueChanges.pipe(startWith('')),
       this.oauth2AppsService,
       this.refresh$.asObservable().pipe(startWith(true as const))
+    );
+    this.cloudAuthToggleFormControl.setValue(
+      this.platform$.value.cloudAuthEnabled
+    );
+  }
+
+  getCloudOAuth2ToggleListener() {
+    return this.cloudAuthToggleFormControl.valueChanges.pipe(
+      tap((cloudAuthEnabled) => {
+        this.platform$.next({ ...this.platform$.value, cloudAuthEnabled });
+      }),
+      switchMap((cloudAuthEnabled) => {
+        return this.platformService.updatePlatform(
+          {
+            ...this.platform$.value,
+            cloudAuthEnabled,
+          },
+          this.platform$.value.id
+        );
+      })
     );
   }
 

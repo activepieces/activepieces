@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
-import { TestFlowRunRequestBody, FlowRunId, ListFlowRunsRequestQuery, ApId } from '@activepieces/shared'
+import { TestFlowRunRequestBody, FlowRunId, ListFlowRunsRequestQuery, ApId, ALL_PRINICPAL_TYPES } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowRunService } from './flow-run-service'
 
@@ -17,6 +17,9 @@ const TestFlowRunRequest = {
 }
 
 const ResumeFlowRunRequest = {
+    config: {
+        allowedPrincipals: ALL_PRINICPAL_TYPES,
+    },
     schema: {
         params: Type.Object({
             id: ApId,

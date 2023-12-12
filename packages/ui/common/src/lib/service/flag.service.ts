@@ -11,17 +11,23 @@ type FlagsMap = Record<string, boolean | string | object | undefined>;
   providedIn: 'root',
 })
 export class FlagService {
-  flags$: Observable<FlagsMap> | undefined;
+  private flags$: Observable<FlagsMap> | undefined;
 
   constructor(private http: HttpClient) {}
 
   getAllFlags() {
     if (!this.flags$) {
-      this.flags$ = this.http
-        .get<FlagsMap>(environment.apiUrl + '/flags')
-        .pipe(shareReplay(1));
+      this.flags$ = this.initialiseFlags();
     }
     return this.flags$;
+  }
+  reinitialiseFlags() {
+    this.flags$ = this.initialiseFlags();
+  }
+  private initialiseFlags() {
+    return this.http
+      .get<FlagsMap>(environment.apiUrl + '/flags')
+      .pipe(shareReplay(1));
   }
 
   getStringFlag(flag: ApFlagId): Observable<string> {
