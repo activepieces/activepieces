@@ -21,10 +21,6 @@ async function trimStepOutput(stepOutput: StepOutput): Promise<StepOutput> {
     switch (modified.type) {
         case ActionType.BRANCH:
             break
-        case ActionType.CODE:
-        case ActionType.PIECE:
-            modified.output = await applyFunctionToValues(modified.output, trim)
-            break
         case ActionType.LOOP_ON_ITEMS: {
             const loopItem = (modified as LoopOnItemsStepOutput).output
             if (loopItem) {
@@ -33,6 +29,11 @@ async function trimStepOutput(stepOutput: StepOutput): Promise<StepOutput> {
             }
             break
         }
+        case ActionType.CODE:
+        case ActionType.PIECE:
+        default:
+            modified.output = await applyFunctionToValues(modified.output, trim)
+            break
     }
     modified.standardOutput = await applyFunctionToValues(modified.standardOutput, trim)
     modified.errorMessage = await applyFunctionToValues(modified.errorMessage, trim)
