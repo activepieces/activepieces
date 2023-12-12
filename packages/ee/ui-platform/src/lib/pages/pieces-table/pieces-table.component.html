@@ -9,8 +9,9 @@
     </mat-form-field>
 
     <mat-slide-toggle color="primary" [formControl]="cloudAuthToggleFormControl" i18n i18n-matTooltip
+        labelPosition="before"
         matTooltip="For pieces that use OAuth2 and don't have your own app credentials assigned to them, they will use Activepieces' apps">
-        Use Activepieces OAuth2 Apps
+        Use Activepieces' OAuth2 apps for pieces that aren't configured
     </mat-slide-toggle>
 </div>
 
