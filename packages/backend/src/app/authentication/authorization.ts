@@ -25,7 +25,7 @@ export const allowWorkersOrQueryTokens: onRequestHookHandler = async (request, _
             params: {},
         })
     }
-    else if (query.token) {
+    else if (request.principal.type !== PrincipalType.WORKER && query.token) {
         request.principal = await accessTokenManager.extractPrincipal(query.token)
     }
 }
