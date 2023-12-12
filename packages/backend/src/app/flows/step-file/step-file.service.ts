@@ -101,7 +101,7 @@ async function encrichWithUrl(hostname: string, file: StepFile): Promise<StepFil
         expiresInSeconds: 60 * 60 * 24 * 7,
         key: jwtSecret,
     })
-    const url = await domainHelper.get().constructUrlFromRequest({
+    const url = await domainHelper.get().constructApiUrlFromRequest({
         domain: hostname,
         path: `v1/step-files/signed?token=${accessToken}`,
     })

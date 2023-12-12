@@ -1,14 +1,19 @@
 import { SystemProp } from '../../helper/system/system-prop'
 import { system } from '../../helper/system/system'
 import { customDomainService } from '../custom-domains/custom-domain.service'
+import { ApEnvironment } from '@activepieces/shared'
 
 export const platformDomainHelper = {
     async constructUrlFrom({ platformId, path }: { platformId: string | undefined | null, path: string }): Promise<string> {
         const domain = await getFrontendDomain(platformId)
         return `${domain}${path}`
     },
-    async constructUrlFromRequest({ domain, path }: { domain: string, path: string }): Promise<string> {
+    async constructFrontendUrlFromRequest({ domain, path }: { domain: string, path: string }): Promise<string> {
         const domainWithProtocol = await getFrontendDomainFromHostname(domain)
+        return `${domainWithProtocol}${path}`
+    },
+    async constructApiUrlFromRequest({ domain, path }: { domain: string, path: string }): Promise<string> {
+        const domainWithProtocol = await getApiDomainFromHostname(domain)
         return `${domainWithProtocol}${path}`
     },
 }
@@ -24,8 +29,13 @@ async function getFrontendDomainFromHostname(hostname: string): Promise<string> 
     return domain + (domain?.endsWith('/') ? '' : '/')
 }
 
+async function getApiDomainFromHostname(hostname: string): Promise<string> {
+    const frontendUrl = getFrontendDomainFromHostname(hostname)
+    const environment = system.getOrThrow<ApEnvironment>(SystemProp.ENVIRONMENT)
+    return frontendUrl + (environment === ApEnvironment.PRODUCTION ? 'api/' : '')
+}
 async function getFrontendDomain(platformId: string | undefined | null): Promise<string> {
-    let domain = system.get(SystemProp.FRONTEND_URL)
+    let domain = system.getOrThrow(SystemProp.FRONTEND_URL)
     if (platformId) {
         const customDomain = await customDomainService.getOneByPlatform({
             platformId,
@@ -34,6 +44,6 @@ async function getFrontendDomain(platformId: string | undefined | null): Promise
             domain = `https://${customDomain.domain}/`
         }
     }
-    return domain + (domain?.endsWith('/') ? '' : '/')
+    return domain + (domain.endsWith('/') ? '' : '/')
 }
 
