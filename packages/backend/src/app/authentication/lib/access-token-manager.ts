@@ -1,4 +1,4 @@
-import { Principal } from '@activepieces/shared'
+import { Principal, assertNotNullOrUndefined } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { jwtUtils } from '../../helper/jwt-utils'
 
@@ -17,10 +17,12 @@ export const accessTokenManager = {
         const secret = await jwtUtils.getJwtSecret()
 
         try {
-            return await jwtUtils.decodeAndVerify({
+            const decoded = await jwtUtils.decodeAndVerify<Principal>({
                 jwt: token,
                 key: secret,
             })
+            assertNotNullOrUndefined(decoded.type, 'decoded.type')
+            return decoded
         }
         catch (e) {
             throw new ActivepiecesError({
