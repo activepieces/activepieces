@@ -7,7 +7,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 export const storeEntryController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.post(
         '/',
-        {
+        {  
             schema: {
                 body: PutStoreEntryRequest,
             },

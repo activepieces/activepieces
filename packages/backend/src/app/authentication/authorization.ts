@@ -1,7 +1,6 @@
 import { ActivepiecesError, ErrorCode, PrincipalType } from '@activepieces/shared'
 import { onRequestHookHandler, preSerializationHookHandler } from 'fastify'
 import { logger } from '../helper/logger'
-import { accessTokenManager } from './lib/access-token-manager'
 
 // TODO REMOVE
 export const allowWorkersOnly: onRequestHookHandler = (request, _res, done) => {
@@ -13,21 +12,6 @@ export const allowWorkersOnly: onRequestHookHandler = (request, _res, done) => {
     }
 
     done()
-}
-
-export const allowWorkersOrQueryTokens: onRequestHookHandler = async (request, _res) => {
-    const query: {
-        token: string
-    } = request.query as { token: string }
-    if (request.principal.type !== PrincipalType.WORKER && !query.token) {
-        throw new ActivepiecesError({
-            code: ErrorCode.AUTHORIZATION,
-            params: {},
-        })
-    }
-    else if (request.principal.type !== PrincipalType.WORKER && query.token) {
-        request.principal = await accessTokenManager.extractPrincipal(query.token)
-    }
 }
 
 export function extractResourceName(url: string): string | undefined {

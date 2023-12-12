@@ -217,7 +217,6 @@ function isAuthenticatedRoute(fastifyRequest: FastifyRequest): boolean {
         '/v1/chatbots/:id/metadata',
         '/favicon.ico',
         '/v1/docs',
-        '/v1/step-files/:id',
         '/redirect',
     ])
     if (ignoredRoutes.has(fastifyRequest.routerPath) || fastifyRequest.routerPath.startsWith('/ui')) {

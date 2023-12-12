@@ -6,7 +6,6 @@ import { isString } from '@activepieces/shared'
 const DB_PREFIX_URL = 'db://'
 const FILE_PREFIX_URL = 'file://'
 const MEMORY_PREFIX_URL = 'memory://'
-const STEP_FILE_URL = `${globals.apiUrl}v1/step-files/`
 
 export type DefaultFileSystem = 'db' | 'local' | 'memory'
 
@@ -14,6 +13,7 @@ export function createFilesService({ stepName, type, flowId }: { stepName: strin
     return {
         async write({ fileName, data }: { fileName: string, data: Buffer }): Promise<string> {
             switch (type) {
+                // TODO remove db as it now generates a signed url
                 case 'db':
                     return writeDbFile({ stepName, flowId, fileName, data })
                 case 'local':
@@ -44,6 +44,7 @@ export async function handleAPFile(path: string) {
     if (path.startsWith(MEMORY_PREFIX_URL)) {
         return readMemoryFile(path)
     }
+    // TODO REMOVE DB AS IT NOW GENERATES A SIGNED URL
     else if (path.startsWith(DB_PREFIX_URL)) {
         return readDbFile(path)
     }
@@ -85,6 +86,7 @@ async function writeDbFile({ stepName, flowId, fileName, data }: { stepName: str
     formData.append('flowId', flowId)
     formData.append('file', new Blob([data], { type: 'application/octet-stream' }))
 
+
     const response = await fetch(globals.apiUrl + 'v1/step-files', {
         method: 'POST',
         headers: {
@@ -97,16 +99,7 @@ async function writeDbFile({ stepName, flowId, fileName, data }: { stepName: str
         throw new Error('Failed to store entry ' + response.body)
     }
     const result = await response.json()
-
-    const viewToken = await (await fetch(STEP_FILE_URL + result.id + '/generate-view-token', {
-        method: 'GET',
-        headers: {
-            Authorization: 'Bearer ' + globals.workerToken,
-        },
-    })).text()
-
-    const fileUrl = `${STEP_FILE_URL}${result.id}?token=${viewToken}`
-    return fileUrl
+    return result.url
 }
 
 async function readDbFile(absolutePath: string): Promise<ApFile> {
