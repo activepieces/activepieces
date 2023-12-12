@@ -30,7 +30,7 @@ export const retableCreateRecordAction = createAction({
       })
       .filter((entry) => entry !== null);
 
-    return await httpClient.sendRequest({
+    return (await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `${retableCommon.baseUrl}/retable/${retable_id}/data`,
       headers: {
@@ -39,6 +39,6 @@ export const retableCreateRecordAction = createAction({
       body: {
         data: [{ columns: outputData }],
       },
-    });
+    })).body;
   },
 });
