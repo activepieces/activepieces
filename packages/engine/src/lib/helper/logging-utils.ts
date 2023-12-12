@@ -1,4 +1,4 @@
-import { ActionType, ExecutionOutput, LoopOnItemsStepOutput, MAX_LOG_SIZE, MAX_SINGLE_SIZE_FOR_SINGLE_ENTRY, StepOutput, applyFunctionToValues } from '@activepieces/shared'
+import { ActionType, ExecutionOutput, LoopOnItemsStepOutput, MAX_SINGLE_SIZE_FOR_SINGLE_ENTRY, StepOutput, applyFunctionToValues } from '@activepieces/shared'
 import sizeof from 'object-sizeof'
 import { isMemoryFilePath } from '../services/files.service'
 
