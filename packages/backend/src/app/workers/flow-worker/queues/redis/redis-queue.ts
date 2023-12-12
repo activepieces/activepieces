@@ -1,5 +1,5 @@
 import { DefaultJobOptions, Queue } from 'bullmq'
-import { ApEdition, ApEnvironment, ApId, Flow } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, ApId } from '@activepieces/shared'
 import { createRedisClient } from '../../../../database/redis-connection'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { logger } from '../../../../helper/logger'
@@ -249,12 +249,11 @@ async function updateCronExpressionOfRedisToPostgresTable(job: Job): Promise<boo
         logger.error('Found unrepeatable job in repeatable queue')
         return false
     }
-    const flow: Flow | null = await flowRepo.findOneBy({
+    const flow = await flowRepo.findOneBy({
         publishedVersionId: job.data.flowVersionId,
     })
-    if (!isNil(flow)) {
+    if (flow) {
         await flowRepo.update(flow.id, {
-            ...flow,
             schedule: {
                 type: ScheduleType.CRON_EXPRESSION,
                 timezone: tz,
