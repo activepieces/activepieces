@@ -19,7 +19,7 @@ import { saveDepotAction } from "./lib/actions/save-depot";
 import { newBlogPost } from "./lib/triggers/new-blog-post";
 
 export const totalcms = createPiece({
-  displayName             : "Totalcms",
+  displayName             : "Total CMS",
   auth                    : cmsAuth,
   minimumSupportedRelease : '0.9.0',
   logoUrl                 : "https://cdn.activepieces.com/pieces/totalcms.png",
