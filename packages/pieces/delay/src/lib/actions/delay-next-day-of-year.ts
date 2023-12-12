@@ -38,10 +38,16 @@ export const delayNextDayofYear = createAction({
 				Validators.maxValue(31),
 			],
 		}),
+        lastDayOfMonth: Property.Checkbox({
+			displayName  : 'Last Day of Month',
+			description  : 'If checked, the last day of the month will be used instead of the day specified above.',
+			required     : false,
+			defaultValue : false
+		}),
         time: Property.ShortText({
             displayName  : '24h Time',
             description  : "The time that you would like to get the date and time of. This must be in 24h format.",
-            required     : false,
+            required     : true,
             defaultValue : "00:00",
             validators   : [ Validators.pattern(/^\d\d:\d\d$/) ],
 		}),
@@ -61,11 +67,12 @@ export const delayNextDayofYear = createAction({
         }),
 	},
 	async run(context) {
-		const timeZone    = context.propsValue.timeZone as string;
-		const currentTime = context.propsValue.currentTime as boolean;
-		const month       = context.propsValue.month as number;
-		const day         = context.propsValue.day as number;
-		let   time        = context.propsValue.time as string;
+		const timeZone       = context.propsValue.timeZone as string;
+		const currentTime    = context.propsValue.currentTime as boolean;
+		const lastDayOfMonth = context.propsValue.lastDayOfMonth as boolean;
+		let   month          = context.propsValue.month as number;
+		let   day            = context.propsValue.day as number;
+		let   time           = context.propsValue.time as string;
 
         const now = new Date();
 
@@ -81,7 +88,13 @@ export const delayNextDayofYear = createAction({
 
 		const currentYear = now.getFullYear();
 
+		if (lastDayOfMonth) {
+			month += 1;
+			day    = 0;
+		}
+
 		// Create a date object for the next occurrence
+		// subtract 1 from the month because months are 0 indexed
 		const nextOccurrence = new Date(currentYear, month - 1, day);
 		nextOccurrence.setHours(hours, minutes, 0, 0);
 
