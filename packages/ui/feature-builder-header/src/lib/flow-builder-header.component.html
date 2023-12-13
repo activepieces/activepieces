@@ -66,7 +66,7 @@
           </div>
         </button>
         <ap-share-flow-template-dialog></ap-share-flow-template-dialog>
-        <ng-container *ngIf="(showBackButtonAndFolderName$ | async ) === false">
+        <ng-container *ngIf="(showBackButtonAndFolderName$ | async )">
           <button mat-menu-item *ngIf="flow$ | async as flow" (click)="deleteFlow(flow)">
             <div class="ap-flex ap-gap-3 ap-items-center">
               <svg-icon src="assets/img/custom/trash.svg" class="ap-fill-danger ap-w-[20px] ap-h-[20px]"
