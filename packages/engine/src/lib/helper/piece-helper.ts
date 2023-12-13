@@ -24,10 +24,10 @@ import { variableService } from '../services/variable-service'
 
 
 export const pieceHelper = {
-    async executeProps({ params, environment }: { params: ExecutePropsOptions, environment: string }) {
+    async executeProps({ params, piecesSource }: { params: ExecutePropsOptions, piecesSource: string }) {
         const property = await pieceLoader.getPropOrThrow({
             params,
-            environment,
+            piecesSource,
         })
 
         try {
@@ -75,11 +75,11 @@ export const pieceHelper = {
     },
 
     async executeValidateAuth(
-        { params, environment }: { params: ExecuteValidateAuthOperation, environment: string },
+        { params, piecesSource }: { params: ExecuteValidateAuthOperation, piecesSource: string },
     ): Promise<ExecuteValidateAuthResponse> {
         const { piece: piecePackage } = params
 
-        const piece = await pieceLoader.loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, environment })
+        const piece = await pieceLoader.loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, piecesSource })
         if (piece.auth?.validate === undefined) {
             return {
                 valid: true,
@@ -114,9 +114,9 @@ export const pieceHelper = {
         }
     },
 
-    async extractPieceMetadata({ environment, params }: { environment: string, params: ExecuteExtractPieceMetadata }): Promise<PieceMetadata> {
+    async extractPieceMetadata({ piecesSource, params }: { piecesSource: string, params: ExecuteExtractPieceMetadata }): Promise<PieceMetadata> {
         const { pieceName, pieceVersion } = params
-        const piece = await pieceLoader.loadPieceOrThrow({ pieceName, pieceVersion, environment })
+        const piece = await pieceLoader.loadPieceOrThrow({ pieceName, pieceVersion, piecesSource })
 
         return {
             ...piece.metadata(),

@@ -24,7 +24,7 @@ import { utils } from './lib/utils'
 import { flowExecutor } from './lib/handler/flow-executor'
 import { ExecutionVerdict, FlowExecutorContext } from './lib/handler/context/flow-execution-context'
 import { codeExecutor } from './lib/handler/code-executor'
-import { BASE_CODE_DIRECTORY, INPUT_FILE, OUTPUT_FILE, PIECE_ENVIRONMENT } from './lib/constants'
+import { BASE_CODE_DIRECTORY, INPUT_FILE, OUTPUT_FILE, PIECE_SOURCES } from './lib/constants'
 import { testExecutionContext } from './lib/handler/context/test-execution-context'
 import { pieceExecutor } from './lib/handler/piece-executor'
 import { VariableService } from './lib/services/variable-service'
@@ -48,7 +48,7 @@ const executeFlow = async (input: ExecuteFlowOperation, context: FlowExecutorCon
                 workerToken: input.workerToken,
             }),
             resumePayload: input.executionType === ExecutionType.RESUME ? input.resumePayload : undefined,
-            pieceEnvironment: PIECE_ENVIRONMENT,
+            piecesSource: PIECE_SOURCES,
             baseCodeDirectory: BASE_CODE_DIRECTORY,
         },
     })
@@ -80,7 +80,7 @@ async function executeCode(input: ExecuteCodeOperation): Promise<ExecuteActionRe
             }),
             apiUrl: input.serverUrl,
             workerToken: input.workerToken,
-            pieceEnvironment: PIECE_ENVIRONMENT,
+            piecesSource: PIECE_SOURCES,
             baseCodeDirectory: BASE_CODE_DIRECTORY,
         },
     })
@@ -109,7 +109,7 @@ async function executeAction(input: ExecuteActionOperation): Promise<ExecuteActi
                 projectId: input.projectId,
                 workerToken: input.workerToken,
             }),
-            pieceEnvironment: PIECE_ENVIRONMENT,
+            piecesSource: PIECE_SOURCES,
             apiUrl: input.serverUrl,
             workerToken: input.workerToken,
             baseCodeDirectory: BASE_CODE_DIRECTORY,
@@ -130,7 +130,7 @@ const execute = async (): Promise<void> => {
                 const input: ExecuteExtractPieceMetadata = await utils.parseJsonFile(INPUT_FILE)
                 const output = await pieceHelper.extractPieceMetadata({
                     params: input,
-                    environment: PIECE_ENVIRONMENT,
+                    piecesSource: PIECE_SOURCES,
                 })
                 await writeOutput({
                     status: EngineResponseStatus.OK,
@@ -153,7 +153,7 @@ const execute = async (): Promise<void> => {
                 const input: ExecutePropsOptions = await utils.parseJsonFile(INPUT_FILE)
                 const output = await pieceHelper.executeProps({
                     params: input,
-                    environment: PIECE_ENVIRONMENT,
+                    piecesSource: PIECE_SOURCES,
                 })
                 await writeOutput({
                     status: EngineResponseStatus.OK,
@@ -166,7 +166,7 @@ const execute = async (): Promise<void> => {
 
                 const output = await triggerHelper.executeTrigger({
                     params: input,
-                    environment: PIECE_ENVIRONMENT,
+                    piecesSource: PIECE_SOURCES,
                 })
                 await writeOutput({
                     status: EngineResponseStatus.OK,
@@ -196,7 +196,7 @@ const execute = async (): Promise<void> => {
                 const input: ExecuteValidateAuthOperation = await utils.parseJsonFile(INPUT_FILE)
                 const output = await pieceHelper.executeValidateAuth({
                     params: input,
-                    environment: PIECE_ENVIRONMENT,
+                    piecesSource: PIECE_SOURCES,
                 })
 
                 await writeOutput({

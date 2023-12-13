@@ -45,7 +45,7 @@ export const pieceExecutor: BaseExecutor<PieceAction> = {
             pieceName: action.settings.pieceName,
             pieceVersion: action.settings.pieceVersion,
             actionName: action.settings.actionName,
-            environment: constants.pieceEnvironment,
+            piecesSource: constants.piecesSource,
         })
 
         const { processedInput, errors } = await constants.variableService.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth)

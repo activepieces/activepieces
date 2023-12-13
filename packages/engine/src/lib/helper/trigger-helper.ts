@@ -14,10 +14,10 @@ type Listener = {
 }
 
 export const triggerHelper = {
-    async executeTrigger({ params, environment }: { environment: string, params: ExecuteTriggerOperation<TriggerHookType> }): Promise<ExecuteTriggerResponse<TriggerHookType>> {
+    async executeTrigger({ params, piecesSource }: { piecesSource: string, params: ExecuteTriggerOperation<TriggerHookType> }): Promise<ExecuteTriggerResponse<TriggerHookType>> {
         const { pieceName, pieceVersion, triggerName, input } = (params.flowVersion.trigger as PieceTrigger).settings
 
-        const piece = await pieceLoader.loadPieceOrThrow({ pieceName, pieceVersion, environment })
+        const piece = await pieceLoader.loadPieceOrThrow({ pieceName, pieceVersion, piecesSource })
         const trigger = piece.getTrigger(triggerName)
 
         if (trigger === undefined) {

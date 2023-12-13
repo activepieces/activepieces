@@ -3,13 +3,13 @@ import { ActivepiecesError, ErrorCode, ExecutePropsOptions, extractPieceFromModu
 
 
 const loadPieceOrThrow = async (
-    { pieceName, pieceVersion, environment }:
-    { pieceName: string, pieceVersion: string, environment: string },
+    { pieceName, pieceVersion, piecesSource }:
+    { pieceName: string, pieceVersion: string, piecesSource: string },
 ): Promise<Piece> => {
     const packageName = getPackageAlias({
         pieceName,
         pieceVersion,
-        environment,
+        piecesSource,
     })
 
     const module = await import(packageName)
@@ -36,12 +36,12 @@ const getPieceAndActionOrThrow = async (params: {
     pieceName: string
     pieceVersion: string
     actionName: string
-    environment: string
+    piecesSource: string
 },
 ): Promise<{ piece: Piece, pieceAction: Action }> => {
-    const { pieceName, pieceVersion, actionName, environment } = params
+    const { pieceName, pieceVersion, actionName, piecesSource } = params
 
-    const piece = await loadPieceOrThrow({ pieceName, pieceVersion, environment })
+    const piece = await loadPieceOrThrow({ pieceName, pieceVersion, piecesSource })
     const pieceAction = piece.getAction(actionName)
 
     if (isNil(pieceAction)) {
@@ -61,10 +61,10 @@ const getPieceAndActionOrThrow = async (params: {
     }
 }
 
-const getPropOrThrow = async ({ params, environment }: { params: ExecutePropsOptions, environment: string }) => {
+const getPropOrThrow = async ({ params, piecesSource }: { params: ExecutePropsOptions, piecesSource: string }) => {
     const { piece: piecePackage, stepName, propertyName } = params
 
-    const piece = await loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, environment })
+    const piece = await loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, piecesSource })
 
     const action = piece.getAction(stepName) ?? piece.getTrigger(stepName)
 
@@ -96,12 +96,12 @@ const getPropOrThrow = async ({ params, environment }: { params: ExecutePropsOpt
     return prop
 }
 
-const getPackageAlias = ({ pieceName, pieceVersion, environment }: {
+const getPackageAlias = ({ pieceName, pieceVersion, piecesSource }: {
     pieceName: string
-    environment: string
+    piecesSource: string
     pieceVersion: string
 }) => {
-    if (environment === 'dev') {
+    if (piecesSource === 'FILE') {
         return pieceName
     }
 

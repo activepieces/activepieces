@@ -13,5 +13,5 @@ export type EngineConstantData = {
     variableService: VariableService
     resumePayload?: unknown
     baseCodeDirectory: string
-    pieceEnvironment: string
+    piecesSource: string
 }
