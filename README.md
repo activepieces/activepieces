@@ -46,7 +46,7 @@ src="https://github.com/activepieces/activepieces/assets/1812998/76c97441-c285-4
 <br>
 <br>
 
-# 🤯 Welcome to Activepiece
+# 🤯 Welcome to Activepieces
 
 Your friendliest open source all-in-one automation tool, designed to be **extensible** through a **type-safe** pieces framework written in **Typescript**.
 
