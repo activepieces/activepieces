@@ -1,9 +1,16 @@
 import { ActionContext } from '../context';
 import { ActionBase } from '../piece-metadata';
-import { NonAuthPiecePropertyMap, PieceAuthProperty } from '../property/property';
+import { NonAuthPiecePropertyMap, PieceAuthProperty, PiecePropValueSchema, StaticPropsValue } from '../property/property';
 
 export type ActionRunner<PieceAuth extends PieceAuthProperty, ActionProps extends NonAuthPiecePropertyMap> =
   (ctx: ActionContext<PieceAuth, ActionProps>) => Promise<unknown | void>
+
+
+
+type StepBranch = {
+  id: string
+  label: string
+}
 
 type CreateActionParams<PieceAuth extends PieceAuthProperty, ActionProps extends NonAuthPiecePropertyMap> = {
   /**
@@ -13,6 +20,7 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty, ActionProps extends
   auth?: PieceAuth
   displayName: string
   description: string
+  branches?: StepBranch[],
   props: ActionProps
   run: ActionRunner<PieceAuth, ActionProps>
   test?: ActionRunner<PieceAuth, ActionProps>
@@ -25,6 +33,7 @@ export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends No
     public readonly displayName: string,
     public readonly description: string,
     public readonly props: ActionProps,
+    public readonly branches: StepBranch[],
     public readonly run: ActionRunner<PieceAuth, ActionProps>,
     public readonly test: ActionRunner<PieceAuth, ActionProps>,
     public readonly requireAuth: boolean,
@@ -47,6 +56,7 @@ export const createAction = <
     params.displayName,
     params.description,
     params.props,
+    params.branches ?? [],
     params.run,
     params.test ?? params.run,
     params.requireAuth ?? true,

@@ -7,6 +7,13 @@ export const waitForApprovalLink = createAction({
   description: 'Pauses the flow and wait for the approval from the user',
   props: {
   },
+  branches: [{
+    id: 'approved',
+    label: 'Approved',
+  }, {
+    id: 'disapproved',
+    label: 'Disapproved',
+  }],
   async run(ctx) {
     if (ctx.executionType === ExecutionType.BEGIN) {
       ctx.run.pause({
