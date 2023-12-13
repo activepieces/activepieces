@@ -16,7 +16,7 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.get('/:id', GetPlatformRequest, async (req) => {
-        assertEqual(req.principal.platform?.id, req.params.id)
+        assertEqual(req.principal.platform?.id, req.params.id, 'userPlatformId', 'paramId')
         const platform = await platformService.getOneOrThrow(req.params.id)
 
         return buildResponse({

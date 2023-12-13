@@ -1,9 +1,12 @@
 export function assertEqual<T>(
     actual: T,
     expected: T,
+    fieldName1: string,
+    fieldName2: string,
+    
 ): asserts actual is T {
     if (actual !== expected) {
-        throw new Error(`${actual} doesn't not equal ${expected}`)
+        throw new Error(`${fieldName1} and ${fieldName2} should be equal`)
     }
 }
 
