@@ -44,7 +44,7 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
 
         await authenticationHelper.autoVerifyUserIfEligible(user)
         const updatedUser = await userService.getOneOrFail({ id: user.id })
-        const { project: updatedProject, token } = await authenticationHelper.getProjectAndTokenOrThrow(user)
+        const { project: updatedProject, token } = await authenticationHelper.getProjectAndTokenOrThrow(updatedUser)
         return {
             user: updatedUser,
             project: updatedProject,

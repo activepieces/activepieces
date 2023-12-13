@@ -1,5 +1,5 @@
 import { Platform, PlatformId, ProjectMemberStatus } from '@activepieces/ee-shared'
-import { PrincipalType, Project, isNil, User, ActivepiecesError, ErrorCode, ApEdition } from '@activepieces/shared'
+import { PrincipalType, Project, isNil, User, ActivepiecesError, ErrorCode, ApEdition, PlatformRole } from '@activepieces/shared'
 import { platformService } from '../../../platform/platform.service'
 import { accessTokenManager } from '../../../../authentication/lib/access-token-manager'
 import { projectMemberService } from '../../../project-members/project-member.service'
@@ -44,7 +44,7 @@ const populateTokenWithPlatformInfo = async ({ user, project }: PopulateTokenWit
         projectType: project.type,
         platform: isNil(platform) ? undefined : {
             id: platform.id,
-            role: platform.ownerId === user.id ? 'OWNER' : 'MEMBER',
+            role: platform.ownerId === user.id ? PlatformRole.OWNER : PlatformRole.MEMBER,
         },
     })
 

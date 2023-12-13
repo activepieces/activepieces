@@ -13,6 +13,7 @@ export function createFilesService({ stepName, type, flowId, workerToken }: { st
     return {
         async write({ fileName, data }: { fileName: string, data: Buffer }): Promise<string> {
             switch (type) {
+                // TODO remove db as it now generates a signed url
                 case 'db':
                     return writeDbFile({ stepName, flowId, fileName, data, workerToken })
                 case 'local':
@@ -43,6 +44,7 @@ export async function handleAPFile({ workerToken, path }: { workerToken: string,
     if (path.startsWith(MEMORY_PREFIX_URL)) {
         return readMemoryFile(path)
     }
+    // TODO REMOVE DB AS IT NOW GENERATES A SIGNED URL
     else if (path.startsWith(DB_PREFIX_URL)) {
         return readDbFile({ workerToken, absolutePath: path })
     }
@@ -96,7 +98,7 @@ async function writeDbFile({ stepName, flowId, fileName, data, workerToken }: { 
         throw new Error('Failed to store entry ' + response.body)
     }
     const result = await response.json()
-    return DB_PREFIX_URL + `${result.id}`
+    return result.url
 }
 
 async function readDbFile({ workerToken, absolutePath }: { workerToken: string, absolutePath: string }): Promise<ApFile> {

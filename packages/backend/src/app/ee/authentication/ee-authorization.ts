@@ -1,6 +1,5 @@
-import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, PlatformRole, isNil } from '@activepieces/shared'
 import { onRequestAsyncHookHandler } from 'fastify'
-import { platformService } from '../platform/platform.service'
 
 const USER_NOT_ALLOWED_TO_PERFORM_OPERATION_ERROR = new ActivepiecesError({
     code: ErrorCode.AUTHORIZATION,
@@ -14,9 +13,8 @@ export const platformMustBeOwnedByCurrentUser: onRequestAsyncHookHandler = async
         throw USER_NOT_ALLOWED_TO_PERFORM_OPERATION_ERROR
     }
 
-    const platform = await platformService.getOne(platformId)
-
-    if (isNil(platform) || platform.ownerId !== request.principal.id) {
+    const canEditPlatform = request.principal.platform?.role === PlatformRole.OWNER
+    if (!canEditPlatform) {
         throw USER_NOT_ALLOWED_TO_PERFORM_OPERATION_ERROR
     }
 }

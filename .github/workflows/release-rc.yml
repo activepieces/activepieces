@@ -1,6 +1,7 @@
 name: Release RC
 
 on:
+  workflow_dispatch:
   pull_request:
     types: [closed]
     branches:
@@ -16,6 +17,12 @@ jobs:
 
       - name: Set RELEASE env var from package.json
         run: echo RELEASE=$(node --print "require('./package.json').rcVersion") >> $GITHUB_ENV
+
+      - name: Set CLOUD_RELEASE env var from package.json
+        run: echo CLOUD_RELEASE=$(node --print "require('./package.json').rcVersion.replace(/-/g, '')") >> $GITHUB_ENV
+
+      - name: Fail if tag already exists
+        run: '! docker manifest inspect activepieces/activepieces:${{ env.RELEASE }}'
 
       - name: Set up Depot CLI
         uses: depot/setup-action@v1
@@ -48,3 +55,4 @@ jobs:
           push: true
           tags: |
             ghcr.io/activepieces/activepieces:${{ env.RELEASE }}
+            ghcr.io/activepieces/activepieces-cloud:${{ env.CLOUD_RELEASE }}

@@ -5,7 +5,7 @@ import { createMockPieceMetadata, createMockPlatform, createMockProject, createM
 import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
 import { FilteredPieceBehavior } from '@activepieces/ee-shared'
-import { PieceType, PrincipalType, ProjectType, apId } from '@activepieces/shared'
+import { PieceType, PlatformRole, PrincipalType, ProjectType, apId } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
@@ -154,7 +154,7 @@ describe('Piece Metadata API', () => {
                 id: mockUser.id,
                 platform: {
                     id: mockPlatform.id,
-                    role: 'MEMBER',
+                    role: PlatformRole.MEMBER,
                 },
             })
 
@@ -267,7 +267,7 @@ describe('Piece Metadata API', () => {
                 type: PrincipalType.USER,
                 platform: {
                     id: mockPlatform.id,
-                    role: 'OWNER',
+                    role: PlatformRole.OWNER,
                 },
             })
 
@@ -309,7 +309,7 @@ describe('Piece Metadata API', () => {
                 type: PrincipalType.USER,
                 platform: {
                     id: mockPlatform.id,
-                    role: 'OWNER',
+                    role: PlatformRole.OWNER,
                 },
             })
 

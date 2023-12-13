@@ -1430,7 +1430,7 @@ Geen email ontvangen? Resend
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/canvas-utils/drawing/branch-drawer.ts</context>
           <context context-type="linenumber">71</context>
         </context-group>
-        <target state="needs-translation">True</target>
+        <target state="translated">Waar</target>
       </trans-unit>
       <trans-unit id="3800326155195149498" datatype="html">
         <source>False</source>
@@ -1438,7 +1438,7 @@ Geen email ontvangen? Resend
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/canvas-utils/drawing/branch-drawer.ts</context>
           <context context-type="linenumber">71</context>
         </context-group>
-        <target state="needs-translation">False</target>
+        <target state="translated">Onwaar</target>
       </trans-unit>
       <trans-unit id="7006228718285189938" datatype="html" approved="yes">
         <source>Delete Step</source>
@@ -1470,7 +1470,7 @@ Geen email ontvangen? Resend
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/flow-item-tree/flow-item/flow-item-connection/add-button-core.component.ts</context>
           <context context-type="linenumber">21</context>
         </context-group>
-        <target state="needs-translation">Can't move here</target>
+        <target state="translated">Kan hier niet verplaatsen</target>
       </trans-unit>
       <trans-unit id="852013103273628574" datatype="html" approved="yes">
         <source>Incomplete settings</source>
@@ -1511,7 +1511,7 @@ Geen email ontvangen? Resend
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/widgets/end-of-flow-widget/end-of-flow-widget.component.html</context>
           <context context-type="linenumber">2,4</context>
         </context-group>
-        <target state="needs-translation"> End
+        <target state="translated"> Einde
 </target>
       </trans-unit>
       <trans-unit id="3805341172871384186" datatype="html" approved="yes">
@@ -1538,7 +1538,7 @@ Geen email ontvangen? Resend
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/widgets/test-flow-widget/test-flow-widget.component.html</context>
           <context context-type="linenumber">11,13</context>
         </context-group>
-        <target state="needs-translation">
+        <target state="translated">
           <x id="INTERPOLATION" equiv-text="{{(isSaving$ | async)? savingText: testFlowText}}"/>
         </target>
       </trans-unit>
@@ -1548,7 +1548,7 @@ Geen email ontvangen? Resend
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/widgets/test-flow-widget/test-flow-widget.component.ts</context>
           <context context-type="linenumber">53</context>
         </context-group>
-        <target state="needs-translation">Test flow</target>
+        <target state="translated">Test flow</target>
       </trans-unit>
       <trans-unit id="3407061818321766940" datatype="html">
         <source>Saving...</source>
@@ -1556,7 +1556,7 @@ Geen email ontvangen? Resend
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/widgets/test-flow-widget/test-flow-widget.component.ts</context>
           <context context-type="linenumber">54</context>
         </context-group>
-        <target state="needs-translation">Saving...</target>
+        <target state="translated">Bewaren...</target>
       </trans-unit>
       <trans-unit id="6212705197426717225" datatype="html" approved="yes">
         <source> View Only

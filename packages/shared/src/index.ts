@@ -56,6 +56,7 @@ export * from './lib/flows/dto/list-flows-request'
 export * from './lib/chatbot'
 export * from './lib/project/project'
 import { TypeSystem } from '@sinclair/typebox/system'
+export { StepFileWithUrl } from './lib/flows'
 // Look at https://github.com/sinclairzx81/typebox/issues/350
 TypeSystem.ExactOptionalPropertyTypes = false
 export * from './lib/support-url'

@@ -6,7 +6,7 @@ import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
 import { faker } from '@faker-js/faker'
 import { AddDomainRequest, CustomDomainStatus } from '@activepieces/ee-shared'
-import { PrincipalType, apId } from '@activepieces/shared'
+import { PlatformRole, PrincipalType, apId } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
@@ -33,7 +33,7 @@ describe('Custom Domain API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
-                platform: { id: mockPlatform.id, role: 'OWNER' },
+                platform: { id: mockPlatform.id, role: PlatformRole.OWNER },
             })
 
             const request: AddDomainRequest = {
@@ -68,7 +68,7 @@ describe('Custom Domain API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: nonOwnerUserId,
-                platform: { id: mockPlatform.id, role: 'MEMBER' },
+                platform: { id: mockPlatform.id, role: PlatformRole.MEMBER },
             })
 
             const request: AddDomainRequest = {
@@ -107,7 +107,7 @@ describe('Custom Domain API', () => {
             const testToken1 = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser1.id,
-                platform: { id: mockPlatform1.id, role: 'OWNER' },
+                platform: { id: mockPlatform1.id, role: PlatformRole.OWNER },
             })
 
 
@@ -159,7 +159,7 @@ describe('Custom Domain API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
-                platform: { id: mockPlatform.id, role: 'OWNER' },
+                platform: { id: mockPlatform.id, role: PlatformRole.OWNER },
             })
 
             const customDomain = createMockCustomDomain({
@@ -193,7 +193,7 @@ describe('Custom Domain API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: nonOwnerUserId,
-                platform: { id: mockPlatform.id, role: 'MEMBER' },
+                platform: { id: mockPlatform.id, role: PlatformRole.MEMBER },
             })
 
             const customDomain = createMockCustomDomain({
