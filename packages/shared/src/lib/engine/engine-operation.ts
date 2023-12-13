@@ -1,6 +1,5 @@
 import { AppConnectionValue } from '../app-connection/app-connection'
 import { FlowRunId } from '../flow-run/flow-run'
-import { CodeAction, PieceAction } from '../flows/actions/action'
 import { FlowVersion } from '../flows/flow-version'
 import { ProjectId } from '../project/project'
 import { PiecePackage } from '../pieces'
@@ -8,8 +7,7 @@ import { ExecutionState, ExecutionType } from '../flow-run/execution/execution-o
 
 export enum EngineOperationType {
     EXTRACT_PIECE_METADATA = 'EXTRACT_PIECE_METADATA',
-    EXECUTE_ACTION = 'EXECUTE_ACTION',
-    EXECUTE_CODE = 'EXECUTE_CODE',
+    EXECUTE_STEP = 'EXECUTE_STEP',
     EXECUTE_TEST_FLOW = 'EXECUTE_TEST_FLOW',
     EXECUTE_FLOW = 'EXECUTE_FLOW',
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
@@ -26,8 +24,7 @@ export enum TriggerHookType {
 }
 
 export type EngineOperation =
-    | ExecuteActionOperation
-    | ExecuteCodeOperation
+    | ExcuteStepOperation
     | ExecuteFlowOperation
     | ExecutePropsOptions
     | ExecuteTriggerOperation<TriggerHookType>
@@ -40,13 +37,6 @@ export type BaseEngineOperation = {
     serverUrl: string
 }
 
-export type ExecuteActionOperation = BaseEngineOperation & {
-    action: PieceAction
-    flowVersion: FlowVersion
-    serverUrl: string
-    input: Record<string, unknown>
-}
-
 export type ExecuteValidateAuthOperation = BaseEngineOperation & {
     piece: PiecePackage
     auth: AppConnectionValue
@@ -54,10 +44,9 @@ export type ExecuteValidateAuthOperation = BaseEngineOperation & {
 
 export type ExecuteExtractPieceMetadata = PiecePackage & { projectId: string }
 
-export type ExecuteCodeOperation = BaseEngineOperation &  {
-    step: CodeAction
+export type ExcuteStepOperation = BaseEngineOperation &  {
+    stepName: string
     flowVersion: FlowVersion
-    input: Record<string, unknown>
 }
 
 export type ExecutePropsOptions = BaseEngineOperation & {

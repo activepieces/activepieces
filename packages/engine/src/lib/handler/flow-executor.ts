@@ -15,6 +15,13 @@ const executeFunction: Record<ActionType, BaseExecutor<Action>> = {
 }
 
 export const flowExecutor = {
+    getExecutorForAction(type: ActionType): BaseExecutor<Action> {
+        const executor = executeFunction[type]
+        if (isNil(executor)) {
+            throw new Error('Not implemented')
+        }
+        return executor
+    },
     async execute({ action, constants, executionState }: {
         action: Action
         executionState: FlowExecutorContext
@@ -24,10 +31,7 @@ export const flowExecutor = {
         let flowExecutionContext = executionState
         let currentAction: Action | undefined = action
         while (!isNil(currentAction)) {
-            const handler = executeFunction[currentAction.type]
-            if (isNil(handler)) {
-                throw new Error('Not implemented')
-            }
+            const handler = this.getExecutorForAction(currentAction.type)
             flowExecutionContext = await handler.handle({
                 action: currentAction,
                 executionState: flowExecutionContext,
