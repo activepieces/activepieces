@@ -149,6 +149,7 @@
         "packages/pieces/mailer-lite/src/index.ts"
       ],
       "@activepieces/piece-mastodon": ["packages/pieces/mastodon/src/index.ts"],
+      "@activepieces/piece-matomo": ["packages/pieces/matomo/src/index.ts"],
       "@activepieces/piece-matrix": ["packages/pieces/matrix/src/index.ts"],
       "@activepieces/piece-mattermost": [
         "packages/pieces/mattermost/src/index.ts"
