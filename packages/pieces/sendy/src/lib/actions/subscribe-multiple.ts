@@ -3,15 +3,15 @@ import { subscribe } from "../api";
 import { buildListDropdown } from "../props";
 import { sendyAuth, SendyAuthType } from "../auth";
 
-export const subscribeAction = createAction({
-	name        : 'subscribe',
+export const subscribeMultipleAction = createAction({
+	name        : 'subscribe_multiple_lists',
 	auth        : sendyAuth,
-	displayName : 'Subscribe Updated',
-	description : 'Add a new subscriber to a list',
+	displayName : 'Subscribe Multiple Lists',
+	description : 'Add a new subscriber to a multiple lists',
 	props       : {
-		list: Property.Dropdown({
-			displayName : 'List',
-			description : 'Select the list to subscribe to',
+		lists: Property.MultiSelectDropdown({
+			displayName : 'Lists',
+			description : 'Select the lists to subscribe to',
 			required    : true,
 			refreshers  : ['auth'],
 			options     : async ({auth}) => await buildListDropdown(auth as SendyAuthType),
@@ -57,16 +57,22 @@ export const subscribeAction = createAction({
 		}),
 	},
 	async run(context) {
-		return await subscribe(context.auth, {
-			list      : context.propsValue.list,
-			email     : context.propsValue.email,
-			name      : context.propsValue.name,
-			country   : context.propsValue.country,
-			ipaddress : context.propsValue.ipaddress,
-			referrer  : context.propsValue.referrer,
-			gdpr      : context.propsValue.gdpr,
-			silent    : context.propsValue.silent,
-		});
+		const returnValues: any[] = [];
+
+		for (const list of context.propsValue.lists) {
+			const rc = await subscribe(context.auth, {
+				list      : list,
+				email     : context.propsValue.email,
+				name      : context.propsValue.name,
+				country   : context.propsValue.country,
+				ipaddress : context.propsValue.ipaddress,
+				referrer  : context.propsValue.referrer,
+				gdpr      : context.propsValue.gdpr,
+				silent    : context.propsValue.silent,
+			});
+			returnValues.push(rc);
+		}
+		return returnValues;
 	},
 });
 
