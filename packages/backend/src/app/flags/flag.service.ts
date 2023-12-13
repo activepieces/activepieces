@@ -1,4 +1,4 @@
-import { ApEdition, ApFlagId, Flag } from '@activepieces/shared'
+import { ApEdition, ApFlagId, Flag, isNil } from '@activepieces/shared'
 import { databaseConnection } from '../database/database-connection'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
@@ -191,6 +191,12 @@ export const flagService = {
             {
                 id: ApFlagId.SHOW_POWERED_BY_AP,
                 value: false,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.APP_WEBHOOK_ENABLED,
+                value: !isNil(system.get(SystemProp.APP_WEBHOOK_SECRETS)),
                 created,
                 updated,
             },

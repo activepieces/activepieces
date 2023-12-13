@@ -5,6 +5,7 @@ import {
   AddPieceRequestBody,
   PieceOptionRequest,
   TriggerType,
+  ApFlagId,
 } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
 import {
@@ -109,9 +110,9 @@ export class PieceMetadataService {
   }
   private filterAppWebhooks(
     triggersMap: TriggersMetadata,
-    edition: ApEdition
+    appWebhookEnabled: boolean
   ): TriggersMetadata {
-    if (edition !== ApEdition.COMMUNITY) {
+    if (!appWebhookEnabled) {
       return triggersMap;
     }
 
@@ -214,9 +215,12 @@ export class PieceMetadataService {
       return this.piecesCache.get(cacheKey)!;
     }
 
-    const pieceMetadata$ = this.edition$.pipe(
+    const pieceMetadata$ = combineLatest({
+      edition: this.edition$,
+      appWebhookEnabled: this.flagsService.isFlagEnabled(ApFlagId.APP_WEBHOOK_ENABLED),
+    }).pipe(
       take(1),
-      switchMap((edition) => {
+      switchMap(({ edition, appWebhookEnabled }) => {
         return this.fetchPieceMetadata({
           pieceName,
           pieceVersion,
@@ -226,7 +230,7 @@ export class PieceMetadataService {
           map((pieceMetadata) => {
             return {
               ...pieceMetadata,
-              triggers: this.filterAppWebhooks(pieceMetadata.triggers, edition),
+              triggers: this.filterAppWebhooks(pieceMetadata.triggers, appWebhookEnabled),
             };
           })
         );
