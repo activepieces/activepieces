@@ -37,6 +37,9 @@
       "@activepieces/piece-bannerbear": [
         "packages/pieces/bannerbear/src/index.ts"
       ],
+      "@activepieces/piece-bettermode": [
+        "packages/pieces/bettermode/src/index.ts"
+      ],
       "@activepieces/piece-binance": ["packages/pieces/binance/src/index.ts"],
       "@activepieces/piece-bonjoro": ["packages/pieces/bonjoro/src/index.ts"],
       "@activepieces/piece-box": ["packages/pieces/box/src/index.ts"],
