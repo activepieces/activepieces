@@ -32,7 +32,8 @@
           " [allowClick]="true" [cssClasses]="'ap-typography-body-1 !ap-font-semibold'"
           class="ap-text-title"></ap-editable-text>
       </div>
-      <div class="ap-p-1 ap-cursor-pointer" [matMenuTriggerFor]="menu" xPosition="after">
+      <div *ngIf="(isInReadOnlyMode$ | async) === false" class="ap-p-1 ap-cursor-pointer" [matMenuTriggerFor]="menu"
+        xPosition="after">
         <svg-icon [svgStyle]="{ width: '18px', height: '18px' }" src="assets/img/custom/chevron.svg">
         </svg-icon>
       </div>
