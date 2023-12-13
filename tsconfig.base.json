@@ -192,8 +192,8 @@
       "@activepieces/piece-read-file": [
         "packages/pieces/read-file/src/index.ts"
       ],
-      "@activepieces/piece-retune": ["packages/pieces/retune/src/index.ts"],
       "@activepieces/piece-retable": ["packages/pieces/retable/src/index.ts"],
+      "@activepieces/piece-retune": ["packages/pieces/retune/src/index.ts"],
       "@activepieces/piece-rss": ["packages/pieces/rss/src/index.ts"],
       "@activepieces/piece-salesforce": [
         "packages/pieces/salesforce/src/index.ts"
@@ -239,6 +239,7 @@
       "@activepieces/piece-twilio": ["packages/pieces/twilio/src/index.ts"],
       "@activepieces/piece-twitter": ["packages/pieces/twitter/src/index.ts"],
       "@activepieces/piece-typeform": ["packages/pieces/typeform/src/index.ts"],
+      "@activepieces/piece-vbout": ["packages/pieces/vbout/src/index.ts"],
       "@activepieces/piece-vtex": ["packages/pieces/vtex/src/index.ts"],
       "@activepieces/piece-woocommerce": [
         "packages/pieces/woocommerce/src/index.ts"
