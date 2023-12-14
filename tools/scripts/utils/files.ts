@@ -15,9 +15,9 @@ export type ProjectJson = {
         updateBuildableProjectDepsInPackageJson: boolean
       }
     },
-    lint?: {
-        options?: {
-            lintFilePatterns?: string[]
+    lint: {
+        options: {
+            lintFilePatterns: string[]
         }
     }
   }
