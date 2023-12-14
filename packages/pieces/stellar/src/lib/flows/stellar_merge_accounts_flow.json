@@ -1,0 +1,182 @@
+{
+  "id": "plzwZisv8UDV7MllXdZLy",
+  "created": "1702589035842",
+  "updated": "1702589035842",
+  "name": "Stellar - Merge Accounts",
+  "description": "",
+  "tags": [],
+  "pieces": [
+    "@activepieces/piece-stellar",
+    "@activepieces/piece-http"
+  ],
+  "blogUrl": "",
+  "template": {
+    "displayName": "Stellar - Merge Accounts",
+    "trigger": {
+      "name": "trigger",
+      "valid": true,
+      "displayName": "Webhook Trigger",
+      "nextAction": {
+        "displayName": "Create Account A",
+        "name": "step_1",
+        "valid": true,
+        "type": "PIECE",
+        "settings": {
+          "packageType": "REGISTRY",
+          "pieceType": "OFFICIAL",
+          "pieceName": "@activepieces/piece-stellar",
+          "pieceVersion": "0.4.1",
+          "input": {},
+          "inputUiInfo": {},
+          "actionName": "stellar-create-account"
+        },
+        "nextAction": {
+          "displayName": "Fund Account A",
+          "name": "step_2",
+          "valid": true,
+          "type": "PIECE",
+          "settings": {
+            "packageType": "REGISTRY",
+            "pieceType": "OFFICIAL",
+            "pieceName": "@activepieces/piece-stellar",
+            "pieceVersion": "0.4.1",
+            "input": {
+              "publicKey": "{{step_1['publicKey']}}",
+              "network": 1
+            },
+            "inputUiInfo": {},
+            "actionName": "stellar-fund-account"
+          },
+          "nextAction": {
+            "displayName": "Create Account B",
+            "name": "step_3",
+            "valid": true,
+            "type": "PIECE",
+            "settings": {
+              "packageType": "REGISTRY",
+              "pieceType": "OFFICIAL",
+              "pieceName": "@activepieces/piece-stellar",
+              "pieceVersion": "0.4.1",
+              "input": {},
+              "inputUiInfo": {},
+              "actionName": "stellar-create-account"
+            },
+            "nextAction": {
+              "displayName": "Fund Stellar Account",
+              "name": "step_4",
+              "valid": true,
+              "type": "PIECE",
+              "settings": {
+                "packageType": "REGISTRY",
+                "pieceType": "OFFICIAL",
+                "pieceName": "@activepieces/piece-stellar",
+                "pieceVersion": "0.4.1",
+                "input": {
+                  "publicKey": "{{step_3['publicKey']}}",
+                  "network": 1
+                },
+                "inputUiInfo": {},
+                "actionName": "stellar-fund-account"
+              },
+              "nextAction": {
+                "displayName": "Merge Stellar Accounts",
+                "name": "step_5",
+                "valid": true,
+                "type": "PIECE",
+                "settings": {
+                  "packageType": "REGISTRY",
+                  "pieceType": "OFFICIAL",
+                  "pieceName": "@activepieces/piece-stellar",
+                  "pieceVersion": "0.4.1",
+                  "input": {
+                    "source": "{{step_3['publicKey']}}",
+                    "destination": "{{step_1['publicKey']}}"
+                  },
+                  "inputUiInfo": {},
+                  "actionName": "stellar-merge-account"
+                },
+                "nextAction": {
+                  "displayName": "Build Stellar Transaction",
+                  "name": "step_6",
+                  "valid": true,
+                  "type": "PIECE",
+                  "settings": {
+                    "packageType": "REGISTRY",
+                    "pieceType": "OFFICIAL",
+                    "pieceName": "@activepieces/piece-stellar",
+                    "pieceVersion": "0.4.1",
+                    "input": {
+                      "source": "{{step_3['publicKey']}}",
+                      "network": 1,
+                      "operations": [
+                        "{{step_5['operation']}}"
+                      ],
+                      "timeout": "300",
+                      "fee": "100",
+                      "memoProps": {
+                        "memoId": "Hola!"
+                      },
+                      "memo": true
+                    },
+                    "inputUiInfo": {},
+                    "actionName": "stellar-build-transaction"
+                  },
+                  "nextAction": {
+                    "displayName": "Sign Stellar Transaction",
+                    "name": "step_8",
+                    "valid": true,
+                    "nextAction": {
+                      "displayName": "Return Response",
+                      "name": "step_7",
+                      "valid": true,
+                      "type": "PIECE",
+                      "settings": {
+                        "packageType": "REGISTRY",
+                        "pieceType": "OFFICIAL",
+                        "pieceName": "@activepieces/piece-http",
+                        "pieceVersion": "0.3.9",
+                        "input": {
+                          "body": "{{step_8}}",
+                          "status": "202",
+                          "headers": {}
+                        },
+                        "inputUiInfo": {},
+                        "actionName": "return_response"
+                      }
+                    },
+                    "type": "PIECE",
+                    "settings": {
+                      "packageType": "REGISTRY",
+                      "pieceType": "OFFICIAL",
+                      "pieceName": "@activepieces/piece-stellar",
+                      "pieceVersion": "0.4.1",
+                      "input": {
+                        "signingKeys": [
+                          "{{step_3['privateKey']}}"
+                        ],
+                        "xdr": "{{step_6['transaction']}}",
+                        "submitTransaction": false,
+                        "network": 1
+                      },
+                      "inputUiInfo": {},
+                      "actionName": "stellar-sign-transaction"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "type": "WEBHOOK",
+      "settings": {
+        "inputUiInfo": {}
+      }
+    },
+    "valid": true
+  },
+  "userId": null,
+  "imageUrl": null,
+  "featuredDescription": "",
+  "isFeatured": false
+}
