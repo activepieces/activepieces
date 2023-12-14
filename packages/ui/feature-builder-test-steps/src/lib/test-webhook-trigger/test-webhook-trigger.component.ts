@@ -128,7 +128,6 @@ export class TestWebhookTriggerComponent extends TestStepCoreComponent {
           this.foundNewResult$.next(true);
           const resultsList = [...newResults, ...res.currentResults];
           this.currentResults$.next(resultsList);
-
           this.testStepService.elevateResizer$.next(true);
           return resultsList;
         }
