@@ -7,13 +7,7 @@
 
   <ng-container *ngIf="rightSidebarType === sidebarType.EDIT_STEP">
     <div class="ap-relative ap-h-full" #editStepSection [class.top-resizer-section]="
-       (currentStep$ | async)?.type === TriggerType.WEBHOOK ||
-       (isCurrentStepPieceWebhookTrigger$ | async)||
-       (isCurrentStepPollingTrigger$ | async) ||
-       (currentStep$ | async)?.type === ActionType.PIECE ||
-       (currentStep$ | async)?.type === ActionType.BRANCH ||
-       (currentStep$ | async)?.type === ActionType.CODE  && (viewMode$ | async) === ViewModeEnum.BUILDING"
-      [class.ap-transition-all]="animateSectionsHeightChange">
+      (viewMode$ | async) === ViewModeEnum.BUILDING" [class.ap-transition-all]="animateSectionsHeightChange">
       <app-edit-step-sidebar>
       </app-edit-step-sidebar>
       <div *ngIf="currentStepPieceVersion$ | async as result"
@@ -47,8 +41,9 @@
         <div class="bottom-resizer-section" #selectedStepResultContainer>
           <app-test-webhook-trigger *ngIf="currentStep.type === TriggerType.WEBHOOK"></app-test-webhook-trigger>
           <app-test-action
-            *ngIf="currentStep.type === ActionType.PIECE || currentStep.type === ActionType.BRANCH || currentStep.type === ActionType.CODE"
+            *ngIf="currentStep.type === ActionType.PIECE || currentStep.type === ActionType.BRANCH || currentStep.type === ActionType.LOOP_ON_ITEMS  || currentStep.type === ActionType.CODE"
             [step]="currentStep"></app-test-action>
+
           <app-test-piece-webhook-trigger
             *ngIf="isCurrentStepPieceWebhookTrigger$ | async"></app-test-piece-webhook-trigger>
           <app-test-polling-trigger *ngIf="isCurrentStepPollingTrigger$ | async"></app-test-polling-trigger>
