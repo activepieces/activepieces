@@ -4,7 +4,7 @@ import { catchError, of, tap } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { FlowInstanceStatus, FlowVersionState } from '@activepieces/shared';
+import { FlowStatus, FlowVersionState } from '@activepieces/shared';
 import { FlowInstanceActions } from './flow-instance.action';
 import { FlowInstanceService, FlowService } from '@activepieces/ui/common';
 import { BuilderSelectors } from '../builder.selector';
@@ -105,7 +105,7 @@ export class FlowInstanceEffects {
       switchMap(([action, flow]) => {
         return this.flowInstanceService
           .updateStatus(flow.id, {
-            status: FlowInstanceStatus.ENABLED,
+            status: FlowStatus.ENABLED,
           })
           .pipe(
             switchMap((instance) => {
@@ -133,7 +133,7 @@ export class FlowInstanceEffects {
       switchMap(([action, flow]) => {
         return this.flowInstanceService
           .updateStatus(flow.id, {
-            status: FlowInstanceStatus.DISABLED,
+            status: FlowStatus.DISABLED,
           })
           .pipe(
             switchMap((instance) => {

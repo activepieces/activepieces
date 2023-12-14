@@ -20,7 +20,7 @@ import {
 } from '@activepieces/ui/common';
 
 import { FormControl } from '@angular/forms';
-import { Flow, FlowInstanceStatus } from '@activepieces/shared';
+import { Flow, FlowStatus } from '@activepieces/shared';
 import { Params } from '@angular/router';
 import { FoldersService } from '@activepieces/ui/common';
 import { FolderActions } from '../../store/folders/folders.actions';
@@ -119,8 +119,8 @@ export class FlowsTableDataSource extends DataSource<FlowListDtoWithInstanceStat
     const controls: Record<string, FormControl> = {};
     flows.forEach((f) => {
       controls[f.id] = new FormControl({
-        value: f.status === FlowInstanceStatus.ENABLED,
-        disabled: f.status === FlowInstanceStatus.UNPUBLISHED,
+        value: f.status === FlowStatus.ENABLED,
+        disabled: f.status === FlowStatus.UNPUBLISHED,
       });
     });
     return controls;

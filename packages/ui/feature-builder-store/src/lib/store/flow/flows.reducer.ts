@@ -2,7 +2,7 @@ import { Action, createReducer, on } from '@ngrx/store';
 import { FlowsActions } from './flows.action';
 import {
   flowHelper,
-  FlowInstanceStatus,
+  FlowStatus,
   FlowOperationType,
   FlowVersionState,
   TriggerType,
@@ -14,7 +14,7 @@ import { ViewModeActions } from '../builder/viewmode/view-mode.action';
 
 const initialState: FlowState = {
   flow: {
-    status: FlowInstanceStatus.UNPUBLISHED,
+    status: FlowStatus.UNPUBLISHED,
     projectId: '1',
     folderId: null,
     id: '1',

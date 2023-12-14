@@ -6,7 +6,7 @@ import {
 } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { Observable, tap } from 'rxjs';
-import { FlowInstance, FlowInstanceStatus } from '@activepieces/shared';
+import { FlowInstance, FlowStatus } from '@activepieces/shared';
 import { Store } from '@ngrx/store';
 import { FlowInstanceActions } from '@activepieces/ui/feature-builder-store';
 
@@ -19,7 +19,7 @@ export class ToggleInstanceStateComponent implements OnInit {
   toggleFormControl: FormControl<boolean> = new FormControl();
   instanceStateChanged$: Observable<boolean>;
   @Input() set instance(val: FlowInstance) {
-    this.toggleFormControl.setValue(val.status === FlowInstanceStatus.ENABLED, {
+    this.toggleFormControl.setValue(val.status === FlowStatus.ENABLED, {
       emitEvent: false,
     });
   }

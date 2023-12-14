@@ -3,12 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { map, Observable, shareReplay, startWith, Subject, tap } from 'rxjs';
 import { FlowsTableDataSource } from './flows-table.datasource';
 import { MatDialog } from '@angular/material/dialog';
-import {
-  Flow,
-  FlowInstanceStatus,
-  FolderId,
-  TriggerType,
-} from '@activepieces/shared';
+import { Flow, FlowStatus, FolderId, TriggerType } from '@activepieces/shared';
 
 import {
   ApPaginatorComponent,
@@ -146,14 +141,14 @@ export class FlowsTableComponent implements OnInit {
       this.flowsUpdateStatusRequest$[flow.id] = this.instanceService
         .updateStatus(flow.id, {
           status:
-            flow.status === FlowInstanceStatus.ENABLED
-              ? FlowInstanceStatus.DISABLED
-              : FlowInstanceStatus.ENABLED,
+            flow.status === FlowStatus.ENABLED
+              ? FlowStatus.DISABLED
+              : FlowStatus.ENABLED,
         })
         .pipe(
           tap((res) => {
             control.enable();
-            control.setValue(res.status === FlowInstanceStatus.ENABLED);
+            control.setValue(res.status === FlowStatus.ENABLED);
             this.flowsUpdateStatusRequest$[flow.id] = null;
             flow.status = res.status;
           }),
