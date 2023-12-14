@@ -79,6 +79,11 @@ const updateProjectJsonConfig = async (pieceName: string) => {
 
   projectJson.targets.build.options.buildableProjectDepsInPackageJsonType = 'dependencies'
   projectJson.targets.build.options.updateBuildableProjectDepsInPackageJson = true
+
+  const lintFilePatterns = projectJson.targets.lint?.options?.lintFilePatterns
+  if (lintFilePatterns) {
+    lintFilePatterns?.splice(lintFilePatterns.findIndex((item => item.endsWith('package.json'))), 1)
+  }
   await writeProjectJson(`packages/pieces/${pieceName}`, projectJson)
 }
 
