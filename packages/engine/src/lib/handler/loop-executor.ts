@@ -19,7 +19,9 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
         constants: EngineConstantData
     }) {
         const { resolvedInput, censoredInput } = await constants.variableService.resolve<LoopOnActionResolvedSettings>({
-            unresolvedInput: action.settings,
+            unresolvedInput: {
+                items: action.settings.items,
+            },
             executionState,
         })
 
@@ -29,26 +31,29 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
 
         let newExecutionContext = executionState.upsertStep(action.name, stepOutput)
         const firstLoopAction = action.firstLoopAction
-        if (isNil(firstLoopAction)) {
-            return newExecutionContext
-        }
+
 
         for (let i = 0; i < resolvedInput.items.length; ++i) {
             const newCurrentPath = newExecutionContext.currentPath.loopIteration({ loopName: action.name, iteration: i })
             stepOutput = stepOutput.addIteration({ index: i + 1, item: resolvedInput.items[i] })
 
             newExecutionContext = newExecutionContext.upsertStep(action.name, stepOutput).setCurrentPath(newCurrentPath)
-
-            newExecutionContext = await flowExecutor.execute({
-                action: firstLoopAction,
-                executionState: newExecutionContext,
-                constants,
-            })
+            if (!isNil(firstLoopAction) && !constants.testSingleStepMode) {
+                newExecutionContext = await flowExecutor.execute({
+                    action: firstLoopAction,
+                    executionState: newExecutionContext,
+                    constants,
+                })
+            }   
+    
             if (newExecutionContext.verdict !== ExecutionVerdict.RUNNING) {
                 return newExecutionContext
             }
-
+    
             newExecutionContext = newExecutionContext.setCurrentPath(newExecutionContext.currentPath.removeLast())
+            if (constants.testSingleStepMode) {
+                break
+            }
         }
         return newExecutionContext
     },

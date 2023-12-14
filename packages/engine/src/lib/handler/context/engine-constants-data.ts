@@ -14,4 +14,5 @@ export type EngineConstantData = {
     resumePayload?: unknown
     baseCodeDirectory: string
     piecesSource: string
+    testSingleStepMode: boolean
 }
