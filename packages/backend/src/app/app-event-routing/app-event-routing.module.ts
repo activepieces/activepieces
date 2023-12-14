@@ -89,7 +89,6 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (fasti
 async function callback(listener: AppEventRouting, eventPayload: EventPayload) {
     const flow = await flowService.getOneOrThrow({ projectId: listener.projectId, id: listener.flowId })
     return webhookService.callback({
-        synchronous: false,
         flow,
         payload: eventPayload,
     })

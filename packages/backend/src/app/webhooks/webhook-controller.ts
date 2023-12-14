@@ -32,7 +32,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             }
             const run = (await webhookService.callback({
                 flow,
-                synchronous: true,
+                synchronousHandlerId: flowResponseWatcher.getHandlerId(),
                 payload: {
                     method: request.method,
                     headers: request.headers as Record<string, string>,
@@ -172,7 +172,6 @@ const asyncHandler = async (payload: EventPayload, flow: Flow) => {
     return webhookService.callback({
         flow,
         payload,
-        synchronous: false,
     })
 }
 

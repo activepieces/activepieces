@@ -56,7 +56,7 @@ export const webhookService = {
         }
         return response
     },
-    async callback({ flow, payload, synchronous }: SyncParams): Promise<FlowRun[]> {
+    async callback({ flow, payload, synchronousHandlerId }: SyncParams): Promise<FlowRun[]> {
         logger.info(`[WebhookService#callback] flowId=${flow.id}`)
 
         const { projectId } = flow
@@ -113,8 +113,8 @@ export const webhookService = {
                 environment: RunEnvironment.PRODUCTION,
                 flowVersionId: flowVersion.id,
                 payload,
+                synchronousHandlerId,
                 projectId,
-                synchronous,
                 executionType: ExecutionType.BEGIN,
             }),
         )
@@ -223,5 +223,5 @@ type CallbackParams = {
 type SyncParams = {
     flow: Flow
     payload: EventPayload
-    synchronous: boolean
+    synchronousHandlerId?: string
 }

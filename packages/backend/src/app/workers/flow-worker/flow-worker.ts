@@ -215,8 +215,8 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             input,
         )
 
-        if (jobData.synchronous) {
-            await flowResponseWatcher.publish(jobData.runId, executionOutput)
+        if (jobData.synchronousHandlerId) {
+            await flowResponseWatcher.publish(jobData.runId, jobData.synchronousHandlerId, executionOutput)
         }
 
         const logsFile = await saveToLogFile({

@@ -103,7 +103,6 @@ const consumeDelayedJob = async (data: DelayedJobData): Promise<void> => {
         flowRunId: data.runId,
         projectId: data.projectId,
         flowVersionId: data.flowVersionId,
-        synchronous: false,
         executionType: ExecutionType.RESUME,
         environment: RunEnvironment.PRODUCTION,
     })
@@ -189,7 +188,6 @@ const consumePieceTrigger = async (data: RepeatingJobData): Promise<void> => {
             environment: RunEnvironment.PRODUCTION,
             flowVersionId: data.flowVersionId,
             payload,
-            synchronous: false,
             projectId: data.projectId,
             executionType: ExecutionType.BEGIN,
         }),

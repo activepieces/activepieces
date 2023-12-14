@@ -1,5 +1,5 @@
 import { logger } from '@sentry/utils'
-import { ExecutionOutput, ExecutionOutputStatus, StopExecutionOutput } from '@activepieces/shared'
+import { ExecutionOutput, ExecutionOutputStatus, StopExecutionOutput, apId } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 import { pubSub } from '../../helper/pubsub'
 import { system } from '../../helper/system/system'
@@ -19,13 +19,15 @@ type FlowResponseWithId = {
 }
 
 const WEBHOOK_TIMEOUT_MS = (system.getNumber(SystemProp.WEBHOOK_TIMEOUT_SECONDS) ?? 30) * 1000
-
+const HANDLER_ID = apId()
 export const flowResponseWatcher = {
+    getHandlerId(): string {
+        return HANDLER_ID
+    },
     async init(): Promise<void> {
         logger.info('[flowRunWatcher#init] Initializing flow run watcher')
 
-        // TODO each worker should have its own channel, this is a temporary solution
-        await pubSub.subscribe('flow-run:sync', (message) => {
+        await pubSub.subscribe(`flow-run:sync:${HANDLER_ID}`, (message) => {
             const parsedMessasge: FlowResponseWithId = JSON.parse(message)
             const listener = listeners.get(parsedMessasge.flowRunId)
             if (listener) {
@@ -53,14 +55,14 @@ export const flowResponseWatcher = {
             })
         })
     },
-    async publish(flowRunId: string, executionOutput: ExecutionOutput): Promise<void> {
+    async publish(flowRunId: string, handlerId: string, executionOutput: ExecutionOutput): Promise<void> {
         logger.info(`[flowRunWatcher#publish] flowRunId=${flowRunId}`)
         const flowResponse = await getFlowResponse(executionOutput)
         const message: FlowResponseWithId = { flowRunId, flowResponse }
-        await pubSub.publish('flow-run:sync', JSON.stringify(message))
+        await pubSub.publish(`flow-run:sync:${handlerId}`, JSON.stringify(message))
     },
     async shutdown(): Promise<void> {
-        await pubSub.unsubscribe('flow-run:sync')
+        await pubSub.unsubscribe(`flow-run:sync:${HANDLER_ID}`)
     },
 }
 

@@ -103,7 +103,6 @@ export const flowRunService = {
             payload: {
                 action,
             },
-            synchronous: false,
             flowRunId: flowRunToResume.id,
             projectId: flowRunToResume.projectId,
             flowVersionId: flowRunToResume.flowVersionId,
@@ -134,7 +133,7 @@ export const flowRunService = {
         return flowRun
     },
 
-    async start({ projectId, flowVersionId, flowRunId, payload, environment, executionType, synchronous }: StartParams): Promise<FlowRun> {
+    async start({ projectId, flowVersionId, flowRunId, payload, environment, executionType, synchronousHandlerId }: StartParams): Promise<FlowRun> {
         logger.info(`[flowRunService#start] flowRunId=${flowRunId} executionType=${executionType}`)
 
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
@@ -171,7 +170,7 @@ export const flowRunService = {
         await flowRunSideEffects.start({
             flowRun: savedFlowRun,
             payload,
-            synchronous,
+            synchronousHandlerId,
             executionType,
         })
 
@@ -187,7 +186,6 @@ export const flowRunService = {
             projectId,
             flowVersionId,
             payload,
-            synchronous: false,
             environment: RunEnvironment.TESTING,
             executionType: ExecutionType.BEGIN,
         })
@@ -277,7 +275,7 @@ type StartParams = {
     flowRunId?: FlowRunId
     environment: RunEnvironment
     payload: unknown
-    synchronous: boolean
+    synchronousHandlerId?: string
     executionType: ExecutionType
 }
 

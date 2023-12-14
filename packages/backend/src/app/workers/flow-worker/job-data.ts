@@ -29,7 +29,7 @@ export type ScheduledJobData = RepeatingJobData | DelayedJobData
 export type OneTimeJobData = BaseJobData & {
     flowVersionId: FlowVersionId
     runId: FlowRunId
-    synchronous: boolean
+    synchronousHandlerId?: string
     payload: unknown
     executionType: ExecutionType
 }
