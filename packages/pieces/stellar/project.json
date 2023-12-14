@@ -1,0 +1,29 @@
+{
+  "name": "pieces-stellar",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/stellar/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/stellar",
+        "tsConfig": "packages/pieces/stellar/tsconfig.lib.json",
+        "packageJson": "packages/pieces/stellar/package.json",
+        "main": "packages/pieces/stellar/src/index.ts",
+        "assets": ["packages/pieces/stellar/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/stellar/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}
