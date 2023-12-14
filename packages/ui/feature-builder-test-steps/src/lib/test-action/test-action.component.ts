@@ -21,6 +21,7 @@ import {
   ActionType,
   BranchAction,
   CodeAction,
+  LoopOnItemsAction,
   PieceAction,
 } from '@activepieces/shared';
 import { TestStepCoreComponent } from '../test-steps-core.component';
@@ -211,6 +212,31 @@ export class TestActionComponent extends TestStepCoreComponent {
                 );
                 break;
               }
+              case ActionType.LOOP_ON_ITEMS: {
+                const clone: LoopOnItemsAction = {
+                  ...step,
+                  settings: {
+                    ...step.settings,
+                    inputUiInfo: {
+                      currentSelectedData: testResult
+                        ? testResult
+                        : testResult === undefined
+                        ? 'undefined'
+                        : testResult === ''
+                        ? ''
+                        : JSON.stringify(testResult),
+                      lastTestDate: new Date().toString(),
+                    },
+                  },
+                };
+                this.store.dispatch(
+                  FlowsActions.updateAction({
+                    operation: clone,
+                  })
+                );
+                break;
+              }
+
               default:
                 break;
             }
