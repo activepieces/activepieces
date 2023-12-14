@@ -5,6 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { vboutCommon } from '.';
+import { ContactListsListResponse } from './models';
 
 export class VboutClient {
   constructor(private apiKey: string) {}
@@ -22,5 +23,14 @@ export class VboutClient {
       body,
     });
     return res.body;
+  }
+
+  async listContactLists() {
+    return (
+      await this.makeRequest<ContactListsListResponse>(
+        HttpMethod.GET,
+        '/emailmarketing/getlists'
+      )
+    ).response.data;
   }
 }
