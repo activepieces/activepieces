@@ -17,6 +17,7 @@ export const EXECUTE_CONSTANTS = {
     baseCodeDirectory: path.resolve(cwd(), 'packages', 'engine', 'test', 'resources', 'codes'),
     executionType: ExecutionType.BEGIN,
     piecesSource: 'FILE',
+    testSingleStepMode: false,
 }
 
 export function buildSimpleLoopAction({
@@ -34,6 +35,7 @@ export function buildSimpleLoopAction({
         type: ActionType.LOOP_ON_ITEMS,
         settings: {
             items: loopItems,
+            inputUiInfo: {},
         },
         firstLoopAction,
         valid: true,

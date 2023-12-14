@@ -4,10 +4,8 @@ import {
     ExecutePropsOptions,
     ExecuteFlowOperation,
     ExecuteTriggerOperation,
-    ExecuteActionOperation,
     EngineResponseStatus,
     TriggerHookType,
-    ExecuteCodeOperation,
     ExecuteExtractPieceMetadata,
     ExecuteValidateAuthOperation,
     StepOutputStatus,
@@ -17,19 +15,20 @@ import {
     ExecuteActionResponse,
     EngineResponse,
     GenricStepOutput,
+    ExcuteStepOperation,
+    flowHelper,
+    Action,
+    ActionType,
+    isNil,
 } from '@activepieces/shared'
 import { pieceHelper } from './lib/helper/piece-helper'
 import { triggerHelper } from './lib/helper/trigger-helper'
 import { utils } from './lib/utils'
 import { flowExecutor } from './lib/handler/flow-executor'
 import { ExecutionVerdict, FlowExecutorContext } from './lib/handler/context/flow-execution-context'
-import { codeExecutor } from './lib/handler/code-executor'
 import { BASE_CODE_DIRECTORY, INPUT_FILE, OUTPUT_FILE, PIECE_SOURCES } from './lib/constants'
 import { testExecutionContext } from './lib/handler/context/test-execution-context'
-import { pieceExecutor } from './lib/handler/piece-executor'
 import { VariableService } from './lib/services/variable-service'
-
-
 
 const executeFlow = async (input: ExecuteFlowOperation, context: FlowExecutorContext): Promise<EngineResponse<ExecutionOutput>> => {
     const output = await flowExecutor.execute({
@@ -40,6 +39,7 @@ const executeFlow = async (input: ExecuteFlowOperation, context: FlowExecutorCon
             flowRunId: input.flowRunId,
             executionType: input.executionType,
             serverUrl: input.serverUrl,
+            testSingleStepMode: false,
             apiUrl: input.serverUrl,
             projectId: input.projectId,
             workerToken: input.workerToken,
@@ -59,12 +59,16 @@ const executeFlow = async (input: ExecuteFlowOperation, context: FlowExecutorCon
 }
 
 
-async function executeCode(input: ExecuteCodeOperation): Promise<ExecuteActionResponse> {
-    const output = await codeExecutor.handle({
-        action: input.step,
+async function executeStep(input: ExcuteStepOperation): Promise<ExecuteActionResponse> {
+    const step = flowHelper.getStep(input.flowVersion, input.stepName) as Action | undefined
+    if (isNil(step) || !Object.values(ActionType).includes(step.type)) {
+        throw new Error('Step not found or not supported')
+    }
+    const output = await flowExecutor.getExecutorForAction(step.type).handle({
+        action: step,
         executionState: await testExecutionContext.stateFromFlowVersion({
             flowVersion: input.flowVersion,
-            excludedStepName: input.step.name,
+            excludedStepName: step.name,
             projectId: input.projectId,
             workerToken: input.workerToken,
         }),
@@ -78,6 +82,7 @@ async function executeCode(input: ExecuteCodeOperation): Promise<ExecuteActionRe
                 projectId: input.projectId,
                 workerToken: input.workerToken,
             }),
+            testSingleStepMode: true,
             apiUrl: input.serverUrl,
             workerToken: input.workerToken,
             piecesSource: PIECE_SOURCES,
@@ -86,40 +91,10 @@ async function executeCode(input: ExecuteCodeOperation): Promise<ExecuteActionRe
     })
     return {
         success: output.verdict !== ExecutionVerdict.FAILED,
-        output: output.steps[input.step.name].output,
+        output: output.steps[step.name].output,
     }
 }
 
-async function executeAction(input: ExecuteActionOperation): Promise<ExecuteActionResponse> {
-    const output = await pieceExecutor.handle({
-        action: input.action,
-        executionState: await testExecutionContext.stateFromFlowVersion({
-            flowVersion: input.flowVersion,
-            excludedStepName: input.action.name,
-            workerToken: input.workerToken,
-            projectId: input.projectId,
-        }),
-        constants: {
-            flowId: input.flowVersion.flowId,
-            flowRunId: 'test-run',
-            projectId: input.projectId,
-            executionType: ExecutionType.BEGIN,
-            serverUrl: input.serverUrl,
-            variableService: new VariableService({
-                projectId: input.projectId,
-                workerToken: input.workerToken,
-            }),
-            piecesSource: PIECE_SOURCES,
-            apiUrl: input.serverUrl,
-            workerToken: input.workerToken,
-            baseCodeDirectory: BASE_CODE_DIRECTORY,
-        },
-    })
-    return {
-        success: output.verdict !== ExecutionVerdict.FAILED,
-        output: output.steps[input.action.name].output,
-    }
-}
 
 const execute = async (): Promise<void> => {
     try {
@@ -174,18 +149,9 @@ const execute = async (): Promise<void> => {
                 })
                 break
             }
-            case EngineOperationType.EXECUTE_ACTION: {
-                const input: ExecuteActionOperation = await utils.parseJsonFile(INPUT_FILE)
-                const output = await executeAction(input)
-                await writeOutput({
-                    status: EngineResponseStatus.OK,
-                    response: output,
-                })
-                break
-            }
-            case EngineOperationType.EXECUTE_CODE: {
-                const input: ExecuteCodeOperation = await utils.parseJsonFile(INPUT_FILE)
-                const output = await executeCode(input)
+            case EngineOperationType.EXECUTE_STEP: {
+                const input: ExcuteStepOperation = await utils.parseJsonFile(INPUT_FILE)
+                const output = await executeStep(input)
                 await writeOutput({
                     status: EngineResponseStatus.OK,
                     response: output,

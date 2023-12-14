@@ -15,7 +15,10 @@ import {
   BranchCondition,
 } from '@activepieces/shared';
 import { branchConditionGroupValidator } from '@activepieces/ui/common';
-
+type BranchActionSettingsWithoutInputUiInfo = Omit<
+  BranchActionSettings,
+  'inputUiInfo'
+>;
 @Component({
   selector: 'app-branch-step-input-form',
   templateUrl: './branch-step-input-form.component.html',
@@ -38,10 +41,9 @@ export class BranchStepInputFormComponent implements ControlValueAccessor {
     conditionsGroups: FormArray<FormControl<BranchCondition[]>>;
   }>;
   valueChanges$: Observable<void>;
-  onChange: (val: BranchActionSettings & { type: ActionType.BRANCH }) => void =
-    () => {
-      //ignored
-    };
+  onChange: (val: BranchActionSettingsWithoutInputUiInfo) => void = () => {
+    //ignored
+  };
 
   constructor(private fb: FormBuilder) {
     const emptyConditionsGroupList: FormControl<BranchCondition[]>[] = [];
@@ -54,8 +56,6 @@ export class BranchStepInputFormComponent implements ControlValueAccessor {
         const val = this.form.getRawValue();
         this.onChange({
           conditions: val.conditionsGroups,
-          type: ActionType.BRANCH,
-          inputUiInfo: {},
         });
       }),
       map(() => void 0)
@@ -88,7 +88,7 @@ export class BranchStepInputFormComponent implements ControlValueAccessor {
     );
   }
   registerOnChange(
-    fn: (val: BranchActionSettings & { type: ActionType.BRANCH }) => void
+    fn: (val: BranchActionSettingsWithoutInputUiInfo) => void
   ): void {
     this.onChange = fn;
   }

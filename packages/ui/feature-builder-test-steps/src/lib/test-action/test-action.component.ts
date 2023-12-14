@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { TestStepService } from '@activepieces/ui/common';
 import {
   Observable,
@@ -15,19 +15,26 @@ import { Store } from '@ngrx/store';
 import {
   BuilderSelectors,
   FlowsActions,
+  Step,
 } from '@activepieces/ui/feature-builder-store';
-import { ActionType, BranchAction, PieceAction } from '@activepieces/shared';
+import {
+  ActionType,
+  BranchAction,
+  CodeAction,
+  LoopOnItemsAction,
+  PieceAction,
+} from '@activepieces/shared';
 import { TestStepCoreComponent } from '../test-steps-core.component';
 import deepEqual from 'deep-equal';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
-  selector: 'app-test-piece-step',
-  templateUrl: './test-piece-step.component.html',
+  selector: 'app-test-action',
+  templateUrl: './test-action.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TestPieceStepComponent extends TestStepCoreComponent {
+export class TestActionComponent extends TestStepCoreComponent {
   loading = false;
   testStep$: Observable<unknown>;
   currentStepValidity$: Observable<boolean>;
@@ -35,6 +42,14 @@ export class TestPieceStepComponent extends TestStepCoreComponent {
   saveStepAfterTesting$: Observable<void>;
   lastTestDate$: Observable<string | undefined>;
   errorResponse: null | unknown = null;
+  private _step?: Step;
+  @Input({ required: true }) set step(val: Step) {
+    if (this._step && this._step.name !== val.name) {
+      this.errorResponse = null;
+    }
+    this._step = val;
+  }
+
   constructor(
     testStepService: TestStepService,
     store: Store,
@@ -76,20 +91,24 @@ export class TestPieceStepComponent extends TestStepCoreComponent {
           if (!res.flowVersionId || !res.stepName) {
             throw new Error('some test piece step params are missing');
           }
-          return this.testStepService.testPieceOrCodeStep({
-            flowVersionId: res.flowVersionId,
-            stepName: res.stepName,
-          });
+          return this.testStepService
+            .testPieceOrCodeStep({
+              flowVersionId: res.flowVersionId,
+              stepName: res.stepName,
+            })
+            .pipe(
+              tap((res) => {
+                this.loading = false;
+                this.testStepService.elevateResizer$.next(true);
+                if (res.success) {
+                  this.saveStepTestResult(res.output);
+                } else {
+                  this.errorResponse = res.standardError;
+                }
+              })
+            );
         }),
-        tap((res) => {
-          this.loading = false;
-          this.testStepService.elevateResizer$.next(true);
-          if (res.success) {
-            this.saveStepTestResult(res.output);
-          } else {
-            this.errorResponse = res.output;
-          }
-        }),
+
         catchError((err: HttpErrorResponse) => {
           if (err.status === 504) {
             const errorBar = this.snackBar.open(
@@ -143,7 +162,6 @@ export class TestPieceStepComponent extends TestStepCoreComponent {
 
                 break;
               }
-
               case ActionType.BRANCH: {
                 const clone: BranchAction = {
                   ...step,
@@ -168,6 +186,54 @@ export class TestPieceStepComponent extends TestStepCoreComponent {
                   })
                 );
 
+                break;
+              }
+              case ActionType.CODE: {
+                const clone: CodeAction = {
+                  ...step,
+                  settings: {
+                    ...step.settings,
+                    inputUiInfo: {
+                      currentSelectedData: testResult
+                        ? testResult
+                        : testResult === undefined
+                        ? 'undefined'
+                        : testResult === ''
+                        ? ''
+                        : JSON.stringify(testResult),
+                      lastTestDate: new Date().toString(),
+                    },
+                  },
+                };
+                this.store.dispatch(
+                  FlowsActions.updateAction({
+                    operation: clone,
+                  })
+                );
+                break;
+              }
+              case ActionType.LOOP_ON_ITEMS: {
+                const clone: LoopOnItemsAction = {
+                  ...step,
+                  settings: {
+                    ...step.settings,
+                    inputUiInfo: {
+                      currentSelectedData: testResult
+                        ? testResult
+                        : testResult === undefined
+                        ? 'undefined'
+                        : testResult === ''
+                        ? ''
+                        : JSON.stringify(testResult),
+                      lastTestDate: new Date().toString(),
+                    },
+                  },
+                };
+                this.store.dispatch(
+                  FlowsActions.updateAction({
+                    operation: clone,
+                  })
+                );
                 break;
               }
 
