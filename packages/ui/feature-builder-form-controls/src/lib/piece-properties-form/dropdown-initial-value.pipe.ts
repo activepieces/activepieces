@@ -2,6 +2,7 @@ import { Pipe, PipeTransform } from '@angular/core';
 import { DropdownOption } from '@activepieces/pieces-framework';
 import { FormGroup } from '@angular/forms';
 import { Observable, map, startWith } from 'rxjs';
+import deepEqual from 'deep-equal';
 
 @Pipe({
   name: 'dropdownInitialValue',
@@ -18,19 +19,21 @@ export class DropdownPropertyInitialValuePipe implements PipeTransform {
       console.warn(`form control not found : ${formControlName}`);
       return undefined;
     }
+
     return formControl.valueChanges.pipe(
       startWith(formControl.value),
       map((formControlValue) => {
         if (!Array.isArray(formControlValue)) {
           const initialValue = options.find((o) => {
-            return o.value === formGroup.get(formControlName)?.value;
+            return deepEqual(o.value, formGroup.get(formControlName)?.value);
           });
           if (initialValue) {
+            console.log(initialValue);
             return [initialValue];
           }
         } else {
           return options.filter((o) => {
-            return formControlValue.includes(o.value);
+            return !!formControlValue.find((v) => deepEqual(v, o.value));
           });
         }
         return undefined;

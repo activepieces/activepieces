@@ -31,6 +31,7 @@ import dayjs from 'dayjs'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { getEdition } from '../../helper/secret-helper'
 import { IsNull } from 'typeorm'
+import { jwtUtils } from '../../helper/jwt-utils'
 
 const projectMemberRepo = databaseConnection.getRepository(ProjectMemberEntity)
 
@@ -181,7 +182,10 @@ export const projectMemberService = {
 }
 
 async function getByInvitationTokenOrThrow(invitationToken: string): Promise<ProjectMember> {
-    const { id: projectMemberId } = await accessTokenManager.extractPrincipal(invitationToken) as ProjectMemberToken
+    const { id: projectMemberId } = await jwtUtils.decodeAndVerify<ProjectMemberToken>({
+        jwt: invitationToken,
+        key: await jwtUtils.getJwtSecret(),
+    })
     return getOrThrow(projectMemberId)
 }
 
@@ -233,7 +237,7 @@ type AcceptParams = {
     invitationToken: string
 }
 
-type ProjectMemberToken = {
+export type ProjectMemberToken = {
     id: string
 }
 

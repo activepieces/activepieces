@@ -1,8 +1,6 @@
-import axios from 'axios'
 import { ApEdition, FlowVersion, isNil } from '@activepieces/shared'
 import { system } from './system/system'
 import { SystemProp } from './system/system-prop'
-import { captureException } from './logger'
 
 let webhookSecrets: Record<string, string> | undefined = undefined
 
@@ -31,19 +29,8 @@ export async function getWebhookSecret(
 
 async function getWebhookSecrets(): Promise<Record<string, string>> {
     const currentEdition = getEdition()
-    if (currentEdition === ApEdition.COMMUNITY) {
+    if (currentEdition !== ApEdition.CLOUD) {
         return {}
     }
-    try {
-        const licenseKey = system.get(SystemProp.LICENSE_KEY)
-        const response = await axios.post(
-            'https://secrets.activepieces.com/webhooks',
-            { licenseKey },
-        )
-        return response.data
-    }
-    catch (e) {
-        captureException(e)
-        throw e
-    }
+    return JSON.parse(system.getOrThrow(SystemProp.APP_WEBHOOK_SECRETS))
 }
