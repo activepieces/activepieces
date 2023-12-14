@@ -80,6 +80,7 @@ import { authorizationMiddleware } from './authentication/authorization-middlewa
 import { apiKeyModule } from './ee/api-keys/api-key-module'
 import { domainHelper } from './helper/domain-helper'
 import { platformDomainHelper } from './ee/helper/platform-domain-helper'
+import { flowResponseWatcher } from './flows/flow-run/flow-response-watcher'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -283,6 +284,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
 
     app.addHook('onClose', async () => {
         await flowQueueConsumer.close()
+        await flowResponseWatcher.shutdown()
     })
 
     return app
