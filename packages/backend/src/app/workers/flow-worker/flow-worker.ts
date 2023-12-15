@@ -21,7 +21,6 @@ import {
     RunEnvironment,
     RunTerminationReason,
     SourceCode,
-    StepOutputStatus,
     Trigger,
     TriggerType,
 } from '@activepieces/shared'
@@ -118,12 +117,7 @@ const loadInputAndLogFileId = async ({
         flowVersion,
         flowRunId: jobData.runId,
         projectId: jobData.projectId,
-        triggerPayload: {
-            duration: 0,
-            input: {},
-            output: jobData.payload,
-            status: StepOutputStatus.SUCCEEDED,
-        },
+        triggerPayload: jobData.payload,
     }
 
     if (jobData.executionType === ExecutionType.BEGIN) {
