@@ -1,6 +1,7 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { vboutGetContactByEmailAction } from './lib/actions/get-contact-by-email';
 import { vboutGetEmailListAction } from './lib/actions/get-email-list';
+import { vboutCreateEmailListAction } from './lib/actions/create-email-list';
 const markdown = `
 To obtain your API key, follow these steps:
 
@@ -20,6 +21,10 @@ export const vbout = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/vbout.png',
   authors: ['kishanprmr'],
-  actions: [vboutGetContactByEmailAction, vboutGetEmailListAction],
+  actions: [
+    vboutGetContactByEmailAction,
+    vboutGetEmailListAction,
+    vboutCreateEmailListAction,
+  ],
   triggers: [],
 });

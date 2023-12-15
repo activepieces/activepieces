@@ -5,7 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { vboutCommon } from '.';
-import { ContactListsListResponse } from './models';
+import { ContactListsListResponse, EmailListCreateRequest } from './models';
 
 function emptyValueFilter(
   accessor: (key: string) => any
@@ -70,6 +70,14 @@ export class VboutClient {
       HttpMethod.GET,
       '/emailmarketing/getlist',
       prepareQuery({ id: listId })
+    );
+  }
+  async createEmailList(request: EmailListCreateRequest) {
+    return await this.makeRequest(
+      HttpMethod.POST,
+      '/emailMarketing/AddList',
+      undefined,
+      request
     );
   }
 }
