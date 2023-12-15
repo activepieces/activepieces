@@ -7,6 +7,29 @@ import {
 import { vboutCommon } from '.';
 import { ContactListsListResponse } from './models';
 
+function emptyValueFilter(
+  accessor: (key: string) => any
+): (key: string) => boolean {
+  return (key: string) => {
+    const val = accessor(key);
+    return (
+      val !== null &&
+      val !== undefined &&
+      (typeof val != 'string' || val.length > 0)
+    );
+  };
+}
+
+export function prepareQuery(request?: Record<string, any>): QueryParams {
+  const params: QueryParams = {};
+  if (!request) return params;
+  Object.keys(request)
+    .filter(emptyValueFilter((k) => request[k]))
+    .forEach((k: string) => {
+      params[k] = (request as Record<string, any>)[k].toString();
+    });
+  return params;
+}
 export class VboutClient {
   constructor(private apiKey: string) {}
 
@@ -25,12 +48,28 @@ export class VboutClient {
     return res.body;
   }
 
-  async listContactLists() {
+  async listEmailLists() {
     return (
       await this.makeRequest<ContactListsListResponse>(
         HttpMethod.GET,
         '/emailmarketing/getlists'
       )
     ).response.data;
+  }
+
+  async getContactByEmail(email: string, listId?: string) {
+    return await this.makeRequest(
+      HttpMethod.GET,
+      '/emailmarketing/getcontactbyemail',
+      prepareQuery({ email: email, listid: listId })
+    );
+  }
+
+  async getEmailList(listId: string) {
+    return await this.makeRequest(
+      HttpMethod.GET,
+      '/emailmarketing/getlist',
+      prepareQuery({ id: listId })
+    );
   }
 }
