@@ -121,8 +121,8 @@ export const pieceExecutor: BaseExecutor<PieceAction> = {
             return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).setVerdict(ExecutionVerdict.RUNNING, undefined)
         }
         catch (e) {
-            console.error(e)
             const errorMessage =  await utils.tryParseJson((e as Error).message)
+            console.error(errorMessage)
             return executionState
                 .upsertStep(action.name, stepOutput.setStatus(StepOutputStatus.FAILED).setErrorMessage(errorMessage))
                 .setVerdict(ExecutionVerdict.FAILED, undefined)

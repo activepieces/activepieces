@@ -103,7 +103,7 @@ export class TestActionComponent extends TestStepCoreComponent {
                 if (res.success) {
                   this.saveStepTestResult(res.output);
                 } else {
-                  this.errorResponse = res.standardError;
+                  this.errorResponse = res.output;
                 }
               })
             );
