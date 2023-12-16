@@ -37,6 +37,7 @@ import { sandboxProvisioner } from '../sandbox/provisioner/sandbox-provisioner'
 import { SandBoxCacheType } from '../sandbox/provisioner/sandbox-cache-key'
 import { flowWorkerHooks } from './flow-worker-hooks'
 import { logSerializer } from '../../flows/common/log-serializer'
+import { flowResponseWatcher } from '../../flows/flow-run/flow-response-watcher'
 
 type FinishExecutionParams = {
     flowRunId: FlowRunId
@@ -206,6 +207,9 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             input,
         )
 
+        if (jobData.synchronousHandlerId) {
+            await flowResponseWatcher.publish(jobData.runId, jobData.synchronousHandlerId, executionOutput)
+        }
 
         const logsFile = await saveToLogFile({
             fileId: logFileId,
