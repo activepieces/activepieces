@@ -27,7 +27,7 @@ export const flowResponseWatcher = {
     async init(): Promise<void> {
         logger.info('[flowRunWatcher#init] Initializing flow run watcher')
 
-        await pubSub.subscribe(`flow-run:sync:${HANDLER_ID}`, (message) => {
+        await pubSub.subscribe(`flow-run:sync:${HANDLER_ID}`, (_channel, message) => {
             const parsedMessasge: FlowResponseWithId = JSON.parse(message)
             const listener = listeners.get(parsedMessasge.flowRunId)
             if (listener) {
