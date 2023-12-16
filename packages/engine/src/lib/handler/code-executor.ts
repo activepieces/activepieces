@@ -38,7 +38,7 @@ export const codeExecutor: BaseExecutor<CodeAction> = {
         catch (e) {
             console.error(e)
             return executionState
-                .upsertStep(action.name, stepOutput.setErrorMessage((e as Error).message))
+                .upsertStep(action.name, stepOutput.setStatus(StepOutputStatus.FAILED).setErrorMessage((e as Error).message))
                 .setVerdict(ExecutionVerdict.FAILED, undefined)
         }
     },
