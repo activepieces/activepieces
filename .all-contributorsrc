@@ -744,6 +744,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "bigfluffycookie",
+      "name": "Leyla",
+      "avatar_url": "https://avatars.githubusercontent.com/u/54935347?v=4",
+      "profile": "https://github.com/bigfluffycookie",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "commitType": "docs"
