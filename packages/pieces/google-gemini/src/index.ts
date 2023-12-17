@@ -42,8 +42,8 @@ export const googleGemini = createPiece({
   auth: googleGeminiAuth,
   description: "Use the new Gemini models from Google",
   minimumSupportedRelease: '0.9.0',
-  logoUrl: "https://ai.google.dev/static/docs/images/icon_480.png",
-  authors: ["Pablo Fernandez <github.com/pfernandez98>"],
+  logoUrl: "https://cdn.activepieces.com/pieces/google-gemini.png",
+  authors: ["pfernandez98"],
   actions: [generateContentAction, generateContentFromImageAction],
   triggers: [],
 });
