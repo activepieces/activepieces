@@ -432,7 +432,9 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
           break;
         }
         case PropertyType.CHECKBOX: {
-          controls[pk] = new UntypedFormControl(propValue || prop.defaultValue || false);
+          controls[pk] = new UntypedFormControl(
+            propValue || prop.defaultValue || false
+          );
           break;
         }
         case PropertyType.DATE_TIME:

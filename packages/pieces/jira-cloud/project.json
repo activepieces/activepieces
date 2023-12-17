@@ -34,8 +34,7 @@
       ],
       "options": {
         "lintFilePatterns": [
-          "packages/pieces/jira-cloud/**/*.ts",
-          "packages/pieces/jira-cloud/package.json"
+          "packages/pieces/jira-cloud/**/*.ts"
         ]
       }
     }
