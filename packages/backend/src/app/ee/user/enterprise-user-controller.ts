@@ -14,11 +14,11 @@ export const enterpriseUserController: FastifyPluginAsyncTypebox = async (app) =
         })
     })
 
-    app.delete('/:id', DeleteUserRequest, async (req, res) => {
+    app.patch('/:id/suspend', SuspendUserRequest, async (req, res) => {
         const platformId = req.principal.platform?.id
         assertNotNullOrUndefined(platformId, 'platformId')
 
-        await enterpriseUserService.delete({
+        await enterpriseUserService.suspend({
             id: req.params.id,
             platformId,
         })
@@ -39,7 +39,7 @@ const ListUsersRequest = {
     },
 }
 
-const DeleteUserRequest = {
+const SuspendUserRequest = {
     schema: {
         params: Type.Object({
             id: ApId,

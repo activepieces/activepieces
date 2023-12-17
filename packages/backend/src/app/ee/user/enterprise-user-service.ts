@@ -1,7 +1,8 @@
-import { ActivepiecesError, ErrorCode, SeekPage, User, UserId } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, SeekPage, User, UserId, UserStatus } from '@activepieces/shared'
 import { PlatformId } from '@activepieces/ee-shared'
 import { databaseConnection } from '../../database/database-connection'
 import { UserEntity } from '../../user/user-entity'
+import { FindOptionsWhere } from 'typeorm'
 
 const repo = databaseConnection.getRepository(UserEntity)
 
@@ -18,13 +19,18 @@ export const enterpriseUserService = {
         }
     },
 
-    async delete({ id, platformId }: DeleteParams): Promise<void> {
-        const deleteResult = await repo.delete({
+    async suspend({ id, platformId }: DeleteParams): Promise<void> {
+        const updateCriteria: FindOptionsWhere<User> = {
             id,
             platformId,
+            status: UserStatus.VERIFIED,
+        }
+
+        const updateResult = await repo.update(updateCriteria, {
+            status: UserStatus.SUSPENDED,
         })
 
-        if (deleteResult.affected !== 1) {
+        if (updateResult.affected !== 1) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
