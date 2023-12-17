@@ -61,12 +61,9 @@ export const chatGemini = createAction({
 
         messageHistory.push(thisMessage);
 
-        console.log("messageHistory: ", messageHistory);
-
         const body = {
             "contents": messageHistory
         };
-
 
         const request = await httpClient.sendRequest({
             method: HttpMethod.POST,
