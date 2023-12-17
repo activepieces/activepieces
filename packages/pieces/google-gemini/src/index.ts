@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
 import { generateContentAction } from "./lib/actions/generate-content.action";
 import { generateContentFromImageAction } from "./lib/actions/generate-content-from-image.action";
+import { chatGemini } from "./lib/actions/chat-gemini.action";
 
 
 const markdownDescription = `
@@ -44,6 +45,6 @@ export const googleGemini = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: "https://cdn.activepieces.com/pieces/google-gemini.png",
   authors: ["pfernandez98"],
-  actions: [generateContentAction, generateContentFromImageAction],
+  actions: [generateContentAction, generateContentFromImageAction, chatGemini],
   triggers: [],
 });
