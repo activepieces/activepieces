@@ -221,8 +221,8 @@ export class TestActionComponent extends TestStepCoreComponent {
                   'index' in testResult
                 ) {
                   const item = {
-                    item: testResult['item'],
                     index: testResult['index'],
+                    item: testResult['item'],
                   };
                   const clone: LoopOnItemsAction = {
                     ...step,

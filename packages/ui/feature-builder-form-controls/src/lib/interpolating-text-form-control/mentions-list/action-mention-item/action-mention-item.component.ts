@@ -18,17 +18,21 @@ import {
   traverseStepOutputAndReturnMentionTree,
 } from '../../utils';
 import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
-
+import {
+  CustomPathMentionDialogComponent,
+  CustomPathMentionDialogData,
+} from '../custom-path-mention-dialog/custom-path-mention-dialog.component';
 import { Step } from '@activepieces/ui/feature-builder-store';
 import { Store } from '@ngrx/store';
 import { canvasActions } from '@activepieces/ui/feature-builder-store';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
-  selector: 'app-code-step-mention-item',
-  templateUrl: './code-step-mention-item.component.html',
+  selector: 'app-action-mention-item',
+  templateUrl: './action-mention-item.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CodeStepMentionItemComponent implements OnInit {
+export class ActionMentionItemComponent implements OnInit {
   readonly CHEVRON_SPACE_IN_MENTIONS_LIST = CHEVRON_SPACE_IN_MENTIONS_LIST;
   readonly FIRST_LEVEL_PADDING_IN_MENTIONS_LIST =
     FIRST_LEVEL_PADDING_IN_MENTIONS_LIST;
@@ -36,15 +40,17 @@ export class CodeStepMentionItemComponent implements OnInit {
   @Input() stepIndex: number;
   @Output() mentionClicked: EventEmitter<MentionListItem> = new EventEmitter();
   expandCodeCollapse = false;
-  codeStepTest$: Observable<{
+  actionTest$: Observable<{
     children?: MentionTreeNode[];
     value?: unknown;
     markedNodesToShow: Map<string, boolean>;
   }>;
+  customPathDialogClosed$: Observable<MentionListItem | undefined>;
   search$: Observable<string>;
   constructor(
     private mentionsTreeCache: MentionsTreeCacheService,
-    private store: Store
+    private store: Store,
+    private dialogService: MatDialog
   ) {}
   ngOnInit(): void {
     const cacheResult = this.getChachedData();
@@ -58,7 +64,7 @@ export class CodeStepMentionItemComponent implements OnInit {
       })
     );
     if (cacheResult) {
-      this.codeStepTest$ = combineLatest({
+      this.actionTest$ = combineLatest({
         stepTree: of({
           children: cacheResult?.children || [],
           value: cacheResult?.value,
@@ -83,11 +89,35 @@ export class CodeStepMentionItemComponent implements OnInit {
   emitMention(mentionListItem: MentionListItem) {
     this.mentionClicked.emit(mentionListItem);
   }
+
+  openPathDialog() {
+    const dialogData: CustomPathMentionDialogData = {
+      defaultValue: `${this.stepMention.step.name}.item`,
+      dialogTitle: 'Loop Item Path',
+      entityName: 'loop item',
+      placeHolder: `eg. ${this.stepMention.step.name}.item.x`,
+      stepDisplayName: this.stepMention.step.displayName,
+      stepName: `${this.stepMention.step.name}.item`,
+    };
+    this.customPathDialogClosed$ = this.dialogService
+      .open(CustomPathMentionDialogComponent, { data: dialogData })
+      .afterClosed()
+      .pipe(
+        tap((val) => {
+          if (val) {
+            this.emitMention(val);
+          }
+        })
+      );
+  }
+
   getChachedData() {
     const step = this.stepMention.step;
     let cachedResult: undefined | MentionTreeNode = undefined;
     if (
-      step.type === ActionType.CODE &&
+      (step.type === ActionType.CODE ||
+        step.type === ActionType.LOOP_ON_ITEMS ||
+        step.type === ActionType.PIECE) &&
       step.settings.inputUiInfo?.currentSelectedData !== undefined
     ) {
       cachedResult = traverseStepOutputAndReturnMentionTree(
