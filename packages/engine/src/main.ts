@@ -91,7 +91,7 @@ async function executeStep(input: ExcuteStepOperation): Promise<ExecuteActionRes
     })
     return {
         success: output.verdict !== ExecutionVerdict.FAILED,
-        output: output.steps[step.name].output,
+        output: output.steps[step.name].output ?? output.steps[step.name].errorMessage,
     }
 }
 

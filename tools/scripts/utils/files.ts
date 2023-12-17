@@ -14,6 +14,11 @@ export type ProjectJson = {
         buildableProjectDepsInPackageJsonType?: 'peerDependencies' | 'dependencies'
         updateBuildableProjectDepsInPackageJson: boolean
       }
+    },
+    lint: {
+        options: {
+            lintFilePatterns: string[]
+        }
     }
   }
 }

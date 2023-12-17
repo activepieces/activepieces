@@ -25,6 +25,7 @@ describe('codeExecutor', () => {
             }), executionState: FlowExecutorContext.empty(), constants: EXECUTE_CONSTANTS,
         })
         expect(result.verdict).toBe(ExecutionVerdict.FAILED)
+        expect(result.steps.runtime.status).toEqual('FAILED')
         expect(result.steps.runtime.errorMessage).toEqual('Custom Runtime Error')
     })
 

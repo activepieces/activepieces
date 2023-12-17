@@ -21,7 +21,6 @@ import {
     RunEnvironment,
     RunTerminationReason,
     SourceCode,
-    StepOutputStatus,
     Trigger,
     TriggerType,
 } from '@activepieces/shared'
@@ -38,6 +37,7 @@ import { sandboxProvisioner } from '../sandbox/provisioner/sandbox-provisioner'
 import { SandBoxCacheType } from '../sandbox/provisioner/sandbox-cache-key'
 import { flowWorkerHooks } from './flow-worker-hooks'
 import { logSerializer } from '../../flows/common/log-serializer'
+import { flowResponseWatcher } from '../../flows/flow-run/flow-response-watcher'
 
 type FinishExecutionParams = {
     flowRunId: FlowRunId
@@ -118,12 +118,7 @@ const loadInputAndLogFileId = async ({
         flowVersion,
         flowRunId: jobData.runId,
         projectId: jobData.projectId,
-        triggerPayload: {
-            duration: 0,
-            input: {},
-            output: jobData.payload,
-            status: StepOutputStatus.SUCCEEDED,
-        },
+        triggerPayload: jobData.payload,
     }
 
     if (jobData.executionType === ExecutionType.BEGIN) {
@@ -212,6 +207,9 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             input,
         )
 
+        if (jobData.synchronousHandlerId) {
+            await flowResponseWatcher.publish(jobData.runId, jobData.synchronousHandlerId, executionOutput)
+        }
 
         const logsFile = await saveToLogFile({
             fileId: logFileId,

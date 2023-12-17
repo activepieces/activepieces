@@ -8,6 +8,7 @@ import { createFilesService } from '../services/files.service'
 import { createConnectionService } from '../services/connections.service'
 import { EngineConstantData } from './context/engine-constants-data'
 import { pieceLoader } from '../helper/piece-loader'
+import { utils } from '../utils'
 
 type HookResponse = { stopResponse: StopHookParams | undefined, pauseResponse: PauseHookParams | undefined, tags: string[], stopped: boolean, paused: boolean }
 
@@ -40,82 +41,93 @@ export const pieceExecutor: BaseExecutor<PieceAction> = {
             type: ActionType.PIECE,
             status: StepOutputStatus.SUCCEEDED,
         })
-        assertNotNullOrUndefined(action.settings.actionName, 'actionName')
-        const { pieceAction, piece } = await pieceLoader.getPieceAndActionOrThrow({
-            pieceName: action.settings.pieceName,
-            pieceVersion: action.settings.pieceVersion,
-            actionName: action.settings.actionName,
-            piecesSource: constants.piecesSource,
-        })
+        try {
 
-        const { processedInput, errors } = await constants.variableService.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth)
-        if (Object.keys(errors).length > 0) {
-            throw new Error(JSON.stringify(errors))
-        }
-
-        const hookResponse: HookResponse = {
-            stopResponse: undefined,
-            stopped: false,
-            pauseResponse: undefined,
-            paused: false,
-            tags: [],
-        }
-
-        const context: ActionContext = {
-            executionType: constants.executionType,
-            store: createContextStore({
-                prefix: '',
-                flowId: constants.flowId,
-                workerToken: constants.workerToken,
-            }),
-            auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
-            files: createFilesService({
-                workerToken: constants.workerToken,
-                stepName: action.name,
-                flowId: constants.flowId,
-                type: 'local',
-            }),
-            server: {
-                token: constants.workerToken,
-                apiUrl: constants.apiUrl,
-                publicUrl: constants.serverUrl,
-            },
-            propsValue: processedInput,
-            tags: createTagsManager(hookResponse),
-            connections: createConnectionManager({
-                projectId: constants.projectId,
-                workerToken: constants.workerToken,
-                hookResponse,
-            }),
-            serverUrl: constants.serverUrl,
-            run: {
-                id: constants.flowRunId,
-                stop: createStopHook(hookResponse),
-                pause: createPauseHook(hookResponse),
-            },
-            resumePayload: constants.resumePayload,
-        }
-        const output = await pieceAction.run(context)
-        const newExecutionContext = executionState.addTags(hookResponse.tags)
-
-        if (hookResponse.stopped) {
-            assertNotNullOrUndefined(hookResponse.stopResponse, 'stopResponse')
-            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).setVerdict(ExecutionVerdict.SUCCEEDED, {
-                reason: ExecutionOutputStatus.STOPPED,
-                stopResponse: hookResponse.stopResponse.response,
+            assertNotNullOrUndefined(action.settings.actionName, 'actionName')
+            const { pieceAction, piece } = await pieceLoader.getPieceAndActionOrThrow({
+                pieceName: action.settings.pieceName,
+                pieceVersion: action.settings.pieceVersion,
+                actionName: action.settings.actionName,
+                piecesSource: constants.piecesSource,
             })
-        }
-        if (hookResponse.paused) {
-            assertNotNullOrUndefined(hookResponse.pauseResponse, 'pauseResponse')
-            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)
-                .setStatus(StepOutputStatus.PAUSED))
-                .setVerdict(ExecutionVerdict.PAUSED, {
-                    reason: ExecutionOutputStatus.PAUSED,
-                    pauseMetadata: hookResponse.pauseResponse.pauseMetadata,
-                })
-        }
 
-        return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).setVerdict(ExecutionVerdict.RUNNING, undefined)
+            const { processedInput, errors } = await constants.variableService.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth)
+            if (Object.keys(errors).length > 0) {
+                throw new Error(JSON.stringify(errors))
+            }
+
+            const hookResponse: HookResponse = {
+                stopResponse: undefined,
+                stopped: false,
+                pauseResponse: undefined,
+                paused: false,
+                tags: [],
+            }
+
+            const context: ActionContext = {
+                executionType: constants.executionType,
+                store: createContextStore({
+                    prefix: '',
+                    flowId: constants.flowId,
+                    workerToken: constants.workerToken,
+                }),
+                auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
+                files: createFilesService({
+                    workerToken: constants.workerToken,
+                    stepName: action.name,
+                    flowId: constants.flowId,
+                    type: 'local',
+                }),
+                server: {
+                    token: constants.workerToken,
+                    apiUrl: constants.apiUrl,
+                    publicUrl: constants.serverUrl,
+                },
+                propsValue: processedInput,
+                tags: createTagsManager(hookResponse),
+                connections: createConnectionManager({
+                    projectId: constants.projectId,
+                    workerToken: constants.workerToken,
+                    hookResponse,
+                }),
+                serverUrl: constants.serverUrl,
+                run: {
+                    id: constants.flowRunId,
+                    stop: createStopHook(hookResponse),
+                    pause: createPauseHook(hookResponse),
+                },
+                resumePayload: constants.resumePayload,
+            }
+            const output = await pieceAction.run(context)
+            const newExecutionContext = executionState.addTags(hookResponse.tags)
+
+            if (hookResponse.stopped) {
+                assertNotNullOrUndefined(hookResponse.stopResponse, 'stopResponse')
+                return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).setVerdict(ExecutionVerdict.SUCCEEDED, {
+                    reason: ExecutionOutputStatus.STOPPED,
+                    stopResponse: hookResponse.stopResponse.response,
+                })
+            }
+            if (hookResponse.paused) {
+                assertNotNullOrUndefined(hookResponse.pauseResponse, 'pauseResponse')
+                return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)
+                    .setStatus(StepOutputStatus.PAUSED))
+                    .setVerdict(ExecutionVerdict.PAUSED, {
+                        reason: ExecutionOutputStatus.PAUSED,
+                        pauseMetadata: hookResponse.pauseResponse.pauseMetadata,
+                    })
+            }
+
+            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).setVerdict(ExecutionVerdict.RUNNING, undefined)
+        }
+        catch (e) {
+            const errorMessage =  await utils.tryParseJson((e as Error).message)
+            console.error(errorMessage)
+            return executionState
+                .upsertStep(action.name, stepOutput.setStatus(StepOutputStatus.FAILED).setErrorMessage(errorMessage))
+                .setVerdict(ExecutionVerdict.FAILED, undefined)
+
+        }
     },
 }
 
