@@ -547,7 +547,7 @@ describe('Flow Helper', () => {
                 'type': 'LOOP_ON_ITEMS',
                 'settings': {
                     'items': 'items',
-                    inputUiInfo: {},
+                    'inputUiInfo': {},
                 },
                 'firstLoopAction': {
                     'displayName': 'Code',
@@ -824,7 +824,7 @@ test('Duplicate Flow With Loops using Import', () => {
                 'valid': false,
                 'settings': {
                     'items': '',
-                    inputUiInfo: {},
+                    'inputUiInfo': {},
                 },
                 'nextAction': {
                     'name': 'step_3',
