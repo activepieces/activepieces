@@ -71,6 +71,15 @@
             </div>
             <div class="ap-mt-2 ap-flex-grow ap-relative">
               <form [formGroup]="testResultForm" class="ap-h-full">
+                <div class="ap-absolute ap-top-2 ap-right-2 ap-z-40">
+                  <ap-icon-button iconFilename="copy.svg" tooltipText="Copy"
+                    *ngIf="testResultForm.get('outputResult')?.value" extraClasses="ap-fill-white"
+                    (click)="selectedTab === SelectedTabInFullscreenCodeEditor.OUTPUT ? copyToClipboard(testResultForm.get('outputResult')?.value) : copyToClipboard(testResultForm.get('consoleResult')?.value)">
+                  </ap-icon-button>
+                </div>
+
+
+
                 <ngx-codemirror *ngIf="selectedTab === SelectedTabInFullscreenCodeEditor.OUTPUT" class="ap-h-full"
                   formControlName="outputResult" [options]="outputResultEditorOptions"></ngx-codemirror>
                 <ngx-codemirror *ngIf="selectedTab === SelectedTabInFullscreenCodeEditor.CONSOLE"

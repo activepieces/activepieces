@@ -18,6 +18,7 @@ import {
 import { TestStepService } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 import { StepRunResponse } from '@activepieces/shared';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 type PackageName = string;
 type PackageVersion = string;
@@ -75,7 +76,8 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
     private dialogService: MatDialog,
     private testStepService: TestStepService,
     private store: Store,
-    private cd: ChangeDetectorRef
+    private cd: ChangeDetectorRef,
+    private snackbar: MatSnackBar
   ) {
     this.testResultForm = this.formBuilder.group({
       outputResult: new FormControl(),
@@ -179,5 +181,10 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
   }
   hide() {
     this.dialogRef.close(true);
+  }
+
+  copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text);
+    this.snackbar.open($localize`Copied to clipboard`);
   }
 }
