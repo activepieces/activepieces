@@ -6,10 +6,8 @@ import {
   OnInit,
   Output,
 } from '@angular/core';
-
 import { combineLatest, map, Observable, of, tap } from 'rxjs';
 import { ActionType } from '@activepieces/shared';
-
 import {
   CHEVRON_SPACE_IN_MENTIONS_LIST,
   FIRST_LEVEL_PADDING_IN_MENTIONS_LIST,
@@ -18,15 +16,9 @@ import {
   traverseStepOutputAndReturnMentionTree,
 } from '../../utils';
 import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
-import {
-  CustomPathMentionDialogComponent,
-  CustomPathMentionDialogData,
-} from '../custom-path-mention-dialog/custom-path-mention-dialog.component';
 import { Step } from '@activepieces/ui/feature-builder-store';
 import { Store } from '@ngrx/store';
 import { canvasActions } from '@activepieces/ui/feature-builder-store';
-import { MatDialog } from '@angular/material/dialog';
-
 @Component({
   selector: 'app-action-mention-item',
   templateUrl: './action-mention-item.component.html',
@@ -49,8 +41,7 @@ export class ActionMentionItemComponent implements OnInit {
   search$: Observable<string>;
   constructor(
     private mentionsTreeCache: MentionsTreeCacheService,
-    private store: Store,
-    private dialogService: MatDialog
+    private store: Store
   ) {}
   ngOnInit(): void {
     const cacheResult = this.getChachedData();
@@ -88,27 +79,6 @@ export class ActionMentionItemComponent implements OnInit {
 
   emitMention(mentionListItem: MentionListItem) {
     this.mentionClicked.emit(mentionListItem);
-  }
-
-  openPathDialog() {
-    const dialogData: CustomPathMentionDialogData = {
-      defaultValue: `${this.stepMention.step.name}.item`,
-      dialogTitle: 'Loop Item Path',
-      entityName: 'loop item',
-      placeHolder: `eg. ${this.stepMention.step.name}.item.x`,
-      stepDisplayName: this.stepMention.step.displayName,
-      stepName: `${this.stepMention.step.name}.item`,
-    };
-    this.customPathDialogClosed$ = this.dialogService
-      .open(CustomPathMentionDialogComponent, { data: dialogData })
-      .afterClosed()
-      .pipe(
-        tap((val) => {
-          if (val) {
-            this.emitMention(val);
-          }
-        })
-      );
   }
 
   getChachedData() {
