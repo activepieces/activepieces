@@ -199,7 +199,7 @@ function getTableNameFromResource(resource: string | undefined): string | undefi
     switch (resource) {
         case 'flows':
             return FlowEntity.options.name
-        case 'connections':
+        case 'app-connections':
             return AppConnectionEntity.options.name
         case 'project-members':
             return ProjectMemberEntity.options.name

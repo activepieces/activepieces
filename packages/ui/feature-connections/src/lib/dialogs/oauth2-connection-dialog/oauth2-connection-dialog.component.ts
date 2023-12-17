@@ -22,7 +22,11 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 import deepEqual from 'deep-equal';
-import { environment, fadeInUp400ms } from '@activepieces/ui/common';
+import {
+  AuthenticationService,
+  environment,
+  fadeInUp400ms,
+} from '@activepieces/ui/common';
 import {
   OAuth2PopupParams,
   OAuth2PopupResponse,
@@ -83,6 +87,7 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
     public dialogRef: MatDialogRef<OAuth2ConnectionDialogComponent>,
     private cloudAuthConfigsService: CloudAuthConfigsService,
     private appConnectionsService: AppConnectionsService,
+    private authenticatiionService: AuthenticationService,
     private snackbar: MatSnackBar,
     @Inject(MAT_DIALOG_DATA)
     public dialogData: OAuth2ConnectionDialogData
@@ -165,6 +170,7 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
       : this.settingsForm.controls.name.value;
     const { tokenUrl } = this.getTokenAndUrl();
     const newConnection: UpsertOAuth2Request = {
+      projectId: this.authenticatiionService.getProjectId(),
       name: connectionName,
       appName: this.dialogData.pieceName,
       type: AppConnectionType.OAUTH2,
