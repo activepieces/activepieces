@@ -3,6 +3,8 @@ import { LoopOnItemsStepOutput, StepOutput } from './step-output'
 
 export const MAX_LOG_SIZE = 2048 * 1024
 
+export const MAX_SINGLE_SIZE_FOR_SINGLE_ENTRY = 512 * 1024
+
 type GetStepOutputParams = {
     stepName: string
     ancestors: [string, number][]

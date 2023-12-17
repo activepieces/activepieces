@@ -1,4 +1,6 @@
 include-pre-releases: true
+exclude-labels:
+  - 'skip-changelog'
 categories:
   - title: "✨ Exciting New Features"
     labels:
@@ -18,6 +20,10 @@ categories:
   - title: "📚 Documentation"
     labels:
       - "📚 documentation"
+  - title: "🧹 Maintenance"
+    labels:
+      - "🧹 clean up"
+      - "💻 tech debt"
   - title: "Other Changes"
     labels:
       - "*"

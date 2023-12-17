@@ -1,4 +1,4 @@
-import { ActionType, ExecutionOutput, LoopOnItemsStepOutput, MAX_LOG_SIZE, StepOutput, applyFunctionToValues } from '@activepieces/shared'
+import { ActionType, ExecutionOutput, LoopOnItemsStepOutput, MAX_SINGLE_SIZE_FOR_SINGLE_ENTRY, StepOutput, applyFunctionToValues } from '@activepieces/shared'
 import sizeof from 'object-sizeof'
 import { isMemoryFilePath } from '../services/files.service'
 
@@ -21,10 +21,6 @@ async function trimStepOutput(stepOutput: StepOutput): Promise<StepOutput> {
     switch (modified.type) {
         case ActionType.BRANCH:
             break
-        case ActionType.CODE:
-        case ActionType.PIECE:
-            modified.output = await applyFunctionToValues(modified.output, trim)
-            break
         case ActionType.LOOP_ON_ITEMS: {
             const loopItem = (modified as LoopOnItemsStepOutput).output
             if (loopItem) {
@@ -33,6 +29,11 @@ async function trimStepOutput(stepOutput: StepOutput): Promise<StepOutput> {
             }
             break
         }
+        case ActionType.CODE:
+        case ActionType.PIECE:
+        default:
+            modified.output = await applyFunctionToValues(modified.output, trim)
+            break
     }
     modified.standardOutput = await applyFunctionToValues(modified.standardOutput, trim)
     modified.errorMessage = await applyFunctionToValues(modified.errorMessage, trim)
@@ -68,7 +69,7 @@ const objectEntriesExceedMaxSize = (objectEntries: [string, unknown][]): boolean
 }
 
 const objectExceedMaxSize = (obj: unknown): boolean => {
-    return sizeof(obj) > MAX_LOG_SIZE
+    return sizeof(obj) > MAX_SINGLE_SIZE_FOR_SINGLE_ENTRY
 }
 
 const isObject = (obj: unknown): obj is Record<string, unknown> => {

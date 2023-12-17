@@ -7,6 +7,7 @@
   "components": {
     "schemas": {
       "project-member": {
+        "description": "Project member is which user is assigned to a project.",
         "type": "object",
         "properties": {
           "id": {
@@ -73,7 +74,6 @@
           "created",
           "updated",
           "email",
-          "platformId",
           "projectId",
           "role",
           "status"
@@ -183,14 +183,12 @@
               "created",
               "updated",
               "projectId",
-              "stripeSubscriptionId",
               "subscriptionStartDatetime",
               "flowPlanName",
               "minimumPollingInterval",
               "connections",
               "teamMembers",
-              "tasks",
-              "tasksPerDay"
+              "tasks"
             ]
           },
           "usage": {
@@ -556,12 +554,12 @@
           "created",
           "updated",
           "projectId",
-          "folderId",
           "version",
           "status"
         ]
       },
       "app-connection": {
+        "description": "App connection is a connection to an external app.",
         "type": "object",
         "properties": {
           "id": {
@@ -1417,14 +1415,12 @@
                         "created",
                         "updated",
                         "projectId",
-                        "stripeSubscriptionId",
                         "subscriptionStartDatetime",
                         "flowPlanName",
                         "minimumPollingInterval",
                         "connections",
                         "teamMembers",
-                        "tasks",
-                        "tasksPerDay"
+                        "tasks"
                       ]
                     },
                     "usage": {
@@ -1616,14 +1612,12 @@
                               "created",
                               "updated",
                               "projectId",
-                              "stripeSubscriptionId",
                               "subscriptionStartDatetime",
                               "flowPlanName",
                               "minimumPollingInterval",
                               "connections",
                               "teamMembers",
-                              "tasks",
-                              "tasksPerDay"
+                              "tasks"
                             ]
                           },
                           "usage": {
@@ -1695,9 +1689,7 @@
                     }
                   },
                   "required": [
-                    "data",
-                    "next",
-                    "previous"
+                    "data"
                   ]
                 }
               }
@@ -1880,14 +1872,12 @@
                         "created",
                         "updated",
                         "projectId",
-                        "stripeSubscriptionId",
                         "subscriptionStartDatetime",
                         "flowPlanName",
                         "minimumPollingInterval",
                         "connections",
                         "teamMembers",
-                        "tasks",
-                        "tasksPerDay"
+                        "tasks"
                       ]
                     },
                     "usage": {
@@ -2057,10 +2047,11 @@
         },
         "responses": {
           "201": {
-            "description": "Default Response",
+            "description": "Project member is which user is assigned to a project.",
             "content": {
               "application/json": {
                 "schema": {
+                  "description": "Project member is which user is assigned to a project.",
                   "type": "object",
                   "properties": {
                     "id": {
@@ -2127,7 +2118,6 @@
                     "created",
                     "updated",
                     "email",
-                    "platformId",
                     "projectId",
                     "role",
                     "status"

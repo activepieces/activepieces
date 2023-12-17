@@ -6,7 +6,7 @@ import { sendyAuth, SendyAuthType } from "../auth";
 export const subscribeAction = createAction({
 	name        : 'subscribe',
 	auth        : sendyAuth,
-	displayName : 'Subscribe',
+	displayName : 'Subscribe Updated',
 	description : 'Add a new subscriber to a list',
 	props       : {
 		list: Property.Dropdown({

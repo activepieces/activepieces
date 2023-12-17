@@ -1,5 +1,5 @@
 import { PlatformId, ApiKeyResponseWithValue, ApiKey } from '@activepieces/ee-shared'
-import { SeekPage, apId, assertNotNullOrUndefined, secureApId } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, SeekPage, apId, assertNotNullOrUndefined, isNil, secureApId } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { ApiKeyEntity } from './api-key-entity'
 import { hashSHA256 } from '../../helper/crypto'
@@ -40,6 +40,18 @@ export const apiKeyService = {
         }
     },
     async delete({ platformId, id }: DeleteParams): Promise<void> {
+        const apiKey = await repo.findOneBy({
+            platformId,
+            id,
+        })
+        if (isNil(apiKey)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    message: `api key with id ${id} not found`,
+                },
+            })
+        }
         await repo.delete({
             platformId,
             id,

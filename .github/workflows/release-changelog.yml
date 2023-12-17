@@ -2,7 +2,7 @@ name: Write release notes
 
 on:
   pull_request:
-    types: [opened, reopened, synchronize, edited, closed, labled]
+    types: [opened, reopened, synchronize, edited, closed, labeled]
 
 permissions:
   contents: write
@@ -25,6 +25,7 @@ jobs:
           commitish: main
           prerelease: true
           tag: ${{ env.RELEASE }}
+          name: ${{ env.RELEASE }}
           version: ${{ env.RELEASE }}
           latest: false
         env:

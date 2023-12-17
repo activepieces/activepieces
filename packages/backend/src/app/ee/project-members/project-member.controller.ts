@@ -1,5 +1,5 @@
 import { ListProjectMembersRequestQuery, AcceptProjectResponse, AddProjectMemberRequestBody, ProjectMember, ProjectMemberStatus } from '@activepieces/ee-shared'
-import { ActivepiecesError, ErrorCode, PrincipalType, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { ALL_PRINICPAL_TYPES, ActivepiecesError, ErrorCode, PrincipalType, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -105,7 +105,7 @@ const AddProjectMemberRequest = {
 
 const AcceptProjectMemberRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: ALL_PRINICPAL_TYPES,
     },
     schema: {
         body: Type.Object({

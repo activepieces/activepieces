@@ -1,0 +1,44 @@
+{
+  "name": "pieces-totalcms",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/totalcms/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/totalcms",
+        "tsConfig": "packages/pieces/totalcms/tsconfig.lib.json",
+        "packageJson": "packages/pieces/totalcms/package.json",
+        "main": "packages/pieces/totalcms/src/index.ts",
+        "assets": [
+          "packages/pieces/totalcms/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-totalcms {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/totalcms/**/*.ts",
+          "packages/pieces/totalcms/package.json"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

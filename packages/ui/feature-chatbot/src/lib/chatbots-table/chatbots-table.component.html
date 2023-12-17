@@ -1,5 +1,25 @@
 <div class="ap-w-full ap-h-full ap-px-[30px] ap-pt-[50px]">
   <div class="ap-h-full">
+    <div class="ap-my-3 ap-w-[720px]">
+      <ap-warning-box>
+        <div class="ap-flex ap-items-center ap-gap-2 ap-ml-[-3px] ">
+          <svg-icon [svgStyle]="{ width: '20px', height: '20px' }" src="assets/img/custom/warn.svg">
+          </svg-icon> <span class="!ap-font-semibold">Deprecation Note</span>
+        </div>
+        <div>
+          Thank you for using our chatbots, we are deprecating this feature and will be removing it from
+          Activepieces
+          on the 15th of December.
+        </div>
+        <div>
+          For full announcement please visit <a class="!ap-typography-body-1"
+            href="https://community.activepieces.com/t/important-update-sunsetting-chatbots/1326"
+            rel="noreferrer noopener" target="_blank">this thread</a>.
+        </div>
+      </ap-warning-box>
+    </div>
+
+
     <ap-page-title [title]="title" [isBeta]="true"></ap-page-title>
 
     <div class="ap-min-h-[70%]">
