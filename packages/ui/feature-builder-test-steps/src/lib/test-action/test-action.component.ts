@@ -210,30 +210,42 @@ export class TestActionComponent extends TestStepCoreComponent {
                     operation: clone,
                   })
                 );
+
                 break;
               }
               case ActionType.LOOP_ON_ITEMS: {
-                const clone: LoopOnItemsAction = {
-                  ...step,
-                  settings: {
-                    ...step.settings,
-                    inputUiInfo: {
-                      currentSelectedData: testResult
-                        ? testResult
-                        : testResult === undefined
-                        ? 'undefined'
-                        : testResult === ''
-                        ? ''
-                        : JSON.stringify(testResult),
-                      lastTestDate: new Date().toString(),
+                if (
+                  testResult &&
+                  typeof testResult === 'object' &&
+                  'item' in testResult &&
+                  'index' in testResult
+                ) {
+                  const item = {
+                    item: testResult['item'],
+                    index: testResult['index'],
+                  };
+                  const clone: LoopOnItemsAction = {
+                    ...step,
+                    settings: {
+                      ...step.settings,
+                      inputUiInfo: {
+                        currentSelectedData: item
+                          ? item
+                          : item === undefined
+                          ? 'undefined'
+                          : item === ''
+                          ? ''
+                          : JSON.stringify(item),
+                        lastTestDate: new Date().toString(),
+                      },
                     },
-                  },
-                };
-                this.store.dispatch(
-                  FlowsActions.updateAction({
-                    operation: clone,
-                  })
-                );
+                  };
+                  this.store.dispatch(
+                    FlowsActions.updateAction({
+                      operation: clone,
+                    })
+                  );
+                }
                 break;
               }
 
