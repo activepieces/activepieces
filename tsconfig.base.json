@@ -113,6 +113,9 @@
       "@activepieces/piece-google-forms": [
         "packages/pieces/google-forms/src/index.ts"
       ],
+      "@activepieces/piece-google-gemini": [
+        "packages/pieces/google-gemini/src/index.ts"
+      ],
       "@activepieces/piece-google-sheets": [
         "packages/pieces/google-sheets/src/index.ts"
       ],
@@ -192,8 +195,8 @@
       "@activepieces/piece-read-file": [
         "packages/pieces/read-file/src/index.ts"
       ],
-      "@activepieces/piece-retune": ["packages/pieces/retune/src/index.ts"],
       "@activepieces/piece-retable": ["packages/pieces/retable/src/index.ts"],
+      "@activepieces/piece-retune": ["packages/pieces/retune/src/index.ts"],
       "@activepieces/piece-rss": ["packages/pieces/rss/src/index.ts"],
       "@activepieces/piece-salesforce": [
         "packages/pieces/salesforce/src/index.ts"
