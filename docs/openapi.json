@@ -1146,6 +1146,7 @@
                     "data": {
                       "type": "array",
                       "items": {
+                        "description": "App connection is a connection to an external app.",
                         "type": "object",
                         "properties": {
                           "id": {
@@ -1248,9 +1249,7 @@
                     }
                   },
                   "required": [
-                    "data",
-                    "next",
-                    "previous"
+                    "data"
                   ]
                 }
               }
