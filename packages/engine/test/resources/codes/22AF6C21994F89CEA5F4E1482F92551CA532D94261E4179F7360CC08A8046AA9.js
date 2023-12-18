@@ -1,1 +1,0 @@
-module.exports={code:async e=>!0};

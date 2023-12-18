@@ -17,8 +17,7 @@ import {
 import { map, Observable, startWith, tap } from 'rxjs';
 import { RunDetailsService } from '../iteration-details.service';
 import {
-  ActionType,
-  LoopOnItemsStepOutput,
+  LoopStepOutput,
   StepOutput,
   StepOutputStatus,
 } from '@activepieces/shared';
@@ -75,7 +74,7 @@ export class StepResultComponent implements OnInit, AfterViewInit {
     const stepOutput = this.stepResult.output?.output as any;
     if (stepOutput?.iterations !== undefined) {
       this.isLoopStep = true;
-      const loopOutput = this.stepResult.output as LoopOnItemsStepOutput;
+      const loopOutput = this.stepResult.output as LoopStepOutput;
       loopOutput.output?.iterations.forEach((iteration) => {
         this.iterationsAccordionList.push(
           this.createStepResultsForDetailsAccordion(iteration)
@@ -185,7 +184,7 @@ export class StepResultComponent implements OnInit, AfterViewInit {
   }
 
   createStepResultsForDetailsAccordion(
-    iteration: Record<string, StepOutput<ActionType, any>>
+    iteration: Record<string, StepOutput>
   ): Pick<StepRunResult, 'stepName' | 'output'>[] {
     const iterationStepsNames = Object.keys(iteration);
     return iterationStepsNames.map((stepName) => {

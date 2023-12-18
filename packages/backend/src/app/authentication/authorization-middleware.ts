@@ -75,7 +75,7 @@ async function getJwtPrincipal(token: string, request: FastifyRequest): Promise<
 
     // TODO Merge with API key once it's specified for all routes, currenttly we ignore old routes
     const allowedPrincipals = request.routeConfig.allowedPrincipals
-    if (!isNil(allowedPrincipals) && !allowedPrincipals.includes(principal.type)) {
+    if (allowedPrincipals && !allowedPrincipals.includes(principal.type)) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,
             params: {
@@ -88,8 +88,8 @@ async function getJwtPrincipal(token: string, request: FastifyRequest): Promise<
     if (exemptedRoutesFromProjectIdCheck.includes(request.routerPath)) {
         return principal
     }
-    const projectId = await getProjectIdFromBodyOrQuery(request)
-    if (!isNil(projectId) && principal.projectId !== projectId) {
+    const projectId = getProjectIdFromBodyOrQuery(request)
+    if (projectId && projectId !== principal.projectId) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,
             params: {
@@ -118,7 +118,7 @@ async function getAPIKeyPrincipal(rawToken: string, request: FastifyRequest): Pr
             id: apiKey.id,
             type: PrincipalType.SERVICE,
             // TODO remove this
-            projectId: 'ANONYMOUSE_' + nanoid(),
+            projectId: 'ANONYMOUS_' + nanoid(),
             projectType: ProjectType.PLATFORM_MANAGED,
             platform: {
                 id: apiKey.platformId,
@@ -158,7 +158,7 @@ async function getAPIKeyPrincipal(rawToken: string, request: FastifyRequest): Pr
 }
 
 async function getProjectIdFromRequest(request: FastifyRequest): Promise<string | undefined> {
-    if (request.routerPath.endsWith(':id') && ['GET', 'DELETE', 'POST'].includes(request.method)) {
+    if (request.routerPath.includes(':id')) {
         const resourceName = extractResourceName(request.routerPath)
         const { id } = request.params as { id: string }
         return extractProjectIdFromResource(resourceName, id)
@@ -166,20 +166,16 @@ async function getProjectIdFromRequest(request: FastifyRequest): Promise<string 
     return getProjectIdFromBodyOrQuery(request)
 }
 
-async function getProjectIdFromBodyOrQuery(request: FastifyRequest): Promise<string | undefined> {
-    switch (request.method) {
-        case 'POST': {
-            const { projectId } = request.body as { projectId: string }
-            return projectId
-        }
-        case 'GET': {
-            const { projectId } = request.query as { projectId: string }
-            return projectId
-        }
+function getProjectIdFromBodyOrQuery(request: FastifyRequest): string | undefined {
+    if (isObject(request.body) && 'projectId' in request.body) {
+        return request.body.projectId as string
     }
+    else if (isObject(request.query) && 'projectId' in request.query) {
+        return request.query.projectId as string
+    }
+
     return undefined
 }
-
 
 async function extractProjectIdFromResource(resource: string | undefined, id: string): Promise<string | undefined> {
     const tableName = getTableNameFromResource(resource)
@@ -253,3 +249,6 @@ function handleInvalidBearerToken(): void {
     })
 }
 
+function isObject(obj: unknown): obj is Record<string, unknown> {
+    return typeof obj === 'object' && obj !== null && !Array.isArray(obj)
+}

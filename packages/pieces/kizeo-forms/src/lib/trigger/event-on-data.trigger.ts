@@ -10,6 +10,24 @@ export const eventOnData = createTrigger({
   displayName: 'Event On Data',
   description: 'Handle EventOnData events via webhooks',
   props: {
+    format: Property.StaticDropdown({
+        displayName: 'Output Format',
+        description: 'Select the output format',
+        required: true,
+        defaultValue: 'simple',
+        options: {
+            options: [
+                {
+                    label: 'Simple format',
+                    value: 'simple'
+                },
+                {
+                    label: 'Advanced format',
+                    value: 'advanced'
+                }
+            ]
+        }
+    }),
     formId: kizeoFormsCommon.formId,
     event1:
       Property.StaticDropdown({
@@ -249,11 +267,41 @@ export const eventOnData = createTrigger({
     if (!context.payload.body) {
       return []
     }
-    return [context.payload.body];
+    const body = context.payload.body as BodyDataType;
+    const formattedData : FormattedData = {
+        id: body.id,
+      };
+    if(context.propsValue.format === 'simple'){
+      for (const fieldKey in body.data.fields) {
+        if (body.data.fields[fieldKey].result && body.data.fields[fieldKey].result?.value !== undefined) {
+          const newFieldKey = fieldKey;
+          formattedData[newFieldKey] = body.data.fields[fieldKey].result?.value;
+        }
+      }
+      return [formattedData]
+    }
+
+    return [body];
   },
 });
 
+interface FormattedData {
+    id: string;
+    [key: string]: any;
+}
 
+interface BodyDataType {
+    id: string;
+    data: {
+        fields: {
+            [key: string]: {
+                result?: {
+                    value: any;
+                }
+            }
+        }
+    };
+}
 
 interface KizeoFormsWebhookInformation {
   webhookId: string;
