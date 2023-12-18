@@ -35,6 +35,7 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
   readOnly: boolean;
   selectedFile = SelectedFileInFullscreenCodeEditor.CONTENT;
   executeCodeTest$: Observable<StepRunResponse>;
+
   codeEditorOptions = {
     minimap: { enabled: false },
     theme: 'apTheme',
@@ -86,6 +87,14 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
     this.codeFilesForm = this.state.codeFilesForm;
     this.readOnly = this.state.readOnly;
   }
+
+  focusEditor(editor: { focus: () => void }) {
+    //needs to wait for the dialog to finish opening
+    setTimeout(() => {
+      editor.focus();
+    }, 100);
+  }
+
   ngOnInit(): void {
     if (this.readOnly) {
       this.codeEditorOptions.readOnly = this.readOnly;
@@ -136,7 +145,7 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
       return { dependencies: {} };
     }
   }
-  openTestCodeModal() {
+  testCode() {
     this.testResultForm.setValue({ outputResult: '', consoleResult: '' });
     this.testLoading = true;
     const testCodeParams$ = forkJoin({
