@@ -33,9 +33,11 @@
 <ng-container *ngIf="readOnly$ | async"></ng-container>
 <ng-template #inputFormSelection>
   <div [formGroup]="stepForm">
+    <app-loop-step-input-form *ngIf="_selectedStep.type === ActionType.LOOP_ON_ITEMS" [step]="_selectedStep"
+      formControlName="settings">
+    </app-loop-step-input-form>
+
     <ng-container [ngSwitch]="_selectedStep.type">
-      <app-loop-step-input-form *ngSwitchCase="ActionType.LOOP_ON_ITEMS" formControlName="settings">
-      </app-loop-step-input-form>
       <app-code-step-input-form *ngSwitchCase="ActionType.CODE" formControlName="settings">
       </app-code-step-input-form>
       <app-piece-action-input-form *ngSwitchCase="ActionType.PIECE" formControlName="settings">

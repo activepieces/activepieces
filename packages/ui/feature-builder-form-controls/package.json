@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/ui/feature-builder-form-controls",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "peerDependencies": {
     "@angular/common": "^15.1.0",
     "@angular/core": "^15.1.0"
