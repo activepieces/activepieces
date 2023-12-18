@@ -14,7 +14,7 @@ export const enterpriseUserController: FastifyPluginAsyncTypebox = async (app) =
         })
     })
 
-    app.patch('/:id/suspend', SuspendUserRequest, async (req, res) => {
+    app.post('/:id/suspend', SuspendUserRequest, async (req, res) => {
         const platformId = req.principal.platform?.id
         assertNotNullOrUndefined(platformId, 'platformId')
 

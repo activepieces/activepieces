@@ -159,7 +159,7 @@ describe('Enterprise User API', () => {
 
             // act
             const response = await app?.inject({
-                method: 'PATCH',
+                method: 'POST',
                 url: `/v1/users/${mockUser.id}/suspend`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
@@ -187,7 +187,7 @@ describe('Enterprise User API', () => {
 
             // act
             const response = await app?.inject({
-                method: 'PATCH',
+                method: 'POST',
                 url: `/v1/users/${nonExistentUserId}/suspend`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
@@ -213,7 +213,7 @@ describe('Enterprise User API', () => {
 
             // act
             const response = await app?.inject({
-                method: 'PATCH',
+                method: 'POST',
                 url: `/v1/users/${mockUser.id}/suspend`,
                 headers: {
                     authorization: `Bearer ${mockApiKey.value}`,
@@ -237,7 +237,7 @@ describe('Enterprise User API', () => {
 
             // act
             const response = await app?.inject({
-                method: 'PATCH',
+                method: 'POST',
                 url: `/v1/users/${mockUserId}/suspend`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
