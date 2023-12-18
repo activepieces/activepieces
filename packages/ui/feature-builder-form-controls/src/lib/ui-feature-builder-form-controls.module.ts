@@ -12,13 +12,11 @@ import { AddNpmPackageModalComponent } from './code-artifact-form-control/code-a
 import { CodeArtifactControlFullscreenComponent } from './code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component';
 import { MentionsListComponent } from './interpolating-text-form-control/mentions-list/mentions-list.component';
 import { BuilderAutocompleteMentionsDropdownComponent } from './interpolating-text-form-control/builder-autocomplete-mentions-dropdown/builder-autocomplete-mentions-dropdown.component';
-import { CodeStepMentionItemComponent } from './interpolating-text-form-control/mentions-list/code-step-mention-item/code-step-mention-item.component';
+import { ActionMentionItemComponent } from './interpolating-text-form-control/mentions-list/action-mention-item/action-mention-item.component';
 import { CustomPathMentionDialogComponent } from './interpolating-text-form-control/mentions-list/custom-path-mention-dialog/custom-path-mention-dialog.component';
 import { GenericMentionItemComponent } from './interpolating-text-form-control/mentions-list/generic-mention-item/generic-mention-item.component';
 import { GenericStepMentionItemComponent } from './interpolating-text-form-control/mentions-list/generic-step-mention-item/generic-step-mention-item.component';
-import { LoopStepMentionItemComponent } from './interpolating-text-form-control/mentions-list/loop-step-mention-item/loop-step-mention-item.component';
 import { MentionListItemTemplateComponent } from './interpolating-text-form-control/mentions-list/mention-list-item-template/mention-list-item-template.component';
-import { PieceStepMentionItemComponent } from './interpolating-text-form-control/mentions-list/piece-step-mention-item/piece-step-mention-item.component';
 import { PieceTriggerMentionItemComponent } from './interpolating-text-form-control/mentions-list/piece-trigger-mention-item/piece-trigger-mention-item.component';
 import { StepMentionsTreeComponent } from './interpolating-text-form-control/mentions-list/step-mentions-tree/step-mentions-tree.component';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
@@ -70,13 +68,11 @@ const exportedDeclarations = [
     AddNpmPackageModalComponent,
     CodeArtifactControlFullscreenComponent,
     MentionsListComponent,
-    CodeStepMentionItemComponent,
+    ActionMentionItemComponent,
     CustomPathMentionDialogComponent,
     GenericMentionItemComponent,
     GenericStepMentionItemComponent,
-    LoopStepMentionItemComponent,
     MentionListItemTemplateComponent,
-    PieceStepMentionItemComponent,
     PieceTriggerMentionItemComponent,
     StepMentionsTreeComponent,
     WebhookTriggerMentionItemComponent,
