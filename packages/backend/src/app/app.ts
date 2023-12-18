@@ -81,6 +81,7 @@ import { apiKeyModule } from './ee/api-keys/api-key-module'
 import { domainHelper } from './helper/domain-helper'
 import { platformDomainHelper } from './ee/helper/platform-domain-helper'
 import { flowResponseWatcher } from './flows/flow-run/flow-response-watcher'
+import { gitRepoModule } from './ee/git-repos/git-repo.module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -189,6 +190,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(chatbotModule)
     await app.register(userModule)
     await app.register(authenticationModule)
+    await app.register(gitRepoModule)
 
     await setupBullMQBoard(app)
 

@@ -110,6 +110,16 @@
                 "endpoints/connections/list",
                 "endpoints/connections/delete"
               ]
+            },
+            {
+              "group": "Git Sync",
+              "icon": "git",
+              "pages": [
+                "endpoints/git/configure",
+                "endpoints/git/list",
+                "endpoints/git/push",
+                "endpoints/git/pull"
+              ]
             }
           ]
         },
@@ -233,14 +243,14 @@
         "platform/manage-oauth2",
         "platform/customize-emails",
         "platform/managed-users",
-        "platform/embedding"
+        "platform/embedding",
+        "platform/environments"
       ]
     },
     {
       "group": "Enterprise Edition",
       "pages": [
         "enterprise/whitelabel",
-        "enterprise/environments",
         {
           "group": "Connection Cards",
           "icon": "cards-blank",
