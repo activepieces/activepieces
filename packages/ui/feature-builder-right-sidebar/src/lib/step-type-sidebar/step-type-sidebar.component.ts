@@ -328,6 +328,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
             type: ActionType.LOOP_ON_ITEMS,
             settings: {
               items: '',
+              inputUiInfo: {},
             },
             valid: false,
           },

@@ -97,6 +97,8 @@ export const AppConnectionWithoutSensitiveData = Type.Object({
     appName: Type.String(),
     projectId: ApId,
     status: Type.Enum(AppConnectionStatus),
+}, {
+    description: 'App connection is a connection to an external app.',
 })
 
 export type AppConnectionWithoutSensitiveData = Static<typeof AppConnectionWithoutSensitiveData> & { __brand: 'AppConnectionWithoutSensitiveData' }

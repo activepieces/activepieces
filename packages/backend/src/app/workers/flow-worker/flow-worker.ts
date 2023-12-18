@@ -2,9 +2,9 @@ import {
     Action,
     ActionType,
     ActivepiecesError,
+    BeginExecuteFlowOperation,
     CodeAction,
     ErrorCode,
-    ExecuteFlowOperation,
     ExecutionOutput,
     ExecutionOutputStatus,
     ExecutionType,
@@ -17,10 +17,10 @@ import {
     FlowVersion,
     PiecePackage,
     ProjectId,
+    ResumeExecuteFlowOperation,
     RunEnvironment,
     RunTerminationReason,
     SourceCode,
-    StepOutputStatus,
     Trigger,
     TriggerType,
 } from '@activepieces/shared'
@@ -32,12 +32,12 @@ import { OneTimeJobData } from './job-data'
 import { engineHelper } from '../../helper/engine-helper'
 import { captureException, logger } from '../../helper/logger'
 import { isNil } from '@activepieces/shared'
-import { getServerUrl } from '../../helper/public-ip-utils'
 import { MAX_LOG_SIZE } from '@activepieces/shared'
 import { sandboxProvisioner } from '../sandbox/provisioner/sandbox-provisioner'
 import { SandBoxCacheType } from '../sandbox/provisioner/sandbox-cache-key'
 import { flowWorkerHooks } from './flow-worker-hooks'
 import { logSerializer } from '../../flows/common/log-serializer'
+import { flowResponseWatcher } from '../../flows/flow-run/flow-response-watcher'
 
 type FinishExecutionParams = {
     flowRunId: FlowRunId
@@ -51,7 +51,7 @@ type LoadInputAndLogFileIdParams = {
 }
 
 type LoadInputAndLogFileIdResponse = {
-    input: ExecuteFlowOperation
+    input: Omit<BeginExecuteFlowOperation, 'serverUrl' | 'workerToken'> | Omit<ResumeExecuteFlowOperation, 'serverUrl' | 'workerToken'>
     logFileId?: FileId | undefined
 }
 
@@ -99,7 +99,7 @@ const finishExecution = async (params: FinishExecutionParams): Promise<void> => 
 }
 
 const getTerminalStatus = (executionOutputStatus: ExecutionOutputStatus): ExecutionOutputStatus => {
-    return executionOutputStatus == ExecutionOutputStatus.STOPPED ?  ExecutionOutputStatus.SUCCEEDED : executionOutputStatus
+    return executionOutputStatus == ExecutionOutputStatus.STOPPED ? ExecutionOutputStatus.SUCCEEDED : executionOutputStatus
 }
 
 
@@ -118,18 +118,12 @@ const loadInputAndLogFileId = async ({
         flowVersion,
         flowRunId: jobData.runId,
         projectId: jobData.projectId,
-        triggerPayload: {
-            duration: 0,
-            input: {},
-            output: jobData.payload,
-            status: StepOutputStatus.SUCCEEDED,
-        },
+        triggerPayload: jobData.payload,
     }
 
     if (jobData.executionType === ExecutionType.BEGIN) {
         return {
             input: {
-                serverUrl: await getServerUrl(),
                 executionType: ExecutionType.BEGIN,
                 ...baseInput,
             },
@@ -156,18 +150,17 @@ const loadInputAndLogFileId = async ({
     })
 
     const serializedExecutionOutput = logFile.data.toString('utf-8')
-    const executionOutput = JSON.parse(
+    const executionOutput: ExecutionOutput = JSON.parse(
         serializedExecutionOutput,
-    ) as ExecutionOutput
+    )
+
 
     return {
         input: {
-            serverUrl: await getServerUrl(),
+            ...baseInput,
             executionType: ExecutionType.RESUME,
             executionState: executionOutput.executionState,
-            resumeStepMetadata: flowRun.pauseMetadata.resumeStepMetadata,
             resumePayload: jobData.payload,
-            ...baseInput,
         },
         logFileId: logFile.id,
     }
@@ -214,6 +207,9 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             input,
         )
 
+        if (jobData.synchronousHandlerId) {
+            await flowResponseWatcher.publish(jobData.runId, jobData.synchronousHandlerId, executionOutput)
+        }
 
         const logsFile = await saveToLogFile({
             fileId: logFileId,

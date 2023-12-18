@@ -73,6 +73,7 @@ export const connectionKeyService = {
                 return appConnectionService.upsert({
                     projectId,
                     request: {
+                        projectId,
                         name: `${appCredential.appName}_${connectionName}`,
                         appName: finalAppName,
                         type: AppConnectionType.SECRET_TEXT,
@@ -90,6 +91,7 @@ export const connectionKeyService = {
                     request: {
                         name: `${appCredential.appName}_${connectionName}`,
                         appName: finalAppName,
+                        projectId,
                         type: AppConnectionType.OAUTH2,
                         value: {
                             type: AppConnectionType.OAUTH2,

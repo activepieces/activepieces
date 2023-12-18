@@ -99,7 +99,16 @@
                 "endpoints/project-members/create",
                 "endpoints/project-members/list",
                 "endpoints/project-members/delete"
-
+              ]
+            },
+            {
+              "group": "Connections",
+              "icon": "link",
+              "pages": [
+                "endpoints/connections/schema",
+                "endpoints/connections/upsert",
+                "endpoints/connections/list",
+                "endpoints/connections/delete"
               ]
             }
           ]

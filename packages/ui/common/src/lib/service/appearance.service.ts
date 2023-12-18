@@ -48,7 +48,7 @@ export class AppearanceService {
 
   private setColorsVariables(
     colors: Record<string, string | object>,
-    paletteName: string
+    paletteName: '' | 'primary-palette-' | 'warn-palette-'
   ) {
     Object.entries(colors).forEach(([colorName, value]) => {
       if (typeof value == 'string') {
@@ -57,14 +57,28 @@ export class AppearanceService {
           value
         );
       }
+
       if (typeof value === 'object') {
         Object.entries(value).forEach(([shade, shadeValue]) => {
           document.documentElement.style.setProperty(
             `--${paletteName}${colorName}-${shade}`,
             shadeValue
           );
+          if (`--${paletteName}${colorName}-${shade}` === '--primary-default') {
+            document.documentElement.style.setProperty(
+              `--primary-default-rgb`,
+              this.hex2rgb(shadeValue)
+            );
+          }
         });
       }
     });
+  }
+  private hex2rgb(hex: string) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+
+    return `${r}, ${g}, ${b}`;
   }
 }

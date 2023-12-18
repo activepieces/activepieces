@@ -23,7 +23,7 @@
 
                 <textarea readonly class="ap-w-full" rows="4" [formControl]="signingKeyFormControl" matInput></textarea>
                 <ap-icon-button [width]="15" [height]="15" matSuffix iconFilename="copy.svg" tooltipText="Copy"
-                    class="ap-mr-[3.125rem]" (buttonClicked)="copyKey()"></ap-icon-button>
+                    extraClasses="ap-fill-body" class="ap-mr-[3.125rem]" (buttonClicked)="copyKey()"></ap-icon-button>
                 <ap-icon-button [width]="15" [height]="15" matSuffix iconFilename="download.svg" tooltipText="Download"
                     (buttonClicked)="downloadKey()"></ap-icon-button>
 
