@@ -63,14 +63,11 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/:id/published-version-id', UpdateFlowPublishedVersionIdRequestOptions, async (request) => {
-
-        
-        const flow  = await flowService.updatedPublishedVersionId({
+        return flowService.updatedPublishedVersionId({
             id: request.params.id,
             userId: request.principal.id,
             projectId: request.principal.projectId,
         })
-        return flow
     })
 
     app.get('/', ListFlowsRequestOptions, async (request) => {
@@ -178,9 +175,9 @@ const GetFlowRequestOptions = {
             id: ApId,
         }),
         querystring: GetFlowQueryParamsRequest,
-    },
-    response: {
-        [StatusCodes.OK]: PopulatedFlow,
+        response: {
+            [StatusCodes.OK]: PopulatedFlow,
+        },
     },
 }
 
