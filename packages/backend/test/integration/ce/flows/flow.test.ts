@@ -1,10 +1,10 @@
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupApp } from '../../../../src/app/app'
 import { generateMockToken } from '../../../helpers/auth'
-import { createMockUser, createMockProject } from '../../../helpers/mocks'
+import { createMockUser, createMockProject, createMockFlow, createMockFlowVersion } from '../../../helpers/mocks'
 import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
-import { PrincipalType } from '@activepieces/shared'
+import { FlowStatus, PrincipalType } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
@@ -73,6 +73,57 @@ describe('Flow API', () => {
             expect(responseBody?.version?.trigger.displayName).toBe('Select Trigger')
             expect(responseBody?.version?.valid).toBe(false)
             expect(responseBody?.version?.state).toBe('DRAFT')
+        })
+    })
+
+    describe('Update status endpoint', () => {
+        it('Enables a disabled Flow', async () => {
+            // arrange
+            const mockUser = createMockUser()
+            await databaseConnection.getRepository('user').save([mockUser])
+
+            const mockProject = createMockProject({ ownerId: mockUser.id })
+            await databaseConnection.getRepository('project').save([mockProject])
+
+            const mockFlow = createMockFlow({ projectId: mockProject.id, status: FlowStatus.DISABLED })
+            await databaseConnection.getRepository('flow').save([mockFlow])
+
+            const mockFlowVersion = createMockFlowVersion({ flowId: mockFlow.id, updatedBy: mockUser.id })
+            await databaseConnection.getRepository('flow_version').save([mockFlowVersion])
+
+            await databaseConnection.getRepository('flow').update(mockFlow.id, {
+                publishedVersionId: mockFlowVersion.id,
+            })
+
+            const mockToken = await generateMockToken({ type: PrincipalType.USER, projectId: mockProject.id })
+
+            const mockUpdateFlowStatusRequest = {
+                status: 'ENABLED',
+            }
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/v1/flows/${mockFlow.id}/status`,
+                headers: {
+                    authorization: `Bearer ${mockToken}`,
+                },
+                body: mockUpdateFlowStatusRequest,
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const responseBody = response?.json()
+
+            expect(Object.keys(responseBody)).toHaveLength(8)
+            expect(responseBody?.id).toBe(mockFlow.id)
+            expect(responseBody?.created).toBeDefined()
+            expect(responseBody?.updated).toBeDefined()
+            expect(responseBody?.projectId).toBe(mockProject.id)
+            expect(responseBody?.folderId).toBeNull()
+            expect(responseBody?.status).toBe('ENABLED')
+            expect(responseBody?.publishedVersionId).toBe(mockFlowVersion.id)
+            expect(responseBody?.schedule).toBeNull()
         })
     })
 })

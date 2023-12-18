@@ -1,5 +1,5 @@
 import { KeyAlgorithm, SigningKey, Platform, OAuthApp, FilteredPieceBehavior, CustomDomain, CustomDomainStatus, OtpModel, OtpType, OtpState, ProjectMember, ApiKey, ProjectMemberRole, ProjectMemberStatus } from '@activepieces/ee-shared'
-import { UserStatus, User, apId, Project, NotificationStatus, ProjectType, PieceType, PackageType } from '@activepieces/shared'
+import { UserStatus, User, apId, Project, NotificationStatus, ProjectType, PieceType, PackageType, Flow, FlowStatus, FlowVersion, TriggerType, FlowVersionState } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
 import bcrypt from 'bcrypt'
@@ -195,5 +195,40 @@ export const createMockOtp = (otp?: Partial<OtpModel>): OtpModel => {
         userId: otp?.userId ?? apId(),
         value: otp?.value ?? faker.number.int({ min: 100000, max: 999999 }).toString(),
         state: otp?.state ?? faker.helpers.enumValue(OtpState),
+    }
+}
+
+export const createMockFlow = (flow?: Partial<Flow>): Flow => {
+    return {
+        id: flow?.id ?? apId(),
+        created: flow?.created ?? faker.date.recent().toISOString(),
+        updated: flow?.updated ?? faker.date.recent().toISOString(),
+        projectId: flow?.projectId ?? apId(),
+        status: flow?.status ?? faker.helpers.enumValue(FlowStatus),
+        folderId: flow?.folderId ?? null,
+        schedule: flow?.schedule ?? null,
+        publishedVersionId: flow?.publishedVersionId ?? null,
+    }
+}
+
+export const createMockFlowVersion = (flowVersion?: Partial<FlowVersion>): FlowVersion => {
+    const emptyTrigger = {
+        type: TriggerType.EMPTY,
+        name: 'trigger',
+        settings: {},
+        valid: false,
+        displayName: 'Select Trigger',
+    } as const
+
+    return {
+        id: flowVersion?.id ?? apId(),
+        created: flowVersion?.created ?? faker.date.recent().toISOString(),
+        updated: flowVersion?.updated ?? faker.date.recent().toISOString(),
+        displayName: flowVersion?.displayName ?? faker.word.words(),
+        flowId: flowVersion?.flowId ?? apId(),
+        trigger: flowVersion?.trigger ?? emptyTrigger,
+        state: flowVersion?.state ?? faker.helpers.enumValue(FlowVersionState),
+        updatedBy: flowVersion?.updatedBy ?? apId(),
+        valid: flowVersion?.valid ?? faker.datatype.boolean(),
     }
 }
