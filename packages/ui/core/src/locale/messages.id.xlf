@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
-  <file source-language="en" datatype="plaintext" original="ng2.template" target-language="zh-CN">
+  <file source-language="en" datatype="plaintext" original="ng2.template" target-language="id">
     <body>
       <trans-unit id="3307420368271433057" datatype="html" approved="yes">
         <source>
@@ -14,7 +14,7 @@
           <context context-type="linenumber">17,20</context>
         </context-group>
         <target state="final">
-           您已达到当前计划的极限。⭐ 要解锁更多功能。 
+           Anda telah mencapai batas paket Anda saat ini.    ⭐ untuk membuka lebih banyak fitur. 
           <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;ap-font-bold&quot;&gt;"/>
           <x id="INTERPOLATION" equiv-text="{{teamMemebersNotes[data.projectType]}}"/>
           <x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/>
@@ -26,7 +26,7 @@
           <context context-type="sourcefile">packages/ee/billing/ui/src/lib/upgrade-dialog/upgrade-dialog.component.ts</context>
           <context context-type="linenumber">26</context>
         </context-group>
-        <target state="final">请联系您的平台管理员</target>
+        <target state="final">Silakan hubungi admin platform Anda</target>
       </trans-unit>
       <trans-unit id="2849750161085431718" datatype="html" approved="yes">
         <source>Upgrade</source>
@@ -34,7 +34,7 @@
           <context context-type="sourcefile">packages/ee/billing/ui/src/lib/upgrade-dialog/upgrade-dialog.component.ts</context>
           <context context-type="linenumber">27</context>
         </context-group>
-        <target state="final">升级</target>
+        <target state="final">Upgrade</target>
       </trans-unit>
       <trans-unit id="81394443656404829" datatype="html" approved="yes">
         <source>Share template</source>
@@ -42,7 +42,7 @@
           <context context-type="sourcefile">packages/ee/components/src/lib/share-flow-template-dialog/share-flow-template-dialog.component.html</context>
           <context context-type="linenumber">8</context>
         </context-group>
-        <target state="final">分享模板</target>
+        <target state="final">Bagikan templat</target>
       </trans-unit>
       <trans-unit id="4902817035128594900" datatype="html" approved="yes">
         <source>Description</source>
@@ -50,7 +50,7 @@
           <context context-type="sourcefile">packages/ee/components/src/lib/share-flow-template-dialog/share-flow-template-dialog.component.html</context>
           <context context-type="linenumber">18</context>
         </context-group>
-        <target state="final">描述</target>
+        <target state="final">Deskripsi</target>
       </trans-unit>
       <trans-unit id="8289400513068937763" datatype="html" approved="yes">
         <source>Blog Url </source>
@@ -58,7 +58,7 @@
           <context context-type="sourcefile">packages/ee/components/src/lib/share-flow-template-dialog/share-flow-template-dialog.component.html</context>
           <context context-type="linenumber">24</context>
         </context-group>
-        <target state="final">博客网址 </target>
+        <target state="final">Url Blog </target>
       </trans-unit>
       <trans-unit id="1984826134993441246" datatype="html" approved="yes">
         <source>Image url </source>
@@ -66,7 +66,7 @@
           <context context-type="sourcefile">packages/ee/components/src/lib/share-flow-template-dialog/share-flow-template-dialog.component.html</context>
           <context context-type="linenumber">28</context>
         </context-group>
-        <target state="final">图片链接 </target>
+        <target state="final">Url gambar </target>
       </trans-unit>
       <trans-unit id="2637278026035363299" datatype="html" approved="yes">
         <source>Featured Description</source>
@@ -74,7 +74,7 @@
           <context context-type="sourcefile">packages/ee/components/src/lib/share-flow-template-dialog/share-flow-template-dialog.component.html</context>
           <context context-type="linenumber">36</context>
         </context-group>
-        <target state="final">功能描述</target>
+        <target state="final">Deskripsi Unggulan</target>
       </trans-unit>
       <trans-unit id="4163272119298020373" datatype="html" approved="yes">
         <source>Filters</source>
@@ -82,7 +82,7 @@
           <context context-type="sourcefile">packages/ee/components/src/lib/share-flow-template-dialog/share-flow-template-dialog.component.html</context>
           <context context-type="linenumber">40</context>
         </context-group>
-        <target state="final">过滤器</target>
+        <target state="final">Filter</target>
       </trans-unit>
       <trans-unit id="2330577642930707695" datatype="html" approved="yes">
         <source> Cancel </source>
@@ -150,7 +150,7 @@
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/install-community-piece/install-community-piece-modal.component.html</context>
           <context context-type="linenumber">58,60</context>
         </context-group>
-        <target state="final"> 取消 </target>
+        <target state="final"> Batalkan </target>
       </trans-unit>
       <trans-unit id="6249484391846924804" datatype="html" approved="yes">
         <source> Confirm </source>
@@ -166,7 +166,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/custom-path-mention-dialog/custom-path-mention-dialog.component.html</context>
           <context context-type="linenumber">29,31</context>
         </context-group>
-        <target state="final"> 确认 </target>
+        <target state="final"> Konfirmasi </target>
       </trans-unit>
       <trans-unit id="631520980743150884" datatype="html" approved="yes">
         <source> OR </source>
@@ -174,7 +174,7 @@
           <context context-type="sourcefile">packages/ee/components/src/lib/third-party-auth/third-party-auth.component.html</context>
           <context context-type="linenumber">29,31</context>
         </context-group>
-        <target state="final"> 或 </target>
+        <target state="final"> ATAU </target>
       </trans-unit>
       <trans-unit id="4103400345525770187" datatype="html" approved="yes">
         <source>Sign up with</source>
@@ -182,7 +182,7 @@
           <context context-type="sourcefile">packages/ee/components/src/lib/third-party-auth/third-party-auth.component.ts</context>
           <context context-type="linenumber">21</context>
         </context-group>
-        <target state="final">注册方式:</target>
+        <target state="final">Mendaftar dengan</target>
       </trans-unit>
       <trans-unit id="8150083087133736700" datatype="html" approved="yes">
         <source>Sign in with</source>
@@ -190,7 +190,7 @@
           <context context-type="sourcefile">packages/ee/components/src/lib/third-party-auth/third-party-auth.component.ts</context>
           <context context-type="linenumber">22</context>
         </context-group>
-        <target state="final">登录方式</target>
+        <target state="final">Masuk dengan</target>
       </trans-unit>
       <trans-unit id="8503408630418561538" datatype="html" approved="yes">
         <source> Team Invitation Accepted </source>
@@ -198,7 +198,7 @@
           <context context-type="sourcefile">packages/ee/project-members/src/lib/accept-invitation/accept-invitation.component.html</context>
           <context context-type="linenumber">3,5</context>
         </context-group>
-        <target state="final"> 已接受团队邀请 </target>
+        <target state="final"> Undangan Tim Diterima </target>
       </trans-unit>
       <trans-unit id="4395110422147815828" datatype="html" approved="yes">
         <source> Thank you for accepting the invitation. We are redirecting you right now... </source>
@@ -206,7 +206,7 @@
           <context context-type="sourcefile">packages/ee/project-members/src/lib/accept-invitation/accept-invitation.component.html</context>
           <context context-type="linenumber">6,8</context>
         </context-group>
-        <target state="final"> 感谢您接受邀请。我们现在正在重定向您... </target>
+        <target state="final"> Terima kasih telah menerima undangannya. Kami sedang mengarahkan Anda sekarang... </target>
       </trans-unit>
       <trans-unit id="8331641771927553330" datatype="html" approved="yes">
         <source> Invalid invitation token. Please try again. </source>
@@ -214,7 +214,7 @@
           <context context-type="sourcefile">packages/ee/project-members/src/lib/accept-invitation/accept-invitation.component.html</context>
           <context context-type="linenumber">11,13</context>
         </context-group>
-        <target state="final"> 无效的邀请令牌。请重试。 </target>
+        <target state="final"> Token undangan tidak valid. Silakan coba lagi. </target>
       </trans-unit>
       <trans-unit id="4692033629362352985" datatype="html" approved="yes">
         <source>Invite Project Member
@@ -223,7 +223,8 @@
           <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html</context>
           <context context-type="linenumber">1,2</context>
         </context-group>
-        <target state="final">邀请项目成员</target>
+        <target state="final">Undang Anggota Proyek
+</target>
       </trans-unit>
       <trans-unit id="1104679811553007900" datatype="html" approved="yes">
         <source> Type the email address of the user you want to invite. </source>
@@ -231,7 +232,7 @@
           <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html</context>
           <context context-type="linenumber">5,7</context>
         </context-group>
-        <target state="final"> 输入您想要邀请的用户的电子邮件地址。 </target>
+        <target state="final"> Ketikkan alamat email pengguna yang ingin Anda undang. </target>
       </trans-unit>
       <trans-unit id="5637407793093197884" datatype="html" approved="yes">
         <source>The invited email already has an account. Please contact support for assistance.</source>
@@ -239,7 +240,7 @@
           <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html</context>
           <context context-type="linenumber">13</context>
         </context-group>
-        <target state="final">邀请的电子邮件已经有一个帐户。请联系客服以获取帮助。</target>
+        <target state="final">Email yang diundang sudah memiliki akun. Silakan hubungi tim dukungan untuk mendapatkan bantuan.</target>
       </trans-unit>
       <trans-unit id="1257197684303803009" datatype="html" approved="yes">
         <source>Email is Required</source>
@@ -247,7 +248,7 @@
           <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html</context>
           <context context-type="linenumber">16</context>
         </context-group>
-        <target state="final">电子邮件为必填项</target>
+        <target state="final">Email diperlukan</target>
       </trans-unit>
       <trans-unit id="4145496584631696119" datatype="html" approved="yes">
         <source>Role</source>
@@ -259,7 +260,7 @@
           <context context-type="sourcefile">packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html</context>
           <context context-type="linenumber">19</context>
         </context-group>
-        <target state="final">职务</target>
+        <target state="final">Peran</target>
       </trans-unit>
       <trans-unit id="7927354222438929134" datatype="html" approved="yes">
         <source> Invite </source>
@@ -267,7 +268,7 @@
           <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html</context>
           <context context-type="linenumber">37,39</context>
         </context-group>
-        <target state="final"> 邀请 </target>
+        <target state="final"> Undang </target>
       </trans-unit>
       <trans-unit id="2177891213716569763" datatype="html" approved="yes">
         <source>Internal error occurred please contact support</source>
@@ -275,7 +276,7 @@
           <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.ts</context>
           <context context-type="linenumber">65</context>
         </context-group>
-        <target state="final">发生内部错误，请联系客服</target>
+        <target state="final">Terjadi kesalahan internal, harap hubungi tim dukungan</target>
       </trans-unit>
       <trans-unit id="1483298785952962987" datatype="html" approved="yes">
         <source>ADMIN</source>
@@ -283,7 +284,7 @@
           <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.ts</context>
           <context context-type="linenumber">96</context>
         </context-group>
-        <target state="final">管理员</target>
+        <target state="final">ADMIN</target>
       </trans-unit>
       <trans-unit id="2086645557074934337" datatype="html" approved="yes">
         <source>EDITOR</source>
@@ -291,7 +292,7 @@
           <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.ts</context>
           <context context-type="linenumber">98</context>
         </context-group>
-        <target state="final">编辑者</target>
+        <target state="final">EDITOR</target>
       </trans-unit>
       <trans-unit id="2739133472258186788" datatype="html" approved="yes">
         <source>VIEWER</source>
@@ -299,7 +300,7 @@
           <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.ts</context>
           <context context-type="linenumber">100</context>
         </context-group>
-        <target state="final">查看者</target>
+        <target state="final">PENONTON</target>
       </trans-unit>
       <trans-unit id="3169427932576895164" datatype="html" approved="yes">
         <source>UNKNOWN</source>
@@ -307,7 +308,7 @@
           <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.ts</context>
           <context context-type="linenumber">102</context>
         </context-group>
-        <target state="final">未知</target>
+        <target state="final">TIDAK DIKENAL</target>
       </trans-unit>
       <trans-unit id="2304614617903385642" datatype="html" approved="yes">
         <source>Project Members</source>
@@ -319,7 +320,7 @@
           <context context-type="sourcefile">packages/ee/project-members/src/lib/project-members-table/project-members-table.component.ts</context>
           <context context-type="linenumber">44</context>
         </context-group>
-        <target state="final">项目成员</target>
+        <target state="final">Anggota Proyek</target>
       </trans-unit>
       <trans-unit id="4768749765465246664" datatype="html" approved="yes">
         <source>Email</source>
@@ -339,7 +340,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">27</context>
         </context-group>
-        <target state="final">电子邮件</target>
+        <target state="final">Email</target>
       </trans-unit>
       <trans-unit id="5611592591303869712" datatype="html" approved="yes">
         <source>Status</source>
@@ -359,7 +360,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
           <context context-type="linenumber">34</context>
         </context-group>
-        <target state="final">状态</target>
+        <target state="final">Status</target>
       </trans-unit>
       <trans-unit id="753844560726167738" datatype="html" approved="yes">
         <source>Invited At</source>
@@ -367,7 +368,7 @@
           <context context-type="sourcefile">packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html</context>
           <context context-type="linenumber">24</context>
         </context-group>
-        <target state="final">被邀请于</target>
+        <target state="final">Diundang Pada</target>
       </trans-unit>
       <trans-unit id="7622269434262400347" datatype="html" approved="yes">
         <source>+ Invite</source>
@@ -375,7 +376,7 @@
           <context context-type="sourcefile">packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html</context>
           <context context-type="linenumber">31</context>
         </context-group>
-        <target state="final">+ 邀请</target>
+        <target state="final">+ Undang</target>
       </trans-unit>
       <trans-unit id="4701552962997211350" datatype="html" approved="yes">
         <source>Delete Invitation</source>
@@ -383,7 +384,7 @@
           <context context-type="sourcefile">packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html</context>
           <context context-type="linenumber">36</context>
         </context-group>
-        <target state="final">删除邀请</target>
+        <target state="final">Hapus Undangan</target>
       </trans-unit>
       <trans-unit id="8204176479746810612" datatype="html" approved="yes">
         <source>Active</source>
@@ -395,7 +396,7 @@
           <context context-type="sourcefile">packages/ui/common/src/lib/components/status-icon/state-icon.component.ts</context>
           <context context-type="linenumber">88</context>
         </context-group>
-        <target state="final">已启用</target>
+        <target state="final">Aktif</target>
       </trans-unit>
       <trans-unit id="4416413576346763682" datatype="html" approved="yes">
         <source>Pending</source>
@@ -403,7 +404,7 @@
           <context context-type="sourcefile">packages/ee/project-members/src/lib/project-members-table/project-members-table.component.ts</context>
           <context context-type="linenumber">143</context>
         </context-group>
-        <target state="final">待定</target>
+        <target state="final">Pending</target>
       </trans-unit>
       <trans-unit id="8953033926734869941" datatype="html" approved="yes">
         <source>Name</source>
@@ -443,7 +444,7 @@
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/community-pieces-table/community-pieces-table.component.html</context>
           <context context-type="linenumber">17</context>
         </context-group>
-        <target state="final">名称</target>
+        <target state="final">Nama</target>
       </trans-unit>
       <trans-unit id="4207916966377787111" datatype="html" approved="yes">
         <source>Created</source>
@@ -455,7 +456,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html</context>
           <context context-type="linenumber">27</context>
         </context-group>
-        <target state="final">已创建</target>
+        <target state="final">Dibuat</target>
       </trans-unit>
       <trans-unit id="7484291313969220918" datatype="html" approved="yes">
         <source>Chatbots</source>
@@ -471,7 +472,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
           <context context-type="linenumber">81</context>
         </context-group>
-        <target state="final">聊天机器人</target>
+        <target state="final">Chatbot</target>
       </trans-unit>
       <trans-unit id="7941428823403788384" datatype="html" approved="yes">
         <source> Create </source>
@@ -479,7 +480,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/new-folder-dialog/new-folder-dialog.component.html</context>
           <context context-type="linenumber">27,29</context>
         </context-group>
-        <target state="final"> 创建 </target>
+        <target state="final"> Buat </target>
       </trans-unit>
       <trans-unit id="7585826646011739428" datatype="html" approved="yes">
         <source>Edit</source>
@@ -503,7 +504,7 @@
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/secret-text-connection-dialog/secret-text-connection-dialog.component.html</context>
           <context context-type="linenumber">6</context>
         </context-group>
-        <target state="final">编辑</target>
+        <target state="final">Sunting</target>
       </trans-unit>
       <trans-unit id="3620188369327429839" datatype="html" approved="yes">
         <source> Save </source>
@@ -527,7 +528,7 @@
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/secret-text-connection-dialog/secret-text-connection-dialog.component.html</context>
           <context context-type="linenumber">51,53</context>
         </context-group>
-        <target state="final"> 保存 </target>
+        <target state="final"> Simpan </target>
       </trans-unit>
       <trans-unit id="7091571651222742304" datatype="html" approved="yes">
         <source>Projects</source>
@@ -535,7 +536,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
           <context context-type="linenumber">42</context>
         </context-group>
-        <target state="final">项目</target>
+        <target state="final">Proyek</target>
       </trans-unit>
       <trans-unit id="8671234314555525900" datatype="html" approved="yes">
         <source>Appearance</source>
@@ -543,7 +544,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
           <context context-type="linenumber">48</context>
         </context-group>
-        <target state="final">外观</target>
+        <target state="final">Penampilan</target>
       </trans-unit>
       <trans-unit id="3372037160964274985" datatype="html" approved="yes">
         <source>Pieces</source>
@@ -551,7 +552,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
           <context context-type="linenumber">55</context>
         </context-group>
-        <target state="final">块</target>
+        <target state="final">Bagian-bagian</target>
       </trans-unit>
       <trans-unit id="4930506384627295710" datatype="html" approved="yes">
         <source>Settings</source>
@@ -559,7 +560,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
           <context context-type="linenumber">61</context>
         </context-group>
-        <target state="final">设置</target>
+        <target state="final">Pengaturan</target>
       </trans-unit>
       <trans-unit id="2724055831234181057" datatype="html" approved="yes">
         <source>Version</source>
@@ -567,7 +568,7 @@
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/community-pieces-table/community-pieces-table.component.html</context>
           <context context-type="linenumber">22</context>
         </context-group>
-        <target state="final">版本</target>
+        <target state="final">Versi</target>
       </trans-unit>
       <trans-unit id="9211272372634231639" datatype="html" approved="yes">
         <source> Add Piece </source>
@@ -575,7 +576,7 @@
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/community-pieces-table/community-pieces-table.component.html</context>
           <context context-type="linenumber">29,31</context>
         </context-group>
-        <target state="final"> 添加块 </target>
+        <target state="final"> Tambahkan Bagian </target>
       </trans-unit>
       <trans-unit id="3720371318294752429" datatype="html" approved="yes">
         <source>
@@ -588,7 +589,7 @@
           <context context-type="linenumber">1,2</context>
         </context-group>
         <target state="final">
-          删除 
+          Hapus 
 
           <x id="INTERPOLATION" equiv-text="{{data.entityName}}"/>
         </target>
@@ -603,7 +604,8 @@
           <context context-type="sourcefile">packages/ui/common/src/lib/components/delete-enity-dialog/delete-entity-dialog.component.html</context>
           <context context-type="linenumber">7,9</context>
         </context-group>
-        <target state="final">           输入 DELETE 并点击确认以继续. 
+        <target state="final">
+           Ketik HAPUS dan tekan konfirmasi untuk melanjutkan. 
           <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>
           <x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="&lt;/b&gt;"/>
         </target>
@@ -614,7 +616,7 @@
           <context context-type="sourcefile">packages/ui/common/src/lib/components/delete-enity-dialog/delete-entity-dialog.component.html</context>
           <context context-type="linenumber">14,16</context>
         </context-group>
-        <target state="final"> 请正确写入确认消息 </target>
+        <target state="final"> Silakan tulis pesan konfirmasi dengan benar </target>
       </trans-unit>
       <trans-unit id="5547981558491672240" datatype="html" approved="yes">
         <source> Close </source>
@@ -622,7 +624,7 @@
           <context context-type="sourcefile">packages/ui/common/src/lib/components/json-view/json-view-dialog/json-view-dialog.component.html</context>
           <context context-type="linenumber">13,15</context>
         </context-group>
-        <target state="final"> 关闭 </target>
+        <target state="final"> Tutup </target>
       </trans-unit>
       <trans-unit id="7952700156372001331" datatype="html" approved="yes">
         <source>BETA</source>
@@ -638,7 +640,7 @@
           <context context-type="sourcefile">packages/ui/common/src/lib/components/pagination/ap-paginator.component.html</context>
           <context context-type="linenumber">2</context>
         </context-group>
-        <target state="final">页面大小：</target>
+        <target state="final">Ukuran Halaman:</target>
       </trans-unit>
       <trans-unit id="2807689216255894412" datatype="html" approved="yes">
         <source>Succeeded</source>
@@ -650,7 +652,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
           <context context-type="linenumber">10</context>
         </context-group>
-        <target state="final">已成功</target>
+        <target state="final">Berhasil</target>
       </trans-unit>
       <trans-unit id="8758303120670152799" datatype="html" approved="yes">
         <source>Internal Error</source>
@@ -658,7 +660,7 @@
           <context context-type="sourcefile">packages/ui/common/src/lib/components/status-icon/state-icon.component.ts</context>
           <context context-type="linenumber">75</context>
         </context-group>
-        <target state="final">内部错误</target>
+        <target state="final">Kesalahan Internal</target>
       </trans-unit>
       <trans-unit id="7606629882846319647" datatype="html" approved="yes">
         <source>Timed Out</source>
@@ -666,7 +668,7 @@
           <context context-type="sourcefile">packages/ui/common/src/lib/components/status-icon/state-icon.component.ts</context>
           <context context-type="linenumber">77</context>
         </context-group>
-        <target state="final">已超时</target>
+        <target state="final">Waktu Habis</target>
       </trans-unit>
       <trans-unit id="7256395947475975935" datatype="html" approved="yes">
         <source>Failed</source>
@@ -678,7 +680,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
           <context context-type="linenumber">9</context>
         </context-group>
-        <target state="final">已失败</target>
+        <target state="final">Gagal</target>
       </trans-unit>
       <trans-unit id="840264455199725883" datatype="html" approved="yes">
         <source>Paused</source>
@@ -686,7 +688,7 @@
           <context context-type="sourcefile">packages/ui/common/src/lib/components/status-icon/state-icon.component.ts</context>
           <context context-type="linenumber">83</context>
         </context-group>
-        <target state="final">已暂停</target>
+        <target state="final">Dijeda</target>
       </trans-unit>
       <trans-unit id="2956098160626271284" datatype="html" approved="yes">
         <source>Running</source>
@@ -698,7 +700,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
           <context context-type="linenumber">8</context>
         </context-group>
-        <target state="final">运行中</target>
+        <target state="final">Running</target>
       </trans-unit>
       <trans-unit id="1519954996184640001" datatype="html" approved="yes">
         <source>Error</source>
@@ -706,7 +708,7 @@
           <context context-type="sourcefile">packages/ui/common/src/lib/components/status-icon/state-icon.component.ts</context>
           <context context-type="linenumber">90</context>
         </context-group>
-        <target state="final">错误</target>
+        <target state="final">Error</target>
       </trans-unit>
       <trans-unit id="3708656846739179305" datatype="html" approved="yes">
         <source>My Pieces</source>
@@ -722,7 +724,7 @@
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/community-pieces-table/community-pieces-table.component.html</context>
           <context context-type="linenumber">3</context>
         </context-group>
-        <target state="final">我的块</target>
+        <target state="final">Bagian Saya</target>
       </trans-unit>
       <trans-unit id="3797778920049399855" datatype="html" approved="yes">
         <source>Logout</source>
@@ -730,7 +732,7 @@
           <context context-type="sourcefile">packages/ui/common/src/lib/components/user-avatar/user-avatar.component.html</context>
           <context context-type="linenumber">74</context>
         </context-group>
-        <target state="final">注销</target>
+        <target state="final">Keluar</target>
       </trans-unit>
       <trans-unit id="6568108278209272202" datatype="html" approved="yes">
         <source>An unexpected error occured, please contact support</source>
@@ -738,7 +740,7 @@
           <context context-type="sourcefile">packages/ui/common/src/lib/utils/consts.ts</context>
           <context context-type="linenumber">1</context>
         </context-group>
-        <target state="final">发生内部错误，请联系客服</target>
+        <target state="final">Terjadi kesalahan yang tidak terduga, silakan hubungi tim dukungan</target>
       </trans-unit>
       <trans-unit id="2976564074018381687" datatype="html" approved="yes">
         <source>Webhook Trigger</source>
@@ -746,7 +748,7 @@
           <context context-type="sourcefile">packages/ui/common/src/lib/utils/utils.ts</context>
           <context context-type="linenumber">6</context>
         </context-group>
-        <target state="final">Webhook 触发</target>
+        <target state="final">Webhook Trigger</target>
       </trans-unit>
       <trans-unit id="2523469970175692723" datatype="html" approved="yes">
         <source>Empty Trigger</source>
@@ -754,7 +756,7 @@
           <context context-type="sourcefile">packages/ui/common/src/lib/utils/utils.ts</context>
           <context context-type="linenumber">10</context>
         </context-group>
-        <target state="final">空触发器</target>
+        <target state="final">Trigger Kosong</target>
       </trans-unit>
       <trans-unit id="7343642247493540451" datatype="html" approved="yes">
         <source>Trigger</source>
@@ -762,7 +764,7 @@
           <context context-type="sourcefile">packages/ui/common/src/lib/utils/utils.ts</context>
           <context context-type="linenumber">13</context>
         </context-group>
-        <target state="final">触发器</target>
+        <target state="final">Trigger</target>
       </trans-unit>
       <trans-unit id="8186013988289067040" datatype="html" approved="yes">
         <source>Code</source>
@@ -778,7 +780,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/code-step-input-form/code-step-input-form.component.html</context>
           <context context-type="linenumber">12</context>
         </context-group>
-        <target state="final">代码</target>
+        <target state="final">Kode</target>
       </trans-unit>
       <trans-unit id="1437638433150622409" datatype="html" approved="yes">
         <source>Loop on Items</source>
@@ -786,7 +788,7 @@
           <context context-type="sourcefile">packages/ui/common/src/lib/utils/utils.ts</context>
           <context context-type="linenumber">25</context>
         </context-group>
-        <target state="final">在项目上循环</target>
+        <target state="final">Ulangi Item</target>
       </trans-unit>
       <trans-unit id="8387651464002742246" datatype="html" approved="yes">
         <source>Branch</source>
@@ -798,7 +800,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.ts</context>
           <context context-type="linenumber">193</context>
         </context-group>
-        <target state="final">分支</target>
+        <target state="final">Cabang</target>
       </trans-unit>
       <trans-unit id="491159195078241064" datatype="html" approved="yes">
         <source>Import Flow</source>
@@ -806,7 +808,7 @@
           <context context-type="sourcefile">packages/ui/core/src/app/app-routing.module.ts</context>
           <context context-type="linenumber">29</context>
         </context-group>
-        <target state="final">导入流程</target>
+        <target state="final">Import Flow</target>
       </trans-unit>
       <trans-unit id="833959964659558357" datatype="html" approved="yes">
         <source>Chatbot</source>
@@ -814,7 +816,7 @@
           <context context-type="sourcefile">packages/ui/core/src/app/app-routing.module.ts</context>
           <context context-type="linenumber">37</context>
         </context-group>
-        <target state="final">聊天机器人</target>
+        <target state="final">Chatbot</target>
       </trans-unit>
       <trans-unit id="4593401671892965174" datatype="html" approved="yes">
         <source> Upgrade</source>
@@ -822,7 +824,7 @@
           <context context-type="sourcefile">packages/ui/core/src/app/app.component.html</context>
           <context context-type="linenumber">7,8</context>
         </context-group>
-        <target state="final"> 升级</target>
+        <target state="final"> Upgrade</target>
       </trans-unit>
       <trans-unit id="1234782976282586575" datatype="html" approved="yes">
         <source> Ignore</source>
@@ -830,7 +832,7 @@
           <context context-type="sourcefile">packages/ui/core/src/app/app.component.html</context>
           <context context-type="linenumber">9,10</context>
         </context-group>
-        <target state="final"> 忽略</target>
+        <target state="final"> Abaikan</target>
       </trans-unit>
       <trans-unit id="9202148072595155250" datatype="html" approved="yes">
         <source>Steps in this flow</source>
@@ -838,7 +840,7 @@
           <context context-type="sourcefile">packages/ui/core/src/app/modules/import-flow/import-flow.component.html</context>
           <context context-type="linenumber">17</context>
         </context-group>
-        <target state="final">这个流中的步骤</target>
+        <target state="final">Langkah-langkah dalam flow ini</target>
       </trans-unit>
       <trans-unit id="3087857313586976299" datatype="html" approved="yes">
         <source>Template Description</source>
@@ -846,7 +848,7 @@
           <context context-type="sourcefile">packages/ui/core/src/app/modules/import-flow/import-flow.component.html</context>
           <context context-type="linenumber">24</context>
         </context-group>
-        <target state="final">模板描述</target>
+        <target state="final">Deskripsi Templat</target>
       </trans-unit>
       <trans-unit id="1050001620607966490" datatype="html" approved="yes">
         <source>Use Template</source>
@@ -854,7 +856,7 @@
           <context context-type="sourcefile">packages/ui/core/src/app/modules/import-flow/import-flow.component.html</context>
           <context context-type="linenumber">36,37</context>
         </context-group>
-        <target state="final">使用模版</target>
+        <target state="final">Gunakan Templat</target>
       </trans-unit>
       <trans-unit id="4349518606715943395" datatype="html" approved="yes">
         <source>Page not found 😢</source>
@@ -862,7 +864,7 @@
           <context context-type="sourcefile">packages/ui/core/src/app/modules/not-found/not-found.component.html</context>
           <context context-type="linenumber">5</context>
         </context-group>
-        <target state="final">页面找不到 😢</target>
+        <target state="final">Halaman tidak ditemukan 😢</target>
       </trans-unit>
       <trans-unit id="8233664048165935539" datatype="html" approved="yes">
         <source>Looks like you are lost.</source>
@@ -870,7 +872,7 @@
           <context context-type="sourcefile">packages/ui/core/src/app/modules/not-found/not-found.component.html</context>
           <context context-type="linenumber">6</context>
         </context-group>
-        <target state="final">看起来你已经丢失。</target>
+        <target state="final">Sepertinya kamu tersesat.</target>
       </trans-unit>
       <trans-unit id="6220061776295222544" datatype="html" approved="yes">
         <source>Return Home</source>
@@ -878,7 +880,7 @@
           <context context-type="sourcefile">packages/ui/core/src/app/modules/not-found/not-found.component.html</context>
           <context context-type="linenumber">7</context>
         </context-group>
-        <target state="final">返回首页</target>
+        <target state="final">Kembali ke Home</target>
       </trans-unit>
       <trans-unit id="6252811073109002958" datatype="html" approved="yes">
         <source>redirect-url works!</source>
@@ -886,7 +888,7 @@
           <context context-type="sourcefile">packages/ui/core/src/app/modules/redirect-url/redirect-url.component.html</context>
           <context context-type="linenumber">1</context>
         </context-group>
-        <target state="final">重定向网址工作！</target>
+        <target state="final">pengalihan-url berfungsi!</target>
       </trans-unit>
       <trans-unit id="7500577610906589634" datatype="html" approved="yes">
         <source>
@@ -899,7 +901,7 @@
           <context context-type="linenumber">14,19</context>
         </context-group>
         <target state="final">
-           没有收到电子邮件？重新发送
+           Tidak menerima email? Kirim ulang
           <x id="START_LINK" ctype="x-a" equiv-text="&lt;a class=&quot;ap-text-blueLink ap-cursor-pointer&quot;&amp;#10;&amp;#9;&amp;#9;&amp;#9;&amp;#9;(click)=&quot;otpType === OtpType.EMAIL_VERIFICATION ?  resendVerification() :  sendPasswordReset() &quot;&gt;"/>
           <x id="CLOSE_LINK" ctype="x-a" equiv-text="&lt;/a&gt;"/>
         </target>
@@ -910,7 +912,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/components/send-email-for-auth-action/send-email-for-auth-action.component.html</context>
           <context context-type="linenumber">19</context>
         </context-group>
-        <target state="final">返回以登录</target>
+        <target state="final">Kembali untuk masuk</target>
       </trans-unit>
       <trans-unit id="6708459275523532403" datatype="html" approved="yes">
         <source>We sent you a link to complete your registration, check your email.</source>
@@ -918,7 +920,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/components/send-email-for-auth-action/send-email-for-auth-action.component.ts</context>
           <context context-type="linenumber">29</context>
         </context-group>
-        <target state="final">我们向您发送了一个链接来完成您的注册，请检查您的电子邮件。</target>
+        <target state="final">Kami mengirimi Anda tautan untuk menyelesaikan pendaftaran Anda, periksa email Anda.</target>
       </trans-unit>
       <trans-unit id="5704078822178981720" datatype="html" approved="yes">
         <source>We sent you a link to reset your password, check your email.</source>
@@ -926,7 +928,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/components/send-email-for-auth-action/send-email-for-auth-action.component.ts</context>
           <context context-type="linenumber">30</context>
         </context-group>
-        <target state="final">我们向您发送了一个链接来完成您的注册，请检查您的电子邮件。</target>
+        <target state="final">Kami mengirimi Anda tautan untuk mengatur ulang kata sandi Anda, periksa email Anda.</target>
       </trans-unit>
       <trans-unit id="8248846932695644777" datatype="html" approved="yes">
         <source>Verification resent</source>
@@ -934,7 +936,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/components/send-email-for-auth-action/send-email-for-auth-action.component.ts</context>
           <context context-type="linenumber">51</context>
         </context-group>
-        <target state="final"/>
+        <target state="final">Verifikasi telah dikirim ulang</target>
       </trans-unit>
       <trans-unit id="902992674467519913" datatype="html" approved="yes">
         <source>Password reset link resent</source>
@@ -942,7 +944,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/components/send-email-for-auth-action/send-email-for-auth-action.component.ts</context>
           <context context-type="linenumber">75</context>
         </context-group>
-        <target state="final">密码重置链接已发送</target>
+        <target state="final">Tautan atur ulang kata sandi telah dikirim ulang</target>
       </trans-unit>
       <trans-unit id="6972105223770675605" datatype="html" approved="yes">
         <source>Reset Password</source>
@@ -950,7 +952,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/auth-actions/reset-password/reset-password.component.ts</context>
           <context context-type="linenumber">23</context>
         </context-group>
-        <target state="final">密码重置</target>
+        <target state="final">Atur Ulang Kata Sandi</target>
       </trans-unit>
       <trans-unit id="6607668325067739896" datatype="html" approved="yes">
         <source>Your password reset request has expired, please request a new one</source>
@@ -958,7 +960,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/auth-actions/reset-password/reset-password.component.ts</context>
           <context context-type="linenumber">60</context>
         </context-group>
-        <target state="final">您的密码重置请求已过期，请申请一个新的请求</target>
+        <target state="final">Permintaan pengaturan ulang kata sandi Anda telah kedaluwarsa, silakan meminta yang baru</target>
       </trans-unit>
       <trans-unit id="6657450660368990970" datatype="html" approved="yes">
         <source>
@@ -984,9 +986,9 @@
           <context context-type="linenumber">13,17</context>
         </context-group>
         <target state="final">
-          您的电子邮件已验证。您将被重定向到
+          Email Anda telah diverifikasi. Anda akan diarahkan untuk masuk
           <x id="LINE_BREAK" ctype="lb" equiv-text="&lt;br /&gt;"/>
-        登录        </target>
+        </target>
       </trans-unit>
       <trans-unit id="5624883428695428733" datatype="html" approved="yes">
         <source>
@@ -998,7 +1000,7 @@
           <context context-type="linenumber">17,19</context>
         </context-group>
         <target state="final">
-          此邀请已过期，重定向到登录页...
+          Undangan ini telah kedaluwarsa, dialihkan untuk masuk...
           <x id="LINE_BREAK" ctype="lb" equiv-text="&lt;br /&gt;"/>
         </target>
       </trans-unit>
@@ -1012,7 +1014,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/ui-feature-authentication.module.ts</context>
           <context context-type="linenumber">52</context>
         </context-group>
-        <target state="final">登录</target>
+        <target state="final">Masuk</target>
       </trans-unit>
       <trans-unit id="5411574545284988510" datatype="html" approved="yes">
         <source>Verifying Email</source>
@@ -1020,7 +1022,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/auth-actions/verify-email-post-sign-up/verify-email-post-sign-up.component.ts</context>
           <context context-type="linenumber">21</context>
         </context-group>
-        <target state="final">验证电子邮件</target>
+        <target state="final">Memverifikasi Email</target>
       </trans-unit>
       <trans-unit id="144580535702564134" datatype="html" approved="yes">
         <source>Verified Email</source>
@@ -1028,7 +1030,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/auth-actions/verify-email-post-sign-up/verify-email-post-sign-up.component.ts</context>
           <context context-type="linenumber">22</context>
         </context-group>
-        <target state="final">验证的电子邮件</target>
+        <target state="final">Email Terverifikasi</target>
       </trans-unit>
       <trans-unit id="5598589668932032802" datatype="html" approved="yes">
         <source>Verification Failed</source>
@@ -1036,7 +1038,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/auth-actions/verify-email-post-sign-up/verify-email-post-sign-up.component.ts</context>
           <context context-type="linenumber">23</context>
         </context-group>
-        <target state="final">验证失败</target>
+        <target state="final">Verifikasi gagal</target>
       </trans-unit>
       <trans-unit id="9160273934521319360" datatype="html" approved="yes">
         <source>Verifying email</source>
@@ -1044,7 +1046,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/auth-actions/verify-email-post-sign-up/verify-email-post-sign-up.component.ts</context>
           <context context-type="linenumber">38</context>
         </context-group>
-        <target state="final">验证邮箱</target>
+        <target state="final">Memverifikasi email</target>
       </trans-unit>
       <trans-unit id="7056192090407062309" datatype="html" approved="yes">
         <source>Email Verified</source>
@@ -1052,7 +1054,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/auth-actions/verify-email-post-sign-up/verify-email-post-sign-up.component.ts</context>
           <context context-type="linenumber">61</context>
         </context-group>
-        <target state="final">邮箱已验证</target>
+        <target state="final">Email Terverifikasi</target>
       </trans-unit>
       <trans-unit id="2950516762204674600" datatype="html" approved="yes">
         <source>Forgot Password</source>
@@ -1060,7 +1062,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/forgot-password/forgot-password.component.html</context>
           <context context-type="linenumber">3</context>
         </context-group>
-        <target state="final">忘记密码</target>
+        <target state="final">Lupa Kata Sandi</target>
       </trans-unit>
       <trans-unit id="3602430501804064515" datatype="html" approved="yes">
         <source> If the user exists we'll send you an email with a link to reset your password. </source>
@@ -1068,7 +1070,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/forgot-password/forgot-password.component.html</context>
           <context context-type="linenumber">4,6</context>
         </context-group>
-        <target state="final"> 如果该用户存在，我们会向您发送一封包含重置密码链接的电子邮件。 </target>
+        <target state="final"> Jika pengguna tersebut ada, kami akan mengirimi Anda email berisi tautan untuk mengatur ulang kata sandi Anda. </target>
       </trans-unit>
       <trans-unit id="9097289685105179814" datatype="html" approved="yes">
         <source>
@@ -1083,7 +1085,12 @@
           <context context-type="linenumber">12,20</context>
         </context-group>
         <target state="final">
-电子邮件必填 电子邮件非法        </target>
+           Email diperlukan  Email tidak valid 
+          <x id="START_TAG_NG_CONTAINER" ctype="x-ng_container" equiv-text="-container *ngIf=&quot;emailFormControl.hasError('required')&quot;&gt;"/>
+          <x id="CLOSE_TAG_NG_CONTAINER" ctype="x-ng_container" equiv-text="&lt;/ng-container&gt;"/>
+          <x id="START_TAG_NG_CONTAINER_1" ctype="x-ng_container_1" equiv-text="&lt;ng-container *ngIf=&quot;emailFormControl.hasError('email')&quot;&gt;"/>
+          <x id="CLOSE_TAG_NG_CONTAINER" ctype="x-ng_container" equiv-text="&lt;/ng-container&gt;"/>
+        </target>
       </trans-unit>
       <trans-unit id="3006097408675799565" datatype="html" approved="yes">
         <source> Send email </source>
@@ -1091,7 +1098,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/forgot-password/forgot-password.component.html</context>
           <context context-type="linenumber">25,27</context>
         </context-group>
-        <target state="final"> 发送邮件 </target>
+        <target state="final"> Kirim email </target>
       </trans-unit>
       <trans-unit id="4939428286618017421" datatype="html" approved="yes">
         <source>Back to sign in</source>
@@ -1099,7 +1106,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/forgot-password/forgot-password.component.html</context>
           <context context-type="linenumber">31</context>
         </context-group>
-        <target state="final">返回到登录页</target>
+        <target state="final">Kembali untuk masuk</target>
       </trans-unit>
       <trans-unit id="2668864227584228682" datatype="html" approved="yes">
         <source>Welcome Back</source>
@@ -1107,7 +1114,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
           <context context-type="linenumber">1</context>
         </context-group>
-        <target state="final">欢迎回来</target>
+        <target state="final">Selamat Datang Kembali</target>
       </trans-unit>
       <trans-unit id="8232890416577573080" datatype="html" approved="yes">
         <source> Email is invalid </source>
@@ -1119,7 +1126,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">33,35</context>
         </context-group>
-        <target state="final"> 邮箱格式不正确 </target>
+        <target state="final"> Email tidak valid </target>
       </trans-unit>
       <trans-unit id="8552587679160911578" datatype="html" approved="yes">
         <source>Email is required</source>
@@ -1131,7 +1138,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">39,40</context>
         </context-group>
-        <target state="final">邮箱为必填</target>
+        <target state="final">Email diperlukan</target>
       </trans-unit>
       <trans-unit id="1431416938026210429" datatype="html" approved="yes">
         <source>Password</source>
@@ -1151,7 +1158,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">49</context>
         </context-group>
-        <target state="final">密码</target>
+        <target state="final">Kata Sandi</target>
       </trans-unit>
       <trans-unit id="205044832662301680" datatype="html" approved="yes">
         <source>Password is required</source>
@@ -1159,7 +1166,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
           <context context-type="linenumber">17</context>
         </context-group>
-        <target state="final">密码为必填</target>
+        <target state="final">Kata Sandi diperlukan</target>
       </trans-unit>
       <trans-unit id="4469513261081670706" datatype="html" approved="yes">
         <source>Invalid email or password</source>
@@ -1167,7 +1174,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
           <context context-type="linenumber">19</context>
         </context-group>
-        <target state="final">无效的邮箱或密码</target>
+        <target state="final">Email atau Kata Sandi tidak valid</target>
       </trans-unit>
       <trans-unit id="6663783128602596673" datatype="html" approved="yes">
         <source> Sign in </source>
@@ -1175,7 +1182,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
           <context context-type="linenumber">29,31</context>
         </context-group>
-        <target state="final"> 登录 </target>
+        <target state="final"> Masuk </target>
       </trans-unit>
       <trans-unit id="8164791295086777340" datatype="html" approved="yes">
         <source>Don't have an account?</source>
@@ -1183,7 +1190,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
           <context context-type="linenumber">36</context>
         </context-group>
-        <target state="final">还没有账户？</target>
+        <target state="final">Belum mempunyai akun?</target>
       </trans-unit>
       <trans-unit id="8249878174557818173" datatype="html" approved="yes">
         <source>Sign up now</source>
@@ -1191,7 +1198,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
           <context context-type="linenumber">36</context>
         </context-group>
-        <target state="final">立即注册</target>
+        <target state="final">Daftar Sekarang</target>
       </trans-unit>
       <trans-unit id="2727496946419791472" datatype="html" approved="yes">
         <source>Forgot password?</source>
@@ -1199,7 +1206,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
           <context context-type="linenumber">40</context>
         </context-group>
-        <target state="final">忘记密码？</target>
+        <target state="final">Lupa Kata Sandi?</target>
       </trans-unit>
       <trans-unit id="2919058663947697555" datatype="html" approved="yes">
         <source> Let's Get Started! </source>
@@ -1207,7 +1214,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">3,5</context>
         </context-group>
-        <target state="final"> 让我们开始吧！ </target>
+        <target state="final"> Mari Kita Mulai! </target>
       </trans-unit>
       <trans-unit id="6028371114637047813" datatype="html" approved="yes">
         <source>First Name</source>
@@ -1215,7 +1222,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">10</context>
         </context-group>
-        <target state="final">名</target>
+        <target state="final">Nama Depan</target>
       </trans-unit>
       <trans-unit id="3337540717284723401" datatype="html" approved="yes">
         <source> First name is required </source>
@@ -1223,7 +1230,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">12,14</context>
         </context-group>
-        <target state="final"> 名是必填项 </target>
+        <target state="final"> Nama Depan diperlukan </target>
       </trans-unit>
       <trans-unit id="4407559560004943843" datatype="html" approved="yes">
         <source>Last Name</source>
@@ -1231,7 +1238,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">17</context>
         </context-group>
-        <target state="final">姓</target>
+        <target state="final">Nama Belakang</target>
       </trans-unit>
       <trans-unit id="5202458308518213857" datatype="html" approved="yes">
         <source> Last name is required </source>
@@ -1239,7 +1246,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">19,21</context>
         </context-group>
-        <target state="final"> 姓是必填项 </target>
+        <target state="final"> Nama Belakang diperlukan </target>
       </trans-unit>
       <trans-unit id="3285380396703325390" datatype="html" approved="yes">
         <source> Email is used </source>
@@ -1247,7 +1254,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">36,38</context>
         </context-group>
-        <target state="final"> 邮箱已被使用 </target>
+        <target state="final"> Email digunakan </target>
       </trans-unit>
       <trans-unit id="9132547751630599796" datatype="html" approved="yes">
         <source> Password is required </source>
@@ -1255,7 +1262,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">51,53</context>
         </context-group>
-        <target state="final"> 密码是必填项 </target>
+        <target state="final"> Kata Sandi diperlukan </target>
       </trans-unit>
       <trans-unit id="5145449122692464963" datatype="html" approved="yes">
         <source>Password is invalid</source>
@@ -1263,7 +1270,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">54</context>
         </context-group>
-        <target state="final">密码无效</target>
+        <target state="final">Kata Sandi tidak valid</target>
       </trans-unit>
       <trans-unit id="3371018857182408066" datatype="html" approved="yes">
         <source> Contact your admin to send you an invite </source>
@@ -1271,7 +1278,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">58,60</context>
         </context-group>
-        <target state="final"> 请联系您的管理员发送邀请 </target>
+        <target state="final"> Hubungi admin Anda untuk mengirimi Anda undangan </target>
       </trans-unit>
       <trans-unit id="1831185355933631853" datatype="html" approved="yes">
         <source>Lowercase</source>
@@ -1279,7 +1286,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">71</context>
         </context-group>
-        <target state="final">小写</target>
+        <target state="final">Huruf kecil</target>
       </trans-unit>
       <trans-unit id="6131686574068357886" datatype="html" approved="yes">
         <source>Uppercase</source>
@@ -1287,7 +1294,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">81</context>
         </context-group>
-        <target state="final">大写</target>
+        <target state="final">Huruf besar</target>
       </trans-unit>
       <trans-unit id="5276080702883013396" datatype="html" approved="yes">
         <source>Special Character</source>
@@ -1295,7 +1302,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">92</context>
         </context-group>
-        <target state="final">特殊字符</target>
+        <target state="final">Karakter spesial</target>
       </trans-unit>
       <trans-unit id="6370642728789544052" datatype="html" approved="yes">
         <source>Number</source>
@@ -1303,7 +1310,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">101</context>
         </context-group>
-        <target state="final">数字</target>
+        <target state="final">Angka</target>
       </trans-unit>
       <trans-unit id="179646624931045993" datatype="html" approved="yes">
         <source>8-64 Characters</source>
@@ -1311,7 +1318,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">114</context>
         </context-group>
-        <target state="final">8-64 个字符</target>
+        <target state="final">8-64 Karakter</target>
       </trans-unit>
       <trans-unit id="6315299944136778290" datatype="html" approved="yes">
         <source>Receive updates and newsletters from activepieces</source>
@@ -1319,7 +1326,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">120,123</context>
         </context-group>
-        <target state="final">从 activepieces 接收更新和新闻消息</target>
+        <target state="final">Terima pembaruan dan buletin </target>
       </trans-unit>
       <trans-unit id="7203320122205058413" datatype="html" approved="yes">
         <source> Sign up </source>
@@ -1327,7 +1334,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">126,128</context>
         </context-group>
-        <target state="final"> 注册 </target>
+        <target state="final"> Daftar </target>
       </trans-unit>
       <trans-unit id="4376281136928352035" datatype="html" approved="yes">
         <source>By creating an account, you agree to our </source>
@@ -1335,7 +1342,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">134</context>
         </context-group>
-        <target state="final">创建账户后，您将被默认同意我们的 </target>
+        <target state="final">Dengan membuat akun, Anda menyetujui </target>
       </trans-unit>
       <trans-unit id="5588556721941421289" datatype="html" approved="yes">
         <source>terms of service</source>
@@ -1343,7 +1350,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">136,137</context>
         </context-group>
-        <target state="final">服务条款</target>
+        <target state="final">persyaratan layanan</target>
       </trans-unit>
       <trans-unit id="8826454553473999816" datatype="html" approved="yes">
         <source> and </source>
@@ -1351,7 +1358,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">138</context>
         </context-group>
-        <target state="final"> 和 </target>
+        <target state="final"> dan </target>
       </trans-unit>
       <trans-unit id="7880342747895814760" datatype="html" approved="yes">
         <source>privacy policy</source>
@@ -1359,7 +1366,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">139</context>
         </context-group>
-        <target state="final">隐私政策</target>
+        <target state="final">kebijakan pribadi</target>
       </trans-unit>
       <trans-unit id="6207438724033771807" datatype="html" approved="yes">
         <source>Already have an account? </source>
@@ -1367,7 +1374,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">143</context>
         </context-group>
-        <target state="final">已经拥有账户？ </target>
+        <target state="final">Sudah memiliki akun? </target>
       </trans-unit>
       <trans-unit id="4860327484616227095" datatype="html" approved="yes">
         <source>Signing up is disabled.</source>
@@ -1375,7 +1382,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">150</context>
         </context-group>
-        <target state="final">注册已被禁用。</target>
+        <target state="final">Pendaftaran dinonaktifkan.</target>
       </trans-unit>
       <trans-unit id="8502548447094943346" datatype="html" approved="yes">
         <source> If you are the owner, please refer to the configuration section in the documentation to learn how to enable it. </source>
@@ -1383,7 +1390,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">151,154</context>
         </context-group>
-        <target state="final"> 如果您是所有者，请参阅文档中的配置部分以了解如何启用它。 </target>
+        <target state="final"> Jika Anda pemiliknya, silakan lihat bagian konfigurasi pada dokumentasi untuk mempelajari cara mengaktifkannya. </target>
       </trans-unit>
       <trans-unit id="7028204981963450021" datatype="html" approved="yes">
         <source>Sign up</source>
@@ -1391,7 +1398,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/ui-feature-authentication.module.ts</context>
           <context context-type="linenumber">60</context>
         </context-group>
-        <target state="final">注册</target>
+        <target state="final">Daftar</target>
       </trans-unit>
       <trans-unit id="4227831333725112678" datatype="html" approved="yes">
         <source>Verify email</source>
@@ -1399,7 +1406,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/ui-feature-authentication.module.ts</context>
           <context context-type="linenumber">68</context>
         </context-group>
-        <target state="final">验证邮箱</target>
+        <target state="final">Verifikasi email</target>
       </trans-unit>
       <trans-unit id="1636934520301910285" datatype="html" approved="yes">
         <source>Reset password</source>
@@ -1407,7 +1414,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/ui-feature-authentication.module.ts</context>
           <context context-type="linenumber">78</context>
         </context-group>
-        <target state="final">重置密码</target>
+        <target state="final">Atur ulang kata sandi</target>
       </trans-unit>
       <trans-unit id="8264044238565501678" datatype="html" approved="yes">
         <source>Forgot password</source>
@@ -1415,7 +1422,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/ui-feature-authentication.module.ts</context>
           <context context-type="linenumber">88</context>
         </context-group>
-        <target state="final">忘记密码</target>
+        <target state="final">Lupa Kata Sandi</target>
       </trans-unit>
       <trans-unit id="4465085913683915434" datatype="html" approved="yes">
         <source>True</source>
@@ -1423,7 +1430,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/canvas-utils/drawing/branch-drawer.ts</context>
           <context context-type="linenumber">71</context>
         </context-group>
-        <target state="final">是</target>
+        <target state="final">Benar</target>
       </trans-unit>
       <trans-unit id="3800326155195149498" datatype="html" approved="yes">
         <source>False</source>
@@ -1431,7 +1438,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/canvas-utils/drawing/branch-drawer.ts</context>
           <context context-type="linenumber">71</context>
         </context-group>
-        <target state="final">否</target>
+        <target state="final">Salah</target>
       </trans-unit>
       <trans-unit id="7006228718285189938" datatype="html" approved="yes">
         <source>Delete Step</source>
@@ -1439,7 +1446,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/flow-item-tree/flow-item/actions/delete-flow-item-action/delete-flow-item-action.component.html</context>
           <context context-type="linenumber">1</context>
         </context-group>
-        <target state="final">删除步骤</target>
+        <target state="final">Hapus Langkah</target>
       </trans-unit>
       <trans-unit id="7736075512379733726" datatype="html" approved="yes">
         <source>Duplicate Step</source>
@@ -1447,7 +1454,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/flow-item-tree/flow-item/actions/duplicate-step-action/duplicate-step-action.component.html</context>
           <context context-type="linenumber">1</context>
         </context-group>
-        <target state="final">复制步骤</target>
+        <target state="final">Duplikasi Langkah</target>
       </trans-unit>
       <trans-unit id="1403002090052852025" datatype="html" approved="yes">
         <source>Change Trigger</source>
@@ -1455,7 +1462,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/flow-item-tree/flow-item/actions/replace-trigger-action/replace-trigger-action.component.html</context>
           <context context-type="linenumber">1</context>
         </context-group>
-        <target state="final">更改触发器</target>
+        <target state="final">Ganti Trigger</target>
       </trans-unit>
       <trans-unit id="2424797729759691148" datatype="html" approved="yes">
         <source>Can't move here</source>
@@ -1463,7 +1470,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/flow-item-tree/flow-item/flow-item-connection/add-button-core.component.ts</context>
           <context context-type="linenumber">21</context>
         </context-group>
-        <target state="final">不能移动到这里</target>
+        <target state="final">Tidak bisa pindah ke sini</target>
       </trans-unit>
       <trans-unit id="852013103273628574" datatype="html" approved="yes">
         <source>Incomplete settings</source>
@@ -1471,7 +1478,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.html</context>
           <context context-type="linenumber">35</context>
         </context-group>
-        <target state="final">设置不完整</target>
+        <target state="final">Pengaturan tidak lengkap</target>
       </trans-unit>
       <trans-unit id="2784956659778044823" datatype="html" approved="yes">
         <source>Loop</source>
@@ -1479,7 +1486,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.ts</context>
           <context context-type="linenumber">197</context>
         </context-group>
-        <target state="final">循环</target>
+        <target state="final">Loop</target>
       </trans-unit>
       <trans-unit id="3281993254947750204" datatype="html" approved="yes">
         <source>Choose a trigger</source>
@@ -1487,7 +1494,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.ts</context>
           <context context-type="linenumber">207</context>
         </context-group>
-        <target state="final">选择一个触发器</target>
+        <target state="final">Pilih trigger</target>
       </trans-unit>
       <trans-unit id="2498487601274189013" datatype="html" approved="yes">
         <source>Webhook trigger</source>
@@ -1495,7 +1502,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.ts</context>
           <context context-type="linenumber">209</context>
         </context-group>
-        <target state="final">Webhook 触发器</target>
+        <target state="final">Webhook trigger</target>
       </trans-unit>
       <trans-unit id="8800642840450835643" datatype="html" approved="yes">
         <source> End
@@ -1504,7 +1511,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/widgets/end-of-flow-widget/end-of-flow-widget.component.html</context>
           <context context-type="linenumber">2,4</context>
         </context-group>
-        <target state="final"> 结束
+        <target state="final"> Akhir
 </target>
       </trans-unit>
       <trans-unit id="3805341172871384186" datatype="html" approved="yes">
@@ -1518,7 +1525,7 @@
           <context context-type="linenumber">5,7</context>
         </context-group>
         <target state="final">
-           完成步骤 
+           Menyelesaikan  langkah 
           <x id="INTERPOLATION" equiv-text="{{numOfInvalidSteps}}"/>
           <x id="INTERPOLATION_1" equiv-text="{{numOfInvalidSteps &gt; 1 ? 's' : ''}}"/>
         </target>
@@ -1532,7 +1539,7 @@
           <context context-type="linenumber">11,13</context>
         </context-group>
         <target state="final">
-          <x id="INTERPOLATION" equiv-text="{{(isSaving$ | async)? savingText: testFlowText}}"/>
+          <x id="INTERPOLATION" equiv-text="{{(isSaving$ | async)? 'Menyimpan...': 'Uji flow'}}"/>
         </target>
       </trans-unit>
       <trans-unit id="7468425627961650152" datatype="html" approved="yes">
@@ -1541,7 +1548,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/widgets/test-flow-widget/test-flow-widget.component.ts</context>
           <context context-type="linenumber">53</context>
         </context-group>
-        <target state="final">测试流程</target>
+        <target state="final">Uji flow</target>
       </trans-unit>
       <trans-unit id="3407061818321766940" datatype="html" approved="yes">
         <source>Saving...</source>
@@ -1549,7 +1556,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/widgets/test-flow-widget/test-flow-widget.component.ts</context>
           <context context-type="linenumber">54</context>
         </context-group>
-        <target state="final">保存中...</target>
+        <target state="final">Menyimpan...</target>
       </trans-unit>
       <trans-unit id="6212705197426717225" datatype="html" approved="yes">
         <source> View Only
@@ -1558,7 +1565,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/widgets/view-only-mode-widget/view-only-mode-widget.component.html</context>
           <context context-type="linenumber">2,4</context>
         </context-group>
-        <target state="final"> 仅查看
+        <target state="final"> Lihat Saja
 </target>
       </trans-unit>
       <trans-unit id="7336734700471735506" datatype="html" approved="yes">
@@ -1571,7 +1578,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/dictionary-form-control/dictionary-form-control.component.html</context>
           <context context-type="linenumber">37,38</context>
         </context-group>
-        <target state="final"> + 添加项目 </target>
+        <target state="final"> + Tambahkan Item </target>
       </trans-unit>
       <trans-unit id="4163163170493567215" datatype="html" approved="yes">
         <source>
@@ -1583,7 +1590,7 @@
           <context context-type="linenumber">5</context>
         </context-group>
         <target state="final">
-           值
+           Nilai
           <x id="INTERPOLATION" equiv-text="showSecondValue)? 'First':''}}"/>
         </target>
       </trans-unit>
@@ -1593,7 +1600,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/branch-condition-form-control/branch-condition-form-control.component.html</context>
           <context context-type="linenumber">9,11</context>
         </context-group>
-        <target state="final"> 第一个值是必填项 </target>
+        <target state="final"> Nilai pertama diperlukan </target>
       </trans-unit>
       <trans-unit id="8448328978191313077" datatype="html" approved="yes">
         <source> Condition</source>
@@ -1601,7 +1608,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/branch-condition-form-control/branch-condition-form-control.component.html</context>
           <context context-type="linenumber">32</context>
         </context-group>
-        <target state="final"> 条件</target>
+        <target state="final"> Kondisi</target>
       </trans-unit>
       <trans-unit id="996299283992999375" datatype="html" approved="yes">
         <source> Condition is required </source>
@@ -1609,7 +1616,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/branch-condition-form-control/branch-condition-form-control.component.html</context>
           <context context-type="linenumber">38,40</context>
         </context-group>
-        <target state="final"> 条件是必填项 </target>
+        <target state="final"> Kondisi diperlukan </target>
       </trans-unit>
       <trans-unit id="9118432878528508253" datatype="html" approved="yes">
         <source>Second Value</source>
@@ -1617,7 +1624,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/branch-condition-form-control/branch-condition-form-control.component.html</context>
           <context context-type="linenumber">47</context>
         </context-group>
-        <target state="final">第二个值</target>
+        <target state="final">Nilai Kedua</target>
       </trans-unit>
       <trans-unit id="2581780998909888908" datatype="html" approved="yes">
         <source> Second value is required </source>
@@ -1625,7 +1632,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/branch-condition-form-control/branch-condition-form-control.component.html</context>
           <context context-type="linenumber">51,53</context>
         </context-group>
-        <target state="final"> 第二个值是必填项 </target>
+        <target state="final"> Nilai kedua diperlukan </target>
       </trans-unit>
       <trans-unit id="1601518217526203092" datatype="html" approved="yes">
         <source> Case sensitive </source>
@@ -1633,7 +1640,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/branch-condition-form-control/branch-condition-form-control.component.html</context>
           <context context-type="linenumber">64,66</context>
         </context-group>
-        <target state="final"> 区分大小写 </target>
+        <target state="final"> Hal-hal sensitif </target>
       </trans-unit>
       <trans-unit id="6681500251003895090" datatype="html" approved="yes">
         <source> And </source>
@@ -1641,7 +1648,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/branch-conditions-group-form-control/branch-conditions-group-form-control.component.html</context>
           <context context-type="linenumber">11,13</context>
         </context-group>
-        <target state="final"> 和 </target>
+        <target state="final"> Dan </target>
       </trans-unit>
       <trans-unit id="5532053643727258773" datatype="html" approved="yes">
         <source> + And </source>
@@ -1649,7 +1656,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/branch-conditions-group-form-control/branch-conditions-group-form-control.component.html</context>
           <context context-type="linenumber">21,23</context>
         </context-group>
-        <target state="final"> + 和 </target>
+        <target state="final"> + Dan </target>
       </trans-unit>
       <trans-unit id="7896829997070648469" datatype="html" approved="yes">
         <source> + Or </source>
@@ -1657,7 +1664,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/branch-conditions-group-form-control/branch-conditions-group-form-control.component.html</context>
           <context context-type="linenumber">25,27</context>
         </context-group>
-        <target state="final"> + 或 </target>
+        <target state="final"> + Atau </target>
       </trans-unit>
       <trans-unit id="2496825876408159474" datatype="html" approved="yes">
         <source>Add NPM Package</source>
@@ -1665,7 +1672,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component.html</context>
           <context context-type="linenumber">1</context>
         </context-group>
-        <target state="final">添加 NPM 包</target>
+        <target state="final">Tambahkan Paket NPM</target>
       </trans-unit>
       <trans-unit id="8916992158425367122" datatype="html" approved="yes">
         <source>
@@ -1677,7 +1684,7 @@
           <context context-type="linenumber">3,6</context>
         </context-group>
         <target state="final">
-           请输入 NPM 包的名称。
+           Silakan ketikkan nama paket NPM.
           <x id="LINE_BREAK" ctype="lb" equiv-text="&lt;br&gt;"/>
         </target>
       </trans-unit>
@@ -1687,7 +1694,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component.html</context>
           <context context-type="linenumber">11,13</context>
         </context-group>
-        <target state="final"> 包名称是必填项 </target>
+        <target state="final"> Nama paket diperlukan </target>
       </trans-unit>
       <trans-unit id="7247626109904878386" datatype="html" approved="yes">
         <source> Package not found </source>
@@ -1695,7 +1702,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component.html</context>
           <context context-type="linenumber">15,17</context>
         </context-group>
-        <target state="final"> 包不存在 </target>
+        <target state="final"> Paket tidak ditemukan </target>
       </trans-unit>
       <trans-unit id="3989217883668206850" datatype="html" approved="yes">
         <source> The latest version will be fetched and added to package.json </source>
@@ -1703,7 +1710,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component.html</context>
           <context context-type="linenumber">21,23</context>
         </context-group>
-        <target state="final"> 将获取最新版本并添加到 package.json </target>
+        <target state="final"> Versi terbaru akan diambil dan ditambahkan ke paket.json </target>
       </trans-unit>
       <trans-unit id="577038887888857351" datatype="html" approved="yes">
         <source> Add </source>
@@ -1711,7 +1718,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component.html</context>
           <context context-type="linenumber">31,33</context>
         </context-group>
-        <target state="final"> 添加 </target>
+        <target state="final"> Tambahkan </target>
       </trans-unit>
       <trans-unit id="5280318900735007886" datatype="html" approved="yes">
         <source>Code Editor</source>
@@ -1719,7 +1726,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component.html</context>
           <context context-type="linenumber">3</context>
         </context-group>
-        <target state="final">代码编辑器</target>
+        <target state="final">Editor Kode</target>
       </trans-unit>
       <trans-unit id="3524658885997089516" datatype="html" approved="yes">
         <source> Add npm package </source>
@@ -1727,7 +1734,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component.html</context>
           <context context-type="linenumber">6,8</context>
         </context-group>
-        <target state="final"> 添加 Npm 包 </target>
+        <target state="final"> Tambahkan paket npm </target>
       </trans-unit>
       <trans-unit id="6555875325581285494" datatype="html" approved="yes">
         <source>Test code </source>
@@ -1735,7 +1742,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component.html</context>
           <context context-type="linenumber">10,11</context>
         </context-group>
-        <target state="final">测试代码 </target>
+        <target state="final">Uji kode </target>
       </trans-unit>
       <trans-unit id="6131680921696393746" datatype="html">
         <source>Minimize Editor</source>
@@ -1783,7 +1790,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/action-mention-item/action-mention-item.component.html</context>
           <context context-type="linenumber">45,47</context>
         </context-group>
-        <target state="final"> 需要先测试这一步骤以便查看其数据。 </target>
+        <target state="final"> Langkah ini perlu diuji untuk melihat datanya. </target>
       </trans-unit>
       <trans-unit id="1247109697914602116" datatype="html" approved="yes">
         <source> Go to step </source>
@@ -1791,7 +1798,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/action-mention-item/action-mention-item.component.html</context>
           <context context-type="linenumber">50,52</context>
         </context-group>
-        <target state="final"> 跳转到步骤 </target>
+        <target state="final"> Lanjutkan ke langkah </target>
       </trans-unit>
       <trans-unit id="4578163876314196724" datatype="html" approved="yes">
         <source>
@@ -1805,7 +1812,7 @@
           <context context-type="linenumber">4,6</context>
         </context-group>
         <target state="final">
-           使用 JSON 格式描述路径的属性 
+           Jelaskan jalur menuju properti menggunakan format JSON 
           <x id="START_PARAGRAPH" ctype="x-p" equiv-text="&lt;p&gt;"/>
           <x id="INTERPOLATION" equiv-text="{{data.placeHolder}}"/>
           <x id="CLOSE_PARAGRAPH" ctype="x-p" equiv-text="&lt;/p&gt;"/>
@@ -1817,7 +1824,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/custom-path-mention-dialog/custom-path-mention-dialog.component.html</context>
           <context context-type="linenumber">12,14</context>
         </context-group>
-        <target state="final"> 路径无效 </target>
+        <target state="final"> Jalur tidak valid </target>
       </trans-unit>
       <trans-unit id="4407837587845744851" datatype="html" approved="yes">
         <source>
@@ -1829,7 +1836,7 @@
           <context context-type="linenumber">16,18</context>
         </context-group>
         <target state="final">
-           路径起始必须是  
+           Jalur harus dimulai dengan  
           <x id="INTERPOLATION" equiv-text="{{data.stepName}}"/>
         </target>
       </trans-unit>
@@ -1839,7 +1846,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/generic-mention-item/generic-mention-item.component.html</context>
           <context context-type="linenumber">4,5</context>
         </context-group>
-        <target state="final">选择 </target>
+        <target state="final">Pilih </target>
       </trans-unit>
       <trans-unit id="2382599479144636387" datatype="html" approved="yes">
         <source>
@@ -1853,7 +1860,7 @@
           <context context-type="linenumber">37,40</context>
         </context-group>
         <target state="final">
-          结果： 
+          hasil:  
           <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;ap-transition-all ap-text-primary&quot; [matTooltip]=&quot;'' + result.value || ''&quot;&gt;"/>
           <x id="INTERPOLATION"/>
           <x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/>
@@ -1873,7 +1880,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/step-mentions-tree/step-mentions-tree.component.html</context>
           <context context-type="linenumber">44,45</context>
         </context-group>
-        <target state="final">插入 </target>
+        <target state="final">Masukkan </target>
       </trans-unit>
       <trans-unit id="8902753740956283901" datatype="html" approved="yes">
         <source> This trigger needs to have data loaded from your account, to use as sample data </source>
@@ -1881,7 +1888,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-trigger-mention-item/piece-trigger-mention-item.component.html</context>
           <context context-type="linenumber">56,58</context>
         </context-group>
-        <target state="final"> 此触发器需要从您的账户中加载数据作为示例数据 </target>
+        <target state="final"> Trigger ini perlu memuat data dari akun Anda, untuk digunakan sebagai data sampel </target>
       </trans-unit>
       <trans-unit id="806466970018409276" datatype="html" approved="yes">
         <source>Go to trigger </source>
@@ -1893,7 +1900,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/webhook-trigger-mention-item/webhook-trigger-mention-item.component.html</context>
           <context context-type="linenumber">33,34</context>
         </context-group>
-        <target state="final">转到触发器 </target>
+        <target state="final">Lanjutkan ke trigger </target>
       </trans-unit>
       <trans-unit id="1705277357265501985" datatype="html" approved="yes">
         <source> Send sample data first </source>
@@ -1901,7 +1908,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/webhook-trigger-mention-item/webhook-trigger-mention-item.component.html</context>
           <context context-type="linenumber">25,27</context>
         </context-group>
-        <target state="final"> 先发送样本数据 </target>
+        <target state="final"> Kirim data sampel terlebih dahulu </target>
       </trans-unit>
       <trans-unit id="2776954849664294745" datatype="html" approved="yes">
         <source> This trigger needs to have data sent to it, to use as sample data </source>
@@ -1909,7 +1916,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/webhook-trigger-mention-item/webhook-trigger-mention-item.component.html</context>
           <context context-type="linenumber">28,30</context>
         </context-group>
-        <target state="final"> 此触发器需要先将数据发送给它，以作为示例数据 </target>
+        <target state="final"> Trigger ini perlu mengirimkan data ke dalamnya, untuk digunakan sebagai data sampel </target>
       </trans-unit>
       <trans-unit id="465580375833195843" datatype="html" approved="yes">
         <source> Switch Version </source>
@@ -1917,7 +1924,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/draft-status/draft-status.component.html</context>
           <context context-type="linenumber">18,20</context>
         </context-group>
-        <target state="final"> 切换版本 </target>
+        <target state="final"> Ganti Versi </target>
       </trans-unit>
       <trans-unit id="3413929662864508239" datatype="html" approved="yes">
         <source> Draft </source>
@@ -1925,7 +1932,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/draft-status/draft-status.component.html</context>
           <context context-type="linenumber">21,23</context>
         </context-group>
-        <target state="final"> 草稿 </target>
+        <target state="final"> Draf </target>
       </trans-unit>
       <trans-unit id="8481607203070134929" datatype="html" approved="yes">
         <source> Published </source>
@@ -1933,7 +1940,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/draft-status/draft-status.component.html</context>
           <context context-type="linenumber">24,26</context>
         </context-group>
-        <target state="final"> 已发布 </target>
+        <target state="final"> Diterbitkan </target>
       </trans-unit>
       <trans-unit id="4058575476871566236" datatype="html" approved="yes">
         <source>Published</source>
@@ -1945,7 +1952,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts</context>
           <context context-type="linenumber">84</context>
         </context-group>
-        <target state="final">已发布</target>
+        <target state="final">Diterbitkan</target>
       </trans-unit>
       <trans-unit id="4808589666930368915" datatype="html" approved="yes">
         <source>Draft</source>
@@ -1953,7 +1960,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/draft-status/draft-status.component.ts</context>
           <context context-type="linenumber">38</context>
         </context-group>
-        <target state="final">草稿</target>
+        <target state="final">Draf</target>
       </trans-unit>
       <trans-unit id="2288513108450439427" datatype="html" approved="yes">
         <source>Support</source>
@@ -1965,7 +1972,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html</context>
           <context context-type="linenumber">37</context>
         </context-group>
-        <target state="final">支持</target>
+        <target state="final">Dukungan</target>
       </trans-unit>
       <trans-unit id="2821179408673282599" datatype="html" approved="yes">
         <source>Home</source>
@@ -1977,7 +1984,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html</context>
           <context context-type="linenumber">4</context>
         </context-group>
-        <target state="final">首页</target>
+        <target state="final">Home</target>
       </trans-unit>
       <trans-unit id="6041115344061899387" datatype="html" approved="yes">
         <source>Rename</source>
@@ -1989,7 +1996,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/folders-list/folders-list.component.html</context>
           <context context-type="linenumber">57</context>
         </context-group>
-        <target state="final">重命名</target>
+        <target state="final">Ubah nama</target>
       </trans-unit>
       <trans-unit id="6621329748219109148" datatype="html" approved="yes">
         <source>Duplicate</source>
@@ -2001,7 +2008,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html</context>
           <context context-type="linenumber">77</context>
         </context-group>
-        <target state="final">复制</target>
+        <target state="final">Duplikasi</target>
       </trans-unit>
       <trans-unit id="1071721880474488785" datatype="html" approved="yes">
         <source>Import</source>
@@ -2009,7 +2016,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html</context>
           <context context-type="linenumber">59</context>
         </context-group>
-        <target state="final">导入</target>
+        <target state="final">Import</target>
       </trans-unit>
       <trans-unit id="7462301153729425254" datatype="html" approved="yes">
         <source>Export</source>
@@ -2017,7 +2024,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html</context>
           <context context-type="linenumber">66</context>
         </context-group>
-        <target state="final">导出</target>
+        <target state="final">Export</target>
       </trans-unit>
       <trans-unit id="7022070615528435141" datatype="html" approved="yes">
         <source>Delete</source>
@@ -2033,7 +2040,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/folders-list/folders-list.component.html</context>
           <context context-type="linenumber">64</context>
         </context-group>
-        <target state="final">删除</target>
+        <target state="final">Hapus</target>
       </trans-unit>
       <trans-unit id="3564199105925922112" datatype="html" approved="yes">
         <source>This will permanently delete the flow, all its data and any background runs.
@@ -2046,8 +2053,8 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts</context>
           <context context-type="linenumber">121,122</context>
         </context-group>
-        <target state="final">这将会永久删除此流程，包括它所有数据和后台。
-      您不能撤消此操作。</target>
+        <target state="final">Tindakan ini akan menghapus flow, semua datanya, dan semua proses di latar belakang secara permanen.
+      You can't undo this action.</target>
       </trans-unit>
       <trans-unit id="3785740330706781283" datatype="html" approved="yes">
         <source> Import Flow
@@ -2056,7 +2063,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/import-flow-dialogue/import-flow-dialogue.component.html</context>
           <context context-type="linenumber">1,3</context>
         </context-group>
-        <target state="final"> 导入流程
+        <target state="final"> Import Flow
 </target>
       </trans-unit>
       <trans-unit id="7723572148434820610" datatype="html" approved="yes">
@@ -2070,7 +2077,7 @@
           <context context-type="linenumber">9</context>
         </context-group>
         <target state="final">
-          重要：导入流程将覆盖您当前的流程。
+          Penting: Mengimpor flow akan menimpa flow Anda saat ini.
           <x id="START_BOLD_TEXT" ctype="x-b"/>
           <x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="&lt;/b&gt;"/>
         </target>
@@ -2081,7 +2088,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/import-flow-dialogue/import-flow-dialogue.component.html</context>
           <context context-type="linenumber">12</context>
         </context-group>
-        <target state="final">文件</target>
+        <target state="final">File</target>
       </trans-unit>
       <trans-unit id="727310260821422069" datatype="html" approved="yes">
         <source> Import </source>
@@ -2089,7 +2096,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/import-flow-dialogue/import-flow-dialogue.component.html</context>
           <context context-type="linenumber">26,28</context>
         </context-group>
-        <target state="final"> 导入 </target>
+        <target state="final"> Import </target>
       </trans-unit>
       <trans-unit id="7612725427647519192" datatype="html" approved="yes">
         <source> Edit Flow </source>
@@ -2097,7 +2104,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.html</context>
           <context context-type="linenumber">16,18</context>
         </context-group>
-        <target state="final"> 编辑流程 </target>
+        <target state="final"> Edit Flow </target>
       </trans-unit>
       <trans-unit id="8161497630812704942" datatype="html" approved="yes">
         <source>Add 1 more step to publish</source>
@@ -2105,7 +2112,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts</context>
           <context context-type="linenumber">82</context>
         </context-group>
-        <target state="final">再添加一个步骤发布</target>
+        <target state="final">Tambahkan 1 langkah lagi untuk menerbitkan</target>
       </trans-unit>
       <trans-unit id="3433912835588025867" datatype="html" approved="yes">
         <source>Your flow has invalid steps</source>
@@ -2113,7 +2120,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts</context>
           <context context-type="linenumber">86</context>
         </context-group>
-        <target state="final">您的流程存在无效的步骤</target>
+        <target state="final">Flow Anda memiliki langkah-langkah yang tidak valid</target>
       </trans-unit>
       <trans-unit id="6493545318293497285" datatype="html" approved="yes">
         <source>Publish Flow</source>
@@ -2121,7 +2128,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts</context>
           <context context-type="linenumber">88</context>
         </context-group>
-        <target state="final">发布流程</target>
+        <target state="final">Terbitkan Flow</target>
       </trans-unit>
       <trans-unit id="4636616640072565270" datatype="html" approved="yes">
         <source>Saving</source>
@@ -2129,7 +2136,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts</context>
           <context context-type="linenumber">94</context>
         </context-group>
-        <target state="final">保存中</target>
+        <target state="final">Menyimpan</target>
       </trans-unit>
       <trans-unit id="7132078449210987153" datatype="html" approved="yes">
         <source>Publishing</source>
@@ -2137,7 +2144,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts</context>
           <context context-type="linenumber">96</context>
         </context-group>
-        <target state="final">发布中</target>
+        <target state="final">Menerbitkan</target>
       </trans-unit>
       <trans-unit id="7430416142942514215" datatype="html" approved="yes">
         <source>Publish</source>
@@ -2145,7 +2152,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts</context>
           <context context-type="linenumber">98</context>
         </context-group>
-        <target state="final">发布</target>
+        <target state="final">Terbitkan</target>
       </trans-unit>
       <trans-unit id="6310395472139498755" datatype="html" approved="yes">
         <source>Run Details</source>
@@ -2153,7 +2160,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-left-sidebar/src/lib/run-details/run-details.component.html</context>
           <context context-type="linenumber">2</context>
         </context-group>
-        <target state="final">运行详情</target>
+        <target state="final">Jalankan Detail</target>
       </trans-unit>
       <trans-unit id="1859826026585680442" datatype="html" approved="yes">
         <source>No details available for this run.</source>
@@ -2161,7 +2168,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-left-sidebar/src/lib/run-details/run-details.component.html</context>
           <context context-type="linenumber">49</context>
         </context-group>
-        <target state="final">没有此运行的详情。</target>
+        <target state="final">Tidak ada detail yang tersedia untuk proses ini.</target>
       </trans-unit>
       <trans-unit id="7238368002587743460" datatype="html" approved="yes">
         <source>Step succeeded</source>
@@ -2177,7 +2184,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-piece-webhook-trigger/test-piece-webhook-trigger.component.html</context>
           <context context-type="linenumber">30</context>
         </context-group>
-        <target state="final">步骤已成功</target>
+        <target state="final">Langkah berhasil</target>
       </trans-unit>
       <trans-unit id="977525603391908118" datatype="html" approved="yes">
         <source>Step paused</source>
@@ -2185,7 +2192,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-left-sidebar/src/lib/run-details/selected-step-result/selected-step-result.component.html</context>
           <context context-type="linenumber">14</context>
         </context-group>
-        <target state="final">步骤已暂停</target>
+        <target state="final">Langkah dijeda</target>
       </trans-unit>
       <trans-unit id="4220765745195024064" datatype="html" approved="yes">
         <source>Duration:</source>
@@ -2193,7 +2200,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-left-sidebar/src/lib/run-details/selected-step-result/selected-step-result.component.html</context>
           <context context-type="linenumber">22</context>
         </context-group>
-        <target state="final">持续时间︰</target>
+        <target state="final">Durasi:</target>
       </trans-unit>
       <trans-unit id="8968030053137661433" datatype="html" approved="yes">
         <source>Output</source>
@@ -2201,7 +2208,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-left-sidebar/src/lib/run-details/selected-step-result/selected-step-result.component.html</context>
           <context context-type="linenumber">27</context>
         </context-group>
-        <target state="final">输出</target>
+        <target state="final">Output</target>
       </trans-unit>
       <trans-unit id="1464435073936969366" datatype="html" approved="yes">
         <source> Done </source>
@@ -2213,7 +2220,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/rename-folder-dialog/rename-folder-dialog.component.html</context>
           <context context-type="linenumber">27,29</context>
         </context-group>
-        <target state="final"> 已完成 </target>
+        <target state="final"> Selesai </target>
       </trans-unit>
       <trans-unit id="5112507844562615179" datatype="html" approved="yes">
         <source> All Iterations </source>
@@ -2221,7 +2228,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-left-sidebar/src/lib/run-details/steps-results-list/step-result.component.html</context>
           <context context-type="linenumber">72,74</context>
         </context-group>
-        <target state="final"> 所有迭代 </target>
+        <target state="final"> Semua Iterasi </target>
       </trans-unit>
       <trans-unit id="892494322375448657" datatype="html" approved="yes">
         <source>
@@ -2237,9 +2244,9 @@
           <context context-type="linenumber">17,21</context>
         </context-group>
         <target state="final">
-如果您希望得到这个 webhook 的返回， 添加 &lt;b&gt;/sync&lt;/b&gt; 到URL上。&lt;br&gt; &lt;br&gt;
-                  在这种情况下，您还需要在流程末尾添加一个带返回响应的 &lt;b&gt;HTTP 步骤&lt;/b&gt;  。&lt;br&gt; &lt;br&gt;
-                  **如果流程运行超过 30 秒，将会返回 408 请求超时响应**&lt;br&gt;
+          Jika Anda mengharapkan balasan dari webhook ini, tambahkan &lt;b&gt;/sync&lt;/b&gt; ke URL.&lt;br&gt; &lt;br&gt;
+                  Dalam hal ini, Anda juga harus menambahkan &lt;b&gt;HTTP step&lt;/b&gt;  dengan respon balik ke akhir flow Anda.&lt;br&gt; &lt;br&gt;
+                  **Jika flow memakan waktu lebih dari 30 detik, maka akan memberikan respon 204 tanpa-konten.**&lt;br&gt;
                   
                   
           <x id="INTERPOLATION" equiv-text="{{ (edition$ | async) === ApEdition.CLOUD ? '' : 'To change this, set the **AP_WEBHOOK_TIMEOUT_SECONDS** to desired number.' }}"/>
@@ -2251,7 +2258,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/edit-step-sidebar/step-name-editor/step-name-editor.component.html</context>
           <context context-type="linenumber">6</context>
         </context-group>
-        <target state="final">编辑步骤名称</target>
+        <target state="final">Edit nama langkah</target>
       </trans-unit>
       <trans-unit id="6867381603185205680" datatype="html" approved="yes">
         <source> Or </source>
@@ -2263,7 +2270,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-piece-webhook-trigger/test-piece-webhook-trigger.component.html</context>
           <context context-type="linenumber">19,21</context>
         </context-group>
-        <target state="final"> 或 </target>
+        <target state="final"> Atau </target>
       </trans-unit>
       <trans-unit id="2537648413493478491" datatype="html" approved="yes">
         <source>Inputs</source>
@@ -2271,7 +2278,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/code-step-input-form/code-step-input-form.component.html</context>
           <context context-type="linenumber">4</context>
         </context-group>
-        <target state="final">输入</target>
+        <target state="final">Input</target>
       </trans-unit>
       <trans-unit id="6162691442834560200" datatype="html" approved="yes">
         <source>Items</source>
@@ -2279,7 +2286,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/loop-step-input-form/loop-step-input-form.component.html</context>
           <context context-type="linenumber">4</context>
         </context-group>
-        <target state="final">项目</target>
+        <target state="final">Item</target>
       </trans-unit>
       <trans-unit id="3349891418640044644" datatype="html" approved="yes">
         <source> Items are required. </source>
@@ -2287,7 +2294,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/loop-step-input-form/loop-step-input-form.component.html</context>
           <context context-type="linenumber">7,9</context>
         </context-group>
-        <target state="final"> 项目是必填项。 </target>
+        <target state="final"> Item diperlukan. </target>
       </trans-unit>
       <trans-unit id="97940262148604706" datatype="html" approved="yes">
         <source> Action </source>
@@ -2295,7 +2302,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/piece-input-forms/piece-action-input-form/piece-action-input-form.component.html</context>
           <context context-type="linenumber">4</context>
         </context-group>
-        <target state="final"> 动作 </target>
+        <target state="final"> Tindakan </target>
       </trans-unit>
       <trans-unit id="8585958577229523205" datatype="html" approved="yes">
         <source> No options available </source>
@@ -2307,7 +2314,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/piece-input-forms/piece-trigger-input-form/piece-trigger-input-form.component.html</context>
           <context context-type="linenumber">40,42</context>
         </context-group>
-        <target state="final"> 无可用选项 </target>
+        <target state="final"> Tidak ada opsi yang tersedia </target>
       </trans-unit>
       <trans-unit id="7863127620120051284" datatype="html" approved="yes">
         <source> Action is required </source>
@@ -2315,7 +2322,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/piece-input-forms/piece-action-input-form/piece-action-input-form.component.html</context>
           <context context-type="linenumber">27,29</context>
         </context-group>
-        <target state="final"> 动作是必填项 </target>
+        <target state="final"> Tindakan diperlukan </target>
       </trans-unit>
       <trans-unit id="8425620343514116260" datatype="html" approved="yes">
         <source> Trigger </source>
@@ -2323,7 +2330,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/piece-input-forms/piece-trigger-input-form/piece-trigger-input-form.component.html</context>
           <context context-type="linenumber">4</context>
         </context-group>
-        <target state="final"> 触发器 </target>
+        <target state="final"> Trigger </target>
       </trans-unit>
       <trans-unit id="628476928604062458" datatype="html" approved="yes">
         <source>Select a Trigger</source>
@@ -2331,7 +2338,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/piece-input-forms/piece-trigger-input-form/piece-trigger-input-form.component.html</context>
           <context context-type="linenumber">5</context>
         </context-group>
-        <target state="final">选择一个触发器</target>
+        <target state="final">Pilih Trigger</target>
       </trans-unit>
       <trans-unit id="5746253109350702685" datatype="html" approved="yes">
         <source>Instantly triggered once change occurs</source>
@@ -2339,7 +2346,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/piece-input-forms/piece-trigger-input-form/piece-trigger-input-form.component.html</context>
           <context context-type="linenumber">21</context>
         </context-group>
-        <target state="final">发生更改后立即触发</target>
+        <target state="final">Dipicu secara instan begitu terjadi perubahan</target>
       </trans-unit>
       <trans-unit id="4481618196785625765" datatype="html" approved="yes">
         <source>Checks for changes periodically, based on your plan</source>
@@ -2347,7 +2354,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/piece-input-forms/piece-trigger-input-form/piece-trigger-input-form.component.html</context>
           <context context-type="linenumber">29</context>
         </context-group>
-        <target state="final">根据您的计划，定期检查更改</target>
+        <target state="final">Periksa perubahan secara berkala, berdasarkan rencana Anda</target>
       </trans-unit>
       <trans-unit id="586223894042857512" datatype="html" approved="yes">
         <source> Trigger is required </source>
@@ -2355,7 +2362,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/piece-input-forms/piece-trigger-input-form/piece-trigger-input-form.component.html</context>
           <context context-type="linenumber">44,46</context>
         </context-group>
-        <target state="final"> 触发器是必填项 </target>
+        <target state="final"> Trigger diperlukan </target>
       </trans-unit>
       <trans-unit id="6019850736144907892" datatype="html" approved="yes">
         <source> Request Piece </source>
@@ -2363,7 +2370,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-list/step-type-list.component.html</context>
           <context context-type="linenumber">5,7</context>
         </context-group>
-        <target state="final"> 请求区块 </target>
+        <target state="final"> Meminta Bagian </target>
       </trans-unit>
       <trans-unit id="4580988005648117665" datatype="html" approved="yes">
         <source>Search</source>
@@ -2375,7 +2382,7 @@
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/template-apps-dropdown/template-apps-dropdown.component.html</context>
           <context context-type="linenumber">10</context>
         </context-group>
-        <target state="final">搜索</target>
+        <target state="final">Cari</target>
       </trans-unit>
       <trans-unit id="4130109056262417125" datatype="html" approved="yes">
         <source>Select Trigger</source>
@@ -2383,7 +2390,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts</context>
           <context context-type="linenumber">73</context>
         </context-group>
-        <target state="final">选择触发器</target>
+        <target state="final">Pilih Trigger</target>
       </trans-unit>
       <trans-unit id="4973271808417683361" datatype="html" approved="yes">
         <source>Select Step</source>
@@ -2395,7 +2402,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts</context>
           <context context-type="linenumber">80</context>
         </context-group>
-        <target state="final">选择步骤</target>
+        <target state="final">Pilih Langkah</target>
       </trans-unit>
       <trans-unit id="1616102757855967475" datatype="html" approved="yes">
         <source>All</source>
@@ -2407,7 +2414,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
           <context context-type="linenumber">7</context>
         </context-group>
-        <target state="final">全部</target>
+        <target state="final">Semua</target>
       </trans-unit>
       <trans-unit id="2995024767956767595" datatype="html" approved="yes">
         <source>Oops! We didn't find any results.</source>
@@ -2423,7 +2430,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts</context>
           <context context-type="linenumber">182</context>
         </context-group>
-        <target state="final">哦豁！我们找不到任何结果。</target>
+        <target state="final">Oops! Kami tidak menemukan hasil apa pun.</target>
       </trans-unit>
       <trans-unit id="7027401708987643293" datatype="html" approved="yes">
         <source>Core</source>
@@ -2431,7 +2438,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts</context>
           <context context-type="linenumber">172</context>
         </context-group>
-        <target state="final">核心</target>
+        <target state="final">Inti</target>
       </trans-unit>
       <trans-unit id="3392444403919167176" datatype="html" approved="yes">
         <source>App Events</source>
@@ -2439,7 +2446,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts</context>
           <context context-type="linenumber">179</context>
         </context-group>
-        <target state="final">应用的事件</target>
+        <target state="final">Acara Aplikasi</target>
       </trans-unit>
       <trans-unit id="5431974576991822715" datatype="html" approved="yes">
         <source>App Actions</source>
@@ -2447,7 +2454,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts</context>
           <context context-type="linenumber">180</context>
         </context-group>
-        <target state="final">应用的动作</target>
+        <target state="final">Tindakan Aplikasi</target>
       </trans-unit>
       <trans-unit id="4890031060409002646" datatype="html" approved="yes">
         <source>Uncategorized</source>
@@ -2475,7 +2482,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/store/folders/folders.effects.ts</context>
           <context context-type="linenumber">22</context>
         </context-group>
-        <target state="final">未分类的</target>
+        <target state="final">Tidak dikategorikan</target>
       </trans-unit>
       <trans-unit id="7453039164124655632" datatype="html" approved="yes">
         <source>
@@ -2491,7 +2498,7 @@
           <context context-type="linenumber">11</context>
         </context-group>
         <target state="final">
-          运行成功 ()
+          Berhasil dijalankan ()
           <x id="INTERPOLATION" equiv-text="{{ selectedRun.id }}"/>
         </target>
       </trans-unit>
@@ -2505,7 +2512,7 @@
           <context context-type="linenumber">15</context>
         </context-group>
         <target state="final">
-          运行失败 ()
+          Gagal dijalankan ()
           <x id="INTERPOLATION" equiv-text="{{ selectedRun.id }}"/>
         </target>
       </trans-unit>
@@ -2515,7 +2522,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-store/src/lib/test-run-bar/test-run-bar.component.html</context>
           <context context-type="linenumber">19</context>
         </context-group>
-        <target state="final">流程正在运行</target>
+        <target state="final">Flow sedang berjalan</target>
       </trans-unit>
       <trans-unit id="4598207822643496236" datatype="html" approved="yes">
         <source>Flow is paused ...</source>
@@ -2523,7 +2530,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-store/src/lib/test-run-bar/test-run-bar.component.html</context>
           <context context-type="linenumber">23</context>
         </context-group>
-        <target state="final">流程已暂停...</target>
+        <target state="final">Flow dijeda ...</target>
       </trans-unit>
       <trans-unit id="7038602814235796780" datatype="html" approved="yes">
         <source>
@@ -2535,7 +2542,7 @@
           <context context-type="linenumber">27,28</context>
         </context-group>
         <target state="final">
-          运行超时，请优化您的步骤
+          Proses melebihi beberapa detik, cobalah optimalkan langkah Anda.
           <x id="INTERPOLATION" equiv-text="{{sandboxTimeoutSeconds$ | async}}"/>
         </target>
       </trans-unit>
@@ -2545,7 +2552,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-store/src/lib/test-run-bar/test-run-bar.component.html</context>
           <context context-type="linenumber">32</context>
         </context-group>
-        <target state="final">因未知原因运行失败，请联系支持。</target>
+        <target state="final">Proses gagal karena alasan yang tidak diketahui, hubungi tim dukungan.</target>
       </trans-unit>
       <trans-unit id="8315482926074085909" datatype="html" approved="yes">
         <source> Exit Run </source>
@@ -2553,7 +2560,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-store/src/lib/test-run-bar/test-run-bar.component.html</context>
           <context context-type="linenumber">39</context>
         </context-group>
-        <target state="final"> 退出运行 </target>
+        <target state="final"> Keluar dari proses Run </target>
       </trans-unit>
       <trans-unit id="500133922719782601" datatype="html" approved="yes">
         <source> Generate Sample Data </source>
@@ -2573,7 +2580,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html</context>
           <context context-type="linenumber">2,4</context>
         </context-group>
-        <target state="final"> 生成示例数据 </target>
+        <target state="final"> Hasilkan Data Sampel </target>
       </trans-unit>
       <trans-unit id="8144434134010600908" datatype="html" approved="yes">
         <source>Test step</source>
@@ -2581,7 +2588,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-action/test-action.component.html</context>
           <context context-type="linenumber">40,41</context>
         </context-group>
-        <target state="final">测试步骤</target>
+        <target state="final">Uji Langkah</target>
       </trans-unit>
       <trans-unit id="7919787260081015275" datatype="html" approved="yes">
         <source>Tested Successfully</source>
@@ -2597,7 +2604,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html</context>
           <context context-type="linenumber">24</context>
         </context-group>
-        <target state="final">测试成功</target>
+        <target state="final">Berhasil Diuji</target>
       </trans-unit>
       <trans-unit id="2150150684765904117" datatype="html" approved="yes">
         <source>Testing Failed</source>
@@ -2605,7 +2612,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-action/test-action.component.html</context>
           <context context-type="linenumber">63</context>
         </context-group>
-        <target state="final">测试失败</target>
+        <target state="final">Pengujian Gagal</target>
       </trans-unit>
       <trans-unit id="3541311390491548382" datatype="html" approved="yes">
         <source>Retest</source>
@@ -2621,7 +2628,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html</context>
           <context context-type="linenumber">30</context>
         </context-group>
-        <target state="final">重新测试</target>
+        <target state="final">Uji lagi</target>
       </trans-unit>
       <trans-unit id="4137681575855964026" datatype="html" approved="yes">
         <source>Test this trigger to generate sample data that can be used in the next steps</source>
@@ -2629,7 +2636,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-piece-webhook-trigger/test-piece-webhook-trigger.component.html</context>
           <context context-type="linenumber">10</context>
         </context-group>
-        <target state="final">测试此触发器以生成可用于下一个步骤的示例数据</target>
+        <target state="final">Uji trigger ini untuk menghasilkan data sampel yang dapat digunakan pada langkah berikutnya</target>
       </trans-unit>
       <trans-unit id="7772874305312537929" datatype="html" approved="yes">
         <source>Test Trigger </source>
@@ -2637,7 +2644,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-piece-webhook-trigger/test-piece-webhook-trigger.component.html</context>
           <context context-type="linenumber">16,17</context>
         </context-group>
-        <target state="final">测试触发器 </target>
+        <target state="final">Uji Trigger </target>
       </trans-unit>
       <trans-unit id="7821978891866988357" datatype="html" approved="yes">
         <source>Use Mock Data </source>
@@ -2645,7 +2652,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-piece-webhook-trigger/test-piece-webhook-trigger.component.html</context>
           <context context-type="linenumber">22,23</context>
         </context-group>
-        <target state="final">使用模拟数据 </target>
+        <target state="final">Gunakan Data Tiruan </target>
       </trans-unit>
       <trans-unit id="326819936092149573" datatype="html" approved="yes">
         <source> Data </source>
@@ -2661,7 +2668,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html</context>
           <context context-type="linenumber">34,36</context>
         </context-group>
-        <target state="final"> 数据 </target>
+        <target state="final"> Data </target>
       </trans-unit>
       <trans-unit id="1443544130994970867" datatype="html" approved="yes">
         <source>
@@ -2681,7 +2688,7 @@
           <context context-type="linenumber">39</context>
         </context-group>
         <target state="final">
-           (结果 )
+           (Hasil )
           <x id="INTERPOLATION" equiv-text="{{currentResults.length-idx}}"/>
         </target>
       </trans-unit>
@@ -2695,7 +2702,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html</context>
           <context context-type="linenumber">54</context>
         </context-group>
-        <target state="final">测试触发器</target>
+        <target state="final">Menguji trigger</target>
       </trans-unit>
       <trans-unit id="2159130950882492111" datatype="html" approved="yes">
         <source>Cancel</source>
@@ -2707,7 +2714,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html</context>
           <context context-type="linenumber">57</context>
         </context-group>
-        <target state="final">取消</target>
+        <target state="final">Batalkan</target>
       </trans-unit>
       <trans-unit id="1098411996448900439" datatype="html" approved="yes">
         <source>Action Required</source>
@@ -2719,7 +2726,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html</context>
           <context context-type="linenumber">63</context>
         </context-group>
-        <target state="final">动作是必填项</target>
+        <target state="final">Tindakan diperlukan</target>
       </trans-unit>
       <trans-unit id="202666211146552310" datatype="html" approved="yes">
         <source>Load sample data from your account to be used in the next steps</source>
@@ -2727,7 +2734,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-polling-trigger/test-polling-trigger.component.html</context>
           <context context-type="linenumber">13</context>
         </context-group>
-        <target state="final">从您的账户中加载示例数据以供在下一个步骤中使用</target>
+        <target state="final">Muat data sampel dari akun Anda untuk digunakan pada langkah berikutnya</target>
       </trans-unit>
       <trans-unit id="8335477655941671361" datatype="html" approved="yes">
         <source>Load data</source>
@@ -2743,7 +2750,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-polling-trigger/test-polling-trigger.component.html</context>
           <context context-type="linenumber">69</context>
         </context-group>
-        <target state="final">加载数据</target>
+        <target state="final">Muat data</target>
       </trans-unit>
       <trans-unit id="4385583003359794696" datatype="html" approved="yes">
         <source> This sample data can be used in the next steps </source>
@@ -2751,7 +2758,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-polling-trigger/test-polling-trigger.component.html</context>
           <context context-type="linenumber">49,51</context>
         </context-group>
-        <target state="final"> 此示例数据可以用在下一个步骤中 </target>
+        <target state="final"> Data sampel ini dapat digunakan pada langkah berikutnya </target>
       </trans-unit>
       <trans-unit id="1645193489541371451" datatype="html" approved="yes">
         <source>No results found</source>
@@ -2759,7 +2766,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-polling-trigger/test-polling-trigger.component.html</context>
           <context context-type="linenumber">60</context>
         </context-group>
-        <target state="final">没找到结果</target>
+        <target state="final">Tidak ada hasil yang ditemukan</target>
       </trans-unit>
       <trans-unit id="3854830088717420676" datatype="html" approved="yes">
         <source>Please add some data then press "Load Data"</source>
@@ -2767,7 +2774,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-polling-trigger/test-polling-trigger.component.html</context>
           <context context-type="linenumber">72</context>
         </context-group>
-        <target state="final">请添加一些数据，然后按"加载数据"</target>
+        <target state="final">Silakan tambahkan beberapa data lalu tekan "Muat Data"</target>
       </trans-unit>
       <trans-unit id="7790321446929337842" datatype="html" approved="yes">
         <source>Testing data failed. Please ensure that the settings are correct or try again.</source>
@@ -2775,7 +2782,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-polling-trigger/test-polling-trigger.component.html</context>
           <context context-type="linenumber">73,74</context>
         </context-group>
-        <target state="final">测试数据失败。请确保设置正确或再试一次。</target>
+        <target state="final">Pengujian data gagal. Harap pastikan bahwa pengaturan sudah benar atau coba lagi.</target>
       </trans-unit>
       <trans-unit id="8201052275889392973" datatype="html" approved="yes">
         <source>Send a request to generate sample data that can be used in the next steps</source>
@@ -2783,7 +2790,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html</context>
           <context context-type="linenumber">10</context>
         </context-group>
-        <target state="final">发送请求以生成可以在下一个步骤中使用的示例数据</target>
+        <target state="final">Kirim permintaan untuk menghasilkan data sampel yang dapat digunakan pada langkah berikutnya</target>
       </trans-unit>
       <trans-unit id="4633860620352207300" datatype="html" approved="yes">
         <source> Send Data </source>
@@ -2791,7 +2798,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html</context>
           <context context-type="linenumber">13,15</context>
         </context-group>
-        <target state="final"> 发送数据 </target>
+        <target state="final"> Kirim Data </target>
       </trans-unit>
       <trans-unit id="5226293457079438761" datatype="html" approved="yes">
         <source> Please send data to the webhook endpoint to test the step. </source>
@@ -2799,7 +2806,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html</context>
           <context context-type="linenumber">65,68</context>
         </context-group>
-        <target state="final"> 请发送数据到 webhook 端点以便测试步骤。 </target>
+        <target state="final"> Silakan kirim data ke titik akhir webhook untuk menguji langkah tersebut. </target>
       </trans-unit>
       <trans-unit id="4042902315677630519" datatype="html" approved="yes">
         <source> Name is required </source>
@@ -2831,7 +2838,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/rename-folder-dialog/rename-folder-dialog.component.html</context>
           <context context-type="linenumber">14,16</context>
         </context-group>
-        <target state="final"> 名称是必填项 </target>
+        <target state="final"> Nama diperlukan </target>
       </trans-unit>
       <trans-unit id="6070859199120014907" datatype="html" approved="yes">
         <source>Reconnect</source>
@@ -2839,7 +2846,7 @@
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/custom-auth-connection-dialog/custom-auth-connection-dialog.component.html</context>
           <context context-type="linenumber">3</context>
         </context-group>
-        <target state="final">重新连接</target>
+        <target state="final">Hubungkan kembali</target>
       </trans-unit>
       <trans-unit id="8096108831936282703" datatype="html" approved="yes">
         <source>New Connection</source>
@@ -2859,7 +2866,7 @@
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
           <context context-type="linenumber">3</context>
         </context-group>
-        <target state="final">新建连接</target>
+        <target state="final">Koneksi Baru</target>
       </trans-unit>
       <trans-unit id="828831341307092377" datatype="html" approved="yes">
         <source> Name can only contain letters, numbers and underscores </source>
@@ -2883,7 +2890,7 @@
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/secret-text-connection-dialog/secret-text-connection-dialog.component.html</context>
           <context context-type="linenumber">23,25</context>
         </context-group>
-        <target state="final"> 名称只能包含字母、数字和下划线 </target>
+        <target state="final"> Nama hanya boleh berisi huruf, angka, dan garis bawah </target>
       </trans-unit>
       <trans-unit id="7467703008452363786" datatype="html" approved="yes">
         <source> Name is already used </source>
@@ -2907,7 +2914,7 @@
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/secret-text-connection-dialog/secret-text-connection-dialog.component.html</context>
           <context context-type="linenumber">26,28</context>
         </context-group>
-        <target state="final"> 名称已被占用 </target>
+        <target state="final"> Nama sudah digunakan </target>
       </trans-unit>
       <trans-unit id="6608576580294436927" datatype="html" approved="yes">
         <source>is required</source>
@@ -2951,7 +2958,7 @@
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/secret-text-connection-dialog/secret-text-connection-dialog.component.html</context>
           <context context-type="linenumber">37</context>
         </context-group>
-        <target state="final">是必填项</target>
+        <target state="final">wajib diisi</target>
       </trans-unit>
       <trans-unit id="2504830835198730128" datatype="html" approved="yes">
         <source> You have to connect an account to continue </source>
@@ -2963,7 +2970,7 @@
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
           <context context-type="linenumber">86,88</context>
         </context-group>
-        <target state="final"> 您必须连接一个账户才能继续 </target>
+        <target state="final"> Anda harus menghubungkan akun untuk melanjutkan </target>
       </trans-unit>
       <trans-unit id="3543628236093406924" datatype="html" approved="yes">
         <source>I would like to use my own app credentials </source>
@@ -2971,7 +2978,7 @@
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/managed-oauth2-connection-dialog/managed-oauth2-connection-dialog.component.html</context>
           <context context-type="linenumber">64,67</context>
         </context-group>
-        <target state="final">我想使用我自己的应用凭据 </target>
+        <target state="final">Saya ingin menggunakan kredensial aplikasi saya sendiri </target>
       </trans-unit>
       <trans-unit id="3591602381641269137" datatype="html" approved="yes">
         <source>The ID of this connection definition. You will need to select this key whenever you want to reuse this connection.</source>
@@ -2979,7 +2986,7 @@
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/managed-oauth2-connection-dialog/managed-oauth2-connection-dialog.component.ts</context>
           <context context-type="linenumber">75</context>
         </context-group>
-        <target state="final">此连接定义的ID。每当您想要重用此连接时，您需要选择此密钥。</target>
+        <target state="final">ID definisi koneksi ini. Anda harus memilih kunci ini kapan pun Anda ingin menggunakan kembali koneksi ini.</target>
       </trans-unit>
       <trans-unit id="7022562336989577788" datatype="html" approved="yes">
         <source> Redirect URL is required</source>
@@ -2987,7 +2994,7 @@
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
           <context context-type="linenumber">37,38</context>
         </context-group>
-        <target state="final"> 重定向 URL 是必填项</target>
+        <target state="final"> URL pengalihan diperlukan</target>
       </trans-unit>
       <trans-unit id="5273501066845923426" datatype="html" approved="yes">
         <source>Client ID</source>
@@ -2995,7 +3002,7 @@
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
           <context context-type="linenumber">42</context>
         </context-group>
-        <target state="final">Client ID</target>
+        <target state="final">ID Klien</target>
       </trans-unit>
       <trans-unit id="6157299238892357663" datatype="html" approved="yes">
         <source> Client ID is required</source>
@@ -3003,7 +3010,7 @@
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
           <context context-type="linenumber">44,45</context>
         </context-group>
-        <target state="final"> Client ID 是必填项</target>
+        <target state="final"> ID Klien diperlukan</target>
       </trans-unit>
       <trans-unit id="3858350041926042177" datatype="html" approved="yes">
         <source>Client Secret</source>
@@ -3011,7 +3018,7 @@
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
           <context context-type="linenumber">48</context>
         </context-group>
-        <target state="final">Client Secret</target>
+        <target state="final">Rahasia Klien</target>
       </trans-unit>
       <trans-unit id="1073544708188299870" datatype="html" approved="yes">
         <source> Client Secret is required</source>
@@ -3019,7 +3026,7 @@
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
           <context context-type="linenumber">51,52</context>
         </context-group>
-        <target state="final"> Client Secret 是必填项</target>
+        <target state="final"> Rahasia Klien diperlukan</target>
       </trans-unit>
       <trans-unit id="9030073336275002095" datatype="html" approved="yes">
         <source>I would like to use predefined app credentials </source>
@@ -3027,7 +3034,7 @@
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
           <context context-type="linenumber">92,93</context>
         </context-group>
-        <target state="final">我想使用预定义的应用凭据 </target>
+        <target state="final">Saya ingin menggunakan kredensial aplikasi yang telah ditentukan sebelumnya </target>
       </trans-unit>
       <trans-unit id="2903873185531053389" datatype="html" approved="yes">
         <source> New Connection </source>
@@ -3035,7 +3042,7 @@
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/secret-text-connection-dialog/secret-text-connection-dialog.component.html</context>
           <context context-type="linenumber">2,4</context>
         </context-group>
-        <target state="final"> 新建连接 </target>
+        <target state="final"> Koneksi Baru </target>
       </trans-unit>
       <trans-unit id="4804768288792909623" datatype="html" approved="yes">
         <source> Connect</source>
@@ -3043,7 +3050,7 @@
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/form-controls/o-auth2-connect-control/o-auth2-connect-control.component.html</context>
           <context context-type="linenumber">2</context>
         </context-group>
-        <target state="final"> 连接</target>
+        <target state="final"> Hubungkan</target>
       </trans-unit>
       <trans-unit id="2907016025519254862" datatype="html" approved="yes">
         <source>Disconnect</source>
@@ -3051,7 +3058,7 @@
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/form-controls/o-auth2-connect-control/o-auth2-connect-control.component.html</context>
           <context context-type="linenumber">4</context>
         </context-group>
-        <target state="final">断开连接</target>
+        <target state="final">Putuskan koneksi</target>
       </trans-unit>
       <trans-unit id="5175055549231295483" datatype="html" approved="yes">
         <source> Please make sure this connections's credentials are correct.
@@ -3060,7 +3067,7 @@
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/form-controls/o-auth2-connect-control/o-auth2-connect-control.component.html</context>
           <context context-type="linenumber">5,7</context>
         </context-group>
-        <target state="final"> 请确保此连接的凭据是正确的。
+        <target state="final"> Harap pastikan kredensial koneksi ini benar.
 </target>
       </trans-unit>
       <trans-unit id="5578202866683959807" datatype="html" approved="yes">
@@ -3069,7 +3076,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html</context>
           <context context-type="linenumber">29</context>
         </context-group>
-        <target state="final">向社区提问</target>
+        <target state="final">Tanyakan pada Komunitas</target>
       </trans-unit>
       <trans-unit id="4895326106573044490" datatype="html" approved="yes">
         <source>Documentation</source>
@@ -3077,7 +3084,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html</context>
           <context context-type="linenumber">39</context>
         </context-group>
-        <target state="final">文档</target>
+        <target state="final">Dokumen</target>
       </trans-unit>
       <trans-unit id="4447668871712407032" datatype="html" approved="yes">
         <source>Docs</source>
@@ -3085,7 +3092,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html</context>
           <context context-type="linenumber">47</context>
         </context-group>
-        <target state="final">文档</target>
+        <target state="final">Dokumen</target>
       </trans-unit>
       <trans-unit id="3446912724041461894" datatype="html" approved="yes">
         <source>Flows</source>
@@ -3097,7 +3104,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
           <context context-type="linenumber">119</context>
         </context-group>
-        <target state="final">流程</target>
+        <target state="final">Flow</target>
       </trans-unit>
       <trans-unit id="5831959151852803859" datatype="html" approved="yes">
         <source>Runs</source>
@@ -3121,7 +3128,7 @@
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/community-pieces-table/community-pieces-table.component.html</context>
           <context context-type="linenumber">9</context>
         </context-group>
-        <target state="final">运行</target>
+        <target state="final">Runs</target>
       </trans-unit>
       <trans-unit id="2557623954339695776" datatype="html" approved="yes">
         <source>Connections</source>
@@ -3137,7 +3144,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.ts</context>
           <context context-type="linenumber">35</context>
         </context-group>
-        <target state="final">社交网络</target>
+        <target state="final">Koneksi</target>
       </trans-unit>
       <trans-unit id="3724068243287682962" datatype="html" approved="yes">
         <source>Team</source>
@@ -3149,7 +3156,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
           <context context-type="linenumber">51</context>
         </context-group>
-        <target state="final">团队</target>
+        <target state="final">Tim</target>
       </trans-unit>
       <trans-unit id="638799406436586796" datatype="html" approved="yes">
         <source> What's new </source>
@@ -3157,7 +3164,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard-container.component.html</context>
           <context context-type="linenumber">15,17</context>
         </context-group>
-        <target state="final"> 更新日志 </target>
+        <target state="final"> Apa yang baru </target>
       </trans-unit>
       <trans-unit id="3950972977983792144" datatype="html" approved="yes">
         <source>Plans</source>
@@ -3165,7 +3172,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
           <context context-type="linenumber">43</context>
         </context-group>
-        <target state="final">套餐</target>
+        <target state="final">Rencana</target>
       </trans-unit>
       <trans-unit id="5903633013884641340" datatype="html" approved="yes">
         <source>Chatbot settings</source>
@@ -3177,7 +3184,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
           <context context-type="linenumber">92</context>
         </context-group>
-        <target state="final">Chatbot 设置</target>
+        <target state="final">Pengaturan Chatbot</target>
       </trans-unit>
       <trans-unit id="962765493084218985" datatype="html" approved="yes">
         <source>Platform</source>
@@ -3185,7 +3192,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
           <context context-type="linenumber">131</context>
         </context-group>
-        <target state="final">平台</target>
+        <target state="final">Platform</target>
       </trans-unit>
       <trans-unit id="2818570902941667477" datatype="html" approved="yes">
         <source>App</source>
@@ -3197,7 +3204,7 @@
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/community-pieces-table/community-pieces-table.component.html</context>
           <context context-type="linenumber">11</context>
         </context-group>
-        <target state="final">应用</target>
+        <target state="final">Aplikasi</target>
       </trans-unit>
       <trans-unit id="7239750919884229270" datatype="html" approved="yes">
         <source>Updated</source>
@@ -3205,7 +3212,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.html</context>
           <context context-type="linenumber">33</context>
         </context-group>
-        <target state="final">已更新</target>
+        <target state="final">Diperbarui</target>
       </trans-unit>
       <trans-unit id="3928717218923468734" datatype="html" approved="yes">
         <source>Delete Connection</source>
@@ -3213,7 +3220,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.html</context>
           <context context-type="linenumber">43</context>
         </context-group>
-        <target state="final">删除连接</target>
+        <target state="final">Hapus Koneksi</target>
       </trans-unit>
       <trans-unit id="4018267042970589486" datatype="html" approved="yes">
         <source> No connections created yet </source>
@@ -3221,7 +3228,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.html</context>
           <context context-type="linenumber">58,60</context>
         </context-group>
-        <target state="final"> 尚未创建连接 </target>
+        <target state="final"> Belum ada koneksi yang dibuat </target>
       </trans-unit>
       <trans-unit id="4578383372914193173" datatype="html" approved="yes">
         <source>Create Your First Flow</source>
@@ -3229,7 +3236,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/empty-flows-table/empty-flows-table.component.html</context>
           <context context-type="linenumber">5</context>
         </context-group>
-        <target state="final">创建您的第一个流程</target>
+        <target state="final">Buat Flow Pertama Anda</target>
       </trans-unit>
       <trans-unit id="3077777282169383075" datatype="html" approved="yes">
         <source>Demo flow</source>
@@ -3237,7 +3244,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/empty-flows-table/empty-flows-table.component.html</context>
           <context context-type="linenumber">15</context>
         </context-group>
-        <target state="final">演示流程</target>
+        <target state="final">Flow Demo</target>
       </trans-unit>
       <trans-unit id="8549223348777613655" datatype="html" approved="yes">
         <source> Learn from our Gelato maker demo flow </source>
@@ -3245,7 +3252,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/empty-flows-table/empty-flows-table.component.html</context>
           <context context-type="linenumber">16,18</context>
         </context-group>
-        <target state="final"> 从我们的 Gelato maker 演示流程学习 </target>
+        <target state="final"> Belajar dari flow demo pembuat Gelato kami </target>
       </trans-unit>
       <trans-unit id="3292499463822135407" datatype="html" approved="yes">
         <source>Build flow </source>
@@ -3253,7 +3260,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/empty-flows-table/empty-flows-table.component.html</context>
           <context context-type="linenumber">37</context>
         </context-group>
-        <target state="final">构建流程 </target>
+        <target state="final">Bangun flow </target>
       </trans-unit>
       <trans-unit id="913302789306531927" datatype="html" approved="yes">
         <source> Start building your first flow from scratch </source>
@@ -3261,7 +3268,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/empty-flows-table/empty-flows-table.component.html</context>
           <context context-type="linenumber">38,40</context>
         </context-group>
-        <target state="final"> 开始从头开始构建您的第一个流程 </target>
+        <target state="final"> Mulai membangun flow pertama Anda dari awal </target>
       </trans-unit>
       <trans-unit id="7869199587095613616" datatype="html" approved="yes">
         <source>Untitled</source>
@@ -3273,7 +3280,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table-title/flows-table-title.component.ts</context>
           <context context-type="linenumber">38</context>
         </context-group>
-        <target state="final">未命名</target>
+        <target state="final">Tanpa judul</target>
       </trans-unit>
       <trans-unit id="6010972448112025437" datatype="html" approved="yes">
         <source>All flows</source>
@@ -3285,7 +3292,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/folders-list/folders-list.component.html</context>
           <context context-type="linenumber">15</context>
         </context-group>
-        <target state="final">所有流程</target>
+        <target state="final">Semua flow</target>
       </trans-unit>
       <trans-unit id="2428227617692008299" datatype="html" approved="yes">
         <source>+ New Flow</source>
@@ -3293,7 +3300,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table-title/flows-table-title.component.html</context>
           <context context-type="linenumber">26</context>
         </context-group>
-        <target state="final">+ 新建流程</target>
+        <target state="final">+ Flow Baru</target>
       </trans-unit>
       <trans-unit id="5417428761029126177" datatype="html" approved="yes">
         <source>My Flows</source>
@@ -3301,7 +3308,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html</context>
           <context context-type="linenumber">4</context>
         </context-group>
-        <target state="final">我的流程</target>
+        <target state="final">Flow Saya</target>
       </trans-unit>
       <trans-unit id="1534367694207535197" datatype="html" approved="yes">
         <source>Steps</source>
@@ -3309,7 +3316,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html</context>
           <context context-type="linenumber">21</context>
         </context-group>
-        <target state="final">步骤</target>
+        <target state="final">Langkah-langkah</target>
       </trans-unit>
       <trans-unit id="7046259383943324039" datatype="html" approved="yes">
         <source>Folder</source>
@@ -3317,7 +3324,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html</context>
           <context context-type="linenumber">54</context>
         </context-group>
-        <target state="final">文件夹</target>
+        <target state="final">Folder</target>
       </trans-unit>
       <trans-unit id="2792560466819244367" datatype="html" approved="yes">
         <source>Move to...</source>
@@ -3325,7 +3332,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html</context>
           <context context-type="linenumber">70</context>
         </context-group>
-        <target state="final">移动到......</target>
+        <target state="final">Pindahkan ke...</target>
       </trans-unit>
       <trans-unit id="1068067937132498347" datatype="html" approved="yes">
         <source>You don't have any flows yet</source>
@@ -3333,7 +3340,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html</context>
           <context context-type="linenumber">101</context>
         </context-group>
-        <target state="final">您尚未创建任何流程</target>
+        <target state="final">Anda belum memiliki flow apa pun</target>
       </trans-unit>
       <trans-unit id="2994670610835703888" datatype="html" approved="yes">
         <source>This folder doesn't have any flows yet</source>
@@ -3341,7 +3348,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html</context>
           <context context-type="linenumber">104</context>
         </context-group>
-        <target state="final">此文件夹没有任何流程</target>
+        <target state="final">Folder ini belum memiliki flow apa pun</target>
       </trans-unit>
       <trans-unit id="4156762084256299285" datatype="html" approved="yes">
         <source>Real time flow</source>
@@ -3353,7 +3360,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts</context>
           <context context-type="linenumber">202</context>
         </context-group>
-        <target state="final">实时流程</target>
+        <target state="final">Flow real time</target>
       </trans-unit>
       <trans-unit id="2999814213294266636" datatype="html" approved="yes">
         <source>
@@ -3365,7 +3372,7 @@
           <context context-type="linenumber">199,201</context>
         </context-group>
         <target state="final">
-          运行 
+          Runs 
           <x id="PH" equiv-text="cronstrue&amp;#10;              .toString(cronExpression, { locale: this.locale })&amp;#10;              .toLocaleLowerCase()"/>
         </target>
       </trans-unit>
@@ -3375,7 +3382,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts</context>
           <context context-type="linenumber">209</context>
         </context-group>
-        <target state="final">由于您发布的流程有问题，请联系客服。</target>
+        <target state="final">Silakan hubungi tim dukungan karena flow yang Anda terbitkan bermasalah</target>
       </trans-unit>
       <trans-unit id="8669717871933589565" datatype="html" approved="yes">
         <source>Please publish the flow</source>
@@ -3383,7 +3390,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts</context>
           <context context-type="linenumber">234</context>
         </context-group>
-        <target state="final">请发布流程</target>
+        <target state="final">Silakan terbitkan flow</target>
       </trans-unit>
       <trans-unit id="6655540167436629912" datatype="html" approved="yes">
         <source>Flow is on</source>
@@ -3391,7 +3398,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts</context>
           <context context-type="linenumber">238</context>
         </context-group>
-        <target state="final">流程已开启</target>
+        <target state="final">Flow aktif</target>
       </trans-unit>
       <trans-unit id="2532250142169750361" datatype="html" approved="yes">
         <source>Flow is off</source>
@@ -3399,7 +3406,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts</context>
           <context context-type="linenumber">239</context>
         </context-group>
-        <target state="final">流程已关闭</target>
+        <target state="final">Flow tidak aktif</target>
       </trans-unit>
       <trans-unit id="1205037876874222931" datatype="html" approved="yes">
         <source>Folders</source>
@@ -3407,7 +3414,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/folders-list/folders-list.component.html</context>
           <context context-type="linenumber">2</context>
         </context-group>
-        <target state="final">文件夹</target>
+        <target state="final">Folder</target>
       </trans-unit>
       <trans-unit id="6272889378364553386" datatype="html" approved="yes">
         <source>New Folder</source>
@@ -3415,7 +3422,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/folders-list/folders-list.component.html</context>
           <context context-type="linenumber">7</context>
         </context-group>
-        <target state="final">新建文件夹</target>
+        <target state="final">Folder Baru</target>
       </trans-unit>
       <trans-unit id="6093210751404423786" datatype="html" approved="yes">
         <source>Ascending</source>
@@ -3423,7 +3430,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/folders-list/folders-list.component.ts</context>
           <context context-type="linenumber">140</context>
         </context-group>
-        <target state="final">升序</target>
+        <target state="final">Naik</target>
       </trans-unit>
       <trans-unit id="2382330284069784226" datatype="html" approved="yes">
         <source>Descending</source>
@@ -3431,7 +3438,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/folders-list/folders-list.component.ts</context>
           <context context-type="linenumber">143</context>
         </context-group>
-        <target state="final">降序</target>
+        <target state="final">Menurun</target>
       </trans-unit>
       <trans-unit id="9077429056049361829" datatype="html" approved="yes">
         <source>New Folder
@@ -3444,7 +3451,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/new-folder-dialog/new-folder-dialog.component.html</context>
           <context context-type="linenumber">1,2</context>
         </context-group>
-        <target state="final">新建文件夹
+        <target state="final">Folder Baru
 </target>
       </trans-unit>
       <trans-unit id="6845813511844074904" datatype="html" approved="yes">
@@ -3457,7 +3464,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/new-folder-dialog/new-folder-dialog.component.html</context>
           <context context-type="linenumber">4,6</context>
         </context-group>
-        <target state="final"> 命名您的新文件夹 </target>
+        <target state="final"> Beri nama folder baru Anda </target>
       </trans-unit>
       <trans-unit id="7407917947213467151" datatype="html" approved="yes">
         <source>Select Folder</source>
@@ -3465,7 +3472,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/move-flow-to-folder-dialog/move-flow-to-folder-dialog.component.html</context>
           <context context-type="linenumber">9</context>
         </context-group>
-        <target state="final">选择文件夹</target>
+        <target state="final">Pilih Folder</target>
       </trans-unit>
       <trans-unit id="1245322889153100633" datatype="html" approved="yes">
         <source>No folders to move to</source>
@@ -3473,7 +3480,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/move-flow-to-folder-dialog/move-flow-to-folder-dialog.component.html</context>
           <context context-type="linenumber">17</context>
         </context-group>
-        <target state="final">没有要移动的文件夹</target>
+        <target state="final">Tidak ada folder untuk dipindahkan</target>
       </trans-unit>
       <trans-unit id="2494941239288147237" datatype="html" approved="yes">
         <source>Must select a folder</source>
@@ -3481,7 +3488,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/move-flow-to-folder-dialog/move-flow-to-folder-dialog.component.html</context>
           <context context-type="linenumber">19</context>
         </context-group>
-        <target state="final">必须选择一个文件夹</target>
+        <target state="final">Harus memilih folder</target>
       </trans-unit>
       <trans-unit id="8389636361036124153" datatype="html" approved="yes">
         <source> Move </source>
@@ -3489,7 +3496,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/move-flow-to-folder-dialog/move-flow-to-folder-dialog.component.html</context>
           <context context-type="linenumber">29,31</context>
         </context-group>
-        <target state="final"> 移动 </target>
+        <target state="final"> Pindah </target>
       </trans-unit>
       <trans-unit id="7697803500143402577" datatype="html" approved="yes">
         <source>Name is already used</source>
@@ -3501,7 +3508,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/rename-folder-dialog/rename-folder-dialog.component.html</context>
           <context context-type="linenumber">17</context>
         </context-group>
-        <target state="final">名称已被占用</target>
+        <target state="final">Nama sudah digunakan</target>
       </trans-unit>
       <trans-unit id="7466074960429522816" datatype="html" approved="yes">
         <source>
@@ -3514,7 +3521,7 @@
           <context context-type="linenumber">1,2</context>
         </context-group>
         <target state="final">
-          重命名文件夹 ()
+          Ubah nama Folder ()
 
           <x id="INTERPOLATION" equiv-text="{{data.folderDisplayName}}"/>
         </target>
@@ -3525,7 +3532,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/rename-folder-dialog/rename-folder-dialog.component.html</context>
           <context context-type="linenumber">4,6</context>
         </context-group>
-        <target state="final"> 更改您文件夹的名称 </target>
+        <target state="final"> Ubah nama folder Anda </target>
       </trans-unit>
       <trans-unit id="987902700013871247" datatype="html" approved="yes">
         <source>Filter by status</source>
@@ -3533,7 +3540,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
           <context context-type="linenumber">5</context>
         </context-group>
-        <target state="final">按状态筛选</target>
+        <target state="final">Saring berdasarkan status</target>
       </trans-unit>
       <trans-unit id="8803075308102273847" datatype="html" approved="yes">
         <source> Send email notifications about failed runs </source>
@@ -3541,7 +3548,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
           <context context-type="linenumber">14,16</context>
         </context-group>
-        <target state="final"> 发送运行失败的邮件通知 </target>
+        <target state="final"> Kirim pemberitahuan email tentang kegagalan proses running </target>
       </trans-unit>
       <trans-unit id="8888491308706722034" datatype="html" approved="yes">
         <source>Flow</source>
@@ -3549,7 +3556,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
           <context context-type="linenumber">20</context>
         </context-group>
-        <target state="final">流程</target>
+        <target state="final">Flow</target>
       </trans-unit>
       <trans-unit id="3326877877555410533" datatype="html" approved="yes">
         <source>Started</source>
@@ -3557,7 +3564,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
           <context context-type="linenumber">25</context>
         </context-group>
-        <target state="final">已开始</target>
+        <target state="final">Dimulai</target>
       </trans-unit>
       <trans-unit id="340430316261570792" datatype="html" approved="yes">
         <source>Finished</source>
@@ -3565,7 +3572,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
           <context context-type="linenumber">30</context>
         </context-group>
-        <target state="final">已完成</target>
+        <target state="final">Selesai</target>
       </trans-unit>
       <trans-unit id="2388673916006005004" datatype="html" approved="yes">
         <source> No runs instantiated yet </source>
@@ -3573,7 +3580,7 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
           <context context-type="linenumber">49,51</context>
         </context-group>
-        <target state="final"> 尚无运行实例 </target>
+        <target state="final"> Belum ada proses yang dijalankan </target>
       </trans-unit>
       <trans-unit id="694236538889679195" datatype="html" approved="yes">
         <source> This is where you can install pieces made by yourself or contributors. </source>
@@ -3581,7 +3588,7 @@
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/community-pieces-table/community-pieces-table.component.html</context>
           <context context-type="linenumber">4,6</context>
         </context-group>
-        <target state="final"> 您可以在这里安装您自己或贡献者制作的块。 </target>
+        <target state="final"> Di sinilah Anda dapat memasang bagian yang dibuat sendiri atau kontributor. </target>
       </trans-unit>
       <trans-unit id="3336001235735417463" datatype="html" approved="yes">
         <source> No pieces installed </source>
@@ -3589,7 +3596,7 @@
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/community-pieces-table/community-pieces-table.component.html</context>
           <context context-type="linenumber">49,51</context>
         </context-group>
-        <target state="final"> 未安装任何块 </target>
+        <target state="final"> Tidak ada bagian yang terpasang </target>
       </trans-unit>
       <trans-unit id="2247331365648205687" datatype="html" approved="yes">
         <source>Install Piece</source>
@@ -3597,7 +3604,7 @@
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/install-community-piece/install-community-piece-modal.component.html</context>
           <context context-type="linenumber">1</context>
         </context-group>
-        <target state="final">安装块</target>
+        <target state="final">Pasang Bagian</target>
       </trans-unit>
       <trans-unit id="1183032279513578972" datatype="html" approved="yes">
         <source>Piece name</source>
@@ -3605,7 +3612,7 @@
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/install-community-piece/install-community-piece-modal.component.html</context>
           <context context-type="linenumber">7</context>
         </context-group>
-        <target state="final">块名称</target>
+        <target state="final">Nama Bagian</target>
       </trans-unit>
       <trans-unit id="5376544880787061544" datatype="html" approved="yes">
         <source>NPM package name</source>
@@ -3613,7 +3620,7 @@
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/install-community-piece/install-community-piece-modal.component.html</context>
           <context context-type="linenumber">8</context>
         </context-group>
-        <target state="final">NPM 包名称</target>
+        <target state="final">Nama paket NPM</target>
       </trans-unit>
       <trans-unit id="7515584469189435123" datatype="html" approved="yes">
         <source> This is required </source>
@@ -3621,7 +3628,7 @@
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/install-community-piece/install-community-piece-modal.component.html</context>
           <context context-type="linenumber">11,13</context>
         </context-group>
-        <target state="final"> 这是必填项 </target>
+        <target state="final"> Wajib diisi </target>
       </trans-unit>
       <trans-unit id="6993437395710220266" datatype="html" approved="yes">
         <source> Install </source>
@@ -3629,7 +3636,7 @@
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/install-community-piece/install-community-piece-modal.component.html</context>
           <context context-type="linenumber">61,63</context>
         </context-group>
-        <target state="final"> 安装 </target>
+        <target state="final"> Pasang </target>
       </trans-unit>
       <trans-unit id="2206632393383450361" datatype="html" approved="yes">
         <source>
@@ -3643,10 +3650,10 @@
           <context context-type="linenumber">35,40</context>
         </context-group>
         <target state="final">
-  用它来安装您(或其他人)创建的 &lt;a href="https://www.activepieces.com/docs/developers/building-pieces/create-action" target="_blank" rel="noopener"&gt;自定义块&lt;/a&gt;
-  一旦块安装完成，您就可以在流程编辑器中使用它。
- &lt;br&gt;&lt;br&gt;**警告:**
- 请确保您信任该块的作者，它将有权访问您的流程数据，并且它可能与当前版本的 Activeges不兼容。
+  Gunakan ini untuk menginstal &lt;a href="https://www.activepieces.com/docs/developers/building-pieces/create-action" target="_blank" rel="noopener"&gt;custom piece&lt;/a&gt; yang Anda (atau orang lain) buat.
+  Setelah bagian tersebut dipasang, Anda dapat menggunakannya pada pembuat flow.
+ &lt;br&gt;&lt;br&gt;**Warning:**
+ Pastikan Anda memercayai penulisnya karena bagian tersebut akan memiliki akses ke data flow Anda dan mungkin tidak kompatibel dengan versi saat ini.
   </target>
       </trans-unit>
       <trans-unit id="2930524874557603286" datatype="html" approved="yes">
@@ -3655,7 +3662,7 @@
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/featured-template-card/featured-template-card.component.html</context>
           <context context-type="linenumber">15</context>
         </context-group>
-        <target state="final">Activepieces 团队</target>
+        <target state="final">Tim AhaMake</target>
       </trans-unit>
       <trans-unit id="954840788512180203" datatype="html" approved="yes">
         <source>See less</source>
@@ -3663,7 +3670,7 @@
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/featured-template-card/featured-template-card.component.html</context>
           <context context-type="linenumber">36</context>
         </context-group>
-        <target state="final">收起</target>
+        <target state="final">Lihat lebih sedikit</target>
       </trans-unit>
       <trans-unit id="4462165726005928867" datatype="html" approved="yes">
         <source>See more</source>
@@ -3671,7 +3678,7 @@
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/featured-template-card/featured-template-card.component.html</context>
           <context context-type="linenumber">39</context>
         </context-group>
-        <target state="final">展开</target>
+        <target state="final">Lihat lebih banyak</target>
       </trans-unit>
       <trans-unit id="29870732231596621" datatype="html" approved="yes">
         <source>Use Template </source>
@@ -3679,7 +3686,7 @@
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/featured-template-card/featured-template-card.component.html</context>
           <context context-type="linenumber">57</context>
         </context-group>
-        <target state="final">使用该模版 </target>
+        <target state="final">Gunakan Templat </target>
       </trans-unit>
       <trans-unit id="2047936376758344367" datatype="html" approved="yes">
         <source>Verified icons created by lakonicon - Flaticon</source>
@@ -3687,7 +3694,7 @@
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/featured-template-card/featured-template-card.component.html</context>
           <context context-type="linenumber">64,65</context>
         </context-group>
-        <target state="final">由 lakonicon 创建的已验证图标 - Flaticon</target>
+        <target state="final">Ikon terverifikasi yang dibuat oleh lakonicon - Flaticon</target>
       </trans-unit>
       <trans-unit id="5949896491927456436" datatype="html" approved="yes">
         <source> Learn about this flow </source>
@@ -3695,7 +3702,7 @@
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/template-blog-notification/template-blog-notification.component.html</context>
           <context context-type="linenumber">3,5</context>
         </context-group>
-        <target state="final"> 了解这个流程 </target>
+        <target state="final"> Pelajari tentang flow ini </target>
       </trans-unit>
       <trans-unit id="3490041488928665412" datatype="html" approved="yes">
         <source> You used a template for this flow and you can read our guide on how to set it up. </source>
@@ -3703,7 +3710,7 @@
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/template-blog-notification/template-blog-notification.component.html</context>
           <context context-type="linenumber">6,8</context>
         </context-group>
-        <target state="final"> 您为此流程使用了一个模板，您可以阅读我们的指南来设置它。 </target>
+        <target state="final"> Anda menggunakan template untuk flow ini dan Anda dapat membaca panduan kami tentang cara menyiapkannya. </target>
       </trans-unit>
       <trans-unit id="9024715782279733035" datatype="html" approved="yes">
         <source>Go to guide</source>
@@ -3711,7 +3718,7 @@
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/template-blog-notification/template-blog-notification.component.html</context>
           <context context-type="linenumber">12</context>
         </context-group>
-        <target state="final">跳转到指南</target>
+        <target state="final">Buka panduan</target>
       </trans-unit>
       <trans-unit id="1892409467490527310" datatype="html" approved="yes">
         <source> Ignore </source>
@@ -3719,7 +3726,7 @@
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/template-blog-notification/template-blog-notification.component.html</context>
           <context context-type="linenumber">18,20</context>
         </context-group>
-        <target state="final"> 忽略 </target>
+        <target state="final"> Abaikan </target>
       </trans-unit>
       <trans-unit id="2778126117828123438" datatype="html" approved="yes">
         <source> Use Template </source>
@@ -3727,7 +3734,7 @@
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/template-card/template-card.component.html</context>
           <context context-type="linenumber">8,10</context>
         </context-group>
-        <target state="final"> 使用该模版 </target>
+        <target state="final"> Gunakan Templat </target>
       </trans-unit>
       <trans-unit id="8116094792018370870" datatype="html" approved="yes">
         <source> Apps
@@ -3736,7 +3743,7 @@
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/template-apps-dropdown/template-apps-dropdown.component.html</context>
           <context context-type="linenumber">1,3</context>
         </context-group>
-        <target state="final"> 应用
+        <target state="final"> Aplikasi
 </target>
       </trans-unit>
       <trans-unit id="3797570084942068182" datatype="html" approved="yes">
@@ -3745,7 +3752,7 @@
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/template-apps-dropdown/template-apps-dropdown.component.html</context>
           <context context-type="linenumber">6</context>
         </context-group>
-        <target state="final">选择</target>
+        <target state="final">Pilih</target>
       </trans-unit>
       <trans-unit id="6703947649972852818" datatype="html" approved="yes">
         <source>Featured</source>
@@ -3753,7 +3760,7 @@
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html</context>
           <context context-type="linenumber">9</context>
         </context-group>
-        <target state="final">精选</target>
+        <target state="final">Unggulan</target>
       </trans-unit>
       <trans-unit id="5688462374174490321" datatype="html" approved="yes">
         <source> Load more </source>
@@ -3761,7 +3768,7 @@
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html</context>
           <context context-type="linenumber">23,25</context>
         </context-group>
-        <target state="final"> 加载更多 </target>
+        <target state="final"> Muat lebih banyak </target>
       </trans-unit>
       <trans-unit id="2264989214104883907" datatype="html" approved="yes">
         <source>All ideas</source>
@@ -3769,7 +3776,7 @@
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html</context>
           <context context-type="linenumber">41</context>
         </context-group>
-        <target state="final">所有建议</target>
+        <target state="final">Semua ide</target>
       </trans-unit>
       <trans-unit id="5784653381187077675" datatype="html" approved="yes">
         <source>Browse Templates</source>
@@ -3777,7 +3784,7 @@
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html</context>
           <context context-type="linenumber">63</context>
         </context-group>
-        <target state="final">浏览模板</target>
+        <target state="final">Telusuri Templat</target>
       </trans-unit>
       <trans-unit id="3632453124332504959" datatype="html" approved="yes">
         <source> A new way to explore fresh ideas from our partners</source>
@@ -3785,7 +3792,7 @@
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html</context>
           <context context-type="linenumber">90</context>
         </context-group>
-        <target state="final"> 探索合作伙伴新想法的新方式</target>
+        <target state="final"> Sebuah cara baru untuk mengeksplorasi ide-ide baru dari mitra kami</target>
       </trans-unit>
       <trans-unit id="3467902316108509147" datatype="html" approved="yes">
         <source>View featured ideas </source>
@@ -3793,7 +3800,7 @@
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html</context>
           <context context-type="linenumber">92,93</context>
         </context-group>
-        <target state="final">查看精选意见 </target>
+        <target state="final">Lihat ide unggulan </target>
       </trans-unit>
       <trans-unit id="2683765549895995966" datatype="html" approved="yes">
         <source>Search templates</source>
@@ -3801,7 +3808,7 @@
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html</context>
           <context context-type="linenumber">101</context>
         </context-group>
-        <target state="final">搜索模板</target>
+        <target state="final">Cari templat</target>
       </trans-unit>
       <trans-unit id="2590054615761981950" datatype="html" approved="yes">
         <source>Start from scratch</source>
@@ -3809,7 +3816,7 @@
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html</context>
           <context context-type="linenumber">114</context>
         </context-group>
-        <target state="final">从头开始</target>
+        <target state="final">Mulai dari awal</target>
       </trans-unit>
       <trans-unit id="3814533228057776001" datatype="html" approved="yes">
         <source> Filters
@@ -3818,7 +3825,7 @@
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/templates-filters/templates-filters.component.html</context>
           <context context-type="linenumber">1,3</context>
         </context-group>
-        <target state="final"> 筛选
+        <target state="final"> Filter
 </target>
       </trans-unit>
     </body>
