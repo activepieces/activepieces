@@ -2,11 +2,11 @@ import {
     ApId,
     CreateFlowRequest,
     FlowOperationRequest,
-    FlowStatus,
     FlowTemplate,
     GetFlowQueryParamsRequest,
     ListFlowsRequest,
     PopulatedFlow,
+    UpdateFlowStatusRequest,
 } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 import { flowService } from './flow.service'
@@ -63,11 +63,14 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/:id/published-version-id', UpdateFlowPublishedVersionIdRequestOptions, async (request) => {
-        return flowService.updatedPublishedVersionId({
+
+        
+        const flow  = await flowService.updatedPublishedVersionId({
             id: request.params.id,
             userId: request.principal.id,
             projectId: request.principal.projectId,
         })
+        return flow
     })
 
     app.get('/', ListFlowsRequestOptions, async (request) => {
@@ -129,9 +132,7 @@ const UpdateFlowRequestOptions = {
 
 const UpdateFlowStatusRequestOptions = {
     schema: {
-        body: Type.Object({
-            status: Type.Enum(FlowStatus),
-        }),
+        body: UpdateFlowStatusRequest,
         params: Type.Object({
             id: ApId,
         }),

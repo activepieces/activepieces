@@ -1,7 +1,6 @@
 import { createAction, props } from '@ngrx/store';
 import {
   AppConnectionWithoutSensitiveData,
-  FlowInstance,
   FlowRun,
   FlowVersion,
   Folder,
@@ -17,7 +16,6 @@ export const loadInitial = createAction(
   BuilderActionType.LOAD_INITIAL,
   props<{
     flow: PopulatedFlow;
-    instance?: FlowInstance;
     viewMode: ViewModeEnum;
     run?: FlowRun;
     appConnections: AppConnectionWithoutSensitiveData[];

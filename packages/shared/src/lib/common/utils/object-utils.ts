@@ -78,3 +78,8 @@ export async function applyFunctionToValues<T>(obj: unknown, apply: (str: unknow
 const isObject = (obj: unknown): obj is Record<string, unknown> => {
     return typeof obj === 'object'
 }
+
+export type MakeKeyNonNullable<T extends object, K extends keyof T> = {
+    [P in keyof T]: P extends K ? NonNullable<T[P]> : T[P]
+}
+

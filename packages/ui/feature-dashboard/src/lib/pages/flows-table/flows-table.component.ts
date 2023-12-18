@@ -12,7 +12,6 @@ import {
 
 import {
   ApPaginatorComponent,
-  FlowInstanceService,
   FoldersService,
   NavigationService,
 } from '@activepieces/ui/common';
@@ -61,7 +60,6 @@ export class FlowsTableComponent implements OnInit {
     private dialogService: MatDialog,
     private flowService: FlowService,
     private foldersService: FoldersService,
-    private instanceService: FlowInstanceService,
     private store: Store,
     private navigationService: NavigationService,
     @Inject(LOCALE_ID) private locale: string
@@ -143,7 +141,7 @@ export class FlowsTableComponent implements OnInit {
   toggleFlowStatus(flow: PopulatedFlow, control: FormControl<boolean>) {
     if (control.enabled) {
       control.disable();
-      this.flowsUpdateStatusRequest$[flow.id] = this.instanceService
+      this.flowsUpdateStatusRequest$[flow.id] = this.flowService
         .updateStatus(flow.id, {
           status:
             flow.status === FlowStatus.ENABLED

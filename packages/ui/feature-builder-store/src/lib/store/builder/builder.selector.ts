@@ -18,8 +18,6 @@ import { FlowStructureUtil } from '../../utils/flowStructureUtil';
 import { ConnectionDropdownItem } from '../../model/connections-dropdown-item';
 import { BuilderSavingStatusEnum, CanvasState } from '../../model';
 import { FlowItemDetails } from '@activepieces/ui/common';
-
-import { FlowInstanceState } from './flow-instance/flow-instance.reducer';
 import { StepRunResult } from '../../utils/stepRunResult';
 import {
   CORE_PIECES_ACTIONS_NAMES,
@@ -51,10 +49,13 @@ export const selectIsSaving = createSelector(
     (state.savingStatus & BuilderSavingStatusEnum.WAITING_TO_SAVE) ===
       BuilderSavingStatusEnum.WAITING_TO_SAVE
 );
+export const selectCurrentFlow = createSelector(selectFlowState, (state) => {
+  return state.flow;
+});
 
 export const selectFlowHasAnySteps = createSelector(
-  selectFlowState,
-  (state) => !!state.flow.version.trigger?.nextAction
+  selectCurrentFlow,
+  (flow) => !!flow.version.trigger?.nextAction
 );
 
 export const selectViewMode = createSelector(
@@ -76,31 +77,24 @@ export const selectReadOnly = createSelector(
   selectGlobalBuilderState,
   (state: GlobalBuilderState) => state.viewMode !== ViewModeEnum.BUILDING
 );
-const selectInstanceState = createSelector(
-  selectGlobalBuilderState,
-  (state: GlobalBuilderState) => state.instance
-);
 
-const selectCurrentInstance = createSelector(
-  selectInstanceState,
-  (state: FlowInstanceState) => {
-    return state?.instance;
-  }
-);
-const selectHasFlowBeenPublished = createSelector(
-  selectInstanceState,
-  (state: FlowInstanceState) => {
-    return !!state?.instance;
-  }
-);
 const selectCanvasState = createSelector(selectGlobalBuilderState, (state) => {
   return state.canvasState;
 });
 
-export const selectCurrentFlow = createSelector(selectFlowState, (state) => {
-  return state.flow;
-});
+const selectHasFlowBeenPublished = createSelector(
+  selectCurrentFlow,
+  (flow: PopulatedFlow) => {
+    return flow.publishedVersionId !== null;
+  }
+);
 
+const selectFlowStatus = createSelector(
+  selectCurrentFlow,
+  (flow: PopulatedFlow) => {
+    return flow.status;
+  }
+);
 const selectShownFlowVersion = createSelector(
   selectCanvasState,
   (cavnasState) => {
@@ -234,12 +228,9 @@ export const selectCurrentFlowRun = createSelector(
     return state.selectedRun;
   }
 );
-const selectPublishedFlowVersion = createSelector(
-  selectInstanceState,
-  (instanceState) => {
-    return instanceState.publishedFlowVersion;
-  }
-);
+const selectPublishedFlowVersion = createSelector(selectCurrentFlow, (flow) => {
+  return flow.publishedFlowVersion;
+});
 export const selectCurrentFlowRunStatus = createSelector(
   selectCurrentFlowRun,
   (run: FlowRun | undefined) => {
@@ -613,7 +604,6 @@ export const BuilderSelectors = {
   selectIsInPublishedVersionViewMode,
   selectCurrentFlowRun,
   selectCurrentFlow,
-  selectCurrentInstance,
   selectCurrentRightSideBar,
   selectCurrentStep,
   selectIsPublishing,
@@ -663,4 +653,5 @@ export const BuilderSelectors = {
   selectAppConnectionsDropdownOptionsForAppWithIds,
   selectAppConnectionsDropdownOptionsWithIds,
   selectStepIndex,
+  selectFlowStatus,
 };

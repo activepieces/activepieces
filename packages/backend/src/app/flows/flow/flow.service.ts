@@ -173,7 +173,13 @@ export const flowService = {
                     })
                 }
 
-                await flowVersionService.applyOperation(userId, projectId, lastVersion, operation)
+                const flowVersion = await flowVersionService.applyOperation(userId, projectId, lastVersion, operation)
+                if (operation.type === FlowOperationType.LOCK_FLOW) {
+                    await flowRepo.update(id, {
+                        publishedVersionId: flowVersion.id,
+                    })
+                }
+              
             }
 
             return await flowService.getOnePopulatedOrThrow({
@@ -239,7 +245,7 @@ export const flowService = {
                 flowToUpdate,
                 newPublishedVersionId: lockedFlow.publishedVersionId!,
             })
-
+            flowToUpdate.publishedVersionId = lockedFlow.publishedVersionId
             flowToUpdate.status = FlowStatus.ENABLED
             flowToUpdate.schedule = scheduleOptions
 

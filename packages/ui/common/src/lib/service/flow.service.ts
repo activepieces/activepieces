@@ -3,20 +3,24 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../environments/environment';
 import { map, Observable, of, switchMap, tap } from 'rxjs';
 import {
+  ApId,
   CountFlowsRequest,
   CreateFlowRequest,
   ExecutionOutputStatus,
   ExecutionState,
   FileId,
+  Flow,
   FlowId,
   FlowOperationRequest,
   FlowOperationType,
   FlowRun,
   FlowVersionId,
   ListFlowsRequest,
+  MakeKeyNonNullable,
   PopulatedFlow,
   SeekPage,
   TestFlowRunRequestBody,
+  UpdateFlowStatusRequest,
 } from '@activepieces/shared';
 
 @Injectable({
@@ -154,5 +158,23 @@ export class FlowService {
     return this.http.get<number>(environment.apiUrl + '/flows/count', {
       params: params,
     });
+  }
+  publish(request: {
+    id: ApId;
+  }): Observable<MakeKeyNonNullable<Flow, 'publishedVersionId'>> {
+    return this.http.post<MakeKeyNonNullable<Flow, 'publishedVersionId'>>(
+      environment.apiUrl + `/flows/${request.id}/published-version-id`,
+      request
+    );
+  }
+
+  updateStatus(
+    flowId: ApId,
+    request: UpdateFlowStatusRequest
+  ): Observable<Flow> {
+    return this.http.post<Flow>(
+      environment.apiUrl + `/flows/${flowId}/status`,
+      request
+    );
   }
 }

@@ -11,6 +11,8 @@ import {
   Folder,
   MoveActionRequest,
   FlowVersion,
+  FlowStatus,
+  ApId,
 } from '@activepieces/shared';
 
 export enum FlowsActionType {
@@ -30,6 +32,12 @@ export enum FlowsActionType {
   IMPORT_FLOW = '[FLOWS] IMPORT_FLOW',
   TOGGLE_WAITING_TO_SAVE = '[FLOWS] TOGGLE_WAITING_TO_SAVE',
   DUPLICATE_ACTION = `[FLOWS] DUPLICATE_ACTION`,
+  PUBLISH_FLOW = '[FLOWS] PUBLISH_FLOW',
+  PUBLISH_FLOW_FAILED = '[FLOWS] PUBLISH_FLOW_FAILED',
+  PUBLISH_FLOW_SUCCESS = '[FLOWS] PUBLISH_FLOW_SUCCESS',
+  DISABLE_INSTANCE = '[FLOWS] DISABLE_FLOW',
+  ENABLE_INSTANCE = `[FLOWS] ENABLE_FLOW`,
+  UPDATE_INSTANCE_STATUS_SUCCESS = `[FLOWS] UPDATE_STATUS_SUCCESS`,
 }
 
 const updateTrigger = createAction(
@@ -77,7 +85,7 @@ const changeName = createAction(
 const setInitial = createAction(
   FlowsActionType.SET_INITIAL,
   props<{
-    flow: PopulatedFlow;
+    flow: PopulatedFlow & { publishedFlowVersion?: FlowVersion };
     run: FlowRun | undefined;
     folder?: Folder;
   }>()
@@ -110,6 +118,24 @@ const toggleWaitingToSave = createAction(
 );
 const deselectStep = createAction(FlowsActionType.DESELECT_STEP);
 
+const enableFlow = createAction(FlowsActionType.ENABLE_INSTANCE);
+const disableFlow = createAction(FlowsActionType.DISABLE_INSTANCE);
+const publish = createAction(FlowsActionType.PUBLISH_FLOW);
+const publishFailed = createAction(FlowsActionType.PUBLISH_FLOW_FAILED);
+
+const publishSuccess = createAction(
+  FlowsActionType.PUBLISH_FLOW_SUCCESS,
+  props<{
+    status: FlowStatus;
+    showSnackbar: boolean;
+    publishedFlowVersionId: ApId;
+  }>()
+);
+const updateStatusSuccess = createAction(
+  FlowsActionType.UPDATE_INSTANCE_STATUS_SUCCESS,
+  props<{ status: FlowStatus }>()
+);
+
 export const FlowsActions = {
   setInitial,
   savedSuccess,
@@ -126,6 +152,12 @@ export const FlowsActions = {
   importFlow,
   toggleWaitingToSave,
   duplicateStep,
+  publish,
+  publishFailed,
+  publishSuccess,
+  enableFlow,
+  disableFlow,
+  updateStatusSuccess,
 };
 
 export const SingleFlowModifyingState = [

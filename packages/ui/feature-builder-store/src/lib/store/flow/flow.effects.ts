@@ -7,6 +7,7 @@ import {
   EMPTY,
   Observable,
   of,
+  map,
   switchMap,
   tap,
 } from 'rxjs';
@@ -27,6 +28,8 @@ import {
   FlowOperationType,
   TriggerType,
   flowHelper,
+  FlowVersionState,
+  FlowStatus,
 } from '@activepieces/shared';
 import { RightSideBarType } from '../../model/enums/right-side-bar-type.enum';
 import { LeftSideBarType } from '../../model/enums/left-side-bar-type.enum';
@@ -47,8 +50,14 @@ export class FlowsEffects {
   loadInitial$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(BuilderActions.loadInitial),
-      switchMap(({ flow, run, folder }) => {
-        return of(FlowsActions.setInitial({ flow, run, folder }));
+      switchMap(({ flow, run, folder, publishedVersion }) => {
+        return of(
+          FlowsActions.setInitial({
+            flow: { ...flow, publishedFlowVersion: publishedVersion },
+            run,
+            folder,
+          })
+        );
       }),
       catchError((err) => {
         console.error(err);
@@ -368,6 +377,160 @@ export class FlowsEffects {
     //so in development mode the publish button doesn't flicker constantly and cause us to have epilieptic episodes
     return update$.pipe(delay(150), updateTap);
   }
+
+  publishFailed$ = createEffect(
+    () => {
+      return this.actions$.pipe(
+        ofType(FlowsActions.publishFailed),
+        tap(() => {
+          this.snackBar.open(`Publishing failed`, '', {
+            panelClass: 'error',
+            duration: 5000,
+          });
+        })
+      );
+    },
+    { dispatch: false }
+  );
+
+  publishingSuccess$ = createEffect(
+    () => {
+      return this.actions$.pipe(
+        ofType(FlowsActions.publishSuccess),
+        tap((action) => {
+          if (action.showSnackbar) {
+            this.snackBar.open(`Publishing finished`);
+          }
+        })
+      );
+    },
+    { dispatch: false }
+  );
+
+  publish$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(FlowsActions.publish),
+      concatLatestFrom(() =>
+        this.store.select(BuilderSelectors.selectCurrentFlow)
+      ),
+      switchMap(([_, flow]) => {
+        return this.flowService
+          .publish({
+            id: flow.id,
+          })
+          .pipe(
+            map((flow) => {
+              return FlowsActions.publishSuccess({
+                status: flow.status,
+                showSnackbar: true,
+                publishedFlowVersionId: flow.publishedVersionId,
+              });
+            }),
+            catchError((err) => {
+              console.error(err);
+              return of(FlowsActions.publishFailed());
+            })
+          );
+      })
+    );
+  });
+
+  enableInstance$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(FlowsActions.enableFlow),
+      concatLatestFrom(() =>
+        this.store.select(BuilderSelectors.selectCurrentFlow)
+      ),
+      switchMap(([_, flow]) => {
+        return this.flowService
+          .updateStatus(flow.id, {
+            status: FlowStatus.ENABLED,
+          })
+          .pipe(
+            switchMap((flow) => {
+              return of(
+                FlowsActions.updateStatusSuccess({
+                  status: flow.status,
+                })
+              );
+            }),
+            catchError((err) => {
+              console.error(err);
+              return of(FlowsActions.publishFailed());
+            })
+          );
+      })
+    );
+  });
+
+  disableInstance$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(FlowsActions.disableFlow),
+      concatLatestFrom(() =>
+        this.store.select(BuilderSelectors.selectCurrentFlow)
+      ),
+      switchMap(([_, flow]) => {
+        return this.flowService
+          .updateStatus(flow.id, {
+            status: FlowStatus.DISABLED,
+          })
+          .pipe(
+            switchMap((flow) => {
+              return of(
+                FlowsActions.updateStatusSuccess({
+                  status: flow.status,
+                })
+              );
+            }),
+            catchError((err) => {
+              console.error(err);
+              return of(FlowsActions.publishFailed());
+            })
+          );
+      })
+    );
+  });
+
+  showPublishedVersion$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(ViewModeActions.setViewMode),
+      concatLatestFrom(() => [
+        this.store.select(BuilderSelectors.selectPublishedFlowVersion),
+        this.store.select(BuilderSelectors.selectCurrentFlow),
+      ]),
+      switchMap(([action, publishedVersion, currentFlow]) => {
+        switch (action.viewMode) {
+          case ViewModeEnum.SHOW_PUBLISHED:
+            if (publishedVersion) {
+              return of(
+                canvasActions.setInitial({
+                  displayedFlowVersion: publishedVersion,
+                })
+              );
+            } else {
+              throw Error(
+                'Trying to view published version when there is none'
+              );
+            }
+          case ViewModeEnum.BUILDING:
+            if (currentFlow.version.state === FlowVersionState.LOCKED) {
+              throw Error('Trying to view draft version when there is none');
+            } else {
+              return of(
+                canvasActions.setInitial({
+                  displayedFlowVersion: currentFlow.version,
+                })
+              );
+            }
+          case ViewModeEnum.VIEW_INSTANCE_RUN: {
+            throw Error(
+              'Trying to view run version, viewing run version should only be the initial state'
+            );
+          }
+        }
+      })
+    );
+  });
 
   constructor(
     private pieceBuilderService: CollectionBuilderService,

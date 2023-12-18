@@ -9,7 +9,6 @@ import {
 } from '@activepieces/shared';
 import { BuilderSavingStatusEnum, ViewModeEnum } from '../../model';
 import { FlowState } from '../../model/flow-state';
-import { FlowInstanceActions } from '../builder/flow-instance/flow-instance.action';
 import { ViewModeActions } from '../builder/viewmode/view-mode.action';
 
 const initialState: FlowState = {
@@ -39,7 +38,9 @@ const initialState: FlowState = {
       },
       state: FlowVersionState.DRAFT,
     },
+    publishedFlowVersion: undefined,
   },
+
   folder: undefined,
   savingStatus: BuilderSavingStatusEnum.NONE,
   lastSaveId: '161f8c09-dea1-470e-8a90-5666a8f17bd4',
@@ -140,6 +141,7 @@ const _flowsReducer = createReducer(
   }),
   on(FlowsActions.savedSuccess, (state, action) => {
     const clonedState: FlowState = JSON.parse(JSON.stringify(state));
+    clonedState.flow.version.state = FlowVersionState.DRAFT;
     if (action.saveRequestId === clonedState.lastSaveId) {
       clonedState.savingStatus &= ~BuilderSavingStatusEnum.SAVING_FLOW;
     }
@@ -151,19 +153,19 @@ const _flowsReducer = createReducer(
       BuilderSavingStatusEnum.FAILED_SAVING_OR_PUBLISHING;
     return clonedState;
   }),
-  on(FlowInstanceActions.publish, (state) => {
+  on(FlowsActions.publish, (state) => {
     const clonedState: FlowState = JSON.parse(JSON.stringify(state));
     clonedState.savingStatus |= BuilderSavingStatusEnum.PUBLISHING;
     return clonedState;
   }),
-  on(FlowInstanceActions.publishSuccess, (state, { instance }) => {
+  on(FlowsActions.publishSuccess, (state, { publishedFlowVersionId }) => {
     const clonedState: FlowState = JSON.parse(JSON.stringify(state));
-    clonedState.flow.version.id = instance.flowVersionId;
+    clonedState.flow.version.id = publishedFlowVersionId;
     clonedState.flow.version.state = FlowVersionState.LOCKED;
     clonedState.savingStatus &= ~BuilderSavingStatusEnum.PUBLISHING;
     return clonedState;
   }),
-  on(FlowInstanceActions.publishFailed, (state) => {
+  on(FlowsActions.publishFailed, (state) => {
     const clonedState: FlowState = JSON.parse(JSON.stringify(state));
     clonedState.savingStatus =
       BuilderSavingStatusEnum.FAILED_SAVING_OR_PUBLISHING;
