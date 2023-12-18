@@ -22,7 +22,7 @@ import { UUID } from 'angular2-uuid';
 import { BuilderActions } from '../builder/builder.action';
 import {
   ActionType,
-  Flow,
+  PopulatedFlow,
   FlowOperationRequest,
   FlowOperationType,
   TriggerType,
@@ -339,11 +339,11 @@ export class FlowsEffects {
 
   private processFlowUpdate(request: {
     operation: FlowOperationRequest;
-    flow: Flow;
+    flow: PopulatedFlow;
     saveRequestId: UUID;
-  }): Observable<Flow> {
+  }): Observable<PopulatedFlow> {
     const update$ = this.flowService.update(request.flow.id, request.operation);
-    const updateTap = tap((updatedFlow: Flow) => {
+    const updateTap = tap((updatedFlow: PopulatedFlow) => {
       this.store.dispatch(
         FlowsActions.savedSuccess({
           saveRequestId: request.saveRequestId,

@@ -4,9 +4,9 @@ import { GlobalBuilderState } from '../../model/global-builder-state.model';
 import {
   AppConnectionWithoutSensitiveData,
   ExecutionOutputStatus,
-  Flow,
   FlowRun,
   FlowVersionState,
+  PopulatedFlow,
   flowHelper,
 } from '@activepieces/shared';
 import { ViewModeEnum } from '../../model/enums/view-mode.enum';
@@ -131,7 +131,7 @@ const selectCurrentFlowFolderId = createSelector(selectFlowState, (state) => {
 });
 export const selectCurrentFlowValidity = createSelector(
   selectCurrentFlow,
-  (flow: Flow | undefined) => {
+  (flow: PopulatedFlow | undefined) => {
     if (!flow) return false;
     return flow.version?.valid || false;
   }
@@ -216,9 +216,9 @@ export const selectCurrentStepDisplayName = createSelector(
 
 export const selectCurrentFlowVersionId = createSelector(
   selectCurrentFlow,
-  (flow: Flow | undefined) => {
+  (flow: PopulatedFlow | undefined) => {
     if (!flow) return undefined;
-    return flow.version?.id;
+    return flow.version.id;
   }
 );
 export const selectNumberOfInvalidSteps = createSelector(

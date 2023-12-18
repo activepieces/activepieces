@@ -14,7 +14,9 @@ import { ViewModeActions } from '../builder/viewmode/view-mode.action';
 
 const initialState: FlowState = {
   flow: {
-    status: FlowStatus.UNPUBLISHED,
+    publishedVersionId: null,
+    schedule: null,
+    status: FlowStatus.DISABLED,
     projectId: '1',
     folderId: null,
     id: '1',

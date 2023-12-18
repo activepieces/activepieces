@@ -2,10 +2,10 @@ import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { Observable, map, of, switchMap } from 'rxjs';
 
-import { Flow, FlowId, Folder } from '@activepieces/shared';
+import { PopulatedFlow, FlowId, Folder } from '@activepieces/shared';
 import { FlowService, FoldersService } from '@activepieces/ui/common';
 
-export type FlowResolverData = { flow: Flow; folder?: Folder };
+export type FlowResolverData = { flow: PopulatedFlow; folder?: Folder };
 @Injectable({
   providedIn: 'root',
 })

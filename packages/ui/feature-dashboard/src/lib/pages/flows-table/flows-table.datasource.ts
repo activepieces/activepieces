@@ -20,13 +20,13 @@ import {
 } from '@activepieces/ui/common';
 
 import { FormControl } from '@angular/forms';
-import { Flow, FlowStatus } from '@activepieces/shared';
+import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
 import { Params } from '@angular/router';
 import { FoldersService } from '@activepieces/ui/common';
 import { FolderActions } from '../../store/folders/folders.actions';
 import { Store } from '@ngrx/store';
 
-type FlowListDtoWithInstanceStatusToggleControl = Flow & {
+type FlowListDtoWithInstanceStatusToggleControl = PopulatedFlow & {
   instanceToggleControl: FormControl<boolean>;
   folderDisplayName: string;
 };
@@ -115,12 +115,12 @@ export class FlowsTableDataSource extends DataSource<FlowListDtoWithInstanceStat
   disconnect(): void {
     //ignore
   }
-  createTogglesControls(flows: Flow[]) {
+  createTogglesControls(flows: PopulatedFlow[]) {
     const controls: Record<string, FormControl> = {};
     flows.forEach((f) => {
       controls[f.id] = new FormControl({
         value: f.status === FlowStatus.ENABLED,
-        disabled: f.status === FlowStatus.UNPUBLISHED,
+        disabled: f.publishedVersionId === null,
       });
     });
     return controls;

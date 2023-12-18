@@ -7,7 +7,7 @@ import {
   OnInit,
   Output,
 } from '@angular/core';
-import { Flow, FlowTemplate, FolderId } from '@activepieces/shared';
+import { PopulatedFlow, FlowTemplate, FolderId } from '@activepieces/shared';
 
 import { Observable } from 'rxjs';
 
@@ -17,7 +17,7 @@ import { Observable } from 'rxjs';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FeaturedTemplateCardComponent implements OnInit {
-  useTemplate$: Observable<Flow>;
+  useTemplate$: Observable<PopulatedFlow>;
   showFullDescription = false;
   readonly SEE_MORE_LIMIT = 255;
   @Output() useTemplateClicked = new EventEmitter<FlowTemplate>();

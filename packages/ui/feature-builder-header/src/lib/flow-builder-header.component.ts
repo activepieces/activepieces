@@ -18,7 +18,7 @@ import {
   CollectionBuilderService,
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
-import { Flow, FlowInstance } from '@activepieces/shared';
+import { FlowInstance, PopulatedFlow } from '@activepieces/shared';
 import { EmbeddingService } from '@activepieces/ui/common';
 import { ImportFlowDialogueComponent } from './import-flow-dialogue/import-flow-dialogue.component';
 
@@ -32,7 +32,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
   isInDebugMode$: Observable<boolean>;
   isInReadOnlyMode$: Observable<boolean>;
   instance$: Observable<FlowInstance | undefined>;
-  flow$: Observable<Flow>;
+  flow$: Observable<PopulatedFlow>;
   editingFlowName = false;
   downloadFile$: Observable<void>;
   shareFlow$: Observable<void>;
@@ -124,7 +124,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
     this.matDialog.open(ImportFlowDialogueComponent);
   }
 
-  deleteFlow(flow: Flow) {
+  deleteFlow(flow: PopulatedFlow) {
     const dialogData: DeleteEntityDialogData = {
       deleteEntity$: this.flowService.delete(flow.id),
       entityName: flow.version.displayName,

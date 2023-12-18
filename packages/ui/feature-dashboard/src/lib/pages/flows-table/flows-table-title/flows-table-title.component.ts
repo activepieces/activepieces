@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Observable, switchMap, take, tap } from 'rxjs';
-import { Flow, FolderDto } from '@activepieces/shared';
+import { PopulatedFlow, FolderDto } from '@activepieces/shared';
 import { FoldersSelectors } from '../../../store/folders/folders.selector';
 import { Store } from '@ngrx/store';
 import { FlowService } from '@activepieces/ui/common';
@@ -14,7 +14,7 @@ import { Router } from '@angular/router';
 export class FlowsTableTitleComponent {
   creatingFlow = false;
   currentFolder$: Observable<FolderDto | undefined>;
-  createFlow$: Observable<Flow>;
+  createFlow$: Observable<PopulatedFlow>;
   showAllFlows$: Observable<boolean>;
   constructor(
     private store: Store,

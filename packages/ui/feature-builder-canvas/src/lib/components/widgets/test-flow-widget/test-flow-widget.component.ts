@@ -21,8 +21,8 @@ import { Store } from '@ngrx/store';
 import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
 import {
   ExecutionOutputStatus,
-  Flow,
   FlowRun,
+  PopulatedFlow,
   TriggerType,
 } from '@activepieces/shared';
 import {
@@ -44,7 +44,7 @@ export class TestFlowWidgetComponent implements OnInit {
   statusEnum = ExecutionOutputStatus;
   instanceRunStatus$: Observable<undefined | ExecutionOutputStatus>;
   isSaving$: Observable<boolean> = of(false);
-  selectedFlow$: Observable<Flow | undefined>;
+  selectedFlow$: Observable<PopulatedFlow | undefined>;
   instanceRunStatusChecker$: Observable<FlowRun>;
   executeTest$: Observable<FlowRun | null>;
   shouldHideTestWidget$: Observable<boolean>;
@@ -87,14 +87,14 @@ export class TestFlowWidgetComponent implements OnInit {
     );
   }
 
-  testFlowButtonClicked(flow: Flow) {
+  testFlowButtonClicked(flow: PopulatedFlow) {
     this.executeTest$ = this.executeTest(flow);
   }
 
-  executeTest(flow: Flow) {
+  executeTest(flow: PopulatedFlow) {
     return this.flowService
       .execute({
-        flowVersionId: flow.version!.id,
+        flowVersionId: flow.version.id,
       })
       .pipe(
         tap({

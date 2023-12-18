@@ -3,7 +3,12 @@ import { ActivatedRoute } from '@angular/router';
 import { map, Observable, shareReplay, startWith, Subject, tap } from 'rxjs';
 import { FlowsTableDataSource } from './flows-table.datasource';
 import { MatDialog } from '@angular/material/dialog';
-import { Flow, FlowStatus, FolderId, TriggerType } from '@activepieces/shared';
+import {
+  PopulatedFlow,
+  FlowStatus,
+  FolderId,
+  TriggerType,
+} from '@activepieces/shared';
 
 import {
   ApPaginatorComponent,
@@ -103,13 +108,13 @@ export class FlowsTableComponent implements OnInit {
     );
   }
 
-  openBuilder(flow: Flow, event: MouseEvent) {
+  openBuilder(flow: PopulatedFlow, event: MouseEvent) {
     const link = '/flows/' + flow.id;
     const newWindow = event.ctrlKey || event.which == 2 || event.button == 4;
     this.navigationService.navigate(link, newWindow);
   }
 
-  deleteFlow(flow: Flow) {
+  deleteFlow(flow: PopulatedFlow) {
     const dialogData: DeleteEntityDialogData = {
       deleteEntity$: this.flowService.delete(flow.id),
       entityName: flow.version.displayName,
@@ -135,7 +140,7 @@ export class FlowsTableComponent implements OnInit {
       })
     );
   }
-  toggleFlowStatus(flow: Flow, control: FormControl<boolean>) {
+  toggleFlowStatus(flow: PopulatedFlow, control: FormControl<boolean>) {
     if (control.enabled) {
       control.disable();
       this.flowsUpdateStatusRequest$[flow.id] = this.instanceService
@@ -156,11 +161,11 @@ export class FlowsTableComponent implements OnInit {
         );
     }
   }
-  duplicate(flow: Flow) {
+  duplicate(flow: PopulatedFlow) {
     this.duplicateFlow$ = this.flowService.duplicate(flow.id);
   }
 
-  getTriggerIcon(flow: Flow) {
+  getTriggerIcon(flow: PopulatedFlow) {
     const trigger = flow.version.trigger;
     switch (trigger.type) {
       case TriggerType.WEBHOOK:
@@ -183,7 +188,7 @@ export class FlowsTableComponent implements OnInit {
     }
   }
 
-  getTriggerToolTip(flow: Flow) {
+  getTriggerToolTip(flow: PopulatedFlow) {
     const trigger = flow.version.trigger;
     switch (trigger.type) {
       case TriggerType.WEBHOOK:
@@ -206,7 +211,7 @@ export class FlowsTableComponent implements OnInit {
     }
   }
 
-  moveFlow(flow: Flow) {
+  moveFlow(flow: PopulatedFlow) {
     const dialogData: MoveFlowToFolderDialogData = {
       flowId: flow.id,
       folderId: flow.folderId,
@@ -224,7 +229,9 @@ export class FlowsTableComponent implements OnInit {
       );
   }
 
-  getStatusFlowMatTooltip(flow: any) {
+  getStatusFlowMatTooltip(flow: {
+    instanceToggleControl: FormControl<boolean>;
+  }) {
     if (flow.instanceToggleControl.disabled) {
       return $localize`Please publish the flow`;
     }

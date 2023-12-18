@@ -2,7 +2,7 @@ import { createAction, props } from '@ngrx/store';
 import { UUID } from 'angular2-uuid';
 import {
   AddActionRequest,
-  Flow,
+  PopulatedFlow,
   DeleteActionRequest,
   UpdateActionRequest,
   UpdateTriggerRequest,
@@ -61,7 +61,7 @@ const deleteAction = createAction(
 
 const savedSuccess = createAction(
   FlowsActionType.SAVED_SUCCESS,
-  props<{ saveRequestId: UUID; flow: Flow }>()
+  props<{ saveRequestId: UUID; flow: PopulatedFlow }>()
 );
 
 const savedFailed = createAction(
@@ -77,7 +77,7 @@ const changeName = createAction(
 const setInitial = createAction(
   FlowsActionType.SET_INITIAL,
   props<{
-    flow: Flow;
+    flow: PopulatedFlow;
     run: FlowRun | undefined;
     folder?: Folder;
   }>()
@@ -85,7 +85,7 @@ const setInitial = createAction(
 const importFlow = createAction(
   FlowsActionType.SET_INITIAL,
   props<{
-    flow: Flow;
+    flow: PopulatedFlow;
   }>()
 );
 const duplicateStep = createAction(
@@ -99,7 +99,11 @@ const duplicateStep = createAction(
 );
 const applyUpdateOperation = createAction(
   FlowsActionType.APPLY_UPDATE_OPERATION,
-  props<{ flow: Flow; operation: FlowOperationRequest; saveRequestId: UUID }>()
+  props<{
+    flow: PopulatedFlow;
+    operation: FlowOperationRequest;
+    saveRequestId: UUID;
+  }>()
 );
 const toggleWaitingToSave = createAction(
   FlowsActionType.TOGGLE_WAITING_TO_SAVE

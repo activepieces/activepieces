@@ -26,7 +26,7 @@
           <div class="ap-typography-body-1 ap-text-placeholder">/</div>
         </ng-container>
         <ap-editable-text [editing]="editingFlowName" (editingChanges)="changeEditValue($event)"
-          [value]="(flow$ | async)?.version?.displayName || ''" (valueChanges)="saveFlowName($event)" [disableEditing]="
+          [value]="(flow$ | async)?.version?.displayName" (valueChanges)="saveFlowName($event)" [disableEditing]="
             (isInDebugMode$ | async | defaultTrue) ||
             (isInReadOnlyMode$ | async | defaultTrue)
           " [allowClick]="true" [cssClasses]="'ap-typography-body-1 !ap-font-semibold'"
