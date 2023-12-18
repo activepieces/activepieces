@@ -1,10 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { config } from '../../index';
+import { activePieceAuth, config } from '../../index';
 
 export const updateProject = createAction({
   name: 'update_project',
-  auth: config.auth,
+  auth: activePieceAuth,
   displayName: 'Update Project',
   description: 'Update a project',
   props: {

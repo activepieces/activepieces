@@ -1,10 +1,10 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { config } from '../../index';
+import { activePieceAuth, config } from '../../index';
 
 export const listProject = createAction({
   name: 'list_project',
-  auth: config.auth,
+  auth: activePieceAuth,
   displayName: 'List Projects',
   description: 'List all projects',
   props: {},

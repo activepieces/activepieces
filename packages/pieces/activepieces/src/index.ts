@@ -7,9 +7,15 @@ import { updateProject } from './lib/actions/update-project';
 import { listProjectMember } from './lib/actions/list-project-member';
 import { deleteProjectMember } from './lib/actions/delete-project-member';
 
+export const activePieceAuth = PieceAuth.SecretText({
+  displayName: 'Secret Text',
+  description: 'Secret text to be used for authentication',
+  required: true,
+})
+
 export const activepieces = createPiece({
   displayName: "Activepieces",
-  auth: PieceAuth.None(),
+  auth: activePieceAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: "https://cdn.activepieces.com/pieces/activepieces.png",
   authors: [
@@ -28,9 +34,4 @@ export const activepieces = createPiece({
 
 export const config = {
   baseApiUrl: "https://cloud.activepieces.com/api/v1",
-  auth: PieceAuth.SecretText({
-    displayName: 'Secret Text',
-    description: 'Secret text to be used for authentication',
-    required: true,
-  })
 }

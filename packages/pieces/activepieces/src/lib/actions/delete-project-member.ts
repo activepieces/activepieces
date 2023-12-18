@@ -1,10 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { config } from '../../index';
+import { activePieceAuth, config } from '../../index';
 
 export const deleteProjectMember = createAction({
   name: 'delete_project_member',
-  auth: config.auth,
+  auth: activePieceAuth,
   displayName: 'Delete Project Member',
   description: 'Delete a project Member',
   props: {
