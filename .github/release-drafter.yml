@@ -27,6 +27,9 @@ categories:
   - title: "Other Changes"
     labels:
       - "*"
+  - title: "🖥️ API Changes"
+    labels:
+      - "🖥️ api"
 
 template: |
 
