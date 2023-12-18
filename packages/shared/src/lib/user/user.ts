@@ -9,6 +9,8 @@ export enum UserStatus {
     CREATED = 'CREATED',
     /* user registered and verified their email or accepted an invitation */
     VERIFIED = 'VERIFIED',
+    /* user is disabled */
+    SUSPENDED = 'SUSPENDED',
 }
 
 export const EmailType = Type.String({

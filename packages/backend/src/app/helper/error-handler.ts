@@ -5,6 +5,7 @@ import { captureException, logger } from './logger'
 import { system } from './system/system'
 import { SystemProp } from './system/system-prop'
 
+
 const ENRICH_ERROR_CONTEXT = system.getBoolean(SystemProp.ENRICH_ERROR_CONTEXT) ?? false
 
 export const errorHandler = async (

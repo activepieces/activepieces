@@ -80,6 +80,7 @@ import { authorizationMiddleware } from './authentication/authorization-middlewa
 import { apiKeyModule } from './ee/api-keys/api-key-module'
 import { domainHelper } from './helper/domain-helper'
 import { platformDomainHelper } from './ee/helper/platform-domain-helper'
+import { enterpriseUserModule } from './ee/user/enterprise-user-module'
 import { flowResponseWatcher } from './flows/flow-run/flow-response-watcher'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
@@ -236,6 +237,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(enterpriseLocalAuthnModule)
             await app.register(federatedAuthModule)
             await app.register(apiKeyModule)
+            await app.register(enterpriseUserModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
@@ -265,6 +267,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(enterpriseLocalAuthnModule)
             await app.register(federatedAuthModule)
             await app.register(apiKeyModule)
+            await app.register(enterpriseUserModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
