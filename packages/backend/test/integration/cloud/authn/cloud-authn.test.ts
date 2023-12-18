@@ -164,12 +164,10 @@ describe('Authentication API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
             const responseBody = response?.json()
 
-            expect(responseBody?.code).toBe('ENTITY_NOT_FOUND')
-            expect(responseBody?.params?.entityType).toBe('project')
-            expect(responseBody?.params?.message).toContain('no projects found for the user=')
+            expect(responseBody?.code).toBe('INVITATIION_ONLY_SIGN_UP')
         })
 
         it('Adds tasks for referrals', async () => {

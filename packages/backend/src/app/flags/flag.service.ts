@@ -62,6 +62,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.SHOW_SIGN_UP_LINK,
+                value: true,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.EDITION,
                 value: getEdition(),
                 created,
