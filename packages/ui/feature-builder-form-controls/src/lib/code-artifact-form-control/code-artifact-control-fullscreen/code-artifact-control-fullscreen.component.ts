@@ -92,7 +92,7 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
     //needs to wait for the dialog to finish opening
     setTimeout(() => {
       editor.focus();
-    }, 100);
+    }, 200);
   }
 
   ngOnInit(): void {
@@ -129,6 +129,7 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
   addNewPackage(pkg: { [key: PackageName]: PackageVersion }) {
     const packageDotJson = this.getPackageDotJsonObject();
     packageDotJson.dependencies = { ...packageDotJson.dependencies, ...pkg };
+    this.selectedFile = SelectedFileInFullscreenCodeEditor.PACKAGE;
     this.codeFilesForm.controls.packageJson.setValue(
       this.codeService.beautifyJson(packageDotJson)
     );
