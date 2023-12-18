@@ -1,16 +1,15 @@
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { ApId, EndpointScope, PrincipalType, assertEqual, assertNotNullOrUndefined } from '@activepieces/shared'
+import { ApId, EndpointScope, PrincipalType, SeekPage, UserResponse, assertNotNullOrUndefined } from '@activepieces/shared'
 import { enterpriseUserService } from './enterprise-user-service'
 import { StatusCodes } from 'http-status-codes'
 
 export const enterpriseUserController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListUsersRequest, async (req) => {
-        const principalPlatformId = req.principal.platform?.id
-        const requestPlatformId = req.query.platformId
-        assertEqual(principalPlatformId, requestPlatformId, 'principalPlatformId', requestPlatformId)
+        const platformId = req.principal.platform?.id
+        assertNotNullOrUndefined(platformId, 'platformId')
 
         return enterpriseUserService.list({
-            platformId: req.query.platformId,
+            platformId,
         })
     })
 
@@ -29,9 +28,9 @@ export const enterpriseUserController: FastifyPluginAsyncTypebox = async (app) =
 
 const ListUsersRequest = {
     schema: {
-        querystring: Type.Object({
-            platformId: ApId,
-        }),
+        response: {
+            [StatusCodes.OK]: SeekPage(UserResponse),
+        },
     },
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],

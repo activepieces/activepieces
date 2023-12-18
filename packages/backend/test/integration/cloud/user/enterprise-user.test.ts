@@ -56,6 +56,7 @@ describe('Enterprise User API', () => {
             expect(Object.keys(responseBody)).toHaveLength(3)
             expect(responseBody.data).toHaveLength(1)
             expect(responseBody.data[0].id).toBe(mockOwnerOne.id)
+            expect(responseBody.data[0].password).toBeUndefined()
         })
 
         it('Allows service accounts', async () => {
@@ -112,26 +113,6 @@ describe('Enterprise User API', () => {
             const responseBody = response?.json()
 
             expect(responseBody?.code).toBe('AUTHORIZATION')
-        })
-
-        it('Fails if platformId is not present in query', async () => {
-            // arrange
-            const testToken = await generateMockToken({ type: PrincipalType.USER })
-
-            // act
-            const response = await app?.inject({
-                method: 'GET',
-                url: '/v1/users',
-                headers: {
-                    authorization: `Bearer ${testToken}`,
-                },
-            })
-
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
-            const responseBody = response?.json()
-
-            expect(responseBody.message).toBe('querystring must have required property \'platformId\'')
         })
     })
 
