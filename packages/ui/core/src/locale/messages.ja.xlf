@@ -723,7 +723,7 @@
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/community-pieces-table/community-pieces-table.component.html</context>
           <context context-type="linenumber">3</context>
         </context-group>
-        <target state="final">Pieces</target>
+        <target state="final">自作ピース</target>
       </trans-unit>
       <trans-unit id="3797778920049399855" datatype="html" approved="yes">
         <source>Logout</source>
@@ -1423,21 +1423,21 @@
         </context-group>
         <target state="final">パスワードを忘れた</target>
       </trans-unit>
-      <trans-unit id="4465085913683915434" datatype="html">
+      <trans-unit id="4465085913683915434" datatype="html" approved="yes">
         <source>True</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/canvas-utils/drawing/branch-drawer.ts</context>
           <context context-type="linenumber">71</context>
         </context-group>
-        <target state="needs-translation">True</target>
+        <target state="final">True</target>
       </trans-unit>
-      <trans-unit id="3800326155195149498" datatype="html">
+      <trans-unit id="3800326155195149498" datatype="html" approved="yes">
         <source>False</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/canvas-utils/drawing/branch-drawer.ts</context>
           <context context-type="linenumber">71</context>
         </context-group>
-        <target state="needs-translation">False</target>
+        <target state="final">False</target>
       </trans-unit>
       <trans-unit id="7006228718285189938" datatype="html" approved="yes">
         <source>Delete Step</source>
@@ -1463,13 +1463,13 @@
         </context-group>
         <target state="final">トリガーの変更</target>
       </trans-unit>
-      <trans-unit id="2424797729759691148" datatype="html">
+      <trans-unit id="2424797729759691148" datatype="html" approved="yes">
         <source>Can't move here</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/flow-item-tree/flow-item/flow-item-connection/add-button-core.component.ts</context>
           <context context-type="linenumber">21</context>
         </context-group>
-        <target state="needs-translation">Can't move here</target>
+        <target state="final">ここには移動できません。</target>
       </trans-unit>
       <trans-unit id="852013103273628574" datatype="html" approved="yes">
         <source>Incomplete settings</source>
@@ -1479,41 +1479,41 @@
         </context-group>
         <target state="final">未完了の設定</target>
       </trans-unit>
-      <trans-unit id="2784956659778044823" datatype="html">
+      <trans-unit id="2784956659778044823" datatype="html" approved="yes">
         <source>Loop</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.ts</context>
           <context context-type="linenumber">197</context>
         </context-group>
-        <target state="needs-translation">Loop</target>
+        <target state="final">ループ</target>
       </trans-unit>
-      <trans-unit id="3281993254947750204" datatype="html">
+      <trans-unit id="3281993254947750204" datatype="html" approved="yes">
         <source>Choose a trigger</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.ts</context>
           <context context-type="linenumber">207</context>
         </context-group>
-        <target state="needs-translation">Choose a trigger</target>
+        <target state="final">トリガーを選択</target>
       </trans-unit>
-      <trans-unit id="2498487601274189013" datatype="html">
+      <trans-unit id="2498487601274189013" datatype="html" approved="yes">
         <source>Webhook trigger</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.ts</context>
           <context context-type="linenumber">209</context>
         </context-group>
-        <target state="needs-translation">Webhook trigger</target>
+        <target state="final">Webhookトリガー</target>
       </trans-unit>
-      <trans-unit id="8800642840450835643" datatype="html">
+      <trans-unit id="8800642840450835643" datatype="html" approved="yes">
         <source> End
 </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/widgets/end-of-flow-widget/end-of-flow-widget.component.html</context>
           <context context-type="linenumber">2,4</context>
         </context-group>
-        <target state="needs-translation"> End
+        <target state="final"> 終了
 </target>
       </trans-unit>
-      <trans-unit id="3805341172871384186" datatype="html">
+      <trans-unit id="3805341172871384186" datatype="html" approved="yes">
         <source>
            Complete  step 
           <x id="INTERPOLATION" equiv-text="{{numOfInvalidSteps}}"/>
@@ -1523,13 +1523,13 @@
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/widgets/incomplete-steps-widget/incomplete-steps-widget.component.html</context>
           <context context-type="linenumber">5,7</context>
         </context-group>
-        <target state="needs-translation">
-           Complete  step 
+        <target state="final">
+完了ステップ 
           <x id="INTERPOLATION" equiv-text="{{numOfInvalidSteps}}"/>
           <x id="INTERPOLATION_1" equiv-text="{{numOfInvalidSteps &gt; 1 ? 's' : ''}}"/>
         </target>
       </trans-unit>
-      <trans-unit id="7708270344948043036" datatype="html">
+      <trans-unit id="7708270344948043036" datatype="html" approved="yes">
         <source>
           <x id="INTERPOLATION" equiv-text="{{(isSaving$ | async)? savingText: testFlowText}}"/>
         </source>
@@ -1537,37 +1537,37 @@
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/widgets/test-flow-widget/test-flow-widget.component.html</context>
           <context context-type="linenumber">11,13</context>
         </context-group>
-        <target state="needs-translation">
+        <target state="final">
           <x id="INTERPOLATION" equiv-text="{{(isSaving$ | async)? savingText: testFlowText}}"/>
         </target>
       </trans-unit>
-      <trans-unit id="7468425627961650152" datatype="html">
+      <trans-unit id="7468425627961650152" datatype="html" approved="yes">
         <source>Test flow</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/widgets/test-flow-widget/test-flow-widget.component.ts</context>
           <context context-type="linenumber">53</context>
         </context-group>
-        <target state="needs-translation">Test flow</target>
+        <target state="final">フローをテスト</target>
       </trans-unit>
-      <trans-unit id="3407061818321766940" datatype="html">
+      <trans-unit id="3407061818321766940" datatype="html" approved="yes">
         <source>Saving...</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/widgets/test-flow-widget/test-flow-widget.component.ts</context>
           <context context-type="linenumber">54</context>
         </context-group>
-        <target state="needs-translation">Saving...</target>
+        <target state="final">保存中...</target>
       </trans-unit>
-      <trans-unit id="6212705197426717225" datatype="html">
+      <trans-unit id="6212705197426717225" datatype="html" approved="yes">
         <source> View Only
 </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/widgets/view-only-mode-widget/view-only-mode-widget.component.html</context>
           <context context-type="linenumber">2,4</context>
         </context-group>
-        <target state="needs-translation"> View Only
+        <target state="final"> 閲覧のみ
 </target>
       </trans-unit>
-      <trans-unit id="7336734700471735506" datatype="html">
+      <trans-unit id="7336734700471735506" datatype="html" approved="yes">
         <source> + Add Item </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/array-form-control/array-form-control.component.html</context>
@@ -1577,9 +1577,9 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/dictionary-form-control/dictionary-form-control.component.html</context>
           <context context-type="linenumber">37,38</context>
         </context-group>
-        <target state="needs-translation"> + Add Item </target>
+        <target state="final"> + アイテムを追加 </target>
       </trans-unit>
-      <trans-unit id="4163163170493567215" datatype="html">
+      <trans-unit id="4163163170493567215" datatype="html" approved="yes">
         <source>
            Value
           <x id="INTERPOLATION" equiv-text="showSecondValue)? 'First':''}}"/>
@@ -1588,92 +1588,92 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/branch-condition-form-control/branch-condition-form-control.component.html</context>
           <context context-type="linenumber">5</context>
         </context-group>
-        <target state="needs-translation">
-           Value
+        <target state="final">
+           値
           <x id="INTERPOLATION" equiv-text="showSecondValue)? 'First':''}}"/>
         </target>
       </trans-unit>
-      <trans-unit id="5736745948064769809" datatype="html">
+      <trans-unit id="5736745948064769809" datatype="html" approved="yes">
         <source> First value is required </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/branch-condition-form-control/branch-condition-form-control.component.html</context>
           <context context-type="linenumber">9,11</context>
         </context-group>
-        <target state="needs-translation"> First value is required </target>
+        <target state="final"> 最初の値は必須です </target>
       </trans-unit>
-      <trans-unit id="8448328978191313077" datatype="html">
+      <trans-unit id="8448328978191313077" datatype="html" approved="yes">
         <source> Condition</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/branch-condition-form-control/branch-condition-form-control.component.html</context>
           <context context-type="linenumber">32</context>
         </context-group>
-        <target state="needs-translation"> Condition</target>
+        <target state="final"> 条件</target>
       </trans-unit>
-      <trans-unit id="996299283992999375" datatype="html">
+      <trans-unit id="996299283992999375" datatype="html" approved="yes">
         <source> Condition is required </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/branch-condition-form-control/branch-condition-form-control.component.html</context>
           <context context-type="linenumber">38,40</context>
         </context-group>
-        <target state="needs-translation"> Condition is required </target>
+        <target state="final"> 条件は必須です </target>
       </trans-unit>
-      <trans-unit id="9118432878528508253" datatype="html">
+      <trans-unit id="9118432878528508253" datatype="html" approved="yes">
         <source>Second Value</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/branch-condition-form-control/branch-condition-form-control.component.html</context>
           <context context-type="linenumber">47</context>
         </context-group>
-        <target state="needs-translation">Second Value</target>
+        <target state="final">2番目の値</target>
       </trans-unit>
-      <trans-unit id="2581780998909888908" datatype="html">
+      <trans-unit id="2581780998909888908" datatype="html" approved="yes">
         <source> Second value is required </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/branch-condition-form-control/branch-condition-form-control.component.html</context>
           <context context-type="linenumber">51,53</context>
         </context-group>
-        <target state="needs-translation"> Second value is required </target>
+        <target state="final"> 2番目の値は必須です </target>
       </trans-unit>
-      <trans-unit id="1601518217526203092" datatype="html">
+      <trans-unit id="1601518217526203092" datatype="html" approved="yes">
         <source> Case sensitive </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/branch-condition-form-control/branch-condition-form-control.component.html</context>
           <context context-type="linenumber">64,66</context>
         </context-group>
-        <target state="needs-translation"> Case sensitive </target>
+        <target state="final"> 大/小文字を区別 </target>
       </trans-unit>
-      <trans-unit id="6681500251003895090" datatype="html">
+      <trans-unit id="6681500251003895090" datatype="html" approved="yes">
         <source> And </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/branch-conditions-group-form-control/branch-conditions-group-form-control.component.html</context>
           <context context-type="linenumber">11,13</context>
         </context-group>
-        <target state="needs-translation"> And </target>
+        <target state="final"> And </target>
       </trans-unit>
-      <trans-unit id="5532053643727258773" datatype="html">
+      <trans-unit id="5532053643727258773" datatype="html" approved="yes">
         <source> + And </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/branch-conditions-group-form-control/branch-conditions-group-form-control.component.html</context>
           <context context-type="linenumber">21,23</context>
         </context-group>
-        <target state="needs-translation"> + And </target>
+        <target state="final"> + And </target>
       </trans-unit>
-      <trans-unit id="7896829997070648469" datatype="html">
+      <trans-unit id="7896829997070648469" datatype="html" approved="yes">
         <source> + Or </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/branch-conditions-group-form-control/branch-conditions-group-form-control.component.html</context>
           <context context-type="linenumber">25,27</context>
         </context-group>
-        <target state="needs-translation"> + Or </target>
+        <target state="final"> + Or </target>
       </trans-unit>
-      <trans-unit id="2496825876408159474" datatype="html">
+      <trans-unit id="2496825876408159474" datatype="html" approved="yes">
         <source>Add NPM Package</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component.html</context>
           <context context-type="linenumber">1</context>
         </context-group>
-        <target state="needs-translation">Add NPM Package</target>
+        <target state="final">NPMパッケージを追加</target>
       </trans-unit>
-      <trans-unit id="8916992158425367122" datatype="html">
+      <trans-unit id="8916992158425367122" datatype="html" approved="yes">
         <source>
            Please type the name of an NPM package.
           <x id="LINE_BREAK" ctype="lb" equiv-text="&lt;br&gt;"/>
@@ -1682,92 +1682,124 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component.html</context>
           <context context-type="linenumber">3,6</context>
         </context-group>
-        <target state="needs-translation">
-           Please type the name of an NPM package.
+        <target state="final">
+           NPMパッケージの名前を入力してください。
           <x id="LINE_BREAK" ctype="lb" equiv-text="&lt;br&gt;"/>
         </target>
       </trans-unit>
-      <trans-unit id="4429446519625428933" datatype="html">
+      <trans-unit id="4429446519625428933" datatype="html" approved="yes">
         <source> Package name is required </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component.html</context>
           <context context-type="linenumber">11,13</context>
         </context-group>
-        <target state="needs-translation"> Package name is required </target>
+        <target state="final"> パッケージ名は必須です </target>
       </trans-unit>
-      <trans-unit id="7247626109904878386" datatype="html">
+      <trans-unit id="7247626109904878386" datatype="html" approved="yes">
         <source> Package not found </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component.html</context>
           <context context-type="linenumber">15,17</context>
         </context-group>
-        <target state="needs-translation"> Package not found </target>
+        <target state="final"> パッケージが見つかりません。 </target>
       </trans-unit>
-      <trans-unit id="3989217883668206850" datatype="html">
+      <trans-unit id="3989217883668206850" datatype="html" approved="yes">
         <source> The latest version will be fetched and added to package.json </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component.html</context>
           <context context-type="linenumber">21,23</context>
         </context-group>
-        <target state="needs-translation"> The latest version will be fetched and added to package.json </target>
+        <target state="final"> 最新バージョンを取得し、package.json に追加します </target>
       </trans-unit>
-      <trans-unit id="577038887888857351" datatype="html">
+      <trans-unit id="577038887888857351" datatype="html" approved="yes">
         <source> Add </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component.html</context>
           <context context-type="linenumber">31,33</context>
         </context-group>
-        <target state="needs-translation"> Add </target>
+        <target state="final"> 追加 </target>
       </trans-unit>
-      <trans-unit id="5280318900735007886" datatype="html">
+      <trans-unit id="5280318900735007886" datatype="html" approved="yes">
         <source>Code Editor</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component.html</context>
           <context context-type="linenumber">3</context>
         </context-group>
-        <target state="needs-translation">Code Editor</target>
+        <target state="final">コードエディタ</target>
       </trans-unit>
-      <trans-unit id="3524658885997089516" datatype="html">
+      <trans-unit id="3524658885997089516" datatype="html" approved="yes">
         <source> Add npm package </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component.html</context>
           <context context-type="linenumber">6,8</context>
         </context-group>
-        <target state="needs-translation"> Add npm package </target>
+        <target state="final"> Npmパッケージを追加 </target>
       </trans-unit>
-      <trans-unit id="6555875325581285494" datatype="html">
+      <trans-unit id="6555875325581285494" datatype="html" approved="yes">
         <source>Test code </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component.html</context>
           <context context-type="linenumber">10,11</context>
         </context-group>
-        <target state="needs-translation">Test code </target>
+        <target state="final">コードをテスト </target>
       </trans-unit>
-      <trans-unit id="2272612543539034211" datatype="html">
-        <source> Test Code First </source>
+      <trans-unit id="6131680921696393746" datatype="html">
+        <source>Minimize Editor</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/code-step-mention-item/code-step-mention-item.component.html</context>
+          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component.html</context>
+          <context context-type="linenumber">13</context>
+        </context-group>
+        <target state="needs-translation">Minimize Editor</target>
+      </trans-unit>
+      <trans-unit id="2588893911086802790" datatype="html">
+        <source> Output </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component.html</context>
+          <context context-type="linenumber">74,76</context>
+        </context-group>
+        <target state="needs-translation"> Output </target>
+      </trans-unit>
+      <trans-unit id="6287928812505781175" datatype="html">
+        <source> Console </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component.html</context>
+          <context context-type="linenumber">81,83</context>
+        </context-group>
+        <target state="needs-translation"> Console </target>
+      </trans-unit>
+      <trans-unit id="969162659595657718" datatype="html">
+        <source>Copied to clipboard</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component.ts</context>
+          <context context-type="linenumber">198</context>
+        </context-group>
+        <target state="needs-translation">Copied to clipboard</target>
+      </trans-unit>
+      <trans-unit id="1884322386510747920" datatype="html">
+        <source> Test Step First </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/action-mention-item/action-mention-item.component.html</context>
           <context context-type="linenumber">42,44</context>
         </context-group>
-        <target state="needs-translation"> Test Code First </target>
+        <target state="needs-translation"> Test Step First </target>
       </trans-unit>
-      <trans-unit id="6240237049554265257" datatype="html">
+      <trans-unit id="6240237049554265257" datatype="html" approved="yes">
         <source> This step needs to be tested in order to view its data. </source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/code-step-mention-item/code-step-mention-item.component.html</context>
+          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/action-mention-item/action-mention-item.component.html</context>
           <context context-type="linenumber">45,47</context>
         </context-group>
-        <target state="needs-translation"> This step needs to be tested in order to view its data. </target>
+        <target state="final"> このステップは、データを表示するためにテストする必要があります。 </target>
       </trans-unit>
-      <trans-unit id="1247109697914602116" datatype="html">
+      <trans-unit id="1247109697914602116" datatype="html" approved="yes">
         <source> Go to step </source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/code-step-mention-item/code-step-mention-item.component.html</context>
+          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/action-mention-item/action-mention-item.component.html</context>
           <context context-type="linenumber">50,52</context>
         </context-group>
-        <target state="needs-translation"> Go to step </target>
+        <target state="final"> ステップに進む </target>
       </trans-unit>
-      <trans-unit id="4578163876314196724" datatype="html">
+      <trans-unit id="4578163876314196724" datatype="html" approved="yes">
         <source>
            Describe the path to the property using JSON format 
           <x id="START_PARAGRAPH" ctype="x-p" equiv-text="&lt;p&gt;"/>
@@ -1778,22 +1810,22 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/custom-path-mention-dialog/custom-path-mention-dialog.component.html</context>
           <context context-type="linenumber">4,6</context>
         </context-group>
-        <target state="needs-translation">
-           Describe the path to the property using JSON format 
+        <target state="final">
+           JSON 形式 
           <x id="START_PARAGRAPH" ctype="x-p" equiv-text="&lt;p&gt;"/>
           <x id="INTERPOLATION" equiv-text="{{data.placeHolder}}"/>
           <x id="CLOSE_PARAGRAPH" ctype="x-p" equiv-text="&lt;/p&gt;"/>
-        </target>
+        を使用して、プロパティへのパスを記述します。        </target>
       </trans-unit>
-      <trans-unit id="1303595947745715638" datatype="html">
+      <trans-unit id="1303595947745715638" datatype="html" approved="yes">
         <source> Path is invalid </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/custom-path-mention-dialog/custom-path-mention-dialog.component.html</context>
           <context context-type="linenumber">12,14</context>
         </context-group>
-        <target state="needs-translation"> Path is invalid </target>
+        <target state="final"> パスが無効です </target>
       </trans-unit>
-      <trans-unit id="4407837587845744851" datatype="html">
+      <trans-unit id="4407837587845744851" datatype="html" approved="yes">
         <source>
            Path must begin with  
           <x id="INTERPOLATION" equiv-text="{{data.stepName}}"/>
@@ -1802,29 +1834,39 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/custom-path-mention-dialog/custom-path-mention-dialog.component.html</context>
           <context context-type="linenumber">16,18</context>
         </context-group>
-        <target state="needs-translation">
-           Path must begin with  
+        <target state="final">
+           パスは  
           <x id="INTERPOLATION" equiv-text="{{data.stepName}}"/>
-        </target>
+        で始まる必要があります        </target>
       </trans-unit>
-      <trans-unit id="4745987606023884549" datatype="html">
+      <trans-unit id="4745987606023884549" datatype="html" approved="yes">
         <source>Select </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/generic-mention-item/generic-mention-item.component.html</context>
           <context context-type="linenumber">4,5</context>
         </context-group>
-        <target state="needs-translation">Select </target>
+        <target state="final">選択 </target>
       </trans-unit>
-      <trans-unit id="1483784557054514527" datatype="html">
+      <trans-unit id="2382599479144636387" datatype="html" approved="yes">
+        <source>
+          result:  
+          <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;ap-transition-all ap-text-primary&quot; [matTooltip]=&quot;'' + result.value || ''&quot;&gt;"/>
+          <x id="INTERPOLATION"/>
+          <x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/>
+        </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-trigger-mention-item/piece-trigger-mention-item.component.html</context>
+          <context context-type="linenumber">37,40</context>
+        </context-group>
+        <target state="final">
+          結果:  
+          <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;ap-transition-all ap-text-primary&quot; [matTooltip]=&quot;'' + result.value || ''&quot;&gt;"/>
+          <x id="INTERPOLATION"/>
+          <x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/>
+        </target>
+      </trans-unit>
+      <trans-unit id="1483784557054514527" datatype="html" approved="yes">
         <source>Insert </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-step-mention-item/piece-step-mention-item.component.html</context>
-          <context context-type="linenumber">10,11</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-step-mention-item/piece-step-mention-item.component.html</context>
-          <context context-type="linenumber">55,56</context>
-        </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-trigger-mention-item/piece-trigger-mention-item.component.html</context>
           <context context-type="linenumber">43,44</context>
@@ -1837,63 +1879,17 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/step-mentions-tree/step-mentions-tree.component.html</context>
           <context context-type="linenumber">44,45</context>
         </context-group>
-        <target state="needs-translation">Insert </target>
+        <target state="final">挿入 </target>
       </trans-unit>
-      <trans-unit id="2382599479144636387" datatype="html">
-        <source>
-          result:  
-          <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;ap-transition-all ap-text-primary&quot; [matTooltip]=&quot;'' + result.value || ''&quot;&gt;"/>
-          <x id="INTERPOLATION"/>
-          <x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/>
-        </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-step-mention-item/piece-step-mention-item.component.html</context>
-          <context context-type="linenumber">49,52</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-trigger-mention-item/piece-trigger-mention-item.component.html</context>
-          <context context-type="linenumber">37,40</context>
-        </context-group>
-        <target state="needs-translation">
-          result:  
-          <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;ap-transition-all ap-text-primary&quot; [matTooltip]=&quot;'' + result.value || ''&quot;&gt;"/>
-          <x id="INTERPOLATION"/>
-          <x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/>
-        </target>
-      </trans-unit>
-      <trans-unit id="995418901058119655" datatype="html">
-        <source> Test step </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-step-mention-item/piece-step-mention-item.component.html</context>
-          <context context-type="linenumber">63,65</context>
-        </context-group>
-        <target state="needs-translation"> Test step </target>
-      </trans-unit>
-      <trans-unit id="31885550206889765" datatype="html">
-        <source> This step needs to be tested, to generate sample data. </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-step-mention-item/piece-step-mention-item.component.html</context>
-          <context context-type="linenumber">66,68</context>
-        </context-group>
-        <target state="needs-translation"> This step needs to be tested, to generate sample data. </target>
-      </trans-unit>
-      <trans-unit id="3363972622671896869" datatype="html">
-        <source>Go to step </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-step-mention-item/piece-step-mention-item.component.html</context>
-          <context context-type="linenumber">71,72</context>
-        </context-group>
-        <target state="needs-translation">Go to step </target>
-      </trans-unit>
-      <trans-unit id="8902753740956283901" datatype="html">
+      <trans-unit id="8902753740956283901" datatype="html" approved="yes">
         <source> This trigger needs to have data loaded from your account, to use as sample data </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-trigger-mention-item/piece-trigger-mention-item.component.html</context>
           <context context-type="linenumber">56,58</context>
         </context-group>
-        <target state="needs-translation"> This trigger needs to have data loaded from your account, to use as sample data </target>
+        <target state="final"> サンプルデータとして使用するには、アカウントからデータを読み込む必要があります </target>
       </trans-unit>
-      <trans-unit id="806466970018409276" datatype="html">
+      <trans-unit id="806466970018409276" datatype="html" approved="yes">
         <source>Go to trigger </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-trigger-mention-item/piece-trigger-mention-item.component.html</context>
@@ -1903,49 +1899,49 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/webhook-trigger-mention-item/webhook-trigger-mention-item.component.html</context>
           <context context-type="linenumber">33,34</context>
         </context-group>
-        <target state="needs-translation">Go to trigger </target>
+        <target state="final">トリガーに移動 </target>
       </trans-unit>
-      <trans-unit id="1705277357265501985" datatype="html">
+      <trans-unit id="1705277357265501985" datatype="html" approved="yes">
         <source> Send sample data first </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/webhook-trigger-mention-item/webhook-trigger-mention-item.component.html</context>
           <context context-type="linenumber">25,27</context>
         </context-group>
-        <target state="needs-translation"> Send sample data first </target>
+        <target state="final"> まずサンプルデータを送信 </target>
       </trans-unit>
-      <trans-unit id="2776954849664294745" datatype="html">
+      <trans-unit id="2776954849664294745" datatype="html" approved="yes">
         <source> This trigger needs to have data sent to it, to use as sample data </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/webhook-trigger-mention-item/webhook-trigger-mention-item.component.html</context>
           <context context-type="linenumber">28,30</context>
         </context-group>
-        <target state="needs-translation"> This trigger needs to have data sent to it, to use as sample data </target>
+        <target state="final"> サンプルデータとして使用するには、アカウントからデータを読み込む必要があります </target>
       </trans-unit>
-      <trans-unit id="465580375833195843" datatype="html">
+      <trans-unit id="465580375833195843" datatype="html" approved="yes">
         <source> Switch Version </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/draft-status/draft-status.component.html</context>
           <context context-type="linenumber">18,20</context>
         </context-group>
-        <target state="needs-translation"> Switch Version </target>
+        <target state="final"> バージョンを切り替える </target>
       </trans-unit>
-      <trans-unit id="3413929662864508239" datatype="html">
+      <trans-unit id="3413929662864508239" datatype="html" approved="yes">
         <source> Draft </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/draft-status/draft-status.component.html</context>
           <context context-type="linenumber">21,23</context>
         </context-group>
-        <target state="needs-translation"> Draft </target>
+        <target state="final"> 下書き </target>
       </trans-unit>
-      <trans-unit id="8481607203070134929" datatype="html">
+      <trans-unit id="8481607203070134929" datatype="html" approved="yes">
         <source> Published </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/draft-status/draft-status.component.html</context>
           <context context-type="linenumber">24,26</context>
         </context-group>
-        <target state="needs-translation"> Published </target>
+        <target state="final"> 公開済み </target>
       </trans-unit>
-      <trans-unit id="4058575476871566236" datatype="html">
+      <trans-unit id="4058575476871566236" datatype="html" approved="yes">
         <source>Published</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/draft-status/draft-status.component.ts</context>
@@ -1955,17 +1951,17 @@
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts</context>
           <context context-type="linenumber">84</context>
         </context-group>
-        <target state="needs-translation">Published</target>
+        <target state="final">公開済み</target>
       </trans-unit>
-      <trans-unit id="4808589666930368915" datatype="html">
+      <trans-unit id="4808589666930368915" datatype="html" approved="yes">
         <source>Draft</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/draft-status/draft-status.component.ts</context>
           <context context-type="linenumber">38</context>
         </context-group>
-        <target state="needs-translation">Draft</target>
+        <target state="final">下書き</target>
       </trans-unit>
-      <trans-unit id="2288513108450439427" datatype="html">
+      <trans-unit id="2288513108450439427" datatype="html" approved="yes">
         <source>Support</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/feedback/support.component.html</context>
@@ -1975,9 +1971,9 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html</context>
           <context context-type="linenumber">37</context>
         </context-group>
-        <target state="needs-translation">Support</target>
+        <target state="final">サポート</target>
       </trans-unit>
-      <trans-unit id="2821179408673282599" datatype="html">
+      <trans-unit id="2821179408673282599" datatype="html" approved="yes">
         <source>Home</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html</context>
@@ -1987,25 +1983,25 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html</context>
           <context context-type="linenumber">4</context>
         </context-group>
-        <target state="needs-translation">Home</target>
+        <target state="final">ホーム</target>
       </trans-unit>
-      <trans-unit id="6041115344061899387" datatype="html">
+      <trans-unit id="6041115344061899387" datatype="html" approved="yes">
         <source>Rename</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html</context>
-          <context context-type="linenumber">45</context>
+          <context context-type="linenumber">46</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/folders-list/folders-list.component.html</context>
           <context context-type="linenumber">57</context>
         </context-group>
-        <target state="needs-translation">Rename</target>
+        <target state="final">名前を変更</target>
       </trans-unit>
       <trans-unit id="6621329748219109148" datatype="html" approved="yes">
         <source>Duplicate</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html</context>
-          <context context-type="linenumber">52</context>
+          <context context-type="linenumber">53</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html</context>
@@ -2017,7 +2013,7 @@
         <source>Import</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html</context>
-          <context context-type="linenumber">58</context>
+          <context context-type="linenumber">59</context>
         </context-group>
         <target state="final">インポート</target>
       </trans-unit>
@@ -2025,7 +2021,7 @@
         <source>Export</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html</context>
-          <context context-type="linenumber">65</context>
+          <context context-type="linenumber">66</context>
         </context-group>
         <target state="final">エクスポート</target>
       </trans-unit>
@@ -2033,7 +2029,7 @@
         <source>Delete</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html</context>
-          <context context-type="linenumber">74</context>
+          <context context-type="linenumber">75</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html</context>
@@ -2521,23 +2517,23 @@
           <x id="INTERPOLATION" equiv-text="{{ selectedRun.id }}"/>
         </target>
       </trans-unit>
-      <trans-unit id="691056332862512203" datatype="html">
+      <trans-unit id="691056332862512203" datatype="html" approved="yes">
         <source>Flow is running</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-store/src/lib/test-run-bar/test-run-bar.component.html</context>
           <context context-type="linenumber">19</context>
         </context-group>
-        <target state="needs-translation">Flow is running</target>
+        <target state="final">フローを実行しています</target>
       </trans-unit>
-      <trans-unit id="4598207822643496236" datatype="html">
+      <trans-unit id="4598207822643496236" datatype="html" approved="yes">
         <source>Flow is paused ...</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-store/src/lib/test-run-bar/test-run-bar.component.html</context>
           <context context-type="linenumber">23</context>
         </context-group>
-        <target state="needs-translation">Flow is paused ...</target>
+        <target state="final">フローが一時停止中...</target>
       </trans-unit>
-      <trans-unit id="7038602814235796780" datatype="html">
+      <trans-unit id="7038602814235796780" datatype="html" approved="yes">
         <source>
           Run exceeded  seconds, try to optimize your steps.
           <x id="INTERPOLATION" equiv-text="{{sandboxTimeoutSeconds$ | async}}"/>
@@ -2546,35 +2542,31 @@
           <context context-type="sourcefile">packages/ui/feature-builder-store/src/lib/test-run-bar/test-run-bar.component.html</context>
           <context context-type="linenumber">27,28</context>
         </context-group>
-        <target state="needs-translation">
-          Run exceeded  seconds, try to optimize your steps.
+        <target state="final">
+          実行秒数を超えました。ステップを検討してください。
           <x id="INTERPOLATION" equiv-text="{{sandboxTimeoutSeconds$ | async}}"/>
         </target>
       </trans-unit>
-      <trans-unit id="601645365235785306" datatype="html">
+      <trans-unit id="601645365235785306" datatype="html" approved="yes">
         <source>Run failed for an unknown reason, contact support.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-store/src/lib/test-run-bar/test-run-bar.component.html</context>
           <context context-type="linenumber">32</context>
         </context-group>
-        <target state="needs-translation">Run failed for an unknown reason, contact support.</target>
+        <target state="final">不明な理由で実行に失敗しました, サポートにご連絡ください.</target>
       </trans-unit>
-      <trans-unit id="8315482926074085909" datatype="html">
+      <trans-unit id="8315482926074085909" datatype="html" approved="yes">
         <source> Exit Run </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-store/src/lib/test-run-bar/test-run-bar.component.html</context>
           <context context-type="linenumber">39</context>
         </context-group>
-        <target state="needs-translation"> Exit Run </target>
+        <target state="final"> 実行を終了 </target>
       </trans-unit>
-      <trans-unit id="500133922719782601" datatype="html">
+      <trans-unit id="500133922719782601" datatype="html" approved="yes">
         <source> Generate Sample Data </source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-code-step/test-code-step.component.html</context>
-          <context context-type="linenumber">2,4</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-piece-step/test-piece-step.component.html</context>
+          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-action/test-action.component.html</context>
           <context context-type="linenumber">2,4</context>
         </context-group>
         <context-group purpose="location">
@@ -2589,17 +2581,21 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html</context>
           <context context-type="linenumber">2,4</context>
         </context-group>
-        <target state="needs-translation"> Generate Sample Data </target>
+        <target state="final"> サンプルデータの生成 </target>
       </trans-unit>
-      <trans-unit id="7919787260081015275" datatype="html">
+      <trans-unit id="8144434134010600908" datatype="html" approved="yes">
+        <source>Test step</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-action/test-action.component.html</context>
+          <context context-type="linenumber">40,41</context>
+        </context-group>
+        <target state="final">テストステップ</target>
+      </trans-unit>
+      <trans-unit id="7919787260081015275" datatype="html" approved="yes">
         <source>Tested Successfully</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-code-step/test-code-step.component.html</context>
-          <context context-type="linenumber">15</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-piece-step/test-piece-step.component.html</context>
-          <context context-type="linenumber">61</context>
+          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-action/test-action.component.html</context>
+          <context context-type="linenumber">60</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-piece-webhook-trigger/test-piece-webhook-trigger.component.html</context>
@@ -2609,25 +2605,21 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html</context>
           <context context-type="linenumber">24</context>
         </context-group>
-        <target state="needs-translation">Tested Successfully</target>
+        <target state="final">テスト成功</target>
       </trans-unit>
-      <trans-unit id="3803178221894171065" datatype="html">
-        <source>Test Failed</source>
+      <trans-unit id="2150150684765904117" datatype="html" approved="yes">
+        <source>Testing Failed</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-code-step/test-code-step.component.html</context>
-          <context context-type="linenumber">20</context>
+          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-action/test-action.component.html</context>
+          <context context-type="linenumber">63</context>
         </context-group>
-        <target state="needs-translation">Test Failed</target>
+        <target state="final">テストに失敗しました</target>
       </trans-unit>
-      <trans-unit id="3541311390491548382" datatype="html">
+      <trans-unit id="3541311390491548382" datatype="html" approved="yes">
         <source>Retest</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-code-step/test-code-step.component.html</context>
-          <context context-type="linenumber">27</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-piece-step/test-piece-step.component.html</context>
-          <context context-type="linenumber">73</context>
+          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-action/test-action.component.html</context>
+          <context context-type="linenumber">72</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-piece-webhook-trigger/test-piece-webhook-trigger.component.html</context>
@@ -2637,53 +2629,33 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html</context>
           <context context-type="linenumber">30</context>
         </context-group>
-        <target state="needs-translation">Retest</target>
+        <target state="final">再テスト</target>
       </trans-unit>
-      <trans-unit id="8144434134010600908" datatype="html">
-        <source>Test step</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-code-step/test-code-step.component.html</context>
-          <context context-type="linenumber">46,47</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-piece-step/test-piece-step.component.html</context>
-          <context context-type="linenumber">40,41</context>
-        </context-group>
-        <target state="needs-translation">Test step</target>
-      </trans-unit>
-      <trans-unit id="2150150684765904117" datatype="html">
-        <source>Testing Failed</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-piece-step/test-piece-step.component.html</context>
-          <context context-type="linenumber">64</context>
-        </context-group>
-        <target state="needs-translation">Testing Failed</target>
-      </trans-unit>
-      <trans-unit id="4137681575855964026" datatype="html">
+      <trans-unit id="4137681575855964026" datatype="html" approved="yes">
         <source>Test this trigger to generate sample data that can be used in the next steps</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-piece-webhook-trigger/test-piece-webhook-trigger.component.html</context>
           <context context-type="linenumber">10</context>
         </context-group>
-        <target state="needs-translation">Test this trigger to generate sample data that can be used in the next steps</target>
+        <target state="final">このトリガーをテストして、次のステップで使用できるサンプルデータを生成します</target>
       </trans-unit>
-      <trans-unit id="7772874305312537929" datatype="html">
+      <trans-unit id="7772874305312537929" datatype="html" approved="yes">
         <source>Test Trigger </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-piece-webhook-trigger/test-piece-webhook-trigger.component.html</context>
           <context context-type="linenumber">16,17</context>
         </context-group>
-        <target state="needs-translation">Test Trigger </target>
+        <target state="final">トリガーをテスト </target>
       </trans-unit>
-      <trans-unit id="7821978891866988357" datatype="html">
+      <trans-unit id="7821978891866988357" datatype="html" approved="yes">
         <source>Use Mock Data </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-piece-webhook-trigger/test-piece-webhook-trigger.component.html</context>
           <context context-type="linenumber">22,23</context>
         </context-group>
-        <target state="needs-translation">Use Mock Data </target>
+        <target state="final">モックデータを使用 </target>
       </trans-unit>
-      <trans-unit id="326819936092149573" datatype="html">
+      <trans-unit id="326819936092149573" datatype="html" approved="yes">
         <source> Data </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-piece-webhook-trigger/test-piece-webhook-trigger.component.html</context>
@@ -2697,9 +2669,9 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html</context>
           <context context-type="linenumber">34,36</context>
         </context-group>
-        <target state="needs-translation"> Data </target>
+        <target state="final"> データ </target>
       </trans-unit>
-      <trans-unit id="1443544130994970867" datatype="html">
+      <trans-unit id="1443544130994970867" datatype="html" approved="yes">
         <source>
            (Result )
           <x id="INTERPOLATION" equiv-text="{{currentResults.length-idx}}"/>
@@ -2716,12 +2688,12 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html</context>
           <context context-type="linenumber">39</context>
         </context-group>
-        <target state="needs-translation">
-           (Result )
+        <target state="final">
+           (結果)
           <x id="INTERPOLATION" equiv-text="{{currentResults.length-idx}}"/>
         </target>
       </trans-unit>
-      <trans-unit id="8101735558462006931" datatype="html">
+      <trans-unit id="8101735558462006931" datatype="html" approved="yes">
         <source>Testing trigger</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-piece-webhook-trigger/test-piece-webhook-trigger.component.html</context>
@@ -2731,9 +2703,9 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html</context>
           <context context-type="linenumber">54</context>
         </context-group>
-        <target state="needs-translation">Testing trigger</target>
+        <target state="final">テストトリガー</target>
       </trans-unit>
-      <trans-unit id="2159130950882492111" datatype="html">
+      <trans-unit id="2159130950882492111" datatype="html" approved="yes">
         <source>Cancel</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-piece-webhook-trigger/test-piece-webhook-trigger.component.html</context>
@@ -2743,9 +2715,9 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html</context>
           <context context-type="linenumber">57</context>
         </context-group>
-        <target state="needs-translation">Cancel</target>
+        <target state="final">キャンセル</target>
       </trans-unit>
-      <trans-unit id="1098411996448900439" datatype="html">
+      <trans-unit id="1098411996448900439" datatype="html" approved="yes">
         <source>Action Required</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-piece-webhook-trigger/test-piece-webhook-trigger.component.html</context>
@@ -2755,17 +2727,17 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html</context>
           <context context-type="linenumber">63</context>
         </context-group>
-        <target state="needs-translation">Action Required</target>
+        <target state="final">アクションは必須です</target>
       </trans-unit>
-      <trans-unit id="202666211146552310" datatype="html">
+      <trans-unit id="202666211146552310" datatype="html" approved="yes">
         <source>Load sample data from your account to be used in the next steps</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-polling-trigger/test-polling-trigger.component.html</context>
           <context context-type="linenumber">13</context>
         </context-group>
-        <target state="needs-translation">Load sample data from your account to be used in the next steps</target>
+        <target state="final">次のステップで使用するアカウントからサンプルデータを読み込む</target>
       </trans-unit>
-      <trans-unit id="8335477655941671361" datatype="html">
+      <trans-unit id="8335477655941671361" datatype="html" approved="yes">
         <source>Load data</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-polling-trigger/test-polling-trigger.component.html</context>
@@ -2779,65 +2751,65 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-polling-trigger/test-polling-trigger.component.html</context>
           <context context-type="linenumber">69</context>
         </context-group>
-        <target state="needs-translation">Load data</target>
+        <target state="final">データをロード</target>
       </trans-unit>
-      <trans-unit id="4385583003359794696" datatype="html">
+      <trans-unit id="4385583003359794696" datatype="html" approved="yes">
         <source> This sample data can be used in the next steps </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-polling-trigger/test-polling-trigger.component.html</context>
           <context context-type="linenumber">49,51</context>
         </context-group>
-        <target state="needs-translation"> This sample data can be used in the next steps </target>
+        <target state="final"> このサンプルデータは次のステップで使用できます </target>
       </trans-unit>
-      <trans-unit id="1645193489541371451" datatype="html">
+      <trans-unit id="1645193489541371451" datatype="html" approved="yes">
         <source>No results found</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-polling-trigger/test-polling-trigger.component.html</context>
           <context context-type="linenumber">60</context>
         </context-group>
-        <target state="needs-translation">No results found</target>
+        <target state="final">結果は見つかりませんでした。</target>
       </trans-unit>
-      <trans-unit id="3854830088717420676" datatype="html">
+      <trans-unit id="3854830088717420676" datatype="html" approved="yes">
         <source>Please add some data then press "Load Data"</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-polling-trigger/test-polling-trigger.component.html</context>
           <context context-type="linenumber">72</context>
         </context-group>
-        <target state="needs-translation">Please add some data then press "Load Data"</target>
+        <target state="final">データを追加し、「データを読み込む」を押してください</target>
       </trans-unit>
-      <trans-unit id="7790321446929337842" datatype="html">
+      <trans-unit id="7790321446929337842" datatype="html" approved="yes">
         <source>Testing data failed. Please ensure that the settings are correct or try again.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-polling-trigger/test-polling-trigger.component.html</context>
           <context context-type="linenumber">73,74</context>
         </context-group>
-        <target state="needs-translation">Testing data failed. Please ensure that the settings are correct or try again.</target>
+        <target state="final">データのテストに失敗しました。設定を確認し、やり直してください。</target>
       </trans-unit>
-      <trans-unit id="8201052275889392973" datatype="html">
+      <trans-unit id="8201052275889392973" datatype="html" approved="yes">
         <source>Send a request to generate sample data that can be used in the next steps</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html</context>
           <context context-type="linenumber">10</context>
         </context-group>
-        <target state="needs-translation">Send a request to generate sample data that can be used in the next steps</target>
+        <target state="final">次のステップで使用できるサンプルデータを生成するリクエストを送信します</target>
       </trans-unit>
-      <trans-unit id="4633860620352207300" datatype="html">
+      <trans-unit id="4633860620352207300" datatype="html" approved="yes">
         <source> Send Data </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html</context>
           <context context-type="linenumber">13,15</context>
         </context-group>
-        <target state="needs-translation"> Send Data </target>
+        <target state="final"> データ送信 </target>
       </trans-unit>
-      <trans-unit id="5226293457079438761" datatype="html">
+      <trans-unit id="5226293457079438761" datatype="html" approved="yes">
         <source> Please send data to the webhook endpoint to test the step. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html</context>
           <context context-type="linenumber">65,68</context>
         </context-group>
-        <target state="needs-translation"> Please send data to the webhook endpoint to test the step. </target>
+        <target state="final"> Webhookエンドポイントにデータを送信してください。 </target>
       </trans-unit>
-      <trans-unit id="4042902315677630519" datatype="html">
+      <trans-unit id="4042902315677630519" datatype="html" approved="yes">
         <source> Name is required </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/basic-auth-connection-dialog/basic-auth-connection-dialog.component.html</context>
@@ -2867,17 +2839,17 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/rename-folder-dialog/rename-folder-dialog.component.html</context>
           <context context-type="linenumber">14,16</context>
         </context-group>
-        <target state="needs-translation"> Name is required </target>
+        <target state="final"> 名前は必須です </target>
       </trans-unit>
-      <trans-unit id="6070859199120014907" datatype="html">
+      <trans-unit id="6070859199120014907" datatype="html" approved="yes">
         <source>Reconnect</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/custom-auth-connection-dialog/custom-auth-connection-dialog.component.html</context>
           <context context-type="linenumber">3</context>
         </context-group>
-        <target state="needs-translation">Reconnect</target>
+        <target state="final">再接続</target>
       </trans-unit>
-      <trans-unit id="8096108831936282703" datatype="html">
+      <trans-unit id="8096108831936282703" datatype="html" approved="yes">
         <source>New Connection</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/basic-auth-connection-dialog/basic-auth-connection-dialog.component.html</context>
@@ -2895,9 +2867,9 @@
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
           <context context-type="linenumber">3</context>
         </context-group>
-        <target state="needs-translation">New Connection</target>
+        <target state="final">新しいコネクション</target>
       </trans-unit>
-      <trans-unit id="828831341307092377" datatype="html">
+      <trans-unit id="828831341307092377" datatype="html" approved="yes">
         <source> Name can only contain letters, numbers and underscores </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/basic-auth-connection-dialog/basic-auth-connection-dialog.component.html</context>
@@ -2919,9 +2891,9 @@
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/secret-text-connection-dialog/secret-text-connection-dialog.component.html</context>
           <context context-type="linenumber">23,25</context>
         </context-group>
-        <target state="needs-translation"> Name can only contain letters, numbers and underscores </target>
+        <target state="final"> ニックネームにはアルファベット、数字、アンダーバーのみ含めることができます </target>
       </trans-unit>
-      <trans-unit id="7467703008452363786" datatype="html">
+      <trans-unit id="7467703008452363786" datatype="html" approved="yes">
         <source> Name is already used </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/basic-auth-connection-dialog/basic-auth-connection-dialog.component.html</context>
@@ -2943,9 +2915,9 @@
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/secret-text-connection-dialog/secret-text-connection-dialog.component.html</context>
           <context context-type="linenumber">26,28</context>
         </context-group>
-        <target state="needs-translation"> Name is already used </target>
+        <target state="final"> この名前はすでに使われています </target>
       </trans-unit>
-      <trans-unit id="6608576580294436927" datatype="html">
+      <trans-unit id="6608576580294436927" datatype="html" approved="yes">
         <source>is required</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/basic-auth-connection-dialog/basic-auth-connection-dialog.component.html</context>
@@ -2987,9 +2959,9 @@
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/secret-text-connection-dialog/secret-text-connection-dialog.component.html</context>
           <context context-type="linenumber">37</context>
         </context-group>
-        <target state="needs-translation">is required</target>
+        <target state="final">は必須です</target>
       </trans-unit>
-      <trans-unit id="2504830835198730128" datatype="html">
+      <trans-unit id="2504830835198730128" datatype="html" approved="yes">
         <source> You have to connect an account to continue </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/managed-oauth2-connection-dialog/managed-oauth2-connection-dialog.component.html</context>
@@ -2999,129 +2971,129 @@
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
           <context context-type="linenumber">86,88</context>
         </context-group>
-        <target state="needs-translation"> You have to connect an account to continue </target>
+        <target state="final"> 続行するにはアカウントに接続する必要があります </target>
       </trans-unit>
-      <trans-unit id="3543628236093406924" datatype="html">
+      <trans-unit id="3543628236093406924" datatype="html" approved="yes">
         <source>I would like to use my own app credentials </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/managed-oauth2-connection-dialog/managed-oauth2-connection-dialog.component.html</context>
           <context context-type="linenumber">64,67</context>
         </context-group>
-        <target state="needs-translation">I would like to use my own app credentials </target>
+        <target state="final">自身で認証情報を設定する </target>
       </trans-unit>
-      <trans-unit id="3591602381641269137" datatype="html">
+      <trans-unit id="3591602381641269137" datatype="html" approved="yes">
         <source>The ID of this connection definition. You will need to select this key whenever you want to reuse this connection.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/managed-oauth2-connection-dialog/managed-oauth2-connection-dialog.component.ts</context>
-          <context context-type="linenumber">74</context>
+          <context context-type="linenumber">75</context>
         </context-group>
-        <target state="needs-translation">The ID of this connection definition. You will need to select this key whenever you want to reuse this connection.</target>
+        <target state="final">このコネクションの ID です。こちらのIDを使用することで再利用することができます。</target>
       </trans-unit>
-      <trans-unit id="7022562336989577788" datatype="html">
+      <trans-unit id="7022562336989577788" datatype="html" approved="yes">
         <source> Redirect URL is required</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
           <context context-type="linenumber">37,38</context>
         </context-group>
-        <target state="needs-translation"> Redirect URL is required</target>
+        <target state="final"> リダイレクトURLは必須です</target>
       </trans-unit>
-      <trans-unit id="5273501066845923426" datatype="html">
+      <trans-unit id="5273501066845923426" datatype="html" approved="yes">
         <source>Client ID</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
           <context context-type="linenumber">42</context>
         </context-group>
-        <target state="needs-translation">Client ID</target>
+        <target state="final">クライアントID</target>
       </trans-unit>
-      <trans-unit id="6157299238892357663" datatype="html">
+      <trans-unit id="6157299238892357663" datatype="html" approved="yes">
         <source> Client ID is required</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
           <context context-type="linenumber">44,45</context>
         </context-group>
-        <target state="needs-translation"> Client ID is required</target>
+        <target state="final"> クライアント ID は必須です</target>
       </trans-unit>
-      <trans-unit id="3858350041926042177" datatype="html">
+      <trans-unit id="3858350041926042177" datatype="html" approved="yes">
         <source>Client Secret</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
           <context context-type="linenumber">48</context>
         </context-group>
-        <target state="needs-translation">Client Secret</target>
+        <target state="final">クライアントシークレット</target>
       </trans-unit>
-      <trans-unit id="1073544708188299870" datatype="html">
+      <trans-unit id="1073544708188299870" datatype="html" approved="yes">
         <source> Client Secret is required</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
           <context context-type="linenumber">51,52</context>
         </context-group>
-        <target state="needs-translation"> Client Secret is required</target>
+        <target state="final"> クライアントシークレットは必須です</target>
       </trans-unit>
-      <trans-unit id="9030073336275002095" datatype="html">
+      <trans-unit id="9030073336275002095" datatype="html" approved="yes">
         <source>I would like to use predefined app credentials </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
           <context context-type="linenumber">92,93</context>
         </context-group>
-        <target state="needs-translation">I would like to use predefined app credentials </target>
+        <target state="final">既に設定された認証情報を使用する </target>
       </trans-unit>
-      <trans-unit id="2903873185531053389" datatype="html">
+      <trans-unit id="2903873185531053389" datatype="html" approved="yes">
         <source> New Connection </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/secret-text-connection-dialog/secret-text-connection-dialog.component.html</context>
           <context context-type="linenumber">2,4</context>
         </context-group>
-        <target state="needs-translation"> New Connection </target>
+        <target state="final"> 新しいコネクション </target>
       </trans-unit>
-      <trans-unit id="4804768288792909623" datatype="html">
+      <trans-unit id="4804768288792909623" datatype="html" approved="yes">
         <source> Connect</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/form-controls/o-auth2-connect-control/o-auth2-connect-control.component.html</context>
           <context context-type="linenumber">2</context>
         </context-group>
-        <target state="needs-translation"> Connect</target>
+        <target state="final"> 接続</target>
       </trans-unit>
-      <trans-unit id="2907016025519254862" datatype="html">
+      <trans-unit id="2907016025519254862" datatype="html" approved="yes">
         <source>Disconnect</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/form-controls/o-auth2-connect-control/o-auth2-connect-control.component.html</context>
           <context context-type="linenumber">4</context>
         </context-group>
-        <target state="needs-translation">Disconnect</target>
+        <target state="final">接続解除</target>
       </trans-unit>
-      <trans-unit id="5175055549231295483" datatype="html">
+      <trans-unit id="5175055549231295483" datatype="html" approved="yes">
         <source> Please make sure this connections's credentials are correct.
 </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/form-controls/o-auth2-connect-control/o-auth2-connect-control.component.html</context>
           <context context-type="linenumber">5,7</context>
         </context-group>
-        <target state="needs-translation"> Please make sure this connections's credentials are correct.
+        <target state="final"> 接続の認証情報が正しいことを確認してください。
 </target>
       </trans-unit>
-      <trans-unit id="5578202866683959807" datatype="html">
+      <trans-unit id="5578202866683959807" datatype="html" approved="yes">
         <source>Ask the Community</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html</context>
           <context context-type="linenumber">29</context>
         </context-group>
-        <target state="needs-translation">Ask the Community</target>
+        <target state="final">コミュニティで質問する</target>
       </trans-unit>
-      <trans-unit id="4895326106573044490" datatype="html">
+      <trans-unit id="4895326106573044490" datatype="html" approved="yes">
         <source>Documentation</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html</context>
           <context context-type="linenumber">39</context>
         </context-group>
-        <target state="needs-translation">Documentation</target>
+        <target state="final">ドキュメント</target>
       </trans-unit>
-      <trans-unit id="4447668871712407032" datatype="html">
+      <trans-unit id="4447668871712407032" datatype="html" approved="yes">
         <source>Docs</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html</context>
           <context context-type="linenumber">47</context>
         </context-group>
-        <target state="needs-translation">Docs</target>
+        <target state="final">ドキュメント</target>
       </trans-unit>
       <trans-unit id="3446912724041461894" datatype="html" approved="yes">
         <source>Flows</source>
@@ -3171,7 +3143,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.ts</context>
-          <context context-type="linenumber">34</context>
+          <context context-type="linenumber">35</context>
         </context-group>
         <target state="final">コネクション</target>
       </trans-unit>
@@ -3603,71 +3575,71 @@
         </context-group>
         <target state="final">終了しました</target>
       </trans-unit>
-      <trans-unit id="2388673916006005004" datatype="html">
+      <trans-unit id="2388673916006005004" datatype="html" approved="yes">
         <source> No runs instantiated yet </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
           <context context-type="linenumber">49,51</context>
         </context-group>
-        <target state="needs-translation"> No runs instantiated yet </target>
+        <target state="final"> 実行はまだ開始されていません </target>
       </trans-unit>
-      <trans-unit id="694236538889679195" datatype="html">
+      <trans-unit id="694236538889679195" datatype="html" approved="yes">
         <source> This is where you can install pieces made by yourself or contributors. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/community-pieces-table/community-pieces-table.component.html</context>
           <context context-type="linenumber">4,6</context>
         </context-group>
-        <target state="needs-translation"> This is where you can install pieces made by yourself or contributors. </target>
+        <target state="final"> 自身やコントリビューターが作成したピースをインストールできます </target>
       </trans-unit>
-      <trans-unit id="3336001235735417463" datatype="html">
+      <trans-unit id="3336001235735417463" datatype="html" approved="yes">
         <source> No pieces installed </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/community-pieces-table/community-pieces-table.component.html</context>
           <context context-type="linenumber">49,51</context>
         </context-group>
-        <target state="needs-translation"> No pieces installed </target>
+        <target state="final"> ピースがインストールされていません </target>
       </trans-unit>
-      <trans-unit id="2247331365648205687" datatype="html">
+      <trans-unit id="2247331365648205687" datatype="html" approved="yes">
         <source>Install Piece</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/install-community-piece/install-community-piece-modal.component.html</context>
           <context context-type="linenumber">1</context>
         </context-group>
-        <target state="needs-translation">Install Piece</target>
+        <target state="final">ピースをインストール</target>
       </trans-unit>
-      <trans-unit id="1183032279513578972" datatype="html">
+      <trans-unit id="1183032279513578972" datatype="html" approved="yes">
         <source>Piece name</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/install-community-piece/install-community-piece-modal.component.html</context>
           <context context-type="linenumber">7</context>
         </context-group>
-        <target state="needs-translation">Piece name</target>
+        <target state="final">ピース名</target>
       </trans-unit>
-      <trans-unit id="5376544880787061544" datatype="html">
+      <trans-unit id="5376544880787061544" datatype="html" approved="yes">
         <source>NPM package name</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/install-community-piece/install-community-piece-modal.component.html</context>
           <context context-type="linenumber">8</context>
         </context-group>
-        <target state="needs-translation">NPM package name</target>
+        <target state="final">NPM パッケージ名</target>
       </trans-unit>
-      <trans-unit id="7515584469189435123" datatype="html">
+      <trans-unit id="7515584469189435123" datatype="html" approved="yes">
         <source> This is required </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/install-community-piece/install-community-piece-modal.component.html</context>
           <context context-type="linenumber">11,13</context>
         </context-group>
-        <target state="needs-translation"> This is required </target>
+        <target state="final"> 必須項目です </target>
       </trans-unit>
-      <trans-unit id="6993437395710220266" datatype="html">
+      <trans-unit id="6993437395710220266" datatype="html" approved="yes">
         <source> Install </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/install-community-piece/install-community-piece-modal.component.html</context>
           <context context-type="linenumber">61,63</context>
         </context-group>
-        <target state="needs-translation"> Install </target>
+        <target state="final"> インストール </target>
       </trans-unit>
-      <trans-unit id="2206632393383450361" datatype="html">
+      <trans-unit id="2206632393383450361" datatype="html" approved="yes">
         <source>
   Use this to install a &lt;a href="https://www.activepieces.com/docs/developers/building-pieces/create-action" target="_blank" rel="noopener"&gt;custom piece&lt;/a&gt; that you (or someone else) created.
   Once the piece is installed, you can use it in the flow builder.
@@ -3678,183 +3650,183 @@
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/install-community-piece/install-community-piece-modal.component.ts</context>
           <context context-type="linenumber">35,40</context>
         </context-group>
-        <target state="needs-translation">
+        <target state="final">
   Use this to install a &lt;a href="https://www.activepieces.com/docs/developers/building-pieces/create-action" target="_blank" rel="noopener"&gt;custom piece&lt;/a&gt; that you (or someone else) created.
   Once the piece is installed, you can use it in the flow builder.
  &lt;br&gt;&lt;br&gt;**Warning:**
  Make sure you trust the author as the piece will have access to your flow data and it might not be compatible with the current version of Activepieces.
   </target>
       </trans-unit>
-      <trans-unit id="2930524874557603286" datatype="html">
+      <trans-unit id="2930524874557603286" datatype="html" approved="yes">
         <source>Activepieces Team</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/featured-template-card/featured-template-card.component.html</context>
           <context context-type="linenumber">15</context>
         </context-group>
-        <target state="needs-translation">Activepieces Team</target>
+        <target state="final">Activepieces チーム</target>
       </trans-unit>
-      <trans-unit id="954840788512180203" datatype="html">
+      <trans-unit id="954840788512180203" datatype="html" approved="yes">
         <source>See less</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/featured-template-card/featured-template-card.component.html</context>
           <context context-type="linenumber">36</context>
         </context-group>
-        <target state="needs-translation">See less</target>
+        <target state="final">表示を減らす</target>
       </trans-unit>
-      <trans-unit id="4462165726005928867" datatype="html">
+      <trans-unit id="4462165726005928867" datatype="html" approved="yes">
         <source>See more</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/featured-template-card/featured-template-card.component.html</context>
           <context context-type="linenumber">39</context>
         </context-group>
-        <target state="needs-translation">See more</target>
+        <target state="final">詳細を表示</target>
       </trans-unit>
-      <trans-unit id="29870732231596621" datatype="html">
+      <trans-unit id="29870732231596621" datatype="html" approved="yes">
         <source>Use Template </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/featured-template-card/featured-template-card.component.html</context>
           <context context-type="linenumber">57</context>
         </context-group>
-        <target state="needs-translation">Use Template </target>
+        <target state="final">このテンプレートを使う </target>
       </trans-unit>
-      <trans-unit id="2047936376758344367" datatype="html">
+      <trans-unit id="2047936376758344367" datatype="html" approved="yes">
         <source>Verified icons created by lakonicon - Flaticon</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/featured-template-card/featured-template-card.component.html</context>
           <context context-type="linenumber">64,65</context>
         </context-group>
-        <target state="needs-translation">Verified icons created by lakonicon - Flaticon</target>
+        <target state="final">Lakonicon が作成した確認済みアイコン - Flaticon</target>
       </trans-unit>
-      <trans-unit id="5949896491927456436" datatype="html">
+      <trans-unit id="5949896491927456436" datatype="html" approved="yes">
         <source> Learn about this flow </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/template-blog-notification/template-blog-notification.component.html</context>
           <context context-type="linenumber">3,5</context>
         </context-group>
-        <target state="needs-translation"> Learn about this flow </target>
+        <target state="final"> このフローについて学ぶ </target>
       </trans-unit>
-      <trans-unit id="3490041488928665412" datatype="html">
+      <trans-unit id="3490041488928665412" datatype="html" approved="yes">
         <source> You used a template for this flow and you can read our guide on how to set it up. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/template-blog-notification/template-blog-notification.component.html</context>
           <context context-type="linenumber">6,8</context>
         </context-group>
-        <target state="needs-translation"> You used a template for this flow and you can read our guide on how to set it up. </target>
+        <target state="final"> このフローにテンプレートを使用し、セットアップ方法についてのガイドを読むことができます。 </target>
       </trans-unit>
-      <trans-unit id="9024715782279733035" datatype="html">
+      <trans-unit id="9024715782279733035" datatype="html" approved="yes">
         <source>Go to guide</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/template-blog-notification/template-blog-notification.component.html</context>
           <context context-type="linenumber">12</context>
         </context-group>
-        <target state="needs-translation">Go to guide</target>
+        <target state="final">ガイドへ移動</target>
       </trans-unit>
-      <trans-unit id="1892409467490527310" datatype="html">
+      <trans-unit id="1892409467490527310" datatype="html" approved="yes">
         <source> Ignore </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/template-blog-notification/template-blog-notification.component.html</context>
           <context context-type="linenumber">18,20</context>
         </context-group>
-        <target state="needs-translation"> Ignore </target>
+        <target state="final"> 無視 </target>
       </trans-unit>
-      <trans-unit id="2778126117828123438" datatype="html">
+      <trans-unit id="2778126117828123438" datatype="html" approved="yes">
         <source> Use Template </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/template-card/template-card.component.html</context>
           <context context-type="linenumber">8,10</context>
         </context-group>
-        <target state="needs-translation"> Use Template </target>
+        <target state="final"> このテンプレートを使う </target>
       </trans-unit>
-      <trans-unit id="8116094792018370870" datatype="html">
+      <trans-unit id="8116094792018370870" datatype="html" approved="yes">
         <source> Apps
 </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/template-apps-dropdown/template-apps-dropdown.component.html</context>
           <context context-type="linenumber">1,3</context>
         </context-group>
-        <target state="needs-translation"> Apps
+        <target state="final"> アプリ
 </target>
       </trans-unit>
-      <trans-unit id="3797570084942068182" datatype="html">
+      <trans-unit id="3797570084942068182" datatype="html" approved="yes">
         <source>Select</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/template-apps-dropdown/template-apps-dropdown.component.html</context>
           <context context-type="linenumber">6</context>
         </context-group>
-        <target state="needs-translation">Select</target>
+        <target state="final">選択</target>
       </trans-unit>
-      <trans-unit id="6703947649972852818" datatype="html">
+      <trans-unit id="6703947649972852818" datatype="html" approved="yes">
         <source>Featured</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html</context>
           <context context-type="linenumber">9</context>
         </context-group>
-        <target state="needs-translation">Featured</target>
+        <target state="final">注目</target>
       </trans-unit>
-      <trans-unit id="5688462374174490321" datatype="html">
+      <trans-unit id="5688462374174490321" datatype="html" approved="yes">
         <source> Load more </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html</context>
           <context context-type="linenumber">23,25</context>
         </context-group>
-        <target state="needs-translation"> Load more </target>
+        <target state="final"> 更に読み込む </target>
       </trans-unit>
-      <trans-unit id="2264989214104883907" datatype="html">
+      <trans-unit id="2264989214104883907" datatype="html" approved="yes">
         <source>All ideas</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html</context>
           <context context-type="linenumber">41</context>
         </context-group>
-        <target state="needs-translation">All ideas</target>
+        <target state="final">すべてのアイデア</target>
       </trans-unit>
-      <trans-unit id="5784653381187077675" datatype="html">
+      <trans-unit id="5784653381187077675" datatype="html" approved="yes">
         <source>Browse Templates</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html</context>
           <context context-type="linenumber">63</context>
         </context-group>
-        <target state="needs-translation">Browse Templates</target>
+        <target state="final">テンプレートを見る</target>
       </trans-unit>
-      <trans-unit id="3632453124332504959" datatype="html">
+      <trans-unit id="3632453124332504959" datatype="html" approved="yes">
         <source> A new way to explore fresh ideas from our partners</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html</context>
           <context context-type="linenumber">90</context>
         </context-group>
-        <target state="needs-translation"> A new way to explore fresh ideas from our partners</target>
+        <target state="final"> パートナーからの新しいアイデアを探求する</target>
       </trans-unit>
-      <trans-unit id="3467902316108509147" datatype="html">
+      <trans-unit id="3467902316108509147" datatype="html" approved="yes">
         <source>View featured ideas </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html</context>
           <context context-type="linenumber">92,93</context>
         </context-group>
-        <target state="needs-translation">View featured ideas </target>
+        <target state="final">注目のアイデアを見る </target>
       </trans-unit>
-      <trans-unit id="2683765549895995966" datatype="html">
+      <trans-unit id="2683765549895995966" datatype="html" approved="yes">
         <source>Search templates</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html</context>
           <context context-type="linenumber">101</context>
         </context-group>
-        <target state="needs-translation">Search templates</target>
+        <target state="final">テンプレートを検索する</target>
       </trans-unit>
-      <trans-unit id="2590054615761981950" datatype="html">
+      <trans-unit id="2590054615761981950" datatype="html" approved="yes">
         <source>Start from scratch</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html</context>
           <context context-type="linenumber">114</context>
         </context-group>
-        <target state="needs-translation">Start from scratch</target>
+        <target state="final">新規作成</target>
       </trans-unit>
-      <trans-unit id="3814533228057776001" datatype="html">
+      <trans-unit id="3814533228057776001" datatype="html" approved="yes">
         <source> Filters
 </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/templates-filters/templates-filters.component.html</context>
           <context context-type="linenumber">1,3</context>
         </context-group>
-        <target state="needs-translation"> Filters
+        <target state="final"> 絞り込み
 </target>
       </trans-unit>
     </body>

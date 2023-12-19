@@ -14,14 +14,17 @@ type SaveParams = {
     compression: FileCompression
 }
 
-type BaseOneParams = {
+
+
+type GetOneParams = {
+    fileId: FileId
+    projectId?: ProjectId
+}
+
+type DeleteOneParams = {
     fileId: FileId
     projectId: ProjectId
 }
-
-type GetOneParams = BaseOneParams
-
-type DeleteOneParams = BaseOneParams
 
 const fileRepo = databaseConnection.getRepository<File>(FileEntity)
 

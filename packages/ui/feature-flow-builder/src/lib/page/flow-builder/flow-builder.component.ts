@@ -97,7 +97,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
   dataInsertionPopupHidden$: Observable<boolean>;
   codeEditorOptions = {
     minimap: { enabled: false },
-    theme: 'cobalt2',
+    theme: 'apTheme',
     language: 'typescript',
     readOnly: false,
     automaticLayout: true,

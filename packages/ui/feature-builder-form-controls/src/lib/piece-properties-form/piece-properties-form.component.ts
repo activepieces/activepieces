@@ -349,7 +349,9 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
           return JSON.stringify(prev) === JSON.stringify(curr);
         }),
         tap(() => {
-          this.form.controls[obj.propertyKey].setValue(undefined);
+          if (obj.property.type !== PropertyType.DYNAMIC) {
+            this.form.controls[obj.propertyKey].setValue(undefined);
+          }
         }),
         startWith(this.form.controls[rk].value),
         tap(() => {
@@ -430,7 +432,9 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
           break;
         }
         case PropertyType.CHECKBOX: {
-          controls[pk] = new UntypedFormControl(propValue || false);
+          controls[pk] = new UntypedFormControl(
+            propValue || prop.defaultValue || false
+          );
           break;
         }
         case PropertyType.DATE_TIME:

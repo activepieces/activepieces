@@ -69,6 +69,12 @@ export async function subscribe(auth : SendyAuthType, data: KeyValuePair ) {
 	return sendyPostAPI(api, auth, data);
 }
 
+export async function subscribeMultiple(auth : SendyAuthType, data: KeyValuePair ) {
+	const api = '/subscribe';
+	data['boolean'] = "true"; // plain text response
+	return sendyPostAPI(api, auth, data);
+}
+
 export async function unsubscribe(auth : SendyAuthType, data: KeyValuePair ) {
 	const api = '/unsubscribe';
 	data['boolean'] = "true"; // plain text response

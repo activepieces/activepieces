@@ -38,6 +38,9 @@ const flowVersionRepo = databaseConnection.getRepository<FlowVersion>(FlowVersio
 
 export const flowVersionService = {
     async lockPieceVersions(projectId: ProjectId, mutatedFlowVersion: FlowVersion): Promise<FlowVersion> {
+        if (mutatedFlowVersion.state === FlowVersionState.LOCKED) {
+            return mutatedFlowVersion
+        }
         return flowHelper.transferFlowAsync(mutatedFlowVersion, async (step) => {
             const clonedStep = JSON.parse(JSON.stringify(step))
             switch (step.type) {

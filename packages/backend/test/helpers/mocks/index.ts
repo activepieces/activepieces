@@ -80,6 +80,28 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
     }
 }
 
+export const createMockPlatformWithOwner = (params?: CreateMockPlatformWithOwnerParams): CreateMockPlatformWithOwnerReturn => {
+    const mockOwnerId = params?.owner?.id ?? apId()
+    const mockPlatformId = params?.platform?.id ?? apId()
+
+    const mockOwner = createMockUser({
+        ...params?.owner,
+        id: mockOwnerId,
+        platformId: mockPlatformId,
+    })
+
+    const mockPlatform = createMockPlatform({
+        ...params?.platform,
+        id: mockPlatformId,
+        ownerId: mockOwnerId,
+    })
+
+    return {
+        mockPlatform,
+        mockOwner,
+    }
+}
+
 export const createMockProjectMember = (projectMember?: Partial<ProjectMember>): ProjectMember => {
     return {
         id: projectMember?.id ?? apId(),
@@ -119,6 +141,24 @@ export const createMockApiKey = (apiKey?: Partial<Omit<ApiKey, 'hashedValue' | '
         hashedValue: secretHashed,
         value: secret,
         truncatedValue: secretTruncated,
+    }
+}
+
+export const setupMockApiKeyServiceAccount = (params?: SetupMockApiKeyServiceAccountParams): SetupMockApiKeyServiceAccountReturn => {
+    const { mockOwner, mockPlatform } = createMockPlatformWithOwner({
+        owner: params?.owner,
+        platform: params?.platform,
+    })
+
+    const mockApiKey = createMockApiKey({
+        ...params?.apiKey,
+        platformId: mockPlatform.id,
+    })
+
+    return {
+        mockOwner,
+        mockPlatform,
+        mockApiKey,
     }
 }
 
@@ -231,4 +271,22 @@ export const createMockFlowVersion = (flowVersion?: Partial<FlowVersion>): FlowV
         updatedBy: flowVersion?.updatedBy ?? apId(),
         valid: flowVersion?.valid ?? faker.datatype.boolean(),
     }
+}
+
+type CreateMockPlatformWithOwnerParams = {
+    platform?: Partial<Omit<Platform, 'ownerId'>>
+    owner?: Partial<Omit<User, 'platformId'>>
+}
+
+type CreateMockPlatformWithOwnerReturn = {
+    mockPlatform: Platform
+    mockOwner: User
+}
+
+type SetupMockApiKeyServiceAccountParams = CreateMockPlatformWithOwnerParams & {
+    apiKey?: Partial<Omit<ApiKey, 'hashedValue' | 'truncatedValue'>>
+}
+
+type SetupMockApiKeyServiceAccountReturn = CreateMockPlatformWithOwnerReturn & {
+    mockApiKey: ApiKey & { value: string }
 }

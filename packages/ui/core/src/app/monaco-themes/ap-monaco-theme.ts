@@ -105,12 +105,12 @@ export const apMonacoTheme = {
   ],
   colors: {
     'editor.foreground': '#0055AA',
-    'editor.background': '#F8F9FA',
+    'editor.background': '#ffffff',
     'editor.selectionBackground': '#BAD6FD',
     'editor.lineHighlightBackground': '#0000001A',
     'editorCursor.foreground': '#000000',
     'editorWhitespace.foreground': '#B3B3B3F4',
     'editorLineNumber.foreground': '#999999',
-    'editorGutter.background': '#F7F7F7',
+    'editorGutter.background': '#F5F5F5',
   },
 };

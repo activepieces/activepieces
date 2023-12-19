@@ -173,7 +173,7 @@ export class FlagService {
   }> {
     return this.getTheme().pipe(map((theme) => theme['logos']));
   }
-
+  /**Colors like formlabel, borders,dividers ... etc */
   getColors(): Observable<Record<string, string | Record<string, string>>> {
     return this.getTheme().pipe(map((theme) => theme['colors']));
   }
