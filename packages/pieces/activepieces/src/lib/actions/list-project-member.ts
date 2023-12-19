@@ -15,7 +15,7 @@ export const listProjectMember = createAction({
   },
   async run({ propsValue, auth }) {
     const response = await httpClient.sendRequest<string[]>({
-      method: HttpMethod.POST,
+      method: HttpMethod.GET,
       url: `${config.baseApiUrl}/project-members`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
