@@ -5,8 +5,8 @@ import { activePieceAuth, config } from '../../index';
 export const createProjectMember = createAction({
   name: 'create_project_member',
   auth: activePieceAuth,
-  displayName: 'New Project Member',
-  description: 'Create a new project Member',
+  displayName: 'Create Project Member',
+  description: 'add or invite a new project member',
   props: {
     project_id: Property.ShortText({
       displayName: 'Project Id',

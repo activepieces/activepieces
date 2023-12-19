@@ -5,7 +5,7 @@ import { activePieceAuth, config } from '../../index';
 export const createProject = createAction({
   name: 'create_project',
   auth: activePieceAuth,
-  displayName: 'New Project',
+  displayName: 'Create Project',
   description: 'Create a new project',
   props: {
     display_name: Property.ShortText({

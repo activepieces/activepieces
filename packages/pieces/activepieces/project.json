@@ -34,8 +34,7 @@
       ],
       "options": {
         "lintFilePatterns": [
-          "packages/pieces/activepieces/**/*.ts",
-          "packages/pieces/activepieces/package.json"
+          "packages/pieces/activepieces/**/*.ts"
         ]
       }
     }

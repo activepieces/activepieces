@@ -7,14 +7,21 @@ import { updateProject } from './lib/actions/update-project';
 import { listProjectMember } from './lib/actions/list-project-member';
 import { deleteProjectMember } from './lib/actions/delete-project-member';
 
+const markdown = `
+Activepieces Platform API is available under the Platform Edition.
+(https://www.activepieces.com/docs/platform/overview)
+
+You can get your API Key from the Platform Dashboard.
+`
+
 export const activePieceAuth = PieceAuth.SecretText({
-  displayName: 'Secret Text',
-  description: 'Secret text to be used for authentication',
+  displayName: 'API Key',
+  description: markdown,
   required: true,
 })
 
 export const activepieces = createPiece({
-  displayName: "Activepieces",
+  displayName: "Activepieces Platform",
   auth: activePieceAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: "https://cdn.activepieces.com/pieces/activepieces.png",

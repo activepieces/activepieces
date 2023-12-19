@@ -5,7 +5,7 @@ import { activePieceAuth, config } from '../../index';
 export const listProjectMember = createAction({
   name: 'list_project_member',
   auth: activePieceAuth,
-  displayName: 'List Project Member',
+  displayName: 'List Project Members',
   description: 'List all project Member',
   props: {
     project_id: Property.ShortText({
