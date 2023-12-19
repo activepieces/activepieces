@@ -24,6 +24,7 @@ export const slackAuth = PieceAuth.OAuth2({
     'mpim:read',
     'users:read',
     'bot',
+    'files:write'
   ],
 })
 
