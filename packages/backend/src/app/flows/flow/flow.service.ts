@@ -175,18 +175,18 @@ export const flowService = {
 
                 await flowVersionService.applyOperation(userId, projectId, lastVersion, operation)
             }
-
-            return await flowService.getOnePopulatedOrThrow({
-                id,
-                projectId,
-            })
         }
         finally {
             await flowLock?.release()
         }
+
+        return this.getOnePopulatedOrThrow({
+            id,
+            projectId,
+        })
     },
 
-    async updateStatus({ id, projectId, newStatus }: UpdateStatusParams): Promise<Flow> {
+    async updateStatus({ id, projectId, newStatus }: UpdateStatusParams): Promise<PopulatedFlow> {
         const lock = await acquireLock({
             key: id,
             timeout: 10000,
@@ -195,25 +195,28 @@ export const flowService = {
         try {
             const flowToUpdate = await this.getOneOrThrow({ id, projectId })
 
-            if (flowToUpdate.status === newStatus) {
-                return flowToUpdate
+            if (flowToUpdate.status !== newStatus) {
+                const { scheduleOptions } = await hooks.preUpdateStatus({
+                    flowToUpdate,
+                })
+
+                flowToUpdate.status = newStatus
+                flowToUpdate.schedule = scheduleOptions
+
+                await flowRepo.save(flowToUpdate)
             }
-
-            const { scheduleOptions } = await hooks.preUpdateStatus({
-                flowToUpdate,
-            })
-
-            flowToUpdate.status = newStatus
-            flowToUpdate.schedule = scheduleOptions
-
-            return await flowRepo.save(flowToUpdate)
         }
         finally {
             await lock.release()
         }
+
+        return this.getOnePopulatedOrThrow({
+            id,
+            projectId,
+        })
     },
 
-    async updatedPublishedVersionId({ id, userId, projectId }: UpdatePublishedVersionIdParams): Promise<Flow> {
+    async updatedPublishedVersionId({ id, userId, projectId }: UpdatePublishedVersionIdParams): Promise<PopulatedFlow> {
         const lock = await acquireLock({
             key: id,
             timeout: 10000,
@@ -222,7 +225,7 @@ export const flowService = {
         try {
             const flowToUpdate = await this.getOneOrThrow({ id, projectId })
 
-            const lockedFlow = await flowService.update({
+            const lockedFlow = await this.update({
                 id,
                 userId,
                 projectId,
@@ -244,7 +247,12 @@ export const flowService = {
             flowToUpdate.status = FlowStatus.ENABLED
             flowToUpdate.schedule = scheduleOptions
 
-            return await flowRepo.save(flowToUpdate)
+            const updatedFlow = await flowRepo.save(flowToUpdate)
+
+            return {
+                ...updatedFlow,
+                version: lockedFlow.version,
+            }
         }
         finally {
             await lock.release()
