@@ -16,7 +16,7 @@ export const deleteProjectMember = createAction({
   async run({ propsValue, auth }) {
     const response = await httpClient.sendRequest<string[]>({
       method: HttpMethod.DELETE,
-      url: `${config.baseApiUrl}/projects-members/${propsValue['id']}`,
+      url: `${config.baseApiUrl}/project-members/${propsValue['id']}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: auth

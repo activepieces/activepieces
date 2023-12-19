@@ -59,7 +59,7 @@ export const createProjectMember = createAction({
   async run({ propsValue, auth }) {
     const response = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
-      url: `${config.baseApiUrl}/projects-members`,
+      url: `${config.baseApiUrl}/project-members`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: auth
