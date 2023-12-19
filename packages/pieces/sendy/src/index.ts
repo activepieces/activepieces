@@ -4,7 +4,9 @@ import { sendyAuth } from "./lib/auth";
 import { getBrandsAction } from "./lib/actions/get-brands";
 import { getListsAction } from "./lib/actions/get-brand-lists";
 import { subscribeAction } from "./lib/actions/subscribe";
+import { subscribeMultipleAction } from "./lib/actions/subscribe-multiple";
 import { unsubscribeAction } from "./lib/actions/unsubscribe";
+import { unsubscribeMultipleAction } from "./lib/actions/unsubscribe-multiple";
 import { deleteAction } from "./lib/actions/delete-subscriber";
 import { statusAction } from "./lib/actions/get-subscription-status";
 import { countAction } from "./lib/actions/count-subscriber";
@@ -24,7 +26,9 @@ export const sendy = createPiece({
 		getListsAction,
 		statusAction,
 		subscribeAction,
+		subscribeMultipleAction,
 		unsubscribeAction,
+		unsubscribeMultipleAction,
 	],
 	triggers: [],
 });

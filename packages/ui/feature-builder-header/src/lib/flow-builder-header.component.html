@@ -32,7 +32,8 @@
           " [allowClick]="true" [cssClasses]="'ap-typography-body-1 !ap-font-semibold'"
           class="ap-text-title"></ap-editable-text>
       </div>
-      <div class="ap-p-1 ap-cursor-pointer" [matMenuTriggerFor]="menu" xPosition="after">
+      <div *ngIf="(isInReadOnlyMode$ | async) === false" class="ap-p-1 ap-cursor-pointer" [matMenuTriggerFor]="menu"
+        xPosition="after">
         <svg-icon [svgStyle]="{ width: '18px', height: '18px' }" src="assets/img/custom/chevron.svg">
         </svg-icon>
       </div>
@@ -66,7 +67,7 @@
           </div>
         </button>
         <ap-share-flow-template-dialog></ap-share-flow-template-dialog>
-        <ng-container *ngIf="(showBackButtonAndFolderName$ | async ) === false">
+        <ng-container *ngIf="(showBackButtonAndFolderName$ | async )">
           <button mat-menu-item *ngIf="flow$ | async as flow" (click)="deleteFlow(flow)">
             <div class="ap-flex ap-gap-3 ap-items-center">
               <svg-icon src="assets/img/custom/trash.svg" class="ap-fill-danger ap-w-[20px] ap-h-[20px]"

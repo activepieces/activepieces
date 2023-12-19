@@ -1,31 +1,14 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import {
-    ActivepiecesError,
-    ALL_PRINICPAL_TYPES,
-    ApEdition,
-    ErrorCode,
-    EventPayload,
-    ExecutionOutputStatus,
-    Flow,
-    FlowId,
-    FlowRun,
-    FlowStatus,
-    RunTerminationReason,
-    StopExecutionOutput,
-    WebhookUrlParams,
-} from '@activepieces/shared'
+import { ALL_PRINICPAL_TYPES, ActivepiecesError, ApEdition, ErrorCode, EventPayload, Flow, FlowId, FlowStatus, WebhookUrlParams } from '@activepieces/shared'
 import { webhookService } from './webhook-service'
 import { captureException, logger } from '../helper/logger'
-import { flowRunService } from '../flows/flow-run/flow-run-service'
-import { fileService } from '../file/file.service'
 import { isNil } from '@activepieces/shared'
 import { flowRepo } from '../flows/flow/flow.repo'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { getEdition } from '../helper/secret-helper'
-import { SystemProp } from '../helper/system/system-prop'
-import { system } from '../helper/system/system'
 import { tasksLimit } from '../ee/billing/limits/tasks-limit'
+import { flowResponseWatcher } from '../flows/flow-run/flow-response-watcher'
 import { flowService } from '../flows/flow/flow.service'
 
 export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
@@ -47,8 +30,9 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             if (isHandshake) {
                 return
             }
-            let run = (await webhookService.callback({
+            const run = (await webhookService.callback({
                 flow,
+                synchronousHandlerId: flowResponseWatcher.getHandlerId(),
                 payload: {
                     method: request.method,
                     headers: request.headers as Record<string, string>,
@@ -60,8 +44,8 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
                 await reply.status(StatusCodes.NOT_FOUND).send()
                 return
             }
-            run = await waitForRunToComplete(run)
-            await handleExecutionOutputStatus(run, reply)
+            const response = await flowResponseWatcher.listen(run.id)
+            await reply.status(response.status).headers(response.headers).send(response.body)
         },
     )
 
@@ -137,78 +121,6 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             await reply.status(StatusCodes.OK).send()
         },
     )
-}
-
-const POLLING_INTERVAL_MS = 300
-const MAX_POLLING_INTERVAL_MS = 2000
-const POLLING_TIMEOUT_MS = (system.getNumber(SystemProp.WEBHOOK_TIMEOUT_SECONDS) ?? 30) * 1000
-
-const waitForRunToComplete = async (run: FlowRun) => {
-    const startTime = Date.now()
-    let pollingInterval = POLLING_INTERVAL_MS // Initialize with the initial polling interval
-
-    while (run.status === ExecutionOutputStatus.RUNNING) {
-        if (Date.now() - startTime >= POLLING_TIMEOUT_MS) {
-            break
-        }
-
-        run = await flowRunService.getOneOrThrow({
-            id: run.id,
-            projectId: run.projectId,
-        })
-
-        if (run.status === ExecutionOutputStatus.RUNNING) {
-            await new Promise((resolve) => setTimeout(resolve, pollingInterval))
-
-            // Increase the polling interval
-            if (pollingInterval < MAX_POLLING_INTERVAL_MS) {
-                pollingInterval *= 2
-                pollingInterval = Math.min(pollingInterval, MAX_POLLING_INTERVAL_MS)
-            }
-        }
-    }
-
-    return run
-}
-
-const getResponseForStoppedRun = async (run: FlowRun, reply: FastifyReply) => {
-    const logs = await fileService.getOneOrThrow({
-        fileId: run.logsFileId!,
-        projectId: run.projectId,
-    })
-
-    const flowLogs: StopExecutionOutput = JSON.parse(logs.data.toString())
-    await reply
-        .status(flowLogs.stopResponse?.status ?? StatusCodes.OK)
-        .headers(flowLogs.stopResponse?.headers ?? {})
-        .send(flowLogs.stopResponse?.body)
-}
-
-const handleExecutionOutputStatus = async (run: FlowRun, reply: FastifyReply): Promise<void> => {
-    if (run.status === ExecutionOutputStatus.SUCCEEDED && run.terminationReason === RunTerminationReason.STOPPED_BY_HOOK) {
-        await getResponseForStoppedRun(run, reply)
-    }
-    else {
-        switch (run.status) {
-            case ExecutionOutputStatus.INTERNAL_ERROR:
-                await reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send()
-                break
-            case ExecutionOutputStatus.FAILED:
-                await reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
-                    message: 'The flow has failed and there is no response returned',
-                })
-                break
-            case ExecutionOutputStatus.TIMEOUT:
-            case ExecutionOutputStatus.RUNNING:
-                await reply.status(StatusCodes.GATEWAY_TIMEOUT).send({
-                    message: `The request took more than ${Math.floor(POLLING_TIMEOUT_MS / 1000)} seconds`,
-                })
-                break
-            default:
-                await reply.status(StatusCodes.NO_CONTENT).send()
-                break
-        }
-    }
 }
 
 async function convertRequest(request: FastifyRequest): Promise<EventPayload> {

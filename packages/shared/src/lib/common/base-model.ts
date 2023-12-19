@@ -13,6 +13,6 @@ export const BaseModelSchema = {
 }
 
 // Used to generate valid nullable in OpenAPI Schema
-export const Nullable = <T extends TSchema>(schema: T) => Type.Unsafe<Static<T> | null>({ 
+export const Nullable = <T extends TSchema>(schema: T) => Type.Optional(Type.Unsafe<Static<T> | null>({ 
     ...schema, nullable: true, 
-})
+}))

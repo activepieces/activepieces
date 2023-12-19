@@ -1,4 +1,6 @@
 include-pre-releases: true
+exclude-labels:
+  - 'skip-changelog'
 categories:
   - title: "✨ Exciting New Features"
     labels:
@@ -25,6 +27,9 @@ categories:
   - title: "Other Changes"
     labels:
       - "*"
+  - title: "🖥️ API Changes"
+    labels:
+      - "🖥️ api"
 
 template: |
 

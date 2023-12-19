@@ -8,7 +8,7 @@ import { FormControl } from '@angular/forms';
 import { Observable, tap } from 'rxjs';
 import { FlowStatus } from '@activepieces/shared';
 import { Store } from '@ngrx/store';
-import { FlowsActions } from '../../../../feature-builder-store/src';
+import { FlowsActions } from '@activepieces/ui/feature-builder-store';
 
 @Component({
   selector: 'app-toggle-instance-state',

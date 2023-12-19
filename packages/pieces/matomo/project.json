@@ -1,0 +1,44 @@
+{
+  "name": "pieces-matomo",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/matomo/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/matomo",
+        "tsConfig": "packages/pieces/matomo/tsconfig.lib.json",
+        "packageJson": "packages/pieces/matomo/package.json",
+        "main": "packages/pieces/matomo/src/index.ts",
+        "assets": [
+          "packages/pieces/matomo/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-matomo {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/matomo/**/*.ts",
+          "packages/pieces/matomo/package.json"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

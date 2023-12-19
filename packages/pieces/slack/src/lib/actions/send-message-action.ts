@@ -17,17 +17,22 @@ export const slackSendMessageAction = createAction({
       }),
       username,
       profilePicture,
+      file: Property.File({
+        displayName: 'Attachment',
+        required: false,
+      })
     },
     async run(context) {
       const token = context.auth.access_token
-      const { text, channel } = context.propsValue
+      const { text, channel, username, profilePicture, file } = context.propsValue
 
       return slackSendMessage({
         token,
         text,
-        username: context.propsValue.username,
-        profilePicture: context.propsValue.profilePicture,
+        username,
+        profilePicture,
         conversationId: channel,
+        file
       })
     },
 })
