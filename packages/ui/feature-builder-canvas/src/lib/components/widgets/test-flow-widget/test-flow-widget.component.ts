@@ -13,8 +13,7 @@ import {
 import {
   FlowService,
   InstanceRunService,
-  fadeIn400ms,
-  fadeInUp400ms,
+  fadeIn400msWithoutOut,
   initializedRun,
 } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
@@ -36,7 +35,7 @@ import { canvasActions } from '@activepieces/ui/feature-builder-store';
   selector: 'app-test-flow-widget',
   templateUrl: './test-flow-widget.component.html',
   styleUrls: ['./test-flow-widget.component.scss'],
-  animations: [fadeInUp400ms, fadeIn400ms],
+  animations: [fadeIn400msWithoutOut],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TestFlowWidgetComponent implements OnInit {
