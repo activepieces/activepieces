@@ -10,8 +10,12 @@ import { userService } from '../../../../user/user-service'
 import { ProjectType, UserStatus, isNil } from '@activepieces/shared'
 
 export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
+    async preSignUp({ email, platformId }) {
+        if (!isNil(platformId)) {
+            await authenticationHelper.assertUserIsInvitedToAnyProject({ email, platformId })            
+        }
+    },
     async postSignUp({ user, referringUserId }) {
-
 
         if (isNil(user.platformId)) {
             await projectService.create({

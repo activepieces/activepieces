@@ -29,7 +29,7 @@ export const ntfyAuth = PieceAuth.CustomAuth({
 })
 
 export const ntfy = createPiece({
-  displayName: "Ntfy",
+  displayName: "ntfy",
     logoUrl: "https://cdn.activepieces.com/pieces/ntfy.png",
     minimumSupportedRelease: '0.5.0',
   auth: ntfyAuth,
