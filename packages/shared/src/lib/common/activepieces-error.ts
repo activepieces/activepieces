@@ -51,11 +51,17 @@ type ErrorParams =
     | TriggerEnableErrorParams
     | TriggerFailedErrorParams
     | ValidationErrorParams
+    | InvitationOnlySignUpParams
 
 export type BaseErrorParams<T, V> = {
     code: T
     params: V
 }
+
+export type InvitationOnlySignUpParams = BaseErrorParams<
+ErrorCode.INVITATIION_ONLY_SIGN_UP,
+Record<string, never>
+>
 
 export type InvalidClaimParams = BaseErrorParams<ErrorCode.INVALID_CLAIM, { redirectUrl: string, tokenUrl: string, clientId: string }>
 export type InvalidCloudClaimParams = BaseErrorParams<ErrorCode.INVALID_CLOUD_CLAIM, { appName: string }>
@@ -326,6 +332,7 @@ export enum ErrorCode {
     INVALID_CREDENTIALS = 'INVALID_CREDENTIALS',
     INVALID_OR_EXPIRED_JWT_TOKEN = 'INVALID_OR_EXPIRED_JWT_TOKEN',
     INVALID_OTP = 'INVALID_OTP',
+    INVITATIION_ONLY_SIGN_UP = 'INVITATIION_ONLY_SIGN_UP',
     JOB_REMOVAL_FAILURE = 'JOB_REMOVAL_FAILURE',
     OPEN_AI_FAILED = 'OPEN_AI_FAILED',
     PAUSE_METADATA_MISSING = 'PAUSE_METADATA_MISSING',

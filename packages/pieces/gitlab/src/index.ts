@@ -10,7 +10,7 @@ export const gitlabAuth = PieceAuth.OAuth2({
 });
 
 export const gitlab = createPiece({
-  displayName: 'Gitlab',
+  displayName: 'GitLab',
   auth: gitlabAuth,
   minimumSupportedRelease: '0.7.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/gitlab.png',
