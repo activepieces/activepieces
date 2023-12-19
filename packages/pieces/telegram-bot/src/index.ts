@@ -20,7 +20,7 @@ export const telegramBotAuth = PieceAuth.SecretText({
 });
 
 export const telegramBot = createPiece({
-  displayName: 'Telegram bot',
+  displayName: 'Telegram Bot',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/telegram_bot.png',
   auth: telegramBotAuth,
