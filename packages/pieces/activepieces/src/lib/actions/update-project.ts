@@ -47,7 +47,7 @@ export const updateProject = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    return await httpClient.sendRequest<string[]>({
+    const response = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
       url: `${config.baseApiUrl}/projects/${propsValue['id']}`,
       authentication: {
@@ -63,6 +63,8 @@ export const updateProject = createAction({
         }
       }
     });
+
+    return response.body;
   },
 });
 

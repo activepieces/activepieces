@@ -57,7 +57,7 @@ export const createProjectMember = createAction({
     })
   },
   async run({ propsValue, auth }) {
-    return await httpClient.sendRequest<string[]>({
+    const response = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
       url: `${config.baseApiUrl}/projects-members`,
       authentication: {
@@ -71,6 +71,8 @@ export const createProjectMember = createAction({
         status: propsValue['status']
       }
     });
+
+    return response.body;
   },
 });
 

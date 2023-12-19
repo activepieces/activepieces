@@ -14,7 +14,7 @@ export const listProjectMember = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    return await httpClient.sendRequest<string[]>({
+    const response = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
       url: `${config.baseApiUrl}/projects-members`,
       authentication: {
@@ -25,6 +25,8 @@ export const listProjectMember = createAction({
         projectId: propsValue['project_id'],
       }
     });
+
+    return response.body;
   },
 });
 

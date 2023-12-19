@@ -9,7 +9,7 @@ export const listProject = createAction({
   description: 'List all projects',
   props: {},
   async run({ auth }) {
-    return await httpClient.sendRequest<string[]>({
+    const response = await httpClient.sendRequest<string[]>({
       method: HttpMethod.GET,
       url: `${config.baseApiUrl}/projects`,
       authentication: {
@@ -17,6 +17,8 @@ export const listProject = createAction({
         token: auth
       },
     });
+
+    return response.body;
   },
 });
 

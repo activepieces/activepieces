@@ -15,7 +15,7 @@ export const createProject = createAction({
     })
   },
   async run({ propsValue, auth }) {
-    return await httpClient.sendRequest<string[]>({
+    const response = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
       url: `${config.baseApiUrl}/projects`,
       authentication: {
@@ -26,6 +26,8 @@ export const createProject = createAction({
         displayName: propsValue['display_name']
       }
     });
+
+    return response.body;
   },
 });
 
