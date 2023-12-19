@@ -18,9 +18,7 @@ export const activepieces = createPiece({
   auth: activePieceAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: "https://cdn.activepieces.com/pieces/activepieces.png",
-  authors: [
-    "Damien HEBERT <doskyft@gmail.com>"
-  ],
+  authors: ["doskyft"],
   actions: [
     createProject,
     updateProject,
