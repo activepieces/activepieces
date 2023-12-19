@@ -16,7 +16,7 @@ import {
   FlowRun,
   FlowVersionId,
   ListFlowsRequest,
-  MakeKeyNonNullable,
+  MakeKeyNonNullableAndRequired,
   PopulatedFlow,
   SeekPage,
   TestFlowRunRequestBody,
@@ -161,8 +161,10 @@ export class FlowService {
   }
   publish(request: {
     id: ApId;
-  }): Observable<MakeKeyNonNullable<Flow, 'publishedVersionId'>> {
-    return this.http.post<MakeKeyNonNullable<Flow, 'publishedVersionId'>>(
+  }): Observable<MakeKeyNonNullableAndRequired<Flow, 'publishedVersionId'>> {
+    return this.http.post<
+      MakeKeyNonNullableAndRequired<Flow, 'publishedVersionId'>
+    >(
       environment.apiUrl + `/flows/${request.id}/published-version-id`,
       request
     );
