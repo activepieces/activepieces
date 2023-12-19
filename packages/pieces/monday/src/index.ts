@@ -22,7 +22,7 @@ export const mondayAuth = PieceAuth.OAuth2({
 })
 
 export const monday = createPiece({
-  displayName: "Monday",
+  displayName: "monday.com",
       minimumSupportedRelease: '0.5.0',
     logoUrl: "https://cdn.activepieces.com/pieces/monday.png",
   authors: ['kanarelo'],
