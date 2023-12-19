@@ -39,7 +39,7 @@ export const createProjectMember = createAction({
       }
     }),
     status: Property.StaticDropdown({
-      displayName: '',
+      displayName: 'Status',
       description: undefined,
       required: false,
       options: {
