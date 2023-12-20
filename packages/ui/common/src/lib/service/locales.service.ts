@@ -6,7 +6,7 @@ import { localesMap } from '../utils/locales';
 
 @Injectable({ providedIn: 'root' })
 export class LocalesService {
-  constructor(private location: Location) { }
+  constructor(private location: Location) {}
   readonly currentLanguageKeyInLocalStorage = 'currentLanguage';
   public readonly defaultLocale = LocalesEnum.ENGLISH;
   setCurrentLocale(locale: LocalesEnum) {
