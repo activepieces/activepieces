@@ -23,14 +23,14 @@
 
                 <textarea readonly class="ap-w-full" rows="4" [formControl]="signingKeyFormControl" matInput></textarea>
                 <ap-icon-button [width]="15" [height]="15" matSuffix iconFilename="copy.svg" tooltipText="Copy"
-                    class="ap-mr-[3.125rem]" (buttonClicked)="copyKey()"></ap-icon-button>
+                    extraClasses="ap-fill-body" class="ap-mr-[3.125rem]" (buttonClicked)="copyKey()"></ap-icon-button>
                 <ap-icon-button [width]="15" [height]="15" matSuffix iconFilename="download.svg" tooltipText="Download"
                     (buttonClicked)="downloadKey()"></ap-icon-button>
 
             </mat-form-field>
             <div class="ap-typography-body-1" i18n>
-                Read our docs to see how you will use this key to sign requests sent from your app to Activepieces (You
-                will no longer find the key on Activepeices).
+                Read our docs to see how you will use this key to sign requests sent from your app to Activepieces. You
+                will no longer find the key on Activepieces.
             </div>
 
             <mat-checkbox color="primary" [formControl]="confirmationControl" i18n>I understand I will no longer

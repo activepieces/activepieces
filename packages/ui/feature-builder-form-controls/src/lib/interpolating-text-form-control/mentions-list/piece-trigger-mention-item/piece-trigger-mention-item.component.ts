@@ -19,15 +19,11 @@ import {
 import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
 import {
   BuilderSelectors,
-  FlowItem,
+  Step,
   canvasActions,
 } from '@activepieces/ui/feature-builder-store';
-import {
-  PieceMetadataService,
-  CORE_SCHEDULE,
-  FlowItemDetails,
-} from '@activepieces/ui/common';
-
+import { FlowItemDetails } from '@activepieces/ui/common';
+import { PieceMetadataService, CORE_SCHEDULE } from 'ui-feature-pieces';
 @Component({
   selector: 'app-piece-trigger-mention-item',
   templateUrl: './piece-trigger-mention-item.component.html',
@@ -40,7 +36,7 @@ export class PieceTriggerMentionItemComponent implements OnInit {
   expandSample = false;
   search$: Observable<string>;
   @Input()
-  set stepMention(val: MentionListItem & { step: FlowItem }) {
+  set stepMention(val: MentionListItem & { step: Step }) {
     if (val.step.type !== TriggerType.PIECE) {
       throw new Error('Step is not a piece trigger');
     }

@@ -28,8 +28,10 @@ The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified 
     `)
 
         const environemnt = system.get(SystemProp.ENVIRONMENT)
+        const piecesSource = system.getOrThrow(SystemProp.PIECES_SOURCE)
         const pieces = process.env.AP_DEV_PIECES
 
+        logger.warn(`[WARNING]: Pieces will be loaded from source type ${piecesSource}`)
         if (environemnt === ApEnvironment.DEVELOPMENT) {
             logger.warn(`[WARNING]: The application is running in ${environemnt} mode.`)
             logger.warn(`[WARNING]: This is only shows pieces specified in AP_DEV_PIECES ${pieces} environment variable.`)

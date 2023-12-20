@@ -15,6 +15,10 @@ import { SmtpSettingsComponent } from './components/smtp-settings/smtp-settings.
 import { SigningKeysTableComponent } from './components/signing-keys-table/signing-keys-table.component';
 import { CreateSigningKeyDialogComponent } from './components/dialogs/create-signing-key-dialog/create-signing-key-dialog.component';
 import { TermsAndServicesSettingsComponent } from './components/terms-and-services-settings/terms-and-services-settings.component';
+import { CustomDomainTableComponent } from './components/custom-domain-table/custom-domain-table.component';
+import { CreateCustomDomainDialogComponent } from './components/dialogs/create-custom-domain-dialog/create-custom-domain-dialog.component';
+import { ApiKeysTableComponent } from './components/api-keys-table/api-keys-table.component';
+import { CreateApiKeyDialogComponent } from './components/dialogs/create-api-key-dialog/create-api-key-dialog.component';
 
 @NgModule({
   imports: [
@@ -29,13 +33,16 @@ import { TermsAndServicesSettingsComponent } from './components/terms-and-servic
     UpdateProjectDialogComponent,
     PlatformAppearanceComponent,
     PlatformSettingsComponent,
+    ApiKeysTableComponent,
     SigningKeysTableComponent,
+    CreateApiKeyDialogComponent,
     CreateSigningKeyDialogComponent,
+    CreateCustomDomainDialogComponent,
     PiecesTableComponent,
     EditAddPieceOAuth2CredentialsDialogComponent,
     SmtpSettingsComponent,
-    SmtpSettingsComponent,
     TermsAndServicesSettingsComponent,
+    CustomDomainTableComponent,
   ],
 })
 export class UiEePlatformModule {}

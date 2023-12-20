@@ -2,6 +2,7 @@ import { Static, Type } from '@sinclair/typebox'
 import { BaseModel, BaseModelSchema } from '../common/base-model'
 import { OAuth2AuthorizationMethod } from './oauth2-authorization-method'
 import { ApId } from '../common/id-generator'
+import { OAuth2GrantType } from './dto/upsert-app-connection-request'
 
 export type AppConnectionId = string
 
@@ -41,7 +42,7 @@ export type BaseOAuth2ConnectionValue = {
     authorization_method?: OAuth2AuthorizationMethod
     data: Record<string, unknown>
     props?: Record<string, unknown>
-
+    grant_type?: OAuth2GrantType
 }
 
 export type CustomAuthConnectionValue = {
@@ -96,6 +97,8 @@ export const AppConnectionWithoutSensitiveData = Type.Object({
     appName: Type.String(),
     projectId: ApId,
     status: Type.Enum(AppConnectionStatus),
+}, {
+    description: 'App connection is a connection to an external app.',
 })
 
 export type AppConnectionWithoutSensitiveData = Static<typeof AppConnectionWithoutSensitiveData> & { __brand: 'AppConnectionWithoutSensitiveData' }

@@ -27,7 +27,7 @@ export const runBot = async ({
     }
     try {
         const embeddingsTool = embeddings.create({ botId, openAIApiKey: auth.secret_text })
-        return bot.run({
+        return await bot.run({
             input,
             llm: llm(auth.secret_text, 'gpt-3.5-turbo'),
             embeddings: embeddingsTool,

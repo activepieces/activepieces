@@ -14,6 +14,11 @@ export type ProjectJson = {
         buildableProjectDepsInPackageJsonType?: 'peerDependencies' | 'dependencies'
         updateBuildableProjectDepsInPackageJson: boolean
       }
+    },
+    lint: {
+        options: {
+            lintFilePatterns: string[]
+        }
     }
   }
 }
@@ -34,6 +39,14 @@ export const readPackageJson = async (path: string): Promise<PackageJson> => {
 
 export const readProjectJson = async (path: string): Promise<ProjectJson> => {
   return await readJsonFile(`${path}/project.json`)
+}
+
+export const readPackageEslint = async (path: string): Promise<any> => {
+  return await readJsonFile(`${path}/.eslintrc.json`)
+}
+
+export const writePackageEslint = async (path: string, eslint: any): Promise<void> => {
+  return await writeJsonFile(`${path}/.eslintrc.json`, eslint)
 }
 
 export const writeProjectJson = async (path: string, projectJson: ProjectJson): Promise<void> => {

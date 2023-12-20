@@ -48,7 +48,6 @@ export const UserEntity = new EntitySchema<UserSchema>({
         platformId: {
             type: String,
             nullable: true,
-            update: false,
         },
     },
     indices: [
@@ -61,6 +60,10 @@ export const UserEntity = new EntitySchema<UserSchema>({
             name: 'idx_user_platform_id_external_id',
             columns: ['platformId', 'externalId'],
             unique: true,
+        },
+        {
+            name: 'idx_user_partial_unique_email_platform_id_is_null',
+            synchronize: false,
         },
     ],
     relations: {

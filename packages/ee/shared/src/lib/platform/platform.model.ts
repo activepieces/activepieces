@@ -8,10 +8,17 @@ export enum FilteredPieceBehavior {
     BLOCKED = 'BLOCKED',
 }
 export enum LocalesEnum {
-    ENGLISH='en',
-    GERMAN='de',
-    ITALIAN ='it',
-    FRENCH ='fr'
+    DUTCH = 'nl',
+    ENGLISH = 'en',
+    GERMAN = 'de',
+    ITALIAN = 'it',
+    FRENCH = 'fr',
+    SPANISH = 'es',
+    JAPANESE = 'ja',
+    INDONESIAN = 'id',
+    VIETNAMESE = 'vi',
+    CHINESE_SIMPLIFIED = 'zh',
+    PORTUGUESE = 'pt'
 }
 
 export const Platform = Type.Object({
@@ -34,6 +41,7 @@ export const Platform = Type.Object({
     termsOfServiceUrl: Type.Optional(Type.String()),
     cloudAuthEnabled: Type.Boolean(),
     showPoweredBy: Type.Boolean(),
+    embeddingEnabled: Type.Boolean(),
     defaultLocale: Type.Optional(Type.Enum(LocalesEnum))
 })
 

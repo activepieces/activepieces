@@ -1,16 +1,16 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Observable, Subject, map, startWith, tap } from 'rxjs';
 import { ProjectsDataSource } from './projects-table.datasource';
-import {
-  AuthenticationService,
-  CommonActions,
-  ProjectService,
-} from '@activepieces/ui/common';
 import { Project } from '@activepieces/shared';
 import { MatDialog } from '@angular/material/dialog';
 import { CreateProjectDialogComponent } from './create-project-dialog/create-project-dialog.component';
 import { UpdateProjectDialogComponent } from './update-project-dialog/update-project-dialog.component';
 import { Store } from '@ngrx/store';
+import {
+  AuthenticationService,
+  CommonActions,
+  PlatformProjectService,
+} from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-projects-table',
@@ -18,7 +18,14 @@ import { Store } from '@ngrx/store';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProjectsTableComponent {
-  displayedColumns = ['displayName', 'created', 'externalId', 'action'];
+  displayedColumns = [
+    'displayName',
+    'created',
+    'tasks',
+    'users',
+    'externalId',
+    'action',
+  ];
   refreshTable$: Subject<boolean> = new Subject();
   dataSource: ProjectsDataSource;
   loading = true;
@@ -27,7 +34,7 @@ export class ProjectsTableComponent {
   updateProject$: Observable<void> | undefined;
   title = $localize`Projects`;
   constructor(
-    private projectsService: ProjectService,
+    private projectsService: PlatformProjectService,
     private matDialog: MatDialog,
     private authenticationService: AuthenticationService,
     private store: Store

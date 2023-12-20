@@ -5,7 +5,7 @@ import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
 import { faker } from '@faker-js/faker'
 import { Project } from '@activepieces/shared'
-import { Platform } from '@activepieces/ee-shared'
+import { LocalesEnum, Platform } from '@activepieces/ee-shared'
 
 let app: FastifyInstance | null = null
 
@@ -47,7 +47,7 @@ describe('admin add platform endpoint', () => {
         // assert
         const responseBody = response?.json()
         expect(response?.statusCode).toBe(StatusCodes.CREATED)
-        expect(Object.keys(responseBody)).toHaveLength(22)
+        expect(Object.keys(responseBody)).toHaveLength(23)
         expect(responseBody.id).toHaveLength(21)
         expect(responseBody.created).toBeDefined()
         expect(responseBody.updated).toBeDefined()
@@ -68,10 +68,11 @@ describe('admin add platform endpoint', () => {
         expect(responseBody.privacyPolicyUrl).toBeNull()
         expect(responseBody.termsOfServiceUrl).toBeNull()
         expect(responseBody.cloudAuthEnabled).toBe(true)
-        expect(responseBody.showPoweredBy).toBe(true)
+        expect(responseBody.embeddingEnabled).toBe(true)
+        expect(responseBody.showPoweredBy).toBe(false)
         expect(responseBody.privacyPolicyUrl).toBeNull()
         expect(responseBody.termsOfServiceUrl).toBeNull()
-        expect(responseBody.defaultLocale).toBeNull()
+        expect(responseBody.defaultLocale).toBe(LocalesEnum.ENGLISH)
     })
 
     it('updates project to be platform-managed', async () => {
@@ -112,5 +113,38 @@ describe('admin add platform endpoint', () => {
         expect(updatedMockProject).not.toBeNull()
         expect(updatedMockProject?.type).toBe('PLATFORM_MANAGED')
         expect(updatedMockProject?.platformId).toBe(mockPlatform?.id)
+    })
+
+    it('adds owner to newly created platform', async () => {
+        // arrange
+        const mockUser = createMockUser()
+        await databaseConnection.getRepository('user').save(mockUser)
+
+        const mockProject = createMockProject({ ownerId: mockUser.id })
+        await databaseConnection.getRepository('project').save(mockProject)
+
+        const mockPlatformName = faker.lorem.word()
+
+        // act
+        const response = await app?.inject({
+            method: 'POST',
+            url: '/v1/admin/platforms',
+            headers: {
+                'api-key': 'api-key',
+            },
+            body: {
+                userId: mockUser.id,
+                projectId: mockProject.id,
+                name: mockPlatformName,
+            },
+        })
+
+        // assert
+        expect(response?.statusCode).toBe(StatusCodes.CREATED)
+        const responseBody = response?.json()
+        const newlyCreatedPlatformId = responseBody.id
+
+        const user = await databaseConnection.getRepository('user').findOneByOrFail({ id: mockUser.id })
+        expect(user.platformId).toBe(newlyCreatedPlatformId)
     })
 })

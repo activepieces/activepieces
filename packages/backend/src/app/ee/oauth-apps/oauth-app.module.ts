@@ -1,11 +1,42 @@
 import { FastifyPluginAsyncTypebox, Static, Type } from '@fastify/type-provider-typebox'
 import { oauthAppService } from './oauth-app.service'
-import { ListOAuth2AppRequest, UpsertOAuth2AppRequest } from '@activepieces/ee-shared'
-import { assertNotNullOrUndefined } from '@activepieces/shared'
+import { ListOAuth2AppRequest, OAuthApp, UpsertOAuth2AppRequest } from '@activepieces/ee-shared'
+import { SeekPage, assertNotNullOrUndefined } from '@activepieces/shared'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
+import { StatusCodes } from 'http-status-codes'
 
 export const oauthAppModule: FastifyPluginAsyncTypebox = async (app) => {
-    app.addHook('onRequest', platformMustBeOwnedByCurrentUser)
+    await app.register(readOauthAppModule)
+    await app.register(writeOauthAppModule)
+}
+
+const readOauthAppModule: FastifyPluginAsyncTypebox = async (app) => {
+    await app.register(readOauthAppController, { prefix: '/v1/oauth-apps' })
+}
+
+const readOauthAppController: FastifyPluginAsyncTypebox = async (app) => {
+
+    app.get('/', {
+        schema: {
+            querystring: ListOAuth2AppRequest,
+            response: {
+                [StatusCodes.OK]: SeekPage(OAuthApp),
+            },
+        },
+    },
+    async (request) => {
+        const platformId = request.principal.platform?.id
+        assertNotNullOrUndefined(platformId, 'platformId')
+        return oauthAppService.list({
+            platformId,
+            request: request.query,
+        })
+    },
+    )
+}
+
+const writeOauthAppModule: FastifyPluginAsyncTypebox = async (app) => {
+    app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
     await app.register(oauthAppController, { prefix: '/v1/oauth-apps' })
 }
 
@@ -22,21 +53,6 @@ const oauthAppController: FastifyPluginAsyncTypebox = async (app) => {
         return oauthAppService.upsert({
             platformId,
             request: request.body,
-        })
-    },
-    )
-
-    app.get('/', {
-        schema: {
-            querystring: ListOAuth2AppRequest,
-        },
-    },
-    async (request) => {
-        const platformId = request.principal.platform?.id
-        assertNotNullOrUndefined(platformId, 'platformId')
-        return oauthAppService.list({
-            platformId,
-            request: request.query,
         })
     },
     )

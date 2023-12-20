@@ -14,6 +14,7 @@
       "dark": "#121212"
     }
   },
+  "openapi": ["/openapi.json"],
   "metadata": {
     "og:image": "https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/62c4ecbe6b2d76719d890ae7_Screenshot%202022-07-06%20at%2004.59.45-p-2600.png",
     "description": "Open source alternative to zapier"
@@ -33,25 +34,33 @@
       "url": "https://github.com/activepieces/activepieces"
     }
   ],
+  "anchors": [
+    {
+      "name": "Discord",
+      "icon": "discord",
+      "url": "https://discord.gg/2jUXBKDdP8"
+    },
+    {
+      "name": "Pieces",
+      "icon": "plug",
+      "url": "https://www.activepieces.com/pieces"
+    }
+  ],
   "primaryTab": {
     "name": "Learn"
   },
   "tabs": [
     {
-      "name": "Developers",
+      "name": "Develop Pieces",
       "url": "developers"
-    },
-    {
-      "name": "Pieces",
-      "url": "https://www.activepieces.com/pieces"
     },
     {
       "name": "Deploy",
       "url": "install"
     },
     {
-      "name": "Discord",
-      "url": "https://discord.gg/2jUXBKDdP8"
+      "name": "API",
+      "url": "endpoints"
     }
   ],
   "navigation": [
@@ -62,6 +71,48 @@
         "getting-started/principles"
       ]
     },
+       {
+        "group": "Get Started",
+        "pages": [
+          "endpoints/overview"
+        ]
+       },
+       {
+          "group": "Endpoints",
+          "pages": [
+            {
+              "group": "Projects",
+              "icon": "building",
+              "pages": [
+                "endpoints/projects/schema",
+                "endpoints/projects/create",
+                "endpoints/projects/update",
+                "endpoints/projects/list"
+
+              ]
+            },
+            {
+              "group": "Project Members",
+              "icon": "user",
+              "pages": [
+                "endpoints/project-members/schema",
+                "endpoints/project-members/create",
+                "endpoints/project-members/list",
+                "endpoints/project-members/delete"
+              ]
+            },
+            {
+              "group": "Connections",
+              "icon": "link",
+              "pages": [
+                "endpoints/connections/schema",
+                "endpoints/connections/upsert",
+                "endpoints/connections/list",
+                "endpoints/connections/delete"
+              ]
+            }
+          ]
+        },
     {
       "group": "Flows",
       "pages": [
@@ -98,12 +149,13 @@
           "icon": "gear",
           "pages": [
             "install/configurations/environment-variables",
-            "install/configurations/error-notifications",
-            "install/configurations/troubleshooting"
+            "install/configurations/error-notifications"
           ]
         },
+        "install/setup-ssl",
         "install/architecture",
-        "install/enterprise"
+        "install/enterprise",
+        "install/troubleshooting"
       ]
     },
     {
@@ -175,10 +227,11 @@
       "pages": [
         "platform/overview",
         "platform/appearance",
+        "platform/manage-projects",
+        "platform/custom-domain",
         "platform/manage-pieces",
         "platform/manage-oauth2",
         "platform/customize-emails",
-        "platform/managed-projects",
         "platform/managed-users",
         "platform/embedding"
       ]
@@ -187,6 +240,7 @@
       "group": "Enterprise Edition",
       "pages": [
         "enterprise/whitelabel",
+        "enterprise/environments",
         {
           "group": "Connection Cards",
           "icon": "cards-blank",

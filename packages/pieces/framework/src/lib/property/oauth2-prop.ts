@@ -4,6 +4,7 @@ import { BasePieceAuthSchema, SecretTextProperty, ShortTextProperty, TPropertyVa
 import { StaticDropdownProperty } from "./dropdown-prop";
 import { StaticPropsValue } from "./property";
 import { ValidationInputType } from "../validators/types";
+import { OAuth2GrantType } from "@activepieces/shared";
 
 type OAuthProp = ShortTextProperty<true> | SecretTextProperty<true> | StaticDropdownProperty<any, true>;
 
@@ -20,7 +21,8 @@ export type OAuth2PropertySchema = BasePieceAuthSchema<OAuth2PropertyValue> & {
 	scope: string[];
 	pkce?: boolean;
 	authorizationMethod?: OAuth2AuthorizationMethod,
-	extra?: Record<string, unknown>
+	grantType?: OAuth2GrantType;
+	extra?: Record<string, unknown>;
 }
 
 export type OAuth2PropertyValue<T extends OAuth2Props = any> = {

@@ -9,11 +9,9 @@ import {
   tap,
 } from 'rxjs';
 import {
-  AuthenticationService,
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
   OAuth2AppsService,
-  PieceMetadataService,
   PlatformService,
 } from '@activepieces/ui/common';
 import { Platform } from '@activepieces/ee-shared';
@@ -30,6 +28,10 @@ import {
   PieceOAuth2CredentialsDialogData,
 } from '../../components/dialogs/edit-add-piece-oauth-2-credentials-dialog/edit-add-piece-oauth-2-credentials-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
+import {
+  InstallCommunityPieceModalComponent,
+  PieceMetadataService,
+} from 'ui-feature-pieces';
 
 @Component({
   selector: 'app-pieces-table',
@@ -37,7 +39,7 @@ import { MatDialog } from '@angular/material/dialog';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PiecesTableComponent implements OnInit {
-  displayedColumns = ['displayName', 'action'];
+  displayedColumns = ['displayName', 'version', 'action'];
   title = $localize`Pieces`;
   saving$?: Observable<void>;
   platform$!: BehaviorSubject<Platform>;
@@ -53,8 +55,10 @@ export class PiecesTableComponent implements OnInit {
   dataSource!: PiecesTableDataSource;
   refresh$: Subject<true> = new Subject();
   dialogClosed$?: Observable<boolean>;
+  addPackageDialogClosed$!: Observable<Record<string, string> | null>;
+  cloudAuthToggleFormControl = new FormControl(false, { nonNullable: true });
+  toggelCloudOAuth2$: Observable<void>;
   constructor(
-    private authenticationService: AuthenticationService,
     private piecesService: PieceMetadataService,
     private route: ActivatedRoute,
     private platformService: PlatformService,
@@ -62,7 +66,7 @@ export class PiecesTableComponent implements OnInit {
     private matDialog: MatDialog,
     private oauth2AppsService: OAuth2AppsService
   ) {
-    this.authenticationService.getPlatformId();
+    this.toggelCloudOAuth2$ = this.getCloudOAuth2ToggleListener();
   }
   ngOnInit(): void {
     this.platform$ = new BehaviorSubject(this.route.snapshot.data['platform']);
@@ -71,6 +75,26 @@ export class PiecesTableComponent implements OnInit {
       this.searchFormControl.valueChanges.pipe(startWith('')),
       this.oauth2AppsService,
       this.refresh$.asObservable().pipe(startWith(true as const))
+    );
+    this.cloudAuthToggleFormControl.setValue(
+      this.platform$.value.cloudAuthEnabled
+    );
+  }
+
+  getCloudOAuth2ToggleListener() {
+    return this.cloudAuthToggleFormControl.valueChanges.pipe(
+      tap((cloudAuthEnabled) => {
+        this.platform$.next({ ...this.platform$.value, cloudAuthEnabled });
+      }),
+      switchMap((cloudAuthEnabled) => {
+        return this.platformService.updatePlatform(
+          {
+            ...this.platform$.value,
+            cloudAuthEnabled,
+          },
+          this.platform$.value.id
+        );
+      })
     );
   }
 
@@ -107,19 +131,42 @@ export class PiecesTableComponent implements OnInit {
     if (this.saving$) {
       this.saving$ = this.saving$.pipe(
         switchMap(() => {
-          return this.savePlatform(this.platform$.value);
+          return this.saveFilteredPieces(this.platform$.value);
         }),
         finishedSavingPipe
       );
     } else {
-      this.saving$ = this.savePlatform(this.platform$.value).pipe(
+      this.saving$ = this.saveFilteredPieces(this.platform$.value).pipe(
         finishedSavingPipe
       );
     }
   }
 
-  savePlatform(platform: Platform) {
-    return this.platformService.updatePlatform(platform, platform.id);
+  installPiece() {
+    this.addPackageDialogClosed$ = this.matDialog
+      .open(InstallCommunityPieceModalComponent, {
+        data: {
+          platformId: this.platform$.value.id,
+        },
+      })
+      .afterClosed()
+      .pipe(
+        tap((res) => {
+          if (res) {
+            this.piecesService.clearCache();
+            this.refresh$.next(true);
+          }
+        })
+      );
+  }
+
+  saveFilteredPieces(platform: Platform) {
+    return this.platformService.updatePlatform(
+      {
+        filteredPieceNames: platform.filteredPieceNames,
+      },
+      platform.id
+    );
   }
 
   openPieceOAuth2CredentialsDialog(

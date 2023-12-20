@@ -4,12 +4,12 @@ import { Observable, Subject, tap } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { CreateSigningKeyDialogComponent } from '../dialogs/create-signing-key-dialog/create-signing-key-dialog.component';
 import { startWith } from 'rxjs';
-import { SigningKeysService } from '@activepieces/ee-components';
 import { SigningKey } from '@activepieces/ee-shared';
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
 } from '@activepieces/ui/common';
+import { SigningKeysService } from '../../service/signing-keys.service';
 
 @Component({
   selector: 'app-signing-keys-table',

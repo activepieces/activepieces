@@ -19,10 +19,11 @@ import {
   DEFAULT_PAGE_SIZE,
   LIMIT_QUERY_PARAM,
   CURSOR_QUERY_PARAM,
-  PieceMetadataService,
+  AuthenticationService,
 } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 import { Params } from '@angular/router';
+import { PieceMetadataService } from 'ui-feature-pieces';
 
 /**
  * Data source for the LogsTable view. This class should
@@ -37,6 +38,7 @@ export class ConnectionsTableDataSource extends DataSource<any> {
     private paginator: ApPaginatorComponent,
     private store: Store,
     private pieceMetadataService: PieceMetadataService,
+    private authenticationService: AuthenticationService,
     private connectionsService: AppConnectionsService,
     private refresh$: Observable<boolean>
   ) {
@@ -61,6 +63,7 @@ export class ConnectionsTableDataSource extends DataSource<any> {
       }),
       switchMap((res) => {
         return this.connectionsService.list({
+          projectId: this.authenticationService.getProjectId(),
           limit: res.queryParams[LIMIT_QUERY_PARAM] || DEFAULT_PAGE_SIZE,
           cursor: res.queryParams[CURSOR_QUERY_PARAM],
         });

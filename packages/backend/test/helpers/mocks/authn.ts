@@ -9,6 +9,7 @@ export const createMockSignUpRequest = (signUpRequest?: Partial<SignUpRequest>):
         lastName: signUpRequest?.lastName ?? faker.person.lastName(),
         trackEvents: signUpRequest?.trackEvents ?? faker.datatype.boolean(),
         newsLetter: signUpRequest?.newsLetter ?? faker.datatype.boolean(),
+        referringUserId: signUpRequest?.referringUserId,
     }
 }
 

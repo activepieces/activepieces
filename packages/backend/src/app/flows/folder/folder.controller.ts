@@ -24,7 +24,7 @@ export const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
             },
         },
         async (request) => {
-            return await folderService.create({ projectId: request.principal.projectId, request: request.body })
+            return folderService.create({ projectId: request.principal.projectId, request: request.body })
         },
     )
 
@@ -38,7 +38,7 @@ export const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
             },
         },
         async (request) => {
-            return await folderService.update({ projectId: request.principal.projectId, folderId: request.params.folderId, request: request.body })
+            return folderService.update({ projectId: request.principal.projectId, folderId: request.params.folderId, request: request.body })
         },
     )
 
@@ -65,7 +65,7 @@ export const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
             },
         },
         async (request) => {
-            return await folderService.list({ projectId: request.principal.projectId, cursorRequest: request.query.cursor ?? null, limit: request.query.limit ?? DEFUALT_PAGE_SIZE })
+            return folderService.list({ projectId: request.principal.projectId, cursorRequest: request.query.cursor ?? null, limit: request.query.limit ?? DEFUALT_PAGE_SIZE })
         },
     )
 

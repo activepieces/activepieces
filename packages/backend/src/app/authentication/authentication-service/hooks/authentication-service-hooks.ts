@@ -1,12 +1,19 @@
 import { Project, User } from '@activepieces/shared'
 
 export type AuthenticationServiceHooks = {
+    preSignUp(p: PreParams): Promise<void>
     postSignUp(p: PostParams): Promise<PostResult>
     postSignIn(p: PostParams): Promise<PostResult>
 }
 
+type PreParams = {
+    email: string
+    platformId: string | null
+}
+
 type PostParams = {
     user: User
+    referringUserId?: string
 }
 
 type PostResult = {

@@ -6,15 +6,17 @@ import {
   Validators,
 } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { Project } from '@activepieces/shared';
 import { Observable, catchError, tap } from 'rxjs';
-import { ProjectService } from '@activepieces/ui/common';
+import { ProjectWithUsageAndPlanResponse } from '@activepieces/ee-shared';
+import { PlatformProjectService } from '@activepieces/ui/common';
 
 interface UpdateProjectForm {
   displayName: FormControl<string>;
+  teamMembers: FormControl<number>;
+  tasks: FormControl<number>;
 }
 export type UpdateProjectDialogData = {
-  project: Project;
+  project: ProjectWithUsageAndPlanResponse;
 };
 @Component({
   selector: 'app-update-project-dialog',
@@ -24,19 +26,39 @@ export type UpdateProjectDialogData = {
 export class UpdateProjectDialogComponent {
   formGroup: FormGroup<UpdateProjectForm>;
   loading = false;
-  updateProject$?: Observable<Project>;
+  updateProject$?: Observable<ProjectWithUsageAndPlanResponse>;
 
   constructor(
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<UpdateProjectDialogComponent>,
     @Inject(MAT_DIALOG_DATA)
     public data: UpdateProjectDialogData,
-    private projectService: ProjectService
+    private projectService: PlatformProjectService
   ) {
     this.formGroup = this.fb.group({
       displayName: this.fb.control(
         {
           value: this.data.project.displayName,
+          disabled: false,
+        },
+        {
+          nonNullable: true,
+          validators: Validators.required,
+        }
+      ),
+      tasks: this.fb.control(
+        {
+          value: this.data.project.plan.tasks,
+          disabled: false,
+        },
+        {
+          nonNullable: true,
+          validators: Validators.required,
+        }
+      ),
+      teamMembers: this.fb.control(
+        {
+          value: this.data.project.plan.teamMembers,
           disabled: false,
         },
         {
@@ -53,6 +75,10 @@ export class UpdateProjectDialogComponent {
         .update(this.data.project.id, {
           displayName: this.formGroup.getRawValue().displayName,
           notifyStatus: this.data.project.notifyStatus,
+          plan: {
+            tasks: this.formGroup.getRawValue().tasks,
+            teamMembers: this.formGroup.getRawValue().teamMembers,
+          },
         })
         .pipe(
           tap(() => {

@@ -1,9 +1,10 @@
-import { CreateDomainRequest, ListCustomDomainsRequest } from '@activepieces/ee-shared'
+import { AddDomainRequest, ListCustomDomainsRequest } from '@activepieces/ee-shared'
 import { FastifyPluginAsyncTypebox, Static, Type } from '@fastify/type-provider-typebox'
 import { customDomainService } from './custom-domain.service'
 import { HttpStatusCode } from 'axios'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import { assertNotNullOrUndefined } from '@activepieces/shared'
+import { StatusCodes } from 'http-status-codes'
 
 
 const GetOneRequest = Type.Object({
@@ -12,7 +13,7 @@ const GetOneRequest = Type.Object({
 type GetOneRequest = Static<typeof GetOneRequest>
 
 export const customDomainModule: FastifyPluginAsyncTypebox = async (app) => {
-    app.addHook('onRequest', platformMustBeOwnedByCurrentUser)
+    app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
     await app.register(customDomainController, { prefix: '/v1/custom-domains' })
 }
 
@@ -22,7 +23,7 @@ const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
         '/',
         {
             schema: {
-                body: CreateDomainRequest,
+                body: AddDomainRequest,
             },
         },
         async (
@@ -44,29 +45,14 @@ const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
                     })
             }
 
-            return customDomainService.create({
+            const customDomain = await customDomainService.create({
                 domain: request.body.domain,
                 platformId,
             })
-        },
-    )
 
-    app.post(
-        '/:id/verify',
-        {
-            schema: {
-                params: GetOneRequest,
-            },
-        },
-        async (
-            request,
-        ) => {
-            const platformId = request.principal.platform?.id
-            assertNotNullOrUndefined(platformId, 'platformId')
-            return customDomainService.check({
-                id: request.params.id,
-                platformId,
-            })
+            return reply
+                .status(StatusCodes.CREATED)
+                .send(customDomain)
         },
     )
 

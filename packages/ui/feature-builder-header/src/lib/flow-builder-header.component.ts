@@ -19,8 +19,8 @@ import {
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
 import { Flow, FlowInstance } from '@activepieces/shared';
-import { ImportFlowDialogueComponent } from './import-flow-dialogue/import-flow-dialogue.component';
 import { EmbeddingService } from '@activepieces/ui/common';
+import { ImportFlowDialogueComponent } from './import-flow-dialogue/import-flow-dialogue.component';
 
 @Component({
   selector: 'app-flow-builder-header',
@@ -44,6 +44,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
   fullLogo$: Observable<string>;
   setTitle$: Observable<void>;
   isInEmbedded$: Observable<boolean>;
+  showBackButtonAndFolderName$: Observable<boolean>;
   constructor(
     public dialogService: MatDialog,
     private store: Store,
@@ -57,6 +58,8 @@ export class FlowBuilderHeaderComponent implements OnInit {
     private navigationService: NavigationService
   ) {
     this.isInEmbedded$ = this.embeddingService.getIsInEmbedding$();
+    this.showBackButtonAndFolderName$ =
+      this.embeddingService.getShowFolderNameAndBackButton$();
     this.fullLogo$ = this.flagService
       .getLogos()
       .pipe(map((logos) => logos.fullLogoUrl));

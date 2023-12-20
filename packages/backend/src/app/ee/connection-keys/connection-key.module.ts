@@ -4,6 +4,7 @@ import { connectionKeyService } from './connection-key.service'
 import { StatusCodes } from 'http-status-codes'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
+import { ALL_PRINICPAL_TYPES } from '@activepieces/shared'
 
 export const connectionKeyModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(connectionKeyController, { prefix: '/v1/connection-keys' })
@@ -13,10 +14,12 @@ const DEFAULT_LIMIT_SIZE = 10
 
 const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
 
-
     fastify.delete(
         '/app-connections',
         {
+            config: {
+                allowedPrincipals: ALL_PRINICPAL_TYPES,
+            },
             schema: {
                 querystring: GetOrDeleteConnectionFromTokenRequest,
             },
@@ -36,6 +39,9 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.get(
         '/app-connections',
         {
+            config: {
+                allowedPrincipals: ALL_PRINICPAL_TYPES,
+            },
             schema: {
                 querystring: GetOrDeleteConnectionFromTokenRequest,
             },
@@ -45,7 +51,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
                 Querystring: GetOrDeleteConnectionFromTokenRequest
             }>,
         ) => {
-            return await connectionKeyService.getConnection(request.query)
+            return connectionKeyService.getConnection(request.query)
         },
     )
 
@@ -53,6 +59,9 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.post(
         '/app-connections',
         {
+            config: {
+                allowedPrincipals: ALL_PRINICPAL_TYPES,
+            },
             schema: {
                 body: UpsertConnectionFromToken,
             },
@@ -62,7 +71,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
                 Body: UpsertConnectionFromToken
             }>,
         ) => {
-            return await connectionKeyService.createConnection(request.body)
+            return connectionKeyService.createConnection(request.body)
         },
     )
 
@@ -74,7 +83,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
     {
         Querystring: ListConnectionKeysRequest
     }>) => {
-        return await connectionKeyService.list(request.principal.projectId, request.query.cursor ?? null, request.query.limit ?? DEFAULT_LIMIT_SIZE)
+        return connectionKeyService.list(request.principal.projectId, request.query.cursor ?? null, request.query.limit ?? DEFAULT_LIMIT_SIZE)
     })
 
 
@@ -90,7 +99,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
                 Body: UpsertSigningKeyConnection
             }>,
         ) => {
-            return await connectionKeyService.upsert({
+            return connectionKeyService.upsert({
                 projectId: request.principal.projectId,
                 request: request.body,
             })

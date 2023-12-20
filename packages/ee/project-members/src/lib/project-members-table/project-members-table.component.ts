@@ -18,7 +18,7 @@ import {
   ProjectMemberRole,
   ProjectMemberStatus,
 } from '@activepieces/ee-shared';
-import { BillingService } from '@activepieces/ee-billing-ui';
+import { BillingService, UpgradeDialogData } from '@activepieces/ee-billing-ui';
 import { UpgradeDialogComponent } from '@activepieces/ee-billing-ui';
 import { Store } from '@ngrx/store';
 import {
@@ -43,13 +43,14 @@ export class ProjectMembersTableComponent implements OnInit {
   displayedColumns = ['email', 'role', 'status', 'created', 'action'];
   title = $localize`Project Members`;
   constructor(
-    private dialogRef: MatDialog,
+    private matDialog: MatDialog,
     private billingService: BillingService,
     private store: Store,
     private projectMemberService: ProjectMemberService,
     private authenticationService: AuthenticationService
   ) {
     this.dataSource = new ProjectMembersTableDataSource(
+      this.authenticationService,
       this.projectMemberService,
       this.refreshTableAtCurrentCursor$.asObservable().pipe(startWith(true))
     );
@@ -60,7 +61,10 @@ export class ProjectMembersTableComponent implements OnInit {
       .pipe(take(1));
     // TODO OPTMIZE THIS and use role from centerlized place
     this.isCurrentUserAdmin$ = forkJoin([
-      this.projectMemberService.list({ limit: 100 }),
+      this.projectMemberService.list({
+        limit: 100,
+        projectId: this.authenticationService.getProjectId(),
+      }),
       this.projectOwnerId$,
     ]).pipe(
       map(([members, ownerId]) => {
@@ -68,8 +72,11 @@ export class ProjectMembersTableComponent implements OnInit {
 
         // Check if the current user is an admin
         const isAdmin =
-          members.data.find((member) => currentUser.id === member.userId)
-            ?.role === ProjectMemberRole.ADMIN;
+          members.data.find(
+            (member) =>
+              currentUser.email === member.email &&
+              member.platformId === currentUser.platformId
+          )?.role === ProjectMemberRole.ADMIN;
 
         // Check if the current user is the project owner
         const isOwner = currentUser.id === ownerId;
@@ -90,13 +97,22 @@ export class ProjectMembersTableComponent implements OnInit {
       switchMap((billing) => {
         this.inviteLoading = false;
         if (billing.exceeded) {
-          return this.dialogRef
-            .open(UpgradeDialogComponent)
-            .afterClosed()
-            .pipe(map(() => void 0));
+          return this.store.select(ProjectSelectors.selectCurrentProject).pipe(
+            switchMap((proj) => {
+              const data: UpgradeDialogData = {
+                limitType: 'team',
+                limit: billing.limit,
+                projectType: proj.type,
+              };
+              return this.matDialog
+                .open(UpgradeDialogComponent, { data })
+                .afterClosed()
+                .pipe(map(() => void 0));
+            })
+          );
         }
 
-        return this.dialogRef
+        return this.matDialog
           .open(InviteProjectMemberDialogComponent)
           .afterClosed()
           .pipe(

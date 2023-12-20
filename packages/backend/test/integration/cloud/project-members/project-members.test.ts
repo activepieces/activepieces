@@ -2,20 +2,25 @@ import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { createMockProject, createMockUser } from '../../../helpers/mocks'
+import { createMockApiKey, createMockPlatform, createMockProject, createMockProjectMember, createMockUser } from '../../../helpers/mocks'
 import { generateMockToken } from '../../../helpers/auth'
-import { stripeHelper } from '../../../../src/app/ee/billing/stripe/stripe-helper'
+import { stripeHelper } from '../../../../src/app/ee/billing/billing/stripe-helper'
 import { emailService } from '../../../../src/app/ee/helper/email/email-service'
-import { UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
-import { createMockProjectMember } from '../../../helpers/mocks/project-member-mocks'
-import { ProjectMemberStatus } from '@activepieces/ee-shared'
+import { PlatformRole, Project, User } from '@activepieces/shared'
+import { PrincipalType } from '@activepieces/shared'
+import { AddProjectMemberRequestBody, ApiKeyResponseWithValue, Platform, ProjectMemberRole, ProjectMemberStatus } from '@activepieces/ee-shared'
 
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
     await databaseConnection.initialize()
     app = await setupApp()
+})
+
+beforeEach(async () => {
+    stripeHelper.getOrCreateCustomer = jest.fn().mockResolvedValue(faker.string.uuid())
+    emailService.sendInvitation = jest.fn()
 })
 
 afterAll(async () => {
@@ -25,94 +30,145 @@ afterAll(async () => {
 
 describe('Project Member API', () => {
     describe('Invite member to project Endpoint', () => {
+
+        it('Adds new invited user from api for random project', async () => {
+            const { mockApiKey } = await createBasicEnvironment()
+            const { mockProject: mockProject2 } = await createBasicEnvironment()
+            await databaseConnection.getRepository('project').save(mockProject2)
+
+            const mockInviteProjectMemberRequest: AddProjectMemberRequestBody = {
+                email: 'test@ap.com',
+                role: ProjectMemberRole.VIEWER,
+                projectId: mockProject2.id,
+                status: ProjectMemberStatus.ACTIVE,
+            }
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/project-members',
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
+                body: mockInviteProjectMemberRequest,
+            })
+            expect(response?.statusCode).toBe(StatusCodes.UNAUTHORIZED)
+        })
+
+
+        it('Adds new invited user from api', async () => {
+            const { mockApiKey, mockProject } = await createBasicEnvironment()
+            const mockInviteProjectMemberRequest: AddProjectMemberRequestBody = {
+                email: 'test@ap.com',
+                role: ProjectMemberRole.VIEWER,
+                projectId: mockProject.id,
+            }
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/project-members',
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
+                body: mockInviteProjectMemberRequest,
+            })
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
+        })
+
+
         it('Adds new invited user', async () => {
+            const { mockUserToken, mockProject } = await createBasicEnvironment()
+
+            const randomEmail = faker.internet.email()
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/project-members',
+                headers: {
+                    authorization: `Bearer ${mockUserToken}`,
+                },
+                body: {
+                    email: randomEmail,
+                    role: 'VIEWER',
+                    projectId: mockProject.id,
+                },
+            })
+
+            // assert
+            const responseBody = response?.json()
+
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
+            expect(Object.keys(responseBody)).toHaveLength(8)
+
+            expect(emailService.sendInvitation).toBeCalledTimes(1)
+
+            const projectMember = await databaseConnection.getRepository('project_member').findOneBy({
+                email: randomEmail,
+                projectId: mockProject.id,
+            })
+
+            expect(projectMember?.status).toBe('PENDING')
+        })
+
+        it('Auto activates membership if status is set to ACTIVE with embeddedEnabled', async () => {
+            const { mockUserToken, mockProject } = await createBasicEnvironment(true)
+            // act
+            const randomEmail = faker.internet.email()
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/project-members',
+                headers: {
+                    authorization: `Bearer ${mockUserToken}`,
+                },
+                body: {
+                    email: randomEmail,
+                    role: 'VIEWER',
+                    status: ProjectMemberStatus.ACTIVE,
+                    projectId: mockProject.id,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
+            const responseBody = response?.json()
+            expect(responseBody?.status).toBe('ACTIVE')
+        })
+
+        it('Skips sending invitation email if membership is ACTIVE', async () => {
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save(mockUser)
 
-            const mockPlatformId = faker.string.nanoid(21)
+            const mockPlatform = createMockPlatform({
+                embeddingEnabled: true,
+                ownerId: mockUser.id,
+            })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
             const mockProject = createMockProject({
                 ownerId: mockUser.id,
-                platformId: mockPlatformId,
+                platformId: mockPlatform.id,
             })
             await databaseConnection.getRepository('project').save(mockProject)
 
             const mockToken = await generateMockToken({
                 id: mockUser.id,
+                type: PrincipalType.USER,
                 projectId: mockProject.id,
                 platform: {
-                    id: mockPlatformId,
-                    role: 'OWNER',
+                    id: mockPlatform.id,
+                    role: PlatformRole.OWNER,
                 },
             })
 
             const mockInviteProjectMemberRequest = {
                 email: 'test@ap.com',
                 role: 'VIEWER',
-            }
-
-            stripeHelper.createCustomer = jest.fn().mockResolvedValue(faker.string.uuid())
-            emailService.sendInvitation = jest.fn()
-
-            // act
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/v1/project-members/invite',
-                headers: {
-                    authorization: `Bearer ${mockToken}`,
-                },
-                body: mockInviteProjectMemberRequest,
-            })
-
-            // assert
-            const responseBody = response?.json()
-
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(Object.keys(responseBody)).toHaveLength(1)
-            expect(responseBody?.token).toBeDefined()
-
-            const invitedUser = await databaseConnection.getRepository('user').findOneBy({
-                email: mockInviteProjectMemberRequest.email,
-            })
-
-            expect(invitedUser?.status).toBe('INVITED')
-            expect(invitedUser?.platformId).toBe(mockProject.platformId)
-        })
-
-        it('Uses existing invited user', async () => {
-            const mockProjectOwner = createMockUser()
-            const mockInvitedUser = createMockUser({
-                status: UserStatus.INVITED,
-            })
-            await databaseConnection.getRepository('user').save([mockProjectOwner, mockInvitedUser])
-
-            const mockPlatformId = faker.string.nanoid(21)
-            const mockProject = createMockProject({
-                ownerId: mockProjectOwner.id,
-                platformId: mockPlatformId,
-            })
-            await databaseConnection.getRepository('project').save(mockProject)
-
-            const mockToken = await generateMockToken({
-                id: mockProjectOwner.id,
                 projectId: mockProject.id,
-                platform: {
-                    id: mockPlatformId,
-                    role: 'OWNER',
-                },
-            })
-
-            const mockInviteProjectMemberRequest = {
-                email: mockInvitedUser.email,
-                role: 'VIEWER',
+                status: ProjectMemberStatus.ACTIVE,
             }
-
-            stripeHelper.createCustomer = jest.fn().mockResolvedValue(faker.string.uuid())
-            emailService.sendInvitation = jest.fn()
 
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/project-members/invite',
+                url: '/v1/project-members',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -120,64 +176,166 @@ describe('Project Member API', () => {
             })
 
             // assert
-            const responseBody = response?.json()
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
 
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(Object.keys(responseBody)).toHaveLength(1)
-            expect(responseBody?.token).toBeDefined()
-
-            const invitedUser = await databaseConnection.getRepository('user').findOneBy({
-                email: mockInviteProjectMemberRequest.email,
-            })
-
-            expect(invitedUser?.id).toBe(mockInvitedUser.id)
+            expect(emailService.sendInvitation).not.toBeCalled()
         })
     })
 
-    describe('Accept Invitation Endpoint', () => {
-        it('Verifies invited user', async () => {
-            const mockProjectOwner = createMockUser()
-            const mockInvitedUser = createMockUser({ status: UserStatus.INVITED })
-            await databaseConnection.getRepository('user').save([mockProjectOwner, mockInvitedUser])
+    describe('List project members Endpoint', () => {
+        describe('List project members from api', () => {
+            it('Lists project members', async () => {
+                const { mockApiKey, mockProject } = await createBasicEnvironment()
+                const randomEmail = faker.internet.email()
 
-            const mockProject = createMockProject({ ownerId: mockProjectOwner.id })
-            await databaseConnection.getRepository('project').save(mockProject)
+                const mockProjectMember = createMockProjectMember({
+                    projectId: mockProject.id,
+                    email: randomEmail,
+                })
+                await databaseConnection.getRepository('project_member').save(mockProjectMember)
+
+                // act
+                const response = await app?.inject({
+                    method: 'GET',
+                    url: `/v1/project-members?projectId=${mockProject.id}`,
+                    headers: {
+                        authorization: `Bearer ${mockApiKey.value}`,
+                    },
+                })
+                expect(response?.statusCode).toBe(StatusCodes.OK)
+                const responseBody = response?.json()
+                expect(responseBody.data).toHaveLength(2)
+                expect(responseBody.data[1].id).toBe(mockProjectMember.id)
+            })
+
+            it('Lists project members for non owner project', async () => {
+                const { mockApiKey } = await createBasicEnvironment()
+                const { mockProject: mockProject2 } = await createBasicEnvironment()
+                const randomEmail = faker.internet.email()
+
+                const mockProjectMember = createMockProjectMember({
+                    projectId: mockProject2.id,
+                    email: randomEmail,
+                })
+                await databaseConnection.getRepository('project_member').save(mockProjectMember)
+
+                // act
+                const response = await app?.inject({
+                    method: 'GET',
+                    url: `/v1/project-members?projectId=${mockProject2.id}`,
+                    headers: {
+                        authorization: `Bearer ${mockApiKey.value}`,
+                    },
+                })
+                expect(response?.statusCode).toBe(StatusCodes.UNAUTHORIZED)
+            })
+        },
+        )
+        
+    })
+    describe('Delete project member Endpoint', () => {
+        it('Deletes project member', async () => {
+            const { mockUserToken, mockProject } = await createBasicEnvironment()
+            const randomEmail = faker.internet.email()
 
             const mockProjectMember = createMockProjectMember({
-                userId: mockInvitedUser.id,
                 projectId: mockProject.id,
-                status: ProjectMemberStatus.PENDING,
+                email: randomEmail,
             })
             await databaseConnection.getRepository('project_member').save(mockProjectMember)
 
-            const mockInvitationToken = await generateMockToken({
-                id: mockProjectMember.id,
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/v1/project-members/${mockProjectMember.id}`,
+                headers: {
+                    authorization: `Bearer ${mockUserToken}`,
+                },
             })
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+        })
 
-            const mockAcceptProjectMemberInvitationRequest = {
-                token: mockInvitationToken,
-            }
+        it('Delete project member from api', async () => {
+            const { mockApiKey, mockProject } = await createBasicEnvironment()
+            const randomEmail = faker.internet.email()
+
+            const mockProjectMember = createMockProjectMember({
+                projectId: mockProject.id,
+                email: randomEmail,
+            })
+            await databaseConnection.getRepository('project_member').save(mockProjectMember)
 
             // act
             const response = await app?.inject({
-                method: 'POST',
-                url: '/v1/project-members/accept',
-                body: mockAcceptProjectMemberInvitationRequest,
+                method: 'DELETE',
+                url: `/v1/project-members/${mockProjectMember.id}`,
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
             })
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+        })
 
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            const responseBody = response?.json()
+        it('Delete project member from api for non owner project', async () => {
+            const { mockApiKey } = await createBasicEnvironment()
+            const { mockProject: mockProject2 } = await createBasicEnvironment()
+            const randomEmail = faker.internet.email()
 
-            expect(Object.keys(responseBody)).toHaveLength(7)
-            expect(responseBody?.id).toBe(mockProjectMember.id)
-            expect(responseBody?.userId).toBe(mockInvitedUser.id)
-            expect(responseBody?.projectId).toBe(mockProject.id)
-            expect(responseBody?.role).toBe(mockProjectMember.role)
-            expect(responseBody?.status).toBe(ProjectMemberStatus.ACTIVE)
+            const mockProjectMember = createMockProjectMember({
+                projectId: mockProject2.id,
+                email: randomEmail,
+            })
+            await databaseConnection.getRepository('project_member').save(mockProjectMember)
 
-            const invitedUser = await databaseConnection.getRepository('user').findOneBy({ id: mockInvitedUser.id })
-            expect(invitedUser?.status).toBe('VERIFIED')
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/v1/project-members/${mockProjectMember.id}`,
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
+            })
+            expect(response?.statusCode).toBe(StatusCodes.UNAUTHORIZED)
         })
     })
 })
+
+async function createBasicEnvironment(embeddingEnabled = false): Promise<{ mockUser: User, mockPlatform: Platform, mockProject: Project, mockApiKey: ApiKeyResponseWithValue, mockUserToken: string }> {
+    const mockUser = createMockUser()
+    await databaseConnection.getRepository('user').save(mockUser)
+
+    const mockPlatform = createMockPlatform({
+        ownerId: mockUser.id,
+        embeddingEnabled,
+    })
+    await databaseConnection.getRepository('platform').save(mockPlatform)
+
+    const mockProject = createMockProject({
+        ownerId: mockUser.id,
+        platformId: mockPlatform.id,
+    })
+    await databaseConnection.getRepository('project').save(mockProject)
+
+    const mockApiKey = createMockApiKey({
+        platformId: mockPlatform.id,
+    })
+    await databaseConnection.getRepository('api_key').save(mockApiKey)
+
+    const mockUserToken = await generateMockToken({
+        id: mockUser.id,
+        type: PrincipalType.USER,
+        projectId: mockProject.id,
+        platform: {
+            id: mockPlatform.id,
+            role: PlatformRole.OWNER,
+        },
+    })
+    return {
+        mockUser,
+        mockPlatform,
+        mockProject,
+        mockApiKey,
+        mockUserToken,
+
+    }
+}

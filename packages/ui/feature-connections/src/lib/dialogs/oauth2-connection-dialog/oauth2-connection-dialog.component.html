@@ -29,7 +29,8 @@
         </ng-template></mat-error>
     </mat-form-field>
 
-    <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-form-field class="ap-w-full" appearance="outline"
+      *ngIf="dialogData.pieceAuthProperty.grantType !== OAuth2GrantType.CLIENT_CREDENTIALS">
       <mat-label>Redirect URL</mat-label>
       <input placeholder="Redirect URL" [matTooltip]="redirectUrlTooltip" formControlName="redirect_url" matInput
         type="text" />
@@ -78,7 +79,7 @@
 
     </div>
 
-    <div>
+    <div *ngIf="dialogData.pieceAuthProperty.grantType !== OAuth2GrantType.CLIENT_CREDENTIALS">
       <app-o-auth2-connect-control [popupParams]="getOAuth2Settings()"
         [settingsValid]="authenticationSettingsControlsValid" formControlName="value"></app-o-auth2-connect-control>
       <p @fadeInUp class="ap-typography-caption ap-text-danger"
@@ -89,7 +90,7 @@
   </form>
   <a class="ap-cursor-pointer ap-mt-2" *ngIf="(hasCloudAuthCred$ | async) && !dialogData.connectionToUpdate"
     (click)="useCloudCreds()" i18n>I would like to
-    use activepieces app credentials </a>
+    use predefined app credentials </a>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">

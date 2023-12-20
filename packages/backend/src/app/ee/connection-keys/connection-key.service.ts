@@ -70,9 +70,10 @@ export const connectionKeyService = {
         switch (appCredential.settings.type) {
             case AppCredentialType.API_KEY: {
                 const apiRequest = request as UpsertApiKeyConnectionFromToken
-                return await appConnectionService.upsert({
+                return appConnectionService.upsert({
                     projectId,
                     request: {
+                        projectId,
                         name: `${appCredential.appName}_${connectionName}`,
                         appName: finalAppName,
                         type: AppConnectionType.SECRET_TEXT,
@@ -85,11 +86,12 @@ export const connectionKeyService = {
             }
             case AppCredentialType.OAUTH2: {
                 const apiRequest = request as UpsertOAuth2ConnectionFromToken
-                return await appConnectionService.upsert({
+                return appConnectionService.upsert({
                     projectId,
                     request: {
                         name: `${appCredential.appName}_${connectionName}`,
                         appName: finalAppName,
+                        projectId,
                         type: AppConnectionType.OAUTH2,
                         value: {
                             type: AppConnectionType.OAUTH2,
