@@ -33,6 +33,7 @@ export type ListPiecesRequestQuery = Static<typeof ListPiecesRequestQuery>
 
 export const GetPieceRequestQuery = Type.Object({
     version: Type.Optional(VersionType),
+    language: Type.Optional(Type.String({})),
 })
 
 export type GetPieceRequestQuery = Static<typeof GetPieceRequestQuery>

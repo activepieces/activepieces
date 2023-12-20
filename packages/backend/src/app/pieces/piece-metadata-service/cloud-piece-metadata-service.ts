@@ -4,6 +4,9 @@ import { AllPiecesStats, pieceStatsService } from './piece-stats-service'
 import { StatusCodes } from 'http-status-codes'
 import { ActivepiecesError, EXACT_VERSION_PATTERN, ErrorCode } from '@activepieces/shared'
 import { pieceMetadataServiceHooks } from './hooks'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { cwd } from 'node:process'
 
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 
@@ -36,12 +39,22 @@ export const CloudPieceMetadataService = (): PieceMetadataService => {
             })
         },
 
-        async getOrThrow({ name, version }): Promise<PieceMetadataModel> {
+        async getOrThrow({ name, version, language }): Promise<PieceMetadataModel> {
             const response = await fetch(`${CLOUD_API_URL}/${name}${version ? '?version=' + version : ''}`)
 
             await handleHttpErrors(response)
 
-            return await response.json() as PieceMetadataModel
+            const jsonResponse = await response.json()
+
+            const translations = loadTranslationsSync(jsonResponse.name.replace('@activepieces/piece-', ''), language ?? 'en')
+
+            if (translations != null) {
+                const translatedPieceMetadata = applyTranslationsToPieceMetadataModel(jsonResponse, translations)
+
+                return translatedPieceMetadata
+            }
+
+            return jsonResponse as PieceMetadataModel
         },
 
         async create(): Promise<PieceMetadataSchema> {
@@ -72,4 +85,51 @@ export const CloudPieceMetadataService = (): PieceMetadataService => {
             return pieceMetadata.version
         },
     }
+}
+
+const loadTranslationsSync = (pieceName: string, languageCode: string): Record<string, string> | null => {
+    try {
+        const translationsPath = join(cwd(), 'dist', 'packages', 'pieces', pieceName, 'translations', `${languageCode}.json`)
+        const translationsContent = readFileSync(translationsPath, 'utf8')
+        return JSON.parse(translationsContent)
+    }
+    catch (error) {
+        return null
+    }
+}
+
+const applyTranslationsToPieceMetadataModel = (pieceMetadata: PieceMetadataModel, translations: Record<string, string>): PieceMetadataModel => {
+    if (translations[pieceMetadata.displayName]) {
+        pieceMetadata.displayName = translations[pieceMetadata.displayName]
+    }
+
+    if (pieceMetadata.auth && translations[pieceMetadata.auth.displayName]) {
+        pieceMetadata.auth.displayName = translations[pieceMetadata.auth.displayName]
+    }
+
+    Object.keys(pieceMetadata.actions).forEach(actionKey => {
+        const action = pieceMetadata.actions[actionKey]
+
+        if (translations[action.displayName]) {
+            action.displayName = translations[action.displayName]
+        }
+
+        if (translations[action.description]) {
+            action.description = translations[action.description]
+        }
+
+        Object.keys(action.props).forEach(propKey => {
+            const prop = action.props[propKey]
+
+            if (translations[prop.displayName]) {
+                prop.displayName = translations[prop.displayName]
+            }
+
+            if (prop.description && translations[prop.description]) {
+                prop.description = translations[prop.description]
+            }
+        })
+    })
+
+    return pieceMetadata
 }

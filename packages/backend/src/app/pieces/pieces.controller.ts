@@ -72,12 +72,14 @@ export const piecesController: FastifyPluginAsyncTypebox = async (app) => {
     }, async (req): Promise<PieceMetadataModel> => {
         const { name } = req.params
         const { version } = req.query
+        const { language } = req.query
 
         const decodedName = decodeURIComponent(name)
         return await pieceMetadataService.getOrThrow({
             projectId: req.principal.projectId,
             name: decodedName,
             version,
+            language,
         })
     })
 

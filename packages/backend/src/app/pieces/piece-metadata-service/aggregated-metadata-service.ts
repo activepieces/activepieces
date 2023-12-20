@@ -30,17 +30,17 @@ export const AggregatedPieceMetadataService = (): PieceMetadataService => {
             return [...cloudMetadata, ...dbMetadata]
         },
 
-        async getOrThrow({ name, version, projectId }): Promise<PieceMetadataModel> {
+        async getOrThrow({ name, version, projectId, language }): Promise<PieceMetadataModel> {
             try {
                 const dbMetadata = await dbPieceProvider.getOrThrow({
-                    name, version, projectId,
+                    name, version, projectId, language,
                 })
                 return dbMetadata
             }
             catch (e) {
                 if (e instanceof ActivepiecesError && (e as ActivepiecesError).error.code === ErrorCode.ENTITY_NOT_FOUND) {
                     const cloudMetadata = await cloudPieceProvider.getOrThrow({
-                        name, version, projectId,
+                        name, version, projectId, language,
                     })
                     return cloudMetadata
                 }

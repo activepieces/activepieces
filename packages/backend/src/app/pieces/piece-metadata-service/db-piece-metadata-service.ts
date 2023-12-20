@@ -7,6 +7,9 @@ import { ActivepiecesError, ErrorCode, apId } from '@activepieces/shared'
 import { AllPiecesStats, pieceStatsService } from './piece-stats-service'
 import * as semver from 'semver'
 import { pieceMetadataServiceHooks as hooks } from './hooks'
+import { join } from 'path'
+import { cwd } from 'node:process'
+import { readFileSync } from 'fs'
 
 const repo = databaseConnection.getRepository(PieceMetadataEntity)
 
@@ -44,7 +47,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
             })
         },
 
-        async getOrThrow({ name, version, projectId }): Promise<PieceMetadataModel> {
+        async getOrThrow({ name, version, projectId, language }): Promise<PieceMetadataModel> {
             const projectPiece: Record<string, unknown> = {
                 name,
                 projectId: Equal(projectId),
@@ -77,6 +80,15 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                     },
                 })
             }
+
+            const translations = loadTranslationsSync(pieceMetadataEntity.name.replace('@activepieces/piece-', ''), language ?? 'en')
+
+            if (translations != null) {
+                const translatedPieceMetadataEntity = applyTranslationsToPieceMetadataSchema(pieceMetadataEntity, translations)
+
+                return toPieceMetadataModel(translatedPieceMetadataEntity)
+            }
+
 
             return toPieceMetadataModel(pieceMetadataEntity)
         },
@@ -190,4 +202,51 @@ const increaseMajorVersion = (version: string): string => {
         throw new Error(`Failed to increase major version ${version}`)
     }
     return incrementedVersion
+}
+
+const loadTranslationsSync = (pieceName: string, languageCode: string): Record<string, string> | null => {
+    try {
+        const translationsPath = join(cwd(), 'dist', 'packages', 'pieces', pieceName, 'translations', `${languageCode}.json`)
+        const translationsContent = readFileSync(translationsPath, 'utf8')
+        return JSON.parse(translationsContent)
+    }
+    catch (error) {
+        return null
+    }
+}
+
+const applyTranslationsToPieceMetadataSchema = (pieceMetadata: PieceMetadataSchema, translations: Record<string, string>): PieceMetadataSchema => {
+    if (translations[pieceMetadata.displayName]) {
+        pieceMetadata.displayName = translations[pieceMetadata.displayName]
+    }
+
+    if (pieceMetadata.auth && translations[pieceMetadata.auth.displayName]) {
+        pieceMetadata.auth.displayName = translations[pieceMetadata.auth.displayName]
+    }
+
+    Object.keys(pieceMetadata.actions).forEach(actionKey => {
+        const action = pieceMetadata.actions[actionKey]
+
+        if (translations[action.displayName]) {
+            action.displayName = translations[action.displayName]
+        }
+
+        if (translations[action.description]) {
+            action.description = translations[action.description]
+        }
+
+        Object.keys(action.props).forEach(propKey => {
+            const prop = action.props[propKey]
+
+            if (translations[prop.displayName]) {
+                prop.displayName = translations[prop.displayName]
+            }
+
+            if (prop.description && translations[prop.description]) {
+                prop.description = translations[prop.description]
+            }
+        })
+    })
+
+    return pieceMetadata
 }

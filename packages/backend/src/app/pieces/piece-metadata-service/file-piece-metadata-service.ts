@@ -9,6 +9,7 @@ import { isNil } from '@activepieces/shared'
 import { AllPiecesStats } from './piece-stats-service'
 import importFresh from 'import-fresh'
 import { PieceMetadataModel, PieceMetadataModelSummary } from '../piece-metadata-entity'
+import { readFileSync } from 'fs'
 
 const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
     const ignoredPackages = ['framework', 'apps', 'dist', 'common']
@@ -55,7 +56,8 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
             }))
         },
 
-        async getOrThrow({ name, version, projectId }): Promise<PieceMetadataModel> {
+        async getOrThrow({ name, version, projectId, language }): Promise<PieceMetadataModel> {
+
             const piecesMetadata = await loadPiecesMetadata()
             const pieceMetadata = piecesMetadata.find(p => p.name === name)
 
@@ -66,6 +68,16 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
                         pieceName: name,
                         pieceVersion: version,
                     },
+                })
+            }
+
+            const translations = loadTranslationsSync(pieceMetadata.name.replace('@activepieces/piece-', ''), language ?? 'en')
+            const pieceMetadataCopy = JSON.parse(JSON.stringify(pieceMetadata))
+            if (translations) {
+                const translatedPieceMetadata = applyTranslationsToPieceMetadata(pieceMetadataCopy, translations)
+                return toPieceMetadataModel({
+                    pieceMetadata: translatedPieceMetadata,
+                    projectId,
                 })
             }
 
@@ -140,4 +152,51 @@ const toPieceMetadataModelSummary = ({ pieceMetadata, projectId }: ToPieceMetada
 type ToPieceMetadataModelParams = {
     pieceMetadata: PieceMetadata
     projectId?: ProjectId
+}
+
+const loadTranslationsSync = (pieceName: string, languageCode: string): Record<string, string> | null => {
+    try {
+        const translationsPath = join(cwd(), 'dist', 'packages', 'pieces', pieceName, 'translations', `${languageCode}.json`)
+        const translationsContent = readFileSync(translationsPath, 'utf8')
+        return JSON.parse(translationsContent)
+    }
+    catch (error) {
+        return null
+    }
+}
+
+const applyTranslationsToPieceMetadata = (pieceMetadata: PieceMetadata, translations: Record<string, string>): PieceMetadata => {
+    if (translations[pieceMetadata.displayName]) {
+        pieceMetadata.displayName = translations[pieceMetadata.displayName]
+    }
+
+    if (pieceMetadata.auth && translations[pieceMetadata.auth.displayName]) {
+        pieceMetadata.auth.displayName = translations[pieceMetadata.auth.displayName]
+    }
+
+    Object.keys(pieceMetadata.actions).forEach(actionKey => {
+        const action = pieceMetadata.actions[actionKey]
+
+        if (translations[action.displayName]) {
+            action.displayName = translations[action.displayName]
+        }
+
+        if (translations[action.description]) {
+            action.description = translations[action.description]
+        }
+
+        Object.keys(action.props).forEach(propKey => {
+            const prop = action.props[propKey]
+
+            if (translations[prop.displayName]) {
+                prop.displayName = translations[prop.displayName]
+            }
+
+            if (prop.description && translations[prop.description]) {
+                prop.description = translations[prop.description]
+            }
+        })
+    })
+
+    return pieceMetadata
 }

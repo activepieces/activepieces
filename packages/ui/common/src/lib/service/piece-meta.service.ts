@@ -32,6 +32,7 @@ import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
 } from '../models/piece-metadata-model';
+import { LocalesService } from './locales.service';
 
 type TriggersMetadata = Record<string, TriggerBase>;
 
@@ -106,10 +107,19 @@ export class PieceMetadataService {
     },
   ];
 
-  constructor(private http: HttpClient, private flagsService: FlagService) {}
+  constructor(
+    private http: HttpClient,
+    private flagsService: FlagService,
+    private localesService: LocalesService
+  ) {}
 
-  private getCacheKey(pieceName: string, pieceVersion: string): string {
-    return `${pieceName}-${pieceVersion}`;
+  private getCacheKey(
+    pieceName: string,
+    pieceVersion: string,
+    language?: string
+  ): string {
+    language = language ?? 'en';
+    return `${pieceName}-${pieceVersion}-${language}`;
   }
   private filterAppWebhooks(
     triggersMap: TriggersMetadata,
@@ -132,10 +142,12 @@ export class PieceMetadataService {
     pieceName,
     pieceVersion,
     edition,
+    language,
   }: {
     pieceName: string;
     pieceVersion: string;
     edition: ApEdition;
+    language?: string;
   }): Observable<PieceMetadataModel> {
     return this.http.get<PieceMetadataModel>(
       `${environment.apiUrl}/pieces/${encodeURIComponent(pieceName)}`,
@@ -143,6 +155,7 @@ export class PieceMetadataService {
         params: {
           version: pieceVersion,
           edition,
+          ...(language ? { language } : {}),
         },
       }
     );
@@ -210,7 +223,9 @@ export class PieceMetadataService {
     pieceName: string,
     pieceVersion: string
   ): Observable<PieceMetadataModel> {
-    const cacheKey = this.getCacheKey(pieceName, pieceVersion);
+    const language =
+      this.localesService.getCurrentLanguageFromLocalStorageOrDefault().locale;
+    const cacheKey = this.getCacheKey(pieceName, pieceVersion, language);
 
     if (this.piecesCache.has(cacheKey)) {
       return this.piecesCache.get(cacheKey)!;
@@ -223,6 +238,7 @@ export class PieceMetadataService {
           pieceName,
           pieceVersion,
           edition,
+          language,
         }).pipe(
           take(1),
           map((pieceMetadata) => {

@@ -15,6 +15,7 @@ type GetOrThrowParams = {
     name: string
     version?: string
     projectId?: string
+    language?: string
 }
 
 type DeleteParams = {

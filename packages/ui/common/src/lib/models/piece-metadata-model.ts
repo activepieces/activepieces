@@ -8,6 +8,7 @@ type PiecePackageMetadata = {
   projectId?: ProjectId;
   pieceType: PieceType;
   packageType: PackageType;
+  language?: string;
 };
 
 export type PieceMetadataModel = PieceMetadata & PiecePackageMetadata;
