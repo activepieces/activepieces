@@ -198,6 +198,7 @@ export const flowService = {
             if (flowToUpdate.status !== newStatus) {
                 const { scheduleOptions } = await hooks.preUpdateStatus({
                     flowToUpdate,
+                    newStatus,
                 })
 
                 flowToUpdate.status = newStatus

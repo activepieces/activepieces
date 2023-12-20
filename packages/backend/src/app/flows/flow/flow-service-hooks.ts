@@ -3,7 +3,7 @@ import { flowVersionService } from '../flow-version/flow-version.service'
 import { triggerUtils } from '../../helper/trigger-utils'
 
 export const flowServiceHooks = {
-    async preUpdateStatus({ flowToUpdate }: PreUpdateParams): Promise<PreUpdateReturn> {
+    async preUpdateStatus({ flowToUpdate, newStatus }: PreUpdateStatusParams): Promise<PreUpdateReturn> {
         assertNotNullOrUndefined(flowToUpdate.publishedVersionId, 'publishedVersionId')
 
         const publishedFlowVersion = await flowVersionService.getFlowVersion({
@@ -13,7 +13,7 @@ export const flowServiceHooks = {
 
         let scheduleOptions: ScheduleOptions | undefined
 
-        switch (flowToUpdate.status) {
+        switch (newStatus) {
             case FlowStatus.ENABLED: {
                 const response = await triggerUtils.enable({
                     flowVersion: publishedFlowVersion,
@@ -103,6 +103,10 @@ export const flowServiceHooks = {
 
 type PreUpdateParams = {
     flowToUpdate: Flow
+}
+
+type PreUpdateStatusParams = PreUpdateParams & {
+    newStatus: FlowStatus
 }
 
 type PreUpdatePublishedVersionIdParams = PreUpdateParams & {
