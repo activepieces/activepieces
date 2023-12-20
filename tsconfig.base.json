@@ -40,9 +40,13 @@
       "@activepieces/piece-bannerbear": [
         "packages/pieces/bannerbear/src/index.ts"
       ],
+<<<<<<< HEAD
       "@activepieces/piece-bettermode": [
         "packages/pieces/bettermode/src/index.ts"
       ],
+=======
+      "@activepieces/piece-beamer": ["packages/pieces/beamer/src/index.ts"],
+>>>>>>> 6257a36ff (feat(beamer): add changelog and notification center tool)
       "@activepieces/piece-binance": ["packages/pieces/binance/src/index.ts"],
       "@activepieces/piece-bonjoro": ["packages/pieces/bonjoro/src/index.ts"],
       "@activepieces/piece-box": ["packages/pieces/box/src/index.ts"],
