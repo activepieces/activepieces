@@ -4,7 +4,7 @@ import {
 } from '@activepieces/pieces-framework';
 
 export const replace = createAction({
-  description: 'Replaces all instances of any word, character or phrase in text, with another word, character or phrase.',
+  description: 'Replaces all instances of any word, character or phrase in text, with another.',
   displayName: 'Replace',
   name: 'replace',
   props: {
@@ -20,7 +20,8 @@ export const replace = createAction({
     }),
     replaceValue: Property.ShortText({
       displayName: 'Replace Value',
-      required: true
+      required: false,
+      description:'Leave empty to delete found results.',
     }),
   },
   run: async (ctx) => {
