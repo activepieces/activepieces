@@ -14,7 +14,7 @@ export const replace = createAction({
     }),
     searchValue: Property.ShortText({
       displayName: 'Search Value',
-      description: 'Can be a regex expression or plain text.',
+      description: 'Can be plain text or a regex expression.',
       required: true,
       validators: [],
     }),
@@ -25,7 +25,7 @@ export const replace = createAction({
     }),
   },
   run: async (ctx) => {
-    const expression = RegExp(ctx.propsValue.searchValue);
+    const expression = RegExp(ctx.propsValue.searchValue,'g');
     return ctx.propsValue.text.replaceAll(
       expression,
       ctx.propsValue.replaceValue || ''
