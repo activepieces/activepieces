@@ -8,4 +8,8 @@ export const localesMap = {
   [LocalesEnum.ITALIAN]: 'Italiano',
   [LocalesEnum.DUTCH]: 'Nederlands',
   [LocalesEnum.JAPANESE]: '日本語',
+  [LocalesEnum.INDONESIAN]: 'Bahasa Indonesia',
+  [LocalesEnum.VIETNAMESE]: 'Tiếng Việt',
+  [LocalesEnum.CHINESE_SIMPLIFIED]: '简体中文',
+  [LocalesEnum.PORTUGUESE]: 'Português (Brasil)',
 };

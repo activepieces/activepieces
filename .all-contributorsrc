@@ -744,6 +744,24 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "bigfluffycookie",
+      "name": "Leyla",
+      "avatar_url": "https://avatars.githubusercontent.com/u/54935347?v=4",
+      "profile": "https://github.com/bigfluffycookie",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "i-nithin",
+      "name": "i-nithin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/97078688?v=4",
+      "profile": "https://i-nithin.netlify.app/",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

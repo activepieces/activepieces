@@ -164,12 +164,10 @@ describe('Authentication API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
             const responseBody = response?.json()
 
-            expect(responseBody?.code).toBe('ENTITY_NOT_FOUND')
-            expect(responseBody?.params?.entityType).toBe('project')
-            expect(responseBody?.params?.message).toContain('no projects found for the user=')
+            expect(responseBody?.code).toBe('INVITATIION_ONLY_SIGN_UP')
         })
 
         it('Adds tasks for referrals', async () => {
@@ -436,5 +434,41 @@ describe('Authentication API', () => {
             expect(responseBody?.code).toBe('INVALID_CREDENTIALS')
         })
 
+        it('Fails if user status is SUSPENDED', async () => {
+            // arrange
+            const mockEmail = faker.internet.email()
+            const mockPassword = 'password'
+
+            const mockUser = createMockUser({
+                email: mockEmail,
+                password: mockPassword,
+                status: UserStatus.SUSPENDED,
+            })
+            await databaseConnection.getRepository('user').save(mockUser)
+
+            const mockProject = createMockProject({
+                ownerId: mockUser.id,
+            })
+            await databaseConnection.getRepository('project').save(mockProject)
+
+            const mockSignInRequest = createMockSignInRequest({
+                email: mockEmail,
+                password: mockPassword,
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/authentication/sign-in',
+                body: mockSignInRequest,
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            const responseBody = response?.json()
+
+            expect(responseBody?.code).toBe('EMAIL_IS_NOT_VERIFIED')
+            expect(responseBody?.params?.email).toBe(mockUser.email)
+        })
     })
 })

@@ -5,14 +5,15 @@ import {
   PackageType,
   PieceType,
   SourceCode,
+  LoopOnItemsActionSettings,
 } from '@activepieces/shared';
 declare type ConfigsAndTheirValues = { [key: string]: any };
 interface InputFormsSchemaBase {
   type?: ActionType | TriggerType;
 }
-export interface LoopStepInputFormSchema extends InputFormsSchemaBase {
-  items: string;
-}
+export interface LoopStepInputFormSchema
+  extends InputFormsSchemaBase,
+    LoopOnItemsActionSettings {}
 export interface CodeStepInputFormSchema extends InputFormsSchemaBase {
   sourceCode: SourceCode;
   input: Record<string, unknown>;
@@ -50,5 +51,4 @@ export interface ComponentTriggerInputFormSchema extends InputFormsSchemaBase {
 export type InputFormsSchema =
   | LoopStepInputFormSchema
   | CodeStepInputFormSchema
-  | ScheduledTriggerInputFormSchema
   | PieceActionInputFormSchema;

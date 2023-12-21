@@ -27,6 +27,9 @@
         "packages/ee/project-members/src/index.ts"
       ],
       "@activepieces/engine": ["packages/engine/src/main.ts"],
+      "@activepieces/piece-activepieces": [
+        "packages/pieces/activepieces/src/index.ts"
+      ],
       "@activepieces/piece-airtable": ["packages/pieces/airtable/src/index.ts"],
       "@activepieces/piece-amazon-s3": [
         "packages/pieces/amazon-s3/src/index.ts"
@@ -113,6 +116,9 @@
       "@activepieces/piece-google-forms": [
         "packages/pieces/google-forms/src/index.ts"
       ],
+      "@activepieces/piece-google-gemini": [
+        "packages/pieces/google-gemini/src/index.ts"
+      ],
       "@activepieces/piece-google-sheets": [
         "packages/pieces/google-sheets/src/index.ts"
       ],
@@ -135,6 +141,9 @@
       "@activepieces/piece-intercom": ["packages/pieces/intercom/src/index.ts"],
       "@activepieces/piece-invoiceninja": [
         "packages/pieces/invoiceninja/src/index.ts"
+      ],
+      "@activepieces/piece-jira-cloud": [
+        "packages/pieces/jira-cloud/src/index.ts"
       ],
       "@activepieces/piece-jotform": ["packages/pieces/jotform/src/index.ts"],
       "@activepieces/piece-kimai": ["packages/pieces/kimai/src/index.ts"],
@@ -192,8 +201,8 @@
       "@activepieces/piece-read-file": [
         "packages/pieces/read-file/src/index.ts"
       ],
-      "@activepieces/piece-retune": ["packages/pieces/retune/src/index.ts"],
       "@activepieces/piece-retable": ["packages/pieces/retable/src/index.ts"],
+      "@activepieces/piece-retune": ["packages/pieces/retune/src/index.ts"],
       "@activepieces/piece-rss": ["packages/pieces/rss/src/index.ts"],
       "@activepieces/piece-salesforce": [
         "packages/pieces/salesforce/src/index.ts"
