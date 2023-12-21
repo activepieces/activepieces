@@ -36,7 +36,7 @@ export const discourse = createPiece({
   displayName: "Discourse",
   auth: discourseAuth,
   minimumSupportedRelease: '0.9.0',
-  logoUrl: "https://docs.discourse.org/favicon.png",
+  logoUrl: "https://cdn.activepieces.com/pieces/discourse.png",
   authors: ["pfernandez98"],
   actions: [newPost, newTopic, changeUserTrustLevel, addUsersToGroup, newPrivateMessage],
   triggers: [],
