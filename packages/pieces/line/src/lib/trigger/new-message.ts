@@ -32,6 +32,6 @@ export const newMessage = createTrigger({
         if (!events) {
             return [];
         }
-        return events.filter((event: any) => event.type === 'message' && event.message.type === 'active');
+        return events.filter((event: any) => event.mode === 'active' && event.type === 'message');
     }
 });
