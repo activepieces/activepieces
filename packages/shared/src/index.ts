@@ -31,7 +31,7 @@ export {
     PieceActionSettings, LoopOnItemsActionSettings, Action, ActionType, CodeActionSettings, StepSettings,
 } from './lib/flows/actions/action'
 export { StoreEntry, StoreEntryId } from './lib/store-entry/store-entry'
-export * from './lib/user/user'
+export * from './lib/user'
 export { TestFlowRunRequestBody } from './lib/flow-run/test-flow-run-request'
 export { Trigger, EmptyTrigger, PieceTriggerSettings, PieceTrigger, WebhookTrigger, TriggerType, AUTHENTICATION_PROPERTY_NAME } from './lib/flows/triggers/trigger'
 export { FlowVersion, FlowVersionState, FlowVersionId } from './lib/flows/flow-version'

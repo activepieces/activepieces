@@ -4,6 +4,9 @@ import { AuthenticationServiceHooks } from './authentication-service-hooks'
 import { accessTokenManager } from '../../lib/access-token-manager'
 
 export const communityAuthenticationServiceHooks: AuthenticationServiceHooks = {
+    async preSignUp() {
+        // Empty
+    },
     async postSignUp({ user }) {
 
         const project = await projectService.create({
