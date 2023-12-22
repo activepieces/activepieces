@@ -26,6 +26,7 @@ export const errorHandler = async (
             [ErrorCode.INVALID_CREDENTIALS]: StatusCodes.UNAUTHORIZED,
             [ErrorCode.EMAIL_IS_NOT_VERIFIED]: StatusCodes.FORBIDDEN,
             [ErrorCode.INVALID_OTP]: StatusCodes.GONE,
+            [ErrorCode.INVITATIION_ONLY_SIGN_UP]: StatusCodes.FORBIDDEN,
         }
 
         const statusCode = statusCodeMap[error.error.code] ?? StatusCodes.BAD_REQUEST
