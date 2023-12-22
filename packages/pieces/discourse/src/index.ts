@@ -1,10 +1,10 @@
 
 import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework";
-import { newPost } from "./lib/actions/new-post.action";
-import { newTopic } from "./lib/actions/new-topic.action";
+import { createPost } from "./lib/actions/create-post.action";
+import { createTopic } from "./lib/actions/create-topic.action";
 import { changeUserTrustLevel } from "./lib/actions/change-trust-level.action";
 import { addUsersToGroup } from "./lib/actions/add-users-to-group.action";
-import { newPrivateMessage } from "./lib/actions/new-pm-to-user.action";
+import { sendPrivateMessage } from "./lib/actions/send-private-message.action";
 
 const markdownPropertyDescription = `
 *Get your api Key: https://discourse.yourinstance.com/admin/api/keys
@@ -38,6 +38,6 @@ export const discourse = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: "https://cdn.activepieces.com/pieces/discourse.png",
   authors: ["pfernandez98"],
-  actions: [newPost, newTopic, changeUserTrustLevel, addUsersToGroup, newPrivateMessage],
+  actions: [createPost, createTopic, changeUserTrustLevel, addUsersToGroup, sendPrivateMessage],
   triggers: [],
 });

@@ -5,33 +5,38 @@ import { Property, createAction } from "@activepieces/pieces-framework";
 
 
 
-export const newPost = createAction({
+export const createTopic = createAction({
     auth: discourseAuth,
-    name: 'new_post',
-    description: 'Create a new post in discourse',
-    displayName: 'New Post',
+    name: 'create_topic',
+    description: 'Create a new topic in Discourse',
+    displayName: 'Create Topic',
     props: {
-        raw: Property.LongText({
-            description: 'Content of the post',
-            displayName: 'Post Content',
+        title: Property.ShortText({
+            description: 'Title of the Topic',
+            displayName: 'Post Title',
             required: true
         }),
-        topic_id: Property.Dropdown({
-            description: 'ID of the topic to post in',
-            displayName: 'Topic ID',
-            required: true,
+        raw: Property.LongText({
+            description: 'Content of the topic',
+            displayName: 'Topic Content',
+            required: true
+        }),
+        category: Property.Dropdown({
+            description: 'ID of the category to post in',
+            displayName: 'Category ID',
+            required: false,
             options: async ({ auth }: any) => {
                 const response = await httpClient.sendRequest({
                     method: HttpMethod.GET,
-                    url: `${auth.website_url.trim()}/latest.json`,
+                    url: `${auth.website_url.trim()}/categories.json`,
                     headers: {
                         'Api-Key': auth.api_key,
                         'Api-Username': auth.api_username,
                     },
                 });
-                const options = response.body['topic_list']['topics'].map((res: { title: any; id: any; }) => {
+                const options = response.body['category_list']['categories'].map((res: { name: any; id: any; }) => {
                     return {
-                        label: res.title,
+                        label: res.name,
                         value: res.id
                     };
                 });
@@ -46,7 +51,7 @@ export const newPost = createAction({
         }),
     },
     async run (context) {
-        const { raw, topic_id } = context.propsValue;
+        const { title, raw, category } = context.propsValue;
 
         console.log('new post action');
 
@@ -58,8 +63,9 @@ export const newPost = createAction({
                 'Api-Username': context.auth.api_username,
             },
             body: {
+                "title": title,
                 "raw" : raw,
-                "topic_id": topic_id
+                "category": category
             }
         });
     }

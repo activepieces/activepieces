@@ -5,11 +5,11 @@ import { Property, createAction } from "@activepieces/pieces-framework";
 
 
 
-export const newPrivateMessage = createAction({
+export const sendPrivateMessage = createAction({
     auth: discourseAuth,
-    name: 'new_private_message',
-    description: 'Create a new private message in Discourse',
-    displayName: 'New Private Message',
+    name: 'send_private_message',
+    description: 'Send a private message in Discourse',
+    displayName: 'Send Private Message',
     props: {
         title: Property.ShortText({
             description: 'Title for the PM',
