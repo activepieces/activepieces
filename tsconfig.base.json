@@ -153,6 +153,7 @@
       "@activepieces/piece-lead-connector": [
         "packages/pieces/lead-connector/src/index.ts"
       ],
+      "@activepieces/piece-line": ["packages/pieces/line/src/index.ts"],
       "@activepieces/piece-linear": ["packages/pieces/linear/src/index.ts"],
       "@activepieces/piece-linkedin": ["packages/pieces/linkedin/src/index.ts"],
       "@activepieces/piece-mailchimp": [
