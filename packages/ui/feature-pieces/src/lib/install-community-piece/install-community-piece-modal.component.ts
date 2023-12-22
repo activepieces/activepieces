@@ -135,10 +135,6 @@ export class InstallCommunityPieceModalComponent {
             this.dialogRef.close(pieceInfo);
           })
         );
-    } else {
-      this.addPieceForm.setErrors({
-        failedInstall: true,
-      });
     }
   }
 }

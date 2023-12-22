@@ -1,7 +1,7 @@
 import { Static, Type } from '@sinclair/typebox'
 import { FlowVersion } from '../flow-version'
 import { UserMeta } from '../../user/user'
-import { BaseModelSchema } from '../../common'
+import { BaseModelSchema, Nullable } from '../../common'
 export const FlowVersionTemplate = Type.Omit(
     FlowVersion,
     ['id', 'created', 'updated', 'flowId', 'state', 'updatedBy'],
@@ -17,9 +17,11 @@ export const FlowTemplate = Type.Object({
     pieces: Type.Array(Type.String()),
     blogUrl: Type.Optional(Type.String()),
     template: FlowVersionTemplate,
-    userId: Type.Union([Type.Null(), Type.String()]),
+    projectId: Type.String(),
+    userId: Nullable(Type.String()),
     user: Type.Optional(Type.Partial(UserMeta)),
-    imageUrl: Type.Union([Type.Null(), Type.String()]),
+    imageUrl: Nullable(Type.String()),
+    platformId: Type.Optional(Type.String()),
     featuredDescription: Type.Optional(Type.String()),
     isFeatured: Type.Optional( Type.Boolean()),
 })

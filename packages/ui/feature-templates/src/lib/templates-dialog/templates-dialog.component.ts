@@ -4,6 +4,7 @@ import {
   BehaviorSubject,
   Observable,
   debounceTime,
+  map,
   shareReplay,
   startWith,
   switchMap,
@@ -52,14 +53,7 @@ export class TemplatesDialogComponent {
   featuredListOverflowing = false;
   featuredTemplates$: Observable<FlowTemplate[]>;
   showAllFeaturedTemplates = false;
-  filters = [
-    'ChatGPT',
-    'Content Creation',
-    'Social Media',
-    'Customer Service',
-    'Marketing Automation',
-    'Analysis',
-  ];
+  filters$: Observable<string[]>;
   isThereNewFeaturedTemplates$: Observable<boolean>;
   constructor(
     private templatesService: TemplatesService,
@@ -85,18 +79,26 @@ export class TemplatesDialogComponent {
           name: TelemetryEventName.TEMPLATE_SEARCH,
           payload: this.dialogForm.getRawValue(),
         });
-        return this.templatesService.getTemplates(
-          this.dialogForm.getRawValue()
-        );
+        return this.templatesService.list(this.dialogForm.getRawValue());
       }),
       tap(() => {
         this.loading$.next(false);
       }),
       shareReplay(1)
     );
+    this.filters$ = this.templates$
+      .pipe(
+        map((templates) => {
+          const tags = templates.flatMap((template) => template.tags);
+          const uniqueTags = Array.from(new Set(tags));
+          const sortedTags = uniqueTags.sort();
+          return sortedTags.filter((tag) => tag !== '');
+        })
+      )
+      .pipe(shareReplay(1));
 
     this.featuredTemplates$ = this.templatesService
-      .getTemplates({ featuredOnly: true })
+      .list({ featuredOnly: true })
       .pipe(shareReplay(1));
   }
   useTemplate(template: FlowTemplate, tab: tabsNames) {

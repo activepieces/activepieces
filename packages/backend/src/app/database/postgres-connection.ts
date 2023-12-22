@@ -200,6 +200,12 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
             break
         case ApEdition.ENTERPRISE:
             commonMigration.push(
+                AddTemplates1685538145476,
+                AddPinnedAndBlogUrlToTemplates1686133672743,
+                AddPinnedOrder1686154285890,
+                AddProjectIdToTemplate1688083336934,
+                FlowTemplateAddUserIdAndImageUrl1694379223109,
+                AddFeaturedDescriptionAndFlagToTemplates1694604120205,
                 AddProjectMembers1689177797092,
                 ProjectMemberRelations1694381968985,
                 AddPlatform1697717995884,

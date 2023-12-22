@@ -142,43 +142,35 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
           map((val) => val[isThereAnyNewFeaturedTemplatesResolverKey])
         ),
       };
-      this.importTemplate$ = this.flagService.getTemplatesSourceUrl().pipe(
-        map((url) => !!url),
-        switchMap((showDialog) => {
-          if (showDialog) {
-            return this.matDialog
-              .open(TemplatesDialogComponent, {
-                data: TemplateDialogData,
-              })
-              .afterClosed()
+      this.importTemplate$ =  this.matDialog
+      .open(TemplatesDialogComponent, {
+        data: TemplateDialogData,
+      })
+      .afterClosed()
+      .pipe(
+        switchMap((result?: TemplateDialogClosingResult) => {
+          if (result) {
+            return this.store
+              .select(BuilderSelectors.selectCurrentFlow)
               .pipe(
-                switchMap((result?: TemplateDialogClosingResult) => {
-                  if (result) {
-                    return this.store
-                      .select(BuilderSelectors.selectCurrentFlow)
-                      .pipe(
-                        take(1),
-                        tap((flow) => {
-                          this.telemetryService.capture({
-                            name: TelemetryEventName.FLOW_IMPORTED,
-                            payload: {
-                              id: result.template.id,
-                              name: result.template.name,
-                              location: `inside the builder`,
-                              tab: `${result.activeTab}`,
-                            },
-                          });
-                          this.builderService.importTemplate$.next({
-                            flowId: flow.id,
-                            template: result.template,
-                          });
-                          if (result.template.blogUrl) {
-                            this.showBlogNotification(result.template);
-                          }
-                        })
-                      );
+                take(1),
+                tap((flow) => {
+                  this.telemetryService.capture({
+                    name: TelemetryEventName.FLOW_IMPORTED,
+                    payload: {
+                      id: result.template.id,
+                      name: result.template.name,
+                      location: `inside the builder`,
+                      tab: `${result.activeTab}`,
+                    },
+                  });
+                  this.builderService.importTemplate$.next({
+                    flowId: flow.id,
+                    template: result.template,
+                  });
+                  if (result.template.blogUrl) {
+                    this.showBlogNotification(result.template);
                   }
-                  return EMPTY;
                 })
               );
           }

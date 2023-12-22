@@ -25,13 +25,13 @@ import {
 } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
-import { ShareFlowRequest } from '@activepieces/ee-shared';
 import {
   ApEdition,
   ApFlagId,
   FlowTemplate,
   TelemetryEventName,
 } from '@activepieces/shared';
+import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
 
 @Component({
   selector: 'ap-share-flow-template-dialog',
@@ -102,10 +102,9 @@ export class ShareFlowTemplateDialogComponent {
         .pipe(
           take(1),
           switchMap((flow) => {
-            const request: ShareFlowRequest = {
+            const request: CreateFlowTemplateRequest = {
               description: this.form.value.description,
-              flowId: flow.id,
-              flowVersionId: flow.version.id,
+              template: flow.version,
               blogUrl: this.form.value.blogUrl,
               imageUrl: this.form.value.imageUrl,
               tags: this.form.value.tags,
@@ -119,7 +118,7 @@ export class ShareFlowTemplateDialogComponent {
                 projectId: flow.projectId,
               },
             });
-            return this.templatesService.shareTemplate(request).pipe(
+            return this.templatesService.create(request).pipe(
               switchMap((flowTemplate) => {
                 return this.flagsService
                   .getFrontendUrl()

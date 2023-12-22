@@ -1,23 +1,22 @@
 import { Injectable } from '@angular/core';
-import { Observable, map, of, shareReplay, switchMap } from 'rxjs';
+import { Observable, map, shareReplay } from 'rxjs';
 import {
   FlowTemplate,
   ListFlowTemplatesRequest,
-  isNil,
+  SeekPage,
 } from '@activepieces/shared';
-import { FlagService } from './flag.service';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../environments/environment';
-import { ShareFlowRequest } from '@activepieces/ee-shared';
 import dayjs from 'dayjs';
+import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
 
 @Injectable({
   providedIn: 'root',
 })
 export class TemplatesService {
-  constructor(private flagsService: FlagService, private http: HttpClient) {}
+  constructor(private http: HttpClient) {}
   getFeaturedTemplates() {
-    return this.getTemplates({
+    return this.list({
       pieces: [],
       tags: [],
       search: '',
@@ -31,7 +30,7 @@ export class TemplatesService {
       shareReplay(1)
     );
   }
-  getTemplates(params: ListFlowTemplatesRequest): Observable<FlowTemplate[]> {
+  list(params: ListFlowTemplatesRequest): Observable<FlowTemplate[]> {
     let httpParams = new HttpParams();
     if (params.pieces && params.pieces.length > 0) {
       httpParams = httpParams.appendAll({ pieces: params.pieces });
@@ -48,16 +47,15 @@ export class TemplatesService {
         params.featuredOnly ? true : false
       );
     }
-    return this.flagsService.getTemplatesSourceUrl().pipe(
-      switchMap((url) => {
-        if (isNil(url)) {
-          return of([]);
-        }
-        return this.http.get<FlowTemplate[]>(url, { params: httpParams });
+    httpParams.append('limit', '1000');
+    return this.http
+      .get<SeekPage<FlowTemplate>>(environment.apiUrl + '/flow-templates', {
+        params: httpParams,
       })
-    );
+      .pipe(map((res) => res.data));
   }
-  shareTemplate(request: ShareFlowRequest): Observable<FlowTemplate> {
+
+  create(request: CreateFlowTemplateRequest): Observable<FlowTemplate> {
     return this.http.post<FlowTemplate>(
       environment.apiUrl + '/flow-templates',
       request

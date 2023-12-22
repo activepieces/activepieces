@@ -1,0 +1,65 @@
+import { flowTemplateService } from './flow-template.service'
+import { ListFlowTemplatesRequest, ALL_PRINICPAL_TYPES, PrincipalType } from '@activepieces/shared'
+import { Static, Type } from '@sinclair/typebox'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { CreateFlowTemplateRequest } from '@activepieces/ee-shared'
+
+export const platformFlowTemplateModule: FastifyPluginAsyncTypebox = async (app) => {
+    await app.register(flowTemplateController, { prefix: '/v1/flow-templates' })
+}
+
+const GetIdParams = Type.Object({
+    id: Type.String(),
+})
+type GetIdParams = Static<typeof GetIdParams>
+
+
+const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
+
+    fastify.get('/:id', {
+        config: {
+            allowedPrincipals: ALL_PRINICPAL_TYPES,
+        },
+        schema: {
+            params: GetIdParams,
+        },
+    }, async (request) => {
+        return flowTemplateService.getOrThrow(request.params.id)
+    })
+
+    fastify.get('/', {
+        config: {
+            allowedPrincipals: ALL_PRINICPAL_TYPES,
+        },
+        schema: {
+            querystring: ListFlowTemplatesRequest,
+        },
+    }, async (request) => {
+        return flowTemplateService.list(request.principal.platform?.id ?? null, request.query)
+    })
+
+    fastify.post('/', {
+        config: {
+            allowedPrincipals: [PrincipalType.USER],
+        },
+        schema: {
+            body: CreateFlowTemplateRequest,
+        },
+    }, async (request) => {
+        return flowTemplateService.upsert(request.principal.projectId, request.body)
+    })
+
+    fastify.delete('/:id', {
+        config: {
+            allowedPrincipals: [PrincipalType.USER],
+        },
+        schema: {
+            params: GetIdParams,
+        }
+    }, async (request) => {
+        return flowTemplateService.delete({
+            id: request.params.id,
+            projectId: request.principal.projectId
+        })
+    })
+}

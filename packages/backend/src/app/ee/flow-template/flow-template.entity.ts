@@ -1,13 +1,12 @@
 import { EntitySchema } from 'typeorm'
 import {  BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../../database/database-common'
-import { ApId, BaseModel, FlowTemplate, Project, ProjectId, User } from '@activepieces/shared'
+import { FlowTemplate, Project, User } from '@activepieces/shared'
+import { Platform } from '@activepieces/ee-shared'
 
-export type FlowTemplateSchema = FlowTemplate & BaseModel<ApId> & {
+type FlowTemplateSchema = FlowTemplate & {
     project: Project
-    projectId: ProjectId
+    platform: Platform
     user: User | null
-    isFeatured: boolean
-    featuredDescription: string
 }
 
 export const FlowTemplateEntity = new EntitySchema<FlowTemplateSchema>({
@@ -19,6 +18,9 @@ export const FlowTemplateEntity = new EntitySchema<FlowTemplateSchema>({
         },
         description: {
             type: String,
+        },
+        platformId: {
+            type: String
         },
         projectId: {
             type: String,
@@ -76,6 +78,17 @@ export const FlowTemplateEntity = new EntitySchema<FlowTemplateSchema>({
             joinColumn: {
                 name: 'projectId',
                 foreignKeyConstraintName: 'fk_flow_template_project_id',
+            },
+        },
+        platform: {
+            type: 'many-to-one',
+            target: 'platform',
+            cascade: true,
+            onDelete: 'CASCADE',
+            nullable: true,
+            joinColumn: {
+                name: 'platformId',
+                foreignKeyConstraintName: 'fk_flow_template_platform_id',
             },
         },
         user: {

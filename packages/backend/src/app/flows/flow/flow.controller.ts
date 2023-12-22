@@ -88,34 +88,6 @@ export const flowController: FastifyPluginAsyncTypebox = async (fastify) => {
         },
     )
 
-
-    fastify.get(
-        '/:flowId/template',
-        {
-            schema: {
-                params: {
-                    flowId: { type: 'string' },
-                },
-                response: {
-                    [StatusCodes.OK]: FlowTemplate,
-                },
-            },
-        },
-        async (
-            request: FastifyRequest<{
-                Params: {
-                    flowId: FlowId
-                }
-            }>,
-        ) => {
-            return flowService.getTemplate({
-                flowId: request.params.flowId,
-                projectId: request.principal.projectId,
-                versionId: undefined,
-            })
-        },
-    )
-
     fastify.get(
         '/:flowId',
         GetFlowByIdRequest,

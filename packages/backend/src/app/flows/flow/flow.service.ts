@@ -124,42 +124,6 @@ export const flowService = {
         })
         return paginationHelper.createPage<Flow>(formattedFlows, paginationResult.cursor)
     },
-    async getTemplate({ flowId, versionId, projectId }: { flowId: FlowId, projectId: ProjectId, versionId: FlowVersionId | undefined }): Promise<FlowTemplate> {
-        const flow: Flow | null = await flowRepo.findOneBy({
-            projectId,
-            id: flowId,
-        })
-        if (isNil(flow)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.FLOW_NOT_FOUND,
-                params: {
-                    id: flowId,
-                },
-            })
-        }
-        const flowVersion = await flowVersionService.getFlowVersion({
-            flowId,
-            versionId,
-            removeSecrets: true,
-        })
-        const template: FlowTemplate =
-        {
-            id: apId(),
-            name: flowVersion.displayName,
-            description: '',
-            pieces: flowHelper.getUsedPieces(flowVersion.trigger),
-            template: flowVersion,
-            tags: [],
-            imageUrl: null,
-            userId: null,
-            created: Date.now().toString(),
-            updated: Date.now().toString(),
-            blogUrl: '',
-            featuredDescription: '',
-            isFeatured: false,
-        }
-        return template
-    },
     async getOne({ projectId, id, versionId }: { projectId: ProjectId, id: FlowId, versionId: FlowVersionId | undefined }): Promise<Flow | null> {
         const flow: Flow | null = await flowRepo.findOneBy({
             projectId,
