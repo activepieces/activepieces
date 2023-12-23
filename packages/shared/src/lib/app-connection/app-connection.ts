@@ -77,7 +77,7 @@ export type AppConnectionValue<T extends AppConnectionType = AppConnectionType> 
 export type AppConnection<Type extends AppConnectionType = AppConnectionType> = BaseModel<AppConnectionId> & {
     name: string
     type: Type
-    appName: string
+    pieceName: string
     projectId: string
     status: AppConnectionStatus
     value: AppConnectionValue<Type>
