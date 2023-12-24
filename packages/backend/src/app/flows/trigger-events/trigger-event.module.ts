@@ -18,7 +18,7 @@ const triggerEventController: FastifyPluginAsyncTypebox = async (fastify) => {
             },
         },
         async (request) => {
-            const flow = await flowService.getOneOrThrow({
+            const flow = await flowService.getOnePopulatedOrThrow({
                 projectId: request.principal.projectId,
                 id: request.query.flowId,
             })
@@ -54,7 +54,11 @@ const triggerEventController: FastifyPluginAsyncTypebox = async (fastify) => {
             },
         },
         async (request) => {
-            const flow = await flowService.getOneOrThrow({ projectId: request.principal.projectId, id: request.query.flowId })
+            const flow = await flowService.getOnePopulatedOrThrow({
+                id: request.query.flowId,
+                projectId: request.principal.projectId,
+            })
+
             return triggerEventService.list({
                 projectId: request.principal.projectId,
                 flow,

@@ -203,11 +203,10 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
           this.store.dispatch(
             BuilderActions.loadInitial({
               flow: routeData.flowAndFolder.flow,
-              instance: routeData.instanceData?.instance,
               viewMode: ViewModeEnum.BUILDING,
               appConnections: routeData.connections,
               folder: routeData.flowAndFolder.folder,
-              publishedVersion: routeData.instanceData?.publishedFlowVersion,
+              publishedVersion: routeData.flowAndFolder.publishedFlowVersion,
             })
           );
         }

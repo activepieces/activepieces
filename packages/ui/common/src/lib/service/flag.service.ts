@@ -67,14 +67,6 @@ export class FlagService {
     );
   }
 
-  isChatbotEnabled(): Observable<boolean> {
-    return this.getAllFlags().pipe(
-      map((flags) => {
-        return flags['CHATBOT_ENABLED'] as boolean;
-      })
-    );
-  }
-
   isTelemetryEnabled(): Observable<boolean> {
     return this.getAllFlags().pipe(
       map((flags) => {

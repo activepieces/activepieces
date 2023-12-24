@@ -26,7 +26,7 @@
           <div class="ap-typography-body-1 ap-text-placeholder">/</div>
         </ng-container>
         <ap-editable-text [editing]="editingFlowName" (editingChanges)="changeEditValue($event)"
-          [value]="(flow$ | async)?.version?.displayName || ''" (valueChanges)="saveFlowName($event)" [disableEditing]="
+          [value]="(flow$ | async)?.version?.displayName" (valueChanges)="saveFlowName($event)" [disableEditing]="
             (isInDebugMode$ | async | defaultTrue) ||
             (isInReadOnlyMode$ | async | defaultTrue)
           " [allowClick]="true" [cssClasses]="'ap-typography-body-1 !ap-font-semibold'"
@@ -86,9 +86,12 @@
       <ng-container *ngIf="(isInDebugMode$ | async) === false">
         <div class="ap-flex ap-items-center ap-gap-1">
           <app-draft-status></app-draft-status>
-          <ng-container *ngIf="instance$ | async as instance">
-            <app-toggle-instance-state [instance]="instance"></app-toggle-instance-state>
+          <ng-container *ngIf="hasFlowBeenPublished$ | async">
+            <ng-container *ngIf="flowStatus$ | async as status">
+              <app-toggle-instance-state [flowStatus]="status"></app-toggle-instance-state>
+            </ng-container>
           </ng-container>
+
         </div>
         <app-publish-button></app-publish-button>
         <ap-user-avatar *ngIf="(isInEmbedded$ | async) === undefined || (isInEmbedded$ | async) === false "

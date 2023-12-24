@@ -2,7 +2,6 @@ import { AppConnectionId } from '../app-connection/app-connection'
 import { FileId } from '../file/file'
 import { FlowRunId } from '../flow-run/flow-run'
 import { FlowId } from '../flows/flow'
-import { FlowInstanceId } from '../flows/flow-instances'
 import { FlowVersionId } from '../flows/flow-version'
 import { ApId } from './id-generator'
 
@@ -22,7 +21,6 @@ type ErrorParams =
     | ExecutionTimeoutErrorParams
     | ExistingUserErrorParams
     | FileNotFoundErrorParams
-    | FlowInstanceNotFoundErrorParams
     | FlowNotFoundErrorParams
     | FlowOperationErrorParams
     | FlowRunNotFoundErrorParams
@@ -106,13 +104,6 @@ export type FlowNotFoundErrorParams = BaseErrorParams<
 ErrorCode.FLOW_NOT_FOUND,
 {
     id: FlowId
-}
->
-
-export type FlowInstanceNotFoundErrorParams = BaseErrorParams<
-ErrorCode.FLOW_INSTANCE_NOT_FOUND,
-{
-    id?: FlowInstanceId
 }
 >
 

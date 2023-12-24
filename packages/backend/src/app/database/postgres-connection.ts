@@ -91,6 +91,7 @@ import { AddApiKeys1701716639135 } from './migration/postgres/1701716639135-AddA
 import { AddEmbeddingFeatureToPlatform1701794452891 } from './migration/postgres/1701794452891-AddEmbeddingFeatureToPlatform'
 import { AddPlatformIdToFile1701807681821 } from './migration/postgres/1701807681821-AddPlatformIdToFile'
 import { AddPlatformIdToFlowTemplates1703411318826 } from './migration/1703411318826-AddPlatformIdToFlowTemplates'
+import { RemoveFlowInstance1702379794665 } from './migration/postgres/1702379794665-remove-flow-instance'
 
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -158,6 +159,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddPlatformIdToPieceMetadata1700522340280,
         AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822,
         AddPlatformIdToFile1701807681821,
+        RemoveFlowInstance1702379794665,
     ]
 
     const edition = getEdition()
