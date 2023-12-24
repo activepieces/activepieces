@@ -209,8 +209,6 @@ function isAuthenticatedRoute(fastifyRequest: FastifyRequest): boolean {
         return false
     }
     const ignoredRoutes = new Set([
-        '/v1/chatbots/:id/ask',
-        '/v1/chatbots/:id/metadata',
         '/favicon.ico',
         '/v1/docs',
         '/redirect',

@@ -24,7 +24,6 @@ import { SystemProp } from '../helper/system/system-prop'
 import { ArrayContains, EntitySchema, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { StepFileEntity } from '../flows/step-file/step-file.entity'
 import { ProjectUsageEntity } from '../ee/billing/project-usage/project-usage.entity'
-import { ChatbotEntity } from '../chatbot/chatbot.entity'
 import { ProjectMemberEntity } from '../ee/project-members/project-member.entity'
 import { getEdition } from '../helper/secret-helper'
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
@@ -57,7 +56,6 @@ function getEntities(): EntitySchema<unknown>[] {
         FolderEntity,
         PieceMetadataEntity,
         StepFileEntity,
-        ChatbotEntity,
     ]
 
     switch (edition) {
@@ -66,7 +64,6 @@ function getEntities(): EntitySchema<unknown>[] {
                 ProjectMemberEntity,
                 AppSumoEntity,
                 ReferralEntity,
-                ChatbotEntity,
                 ProjectPlanEntity,
                 ProjectUsageEntity,
                 FlowTemplateEntity,

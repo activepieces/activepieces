@@ -42,7 +42,6 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [SystemProp.SIGN_UP_ENABLED]: 'false',
     [SystemProp.STATS_ENABLED]: 'false',
     [SystemProp.PACKAGE_ARCHIVE_PATH]: 'dist/archives',
-    [SystemProp.CHATBOT_ENABLED]: 'true',
     [SystemProp.TELEMETRY_ENABLED]: 'true',
     [SystemProp.PIECES_SOURCE]: PiecesSource.CLOUD_AND_DB,
     [SystemProp.TEMPLATES_SOURCE_URL]:
