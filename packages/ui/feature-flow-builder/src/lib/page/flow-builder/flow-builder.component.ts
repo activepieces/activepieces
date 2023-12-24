@@ -50,7 +50,6 @@ import {
   FlagService,
   TelemetryService,
   TestStepService,
-  isThereAnyNewFeaturedTemplatesResolverKey,
 } from '@activepieces/ui/common';
 import { PannerService } from '@activepieces/ui/feature-builder-canvas';
 import { MatDialog } from '@angular/material/dialog';
@@ -137,10 +136,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     this.isDragging$ = this.flowRendererService.isDragginStep$;
     if (localStorage.getItem('newFlow')) {
       const TemplateDialogData: TemplateDialogData = {
-        insideBuilder: true,
-        isThereNewFeaturedTemplates$: this.actRoute.data.pipe(
-          map((val) => val[isThereAnyNewFeaturedTemplatesResolverKey])
-        ),
+        insideBuilder: true
       };
       this.importTemplate$ =  this.matDialog
       .open(TemplatesDialogComponent, {

@@ -90,6 +90,7 @@ import { ModifyProjectMembersAndRemoveUserId1701647565290 } from './migration/po
 import { AddApiKeys1701716639135 } from './migration/postgres/1701716639135-AddApiKeys'
 import { AddEmbeddingFeatureToPlatform1701794452891 } from './migration/postgres/1701794452891-AddEmbeddingFeatureToPlatform'
 import { AddPlatformIdToFile1701807681821 } from './migration/postgres/1701807681821-AddPlatformIdToFile'
+import { AddPlatformIdToFlowTemplates1703411318826 } from './migration/1703411318826-AddPlatformIdToFlowTemplates'
 
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -196,6 +197,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 ModifyProjectMembersAndRemoveUserId1701647565290,
                 AddApiKeys1701716639135,
                 AddEmbeddingFeatureToPlatform1701794452891,
+                AddPlatformIdToFlowTemplates1703411318826,
             )
             break
         case ApEdition.ENTERPRISE:
@@ -230,6 +232,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 ModifyProjectMembersAndRemoveUserId1701647565290,
                 AddApiKeys1701716639135,
                 AddEmbeddingFeatureToPlatform1701794452891,
+                AddPlatformIdToFlowTemplates1703411318826,
             )
             break
         case ApEdition.COMMUNITY:

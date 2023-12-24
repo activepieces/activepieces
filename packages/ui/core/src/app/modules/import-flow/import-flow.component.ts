@@ -59,9 +59,6 @@ export class ImportFlowComponent implements OnInit {
         const templateId = encodeURIComponent(params['templateId']);
         return this.templatesService.getTemplate(templateId).pipe(
           catchError((err: HttpErrorResponse) => {
-            if (err.status === StatusCodes.NOT_FOUND) {
-              return this.templatesService.getTemplateDeprecated(templateId);
-            }
             throw err;
           })
         );

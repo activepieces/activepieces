@@ -30,6 +30,7 @@ import {
   ApFlagId,
   FlowTemplate,
   TelemetryEventName,
+  TemplateType,
 } from '@activepieces/shared';
 import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
 
@@ -41,10 +42,7 @@ import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
 export class ShareFlowTemplateDialogComponent {
   form: FormGroup<{
     description: FormControl<string>;
-    featuredDescription: FormControl<string>;
-    isFeatured: FormControl<boolean>;
     tags: FormControl<string[]>;
-    imageUrl: FormControl<string>;
     blogUrl: FormControl<string>;
   }>;
   shareTemplateMarkdown = `
@@ -88,10 +86,7 @@ export class ShareFlowTemplateDialogComponent {
     this.form = this.fb.group({
       blogUrl: new FormControl('', { nonNullable: true }),
       description: new FormControl('', { nonNullable: true }),
-      imageUrl: new FormControl<string>('', { nonNullable: true }),
       tags: new FormControl<string[]>([''], { nonNullable: true }),
-      isFeatured: new FormControl(false, { nonNullable: true }),
-      featuredDescription: new FormControl('', { nonNullable: true }),
     });
   }
   submit() {
@@ -105,11 +100,9 @@ export class ShareFlowTemplateDialogComponent {
             const request: CreateFlowTemplateRequest = {
               description: this.form.value.description,
               template: flow.version,
+              type: TemplateType.PROJECT,
               blogUrl: this.form.value.blogUrl,
-              imageUrl: this.form.value.imageUrl,
               tags: this.form.value.tags,
-              featuredDescription: this.form.value.featuredDescription,
-              isFeatured: this.form.value.isFeatured,
             };
             this.telemetryService.capture({
               name: TelemetryEventName.FLOW_SHARED,
@@ -157,10 +150,7 @@ export class ShareFlowTemplateDialogComponent {
             this.form.patchValue({
               description: template.description,
               blogUrl: template.blogUrl,
-              imageUrl: template.imageUrl || '',
               tags: template.tags,
-              featuredDescription: template.featuredDescription,
-              isFeatured: template.isFeatured,
             });
           }
         })

@@ -1,8 +1,9 @@
 import { flowTemplateService } from './flow-template.service'
-import { ListFlowTemplatesRequest, ALL_PRINICPAL_TYPES, PrincipalType } from '@activepieces/shared'
+import { ListFlowTemplatesRequest, ALL_PRINICPAL_TYPES, PrincipalType, FlowTemplate, TemplateType, ActivepiecesError, ErrorCode, assertNotNullOrUndefined } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { CreateFlowTemplateRequest } from '@activepieces/ee-shared'
+import { platformService } from '../platform/platform.service'
 
 export const platformFlowTemplateModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(flowTemplateController, { prefix: '/v1/flow-templates' })
@@ -46,7 +47,14 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
             body: CreateFlowTemplateRequest,
         },
     }, async (request) => {
-        return flowTemplateService.upsert(request.principal.projectId, request.body)
+        const { type } = request.body
+        if (type === TemplateType.PLATFORM) {
+            await assertUserIsPlatformOwner({
+                platformId: request.principal.platform?.id,
+                userId: request.principal.id,
+            })
+        }
+        return flowTemplateService.upsert(request.principal.platform?.id, request.principal.projectId, request.body)
     })
 
     fastify.delete('/:id', {
@@ -55,11 +63,28 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
         },
         schema: {
             params: GetIdParams,
-        }
+        },
     }, async (request) => {
         return flowTemplateService.delete({
             id: request.params.id,
-            projectId: request.principal.projectId
+            projectId: request.principal.projectId,
         })
     })
+}
+
+async function assertUserIsPlatformOwner({
+    platformId,
+    userId,
+}: { platformId?: string, userId: string }): Promise<void> {
+    assertNotNullOrUndefined(platformId, 'platformId')
+    const userOwner = await platformService.checkUserIsOwner({
+        platformId,
+        userId,
+    })
+    if (!userOwner) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {},
+        })
+    }
 }

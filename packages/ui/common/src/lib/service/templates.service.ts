@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, map, shareReplay } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import {
   FlowTemplate,
   ListFlowTemplatesRequest,
@@ -7,7 +7,6 @@ import {
 } from '@activepieces/shared';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../environments/environment';
-import dayjs from 'dayjs';
 import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
 
 @Injectable({
@@ -15,21 +14,7 @@ import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
 })
 export class TemplatesService {
   constructor(private http: HttpClient) {}
-  getFeaturedTemplates() {
-    return this.list({
-      pieces: [],
-      tags: [],
-      search: '',
-      featuredOnly: true,
-    }).pipe(
-      map((res) => {
-        return res.sort((a, b) =>
-          new Date(a.created) > new Date(b.created) ? 1 : -1
-        );
-      }),
-      shareReplay(1)
-    );
-  }
+
   list(params: ListFlowTemplatesRequest): Observable<FlowTemplate[]> {
     let httpParams = new HttpParams();
     if (params.pieces && params.pieces.length > 0) {
@@ -40,12 +25,6 @@ export class TemplatesService {
     }
     if (params.search) {
       httpParams = httpParams.append('search', params.search);
-    }
-    if (params.featuredOnly !== undefined) {
-      httpParams = httpParams.append(
-        'featuredOnly',
-        params.featuredOnly ? true : false
-      );
     }
     httpParams.append('limit', '1000');
     return this.http
@@ -64,23 +43,6 @@ export class TemplatesService {
   getTemplate(flowId: string) {
     return this.http.get<FlowTemplate>(
       environment.apiUrl + `/flow-templates/${flowId}`
-    );
-  }
-  getTemplateDeprecated(templateId: string) {
-    return this.http.get<FlowTemplate>(
-      `https://activepieces-cdn.fra1.cdn.digitaloceanspaces.com/templates/${templateId}.json`
-    );
-  }
-
-  getIsThereNewFeaturedTemplates() {
-    return this.getFeaturedTemplates().pipe(
-      map((res) => {
-        return (
-          res.filter((template) => {
-            return dayjs(template.created).isAfter(dayjs().subtract(7, 'days'));
-          }).length > 0
-        );
-      })
     );
   }
 }

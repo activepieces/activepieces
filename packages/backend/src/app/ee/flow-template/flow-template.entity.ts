@@ -19,8 +19,12 @@ export const FlowTemplateEntity = new EntitySchema<FlowTemplateSchema>({
         description: {
             type: String,
         },
+        type: {
+            type: String,
+        },
         platformId: {
-            type: String
+            type: String,
+            nullable: true,
         },
         projectId: {
             type: String,
@@ -37,22 +41,6 @@ export const FlowTemplateEntity = new EntitySchema<FlowTemplateSchema>({
             array: true,
         },
         blogUrl: {
-            type: String,
-            nullable: true,
-        },
-        userId: {
-            type: String,
-            nullable: true,
-        },
-        imageUrl: {
-            type: String,
-            nullable: true,
-        },
-        isFeatured: {
-            type: Boolean,
-            nullable: true,
-        },
-        featuredDescription: {
             type: String,
             nullable: true,
         },
@@ -90,18 +78,6 @@ export const FlowTemplateEntity = new EntitySchema<FlowTemplateSchema>({
                 name: 'platformId',
                 foreignKeyConstraintName: 'fk_flow_template_platform_id',
             },
-        },
-        user: {
-            type: 'many-to-one',
-            target: 'user',
-            cascade: true,
-            onDelete: 'CASCADE',
-            joinColumn: {
-                name: 'userId',
-                foreignKeyConstraintName: 'fk_flow_template_user_id',
-            },
-
-
         },
     },
 })

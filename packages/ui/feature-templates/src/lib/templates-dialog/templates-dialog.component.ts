@@ -18,12 +18,10 @@ import {
 
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TelemetryService, TemplatesService } from '@activepieces/ui/common';
-import { MatTabGroup } from '@angular/material/tabs';
 
 export interface TemplateDialogData {
   insideBuilder: boolean;
   folderId$?: Observable<FolderId | undefined>;
-  isThereNewFeaturedTemplates$: Observable<boolean>;
 }
 type tabsNames = 'all ideas' | 'featured';
 
@@ -50,11 +48,7 @@ export class TemplatesDialogComponent {
   loading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
   templates$: Observable<FlowTemplate[]>;
   searchFormControl = new FormControl<string>('');
-  featuredListOverflowing = false;
-  featuredTemplates$: Observable<FlowTemplate[]>;
-  showAllFeaturedTemplates = false;
   filters$: Observable<string[]>;
-  isThereNewFeaturedTemplates$: Observable<boolean>;
   constructor(
     private templatesService: TemplatesService,
     private dialogRef: MatDialogRef<TemplatesDialogComponent>,
@@ -96,10 +90,6 @@ export class TemplatesDialogComponent {
         })
       )
       .pipe(shareReplay(1));
-
-    this.featuredTemplates$ = this.templatesService
-      .list({ featuredOnly: true })
-      .pipe(shareReplay(1));
   }
   useTemplate(template: FlowTemplate, tab: tabsNames) {
     const result: TemplateDialogClosingResult = {
@@ -109,18 +99,6 @@ export class TemplatesDialogComponent {
     this.dialogRef.close(result);
   }
 
-  showFeaturedTab(
-    tabGroup: MatTabGroup,
-    buttonPressed: 'banner button' | 'tab button'
-  ) {
-    this.telemetryService.capture({
-      name: TelemetryEventName.FEATURED_TAB_VIEWED,
-      payload: {
-        buttonPressed,
-      },
-    });
-    tabGroup.selectedIndex = 0;
-  }
   closeDialog() {
     this.dialogRef.close();
   }

@@ -6,7 +6,7 @@ import {
 import { FormControl } from '@angular/forms';
 
 import { MatDialog } from '@angular/material/dialog';
-import { FlowVersionTemplate } from '@activepieces/shared';
+import { FlowVersionTemplate, TemplateType } from '@activepieces/shared';
 import { Observable, catchError, map, of } from 'rxjs';
 import { TemplatesService } from '@activepieces/ui/common';
 
@@ -32,23 +32,27 @@ export class CreateTemplateDialogueComponent {
       this.loading = true;
     }
   }
-  
+
   readFile() {
-    if (this.fileControl.value === null){ 
+    if (this.fileControl.value === null) {
       return;
     }
     this.invalidJson = false;
     const reader = new FileReader();
     reader.onload = () => {
       const template: FlowVersionTemplate = JSON.parse(reader.result as string);
-      this.createTemplate$ = this.templateService.create({
-        template,
-      }).pipe(
-        catchError(() => {
-          this.invalidJson = true;
-          return of({})
-        }),
-        map(() => void 0))
+      this.createTemplate$ = this.templateService
+        .create({
+          type: TemplateType.PLATFORM,
+          template,
+        })
+        .pipe(
+          catchError(() => {
+            this.invalidJson = true;
+            return of({});
+          }),
+          map(() => void 0)
+        );
       this.matDialog.closeAll();
       this.cd.markForCheck();
     };
