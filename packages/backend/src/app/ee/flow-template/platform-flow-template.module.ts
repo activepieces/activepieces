@@ -1,9 +1,10 @@
 import { flowTemplateService } from './flow-template.service'
-import { ListFlowTemplatesRequest, ALL_PRINICPAL_TYPES, PrincipalType, FlowTemplate, TemplateType, ActivepiecesError, ErrorCode, assertNotNullOrUndefined } from '@activepieces/shared'
+import { ListFlowTemplatesRequest, ALL_PRINICPAL_TYPES, PrincipalType, TemplateType, ActivepiecesError, ErrorCode, assertNotNullOrUndefined } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { CreateFlowTemplateRequest } from '@activepieces/ee-shared'
 import { platformService } from '../platform/platform.service'
+import { StatusCodes } from 'http-status-codes'
 
 export const platformFlowTemplateModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(flowTemplateController, { prefix: '/v1/flow-templates' })
@@ -64,11 +65,13 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
         schema: {
             params: GetIdParams,
         },
-    }, async (request) => {
-        return flowTemplateService.delete({
+    }, async (request, reply) => {
+        // TODO ADD VALIDATION ON PEMRISSIONS
+        await flowTemplateService.delete({
             id: request.params.id,
-            projectId: request.principal.projectId,
         })
+        return reply.status(StatusCodes.NO_CONTENT).send()
+        
     })
 }
 

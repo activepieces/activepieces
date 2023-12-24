@@ -29,6 +29,8 @@ export const FlowTemplate = Type.Object({
 
 export type FlowTemplate = Static<typeof FlowTemplate>
 
+export const FlowTemplateWithoutProjectInformation = Type.Omit(FlowTemplate, ['projectId', 'platformId', 'id', 'type'])
+export type FlowTemplateWithoutProjectInformation = Static<typeof FlowTemplateWithoutProjectInformation>
 
 export const ListFlowTemplatesRequest = Type.Object({
     pieces: Type.Optional(Type.Array(Type.String())),

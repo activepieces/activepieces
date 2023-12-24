@@ -40,6 +40,11 @@ export class TemplatesService {
       request
     );
   }
+
+  delete(id: string): Observable<void> {
+    return this.http.delete<void>(environment.apiUrl + `/flow-templates/${id}`);
+  }
+
   getTemplate(flowId: string) {
     return this.http.get<FlowTemplate>(
       environment.apiUrl + `/flow-templates/${flowId}`

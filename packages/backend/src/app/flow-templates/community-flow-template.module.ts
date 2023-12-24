@@ -3,7 +3,6 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
-import { logger } from '../helper/logger'
 
 export const communityFlowTemplateModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(flowTemplateController, { prefix: '/v1/flow-templates' })
@@ -32,7 +31,7 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
             },
         })
         const templates = await response.json()
-        // TODO Temporary this need to be changed to be without pagination
+        // TODO this need to be changed to be without pagination once released
         return paginationHelper.createPage(templates, null)
     })
 

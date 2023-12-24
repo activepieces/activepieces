@@ -4,10 +4,12 @@ import {
     CreateFlowRequest,
     Cursor,
     Flow,
+    flowHelper,
     FlowId,
     FlowStatus,
     FlowOperationRequest,
     FlowOperationType,
+    FlowTemplateWithoutProjectInformation,
     FlowVersion,
     FlowVersionId,
     FlowVersionState,
@@ -16,6 +18,7 @@ import {
     TelemetryEventName,
     UserId,
     PopulatedFlow,
+    TemplateType,
 } from '@activepieces/shared'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -287,6 +290,26 @@ export const flowService = {
         })
     },
 
+    async getTemplate({ flowId, versionId, projectId }: GetTemplateParams): Promise<FlowTemplateWithoutProjectInformation> {
+        const flow = await this.getOnePopulatedOrThrow({
+            id: flowId,
+            projectId,
+            versionId,
+            removeSecrets: true,
+        })
+
+        return {
+            name: flow.version.displayName,
+            description: '',
+            pieces: flowHelper.getUsedPieces(flow.version.trigger),
+            template: flow.version,
+            tags: [],
+            created: Date.now().toString(),
+            updated: Date.now().toString(),
+            blogUrl: '',
+        }
+    },
+
     async count({ projectId, folderId }: CountParams): Promise<number> {
         if (folderId === undefined) {
             return flowRepo.countBy({ projectId })
@@ -328,6 +351,12 @@ type GetOneParams = {
 type GetOnePopulatedParams = GetOneParams & {
     versionId?: FlowVersionId
     removeSecrets?: boolean
+}
+
+type GetTemplateParams = {
+    flowId: FlowId
+    projectId: ProjectId
+    versionId: FlowVersionId | undefined
 }
 
 type CountParams = {

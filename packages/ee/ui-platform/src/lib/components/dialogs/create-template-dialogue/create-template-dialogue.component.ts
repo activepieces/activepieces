@@ -6,7 +6,7 @@ import {
 import { FormControl } from '@angular/forms';
 
 import { MatDialog } from '@angular/material/dialog';
-import { FlowVersionTemplate, TemplateType } from '@activepieces/shared';
+import { FlowTemplate, TemplateType } from '@activepieces/shared';
 import { Observable, catchError, map, of } from 'rxjs';
 import { TemplatesService } from '@activepieces/ui/common';
 
@@ -40,11 +40,11 @@ export class CreateTemplateDialogueComponent {
     this.invalidJson = false;
     const reader = new FileReader();
     reader.onload = () => {
-      const template: FlowVersionTemplate = JSON.parse(reader.result as string);
+      const template: FlowTemplate = JSON.parse(reader.result as string);
       this.createTemplate$ = this.templateService
         .create({
+          ...template,
           type: TemplateType.PLATFORM,
-          template,
         })
         .pipe(
           catchError(() => {

@@ -6,19 +6,20 @@ import { CreateFlowTemplateRequest } from '@activepieces/ee-shared'
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { flowRepo } from '../../flows/flow/flow.repo'
 
 const templateRepo = databaseConnection.getRepository<FlowTemplate>(FlowTemplateEntity)
 const templateProjectId = system.get(SystemProp.TEMPLATES_PROJECT_ID)
 
 export const flowTemplateService = {
-    upsert: async (platformId: string | undefined, projectId: string | undefined, { type, template, blogUrl, tags }: CreateFlowTemplateRequest): Promise<FlowTemplate> => {
+    upsert: async (platformId: string | undefined, projectId: string | undefined, { description,  type, template, blogUrl, tags }: CreateFlowTemplateRequest): Promise<FlowTemplate> => {
         const id = apId()
         const flowTemplate: FlowVersionTemplate = template
         await templateRepo.upsert({
             id,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             template: flowTemplate as any,
+            name: flowTemplate.displayName,
+            description: description ?? '',
             pieces: flowHelper.getUsedPieces(flowTemplate.trigger),
             blogUrl,
             type,
@@ -70,10 +71,9 @@ export const flowTemplateService = {
         }
         return template
     },
-    async delete({ id, projectId }: { id: string, projectId: string }) {
-        await flowRepo.delete({
+    async delete({ id }: { id: string }): Promise<void> {
+        await templateRepo.delete({
             id,
-            projectId,
         })
     },
 }

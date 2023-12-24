@@ -3,6 +3,7 @@ import {
     CreateFlowRequest,
     FlowOperationRequest,
     FlowTemplate,
+    FlowTemplateWithoutProjectInformation,
     GetFlowQueryParamsRequest,
     ListFlowsRequest,
     PopulatedFlow,
@@ -86,6 +87,14 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
 
+    app.get('/:id/template', GetFlowTemplateRequestOptions, async (request) => {
+        return flowService.getTemplate({
+            flowId: request.params.id,
+            projectId: request.principal.projectId,
+            versionId: undefined,
+        })
+    })
+
     app.get('/:id', GetFlowRequestOptions, async (request) => {
         return flowService.getOnePopulatedOrThrow({
             id: request.params.id,
@@ -155,7 +164,7 @@ const GetFlowTemplateRequestOptions = {
             id: ApId,
         }),
         response: {
-            [StatusCodes.OK]: FlowTemplate,
+            [StatusCodes.OK]: FlowTemplateWithoutProjectInformation,
         },
     },
 }

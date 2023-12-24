@@ -212,7 +212,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(billingModule)
             await app.register(appCredentialModule)
             await app.register(connectionKeyModule)
-            await app.register(platformFlowTemplateModule)
             await app.register(platformProjectModule)
             await app.register(projectMemberModule)
             await app.register(appSumoModule)
