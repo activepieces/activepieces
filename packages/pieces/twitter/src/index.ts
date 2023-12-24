@@ -4,25 +4,21 @@ import { createTweet } from "./lib/actions/create-tweet";
 import { TwitterApi } from "twitter-api-v2";
 
 const markdownDescription = `
-The steps to obtain the required credentials:
+If you don't have the crednetials down below, please follow these steps to obtain the required credentials:
 
-1. Go to [https://developer.twitter.com/en/portal/projects-and-apps](https://developer.twitter.com/en/portal/projects-and-apps) and create a new app.
+1. Go to [https://developer.twitter.com/en/portal/projects-and-apps](https://developer.twitter.com/en/portal/projects-and-apps) and click on your app settings.
 
-2. Make sure your app is placed in a project (it won't work otherwise).
+2. Go to Keys and tokens tab.
 
-3. In your app, go to Settings -> User authentication set up -> Update permission to **Read and Write** -> Copy the Redirect URL below and paste it into the Redirect/Website URL field.
+3. Copy the following values from the "**Keys and tokens**" tab:
 
-4. Go to Keys and tokens tab.
-
-5. Copy the following values from the **Keys and tokens** tab:
-
-    - Click on **API key and secret** and copy the following values:
+    - Next to **API key and secret**, click "Regenerate" and copy the following values:
 
         **Api Key**
 
         **Api Key Secret**
 
-    - Click on **Access token and secret** and copy the following values:
+    - - Next to **Access token and secret**, click "Regenerate" and copy the following values:
 
         **Access Token**
 
