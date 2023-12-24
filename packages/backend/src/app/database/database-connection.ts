@@ -10,7 +10,6 @@ import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { AppEventRoutingEntity } from '../app-event-routing/app-event-routing.entity'
 import { TriggerEventEntity } from '../flows/trigger-events/trigger-event.entity'
 import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
-import { FlowInstanceEntity } from '../flows/flow-instance/flow-instance.entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
 import { FlowTemplateEntity } from '../ee/flow-template/flow-template.entity'
 import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
@@ -43,7 +42,6 @@ function getEntities(): EntitySchema<unknown>[] {
 
     const entities: EntitySchema[] = [
         TriggerEventEntity,
-        FlowInstanceEntity,
         AppEventRoutingEntity,
         FileEntity,
         FlagEntity,

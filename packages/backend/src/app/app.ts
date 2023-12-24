@@ -18,7 +18,6 @@ import swagger from '@fastify/swagger'
 import { logger } from './helper/logger'
 import { appEventRoutingModule } from './app-event-routing/app-event-routing.module'
 import { triggerEventModule } from './flows/trigger-events/trigger-event.module'
-import { flowInstanceModule } from './flows/flow-instance/flow-instance.module'
 import { fastifyRawBody } from 'fastify-raw-body'
 import { stepFileModule } from './flows/step-file/step-file.module'
 import { rbacAuthMiddleware } from './ee/authentication/rbac-auth-middleware'
@@ -172,7 +171,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(flowModule)
     await app.register(flowWorkerModule)
     await app.register(pieceModule)
-    await app.register(flowInstanceModule)
     await app.register(flowRunModule)
     await app.register(webhookModule)
     await app.register(appConnectionModule)

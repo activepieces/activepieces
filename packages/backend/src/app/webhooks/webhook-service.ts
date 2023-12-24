@@ -3,7 +3,7 @@ import {
     ExecutionType,
     Flow,
     FlowId,
-    FlowInstanceStatus,
+    FlowStatus,
     FlowRun,
     FlowVersion,
     ProjectId,
@@ -18,7 +18,6 @@ import { triggerEventService } from '../flows/trigger-events/trigger-event.servi
 import { isNil } from '@activepieces/shared'
 import { logger } from '../helper/logger'
 import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
-import { flowInstanceService } from '../flows/flow-instance/flow-instance.service'
 import { WebhookResponse } from '@activepieces/pieces-framework'
 import { flowService } from '../flows/flow/flow.service'
 
@@ -30,20 +29,16 @@ export const webhookService = {
         logger.info(`[WebhookService#handshake] flowId=${flow.id}`)
 
         const { projectId } = flow
-        const flowInstance = await flowInstanceService.get({
-            flowId: flow.id,
-            projectId: flow.projectId,
-        })
-        if (isNil(flowInstance)) {
+
+        if (isNil(flow.publishedVersionId)) {
             logger.info(
                 `[WebhookService#handshake] flowInstance not found, flowId=${flow.id}`,
             )
             saveSampleDataForWebhookTesting(flow, payload)
             return null
         }
-        const flowVersion = await flowVersionService.getOneOrThrow(
-            flowInstance.flowVersionId,
-        )
+
+        const flowVersion = await flowVersionService.getOneOrThrow(flow.publishedVersionId)
         const response = await triggerUtils.tryHandshake({
             projectId,
             flowVersion,
@@ -60,15 +55,12 @@ export const webhookService = {
         logger.info(`[WebhookService#callback] flowId=${flow.id}`)
 
         const { projectId } = flow
-        const flowInstance = await flowInstanceService.get({
-            flowId: flow.id,
-            projectId: flow.projectId,
-        })
-        if (isNil(flowInstance)) {
+
+        if (isNil(flow.publishedVersionId)) {
             logger.info(
                 `[WebhookService#callback] flowInstance not found, flowId=${flow.id}`,
             )
-            const flowVersion = (await flowService.getOneOrThrow({
+            const flowVersion = (await flowService.getOnePopulatedOrThrow({
                 projectId,
                 id: flow.id,
             })).version
@@ -83,15 +75,13 @@ export const webhookService = {
             })
             return []
         }
-        if (flowInstance.status !== FlowInstanceStatus.ENABLED) {
+        if (flow.status !== FlowStatus.ENABLED) {
             logger.info(
                 `[WebhookService#callback] flowInstance not found or not enabled ignoring the webhook, flowId=${flow.id}`,
             )
             return []
         }
-        const flowVersion = await flowVersionService.getOneOrThrow(
-            flowInstance.flowVersionId,
-        )
+        const flowVersion = await flowVersionService.getOneOrThrow(flow.publishedVersionId)
         const payloads: unknown[] = await triggerUtils.executeTrigger({
             projectId,
             flowVersion,
@@ -176,7 +166,6 @@ const getLatestFlowVersionOrThrow = async (
     const flowVersion = await flowVersionService.getFlowVersion({
         flowId,
         versionId: undefined,
-        removeSecrets: false,
     })
 
     if (isNil(flowVersion)) {
