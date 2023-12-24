@@ -8,21 +8,25 @@ If you don't have the crednetials down below, please follow these steps to obtai
 
 1. Go to [https://developer.twitter.com/en/portal/projects-and-apps](https://developer.twitter.com/en/portal/projects-and-apps) and click on your app settings.
 
-2. Go to Keys and tokens tab.
+2. Under the **Settings** tab then under **User authentication settings** section, click "Set up".
 
-3. Copy the following values from the "**Keys and tokens**" tab:
+3. Check on **Read and write** for "App permissions" and **Native App** for "Type of App", fill in your website url and let the **Callback URI / Redirect URL** be <your_website_url>/redirect .
 
-    - Next to **API key and secret**, click "Regenerate" and copy the following values:
+4. Go back to your app settings page and click the **Keys and tokens** tab.
+
+5. Next to **API key and secret**, click "Regenerate" and copy the following values to the inputs below:
 
         **Api Key**
 
         **Api Key Secret**
 
-    - - Next to **Access token and secret**, click "Regenerate" and copy the following values:
+6. Next to **Access token and secret**, click "Regenerate" and copy the following values to the inputs below:
 
         **Access Token**
 
         **Access Token Secret**
+
+
 `
 
 export const twitterAuth = PieceAuth.CustomAuth({
