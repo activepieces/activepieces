@@ -18,6 +18,8 @@ export const mondayAuth = PieceAuth.OAuth2({
     'boards:write',
     'updates:read',
     'updates:write',
+    'webhooks:write',
+    'webhooks:read'
   ]
 })
 
