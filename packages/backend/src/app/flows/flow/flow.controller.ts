@@ -86,14 +86,6 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
 
-    app.get('/:id/template', GetFlowTemplateRequestOptions, async (request) => {
-        return flowService.getTemplate({
-            flowId: request.params.id,
-            projectId: request.principal.projectId,
-            versionId: undefined,
-        })
-    })
-
     app.get('/:id', GetFlowRequestOptions, async (request) => {
         return flowService.getOnePopulatedOrThrow({
             id: request.params.id,

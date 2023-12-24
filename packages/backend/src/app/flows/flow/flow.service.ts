@@ -4,12 +4,10 @@ import {
     CreateFlowRequest,
     Cursor,
     Flow,
-    flowHelper,
     FlowId,
     FlowStatus,
     FlowOperationRequest,
     FlowOperationType,
-    FlowTemplate,
     FlowVersion,
     FlowVersionId,
     FlowVersionState,
@@ -289,31 +287,6 @@ export const flowService = {
         })
     },
 
-    async getTemplate({ flowId, versionId, projectId }: GetTemplateParams): Promise<FlowTemplate> {
-        const flow = await this.getOnePopulatedOrThrow({
-            id: flowId,
-            projectId,
-            versionId,
-            removeSecrets: true,
-        })
-
-        return {
-            id: apId(),
-            name: flow.version.displayName,
-            description: '',
-            pieces: flowHelper.getUsedPieces(flow.version.trigger),
-            template: flow.version,
-            tags: [],
-            imageUrl: null,
-            userId: null,
-            created: Date.now().toString(),
-            updated: Date.now().toString(),
-            blogUrl: '',
-            featuredDescription: '',
-            isFeatured: false,
-        }
-    },
-
     async count({ projectId, folderId }: CountParams): Promise<number> {
         if (folderId === undefined) {
             return flowRepo.countBy({ projectId })
@@ -355,12 +328,6 @@ type GetOneParams = {
 type GetOnePopulatedParams = GetOneParams & {
     versionId?: FlowVersionId
     removeSecrets?: boolean
-}
-
-type GetTemplateParams = {
-    flowId: FlowId
-    projectId: ProjectId
-    versionId: FlowVersionId | undefined
 }
 
 type CountParams = {
