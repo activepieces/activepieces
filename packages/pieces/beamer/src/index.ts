@@ -13,9 +13,9 @@ export const beamerAuth = PieceAuth.SecretText({
 
 export const beamer = createPiece({
   displayName: 'beamer',
-  logoUrl: 'https://i.ibb.co/S6krpZZ/beamer.jpg',
+  logoUrl: 'https://cdn.activepieces.com/pieces/beamer.png',
   auth: beamerAuth,
-  authors: ['Nithin Kumar'],
+  authors: ['i-nithin'],
   actions: [
     createBeamerPost,
     createNewFeatureRequest,

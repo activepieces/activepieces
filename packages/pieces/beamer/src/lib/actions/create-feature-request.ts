@@ -9,7 +9,7 @@ import { beamerCommon } from '../common';
 
 export const createNewFeatureRequest = createAction({
   auth: beamerAuth,
-  name: 'createNewFeatureRequest',
+  name: 'create_new_feature_request',
   displayName: 'Create New Feature Request ',
   description: 'Create New Feature Request',
   props: {

@@ -24,8 +24,12 @@ export const newPost = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   sampleData: {},
 
-  async onEnable(context) {},
-  async onDisable(context) {},
+  async onEnable(context) {
+    // IGNORED
+  },
+  async onDisable(context) {
+    // IGNORED
+  },
   async run(context) {
     return [context.payload.body];
   },

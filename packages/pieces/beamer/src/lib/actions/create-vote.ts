@@ -1,5 +1,4 @@
 import {
-  HttpClient,
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
@@ -9,7 +8,7 @@ import { beamerCommon } from '../common';
 
 export const createVote = createAction({
   auth: beamerAuth,
-  name: 'createVote',
+  name: 'create_vote',
   displayName: 'Create a new vote ',
   description: 'Create a new vote on a feature request',
   props: {

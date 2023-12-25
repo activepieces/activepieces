@@ -34,8 +34,7 @@
       ],
       "options": {
         "lintFilePatterns": [
-          "packages/pieces/beamer/**/*.ts",
-          "packages/pieces/beamer/package.json"
+          "packages/pieces/beamer/**/*.ts"
         ]
       }
     }

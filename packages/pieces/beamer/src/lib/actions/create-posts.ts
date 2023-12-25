@@ -1,5 +1,4 @@
 import {
-  PieceAuth,
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
@@ -13,7 +12,7 @@ import { beamerCommon } from '../common';
 
 export const createBeamerPost = createAction({
   auth: beamerAuth,
-  name: 'createBeamerPost',
+  name: 'create_beamer_post',
   displayName: 'Create Beamer Post ',
   description: 'Create a new post in Beamer',
   props: {
