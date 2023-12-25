@@ -2,7 +2,6 @@ import {
     ApId,
     CreateFlowRequest,
     FlowOperationRequest,
-    FlowTemplate,
     FlowTemplateWithoutProjectInformation,
     GetFlowQueryParamsRequest,
     ListFlowsRequest,

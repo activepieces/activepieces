@@ -18,7 +18,6 @@ import {
     TelemetryEventName,
     UserId,
     PopulatedFlow,
-    TemplateType,
 } from '@activepieces/shared'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
