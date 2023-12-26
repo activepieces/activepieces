@@ -18,7 +18,7 @@ import { FlowTemplate } from '@activepieces/shared';
 })
 export class TemplatesTableComponent {
   title = $localize`Templates`;
-  displayedColumns = ['name', 'created', 'action'];
+  displayedColumns = ['name', 'created', 'pieces', 'action'];
   dataSource: TemplatesDataSource;
   refresh$: Subject<boolean> = new Subject();
   dialogClosed$?: Observable<unknown>;
@@ -32,22 +32,18 @@ export class TemplatesTableComponent {
     );
   }
   create() {
-    const dialog = this.matDialog.open(CreateTemplateDialogueComponent, {
-      disableClose: true,
-    });
+    const dialog = this.matDialog.open(CreateTemplateDialogueComponent);
     this.dialogClosed$ = dialog.afterClosed().pipe(
-      tap(() => {
-        this.refresh$.next(true);
+      tap((res) => {
+        if (res) {
+          this.refresh$.next(true);
+        }
       })
     );
   }
   deleteTemplate(key: FlowTemplate) {
     const dialogData: DeleteEntityDialogData = {
-      deleteEntity$: this.templateService.delete(key.id).pipe(
-        tap(() => {
-          this.refresh$.next(true);
-        })
-      ),
+      deleteEntity$: this.templateService.delete(key.id),
       entityName: key.name,
       note: $localize`This will permanently delete the flow template.`,
     };

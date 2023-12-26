@@ -65,6 +65,7 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { ImgFallbackDirective } from './directives/image-fallback.directive';
 import { MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
 import { ScrollingModule } from '@angular/cdk/scrolling';
+import { ArrayFormControlComponent } from './components/array-form-control/array-form-control.component';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -126,6 +127,7 @@ const exportedDeclarations = [
   PageTitleComponent,
   PoweredByActivepiecesComponent,
   ImgFallbackDirective,
+  ArrayFormControlComponent,
 ];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,

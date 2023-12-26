@@ -57,7 +57,6 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
         }
         return flowTemplateService.upsert(request.principal.platform?.id, request.principal.projectId, request.body)
     })
-
     fastify.delete('/:id', {
         config: {
             allowedPrincipals: [PrincipalType.USER],
