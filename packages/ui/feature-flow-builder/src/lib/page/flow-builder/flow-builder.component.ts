@@ -47,6 +47,7 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import {
   AppearanceService,
+  CURRENT_FLOW_IS_NEW_KEY_IN_LOCAL_STORAGE,
   FlagService,
   TelemetryService,
   TemplatesService,
@@ -289,12 +290,11 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
   }
 
   openTemaplatesDialogForNewFlows() {
-    if (localStorage.getItem('newFlow')) {
+    if (localStorage.getItem(CURRENT_FLOW_IS_NEW_KEY_IN_LOCAL_STORAGE)) {
       const TemplateDialogData: TemplateDialogData = {
         insideBuilder: true
       };
       const templates$ = this.templatesService.list({});
-    
       this.importTemplate$ =   templates$.pipe(switchMap((templates)=>{
         if(templates.length === 0) {
           return of(void 0);
@@ -336,7 +336,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
           map(() => void 0)
         )
         })) ;
-      localStorage.removeItem('newFlow');
+      localStorage.removeItem(CURRENT_FLOW_IS_NEW_KEY_IN_LOCAL_STORAGE);
     }
   }
 }
