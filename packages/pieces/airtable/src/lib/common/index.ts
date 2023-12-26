@@ -494,5 +494,4 @@ interface Params {
   searchField?: string;
   fieldNames?: string[];
   limitToView?: string;
-  typecast?:boolean
 }
