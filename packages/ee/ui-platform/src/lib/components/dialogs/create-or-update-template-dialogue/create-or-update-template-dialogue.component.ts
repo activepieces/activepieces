@@ -2,30 +2,36 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  Inject
 } from '@angular/core';
 
 import { MatDialogRef } from '@angular/material/dialog';
 import { FlowTemplate, TemplateType } from '@activepieces/shared';
 import { Observable, catchError, map, of, tap } from 'rxjs';
-import { TemplatesService } from '@activepieces/ui/common';
+import { GenericSnackbarTemplateComponent, TemplatesService } from '@activepieces/ui/common';
 import {
   FormBuilder,
   FormControl,
   FormGroup,
   Validators,
 } from '@angular/forms';
-
+import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
+export type CreateOrUpdateTemplateDialogData = {
+  template?: FlowTemplate;
+}
 @Component({
-  selector: 'app-create-template-dialogue',
-  templateUrl: './create-template-dialogue.component.html',
+  selector: 'app-create-or-update-template-dialogue',
+  templateUrl: './create-or-update-template-dialogue.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CreateTemplateDialogueComponent {
+export class CreateOrUpdateTemplateDialogueComponent {
   loading = false;
   invalidJson = false;
   createTemplate$: Observable<void> | undefined;
   shareTemplateMarkdown = `You can create a template from a flow and share it to your platform users,
    to do that go to a flow you would like to use as a template, click on the chevron next to its name and select **Export** then use it here`;
+   title=$localize `New Template`
   form: FormGroup<{
     file: FormControl<File | null>;
     name: FormControl<string>;
@@ -36,7 +42,10 @@ export class CreateTemplateDialogueComponent {
     private templateService: TemplatesService,
     private cd: ChangeDetectorRef,
     private fb: FormBuilder,
-    private dialogRef: MatDialogRef<CreateTemplateDialogueComponent>
+    private dialogRef: MatDialogRef<CreateOrUpdateTemplateDialogueComponent>,
+    private matSnackBar: MatSnackBar,
+    @Inject(MAT_DIALOG_DATA)
+    public data?: CreateOrUpdateTemplateDialogData,
   ) {
     this.form = this.fb.group({
       file: new FormControl<File | null>(null, {
@@ -49,9 +58,18 @@ export class CreateTemplateDialogueComponent {
       blogUrl: new FormControl('', { nonNullable: true }),
       tags: new FormControl<string[]>([], { nonNullable: true }),
     });
+    if(data?.template) {
+      this.form.patchValue({
+        name: data.template.name,
+        blogUrl: data.template.blogUrl,
+        tags: data.template.tags,
+      });
+      this.title = $localize `Edit` + ` ${data.template.name}`
+     
+    }
   }
 
-  createTemplate() {
+  createOrUpdate() {
     this.form.markAllAsTouched();
     if (this.form.valid) {
       this.loading = true;
@@ -75,9 +93,18 @@ export class CreateTemplateDialogueComponent {
           type: TemplateType.PLATFORM,
           blogUrl: this.form.value.blogUrl,
           tags: this.form.value.tags,
+          id: this.data?.template?.id,
         })
         .pipe(
           tap(() => {
+            if(this.data)
+            {
+              this.matSnackBar.openFromComponent(GenericSnackbarTemplateComponent,  { data: `<b> ${this.form.value.name}</b> updated`})
+            }
+            else 
+            {
+              this.matSnackBar.openFromComponent(GenericSnackbarTemplateComponent,  { data: `<b> ${this.form.value.name}</b> created`})
+            }
             this.dialogRef.close(true);
           }),
           catchError(() => {

@@ -11,11 +11,10 @@ const templateRepo = databaseConnection.getRepository<FlowTemplate>(FlowTemplate
 const templateProjectId = system.get(SystemProp.TEMPLATES_PROJECT_ID)
 
 export const flowTemplateService = {
-    upsert: async (platformId: string | undefined, projectId: string | undefined, { description,  type, template, blogUrl, tags }: CreateFlowTemplateRequest): Promise<FlowTemplate> => {
-        const id = apId()
+    upsert: async (platformId: string | undefined, projectId: string | undefined, { description,  type, template, blogUrl, tags,id }: CreateFlowTemplateRequest): Promise<FlowTemplate> => {
         const flowTemplate: FlowVersionTemplate = template
         await templateRepo.upsert({
-            id,
+            id: id ?? apId(),
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             template: flowTemplate as any,
             name: flowTemplate.displayName,

@@ -1,5 +1,5 @@
-<ap-dialog-title-template i18n>
-    New Template
+<ap-dialog-title-template>
+    {{title}}
 </ap-dialog-title-template>
 
 <mat-dialog-content>
@@ -36,8 +36,13 @@
         <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" i18n>
             Cancel
         </ap-button>
-        <ap-button [loading]="loading" (buttonClicked)="createTemplate()" btnColor="success" btnSize="default" i18n>
+        <ap-button *ngIf="!data" [loading]="loading" (buttonClicked)="createOrUpdate()" btnColor="success"
+            btnSize="default" i18n>
             Create
+        </ap-button>
+        <ap-button *ngIf="data" [loading]="loading" (buttonClicked)="createOrUpdate()" btnColor="primary"
+            btnSize="default" i18n>
+            Confirm
         </ap-button>
     </div>
 </mat-dialog-actions>

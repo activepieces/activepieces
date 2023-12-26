@@ -20,7 +20,7 @@ import { CreateCustomDomainDialogComponent } from './components/dialogs/create-c
 import { ApiKeysTableComponent } from './components/api-keys-table/api-keys-table.component';
 import { CreateApiKeyDialogComponent } from './components/dialogs/create-api-key-dialog/create-api-key-dialog.component';
 import { TemplatesTableComponent } from './pages/templates-table/templates-table.component';
-import { CreateTemplateDialogueComponent } from './components/dialogs/create-template-dialogue/create-template-dialogue.component';
+import { CreateOrUpdateTemplateDialogueComponent } from './components/dialogs/create-or-update-template-dialogue/create-or-update-template-dialogue.component';
 import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
 
 @NgModule({
@@ -43,7 +43,7 @@ import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
     CreateSigningKeyDialogComponent,
     CreateCustomDomainDialogComponent,
     PiecesTableComponent,
-    CreateTemplateDialogueComponent,
+    CreateOrUpdateTemplateDialogueComponent,
     EditAddPieceOAuth2CredentialsDialogComponent,
     SmtpSettingsComponent,
     TermsAndServicesSettingsComponent,
