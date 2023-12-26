@@ -49,6 +49,7 @@ import {
   AppearanceService,
   FlagService,
   TelemetryService,
+  TemplatesService,
   TestStepService,
 } from '@activepieces/ui/common';
 import { PannerService } from '@activepieces/ui/feature-builder-canvas';
@@ -117,7 +118,8 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     private matDialog: MatDialog,
     private flagService: FlagService,
     private telemetryService: TelemetryService,
-    public builderAutocompleteService: BuilderAutocompleteMentionsDropdownService
+    public builderAutocompleteService: BuilderAutocompleteMentionsDropdownService,
+    private templatesService: TemplatesService
   ) {
     this.showPoweredByAp$ = this.flagService.getShowPoweredByAp();
     this.dataInsertionPopupHidden$ =
@@ -134,48 +136,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
       this.testStepService.testingStepSectionIsRendered$.asObservable();
     this.isPanning$ = this.pannerService.isPanning$.asObservable();
     this.isDragging$ = this.flowRendererService.isDragginStep$;
-    if (localStorage.getItem('newFlow')) {
-      const TemplateDialogData: TemplateDialogData = {
-        insideBuilder: true
-      };
-      this.importTemplate$ =  this.matDialog
-      .open(TemplatesDialogComponent, {
-        data: TemplateDialogData,
-      })
-      .afterClosed()
-      .pipe(
-        switchMap((result?: TemplateDialogClosingResult) => {
-          if (result) {
-            return this.store
-              .select(BuilderSelectors.selectCurrentFlow)
-              .pipe(
-                take(1),
-                tap((flow) => {
-                  this.telemetryService.capture({
-                    name: TelemetryEventName.FLOW_IMPORTED,
-                    payload: {
-                      id: result.template.id,
-                      name: result.template.name,
-                      location: `inside the builder`,
-                      tab: `${result.activeTab}`,
-                    },
-                  });
-                  this.builderService.importTemplate$.next({
-                    flowId: flow.id,
-                    template: result.template,
-                  });
-                  if (result.template.blogUrl) {
-                    this.showBlogNotification(result.template);
-                  }
-                })
-              );
-          }
-          return EMPTY;
-        }),
-        map(() => void 0)
-      );
-      localStorage.removeItem('newFlow');
-    }
+    this.openTemaplatesDialogForNewFlows();
     this.loadInitialData$ = this.actRoute.data.pipe(
       tap((value) => {
         const routeData = value as BuilderRouteData | RunRouteData;
@@ -324,6 +285,58 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     if (isSaving) {
       event.preventDefault();
       event.returnValue = false;
+    }
+  }
+
+  openTemaplatesDialogForNewFlows() {
+    if (localStorage.getItem('newFlow')) {
+      const TemplateDialogData: TemplateDialogData = {
+        insideBuilder: true
+      };
+      const templates$ = this.templatesService.list({});
+    
+      this.importTemplate$ =   templates$.pipe(switchMap((templates)=>{
+        if(templates.length === 0) {
+          return of(void 0);
+        }
+        return this.matDialog
+        .open(TemplatesDialogComponent, {
+          data: TemplateDialogData,
+        })
+        .afterClosed()
+        .pipe(
+          switchMap((result?: TemplateDialogClosingResult) => {
+            if (result) {
+              return this.store
+                .select(BuilderSelectors.selectCurrentFlow)
+                .pipe(
+                  take(1),
+                  tap((flow) => {
+                    this.telemetryService.capture({
+                      name: TelemetryEventName.FLOW_IMPORTED,
+                      payload: {
+                        id: result.template.id,
+                        name: result.template.name,
+                        location: `inside the builder`,
+                        tab: `${result.activeTab}`,
+                      },
+                    });
+                    this.builderService.importTemplate$.next({
+                      flowId: flow.id,
+                      template: result.template,
+                    });
+                    if (result.template.blogUrl) {
+                      this.showBlogNotification(result.template);
+                    }
+                  })
+                );
+            }
+            return EMPTY;
+          }),
+          map(() => void 0)
+        )
+        })) ;
+      localStorage.removeItem('newFlow');
     }
   }
 }
