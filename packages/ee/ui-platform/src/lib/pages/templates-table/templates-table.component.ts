@@ -8,7 +8,10 @@ import {
 } from '@activepieces/ui/common';
 import { TemplatesDataSource } from './templates-table.datasource';
 import { MatDialog } from '@angular/material/dialog';
-import { CreateOrUpdateTemplateDialogData, CreateOrUpdateTemplateDialogueComponent } from '../../components/dialogs/create-or-update-template-dialogue/create-or-update-template-dialogue.component';
+import {
+  CreateOrUpdateTemplateDialogData,
+  CreateOrUpdateTemplateDialogueComponent,
+} from '../../components/dialogs/create-or-update-template-dialogue/create-or-update-template-dialogue.component';
 import { FlowTemplate } from '@activepieces/shared';
 
 @Component({
@@ -41,12 +44,14 @@ export class TemplatesTableComponent {
       })
     );
   }
-  edit(template:FlowTemplate)
-  { 
-    const data:CreateOrUpdateTemplateDialogData = { template };
-    const dialog = this.matDialog.open(CreateOrUpdateTemplateDialogueComponent,{
-      data
-    });
+  edit(template: FlowTemplate) {
+    const data: CreateOrUpdateTemplateDialogData = { template };
+    const dialog = this.matDialog.open(
+      CreateOrUpdateTemplateDialogueComponent,
+      {
+        data,
+      }
+    );
     this.dialogClosed$ = dialog.afterClosed().pipe(
       tap((res) => {
         if (res) {
