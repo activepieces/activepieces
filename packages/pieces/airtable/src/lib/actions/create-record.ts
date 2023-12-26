@@ -14,7 +14,7 @@ export const airtableCreateRecordAction = createAction({
     typecast: Property.Checkbox({
       required:false,
       displayName:"Typecast",
-      description: "Automatic data conversion from text to the appropriate type.",
+      description: "Automatic data conversion from text to the appropriate type, toggle it on if you have a field that needs to be a number.",
     })
   },
   async run(context) {
