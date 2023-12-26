@@ -6,17 +6,18 @@ import {
   DeleteEntityDialogData,
   TemplatesService,
 } from '@activepieces/ui/common';
-import { TemplatesDataSource } from './template-table.datasource';
+import { TemplatesDataSource } from './templates-table.datasource';
 import { MatDialog } from '@angular/material/dialog';
-import { CreateTemplateDialogueComponent } from '../dialogs/create-template-dialogue/create-template-dialogue.component';
+import { CreateTemplateDialogueComponent } from '../../components/dialogs/create-template-dialogue/create-template-dialogue.component';
 import { FlowTemplate } from '@activepieces/shared';
 
 @Component({
   selector: 'app-template-table',
-  templateUrl: './template-table.component.html',
+  templateUrl: './templates-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TemplateTableComponent {
+export class TemplatesTableComponent {
+  title = $localize`Templates`;
   displayedColumns = ['name', 'created', 'action'];
   dataSource: TemplatesDataSource;
   refresh$: Subject<boolean> = new Subject();

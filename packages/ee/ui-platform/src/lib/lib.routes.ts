@@ -5,7 +5,7 @@ import { ProjectsTableComponent } from './pages/projects-table/projects-table.co
 import { PlatformAppearanceComponent } from './pages/platform-appearance/platform-appearance.component';
 import { PlatformSettingsComponent } from './pages/platform-settings/platform-settings.component';
 import { PiecesTableComponent } from './pages/pieces-table/pieces-table.component';
-import { TemplateTableComponent } from './components/template-table/template-table.component';
+import { TemplatesTableComponent } from './pages/templates-table/templates-table.component';
 
 export const uiEePlatformRoutes: Route[] = [
   {
@@ -46,7 +46,7 @@ export const uiEePlatformRoutes: Route[] = [
       },
       {
         path: 'templates',
-        component: TemplateTableComponent,
+        component: TemplatesTableComponent,
         data: {
           title: $localize`Templates`,
         },

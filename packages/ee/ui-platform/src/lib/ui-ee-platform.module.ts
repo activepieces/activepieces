@@ -19,7 +19,7 @@ import { CustomDomainTableComponent } from './components/custom-domain-table/cus
 import { CreateCustomDomainDialogComponent } from './components/dialogs/create-custom-domain-dialog/create-custom-domain-dialog.component';
 import { ApiKeysTableComponent } from './components/api-keys-table/api-keys-table.component';
 import { CreateApiKeyDialogComponent } from './components/dialogs/create-api-key-dialog/create-api-key-dialog.component';
-import { TemplateTableComponent } from './components/template-table/template-table.component';
+import { TemplatesTableComponent } from './pages/templates-table/templates-table.component';
 import { CreateTemplateDialogueComponent } from './components/dialogs/create-template-dialogue/create-template-dialogue.component';
 
 @NgModule({
@@ -45,7 +45,7 @@ import { CreateTemplateDialogueComponent } from './components/dialogs/create-tem
     EditAddPieceOAuth2CredentialsDialogComponent,
     SmtpSettingsComponent,
     TermsAndServicesSettingsComponent,
-    TemplateTableComponent,
+    TemplatesTableComponent,
     CustomDomainTableComponent,
   ],
 })
