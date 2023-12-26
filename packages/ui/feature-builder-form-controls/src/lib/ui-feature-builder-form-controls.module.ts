@@ -33,7 +33,7 @@ import { DropdownPropertySearchPipe } from './piece-properties-form/dropdown-sea
 import { MarkdownModule } from 'ngx-markdown';
 import { SelectedAuthConfigsPipe } from './piece-properties-form/selected-auth-config.pipe';
 import { init } from './interpolating-text-form-control/fixed-selection-mention';
-import { UiFeaturePiecesModule } from 'ui-feature-pieces';
+import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
 import { DropdownPropertyInitialValuePipe } from './piece-properties-form/dropdown-initial-value.pipe';
 import { isDropdownItemSelectedPipe } from './piece-properties-form/is-selected.pipe';
 import { MatPseudoCheckboxModule } from '@angular/material/core';

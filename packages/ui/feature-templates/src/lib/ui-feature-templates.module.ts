@@ -8,7 +8,7 @@ import { TemplateCardComponent } from './template-card/template-card.component';
 import { UiCommonModule } from '@activepieces/ui/common';
 import { TemplateBlogNotificationComponent } from './template-blog-notification/template-blog-notification.component';
 import { TimeagoModule } from 'ngx-timeago';
-import { UiFeaturePiecesModule } from 'ui-feature-pieces';
+import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
 const exportedDeclarations = [
   TemplatesDialogComponent,
   TemplatesFiltersComponent,

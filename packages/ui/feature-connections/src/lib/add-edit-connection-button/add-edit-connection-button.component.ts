@@ -67,7 +67,7 @@ import {
   checkIfTriggerIsAppWebhook,
   getConnectionNameFromInterpolatedString,
 } from './utils';
-import { PieceMetadataService } from 'ui-feature-pieces';
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 
 @Component({
   selector: 'app-add-edit-connection-button',

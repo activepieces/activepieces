@@ -21,12 +21,14 @@ import { ApiKeysTableComponent } from './components/api-keys-table/api-keys-tabl
 import { CreateApiKeyDialogComponent } from './components/dialogs/create-api-key-dialog/create-api-key-dialog.component';
 import { TemplatesTableComponent } from './pages/templates-table/templates-table.component';
 import { CreateTemplateDialogueComponent } from './components/dialogs/create-template-dialogue/create-template-dialogue.component';
+import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
 
 @NgModule({
   imports: [
     UiCommonModule,
     CommonModule,
     RouterModule.forChild(uiEePlatformRoutes),
+    UiFeaturePiecesModule,
   ],
   declarations: [
     PlatformDashboardContainerComponent,
