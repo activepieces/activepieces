@@ -377,7 +377,6 @@ export const airtableCommon = {
     fields,
     tableId,
     baseId,
-    typecast
   }: Params) {
     const request: HttpRequest = {
       method: HttpMethod.POST,
@@ -388,7 +387,7 @@ export const airtableCommon = {
       },
       body: {
         fields,
-        typecast
+        typecast:true
       },
     };
 

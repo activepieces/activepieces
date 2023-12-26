@@ -1,4 +1,4 @@
-import { DynamicPropsValue, Property, createAction } from "@activepieces/pieces-framework";
+import { DynamicPropsValue, createAction } from "@activepieces/pieces-framework";
 import { airtableCommon } from "../common";
 import { airtableAuth } from "../../index";
 
@@ -11,11 +11,6 @@ export const airtableCreateRecordAction = createAction({
     base: airtableCommon.base,
     tableId: airtableCommon.tableId,
     fields: airtableCommon.fields,
-    typecast: Property.Checkbox({
-      required:false,
-      displayName:"Typecast",
-      description: "Automatic data conversion from text to the appropriate type, toggle it on if you have a field that needs to be a number.",
-    })
   },
   async run(context) {
     const personalToken = context.auth
@@ -33,8 +28,6 @@ export const airtableCreateRecordAction = createAction({
       personalToken,
       baseId,
       tableId: tableId as string,
-      fields: newFields,
-      typecast: context.propsValue.typecast
-    })
+      fields: newFields})
   },
 })
