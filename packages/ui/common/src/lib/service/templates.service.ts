@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable, map, switchMap } from 'rxjs';
 import {
+  ApEdition,
   FlowTemplate,
   ListFlowTemplatesRequest,
   SeekPage,
@@ -8,12 +9,13 @@ import {
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../environments/environment';
 import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
+import { FlagService } from './flag.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class TemplatesService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private flagsService: FlagService) {}
 
   list(params: ListFlowTemplatesRequest): Observable<FlowTemplate[]> {
     let httpParams = new HttpParams();
@@ -27,11 +29,19 @@ export class TemplatesService {
       httpParams = httpParams.append('search', params.search);
     }
     httpParams.append('limit', '1000');
-    return this.http
-      .get<SeekPage<FlowTemplate>>(environment.apiUrl + '/flow-templates', {
-        params: httpParams,
+    let url = environment.apiUrl + '/flow-templates';
+    return this.flagsService.getEdition().pipe(
+      switchMap((ed) => {
+        if (ed === ApEdition.COMMUNITY) {
+          url = 'https://cloud.activepieces.com/api/v1/flow-templates';
+        }
+        return this.http
+          .get<SeekPage<FlowTemplate>>(url, {
+            params: httpParams,
+          })
+          .pipe(map((res) => res.data));
       })
-      .pipe(map((res) => res.data));
+    );
   }
 
   create(request: CreateFlowTemplateRequest): Observable<FlowTemplate> {
