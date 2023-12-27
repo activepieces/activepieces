@@ -8,15 +8,18 @@ import { authenticationHelper } from './authentication-helper'
 import { projectService } from '../../../../project/project-service'
 import { userService } from '../../../../user/user-service'
 import { ProjectType, UserStatus, isNil } from '@activepieces/shared'
+import { flagService } from '../../../../../app/flags/flag.service'
 
 export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
     async preSignUp({ email, platformId }) {
-        if (!isNil(platformId)) {
+        const customerPlatformEnabled = !isNil(platformId) && !flagService.isCloudPlatform(platformId)
+        if (customerPlatformEnabled) {
             await authenticationHelper.assertUserIsInvitedToAnyProject({ email, platformId })            
         }
     },
     async postSignUp({ user, referringUserId }) {
 
+        // TODO remove once we migrated cloud to platform
         if (isNil(user.platformId)) {
             await projectService.create({
                 displayName: `${user.firstName}'s Project`,
@@ -25,6 +28,15 @@ export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
                 type: ProjectType.STANDALONE,
             })
         }
+        if (!isNil(user.platformId) && flagService.isCloudPlatform(user.platformId)) {
+            await projectService.create({
+                displayName: `${user.firstName}'s Project`,
+                ownerId: user.id,
+                platformId: user.platformId,
+                type: ProjectType.PLATFORM_MANAGED,
+            })
+        }
+
         if (referringUserId) {
             await referralService.upsert({
                 referringUserId,
