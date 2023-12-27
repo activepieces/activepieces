@@ -40,7 +40,7 @@ export const createTweet = createAction({
             accessSecret: accessTokenSecret,
         });
     
-        try {
+       
             const media:ApFile[] = [context.propsValue.image_1, context.propsValue.image_2, context.propsValue.image_3].filter((m): m is ApFile => !!m);
             const uploadedMedia:Promise<string>[]=[];
             media.forEach(m =>{
@@ -59,15 +59,6 @@ export const createTweet = createAction({
               })
             : await userClient.v2.tweet(context.propsValue.text);
             return response || { success: true };
-        } catch ( error ) {
-            const mod_error = error as {
-                code: number,
-                errors: unknown[]
-            };
-            throw {
-                code : mod_error.code,
-                errors : mod_error.errors
-            }
-        }
+   
     },
 });
