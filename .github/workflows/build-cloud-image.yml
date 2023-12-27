@@ -6,7 +6,7 @@ on:
 jobs:
   Release:
     env:
-      MY_VERSION: template2
+      MY_VERSION: template3
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
