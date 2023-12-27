@@ -399,7 +399,7 @@ describe('API Security', () => {
         })
     })
 
-    describe.only('Access Token Authentication', () => {
+    describe('Access Token Authentication', () => {
         it('Authenticates users', async () => {
             // arrange
             const mockPrincipal: Principal = {
