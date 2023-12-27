@@ -2,8 +2,9 @@ import { FastifyInstance, FastifyRequest } from 'fastify'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupApp } from '../../../../src/app/app'
 import { authorizationMiddleware } from '../../../../src/app/authentication/authorization-middleware'
-import { ActivepiecesError, EndpointScope, ErrorCode, PlatformRole, PrincipalType, ProjectType, apId } from '@activepieces/shared'
+import { ActivepiecesError, EndpointScope, ErrorCode, PlatformRole, Principal, PrincipalType, ProjectType, apId } from '@activepieces/shared'
 import { createMockFlow, createMockPlatformWithOwner, createMockProject, setupMockApiKeyServiceAccount } from '../../../helpers/mocks'
+import { generateMockToken } from '../../../helpers/auth'
 
 let app: FastifyInstance | null = null
 
@@ -383,6 +384,137 @@ describe('API Security', () => {
                     allowedPrincipals: [PrincipalType.USER],
                     scope: EndpointScope.PLATFORM,
                 },
+            } as unknown as FastifyRequest
+
+            // act
+            const result = authorizationMiddleware(mockRequest)
+
+            // assert
+            await expect(result).rejects.toEqual(new ActivepiecesError({
+                code: ErrorCode.INVALID_BEARER_TOKEN,
+                params: {
+                    message: 'invalid access token',
+                },
+            }))
+        })
+    })
+
+    describe.only('Access Token Authentication', () => {
+        it('Authenticates users', async () => {
+            // arrange
+            const mockPrincipal: Principal = {
+                id: apId(),
+                type: PrincipalType.USER,
+                projectId: apId(),
+                projectType: ProjectType.PLATFORM_MANAGED,
+                platform: {
+                    id: apId(),
+                    role: PlatformRole.OWNER,
+                },
+            }
+
+            const mockAccessToken = await generateMockToken(mockPrincipal)
+
+            const mockRequest = {
+                method: 'GET',
+                routerPath: '/v1/flows',
+                headers: {
+                    authorization: `Bearer ${mockAccessToken}`,
+                },
+                routeConfig: {},
+            } as unknown as FastifyRequest
+
+            // act
+            const result = authorizationMiddleware(mockRequest)
+
+            // assert
+            await expect(result).resolves.toBeUndefined()
+
+            expect(mockRequest.principal).toEqual(expect.objectContaining({
+                id: mockPrincipal.id,
+                type: PrincipalType.USER,
+                projectId: mockPrincipal.projectId,
+                projectType: ProjectType.PLATFORM_MANAGED,
+                platform: {
+                    id: mockPrincipal.platform?.id,
+                    role: PlatformRole.OWNER,
+                },
+            }))
+        })
+
+        it('Fails if route disallows USER principal type', async () => {
+            // arrange
+            const mockAccessToken = await generateMockToken({ type: PrincipalType.USER })
+
+            const mockRequest = {
+                method: 'GET',
+                routerPath: '/v1/flows',
+                headers: {
+                    authorization: `Bearer ${mockAccessToken}`,
+                },
+                routeConfig: {
+                    allowedPrincipals: [PrincipalType.SERVICE],
+                },
+            } as unknown as FastifyRequest
+
+            // act
+            const result = authorizationMiddleware(mockRequest)
+
+            // assert
+            await expect(result).rejects.toEqual(new ActivepiecesError({
+                code: ErrorCode.INVALID_BEARER_TOKEN,
+                params: {
+                    message: 'invalid access token',
+                },
+            }))
+        })
+
+        it('Fails if projectId in query doesn\'t match principal projectId', async () => {
+            // arrange
+            const mockProjectId = apId()
+            const mockOtherProjectId = apId()
+            const mockAccessToken = await generateMockToken({ projectId: mockProjectId })
+
+            const mockRequest = {
+                method: 'GET',
+                routerPath: '/v1/flows',
+                query: {
+                    projectId: mockOtherProjectId,
+                },
+                headers: {
+                    authorization: `Bearer ${mockAccessToken}`,
+                },
+                routeConfig: {},
+            } as unknown as FastifyRequest
+
+            // act
+            const result = authorizationMiddleware(mockRequest)
+
+            // assert
+            await expect(result).rejects.toEqual(new ActivepiecesError({
+                code: ErrorCode.INVALID_BEARER_TOKEN,
+                params: {
+                    message: 'invalid access token',
+                },
+            }))
+        })
+
+        it('Fails if projectId in body doesn\'t match principal projectId', async () => {
+            // arrange
+            const mockProjectId = apId()
+            const mockOtherProjectId = apId()
+            const mockAccessToken = await generateMockToken({ projectId: mockProjectId })
+
+            const mockRequest = {
+                method: 'GET',
+                routerPath: '/v1/flows',
+                headers: {
+                    authorization: `Bearer ${mockAccessToken}`,
+                },
+                body: {
+                    projectId: mockOtherProjectId,
+                },
+                routeConfig: {},
             } as unknown as FastifyRequest
 
             // act
