@@ -229,6 +229,7 @@
         "platform/appearance",
         "platform/manage-projects",
         "platform/custom-domain",
+        "platform/manage-templates",
         "platform/manage-pieces",
         "platform/manage-oauth2",
         "platform/customize-emails",
