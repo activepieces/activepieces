@@ -529,4 +529,56 @@ describe('API Security', () => {
             }))
         })
     })
+
+    describe('Anonymous authentication', () => {
+        it('Enables access to non authenticated routes', async () => {
+            // arrange
+            const nonAuthenticatedRoute = '/v1/docs'
+
+            const mockRequest = {
+                method: 'GET',
+                routerPath: nonAuthenticatedRoute,
+                headers: {},
+                routeConfig: {},
+            } as unknown as FastifyRequest
+
+            // act
+            const result = authorizationMiddleware(mockRequest)
+
+            // assert
+            await expect(result).resolves.toBeUndefined()
+
+            expect(mockRequest.principal).toEqual(expect.objectContaining({
+                id: expect.stringMatching(/ANONYMOUS_.{21}/),
+                type: PrincipalType.UNKNOWN,
+                projectId: expect.stringMatching(/ANONYMOUS_.{21}/),
+                projectType: ProjectType.STANDALONE,
+            }))
+
+            expect(mockRequest.principal).not.toHaveProperty('platform')
+        })
+
+        it('Fails if route is authenticated', async () => {
+            // arrange
+            const authenticatedRoute = '/v1/flows'
+
+            const mockRequest = {
+                method: 'GET',
+                routerPath: authenticatedRoute,
+                headers: {},
+                routeConfig: {},
+            } as unknown as FastifyRequest
+
+            // act
+            const result = authorizationMiddleware(mockRequest)
+
+            // assert
+            await expect(result).rejects.toEqual(new ActivepiecesError({
+                code: ErrorCode.INVALID_BEARER_TOKEN,
+                params: {
+                    message: 'invalid access token',
+                },
+            }))
+        })
+    })
 })
