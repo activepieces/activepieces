@@ -8,6 +8,7 @@ import { vboutCommon } from '.';
 import {
   EmailListCreateRequest,
   ContactCreateRequest,
+  ContactUpdateRequest,
   VboutResponseBody,
   ContactList,
 } from './models';
@@ -67,7 +68,17 @@ export class VboutClient {
   }
 
   async getContactByEmail(email: string, listId?: string) {
-    return await this.makeRequest(
+    return await this.makeRequest<
+      VboutResponseBody<{
+        contact: {
+          id: string;
+          email: string;
+          listid: string;
+          list_name: string;
+          [key: string]: any;
+        }[];
+      }>
+    >(
       HttpMethod.GET,
       '/emailmarketing/getcontactbyemail',
       prepareQuery({ email: email, listid: listId })
@@ -93,6 +104,14 @@ export class VboutClient {
     return await this.makeRequest(
       HttpMethod.POST,
       '/emailMarketing/AddContact',
+      undefined,
+      request
+    );
+  }
+  async updateContact(request: ContactUpdateRequest) {
+    return await this.makeRequest(
+      HttpMethod.POST,
+      '/emailMarketing/EditContact',
       undefined,
       request
     );

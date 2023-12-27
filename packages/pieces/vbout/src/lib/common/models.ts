@@ -49,10 +49,14 @@ export interface ContactList {
 
 export interface ContactCreateRequest {
   listid?: string;
-  status: string;
+  status?: string;
   email: string;
   ipaddress?: string;
   fields?: {
     [key: string]: string;
   };
+}
+
+export interface ContactUpdateRequest extends ContactCreateRequest {
+  id: string;
 }
