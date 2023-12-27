@@ -1,5 +1,5 @@
 import { KeyAlgorithm, SigningKey, Platform, OAuthApp, FilteredPieceBehavior, CustomDomain, CustomDomainStatus, OtpModel, OtpType, OtpState, ProjectMember, ApiKey, ProjectMemberRole, ProjectMemberStatus } from '@activepieces/ee-shared'
-import { UserStatus, User, apId, Project, NotificationStatus, ProjectType, PieceType, PackageType, Flow, FlowStatus, FlowVersion, TriggerType, FlowVersionState } from '@activepieces/shared'
+import { UserStatus, User, apId, Project, NotificationStatus, ProjectType, PieceType, PackageType, Flow, FlowStatus, FlowVersion, TriggerType, FlowVersionState, FlowTemplate, TemplateType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
 import bcrypt from 'bcrypt'
@@ -38,6 +38,23 @@ export const createMockOAuthApp = (oAuthApp?: Partial<OAuthApp>): OAuthAppWithEn
         pieceName: oAuthApp?.pieceName ?? faker.lorem.word(),
         clientId: oAuthApp?.clientId ?? apId(),
         clientSecret: encryptString(faker.lorem.word()),
+    }
+}
+
+export const createMockTemplate = (template?: Partial<FlowTemplate>): FlowTemplate => {
+    return {
+        name: template?.name ?? faker.lorem.word(),
+        description: template?.description ?? faker.lorem.sentence(),
+        type: template?.type ?? faker.helpers.enumValue(TemplateType),
+        tags: template?.tags ?? [],
+        pieces: template?.pieces ?? [],
+        blogUrl: template?.blogUrl ?? faker.internet.url(),
+        template: template?.template ?? createMockFlowVersion(),
+        projectId: template?.projectId ?? apId(),
+        platformId: template?.platformId ?? apId(),
+        id: template?.id ?? apId(),
+        created: template?.created ?? faker.date.recent().toISOString(),
+        updated: template?.updated ?? faker.date.recent().toISOString(),
     }
 }
 

@@ -88,13 +88,9 @@ export enum TelemetryEventName {
     REFERRAL = 'referral',
     REFERRAL_LINK_COPIED = 'referral.link.copied',
     FLOW_SHARED = 'flow.shared',
-    FEATURED_TAB_VIEWED = 'template.featured-tab-viewed',
     TEMPLATE_SEARCH = 'template.search',
 }
 
-type FeaturedTabViewed = {
-    buttonPressed: 'banner button' | 'tab button'
-}
 type BaseTelemetryEvent<T, P> = {
     name: T
     payload: P
@@ -115,5 +111,4 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.REFERRAL_LINK_COPIED, ReferralLinkCopied>
     | BaseTelemetryEvent<TelemetryEventName.FLOW_SHARED, FlowShared>
     | BaseTelemetryEvent<TelemetryEventName.DEMO_IMPORTED, Record<string, never>>
-    | BaseTelemetryEvent<TelemetryEventName.FEATURED_TAB_VIEWED, FeaturedTabViewed>
     | BaseTelemetryEvent<TelemetryEventName.OPENED_PRICING_FROM_DASHBOARD, OpenedFromDasahboard>

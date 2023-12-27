@@ -49,7 +49,7 @@ import {
   PieceAuthProperty,
   PiecePropertyMap,
 } from '@activepieces/pieces-framework';
-import { PieceMetadataService } from 'ui-feature-pieces';
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 
 declare type ActionDropdownOptionValue = {
   actionName: string;

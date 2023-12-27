@@ -1,37 +1,23 @@
 import { Injectable } from '@angular/core';
-import { Observable, map, of, shareReplay, switchMap } from 'rxjs';
+import { Observable, map, switchMap } from 'rxjs';
 import {
+  ApEdition,
   FlowTemplate,
   ListFlowTemplatesRequest,
-  isNil,
+  SeekPage,
 } from '@activepieces/shared';
-import { FlagService } from './flag.service';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../environments/environment';
-import { ShareFlowRequest } from '@activepieces/ee-shared';
-import dayjs from 'dayjs';
+import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
+import { FlagService } from './flag.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class TemplatesService {
-  constructor(private flagsService: FlagService, private http: HttpClient) {}
-  getFeaturedTemplates() {
-    return this.getTemplates({
-      pieces: [],
-      tags: [],
-      search: '',
-      featuredOnly: true,
-    }).pipe(
-      map((res) => {
-        return res.sort((a, b) =>
-          new Date(a.created) > new Date(b.created) ? 1 : -1
-        );
-      }),
-      shareReplay(1)
-    );
-  }
-  getTemplates(params: ListFlowTemplatesRequest): Observable<FlowTemplate[]> {
+  constructor(private http: HttpClient, private flagsService: FlagService) {}
+
+  list(params: ListFlowTemplatesRequest): Observable<FlowTemplate[]> {
     let httpParams = new HttpParams();
     if (params.pieces && params.pieces.length > 0) {
       httpParams = httpParams.appendAll({ pieces: params.pieces });
@@ -42,47 +28,36 @@ export class TemplatesService {
     if (params.search) {
       httpParams = httpParams.append('search', params.search);
     }
-    if (params.featuredOnly !== undefined) {
-      httpParams = httpParams.append(
-        'featuredOnly',
-        params.featuredOnly ? true : false
-      );
-    }
-    return this.flagsService.getTemplatesSourceUrl().pipe(
-      switchMap((url) => {
-        if (isNil(url)) {
-          return of([]);
+    httpParams.append('limit', '1000');
+    let url = environment.apiUrl + '/flow-templates';
+    return this.flagsService.getEdition().pipe(
+      switchMap((ed) => {
+        if (ed === ApEdition.COMMUNITY) {
+          url = 'https://cloud.activepieces.com/api/v1/flow-templates';
         }
-        return this.http.get<FlowTemplate[]>(url, { params: httpParams });
+        return this.http
+          .get<SeekPage<FlowTemplate>>(url, {
+            params: httpParams,
+          })
+          .pipe(map((res) => res.data));
       })
     );
   }
-  shareTemplate(request: ShareFlowRequest): Observable<FlowTemplate> {
+
+  create(request: CreateFlowTemplateRequest): Observable<FlowTemplate> {
     return this.http.post<FlowTemplate>(
       environment.apiUrl + '/flow-templates',
       request
     );
   }
+
+  delete(id: string): Observable<void> {
+    return this.http.delete<void>(environment.apiUrl + `/flow-templates/${id}`);
+  }
+
   getTemplate(flowId: string) {
     return this.http.get<FlowTemplate>(
       environment.apiUrl + `/flow-templates/${flowId}`
-    );
-  }
-  getTemplateDeprecated(templateId: string) {
-    return this.http.get<FlowTemplate>(
-      `https://activepieces-cdn.fra1.cdn.digitaloceanspaces.com/templates/${templateId}.json`
-    );
-  }
-
-  getIsThereNewFeaturedTemplates() {
-    return this.getFeaturedTemplates().pipe(
-      map((res) => {
-        return (
-          res.filter((template) => {
-            return dayjs(template.created).isAfter(dayjs().subtract(7, 'days'));
-          }).length > 0
-        );
-      })
     );
   }
 }

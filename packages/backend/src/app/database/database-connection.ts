@@ -88,6 +88,7 @@ function getEntities(): EntitySchema<unknown>[] {
                 OAuthAppEntity,
                 OtpEntity,
                 ApiKeyEntity,
+                FlowTemplateEntity,
             )
             break
         case ApEdition.COMMUNITY:

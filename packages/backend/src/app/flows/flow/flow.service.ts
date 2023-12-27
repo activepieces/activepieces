@@ -9,7 +9,7 @@ import {
     FlowStatus,
     FlowOperationRequest,
     FlowOperationType,
-    FlowTemplate,
+    FlowTemplateWithoutProjectInformation,
     FlowVersion,
     FlowVersionId,
     FlowVersionState,
@@ -289,7 +289,7 @@ export const flowService = {
         })
     },
 
-    async getTemplate({ flowId, versionId, projectId }: GetTemplateParams): Promise<FlowTemplate> {
+    async getTemplate({ flowId, versionId, projectId }: GetTemplateParams): Promise<FlowTemplateWithoutProjectInformation> {
         const flow = await this.getOnePopulatedOrThrow({
             id: flowId,
             projectId,
@@ -298,19 +298,14 @@ export const flowService = {
         })
 
         return {
-            id: apId(),
             name: flow.version.displayName,
             description: '',
             pieces: flowHelper.getUsedPieces(flow.version.trigger),
             template: flow.version,
             tags: [],
-            imageUrl: null,
-            userId: null,
             created: Date.now().toString(),
             updated: Date.now().toString(),
             blogUrl: '',
-            featuredDescription: '',
-            isFeatured: false,
         }
     },
 

@@ -24,7 +24,7 @@ import {
   CORE_PIECES_TRIGGERS,
   CORE_SCHEDULE,
   corePieceIconUrl,
-} from 'ui-feature-pieces';
+} from '@activepieces/ui/feature-pieces';
 
 export const BUILDER_STATE_NAME = 'builderState';
 

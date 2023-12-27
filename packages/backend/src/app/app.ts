@@ -30,7 +30,7 @@ import { appCredentialModule } from './ee/app-credentials/app-credentials.module
 import { appSumoModule } from './ee/appsumo/appsumo.module'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
 import { platformRunHooks } from './ee/flow-run/cloud-flow-run-hooks'
-import { flowTemplateModule } from './ee/flow-template/flow-template.module'
+import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-template.module'
 import { platformWorkerHooks } from './ee/flow-worker/cloud-flow-worker-hooks'
 import { initilizeSentry } from './ee/helper/exception-handler'
 import { adminPieceModule } from './ee/pieces/admin-piece-module'
@@ -74,6 +74,7 @@ import { domainHelper } from './helper/domain-helper'
 import { platformDomainHelper } from './ee/helper/platform-domain-helper'
 import { enterpriseUserModule } from './ee/user/enterprise-user-module'
 import { flowResponseWatcher } from './flows/flow-run/flow-response-watcher'
+import { communityFlowTemplateModule } from './flow-templates/community-flow-template.module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -211,7 +212,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(billingModule)
             await app.register(appCredentialModule)
             await app.register(connectionKeyModule)
-            await app.register(flowTemplateModule)
             await app.register(platformProjectModule)
             await app.register(projectMemberModule)
             await app.register(appSumoModule)
@@ -228,6 +228,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(federatedAuthModule)
             await app.register(apiKeyModule)
             await app.register(enterpriseUserModule)
+            await app.register(platformFlowTemplateModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
@@ -255,6 +256,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(federatedAuthModule)
             await app.register(apiKeyModule)
             await app.register(enterpriseUserModule)
+            await app.register(platformFlowTemplateModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
@@ -269,6 +271,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
         case ApEdition.COMMUNITY:
             await app.register(projectModule)
             await app.register(communityPiecesModule)
+            await app.register(communityFlowTemplateModule)
             break
     }
 
