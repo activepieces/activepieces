@@ -12,7 +12,9 @@ export class SelectedAuthConfigsPipe implements PipeTransform {
     controlValue: string
   ): ConnectionDropdownItem | undefined {
     return value
-      .filter((item) => item.label.pieceName === pieceName || !item.label.pieceName)
+      .filter(
+        (item) => item.label.pieceName === pieceName || !item.label.pieceName
+      )
       .find((item) => item.value === controlValue);
   }
 }

@@ -1,9 +1,11 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { logger } from '../../helper/logger'
 
 export class UpdateStatusInUserSqlite1703713027818 implements MigrationInterface {
     name = 'UpdateStatusInUserSqlite1703713027818'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        logger.info('UpdateStatusInUserSqlite1703713027818 up')
         await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
         `)
