@@ -19,14 +19,29 @@ export class AddPlatformIdToFlowTemplates1703411318826 implements MigrationInter
         await queryRunner.query(`
             ALTER TABLE "flow_template" DROP COLUMN "featuredDescription"
         `)
+
         await queryRunner.query(`
-            ALTER TABLE "flow_template"
-            ADD "type" character varying NOT NULL
+            ALTER TABLE "flow_template" ADD "type" character varying
         `)
         await queryRunner.query(`
-            ALTER TABLE "flow_template"
-            ADD "platformId" character varying
+            UPDATE "flow_template" SET "type" = 'PROJECT'
         `)
+        await queryRunner.query(`
+            ALTER TABLE "flow_template" ALTER COLUMN "type" SET NOT NULL
+        `)
+
+        await queryRunner.query(`
+            ALTER TABLE "flow_template" ADD "platformId" character varying
+        `)
+        await queryRunner.query(`
+            UPDATE "flow_template" SET "platformId" = (
+                SELECT "platformId" FROM "project" WHERE "projectId" = flow_template."projectId"
+            )
+        `)
+        await queryRunner.query(`
+            ALTER TABLE "flow_template" ALTER COLUMN "platformId" SET NOT NULL
+        `)
+
         await queryRunner.query(`
             ALTER TABLE "flow_template"
             ADD CONSTRAINT "fk_flow_template_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform"("id") ON DELETE CASCADE ON UPDATE NO ACTION
