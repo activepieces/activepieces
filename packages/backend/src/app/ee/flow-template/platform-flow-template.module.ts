@@ -1,5 +1,5 @@
 import { flowTemplateService } from './flow-template.service'
-import { ListFlowTemplatesRequest, ALL_PRINICPAL_TYPES, PrincipalType, TemplateType, ActivepiecesError, ErrorCode, assertNotNullOrUndefined } from '@activepieces/shared'
+import { ListFlowTemplatesRequest, ALL_PRINICPAL_TYPES, PrincipalType, TemplateType, ActivepiecesError, ErrorCode, assertNotNullOrUndefined, Principal } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { CreateFlowTemplateRequest } from '@activepieces/ee-shared'
@@ -65,13 +65,41 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
             params: GetIdParams,
         },
     }, async (request, reply) => {
-        // TODO ADD VALIDATION ON PEMRISSIONS
+        await assertUserCanDeleteTemplate({
+            templateId: request.params.id,
+            userId: request.principal.id,
+            principal: request.principal,
+        })
         await flowTemplateService.delete({
             id: request.params.id,
         })
         return reply.status(StatusCodes.NO_CONTENT).send()
         
     })
+}
+
+async function assertUserCanDeleteTemplate({
+    templateId,
+    userId,
+    principal,
+}: { templateId: string, userId: string, principal: Principal }): Promise<void> {
+    const template = await flowTemplateService.getOrThrow(templateId)
+    switch (template.type) {
+        case TemplateType.PLATFORM:
+            await assertUserIsPlatformOwner({
+                platformId: template.platformId,
+                userId,
+            })
+            break
+        case TemplateType.PROJECT:
+            if (template.projectId !== principal.projectId) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.AUTHORIZATION,
+                    params: {},
+                })
+            }
+            break
+    }
 }
 
 async function assertUserIsPlatformOwner({

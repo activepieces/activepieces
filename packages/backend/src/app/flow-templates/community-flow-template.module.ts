@@ -31,8 +31,7 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
             },
         })
         const templates = await response.json()
-        // TODO this need to be changed to be without pagination once released
-        return paginationHelper.createPage(templates, null)
+        return templates
     })
 
 

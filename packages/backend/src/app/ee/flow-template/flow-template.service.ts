@@ -11,7 +11,7 @@ const templateRepo = databaseConnection.getRepository<FlowTemplate>(FlowTemplate
 const templateProjectId = system.get(SystemProp.TEMPLATES_PROJECT_ID)
 
 export const flowTemplateService = {
-    upsert: async (platformId: string | undefined, projectId: string | undefined, { description,  type, template, blogUrl, tags,id }: CreateFlowTemplateRequest): Promise<FlowTemplate> => {
+    upsert: async (platformId: string | undefined, projectId: string | undefined, { description,  type, template, blogUrl, tags, id }: CreateFlowTemplateRequest): Promise<FlowTemplate> => {
         const flowTemplate: FlowVersionTemplate = template
         await templateRepo.upsert({
             id: id ?? apId(),
