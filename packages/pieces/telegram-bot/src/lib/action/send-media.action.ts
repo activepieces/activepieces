@@ -43,7 +43,7 @@ export const telegramSendMediaAction = createAction({
           disabled: false,
           placeholder: 'Select media type',
           options: [
-            { label: 'Image', value: 'image' },
+            { label: 'Image', value: 'photo' },
             { label: 'Video', value: 'video' },
             { label: 'Sticker', value: 'sticker' },
             { label: 'GIF', value: 'animation' },
@@ -56,18 +56,18 @@ export const telegramSendMediaAction = createAction({
         refreshers: ['media_type'],
         async props({ media_type }) {
           const propsBuilders: Record<string, () => DynamicPropsValue> = {
-            image: () => ({
-              image: Property.File({
+            photo: () => ({
+              photo: Property.File({
                 displayName: 'Image',
                 description: 'The image to be uploaded as a file',
                 required: false,
               }),
-              imageUrl: Property.ShortText({
+              photoUrl: Property.ShortText({
                 displayName: 'Image Url',
                 description: 'The image url to be downloaded by Telegram',
                 required: false,
               }),
-              imageId: Property.ShortText({
+              photoId: Property.ShortText({
                 displayName: 'Image Id',
                 description:
                   "The image id previously uploaded to Telegram's servers",
@@ -120,19 +120,19 @@ export const telegramSendMediaAction = createAction({
             }),
             animation: () => ({
               animation: Property.File({
-                displayName: 'GIF or H.264/MPEG-4',
+                displayName: 'GIF',
                 description:
                   'The GIF or MPEG-4 without sound file to be uploaded as a auto-playing animation',
                 required: false,
               }),
               animationUrl: Property.ShortText({
-                displayName: 'GIF or H.264/MPEG-4 Url',
+                displayName: 'GIF Url',
                 description:
                   'The GIF or MPEG-4 without sound url to be downloaded by Telegram',
                 required: false,
               }),
               animationId: Property.ShortText({
-                displayName: 'GIF or H.264/MPEG-4 Id',
+                displayName: 'GIF Id',
                 description:
                   "The GIF or MPEG-4 without sound id previously uploaded to Telegram's servers",
                 required: false,
@@ -195,7 +195,7 @@ export const telegramSendMediaAction = createAction({
         ];
   
         const methods: Partial<Record<string, string>> = {
-          image: 'sendPhoto',
+          photo: 'sendPhoto',
           video: 'sendVideo',
           sticker: 'sendSticker',
           animation: 'sendAnimation',
@@ -226,7 +226,7 @@ export const telegramSendMediaAction = createAction({
         } else if (typeof url !== 'undefined' || typeof id !== 'undefined') {
           // download
           body = body || {};
-          body.photo = url ?? id;
+          body[mediaType] = url ?? id;
           body.chat_id = ctx.propsValue['chat_id'];
           body.caption = ctx.propsValue['message'];
           body.message_thread_id =
