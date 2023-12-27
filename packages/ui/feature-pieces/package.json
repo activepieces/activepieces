@@ -1,5 +1,5 @@
 {
-  "name": "ui-feature-pieces",
+  "name": "@activepieces/ui/feature-pieces",
   "version": "0.0.1",
   "peerDependencies": {
     "@angular/common": "^16.2.0",

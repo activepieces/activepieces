@@ -28,10 +28,11 @@ export const googleGeminiAuth = PieceAuth.SecretText({
             return {
                 valid: true,
             }
-        } catch (e) {
+        } catch (e:any) {
+            const extraErrorInfo = e.response?.body?.error?.message ? `${e.response?.body?.error?.message} status:${e.response?.body?.error?.code}`  :  e;
             return {
                 valid: false,
-                error: 'Invalid API key'
+                error: `${extraErrorInfo}`
             }
         }
     }

@@ -6,6 +6,7 @@ import { createMockSignUpRequest } from '../../../helpers/mocks/authn'
 import { faker } from '@faker-js/faker'
 import { emailService } from '../../../../src/app/ee/helper/email/email-service'
 import { stripeHelper } from '../../../../src/app/ee/billing/billing/stripe-helper'
+import { createMockCustomDomain, createMockPlatform, createMockUser } from '../../../../test/helpers/mocks'
 
 let app: FastifyInstance | null = null
 
@@ -61,4 +62,37 @@ describe('Authentication API', () => {
 
     })
 
+
+    it('fails to sign up invited user platform if no project exist', async () => {
+        // arrange
+        const mockPlatformId = faker.string.nanoid(21)
+
+        const mockPlatformOwner = createMockUser({ platformId: mockPlatformId })
+        await databaseConnection.getRepository('user').save([mockPlatformOwner])
+
+        const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockPlatformOwner.id })
+        await databaseConnection.getRepository('platform').save(mockPlatform)
+
+        const mockCustomDomain = createMockCustomDomain({ platformId: mockPlatform.id })
+        await databaseConnection.getRepository('custom_domain').save(mockCustomDomain)
+
+        const mockedUpEmail = faker.internet.email()
+        const mockSignUpRequest = createMockSignUpRequest({ email: mockedUpEmail })
+
+        // act
+        const response = await app?.inject({
+            method: 'POST',
+            url: '/v1/authentication/sign-up',
+            headers: {
+                Host: mockCustomDomain.domain,
+            },
+            body: mockSignUpRequest,
+        })
+
+        // assert
+        expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        const responseBody = response?.json()
+
+        expect(responseBody?.code).toBe('INVITATIION_ONLY_SIGN_UP')
+    })
 })

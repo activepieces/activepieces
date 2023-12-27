@@ -60,7 +60,13 @@ export const telegramSendMessageAction = createAction({
             displayName: 'Message',
             description: 'The message to be sent',
             required: true,
-        })
+        }),
+        reply_markup: Property.Json({
+          required: false,
+          displayName: 'Reply Markup',
+          description:
+            'Additional interface options. A JSON-serialized object for an inline keyboard, custom reply keyboard, instructions to remove reply keyboard or to force a reply from the user. Use special actions such as Build Inline Keyboard to generate this JSON object.',
+        }),
     },
     async run(ctx) {
         return await httpClient.sendRequest<never>({
@@ -70,7 +76,8 @@ export const telegramSendMessageAction = createAction({
                 chat_id: ctx.propsValue['chat_id'],
                 text: ctx.propsValue['message'],
                 message_thread_id: ctx.propsValue['message_thread_id'] ?? undefined,
-                parse_mode: ctx.propsValue['format'] ?? 'MarkdownV2'
+                parse_mode: ctx.propsValue['format'] ?? 'MarkdownV2',
+                reply_markup: ctx.propsValue['reply_markup'] ?? undefined,
             },
         });
     },

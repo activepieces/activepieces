@@ -3,9 +3,9 @@ import {
     apId,
     Cursor,
     ErrorCode,
-    Flow,
     FlowId,
     PieceTrigger,
+    PopulatedFlow,
     ProjectId,
     SeekPage,
     Trigger,
@@ -27,8 +27,13 @@ const triggerEventRepo = databaseConnection.getRepository(TriggerEventEntity)
 
 export const triggerEventService = {
     async saveEvent({ projectId, flowId, payload }: { projectId: ProjectId, flowId: FlowId, payload: unknown }): Promise<TriggerEvent> {
-        const flow = await flowService.getOneOrThrow({ projectId, id: flowId })
+        const flow = await flowService.getOnePopulatedOrThrow({
+            id: flowId,
+            projectId,
+        })
+
         const sourceName = getSourceName(flow.version.trigger)
+
         return triggerEventRepo.save({
             id: apId(),
             projectId,
@@ -38,7 +43,7 @@ export const triggerEventService = {
         })
     },
 
-    async test({ projectId, flow }: { projectId: ProjectId, flow: Flow }): Promise<SeekPage<unknown>> {
+    async test({ projectId, flow }: { projectId: ProjectId, flow: PopulatedFlow }): Promise<SeekPage<unknown>> {
         const trigger = flow.version.trigger
         const emptyPage = paginationHelper.createPage<TriggerEvent>([], null)
         switch (trigger.type) {
@@ -79,6 +84,7 @@ export const triggerEventService = {
                         payload: output,
                     })
                 }
+
                 return triggerEventService.list({
                     projectId,
                     flow,
@@ -136,7 +142,7 @@ function getSourceName(trigger: Trigger): string {
 
 type ListParams = {
     projectId: ProjectId
-    flow: Flow
+    flow: PopulatedFlow
     cursor: Cursor | null
     limit: number
 }

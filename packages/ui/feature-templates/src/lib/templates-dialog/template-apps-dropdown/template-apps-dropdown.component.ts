@@ -21,7 +21,7 @@ import {
   CORE_PIECES_TRIGGERS,
   PieceMetadataService,
   corePieceIconUrl,
-} from 'ui-feature-pieces';
+} from '@activepieces/ui/feature-pieces';
 
 @Component({
   selector: 'app-template-apps-dropdown',

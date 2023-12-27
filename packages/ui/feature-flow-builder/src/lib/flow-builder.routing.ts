@@ -2,12 +2,7 @@ import { Routes } from '@angular/router';
 import { FlowBuilderComponent } from './page/flow-builder/flow-builder.component';
 import { GetInstanceRunResolver } from './resolvers/instance-run.resolver';
 import { GetFlowResolver } from './resolvers/flow.resolver';
-import { InstanceResolver as GetInstanceResolver } from './resolvers/instance.resolver';
 import { ConnectionsResolver, UserLoggedIn } from '@activepieces/ui/common';
-import {
-  isThereAnyNewFeaturedTemplatesResolver,
-  isThereAnyNewFeaturedTemplatesResolverKey,
-} from '@activepieces/ui/common';
 import { BuilderSavingGuard } from './guards/builder-saving.guard';
 
 export const FlowLayoutRouting: Routes = [
@@ -16,10 +11,7 @@ export const FlowLayoutRouting: Routes = [
     component: FlowBuilderComponent,
     resolve: {
       flowAndFolder: GetFlowResolver,
-      instanceData: GetInstanceResolver,
       connections: ConnectionsResolver,
-      [isThereAnyNewFeaturedTemplatesResolverKey]:
-        isThereAnyNewFeaturedTemplatesResolver,
     },
     canActivate: [UserLoggedIn],
     canDeactivate: [BuilderSavingGuard],

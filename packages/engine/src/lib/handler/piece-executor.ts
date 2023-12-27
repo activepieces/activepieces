@@ -76,7 +76,7 @@ export const pieceExecutor: BaseExecutor<PieceAction> = {
                     workerToken: constants.workerToken,
                     stepName: action.name,
                     flowId: constants.flowId,
-                    type: 'local',
+                    type: constants.filesServiceType,
                 }),
                 server: {
                     token: constants.workerToken,

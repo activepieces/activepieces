@@ -25,6 +25,7 @@ async function getProjectForUserOrThrow(user: User): Promise<Project> {
     return invitedProject
 }
 
+
 const getProjectMemberOrThrow = async (user: User): Promise<Project | null> => {
     const platformProjects = await projectMemberService.listByUser(user)
 
@@ -88,7 +89,29 @@ async function getProjectAndTokenOrThrow(user: User): Promise<{ project: Project
     }
 }
 
+async function isInvitedToProject({ email, platformId }: { email: string, platformId: string }): Promise<boolean> {
+    const platformProjects = await projectMemberService.listByUser({
+        email,
+        platformId,
+    })
+    return platformProjects.length > 0
+}
+
+async function assertUserIsInvitedToAnyProject({ email, platformId }: { email: string, platformId: string }): Promise<void> {
+    const isInvited = await isInvitedToProject({ email, platformId })
+    if (!isInvited) {
+        throw new ActivepiecesError({
+            code: ErrorCode.INVITATIION_ONLY_SIGN_UP,
+            params: {},
+        })
+    }
+}
+
 export const authenticationHelper = {
     getProjectAndTokenOrThrow,
     autoVerifyUserIfEligible,
+    assertUserIsInvitedToAnyProject,
+
 }
+
+

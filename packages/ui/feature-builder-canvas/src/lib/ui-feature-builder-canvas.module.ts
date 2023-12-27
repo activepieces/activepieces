@@ -19,7 +19,7 @@ import { DeleteFlowItemActionComponent } from './components/flow-item-tree/flow-
 import { ReplaceTriggerActionComponent } from './components/flow-item-tree/flow-item/actions/replace-trigger-action/replace-trigger-action.component';
 import { ActionsContainerComponent } from './components/flow-item-tree/flow-item/actions/actions-container/actions-container.component';
 import { DuplicateStepActionComponent } from './components/flow-item-tree/flow-item/actions/duplicate-step-action/duplicate-step-action.component';
-import { UiFeaturePiecesModule } from 'ui-feature-pieces';
+import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
 import { EndfOfFlowWidgetComponent } from './components/widgets/end-of-flow-widget/end-of-flow-widget.component';
 
 @NgModule({

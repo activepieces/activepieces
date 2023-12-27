@@ -2,7 +2,6 @@ import { AppConnectionId } from '../app-connection/app-connection'
 import { FileId } from '../file/file'
 import { FlowRunId } from '../flow-run/flow-run'
 import { FlowId } from '../flows/flow'
-import { FlowInstanceId } from '../flows/flow-instances'
 import { FlowVersionId } from '../flows/flow-version'
 import { ApId } from './id-generator'
 
@@ -22,7 +21,6 @@ type ErrorParams =
     | ExecutionTimeoutErrorParams
     | ExistingUserErrorParams
     | FileNotFoundErrorParams
-    | FlowInstanceNotFoundErrorParams
     | FlowNotFoundErrorParams
     | FlowOperationErrorParams
     | FlowRunNotFoundErrorParams
@@ -51,11 +49,17 @@ type ErrorParams =
     | TriggerEnableErrorParams
     | TriggerFailedErrorParams
     | ValidationErrorParams
+    | InvitationOnlySignUpParams
 
 export type BaseErrorParams<T, V> = {
     code: T
     params: V
 }
+
+export type InvitationOnlySignUpParams = BaseErrorParams<
+ErrorCode.INVITATIION_ONLY_SIGN_UP,
+Record<string, never>
+>
 
 export type InvalidClaimParams = BaseErrorParams<ErrorCode.INVALID_CLAIM, { redirectUrl: string, tokenUrl: string, clientId: string }>
 export type InvalidCloudClaimParams = BaseErrorParams<ErrorCode.INVALID_CLOUD_CLAIM, { appName: string }>
@@ -100,13 +104,6 @@ export type FlowNotFoundErrorParams = BaseErrorParams<
 ErrorCode.FLOW_NOT_FOUND,
 {
     id: FlowId
-}
->
-
-export type FlowInstanceNotFoundErrorParams = BaseErrorParams<
-ErrorCode.FLOW_INSTANCE_NOT_FOUND,
-{
-    id?: FlowInstanceId
 }
 >
 
@@ -326,6 +323,7 @@ export enum ErrorCode {
     INVALID_CREDENTIALS = 'INVALID_CREDENTIALS',
     INVALID_OR_EXPIRED_JWT_TOKEN = 'INVALID_OR_EXPIRED_JWT_TOKEN',
     INVALID_OTP = 'INVALID_OTP',
+    INVITATIION_ONLY_SIGN_UP = 'INVITATIION_ONLY_SIGN_UP',
     JOB_REMOVAL_FAILURE = 'JOB_REMOVAL_FAILURE',
     OPEN_AI_FAILED = 'OPEN_AI_FAILED',
     PAUSE_METADATA_MISSING = 'PAUSE_METADATA_MISSING',
