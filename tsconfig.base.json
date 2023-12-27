@@ -79,6 +79,9 @@
       "@activepieces/piece-deepl": ["packages/pieces/deepl/src/index.ts"],
       "@activepieces/piece-delay": ["packages/pieces/delay/src/index.ts"],
       "@activepieces/piece-discord": ["packages/pieces/discord/src/index.ts"],
+      "@activepieces/piece-discourse": [
+        "packages/pieces/discourse/src/index.ts"
+      ],
       "@activepieces/piece-drip": ["packages/pieces/drip/src/index.ts"],
       "@activepieces/piece-dropbox": ["packages/pieces/dropbox/src/index.ts"],
       "@activepieces/piece-facebook-leads": [
@@ -153,6 +156,7 @@
       "@activepieces/piece-lead-connector": [
         "packages/pieces/lead-connector/src/index.ts"
       ],
+      "@activepieces/piece-line": ["packages/pieces/line/src/index.ts"],
       "@activepieces/piece-linear": ["packages/pieces/linear/src/index.ts"],
       "@activepieces/piece-linkedin": ["packages/pieces/linkedin/src/index.ts"],
       "@activepieces/piece-mailchimp": [
@@ -268,9 +272,6 @@
       "@activepieces/pieces-framework": [
         "packages/pieces/framework/src/index.ts"
       ],
-      "@activepieces/pieces/chatbots": [
-        "packages/pieces/chatbots/src/index.ts"
-      ],
       "@activepieces/pieces/date-helper": [
         "packages/pieces/date-helper/src/index.ts"
       ],
@@ -309,9 +310,6 @@
       ],
       "@activepieces/ui/feature-builder-test-steps": [
         "packages/ui/feature-builder-test-steps/src/index.ts"
-      ],
-      "@activepieces/ui/feature-chatbot": [
-        "packages/ui/feature-chatbot/src/index.ts"
       ],
       "@activepieces/ui/feature-connections": [
         "packages/ui/feature-connections/src/index.ts"

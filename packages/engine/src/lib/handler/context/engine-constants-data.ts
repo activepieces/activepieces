@@ -15,4 +15,5 @@ export type EngineConstantData = {
     baseCodeDirectory: string
     piecesSource: string
     testSingleStepMode: boolean
+    filesServiceType: 'local' | 'db'
 }

@@ -1,0 +1,43 @@
+{
+  "name": "pieces-discourse",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/discourse/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/discourse",
+        "tsConfig": "packages/pieces/discourse/tsconfig.lib.json",
+        "packageJson": "packages/pieces/discourse/package.json",
+        "main": "packages/pieces/discourse/src/index.ts",
+        "assets": [
+          "packages/pieces/discourse/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-discourse {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/discourse/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
