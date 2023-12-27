@@ -4,15 +4,14 @@ import { map, Observable, shareReplay, startWith, Subject, tap } from 'rxjs';
 import { FlowsTableDataSource } from './flows-table.datasource';
 import { MatDialog } from '@angular/material/dialog';
 import {
-  Flow,
-  FlowInstanceStatus,
+  PopulatedFlow,
+  FlowStatus,
   FolderId,
   TriggerType,
 } from '@activepieces/shared';
 
 import {
   ApPaginatorComponent,
-  FlowInstanceService,
   FoldersService,
   NavigationService,
 } from '@activepieces/ui/common';
@@ -61,7 +60,6 @@ export class FlowsTableComponent implements OnInit {
     private dialogService: MatDialog,
     private flowService: FlowService,
     private foldersService: FoldersService,
-    private instanceService: FlowInstanceService,
     private store: Store,
     private navigationService: NavigationService,
     @Inject(LOCALE_ID) private locale: string
@@ -108,13 +106,13 @@ export class FlowsTableComponent implements OnInit {
     );
   }
 
-  openBuilder(flow: Flow, event: MouseEvent) {
+  openBuilder(flow: PopulatedFlow, event: MouseEvent) {
     const link = '/flows/' + flow.id;
     const newWindow = event.ctrlKey || event.which == 2 || event.button == 4;
     this.navigationService.navigate(link, newWindow);
   }
 
-  deleteFlow(flow: Flow) {
+  deleteFlow(flow: PopulatedFlow) {
     const dialogData: DeleteEntityDialogData = {
       deleteEntity$: this.flowService.delete(flow.id),
       entityName: flow.version.displayName,
@@ -140,20 +138,20 @@ export class FlowsTableComponent implements OnInit {
       })
     );
   }
-  toggleFlowStatus(flow: Flow, control: FormControl<boolean>) {
+  toggleFlowStatus(flow: PopulatedFlow, control: FormControl<boolean>) {
     if (control.enabled) {
       control.disable();
-      this.flowsUpdateStatusRequest$[flow.id] = this.instanceService
+      this.flowsUpdateStatusRequest$[flow.id] = this.flowService
         .updateStatus(flow.id, {
           status:
-            flow.status === FlowInstanceStatus.ENABLED
-              ? FlowInstanceStatus.DISABLED
-              : FlowInstanceStatus.ENABLED,
+            flow.status === FlowStatus.ENABLED
+              ? FlowStatus.DISABLED
+              : FlowStatus.ENABLED,
         })
         .pipe(
           tap((res) => {
             control.enable();
-            control.setValue(res.status === FlowInstanceStatus.ENABLED);
+            control.setValue(res.status === FlowStatus.ENABLED);
             this.flowsUpdateStatusRequest$[flow.id] = null;
             flow.status = res.status;
           }),
@@ -161,11 +159,11 @@ export class FlowsTableComponent implements OnInit {
         );
     }
   }
-  duplicate(flow: Flow) {
+  duplicate(flow: PopulatedFlow) {
     this.duplicateFlow$ = this.flowService.duplicate(flow.id);
   }
 
-  getTriggerIcon(flow: Flow) {
+  getTriggerIcon(flow: PopulatedFlow) {
     const trigger = flow.version.trigger;
     switch (trigger.type) {
       case TriggerType.WEBHOOK:
@@ -188,7 +186,7 @@ export class FlowsTableComponent implements OnInit {
     }
   }
 
-  getTriggerToolTip(flow: Flow) {
+  getTriggerToolTip(flow: PopulatedFlow) {
     const trigger = flow.version.trigger;
     switch (trigger.type) {
       case TriggerType.WEBHOOK:
@@ -211,7 +209,7 @@ export class FlowsTableComponent implements OnInit {
     }
   }
 
-  moveFlow(flow: Flow) {
+  moveFlow(flow: PopulatedFlow) {
     const dialogData: MoveFlowToFolderDialogData = {
       flowId: flow.id,
       folderId: flow.folderId,
@@ -229,7 +227,9 @@ export class FlowsTableComponent implements OnInit {
       );
   }
 
-  getStatusFlowMatTooltip(flow: any) {
+  getStatusFlowMatTooltip(flow: {
+    instanceToggleControl: FormControl<boolean>;
+  }) {
     if (flow.instanceToggleControl.disabled) {
       return $localize`Please publish the flow`;
     }

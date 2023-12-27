@@ -1,5 +1,5 @@
 import {
-  Flow,
+  PopulatedFlow,
   FlowOperationType,
   FlowTemplate,
   TelemetryEventName,
@@ -111,7 +111,7 @@ export class ImportFlowComponent implements OnInit {
                         request: templateJson.template,
                       })
                       .pipe(
-                        tap((updatedFlow: Flow) => {
+                        tap((updatedFlow: PopulatedFlow) => {
                           this.router.navigate(['flows', updatedFlow.id]);
                         })
                       );
