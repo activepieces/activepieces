@@ -21,7 +21,7 @@ import { ConnectionsTableDataSource } from './connections-table.datasource';
 import { ApPaginatorComponent } from '@activepieces/ui/common';
 import { AppConnectionsService } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
-import { PieceMetadataService } from 'ui-feature-pieces';
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 
 @Component({
   templateUrl: './connections-table.component.html',

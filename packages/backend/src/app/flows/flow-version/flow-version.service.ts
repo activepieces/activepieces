@@ -77,7 +77,6 @@ export const flowVersionService = {
             case FlowOperationType.DUPLICATE_ACTION:
                 mutatedFlowVersion = await this.getFlowVersion({
                     flowId: flowVersion.flowId,
-                    removeSecrets: false,
                     versionId: flowVersion.id,
                 })
                 operations = [userOperation]
@@ -114,12 +113,13 @@ export const flowVersionService = {
 
         return flowVersion
     },
-    async getFlowVersion({ flowId, versionId, removeSecrets }: { flowId: FlowId, versionId: FlowVersionId | undefined, removeSecrets: boolean }): Promise<FlowVersion> {
+    async getFlowVersion({ flowId, versionId, removeSecrets = false }: { flowId: FlowId, versionId: FlowVersionId | undefined, removeSecrets?: boolean }): Promise<FlowVersion> {
         let flowVersion = await flowVersionRepo.findOneOrFail({
             where: {
                 flowId,
                 id: versionId,
             },
+            //This is needed to return draft by default because it is always the latest one
             order: {
                 created: 'DESC',
             },

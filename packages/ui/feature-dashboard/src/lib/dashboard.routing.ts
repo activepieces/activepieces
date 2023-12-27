@@ -9,18 +9,12 @@ import { ConnectionsTableComponent } from './pages/connections-table/connections
 import { FoldersResolver } from './resolvers/folders.resolver';
 import { DashboardContainerComponent } from './dashboard-container.component';
 import {
-  ConnectionsResolver,
   showBasedOnFlagGuard,
   showPlatformSettingsGuard,
 } from '@activepieces/ui/common';
-import {
-  ChatbotsTableComponent,
-  ChatbotSettingsComponent,
-  chatbotSettingsResolver,
-} from '@activepieces/ui/feature-chatbot';
 import { PlansPageComponent } from '@activepieces/ee-billing-ui';
 import { ProjectMembersTableComponent } from '@activepieces/ee/project-members';
-import { CommunityPiecesTableComponent } from 'ui-feature-pieces';
+import { CommunityPiecesTableComponent } from '@activepieces/ui/feature-pieces';
 import { ApFlagId } from '@activepieces/shared';
 
 export const DashboardLayoutRouting: Routes = [
@@ -53,50 +47,6 @@ export const DashboardLayoutRouting: Routes = [
         canActivate: [showBasedOnFlagGuard(ApFlagId.PROJECT_MEMBERS_ENABLED)],
         path: 'team',
         component: ProjectMembersTableComponent,
-      },
-      {
-        data: {
-          title: $localize`Chatbots`,
-        },
-        canActivate: [showBasedOnFlagGuard(ApFlagId.CHATBOT_ENABLED)],
-        path: 'chatbots',
-        pathMatch: 'full',
-        component: ChatbotsTableComponent,
-      },
-      {
-        path: 'chatbots/:id/settings',
-        canActivate: [showBasedOnFlagGuard(ApFlagId.CHATBOT_ENABLED)],
-        data: {
-          title: $localize`Chatbot settings`,
-        },
-        pathMatch: 'full',
-        component: ChatbotSettingsComponent,
-        resolve: {
-          connections: ConnectionsResolver,
-          chatbot: chatbotSettingsResolver,
-        },
-      },
-      {
-        data: {
-          title: $localize`Chatbots`,
-        },
-        canActivate: [showBasedOnFlagGuard(ApFlagId.CHATBOT_ENABLED)],
-        path: 'chatbots',
-        pathMatch: 'full',
-        component: ChatbotsTableComponent,
-      },
-      {
-        path: 'chatbots/:id/settings',
-        canActivate: [showBasedOnFlagGuard(ApFlagId.CHATBOT_ENABLED)],
-        data: {
-          title: $localize`Chatbot settings`,
-        },
-        pathMatch: 'full',
-        component: ChatbotSettingsComponent,
-        resolve: {
-          connections: ConnectionsResolver,
-          chatbot: chatbotSettingsResolver,
-        },
       },
       {
         data: {

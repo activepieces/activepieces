@@ -1,5 +1,5 @@
 import { KeyAlgorithm, SigningKey, Platform, OAuthApp, FilteredPieceBehavior, CustomDomain, CustomDomainStatus, OtpModel, OtpType, OtpState, ProjectMember, ApiKey, ProjectMemberRole, ProjectMemberStatus } from '@activepieces/ee-shared'
-import { UserStatus, User, apId, Project, NotificationStatus, ProjectType, PieceType, PackageType } from '@activepieces/shared'
+import { UserStatus, User, apId, Project, NotificationStatus, ProjectType, PieceType, PackageType, Flow, FlowStatus, FlowVersion, TriggerType, FlowVersionState, FlowTemplate, TemplateType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
 import bcrypt from 'bcrypt'
@@ -7,6 +7,8 @@ import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oaut
 import { encryptString } from '../../../src/app/helper/encryption'
 import dayjs from 'dayjs'
 import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
+
+export const CLOUD_PLATFORM_ID = 'cloud-id'
 
 export const createMockUser = (user?: Partial<User>): User => {
     return {
@@ -36,6 +38,23 @@ export const createMockOAuthApp = (oAuthApp?: Partial<OAuthApp>): OAuthAppWithEn
         pieceName: oAuthApp?.pieceName ?? faker.lorem.word(),
         clientId: oAuthApp?.clientId ?? apId(),
         clientSecret: encryptString(faker.lorem.word()),
+    }
+}
+
+export const createMockTemplate = (template?: Partial<FlowTemplate>): FlowTemplate => {
+    return {
+        name: template?.name ?? faker.lorem.word(),
+        description: template?.description ?? faker.lorem.sentence(),
+        type: template?.type ?? faker.helpers.enumValue(TemplateType),
+        tags: template?.tags ?? [],
+        pieces: template?.pieces ?? [],
+        blogUrl: template?.blogUrl ?? faker.internet.url(),
+        template: template?.template ?? createMockFlowVersion(),
+        projectId: template?.projectId ?? apId(),
+        platformId: template?.platformId ?? apId(),
+        id: template?.id ?? apId(),
+        created: template?.created ?? faker.date.recent().toISOString(),
+        updated: template?.updated ?? faker.date.recent().toISOString(),
     }
 }
 
@@ -235,6 +254,41 @@ export const createMockOtp = (otp?: Partial<OtpModel>): OtpModel => {
         userId: otp?.userId ?? apId(),
         value: otp?.value ?? faker.number.int({ min: 100000, max: 999999 }).toString(),
         state: otp?.state ?? faker.helpers.enumValue(OtpState),
+    }
+}
+
+export const createMockFlow = (flow?: Partial<Flow>): Flow => {
+    return {
+        id: flow?.id ?? apId(),
+        created: flow?.created ?? faker.date.recent().toISOString(),
+        updated: flow?.updated ?? faker.date.recent().toISOString(),
+        projectId: flow?.projectId ?? apId(),
+        status: flow?.status ?? faker.helpers.enumValue(FlowStatus),
+        folderId: flow?.folderId ?? null,
+        schedule: flow?.schedule ?? null,
+        publishedVersionId: flow?.publishedVersionId ?? null,
+    }
+}
+
+export const createMockFlowVersion = (flowVersion?: Partial<FlowVersion>): FlowVersion => {
+    const emptyTrigger = {
+        type: TriggerType.EMPTY,
+        name: 'trigger',
+        settings: {},
+        valid: false,
+        displayName: 'Select Trigger',
+    } as const
+
+    return {
+        id: flowVersion?.id ?? apId(),
+        created: flowVersion?.created ?? faker.date.recent().toISOString(),
+        updated: flowVersion?.updated ?? faker.date.recent().toISOString(),
+        displayName: flowVersion?.displayName ?? faker.word.words(),
+        flowId: flowVersion?.flowId ?? apId(),
+        trigger: flowVersion?.trigger ?? emptyTrigger,
+        state: flowVersion?.state ?? faker.helpers.enumValue(FlowVersionState),
+        updatedBy: flowVersion?.updatedBy ?? apId(),
+        valid: flowVersion?.valid ?? faker.datatype.boolean(),
     }
 }
 

@@ -1,3 +1,4 @@
+export * from './array-form-control/array-form-control.component';
 export * from './ap-button/ap-button.component';
 export * from './editable-text/editable-text.component';
 export * from './hotspot/hotspot.component';

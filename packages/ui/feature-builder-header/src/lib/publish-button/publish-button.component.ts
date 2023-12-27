@@ -3,9 +3,9 @@ import { Store } from '@ngrx/store';
 import { combineLatest, map, Observable, of } from 'rxjs';
 import {
   BuilderSelectors,
-  FlowInstanceActions,
   ViewModeEnum,
   ViewModeActions,
+  FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
 
 @Component({
@@ -101,7 +101,7 @@ export class PublishButtonComponent implements OnInit {
   }
 
   publishButtonClicked() {
-    this.store.dispatch(FlowInstanceActions.publish());
+    this.store.dispatch(FlowsActions.publish());
   }
   editFlowButtonClicked() {
     this.store.dispatch(

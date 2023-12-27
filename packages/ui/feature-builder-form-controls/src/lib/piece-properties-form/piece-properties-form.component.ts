@@ -61,7 +61,7 @@ import { InterpolatingTextFormControlComponent } from '../interpolating-text-for
 import { PiecePropertiesFormValue } from '../models/piece-properties-form-value';
 import { AddEditConnectionButtonComponent } from '@activepieces/ui/feature-connections';
 import { PackageType, PieceType } from '@activepieces/shared';
-import { PieceMetadataService } from 'ui-feature-pieces';
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 
 type ConfigKey = string;
 

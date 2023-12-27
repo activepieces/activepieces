@@ -1,13 +1,15 @@
-<div class="ap-typography-subtitle-1 ap-text-title" i18n>
-    Filters
-</div>
-<form [formGroup]="filtersForm" class="ap-mt-4 -ap-ml-2.5 ap-h-[260px] thin-scrollbars ap-overflow-y-scroll">
-    <ng-container *ngFor="let filter of filters; let idx=index">
-        <div formArrayName="filters">
-            <mat-checkbox color="primary" [formControlName]="idx">
-                <div class="ap-typography-body-1 ap-text-body">{{filter}}</div>
-            </mat-checkbox>
-        </div>
-    </ng-container>
-</form>
+<ng-container *ngIf="filters.length > 0">
+    <div class="ap-typography-subtitle-1 ap-text-title" i18n>
+        Filters
+    </div>
+    <form [formGroup]="filtersForm" class="ap-mt-4 -ap-ml-2.5 ap-h-[260px] thin-scrollbars ap-overflow-y-scroll">
+        <ng-container *ngFor="let filter of filters; let idx=index">
+            <div formArrayName="filters">
+                <mat-checkbox color="primary" [formControlName]="idx">
+                    <div class="ap-typography-body-1 ap-text-body">{{filter}}</div>
+                </mat-checkbox>
+            </div>
+        </ng-container>
+    </form>
+</ng-container>
 <ng-container *ngIf="valueChanges$ | async"></ng-container>
