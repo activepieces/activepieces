@@ -8,6 +8,8 @@ import { encryptString } from '../../../src/app/helper/encryption'
 import dayjs from 'dayjs'
 import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
 
+export const CLOUD_PLATFORM_ID = 'cloud-id'
+
 export const createMockUser = (user?: Partial<User>): User => {
     return {
         id: user?.id ?? apId(),

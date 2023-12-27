@@ -34,7 +34,7 @@ import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-tem
 import { platformWorkerHooks } from './ee/flow-worker/cloud-flow-worker-hooks'
 import { initilizeSentry } from './ee/helper/exception-handler'
 import { adminPieceModule } from './ee/pieces/admin-piece-module'
-import { cloudPieceServiceHooks } from './ee/pieces/piece-service/cloud-piece-service-hooks'
+import { platformPieceServiceHooks } from './ee/pieces/piece-service/platform-piece-service-hooks'
 import { platformModule } from './ee/platform/platform.module'
 import { projectMemberModule } from './ee/project-members/project-member.module'
 import { platformProjectModule } from './ee/projects/platform-project-controller'
@@ -235,7 +235,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             appConnectionsHooks.setHooks(cloudAppConnectionsHooks)
             flowWorkerHooks.setHooks(platformWorkerHooks)
             flowRunHooks.setHooks(platformRunHooks)
-            pieceServiceHooks.set(cloudPieceServiceHooks)
+            pieceServiceHooks.set(platformPieceServiceHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             flagHooks.set(enterpriseFlagsHooks)
             authenticationServiceHooks.set(cloudAuthenticationServiceHooks)
@@ -260,7 +260,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
-            pieceServiceHooks.set(cloudPieceServiceHooks)
+            pieceServiceHooks.set(platformPieceServiceHooks)
             flowRunHooks.setHooks(platformRunHooks)
             flowWorkerHooks.setHooks(platformWorkerHooks)
             authenticationServiceHooks.set(enterpriseAuthenticationServiceHooks)

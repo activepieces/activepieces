@@ -209,6 +209,13 @@ export const flagService = {
             return '0.0.0'
         }
     },
+    isCloudPlatform(platformId: string | null): boolean {
+        const cloudPlatformId = system.get(SystemProp.CLOUD_PLATFORM_ID)
+        if (!cloudPlatformId || !platformId) {
+            return false
+        }
+        return platformId === cloudPlatformId
+    },
 }
 
 export type FlagType =
