@@ -23,11 +23,11 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
 
 
     app.get('/', ListAppConnectionsRequest, async (request): Promise<SeekPage<AppConnectionWithoutSensitiveData>> => {
-        const { appName, cursor, limit } = request.query
+        const { pieceName, cursor, limit } = request.query
 
         const appConnections = await appConnectionService.list({
             projectId: request.principal.projectId,
-            appName,
+            pieceName,
             cursorRequest: cursor ?? null,
             limit: limit ?? DEFAULT_PAGE_SIZE,
         })

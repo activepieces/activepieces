@@ -94,7 +94,7 @@ export const AppConnectionWithoutSensitiveData = Type.Object({
     ...BaseModelSchema,
     name: Type.String(),
     type: Type.Enum(AppConnectionType),
-    appName: Type.String(),
+    pieceName: Type.String(),
     projectId: ApId,
     status: Type.Enum(AppConnectionStatus),
 }, {

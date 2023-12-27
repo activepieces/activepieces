@@ -75,7 +75,7 @@ export const connectionKeyService = {
                     request: {
                         projectId,
                         name: `${appCredential.appName}_${connectionName}`,
-                        appName: finalAppName,
+                        pieceName: finalAppName,
                         type: AppConnectionType.SECRET_TEXT,
                         value: {
                             type: AppConnectionType.SECRET_TEXT,
@@ -90,7 +90,7 @@ export const connectionKeyService = {
                     projectId,
                     request: {
                         name: `${appCredential.appName}_${connectionName}`,
-                        appName: finalAppName,
+                        pieceName: finalAppName,
                         projectId,
                         type: AppConnectionType.OAUTH2,
                         value: {
