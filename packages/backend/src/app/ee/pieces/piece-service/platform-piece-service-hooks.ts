@@ -2,7 +2,7 @@ import { FileCompression, FileId, FileType, PieceType, isNil } from '@activepiec
 import { GetPieceArchivePackageParams, PieceServiceHooks } from '../../../pieces/piece-service/piece-service-hooks'
 import { fileService } from '../../../file/file.service'
 
-export const cloudPieceServiceHooks: PieceServiceHooks = {
+export const platformPieceServiceHooks: PieceServiceHooks = {
     async getPieceArchivePackage(params) {
         const archiveId = await saveArchive(params)
         const { archive: _, ...piecePackage } = params

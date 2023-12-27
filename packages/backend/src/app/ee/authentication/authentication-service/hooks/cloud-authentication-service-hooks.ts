@@ -19,15 +19,6 @@ export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
     },
     async postSignUp({ user, referringUserId }) {
 
-        // TODO remove once we migrated cloud to platform
-        if (isNil(user.platformId)) {
-            await projectService.create({
-                displayName: `${user.firstName}'s Project`,
-                ownerId: user.id,
-                platformId: undefined,
-                type: ProjectType.STANDALONE,
-            })
-        }
         if (!isNil(user.platformId) && flagService.isCloudPlatform(user.platformId)) {
             await projectService.create({
                 displayName: `${user.firstName}'s Project`,
