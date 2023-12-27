@@ -4,7 +4,7 @@ import { vboutGetEmailListAction } from './lib/actions/get-email-list';
 import { vboutCreateEmailListAction } from './lib/actions/create-email-list';
 import { vboutAddContactAction } from './lib/actions/add-contact';
 import { vboutUpdateContactAction } from './lib/actions/update-contact';
-
+import { vboutAddTagAction } from './lib/actions/add-tag-to-contact';
 const markdown = `
 To obtain your API key, follow these steps:
 
@@ -30,6 +30,7 @@ export const vbout = createPiece({
     vboutCreateEmailListAction,
     vboutAddContactAction,
     vboutUpdateContactAction,
+    vboutAddTagAction,
   ],
   triggers: [],
 });

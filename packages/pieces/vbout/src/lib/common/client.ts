@@ -9,6 +9,7 @@ import {
   EmailListCreateRequest,
   ContactCreateRequest,
   ContactUpdateRequest,
+  TagCreateRequest,
   VboutResponseBody,
   ContactList,
 } from './models';
@@ -112,6 +113,14 @@ export class VboutClient {
     return await this.makeRequest(
       HttpMethod.POST,
       '/emailMarketing/EditContact',
+      undefined,
+      request
+    );
+  }
+  async addTagToContact(request: TagCreateRequest) {
+    return await this.makeRequest(
+      HttpMethod.POST,
+      '/emailMarketing/AddTag',
       undefined,
       request
     );

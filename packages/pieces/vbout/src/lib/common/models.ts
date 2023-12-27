@@ -60,3 +60,8 @@ export interface ContactCreateRequest {
 export interface ContactUpdateRequest extends ContactCreateRequest {
   id: string;
 }
+
+export interface TagCreateRequest {
+  email: string;
+  tagname: string[];
+}
