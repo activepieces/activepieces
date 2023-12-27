@@ -5,7 +5,12 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { vboutCommon } from '.';
-import { ContactListsListResponse, EmailListCreateRequest } from './models';
+import {
+  EmailListCreateRequest,
+  ContactCreateRequest,
+  VboutResponseBody,
+  ContactList,
+} from './models';
 
 function emptyValueFilter(
   accessor: (key: string) => any
@@ -50,10 +55,14 @@ export class VboutClient {
 
   async listEmailLists() {
     return (
-      await this.makeRequest<ContactListsListResponse>(
-        HttpMethod.GET,
-        '/emailmarketing/getlists'
-      )
+      await this.makeRequest<
+        VboutResponseBody<{
+          lists: {
+            count: number;
+            items: ContactList[];
+          };
+        }>
+      >(HttpMethod.GET, '/emailmarketing/getlists')
     ).response.data;
   }
 
@@ -66,7 +75,7 @@ export class VboutClient {
   }
 
   async getEmailList(listId: string) {
-    return await this.makeRequest(
+    return await this.makeRequest<VboutResponseBody<{ list: ContactList }>>(
       HttpMethod.GET,
       '/emailmarketing/getlist',
       prepareQuery({ id: listId })
@@ -76,6 +85,14 @@ export class VboutClient {
     return await this.makeRequest(
       HttpMethod.POST,
       '/emailMarketing/AddList',
+      undefined,
+      request
+    );
+  }
+  async addContact(request: ContactCreateRequest) {
+    return await this.makeRequest(
+      HttpMethod.POST,
+      '/emailMarketing/AddContact',
       undefined,
       request
     );

@@ -1,5 +1,5 @@
 import { VboutClient } from './client';
-import { Property } from '@activepieces/pieces-framework';
+import { Property, DynamicPropsValue } from '@activepieces/pieces-framework';
 
 export function makeClient(apiKey: string): VboutClient {
   return new VboutClient(apiKey);
@@ -7,10 +7,10 @@ export function makeClient(apiKey: string): VboutClient {
 
 export const vboutCommon = {
   baseUrl: 'https://api.vbout.com/1',
-  listId: (required = true) =>
+  listid: (required = true) =>
     Property.Dropdown({
       displayName: 'List ID',
-      required,
+      required: required,
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) {
@@ -33,4 +33,33 @@ export const vboutCommon = {
         };
       },
     }),
+  listFields: Property.DynamicProperties({
+    displayName: 'Fields',
+    required: true,
+    refreshers: ['listid'],
+    props: async ({ auth, listid }) => {
+      if (!auth || !listid) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please connect your account and select Email List.',
+        };
+      }
+      const fields: DynamicPropsValue = {};
+      const client = makeClient(auth as unknown as string);
+      const contactList = await client.getEmailList(
+        listid as unknown as string
+      );
+      const contactListFields = contactList.response.data.list.fields;
+      for (const key in contactListFields) {
+        if (contactListFields.hasOwnProperty(key)) {
+          fields[key] = Property.ShortText({
+            displayName: contactListFields[key],
+            required: false,
+          });
+        }
+      }
+      return fields;
+    },
+  }),
 };

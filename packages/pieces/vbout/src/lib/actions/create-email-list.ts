@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { makeClient, vboutCommon } from '../common';
+import { makeClient } from '../common';
 import { vboutAuth } from '../..';
 
 export const vboutCreateEmailListAction = createAction({

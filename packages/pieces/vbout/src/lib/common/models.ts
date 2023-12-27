@@ -1,5 +1,5 @@
 import { HttpMessageBody } from '@activepieces/pieces-common';
-interface VboutResponseBody<T> extends HttpMessageBody {
+export interface VboutResponseBody<T> extends HttpMessageBody {
   response: {
     header: {
       status: string;
@@ -10,19 +10,6 @@ interface VboutResponseBody<T> extends HttpMessageBody {
     data: T;
   };
 }
-export interface ContactList {
-  id: string;
-  name: string;
-}
-
-export interface ContactListsListResponse
-  extends VboutResponseBody<{
-    lists: {
-      count: number;
-      items: ContactList[];
-    };
-  }> {}
-
 export interface EmailListCreateRequest {
   name: string;
   email_subject?: string;
@@ -38,4 +25,34 @@ export interface EmailListCreateRequest {
   confirmation_email?: string;
   confirmation_message?: string;
   communications?: boolean;
+}
+export interface ContactList {
+  id: string;
+  name: string;
+  form_title: string;
+  email_subject: string;
+  reply_to: string;
+  from_email: string;
+  from_name: string;
+  confimation_email: string;
+  success_email: string;
+  confimation_message: string;
+  success_message: string;
+  error_message: string;
+  doubleOptin: string;
+  notify_email: string;
+  creation_date: string;
+  fields?: {
+    [key: string]: string;
+  };
+}
+
+export interface ContactCreateRequest {
+  listid?: string;
+  status: string;
+  email: string;
+  ipaddress?: string;
+  fields?: {
+    [key: string]: string;
+  };
 }

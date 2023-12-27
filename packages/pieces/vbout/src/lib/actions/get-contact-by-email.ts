@@ -8,7 +8,7 @@ export const vboutGetContactByEmailAction = createAction({
   displayName: 'Get Contact by Email',
   description: 'Retrives the contact by email.',
   props: {
-    listId: vboutCommon.listId(false),
+    listid: vboutCommon.listid(false),
     email: Property.ShortText({
       displayName: 'Email',
       required: true,
@@ -16,8 +16,8 @@ export const vboutGetContactByEmailAction = createAction({
   },
   async run({ auth, propsValue }) {
     const client = makeClient(auth as string);
-    const { listId, email } = propsValue;
+    const { listid, email } = propsValue;
 
-    return await client.getContactByEmail(email, listId);
+    return await client.getContactByEmail(email, listid);
   },
 });
