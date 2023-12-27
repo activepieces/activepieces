@@ -5,6 +5,8 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { CreateFlowTemplateRequest } from '@activepieces/ee-shared'
 import { platformService } from '../platform/platform.service'
 import { StatusCodes } from 'http-status-codes'
+import { system } from '../../helper/system/system'
+import { SystemProp } from '../../helper/system/system-prop'
 
 export const platformFlowTemplateModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(flowTemplateController, { prefix: '/v1/flow-templates' })
@@ -37,7 +39,8 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
             querystring: ListFlowTemplatesRequest,
         },
     }, async (request) => {
-        return flowTemplateService.list(request.principal.platform?.id ?? null, request.query)
+        const platformId = request.principal.platform?.id ?? system.getOrThrow(SystemProp.CLOUD_PLATFORM_ID)
+        return flowTemplateService.list(platformId, request.query)
     })
 
     fastify.post('/', {

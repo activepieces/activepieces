@@ -177,12 +177,6 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.TEMPLATES_PROJECT_ID,
-                value: system.get(SystemProp.TEMPLATES_PROJECT_ID),
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.SHOW_POWERED_BY_AP,
                 value: false,
                 created,

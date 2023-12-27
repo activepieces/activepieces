@@ -1,14 +1,11 @@
-import { ArrayContains, ArrayOverlap, Equal, ILike, IsNull } from 'typeorm'
+import { ArrayContains, ArrayOverlap, Equal, ILike } from 'typeorm'
 import { databaseConnection } from '../../database/database-connection'
 import { ActivepiecesError, ListFlowTemplatesRequest, ErrorCode, FlowTemplate, SeekPage, isNil, apId, FlowVersionTemplate, flowHelper, TemplateType } from '@activepieces/shared'
 import { FlowTemplateEntity } from './flow-template.entity'
 import { CreateFlowTemplateRequest } from '@activepieces/ee-shared'
-import { system } from '../../helper/system/system'
-import { SystemProp } from '../../helper/system/system-prop'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 
 const templateRepo = databaseConnection.getRepository<FlowTemplate>(FlowTemplateEntity)
-const templateProjectId = system.get(SystemProp.TEMPLATES_PROJECT_ID)
 
 export const flowTemplateService = {
     upsert: async (platformId: string | undefined, projectId: string | undefined, { description,  type, template, blogUrl, tags, id }: CreateFlowTemplateRequest): Promise<FlowTemplate> => {
@@ -32,7 +29,7 @@ export const flowTemplateService = {
             id,
         })
     },
-    list: async (platformId: string | null, { pieces, tags, search }: ListFlowTemplatesRequest): Promise<SeekPage<FlowTemplate>> => {
+    list: async (platformId: string, { pieces, tags, search }: ListFlowTemplatesRequest): Promise<SeekPage<FlowTemplate>> => {
         const commonFilters: Record<string, unknown> = {}
         if (pieces) {
             commonFilters.pieces = ArrayOverlap(pieces)
@@ -44,13 +41,8 @@ export const flowTemplateService = {
             commonFilters.name = ILike(`%${search}%`)
             commonFilters.description = ILike(`%${search}%`)
         }
-        if (isNil(platformId)) {
-            commonFilters.projectId = isNil(templateProjectId) ? IsNull() : Equal(templateProjectId)
-        }
-        else {
-            commonFilters.platformId = Equal(platformId)
-            commonFilters.type = Equal(TemplateType.PLATFORM)
-        }
+        commonFilters.platformId = Equal(platformId)
+        commonFilters.type = Equal(TemplateType.PLATFORM)
         const templates = await templateRepo.createQueryBuilder('flow_template')
             .where(commonFilters)
             .getMany()
