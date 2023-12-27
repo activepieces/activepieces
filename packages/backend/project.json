@@ -64,7 +64,7 @@
         "jestConfig": "packages/backend/jest.config.ts",
         "passWithNoTests": false,
         "bail": true,
-        "testPathPattern": ["packages/backend/test/integration/cloud/flow-templates/"]
+        "testPathPattern": ["packages/backend/test/integration/cloud"]
       }
     },
     "test-ee": {
@@ -81,7 +81,9 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "export $(cat packages/backend/.env.tests | xargs) && AP_EDITION=cloud nx test-cloud backend --output-style stream-without-prefixes"
+          "export $(cat packages/backend/.env.tests | xargs) && AP_EDITION=ce nx test-ce backend --output-style stream-without-prefixes",
+          "export $(cat packages/backend/.env.tests | xargs) && AP_EDITION=cloud nx test-cloud backend --output-style stream-without-prefixes",
+          "export $(cat packages/backend/.env.tests | xargs) && AP_EDITION=ee nx test-ee backend --output-style stream-without-prefixes"  
         ],
         "parallel": false
       }
