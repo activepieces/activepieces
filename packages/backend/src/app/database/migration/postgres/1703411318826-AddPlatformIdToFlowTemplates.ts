@@ -35,7 +35,7 @@ export class AddPlatformIdToFlowTemplates1703411318826 implements MigrationInter
         `)
         await queryRunner.query(`
             UPDATE "flow_template" SET "platformId" = (
-                SELECT "platformId" FROM "project" WHERE "projectId" = flow_template."projectId"
+                SELECT "platformId" FROM "project" WHERE project.id = flow_template."projectId"
             )
         `)
         await queryRunner.query(`
