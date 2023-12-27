@@ -47,6 +47,7 @@ const executeFlow = async (input: ExecuteFlowOperation, context: FlowExecutorCon
                 projectId: input.projectId,
                 workerToken: input.workerToken,
             }),
+            filesServiceType: 'local',
             resumePayload: input.executionType === ExecutionType.RESUME ? input.resumePayload : undefined,
             piecesSource: PIECE_SOURCES,
             baseCodeDirectory: BASE_CODE_DIRECTORY,
@@ -86,6 +87,7 @@ async function executeStep(input: ExcuteStepOperation): Promise<ExecuteActionRes
             apiUrl: input.serverUrl,
             workerToken: input.workerToken,
             piecesSource: PIECE_SOURCES,
+            filesServiceType: 'db',
             baseCodeDirectory: BASE_CODE_DIRECTORY,
         },
     })

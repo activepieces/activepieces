@@ -4,14 +4,15 @@ import { apperanceHelper } from '../helper/apperance-helper'
 import { platformService } from '../platform/platform.service'
 import { ThirdPartyAuthnProviderEnum } from '@activepieces/ee-shared'
 import { resolvePlatformIdForRequest } from '../platform/lib/platform-utils'
+import { flagService } from '../../flags/flag.service'
 
 export const enterpriseFlagsHooks: FlagsServiceHooks = {
     async modify({ flags, request }) {
         const modifiedFlags = { ...flags }
         const hostname = request.hostname
         const platformId = await resolvePlatformIdForRequest(request)
-        const platformEnabled = !isNil(platformId)
-        if (platformEnabled) {
+        const isCustomerPlatform = !isNil(platformId) && !flagService.isCloudPlatform(platformId)
+        if (isCustomerPlatform ) {
             const platform = await platformService.getOneOrThrow(platformId)
             modifiedFlags[ApFlagId.THEME] = await apperanceHelper.getTheme({ platformId })
             modifiedFlags[ApFlagId.SHOW_COMMUNITY] = false
@@ -32,7 +33,6 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             modifiedFlags[ApFlagId.PRIVACY_POLICY_URL] = platform.privacyPolicyUrl
             modifiedFlags[ApFlagId.TERMS_OF_SERVICE_URL] = platform.termsOfServiceUrl
             modifiedFlags[ApFlagId.TEMPLATES_SOURCE_URL] = null
-            modifiedFlags[ApFlagId.CHATBOT_ENABLED] = false
             modifiedFlags[ApFlagId.OWN_AUTH2_ENABLED] = false
         }
         return modifiedFlags

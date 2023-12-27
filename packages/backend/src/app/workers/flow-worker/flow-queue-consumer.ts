@@ -2,7 +2,7 @@ import {
     ActivepiecesError,
     ErrorCode,
     ExecutionType,
-    FlowInstanceStatus,
+    FlowStatus,
     RunEnvironment,
     TriggerPayload,
     TriggerType,
@@ -19,7 +19,6 @@ import {
 } from './job-data'
 import { captureException, logger } from '../../helper/logger'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
-import { flowInstanceService } from '../../flows/flow-instance/flow-instance.service'
 import { isNil } from '@activepieces/shared'
 import { consumeJobsInMemory } from './queues/memory/memory-consumer'
 import { inMemoryQueueManager } from './queues/memory/memory-queue'
@@ -28,6 +27,7 @@ import { redisQueueManager } from './queues/redis/redis-queue'
 import { QueueMode, system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { enrichErrorContext } from '../../helper/error-handler'
+import { flowService } from '../../flows/flow/flow.service'
 
 const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
 
@@ -111,18 +111,18 @@ const consumeDelayedJob = async (data: DelayedJobData): Promise<void> => {
 const consumeRepeatingJob = async (data: RepeatingJobData): Promise<void> => {
     try {
         // TODO REMOVE AND FIND PERMANENT SOLUTION
-        const instance = await flowInstanceService.get({
+        const flow = await flowService.getOne({
+            id: data.flowId,
             projectId: data.projectId,
-            flowId: data.flowId,
         })
 
-        if (isNil(instance) ||
-            instance.status !== FlowInstanceStatus.ENABLED ||
-            instance.flowVersionId !== data.flowVersionId
+        if (isNil(flow) ||
+            flow.status !== FlowStatus.ENABLED ||
+            flow.publishedVersionId !== data.flowVersionId
         ) {
             captureException(
                 new Error(
-                    `[repeatableJobConsumer] removing project.id=${data.projectId} instance.flowVersionId=${instance?.flowVersionId} data.flowVersion.id=${data.flowVersionId}`,
+                    `[repeatableJobConsumer] removing project.id=${data.projectId} instance.flowVersionId=${flow?.publishedVersionId} data.flowVersion.id=${data.flowVersionId}`,
                 ),
             )
 
@@ -155,10 +155,10 @@ const consumeRepeatingJob = async (data: RepeatingJobData): Promise<void> => {
             logger.info(
                 `[repeatableJobConsumer] removing project.id=${data.projectId} run out of flow quota`,
             )
-            await flowInstanceService.update({
+            await flowService.updateStatus({
+                id: data.flowId,
                 projectId: data.projectId,
-                flowId: data.flowId,
-                status: FlowInstanceStatus.DISABLED,
+                newStatus: FlowStatus.DISABLED,
             })
         }
         else {

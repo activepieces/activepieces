@@ -44,8 +44,14 @@ export class UploadFileControlComponent
   id = `file-input-${UploadFileControlComponent.nextId++}`;
   placeholder: string;
   focused = false;
-  empty: boolean;
-  shouldLabelFloat: true;
+  get empty(): boolean {
+    return !this.value;
+  }
+  @HostBinding('class.floated')
+  get shouldLabelFloat(): boolean {
+    console.log(this.focused || !this.empty);
+    return this.focused || !this.empty;
+  }
   @Input()
   get required() {
     return this._required;

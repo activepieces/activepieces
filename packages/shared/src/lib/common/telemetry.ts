@@ -3,10 +3,6 @@ import { FlowId } from '../flows/flow'
 import { ProjectId } from '../project/project'
 import { UserId } from '../user/user'
 
-type ChatbotCreated = {
-    chatbotId: string
-}
-
 type FlowCreated = {
     flowId: FlowId
 }
@@ -83,7 +79,6 @@ export enum TelemetryEventName {
     UPGRADE_CLICKED = 'upgrade.clicked',
     OPENED_PRICING_FROM_DASHBOARD = 'pricing.viewed',
     UPGRADE_POPUP = 'upgrade.popup',
-    CHATBOT_CREATED = 'chatbot.created',
     FLOW_CREATED = 'flow.created',
     DEMO_IMPORTED = 'demo.imported',
     FLOW_RUN_CREATED = 'run.created',
@@ -120,6 +115,5 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.REFERRAL_LINK_COPIED, ReferralLinkCopied>
     | BaseTelemetryEvent<TelemetryEventName.FLOW_SHARED, FlowShared>
     | BaseTelemetryEvent<TelemetryEventName.DEMO_IMPORTED, Record<string, never>>
-    | BaseTelemetryEvent<TelemetryEventName.CHATBOT_CREATED, ChatbotCreated>
     | BaseTelemetryEvent<TelemetryEventName.FEATURED_TAB_VIEWED, FeaturedTabViewed>
     | BaseTelemetryEvent<TelemetryEventName.OPENED_PRICING_FROM_DASHBOARD, OpenedFromDasahboard>

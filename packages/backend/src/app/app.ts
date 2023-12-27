@@ -18,31 +18,23 @@ import swagger from '@fastify/swagger'
 import { logger } from './helper/logger'
 import { appEventRoutingModule } from './app-event-routing/app-event-routing.module'
 import { triggerEventModule } from './flows/trigger-events/trigger-event.module'
-import { flowInstanceModule } from './flows/flow-instance/flow-instance.module'
 import { fastifyRawBody } from 'fastify-raw-body'
 import { stepFileModule } from './flows/step-file/step-file.module'
-import { chatbotModule } from './chatbot/chatbot.module'
 import { rbacAuthMiddleware } from './ee/authentication/rbac-auth-middleware'
 import { userModule } from './user/user.module'
 import { ApEdition, AppConnectionWithoutSensitiveData, Flow } from '@activepieces/shared'
 import { appConnectionsHooks } from './app-connection/app-connection-service/app-connection-hooks'
 import { authenticationModule } from './authentication/authentication.module'
-import { chatbotHooks } from './chatbot/chatbot.hooks'
-import { datasourceHooks } from './chatbot/datasources/datasource.hooks'
-import { embeddings } from './chatbot/embedings'
 import { cloudAppConnectionsHooks } from './ee/app-connections/cloud-app-connection-service'
 import { appCredentialModule } from './ee/app-credentials/app-credentials.module'
 import { appSumoModule } from './ee/appsumo/appsumo.module'
-import { cloudChatbotHooks } from './ee/chatbot/cloud/cloud-chatbot.hook'
-import { cloudDatasourceHooks } from './ee/chatbot/cloud/cloud-datasources.hook'
-import { qdrantEmbeddings } from './ee/chatbot/cloud/qdrant-embeddings'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
 import { platformRunHooks } from './ee/flow-run/cloud-flow-run-hooks'
 import { flowTemplateModule } from './ee/flow-template/flow-template.module'
 import { platformWorkerHooks } from './ee/flow-worker/cloud-flow-worker-hooks'
 import { initilizeSentry } from './ee/helper/exception-handler'
 import { adminPieceModule } from './ee/pieces/admin-piece-module'
-import { cloudPieceServiceHooks } from './ee/pieces/piece-service/cloud-piece-service-hooks'
+import { platformPieceServiceHooks } from './ee/pieces/piece-service/platform-piece-service-hooks'
 import { platformModule } from './ee/platform/platform.module'
 import { projectMemberModule } from './ee/project-members/project-member.module'
 import { platformProjectModule } from './ee/projects/platform-project-controller'
@@ -179,7 +171,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(flowModule)
     await app.register(flowWorkerModule)
     await app.register(pieceModule)
-    await app.register(flowInstanceModule)
     await app.register(flowRunModule)
     await app.register(webhookModule)
     await app.register(appConnectionModule)
@@ -187,7 +178,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(triggerEventModule)
     await app.register(appEventRoutingModule)
     await app.register(stepFileModule)
-    await app.register(chatbotModule)
     await app.register(userModule)
     await app.register(authenticationModule)
 
@@ -241,13 +231,10 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
-            chatbotHooks.setHooks(cloudChatbotHooks)
-            datasourceHooks.setHooks(cloudDatasourceHooks)
-            embeddings.set(qdrantEmbeddings)
             appConnectionsHooks.setHooks(cloudAppConnectionsHooks)
             flowWorkerHooks.setHooks(platformWorkerHooks)
             flowRunHooks.setHooks(platformRunHooks)
-            pieceServiceHooks.set(cloudPieceServiceHooks)
+            pieceServiceHooks.set(platformPieceServiceHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             flagHooks.set(enterpriseFlagsHooks)
             authenticationServiceHooks.set(cloudAuthenticationServiceHooks)
@@ -271,7 +258,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
-            pieceServiceHooks.set(cloudPieceServiceHooks)
+            pieceServiceHooks.set(platformPieceServiceHooks)
             flowRunHooks.setHooks(platformRunHooks)
             flowWorkerHooks.setHooks(platformWorkerHooks)
             authenticationServiceHooks.set(enterpriseAuthenticationServiceHooks)

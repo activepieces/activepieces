@@ -12,7 +12,8 @@ const DEFAULT_PLATFORM_NAME = 'platform'
 
 export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = {
     async preSignUp({ email, platformId }) {
-        if (!isNil(platformId)) {
+        const isCustomerPlatform = !isNil(platformId) && !flagService.isCloudPlatform(platformId)
+        if (isCustomerPlatform) {
             await authenticationHelper.assertUserIsInvitedToAnyProject({ email, platformId })
         }
     },
