@@ -12,6 +12,8 @@ export type FlowVersionTemplate = Static<typeof FlowVersionTemplate>
 export enum TemplateType {
     PLATFORM = 'PLATFORM',
     PROJECT = 'PROJECT',
+    // TODO this should be deprecated since cloud should be a platform.
+    CLOUD = 'CLOUD',
 }
  
 export const FlowTemplate = Type.Object({
