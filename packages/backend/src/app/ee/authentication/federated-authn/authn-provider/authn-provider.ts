@@ -5,7 +5,7 @@ import { gitHubAuthnProvider } from './github-authn-provider'
 
 export type AuthnProvider = {
     getLoginUrl: () => Promise<string>
-    authenticate: (authorizationCode: string) => Promise<AuthenticationResponse>
+    authenticate: (platformId: string | null, authorizationCode: string) => Promise<AuthenticationResponse>
     isConfiguredByUser: () => boolean
 }
 

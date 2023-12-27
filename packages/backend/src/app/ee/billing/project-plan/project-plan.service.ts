@@ -49,6 +49,7 @@ export const plansService = {
             ...spreadIfDefined('flowPlanName', nickname),
             ...spreadIfDefined('connections', connections),
             ...spreadIfDefined('tasks', tasks),
+            tasksPerDay: null,
             ...spreadIfDefined('minimumPollingInterval', minimumPollingInterval),
             ...spreadIfDefined('teamMembers', teamMembers),
             stripeSubscriptionId,

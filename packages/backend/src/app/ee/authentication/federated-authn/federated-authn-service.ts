@@ -13,9 +13,9 @@ export const federatedAuthnService = {
         }
     },
 
-    async claim({ providerName, code }: ClaimParams): Promise<AuthenticationResponse> {
+    async claim({ platformId, providerName, code }: ClaimParams): Promise<AuthenticationResponse> {
         const provider = providers[providerName]
-        return provider.authenticate(code)
+        return provider.authenticate(platformId, code)
     },
 }
 
@@ -25,6 +25,7 @@ type LoginParams = {
 
 
 type ClaimParams = {
+    platformId: string | null
     providerName: ThirdPartyAuthnProviderEnum
     code: string
 }
