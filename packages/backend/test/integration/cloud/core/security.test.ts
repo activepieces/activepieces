@@ -2,7 +2,8 @@ import { FastifyInstance, FastifyRequest } from 'fastify'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupApp } from '../../../../src/app/app'
 import { authorizationMiddleware } from '../../../../src/app/authentication/authorization-middleware'
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { ActivepiecesError, EndpointScope, ErrorCode, PlatformRole, PrincipalType, ProjectType, apId } from '@activepieces/shared'
+import { createMockFlow, createMockPlatformWithOwner, createMockProject, setupMockApiKeyServiceAccount } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 
@@ -57,6 +58,343 @@ describe('API Security', () => {
                     params: {},
                 }))
             })
+        })
+    })
+
+    describe('Platform API Key Authentication', () => {
+        it('Authenticates service principals', async () => {
+            // arrange
+            const { mockOwner, mockPlatform, mockApiKey } = setupMockApiKeyServiceAccount()
+
+            await databaseConnection.getRepository('user').save([mockOwner])
+            await databaseConnection.getRepository('platform').save([mockPlatform])
+            await databaseConnection.getRepository('api_key').save([mockApiKey])
+
+            const mockRequest = {
+                method: 'GET',
+                routerPath: '/v1/flows',
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
+                routeConfig: {
+                    allowedPrincipals: [PrincipalType.SERVICE],
+                    scope: EndpointScope.PLATFORM,
+                },
+            } as unknown as FastifyRequest
+
+            // act
+            const result = authorizationMiddleware(mockRequest)
+
+            // assert
+            await expect(result).resolves.toBeUndefined()
+
+            expect(mockRequest.principal).toEqual(expect.objectContaining({
+                id: mockApiKey.id,
+                type: PrincipalType.SERVICE,
+                projectId: expect.stringMatching(/ANONYMOUS_.{21}/),
+                projectType: ProjectType.PLATFORM_MANAGED,
+                platform: {
+                    id: mockPlatform.id,
+                    role: PlatformRole.OWNER,
+                },
+            }))
+        })
+
+        it('Gets projectId from body if endpoint scope is PROJECT', async () => {
+            // arrange
+            const { mockOwner, mockPlatform, mockApiKey } = setupMockApiKeyServiceAccount()
+            const mockProject = createMockProject({ ownerId: mockOwner.id, platformId: mockPlatform.id })
+
+            await databaseConnection.getRepository('user').save([mockOwner])
+            await databaseConnection.getRepository('platform').save([mockPlatform])
+            await databaseConnection.getRepository('api_key').save([mockApiKey])
+            await databaseConnection.getRepository('project').save([mockProject])
+
+            const mockRequest = {
+                method: 'GET',
+                routerPath: '/v1/flows',
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
+                body: {
+                    projectId: mockProject.id,
+                },
+                routeConfig: {
+                    allowedPrincipals: [PrincipalType.SERVICE],
+                    scope: EndpointScope.PROJECT,
+                },
+            } as unknown as FastifyRequest
+
+            // act
+            const result = authorizationMiddleware(mockRequest)
+
+            // assert
+            await expect(result).resolves.toBeUndefined()
+
+            expect(mockRequest.principal).toEqual(expect.objectContaining({
+                id: mockApiKey.id,
+                type: PrincipalType.SERVICE,
+                projectId: mockProject.id,
+                projectType: ProjectType.PLATFORM_MANAGED,
+                platform: {
+                    id: mockPlatform.id,
+                    role: PlatformRole.OWNER,
+                },
+            }))
+        })
+
+        it('Gets projectId from query if endpoint scope is PROJECT', async () => {
+            // arrange
+            const { mockOwner, mockPlatform, mockApiKey } = setupMockApiKeyServiceAccount()
+            const mockProject = createMockProject({ ownerId: mockOwner.id, platformId: mockPlatform.id })
+
+            await databaseConnection.getRepository('user').save([mockOwner])
+            await databaseConnection.getRepository('platform').save([mockPlatform])
+            await databaseConnection.getRepository('api_key').save([mockApiKey])
+            await databaseConnection.getRepository('project').save([mockProject])
+
+            const mockRequest = {
+                method: 'GET',
+                routerPath: '/v1/flows',
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
+                query: {
+                    projectId: mockProject.id,
+                },
+                routeConfig: {
+                    allowedPrincipals: [PrincipalType.SERVICE],
+                    scope: EndpointScope.PROJECT,
+                },
+            } as unknown as FastifyRequest
+
+            // act
+            const result = authorizationMiddleware(mockRequest)
+
+            // assert
+            await expect(result).resolves.toBeUndefined()
+
+            expect(mockRequest.principal).toEqual(expect.objectContaining({
+                id: mockApiKey.id,
+                type: PrincipalType.SERVICE,
+                projectId: mockProject.id,
+                projectType: ProjectType.PLATFORM_MANAGED,
+                platform: {
+                    id: mockPlatform.id,
+                    role: PlatformRole.OWNER,
+                },
+            }))
+        })
+
+        it('extracts projectId from resource if endpoint scope is PROJECT', async () => {
+            // arrange
+            const { mockOwner, mockPlatform, mockApiKey } = setupMockApiKeyServiceAccount()
+            const mockProject = createMockProject({ ownerId: mockOwner.id, platformId: mockPlatform.id })
+            const mockFlow = createMockFlow({ projectId: mockProject.id })
+
+            await databaseConnection.getRepository('user').save([mockOwner])
+            await databaseConnection.getRepository('platform').save([mockPlatform])
+            await databaseConnection.getRepository('api_key').save([mockApiKey])
+            await databaseConnection.getRepository('project').save([mockProject])
+            await databaseConnection.getRepository('flow').save([mockFlow])
+
+            const mockRequest = {
+                method: 'GET',
+                routerPath: '/v1/flows/:id',
+                params: {
+                    id: mockFlow.id,
+                },
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
+                routeConfig: {
+                    allowedPrincipals: [PrincipalType.SERVICE],
+                    scope: EndpointScope.PROJECT,
+                },
+            } as unknown as FastifyRequest
+
+            // act
+            const result = authorizationMiddleware(mockRequest)
+
+            // assert
+            await expect(result).resolves.toBeUndefined()
+
+            expect(mockRequest.principal).toEqual(expect.objectContaining({
+                id: mockApiKey.id,
+                type: PrincipalType.SERVICE,
+                projectId: mockProject.id,
+                projectType: ProjectType.PLATFORM_MANAGED,
+                platform: {
+                    id: mockPlatform.id,
+                    role: PlatformRole.OWNER,
+                },
+            }))
+        })
+
+        it('Fails if API key and project don\'t belong to same platform if endpoint scope is PROJECT', async () => {
+            // arrange
+            const { mockOwner, mockPlatform, mockApiKey } = setupMockApiKeyServiceAccount()
+            const { mockOwner: mockOtherOwner, mockPlatform: mockOtherPlatform } = createMockPlatformWithOwner()
+            const mockOtherProject = createMockProject({ ownerId: mockOtherOwner.id, platformId: mockOtherPlatform.id })
+
+            await databaseConnection.getRepository('user').save([mockOwner, mockOtherOwner])
+            await databaseConnection.getRepository('platform').save([mockPlatform, mockOtherPlatform])
+            await databaseConnection.getRepository('api_key').save([mockApiKey])
+            await databaseConnection.getRepository('project').save([mockOtherProject])
+
+            const mockRequest = {
+                method: 'GET',
+                routerPath: '/v1/flows',
+                query: {
+                    projectId: mockOtherProject.id,
+                },
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
+                routeConfig: {
+                    allowedPrincipals: [PrincipalType.SERVICE],
+                    scope: EndpointScope.PROJECT,
+                },
+            } as unknown as FastifyRequest
+
+            // act
+            const result = authorizationMiddleware(mockRequest)
+
+            // assert
+            await expect(result).rejects.toEqual(new ActivepiecesError({
+                code: ErrorCode.INVALID_BEARER_TOKEN,
+                params: {
+                    message: 'invalid access token',
+                },
+            }))
+        })
+
+        it('Fails if no projectId is extracted from request or resource and endpoint scope is PROJECT', async () => {
+            // arrange
+            const { mockOwner, mockPlatform, mockApiKey } = setupMockApiKeyServiceAccount()
+
+            await databaseConnection.getRepository('user').save([mockOwner])
+            await databaseConnection.getRepository('platform').save([mockPlatform])
+            await databaseConnection.getRepository('api_key').save([mockApiKey])
+
+            const mockRequest = {
+                method: 'GET',
+                routerPath: '/v1/flows',
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
+                routeConfig: {
+                    allowedPrincipals: [PrincipalType.SERVICE],
+                    scope: EndpointScope.PROJECT,
+                },
+            } as unknown as FastifyRequest
+
+            // act
+            const result = authorizationMiddleware(mockRequest)
+
+            // assert
+            await expect(result).rejects.toEqual(new ActivepiecesError({
+                code: ErrorCode.INVALID_BEARER_TOKEN,
+                params: {
+                    message: 'invalid access token',
+                },
+            }))
+        })
+
+        it('Fails if project with extracted id doesn\'t exist and endpoint scope is PROJECT', async () => {
+            // arrange
+            const mockNonExistentProjectId = apId()
+            const { mockOwner, mockPlatform, mockApiKey } = setupMockApiKeyServiceAccount()
+
+            await databaseConnection.getRepository('user').save([mockOwner])
+            await databaseConnection.getRepository('platform').save([mockPlatform])
+            await databaseConnection.getRepository('api_key').save([mockApiKey])
+
+            const mockRequest = {
+                method: 'GET',
+                routerPath: '/v1/flows',
+                query: {
+                    projectId: mockNonExistentProjectId,
+                },
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
+                routeConfig: {
+                    allowedPrincipals: [PrincipalType.SERVICE],
+                    scope: EndpointScope.PROJECT,
+                },
+            } as unknown as FastifyRequest
+
+            // act
+            const result = authorizationMiddleware(mockRequest)
+
+            // assert
+            await expect(result).rejects.toEqual(new ActivepiecesError({
+                code: ErrorCode.INVALID_BEARER_TOKEN,
+                params: {
+                    message: 'invalid access token',
+                },
+            }))
+        })
+
+        it('Fails if API key doesn\'t exist', async () => {
+            // arrange
+            const mockNonExistentApiKey = '123'
+
+            const mockRequest = {
+                method: 'POST',
+                routerPath: '/v1/flows',
+                headers: {
+                    authorization: `Bearer ${mockNonExistentApiKey}`,
+                },
+                routeConfig: {
+                    allowedPrincipals: [PrincipalType.SERVICE],
+                    scope: EndpointScope.PLATFORM,
+                },
+            } as unknown as FastifyRequest
+
+            // act
+            const result = authorizationMiddleware(mockRequest)
+
+            // assert
+            await expect(result).rejects.toEqual(new ActivepiecesError({
+                code: ErrorCode.INVALID_BEARER_TOKEN,
+                params: {
+                    message: 'invalid access token',
+                },
+            }))
+        })
+
+        it('Fails if route doesn\'t allow SERVICE principals', async () => {
+            // arrange
+            const { mockOwner, mockPlatform, mockApiKey } = setupMockApiKeyServiceAccount()
+
+            await databaseConnection.getRepository('user').save([mockOwner])
+            await databaseConnection.getRepository('platform').save([mockPlatform])
+            await databaseConnection.getRepository('api_key').save([mockApiKey])
+
+            const mockRequest = {
+                method: 'POST',
+                routerPath: '/v1/flows',
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
+                routeConfig: {
+                    allowedPrincipals: [PrincipalType.USER],
+                    scope: EndpointScope.PLATFORM,
+                },
+            } as unknown as FastifyRequest
+
+            // act
+            const result = authorizationMiddleware(mockRequest)
+
+            // assert
+            await expect(result).rejects.toEqual(new ActivepiecesError({
+                code: ErrorCode.INVALID_BEARER_TOKEN,
+                params: {
+                    message: 'invalid access token',
+                },
+            }))
         })
     })
 })
