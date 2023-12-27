@@ -21,7 +21,7 @@ describe('API Security', () => {
     describe('Global API Key Authentication', () => {
         it('Authenticates Admin User using Global API Key', async () => {
             // arrange
-            const mockApiKey = '123'
+            const mockApiKey = 'api-key'
             const mockRequest = {
                 method: 'POST',
                 routerPath: '/v1/admin/users',
