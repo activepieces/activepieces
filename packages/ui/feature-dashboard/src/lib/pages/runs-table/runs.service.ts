@@ -10,14 +10,15 @@ import { Injectable } from '@angular/core';
 export class RunsService {
   constructor(private http: HttpClient) { }
 
-  rerun(runId: string, strategy: FlowRerunStrategy) {
-    return this.http.post(
-      environment.apiUrl + `/flow-runs/${runId}/rerun`, {}, {
-      params: {
-        strategy
+  async rerun(runId: string, strategy: FlowRerunStrategy) {
+    return this.http.post(environment.apiUrl + `/flow-runs/${runId}/rerun`,
+      {},
+      {
+        params: {
+          strategy
+        }
       }
-    }
-    );
+    ).subscribe();
   }
 }
 

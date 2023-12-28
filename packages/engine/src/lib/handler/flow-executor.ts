@@ -30,7 +30,7 @@ export const flowExecutor = {
                 const { strategy } = input.rerunPayload
 
                 switch (strategy) {
-                    case FlowRerunStrategy.FROM_FAILED:
+                    case FlowRerunStrategy.FROM_FAILED: {
                         let failedStep: string | undefined
                         for (const stepName in input.executionState.steps) {
                             const step = input.executionState.steps[stepName]
@@ -55,6 +55,7 @@ export const flowExecutor = {
                             }
                         }
                         break
+                    }
                     case FlowRerunStrategy.FLOW:
                     default:
                         startAction = input.flowVersion.trigger.nextAction

@@ -58,7 +58,7 @@ export class RunsTableComponent implements OnInit {
       color: 'secondary',
       icon: 'replay',
     },
-  ]
+  ];
 
   constructor(
     private router: Router,
@@ -67,7 +67,7 @@ export class RunsTableComponent implements OnInit {
     private store: Store,
     private instanceRunService: InstanceRunService,
     private navigationService: NavigationService,
-    private runsService: RunsService
+    private runsService: RunsService,
   ) { }
 
   ngOnInit(): void {
@@ -121,9 +121,13 @@ export class RunsTableComponent implements OnInit {
     this.navigationService.navigate(route, newWindow);
   }
 
-  async rerunFlow(run: FlowRun, strategy: FlowRerunStrategy, event: MouseEvent) {
-    this.runsService.rerun(run.id, strategy).pipe().subscribe()
-    run.status = ExecutionOutputStatus.RUNNING
+  async rerunFlow(
+    run: FlowRun,
+    strategy: FlowRerunStrategy,
+    event: MouseEvent
+  ) {
+    this.runsService.rerun(run.id, strategy);
+    run.status = ExecutionOutputStatus.RUNNING;
     event.stopPropagation();
   }
 
@@ -132,8 +136,8 @@ export class RunsTableComponent implements OnInit {
       ExecutionOutputStatus.FAILED,
       ExecutionOutputStatus.INTERNAL_ERROR,
       ExecutionOutputStatus.QUOTA_EXCEEDED,
-    ]
+    ];
 
-    return enabledStatuses.includes(run.status)
+    return enabledStatuses.includes(run.status);
   }
 }
