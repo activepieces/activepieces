@@ -2,7 +2,7 @@ import {
     ApId,
     CreateFlowRequest,
     FlowOperationRequest,
-    FlowTemplate,
+    FlowTemplateWithoutProjectInformation,
     GetFlowQueryParamsRequest,
     ListFlowsRequest,
     PopulatedFlow,
@@ -163,7 +163,7 @@ const GetFlowTemplateRequestOptions = {
             id: ApId,
         }),
         response: {
-            [StatusCodes.OK]: FlowTemplate,
+            [StatusCodes.OK]: FlowTemplateWithoutProjectInformation,
         },
     },
 }

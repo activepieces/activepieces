@@ -3,7 +3,10 @@ import { Observable, switchMap, take, tap } from 'rxjs';
 import { PopulatedFlow, FolderDto } from '@activepieces/shared';
 import { FoldersSelectors } from '../../../store/folders/folders.selector';
 import { Store } from '@ngrx/store';
-import { FlowService } from '@activepieces/ui/common';
+import {
+  CURRENT_FLOW_IS_NEW_KEY_IN_LOCAL_STORAGE,
+  FlowService,
+} from '@activepieces/ui/common';
 import { Router } from '@angular/router';
 
 @Component({
@@ -40,7 +43,10 @@ export class FlowsTableTitleComponent {
             })
             .pipe(
               tap((flow) => {
-                localStorage.setItem('newFlow', 'true');
+                localStorage.setItem(
+                  CURRENT_FLOW_IS_NEW_KEY_IN_LOCAL_STORAGE,
+                  'true'
+                );
                 this.router.navigate(['/flows/', flow.id]);
               })
             );

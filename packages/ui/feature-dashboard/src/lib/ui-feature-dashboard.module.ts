@@ -21,7 +21,7 @@ import { FoldersEffects } from './store/folders/folders.effects';
 import { RenameFolderDialogComponent } from './pages/flows-table/rename-folder-dialog/rename-folder-dialog.component';
 import { EeBillingUiModule } from '@activepieces/ee-billing-ui';
 import { UiFeatureTemplatesModule } from '@activepieces/ui/feature-templates';
-import { UiFeaturePiecesModule } from 'ui-feature-pieces';
+import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
 
 @NgModule({
   imports: [

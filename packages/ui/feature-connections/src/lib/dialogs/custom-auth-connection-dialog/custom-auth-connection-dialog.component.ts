@@ -110,7 +110,7 @@ export class CustomAuthConnectionDialogComponent {
       const propsValues = this.settingsForm.getRawValue();
       delete propsValues.name;
       const upsertRequest: UpsertCustomAuthRequest = {
-        appName: this.dialogData.pieceName,
+        pieceName: this.dialogData.pieceName,
         projectId: this.authenticationService.getProjectId(),
         name: this.settingsForm.getRawValue().name,
         type: AppConnectionType.CUSTOM_AUTH,

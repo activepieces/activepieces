@@ -24,7 +24,7 @@ import {
   CORE_PIECES_TRIGGERS,
   CORE_SCHEDULE,
   corePieceIconUrl,
-} from 'ui-feature-pieces';
+} from '@activepieces/ui/feature-pieces';
 
 export const BUILDER_STATE_NAME = 'builderState';
 
@@ -426,7 +426,7 @@ const selectAppConnectionsDropdownOptions = createSelector(
   (connections: AppConnectionWithoutSensitiveData[]) => {
     return [...connections].map((c) => {
       const result: ConnectionDropdownItem = {
-        label: { appName: c.appName, name: c.name },
+        label: { pieceName: c.pieceName, name: c.name },
         value: `{{connections['${c.name}']}}`,
       };
       return result;
@@ -439,7 +439,7 @@ const selectAppConnectionsDropdownOptionsWithIds = createSelector(
   (connections: AppConnectionWithoutSensitiveData[]) => {
     return [...connections].map((c) => {
       const result: ConnectionDropdownItem = {
-        label: { appName: c.appName, name: c.name },
+        label: { pieceName: c.pieceName, name: c.name },
         value: c.id,
       };
       return result;
@@ -452,10 +452,10 @@ const selectAppConnectionsDropdownOptionsForAppWithIds = (appName: string) => {
     selectAppConnectionsDropdownOptionsWithIds,
     (connections) => {
       return connections
-        .filter((opt) => opt.label.appName === appName)
+        .filter((opt) => opt.label.pieceName === appName)
         .map((c) => {
           const result: ConnectionDropdownItem = {
-            label: { appName: c.label.appName, name: c.label.name },
+            label: { pieceName: c.label.pieceName, name: c.label.name },
             value: c.value,
           };
           return result;

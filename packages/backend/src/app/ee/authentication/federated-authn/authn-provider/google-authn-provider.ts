@@ -34,10 +34,10 @@ export const googleAuthnProvider: AuthnProvider = {
         return loginUrl.href
     },
 
-    async authenticate(authorizationCode): Promise<AuthenticationResponse> {
+    async authenticate(platformId, authorizationCode): Promise<AuthenticationResponse> {
         const idToken = await exchangeCodeForIdToken(authorizationCode)
         const idTokenPayload = await verifyIdToken(idToken)
-        return generateAuthenticationResponse(idTokenPayload)
+        return generateAuthenticationResponse(platformId, idTokenPayload)
     },
     isConfiguredByUser(): boolean {
         return !!system.get(SystemProp.FEDERATED_AUTHN_GOOGLE_CLIENT_SECRET) && !!system.get(SystemProp.FEDERATED_AUTHN_GOOGLE_CLIENT_ID)
@@ -84,13 +84,13 @@ const verifyIdToken = async (idToken: string): Promise<IdTokenPayload> => {
     }
 }
 
-const generateAuthenticationResponse = async (idTokenPayload: IdTokenPayload): Promise<AuthenticationResponse> => {
+const generateAuthenticationResponse = async (platformId: string | null, idTokenPayload: IdTokenPayload): Promise<AuthenticationResponse> => {
     return authenticationService.federatedAuthn({
         email: idTokenPayload.email,
         userStatus: UserStatus.VERIFIED,
         firstName: idTokenPayload.givenName,
         lastName: idTokenPayload.familyName,
-        platformId: null,
+        platformId,
     })
 }
 

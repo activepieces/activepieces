@@ -12,7 +12,7 @@ import {
   OAuth2AppsService,
   PieceMetadataModelSummary,
 } from '@activepieces/ui/common';
-import { PieceMetadataService } from 'ui-feature-pieces';
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 
 /**
  * Data source for the LogsTable view. This class should

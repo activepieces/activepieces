@@ -14,7 +14,7 @@ import {
 } from '@activepieces/ui/common';
 import { PlansPageComponent } from '@activepieces/ee-billing-ui';
 import { ProjectMembersTableComponent } from '@activepieces/ee/project-members';
-import { CommunityPiecesTableComponent } from 'ui-feature-pieces';
+import { CommunityPiecesTableComponent } from '@activepieces/ui/feature-pieces';
 import { ApFlagId } from '@activepieces/shared';
 
 export const DashboardLayoutRouting: Routes = [
