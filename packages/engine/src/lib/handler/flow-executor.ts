@@ -50,9 +50,8 @@ export const flowExecutor = {
                                 startAction = action
                                 break
                             }
-                            else {
-                                action = action.nextAction
-                            }
+
+                            action = action.nextAction
                         }
                         break
                     }
