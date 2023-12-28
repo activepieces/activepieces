@@ -68,12 +68,12 @@ import { billingModule } from './ee/billing/billing/billing.module'
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
 import fastifyFavicon from 'fastify-favicon'
 import { ProjectMember, ProjectWithUsageAndPlanResponse } from '@activepieces/ee-shared'
-import { authorizationMiddleware } from './authentication/authorization-middleware'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
 import { domainHelper } from './helper/domain-helper'
 import { platformDomainHelper } from './ee/helper/platform-domain-helper'
 import { enterpriseUserModule } from './ee/user/enterprise-user-module'
 import { flowResponseWatcher } from './flows/flow-run/flow-response-watcher'
+import { securityHandlerChain } from './core/security/security-handler-chain'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -162,7 +162,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
         }
     })
 
-    app.addHook('preHandler', authorizationMiddleware)
+    app.addHook('preHandler', securityHandlerChain)
     app.addHook('preHandler', rbacAuthMiddleware)
     app.setErrorHandler(errorHandler)
     await app.register(fileModule)
