@@ -34,7 +34,7 @@ export { Trigger, EmptyTrigger, PieceTriggerSettings, PieceTrigger, WebhookTrigg
 export { FlowVersion, FlowVersionState, FlowVersionId } from './lib/flows/flow-version'
 export * from './lib/file'
 export * from './lib/flows/flow-helper'
-export { FlowRun, FlowRunId, RunEnvironment, RunTerminationReason } from './lib/flow-run/flow-run'
+export { FlowRun, FlowRunId, RunEnvironment, RunTerminationReason, FlowRerunStrategy, FlowRerunPayload } from './lib/flow-run/flow-run'
 export { Project, ProjectId, ProjectType } from './lib/project/project'
 export * from './lib/flows/dto/create-flow-request'
 export { SeekPage, Cursor } from './lib/common/seek-page'

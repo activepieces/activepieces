@@ -24,6 +24,7 @@ type ErrorParams =
     | FlowNotFoundErrorParams
     | FlowOperationErrorParams
     | FlowRunNotFoundErrorParams
+    | FlowRunNoFailedStepParams
     | FlowVersionNotFoundErrorParams
     | InvalidApiKeyParams
     | InvalidAppConnectionParams
@@ -109,6 +110,13 @@ ErrorCode.FLOW_NOT_FOUND,
 
 export type FlowRunNotFoundErrorParams = BaseErrorParams<
 ErrorCode.FLOW_RUN_NOT_FOUND,
+{
+    id: FlowRunId
+}
+>
+
+export type FlowRunNoFailedStepParams = BaseErrorParams<
+ErrorCode.FLOW_RUN_NO_FAILED_STEP,
 {
     id: FlowRunId
 }
@@ -314,6 +322,7 @@ export enum ErrorCode {
     FLOW_NOT_FOUND = 'FLOW_NOT_FOUND',
     FLOW_OPERATION_INVALID = 'FLOW_OPERATION_INVALID',
     FLOW_RUN_NOT_FOUND = 'FLOW_RUN_NOT_FOUND',
+    FLOW_RUN_NO_FAILED_STEP = 'FLOW_RUN_NO_FAILED_STEP',
     FLOW_VERSION_NOT_FOUND = 'FLOW_VERSION_NOT_FOUND',
     INVALID_API_KEY = 'INVALID_API_KEY',
     INVALID_APP_CONNECTION = 'INVALID_APP_CONNECTION',

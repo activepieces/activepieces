@@ -38,3 +38,12 @@ export enum RunEnvironment {
     PRODUCTION = 'PRODUCTION',
     TESTING = 'TESTING',
 }
+
+export enum FlowRerunStrategy {
+    FLOW = 'FLOW',
+    FROM_FAILED = 'FROM_FAILED',
+}
+
+export type FlowRerunPayload = {
+    strategy: FlowRerunStrategy
+}

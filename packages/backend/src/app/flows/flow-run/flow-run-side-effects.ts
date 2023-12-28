@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/shared'
+import { FlowRerunPayload, isNil } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { ActivepiecesError, ErrorCode, ExecutionType, FlowRun, PauseType } from '@activepieces/shared'
 import { flowQueue } from '../../workers/flow-worker/flow-queue'
@@ -17,6 +17,12 @@ type StartParams = {
 
 type PauseParams = {
     flowRun: FlowRun
+}
+
+type RerunParams = {
+    flowRun: FlowRun
+    payload: unknown
+    rerunPayload: FlowRerunPayload
 }
 
 const calculateDelayForResumeJob = (resumeDateTimeIsoString: string): number => {
@@ -92,5 +98,23 @@ export const flowRunSideEffects = {
             case PauseType.WEBHOOK:
                 break
         }
+    },
+
+    async rerun({ flowRun, payload, rerunPayload }: RerunParams): Promise<void> {
+        logger.info(`[FlowRunSideEffects#rerun] flowRunId=${flowRun.id} executionType=${ExecutionType.RERUN}`)
+
+        await flowQueue.add({
+            id: flowRun.id,
+            type: JobType.ONE_TIME,
+            data: {
+                projectId: flowRun.projectId,
+                environment: flowRun.environment,
+                runId: flowRun.id,
+                flowVersionId: flowRun.flowVersionId,
+                payload,
+                rerunPayload,
+                executionType: ExecutionType.RERUN,
+            },
+        })
     },
 }

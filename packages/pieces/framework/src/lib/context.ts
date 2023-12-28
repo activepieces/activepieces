@@ -107,10 +107,17 @@ type ResumeExecutionActionContext<
     resumePayload: unknown
 }
 
+type RerunExecutionActionContext<
+    PieceAuth extends PieceAuthProperty = PieceAuthProperty,
+    ActionProps extends NonAuthPiecePropertyMap = NonAuthPiecePropertyMap,
+> = BaseActionContext<ExecutionType.RERUN, PieceAuth, ActionProps> & {
+    resumePayload: unknown
+}
+
 export type ActionContext<
     PieceAuth extends PieceAuthProperty = PieceAuthProperty,
     ActionProps extends NonAuthPiecePropertyMap = NonAuthPiecePropertyMap,
-> = BeginExecutionActionContext<PieceAuth, ActionProps> | ResumeExecutionActionContext<PieceAuth, ActionProps>
+> = BeginExecutionActionContext<PieceAuth, ActionProps> | ResumeExecutionActionContext<PieceAuth, ActionProps> | RerunExecutionActionContext<PieceAuth, ActionProps>
 
 export interface FilesService {
     write({ fileName, data }: { fileName: string, data: Buffer }): Promise<string>;

@@ -8,7 +8,7 @@ export const waitForApprovalLink = createAction({
   props: {
   },
   async run(ctx) {
-    if (ctx.executionType === ExecutionType.BEGIN) {
+    if (ctx.executionType !== ExecutionType.RESUME) {
       ctx.run.pause({
         pauseMetadata: {
           type: PauseType.WEBHOOK,

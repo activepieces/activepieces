@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
-import { TestFlowRunRequestBody, FlowRunId, ListFlowRunsRequestQuery, ApId, ALL_PRINICPAL_TYPES } from '@activepieces/shared'
+import { TestFlowRunRequestBody, FlowRunId, ListFlowRunsRequestQuery, ApId, ALL_PRINICPAL_TYPES, FlowRerunStrategy } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowRunService } from './flow-run-service'
 
@@ -27,6 +27,17 @@ const ResumeFlowRunRequest = {
         querystring: Type.Object({
             action: Type.String(),
         }),
+    },
+}
+
+const RerunFlowRequest = {
+    schema: {
+        params: Type.Object({
+            id: ApId,
+        }),
+        querystring: Type.Object({
+            strategy: Type.Enum(FlowRerunStrategy)
+        })
     },
 }
 
@@ -80,6 +91,14 @@ export const flowRunController: FastifyPluginCallbackTypebox = (app, _options, d
         await flowRunService.resume({
             flowRunId: req.params.id,
             action: req.query.action,
+        })
+    })
+
+
+    app.all('/:id/rerun', RerunFlowRequest, async (req) => {
+        await flowRunService.rerun({
+            flowRunId: req.params.id,
+            strategy: req.query.strategy,
         })
     })
 

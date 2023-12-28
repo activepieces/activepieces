@@ -16,6 +16,7 @@ export enum ExecutionOutputStatus {
 export enum ExecutionType {
     BEGIN = 'BEGIN',
     RESUME = 'RESUME',
+    RERUN = 'RERUN',
 }
 
 export type ExecutionError = {
