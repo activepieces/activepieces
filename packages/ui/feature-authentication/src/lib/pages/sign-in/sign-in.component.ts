@@ -80,7 +80,7 @@ export class SignInComponent {
             this.showResendVerification =
               error.error.code === ErrorCode.EMAIL_IS_NOT_VERIFIED;
             this.invitationOnlySignIn =
-              error.error.code === ErrorCode.INVITATIION_ONLY_SIGN_UP;
+              error.error.code === ErrorCode.INVITATION_ONLY_SIGN_UP;
           }
 
           this.loading = false;
