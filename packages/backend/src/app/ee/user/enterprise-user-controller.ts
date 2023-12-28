@@ -24,6 +24,18 @@ export const enterpriseUserController: FastifyPluginAsyncTypebox = async (app) =
 
         return res.status(StatusCodes.NO_CONTENT).send()
     })
+
+    app.post('/:id/activate', SuspendUserRequest, async (req, res) => {
+        const platformId = req.principal.platform?.id
+        assertNotNullOrUndefined(platformId, 'platformId')
+
+        await enterpriseUserService.activate({
+            id: req.params.id,
+            platformId,
+        })
+
+        return res.status(StatusCodes.NO_CONTENT).send()
+    })
 }
 
 const ListUsersRequest = {

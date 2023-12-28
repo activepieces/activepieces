@@ -317,14 +317,16 @@
       "@activepieces/ui/feature-dashboard": [
         "packages/ui/feature-dashboard/src/index.ts"
       ],
+      "@activepieces/ui/feature-pieces": [
+        "packages/ui/feature-pieces/src/index.ts"
+      ],
       "@activepieces/ui/feature-templates": [
         "packages/ui/feature-templates/src/index.ts"
       ],
       "@ee/*": ["packages/ee/*"],
       "ui-feature-flow-builder": [
         "packages/ui/feature-flow-builder/src/index.ts"
-      ],
-      "@activepieces/ui/feature-pieces": ["packages/ui/feature-pieces/src/index.ts"]
+      ]
     },
     "resolveJsonModule": true
   },

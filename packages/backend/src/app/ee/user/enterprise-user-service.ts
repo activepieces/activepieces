@@ -19,7 +19,7 @@ export const enterpriseUserService = {
         }
     },
 
-    async suspend({ id, platformId }: DeleteParams): Promise<void> {
+    async suspend({ id, platformId }: ActivateOrSuspendParams): Promise<void> {
         const updateCriteria: FindOptionsWhere<User> = {
             id,
             platformId,
@@ -40,13 +40,34 @@ export const enterpriseUserService = {
             })
         }
     },
+    async activate({ id, platformId }: ActivateOrSuspendParams): Promise<void> {
+        const updateCriteria: FindOptionsWhere<User> = {
+            id,
+            platformId,
+            status: UserStatus.SUSPENDED,
+        }
+
+        const updateResult = await repo.update(updateCriteria, {
+            status: UserStatus.VERIFIED,
+        })
+
+        if (updateResult.affected !== 1) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'user',
+                    entityId: id,
+                },
+            })
+        }
+    },
 }
 
 type ListParams = {
     platformId: PlatformId
 }
 
-type DeleteParams = {
+type ActivateOrSuspendParams = {
     id: UserId
     platformId: PlatformId
 }
