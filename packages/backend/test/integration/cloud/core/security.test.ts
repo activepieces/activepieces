@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyRequest } from 'fastify'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupApp } from '../../../../src/app/app'
-import { authorizationMiddleware } from '../../../../src/app/authentication/authorization-middleware'
+import { securityHandlerChain } from '../../../../src/app/core/security/security-handler-chain'
 import { ActivepiecesError, EndpointScope, ErrorCode, PlatformRole, Principal, PrincipalType, ProjectType, apId } from '@activepieces/shared'
 import { createMockFlow, createMockPlatformWithOwner, createMockProject, setupMockApiKeyServiceAccount } from '../../../helpers/mocks'
 import { generateMockToken } from '../../../helpers/auth'
@@ -25,17 +25,26 @@ describe('API Security', () => {
             const mockApiKey = 'api-key'
             const mockRequest = {
                 method: 'POST',
-                routerPath: '/v1/admin/users',
+                routerPath: '/v1/admin/platforms',
                 headers: {
                     'api-key': mockApiKey,
+                },
+                routeConfig: {
+                    allowedPrincipals: [PrincipalType.SUPER_USER],
                 },
             } as unknown as FastifyRequest
 
             // act
-            const result = authorizationMiddleware(mockRequest)
+            const result = securityHandlerChain(mockRequest)
 
             // assert
             await expect(result).resolves.toBeUndefined()
+
+            expect(mockRequest.principal).toEqual(expect.objectContaining({
+                id: expect.stringMatching(/SUPER_USER_.{21}/),
+                type: PrincipalType.SUPER_USER,
+                projectId: expect.stringMatching(/SUPER_USER_.{21}/),
+            }))
         })
 
         it('Fails if provided API key is invalid', async () => {
@@ -47,10 +56,11 @@ describe('API Security', () => {
                 headers: {
                     'api-key': mockInvalidApiKey,
                 },
+                routeConfig: {},
             } as unknown as FastifyRequest
 
             // act
-            const result = authorizationMiddleware(mockRequest)
+            const result = securityHandlerChain(mockRequest)
 
             // assert
             return result.catch(e => {
@@ -84,7 +94,7 @@ describe('API Security', () => {
             } as unknown as FastifyRequest
 
             // act
-            const result = authorizationMiddleware(mockRequest)
+            const result = securityHandlerChain(mockRequest)
 
             // assert
             await expect(result).resolves.toBeUndefined()
@@ -127,7 +137,7 @@ describe('API Security', () => {
             } as unknown as FastifyRequest
 
             // act
-            const result = authorizationMiddleware(mockRequest)
+            const result = securityHandlerChain(mockRequest)
 
             // assert
             await expect(result).resolves.toBeUndefined()
@@ -170,7 +180,7 @@ describe('API Security', () => {
             } as unknown as FastifyRequest
 
             // act
-            const result = authorizationMiddleware(mockRequest)
+            const result = securityHandlerChain(mockRequest)
 
             // assert
             await expect(result).resolves.toBeUndefined()
@@ -215,7 +225,7 @@ describe('API Security', () => {
             } as unknown as FastifyRequest
 
             // act
-            const result = authorizationMiddleware(mockRequest)
+            const result = securityHandlerChain(mockRequest)
 
             // assert
             await expect(result).resolves.toBeUndefined()
@@ -259,13 +269,13 @@ describe('API Security', () => {
             } as unknown as FastifyRequest
 
             // act
-            const result = authorizationMiddleware(mockRequest)
+            const result = securityHandlerChain(mockRequest)
 
             // assert
             await expect(result).rejects.toEqual(new ActivepiecesError({
-                code: ErrorCode.INVALID_BEARER_TOKEN,
+                code: ErrorCode.AUTHORIZATION,
                 params: {
-                    message: 'invalid access token',
+                    message: 'invalid project id',
                 },
             }))
         })
@@ -291,13 +301,13 @@ describe('API Security', () => {
             } as unknown as FastifyRequest
 
             // act
-            const result = authorizationMiddleware(mockRequest)
+            const result = securityHandlerChain(mockRequest)
 
             // assert
             await expect(result).rejects.toEqual(new ActivepiecesError({
-                code: ErrorCode.INVALID_BEARER_TOKEN,
+                code: ErrorCode.AUTHORIZATION,
                 params: {
-                    message: 'invalid access token',
+                    message: 'invalid project id',
                 },
             }))
         })
@@ -327,13 +337,13 @@ describe('API Security', () => {
             } as unknown as FastifyRequest
 
             // act
-            const result = authorizationMiddleware(mockRequest)
+            const result = securityHandlerChain(mockRequest)
 
             // assert
             await expect(result).rejects.toEqual(new ActivepiecesError({
-                code: ErrorCode.INVALID_BEARER_TOKEN,
+                code: ErrorCode.AUTHORIZATION,
                 params: {
-                    message: 'invalid access token',
+                    message: 'invalid project id',
                 },
             }))
         })
@@ -355,7 +365,7 @@ describe('API Security', () => {
             } as unknown as FastifyRequest
 
             // act
-            const result = authorizationMiddleware(mockRequest)
+            const result = securityHandlerChain(mockRequest)
 
             // assert
             await expect(result).rejects.toEqual(new ActivepiecesError({
@@ -387,13 +397,13 @@ describe('API Security', () => {
             } as unknown as FastifyRequest
 
             // act
-            const result = authorizationMiddleware(mockRequest)
+            const result = securityHandlerChain(mockRequest)
 
             // assert
             await expect(result).rejects.toEqual(new ActivepiecesError({
-                code: ErrorCode.INVALID_BEARER_TOKEN,
+                code: ErrorCode.AUTHORIZATION,
                 params: {
-                    message: 'invalid access token',
+                    message: 'invalid route for principal type',
                 },
             }))
         })
@@ -425,7 +435,7 @@ describe('API Security', () => {
             } as unknown as FastifyRequest
 
             // act
-            const result = authorizationMiddleware(mockRequest)
+            const result = securityHandlerChain(mockRequest)
 
             // assert
             await expect(result).resolves.toBeUndefined()
@@ -458,13 +468,13 @@ describe('API Security', () => {
             } as unknown as FastifyRequest
 
             // act
-            const result = authorizationMiddleware(mockRequest)
+            const result = securityHandlerChain(mockRequest)
 
             // assert
             await expect(result).rejects.toEqual(new ActivepiecesError({
-                code: ErrorCode.INVALID_BEARER_TOKEN,
+                code: ErrorCode.AUTHORIZATION,
                 params: {
-                    message: 'invalid access token',
+                    message: 'invalid route for principal type',
                 },
             }))
         })
@@ -488,13 +498,13 @@ describe('API Security', () => {
             } as unknown as FastifyRequest
 
             // act
-            const result = authorizationMiddleware(mockRequest)
+            const result = securityHandlerChain(mockRequest)
 
             // assert
             await expect(result).rejects.toEqual(new ActivepiecesError({
-                code: ErrorCode.INVALID_BEARER_TOKEN,
+                code: ErrorCode.AUTHORIZATION,
                 params: {
-                    message: 'invalid access token',
+                    message: 'invalid project id',
                 },
             }))
         })
@@ -518,13 +528,13 @@ describe('API Security', () => {
             } as unknown as FastifyRequest
 
             // act
-            const result = authorizationMiddleware(mockRequest)
+            const result = securityHandlerChain(mockRequest)
 
             // assert
             await expect(result).rejects.toEqual(new ActivepiecesError({
-                code: ErrorCode.INVALID_BEARER_TOKEN,
+                code: ErrorCode.AUTHORIZATION,
                 params: {
-                    message: 'invalid access token',
+                    message: 'invalid project id',
                 },
             }))
         })
@@ -543,7 +553,7 @@ describe('API Security', () => {
             } as unknown as FastifyRequest
 
             // act
-            const result = authorizationMiddleware(mockRequest)
+            const result = securityHandlerChain(mockRequest)
 
             // assert
             await expect(result).resolves.toBeUndefined()
@@ -570,13 +580,13 @@ describe('API Security', () => {
             } as unknown as FastifyRequest
 
             // act
-            const result = authorizationMiddleware(mockRequest)
+            const result = securityHandlerChain(mockRequest)
 
             // assert
             await expect(result).rejects.toEqual(new ActivepiecesError({
-                code: ErrorCode.INVALID_BEARER_TOKEN,
+                code: ErrorCode.AUTHORIZATION,
                 params: {
-                    message: 'invalid access token',
+                    message: 'invalid route for principal type',
                 },
             }))
         })
