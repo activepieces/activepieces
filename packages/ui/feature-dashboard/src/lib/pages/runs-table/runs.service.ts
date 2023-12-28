@@ -1,7 +1,5 @@
 import { FlowRerunStrategy } from '@activepieces/shared';
-import {
-  environment,
-} from '@activepieces/ui/common';
+import { environment } from '@activepieces/ui/common';
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 @Injectable({
@@ -15,10 +13,9 @@ export class RunsService {
       {},
       {
         params: {
-          strategy
-        }
+          strategy,
+        },
       }
     ).subscribe();
   }
 }
-
