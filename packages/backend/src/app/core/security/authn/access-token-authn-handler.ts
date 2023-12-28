@@ -27,9 +27,9 @@ export class AccessTokenAuthnHandler extends BaseSecurityHandler {
 
         if (isNil(accessToken)) {
             throw new ActivepiecesError({
-                code: ErrorCode.AUTHORIZATION,
+                code: ErrorCode.AUTHENTICATION,
                 params: {
-                    message: 'missing api key',
+                    message: 'missing access token',
                 },
             })
         }
