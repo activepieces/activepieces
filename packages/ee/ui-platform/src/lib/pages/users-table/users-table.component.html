@@ -1,9 +1,4 @@
 <ap-page-title [title]="title">
-
-    <div class="ap-typography-caption" underTitle>
-        Manage your platform users by activating or suspending them
-    </div>
-
 </ap-page-title>
 
 
@@ -28,7 +23,7 @@
         </ng-container>
         <ng-container matColumnDef="status">
             <th mat-header-cell *matHeaderCellDef i18n>Status</th>
-            <td mat-cell *matCellDef="let user">{{ user.status === UserStatus.SUSPENDED? suspended: active }}</td>
+            <td mat-cell *matCellDef="let user">{{ user.status === UserStatus.INACTIVE ? deactivated: active }}</td>
         </ng-container>
 
 
@@ -38,13 +33,14 @@
             </th>
             <td mat-cell *matCellDef="let user">
                 <div class="ap-w-[7.3125rem]  ap-float-right ap-flex ap-gap-2 ap-justify-center">
-                    <ap-icon-button (click)="$event.stopPropagation(); activateUser(user)" i18n-tooltipText
+                    <ap-icon-button (buttonClicked)="activateUser(user)" i18n-tooltipText
                         tooltipText="Activate User" iconFilename="reactivate.svg"
-                        *ngIf="user.status === UserStatus.SUSPENDED" [width]="20" [height]="20"
+                        *ngIf="user.status === UserStatus.INACTIVE" [width]="20" [height]="20"
                         [height]="16"></ap-icon-button>
-                    <ap-icon-button (click)="$event.stopPropagation();suspendUser(user)" i18n-tooltipText
-                        tooltipText="Suspend User" iconFilename="suspend.svg"
-                        *ngIf="user.status !== UserStatus.SUSPENDED" [width]="20" [height]="20" color="warn"
+                    <ap-icon-button (buttonClicked)="deactivateUser(user)" i18n-tooltipText
+                        tooltipText="Deactivate User" iconFilename="suspend.svg"
+                        [buttonDisabled]="user.id === platformOwnerId"
+                        *ngIf="user.status === UserStatus.ACTIVE" [width]="20" [height]="20" color="warn"
                         [height]="16"></ap-icon-button>
                 </div>
 
@@ -68,9 +64,9 @@
             (dataSource.isLoading$ | async) === false
           ">
         <div class="ap-flex ap-items-center ap-justify-center ap-h-full ap-h-[500px] ap-py-8" i18n>
-            No templates created yet.
+            No users created yet.
         </div>
     </ng-container>
 </div>
-<ng-container *ngIf="suspend$ | async"></ng-container>
+<ng-container *ngIf="deactivate$ | async"></ng-container>
 <ng-container *ngIf="activate$ | async"></ng-container>

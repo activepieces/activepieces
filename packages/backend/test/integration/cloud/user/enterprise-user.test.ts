@@ -117,7 +117,7 @@ describe('Enterprise User API', () => {
     })
 
     describe('Update user endpoint', () => {
-        it('Updates user status to be DEACTIVATED', async () => {
+        it('Updates user status to be INACTIVE', async () => {
             // arrange
             const { mockOwner, mockPlatform } = createMockPlatformWithOwner()
 
@@ -146,7 +146,7 @@ describe('Enterprise User API', () => {
                     authorization: `Bearer ${testToken}`,
                 },
                 body: {
-                    status: UserStatus.DEACTIVATED,
+                    status: UserStatus.INACTIVE,
                 },
             })
 
@@ -156,7 +156,7 @@ describe('Enterprise User API', () => {
             const responseJson = response?.json()
             expect(responseJson.id).toBe(mockUser.id)
             expect(responseJson.password).toBeUndefined()
-            expect(responseJson.status).toBe(UserStatus.DEACTIVATED)
+            expect(responseJson.status).toBe(UserStatus.INACTIVE)
         })
         
         it('Fails if user doesn\'t exist', async () => {
@@ -179,7 +179,7 @@ describe('Enterprise User API', () => {
                     authorization: `Bearer ${testToken}`,
                 },
                 body: {
-                    status: UserStatus.DEACTIVATED,
+                    status: UserStatus.INACTIVE,
                 },
             })
 
@@ -194,7 +194,7 @@ describe('Enterprise User API', () => {
 
             const mockUser = createMockUser({
                 platformId: mockPlatform.id,
-                status: UserStatus.DEACTIVATED,
+                status: UserStatus.INACTIVE,
             })
 
             await databaseConnection.getRepository('user').save([mockOwner, mockUser])
@@ -239,7 +239,7 @@ describe('Enterprise User API', () => {
                     authorization: `Bearer ${testToken}`,
                 },
                 body: {
-                    status: UserStatus.DEACTIVATED,
+                    status: UserStatus.INACTIVE,
                 },
             })
 

@@ -158,9 +158,9 @@ const assertUserIsAllowedToSignIn: (user: User | null) => asserts user is User =
             params: null,
         })
     }
-    if (user.status === UserStatus.DEACTIVATED) {
+    if (user.status === UserStatus.INACTIVE) {
         throw new ActivepiecesError({
-            code: ErrorCode.USER_IS_DEACTIVATED,
+            code: ErrorCode.USER_IS_INACTIVE,
             params: {
                 email: user.email,
             },

@@ -8,7 +8,7 @@ export enum UserStatus {
     /* user is active */
     ACTIVE = 'ACTIVE',
     /* user account deactivated */
-    DEACTIVATED = 'DEACTIVATED',
+    INACTIVE = 'INACTIVE',
 }
 
 export const EmailType = Type.String({

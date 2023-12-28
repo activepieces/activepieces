@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { UsersDataSource } from './users-table.datasource';
 import {
+  AuthenticationService,
   GenericSnackbarTemplateComponent,
   PlatformService,
 } from '@activepieces/ui/common';
@@ -14,14 +15,15 @@ import { MatSnackBar } from '@angular/material/snack-bar';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UsersTableComponent {
-  suspend$?: Observable<void>;
+  deactivate$?: Observable<void>;
   activate$?: Observable<void>;
   title = $localize`Users`;
-  suspended = $localize`Suspended`;
+  deactivated = $localize`Inactive`;
   active = $localize`Active`;
   dataSource: UsersDataSource;
   UserStatus = UserStatus;
   refresh$ = new Subject<boolean>();
+  platformOwnerId: string;
   displayedColumns = [
     'email',
     'name',
@@ -32,36 +34,42 @@ export class UsersTableComponent {
   ];
   constructor(
     private platformService: PlatformService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private authenticationService: AuthenticationService
   ) {
+    this.platformOwnerId = this.authenticationService.currentUser.id;
     this.dataSource = new UsersDataSource(
       this.refresh$.asObservable().pipe(startWith(true)),
-      this.platformService
+      this.platformService,
     );
   }
 
-  suspendUser(user: UserResponse) {
-    this.suspend$ = this.platformService.suspendUser(user.id).pipe(
-      tap(() => {
-        this.refresh$.next(true);
-        this.snackBar.openFromComponent(GenericSnackbarTemplateComponent, {
-          data: `<b>${user.firstName} ${
-            user.lastName
-          }</b> ${$localize`suspended`} `,
-        });
-      })
-    );
+  deactivateUser(user: UserResponse) {
+    this.deactivate$ = this.platformService
+      .updateUser(user.id, { status: UserStatus.INACTIVE })
+      .pipe(
+        tap(() => {
+          this.refresh$.next(true);
+          this.snackBar.openFromComponent(GenericSnackbarTemplateComponent, {
+            data: `<b>${user.firstName} ${
+              user.lastName
+            }</b> ${$localize`deactivated`} `,
+          });
+        })
+      );
   }
   activateUser(user: UserResponse) {
-    this.activate$ = this.platformService.activateUser(user.id).pipe(
-      tap(() => {
-        this.refresh$.next(true);
-        this.snackBar.openFromComponent(GenericSnackbarTemplateComponent, {
-          data: `<b>${user.firstName} ${
-            user.lastName
-          }</b> ${$localize`activated`} `,
-        });
-      })
-    );
+    this.activate$ = this.platformService
+      .updateUser(user.id, { status: UserStatus.ACTIVE })
+      .pipe(
+        tap(() => {
+          this.refresh$.next(true);
+          this.snackBar.openFromComponent(GenericSnackbarTemplateComponent, {
+            data: `<b>${user.firstName} ${
+              user.lastName
+            }</b> ${$localize`activated`} `,
+          });
+        })
+      );
   }
 }

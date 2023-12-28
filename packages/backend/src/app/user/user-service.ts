@@ -34,7 +34,7 @@ export const userService = {
         }
         return userRepo.save({
             ...user,
-            verfied: true,
+            verified: true,
         })
     },
 

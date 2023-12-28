@@ -223,7 +223,7 @@ export class AddVerifiedAndChangeStatusSqlite1703768553820 implements MigrationI
         `)
 
         await queryRunner.query(`
-            UPDATE "user" SET "status" = 'VERIFIED', "verified" = false
+            UPDATE "user" SET "status" = 'ACTIVE', "verified" = true
         `)
     }
 

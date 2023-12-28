@@ -20,6 +20,9 @@
   <mat-error class="ap-text-center" *ngIf="invitationOnlySignIn" i18n>
     You are not invited to any project, please contact your administrator.
   </mat-error>
+  <mat-error class="ap-text-center" *ngIf="showDisabledUser" i18n>
+    Your user is inactive, please contact your administrator to activate it.
+  </mat-error>
   <div *ngIf="showResendVerification"
     class="ap-text-center ap-flex-col  ap-flex ap-items-center ap-justify-center ap-gap-2">
     Please check your inbox to verify your account. <ap-button type="button" btnSize="small" btnStyle="stroked"
@@ -27,7 +30,7 @@
       verification
     </ap-button>
   </div>
-  
+
   <div class="text-center ap-mt-2 ap-flex ap-flex-col ap-gap-2">
     <ap-button [loading]="loading" (buttonClicked)="signIn()" btnColor="primary" btnSize="large"
       [fullWidthOfContainer]="true" i18n>
