@@ -96,7 +96,7 @@ export class BasicAuthConnectionDialogComponent {
     if (this.settingsForm.valid) {
       this.loading = true;
       const upsertRequest: UpsertBasicAuthRequest = {
-        appName: this.dialogData.pieceName,
+        pieceName: this.dialogData.pieceName,
         projectId: this.authenticationService.getProjectId(),
         name: this.settingsForm.getRawValue().name,
         type: AppConnectionType.BASIC_AUTH,

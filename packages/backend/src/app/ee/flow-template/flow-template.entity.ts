@@ -24,7 +24,7 @@ export const FlowTemplateEntity = new EntitySchema<FlowTemplateSchema>({
         },
         platformId: {
             type: String,
-            nullable: true,
+            nullable: false,
         },
         projectId: {
             type: String,

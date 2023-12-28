@@ -266,244 +266,6 @@
             "type": "string",
             "nullable": true
           },
-          "version": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "created": {
-                "type": "string"
-              },
-              "updated": {
-                "type": "string"
-              },
-              "flowId": {
-                "type": "string"
-              },
-              "displayName": {
-                "type": "string"
-              },
-              "trigger": {
-                "anyOf": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "name": {
-                        "type": "string"
-                      },
-                      "valid": {
-                        "type": "boolean"
-                      },
-                      "displayName": {
-                        "type": "string"
-                      },
-                      "nextAction": {},
-                      "type": {
-                        "type": "string",
-                        "enum": [
-                          "WEBHOOK"
-                        ]
-                      },
-                      "settings": {
-                        "type": "object",
-                        "properties": {
-                          "inputUiInfo": {
-                            "additionalProperties": true,
-                            "type": "object",
-                            "properties": {
-                              "currentSelectedData": {},
-                              "customizedInputs": {
-                                "type": "object",
-                                "additionalProperties": {}
-                              },
-                              "lastTestDate": {
-                                "type": "string"
-                              }
-                            }
-                          }
-                        },
-                        "required": [
-                          "inputUiInfo"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "name",
-                      "valid",
-                      "displayName",
-                      "type",
-                      "settings"
-                    ]
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "name": {
-                        "type": "string"
-                      },
-                      "valid": {
-                        "type": "boolean"
-                      },
-                      "displayName": {
-                        "type": "string"
-                      },
-                      "nextAction": {},
-                      "type": {
-                        "type": "string",
-                        "enum": [
-                          "PIECE_TRIGGER"
-                        ]
-                      },
-                      "settings": {
-                        "type": "object",
-                        "properties": {
-                          "pieceName": {
-                            "type": "string"
-                          },
-                          "pieceVersion": {
-                            "type": "string",
-                            "pattern": "^([~^])?[0-9]+\\.[0-9]+\\.[0-9]+$"
-                          },
-                          "pieceType": {
-                            "anyOf": [
-                              {
-                                "type": "string",
-                                "enum": [
-                                  "CUSTOM"
-                                ]
-                              },
-                              {
-                                "type": "string",
-                                "enum": [
-                                  "OFFICIAL"
-                                ]
-                              }
-                            ]
-                          },
-                          "packageType": {
-                            "anyOf": [
-                              {
-                                "type": "string",
-                                "enum": [
-                                  "ARCHIVE"
-                                ]
-                              },
-                              {
-                                "type": "string",
-                                "enum": [
-                                  "REGISTRY"
-                                ]
-                              }
-                            ]
-                          },
-                          "triggerName": {
-                            "type": "string"
-                          },
-                          "input": {
-                            "type": "object",
-                            "additionalProperties": {}
-                          },
-                          "inputUiInfo": {
-                            "additionalProperties": true,
-                            "type": "object",
-                            "properties": {
-                              "currentSelectedData": {},
-                              "customizedInputs": {
-                                "type": "object",
-                                "additionalProperties": {}
-                              },
-                              "lastTestDate": {
-                                "type": "string"
-                              }
-                            }
-                          }
-                        },
-                        "required": [
-                          "pieceName",
-                          "pieceVersion",
-                          "pieceType",
-                          "packageType",
-                          "triggerName",
-                          "input",
-                          "inputUiInfo"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "name",
-                      "valid",
-                      "displayName",
-                      "type",
-                      "settings"
-                    ]
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "name": {
-                        "type": "string"
-                      },
-                      "valid": {
-                        "type": "boolean"
-                      },
-                      "displayName": {
-                        "type": "string"
-                      },
-                      "nextAction": {},
-                      "type": {
-                        "type": "string",
-                        "enum": [
-                          "EMPTY"
-                        ]
-                      },
-                      "settings": {}
-                    },
-                    "required": [
-                      "name",
-                      "valid",
-                      "displayName",
-                      "type",
-                      "settings"
-                    ]
-                  }
-                ]
-              },
-              "updatedBy": {
-                "type": "string"
-              },
-              "valid": {
-                "type": "boolean"
-              },
-              "state": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                    "enum": [
-                      "LOCKED"
-                    ]
-                  },
-                  {
-                    "type": "string",
-                    "enum": [
-                      "DRAFT"
-                    ]
-                  }
-                ]
-              }
-            },
-            "required": [
-              "id",
-              "created",
-              "updated",
-              "flowId",
-              "displayName",
-              "trigger",
-              "updatedBy",
-              "valid",
-              "state"
-            ]
-          },
           "status": {
             "anyOf": [
               {
@@ -516,12 +278,6 @@
                 "type": "string",
                 "enum": [
                   "DISABLED"
-                ]
-              },
-              {
-                "type": "string",
-                "enum": [
-                  "UNPUBLISHED"
                 ]
               }
             ]
@@ -546,7 +302,12 @@
               "type",
               "cronExpression",
               "timezone"
-            ]
+            ],
+            "nullable": true
+          },
+          "publishedVersionId": {
+            "type": "string",
+            "nullable": true
           }
         },
         "required": [
@@ -554,7 +315,6 @@
           "created",
           "updated",
           "projectId",
-          "version",
           "status"
         ]
       },
@@ -614,7 +374,7 @@
               }
             ]
           },
-          "appName": {
+          "pieceName": {
             "type": "string"
           },
           "projectId": {
@@ -644,7 +404,7 @@
           "updated",
           "name",
           "type",
-          "appName",
+          "pieceName",
           "projectId",
           "status"
         ]
@@ -671,7 +431,7 @@
                       "name": {
                         "type": "string"
                       },
-                      "appName": {
+                      "pieceName": {
                         "type": "string"
                       },
                       "projectId": {
@@ -704,7 +464,7 @@
                     },
                     "required": [
                       "name",
-                      "appName",
+                      "pieceName",
                       "projectId",
                       "type",
                       "value"
@@ -718,7 +478,7 @@
                       "name": {
                         "type": "string"
                       },
-                      "appName": {
+                      "pieceName": {
                         "type": "string"
                       },
                       "projectId": {
@@ -810,7 +570,7 @@
                     },
                     "required": [
                       "name",
-                      "appName",
+                      "pieceName",
                       "projectId",
                       "type",
                       "value"
@@ -824,7 +584,7 @@
                       "name": {
                         "type": "string"
                       },
-                      "appName": {
+                      "pieceName": {
                         "type": "string"
                       },
                       "projectId": {
@@ -893,7 +653,7 @@
                     },
                     "required": [
                       "name",
-                      "appName",
+                      "pieceName",
                       "projectId",
                       "type",
                       "value"
@@ -907,7 +667,7 @@
                       "name": {
                         "type": "string"
                       },
-                      "appName": {
+                      "pieceName": {
                         "type": "string"
                       },
                       "projectId": {
@@ -980,7 +740,7 @@
                     },
                     "required": [
                       "name",
-                      "appName",
+                      "pieceName",
                       "projectId",
                       "type",
                       "value"
@@ -994,7 +754,7 @@
                       "name": {
                         "type": "string"
                       },
-                      "appName": {
+                      "pieceName": {
                         "type": "string"
                       },
                       "projectId": {
@@ -1031,7 +791,7 @@
                     },
                     "required": [
                       "name",
-                      "appName",
+                      "pieceName",
                       "projectId",
                       "type",
                       "value"
@@ -1045,7 +805,7 @@
                       "name": {
                         "type": "string"
                       },
-                      "appName": {
+                      "pieceName": {
                         "type": "string"
                       },
                       "projectId": {
@@ -1079,7 +839,7 @@
                     },
                     "required": [
                       "name",
-                      "appName",
+                      "pieceName",
                       "projectId",
                       "type",
                       "value"
@@ -1123,7 +883,7 @@
               "type": "string"
             },
             "in": "query",
-            "name": "appName",
+            "name": "pieceName",
             "required": false
           },
           {
@@ -1201,7 +961,7 @@
                               }
                             ]
                           },
-                          "appName": {
+                          "pieceName": {
                             "type": "string"
                           },
                           "projectId": {
@@ -1231,7 +991,7 @@
                           "updated",
                           "name",
                           "type",
-                          "appName",
+                          "pieceName",
                           "projectId",
                           "status"
                         ]

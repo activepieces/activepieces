@@ -172,7 +172,7 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
     const newConnection: UpsertOAuth2Request = {
       projectId: this.authenticatiionService.getProjectId(),
       name: connectionName,
-      appName: this.dialogData.pieceName,
+      pieceName: this.dialogData.pieceName,
       type: AppConnectionType.OAUTH2,
       value: {
         code: this.settingsForm.controls.value.value.code,

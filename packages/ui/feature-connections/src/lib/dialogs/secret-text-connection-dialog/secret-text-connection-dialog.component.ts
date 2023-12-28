@@ -92,7 +92,7 @@ export class SecretTextConnectionDialogComponent {
       this.upsert$ = this.appConnectionsService
         .upsert({
           projectId: this.authenticatiionService.getProjectId(),
-          appName: this.dialogData.pieceName,
+          pieceName: this.dialogData.pieceName,
           name: this.settingsForm.controls.name.value,
           type: AppConnectionType.SECRET_TEXT,
           value: {

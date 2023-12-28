@@ -85,7 +85,9 @@ export class ConnectionsTableDataSource extends DataSource<any> {
       }),
       switchMap((res) => {
         const logos: Observable<string | undefined>[] = res.data.map((item) =>
-          this.pieceMetadataService.getPieceNameLogo(item.appName).pipe(take(1))
+          this.pieceMetadataService
+            .getPieceNameLogo(item.pieceName)
+            .pipe(take(1))
         );
         return forkJoin(logos).pipe(
           map((logos) => {
