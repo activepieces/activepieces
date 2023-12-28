@@ -1,5 +1,5 @@
 import jwksClient from 'jwks-rsa'
-import { AuthenticationResponse, UserStatus } from '@activepieces/shared'
+import { AuthenticationResponse } from '@activepieces/shared'
 import { AuthnProvider } from './authn-provider'
 import { authenticationService } from '../../../../authentication/authentication-service'
 import { jwtUtils, JwtSignAlgorithm } from '../../../../helper/jwt-utils'
@@ -87,7 +87,7 @@ const verifyIdToken = async (idToken: string): Promise<IdTokenPayload> => {
 const generateAuthenticationResponse = async (platformId: string | null, idTokenPayload: IdTokenPayload): Promise<AuthenticationResponse> => {
     return authenticationService.federatedAuthn({
         email: idTokenPayload.email,
-        userStatus: UserStatus.VERIFIED,
+        verified: true,
         firstName: idTokenPayload.givenName,
         lastName: idTokenPayload.familyName,
         platformId,
