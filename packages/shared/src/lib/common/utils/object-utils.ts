@@ -86,15 +86,3 @@ type ObjectDifference<T, U> = {
     ? U[K]
     : never;
 };
-
-export function addMissingProperties<T extends object, U extends object>(target: T, source: U): T & ObjectDifference<U, T> {
-    const result = { ...target } as T & ObjectDifference<U, T>;
-
-    for (const key in source) {
-        if (!(key in target)) {
-            (result as any)[key] = source[key];
-        }
-    }
-
-    return result;
-}
