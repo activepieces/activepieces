@@ -167,7 +167,7 @@ describe('Authentication API', () => {
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
             const responseBody = response?.json()
 
-            expect(responseBody?.code).toBe('INVITATIION_ONLY_SIGN_UP')
+            expect(responseBody?.code).toBe('INVITATION_ONLY_SIGN_UP')
         })
 
         it('Adds tasks for referrals', async () => {
