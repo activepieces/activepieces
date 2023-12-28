@@ -265,11 +265,11 @@ export const flowRunService = {
         const flowVersion = await flowVersionService.getFlowVersion({
             flowId: flowRun.flowId,
             versionId: undefined,
-            removeSecrets: true
+            removeSecrets: true,
         })
 
         const logFile = await fileService.getOneOrThrow({
-            fileId: flowRun.logsFileId!
+            fileId: flowRun.logsFileId!,
         })
         const executionOutput: ExecutionOutput = JSON.parse(logFile.data.toString('utf-8'))
 
@@ -280,10 +280,10 @@ export const flowRunService = {
         await flowRunRepo.save(flowRun)
 
         await flowRunSideEffects.rerun({
-            flowRun: flowRun,
+            flowRun,
             payload: executionOutput.executionState.steps.trigger.output,
             rerunPayload: {
-                strategy
+                strategy,
             },
         })
 

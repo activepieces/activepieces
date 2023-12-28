@@ -122,7 +122,7 @@ export class RunsTableComponent implements OnInit {
   }
 
   async rerunFlow(run: FlowRun, strategy: FlowRerunStrategy, event: MouseEvent) {
-    this.runsService.rerun(run.id, strategy).subscribe()
+    this.runsService.rerun(run.id, strategy).pipe().subscribe()
     run.status = ExecutionOutputStatus.RUNNING
     event.stopPropagation();
   }

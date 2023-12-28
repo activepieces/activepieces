@@ -36,8 +36,8 @@ const RerunFlowRequest = {
             id: ApId,
         }),
         querystring: Type.Object({
-            strategy: Type.Enum(FlowRerunStrategy)
-        })
+            strategy: Type.Enum(FlowRerunStrategy),
+        }),
     },
 }
 

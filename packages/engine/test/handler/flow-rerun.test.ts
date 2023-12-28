@@ -1,4 +1,4 @@
-import { flowExecutor } from 'packages/engine/src/lib/handler/flow-executor'
+import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { EXECUTE_CONSTANTS, buildPieceAction } from './test-helper'
 import { ExecutionType, FlowRerunStrategy } from '@activepieces/shared'
@@ -38,9 +38,9 @@ describe('flow rerun', () => {
             }), executionState: context, constants: {
                 ...EXECUTE_CONSTANTS,
                 rerunPayload: {
-                    strategy: FlowRerunStrategy.FLOW
+                    strategy: FlowRerunStrategy.FLOW,
                 },
-                executionType: ExecutionType.RERUN
+                executionType: ExecutionType.RERUN,
             },
         })
         expect(rerunEntireFlow.verdict).toBe(ExecutionVerdict.RUNNING)
@@ -79,9 +79,9 @@ describe('flow rerun', () => {
             }), executionState: context, constants: {
                 ...EXECUTE_CONSTANTS,
                 rerunPayload: {
-                    strategy: FlowRerunStrategy.FROM_FAILED
+                    strategy: FlowRerunStrategy.FROM_FAILED,
                 },
-                executionType: ExecutionType.RERUN
+                executionType: ExecutionType.RERUN,
             },
         })
         expect(rerunFromFailed.verdict).toBe(ExecutionVerdict.RUNNING)
