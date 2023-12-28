@@ -37,7 +37,7 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
 
         if (isNil(apiKeyValue)) {
             throw new ActivepiecesError({
-                code: ErrorCode.AUTHORIZATION,
+                code: ErrorCode.AUTHENTICATION,
                 params: {
                     message: 'missing api key',
                 },
@@ -63,12 +63,23 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
             return principal
         }
 
-        const projectId = await this.extractProjectIdOrThrow(request)
-        const project = await projectService.getOneOrThrow(projectId)
-        this.assertApiKeyAndProjectBelongToSamePlatform(project, apiKey)
-        principal.projectId = projectId
+        try {
+            const projectId = await this.extractProjectIdOrThrow(request)
+            const project = await projectService.getOneOrThrow(projectId)
 
-        return principal
+            this.assertApiKeyAndProjectBelongToSamePlatform(project, apiKey)
+
+            principal.projectId = projectId
+            return principal
+        }
+        catch (e) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'invalid project id',
+                },
+            })
+        }
     }
 
     private async extractProjectIdOrThrow(request: FastifyRequest): Promise<ProjectId> {
