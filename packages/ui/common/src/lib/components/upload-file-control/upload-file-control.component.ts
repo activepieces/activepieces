@@ -49,7 +49,6 @@ export class UploadFileControlComponent
   }
   @HostBinding('class.floated')
   get shouldLabelFloat(): boolean {
-    console.log(this.focused || !this.empty);
     return this.focused || !this.empty;
   }
   @Input()
@@ -142,5 +141,6 @@ export class UploadFileControlComponent
       this.errorState = newState || false;
       this.stateChanges.next();
     }
+    console.log(this.ngControl?.invalid);
   }
 }

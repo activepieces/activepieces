@@ -22,7 +22,7 @@ import {
   TestFlowRunRequestBody,
   UpdateFlowStatusRequest,
 } from '@activepieces/shared';
-
+export const CURRENT_FLOW_IS_NEW_KEY_IN_LOCAL_STORAGE = 'newFlow';
 @Injectable({
   providedIn: 'root',
 })

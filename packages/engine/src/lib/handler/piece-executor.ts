@@ -97,6 +97,9 @@ export const pieceExecutor: BaseExecutor<PieceAction> = {
                     pause: createPauseHook(hookResponse),
                 },
                 resumePayload: constants.resumePayload,
+                project: {
+                    id: constants.projectId,
+                },
             }
             const output = await pieceAction.run(context)
             const newExecutionContext = executionState.addTags(hookResponse.tags)

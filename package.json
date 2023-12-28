@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
-  "version": "0.14.3",
-  "rcVersion": "0.15.0-rc.8",
+  "version": "0.15.0",
+  "rcVersion": "0.16.0-rc.0",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve ui-core",
@@ -65,7 +65,7 @@
     "angular-svg-icon": "15.0.0",
     "angular2-uuid": "1.1.1",
     "async-mutex": "0.4.0",
-    "axios": "^1.6.0",
+    "axios": "^1.6.3",
     "bcrypt": "5.1.1",
     "buffer": "6.0.3",
     "bullmq": "3.15.8",

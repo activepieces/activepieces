@@ -89,7 +89,7 @@ async function getProjectAndTokenOrThrow(user: User): Promise<{ project: Project
     }
 }
 
-async function isInvitedToProject({ email, platformId }: { email: string, platformId: string | null }): Promise<boolean> {
+async function isInvitedToProject({ email, platformId }: { email: string, platformId: string }): Promise<boolean> {
     const platformProjects = await projectMemberService.listByUser({
         email,
         platformId,
@@ -97,7 +97,7 @@ async function isInvitedToProject({ email, platformId }: { email: string, platfo
     return platformProjects.length > 0
 }
 
-async function assertUserIsInvitedToAnyProject({ email, platformId }: { email: string, platformId: string | null }): Promise<void> {
+async function assertUserIsInvitedToAnyProject({ email, platformId }: { email: string, platformId: string }): Promise<void> {
     const isInvited = await isInvitedToProject({ email, platformId })
     if (!isInvited) {
         throw new ActivepiecesError({

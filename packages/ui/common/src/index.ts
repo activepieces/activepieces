@@ -14,7 +14,6 @@ export * from './lib/directives';
 export * from './lib/environments/environment';
 export * from './lib/utils/insert-mention-operation';
 export * from './lib/resolvers/connections.resolver';
-export * from './lib/resolvers/are-there-featured-templates.resolver';
 export * from './lib/models/piece-metadata-model';
 export * from './lib/guards';
 export * from './lib/service';

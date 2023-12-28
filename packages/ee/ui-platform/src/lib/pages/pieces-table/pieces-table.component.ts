@@ -31,7 +31,7 @@ import { MatDialog } from '@angular/material/dialog';
 import {
   InstallCommunityPieceModalComponent,
   PieceMetadataService,
-} from 'ui-feature-pieces';
+} from '@activepieces/ui/feature-pieces';
 
 @Component({
   selector: 'app-pieces-table',

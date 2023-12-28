@@ -177,18 +177,6 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.TEMPLATES_SOURCE_URL,
-                value: system.get(SystemProp.TEMPLATES_SOURCE_URL),
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.TEMPLATES_PROJECT_ID,
-                value: system.get(SystemProp.TEMPLATES_PROJECT_ID),
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.SHOW_POWERED_BY_AP,
                 value: false,
                 created,
@@ -214,6 +202,13 @@ export const flagService = {
         catch (ex) {
             return '0.0.0'
         }
+    },
+    isCloudPlatform(platformId: string | null): boolean {
+        const cloudPlatformId = system.get(SystemProp.CLOUD_PLATFORM_ID)
+        if (!cloudPlatformId || !platformId) {
+            return false
+        }
+        return platformId === cloudPlatformId
     },
 }
 

@@ -68,6 +68,9 @@ export const triggerHelper = {
             auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
             propsValue: processedInput,
             payload: params.triggerPayload ?? {},
+            project: {
+                id: params.projectId,
+            },
         }
         switch (params.hookType) {
             case TriggerHookType.ON_DISABLE:

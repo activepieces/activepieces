@@ -24,7 +24,7 @@ import {
   BuilderSelectors,
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
-import { PieceMetadataService } from 'ui-feature-pieces';
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 
 export interface TriggerHistoricalData {
   payload: unknown;

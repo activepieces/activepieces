@@ -33,7 +33,10 @@ import {
 import { PiecePropertiesFormValue } from '@activepieces/ui/feature-builder-form-controls';
 import { ComponentTriggerInputFormSchema } from '../../input-forms-schema';
 import { PiecePropertyMap } from '@activepieces/pieces-framework';
-import { CORE_SCHEDULE, PieceMetadataService } from 'ui-feature-pieces';
+import {
+  CORE_SCHEDULE,
+  PieceMetadataService,
+} from '@activepieces/ui/feature-pieces';
 
 declare type TriggerDropdownOption = {
   label: {
