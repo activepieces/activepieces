@@ -32,7 +32,7 @@ import { VariableService } from './lib/services/variable-service'
 
 const executeFlow = async (input: ExecuteFlowOperation, context: FlowExecutorContext): Promise<EngineResponse<ExecutionOutput>> => {
     const output = await flowExecutor.execute({
-        action: input.flowVersion.trigger.nextAction,
+        action: flowExecutor.getStartAction(input),
         executionState: context,
         constants: {
             flowId: input.flowVersion.flowId,
@@ -48,6 +48,7 @@ const executeFlow = async (input: ExecuteFlowOperation, context: FlowExecutorCon
                 workerToken: input.workerToken,
             }),
             resumePayload: input.executionType === ExecutionType.RESUME ? input.resumePayload : undefined,
+            rerunPayload: input.executionType === ExecutionType.RERUN ? input.rerunPayload : undefined,
             piecesSource: PIECE_SOURCES,
             baseCodeDirectory: BASE_CODE_DIRECTORY,
         },

@@ -7,6 +7,7 @@ import {
 import {
   ApEdition,
   ExecutionOutputStatus,
+  FlowRerunStrategy,
   FlowRun,
   NotificationStatus,
   SeekPage,
@@ -24,6 +25,7 @@ import {
 } from '@activepieces/ui/common';
 import { FormControl } from '@angular/forms';
 import { Store } from '@ngrx/store';
+import { RunsService } from './runs.service';
 
 @Component({
   templateUrl: './runs-table.component.html',
@@ -42,6 +44,21 @@ export class RunsTableComponent implements OnInit {
     new FormControl();
   changeRunStatus$: Observable<void>;
   readonly ExecutionOutputStatus = ExecutionOutputStatus;
+  FlowRerunStrategy: typeof FlowRerunStrategy = FlowRerunStrategy;
+  flowRerunOptions = [
+    {
+        label: 'Rerun Entire Flow',
+        strategy: FlowRerunStrategy.FLOW,
+        color: 'primary',
+        icon: 'replay',
+    },
+    {
+        label: 'Rerun From Failed',
+        strategy: FlowRerunStrategy.FROM_FAILED,
+        color: 'secondary',
+        icon: 'replay',
+    },
+  ]
 
   constructor(
     private router: Router,
@@ -49,7 +66,8 @@ export class RunsTableComponent implements OnInit {
     private flagsService: FlagService,
     private store: Store,
     private instanceRunService: InstanceRunService,
-    private navigationService: NavigationService
+    private navigationService: NavigationService,
+    private runsService: RunsService
   ) {}
 
   ngOnInit(): void {
@@ -101,5 +119,21 @@ export class RunsTableComponent implements OnInit {
     const route = '/runs/' + run.id;
     const newWindow = event.ctrlKey || event.which == 2 || event.button == 4;
     this.navigationService.navigate(route, newWindow);
+  }
+
+  async rerunFlow(run: FlowRun, strategy: FlowRerunStrategy, event: MouseEvent) {
+    this.runsService.rerun(run.id, strategy).subscribe()
+    run.status = ExecutionOutputStatus.RUNNING
+    event.stopPropagation();
+  }
+
+  isRerunEnabled(run: FlowRun) {
+    const enabledStatuses = [
+        ExecutionOutputStatus.FAILED,
+        ExecutionOutputStatus.INTERNAL_ERROR,
+        ExecutionOutputStatus.QUOTA_EXCEEDED,
+    ]
+
+    return enabledStatuses.includes(run.status)
   }
 }

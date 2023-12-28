@@ -78,3 +78,23 @@ export async function applyFunctionToValues<T>(obj: unknown, apply: (str: unknow
 const isObject = (obj: unknown): obj is Record<string, unknown> => {
     return typeof obj === 'object'
 }
+
+type ObjectDifference<T, U> = {
+    [K in keyof T | keyof U]: K extends keyof T
+    ? T[K]
+    : K extends keyof U
+    ? U[K]
+    : never;
+};
+
+export function addMissingProperties<T extends object, U extends object>(target: T, source: U): T & ObjectDifference<U, T> {
+    const result = { ...target } as T & ObjectDifference<U, T>;
+
+    for (const key in source) {
+        if (!(key in target)) {
+            (result as any)[key] = source[key];
+        }
+    }
+
+    return result;
+}

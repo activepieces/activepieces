@@ -1,5 +1,5 @@
 
-import { ExecutionType, ProjectId } from '@activepieces/shared'
+import { ExecutionType, FlowRerunPayload, ProjectId } from '@activepieces/shared'
 import { VariableService } from '../../services/variable-service'
 
 export type EngineConstantData = {
@@ -12,6 +12,7 @@ export type EngineConstantData = {
     flowId: string
     variableService: VariableService
     resumePayload?: unknown
+    rerunPayload?: FlowRerunPayload
     baseCodeDirectory: string
     piecesSource: string
     testSingleStepMode: boolean

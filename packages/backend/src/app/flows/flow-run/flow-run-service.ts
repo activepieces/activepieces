@@ -18,6 +18,8 @@ import {
     ExecutionType,
     isNil,
     RunTerminationReason,
+    ExecutionOutput,
+    FlowRerunStrategy,
 } from '@activepieces/shared'
 import { APArrayContains, databaseConnection } from '../../database/database-connection'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
@@ -31,6 +33,7 @@ import { logger } from '../../helper/logger'
 import { flowService } from '../flow/flow.service'
 import { MoreThanOrEqual } from 'typeorm'
 import { flowRunHooks } from './flow-run-hooks'
+import { fileService } from '../../file/file.service'
 
 export const flowRunRepo = databaseConnection.getRepository(FlowRunEntity)
 
@@ -231,7 +234,7 @@ export const flowRunService = {
 
     async getAllProdRuns(params: GetAllProdRuns): Promise<number> {
         const { projectId, created } = params
-    
+
         const sumOfTasks = await flowRunRepo.createQueryBuilder('flow_run')
             .select('COALESCE(SUM(flow_run.tasks), 0)', 'tasks')
             .where({
@@ -240,10 +243,52 @@ export const flowRunService = {
                 created: MoreThanOrEqual(created),
             })
             .getRawOne()
-    
+
         return Number(sumOfTasks.tasks)
     },
-    
+
+    async rerun({ flowRunId, strategy }: RerunParams): Promise<FlowRun> {
+        logger.info(`[FlowRunService#rerun] flowRunId=${flowRunId} strategy=${strategy}`)
+
+        const flowRun = await flowRunRepo.findOneBy({
+            id: flowRunId,
+        })
+        if (isNil(flowRun)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.FLOW_RUN_NOT_FOUND,
+                params: {
+                    id: flowRunId,
+                },
+            })
+        }
+
+        const flowVersion = await flowVersionService.getFlowVersion({
+            flowId: flowRun.flowId,
+            versionId: undefined,
+            removeSecrets: true
+        })
+
+        const logFile = await fileService.getOneOrThrow({
+            fileId: flowRun.logsFileId!
+        })
+        const executionOutput: ExecutionOutput = JSON.parse(logFile.data.toString('utf-8'))
+
+        await flowRunHooks.getHooks().onPreStart({ projectId: flowRun.projectId })
+
+        flowRun.status = ExecutionOutputStatus.RUNNING
+        flowRun.flowVersionId = flowVersion.id
+        await flowRunRepo.save(flowRun)
+
+        await flowRunSideEffects.rerun({
+            flowRun: flowRun,
+            payload: executionOutput.executionState.steps.trigger.output,
+            rerunPayload: {
+                strategy
+            },
+        })
+
+        return flowRun
+    },
 }
 
 type GetOrCreateParams = {
@@ -288,6 +333,11 @@ type PauseParams = {
     flowRunId: FlowRunId
     logFileId: FileId
     pauseMetadata: PauseMetadata
+}
+
+type RerunParams = {
+    flowRunId: FlowRunId
+    strategy: FlowRerunStrategy
 }
 
 type GetAllProdRuns = {
