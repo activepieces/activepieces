@@ -6,6 +6,8 @@ import { requestUtils } from '../../request/request-utils'
 export class ProjectAuthzHandler extends BaseSecurityHandler {
     private static readonly IGNORED_ROUTES = [
         '/v1/users/projects/:projectId/token',
+        '/v1/admin/platforms',
+        '/v1/admin/pieces',
     ]
 
     protected canHandle(request: FastifyRequest): Promise<boolean> {
