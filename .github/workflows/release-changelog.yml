@@ -28,6 +28,5 @@ jobs:
           name: ${{ env.RELEASE }}
           version: ${{ env.RELEASE }}
           latest: true
-          include-pre-releases: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
