@@ -47,16 +47,16 @@ export class RunsTableComponent implements OnInit {
   FlowRerunStrategy: typeof FlowRerunStrategy = FlowRerunStrategy;
   flowRerunOptions = [
     {
-        label: 'Rerun Entire Flow',
-        strategy: FlowRerunStrategy.FLOW,
-        color: 'secondary',
-        icon: 'loop',
+      label: 'Rerun Entire Flow',
+      strategy: FlowRerunStrategy.FLOW,
+      color: 'secondary',
+      icon: 'loop',
     },
     {
-        label: 'Rerun From Failed',
-        strategy: FlowRerunStrategy.FROM_FAILED,
-        color: 'secondary',
-        icon: 'replay',
+      label: 'Rerun From Failed',
+      strategy: FlowRerunStrategy.FROM_FAILED,
+      color: 'secondary',
+      icon: 'replay',
     },
   ]
 
@@ -68,7 +68,7 @@ export class RunsTableComponent implements OnInit {
     private instanceRunService: InstanceRunService,
     private navigationService: NavigationService,
     private runsService: RunsService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.changeRunStatus$ = this.selectedStatus.valueChanges.pipe(
@@ -129,9 +129,9 @@ export class RunsTableComponent implements OnInit {
 
   isRerunEnabled(run: FlowRun) {
     const enabledStatuses = [
-        ExecutionOutputStatus.FAILED,
-        ExecutionOutputStatus.INTERNAL_ERROR,
-        ExecutionOutputStatus.QUOTA_EXCEEDED,
+      ExecutionOutputStatus.FAILED,
+      ExecutionOutputStatus.INTERNAL_ERROR,
+      ExecutionOutputStatus.QUOTA_EXCEEDED,
     ]
 
     return enabledStatuses.includes(run.status)

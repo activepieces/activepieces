@@ -81,22 +81,22 @@ const isObject = (obj: unknown): obj is Record<string, unknown> => {
 
 type ObjectDifference<T, U> = {
     [K in keyof T | keyof U]: K extends keyof T
-    ? T[K]
-    : K extends keyof U
-    ? U[K]
-    : never;
-};
+        ? T[K]
+        : K extends keyof U
+            ? U[K]
+            : never
+}
 
 export function addMissingProperties<T extends object, U extends object>(target: T, source: U): T & ObjectDifference<U, T> {
-    const result = { ...target } as T & ObjectDifference<U, T>;
+    const result = { ...target } as T & ObjectDifference<U, T>
 
     for (const key in source) {
         if (!(key in target)) {
-            (result as any)[key] = source[key];
+            (result as U)[key] = source[key]
         }
     }
 
-    return result;
+    return result
 }
 
 export type MakeKeyNonNullableAndRequired<T extends object, K extends keyof T> = T & { [P in K]-?: NonNullable<T[P]> }

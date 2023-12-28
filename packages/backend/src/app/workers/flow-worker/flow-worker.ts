@@ -260,8 +260,8 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
 
                 // Add the missing steps to executionOutput
                 executionOutput.executionState = {
-                    steps: addMissingProperties(outputSteps, inputSteps)
-                };
+                    steps: addMissingProperties(outputSteps, inputSteps),
+                }
             }
         }
 
