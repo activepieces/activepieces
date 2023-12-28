@@ -114,7 +114,7 @@ describe('Authentication API', () => {
                 email: mockEmail,
                 password: mockPassword,
                 verified: true,
-                status: UserStatus.ACTIVE
+                status: UserStatus.ACTIVE,
             })
             await databaseConnection.getRepository('user').save(mockUser)
 
@@ -164,7 +164,7 @@ describe('Authentication API', () => {
                 email: mockEmail,
                 password: mockPassword,
                 verified: true,
-                status: UserStatus.ACTIVE
+                status: UserStatus.ACTIVE,
             })
             await databaseConnection.getRepository('user').save(mockUser)
 

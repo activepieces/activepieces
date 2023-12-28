@@ -53,7 +53,7 @@ describe('Enterprise Local Authn API', () => {
 
             const user = await databaseConnection.getRepository('user').findOneBy({ id: mockUser.id })
             expect(user?.status).toBe(UserStatus.ACTIVE)
-            expect(user?.verified).toBe(true);
+            expect(user?.verified).toBe(true)
             const otp = await databaseConnection.getRepository('otp').findOneBy({ id: mockOtp.id })
             expect(otp?.state).toBe(OtpState.CONFIRMED)
         })

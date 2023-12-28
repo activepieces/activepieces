@@ -40,7 +40,7 @@ export class UsersTableComponent {
     this.platformOwnerId = this.authenticationService.currentUser.id;
     this.dataSource = new UsersDataSource(
       this.refresh$.asObservable().pipe(startWith(true)),
-      this.platformService,
+      this.platformService
     );
   }
 
