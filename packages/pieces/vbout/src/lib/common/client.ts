@@ -11,6 +11,7 @@ import {
   ContactUpdateRequest,
   TagCreateRequest,
   VboutResponseBody,
+  CampaignCreateRequest,
   ContactList,
 } from './models';
 
@@ -121,6 +122,15 @@ export class VboutClient {
     return await this.makeRequest(
       HttpMethod.POST,
       '/emailMarketing/AddTag',
+      undefined,
+      request
+    );
+  }
+
+  async addCampaign(request: CampaignCreateRequest) {
+    return await this.makeRequest(
+      HttpMethod.POST,
+      '/emailMarketing/AddCampaign',
       undefined,
       request
     );

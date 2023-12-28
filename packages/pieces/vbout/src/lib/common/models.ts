@@ -65,3 +65,14 @@ export interface TagCreateRequest {
   email: string;
   tagname: string[];
 }
+
+export interface CampaignCreateRequest {
+  name: string;
+  subject: string;
+  fromemail: string;
+  from_name: string;
+  reply_to: string;
+  body: string;
+  type: string;
+  lists: string;
+}
