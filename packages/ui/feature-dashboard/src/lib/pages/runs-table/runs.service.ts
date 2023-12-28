@@ -6,16 +6,19 @@ import { Injectable } from '@angular/core';
   providedIn: 'root',
 })
 export class RunsService {
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   async rerun(runId: string, strategy: FlowRerunStrategy) {
-    return this.http.post(environment.apiUrl + `/flow-runs/${runId}/rerun`,
-      {},
-      {
-        params: {
-          strategy,
-        },
-      }
-    ).subscribe();
+    return this.http
+      .post(
+        environment.apiUrl + `/flow-runs/${runId}/rerun`,
+        {},
+        {
+          params: {
+            strategy,
+          },
+        }
+      )
+      .subscribe();
   }
 }

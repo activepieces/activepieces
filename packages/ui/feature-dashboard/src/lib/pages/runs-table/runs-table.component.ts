@@ -67,8 +67,8 @@ export class RunsTableComponent implements OnInit {
     private store: Store,
     private instanceRunService: InstanceRunService,
     private navigationService: NavigationService,
-    private runsService: RunsService,
-  ) { }
+    private runsService: RunsService
+  ) {}
 
   ngOnInit(): void {
     this.changeRunStatus$ = this.selectedStatus.valueChanges.pipe(
