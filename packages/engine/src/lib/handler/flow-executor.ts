@@ -26,7 +26,7 @@ export const flowExecutor = {
         let startAction: Action | undefined
 
         switch (input.executionType) {
-            case ExecutionType.RERUN:
+            case ExecutionType.RERUN: {
                 const { strategy } = input.rerunPayload
 
                 switch (strategy) {
@@ -61,6 +61,7 @@ export const flowExecutor = {
                         startAction = input.flowVersion.trigger.nextAction
                 }
                 break
+            }
             case ExecutionType.BEGIN:
             case ExecutionType.RESUME:
             default:
