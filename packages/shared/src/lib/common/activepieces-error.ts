@@ -50,6 +50,7 @@ type ErrorParams =
     | TriggerFailedErrorParams
     | ValidationErrorParams
     | InvitationOnlySignUpParams
+    | UserIsDeactivatedErrorParams
 
 export type BaseErrorParams<T, V> = {
     code: T
@@ -128,6 +129,13 @@ null
 
 export type EmailIsNotVerifiedErrorParams = BaseErrorParams<
 ErrorCode.EMAIL_IS_NOT_VERIFIED,
+{
+    email: string
+}
+>
+
+export type UserIsDeactivatedErrorParams = BaseErrorParams<
+ErrorCode.USER_IS_DEACTIVATED,
 {
     email: string
 }
@@ -339,5 +347,6 @@ export enum ErrorCode {
     TRIGGER_DISABLE = 'TRIGGER_DISABLE',
     TRIGGER_ENABLE = 'TRIGGER_ENABLE',
     TRIGGER_FAILED = 'TRIGGER_FAILED',
+    USER_IS_DEACTIVATED = 'USER_IS_DEACTIVATED',
     VALIDATION = 'VALIDATION',
 }
