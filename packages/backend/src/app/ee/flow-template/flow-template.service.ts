@@ -10,7 +10,7 @@ const templateRepo = databaseConnection.getRepository<FlowTemplate>(FlowTemplate
 export const flowTemplateService = {
     upsert: async (platformId: string | undefined, projectId: string | undefined, { description,  type, template, blogUrl, tags, id }: CreateFlowTemplateRequest): Promise<FlowTemplate> => {
         const flowTemplate: FlowVersionTemplate = template
-        const newTags= tags?? [];
+        const newTags = tags ?? []
         await templateRepo.upsert({
             id: id ?? apId(),
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
