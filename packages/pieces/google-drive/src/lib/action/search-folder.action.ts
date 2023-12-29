@@ -18,8 +18,6 @@ export const googleDriveSearchFolder = createAction({
     },
     async run (context) {
 
-        console.log(context.auth);
-
         const authClient = new OAuth2Client();
         authClient.setCredentials(context.auth)
 
