@@ -6,7 +6,7 @@ on:
 jobs:
   Release:
     env:
-      MY_VERSION: user1
+      MY_VERSION: users1
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
