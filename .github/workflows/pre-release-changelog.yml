@@ -1,4 +1,4 @@
-name: Write release notes
+name: Write Pre Release notes
 
 on:
   pull_request:
