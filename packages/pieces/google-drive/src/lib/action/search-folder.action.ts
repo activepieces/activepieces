@@ -37,7 +37,6 @@ export const googleDriveSearchFolder = createAction({
             throw new Error('Error searching folder');
         }
 
-        console.log('!!!!!!!!!!!!response!!!!!!!!!!!!!');
         const folders = response.data.files ?? [];
         
         if (folders.length > 0) {
