@@ -59,10 +59,3 @@ packages/backend/.env
 
 # scratch pad
 scratch.md
-
-packages/backend/.env
-packages/backend/.env.tests
-packages/backend/src/main.ts
-packages/engine/src/lib/constants.ts
-packages/engine/test/handler/test-helper.ts
-packages/ui/common/src/lib/environments/environment.ts
