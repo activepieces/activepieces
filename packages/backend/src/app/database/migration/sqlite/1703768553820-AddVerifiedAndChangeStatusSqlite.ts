@@ -29,7 +29,7 @@ export class AddVerifiedAndChangeStatusSqlite1703768553820 implements MigrationI
                 "title" varchar,
                 "externalId" varchar,
                 "platformId" varchar,
-                "verified" boolean NOT NULL,
+                "verified" boolean,
                 CONSTRAINT "UQ_e12875dfb3b1d92d7d7c5377e22" UNIQUE ("email")
             )
         `)
@@ -72,6 +72,10 @@ export class AddVerifiedAndChangeStatusSqlite1703768553820 implements MigrationI
         await queryRunner.query(`
             ALTER TABLE "temporary_user"
                 RENAME TO "user"
+        `)
+
+        await queryRunner.query(`
+            UPDATE "user" SET "status" = 'ACTIVE', "verified" = true
         `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "email")
@@ -222,9 +226,6 @@ export class AddVerifiedAndChangeStatusSqlite1703768553820 implements MigrationI
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "email")
         `)
 
-        await queryRunner.query(`
-            UPDATE "user" SET "status" = 'ACTIVE', "verified" = true
-        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
