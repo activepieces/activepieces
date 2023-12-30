@@ -24,6 +24,7 @@ export const createMockUser = (user?: Partial<User>): User => {
         status: user?.status ?? faker.helpers.enumValue(UserStatus),
         imageUrl: user?.imageUrl,
         title: user?.title,
+        verified: user?.verified ?? faker.datatype.boolean(),
         externalId: user?.externalId,
         platformId: user?.platformId ?? null,
     }

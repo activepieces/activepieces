@@ -58,7 +58,7 @@ describe('Managed Authentication API', () => {
             const responseBody = response?.json()
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(Object.keys(responseBody)).toHaveLength(15)
+            expect(Object.keys(responseBody)).toHaveLength(16)
             expect(responseBody?.id).toHaveLength(21)
             expect(responseBody?.email).toBe(mockExternalTokenPayload.email)
             expect(responseBody?.firstName).toBe(mockExternalTokenPayload.firstName)
@@ -66,7 +66,8 @@ describe('Managed Authentication API', () => {
             expect(responseBody?.trackEvents).toBe(true)
             expect(responseBody?.newsLetter).toBe(true)
             expect(responseBody?.password).toBeUndefined()
-            expect(responseBody?.status).toBe('VERIFIED')
+            expect(responseBody?.status).toBe('ACTIVE')
+            expect(responseBody?.verified).toBe(true)
             expect(responseBody?.externalId).toBe(mockExternalTokenPayload.externalUserId)
             expect(responseBody?.platformId).toBe(mockPlatform.id)
             expect(responseBody?.projectId).toHaveLength(21)

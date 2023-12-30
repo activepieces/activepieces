@@ -38,6 +38,13 @@
 
             </td>
         </ng-container>
+        <ng-container matColumnDef="packageName">
+            <th mat-header-cell *matHeaderCellDef i18n>Package Name</th>
+            <td mat-cell *matCellDef="let piece">
+                {{ piece.name }}
+            </td>
+        </ng-container>
+
         <ng-container matColumnDef="version">
             <th mat-header-cell *matHeaderCellDef i18n class="!ap-text-center">Version</th>
             <td mat-cell class="!ap-text-center" *matCellDef="let piece">
