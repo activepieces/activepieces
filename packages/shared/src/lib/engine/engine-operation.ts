@@ -59,16 +59,16 @@ export type ExecutePropsOptions = BaseEngineOperation & {
 type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
     flowVersion: FlowVersion
     flowRunId: FlowRunId
-    triggerPayload: unknown
     executionType: T
 }
 
 export type BeginExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.BEGIN> & {
-    executionState?: ExecutionState
+    triggerPayload: unknown
 }
 
 export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.RESUME> & {
     executionState: ExecutionState
+    tasks: number
     resumePayload: unknown
 }
 

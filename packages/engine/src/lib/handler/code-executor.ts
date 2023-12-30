@@ -33,7 +33,7 @@ export const codeExecutor: BaseExecutor<CodeAction> = {
             const artifactPath = `${constants.baseCodeDirectory}/${action.name}/index.js`
             const codePieceModule: CodePieceModule = await import(artifactPath)
             const output = await codePieceModule.code(resolvedInput)
-            return executionState.upsertStep(action.name, stepOutput.setOutput(output))
+            return executionState.upsertStep(action.name, stepOutput.setOutput(output)).increaseTask()
         }
         catch (e) {
             console.error(e)
