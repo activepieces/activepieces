@@ -5,6 +5,7 @@ import { createEmailMarketingCampaignAction } from './lib/actions/create-campaig
 import { createEmailListAction } from './lib/actions/create-email-list';
 import { getContactByEmailAction } from './lib/actions/get-contact-by-email';
 import { getEmailListAction } from './lib/actions/get-email-list';
+import { removeTagFromContactAction } from './lib/actions/remove-tag-from-contact';
 import { unsubscribeContactAction } from './lib/actions/unsubscribe-contact';
 import { updateContactAction } from './lib/actions/update-contact';
 
@@ -34,6 +35,7 @@ export const vbout = createPiece({
     createEmailMarketingCampaignAction,
     getContactByEmailAction,
     getEmailListAction,
+    removeTagFromContactAction,
     unsubscribeContactAction,
     updateContactAction,
   ],

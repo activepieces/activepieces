@@ -126,6 +126,16 @@ export class VboutClient {
       request
     );
   }
+  async removeTagFromContact(email: string, tagname: string) {
+    return await this.makeRequest(
+      HttpMethod.DELETE,
+      '/emailMarketing/RemoveTag',
+      prepareQuery({
+        email,
+        tagname,
+      })
+    );
+  }
 
   async addCampaign(request: CampaignCreateRequest) {
     return await this.makeRequest(
