@@ -92,7 +92,7 @@ Community templates provide inspiration and enable you to effortlessly build aut
 Activepieces' Community Edition is released as open source under the [MIT license](https://github.com/activepieces/activepieces/blob/main/LICENSE) and enterprise features are released under [Commerical License](https://github.com/activepieces/activepieces/blob/main/packages/ee/LICENSE)
 
 
-Read more about the feature comparsion here https://www.activepieces.com/docs/about/editions
+Read more about the feature comparison here https://www.activepieces.com/docs/about/editions
 <br>
 <br>
 
