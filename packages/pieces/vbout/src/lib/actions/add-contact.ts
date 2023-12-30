@@ -24,12 +24,20 @@ export const vboutAddContactAction = createAction({
         disabled: false,
         options: [
           {
-            label: 'Active',
-            value: 'Active',
+            label: 'Unconfirmed',
+            value: '0',
           },
           {
-            label: 'Disactive',
-            value: 'Disactive',
+            label: 'Active',
+            value: '1',
+          },
+          {
+            label: 'Unsubscribe',
+            value: '2',
+          },
+          {
+            label: 'Bounced Email',
+            value: '3',
           },
         ],
       },
