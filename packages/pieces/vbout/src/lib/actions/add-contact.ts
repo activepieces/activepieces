@@ -8,16 +8,16 @@ export const vboutAddContactAction = createAction({
   displayName: 'Add Contact to List',
   description: 'Adds a contact to a given email list.',
   props: {
-    listid: vboutCommon.listid(true),
     email: Property.ShortText({
       displayName: 'Email Address',
       required: true,
     }),
+    listid: vboutCommon.listid(true),
+    status: vboutCommon.contactStatus(true),
     ipaddress: Property.ShortText({
       displayName: 'IP Address',
       required: false,
     }),
-    status: vboutCommon.contactStatus,
     fields: vboutCommon.listFields,
   },
   async run(context) {

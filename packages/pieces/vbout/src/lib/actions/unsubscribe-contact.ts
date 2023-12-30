@@ -1,12 +1,13 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { makeClient, vboutCommon } from '../common';
 import { vboutAuth } from '../..';
+import { ContactStatusValues } from '../common/models';
 
-export const vboutUpdateContactAction = createAction({
+export const vboutUnsubscribeContactAction = createAction({
   auth: vboutAuth,
-  name: 'vbout_update_contact',
-  displayName: 'Update Contact',
-  description: 'Updates a contact in a given email list.',
+  name: 'vbout_unsubscribe_contact',
+  displayName: 'Unsubscribe Contact',
+  description: 'Unsubscribes an existing contact in a given email list.',
   props: {
     email: Property.ShortText({
       displayName: 'Contact Email',
@@ -14,17 +15,14 @@ export const vboutUpdateContactAction = createAction({
       description: 'Contact email for update.',
     }),
     listid: vboutCommon.listid(true),
-    status: vboutCommon.contactStatus(false),
-    ipaddress: Property.ShortText({
-      displayName: 'IP Address',
-      required: false,
-    }),
-    fields: vboutCommon.listFields,
   },
   async run(context) {
     const client = makeClient(context.auth as string);
-    const { email } = context.propsValue;
-    const res = await client.getContactByEmail(email as string);
+    const { email, listid } = context.propsValue;
+    const res = await client.getContactByEmail(
+      email as string,
+      listid as string
+    );
     const contact = res.response.data.contact;
 
     if ('errorCode' in contact) {
@@ -33,7 +31,7 @@ export const vboutUpdateContactAction = createAction({
       const contactId = contact[0].id;
       return await client.updateContact({
         id: contactId,
-        ...context.propsValue,
+        status: ContactStatusValues.UNSUBSCRIBE,
       });
     }
   },

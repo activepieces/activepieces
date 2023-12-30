@@ -1,6 +1,6 @@
 import { VboutClient } from './client';
 import { Property, DynamicPropsValue } from '@activepieces/pieces-framework';
-
+import { ContactStatusValues } from './models';
 export function makeClient(apiKey: string): VboutClient {
   return new VboutClient(apiKey);
 }
@@ -62,29 +62,30 @@ export const vboutCommon = {
       return fields;
     },
   }),
-  contactStatus: Property.StaticDropdown({
-    displayName: 'Contact Status',
-    required: true,
-    options: {
-      disabled: false,
-      options: [
-        {
-          label: 'Unconfirmed',
-          value: '0',
-        },
-        {
-          label: 'Active',
-          value: '1',
-        },
-        {
-          label: 'Unsubscribe',
-          value: '2',
-        },
-        {
-          label: 'Bounced Email',
-          value: '3',
-        },
-      ],
-    },
-  }),
+  contactStatus: (required = true) =>
+    Property.StaticDropdown({
+      displayName: 'Contact Status',
+      required: required,
+      options: {
+        disabled: false,
+        options: [
+          {
+            label: 'Unconfirmed',
+            value: ContactStatusValues.BOUNCED_EMAIL,
+          },
+          {
+            label: 'Active',
+            value: ContactStatusValues.ACTIVE,
+          },
+          {
+            label: 'Unsubscribe',
+            value: ContactStatusValues.UNSUBSCRIBE,
+          },
+          {
+            label: 'Bounced Email',
+            value: ContactStatusValues.BOUNCED_EMAIL,
+          },
+        ],
+      },
+    }),
 };

@@ -57,8 +57,15 @@ export interface ContactCreateRequest {
   };
 }
 
-export interface ContactUpdateRequest extends ContactCreateRequest {
+export interface ContactUpdateRequest {
   id: string;
+  listid?: string;
+  status?: string;
+  email?: string;
+  ipaddress?: string;
+  fields?: {
+    [key: string]: string;
+  };
 }
 
 export interface TagCreateRequest {
@@ -75,4 +82,11 @@ export interface CampaignCreateRequest {
   body: string;
   type: string;
   lists: string;
+}
+
+export enum ContactStatusValues {
+  UNCONFIRMED = '0',
+  ACTIVE = '1',
+  UNSUBSCRIBE = '2',
+  BOUNCED_EMAIL = '3',
 }
