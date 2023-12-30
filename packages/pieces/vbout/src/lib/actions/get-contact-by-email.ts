@@ -1,8 +1,8 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { makeClient, vboutCommon } from '../common';
 import { vboutAuth } from '../..';
+import { makeClient, vboutCommon } from '../common';
 
-export const vboutGetContactByEmailAction = createAction({
+export const getContactByEmailAction = createAction({
   auth: vboutAuth,
   name: 'vbout_get_contact_by_email',
   displayName: 'Get Contact by Email',

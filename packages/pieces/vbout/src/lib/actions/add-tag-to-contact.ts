@@ -1,8 +1,8 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { makeClient, vboutCommon } from '../common';
 import { vboutAuth } from '../..';
+import { makeClient } from '../common';
 
-export const vboutAddTagAction = createAction({
+export const addTagToContactAction = createAction({
   auth: vboutAuth,
   name: 'vbout_add_tag',
   displayName: 'Add Tag to Contact',

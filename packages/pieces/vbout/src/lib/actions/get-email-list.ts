@@ -1,8 +1,8 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { makeClient, vboutCommon } from '../common';
 import { vboutAuth } from '../..';
+import { makeClient, vboutCommon } from '../common';
 
-export const vboutGetEmailListAction = createAction({
+export const getEmailListAction = createAction({
   auth: vboutAuth,
   name: 'vbout_get_email_list',
   displayName: 'Get List Details with Custom Fields',

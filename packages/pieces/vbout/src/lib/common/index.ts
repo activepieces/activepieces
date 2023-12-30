@@ -1,5 +1,5 @@
+import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { VboutClient } from './client';
-import { Property, DynamicPropsValue } from '@activepieces/pieces-framework';
 import { ContactStatusValues } from './models';
 export function makeClient(apiKey: string): VboutClient {
   return new VboutClient(apiKey);

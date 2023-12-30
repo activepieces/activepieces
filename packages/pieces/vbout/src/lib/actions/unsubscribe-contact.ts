@@ -1,9 +1,9 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { makeClient, vboutCommon } from '../common';
 import { vboutAuth } from '../..';
+import { makeClient, vboutCommon } from '../common';
 import { ContactStatusValues } from '../common/models';
 
-export const vboutUnsubscribeContactAction = createAction({
+export const unsubscribeContactAction = createAction({
   auth: vboutAuth,
   name: 'vbout_unsubscribe_contact',
   displayName: 'Unsubscribe Contact',

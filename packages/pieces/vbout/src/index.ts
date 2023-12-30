@@ -1,12 +1,13 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { vboutGetContactByEmailAction } from './lib/actions/get-contact-by-email';
-import { vboutGetEmailListAction } from './lib/actions/get-email-list';
-import { vboutCreateEmailListAction } from './lib/actions/create-email-list';
-import { vboutAddContactAction } from './lib/actions/add-contact';
-import { vboutUpdateContactAction } from './lib/actions/update-contact';
-import { vboutAddTagAction } from './lib/actions/add-tag-to-contact';
-import { vboutAddEmailMarketingCampaignAction } from './lib/actions/create-campaign';
-import { vboutUnsubscribeContactAction } from './lib/actions/unsubscribe-contact';
+import { addContactAction } from './lib/actions/add-contact';
+import { addTagToContactAction } from './lib/actions/add-tag-to-contact';
+import { createEmailMarketingCampaignAction } from './lib/actions/create-campaign';
+import { createEmailListAction } from './lib/actions/create-email-list';
+import { getContactByEmailAction } from './lib/actions/get-contact-by-email';
+import { getEmailListAction } from './lib/actions/get-email-list';
+import { unsubscribeContactAction } from './lib/actions/unsubscribe-contact';
+import { updateContactAction } from './lib/actions/update-contact';
+
 const markdown = `
 To obtain your API key, follow these steps:
 
@@ -27,14 +28,14 @@ export const vbout = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/vbout.png',
   authors: ['kishanprmr'],
   actions: [
-    vboutGetContactByEmailAction,
-    vboutGetEmailListAction,
-    vboutCreateEmailListAction,
-    vboutAddContactAction,
-    vboutUpdateContactAction,
-    vboutAddTagAction,
-    vboutAddEmailMarketingCampaignAction,
-    vboutUnsubscribeContactAction,
+    addContactAction,
+    addTagToContactAction,
+    createEmailListAction,
+    createEmailMarketingCampaignAction,
+    getContactByEmailAction,
+    getEmailListAction,
+    unsubscribeContactAction,
+    updateContactAction,
   ],
   triggers: [],
 });

@@ -6,13 +6,13 @@ import {
 } from '@activepieces/pieces-common';
 import { vboutCommon } from '.';
 import {
-  EmailListCreateRequest,
+  CampaignCreateRequest,
   ContactCreateRequest,
+  ContactList,
   ContactUpdateRequest,
+  EmailListCreateRequest,
   TagCreateRequest,
   VboutResponseBody,
-  CampaignCreateRequest,
-  ContactList,
 } from './models';
 
 function emptyValueFilter(
