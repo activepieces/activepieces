@@ -17,31 +17,7 @@ export const vboutAddContactAction = createAction({
       displayName: 'IP Address',
       required: false,
     }),
-    status: Property.StaticDropdown({
-      displayName: 'Status',
-      required: true,
-      options: {
-        disabled: false,
-        options: [
-          {
-            label: 'Unconfirmed',
-            value: '0',
-          },
-          {
-            label: 'Active',
-            value: '1',
-          },
-          {
-            label: 'Unsubscribe',
-            value: '2',
-          },
-          {
-            label: 'Bounced Email',
-            value: '3',
-          },
-        ],
-      },
-    }),
+    status: vboutCommon.contactStatus,
     fields: vboutCommon.listFields,
   },
   async run(context) {

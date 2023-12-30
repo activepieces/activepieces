@@ -62,4 +62,29 @@ export const vboutCommon = {
       return fields;
     },
   }),
+  contactStatus: Property.StaticDropdown({
+    displayName: 'Contact Status',
+    required: true,
+    options: {
+      disabled: false,
+      options: [
+        {
+          label: 'Unconfirmed',
+          value: '0',
+        },
+        {
+          label: 'Active',
+          value: '1',
+        },
+        {
+          label: 'Unsubscribe',
+          value: '2',
+        },
+        {
+          label: 'Bounced Email',
+          value: '3',
+        },
+      ],
+    },
+  }),
 };
