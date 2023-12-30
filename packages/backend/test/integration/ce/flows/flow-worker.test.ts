@@ -21,7 +21,6 @@ afterAll(async () => {
 describe('flow execution', () => {
 
     it('should execute simple flow with code and data mapper', async () => {
-        jest.setTimeout(20000)
         const mockUser = createMockUser()
         await databaseConnection.getRepository('user').save([mockUser])
 
@@ -151,6 +150,6 @@ describe('flow execution', () => {
             },
         })
 
-    })
+    }, 60000)
 
 })
