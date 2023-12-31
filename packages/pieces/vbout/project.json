@@ -34,8 +34,7 @@
       ],
       "options": {
         "lintFilePatterns": [
-          "packages/pieces/vbout/**/*.ts",
-          "packages/pieces/vbout/package.json"
+          "packages/pieces/vbout/**/*.ts"
         ]
       }
     }
