@@ -50,7 +50,8 @@ export class FlowsEffects {
   loadInitial$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(BuilderActions.loadInitial),
-      switchMap(({ flow, run, folder, publishedVersion }) => {
+      switchMap(({type , flow, run, folder, publishedVersion }) => {
+   
         return of(
           FlowsActions.setInitial({
             flow: { ...flow, publishedFlowVersion: publishedVersion },
@@ -522,9 +523,11 @@ export class FlowsEffects {
                 })
               );
             }
-          case ViewModeEnum.VIEW_INSTANCE_RUN: {
-            throw Error(
-              'Trying to view run version, viewing run version should only be the initial state'
+          case ViewModeEnum.SHOW_OLD_VERSION: {
+            return of(
+              canvasActions.setInitial({
+                displayedFlowVersion: action.version,
+              })
             );
           }
         }

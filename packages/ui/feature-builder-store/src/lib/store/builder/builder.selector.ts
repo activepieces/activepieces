@@ -212,8 +212,7 @@ export const selectCurrentStepDisplayName = createSelector(
 
 export const selectCurrentFlowVersionId = createSelector(
   selectCurrentFlow,
-  (flow: PopulatedFlow | undefined) => {
-    if (!flow) return undefined;
+  (flow: PopulatedFlow) => {
     return flow.version.id;
   }
 );

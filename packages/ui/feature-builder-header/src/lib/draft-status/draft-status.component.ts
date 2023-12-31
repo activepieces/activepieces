@@ -27,13 +27,17 @@ export class DraftStatusComponent {
       isCurrentVersionPublished: this.store.select(
         BuilderSelectors.selectIsCurrentVersionPublished
       ),
-      isInPublishedVersionView: this.store.select(
-        BuilderSelectors.selectIsInPublishedVersionViewMode
+      viewMode: this.store.select(
+        BuilderSelectors.selectViewMode
       ),
     }).pipe(
       map((res) => {
-        if (res.isCurrentVersionPublished || res.isInPublishedVersionView) {
+        if (res.isCurrentVersionPublished || res.viewMode === ViewModeEnum.SHOW_PUBLISHED) {
           return $localize`Published`;
+        }
+        if(res.viewMode === ViewModeEnum.SHOW_OLD_VERSION)
+        {
+          return $localize`Older Version`;
         }
         return $localize`Draft`;
       })
