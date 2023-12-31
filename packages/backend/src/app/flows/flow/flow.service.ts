@@ -120,7 +120,7 @@ export const flowService = {
             return null
         }
 
-        const flowVersion = await flowVersionService.getFlowVersion({
+        const flowVersion = await flowVersionService.getFlowVersionOrThrow({
             flowId: id,
             versionId,
             removeSecrets,
@@ -151,13 +151,13 @@ export const flowService = {
                 })
             }
             else {
-                let lastVersion = await flowVersionService.getFlowVersion({
+                let lastVersion = await flowVersionService.getFlowVersionOrThrow({
                     flowId: id,
                     versionId: undefined,
                 })
 
                 if (lastVersion.state === FlowVersionState.LOCKED) {
-                    const lastVersionWithArtifacts = await flowVersionService.getFlowVersion({
+                    const lastVersionWithArtifacts = await flowVersionService.getFlowVersionOrThrow({
                         flowId: id,
                         versionId: undefined,
                     })

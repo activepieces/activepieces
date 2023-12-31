@@ -163,7 +163,7 @@ const getLatestFlowVersionOrThrow = async (
     flowId: FlowId,
     projectId: ProjectId,
 ): Promise<FlowVersion> => {
-    const flowVersion = await flowVersionService.getFlowVersion({
+    const flowVersion = await flowVersionService.getFlowVersionOrThrow({
         flowId,
         versionId: undefined,
     })

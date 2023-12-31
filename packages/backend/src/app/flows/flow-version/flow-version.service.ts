@@ -75,7 +75,7 @@ export const flowVersionService = {
                 operations = [userOperation]
                 break
             case FlowOperationType.DUPLICATE_ACTION:
-                mutatedFlowVersion = await this.getFlowVersion({
+                mutatedFlowVersion = await this.getFlowVersionOrThrow({
                     flowId: flowVersion.flowId,
                     versionId: flowVersion.id,
                 })
@@ -113,7 +113,7 @@ export const flowVersionService = {
 
         return flowVersion
     },
-    async getFlowVersion({ flowId, versionId, removeSecrets = false }: { flowId: FlowId, versionId: FlowVersionId | undefined, removeSecrets?: boolean }): Promise<FlowVersion> {
+    async getFlowVersionOrThrow({ flowId, versionId, removeSecrets = false }: GetFlowVersionOrThrowParams): Promise<FlowVersion> {
         let flowVersion = await flowVersionRepo.findOneOrFail({
             where: {
                 flowId,
@@ -421,6 +421,12 @@ function buildSchema(props: PiecePropertyMap): TSchema {
     }
 
     return Type.Object(propsSchema)
+}
+
+type GetFlowVersionOrThrowParams = {
+    flowId: FlowId
+    versionId: FlowVersionId | undefined
+    removeSecrets?: boolean
 }
 
 type NewFlowVersion = Omit<FlowVersion, 'created' | 'updated'>
