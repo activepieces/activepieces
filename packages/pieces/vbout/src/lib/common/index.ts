@@ -75,7 +75,7 @@ export const vboutCommon = {
         options: [
           {
             label: 'Unconfirmed',
-            value: ContactStatusValues.BOUNCED_EMAIL,
+            value: ContactStatusValues.UNCONFIRMED,
           },
           {
             label: 'Active',
