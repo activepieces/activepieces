@@ -23,8 +23,21 @@ export const replace = createAction({
       required: false,
       description:'Leave empty to delete found results.',
     }),
+    replaceOnlyFirst: Property.Checkbox({
+      displayName: 'Replace Only First Match',
+      required: false,
+      description:'Only replaces the first instance of the search value.',
+    })
   },
   run: async (ctx) => {
+ 
+    if(ctx.propsValue.replaceOnlyFirst){
+      const expression = RegExp(ctx.propsValue.searchValue);
+      return ctx.propsValue.text.replace(
+        expression,
+        ctx.propsValue.replaceValue || ''
+      );
+    }
     const expression = RegExp(ctx.propsValue.searchValue,'g');
     return ctx.propsValue.text.replaceAll(
       expression,
