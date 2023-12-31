@@ -55,14 +55,12 @@ export const vboutCommon = {
         listid as unknown as string
       );
       const contactListFields = contactList.response.data.list.fields;
-      for (const key in contactListFields) {
-        if (contactListFields.hasOwnProperty(key)) {
-          fields[key] = Property.ShortText({
-            displayName: contactListFields[key],
-            required: false,
-          });
-        }
-      }
+      Object.keys(contactListFields).forEach((key) => {
+        fields[key] = Property.ShortText({
+          displayName: contactListFields[key],
+          required: false,
+        });
+      });
       return fields;
     },
   }),

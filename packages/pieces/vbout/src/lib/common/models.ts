@@ -42,7 +42,7 @@ export interface ContactList {
   doubleOptin: string;
   notify_email: string;
   creation_date: string;
-  fields?: {
+  fields: {
     [key: string]: string;
   };
 }
