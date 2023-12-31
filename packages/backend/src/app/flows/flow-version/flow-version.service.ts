@@ -132,7 +132,7 @@ export const flowVersionService = {
     async createEmptyVersion(flowId: FlowId, request: {
         displayName: string
     }): Promise<FlowVersion> {
-        const flowVersion: Partial<FlowVersion> = {
+        const flowVersion: NewFlowVersion = {
             id: apId(),
             displayName: request.displayName,
             flowId,
@@ -423,3 +423,4 @@ function buildSchema(props: PiecePropertyMap): TSchema {
     return Type.Object(propsSchema)
 }
 
+type NewFlowVersion = Omit<FlowVersion, 'created' | 'updated'>
