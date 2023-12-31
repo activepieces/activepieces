@@ -40,7 +40,7 @@ export enum RunEnvironment {
 }
 
 export enum FlowRerunStrategy {
-    FROM_START = 'FROM_START',
+    FROM_FIRST_STEP = 'FROM_FIRST_STEP',
     FROM_FAILED_STEP = 'FROM_FAILED_STEP',
 }
 

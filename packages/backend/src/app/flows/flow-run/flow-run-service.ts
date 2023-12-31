@@ -90,7 +90,7 @@ export const flowRunService = {
                     executionType: ExecutionType.RESUME,
                 })
                 break
-            case FlowRerunStrategy.FROM_START:
+            case FlowRerunStrategy.FROM_FIRST_STEP:
                 await flowRunService.addToQueue({
                     flowRunId,
                     payload: {},

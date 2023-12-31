@@ -106,7 +106,7 @@ function getFlowExecutionState(input: ExecuteFlowOperation): FlowExecutorContext
                 input: {},
             }).setOutput(input.triggerPayload))
         case ExecutionType.RESUME: {
-            let flowContext = FlowExecutorContext.empty()
+            let flowContext = FlowExecutorContext.empty().increaseTask(input.tasks)
             for (const [step, output] of Object.entries(input.executionState.steps)) {
                 if (output.status === StepOutputStatus.SUCCEEDED) {
                     flowContext = flowContext.upsertStep(step, output)

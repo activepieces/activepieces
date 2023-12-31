@@ -68,10 +68,10 @@ export class FlowExecutorContext {
         })
     }
 
-    public increaseTask(): FlowExecutorContext {
+    public increaseTask(tasks = 1): FlowExecutorContext {
         return new FlowExecutorContext({
             ...this,
-            tasks: this.tasks + 1,
+            tasks: this.tasks + tasks,
         })
     }
 
