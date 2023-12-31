@@ -24,7 +24,7 @@ export const vboutAuth = PieceAuth.SecretText({
   description: markdown,
 });
 export const vbout = createPiece({
-  displayName: 'Vbout',
+  displayName: 'VBOUT',
   auth: vboutAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/vbout.png',
