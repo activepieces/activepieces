@@ -50,8 +50,7 @@ export class FlowsEffects {
   loadInitial$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(BuilderActions.loadInitial),
-      switchMap(({type , flow, run, folder, publishedVersion }) => {
-   
+      switchMap(({ type, flow, run, folder, publishedVersion }) => {
         return of(
           FlowsActions.setInitial({
             flow: { ...flow, publishedFlowVersion: publishedVersion },

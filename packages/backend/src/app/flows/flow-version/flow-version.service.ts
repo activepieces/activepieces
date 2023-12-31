@@ -66,7 +66,7 @@ export const flowVersionService = {
     },
     async applyOperation(userId: UserId, projectId: ProjectId, flowVersion: FlowVersion, userOperation: FlowOperationRequest): Promise<FlowVersion> {
         let operations: FlowOperationRequest[] = []
-        let mutatedFlowVersion:FlowVersion = flowVersion
+        let mutatedFlowVersion: FlowVersion = flowVersion
         switch (userOperation.type) {
             case FlowOperationType.ROLLBACK: {
                 const previousVersion = await flowVersionService.getFlowVersion({

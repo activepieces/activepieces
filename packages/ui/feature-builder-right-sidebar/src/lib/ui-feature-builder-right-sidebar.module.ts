@@ -38,7 +38,6 @@ import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-bui
     StepTypeItemComponent,
     FlowRightSidebarComponent,
     NewEditPieceSidebarComponent,
-
   ],
   exports: [FlowRightSidebarComponent],
 })

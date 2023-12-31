@@ -631,8 +631,7 @@ export function getImportOperations(
                 },
             })
         }
-        switch(step.type)
-        {
+        switch (step.type) {
             case ActionType.BRANCH: {
                 if (step.onFailureAction) {
                     steps.push({
@@ -658,22 +657,22 @@ export function getImportOperations(
                     })
                     steps.push(...getImportOperations(step.onSuccessAction))
                 }
-                break;
+                break
             }
             case ActionType.LOOP_ON_ITEMS: {
-                if(step.firstLoopAction) {
-                steps.push({
-                    type: FlowOperationType.ADD_ACTION,
-                    request: {
-                        parentStep: step.name,
-                        stepLocationRelativeToParent:
+                if (step.firstLoopAction) {
+                    steps.push({
+                        type: FlowOperationType.ADD_ACTION,
+                        request: {
+                            parentStep: step.name,
+                            stepLocationRelativeToParent:
                 StepLocationRelativeToParent.INSIDE_LOOP,
-                        action: removeAnySubsequentAction(step.firstLoopAction),
-                    },
-                })
-                steps.push(...getImportOperations(step.firstLoopAction))
-             }
-             break;
+                            action: removeAnySubsequentAction(step.firstLoopAction),
+                        },
+                    })
+                    steps.push(...getImportOperations(step.firstLoopAction))
+                }
+                break
 
             }
             case ActionType.CODE:
@@ -682,11 +681,11 @@ export function getImportOperations(
             case TriggerType.WEBHOOK:
             case TriggerType.EMPTY:
             {
-                break;
+                break
             }
             default:
             {  
-                 throw new UnhandledSwitchCaseError(step);
+                throw new UnhandledSwitchCaseError(step)
             }
         }
       
@@ -698,11 +697,11 @@ export function getImportOperations(
 
 
 function removeAnySubsequentAction(action: Action): Action {
-    const clonedAction:Action = JSON.parse(JSON.stringify(action))
-      switch (clonedAction.type) {
+    const clonedAction: Action = JSON.parse(JSON.stringify(action))
+    switch (clonedAction.type) {
         case ActionType.BRANCH: {
-            delete clonedAction.onSuccessAction;
-            delete clonedAction.onFailureAction;
+            delete clonedAction.onSuccessAction
+            delete clonedAction.onFailureAction
             break
         }
         case ActionType.LOOP_ON_ITEMS: {
@@ -711,11 +710,11 @@ function removeAnySubsequentAction(action: Action): Action {
         }
         case ActionType.PIECE:
         case ActionType.CODE:
-            break;
+            break
         default:
-          {
-            throw new UnhandledSwitchCaseError(clonedAction);
-          }
+        {
+            throw new UnhandledSwitchCaseError(clonedAction)
+        }
     }
     delete clonedAction.nextAction
     return clonedAction

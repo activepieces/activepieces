@@ -9,7 +9,6 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { FlowLeftSidebarComponent } from './flow-left-sidebar.component';
 import { VersionHistoryComponent } from './version-history/version-history.component';
 
-
 @NgModule({
   imports: [CommonModule, UiCommonModule, MatExpansionModule],
   declarations: [
@@ -18,7 +17,7 @@ import { VersionHistoryComponent } from './version-history/version-history.compo
     IterationAccordionComponent,
     StepResultComponent,
     RunDetailsComponent,
-    VersionHistoryComponent
+    VersionHistoryComponent,
   ],
   exports: [FlowLeftSidebarComponent],
 })

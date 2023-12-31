@@ -54,7 +54,10 @@ const __CanvasReducer = createReducer(
       ...initialState,
       displayedFlowVersion: action.displayedFlowVersion,
       selectedRun: action.run,
-      leftSidebar: state.leftSidebar.type === LeftSideBarType.VERSIONS_HISTORY? state.leftSidebar: initialState.leftSidebar
+      leftSidebar:
+        state.leftSidebar.type === LeftSideBarType.VERSIONS_HISTORY
+          ? state.leftSidebar
+          : initialState.leftSidebar,
     };
   }),
   on(canvasActions.deselectStep, (state): CanvasState => {
