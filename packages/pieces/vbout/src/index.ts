@@ -3,6 +3,7 @@ import { addContactAction } from './lib/actions/add-contact';
 import { addTagToContactAction } from './lib/actions/add-tag-to-contact';
 import { createEmailMarketingCampaignAction } from './lib/actions/create-campaign';
 import { createEmailListAction } from './lib/actions/create-email-list';
+import { createSocialMediaMessageAction } from './lib/actions/create-social-media-message';
 import { getContactByEmailAction } from './lib/actions/get-contact-by-email';
 import { getEmailListAction } from './lib/actions/get-email-list';
 import { removeTagFromContactAction } from './lib/actions/remove-tag-from-contact';
@@ -33,6 +34,7 @@ export const vbout = createPiece({
     addTagToContactAction,
     createEmailListAction,
     createEmailMarketingCampaignAction,
+    createSocialMediaMessageAction,
     getContactByEmailAction,
     getEmailListAction,
     removeTagFromContactAction,

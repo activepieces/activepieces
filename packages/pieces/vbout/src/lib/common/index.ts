@@ -1,6 +1,10 @@
 import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { VboutClient } from './client';
-import { ContactStatusValues } from './models';
+import {
+  ContactStatusValues,
+  SocialMediaChannelValues,
+  SocialMediaProfile,
+} from './models';
 export function makeClient(apiKey: string): VboutClient {
   return new VboutClient(apiKey);
 }
@@ -88,4 +92,82 @@ export const vboutCommon = {
         ],
       },
     }),
+  socialMediaChannel: Property.StaticDropdown({
+    displayName: 'Social Media Channel',
+    required: true,
+    options: {
+      disabled: false,
+      options: [
+        {
+          label: 'Twitter',
+          value: SocialMediaChannelValues.TWITTER,
+        },
+        {
+          label: 'LinkedIn',
+          value: SocialMediaChannelValues.LINKEDIN,
+        },
+        {
+          label: 'Facebook',
+          value: SocialMediaChannelValues.FACEBOOK,
+        },
+      ],
+    },
+  }),
+  socialMediaProfile: Property.Dropdown({
+    displayName: 'Social Media Account',
+    required: true,
+    refreshers: ['channel'],
+    options: async ({ auth, channel }) => {
+      if (!auth || !channel) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder:
+            'Please connect your account and select social media channel.',
+        };
+      }
+      const client = makeClient(auth as string);
+      const { channels } = await client.listSocialMediaChannels();
+      let options: { label: string; value: string }[] = [];
+      switch (channel as string) {
+        case SocialMediaChannelValues.TWITTER: {
+          options = [
+            ...options,
+            ...mapSocialMediaProfile(channels.Twitter.profiles),
+          ];
+          break;
+        }
+        case SocialMediaChannelValues.FACEBOOK: {
+          options = [
+            ...options,
+            ...mapSocialMediaProfile(channels.Facebook.pages),
+          ];
+          break;
+        }
+        case SocialMediaChannelValues.LINKEDIN: {
+          options = [
+            ...options,
+            ...mapSocialMediaProfile(channels.Linkedin.companies),
+            ...mapSocialMediaProfile(channels.Linkedin.profiles),
+          ];
+          break;
+        }
+      }
+      return {
+        disabled: false,
+        options: options,
+      };
+    },
+  }),
 };
+
+function mapSocialMediaProfile(
+  profiles: SocialMediaProfile[]
+): { label: string; value: string }[] {
+  return profiles.map((profile) => {
+    return {
+      label: profile.name,
+      value: profile.id,
+    };
+  });
+}

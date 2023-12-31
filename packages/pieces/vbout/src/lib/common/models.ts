@@ -83,7 +83,37 @@ export interface CampaignCreateRequest {
   type: string;
   lists: string;
 }
+export interface SocialMediaProfile {
+  id: string;
+  name: string;
+}
+export interface SocialMediaChannelListResponse {
+  Facebook: {
+    count: number;
+    pages: SocialMediaProfile[];
+  };
+  Twitter: {
+    count: number;
+    profiles: SocialMediaProfile[];
+  };
+  Linkedin: {
+    count: number;
+    profiles: SocialMediaProfile[];
+    companies: SocialMediaProfile[];
+  };
+}
 
+export interface SocialMediaPostCreateRequest {
+  message: string;
+  channel: string;
+  channelid: string;
+}
+
+export enum SocialMediaChannelValues {
+  TWITTER = 'twitter',
+  LINKEDIN = 'linkedin',
+  FACEBOOK = 'facebook',
+}
 export enum ContactStatusValues {
   UNCONFIRMED = '0',
   ACTIVE = '1',

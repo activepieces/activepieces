@@ -11,6 +11,8 @@ import {
   ContactList,
   ContactUpdateRequest,
   EmailListCreateRequest,
+  SocialMediaChannelListResponse,
+  SocialMediaPostCreateRequest,
   TagCreateRequest,
   VboutResponseBody,
 } from './models';
@@ -141,6 +143,22 @@ export class VboutClient {
     return await this.makeRequest(
       HttpMethod.POST,
       '/emailMarketing/AddCampaign',
+      undefined,
+      request
+    );
+  }
+  async listSocialMediaChannels() {
+    return (
+      await this.makeRequest<
+        VboutResponseBody<{ channels: SocialMediaChannelListResponse }>
+      >(HttpMethod.GET, '/socialMedia/Channels')
+    ).response.data;
+  }
+
+  async createSocialMediaPost(request: SocialMediaPostCreateRequest) {
+    return await this.makeRequest(
+      HttpMethod.POST,
+      '/socialMedia/AddPost',
       undefined,
       request
     );
