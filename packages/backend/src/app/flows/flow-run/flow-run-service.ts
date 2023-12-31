@@ -18,7 +18,6 @@ import {
     ExecutionType,
     isNil,
     RunTerminationReason,
-    ExecutionOutput,
     FlowRerunStrategy,
 } from '@activepieces/shared'
 import { APArrayContains, databaseConnection } from '../../database/database-connection'
@@ -33,7 +32,6 @@ import { logger } from '../../helper/logger'
 import { flowService } from '../flow/flow.service'
 import { MoreThanOrEqual } from 'typeorm'
 import { flowRunHooks } from './flow-run-hooks'
-import { fileService } from '../../file/file.service'
 
 export const flowRunRepo = databaseConnection.getRepository(FlowRunEntity)
 
@@ -83,9 +81,28 @@ export const flowRunService = {
         const { data, cursor: newCursor } = await paginator.paginate(query)
         return paginationHelper.createPage<FlowRun>(data, newCursor)
     },
-    async resume({ flowRunId, action }: {
+    async rerun({ flowRunId, strategy }: RerunParams): Promise<void> {
+        switch (strategy) {
+            case FlowRerunStrategy.FROM_FAILED_STEP:
+                await flowRunService.addToQueue({
+                    flowRunId,
+                    payload: {},
+                    executionType: ExecutionType.RESUME,
+                })
+                break
+            case FlowRerunStrategy.FROM_START:
+                await flowRunService.addToQueue({
+                    flowRunId,
+                    payload: {},
+                    executionType: ExecutionType.BEGIN,
+                })
+                break
+        }
+    },
+    async addToQueue({ flowRunId, payload, executionType }: {
         flowRunId: FlowRunId
-        action: string
+        payload: Record<string, unknown>
+        executionType: ExecutionType
     }): Promise<void> {
         logger.info(`[FlowRunService#resume] flowRunId=${flowRunId}`)
 
@@ -103,13 +120,11 @@ export const flowRunService = {
         }
 
         await flowRunService.start({
-            payload: {
-                action,
-            },
+            payload,
             flowRunId: flowRunToResume.id,
             projectId: flowRunToResume.projectId,
             flowVersionId: flowRunToResume.flowVersionId,
-            executionType: ExecutionType.RESUME,
+            executionType,
             environment: RunEnvironment.PRODUCTION,
         })
     },
@@ -245,49 +260,6 @@ export const flowRunService = {
             .getRawOne()
 
         return Number(sumOfTasks.tasks)
-    },
-
-    async rerun({ flowRunId, strategy }: RerunParams): Promise<FlowRun> {
-        logger.info(`[FlowRunService#rerun] flowRunId=${flowRunId} strategy=${strategy}`)
-
-        const flowRun = await flowRunRepo.findOneBy({
-            id: flowRunId,
-        })
-        if (isNil(flowRun)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.FLOW_RUN_NOT_FOUND,
-                params: {
-                    id: flowRunId,
-                },
-            })
-        }
-
-        const flowVersion = await flowVersionService.getFlowVersion({
-            flowId: flowRun.flowId,
-            versionId: undefined,
-            removeSecrets: true,
-        })
-
-        const logFile = await fileService.getOneOrThrow({
-            fileId: flowRun.logsFileId!,
-        })
-        const executionOutput: ExecutionOutput = JSON.parse(logFile.data.toString('utf-8'))
-
-        await flowRunHooks.getHooks().onPreStart({ projectId: flowRun.projectId })
-
-        flowRun.status = ExecutionOutputStatus.RUNNING
-        flowRun.flowVersionId = flowVersion.id
-        await flowRunRepo.save(flowRun)
-
-        await flowRunSideEffects.rerun({
-            flowRun,
-            payload: executionOutput.executionState.steps.trigger.output,
-            rerunPayload: {
-                strategy,
-            },
-        })
-
-        return flowRun
     },
 }
 

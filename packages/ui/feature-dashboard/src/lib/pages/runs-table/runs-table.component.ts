@@ -48,13 +48,13 @@ export class RunsTableComponent implements OnInit {
   flowRerunOptions = [
     {
       label: 'Rerun Entire Flow',
-      strategy: FlowRerunStrategy.FLOW,
+      strategy: FlowRerunStrategy.FROM_START,
       color: 'secondary',
       icon: 'loop',
     },
     {
       label: 'Rerun From Failed',
-      strategy: FlowRerunStrategy.FROM_FAILED,
+      strategy: FlowRerunStrategy.FROM_FAILED_STEP,
       color: 'secondary',
       icon: 'replay',
     },

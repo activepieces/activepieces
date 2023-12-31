@@ -1,5 +1,5 @@
 import { AppConnectionValue } from '../app-connection/app-connection'
-import { FlowRerunPayload, FlowRunId } from '../flow-run/flow-run'
+import { FlowRunId } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
 import { ProjectId } from '../project/project'
 import { PiecePackage } from '../pieces'
@@ -72,13 +72,7 @@ export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.
     resumePayload: unknown
 }
 
-export type RereunExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.RERUN> & {
-    executionState: ExecutionState
-    payload: unknown
-    rerunPayload: FlowRerunPayload
-}
-
-export type ExecuteFlowOperation = BeginExecuteFlowOperation | ResumeExecuteFlowOperation | RereunExecuteFlowOperation
+export type ExecuteFlowOperation = BeginExecuteFlowOperation | ResumeExecuteFlowOperation
 
 export type EngineTestOperation = BeginExecuteFlowOperation & {
     /**

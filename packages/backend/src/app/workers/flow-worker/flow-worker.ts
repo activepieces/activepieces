@@ -13,20 +13,16 @@ import {
     FileId,
     FileType,
     flowHelper,
-    FlowRerunStrategy,
     FlowRunId,
     FlowVersion,
     PiecePackage,
     ProjectId,
-    RereunExecuteFlowOperation,
     ResumeExecuteFlowOperation,
     RunEnvironment,
     RunTerminationReason,
     SourceCode,
     Trigger,
     TriggerType,
-    FlowRerunPayload,
-    addMissingProperties,
 } from '@activepieces/shared'
 import { Sandbox } from '../sandbox'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
@@ -55,7 +51,7 @@ type LoadInputAndLogFileIdParams = {
 }
 
 type LoadInputAndLogFileIdResponse = {
-    input: Omit<BeginExecuteFlowOperation, 'serverUrl' | 'workerToken'> | Omit<ResumeExecuteFlowOperation, 'serverUrl' | 'workerToken'> | Omit<RereunExecuteFlowOperation, 'serverUrl' | 'workerToken'>
+    input: Omit<BeginExecuteFlowOperation, 'serverUrl' | 'workerToken'> | Omit<ResumeExecuteFlowOperation, 'serverUrl' | 'workerToken'>
     logFileId?: FileId | undefined
 }
 
@@ -132,7 +128,7 @@ const loadInputAndLogFileId = async ({
                 projectId: jobData.projectId,
             })
 
-            if (isNil(flowRun.pauseMetadata) || isNil(flowRun.logsFileId)) {
+            if (isNil(flowRun.logsFileId)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.VALIDATION,
                     params: {
@@ -162,43 +158,6 @@ const loadInputAndLogFileId = async ({
                 logFileId: logFile.id,
             }
         }
-
-        case ExecutionType.RERUN: {
-            const flowRun = await flowRunService.getOneOrThrow({
-                id: jobData.runId,
-                projectId: jobData.projectId,
-            })
-
-            if (isNil(flowRun.logsFileId)) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.VALIDATION,
-                    params: {
-                        message: `No logsFileId flowRunId=${flowRun.id} executionType=${jobData.executionType}`,
-                    },
-                })
-            }
-
-            const logFile = await fileService.getOneOrThrow({
-                fileId: flowRun.logsFileId,
-                projectId: jobData.projectId,
-            })
-            const serializedExecutionOutput = logFile.data.toString('utf-8')
-            const executionOutput: ExecutionOutput = JSON.parse(
-                serializedExecutionOutput,
-            )
-
-            return {
-                input: {
-                    ...baseInput,
-                    executionType: jobData.executionType,
-                    executionState: executionOutput.executionState,
-                    payload: executionOutput.executionState.steps.trigger.output,
-                    rerunPayload: jobData.rerunPayload as FlowRerunPayload,
-                },
-                logFileId: logFile.id,
-            }
-        }
-
         case ExecutionType.BEGIN:
         default: {
             return {
@@ -251,19 +210,6 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             sandbox,
             input,
         )
-
-        if (jobData.executionType === ExecutionType.RERUN) {
-            const { strategy } = jobData.rerunPayload as FlowRerunPayload
-            if (strategy === FlowRerunStrategy.FROM_FAILED) {
-                const inputSteps = input.executionState?.steps || {}
-                const outputSteps = executionOutput.executionState?.steps
-
-                // Add the missing steps to executionOutput
-                executionOutput.executionState = {
-                    steps: addMissingProperties(outputSteps, inputSteps),
-                }
-            }
-        }
 
         if (jobData.synchronousHandlerId) {
             await flowResponseWatcher.publish(jobData.runId, jobData.synchronousHandlerId, executionOutput)
