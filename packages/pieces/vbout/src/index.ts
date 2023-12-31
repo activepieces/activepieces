@@ -9,6 +9,7 @@ import { getEmailListAction } from './lib/actions/get-email-list';
 import { removeTagFromContactAction } from './lib/actions/remove-tag-from-contact';
 import { unsubscribeContactAction } from './lib/actions/unsubscribe-contact';
 import { updateContactAction } from './lib/actions/update-contact';
+import { makeClient } from './lib/common';
 
 const markdown = `
 To obtain your API key, follow these steps:
@@ -22,7 +23,22 @@ export const vboutAuth = PieceAuth.SecretText({
   displayName: 'API Key',
   required: true,
   description: markdown,
+  async validate({ auth }) {
+    const client = makeClient(auth as string);
+    try {
+      await client.validateAuth();
+      return {
+        valid: true,
+      };
+    } catch (e) {
+      return {
+        valid: false,
+        error: 'Invalid API key.',
+      };
+    }
+  },
 });
+
 export const vbout = createPiece({
   displayName: 'VBOUT',
   auth: vboutAuth,

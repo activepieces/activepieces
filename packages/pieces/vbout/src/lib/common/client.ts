@@ -58,6 +58,10 @@ export class VboutClient {
     return res.body;
   }
 
+  async validateAuth() {
+    return await this.makeRequest(HttpMethod.GET, '/app/me');
+  }
+
   async listEmailLists() {
     return (
       await this.makeRequest<
