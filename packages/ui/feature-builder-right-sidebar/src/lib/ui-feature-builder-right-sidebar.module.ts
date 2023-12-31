@@ -16,7 +16,6 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { FlowRightSidebarComponent } from './flow-right-sidebar.component';
 import { NewEditPieceSidebarComponent } from './edit-step-sidebar/edit-step-sidebar.component';
 import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-builder-form-controls';
-import { ScrollingModule } from '@angular/cdk/scrolling';
 import { VersionHistoryComponent } from './version-history/version-history.component';
 
 @NgModule({
@@ -26,7 +25,6 @@ import { VersionHistoryComponent } from './version-history/version-history.compo
     UiFeatureBuilderFormControlsModule,
     MatTabsModule,
     UiFeatureBuilderTestStepsModule,
-    ScrollingModule,
   ],
   declarations: [
     EditStepFormContainerComponent,

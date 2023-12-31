@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProjectMemberService } from '../service/project-members.service';
-import { Observable, catchError, of, switchMap, tap } from 'rxjs';
+import { Observable, catchError, map, of, switchMap, tap } from 'rxjs';
 
 @Component({
   selector: 'app-accept-invitation',
@@ -25,11 +25,16 @@ export class AcceptInvitationComponent implements OnInit {
           token: query['token'],
         });
       }),
-      tap(() => {
+      tap((value) => {
         if (!this.invalidToken) {
-          this.redirectToSignUp();
+          if (!value.registered) {
+            this.redirectToSignUp();
+          } else {
+            this.router.navigate(['/sign-in']);
+          }
         }
       }),
+      map(() => undefined),
       catchError((e) => {
         console.error(e);
         this.invalidToken = true;

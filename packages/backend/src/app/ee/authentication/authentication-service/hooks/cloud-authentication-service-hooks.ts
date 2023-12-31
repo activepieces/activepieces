@@ -1,33 +1,32 @@
 import {
-    defaultAuthenticationServiceHooks,
-} from '../../../../authentication/authentication-service/hooks/default-authentication-service-hooks'
-import {
     AuthenticationServiceHooks,
 } from '../../../../authentication/authentication-service/hooks/authentication-service-hooks'
-import { PrincipalType, Project, User, isNil } from '@activepieces/shared'
-import { platformService } from '../../../platform/platform.service'
-import { accessTokenManager } from '../../../../authentication/lib/access-token-manager'
-import { OtpType, Platform, PlatformId } from '@activepieces/ee-shared'
+import { OtpType } from '@activepieces/ee-shared'
 import { otpService } from '../../../otp/otp-service'
 import { referralService } from '../../../referrals/referral.service'
+import { authenticationHelper } from './authentication-helper'
+import { projectService } from '../../../../project/project-service'
+import { userService } from '../../../../user/user-service'
+import { ProjectType, UserStatus, isNil } from '@activepieces/shared'
+import { flagService } from '../../../../../app/flags/flag.service'
 
 export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
+    async preSignUp({ email, platformId }) {
+        const customerPlatformEnabled = !isNil(platformId) && !flagService.isCloudPlatform(platformId)
+        if (customerPlatformEnabled) {
+            await authenticationHelper.assertUserIsInvitedToAnyProject({ email, platformId })            
+        }
+    },
     async postSignUp({ user, referringUserId }) {
-        const { user: updatedUser, project, token } = await defaultAuthenticationServiceHooks.postSignUp({
-            user,
-        })
 
-        await otpService.createAndSend({
-            platformId: user.platformId,
-            email: user.email,
-            type: OtpType.EMAIL_VERIFICATION,
-        })
-
-        const updatedToken = await populateTokenWithPlatformInfo({
-            user,
-            project,
-            token,
-        })
+        if (!isNil(user.platformId) && flagService.isCloudPlatform(user.platformId)) {
+            await projectService.create({
+                displayName: `${user.firstName}'s Project`,
+                ownerId: user.id,
+                platformId: user.platformId,
+                type: ProjectType.PLATFORM_MANAGED,
+            })
+        }
 
         if (referringUserId) {
             await referralService.upsert({
@@ -36,63 +35,31 @@ export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
             })
         }
 
+        await authenticationHelper.autoVerifyUserIfEligible(user)
+        const updatedUser = await userService.getOneOrFail({ id: user.id })
+        const { project, token } = await authenticationHelper.getProjectAndTokenOrThrow(user)
+
+        if (updatedUser.status !== UserStatus.VERIFIED) {
+            await otpService.createAndSend({
+                platformId: updatedUser.platformId,
+                email: updatedUser.email,
+                type: OtpType.EMAIL_VERIFICATION,
+            })
+        }
         return {
             user: updatedUser,
             project,
-            token: updatedToken,
+            token,
         }
     },
 
     async postSignIn({ user }) {
-        const { user: updatedUser, project, token } = await defaultAuthenticationServiceHooks.postSignIn({
-            user,
-        })
-
-        const updatedToken = await populateTokenWithPlatformInfo({
+        const { project, token } = await authenticationHelper.getProjectAndTokenOrThrow(user)
+        return {
             user,
             project,
             token,
-        })
-
-        return {
-            user: updatedUser,
-            project,
-            token: updatedToken,
         }
     },
 }
 
-const populateTokenWithPlatformInfo = async ({ user, project, token }: PopulateTokenWithPlatformInfoParams): Promise<string> => {
-    const platform = await getPlatform(user.platformId)
-
-    if (isNil(platform)) {
-        return token
-    }
-
-    const updatedToken = await accessTokenManager.generateToken({
-        id: user.id,
-        type: PrincipalType.USER,
-        projectId: project.id,
-        projectType: project.type,
-        platform: {
-            id: platform.id,
-            role: platform.ownerId === user.id ? 'OWNER' : 'MEMBER',
-        },
-    })
-
-    return updatedToken
-}
-
-const getPlatform = async (platformId: PlatformId | null): Promise<Platform | null> => {
-    if (isNil(platformId)) {
-        return null
-    }
-
-    return platformService.getOne(platformId)
-}
-
-type PopulateTokenWithPlatformInfoParams = {
-    user: User
-    project: Project
-    token: string
-}

@@ -4,10 +4,10 @@ import { Observable, map, of, switchMap } from 'rxjs';
 
 import { FlowService, FoldersService } from '@activepieces/ui/common';
 import { InstanceRunService } from '@activepieces/ui/common';
-import { Flow, FlowRun, Folder } from '@activepieces/shared';
+import { PopulatedFlow, FlowRun, Folder } from '@activepieces/shared';
 
 export type InstanceRunResolverData = {
-  flow: Flow;
+  flow: PopulatedFlow;
   run: FlowRun;
   folder?: Folder;
 };

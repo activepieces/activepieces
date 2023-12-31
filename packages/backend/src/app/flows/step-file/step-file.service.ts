@@ -1,11 +1,18 @@
-import { ActivepiecesError, ErrorCode, StepFile, StepFileGet, StepFileUpsert, apId, isNil } from '@activepieces/shared'
+import { StepFileWithUrl, ActivepiecesError, ErrorCode, StepFile, StepFileGet, StepFileUpsert, apId, isNil } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { StepFileEntity } from './step-file.entity'
+import { jwtUtils } from '../../helper/jwt-utils'
+import { domainHelper } from '../../helper/domain-helper'
 
 const stepFileRepo = databaseConnection.getRepository<StepFile>(StepFileEntity)
 
+
+type FileToken = {
+    fileId: string
+}
+
 export const stepFileService = {
-    async upsert({ request, projectId }: { request: StepFileUpsert, projectId: string }): Promise<StepFile | null> {
+    async upsert({ hostname, request, projectId }: { hostname: string, request: StepFileUpsert, projectId: string }): Promise<StepFile | null> {
         const fileId = apId()
         const bufferFile = request.file as Buffer
         await stepFileRepo.upsert({
@@ -17,10 +24,30 @@ export const stepFileService = {
             data: bufferFile,
             name: request.name,
         }, ['flowId', 'projectId', 'stepName', 'name'])
-        return stepFileRepo.findOneByOrFail({
+        return encrichWithUrl(hostname, await stepFileRepo.findOneByOrFail({
             id: fileId,
             projectId,
-        })
+        }))
+    },
+    async getByToken(token: string): Promise<StepFile | null> {
+        try {
+            const decodedToken = await jwtUtils.decodeAndVerify<FileToken>({
+                jwt: token,
+                key: await jwtUtils.getJwtSecret(),
+            })
+            const file = await stepFileRepo.findOneByOrFail({
+                id: decodedToken.fileId,
+            })
+            return file
+        }
+        catch (e) {
+            throw new ActivepiecesError({
+                code: ErrorCode.INVALID_BEARER_TOKEN,
+                params: {
+                    message: 'invalid token or expired for the step file',
+                },
+            })
+        }
     },
     async get({ projectId, id }: StepFileGet): Promise<StepFile | null> {
         const file = stepFileRepo.findOneBy({
@@ -62,4 +89,24 @@ export const stepFileService = {
             stepName,
         })
     },
+}
+
+async function encrichWithUrl(hostname: string, file: StepFile): Promise<StepFileWithUrl> {
+
+    const jwtSecret = await jwtUtils.getJwtSecret()
+    const accessToken = await jwtUtils.sign({
+        payload: {
+            fileId: file.id,
+        },
+        expiresInSeconds: 60 * 60 * 24 * 7,
+        key: jwtSecret,
+    })
+    const url = await domainHelper.get().constructApiUrlFromRequest({
+        domain: hostname,
+        path: `v1/step-files/signed?token=${accessToken}`,
+    })
+    return {
+        ...file,
+        url,
+    }
 }

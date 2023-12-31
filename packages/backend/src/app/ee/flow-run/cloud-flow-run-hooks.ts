@@ -4,7 +4,7 @@ import { getEdition } from '../../helper/secret-helper'
 import { tasksLimit } from '../billing/limits/tasks-limit'
 import { projectUsageService } from '../billing/project-usage/project-usage-service'
 
-export const cloudRunHooks: FlowRunHooks = {
+export const platformRunHooks: FlowRunHooks = {
     async onPreStart({ projectId }: { projectId: string }): Promise<void> {
         await tasksLimit.limit({
             projectId,
@@ -12,7 +12,7 @@ export const cloudRunHooks: FlowRunHooks = {
     },
     async onFinish({ projectId, tasks }: { projectId: string, tasks: number }): Promise<void> {
         const edition = getEdition()
-        if (edition === ApEdition.CLOUD) {
+        if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
             await projectUsageService.addTasksConsumed({
                 projectId,
                 tasks,

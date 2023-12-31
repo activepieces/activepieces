@@ -74,26 +74,63 @@
             <mat-label> {{ (refreshableConfigsLoadingFlags$[property.key] | async)? 'Loading...' :
               property.value.displayName
               }}</mat-label>
-            <mat-select [formControlName]="property.key" (closed)="searchControl.setValue('')"
+            <mat-select #matSelect [formControlName]="property.key" (closed)="searchControl.setValue('')"
               [compareWith]="dropdownCompareWithFunction">
+
+
               <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
+
+
                 <ng-container
-                  *ngIf="!(state.disabled && ((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key]))">
-                  <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
+                  *ngIf="(((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key]))">
+                  <ng-container *ngIf="(state.options | dropdownSearch:searchControl) | async as options">
+                    <ng-container *ngIf="!state.disabled">
+                      <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
+                    </ng-container>
+
+                    <cdk-virtual-scroll-viewport *ngIf="matSelect.panelOpen && !state.disabled" [itemSize]="48"
+                      minBufferPx="200" maxBufferPx="400" class="ap-max-h-[195px] thin-scrollbars  ap-overflow-y-auto"
+                      [class.ap-h-[50px]]="options.length === 1 " [class.ap-h-[100px]]="options.length === 2 "
+                      [class.ap-h-[150px]]="options.length === 3 " [class.ap-h-[195px]]="options.length >= 4 ">
+
+
+                      <mat-option *cdkVirtualFor="let opt of options" [value]="opt.value"
+                        [class.mdc-list-item--selected]="(opt.value| isDropdownItemSelected:property.key:formGroup ) | async">
+                        <div class="ap-w-full ap-flex ap-justify-between ap-items-center">
+                          {{opt.label}}
+                          <mat-pseudo-checkbox
+                            *ngIf="(opt.value| isDropdownItemSelected:property.key:formGroup) | async" state="checked"
+                            aria-hidden="true" appearance="minimal"
+                            class="mat-pseudo-checkbox virtual-scroll-check-mark mat-mdc-option-pseudo-checkbox mat-pseudo-checkbox-checked mat-pseudo-checkbox-minimal"></mat-pseudo-checkbox>
+                        </div>
+                      </mat-option>
+                    </cdk-virtual-scroll-viewport>
+
+                    <mat-option
+                      *ngFor="let init of (state.options | dropdownInitialValue:property.key:formGroup)|async "
+                      class="!ap-hidden" [value]="init.value">
+                      {{init.label}}
+                    </mat-option>
+
+                    <mat-option [disabled]="true"
+                      *ngIf="state.disabled && ((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key])">
+                      <div> {{state.placeholder}} </div>
+                    </mat-option>
+
+                    <!-- need at least 1 pre-existing option to open the select -->
+                    <mat-option class="!ap-hidden"></mat-option>
+                  </ng-container>
                 </ng-container>
 
-                <div class="thin-scrollbars ap-max-h-[190px] ap-overflow-y-auto">
-                  <mat-option *ngFor="let opt of (state.options | dropdownSearch:searchControl.value)"
-                    [class.!ap-h-0]="!opt.show" [class.!ap-min-h-0]="!opt.show" [value]="opt.item.value">
-                    {{opt.item.label}}
-                  </mat-option>
-                </div>
-                <mat-option [disabled]="true"
-                  *ngIf="state.disabled && ((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key])">
-                  <div> {{state.placeholder}} </div>
-                </mat-option>
+
               </ng-container>
+
             </mat-select>
+
+
+
+
+
 
           </mat-form-field>
           <ng-container *ngTemplateOutlet=" description; 
@@ -122,20 +159,51 @@
             <mat-label> {{ (refreshableConfigsLoadingFlags$[property.key] | async)? 'Loading...' :
               property.value.displayName
               }}</mat-label>
-            <mat-select (closed)="searchControl.setValue('')" [style.display]="((dropdownOptionsObservables$[property.key] | async) === undefined 
+
+
+            <mat-select #matSelect (closed)="searchControl.setValue('')" [style.display]="((dropdownOptionsObservables$[property.key] | async) === undefined 
                 || (dropdownOptionsObservables$[property.key] | async) === null || 
                  (dropdownOptionsObservables$[property.key] | async)?.disabled === true)? 'none':'block' " multiple
               [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
+
+
+              <mat-select-trigger>
+                <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
+                  <ng-container *ngIf="(state.options | dropdownInitialValue:property.key:formGroup)|async as init">
+                    <ng-container *ngFor="let opt of init;let isLast = last">
+                      {{opt.label}}<ng-container *ngIf="!isLast">,</ng-container>
+                    </ng-container>
+                  </ng-container>
+                </ng-container>
+              </mat-select-trigger>
               <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
-                <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
-                <div class="thin-scrollbars ap-max-h-[190px] ap-overflow-y-auto">
-                  <mat-option *ngFor="let opt of state.options| dropdownSearch:searchControl.value"
-                    [class.!ap-h-0]="!opt.show" [class.!ap-min-h-0]="!opt.show" [value]="opt.item.value">
-                    {{opt.item.label}}
+
+                <ng-container
+                  *ngIf="(((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key])) && !state.disabled">
+                  <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
+
+                  <cdk-virtual-scroll-viewport *ngIf="matSelect.panelOpen" [itemSize]="48" minBufferPx="200"
+                    maxBufferPx="400" class="ap-max-h-[195px] thin-scrollbars  ap-overflow-y-auto"
+                    [class.ap-h-[50px]]="state.options.length === 1 " [class.ap-h-[100px]]="state.options.length === 2"
+                    [class.ap-h-[150px]]="state.options.length === 3 " [class.ap-h-[195px]]="state.options.length >= 4">
+                    <mat-option *cdkVirtualFor="let opt of state.options" [value]="opt.value">
+                      {{opt.label}}
+                    </mat-option>
+                  </cdk-virtual-scroll-viewport>
+
+                  <mat-option *ngFor="let init of (state.options | dropdownInitialValue:property.key:formGroup)|async "
+                    class="!ap-hidden" [value]="init.value">
+                    {{init.label}}
                   </mat-option>
-                </div>
+                </ng-container>
+                <!-- need at least 1 pre-existing option to open the select -->
+                <mat-option *ngIf="!state.disabled" class="!ap-hidden"></mat-option>
               </ng-container>
             </mat-select>
+
+
+
+
             <ng-container
               *ngIf="!!(dropdownOptionsObservables$[property.key] | async) &&  (dropdownOptionsObservables$[property.key] | async)?.disabled === true">
               <mat-select [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
@@ -175,17 +243,46 @@
           <mat-form-field subscriptSizing="dynamic" class="ap-w-full" appearance="outline">
 
             <mat-label> {{ property.value.displayName }} </mat-label>
-            <mat-select [matTooltip]="property.value.description" [formControlName]="property.key"
+
+
+
+            <mat-select #matSelect [matTooltip]="property.value.description" [formControlName]="property.key"
               (closed)="searchControl.setValue('')" [compareWith]="dropdownCompareWithFunction">
               <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
-              <div class="thin-scrollbars ap-max-h-[190px] ap-overflow-y-auto">
-                <mat-option *ngFor="let opt of property.value.options.options | dropdownSearch:searchControl.value"
-                  [value]="opt.item.value" [class.!ap-h-0]="!opt.show" [class.!ap-min-h-0]="!opt.show">
-                  {{opt.item.label}}
-                </mat-option>
-              </div>
+              <ng-container *ngIf="(property.value.options.options | dropdownSearch:searchControl) | async as options">
 
+                <cdk-virtual-scroll-viewport *ngIf="matSelect.panelOpen" [itemSize]="48" minBufferPx="200"
+                  maxBufferPx="400" class="ap-max-h-[195px] thin-scrollbars  ap-overflow-y-auto"
+                  [class.ap-h-[50px]]="options.length === 1 " [class.ap-h-[100px]]="options.length === 2 "
+                  [class.ap-h-[150px]]="options.length === 3 " [class.ap-h-[195px]]="options.length >= 4 ">
+
+
+                  <mat-option *cdkVirtualFor="let opt of options" [value]="opt.value"
+                    [class.mdc-list-item--selected]="(opt.value| isDropdownItemSelected:property.key:formGroup ) | async">
+                    <div class="ap-w-full ap-flex ap-justify-between ap-items-center">
+                      {{opt.label}}
+                      <mat-pseudo-checkbox *ngIf="(opt.value| isDropdownItemSelected:property.key:formGroup) | async"
+                        state="checked" aria-hidden="true" appearance="minimal"
+                        class="mat-pseudo-checkbox virtual-scroll-check-mark mat-mdc-option-pseudo-checkbox mat-pseudo-checkbox-checked mat-pseudo-checkbox-minimal"></mat-pseudo-checkbox>
+                    </div>
+                  </mat-option>
+                </cdk-virtual-scroll-viewport>
+
+                <mat-option
+                  *ngFor="let init of (property.value.options.options | dropdownInitialValue:property.key:formGroup)|async "
+                  class="!ap-hidden" [value]="init.value">
+                  {{init.label}}
+                </mat-option>
+                <!-- need at least 1 pre-existing option to open the select -->
+                <mat-option class="!ap-hidden"></mat-option>
+              </ng-container>
             </mat-select>
+
+
+
+
+
+
           </mat-form-field>
           <ng-container *ngTemplateOutlet=" description; 
           context:{$implicit:property,
@@ -213,16 +310,44 @@
             #dropdownUiContainer="hoverTrackerDirective" apTrackHover>
 
             <mat-label> {{ property.value.displayName }} </mat-label>
-            <mat-select (closed)="searchControl.setValue('')" [matTooltip]="property.value.description"
-              [formControlName]="property.key" multiple [compareWith]="dropdownCompareWithFunction">
+
+            <mat-select #matSelect [matTooltip]="property.value.description" [formControlName]="property.key"
+              (closed)="searchControl.setValue('')" [compareWith]="dropdownCompareWithFunction" multiple>
+
+              <mat-select-trigger>
+
+                <ng-container
+                  *ngIf="(property.value.options.options | dropdownInitialValue:property.key:formGroup)|async as init">
+                  <ng-container *ngFor="let opt of init;let isLast = last">
+                    {{opt.label}}<ng-container *ngIf="!isLast">,</ng-container>
+                  </ng-container>
+                </ng-container>
+
+
+              </mat-select-trigger>
+
               <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
-              <div class="thin-scrollbars ap-max-h-[190px] ap-overflow-y-auto">
-                <mat-option *ngFor="let opt of property.value.options.options | dropdownSearch:searchControl.value"
-                  [class.!ap-h-0]="!opt.show" [class.!ap-min-h-0]="!opt.show" [value]="opt.item.value">
-                  {{opt.item.label}}
+              <ng-container *ngIf="(property.value.options.options | dropdownSearch:searchControl) | async as options">
+                <cdk-virtual-scroll-viewport *ngIf="matSelect.panelOpen" [itemSize]="48" minBufferPx="200"
+                  maxBufferPx="400" class="ap-max-h-[195px] thin-scrollbars  ap-overflow-y-auto"
+                  [class.ap-h-[50px]]="options.length === 1 " [class.ap-h-[100px]]="options.length === 2"
+                  [class.ap-h-[150px]]="options.length === 3 " [class.ap-h-[195px]]="options.length >= 4">
+                  <mat-option *cdkVirtualFor="let opt of options" [value]="opt.value">
+                    {{opt.label}}
+                  </mat-option>
+                </cdk-virtual-scroll-viewport>
+
+                <mat-option
+                  *ngFor="let init of (property.value.options.options | dropdownInitialValue:property.key:formGroup)|async "
+                  class="!ap-hidden" [value]="init.value">
+                  {{init.label}}
                 </mat-option>
-              </div>
+                <!-- need at least 1 pre-existing option to open the select -->
+                <mat-option class="!ap-hidden"></mat-option>
+
+              </ng-container>
             </mat-select>
+
 
           </mat-form-field>
           <ng-container *ngTemplateOutlet=" description; 

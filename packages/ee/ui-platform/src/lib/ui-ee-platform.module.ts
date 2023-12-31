@@ -17,12 +17,18 @@ import { CreateSigningKeyDialogComponent } from './components/dialogs/create-sig
 import { TermsAndServicesSettingsComponent } from './components/terms-and-services-settings/terms-and-services-settings.component';
 import { CustomDomainTableComponent } from './components/custom-domain-table/custom-domain-table.component';
 import { CreateCustomDomainDialogComponent } from './components/dialogs/create-custom-domain-dialog/create-custom-domain-dialog.component';
+import { ApiKeysTableComponent } from './components/api-keys-table/api-keys-table.component';
+import { CreateApiKeyDialogComponent } from './components/dialogs/create-api-key-dialog/create-api-key-dialog.component';
+import { TemplatesTableComponent } from './pages/templates-table/templates-table.component';
+import { CreateOrUpdateTemplateDialogueComponent } from './components/dialogs/create-or-update-template-dialogue/create-or-update-template-dialogue.component';
+import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
 
 @NgModule({
   imports: [
     UiCommonModule,
     CommonModule,
     RouterModule.forChild(uiEePlatformRoutes),
+    UiFeaturePiecesModule,
   ],
   declarations: [
     PlatformDashboardContainerComponent,
@@ -31,13 +37,17 @@ import { CreateCustomDomainDialogComponent } from './components/dialogs/create-c
     UpdateProjectDialogComponent,
     PlatformAppearanceComponent,
     PlatformSettingsComponent,
+    ApiKeysTableComponent,
     SigningKeysTableComponent,
+    CreateApiKeyDialogComponent,
     CreateSigningKeyDialogComponent,
     CreateCustomDomainDialogComponent,
     PiecesTableComponent,
+    CreateOrUpdateTemplateDialogueComponent,
     EditAddPieceOAuth2CredentialsDialogComponent,
     SmtpSettingsComponent,
     TermsAndServicesSettingsComponent,
+    TemplatesTableComponent,
     CustomDomainTableComponent,
   ],
 })

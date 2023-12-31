@@ -29,7 +29,6 @@ import {
 } from 'ngx-monaco-editor-v2';
 import { apMonacoTheme } from './monaco-themes/ap-monaco-theme';
 import { cobalt2 } from './monaco-themes/cobalt-2-theme';
-import { UiFeatureChatBotModule } from '@activepieces/ui/feature-chatbot';
 import { EeComponentsModule } from '@activepieces/ee-components';
 import { UiFeatureAuthenticationModule } from '@activepieces/ui/feature-authentication';
 
@@ -97,7 +96,6 @@ export function playerFactory() {
     LottieCacheModule.forRoot(),
     EeComponentsModule,
     MonacoEditorModule.forRoot(monacoConfig),
-    UiFeatureChatBotModule,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   exports: [],

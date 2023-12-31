@@ -128,12 +128,12 @@ export const flowRunService = {
             tags,
             finishTime: new Date().toISOString(),
         })
-        const flowRun = (await this.getOne({ id: flowRunId, projectId: undefined }))!
+        const flowRun = await this.getOneOrThrow({ id: flowRunId, projectId: undefined })
         await flowRunSideEffects.finish({ flowRun })
         return flowRun
     },
 
-    async start({ projectId, flowVersionId, flowRunId, payload, environment, executionType }: StartParams): Promise<FlowRun> {
+    async start({ projectId, flowVersionId, flowRunId, payload, environment, executionType, synchronousHandlerId }: StartParams): Promise<FlowRun> {
         logger.info(`[flowRunService#start] flowRunId=${flowRunId} executionType=${executionType}`)
 
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
@@ -170,6 +170,7 @@ export const flowRunService = {
         await flowRunSideEffects.start({
             flowRun: savedFlowRun,
             payload,
+            synchronousHandlerId,
             executionType,
         })
 
@@ -228,17 +229,21 @@ export const flowRunService = {
         return flowRun
     },
 
-    async getAllProdRuns(params: GetAllProdRuns): Promise<FlowRun[]> {
-        const { projectId, finishTime } = params
-
-        const query = {
-            projectId,
-            environment: RunEnvironment.PRODUCTION,
-            finishTime: MoreThanOrEqual(finishTime),
-        }
-
-        return flowRunRepo.findBy(query)
+    async getAllProdRuns(params: GetAllProdRuns): Promise<number> {
+        const { projectId, created } = params
+    
+        const sumOfTasks = await flowRunRepo.createQueryBuilder('flow_run')
+            .select('COALESCE(SUM(flow_run.tasks), 0)', 'tasks')
+            .where({
+                projectId,
+                environment: RunEnvironment.PRODUCTION,
+                created: MoreThanOrEqual(created),
+            })
+            .getRawOne()
+    
+        return Number(sumOfTasks.tasks)
     },
+    
 }
 
 type GetOrCreateParams = {
@@ -270,6 +275,7 @@ type StartParams = {
     flowRunId?: FlowRunId
     environment: RunEnvironment
     payload: unknown
+    synchronousHandlerId?: string
     executionType: ExecutionType
 }
 
@@ -286,5 +292,5 @@ type PauseParams = {
 
 type GetAllProdRuns = {
     projectId: ProjectId
-    finishTime: string
+    created: string
 }

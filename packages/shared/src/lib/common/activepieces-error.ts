@@ -2,7 +2,6 @@ import { AppConnectionId } from '../app-connection/app-connection'
 import { FileId } from '../file/file'
 import { FlowRunId } from '../flow-run/flow-run'
 import { FlowId } from '../flows/flow'
-import { FlowInstanceId } from '../flows/flow-instances'
 import { FlowVersionId } from '../flows/flow-version'
 import { ApId } from './id-generator'
 
@@ -22,7 +21,6 @@ type ErrorParams =
     | ExecutionTimeoutErrorParams
     | ExistingUserErrorParams
     | FileNotFoundErrorParams
-    | FlowInstanceNotFoundErrorParams
     | FlowNotFoundErrorParams
     | FlowOperationErrorParams
     | FlowRunNotFoundErrorParams
@@ -41,7 +39,6 @@ type ErrorParams =
     | PermissionDeniedErrorParams
     | PieceNotFoundErrorParams
     | PieceTriggerNotFoundErrorParams
-    | PlatformSignUpEnabledForInvitedUsersOnlyParams
     | QuotaExceededParams
     | SignUpDisabledParams
     | StepNotFoundErrorParams
@@ -52,14 +49,20 @@ type ErrorParams =
     | TriggerEnableErrorParams
     | TriggerFailedErrorParams
     | ValidationErrorParams
+    | InvitationOnlySignUpParams
 
 export type BaseErrorParams<T, V> = {
     code: T
     params: V
 }
 
+export type InvitationOnlySignUpParams = BaseErrorParams<
+ErrorCode.INVITATIION_ONLY_SIGN_UP,
+Record<string, never>
+>
+
 export type InvalidClaimParams = BaseErrorParams<ErrorCode.INVALID_CLAIM, { redirectUrl: string, tokenUrl: string, clientId: string }>
-export type InvalidCloudClaimParams = BaseErrorParams<ErrorCode.INVALID_CLOUD_CLAIM, { appName: string }>
+export type InvalidCloudClaimParams = BaseErrorParams<ErrorCode.INVALID_CLOUD_CLAIM, { pieceName: string }>
 
 export type InvalidBearerTokenParams = BaseErrorParams<ErrorCode.INVALID_BEARER_TOKEN, {
     message?: string
@@ -76,7 +79,9 @@ ErrorCode.APP_CONNECTION_NOT_FOUND,
 
 export type AuthorizationErrorParams = BaseErrorParams<
 ErrorCode.AUTHORIZATION,
-Record<string, never>
+{
+    message?: string
+}
 >
 
 export type PermissionDeniedErrorParams = BaseErrorParams<
@@ -99,13 +104,6 @@ export type FlowNotFoundErrorParams = BaseErrorParams<
 ErrorCode.FLOW_NOT_FOUND,
 {
     id: FlowId
-}
->
-
-export type FlowInstanceNotFoundErrorParams = BaseErrorParams<
-ErrorCode.FLOW_INSTANCE_NOT_FOUND,
-{
-    id?: FlowInstanceId
 }
 >
 
@@ -302,11 +300,6 @@ Record<string, never>
 
 export type InvalidOtpParams = BaseErrorParams<ErrorCode.INVALID_OTP, Record<string, never>>
 
-export type PlatformSignUpEnabledForInvitedUsersOnlyParams = BaseErrorParams<
-ErrorCode.PLATFORM_SIGN_UP_ENABLED_FOR_INVITED_USERS_ONLY,
-Record<string, never>
->
-
 export enum ErrorCode {
     APP_CONNECTION_NOT_FOUND = 'APP_CONNECTION_NOT_FOUND',
     AUTHORIZATION = 'AUTHORIZATION',
@@ -330,13 +323,13 @@ export enum ErrorCode {
     INVALID_CREDENTIALS = 'INVALID_CREDENTIALS',
     INVALID_OR_EXPIRED_JWT_TOKEN = 'INVALID_OR_EXPIRED_JWT_TOKEN',
     INVALID_OTP = 'INVALID_OTP',
+    INVITATIION_ONLY_SIGN_UP = 'INVITATIION_ONLY_SIGN_UP',
     JOB_REMOVAL_FAILURE = 'JOB_REMOVAL_FAILURE',
     OPEN_AI_FAILED = 'OPEN_AI_FAILED',
     PAUSE_METADATA_MISSING = 'PAUSE_METADATA_MISSING',
     PERMISSION_DENIED = 'PERMISSION_DENIED',
     PIECE_NOT_FOUND = 'PIECE_NOT_FOUND',
     PIECE_TRIGGER_NOT_FOUND = 'PIECE_TRIGGER_NOT_FOUND',
-    PLATFORM_SIGN_UP_ENABLED_FOR_INVITED_USERS_ONLY = 'PLATFORM_SIGN_UP_ENABLED_FOR_INVITED_USERS_ONLY',
     QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
     SIGN_UP_DISABLED = 'SIGN_UP_DISABLED',
     STEP_NOT_FOUND = 'STEP_NOT_FOUND',

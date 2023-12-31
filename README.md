@@ -46,7 +46,7 @@ src="https://github.com/activepieces/activepieces/assets/1812998/76c97441-c285-4
 <br>
 <br>
 
-# 🤯 Welcome to Activepiece
+# 🤯 Welcome to Activepieces
 
 Your friendliest open source all-in-one automation tool, designed to be **extensible** through a **type-safe** pieces framework written in **Typescript**.
 
@@ -231,6 +231,14 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="http://donthorp.net"><img src="https://avatars.githubusercontent.com/u/8629?v=4?s=100" width="100px;" alt="Don Thorp"/><br /><sub><b>Don Thorp</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=donthorp" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://joeworkman.net"><img src="https://avatars.githubusercontent.com/u/225628?v=4?s=100" width="100px;" alt="Joe Workman"/><br /><sub><b>Joe Workman</b></sub></a><br /><a href="#plugin-joeworkman" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Autumnlight02"><img src="https://avatars.githubusercontent.com/u/68244453?v=4?s=100" width="100px;" alt="Aykut Akgün"/><br /><sub><b>Aykut Akgün</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=Autumnlight02" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/yann120"><img src="https://avatars.githubusercontent.com/u/10012140?v=4?s=100" width="100px;" alt="Yann Petitjean"/><br /><sub><b>Yann Petitjean</b></sub></a><br /><a href="#plugin-yann120" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/pfernandez98"><img src="https://avatars.githubusercontent.com/u/54374282?v=4?s=100" width="100px;" alt="pfernandez98"/><br /><sub><b>pfernandez98</b></sub></a><br /><a href="#plugin-pfernandez98" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://denieler.com"><img src="https://avatars.githubusercontent.com/u/2836281?v=4?s=100" width="100px;" alt="Daniel O."/><br /><sub><b>Daniel O.</b></sub></a><br /><a href="#plugin-denieler" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://myh.tw"><img src="https://avatars.githubusercontent.com/u/12458706?v=4?s=100" width="100px;" alt="Meng-Yuan Huang"/><br /><sub><b>Meng-Yuan Huang</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=MrMYHuang" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/bigfluffycookie"><img src="https://avatars.githubusercontent.com/u/54935347?v=4?s=100" width="100px;" alt="Leyla"/><br /><sub><b>Leyla</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3Abigfluffycookie" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://i-nithin.netlify.app/"><img src="https://avatars.githubusercontent.com/u/97078688?v=4?s=100" width="100px;" alt="i-nithin"/><br /><sub><b>i-nithin</b></sub></a><br /><a href="#plugin-i-nithin" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>

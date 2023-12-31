@@ -387,6 +387,7 @@ export const airtableCommon = {
       },
       body: {
         fields,
+        typecast:true
       },
     };
 

@@ -18,7 +18,13 @@ import {
   containsLowercaseCharacter,
   containsNumber,
 } from '@activepieces/ui/common';
-import { ApFlagId, UserStatus } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  SignUpRequest,
+  UnhandledSwitchCaseError,
+  UserStatus,
+} from '@activepieces/shared';
 import { OtpType } from '@activepieces/ee-shared';
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 
@@ -49,6 +55,7 @@ export class SignUpComponent implements OnInit {
   termsOfServiceUrl$: Observable<string>;
   signUpDone = false;
   invitationOnlySignup = false;
+  showNewsLetterCheckbox$: Observable<boolean>;
   readonly OtpType = OtpType;
   constructor(
     private formBuilder: FormBuilder,
@@ -64,50 +71,10 @@ export class SignUpComponent implements OnInit {
     this.termsOfServiceUrl$ = this.flagService.getStringFlag(
       ApFlagId.TERMS_OF_SERVICE_URL
     );
-    this.registrationForm = this.formBuilder.group({
-      firstName: new FormControl<string>('', {
-        nonNullable: true,
-        validators: [Validators.required],
-      }),
-      lastName: new FormControl<string>('', {
-        nonNullable: true,
-        validators: [Validators.required],
-      }),
-      email: new FormControl<string>('', {
-        nonNullable: true,
-        validators: [
-          Validators.email,
-          Validators.pattern('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$'),
-          Validators.required,
-        ],
-      }),
-      password: new FormControl<string>('', {
-        nonNullable: true,
-        validators: [
-          Validators.required,
-          Validators.minLength(8),
-          Validators.maxLength(64),
-          containsSpecialCharacter(),
-          containsUppercaseCharacter(),
-          containsLowercaseCharacter(),
-          containsNumber(),
-        ],
-      }),
-      trackEvents: new FormControl<boolean>(true, { nonNullable: true }),
-      newsLetter: new FormControl<boolean>(true, { nonNullable: true }),
-    });
+    this.showNewsLetterCheckbox$ = this.getShowNewsLetterCheckbox$();
+    this.registrationForm = this.buildForm();
     this.signedUpEnabled$ = this.flagService.isSignedUpEnabled();
-
-    this.emailValueChanged$ =
-      this.registrationForm.controls.email.valueChanges.pipe(
-        tap(() => {
-          const errors = this.registrationForm.controls.email.errors;
-          if (errors && errors[this.emailIsUsedErrorName]) {
-            delete errors[this.emailIsUsedErrorName];
-          }
-          this.registrationForm.controls.email.setErrors(errors);
-        })
-      );
+    this.emailValueChanged$ = this.getEmailInputListener$();
   }
   ngOnInit(): void {
     const email = this.activeRoute.snapshot.queryParamMap.get('email');
@@ -119,7 +86,12 @@ export class SignUpComponent implements OnInit {
   signUp() {
     if (this.registrationForm.valid && !this.loading) {
       this.loading = true;
-      const request = this.registrationForm.getRawValue();
+      const referringUserId =
+        this.activeRoute.snapshot.queryParamMap.get('referral') ?? undefined;
+      const request: SignUpRequest = {
+        ...this.registrationForm.getRawValue(),
+        referringUserId,
+      };
       this.signUp$ = this.authenticationService.signUp(request).pipe(
         tap((response) => {
           if (
@@ -131,20 +103,6 @@ export class SignUpComponent implements OnInit {
             this.authenticationService.saveToken(response.body.token);
             this.authenticationService.saveUser(response);
           }
-        }),
-        switchMap((response) => {
-          if (this.registrationForm.controls.newsLetter.value && response) {
-            return this.authenticationService
-              .saveNewsLetterSubscriber(request.email)
-              .pipe(
-                map(() => response),
-                catchError((err) => {
-                  console.error(err);
-                  return of(response);
-                })
-              );
-          }
-          return of(response);
         }),
         tap((response) => {
           if (response && response.body?.status === UserStatus.VERIFIED) {
@@ -178,10 +136,85 @@ export class SignUpComponent implements OnInit {
   isPasswordInputIsFocused(passwordInputElement: HTMLInputElement) {
     return passwordInputElement == document.activeElement;
   }
-  goBackToSign() {
+  goBackToSignIn() {
     this.router.navigate(['/sign-in']);
   }
   redirect() {
     this.redirectService.redirect();
+  }
+  private getShowNewsLetterCheckbox$() {
+    return this.flagService.getEdition().pipe(
+      switchMap((ed) => {
+        return this.flagService.getWebsiteName().pipe(
+          map((name) => {
+            switch (ed) {
+              case ApEdition.CLOUD: {
+                if (
+                  typeof name === 'string' &&
+                  name.toLowerCase() === 'activepieces'
+                ) {
+                  this.registrationForm.controls.newsLetter.setValue(true);
+                }
+                return false;
+              }
+              case ApEdition.COMMUNITY: {
+                this.registrationForm.controls.newsLetter.setValue(true);
+                return true;
+              }
+              case ApEdition.ENTERPRISE:
+                return false;
+              default:
+                throw new UnhandledSwitchCaseError(ed);
+            }
+          })
+        );
+      })
+    );
+  }
+
+  private buildForm() {
+    return this.formBuilder.group({
+      firstName: new FormControl<string>('', {
+        nonNullable: true,
+        validators: [Validators.required],
+      }),
+      lastName: new FormControl<string>('', {
+        nonNullable: true,
+        validators: [Validators.required],
+      }),
+      email: new FormControl<string>('', {
+        nonNullable: true,
+        validators: [
+          Validators.email,
+          Validators.pattern('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$'),
+          Validators.required,
+        ],
+      }),
+      password: new FormControl<string>('', {
+        nonNullable: true,
+        validators: [
+          Validators.required,
+          Validators.minLength(8),
+          Validators.maxLength(64),
+          containsSpecialCharacter(),
+          containsUppercaseCharacter(),
+          containsLowercaseCharacter(),
+          containsNumber(),
+        ],
+      }),
+      trackEvents: new FormControl<boolean>(true, { nonNullable: true }),
+      newsLetter: new FormControl<boolean>(false, { nonNullable: true }),
+    });
+  }
+  private getEmailInputListener$() {
+    return this.registrationForm.controls.email.valueChanges.pipe(
+      tap(() => {
+        const errors = this.registrationForm.controls.email.errors;
+        if (errors && errors[this.emailIsUsedErrorName]) {
+          delete errors[this.emailIsUsedErrorName];
+        }
+        this.registrationForm.controls.email.setErrors(errors);
+      })
+    );
   }
 }

@@ -42,6 +42,9 @@ const flowVersionRepo = databaseConnection.getRepository(FlowVersionEntity)
 
 export const flowVersionService = {
     async lockPieceVersions(projectId: ProjectId, mutatedFlowVersion: FlowVersion): Promise<FlowVersion> {
+        if (mutatedFlowVersion.state === FlowVersionState.LOCKED) {
+            return mutatedFlowVersion
+        }
         return flowHelper.transferFlowAsync(mutatedFlowVersion, async (step) => {
             const clonedStep = JSON.parse(JSON.stringify(step))
             switch (step.type) {
@@ -63,7 +66,7 @@ export const flowVersionService = {
     },
     async applyOperation(userId: UserId, projectId: ProjectId, flowVersion: FlowVersion, userOperation: FlowOperationRequest): Promise<FlowVersion> {
         let operations: FlowOperationRequest[] = []
-        let mutatedFlowVersion = flowVersion
+        let mutatedFlowVersion:FlowVersion = flowVersion
         switch (userOperation.type) {
             case FlowOperationType.ROLLBACK: {
                 const previousVersion = await flowVersionService.getFlowVersion({
@@ -87,7 +90,6 @@ export const flowVersionService = {
             case FlowOperationType.DUPLICATE_ACTION:
                 mutatedFlowVersion = await this.getFlowVersion({
                     flowId: flowVersion.flowId,
-                    removeSecrets: false,
                     versionId: flowVersion.id,
                 })
                 operations = [userOperation]
@@ -140,12 +142,13 @@ export const flowVersionService = {
         }))
         return paginationHelper.createPage<FlowVersion>(paginationResult.data, paginationResult.cursor)
     },
-    async getFlowVersion({ flowId, versionId, removeSecrets }: { flowId: FlowId, versionId: FlowVersionId | undefined, removeSecrets: boolean }): Promise<FlowVersion> {
+    async getFlowVersion({ flowId, versionId, removeSecrets }: { flowId: FlowId, versionId: FlowVersionId | undefined, removeSecrets?: boolean }): Promise<FlowVersion> {
         let flowVersion: FlowVersion = await flowVersionRepo.findOneOrFail({
             where: {
                 flowId,
                 id: versionId,
             },
+            //This is needed to return draft by default because it is always the latest one
             order: {
                 created: 'DESC',
             },

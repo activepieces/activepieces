@@ -6,6 +6,7 @@ import { googleDriveUploadFile } from './lib/action/upload-file';
 import { newFile } from './lib/triggers/new-file';
 import { newFolder } from './lib/triggers/new-folder';
 import { readFile } from './lib/action/read-file';
+import { googleDriveListFiles } from './lib/action/list-files.action';
 
 export const googleDriveAuth = PieceAuth.OAuth2({
     description: "",
@@ -18,9 +19,9 @@ export const googleDriveAuth = PieceAuth.OAuth2({
 export const googleDrive = createPiece({
 	minimumSupportedRelease: '0.5.0',
     logoUrl: 'https://cdn.activepieces.com/pieces/google-drive.png',
-	actions: [googleDriveCreateNewFolder, googleDriveCreateNewTextFile, googleDriveUploadFile, readFile],
+	actions: [googleDriveCreateNewFolder, googleDriveCreateNewTextFile, googleDriveUploadFile, readFile, googleDriveListFiles],
 	displayName: "Google Drive",
-	authors: ['kanarelo', 'BastienMe', 'MoShizzle', 'Armangiau', 'vitalini'],
+	authors: ['kanarelo', 'BastienMe', 'MoShizzle', 'Armangiau', 'vitalini', 'pfernandez98'],
 	triggers: [newFile, newFolder],
     auth: googleDriveAuth,
 });

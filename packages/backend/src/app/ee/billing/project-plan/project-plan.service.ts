@@ -1,5 +1,5 @@
 import { ApEdition, ProjectId, apId, isNil, spreadIfDefined } from '@activepieces/shared'
-import { ProjectPlan } from '@activepieces/ee-shared'
+import { DEFAULT_PLATFORM_PLAN, ProjectPlan } from '@activepieces/ee-shared'
 import { databaseConnection } from '../../../database/database-connection'
 import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
@@ -14,8 +14,8 @@ import { getEdition } from '../../../helper/secret-helper'
 const projectPlanRepo = databaseConnection.getRepository<ProjectPlan>(ProjectPlanEntity)
 
 export const plansService = {
-    async getBySubscriptionId({ stripeSubscriptionId }: { stripeSubscriptionId: string }): Promise<ProjectPlan> {
-        return projectPlanRepo.findOneByOrFail({ stripeSubscriptionId })
+    async getByCustomerId({ stripeCustomerId }: { stripeCustomerId: string }): Promise<ProjectPlan> {
+        return projectPlanRepo.findOneByOrFail({ stripeCustomerId })
     },
     async getByProjectId({ projectId }: { projectId: ProjectId }): Promise<ProjectPlan> {
         return projectPlanRepo.findOneByOrFail({ projectId })
@@ -49,6 +49,7 @@ export const plansService = {
             ...spreadIfDefined('flowPlanName', nickname),
             ...spreadIfDefined('connections', connections),
             ...spreadIfDefined('tasks', tasks),
+            tasksPerDay: null,
             ...spreadIfDefined('minimumPollingInterval', minimumPollingInterval),
             ...spreadIfDefined('teamMembers', teamMembers),
             stripeSubscriptionId,
@@ -94,6 +95,10 @@ async function getDefaultFlowPlan({ email }: { email: string }): Promise<FlowPla
         if (!isNil(appsumoPlan)) {
             return appsumoService.getPlanInformation(appsumoPlan.plan_id)
         }
+    }
+    if (edition === ApEdition.ENTERPRISE) {
+        // TODO refactor, first project in ee doesn't have plan created.
+        return DEFAULT_PLATFORM_PLAN
     }
     return defaultPlanInformation
 }

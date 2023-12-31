@@ -11,7 +11,7 @@ export class AuthConfigsPipe implements PipeTransform {
     pieceName: string
   ): ConnectionDropdownItem[] {
     return value.filter(
-      (item) => item.label.appName === pieceName || !item.label.appName
+      (item) => item.label.pieceName === pieceName || !item.label.pieceName
     );
   }
 }

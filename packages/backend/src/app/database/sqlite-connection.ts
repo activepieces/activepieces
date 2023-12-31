@@ -25,6 +25,10 @@ import { AddPlatformIdToUserSqlite1700147448410 } from './migration/sqlite/17001
 import { AddTerminationReasonSqlite1698323327318 } from './migration/sqlite/1698323327318-AddTerminationReason'
 import { AddPlatformIdToPieceMetadataSqlite1700524446967 } from './migration/sqlite/1700524446967-AddPlatformIdToPieceMetadataSqlite'
 import { AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822 } from './migration/common/1701096458822-add-partial-unique-index-for-email-and-platform-id-is-null'
+import { AddPlatformIdToFileSqlite1701808264444 } from './migration/sqlite/1701808264444-AddPlatformIdToFileSqlite'
+import { RemoveFlowInstanceSqlite1702412280963 } from './migration/sqlite/1702412280963-remove-flow-instance-sqlite'
+import { UpdateStatusInUserSqlite1703713027818 } from './migration/1703713027818-UpdateStatusInUserSqlite'
+import { RenameAppNameToPieceNameSqlite1703713475755 } from './migration/1703713475755-RenameAppNameToPieceNameSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(SystemProp.CONFIG_PATH)
@@ -66,6 +70,10 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddPlatformIdToUserSqlite1700147448410,
         AddPlatformIdToPieceMetadataSqlite1700524446967,
         AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822,
+        AddPlatformIdToFileSqlite1701808264444,
+        RemoveFlowInstanceSqlite1702412280963,
+        UpdateStatusInUserSqlite1703713027818,
+        RenameAppNameToPieceNameSqlite1703713475755,
     ]
     const edition = getEdition()
     if (edition !== ApEdition.COMMUNITY) {

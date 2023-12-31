@@ -9,6 +9,12 @@ import { loadEncryptionKey } from '../encryption'
 import path from 'path'
 import os from 'os'
 
+export enum PiecesSource {
+    CLOUD_AND_DB = 'CLOUD_AND_DB',
+    DB = 'DB',
+    FILE = 'FILE',
+}
+
 export enum QueueMode {
     REDIS = 'REDIS',
     MEMORY = 'MEMORY',
@@ -36,10 +42,10 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [SystemProp.SIGN_UP_ENABLED]: 'false',
     [SystemProp.STATS_ENABLED]: 'false',
     [SystemProp.PACKAGE_ARCHIVE_PATH]: 'dist/archives',
-    [SystemProp.CHATBOT_ENABLED]: 'true',
     [SystemProp.TELEMETRY_ENABLED]: 'true',
+    [SystemProp.PIECES_SOURCE]: PiecesSource.CLOUD_AND_DB,
     [SystemProp.TEMPLATES_SOURCE_URL]:
-    'https://cloud.activepieces.com/api/v1/flow-templates',
+        'https://cloud.activepieces.com/api/v1/flow-templates',
     [SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: '5',
     [SystemProp.QUEUE_UI_ENABLED]: 'false',
 }
@@ -100,15 +106,15 @@ const getEnvVar = (prop: SystemProp): string | undefined => {
 export const validateEnvPropsOnStartup = async (): Promise<void> => {
     const executionMode = system.get(SystemProp.EXECUTION_MODE)
     const signedUpEnabled =
-    system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
+        system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
     const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
     const environment = system.get(SystemProp.ENVIRONMENT)
     await loadEncryptionKey(queueMode)
 
     if (
         executionMode === ExecutionMode.UNSANDBOXED &&
-    signedUpEnabled &&
-    environment === ApEnvironment.PRODUCTION
+        signedUpEnabled &&
+        environment === ApEnvironment.PRODUCTION
     ) {
         throw new ActivepiecesError(
             {

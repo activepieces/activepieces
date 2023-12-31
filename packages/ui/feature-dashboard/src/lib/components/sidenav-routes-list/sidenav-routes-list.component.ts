@@ -27,7 +27,6 @@ type SideNavRoute = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SidenavRoutesListComponent implements OnInit {
-  removeChatbots$: Observable<void>;
   logoUrl$: Observable<string>;
   showSupport$: Observable<boolean>;
   showDocs$: Observable<boolean>;
@@ -49,11 +48,16 @@ export class SidenavRoutesListComponent implements OnInit {
       route: 'platform/appearance',
       showInSideNav$: of(true),
     },
-
     {
       icon: 'assets/img/custom/dashboard/pieces.svg',
       caption: $localize`Pieces`,
       route: 'platform/pieces',
+      showInSideNav$: of(true),
+    },
+    {
+      icon: 'assets/img/custom/dashboard/templates.svg',
+      caption: $localize`Templates`,
+      route: 'platform/templates',
       showInSideNav$: of(true),
     },
     {
@@ -85,20 +89,6 @@ export class SidenavRoutesListComponent implements OnInit {
           this.store.dispatch(FolderActions.showAllFlows());
         },
         showInSideNav$: of(true),
-      },
-      {
-        icon: 'assets/img/custom/dashboard/chatbots.svg',
-        caption: $localize`Chatbots`,
-        route: 'chatbots',
-        showInSideNav$: this.isInEmbedding$.pipe(
-          switchMap((isInEmbedding) =>
-            this.flagServices.isChatbotEnabled().pipe(
-              map((chatbotsEnabled) => {
-                return !isInEmbedding && chatbotsEnabled;
-              })
-            )
-          )
-        ),
       },
       {
         icon: 'assets/img/custom/dashboard/runs.svg',

@@ -24,19 +24,6 @@
                             <mat-label i18n>Blog Url </mat-label>
                             <input [formControl]="form.controls.blogUrl" matInput type="text" />
                         </mat-form-field>
-                        <mat-form-field class="ap-w-full" appearance="outline">
-                            <mat-label i18n>Image url </mat-label>
-                            <input [formControl]="form.controls.imageUrl" matInput type="text" />
-                        </mat-form-field>
-                        <div>
-                            <mat-checkbox color="primary"
-                                [formControl]="form.controls.isFeatured">Featured</mat-checkbox>
-                        </div>
-                        <mat-form-field class="ap-w-full" appearance="outline">
-                            <mat-label i18n>Featured Description</mat-label>
-                            <textarea cdkFocusInitial rows="4" [formControl]="form.controls.featuredDescription"
-                                matInput></textarea>
-                        </mat-form-field>
                         <div class="ap-mb-2 ap-pointer-events-none" i18n>Filters</div>
                         <div class="ap-mt-4">
                             <app-array-form-control [formControl]="form.controls.tags"></app-array-form-control>

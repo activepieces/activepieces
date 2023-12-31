@@ -15,9 +15,15 @@ import {
   AppConnectionType,
   AppConnectionWithoutSensitiveData,
   UpsertPlatformOAuth2Request,
+  ApFlagId,
 } from '@activepieces/shared';
 import deepEqual from 'deep-equal';
-import { AppConnectionsService, fadeInUp400ms } from '@activepieces/ui/common';
+import {
+  AppConnectionsService,
+  AuthenticationService,
+  FlagService,
+  fadeInUp400ms,
+} from '@activepieces/ui/common';
 import { ConnectionValidator } from '../../validators/connectionNameValidator';
 import {
   BuilderSelectors,
@@ -68,11 +74,14 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
   upsert$: Observable<AppConnectionWithoutSensitiveData | null>;
   keyTooltip = $localize`The ID of this connection definition. You will need to select this key whenever you want to reuse this connection.`;
   isTriggerAppWebhook = false;
+  ownAuthEnabled$: Observable<boolean>;
   constructor(
     private fb: FormBuilder,
     private store: Store,
     public dialogRef: MatDialogRef<ManagedOAuth2ConnectionDialogComponent>,
     private appConnectionsService: AppConnectionsService,
+    private flagService: FlagService,
+    private authenticationService: AuthenticationService,
     private snackbar: MatSnackBar,
     @Inject(MAT_DIALOG_DATA)
     public dialogData: ManagedOAuth2ConnectionDialogData
@@ -89,6 +98,9 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
       extraParams: this.dialogData.pieceAuthProperty.extra || {},
       client_id: this.dialogData.clientId,
     };
+    this.ownAuthEnabled$ = this.flagService.isFlagEnabled(
+      ApFlagId.OWN_AUTH2_ENABLED
+    );
     this.isTriggerAppWebhook = this.dialogData.isTriggerAppWebhook;
   }
 
@@ -151,7 +163,8 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
     const { tokenUrl } = this.getTokenAndUrl();
     if (this.dialogData.connectionType === AppConnectionType.CLOUD_OAUTH2) {
       const newConnection: UpsertCloudOAuth2Request = {
-        appName: this.dialogData.pieceName,
+        projectId: this.authenticationService.getProjectId(),
+        pieceName: this.dialogData.pieceName,
         type: AppConnectionType.CLOUD_OAUTH2,
         value: {
           token_url: tokenUrl,
@@ -171,7 +184,8 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
       return newConnection;
     } else {
       const newConnection: UpsertPlatformOAuth2Request = {
-        appName: this.dialogData.pieceName,
+        projectId: this.authenticationService.getProjectId(),
+        pieceName: this.dialogData.pieceName,
         type: AppConnectionType.PLATFORM_OAUTH2,
         value: {
           token_url: tokenUrl,

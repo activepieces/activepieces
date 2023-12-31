@@ -2,7 +2,7 @@
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
   <file source-language="en" datatype="plaintext" original="ng2.template" target-language="pt-BR">
     <body>
-      <trans-unit id="3307420368271433057" datatype="html">
+      <trans-unit id="3307420368271433057" datatype="html" approved="yes">
         <source>
            You have reached the limits of your current plan.    ⭐ to unlock more features. 
           <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;ap-font-bold&quot;&gt;"/>
@@ -13,78 +13,78 @@
           <context context-type="sourcefile">packages/ee/billing/ui/src/lib/upgrade-dialog/upgrade-dialog.component.html</context>
           <context context-type="linenumber">17,20</context>
         </context-group>
-        <target state="needs-translation">
-           You have reached the limits of your current plan.    ⭐ to unlock more features. 
+        <target state="final">
+           Você atingiu os limites do plano atual.   ⭐ para desbloquear mais recursos. 
           <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;ap-font-bold&quot;&gt;"/>
           <x id="INTERPOLATION" equiv-text="{{teamMemebersNotes[data.projectType]}}"/>
           <x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/>
         </target>
       </trans-unit>
-      <trans-unit id="315071914730774695" datatype="html">
+      <trans-unit id="315071914730774695" datatype="html" approved="yes">
         <source>Please contact your platform admin</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/billing/ui/src/lib/upgrade-dialog/upgrade-dialog.component.ts</context>
           <context context-type="linenumber">26</context>
         </context-group>
-        <target state="needs-translation">Please contact your platform admin</target>
+        <target state="final">Por favor, entre em contato com o administrador da plataforma</target>
       </trans-unit>
-      <trans-unit id="2849750161085431718" datatype="html">
+      <trans-unit id="2849750161085431718" datatype="html" approved="yes">
         <source>Upgrade</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/billing/ui/src/lib/upgrade-dialog/upgrade-dialog.component.ts</context>
           <context context-type="linenumber">27</context>
         </context-group>
-        <target state="needs-translation">Upgrade</target>
+        <target state="final">Atualizar</target>
       </trans-unit>
-      <trans-unit id="81394443656404829" datatype="html">
+      <trans-unit id="81394443656404829" datatype="html" approved="yes">
         <source>Share template</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/components/src/lib/share-flow-template-dialog/share-flow-template-dialog.component.html</context>
           <context context-type="linenumber">8</context>
         </context-group>
-        <target state="needs-translation">Share template</target>
+        <target state="final">Compartilhar modelo</target>
       </trans-unit>
-      <trans-unit id="4902817035128594900" datatype="html">
+      <trans-unit id="4902817035128594900" datatype="html" approved="yes">
         <source>Description</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/components/src/lib/share-flow-template-dialog/share-flow-template-dialog.component.html</context>
           <context context-type="linenumber">18</context>
         </context-group>
-        <target state="needs-translation">Description</target>
+        <target state="final">Descrição</target>
       </trans-unit>
-      <trans-unit id="8289400513068937763" datatype="html">
+      <trans-unit id="8289400513068937763" datatype="html" approved="yes">
         <source>Blog Url </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/components/src/lib/share-flow-template-dialog/share-flow-template-dialog.component.html</context>
           <context context-type="linenumber">24</context>
         </context-group>
-        <target state="needs-translation">Blog Url </target>
+        <target state="final">Url do blog </target>
       </trans-unit>
-      <trans-unit id="1984826134993441246" datatype="html">
+      <trans-unit id="1984826134993441246" datatype="html" approved="yes">
         <source>Image url </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/components/src/lib/share-flow-template-dialog/share-flow-template-dialog.component.html</context>
           <context context-type="linenumber">28</context>
         </context-group>
-        <target state="needs-translation">Image url </target>
+        <target state="final">URL da imagem</target>
       </trans-unit>
-      <trans-unit id="2637278026035363299" datatype="html">
+      <trans-unit id="2637278026035363299" datatype="html" approved="yes">
         <source>Featured Description</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/components/src/lib/share-flow-template-dialog/share-flow-template-dialog.component.html</context>
           <context context-type="linenumber">36</context>
         </context-group>
-        <target state="needs-translation">Featured Description</target>
+        <target state="final">Descrição do recurso</target>
       </trans-unit>
-      <trans-unit id="4163272119298020373" datatype="html">
+      <trans-unit id="4163272119298020373" datatype="html" approved="yes">
         <source>Filters</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/components/src/lib/share-flow-template-dialog/share-flow-template-dialog.component.html</context>
           <context context-type="linenumber">40</context>
         </context-group>
-        <target state="needs-translation">Filters</target>
+        <target state="final">Filtros</target>
       </trans-unit>
-      <trans-unit id="2330577642930707695" datatype="html">
+      <trans-unit id="2330577642930707695" datatype="html" approved="yes">
         <source> Cancel </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/components/src/lib/share-flow-template-dialog/share-flow-template-dialog.component.html</context>
@@ -128,7 +128,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">97,99</context>
+          <context context-type="linenumber">98,100</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/secret-text-connection-dialog/secret-text-connection-dialog.component.html</context>
@@ -150,9 +150,9 @@
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/install-community-piece/install-community-piece-modal.component.html</context>
           <context context-type="linenumber">58,60</context>
         </context-group>
-        <target state="needs-translation"> Cancel </target>
+        <target state="final"> Cancelar </target>
       </trans-unit>
-      <trans-unit id="6249484391846924804" datatype="html">
+      <trans-unit id="6249484391846924804" datatype="html" approved="yes">
         <source> Confirm </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/components/src/lib/share-flow-template-dialog/share-flow-template-dialog.component.html</context>
@@ -166,83 +166,90 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/custom-path-mention-dialog/custom-path-mention-dialog.component.html</context>
           <context context-type="linenumber">29,31</context>
         </context-group>
-        <target state="needs-translation"> Confirm </target>
+        <target state="final"> Confirmar </target>
       </trans-unit>
-      <trans-unit id="4103400345525770187" datatype="html">
+      <trans-unit id="631520980743150884" datatype="html" approved="yes">
+        <source> OR </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ee/components/src/lib/third-party-auth/third-party-auth.component.html</context>
+          <context context-type="linenumber">29,31</context>
+        </context-group>
+        <target state="final"> OU </target>
+      </trans-unit>
+      <trans-unit id="4103400345525770187" datatype="html" approved="yes">
         <source>Sign up with</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/components/src/lib/third-party-auth/third-party-auth.component.ts</context>
           <context context-type="linenumber">21</context>
         </context-group>
-        <target state="needs-translation">Sign up with</target>
+        <target state="final">Inscreva-se com</target>
       </trans-unit>
-      <trans-unit id="8150083087133736700" datatype="html">
+      <trans-unit id="8150083087133736700" datatype="html" approved="yes">
         <source>Sign in with</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/components/src/lib/third-party-auth/third-party-auth.component.ts</context>
           <context context-type="linenumber">22</context>
         </context-group>
-        <target state="needs-translation">Sign in with</target>
+        <target state="final">Entrar com</target>
       </trans-unit>
-      <trans-unit id="8503408630418561538" datatype="html">
+      <trans-unit id="8503408630418561538" datatype="html" approved="yes">
         <source> Team Invitation Accepted </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/accept-invitation/accept-invitation.component.html</context>
           <context context-type="linenumber">3,5</context>
         </context-group>
-        <target state="needs-translation"> Team Invitation Accepted </target>
+        <target state="final"> Convite de equipe aceito </target>
       </trans-unit>
-      <trans-unit id="4395110422147815828" datatype="html">
+      <trans-unit id="4395110422147815828" datatype="html" approved="yes">
         <source> Thank you for accepting the invitation. We are redirecting you right now... </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/accept-invitation/accept-invitation.component.html</context>
           <context context-type="linenumber">6,8</context>
         </context-group>
-        <target state="needs-translation"> Thank you for accepting the invitation. We are redirecting you right now... </target>
+        <target state="final"> Obrigado por aceitar o convite. Estamos redirecionando você...</target>
       </trans-unit>
-      <trans-unit id="8331641771927553330" datatype="html">
+      <trans-unit id="8331641771927553330" datatype="html" approved="yes">
         <source> Invalid invitation token. Please try again. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/accept-invitation/accept-invitation.component.html</context>
           <context context-type="linenumber">11,13</context>
         </context-group>
-        <target state="needs-translation"> Invalid invitation token. Please try again. </target>
+        <target state="final"> Token de convite inválido. Por favor, tente novamente. </target>
       </trans-unit>
-      <trans-unit id="4692033629362352985" datatype="html">
+      <trans-unit id="4692033629362352985" datatype="html" approved="yes">
         <source>Invite Project Member
 </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html</context>
           <context context-type="linenumber">1,2</context>
         </context-group>
-        <target state="needs-translation">Invite Project Member
-</target>
+        <target state="final">Convidar membros para o projeto</target>
       </trans-unit>
-      <trans-unit id="1104679811553007900" datatype="html">
+      <trans-unit id="1104679811553007900" datatype="html" approved="yes">
         <source> Type the email address of the user you want to invite. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html</context>
           <context context-type="linenumber">5,7</context>
         </context-group>
-        <target state="needs-translation"> Type the email address of the user you want to invite. </target>
+        <target state="final"> Digite o endereço de e-mail do usuário que você deseja convidar. </target>
       </trans-unit>
-      <trans-unit id="5637407793093197884" datatype="html">
+      <trans-unit id="5637407793093197884" datatype="html" approved="yes">
         <source>The invited email already has an account. Please contact support for assistance.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html</context>
           <context context-type="linenumber">13</context>
         </context-group>
-        <target state="needs-translation">The invited email already has an account. Please contact support for assistance.</target>
+        <target state="final">O e-mail convidado já tem uma conta. Entre em contato com o suporte para obter ajuda.</target>
       </trans-unit>
-      <trans-unit id="1257197684303803009" datatype="html">
+      <trans-unit id="1257197684303803009" datatype="html" approved="yes">
         <source>Email is Required</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html</context>
           <context context-type="linenumber">16</context>
         </context-group>
-        <target state="needs-translation">Email is Required</target>
+        <target state="final">Um e-mail é obrigatório</target>
       </trans-unit>
-      <trans-unit id="4145496584631696119" datatype="html">
+      <trans-unit id="4145496584631696119" datatype="html" approved="yes">
         <source>Role</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html</context>
@@ -252,57 +259,57 @@
           <context context-type="sourcefile">packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html</context>
           <context context-type="linenumber">19</context>
         </context-group>
-        <target state="needs-translation">Role</target>
+        <target state="final">Função</target>
       </trans-unit>
-      <trans-unit id="7927354222438929134" datatype="html">
+      <trans-unit id="7927354222438929134" datatype="html" approved="yes">
         <source> Invite </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html</context>
           <context context-type="linenumber">37,39</context>
         </context-group>
-        <target state="needs-translation"> Invite </target>
+        <target state="final"> Convidar </target>
       </trans-unit>
-      <trans-unit id="2177891213716569763" datatype="html">
+      <trans-unit id="2177891213716569763" datatype="html" approved="yes">
         <source>Internal error occurred please contact support</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.ts</context>
-          <context context-type="linenumber">62</context>
+          <context context-type="linenumber">65</context>
         </context-group>
-        <target state="needs-translation">Internal error occurred please contact support</target>
+        <target state="final">Ocorreu um erro interno, por favor contate o suporte</target>
       </trans-unit>
-      <trans-unit id="1483298785952962987" datatype="html">
+      <trans-unit id="1483298785952962987" datatype="html" approved="yes">
         <source>ADMIN</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.ts</context>
-          <context context-type="linenumber">93</context>
+          <context context-type="linenumber">96</context>
         </context-group>
-        <target state="needs-translation">ADMIN</target>
+        <target state="final">ADMIN</target>
       </trans-unit>
-      <trans-unit id="2086645557074934337" datatype="html">
+      <trans-unit id="2086645557074934337" datatype="html" approved="yes">
         <source>EDITOR</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.ts</context>
-          <context context-type="linenumber">95</context>
+          <context context-type="linenumber">98</context>
         </context-group>
-        <target state="needs-translation">EDITOR</target>
+        <target state="final">EDITOR</target>
       </trans-unit>
-      <trans-unit id="2739133472258186788" datatype="html">
+      <trans-unit id="2739133472258186788" datatype="html" approved="yes">
         <source>VIEWER</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.ts</context>
-          <context context-type="linenumber">97</context>
+          <context context-type="linenumber">100</context>
         </context-group>
-        <target state="needs-translation">VIEWER</target>
+        <target state="final">Espectador</target>
       </trans-unit>
-      <trans-unit id="3169427932576895164" datatype="html">
+      <trans-unit id="3169427932576895164" datatype="html" approved="yes">
         <source>UNKNOWN</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.ts</context>
-          <context context-type="linenumber">99</context>
+          <context context-type="linenumber">102</context>
         </context-group>
-        <target state="needs-translation">UNKNOWN</target>
+        <target state="final">DESCONHECIDO</target>
       </trans-unit>
-      <trans-unit id="2304614617903385642" datatype="html">
+      <trans-unit id="2304614617903385642" datatype="html" approved="yes">
         <source>Project Members</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html</context>
@@ -312,9 +319,9 @@
           <context context-type="sourcefile">packages/ee/project-members/src/lib/project-members-table/project-members-table.component.ts</context>
           <context context-type="linenumber">44</context>
         </context-group>
-        <target state="needs-translation">Project Members</target>
+        <target state="final">Membros do Projeto</target>
       </trans-unit>
-      <trans-unit id="4768749765465246664" datatype="html">
+      <trans-unit id="4768749765465246664" datatype="html" approved="yes">
         <source>Email</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html</context>
@@ -332,9 +339,9 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">27</context>
         </context-group>
-        <target state="needs-translation">Email</target>
+        <target state="final">Email</target>
       </trans-unit>
-      <trans-unit id="5611592591303869712" datatype="html">
+      <trans-unit id="5611592591303869712" datatype="html" approved="yes">
         <source>Status</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html</context>
@@ -352,81 +359,53 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
           <context context-type="linenumber">34</context>
         </context-group>
-        <target state="needs-translation">Status</target>
+        <target state="final">Status</target>
       </trans-unit>
-      <trans-unit id="753844560726167738" datatype="html">
+      <trans-unit id="753844560726167738" datatype="html" approved="yes">
         <source>Invited At</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html</context>
           <context context-type="linenumber">24</context>
         </context-group>
-        <target state="needs-translation">Invited At</target>
+        <target state="final">Convidado no</target>
       </trans-unit>
-      <trans-unit id="7622269434262400347" datatype="html">
+      <trans-unit id="7622269434262400347" datatype="html" approved="yes">
         <source>+ Invite</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html</context>
           <context context-type="linenumber">31</context>
         </context-group>
-        <target state="needs-translation">+ Invite</target>
+        <target state="final">+ Convidar</target>
       </trans-unit>
-      <trans-unit id="4701552962997211350" datatype="html">
+      <trans-unit id="4701552962997211350" datatype="html" approved="yes">
         <source>Delete Invitation</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html</context>
           <context context-type="linenumber">36</context>
         </context-group>
-        <target state="needs-translation">Delete Invitation</target>
+        <target state="final">Excluir convite</target>
       </trans-unit>
-      <trans-unit id="8204176479746810612" datatype="html">
+      <trans-unit id="8204176479746810612" datatype="html" approved="yes">
         <source>Active</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/project-members-table/project-members-table.component.ts</context>
-          <context context-type="linenumber">134</context>
+          <context context-type="linenumber">141</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/components/status-icon/state-icon.component.ts</context>
           <context context-type="linenumber">88</context>
         </context-group>
-        <target state="needs-translation">Active</target>
+        <target state="final">Ativo</target>
       </trans-unit>
-      <trans-unit id="4416413576346763682" datatype="html">
+      <trans-unit id="4416413576346763682" datatype="html" approved="yes">
         <source>Pending</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/project-members-table/project-members-table.component.ts</context>
-          <context context-type="linenumber">136</context>
+          <context context-type="linenumber">143</context>
         </context-group>
-        <target state="needs-translation">Pending</target>
+        <target state="final">Pendente</target>
       </trans-unit>
-      <trans-unit id="7484291313969220918" datatype="html">
-        <source>Chatbots</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
-          <context context-type="linenumber">91</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
-          <context context-type="linenumber">59</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
-          <context context-type="linenumber">81</context>
-        </context-group>
-        <target state="needs-translation">Chatbots</target>
-      </trans-unit>
-      <trans-unit id="4207916966377787111" datatype="html">
-        <source>Created</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.html</context>
-          <context context-type="linenumber">25</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html</context>
-          <context context-type="linenumber">27</context>
-        </context-group>
-        <target state="needs-translation">Created</target>
-      </trans-unit>
-      <trans-unit id="8953033926734869941" datatype="html">
+      <trans-unit id="8953033926734869941" datatype="html" approved="yes">
         <source>Name</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/basic-auth-connection-dialog/basic-auth-connection-dialog.component.html</context>
@@ -464,17 +443,45 @@
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/community-pieces-table/community-pieces-table.component.html</context>
           <context context-type="linenumber">17</context>
         </context-group>
-        <target state="needs-translation">Name</target>
+        <target state="final">Nome</target>
       </trans-unit>
-      <trans-unit id="7941428823403788384" datatype="html">
+      <trans-unit id="4207916966377787111" datatype="html" approved="yes">
+        <source>Created</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.html</context>
+          <context context-type="linenumber">25</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html</context>
+          <context context-type="linenumber">27</context>
+        </context-group>
+        <target state="final">Criado</target>
+      </trans-unit>
+      <trans-unit id="7484291313969220918" datatype="html" approved="yes">
+        <source>Chatbots</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
+          <context context-type="linenumber">91</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
+          <context context-type="linenumber">59</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
+          <context context-type="linenumber">81</context>
+        </context-group>
+        <target state="final">Chatbots</target>
+      </trans-unit>
+      <trans-unit id="7941428823403788384" datatype="html" approved="yes">
         <source> Create </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/new-folder-dialog/new-folder-dialog.component.html</context>
           <context context-type="linenumber">27,29</context>
         </context-group>
-        <target state="needs-translation"> Create </target>
+        <target state="final"> Criado </target>
       </trans-unit>
-      <trans-unit id="7585826646011739428" datatype="html">
+      <trans-unit id="7585826646011739428" datatype="html" approved="yes">
         <source>Edit</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts</context>
@@ -496,9 +503,9 @@
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/secret-text-connection-dialog/secret-text-connection-dialog.component.html</context>
           <context context-type="linenumber">6</context>
         </context-group>
-        <target state="needs-translation">Edit</target>
+        <target state="final">Editar</target>
       </trans-unit>
-      <trans-unit id="3620188369327429839" datatype="html">
+      <trans-unit id="3620188369327429839" datatype="html" approved="yes">
         <source> Save </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/basic-auth-connection-dialog/basic-auth-connection-dialog.component.html</context>
@@ -514,55 +521,63 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">100,102</context>
+          <context context-type="linenumber">101,103</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/secret-text-connection-dialog/secret-text-connection-dialog.component.html</context>
           <context context-type="linenumber">51,53</context>
         </context-group>
-        <target state="needs-translation"> Save </target>
+        <target state="final"> Salvar </target>
       </trans-unit>
-      <trans-unit id="7091571651222742304" datatype="html">
+      <trans-unit id="7091571651222742304" datatype="html" approved="yes">
         <source>Projects</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
           <context context-type="linenumber">42</context>
         </context-group>
-        <target state="needs-translation">Projects</target>
+        <target state="final">Projetos</target>
       </trans-unit>
-      <trans-unit id="8671234314555525900" datatype="html">
+      <trans-unit id="8671234314555525900" datatype="html" approved="yes">
         <source>Appearance</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
           <context context-type="linenumber">48</context>
         </context-group>
-        <target state="needs-translation">Appearance</target>
+        <target state="final">Aparência</target>
       </trans-unit>
-      <trans-unit id="3372037160964274985" datatype="html">
+      <trans-unit id="3372037160964274985" datatype="html" approved="yes">
         <source>Pieces</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
           <context context-type="linenumber">55</context>
         </context-group>
-        <target state="needs-translation">Pieces</target>
+        <target state="final">Peças</target>
       </trans-unit>
-      <trans-unit id="4930506384627295710" datatype="html">
+      <trans-unit id="4930506384627295710" datatype="html" approved="yes">
         <source>Settings</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
           <context context-type="linenumber">61</context>
         </context-group>
-        <target state="needs-translation">Settings</target>
+        <target state="final">Configurações</target>
       </trans-unit>
-      <trans-unit id="9211272372634231639" datatype="html">
+      <trans-unit id="2724055831234181057" datatype="html" approved="yes">
+        <source>Version</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/community-pieces-table/community-pieces-table.component.html</context>
+          <context context-type="linenumber">22</context>
+        </context-group>
+        <target state="final">Versão</target>
+      </trans-unit>
+      <trans-unit id="9211272372634231639" datatype="html" approved="yes">
         <source> Add Piece </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/community-pieces-table/community-pieces-table.component.html</context>
           <context context-type="linenumber">29,31</context>
         </context-group>
-        <target state="needs-translation"> Add Piece </target>
+        <target state="final"> Adicionar Pedaços </target>
       </trans-unit>
-      <trans-unit id="3720371318294752429" datatype="html">
+      <trans-unit id="3720371318294752429" datatype="html" approved="yes">
         <source>
           Delete 
 
@@ -572,13 +587,11 @@
           <context context-type="sourcefile">packages/ui/common/src/lib/components/delete-enity-dialog/delete-entity-dialog.component.html</context>
           <context context-type="linenumber">1,2</context>
         </context-group>
-        <target state="needs-translation">
-          Delete 
+        <target state="final">Excluir
 
-          <x id="INTERPOLATION" equiv-text="{{data.entityName}}"/>
-        </target>
+<x id="INTERPOLATION" equiv-text="{{data.entityName}}"/></target>
       </trans-unit>
-      <trans-unit id="6560405483623875453" datatype="html">
+      <trans-unit id="6560405483623875453" datatype="html" approved="yes">
         <source>
            Type DELETE and press confirm to continue. 
           <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>
@@ -588,45 +601,45 @@
           <context context-type="sourcefile">packages/ui/common/src/lib/components/delete-enity-dialog/delete-entity-dialog.component.html</context>
           <context context-type="linenumber">7,9</context>
         </context-group>
-        <target state="needs-translation">
-           Type DELETE and press confirm to continue. 
-          <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>
+        <target state="final">             Digite DELETE e pressione enter para continuar.
+                  <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>
           <x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="&lt;/b&gt;"/>
-        </target>
+        
+</target>
       </trans-unit>
-      <trans-unit id="2394434532665685744" datatype="html">
+      <trans-unit id="2394434532665685744" datatype="html" approved="yes">
         <source> Please write the confirmation message correctly </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/components/delete-enity-dialog/delete-entity-dialog.component.html</context>
           <context context-type="linenumber">14,16</context>
         </context-group>
-        <target state="needs-translation"> Please write the confirmation message correctly </target>
+        <target state="final"> Por favor, escreva a mensagem de confirmação corretamente </target>
       </trans-unit>
-      <trans-unit id="5547981558491672240" datatype="html">
+      <trans-unit id="5547981558491672240" datatype="html" approved="yes">
         <source> Close </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/components/json-view/json-view-dialog/json-view-dialog.component.html</context>
           <context context-type="linenumber">13,15</context>
         </context-group>
-        <target state="needs-translation"> Close </target>
+        <target state="final"> Fechar </target>
       </trans-unit>
-      <trans-unit id="7952700156372001331" datatype="html">
+      <trans-unit id="7952700156372001331" datatype="html" approved="yes">
         <source>BETA</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/components/page-title/page-title.component.html</context>
           <context context-type="linenumber">6</context>
         </context-group>
-        <target state="needs-translation">BETA</target>
+        <target state="final">BETA</target>
       </trans-unit>
-      <trans-unit id="20703455734868720" datatype="html">
+      <trans-unit id="20703455734868720" datatype="html" approved="yes">
         <source>Page Size:</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/components/pagination/ap-paginator.component.html</context>
           <context context-type="linenumber">2</context>
         </context-group>
-        <target state="needs-translation">Page Size:</target>
+        <target state="final">Tamanho da página:</target>
       </trans-unit>
-      <trans-unit id="2807689216255894412" datatype="html">
+      <trans-unit id="2807689216255894412" datatype="html" approved="yes">
         <source>Succeeded</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/components/status-icon/state-icon.component.ts</context>
@@ -636,25 +649,25 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
           <context context-type="linenumber">10</context>
         </context-group>
-        <target state="needs-translation">Succeeded</target>
+        <target state="final">Sucesso</target>
       </trans-unit>
-      <trans-unit id="8758303120670152799" datatype="html">
+      <trans-unit id="8758303120670152799" datatype="html" approved="yes">
         <source>Internal Error</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/components/status-icon/state-icon.component.ts</context>
           <context context-type="linenumber">75</context>
         </context-group>
-        <target state="needs-translation">Internal Error</target>
+        <target state="final">Erro interno</target>
       </trans-unit>
-      <trans-unit id="7606629882846319647" datatype="html">
+      <trans-unit id="7606629882846319647" datatype="html" approved="yes">
         <source>Timed Out</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/components/status-icon/state-icon.component.ts</context>
           <context context-type="linenumber">77</context>
         </context-group>
-        <target state="needs-translation">Timed Out</target>
+        <target state="final">Time Out</target>
       </trans-unit>
-      <trans-unit id="7256395947475975935" datatype="html">
+      <trans-unit id="7256395947475975935" datatype="html" approved="yes">
         <source>Failed</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/components/status-icon/state-icon.component.ts</context>
@@ -664,17 +677,17 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
           <context context-type="linenumber">9</context>
         </context-group>
-        <target state="needs-translation">Failed</target>
+        <target state="final">Falhou</target>
       </trans-unit>
-      <trans-unit id="840264455199725883" datatype="html">
+      <trans-unit id="840264455199725883" datatype="html" approved="yes">
         <source>Paused</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/components/status-icon/state-icon.component.ts</context>
           <context context-type="linenumber">83</context>
         </context-group>
-        <target state="needs-translation">Paused</target>
+        <target state="final">Pausado</target>
       </trans-unit>
-      <trans-unit id="2956098160626271284" datatype="html">
+      <trans-unit id="2956098160626271284" datatype="html" approved="yes">
         <source>Running</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/components/status-icon/state-icon.component.ts</context>
@@ -684,17 +697,17 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
           <context context-type="linenumber">8</context>
         </context-group>
-        <target state="needs-translation">Running</target>
+        <target state="final">Em execução</target>
       </trans-unit>
-      <trans-unit id="1519954996184640001" datatype="html">
+      <trans-unit id="1519954996184640001" datatype="html" approved="yes">
         <source>Error</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/components/status-icon/state-icon.component.ts</context>
           <context context-type="linenumber">90</context>
         </context-group>
-        <target state="needs-translation">Error</target>
+        <target state="final">Erro</target>
       </trans-unit>
-      <trans-unit id="3708656846739179305" datatype="html">
+      <trans-unit id="3708656846739179305" datatype="html" approved="yes">
         <source>My Pieces</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/components/user-avatar/user-avatar.component.html</context>
@@ -708,173 +721,173 @@
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/community-pieces-table/community-pieces-table.component.html</context>
           <context context-type="linenumber">3</context>
         </context-group>
-        <target state="needs-translation">My Pieces</target>
+        <target state="final">Minhas Peças</target>
       </trans-unit>
-      <trans-unit id="3797778920049399855" datatype="html">
+      <trans-unit id="3797778920049399855" datatype="html" approved="yes">
         <source>Logout</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/components/user-avatar/user-avatar.component.html</context>
           <context context-type="linenumber">74</context>
         </context-group>
-        <target state="needs-translation">Logout</target>
+        <target state="final">Logout</target>
       </trans-unit>
-      <trans-unit id="6568108278209272202" datatype="html">
+      <trans-unit id="6568108278209272202" datatype="html" approved="yes">
         <source>An unexpected error occured, please contact support</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/utils/consts.ts</context>
           <context context-type="linenumber">1</context>
         </context-group>
-        <target state="needs-translation">An unexpected error occured, please contact support</target>
+        <target state="final">Ocorreu um erro interno, por favor contate o suporte</target>
       </trans-unit>
-      <trans-unit id="2976564074018381687" datatype="html">
+      <trans-unit id="2976564074018381687" datatype="html" approved="yes">
         <source>Webhook Trigger</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/utils/utils.ts</context>
           <context context-type="linenumber">6</context>
         </context-group>
-        <target state="needs-translation">Webhook Trigger</target>
+        <target state="final">Gatilho Webhook</target>
       </trans-unit>
-      <trans-unit id="2523469970175692723" datatype="html">
+      <trans-unit id="2523469970175692723" datatype="html" approved="yes">
         <source>Empty Trigger</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/utils/utils.ts</context>
           <context context-type="linenumber">10</context>
         </context-group>
-        <target state="needs-translation">Empty Trigger</target>
+        <target state="final">Gatilho Vazio</target>
       </trans-unit>
-      <trans-unit id="7343642247493540451" datatype="html">
+      <trans-unit id="7343642247493540451" datatype="html" approved="yes">
         <source>Trigger</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/utils/utils.ts</context>
           <context context-type="linenumber">13</context>
         </context-group>
-        <target state="needs-translation">Trigger</target>
+        <target state="final">Gatilho</target>
       </trans-unit>
-      <trans-unit id="8186013988289067040" datatype="html">
+      <trans-unit id="8186013988289067040" datatype="html" approved="yes">
         <source>Code</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/utils/utils.ts</context>
           <context context-type="linenumber">22</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.ts</context>
-          <context context-type="linenumber">191</context>
+          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.ts</context>
+          <context context-type="linenumber">195</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/code-step-input-form/code-step-input-form.component.html</context>
           <context context-type="linenumber">12</context>
         </context-group>
-        <target state="needs-translation">Code</target>
+        <target state="final">Código</target>
       </trans-unit>
-      <trans-unit id="1437638433150622409" datatype="html">
+      <trans-unit id="1437638433150622409" datatype="html" approved="yes">
         <source>Loop on Items</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/utils/utils.ts</context>
           <context context-type="linenumber">25</context>
         </context-group>
-        <target state="needs-translation">Loop on Items</target>
+        <target state="final">Fazer loop em itens</target>
       </trans-unit>
-      <trans-unit id="8387651464002742246" datatype="html">
+      <trans-unit id="8387651464002742246" datatype="html" approved="yes">
         <source>Branch</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/utils/utils.ts</context>
           <context context-type="linenumber">31</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.ts</context>
-          <context context-type="linenumber">189</context>
+          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.ts</context>
+          <context context-type="linenumber">193</context>
         </context-group>
-        <target state="needs-translation">Branch</target>
+        <target state="final">Ramificação</target>
       </trans-unit>
-      <trans-unit id="491159195078241064" datatype="html">
+      <trans-unit id="491159195078241064" datatype="html" approved="yes">
         <source>Import Flow</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/core/src/app/app-routing.module.ts</context>
           <context context-type="linenumber">29</context>
         </context-group>
-        <target state="needs-translation">Import Flow</target>
+        <target state="final">Importar Fluxo</target>
       </trans-unit>
-      <trans-unit id="833959964659558357" datatype="html">
+      <trans-unit id="833959964659558357" datatype="html" approved="yes">
         <source>Chatbot</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/core/src/app/app-routing.module.ts</context>
           <context context-type="linenumber">37</context>
         </context-group>
-        <target state="needs-translation">Chatbot</target>
+        <target state="final">Chatbot</target>
       </trans-unit>
-      <trans-unit id="4593401671892965174" datatype="html">
+      <trans-unit id="4593401671892965174" datatype="html" approved="yes">
         <source> Upgrade</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/core/src/app/app.component.html</context>
-          <context context-type="linenumber">6,7</context>
+          <context context-type="linenumber">7,8</context>
         </context-group>
-        <target state="needs-translation"> Upgrade</target>
+        <target state="final"> Atualizar</target>
       </trans-unit>
-      <trans-unit id="1234782976282586575" datatype="html">
+      <trans-unit id="1234782976282586575" datatype="html" approved="yes">
         <source> Ignore</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/core/src/app/app.component.html</context>
-          <context context-type="linenumber">8,9</context>
+          <context context-type="linenumber">9,10</context>
         </context-group>
-        <target state="needs-translation"> Ignore</target>
+        <target state="final"> Ignorar</target>
       </trans-unit>
-      <trans-unit id="9202148072595155250" datatype="html">
+      <trans-unit id="9202148072595155250" datatype="html" approved="yes">
         <source>Steps in this flow</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/core/src/app/modules/import-flow/import-flow.component.html</context>
           <context context-type="linenumber">17</context>
         </context-group>
-        <target state="needs-translation">Steps in this flow</target>
+        <target state="final">Etapas neste fluxo</target>
       </trans-unit>
-      <trans-unit id="3087857313586976299" datatype="html">
+      <trans-unit id="3087857313586976299" datatype="html" approved="yes">
         <source>Template Description</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/core/src/app/modules/import-flow/import-flow.component.html</context>
           <context context-type="linenumber">24</context>
         </context-group>
-        <target state="needs-translation">Template Description</target>
+        <target state="final">Descrição do Modelo</target>
       </trans-unit>
-      <trans-unit id="1050001620607966490" datatype="html">
+      <trans-unit id="1050001620607966490" datatype="html" approved="yes">
         <source>Use Template</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/core/src/app/modules/import-flow/import-flow.component.html</context>
           <context context-type="linenumber">36,37</context>
         </context-group>
-        <target state="needs-translation">Use Template</target>
+        <target state="final">Usar Modelo</target>
       </trans-unit>
-      <trans-unit id="4349518606715943395" datatype="html">
+      <trans-unit id="4349518606715943395" datatype="html" approved="yes">
         <source>Page not found 😢</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/core/src/app/modules/not-found/not-found.component.html</context>
           <context context-type="linenumber">5</context>
         </context-group>
-        <target state="needs-translation">Page not found 😢</target>
+        <target state="final">Página não encontrada 😢</target>
       </trans-unit>
-      <trans-unit id="8233664048165935539" datatype="html">
+      <trans-unit id="8233664048165935539" datatype="html" approved="yes">
         <source>Looks like you are lost.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/core/src/app/modules/not-found/not-found.component.html</context>
           <context context-type="linenumber">6</context>
         </context-group>
-        <target state="needs-translation">Looks like you are lost.</target>
+        <target state="final">Parece que você está perdido.</target>
       </trans-unit>
-      <trans-unit id="6220061776295222544" datatype="html">
+      <trans-unit id="6220061776295222544" datatype="html" approved="yes">
         <source>Return Home</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/core/src/app/modules/not-found/not-found.component.html</context>
           <context context-type="linenumber">7</context>
         </context-group>
-        <target state="needs-translation">Return Home</target>
+        <target state="final">Voltar para o Início</target>
       </trans-unit>
-      <trans-unit id="6252811073109002958" datatype="html">
+      <trans-unit id="6252811073109002958" datatype="html" approved="yes">
         <source>redirect-url works!</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/core/src/app/modules/redirect-url/redirect-url.component.html</context>
           <context context-type="linenumber">1</context>
         </context-group>
-        <target state="needs-translation">redirect-url works!</target>
+        <target state="final">uRL de redirecionamento funciona!</target>
       </trans-unit>
-      <trans-unit id="7500577610906589634" datatype="html">
+      <trans-unit id="7500577610906589634" datatype="html" approved="yes">
         <source>
            Didn't receive an email? Resend
           <x id="START_LINK" ctype="x-a" equiv-text="&lt;a class=&quot;ap-text-blueLink ap-cursor-pointer&quot;&#10;&#9;&#9;&#9;&#9;(click)=&quot;otpType === OtpType.EMAIL_VERIFICATION ?  resendVerification() :  sendPasswordReset() &quot;&gt;"/>
@@ -884,69 +897,69 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/components/send-email-for-auth-action/send-email-for-auth-action.component.html</context>
           <context context-type="linenumber">14,19</context>
         </context-group>
-        <target state="needs-translation">
-           Didn't receive an email? Resend
+        <target state="final">
+           Não recebeu um e-mail? Reenvie
           <x id="START_LINK" ctype="x-a" equiv-text="&lt;a class=&quot;ap-text-blueLink ap-cursor-pointer&quot;&amp;#10;&amp;#9;&amp;#9;&amp;#9;&amp;#9;(click)=&quot;otpType === OtpType.EMAIL_VERIFICATION ?  resendVerification() :  sendPasswordReset() &quot;&gt;"/>
           <x id="CLOSE_LINK" ctype="x-a" equiv-text="&lt;/a&gt;"/>
         </target>
       </trans-unit>
-      <trans-unit id="2535359416934889008" datatype="html">
+      <trans-unit id="2535359416934889008" datatype="html" approved="yes">
         <source>Go back to sign in</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/components/send-email-for-auth-action/send-email-for-auth-action.component.html</context>
           <context context-type="linenumber">19</context>
         </context-group>
-        <target state="needs-translation">Go back to sign in</target>
+        <target state="final">Voltar para a página de login</target>
       </trans-unit>
-      <trans-unit id="6708459275523532403" datatype="html">
+      <trans-unit id="6708459275523532403" datatype="html" approved="yes">
         <source>We sent you a link to complete your registration, check your email.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/components/send-email-for-auth-action/send-email-for-auth-action.component.ts</context>
           <context context-type="linenumber">29</context>
         </context-group>
-        <target state="needs-translation">We sent you a link to complete your registration, check your email.</target>
+        <target state="final">Nós te enviamos um link para completar o seu cadastro, verifique o seu e-mail.</target>
       </trans-unit>
-      <trans-unit id="5704078822178981720" datatype="html">
+      <trans-unit id="5704078822178981720" datatype="html" approved="yes">
         <source>We sent you a link to reset your password, check your email.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/components/send-email-for-auth-action/send-email-for-auth-action.component.ts</context>
           <context context-type="linenumber">30</context>
         </context-group>
-        <target state="needs-translation">We sent you a link to reset your password, check your email.</target>
+        <target state="final">Nós te enviamos um link para redefinir sua senha, verifique o seu e-mail.</target>
       </trans-unit>
-      <trans-unit id="8248846932695644777" datatype="html">
+      <trans-unit id="8248846932695644777" datatype="html" approved="yes">
         <source>Verification resent</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/components/send-email-for-auth-action/send-email-for-auth-action.component.ts</context>
           <context context-type="linenumber">51</context>
         </context-group>
-        <target state="needs-translation">Verification resent</target>
+        <target state="final">Verificação reenviada</target>
       </trans-unit>
-      <trans-unit id="902992674467519913" datatype="html">
+      <trans-unit id="902992674467519913" datatype="html" approved="yes">
         <source>Password reset link resent</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/components/send-email-for-auth-action/send-email-for-auth-action.component.ts</context>
           <context context-type="linenumber">75</context>
         </context-group>
-        <target state="needs-translation">Password reset link resent</target>
+        <target state="final">Link de redefinição de senha enviado</target>
       </trans-unit>
-      <trans-unit id="6972105223770675605" datatype="html">
+      <trans-unit id="6972105223770675605" datatype="html" approved="yes">
         <source>Reset Password</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/auth-actions/reset-password/reset-password.component.ts</context>
           <context context-type="linenumber">23</context>
         </context-group>
-        <target state="needs-translation">Reset Password</target>
+        <target state="final">Redefinir senha</target>
       </trans-unit>
-      <trans-unit id="6607668325067739896" datatype="html">
+      <trans-unit id="6607668325067739896" datatype="html" approved="yes">
         <source>Your password reset request has expired, please request a new one</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/auth-actions/reset-password/reset-password.component.ts</context>
-          <context context-type="linenumber">59</context>
+          <context context-type="linenumber">60</context>
         </context-group>
-        <target state="needs-translation">Your password reset request has expired, please request a new one</target>
+        <target state="final">Seu pedido de redefinição de senha expirou, por favor solicite novamente</target>
       </trans-unit>
-      <trans-unit id="6657450660368990970" datatype="html">
+      <trans-unit id="6657450660368990970" datatype="html" approved="yes">
         <source>
           <x id="START_TAG_AP_LOADING_ICON" ctype="x-ap_loading_icon" equiv-text="-loading-icon height=&quot;50px&quot; width=&quot;50px&quot; [whiteLoader]=&quot;false&quot;&gt;"/>
           <x id="CLOSE_TAG_AP_LOADING_ICON" ctype="x-ap_loading_icon" equiv-text="&lt;/ap-loading-icon&gt;"/>
@@ -955,12 +968,12 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/auth-actions/verify-email-post-sign-up/verify-email-post-sign-up.component.html</context>
           <context context-type="linenumber">9,13</context>
         </context-group>
-        <target state="needs-translation">
+        <target state="final">
           <x id="START_TAG_AP_LOADING_ICON" ctype="x-ap_loading_icon" equiv-text="-loading-icon height=&quot;50px&quot; width=&quot;50px&quot; [whiteLoader]=&quot;false&quot;&gt;"/>
           <x id="CLOSE_TAG_AP_LOADING_ICON" ctype="x-ap_loading_icon" equiv-text="&lt;/ap-loading-icon&gt;"/>
         </target>
       </trans-unit>
-      <trans-unit id="2117131464704842842" datatype="html">
+      <trans-unit id="2117131464704842842" datatype="html" approved="yes">
         <source>
           Your email has been verified. You will be redirected to sign in
           <x id="LINE_BREAK" ctype="lb" equiv-text="&lt;br /&gt;"/>
@@ -969,12 +982,12 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/auth-actions/verify-email-post-sign-up/verify-email-post-sign-up.component.html</context>
           <context context-type="linenumber">13,17</context>
         </context-group>
-        <target state="needs-translation">
-          Your email has been verified. You will be redirected to sign in
+        <target state="final">
+          Este convite expirou, você será redirecionado para entrar...
           <x id="LINE_BREAK" ctype="lb" equiv-text="&lt;br /&gt;"/>
         </target>
       </trans-unit>
-      <trans-unit id="5624883428695428733" datatype="html">
+      <trans-unit id="5624883428695428733" datatype="html" approved="yes">
         <source>
           This invitation has expired, redirecting to sign in...
           <x id="LINE_BREAK" ctype="lb" equiv-text="&lt;br /&gt;"/>
@@ -983,12 +996,12 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/auth-actions/verify-email-post-sign-up/verify-email-post-sign-up.component.html</context>
           <context context-type="linenumber">17,19</context>
         </context-group>
-        <target state="needs-translation">
-          This invitation has expired, redirecting to sign in...
+        <target state="final">
+          Este convite expirou, você será redirecionado para entrar...
           <x id="LINE_BREAK" ctype="lb" equiv-text="&lt;br /&gt;"/>
         </target>
       </trans-unit>
-      <trans-unit id="5207635742003539443" datatype="html">
+      <trans-unit id="5207635742003539443" datatype="html" approved="yes">
         <source>Sign in</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/auth-actions/verify-email-post-sign-up/verify-email-post-sign-up.component.html</context>
@@ -998,97 +1011,108 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/ui-feature-authentication.module.ts</context>
           <context context-type="linenumber">52</context>
         </context-group>
-        <target state="needs-translation">Sign in</target>
+        <target state="final">Entrar</target>
       </trans-unit>
-      <trans-unit id="5411574545284988510" datatype="html">
+      <trans-unit id="5411574545284988510" datatype="html" approved="yes">
         <source>Verifying Email</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/auth-actions/verify-email-post-sign-up/verify-email-post-sign-up.component.ts</context>
           <context context-type="linenumber">21</context>
         </context-group>
-        <target state="needs-translation">Verifying Email</target>
+        <target state="final">Verificando E-mail</target>
       </trans-unit>
-      <trans-unit id="144580535702564134" datatype="html">
+      <trans-unit id="144580535702564134" datatype="html" approved="yes">
         <source>Verified Email</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/auth-actions/verify-email-post-sign-up/verify-email-post-sign-up.component.ts</context>
           <context context-type="linenumber">22</context>
         </context-group>
-        <target state="needs-translation">Verified Email</target>
+        <target state="final">E-mail verificado</target>
       </trans-unit>
-      <trans-unit id="5598589668932032802" datatype="html">
+      <trans-unit id="5598589668932032802" datatype="html" approved="yes">
         <source>Verification Failed</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/auth-actions/verify-email-post-sign-up/verify-email-post-sign-up.component.ts</context>
           <context context-type="linenumber">23</context>
         </context-group>
-        <target state="needs-translation">Verification Failed</target>
+        <target state="final">A verificação falhou</target>
       </trans-unit>
-      <trans-unit id="9160273934521319360" datatype="html">
+      <trans-unit id="9160273934521319360" datatype="html" approved="yes">
         <source>Verifying email</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/auth-actions/verify-email-post-sign-up/verify-email-post-sign-up.component.ts</context>
           <context context-type="linenumber">38</context>
         </context-group>
-        <target state="needs-translation">Verifying email</target>
+        <target state="final">Verificando E-mail</target>
       </trans-unit>
-      <trans-unit id="7056192090407062309" datatype="html">
+      <trans-unit id="7056192090407062309" datatype="html" approved="yes">
         <source>Email Verified</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/auth-actions/verify-email-post-sign-up/verify-email-post-sign-up.component.ts</context>
           <context context-type="linenumber">61</context>
         </context-group>
-        <target state="needs-translation">Email Verified</target>
+        <target state="final">E-mail Verificado</target>
       </trans-unit>
-      <trans-unit id="2950516762204674600" datatype="html">
+      <trans-unit id="2950516762204674600" datatype="html" approved="yes">
         <source>Forgot Password</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/forgot-password/forgot-password.component.html</context>
           <context context-type="linenumber">3</context>
         </context-group>
-        <target state="needs-translation">Forgot Password</target>
+        <target state="final">Esqueci minha senha</target>
       </trans-unit>
-      <trans-unit id="3602430501804064515" datatype="html">
+      <trans-unit id="3602430501804064515" datatype="html" approved="yes">
         <source> If the user exists we'll send you an email with a link to reset your password. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/forgot-password/forgot-password.component.html</context>
           <context context-type="linenumber">4,6</context>
         </context-group>
-        <target state="needs-translation"> If the user exists we'll send you an email with a link to reset your password. </target>
+        <target state="final"> Se o usuário existir, enviaremos um e-mail com um link para redefinir sua senha.</target>
       </trans-unit>
-      <trans-unit id="8552587679160911578" datatype="html">
-        <source>Email is required</source>
+      <trans-unit id="9097289685105179814" datatype="html" approved="yes">
+        <source>
+           Email is required  Email is invalid 
+          <x id="START_TAG_NG_CONTAINER" ctype="x-ng_container" equiv-text="-container *ngIf=&quot;emailFormControl.hasError('required')&quot;&gt;"/>
+          <x id="CLOSE_TAG_NG_CONTAINER" ctype="x-ng_container" equiv-text="&lt;/ng-container&gt;"/>
+          <x id="START_TAG_NG_CONTAINER_1" ctype="x-ng_container_1" equiv-text="&lt;ng-container *ngIf=&quot;emailFormControl.hasError('email')&quot;&gt;"/>
+          <x id="CLOSE_TAG_NG_CONTAINER" ctype="x-ng_container" equiv-text="&lt;/ng-container&gt;"/>
+        </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/forgot-password/forgot-password.component.html</context>
-          <context context-type="linenumber">11</context>
+          <context context-type="linenumber">12,20</context>
         </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
-          <context context-type="linenumber">11</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">39,40</context>
-        </context-group>
-        <target state="needs-translation">Email is required</target>
+        <target state="final">E-mail necessário. E-mail Inválido.
+          <x id="START_TAG_NG_CONTAINER" ctype="x-ng_container" equiv-text="-container *ngIf=&quot;emailFormControl.hasError('required')&quot;&gt;"/>
+          <x id="CLOSE_TAG_NG_CONTAINER" ctype="x-ng_container" equiv-text="&lt;/ng-container&gt;"/>
+          <x id="START_TAG_NG_CONTAINER_1" ctype="x-ng_container_1" equiv-text="&lt;ng-container *ngIf=&quot;emailFormControl.hasError('email')&quot;&gt;"/>
+          <x id="CLOSE_TAG_NG_CONTAINER" ctype="x-ng_container" equiv-text="&lt;/ng-container&gt;"/>
+        </target>
       </trans-unit>
-      <trans-unit id="3006097408675799565" datatype="html">
+      <trans-unit id="3006097408675799565" datatype="html" approved="yes">
         <source> Send email </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/forgot-password/forgot-password.component.html</context>
-          <context context-type="linenumber">17,19</context>
+          <context context-type="linenumber">25,27</context>
         </context-group>
-        <target state="needs-translation"> Send email </target>
+        <target state="final">Enviar email</target>
       </trans-unit>
-      <trans-unit id="2668864227584228682" datatype="html">
+      <trans-unit id="4939428286618017421" datatype="html" approved="yes">
+        <source>Back to sign in</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/forgot-password/forgot-password.component.html</context>
+          <context context-type="linenumber">31</context>
+        </context-group>
+        <target state="final">Voltar para o login</target>
+      </trans-unit>
+      <trans-unit id="2668864227584228682" datatype="html" approved="yes">
         <source>Welcome Back</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
           <context context-type="linenumber">1</context>
         </context-group>
-        <target state="needs-translation">Welcome Back</target>
+        <target state="final">Bem-vindo Novamente</target>
       </trans-unit>
-      <trans-unit id="8232890416577573080" datatype="html">
+      <trans-unit id="8232890416577573080" datatype="html" approved="yes">
         <source> Email is invalid </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
@@ -1098,9 +1122,21 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">33,35</context>
         </context-group>
-        <target state="needs-translation"> Email is invalid </target>
+        <target state="final">E-mail inválido</target>
       </trans-unit>
-      <trans-unit id="1431416938026210429" datatype="html">
+      <trans-unit id="8552587679160911578" datatype="html" approved="yes">
+        <source>Email is required</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
+          <context context-type="linenumber">11</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
+          <context context-type="linenumber">39,40</context>
+        </context-group>
+        <target state="final">O e-mail é obrigatório</target>
+      </trans-unit>
+      <trans-unit id="1431416938026210429" datatype="html" approved="yes">
         <source>Password</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
@@ -1118,276 +1154,292 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">49</context>
         </context-group>
-        <target state="needs-translation">Password</target>
+        <target state="final">Senha</target>
       </trans-unit>
-      <trans-unit id="205044832662301680" datatype="html">
+      <trans-unit id="205044832662301680" datatype="html" approved="yes">
         <source>Password is required</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
           <context context-type="linenumber">17</context>
         </context-group>
-        <target state="needs-translation">Password is required</target>
+        <target state="final">Senha é obrigatória</target>
       </trans-unit>
-      <trans-unit id="4469513261081670706" datatype="html">
+      <trans-unit id="4469513261081670706" datatype="html" approved="yes">
         <source>Invalid email or password</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
           <context context-type="linenumber">19</context>
         </context-group>
-        <target state="needs-translation">Invalid email or password</target>
+        <target state="final">Senha ou e-mail inválido</target>
       </trans-unit>
-      <trans-unit id="6663783128602596673" datatype="html">
+      <trans-unit id="6663783128602596673" datatype="html" approved="yes">
         <source> Sign in </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
           <context context-type="linenumber">29,31</context>
         </context-group>
-        <target state="needs-translation"> Sign in </target>
+        <target state="final"> Iniciar sessão </target>
       </trans-unit>
-      <trans-unit id="8164791295086777340" datatype="html">
+      <trans-unit id="8164791295086777340" datatype="html" approved="yes">
         <source>Don't have an account?</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
           <context context-type="linenumber">36</context>
         </context-group>
-        <target state="needs-translation">Don't have an account?</target>
+        <target state="final">Não tem conta?</target>
       </trans-unit>
-      <trans-unit id="8249878174557818173" datatype="html">
+      <trans-unit id="8249878174557818173" datatype="html" approved="yes">
         <source>Sign up now</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
           <context context-type="linenumber">36</context>
         </context-group>
-        <target state="needs-translation">Sign up now</target>
+        <target state="final">Cadastre-se agora</target>
       </trans-unit>
-      <trans-unit id="2727496946419791472" datatype="html">
+      <trans-unit id="2727496946419791472" datatype="html" approved="yes">
         <source>Forgot password?</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
           <context context-type="linenumber">40</context>
         </context-group>
-        <target state="needs-translation">Forgot password?</target>
+        <target state="final">Esqueceu a senha?</target>
       </trans-unit>
-      <trans-unit id="2919058663947697555" datatype="html">
+      <trans-unit id="2919058663947697555" datatype="html" approved="yes">
         <source> Let's Get Started! </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">3,5</context>
         </context-group>
-        <target state="needs-translation"> Let's Get Started! </target>
+        <target state="final">Vamos começar!</target>
       </trans-unit>
-      <trans-unit id="6028371114637047813" datatype="html">
+      <trans-unit id="6028371114637047813" datatype="html" approved="yes">
         <source>First Name</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">10</context>
         </context-group>
-        <target state="needs-translation">First Name</target>
+        <target state="final">Primeiro Nome</target>
       </trans-unit>
-      <trans-unit id="3337540717284723401" datatype="html">
+      <trans-unit id="3337540717284723401" datatype="html" approved="yes">
         <source> First name is required </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">12,14</context>
         </context-group>
-        <target state="needs-translation"> First name is required </target>
+        <target state="final">Primeiro nome é obrigatório</target>
       </trans-unit>
-      <trans-unit id="4407559560004943843" datatype="html">
+      <trans-unit id="4407559560004943843" datatype="html" approved="yes">
         <source>Last Name</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">17</context>
         </context-group>
-        <target state="needs-translation">Last Name</target>
+        <target state="final">Último nome</target>
       </trans-unit>
-      <trans-unit id="5202458308518213857" datatype="html">
+      <trans-unit id="5202458308518213857" datatype="html" approved="yes">
         <source> Last name is required </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">19,21</context>
         </context-group>
-        <target state="needs-translation"> Last name is required </target>
+        <target state="final">Último nome é obrigatório</target>
       </trans-unit>
-      <trans-unit id="3285380396703325390" datatype="html">
+      <trans-unit id="3285380396703325390" datatype="html" approved="yes">
         <source> Email is used </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">36,38</context>
         </context-group>
-        <target state="needs-translation"> Email is used </target>
+        <target state="final"> O E-mail já foi utilizado</target>
       </trans-unit>
-      <trans-unit id="9132547751630599796" datatype="html">
+      <trans-unit id="9132547751630599796" datatype="html" approved="yes">
         <source> Password is required </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">51,53</context>
         </context-group>
-        <target state="needs-translation"> Password is required </target>
+        <target state="final"> A senha é obrigatória</target>
       </trans-unit>
-      <trans-unit id="5145449122692464963" datatype="html">
+      <trans-unit id="5145449122692464963" datatype="html" approved="yes">
         <source>Password is invalid</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">54</context>
         </context-group>
-        <target state="needs-translation">Password is invalid</target>
+        <target state="final">A senha é inválida</target>
       </trans-unit>
-      <trans-unit id="3371018857182408066" datatype="html">
+      <trans-unit id="3371018857182408066" datatype="html" approved="yes">
         <source> Contact your admin to send you an invite </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">58,60</context>
         </context-group>
-        <target state="needs-translation"> Contact your admin to send you an invite </target>
+        <target state="final"> Entre em contato com o seu administrador para te enviar um convite </target>
       </trans-unit>
-      <trans-unit id="1831185355933631853" datatype="html">
+      <trans-unit id="1831185355933631853" datatype="html" approved="yes">
         <source>Lowercase</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">71</context>
         </context-group>
-        <target state="needs-translation">Lowercase</target>
+        <target state="final">Letras minúsculas</target>
       </trans-unit>
-      <trans-unit id="6131686574068357886" datatype="html">
+      <trans-unit id="6131686574068357886" datatype="html" approved="yes">
         <source>Uppercase</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">81</context>
         </context-group>
-        <target state="needs-translation">Uppercase</target>
+        <target state="final">Letras maiúsculas</target>
       </trans-unit>
-      <trans-unit id="5276080702883013396" datatype="html">
+      <trans-unit id="5276080702883013396" datatype="html" approved="yes">
         <source>Special Character</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">92</context>
         </context-group>
-        <target state="needs-translation">Special Character</target>
+        <target state="final">Caracteres Especiais</target>
       </trans-unit>
-      <trans-unit id="6370642728789544052" datatype="html">
+      <trans-unit id="6370642728789544052" datatype="html" approved="yes">
         <source>Number</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">101</context>
         </context-group>
-        <target state="needs-translation">Number</target>
+        <target state="final">Números</target>
       </trans-unit>
-      <trans-unit id="179646624931045993" datatype="html">
+      <trans-unit id="179646624931045993" datatype="html" approved="yes">
         <source>8-64 Characters</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">114</context>
         </context-group>
-        <target state="needs-translation">8-64 Characters</target>
+        <target state="final">8-64 Caracteres</target>
       </trans-unit>
-      <trans-unit id="6315299944136778290" datatype="html">
+      <trans-unit id="6315299944136778290" datatype="html" approved="yes">
         <source>Receive updates and newsletters from activepieces</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">119,122</context>
+          <context context-type="linenumber">120,123</context>
         </context-group>
-        <target state="needs-translation">Receive updates and newsletters from activepieces</target>
+        <target state="final">Receber atualizações da Activepieces</target>
       </trans-unit>
-      <trans-unit id="7203320122205058413" datatype="html">
+      <trans-unit id="7203320122205058413" datatype="html" approved="yes">
         <source> Sign up </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">125,127</context>
+          <context context-type="linenumber">126,128</context>
         </context-group>
-        <target state="needs-translation"> Sign up </target>
+        <target state="final"> Cadastre-se </target>
       </trans-unit>
-      <trans-unit id="4376281136928352035" datatype="html">
+      <trans-unit id="4376281136928352035" datatype="html" approved="yes">
         <source>By creating an account, you agree to our </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">133</context>
+          <context context-type="linenumber">134</context>
         </context-group>
-        <target state="needs-translation">By creating an account, you agree to our </target>
+        <target state="final">Ao criar sua conta, você concorda com nossos </target>
       </trans-unit>
-      <trans-unit id="5588556721941421289" datatype="html">
+      <trans-unit id="5588556721941421289" datatype="html" approved="yes">
         <source>terms of service</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">135,136</context>
+          <context context-type="linenumber">136,137</context>
         </context-group>
-        <target state="needs-translation">terms of service</target>
+        <target state="final">termos de serviço</target>
       </trans-unit>
-      <trans-unit id="8826454553473999816" datatype="html">
+      <trans-unit id="8826454553473999816" datatype="html" approved="yes">
         <source> and </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">137</context>
-        </context-group>
-        <target state="needs-translation"> and </target>
-      </trans-unit>
-      <trans-unit id="7880342747895814760" datatype="html">
-        <source>privacy policy</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">138</context>
         </context-group>
-        <target state="needs-translation">privacy policy</target>
+        <target state="final"> e </target>
       </trans-unit>
-      <trans-unit id="6207438724033771807" datatype="html">
+      <trans-unit id="7880342747895814760" datatype="html" approved="yes">
+        <source>privacy policy</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
+          <context context-type="linenumber">139</context>
+        </context-group>
+        <target state="final">política de privacidade</target>
+      </trans-unit>
+      <trans-unit id="6207438724033771807" datatype="html" approved="yes">
         <source>Already have an account? </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">142</context>
+          <context context-type="linenumber">143</context>
         </context-group>
-        <target state="needs-translation">Already have an account? </target>
+        <target state="final">Já tem uma conta? </target>
       </trans-unit>
-      <trans-unit id="4860327484616227095" datatype="html">
+      <trans-unit id="4860327484616227095" datatype="html" approved="yes">
         <source>Signing up is disabled.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">149</context>
+          <context context-type="linenumber">150</context>
         </context-group>
-        <target state="needs-translation">Signing up is disabled.</target>
+        <target state="final">O cadastro está desativado.</target>
       </trans-unit>
-      <trans-unit id="8502548447094943346" datatype="html">
+      <trans-unit id="8502548447094943346" datatype="html" approved="yes">
         <source> If you are the owner, please refer to the configuration section in the documentation to learn how to enable it. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">150,153</context>
+          <context context-type="linenumber">151,154</context>
         </context-group>
-        <target state="needs-translation"> If you are the owner, please refer to the configuration section in the documentation to learn how to enable it. </target>
+        <target state="final"> Se você é o proprietário, por favor consulte a seção de configuração da documentação para aprender como ativá-lo. </target>
       </trans-unit>
-      <trans-unit id="7028204981963450021" datatype="html">
+      <trans-unit id="7028204981963450021" datatype="html" approved="yes">
         <source>Sign up</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/ui-feature-authentication.module.ts</context>
           <context context-type="linenumber">60</context>
         </context-group>
-        <target state="needs-translation">Sign up</target>
+        <target state="final">Cadastre-se</target>
       </trans-unit>
-      <trans-unit id="4227831333725112678" datatype="html">
+      <trans-unit id="4227831333725112678" datatype="html" approved="yes">
         <source>Verify email</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/ui-feature-authentication.module.ts</context>
           <context context-type="linenumber">68</context>
         </context-group>
-        <target state="needs-translation">Verify email</target>
+        <target state="final">Verificar e-mail</target>
       </trans-unit>
-      <trans-unit id="1636934520301910285" datatype="html">
+      <trans-unit id="1636934520301910285" datatype="html" approved="yes">
         <source>Reset password</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/ui-feature-authentication.module.ts</context>
           <context context-type="linenumber">78</context>
         </context-group>
-        <target state="needs-translation">Reset password</target>
+        <target state="final">Redefinir senha</target>
       </trans-unit>
-      <trans-unit id="8264044238565501678" datatype="html">
+      <trans-unit id="8264044238565501678" datatype="html" approved="yes">
         <source>Forgot password</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/ui-feature-authentication.module.ts</context>
           <context context-type="linenumber">88</context>
         </context-group>
-        <target state="needs-translation">Forgot password</target>
+        <target state="final">Esqueci a senha</target>
+      </trans-unit>
+      <trans-unit id="4465085913683915434" datatype="html" approved="yes">
+        <source>True</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/canvas-utils/drawing/branch-drawer.ts</context>
+          <context context-type="linenumber">71</context>
+        </context-group>
+        <target state="final">Verdadeiro</target>
+      </trans-unit>
+      <trans-unit id="3800326155195149498" datatype="html" approved="yes">
+        <source>False</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/canvas-utils/drawing/branch-drawer.ts</context>
+          <context context-type="linenumber">71</context>
+        </context-group>
+        <target state="final">Falso</target>
       </trans-unit>
       <trans-unit id="7006228718285189938" datatype="html">
         <source>Delete Step</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/flow-item-tree/flow-item/actions/delete-flow-item-action/delete-flow-item-action.component.html</context>
+          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/flow-item-tree/flow-item/actions/delete-flow-item-action/delete-flow-item-action.component.html</context>
           <context context-type="linenumber">1</context>
         </context-group>
         <target state="needs-translation">Delete Step</target>
@@ -1395,7 +1447,7 @@
       <trans-unit id="7736075512379733726" datatype="html">
         <source>Duplicate Step</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/flow-item-tree/flow-item/actions/duplicate-step-action/duplicate-step-action.component.html</context>
+          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/flow-item-tree/flow-item/actions/duplicate-step-action/duplicate-step-action.component.html</context>
           <context context-type="linenumber">1</context>
         </context-group>
         <target state="needs-translation">Duplicate Step</target>
@@ -1403,42 +1455,60 @@
       <trans-unit id="1403002090052852025" datatype="html">
         <source>Change Trigger</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/flow-item-tree/flow-item/actions/replace-trigger-action/replace-trigger-action.component.html</context>
+          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/flow-item-tree/flow-item/actions/replace-trigger-action/replace-trigger-action.component.html</context>
           <context context-type="linenumber">1</context>
         </context-group>
         <target state="needs-translation">Change Trigger</target>
       </trans-unit>
+      <trans-unit id="2424797729759691148" datatype="html">
+        <source>Can't move here</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/flow-item-tree/flow-item/flow-item-connection/add-button-core.component.ts</context>
+          <context context-type="linenumber">21</context>
+        </context-group>
+        <target state="needs-translation">Can't move here</target>
+      </trans-unit>
       <trans-unit id="852013103273628574" datatype="html">
         <source>Incomplete settings</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.html</context>
-          <context context-type="linenumber">36</context>
+          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.html</context>
+          <context context-type="linenumber">35</context>
         </context-group>
         <target state="needs-translation">Incomplete settings</target>
       </trans-unit>
       <trans-unit id="2784956659778044823" datatype="html">
         <source>Loop</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.ts</context>
-          <context context-type="linenumber">193</context>
+          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.ts</context>
+          <context context-type="linenumber">197</context>
         </context-group>
         <target state="needs-translation">Loop</target>
       </trans-unit>
       <trans-unit id="3281993254947750204" datatype="html">
         <source>Choose a trigger</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.ts</context>
-          <context context-type="linenumber">203</context>
+          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.ts</context>
+          <context context-type="linenumber">207</context>
         </context-group>
         <target state="needs-translation">Choose a trigger</target>
       </trans-unit>
       <trans-unit id="2498487601274189013" datatype="html">
         <source>Webhook trigger</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.ts</context>
-          <context context-type="linenumber">205</context>
+          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.ts</context>
+          <context context-type="linenumber">209</context>
         </context-group>
         <target state="needs-translation">Webhook trigger</target>
+      </trans-unit>
+      <trans-unit id="8800642840450835643" datatype="html">
+        <source> End
+</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/widgets/end-of-flow-widget/end-of-flow-widget.component.html</context>
+          <context context-type="linenumber">2,4</context>
+        </context-group>
+        <target state="needs-translation"> End
+</target>
       </trans-unit>
       <trans-unit id="3805341172871384186" datatype="html">
         <source>
@@ -1447,7 +1517,7 @@
           <x id="INTERPOLATION_1" equiv-text="{{numOfInvalidSteps &gt; 1 ? 's' : ''}}"/>
         </source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/incomplete-steps-widget/incomplete-steps-widget.component.html</context>
+          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/widgets/incomplete-steps-widget/incomplete-steps-widget.component.html</context>
           <context context-type="linenumber">5,7</context>
         </context-group>
         <target state="needs-translation">
@@ -1458,21 +1528,37 @@
       </trans-unit>
       <trans-unit id="7708270344948043036" datatype="html">
         <source>
-          <x id="INTERPOLATION" equiv-text="{{(isSaving$ | async)? 'Saving...': 'Test flow'}}"/>
+          <x id="INTERPOLATION" equiv-text="{{(isSaving$ | async)? savingText: testFlowText}}"/>
         </source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/test-flow-widget/test-flow-widget.component.html</context>
+          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/widgets/test-flow-widget/test-flow-widget.component.html</context>
           <context context-type="linenumber">11,13</context>
         </context-group>
         <target state="needs-translation">
-          <x id="INTERPOLATION" equiv-text="{{(isSaving$ | async)? 'Saving...': 'Test flow'}}"/>
+          <x id="INTERPOLATION" equiv-text="{{(isSaving$ | async)? savingText: testFlowText}}"/>
         </target>
+      </trans-unit>
+      <trans-unit id="7468425627961650152" datatype="html">
+        <source>Test flow</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/widgets/test-flow-widget/test-flow-widget.component.ts</context>
+          <context context-type="linenumber">53</context>
+        </context-group>
+        <target state="needs-translation">Test flow</target>
+      </trans-unit>
+      <trans-unit id="3407061818321766940" datatype="html">
+        <source>Saving...</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/widgets/test-flow-widget/test-flow-widget.component.ts</context>
+          <context context-type="linenumber">54</context>
+        </context-group>
+        <target state="needs-translation">Saving...</target>
       </trans-unit>
       <trans-unit id="6212705197426717225" datatype="html">
         <source> View Only
 </source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/view-only-mode/view-only-mode.component.html</context>
+          <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/widgets/view-only-mode-widget/view-only-mode-widget.component.html</context>
           <context context-type="linenumber">2,4</context>
         </context-group>
         <target state="needs-translation"> View Only
@@ -1654,18 +1740,50 @@
         </context-group>
         <target state="needs-translation">Test code </target>
       </trans-unit>
-      <trans-unit id="2272612543539034211" datatype="html">
-        <source> Test Code First </source>
+      <trans-unit id="6131680921696393746" datatype="html">
+        <source>Minimize Editor</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/code-step-mention-item/code-step-mention-item.component.html</context>
+          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component.html</context>
+          <context context-type="linenumber">13</context>
+        </context-group>
+        <target state="needs-translation">Minimize Editor</target>
+      </trans-unit>
+      <trans-unit id="2588893911086802790" datatype="html">
+        <source> Output </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component.html</context>
+          <context context-type="linenumber">74,76</context>
+        </context-group>
+        <target state="needs-translation"> Output </target>
+      </trans-unit>
+      <trans-unit id="6287928812505781175" datatype="html">
+        <source> Console </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component.html</context>
+          <context context-type="linenumber">81,83</context>
+        </context-group>
+        <target state="needs-translation"> Console </target>
+      </trans-unit>
+      <trans-unit id="969162659595657718" datatype="html">
+        <source>Copied to clipboard</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component.ts</context>
+          <context context-type="linenumber">198</context>
+        </context-group>
+        <target state="needs-translation">Copied to clipboard</target>
+      </trans-unit>
+      <trans-unit id="1884322386510747920" datatype="html">
+        <source> Test Step First </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/action-mention-item/action-mention-item.component.html</context>
           <context context-type="linenumber">42,44</context>
         </context-group>
-        <target state="needs-translation"> Test Code First </target>
+        <target state="needs-translation"> Test Step First </target>
       </trans-unit>
       <trans-unit id="6240237049554265257" datatype="html">
         <source> This step needs to be tested in order to view its data. </source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/code-step-mention-item/code-step-mention-item.component.html</context>
+          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/action-mention-item/action-mention-item.component.html</context>
           <context context-type="linenumber">45,47</context>
         </context-group>
         <target state="needs-translation"> This step needs to be tested in order to view its data. </target>
@@ -1673,7 +1791,7 @@
       <trans-unit id="1247109697914602116" datatype="html">
         <source> Go to step </source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/code-step-mention-item/code-step-mention-item.component.html</context>
+          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/action-mention-item/action-mention-item.component.html</context>
           <context context-type="linenumber">50,52</context>
         </context-group>
         <target state="needs-translation"> Go to step </target>
@@ -1726,16 +1844,26 @@
         </context-group>
         <target state="needs-translation">Select </target>
       </trans-unit>
+      <trans-unit id="2382599479144636387" datatype="html">
+        <source>
+          result:  
+          <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;ap-transition-all ap-text-primary&quot; [matTooltip]=&quot;'' + result.value || ''&quot;&gt;"/>
+          <x id="INTERPOLATION"/>
+          <x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/>
+        </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-trigger-mention-item/piece-trigger-mention-item.component.html</context>
+          <context context-type="linenumber">37,40</context>
+        </context-group>
+        <target state="needs-translation">
+          result:  
+          <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;ap-transition-all ap-text-primary&quot; [matTooltip]=&quot;'' + result.value || ''&quot;&gt;"/>
+          <x id="INTERPOLATION"/>
+          <x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/>
+        </target>
+      </trans-unit>
       <trans-unit id="1483784557054514527" datatype="html">
         <source>Insert </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-step-mention-item/piece-step-mention-item.component.html</context>
-          <context context-type="linenumber">10,11</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-step-mention-item/piece-step-mention-item.component.html</context>
-          <context context-type="linenumber">55,56</context>
-        </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-trigger-mention-item/piece-trigger-mention-item.component.html</context>
           <context context-type="linenumber">43,44</context>
@@ -1749,52 +1877,6 @@
           <context context-type="linenumber">44,45</context>
         </context-group>
         <target state="needs-translation">Insert </target>
-      </trans-unit>
-      <trans-unit id="2382599479144636387" datatype="html">
-        <source>
-          result:  
-          <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;ap-transition-all ap-text-primary&quot; [matTooltip]=&quot;'' + result.value || ''&quot;&gt;"/>
-          <x id="INTERPOLATION"/>
-          <x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/>
-        </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-step-mention-item/piece-step-mention-item.component.html</context>
-          <context context-type="linenumber">49,52</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-trigger-mention-item/piece-trigger-mention-item.component.html</context>
-          <context context-type="linenumber">37,40</context>
-        </context-group>
-        <target state="needs-translation">
-          result:  
-          <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;ap-transition-all ap-text-primary&quot; [matTooltip]=&quot;'' + result.value || ''&quot;&gt;"/>
-          <x id="INTERPOLATION"/>
-          <x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/>
-        </target>
-      </trans-unit>
-      <trans-unit id="995418901058119655" datatype="html">
-        <source> Test step </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-step-mention-item/piece-step-mention-item.component.html</context>
-          <context context-type="linenumber">63,65</context>
-        </context-group>
-        <target state="needs-translation"> Test step </target>
-      </trans-unit>
-      <trans-unit id="31885550206889765" datatype="html">
-        <source> This step needs to be tested, to generate sample data. </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-step-mention-item/piece-step-mention-item.component.html</context>
-          <context context-type="linenumber">66,68</context>
-        </context-group>
-        <target state="needs-translation"> This step needs to be tested, to generate sample data. </target>
-      </trans-unit>
-      <trans-unit id="3363972622671896869" datatype="html">
-        <source>Go to step </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-step-mention-item/piece-step-mention-item.component.html</context>
-          <context context-type="linenumber">71,72</context>
-        </context-group>
-        <target state="needs-translation">Go to step </target>
       </trans-unit>
       <trans-unit id="8902753740956283901" datatype="html">
         <source> This trigger needs to have data loaded from your account, to use as sample data </source>
@@ -1892,7 +1974,7 @@
         <source>Home</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html</context>
-          <context context-type="linenumber">12</context>
+          <context context-type="linenumber">14</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html</context>
@@ -1904,7 +1986,7 @@
         <source>Rename</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html</context>
-          <context context-type="linenumber">41</context>
+          <context context-type="linenumber">46</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/folders-list/folders-list.component.html</context>
@@ -1916,7 +1998,7 @@
         <source>Duplicate</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html</context>
-          <context context-type="linenumber">48</context>
+          <context context-type="linenumber">53</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html</context>
@@ -1928,7 +2010,7 @@
         <source>Import</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html</context>
-          <context context-type="linenumber">54</context>
+          <context context-type="linenumber">59</context>
         </context-group>
         <target state="needs-translation">Import</target>
       </trans-unit>
@@ -1936,7 +2018,7 @@
         <source>Export</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html</context>
-          <context context-type="linenumber">61</context>
+          <context context-type="linenumber">66</context>
         </context-group>
         <target state="needs-translation">Export</target>
       </trans-unit>
@@ -1944,7 +2026,7 @@
         <source>Delete</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html</context>
-          <context context-type="linenumber">69</context>
+          <context context-type="linenumber">75</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html</context>
@@ -1961,7 +2043,7 @@
       You can't undo this action.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/flow-builder-header.component.ts</context>
-          <context context-type="linenumber">128,129</context>
+          <context context-type="linenumber">131,132</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts</context>
@@ -2144,11 +2226,11 @@
         </context-group>
         <target state="needs-translation"> All Iterations </target>
       </trans-unit>
-      <trans-unit id="4296705024052936390" datatype="html">
+      <trans-unit id="892494322375448657" datatype="html">
         <source>
           If you are expecting a reply from this webhook, append &lt;b&gt;/sync&lt;/b&gt; to the URL.&lt;br&gt; &lt;br&gt;
                   In that case, you will also have to add an &lt;b&gt;HTTP step&lt;/b&gt;  with return response to the end of your flow.&lt;br&gt; &lt;br&gt;
-                  **If the flow takes more than 30 seconds, it will give a 204 no-content response.**&lt;br&gt;
+                  **If the flow takes more than 30 seconds, it will give a 408 Request Timeout response.**&lt;br&gt;
                   
                   
           <x id="INTERPOLATION" equiv-text="{{ (edition$ | async) === ApEdition.CLOUD ? '' : 'To change this, set the **AP_WEBHOOK_TIMEOUT_SECONDS** to desired number.' }}"/>
@@ -2160,7 +2242,7 @@
         <target state="needs-translation">
           If you are expecting a reply from this webhook, append &lt;b&gt;/sync&lt;/b&gt; to the URL.&lt;br&gt; &lt;br&gt;
                   In that case, you will also have to add an &lt;b&gt;HTTP step&lt;/b&gt;  with return response to the end of your flow.&lt;br&gt; &lt;br&gt;
-                  **If the flow takes more than 30 seconds, it will give a 204 no-content response.**&lt;br&gt;
+                  **If the flow takes more than 30 seconds, it will give a 408 Request Timeout response.**&lt;br&gt;
                   
                   
           <x id="INTERPOLATION" equiv-text="{{ (edition$ | async) === ApEdition.CLOUD ? '' : 'To change this, set the **AP_WEBHOOK_TIMEOUT_SECONDS** to desired number.' }}"/>
@@ -2479,11 +2561,7 @@
       <trans-unit id="500133922719782601" datatype="html">
         <source> Generate Sample Data </source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-code-step/test-code-step.component.html</context>
-          <context context-type="linenumber">2,4</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-piece-step/test-piece-step.component.html</context>
+          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-action/test-action.component.html</context>
           <context context-type="linenumber">2,4</context>
         </context-group>
         <context-group purpose="location">
@@ -2500,14 +2578,18 @@
         </context-group>
         <target state="needs-translation"> Generate Sample Data </target>
       </trans-unit>
+      <trans-unit id="8144434134010600908" datatype="html">
+        <source>Test step</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-action/test-action.component.html</context>
+          <context context-type="linenumber">40,41</context>
+        </context-group>
+        <target state="needs-translation">Test step</target>
+      </trans-unit>
       <trans-unit id="7919787260081015275" datatype="html">
         <source>Tested Successfully</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-code-step/test-code-step.component.html</context>
-          <context context-type="linenumber">15</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-piece-step/test-piece-step.component.html</context>
+          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-action/test-action.component.html</context>
           <context context-type="linenumber">60</context>
         </context-group>
         <context-group purpose="location">
@@ -2520,22 +2602,18 @@
         </context-group>
         <target state="needs-translation">Tested Successfully</target>
       </trans-unit>
-      <trans-unit id="3803178221894171065" datatype="html">
-        <source>Test Failed</source>
+      <trans-unit id="2150150684765904117" datatype="html">
+        <source>Testing Failed</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-code-step/test-code-step.component.html</context>
-          <context context-type="linenumber">20</context>
+          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-action/test-action.component.html</context>
+          <context context-type="linenumber">63</context>
         </context-group>
-        <target state="needs-translation">Test Failed</target>
+        <target state="needs-translation">Testing Failed</target>
       </trans-unit>
       <trans-unit id="3541311390491548382" datatype="html">
         <source>Retest</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-code-step/test-code-step.component.html</context>
-          <context context-type="linenumber">27</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-piece-step/test-piece-step.component.html</context>
+          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-action/test-action.component.html</context>
           <context context-type="linenumber">72</context>
         </context-group>
         <context-group purpose="location">
@@ -2547,26 +2625,6 @@
           <context context-type="linenumber">30</context>
         </context-group>
         <target state="needs-translation">Retest</target>
-      </trans-unit>
-      <trans-unit id="8144434134010600908" datatype="html">
-        <source>Test step</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-code-step/test-code-step.component.html</context>
-          <context context-type="linenumber">46,47</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-piece-step/test-piece-step.component.html</context>
-          <context context-type="linenumber">40,41</context>
-        </context-group>
-        <target state="needs-translation">Test step</target>
-      </trans-unit>
-      <trans-unit id="2150150684765904117" datatype="html">
-        <source>Testing Failed</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-piece-step/test-piece-step.component.html</context>
-          <context context-type="linenumber">63</context>
-        </context-group>
-        <target state="needs-translation">Testing Failed</target>
       </trans-unit>
       <trans-unit id="4137681575855964026" datatype="html">
         <source>Test this trigger to generate sample data that can be used in the next steps</source>
@@ -2886,11 +2944,11 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">59</context>
+          <context context-type="linenumber">60</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">72</context>
+          <context context-type="linenumber">73</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/secret-text-connection-dialog/secret-text-connection-dialog.component.html</context>
@@ -2906,7 +2964,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">85,87</context>
+          <context context-type="linenumber">86,88</context>
         </context-group>
         <target state="needs-translation"> You have to connect an account to continue </target>
       </trans-unit>
@@ -2922,7 +2980,7 @@
         <source>The ID of this connection definition. You will need to select this key whenever you want to reuse this connection.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/managed-oauth2-connection-dialog/managed-oauth2-connection-dialog.component.ts</context>
-          <context context-type="linenumber">69</context>
+          <context context-type="linenumber">75</context>
         </context-group>
         <target state="needs-translation">The ID of this connection definition. You will need to select this key whenever you want to reuse this connection.</target>
       </trans-unit>
@@ -2930,7 +2988,7 @@
         <source> Redirect URL is required</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">36,37</context>
+          <context context-type="linenumber">37,38</context>
         </context-group>
         <target state="needs-translation"> Redirect URL is required</target>
       </trans-unit>
@@ -2938,7 +2996,7 @@
         <source>Client ID</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">41</context>
+          <context context-type="linenumber">42</context>
         </context-group>
         <target state="needs-translation">Client ID</target>
       </trans-unit>
@@ -2946,7 +3004,7 @@
         <source> Client ID is required</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">43,44</context>
+          <context context-type="linenumber">44,45</context>
         </context-group>
         <target state="needs-translation"> Client ID is required</target>
       </trans-unit>
@@ -2954,7 +3012,7 @@
         <source>Client Secret</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">47</context>
+          <context context-type="linenumber">48</context>
         </context-group>
         <target state="needs-translation">Client Secret</target>
       </trans-unit>
@@ -2962,7 +3020,7 @@
         <source> Client Secret is required</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">50,51</context>
+          <context context-type="linenumber">51,52</context>
         </context-group>
         <target state="needs-translation"> Client Secret is required</target>
       </trans-unit>
@@ -2970,7 +3028,7 @@
         <source>I would like to use predefined app credentials </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">91,92</context>
+          <context context-type="linenumber">92,93</context>
         </context-group>
         <target state="needs-translation">I would like to use predefined app credentials </target>
       </trans-unit>
@@ -3080,7 +3138,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.ts</context>
-          <context context-type="linenumber">34</context>
+          <context context-type="linenumber">35</context>
         </context-group>
         <target state="needs-translation">Connections</target>
       </trans-unit>
@@ -3527,14 +3585,6 @@
           <context context-type="linenumber">4,6</context>
         </context-group>
         <target state="needs-translation"> This is where you can install pieces made by yourself or contributors. </target>
-      </trans-unit>
-      <trans-unit id="2724055831234181057" datatype="html">
-        <source>Version</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/community-pieces-table/community-pieces-table.component.html</context>
-          <context context-type="linenumber">22</context>
-        </context-group>
-        <target state="needs-translation">Version</target>
       </trans-unit>
       <trans-unit id="3336001235735417463" datatype="html">
         <source> No pieces installed </source>

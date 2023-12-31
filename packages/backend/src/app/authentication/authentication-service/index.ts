@@ -1,5 +1,5 @@
 import { QueryFailedError } from 'typeorm'
-import { AuthenticationResponse, UserStatus, ActivepiecesError, ErrorCode, isNil, User, ApFlagId } from '@activepieces/shared'
+import { AuthenticationResponse, UserStatus, ActivepiecesError, ErrorCode, isNil, User, ApFlagId, Project, TelemetryEventName, UserId, ApEnvironment } from '@activepieces/shared'
 import { userService } from '../../user/user-service'
 import { passwordHasher } from '../lib/password-hasher'
 import { authenticationServiceHooks as hooks } from './hooks'
@@ -7,26 +7,24 @@ import { generateRandomPassword } from '../../helper/crypto'
 import { flagService } from '../../flags/flag.service'
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
+import { logger } from '../../helper/logger'
+import { telemetry } from '../../helper/telemetry.utils'
 
 const SIGN_UP_ENABLED = system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
 
 export const authenticationService = {
     async signUp(params: SignUpParams): Promise<AuthenticationResponse> {
-        await assertSignUpIsEnabled(params)
+        await assertSignUpIsEnabled()
+        await hooks.get().preSignUp({
+            email: params.email,
+            platformId: params.platformId,
+        })
         const user = await createUser(params)
 
-        const authnResponse = await hooks.get().postSignUp({
+        return this.signUpResponse({
             user,
             referringUserId: params.referringUserId,
         })
-
-        const userWithoutPassword = removePasswordPropFromUser(authnResponse.user)
-
-        return {
-            ...userWithoutPassword,
-            token: authnResponse.token,
-            projectId: authnResponse.project.id,
-        }
     },
 
     async signIn(request: SignInParams): Promise<AuthenticationResponse> {
@@ -42,17 +40,10 @@ export const authenticationService = {
             userPassword: user.password,
         })
 
-        const { user: updatedUser, project, token } = await hooks.get().postSignIn({
+
+        return this.signInResponse({
             user,
         })
-
-        const userWithoutPassword = removePasswordPropFromUser(updatedUser)
-        
-        return {
-            ...userWithoutPassword,
-            token,
-            projectId: project.id,
-        }
     },
 
     async federatedAuthn(params: FederatedAuthnParams): Promise<AuthenticationResponse> {
@@ -62,17 +53,9 @@ export const authenticationService = {
         })
 
         if (existingUser) {
-            const { user: updatedUser, project, token } = await hooks.get().postSignIn({
+            return this.signInResponse({
                 user: existingUser,
             })
-
-            const userWithoutPassword = removePasswordPropFromUser(updatedUser)
-
-            return {
-                ...userWithoutPassword,
-                token,
-                projectId: project.id,
-            }
         }
 
         const newUser = {
@@ -83,14 +66,49 @@ export const authenticationService = {
             trackEvents: true,
             newsLetter: true,
             password: await generateRandomPassword(),
-            platformId: params. platformId,
+            platformId: params.platformId,
         }
 
         return this.signUp(newUser)
     },
+
+    async signUpResponse({ user, referringUserId }: SignUpResponseParams): Promise<AuthenticationResponse> {
+        const authnResponse = await hooks.get().postSignUp({
+            user,
+            referringUserId,
+        })
+        await flagService.save({ id: ApFlagId.USER_CREATED, value: true })
+
+        const userWithoutPassword = removePasswordPropFromUser(authnResponse.user)
+
+        await sendTelemetry({
+            user, project: authnResponse.project,
+        })
+        await saveNewsLetterSubscriber(user)
+
+        return {
+            ...userWithoutPassword,
+            token: authnResponse.token,
+            projectId: authnResponse.project.id,
+        }
+    },
+
+    async signInResponse({ user }: SignInResponseParams): Promise<AuthenticationResponse> {
+        const authnResponse = await hooks.get().postSignIn({
+            user,
+        })
+
+        const userWithoutPassword = removePasswordPropFromUser(authnResponse.user)
+
+        return {
+            ...userWithoutPassword,
+            token: authnResponse.token,
+            projectId: authnResponse.project.id,
+        }
+    },
 }
 
-const assertSignUpIsEnabled = async (params: SignUpParams): Promise<void> => {
+const assertSignUpIsEnabled = async (): Promise<void> => {
     const userCreated = await flagService.getOne(ApFlagId.USER_CREATED)
 
     if (userCreated && !SIGN_UP_ENABLED) {
@@ -100,7 +118,6 @@ const assertSignUpIsEnabled = async (params: SignUpParams): Promise<void> => {
         })
     }
 
-    await enablePlatformSignUpForInvitedUsersOnly(params)
 }
 
 const createUser = async (params: SignUpParams): Promise<User> => {
@@ -133,24 +150,6 @@ const createUser = async (params: SignUpParams): Promise<User> => {
     }
 }
 
-const enablePlatformSignUpForInvitedUsersOnly = async (params: SignUpParams): Promise<void> => {
-    if (isNil(params.platformId)) {
-        return
-    }
-
-    const invitedUser = await userService.getByPlatformAndEmail({
-        platformId: params.platformId,
-        email: params.email,
-    })
-
-    if (isNil(invitedUser) || invitedUser.status !== UserStatus.INVITED) {
-        throw new ActivepiecesError({
-            code: ErrorCode.PLATFORM_SIGN_UP_ENABLED_FOR_INVITED_USERS_ONLY,
-            params: {},
-        })
-    }
-}
-
 const assertUserIsAllowedToSignIn: (user: User | null) => asserts user is User = (user) => {
     if (isNil(user)) {
         throw new ActivepiecesError({
@@ -158,8 +157,8 @@ const assertUserIsAllowedToSignIn: (user: User | null) => asserts user is User =
             params: null,
         })
     }
-   
-    if (user.status === UserStatus.CREATED || user.status === UserStatus.INVITED) {
+
+    if (user.status !== UserStatus.VERIFIED) {
         throw new ActivepiecesError({
             code: ErrorCode.EMAIL_IS_NOT_VERIFIED,
             params: {
@@ -184,6 +183,53 @@ const removePasswordPropFromUser = (user: User): Omit<User, 'password'> => {
     const { password: _, ...filteredUser } = user
     return filteredUser
 }
+
+const sendTelemetry = async ({ user, project }: SendTelemetryParams): Promise<void> => {
+    try {
+        await telemetry.identify(user, project.id)
+
+        await telemetry.trackProject(project.id, {
+            name: TelemetryEventName.SIGNED_UP,
+            payload: {
+                userId: user.id,
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                projectId: project.id,
+            },
+        })
+    }
+    catch (e) {
+        logger.warn({ name: 'AuthenticationService#sendTelemetry', error: e })
+    }
+}
+
+async function saveNewsLetterSubscriber(user: User): Promise<void> {
+    const isPlatformUserOrNotSubscribed = !isNil(user.platformId) || !user.newsLetter
+    const environment = system.get(SystemProp.ENVIRONMENT)
+    if (isPlatformUserOrNotSubscribed || environment !== ApEnvironment.PRODUCTION) {
+        return
+    }
+    try {
+        const response = await fetch('https://us-central1-activepieces-b3803.cloudfunctions.net/addContact', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email: user.email }),
+        })
+        return await response.json()
+    }
+    catch (error) {
+        logger.warn(error)
+    }
+}
+type SendTelemetryParams = {
+    user: User
+    project: Project
+}
+
+
 
 type NewUser = Omit<User, 'id' | 'created' | 'updated'>
 
@@ -216,4 +262,13 @@ type FederatedAuthnParams = {
     firstName: string
     lastName: string
     platformId: string | null
+}
+
+type SignUpResponseParams = {
+    user: User
+    referringUserId?: UserId
+}
+
+type SignInResponseParams = {
+    user: User
 }

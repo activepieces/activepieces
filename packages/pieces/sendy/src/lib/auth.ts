@@ -27,7 +27,7 @@ export const sendyAuth = PieceAuth.CustomAuth({
 			displayName : 'API Key',
 			description : 'The API key for your Sendy account',
 			required    : true,
-			validators: [Validators.pattern(/^[a-zA-Z0-9]+$/)],
+			validators: [Validators.pattern(/^\S+$/)],
         }),
         brandId: Property.ShortText({
 			displayName : 'Brand ID',
@@ -55,6 +55,6 @@ export const sendyAuth = PieceAuth.CustomAuth({
 const validateAuth = async (auth: SendyAuthType) => {
 	const response = await getLists(auth);
 	if (response.success !== true) {
-		throw new Error('Authentication failed. Please check your domain and API key and try again.');
+		throw new Error(`Authentication failed. Please check your domain and API key and try again. ${response.text}`);
 	}
 }

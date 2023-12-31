@@ -18,7 +18,6 @@ export const userService = {
             password: hashedPassword,
         }
 
-        await continueSignUpIfInvited(user)
         return userRepo.save(user)
     },
 
@@ -34,6 +33,9 @@ export const userService = {
     async get({ id }: IdParams): Promise<User | null> {
         return userRepo.findOneBy({ id })
     },
+    async getOneOrFail({ id }: IdParams): Promise<User> {
+        return userRepo.findOneByOrFail({ id })
+    },
 
     async getMetaInfo({ id }: IdParams): Promise<UserMeta | null> {
         const user = await this.get({ id })
@@ -45,19 +47,12 @@ export const userService = {
         return {
             id: user.id,
             email: user.email,
+            platformId: user.platformId,
             firstName: user.firstName,
             lastName: user.lastName,
             imageUrl: user.imageUrl,
             title: user.title,
         }
-    },
-
-    // TODO REMOVE after firebase migration
-    async getbyEmail({ email }: { email: string }): Promise<User | null> {
-
-        return userRepo.createQueryBuilder()
-            .andWhere('LOWER(email) = LOWER(:email)', { email })
-            .getOne()
     },
 
     async getByPlatformAndEmail({ platformId, email }: GetByPlatformAndEmailParams): Promise<User | null> {
@@ -84,19 +79,13 @@ export const userService = {
             password: hashedPassword,
         })
     },
-}
 
-const continueSignUpIfInvited = async (newUser: NewUser): Promise<void> => {
-    const existingUser = await userService.getByPlatformAndEmail({
-        platformId: newUser.platformId,
-        email: newUser.email,
-    })
-
-    if (existingUser && existingUser.status === UserStatus.INVITED) {
-        newUser.id = existingUser.id
-        newUser.platformId = existingUser.platformId
-        newUser.status = UserStatus.VERIFIED
-    }
+    async updatePlatformId({ id, platformId }: UpdatePlatformIdParams): Promise<void> {
+        await userRepo.update(id, {
+            updated: dayjs().toISOString(),
+            platformId,
+        })
+    },
 }
 
 type CreateParams = SignUpRequest & {
@@ -124,4 +113,9 @@ type IdParams = {
 type UpdatePasswordParams = {
     id: UserId
     newPassword: string
+}
+
+type UpdatePlatformIdParams = {
+    id: UserId
+    platformId: PlatformId
 }

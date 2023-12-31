@@ -1,6 +1,9 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { telegramSendMessageAction } from './lib/action/send-text-message.action';
 import { telegramNewMessage } from './lib/trigger/new-message';
+import { telegramSendMediaAction } from './lib/action/send-media.action';
+import { telegramGetChatMemberAction } from './lib/action/get-chat-member';
+import { telegramCreateInviteLinkAction } from './lib/action/create-invite-link';
 
 const markdownDescription = `
 **Authentication**:
@@ -20,11 +23,11 @@ export const telegramBotAuth = PieceAuth.SecretText({
 });
 
 export const telegramBot = createPiece({
-  displayName: 'Telegram bot',
+  displayName: 'Telegram Bot',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/telegram_bot.png',
   auth: telegramBotAuth,
-  actions: [telegramSendMessageAction],
+  actions: [telegramSendMessageAction, telegramSendMediaAction, telegramGetChatMemberAction, telegramCreateInviteLinkAction],
   authors: ['abuaboud', 'Abdallah-Alwarawreh'],
   triggers: [telegramNewMessage]
 });

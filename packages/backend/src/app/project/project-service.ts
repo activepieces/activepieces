@@ -2,7 +2,6 @@ import { ApId, isNil, ProjectType } from '@activepieces/shared'
 import { databaseConnection } from '../database/database-connection'
 import { ProjectEntity } from './project-entity'
 import { ActivepiecesError, apId, ErrorCode, NotificationStatus, Project, ProjectId, UserId } from '@activepieces/shared'
-import { PlatformId } from '@activepieces/ee-shared'
 
 const projectRepo = databaseConnection.getRepository<Project>(ProjectEntity)
 
@@ -39,7 +38,12 @@ export const projectService = {
 
         return project
     },
-    async getUserProject(ownerId: UserId): Promise<Project> {
+    async getUserProject(ownerId: UserId): Promise<Project | null> {
+        return projectRepo.findOneBy({
+            ownerId,
+        })
+    },
+    async getUserProjectOrThrow(ownerId: UserId): Promise<Project> {
         return projectRepo.findOneByOrFail({
             ownerId,
         })
@@ -56,17 +60,6 @@ export const projectService = {
         return projectRepo.findOneBy({
             platformId,
             externalId,
-        })
-    },
-
-    async getByPlatformId(platformId: PlatformId): Promise<Project | null> {
-        return projectRepo.findOne({
-            where: {
-                platformId,
-            },
-            order: {
-                created: 'DESC',
-            },
         })
     },
 }
