@@ -11,6 +11,7 @@ import { ImportFlowDialogueComponent } from './import-flow-dialogue/import-flow-
 import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-builder-form-controls';
 import { EeComponentsModule } from '@activepieces/ee-components';
 import { EeBillingUiModule } from '@activepieces/ee-billing-ui';
+import { VersionHistroryButtonComponent } from './version-history-button/version-history-button.component';
 
 const exportedDeclarations = [
   FlowBuilderHeaderComponent,
@@ -19,6 +20,7 @@ const exportedDeclarations = [
   PublishButtonComponent,
   DraftStatusComponent,
   ImportFlowDialogueComponent,
+  VersionHistroryButtonComponent,
 ];
 @NgModule({
   imports: [

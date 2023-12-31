@@ -3,8 +3,7 @@ import { FlowService } from '@activepieces/ui/common';
 import {
   BuilderSelectors,
   FlowsActions,
-  NO_PROPS,
-  RightSideBarType,
+  LeftSideBarType,
   ViewModeActions,
   ViewModeEnum,
   canvasActions,
@@ -64,10 +63,8 @@ export class VersionHistoryComponent implements OnInit {
   }
   closeSidebar() {
     this.store.dispatch(
-      canvasActions.setRightSidebar({
-        sidebarType: RightSideBarType.NONE,
-        props: NO_PROPS,
-        deselectCurrentStep: true,
+      canvasActions.setLeftSidebar({
+        sidebarType: LeftSideBarType.NONE
       })
     );
   }

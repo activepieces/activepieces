@@ -92,11 +92,8 @@ const __CanvasReducer = createReducer(
   }),
   on(canvasActions.setLeftSidebar, (state, { sidebarType }): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
-    debugger;
     return {
       ...clonedState,
-      focusedStep:sidebarType === LeftSideBarType.VERSIONS_HISTORY? undefined: clonedState.focusedStep,
-      selectedStepName: sidebarType === LeftSideBarType.VERSIONS_HISTORY? '': clonedState.selectedStepName,
       leftSidebar: {
         type: sidebarType,
       },
