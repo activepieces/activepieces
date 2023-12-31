@@ -307,7 +307,7 @@ export const createMockFlowVersion = (flowVersion?: Partial<FlowVersion>): FlowV
         flowId: flowVersion?.flowId ?? apId(),
         trigger: flowVersion?.trigger ?? emptyTrigger,
         state: flowVersion?.state ?? faker.helpers.enumValue(FlowVersionState),
-        updatedBy: flowVersion?.updatedBy ?? apId(),
+        updatedBy: flowVersion?.updatedBy,
         valid: flowVersion?.valid ?? faker.datatype.boolean(),
     }
 }
