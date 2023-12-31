@@ -22,6 +22,7 @@ import { CreateApiKeyDialogComponent } from './components/dialogs/create-api-key
 import { TemplatesTableComponent } from './pages/templates-table/templates-table.component';
 import { CreateOrUpdateTemplateDialogueComponent } from './components/dialogs/create-or-update-template-dialogue/create-or-update-template-dialogue.component';
 import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
+import { UsersTableComponent } from './pages/users-table/users-table.component';
 
 @NgModule({
   imports: [
@@ -49,6 +50,7 @@ import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
     TermsAndServicesSettingsComponent,
     TemplatesTableComponent,
     CustomDomainTableComponent,
+    UsersTableComponent,
   ],
 })
 export class UiEePlatformModule {}

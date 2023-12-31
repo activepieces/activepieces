@@ -97,6 +97,25 @@ async function executeStep(input: ExcuteStepOperation): Promise<ExecuteActionRes
     }
 }
 
+function getFlowExecutionState(input: ExecuteFlowOperation): FlowExecutorContext {
+    switch (input.executionType) {
+        case ExecutionType.BEGIN:
+            return FlowExecutorContext.empty().upsertStep(input.flowVersion.trigger.name, GenricStepOutput.create({
+                type: input.flowVersion.trigger.type,
+                status: StepOutputStatus.SUCCEEDED,
+                input: {},
+            }).setOutput(input.triggerPayload))
+        case ExecutionType.RESUME: {
+            let flowContext = FlowExecutorContext.empty()
+            for (const [step, output] of Object.entries(input.executionState.steps)) {
+                if (output.status === StepOutputStatus.SUCCEEDED) {
+                    flowContext = flowContext.upsertStep(step, output)
+                }
+            }
+            return flowContext
+        }
+    }
+}
 
 const execute = async (): Promise<void> => {
     try {
@@ -117,11 +136,7 @@ const execute = async (): Promise<void> => {
             }
             case EngineOperationType.EXECUTE_FLOW: {
                 const input: ExecuteFlowOperation = await utils.parseJsonFile(INPUT_FILE)
-                const flowExecutorContext = FlowExecutorContext.empty().upsertStep(input.flowVersion.trigger.name, GenricStepOutput.create({
-                    type: input.flowVersion.trigger.type,
-                    status: StepOutputStatus.SUCCEEDED,
-                    input: {},
-                }).setOutput(input.triggerPayload))
+                const flowExecutorContext = getFlowExecutionState(input)
                 const output = await executeFlow(input, flowExecutorContext)
                 await writeOutput(output)
                 break

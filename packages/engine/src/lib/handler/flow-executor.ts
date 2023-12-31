@@ -22,7 +22,7 @@ export const flowExecutor = {
         }
         return executor
     },
-        async execute({ action, constants, executionState }: {
+    async execute({ action, constants, executionState }: {
         action: Action
         executionState: FlowExecutorContext
         constants: EngineConstantData

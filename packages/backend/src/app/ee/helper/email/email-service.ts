@@ -1,5 +1,5 @@
 import { getEdition } from '../../../helper/secret-helper'
-import { ApEdition, User, UserStatus, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { ApEdition, User, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import fs from 'node:fs/promises'
 import Mustache from 'mustache'
 import nodemailer from 'nodemailer'
@@ -82,7 +82,7 @@ export const emailService = {
         if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
             return
         }
-        if (user.status === UserStatus.VERIFIED && type === OtpType.EMAIL_VERIFICATION) {
+        if (user.verified && type === OtpType.EMAIL_VERIFICATION) {
             return
         }
         logger.info('Sending OTP email', { email: user.email, otp, userId: user.id, firstName: user.email, type })

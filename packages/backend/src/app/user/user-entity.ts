@@ -22,6 +22,9 @@ export const UserEntity = new EntitySchema<UserSchema>({
         password: {
             type: String,
         },
+        verified: {
+            type: Boolean,
+        },
         status: {
             type: String,
         },

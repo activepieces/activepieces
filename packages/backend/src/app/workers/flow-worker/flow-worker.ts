@@ -118,7 +118,6 @@ const loadInputAndLogFileId = async ({
         flowVersion,
         flowRunId: jobData.runId,
         projectId: jobData.projectId,
-        triggerPayload: jobData.payload,
     }
 
     switch (jobData.executionType) {
@@ -152,6 +151,7 @@ const loadInputAndLogFileId = async ({
                 input: {
                     ...baseInput,
                     executionType: ExecutionType.RESUME,
+                    tasks: executionOutput.tasks,
                     executionState: executionOutput.executionState,
                     resumePayload: jobData.payload,
                 },
@@ -162,6 +162,7 @@ const loadInputAndLogFileId = async ({
         default: {
             return {
                 input: {
+                    triggerPayload: jobData.payload,
                     executionType: ExecutionType.BEGIN,
                     ...baseInput,
                 },
