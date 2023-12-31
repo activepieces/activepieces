@@ -119,10 +119,7 @@ export class RunsTableComponent implements OnInit {
     this.navigationService.navigate(route, newWindow);
   }
 
-  async rerunFlow(
-    run: FlowRun,
-    strategy: FlowRerunStrategy
-  ) {
+  async rerunFlow(run: FlowRun, strategy: FlowRerunStrategy) {
     this.runsService.rerun(run.id, strategy);
     run.status = ExecutionOutputStatus.RUNNING;
   }
