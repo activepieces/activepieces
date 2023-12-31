@@ -102,11 +102,13 @@ export const flowVersionService = {
     },
     async getOneOrThrow(id: FlowVersionId): Promise<FlowVersion> {
         const flowVersion = await flowVersionService.getOne(id)
+
         if (isNil(flowVersion)) {
             throw new ActivepiecesError({
-                code: ErrorCode.FLOW_VERSION_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    id,
+                    entityId: id,
+                    entityType: 'FlowVersion',
                 },
             })
         }
@@ -114,7 +116,7 @@ export const flowVersionService = {
         return flowVersion
     },
     async getFlowVersionOrThrow({ flowId, versionId, removeSecrets = false }: GetFlowVersionOrThrowParams): Promise<FlowVersion> {
-        let flowVersion = await flowVersionRepo.findOneOrFail({
+        let flowVersion = await flowVersionRepo.findOne({
             where: {
                 flowId,
                 id: versionId,
@@ -124,9 +126,22 @@ export const flowVersionService = {
                 created: 'DESC',
             },
         })
+
+        if (isNil(flowVersion)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityId: versionId,
+                    entityType: 'FlowVersion',
+                    message: `flowId=${flowId}`,
+                },
+            })
+        }
+
         if (removeSecrets) {
             flowVersion = await removeSecretsFromFlow(flowVersion)
         }
+
         return flowVersion
     },
     async createEmptyVersion(flowId: FlowId, request: {
