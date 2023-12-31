@@ -1,6 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { ApId } from '../common/id-generator'
-import { FlowRerunStrategy } from './flow-run'
+import { FlowRetryStrategy } from './flow-run'
 
 export const TestFlowRunRequestBody = Type.Object({
     flowVersionId: ApId,
@@ -8,8 +8,8 @@ export const TestFlowRunRequestBody = Type.Object({
 
 export type TestFlowRunRequestBody = Static<typeof TestFlowRunRequestBody>
 
-export const RerunFlowRequestBody = Type.Object({
-    strategy: Type.Enum(FlowRerunStrategy),
+export const RetryFlowRequestBody = Type.Object({
+    strategy: Type.Enum(FlowRetryStrategy),
 })
 
-export type RerunFlowRequestBody = Static<typeof RerunFlowRequestBody>
+export type RetryFlowRequestBody = Static<typeof RetryFlowRequestBody>

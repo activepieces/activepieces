@@ -29,34 +29,34 @@ const successHttpAction =  buildPieceAction({
     },
 })
 
-describe('flow rerun', () => {
+describe('flow retry', () => {
     const context = FlowExecutorContext.empty()
-    it('should rerun entire flow', async () => {
+    it('should retry entire flow', async () => {
         const failedResult = await flowExecutor.execute({
             action: failedHttpAction, executionState: context, constants: EXECUTE_CONSTANTS,
         })
-        const rerunEntireFlow = await flowExecutor.execute({
+        const retryEntireFlow = await flowExecutor.execute({
             action: successHttpAction, executionState: context, constants: {
                 ...EXECUTE_CONSTANTS,
                 executionType: ExecutionType.BEGIN,
             },
         })
         expect(failedResult.verdict).toBe(ExecutionVerdict.FAILED)
-        expect(rerunEntireFlow.verdict).toBe(ExecutionVerdict.RUNNING)
+        expect(retryEntireFlow.verdict).toBe(ExecutionVerdict.RUNNING)
     })
 
-    it('should rerun flow from failed step', async () => {
+    it('should retry flow from failed step', async () => {
         const failedResult = await flowExecutor.execute({
             action: failedHttpAction, executionState: context, constants: EXECUTE_CONSTANTS,
         })
 
-        const rerunFromFailed = await flowExecutor.execute({
+        const retryFromFailed = await flowExecutor.execute({
             action: successHttpAction, executionState: context, constants: {
                 ...EXECUTE_CONSTANTS,
                 executionType: ExecutionType.RESUME,
             },
         })
         expect(failedResult.verdict).toBe(ExecutionVerdict.FAILED)
-        expect(rerunFromFailed.verdict).toBe(ExecutionVerdict.RUNNING)
+        expect(retryFromFailed.verdict).toBe(ExecutionVerdict.RUNNING)
     })
 })

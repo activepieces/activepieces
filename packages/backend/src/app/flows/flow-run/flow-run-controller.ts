@@ -1,7 +1,7 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
 import { TestFlowRunRequestBody, FlowRunId, ListFlowRunsRequestQuery, ApId, ALL_PRINICPAL_TYPES, ExecutionType } from '@activepieces/shared'
-import { ActivepiecesError, ErrorCode, RerunFlowRequestBody } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, RetryFlowRequestBody } from '@activepieces/shared'
 import { flowRunService } from './flow-run-service'
 
 const DEFAULT_PAGING_LIMIT = 10
@@ -30,12 +30,12 @@ const ResumeFlowRunRequest = {
     },
 }
 
-const RerunFlowRequest = {
+const RetryFlowRequest = {
     schema: {
         params: Type.Object({
             id: ApId,
         }),
-        querystring: RerunFlowRequestBody,
+        querystring: RetryFlowRequestBody,
     },
 }
 
@@ -96,8 +96,8 @@ export const flowRunController: FastifyPluginCallbackTypebox = (app, _options, d
     })
 
 
-    app.post('/:id/rerun', RerunFlowRequest, async (req) => {
-        await flowRunService.rerun({
+    app.post('/:id/retry', RetryFlowRequest, async (req) => {
+        await flowRunService.retry({
             flowRunId: req.params.id,
             strategy: req.query.strategy,
         })

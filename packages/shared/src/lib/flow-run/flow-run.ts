@@ -39,11 +39,11 @@ export enum RunEnvironment {
     TESTING = 'TESTING',
 }
 
-export enum FlowRerunStrategy {
+export enum FlowRetryStrategy {
     FROM_FIRST_STEP = 'FROM_FIRST_STEP',
     FROM_FAILED_STEP = 'FROM_FAILED_STEP',
 }
 
-export type FlowRerunPayload = {
-    strategy: FlowRerunStrategy
+export type FlowRetryPayload = {
+    strategy: FlowRetryStrategy
 }

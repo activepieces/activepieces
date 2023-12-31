@@ -46,12 +46,12 @@
           </th>
           <td mat-cell *matCellDef="let run" class="!ap-text-center">
             <button mat-icon-button (click)="$event.stopImmediatePropagation()" [matMenuTriggerFor]="menu"
-              *ngIf="isRerunEnabled(run)">
+              *ngIf="isRetryEnabled(run)">
               <mat-icon>more_vert</mat-icon>
             </button>
             <mat-menu #menu="matMenu" xPosition="before">
-              <button mat-menu-item *ngFor="let option of flowRerunOptions" (click)="rerunFlow(run, option.strategy)">
-                <div class="ap-flex ap-gap-3 ap-items-center">
+              <button mat-menu-item *ngFor="let option of flowRetryOptions" (click)="retryFlow(run, option.strategy)">
+                <div class="ap-flex ap-items-center">
                   <mat-icon>{{ option.icon }}</mat-icon>
                   <span i18n>{{ option.label }}</span>
                 </div>

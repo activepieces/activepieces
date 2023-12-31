@@ -7,7 +7,7 @@ import {
 import {
   ApEdition,
   ExecutionOutputStatus,
-  FlowRerunStrategy,
+  FlowRetryStrategy,
   FlowRun,
   NotificationStatus,
   SeekPage,
@@ -44,16 +44,16 @@ export class RunsTableComponent implements OnInit {
     new FormControl();
   changeRunStatus$: Observable<void>;
   readonly ExecutionOutputStatus = ExecutionOutputStatus;
-  FlowRerunStrategy: typeof FlowRerunStrategy = FlowRerunStrategy;
-  flowRerunOptions = [
+  FlowRetryStrategy: typeof FlowRetryStrategy = FlowRetryStrategy;
+  flowRetryOptions = [
     {
       label: 'Retry Entire Flow',
-      strategy: FlowRerunStrategy.FROM_FIRST_STEP,
+      strategy: FlowRetryStrategy.FROM_FIRST_STEP,
       icon: 'loop',
     },
     {
       label: 'Retry Failed Step',
-      strategy: FlowRerunStrategy.FROM_FAILED_STEP,
+      strategy: FlowRetryStrategy.FROM_FAILED_STEP,
       icon: 'replay',
     },
   ];
@@ -119,12 +119,12 @@ export class RunsTableComponent implements OnInit {
     this.navigationService.navigate(route, newWindow);
   }
 
-  async rerunFlow(run: FlowRun, strategy: FlowRerunStrategy) {
-    this.runsService.rerun(run.id, strategy);
+  async retryFlow(run: FlowRun, strategy: FlowRetryStrategy) {
+    this.runsService.retry(run.id, strategy);
     run.status = ExecutionOutputStatus.RUNNING;
   }
 
-  isRerunEnabled(run: FlowRun) {
+  isRetryEnabled(run: FlowRun) {
     const enabledStatuses = [
       ExecutionOutputStatus.FAILED,
       ExecutionOutputStatus.INTERNAL_ERROR,

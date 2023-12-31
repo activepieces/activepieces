@@ -120,13 +120,12 @@ const loadInputAndLogFileId = async ({
         projectId: jobData.projectId,
     }
 
+    const flowRun = await flowRunService.getOneOrThrow({
+        id: jobData.runId,
+        projectId: jobData.projectId,
+    })
     switch (jobData.executionType) {
         case ExecutionType.RESUME: {
-            const flowRun = await flowRunService.getOneOrThrow({
-                id: jobData.runId,
-                projectId: jobData.projectId,
-            })
-
             if (isNil(flowRun.logsFileId)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.VALIDATION,
@@ -160,6 +159,20 @@ const loadInputAndLogFileId = async ({
         }
         case ExecutionType.BEGIN:
         default: {
+            if (!isNil(flowRun.logsFileId)) {
+                const logFile = await fileService.getOneOrThrow({
+                    fileId: flowRun.logsFileId,
+                    projectId: jobData.projectId,
+                })
+    
+                const serializedExecutionOutput = logFile.data.toString('utf-8')
+                const executionOutput: ExecutionOutput = JSON.parse(
+                    serializedExecutionOutput,
+                )
+                
+                jobData.payload = executionOutput.executionState.steps.trigger.output
+            }
+
             return {
                 input: {
                     triggerPayload: jobData.payload,
