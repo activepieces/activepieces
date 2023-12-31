@@ -236,7 +236,7 @@ describe('Flow API', () => {
         })
     })
 
-    describe.only('List Flows endpoint', () => {
+    describe('List Flows endpoint', () => {
         it('Filters Flows by status', async () => {
             // arrange
             const mockUser = createMockUser()
