@@ -10,7 +10,6 @@ import {
     FlowOperationRequest,
     FlowOperationType,
     FlowTemplateWithoutProjectInformation,
-    FlowVersion,
     FlowVersionId,
     FlowVersionState,
     ProjectId,
@@ -82,18 +81,21 @@ export const flowService = {
         }
 
         const paginationResult = await paginator.paginate(flowRepo.createQueryBuilder('flow').where(queryWhere))
-        const flowVersionsPromises: Promise<FlowVersion | null>[] = []
-        paginationResult.data.forEach((flow) => {
-            flowVersionsPromises.push(flowVersionService.getFlowVersion({
+
+        const populatedFlowPromises = paginationResult.data.map(async (flow) => {
+            const version = await flowVersionService.getFlowVersionOrThrow({
                 flowId: flow.id,
                 versionId: undefined,
-            }))
+            })
+
+            return {
+                ...flow,
+                version,
+            }
         })
-        const versions: (FlowVersion | null)[] = await Promise.all(flowVersionsPromises)
-        const populatedFlows: PopulatedFlow[] = paginationResult.data.map((flow, idx) => ({
-            ...flow,
-            version: versions[idx]!,
-        }))
+
+        const populatedFlows = await Promise.all(populatedFlowPromises)
+
         return paginationHelper.createPage(populatedFlows, paginationResult.cursor)
     },
 
