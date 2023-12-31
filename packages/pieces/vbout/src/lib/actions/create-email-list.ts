@@ -33,16 +33,6 @@ export const createEmailListAction = createAction({
       displayName: 'From Name',
       description: 'The From name of the list.',
     }),
-    doubleOptin: Property.Checkbox({
-      required: false,
-      displayName: 'Double Opt-in',
-      description: 'Email confirmation required (Double opt-in)?',
-    }),
-    notify: Property.ShortText({
-      required: false,
-      displayName: 'Notify',
-      description: 'Notify me of new subscribers.',
-    }),
     notify_email: Property.ShortText({
       required: false,
       displayName: 'Notify Email',
@@ -71,10 +61,6 @@ export const createEmailListAction = createAction({
     confirmation_message: Property.ShortText({
       required: false,
       displayName: 'Confirmation Message',
-    }),
-    communications: Property.Checkbox({
-      required: false,
-      displayName: 'Turn off Communications?',
     }),
   },
 

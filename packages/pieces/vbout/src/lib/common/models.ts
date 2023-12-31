@@ -16,7 +16,7 @@ export interface EmailListCreateRequest {
   reply_to?: string;
   fromemail?: string;
   from_name?: string;
-  doubleOptin?: boolean;
+  doubleOptin?: string;
   notify?: string;
   notify_email?: string;
   success_email?: string;
