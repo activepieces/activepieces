@@ -1,10 +1,12 @@
 import { Static, Type } from '@sinclair/typebox'
 import { Cursor } from '../../common/seek-page'
+import { FlowStatus } from '../flow'
 
 export const ListFlowsRequest = Type.Object({
     folderId: Type.Optional(Type.String()),
     limit: Type.Optional(Type.Number({})),
     cursor: Type.Optional(Type.String({})),
+    status: Type.Optional(Type.Enum(FlowStatus)),
 })
 
 export type ListFlowsRequest = Omit<Static<typeof ListFlowsRequest>, 'cursor'> & { cursor: Cursor | undefined }
@@ -14,4 +16,3 @@ export const GetFlowQueryParamsRequest = Type.Object({
 })
 
 export type GetFlowQueryParamsRequest = Static<typeof GetFlowQueryParamsRequest>
-

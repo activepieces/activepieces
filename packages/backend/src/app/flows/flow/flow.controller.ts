@@ -76,6 +76,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             folderId: request.query.folderId,
             cursorRequest: request.query.cursor ?? null,
             limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
+            status: request.query.status,
         })
     })
 

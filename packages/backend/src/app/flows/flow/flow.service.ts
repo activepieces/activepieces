@@ -64,8 +64,9 @@ export const flowService = {
         }
     },
 
-    async list({ projectId, cursorRequest, limit, folderId }: ListParams): Promise<SeekPage<PopulatedFlow>> {
+    async list({ projectId, cursorRequest, limit, folderId, status }: ListParams): Promise<SeekPage<PopulatedFlow>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
+
         const paginator = buildPaginator({
             entity: FlowEntity,
             query: {
@@ -75,9 +76,15 @@ export const flowService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
+
         const queryWhere: Record<string, unknown> = { projectId }
+
         if (folderId !== undefined) {
             queryWhere.folderId = (folderId === 'NULL' ? IsNull() : folderId)
+        }
+
+        if (status !== undefined) {
+            queryWhere.status = status
         }
 
         const paginationResult = await paginator.paginate(flowRepo.createQueryBuilder('flow').where(queryWhere))
@@ -342,6 +349,7 @@ type ListParams = {
     cursorRequest: Cursor | null
     limit: number
     folderId: string | undefined
+    status: FlowStatus | undefined
 }
 
 type GetOneParams = {
