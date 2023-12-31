@@ -38,7 +38,7 @@ export class RunsTableComponent implements OnInit {
   nonCommunityEdition$: Observable<boolean>;
   toggleNotificationFormControl: FormControl<boolean> = new FormControl();
   dataSource!: RunsTableDataSource;
-  displayedColumns = ['flowName', 'status', 'started', 'finished'];
+  displayedColumns = ['flowName', 'status', 'started', 'finished', 'action'];
   updateNotificationsValue$: Observable<boolean>;
   selectedStatus: FormControl<ExecutionOutputStatus | undefined> =
     new FormControl();
@@ -47,15 +47,13 @@ export class RunsTableComponent implements OnInit {
   FlowRerunStrategy: typeof FlowRerunStrategy = FlowRerunStrategy;
   flowRerunOptions = [
     {
-      label: 'Rerun Entire Flow',
+      label: 'Retry Entire Flow',
       strategy: FlowRerunStrategy.FROM_FIRST_STEP,
-      color: 'secondary',
       icon: 'loop',
     },
     {
-      label: 'Rerun From Failed',
+      label: 'Retry Failed Step',
       strategy: FlowRerunStrategy.FROM_FAILED_STEP,
-      color: 'secondary',
       icon: 'replay',
     },
   ];
@@ -123,12 +121,10 @@ export class RunsTableComponent implements OnInit {
 
   async rerunFlow(
     run: FlowRun,
-    strategy: FlowRerunStrategy,
-    event: MouseEvent
+    strategy: FlowRerunStrategy
   ) {
     this.runsService.rerun(run.id, strategy);
     run.status = ExecutionOutputStatus.RUNNING;
-    event.stopPropagation();
   }
 
   isRerunEnabled(run: FlowRun) {
