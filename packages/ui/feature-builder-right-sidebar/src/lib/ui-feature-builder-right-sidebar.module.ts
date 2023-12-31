@@ -16,7 +16,6 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { FlowRightSidebarComponent } from './flow-right-sidebar.component';
 import { NewEditPieceSidebarComponent } from './edit-step-sidebar/edit-step-sidebar.component';
 import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-builder-form-controls';
-import { VersionHistoryComponent } from './version-history/version-history.component';
 
 @NgModule({
   imports: [
@@ -39,7 +38,7 @@ import { VersionHistoryComponent } from './version-history/version-history.compo
     StepTypeItemComponent,
     FlowRightSidebarComponent,
     NewEditPieceSidebarComponent,
-    VersionHistoryComponent,
+
   ],
   exports: [FlowRightSidebarComponent],
 })

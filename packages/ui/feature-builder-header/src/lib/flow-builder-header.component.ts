@@ -17,7 +17,7 @@ import {
   BuilderSelectors,
   CollectionBuilderService,
   FlowsActions,
-  RightSideBarType,
+  LeftSideBarType,
   canvasActions,
 } from '@activepieces/ui/feature-builder-store';
 import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
@@ -154,10 +154,8 @@ export class FlowBuilderHeaderComponent implements OnInit {
 
   showVersions() {
     this.store.dispatch(
-      canvasActions.setRightSidebar({
-        sidebarType: RightSideBarType.VERSIONS,
-        props: 'NO_PROPS',
-        deselectCurrentStep: true,
+      canvasActions.setLeftSidebar({
+        sidebarType: LeftSideBarType.VERSIONS_HISTORY
       })
     );
   }

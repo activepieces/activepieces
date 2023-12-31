@@ -54,7 +54,7 @@ const __CanvasReducer = createReducer(
       ...initialState,
       displayedFlowVersion: action.displayedFlowVersion,
       selectedRun: action.run,
-      rightSidebar: state.rightSidebar.type === RightSideBarType.VERSIONS? state.rightSidebar: initialState.rightSidebar
+      leftSidebar: state.leftSidebar.type === LeftSideBarType.VERSIONS_HISTORY? state.leftSidebar: initialState.leftSidebar
     };
   }),
   on(canvasActions.deselectStep, (state): CanvasState => {
@@ -92,8 +92,11 @@ const __CanvasReducer = createReducer(
   }),
   on(canvasActions.setLeftSidebar, (state, { sidebarType }): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
+    debugger;
     return {
       ...clonedState,
+      focusedStep:sidebarType === LeftSideBarType.VERSIONS_HISTORY? undefined: clonedState.focusedStep,
+      selectedStepName: sidebarType === LeftSideBarType.VERSIONS_HISTORY? '': clonedState.selectedStepName,
       leftSidebar: {
         type: sidebarType,
       },
