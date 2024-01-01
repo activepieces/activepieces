@@ -2,6 +2,10 @@ import { createAction, Property } from "@activepieces/pieces-framework";
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { ntfyAuth } from "../..";
 
+const encodeToRFC2047 = (text: string) => {
+    return `=?UTF-8?B?${Buffer.from(text, 'utf-8').toString('base64')}?=`;
+}
+
 export const sendNotification = createAction({
     auth: ntfyAuth,
         name: "send_notification",
@@ -59,8 +63,10 @@ export const sendNotification = createAction({
             const accessToken = auth.access_token;
 
             const topic = propsValue.topic;
-            const title = propsValue.title;
-            const message = propsValue.message;
+            let title = propsValue.title;
+            let message = propsValue.message;
+            title = encodeToRFC2047(title as string);
+            message = encodeToRFC2047(message as string);
             const priority = propsValue.priority;
             const tags = propsValue.tags;
             const icon = propsValue.icon;
