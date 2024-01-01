@@ -22,7 +22,6 @@ import {
   ApEdition,
   ApFlagId,
   SignUpRequest,
-  UnhandledSwitchCaseError,
   UserStatus,
 } from '@activepieces/shared';
 import { OtpType } from '@activepieces/ee-shared';
@@ -163,8 +162,6 @@ export class SignUpComponent implements OnInit {
               }
               case ApEdition.ENTERPRISE:
                 return false;
-              default:
-                throw new UnhandledSwitchCaseError(ed);
             }
           })
         );
