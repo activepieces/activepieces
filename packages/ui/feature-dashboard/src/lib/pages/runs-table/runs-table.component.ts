@@ -47,12 +47,12 @@ export class RunsTableComponent implements OnInit {
   FlowRetryStrategy: typeof FlowRetryStrategy = FlowRetryStrategy;
   flowRetryOptions = [
     {
-      label: 'Retry Entire Flow',
-      strategy: FlowRetryStrategy.FROM_FIRST_STEP,
+      label: 'Retry on Latest Version',
+      strategy: FlowRetryStrategy.ON_LATEST_VERSION,
       icon: 'loop',
     },
     {
-      label: 'Retry Failed Step',
+      label: 'Retry From Failed Step',
       strategy: FlowRetryStrategy.FROM_FAILED_STEP,
       icon: 'replay',
     },

@@ -19,7 +19,6 @@ import {
     isNil,
     RunTerminationReason,
     FlowRetryStrategy,
-    ApId,
 } from '@activepieces/shared'
 import { APArrayContains, databaseConnection } from '../../database/database-connection'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
@@ -40,21 +39,10 @@ const getFlowRunOrCreate = async (params: GetOrCreateParams): Promise<Partial<Fl
     const { id, projectId, flowId, flowVersionId, flowDisplayName, environment } = params
 
     if (id) {
-        const flowRun = await flowRunService.getOneOrThrow({
+        return flowRunService.getOneOrThrow({
             id,
             projectId,
         })
-        // If mismatched versionIds, update flowRun with new versionId
-        if (flowRun.flowVersionId !== flowVersionId) {
-            flowRun.flowVersionId = flowVersionId
-            await flowRunRepo.update({
-                id: flowRun.id,
-            }, {
-                flowVersionId: flowVersionId,
-            })
-        }
-
-        return flowRun
     }
 
     return {
@@ -66,6 +54,14 @@ const getFlowRunOrCreate = async (params: GetOrCreateParams): Promise<Partial<Fl
         flowDisplayName,
         startTime: new Date().toISOString(),
     }
+}
+
+async function updateFlowRunToLatestFlowVersionId(flowRunId: FlowRunId): Promise<void> {
+    const flowRun = await flowRunRepo.findOneByOrFail({ id: flowRunId })
+    const flowVersion = await flowVersionService.getLatestLockedVersionOrThrow(flowRun.flowId)
+    await flowRunRepo.update(flowRunId, {
+        flowVersionId: flowVersion.id,
+    })
 }
 
 export const flowRunService = {
@@ -102,21 +98,22 @@ export const flowRunService = {
                     executionType: ExecutionType.RESUME,
                 })
                 break
-            case FlowRetryStrategy.FROM_FIRST_STEP:
+            case FlowRetryStrategy.ON_LATEST_VERSION: {
+                await updateFlowRunToLatestFlowVersionId(flowRunId)
                 await flowRunService.addToQueue({
                     flowRunId,
                     payload: {},
                     executionType: ExecutionType.BEGIN,
-                    useLatestVersion: true,
+
                 })
                 break
+            }
         }
     },
-    async addToQueue({ flowRunId, payload, executionType, useLatestVersion }: {
+    async addToQueue({ flowRunId, payload, executionType }: {
         flowRunId: FlowRunId
         payload: Record<string, unknown>
         executionType: ExecutionType
-        useLatestVersion?: boolean
     }): Promise<void> {
         logger.info(`[FlowRunService#resume] flowRunId=${flowRunId}`)
 
@@ -133,31 +130,11 @@ export const flowRunService = {
             })
         }
 
-        let flowVersionId: ApId = flowRunToResume.flowVersionId
-        if (useLatestVersion) {
-            const flowVersionToRun = await flowVersionService.getFlowVersion({
-                flowId: flowRunToResume.flowId,
-                versionId: undefined,
-                removeSecrets: true,
-            })
-
-            if (isNil(flowVersionToRun)) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.FLOW_VERSION_NOT_FOUND,
-                    params: {
-                        id: flowRunToResume.flowId,
-                    },
-                })
-            }
-            
-            flowVersionId = flowVersionToRun.id
-        }
-
         await flowRunService.start({
             payload,
             flowRunId: flowRunToResume.id,
             projectId: flowRunToResume.projectId,
-            flowVersionId,
+            flowVersionId: flowRunToResume.flowVersionId,
             executionType,
             environment: RunEnvironment.PRODUCTION,
         })
