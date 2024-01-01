@@ -120,50 +120,67 @@ const loadInputAndLogFileId = async ({
         projectId: jobData.projectId,
     }
 
-    if (jobData.executionType === ExecutionType.BEGIN) {
-        return {
-            input: {
-                triggerPayload: jobData.payload,
-                executionType: ExecutionType.BEGIN,
-                ...baseInput,
-            },
-        }
-    }
-
     const flowRun = await flowRunService.getOneOrThrow({
         id: jobData.runId,
         projectId: jobData.projectId,
     })
+    switch (jobData.executionType) {
+        case ExecutionType.RESUME: {
+            if (isNil(flowRun.logsFileId)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: `flowRunId=${flowRun.id}`,
+                    },
+                })
+            }
 
-    if (isNil(flowRun.pauseMetadata) || isNil(flowRun.logsFileId)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: `flowRunId=${flowRun.id}`,
-            },
-        })
-    }
+            const logFile = await fileService.getOneOrThrow({
+                fileId: flowRun.logsFileId,
+                projectId: jobData.projectId,
+            })
 
-    const logFile = await fileService.getOneOrThrow({
-        fileId: flowRun.logsFileId,
-        projectId: jobData.projectId,
-    })
-
-    const serializedExecutionOutput = logFile.data.toString('utf-8')
-    const executionOutput: ExecutionOutput = JSON.parse(
-        serializedExecutionOutput,
-    )
+            const serializedExecutionOutput = logFile.data.toString('utf-8')
+            const executionOutput: ExecutionOutput = JSON.parse(
+                serializedExecutionOutput,
+            )
 
 
-    return {
-        input: {
-            ...baseInput,
-            executionType: ExecutionType.RESUME,
-            tasks: executionOutput.tasks,
-            executionState: executionOutput.executionState,
-            resumePayload: jobData.payload,
-        },
-        logFileId: logFile.id,
+            return {
+                input: {
+                    ...baseInput,
+                    executionType: ExecutionType.RESUME,
+                    tasks: executionOutput.tasks,
+                    executionState: executionOutput.executionState,
+                    resumePayload: jobData.payload,
+                },
+                logFileId: logFile.id,
+            }
+        }
+        case ExecutionType.BEGIN:
+        default: {
+            if (!isNil(flowRun.logsFileId)) {
+                const logFile = await fileService.getOneOrThrow({
+                    fileId: flowRun.logsFileId,
+                    projectId: jobData.projectId,
+                })
+    
+                const serializedExecutionOutput = logFile.data.toString('utf-8')
+                const executionOutput: ExecutionOutput = JSON.parse(
+                    serializedExecutionOutput,
+                )
+                
+                jobData.payload = executionOutput.executionState.steps.trigger.output
+            }
+
+            return {
+                input: {
+                    triggerPayload: jobData.payload,
+                    executionType: ExecutionType.BEGIN,
+                    ...baseInput,
+                },
+            }
+        }
     }
 }
 
@@ -197,7 +214,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     logger.info(`[FlowWorker#executeFlow] flowRunId=${jobData.runId} sandboxId=${sandbox.boxId} prepareTime=${Date.now() - startTime}ms`)
 
     try {
-
+        
         const { input, logFileId } = await loadInputAndLogFileId({
             flowVersion,
             jobData,

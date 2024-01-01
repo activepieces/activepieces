@@ -111,7 +111,7 @@ const execute = async <Result extends EngineHelperResult>(
 ): Promise<EngineHelperResponse<Result>> => {
     try {
         logger.debug({ operation, sandboxId: sandbox.boxId }, '[EngineHelper#execute]')
-
+        
         const sandboxPath = sandbox.getSandboxFolderPath()
 
 

@@ -80,4 +80,3 @@ export const isObject = (obj: unknown): obj is Record<string, unknown> => {
 }
 
 export type MakeKeyNonNullableAndRequired<T extends object, K extends keyof T> = T & { [P in K]-?: NonNullable<T[P]> }
-

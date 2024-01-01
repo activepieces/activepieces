@@ -84,7 +84,11 @@ export class FlowBuilderHeaderComponent implements OnInit {
     this.editingFlowName = event;
   }
   redirectHome(newWindow: boolean) {
-    this.navigationService.navigate('/flows', newWindow);
+    if (this.router.url.includes('/runs')) {
+      this.navigationService.navigate('/runs', newWindow);
+    } else {
+      this.navigationService.navigate('/flows', newWindow);
+    }
   }
   saveFlowName(flowName: string) {
     this.setTitle$ = this.appearanceService.setTitle(flowName);
