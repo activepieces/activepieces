@@ -74,6 +74,8 @@ export const platformService = {
             ...spreadIfDefined('termsOfServiceUrl', params.termsOfServiceUrl),
             ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
             ...spreadIfDefined('defaultLocale', params.defaultLocale),
+            ...spreadIfDefined('showPoweredBy', params.showPoweredBy),
+            ...spreadIfDefined('embeddingEnabled', params.embeddingEnabled),
         }
 
         return repo.save(updatedPlatform)
@@ -155,6 +157,8 @@ type NewPlatform = Omit<Platform, 'created' | 'updated'>
 type UpdateParams = UpdatePlatformRequestBody & {
     id: PlatformId
     userId: UserId
+    showPoweredBy?: boolean
+    embeddingEnabled?: boolean
 }
 
 type GetOneByOwnerParams = {

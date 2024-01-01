@@ -1,5 +1,5 @@
 import { KeyAlgorithm, SigningKey, Platform, OAuthApp, FilteredPieceBehavior, CustomDomain, CustomDomainStatus, OtpModel, OtpType, OtpState, ProjectMember, ApiKey, ProjectMemberRole, ProjectMemberStatus } from '@activepieces/ee-shared'
-import { UserStatus, User, apId, Project, NotificationStatus, ProjectType, PieceType, PackageType, Flow, FlowStatus, FlowVersion, TriggerType, FlowVersionState, FlowTemplate, TemplateType } from '@activepieces/shared'
+import { UserStatus, User, apId, Project, NotificationStatus, ProjectType, PieceType, PackageType, Flow, FlowStatus, FlowVersion, TriggerType, FlowVersionState, FlowTemplate, TemplateType, FlowRun, ExecutionOutputStatus, RunEnvironment } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
 import bcrypt from 'bcrypt'
@@ -24,6 +24,7 @@ export const createMockUser = (user?: Partial<User>): User => {
         status: user?.status ?? faker.helpers.enumValue(UserStatus),
         imageUrl: user?.imageUrl,
         title: user?.title,
+        verified: user?.verified ?? faker.datatype.boolean(),
         externalId: user?.externalId,
         platformId: user?.platformId ?? null,
     }
@@ -254,6 +255,25 @@ export const createMockOtp = (otp?: Partial<OtpModel>): OtpModel => {
         userId: otp?.userId ?? apId(),
         value: otp?.value ?? faker.number.int({ min: 100000, max: 999999 }).toString(),
         state: otp?.state ?? faker.helpers.enumValue(OtpState),
+    }
+}
+
+export const createMockFlowRun = (flowRun?: Partial<FlowRun>): FlowRun => {
+    return {
+        id: flowRun?.id ?? apId(),
+        created: flowRun?.created ?? faker.date.recent().toISOString(),
+        updated: flowRun?.updated ?? faker.date.recent().toISOString(),
+        projectId: flowRun?.projectId ?? apId(),
+        flowId: flowRun?.flowId ?? apId(),
+        tags: flowRun?.tags ?? [],
+        flowVersionId: flowRun?.flowVersionId ?? apId(),
+        flowDisplayName: flowRun?.flowDisplayName ?? faker.lorem.word(),
+        logsFileId: flowRun?.logsFileId ?? null,
+        tasks: flowRun?.tasks,
+        status: flowRun?.status ?? faker.helpers.enumValue(ExecutionOutputStatus),
+        startTime: flowRun?.startTime ?? faker.date.recent().toISOString(),
+        finishTime: flowRun?.finishTime ?? faker.date.recent().toISOString(),
+        environment: flowRun?.environment ?? faker.helpers.enumValue(RunEnvironment),
     }
 }
 

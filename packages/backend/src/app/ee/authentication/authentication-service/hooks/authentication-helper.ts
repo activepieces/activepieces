@@ -101,7 +101,7 @@ async function assertUserIsInvitedToAnyProject({ email, platformId }: { email: s
     const isInvited = await isInvitedToProject({ email, platformId })
     if (!isInvited) {
         throw new ActivepiecesError({
-            code: ErrorCode.INVITATIION_ONLY_SIGN_UP,
+            code: ErrorCode.INVITATION_ONLY_SIGN_UP,
             params: {},
         })
     }

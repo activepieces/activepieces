@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Platform, UpdatePlatformRequestBody } from '@activepieces/ee-shared';
 import { environment } from '../environments/environment';
+import { SeekPage, UserResponse, UserStatus } from '@activepieces/shared';
 
 @Injectable({
   providedIn: 'root',
@@ -19,5 +20,14 @@ export class PlatformService {
     return this.http.get<Platform>(
       `${environment.apiUrl}/platforms/${platformId}`
     );
+  }
+  listUsers() {
+    return this.http.get<SeekPage<UserResponse>>(`${environment.apiUrl}/users`);
+  }
+
+  updateUser(userId: string, { status }: { status: UserStatus }) {
+    return this.http.post<void>(`${environment.apiUrl}/users/${userId}`, {
+      status,
+    });
   }
 }

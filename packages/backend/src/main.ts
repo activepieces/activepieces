@@ -2,12 +2,11 @@ import { system } from './app/helper/system/system'
 import { SystemProp } from './app/helper/system/system-prop'
 import { databaseConnection } from './app/database/database-connection'
 import { logger } from './app/helper/logger'
-import { ApEdition, ApEnvironment } from '@activepieces/shared'
+import { ApEnvironment } from '@activepieces/shared'
 import { seedDevData } from './app/database/seeds/dev-seeds'
 import { setupApp } from './app/app'
 import { FastifyInstance } from 'fastify'
-import { licenseValidator } from './app/ee/helper/license-validator'
-import { getEdition } from './app/helper/secret-helper'
+import { enforceLimits } from './app/ee/helper/license-validator'
 
 const start = async (app: FastifyInstance): Promise<void> => {
     try {
@@ -36,15 +35,8 @@ The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified 
             logger.warn(`[WARNING]: The application is running in ${environemnt} mode.`)
             logger.warn(`[WARNING]: This is only shows pieces specified in AP_DEV_PIECES ${pieces} environment variable.`)
         }
-
-        const edition = getEdition()
-        if (edition !== ApEdition.COMMUNITY) {
-            const verified = await licenseValidator.validate()
-            if (!verified) {
-                logger.error('[ERROR]: License key is not valid. Please contact sales@activepieces.com')
-                process.exit(1)
-            }
-        }
+        await enforceLimits()
+        
     }
     catch (err) {
         logger.error(err)

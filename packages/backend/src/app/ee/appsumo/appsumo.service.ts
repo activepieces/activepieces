@@ -52,6 +52,11 @@ export const appsumoService = {
             activation_email: email,
         })
     },
+    getById(uuid: string) {
+        return appsumoRepo.findOneBy({
+            uuid,
+        })
+    },
     delete({ email }: { email: string }) {
         return appsumoRepo.delete({
             activation_email: email,
