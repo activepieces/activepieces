@@ -40,7 +40,7 @@ export enum RunEnvironment {
 }
 
 export enum FlowRetryStrategy {
-    FROM_FIRST_STEP = 'FROM_FIRST_STEP',
+    ON_LATEST_VERSION = 'ON_LATEST_VERSION',
     FROM_FAILED_STEP = 'FROM_FAILED_STEP',
 }
 
