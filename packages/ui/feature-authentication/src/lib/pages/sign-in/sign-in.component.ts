@@ -84,7 +84,7 @@ export class SignInComponent {
             this.showDisabledUser =
               error.error.code === ErrorCode.USER_IS_INACTIVE;
             this.invitationOnlySignIn =
-              error.error.code === ErrorCode.INVITATIION_ONLY_SIGN_UP;
+              error.error.code === ErrorCode.INVITATION_ONLY_SIGN_UP;
           }
 
           this.loading = false;

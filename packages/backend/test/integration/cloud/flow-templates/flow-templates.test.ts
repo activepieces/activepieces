@@ -49,12 +49,12 @@ describe('Flow Templates', () => {
             // arrange
             const { mockPlatformTemplate } = await createMockPlatformTemplate({ platformId: CLOUD_PLATFORM_ID })
             const _randomPlatformTemplate = await createMockPlatformTemplate({ platformId: apId() })
-    
+
             const response = await app?.inject({
                 method: 'GET',
                 url: '/v1/flow-templates',
             })
-    
+
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
@@ -63,9 +63,9 @@ describe('Flow Templates', () => {
         })
     })
 
-    
+
     describe('Delete Flow Template', () => {
-        
+
         it('should not be able delete platform template as member', async () => {
             // arrange
             const { mockPlatform, mockPlatformTemplate } = await createMockPlatformTemplate({ platformId: apId() })
@@ -121,7 +121,7 @@ describe('Flow Templates', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.UNAUTHORIZED)
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
     })
 
@@ -141,5 +141,5 @@ async function createMockPlatformTemplate({ platformId }: { platformId: string }
     const mockPlatformTemplate = createMockTemplate({ platformId: mockPlatform.id, projectId: mockProject.id, type: TemplateType.PLATFORM })
     await databaseConnection.getRepository('flow_template').save(mockPlatformTemplate)
 
-    return { mockUser, mockPlatform, mockProject, mockPlatformTemplate } 
+    return { mockUser, mockPlatform, mockProject, mockPlatformTemplate }
 }

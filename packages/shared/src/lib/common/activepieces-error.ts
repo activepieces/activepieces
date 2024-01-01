@@ -13,6 +13,7 @@ export class ActivepiecesError extends Error {
 
 type ErrorParams =
     | AppConnectionNotFoundErrorParams
+    | AuthenticationParams
     | AuthorizationErrorParams
     | ConfigNotFoundErrorParams
     | EmailIsNotVerifiedErrorParams
@@ -33,6 +34,7 @@ type ErrorParams =
     | InvalidCredentialsErrorParams
     | InvalidJwtTokenErrorParams
     | InvalidOtpParams
+    | InvitationOnlySignUpParams
     | JobRemovalFailureErrorParams
     | OpenAiFailedErrorParams
     | PauseMetadataMissingErrorParams
@@ -58,7 +60,7 @@ export type BaseErrorParams<T, V> = {
 }
 
 export type InvitationOnlySignUpParams = BaseErrorParams<
-ErrorCode.INVITATIION_ONLY_SIGN_UP,
+ErrorCode.INVITATION_ONLY_SIGN_UP,
 Record<string, never>
 >
 
@@ -306,10 +308,18 @@ ErrorCode.SIGN_UP_DISABLED,
 Record<string, never>
 >
 
+export type AuthenticationParams = BaseErrorParams<
+ErrorCode.AUTHENTICATION,
+{
+    message: string
+}
+>
+
 export type InvalidOtpParams = BaseErrorParams<ErrorCode.INVALID_OTP, Record<string, never>>
 
 export enum ErrorCode {
     APP_CONNECTION_NOT_FOUND = 'APP_CONNECTION_NOT_FOUND',
+    AUTHENTICATION = 'AUTHENTICATION',
     AUTHORIZATION = 'AUTHORIZATION',
     CONFIG_NOT_FOUND = 'CONFIG_NOT_FOUND',
     EMAIL_IS_NOT_VERIFIED = 'EMAIL_IS_NOT_VERIFIED',
@@ -331,7 +341,7 @@ export enum ErrorCode {
     INVALID_CREDENTIALS = 'INVALID_CREDENTIALS',
     INVALID_OR_EXPIRED_JWT_TOKEN = 'INVALID_OR_EXPIRED_JWT_TOKEN',
     INVALID_OTP = 'INVALID_OTP',
-    INVITATIION_ONLY_SIGN_UP = 'INVITATIION_ONLY_SIGN_UP',
+    INVITATION_ONLY_SIGN_UP = 'INVITATION_ONLY_SIGN_UP',
     JOB_REMOVAL_FAILURE = 'JOB_REMOVAL_FAILURE',
     OPEN_AI_FAILED = 'OPEN_AI_FAILED',
     PAUSE_METADATA_MISSING = 'PAUSE_METADATA_MISSING',

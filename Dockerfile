@@ -12,7 +12,7 @@ COPY .npmrc package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
-RUN npx nx run-many --target=build --projects=backend,ui-core --skip-nx-cache
+RUN npx nx run-many --target=build --projects=backend,ui-core --configuration production --skip-nx-cache
 
 # Install backend production dependencies
 RUN cd dist/packages/backend && npm install --production --force
