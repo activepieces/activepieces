@@ -12,26 +12,23 @@
                     </div>
 
                     <div class="ap-flex-grow"></div>
-                    <div class="ap-flex ap-items-center ap-justify-center ap-w-[2.8125rem]">
+                    <div class="ap-flex ap-items-center ap-justify-center ap-w-[2.8125rem]" @fadeIn
+                        *ngIf="version.id === (viewedVersion$| async)?.id">
                         <svg-icon src="assets/img/custom/eye.svg" class="ap-w-[20px] ap-h-[20px] ap-fill-primary"
-                            i18n-matTooltip matTooltip="Viewing" @fadeIn
-                            *ngIf="version.id === (viewedVersion$| async)?.id" [applyClass]="true"></svg-icon>
+                            i18n-matTooltip matTooltip="Viewing" [applyClass]="true"></svg-icon>
                     </div>
-
-                    <div class="ap-w-[2.8125rem] ap-flex ap-items-center ap-justify-center" matTooltip="Published"
-                        i18n-matTooltip @fadeIn *ngIf="(publishedVersion$| async)?.id === version.id">
-                        <div class="ap-rounded-full  ap-bg-success-light ap-h-[10px] ap-w-[10px]">
-
-                        </div>
-                    </div>
-
-                    <div class="ap-w-[2.8125rem] ap-flex ap-items-center ap-justify-center" matTooltip="Draft"
-                        i18n-matTooltip
+                    <div class="ap-flex ap-items-center ap-justify-center ap-w-[2.8125rem]" @fadeIn
                         *ngIf="(draftVersionId$| async) === version.id && (publishedVersion$| async)?.id !== version.id">
-                        <div class="ap-rounded-full  ap-bg-warn ap-h-[10px] ap-w-[10px]">
-
-                        </div>
+                        <svg-icon src="assets/img/custom/draft.svg" class="ap-w-[20px] ap-h-[20px] ap-fill-warn"
+                            [applyClass]="true" i18n-matTooltip matTooltip="Draft"></svg-icon>
                     </div>
+                    <div class="ap-flex ap-items-center ap-justify-center ap-w-[2.8125rem]"
+                        *ngIf="(publishedVersion$| async)?.id === version.id" @fadeIn>
+                        <svg-icon src="assets/img/custom/published.svg"
+                            class="ap-w-[20px] ap-h-[20px] ap-fill-success-light" i18n-matTooltip
+                            matTooltip="Published"></svg-icon>
+                    </div>
+
 
                     <button mat-icon-button (click)="$event.stopImmediatePropagation()" [matMenuTriggerFor]="menu">
                         <mat-icon>more_vert</mat-icon>

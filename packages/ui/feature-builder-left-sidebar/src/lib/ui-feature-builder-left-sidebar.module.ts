@@ -9,9 +9,8 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { FlowLeftSidebarComponent } from './flow-left-sidebar.component';
 import { VersionHistoryComponent } from './version-history/version-history.component';
 import { UseAsDraftConfirmationDialogComponent } from './dialogs/use-as-draft-confirmation-dialog/use-as-draft-confirmation-dialog.component';
-import { FormsModule } from '@angular/forms';
 @NgModule({
-  imports: [CommonModule, UiCommonModule, MatExpansionModule, FormsModule],
+  imports: [CommonModule, UiCommonModule, MatExpansionModule],
   declarations: [
     SelectedStepResultComponent,
     FlowLeftSidebarComponent,
