@@ -6,7 +6,6 @@ import { SupportComponent } from './feedback/support.component';
 import { FlowBuilderHeaderComponent } from './flow-builder-header.component';
 import { ToggleInstanceStateComponent } from './toggle-instance-state/toggle-instance-state.component';
 import { PublishButtonComponent } from './publish-button/publish-button.component';
-import { DraftStatusComponent } from './draft-status/draft-status.component';
 import { ImportFlowDialogueComponent } from './import-flow-dialogue/import-flow-dialogue.component';
 import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-builder-form-controls';
 import { EeComponentsModule } from '@activepieces/ee-components';
@@ -18,7 +17,6 @@ const exportedDeclarations = [
   SupportComponent,
   ToggleInstanceStateComponent,
   PublishButtonComponent,
-  DraftStatusComponent,
   ImportFlowDialogueComponent,
   VersionHistroryButtonComponent,
 ];
