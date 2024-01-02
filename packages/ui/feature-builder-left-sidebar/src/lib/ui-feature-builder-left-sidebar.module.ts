@@ -7,7 +7,8 @@ import { StepResultComponent } from './run-details/steps-results-list/step-resul
 import { RunDetailsComponent } from './run-details/run-details.component';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { FlowLeftSidebarComponent } from './flow-left-sidebar.component';
-
+import { VersionHistoryComponent } from './version-history/version-history.component';
+import { UseAsDraftConfirmationDialogComponent } from './dialogs/use-as-draft-confirmation-dialog/use-as-draft-confirmation-dialog.component';
 @NgModule({
   imports: [CommonModule, UiCommonModule, MatExpansionModule],
   declarations: [
@@ -16,6 +17,8 @@ import { FlowLeftSidebarComponent } from './flow-left-sidebar.component';
     IterationAccordionComponent,
     StepResultComponent,
     RunDetailsComponent,
+    VersionHistoryComponent,
+    UseAsDraftConfirmationDialogComponent,
   ],
   exports: [FlowLeftSidebarComponent],
 })

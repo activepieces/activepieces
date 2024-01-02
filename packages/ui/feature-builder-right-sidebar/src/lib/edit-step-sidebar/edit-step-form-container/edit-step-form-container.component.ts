@@ -30,7 +30,6 @@ import {
   PieceTriggerSettings,
   StepSettings,
   TriggerType,
-  UnhandledSwitchCaseError,
   UpdateActionRequest,
   UpdateTriggerRequest,
 } from '@activepieces/shared';
@@ -255,9 +254,6 @@ export class EditStepFormContainerComponent {
           ...inputControlValue,
         };
         return settings;
-      }
-      default: {
-        throw new UnhandledSwitchCaseError(currentStep);
       }
     }
   }

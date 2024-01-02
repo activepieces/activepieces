@@ -142,6 +142,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
       tap((value) => {
         const routeData = value as BuilderRouteData | RunRouteData;
         const runInformation = routeData.runInformation;
+        
         if (runInformation) {
           this.store.dispatch(
             BuilderActions.loadInitial({

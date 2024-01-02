@@ -91,7 +91,7 @@ const setInitial = createAction(
   }>()
 );
 const importFlow = createAction(
-  FlowsActionType.SET_INITIAL,
+  FlowsActionType.IMPORT_FLOW,
   props<{
     flow: PopulatedFlow;
   }>()
