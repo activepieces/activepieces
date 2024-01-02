@@ -1,6 +1,6 @@
 <ap-sidebar-header (closeClicked)="closeSidebar()" [title]="sideBarDisplayName"></ap-sidebar-header>
 <ng-container *ngIf="flowVersions$ | async as flowVersions; else loading">
-    <ng-container *ngIf="!rollingBack; else loading">
+    <ng-container *ngIf="!rewritingDraft; else loading">
         <div class="ap-flex ap-flex-col ap-gap-4 ap-p-5">
             <ng-container *ngFor="let version of flowVersions.data;let idx=index">
                 <div class="ap-flex  ap-items-center  ">
@@ -14,19 +14,19 @@
                     <div class="ap-flex-grow"></div>
                     <div class="ap-flex ap-items-center ap-justify-center ap-w-[2.8125rem]">
                         <svg-icon src="assets/img/custom/eye.svg" class="ap-w-[20px] ap-h-[20px] ap-fill-primary"
-                            i18n-matTooltip matTooltip="Viewing" *ngIf="version.id === (viewedVersion$| async)?.id"
-                            [applyClass]="true"></svg-icon>
+                            i18n-matTooltip matTooltip="Viewing" @fadeIn
+                            *ngIf="version.id === (viewedVersion$| async)?.id" [applyClass]="true"></svg-icon>
                     </div>
 
                     <div class="ap-w-[2.8125rem] ap-flex ap-items-center ap-justify-center" matTooltip="Published"
-                        i18bn-matTooltip *ngIf="(publishedVersion$| async)?.id === version.id">
+                        i18n-matTooltip @fadeIn *ngIf="(publishedVersion$| async)?.id === version.id">
                         <div class="ap-rounded-full  ap-bg-success-light ap-h-[10px] ap-w-[10px]">
 
                         </div>
                     </div>
 
                     <div class="ap-w-[2.8125rem] ap-flex ap-items-center ap-justify-center" matTooltip="Draft"
-                        i18bn-matTooltip
+                        i18n-matTooltip
                         *ngIf="(draftVersionId$| async) === version.id && (publishedVersion$| async)?.id !== version.id">
                         <div class="ap-rounded-full  ap-bg-warn ap-h-[10px] ap-w-[10px]">
 
@@ -45,7 +45,7 @@
                             </div>
                         </button>
                         <button *ngIf="(draftVersionId$| async) !== version.id" mat-menu-item
-                            (click)="rollback(version)">
+                            (click)="useAsDraft(version,flowVersions.data.length - idx)">
                             <div class="ap-flex ap-gap-2 ap-items-center" i18n>
                                 <svg-icon src="assets/img/custom/pencil-underline.svg" class="ap-w-[20px] ap-h-[20px]"
                                     [applyClass]="true"></svg-icon> Use as draft
@@ -67,5 +67,5 @@
     </div>
 </ng-template>
 
-<ng-container *ngIf="rollbackVersion$ | async"></ng-container>
+<ng-container *ngIf="useAsDraft$ | async"></ng-container>
 <ng-container *ngIf="displayVersion$ | async"></ng-container>

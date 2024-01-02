@@ -68,7 +68,7 @@ export const flowVersionService = {
         let operations: FlowOperationRequest[] = []
         let mutatedFlowVersion: FlowVersion = flowVersion
         switch (userOperation.type) {
-            case FlowOperationType.ROLLBACK: {
+            case FlowOperationType.USE_AS_DRAFT: {
                 const previousVersion = await flowVersionService.getFlowVersion({
                     flowId: flowVersion.flowId,
                     versionId: userOperation.request.versionId,

@@ -1,5 +1,5 @@
 import { FlowOperationType, FlowVersion, SeekPage } from '@activepieces/shared';
-import { FlowService } from '@activepieces/ui/common';
+import { FlowService, fadeIn400ms } from '@activepieces/ui/common';
 import {
   BuilderSelectors,
   FlowsActions,
@@ -20,21 +20,31 @@ import {
   tap,
   take,
 } from 'rxjs';
+import {
+  UseAsDraftConfirmationDialogComponent,
+  UseAsDraftConfirmationDialogData,
+} from '../dialogs/use-as-draft-confirmation-dialog/use-as-draft-confirmation-dialog.component';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-version-history',
   templateUrl: './version-history.component.html',
+  animations: [fadeIn400ms],
 })
 export class VersionHistoryComponent {
   sideBarDisplayName = $localize`Versions`;
   flowVersions$: Observable<SeekPage<FlowVersion>>;
-  rollbackVersion$?: Observable<void>;
-  rollingBack = false;
+  useAsDraft$?: Observable<void>;
+  rewritingDraft = false;
   publishedVersion$: Observable<FlowVersion | undefined>;
   draftVersionId$: Observable<string>;
   displayVersion$?: Observable<unknown>;
   viewedVersion$: Observable<FlowVersion>;
-  constructor(private flowService: FlowService, private store: Store) {
+  constructor(
+    private flowService: FlowService,
+    private store: Store,
+    private matDialog: MatDialog
+  ) {
     this.flowVersions$ = this.store
       .select(BuilderSelectors.selectCurrentFlow)
       .pipe(switchMap((flow) => this.flowService.listVersions(flow.id)));
@@ -49,30 +59,47 @@ export class VersionHistoryComponent {
     );
   }
 
-  rollback(flowVersion: FlowVersion) {
-    if (this.rollingBack) {
+  useAsDraft(flowVersion: FlowVersion, versionNumber: number) {
+    if (this.rewritingDraft) {
       return;
     }
-    this.rollingBack = true;
-    this.rollbackVersion$ = this.flowService
+    const useAsDraftRequest$ = this.flowService
       .update(flowVersion.flowId, {
-        type: FlowOperationType.ROLLBACK,
+        type: FlowOperationType.USE_AS_DRAFT,
         request: {
           versionId: flowVersion.id,
         },
       })
       .pipe(
         tap((flow) => {
-          this.rollingBack = false;
+          this.rewritingDraft = false;
           this.store.dispatch(FlowsActions.importFlow({ flow }));
           this.viewDraftVersion();
           this.closeSidebar();
         }),
         catchError(() => {
-          this.rollingBack = false;
+          this.rewritingDraft = false;
           return of(void 0);
         }),
         map(() => void 0)
+      );
+
+    const data: UseAsDraftConfirmationDialogData = {
+      versionNumber,
+    };
+    this.useAsDraft$ = this.matDialog
+      .open(UseAsDraftConfirmationDialogComponent, {
+        data,
+      })
+      .afterClosed()
+      .pipe(
+        switchMap((confirmed) => {
+          if (confirmed) {
+            this.rewritingDraft = true;
+            return useAsDraftRequest$;
+          }
+          return of(void 0);
+        })
       );
   }
   closeSidebar() {
