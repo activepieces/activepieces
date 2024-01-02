@@ -48,7 +48,6 @@ export class FlowBuilderHeaderComponent implements OnInit {
   isInEmbedded$: Observable<boolean>;
   hasFlowBeenPublished$: Observable<boolean>;
   showBackButtonAndFolderName$: Observable<boolean>;
-  showVersionsListButton$: Observable<boolean>;
   constructor(
     public dialogService: MatDialog,
     private store: Store,
@@ -70,9 +69,6 @@ export class FlowBuilderHeaderComponent implements OnInit {
     this.fullLogo$ = this.flagService
       .getLogos()
       .pipe(map((logos) => logos.fullLogoUrl));
-    this.showVersionsListButton$ = this.flagService
-      .getEdition()
-      .pipe(map((ed) => ed !== ApEdition.COMMUNITY));
   }
 
   ngOnInit(): void {

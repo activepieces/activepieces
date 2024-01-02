@@ -85,8 +85,7 @@
       <app-support class="ap-z-50 ap-flex ap-items-center"></app-support>
       <ng-container *ngIf="(isInDebugMode$ | async) === false">
         <div class="ap-flex ap-items-center ap-gap-1">
-          <app-draft-status *ngIf="(showVersionsListButton$ | async) === false"></app-draft-status>
-          <app-version-history-button *ngIf="(showVersionsListButton$ | async) === true"></app-version-history-button>
+          <app-version-history-button></app-version-history-button>
           <ng-container *ngIf="hasFlowBeenPublished$ | async">
             <ng-container *ngIf="flowStatus$ | async as status">
               <app-toggle-instance-state [flowStatus]="status"></app-toggle-instance-state>
