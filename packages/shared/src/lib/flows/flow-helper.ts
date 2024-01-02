@@ -20,7 +20,7 @@ import { TypeCompiler } from '@sinclair/typebox/compiler'
 import { FlowVersion, FlowVersionState } from './flow-version'
 import { ActivepiecesError, ErrorCode } from '../common/activepieces-error'
 import semver from 'semver'
-import { UnhandledSwitchCaseError, applyFunctionToValuesSync, isString } from '../common'
+import { applyFunctionToValuesSync, isString } from '../common'
 
 type Step = Action | Trigger
 
@@ -683,10 +683,6 @@ export function getImportOperations(
             {
                 break
             }
-            default:
-            {  
-                throw new UnhandledSwitchCaseError(step)
-            }
         }
       
       
@@ -711,10 +707,6 @@ function removeAnySubsequentAction(action: Action): Action {
         case ActionType.PIECE:
         case ActionType.CODE:
             break
-        default:
-        {
-            throw new UnhandledSwitchCaseError(clonedAction)
-        }
     }
     delete clonedAction.nextAction
     return clonedAction

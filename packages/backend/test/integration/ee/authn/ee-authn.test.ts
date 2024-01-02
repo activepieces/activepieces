@@ -43,7 +43,7 @@ describe('Authentication API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
 
-            expect(Object.keys(responseBody)).toHaveLength(15)
+            expect(Object.keys(responseBody)).toHaveLength(16)
             expect(responseBody?.id).toHaveLength(21)
             expect(responseBody?.created).toBeDefined()
             expect(responseBody?.updated).toBeDefined()
@@ -53,7 +53,8 @@ describe('Authentication API', () => {
             expect(responseBody?.trackEvents).toBe(mockSignUpRequest.trackEvents)
             expect(responseBody?.newsLetter).toBe(mockSignUpRequest.newsLetter)
             expect(responseBody?.password).toBeUndefined()
-            expect(responseBody?.status).toBe('VERIFIED')
+            expect(responseBody?.status).toBe('ACTIVE')
+            expect(responseBody?.verified).toBe(true)
             expect(responseBody?.platformId).toBeDefined()
             expect(responseBody?.externalId).toBe(null)
             expect(responseBody?.projectId).toHaveLength(21)
@@ -93,6 +94,6 @@ describe('Authentication API', () => {
         expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         const responseBody = response?.json()
 
-        expect(responseBody?.code).toBe('INVITATIION_ONLY_SIGN_UP')
+        expect(responseBody?.code).toBe('INVITATION_ONLY_SIGN_UP')
     })
 })

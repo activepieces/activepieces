@@ -3,6 +3,7 @@ export enum PrincipalType {
     WORKER = 'WORKER',
     SERVICE = 'SERVICE',
     UNKNOWN = 'UNKNOWN',
+    SUPER_USER = 'SUPER_USER',
 }
 
 export const ALL_PRINICPAL_TYPES = Object.values(PrincipalType)

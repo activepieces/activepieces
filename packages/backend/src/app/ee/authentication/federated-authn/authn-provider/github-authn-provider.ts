@@ -1,4 +1,4 @@
-import { ActivepiecesError, AuthenticationResponse, ErrorCode, UserStatus, isNil } from '@activepieces/shared'
+import { ActivepiecesError, AuthenticationResponse, ErrorCode, isNil } from '@activepieces/shared'
 import { AuthnProvider } from './authn-provider'
 import { authenticationService } from '../../../../authentication/authentication-service'
 import { system } from '../../../../helper/system/system'
@@ -116,7 +116,7 @@ const getGitHubUserEmail = async (gitHubAccessToken: string): Promise<string> =>
 const authenticateUser = async (platformId: string | null, gitHubUserInfo: GitHubUserInfo): Promise<AuthenticationResponse> => {
     return authenticationService.federatedAuthn({
         email: gitHubUserInfo.email,
-        userStatus: UserStatus.VERIFIED,
+        verified: true,
         firstName: gitHubUserInfo.name,
         lastName: '',
         platformId,

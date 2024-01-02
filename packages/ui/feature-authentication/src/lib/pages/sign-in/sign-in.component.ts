@@ -36,6 +36,7 @@ export class SignInComponent {
   isCommunityEdition$: Observable<boolean>;
   showResendVerification = false;
   sendingVerificationEmail = false;
+  showDisabledUser = false;
   invitationOnlySignIn = false;
   showSignUpLink$: Observable<boolean>;
   sendVerificationEmail$?: Observable<void>;
@@ -70,6 +71,7 @@ export class SignInComponent {
       this.showInvalidEmailOrPasswordMessage = false;
       this.showResendVerification = false;
       this.invitationOnlySignIn = false;
+      this.showDisabledUser = false;
       const request = this.loginForm.getRawValue();
       this.authenticate$ = this.authenticationService.signIn(request).pipe(
         catchError((error: HttpErrorResponse) => {
@@ -79,8 +81,10 @@ export class SignInComponent {
           if (error.status === StatusCodes.FORBIDDEN) {
             this.showResendVerification =
               error.error.code === ErrorCode.EMAIL_IS_NOT_VERIFIED;
+            this.showDisabledUser =
+              error.error.code === ErrorCode.USER_IS_INACTIVE;
             this.invitationOnlySignIn =
-              error.error.code === ErrorCode.INVITATIION_ONLY_SIGN_UP;
+              error.error.code === ErrorCode.INVITATION_ONLY_SIGN_UP;
           }
 
           this.loading = false;

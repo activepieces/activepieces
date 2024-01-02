@@ -762,6 +762,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "la3rence",
+      "name": "la3rence",
+      "avatar_url": "https://avatars.githubusercontent.com/u/24540598?v=4",
+      "profile": "https://lawrenceli.me",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

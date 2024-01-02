@@ -116,14 +116,14 @@ describe('Enterprise User API', () => {
         })
     })
 
-    describe('Suspend user endpoint', () => {
-        it('Updates user status to be SUSPENDED', async () => {
+    describe('Update user endpoint', () => {
+        it('Updates user status to be INACTIVE', async () => {
             // arrange
             const { mockOwner, mockPlatform } = createMockPlatformWithOwner()
 
             const mockUser = createMockUser({
                 platformId: mockPlatform.id,
-                status: UserStatus.VERIFIED,
+                status: UserStatus.ACTIVE,
             })
 
             await databaseConnection.getRepository('user').save([mockOwner, mockUser])
@@ -141,19 +141,24 @@ describe('Enterprise User API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/users/${mockUser.id}/suspend`,
+                url: `/v1/users/${mockUser.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
+                },
+                body: {
+                    status: UserStatus.INACTIVE,
                 },
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+            expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            const user = await databaseConnection.getRepository('user').findOneBy({ id: mockUser.id })
-            expect(user?.status).toBe(UserStatus.SUSPENDED)
+            const responseJson = response?.json()
+            expect(responseJson.id).toBe(mockUser.id)
+            expect(responseJson.password).toBeUndefined()
+            expect(responseJson.status).toBe(UserStatus.INACTIVE)
         })
-
+        
         it('Fails if user doesn\'t exist', async () => {
             // arrange
             const nonExistentUserId = apId()
@@ -169,23 +174,27 @@ describe('Enterprise User API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/users/${nonExistentUserId}/suspend`,
+                url: `/v1/users/${nonExistentUserId}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
+                },
+                body: {
+                    status: UserStatus.INACTIVE,
                 },
             })
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            
         })
 
-        it('Allows service accounts', async () => {
+        it('Allows service accounts to activate', async () => {
             // arrange
             const { mockOwner, mockPlatform, mockApiKey } = setupMockApiKeyServiceAccount()
 
             const mockUser = createMockUser({
                 platformId: mockPlatform.id,
-                status: UserStatus.VERIFIED,
+                status: UserStatus.INACTIVE,
             })
 
             await databaseConnection.getRepository('user').save([mockOwner, mockUser])
@@ -195,17 +204,23 @@ describe('Enterprise User API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/users/${mockUser.id}/suspend`,
+                url: `/v1/users/${mockUser.id}`,
                 headers: {
                     authorization: `Bearer ${mockApiKey.value}`,
+                },
+                body: {
+                    status: UserStatus.ACTIVE,
                 },
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+            expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            const user = await databaseConnection.getRepository('user').findOneBy({ id: mockUser.id })
-            expect(user?.status).toBe(UserStatus.SUSPENDED)
+    
+            const responseJson = response?.json()
+            expect(responseJson.id).toBe(mockUser.id)
+            expect(responseJson.password).toBeUndefined()
+            expect(responseJson.status).toBe(UserStatus.ACTIVE)
         })
 
         it('Requires principal to be platform owner', async () => {
@@ -219,9 +234,12 @@ describe('Enterprise User API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/users/${mockUserId}/suspend`,
+                url: `/v1/users/${mockUserId}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
+                },
+                body: {
+                    status: UserStatus.INACTIVE,
                 },
             })
 

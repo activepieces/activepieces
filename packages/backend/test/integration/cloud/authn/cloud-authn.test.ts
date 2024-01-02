@@ -52,7 +52,7 @@ describe('Authentication API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
 
-            expect(Object.keys(responseBody)).toHaveLength(15)
+            expect(Object.keys(responseBody)).toHaveLength(16)
             expect(responseBody?.id).toHaveLength(21)
             expect(responseBody?.created).toBeDefined()
             expect(responseBody?.updated).toBeDefined()
@@ -62,7 +62,8 @@ describe('Authentication API', () => {
             expect(responseBody?.trackEvents).toBe(mockSignUpRequest.trackEvents)
             expect(responseBody?.newsLetter).toBe(mockSignUpRequest.newsLetter)
             expect(responseBody?.password).toBeUndefined()
-            expect(responseBody?.status).toBe('CREATED')
+            expect(responseBody?.status).toBe('ACTIVE')
+            expect(responseBody?.verified).toBe(false)
             expect(responseBody?.platformId).toBe(mockPlatform.id)
             expect(responseBody?.externalId).toBe(null)
             expect(responseBody?.projectId).toHaveLength(21)
@@ -133,7 +134,8 @@ describe('Authentication API', () => {
             const responseBody = response?.json()
 
             expect(responseBody?.platformId).toBe(mockPlatform.id)
-            expect(responseBody?.status).toBe('VERIFIED')
+            expect(responseBody?.status).toBe('ACTIVE')
+            expect(responseBody?.verified).toBe(true)
             expect(responseBody?.projectId).toBe(mockProject.id)
         }) 
 
@@ -158,7 +160,7 @@ describe('Authentication API', () => {
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
             const responseBody = response?.json()
 
-            expect(responseBody?.code).toBe('INVITATIION_ONLY_SIGN_UP')
+            expect(responseBody?.code).toBe('INVITATION_ONLY_SIGN_UP')
         })
     
         it('Adds tasks for referrals', async () => {
@@ -264,7 +266,8 @@ describe('Authentication API', () => {
             const mockUser = createMockUser({
                 email: mockEmail,
                 password: mockPassword,
-                status: UserStatus.VERIFIED,
+                verified: true,
+                status: UserStatus.ACTIVE,
             })
             await databaseConnection.getRepository('user').save(mockUser)
 
@@ -289,7 +292,7 @@ describe('Authentication API', () => {
             const responseBody = response?.json()
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(Object.keys(responseBody)).toHaveLength(15)
+            expect(Object.keys(responseBody)).toHaveLength(16)
             expect(responseBody?.id).toBe(mockUser.id)
             expect(responseBody?.email).toBe(mockEmail)
             expect(responseBody?.firstName).toBe(mockUser.firstName)
@@ -298,6 +301,7 @@ describe('Authentication API', () => {
             expect(responseBody?.newsLetter).toBe(mockUser.newsLetter)
             expect(responseBody?.password).toBeUndefined()
             expect(responseBody?.status).toBe(mockUser.status)
+            expect(responseBody?.verified).toBe(mockUser.verified)
             expect(responseBody?.platformId).toBe(null)
             expect(responseBody?.externalId).toBe(null)
             expect(responseBody?.projectId).toBe(mockProject.id)
@@ -314,7 +318,8 @@ describe('Authentication API', () => {
             const mockUser = createMockUser({
                 email: mockEmail,
                 password: mockPassword,
-                status: UserStatus.VERIFIED,
+                verified: true,
+                status: UserStatus.ACTIVE,
                 platformId: mockPlatformId,
             })
             await databaseConnection.getRepository('user').save(mockUser)
@@ -366,7 +371,8 @@ describe('Authentication API', () => {
             const mockUser = createMockUser({
                 email: mockEmail,
                 password: mockPassword,
-                status: UserStatus.VERIFIED,
+                verified: true,
+                status: UserStatus.ACTIVE,
                 platformId: mockPlatformId,
             })
             await databaseConnection.getRepository('user').save(mockUser)
@@ -409,7 +415,8 @@ describe('Authentication API', () => {
             const mockUser = createMockUser({
                 email: mockEmail,
                 password: mockPassword,
-                status: UserStatus.VERIFIED,
+                verified: true,
+                status: UserStatus.ACTIVE,
             })
             await databaseConnection.getRepository('user').save(mockUser)
 
@@ -436,7 +443,7 @@ describe('Authentication API', () => {
             expect(responseBody?.code).toBe('INVALID_CREDENTIALS')
         })
 
-        it('Fails if user status is SUSPENDED', async () => {
+        it('Fails if user status is INACTIVE', async () => {
             // arrange
             const mockEmail = faker.internet.email()
             const mockPassword = 'password'
@@ -444,7 +451,8 @@ describe('Authentication API', () => {
             const mockUser = createMockUser({
                 email: mockEmail,
                 password: mockPassword,
-                status: UserStatus.SUSPENDED,
+                verified: true,
+                status: UserStatus.INACTIVE,
             })
             await databaseConnection.getRepository('user').save(mockUser)
 
@@ -469,7 +477,7 @@ describe('Authentication API', () => {
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
             const responseBody = response?.json()
 
-            expect(responseBody?.code).toBe('EMAIL_IS_NOT_VERIFIED')
+            expect(responseBody?.code).toBe('USER_IS_INACTIVE')
             expect(responseBody?.params?.email).toBe(mockUser.email)
         })
     })

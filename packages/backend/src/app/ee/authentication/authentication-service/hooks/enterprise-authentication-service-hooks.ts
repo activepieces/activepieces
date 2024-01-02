@@ -7,6 +7,7 @@ import { platformService } from '../../../platform/platform.service'
 import { userService } from '../../../../user/user-service'
 import { authenticationHelper } from './authentication-helper'
 import { projectService } from '../../../../project/project-service'
+import { enforceLimits } from '../../../helper/license-validator'
 
 const DEFAULT_PLATFORM_NAME = 'platform'
 
@@ -42,6 +43,8 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
         })
 
         await userService.updatePlatformId({ id: user.id, platformId: platform.id })
+
+        await enforceLimits()
 
         await flagService.save({
             id: ApFlagId.PLATFORM_CREATED,

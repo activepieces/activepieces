@@ -6,6 +6,7 @@ import { PlatformAppearanceComponent } from './pages/platform-appearance/platfor
 import { PlatformSettingsComponent } from './pages/platform-settings/platform-settings.component';
 import { PiecesTableComponent } from './pages/pieces-table/pieces-table.component';
 import { TemplatesTableComponent } from './pages/templates-table/templates-table.component';
+import { UsersTableComponent } from './pages/users-table/users-table.component';
 
 export const uiEePlatformRoutes: Route[] = [
   {
@@ -62,6 +63,13 @@ export const uiEePlatformRoutes: Route[] = [
         },
         resolve: {
           platform: platformResolver,
+        },
+      },
+      {
+        path: 'users',
+        component: UsersTableComponent,
+        data: {
+          title: $localize`Users`,
         },
       },
     ],

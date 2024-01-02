@@ -1,4 +1,4 @@
-include-pre-releases: true
+include-pre-releases: false
 exclude-labels:
   - 'skip-changelog'
   - 'release'

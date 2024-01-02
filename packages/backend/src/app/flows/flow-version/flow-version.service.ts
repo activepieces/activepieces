@@ -113,6 +113,17 @@ export const flowVersionService = {
             id,
         })
     },
+    async getLatestLockedVersionOrThrow(flowId: FlowId): Promise<FlowVersion> {
+        return flowVersionRepo.findOneOrFail({
+            where: {
+                flowId,
+                state: FlowVersionState.LOCKED,
+            },
+            order: {
+                created: 'DESC',
+            },
+        })
+    },
     async getOneOrThrow(id: FlowVersionId): Promise<FlowVersion> {
         const flowVersion = await flowVersionService.getOne(id)
         if (isNil(flowVersion)) {

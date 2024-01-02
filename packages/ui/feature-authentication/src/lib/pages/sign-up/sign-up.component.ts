@@ -18,13 +18,7 @@ import {
   containsLowercaseCharacter,
   containsNumber,
 } from '@activepieces/ui/common';
-import {
-  ApEdition,
-  ApFlagId,
-  SignUpRequest,
-  UnhandledSwitchCaseError,
-  UserStatus,
-} from '@activepieces/shared';
+import { ApEdition, ApFlagId, SignUpRequest } from '@activepieces/shared';
 import { OtpType } from '@activepieces/ee-shared';
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 
@@ -98,14 +92,14 @@ export class SignUpComponent implements OnInit {
             response &&
             response.body &&
             response.body.token &&
-            response.body.status === UserStatus.VERIFIED
+            response.body.verified
           ) {
             this.authenticationService.saveToken(response.body.token);
             this.authenticationService.saveUser(response);
           }
         }),
         tap((response) => {
-          if (response && response.body?.status === UserStatus.VERIFIED) {
+          if (response && response.body?.verified) {
             this.redirect();
           } else {
             this.signUpDone = true;
@@ -163,8 +157,6 @@ export class SignUpComponent implements OnInit {
               }
               case ApEdition.ENTERPRISE:
                 return false;
-              default:
-                throw new UnhandledSwitchCaseError(ed);
             }
           })
         );

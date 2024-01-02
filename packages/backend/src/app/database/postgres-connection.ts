@@ -93,6 +93,7 @@ import { AddPlatformIdToFile1701807681821 } from './migration/postgres/170180768
 import { AddPlatformIdToFlowTemplates1703411318826 } from './migration/postgres/1703411318826-AddPlatformIdToFlowTemplates'
 import { RemoveFlowInstance1702379794665 } from './migration/postgres/1702379794665-remove-flow-instance'
 import { RenameAppNameToPieceName1703711596105 } from './migration/postgres/1703711596105-RenameAppNameToPieceName'
+import { AddVerifiedAndChangeStatus1703769034497 } from './migration/postgres/1703769034497-AddVerifiedAndChangeStatus'
 
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -162,6 +163,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddPlatformIdToFile1701807681821,
         RemoveFlowInstance1702379794665,
         RenameAppNameToPieceName1703711596105,
+        AddVerifiedAndChangeStatus1703769034497,
     ]
 
     const edition = getEdition()
