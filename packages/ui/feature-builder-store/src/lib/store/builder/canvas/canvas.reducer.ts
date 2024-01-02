@@ -28,7 +28,7 @@ const initialState: CanvasState = {
   },
   focusedStep: undefined,
   selectedStepName: 'initialVal',
-  displayedFlowVersion: {
+  viewedVersion: {
     flowId: '1',
     updatedBy: '',
     displayName: 'Flow version',
@@ -50,14 +50,28 @@ const initialState: CanvasState = {
 const __CanvasReducer = createReducer(
   initialState,
   on(canvasActions.setInitial, (state, action): CanvasState => {
+    const displayedFlowVersion = JSON.parse(
+      JSON.stringify(action.displayedFlowVersion)
+    );
+
     return {
       ...initialState,
-      displayedFlowVersion: action.displayedFlowVersion,
+      viewedVersion: displayedFlowVersion,
       selectedRun: action.run,
-      leftSidebar:
-        state.leftSidebar.type === LeftSideBarType.VERSIONS_HISTORY
-          ? state.leftSidebar
-          : initialState.leftSidebar,
+    };
+  }),
+  on(canvasActions.viewVersion, (state, action): CanvasState => {
+    const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
+    return {
+      ...clonedState,
+      viewedVersion: action.viewedFlowVersion,
+      focusedStep: undefined,
+      selectedStepName: '',
+      clickedAddBtnId: undefined,
+      rightSidebar: {
+        props: NO_PROPS,
+        type: RightSideBarType.NONE,
+      },
     };
   }),
   on(canvasActions.deselectStep, (state): CanvasState => {
@@ -65,6 +79,7 @@ const __CanvasReducer = createReducer(
     return {
       ...clonedState,
       focusedStep: undefined,
+      selectedStepName: '',
     };
   }),
   on(
@@ -80,9 +95,9 @@ const __CanvasReducer = createReducer(
   ),
   on(canvasActions.selectStepByName, (state, { stepName }) => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
-    if (clonedState.displayedFlowVersion) {
+    if (clonedState.viewedVersion) {
       const step: Step | undefined = flowHelper.getStep(
-        clonedState.displayedFlowVersion,
+        clonedState.viewedVersion,
         stepName
       );
       return {
@@ -116,13 +131,10 @@ const __CanvasReducer = createReducer(
   }),
   on(FlowsActions.updateAction, (state, { operation }): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
-    clonedState.displayedFlowVersion = flowHelper.apply(
-      clonedState.displayedFlowVersion,
-      {
-        type: FlowOperationType.UPDATE_ACTION,
-        request: operation,
-      }
-    );
+    clonedState.viewedVersion = flowHelper.apply(clonedState.viewedVersion, {
+      type: FlowOperationType.UPDATE_ACTION,
+      request: operation,
+    });
     if (operation.name === state.focusedStep?.name) {
       clonedState.focusedStep = operation;
     }
@@ -130,13 +142,10 @@ const __CanvasReducer = createReducer(
   }),
   on(FlowsActions.addAction, (state, { operation }): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
-    clonedState.displayedFlowVersion = flowHelper.apply(
-      clonedState.displayedFlowVersion,
-      {
-        type: FlowOperationType.ADD_ACTION,
-        request: operation,
-      }
-    );
+    clonedState.viewedVersion = flowHelper.apply(clonedState.viewedVersion, {
+      type: FlowOperationType.ADD_ACTION,
+      request: operation,
+    });
     return clonedState;
   }),
   on(FlowsActions.duplicateStep, (state, { operation }): CanvasState => {
@@ -145,11 +154,11 @@ const __CanvasReducer = createReducer(
       JSON.stringify(operation.flowVersionWithArtifacts)
     );
     const newStepName = flowHelper.findAvailableStepName(
-      state.displayedFlowVersion,
+      state.viewedVersion,
       'step'
     );
 
-    clonedState.displayedFlowVersion = flowHelper.apply(
+    clonedState.viewedVersion = flowHelper.apply(
       clonedFlowVersionWithArtifacts,
       {
         type: FlowOperationType.DUPLICATE_ACTION,
@@ -160,10 +169,7 @@ const __CanvasReducer = createReducer(
     );
     return {
       ...clonedState,
-      focusedStep: flowHelper.getStep(
-        clonedState.displayedFlowVersion,
-        newStepName
-      ),
+      focusedStep: flowHelper.getStep(clonedState.viewedVersion, newStepName),
       rightSidebar: {
         type: RightSideBarType.EDIT_STEP,
         props: 'NO_PROPS',
@@ -172,13 +178,10 @@ const __CanvasReducer = createReducer(
   }),
   on(FlowsActions.updateTrigger, (state, { operation }): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
-    clonedState.displayedFlowVersion = flowHelper.apply(
-      clonedState.displayedFlowVersion,
-      {
-        type: FlowOperationType.UPDATE_TRIGGER,
-        request: operation,
-      }
-    );
+    clonedState.viewedVersion = flowHelper.apply(clonedState.viewedVersion, {
+      type: FlowOperationType.UPDATE_TRIGGER,
+      request: operation,
+    });
     if (operation.name === state.focusedStep?.name) {
       clonedState.focusedStep = operation;
     }
@@ -186,30 +189,24 @@ const __CanvasReducer = createReducer(
   }),
   on(FlowsActions.deleteAction, (state, { operation }): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
-    clonedState.displayedFlowVersion = flowHelper.apply(
-      clonedState.displayedFlowVersion,
-      {
-        type: FlowOperationType.DELETE_ACTION,
-        request: operation,
-      }
-    );
+    clonedState.viewedVersion = flowHelper.apply(clonedState.viewedVersion, {
+      type: FlowOperationType.DELETE_ACTION,
+      request: operation,
+    });
     clonedState.focusedStep = undefined;
     return clonedState;
   }),
   on(FlowsActions.moveAction, (state, { operation }): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
-    clonedState.displayedFlowVersion = flowHelper.apply(
-      clonedState.displayedFlowVersion,
-      {
-        type: FlowOperationType.MOVE_ACTION,
-        request: operation,
-      }
-    );
+    clonedState.viewedVersion = flowHelper.apply(clonedState.viewedVersion, {
+      type: FlowOperationType.MOVE_ACTION,
+      request: operation,
+    });
     return clonedState;
   }),
   on(FlowsActions.importFlow, (state, { flow }) => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
-    clonedState.displayedFlowVersion = flow.version;
+    clonedState.viewedVersion = flow.version;
     return clonedState;
   }),
   on(canvasActions.setAddButtonId, (state, { id }) => {

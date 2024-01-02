@@ -295,22 +295,7 @@ export class FlowsEffects {
       })
     );
   });
-  showDraftVersion$ = createEffect(() => {
-    return this.actions$.pipe(
-      ofType(ViewModeActions.setViewMode),
-      concatLatestFrom(() =>
-        this.store.select(BuilderSelectors.selectCurrentFlow)
-      ),
-      switchMap(([action, flow]) => {
-        if (action.viewMode === ViewModeEnum.BUILDING) {
-          return of(
-            canvasActions.setInitial({ displayedFlowVersion: flow.version })
-          );
-        }
-        return EMPTY;
-      })
-    );
-  });
+
   applyUpdateOperation$ = createEffect(
     () => {
       return this.actions$.pipe(
@@ -491,7 +476,7 @@ export class FlowsEffects {
     );
   });
 
-  showPublishedVersion$ = createEffect(() => {
+  viewVersion$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(ViewModeActions.setViewMode),
       concatLatestFrom(() => [
@@ -503,8 +488,8 @@ export class FlowsEffects {
           case ViewModeEnum.SHOW_PUBLISHED:
             if (publishedVersion) {
               return of(
-                canvasActions.setInitial({
-                  displayedFlowVersion: publishedVersion,
+                canvasActions.viewVersion({
+                  viewedFlowVersion: publishedVersion,
                 })
               );
             } else {
@@ -517,15 +502,15 @@ export class FlowsEffects {
               throw Error('Trying to view draft version when there is none');
             } else {
               return of(
-                canvasActions.setInitial({
-                  displayedFlowVersion: currentFlow.version,
+                canvasActions.viewVersion({
+                  viewedFlowVersion: currentFlow.version,
                 })
               );
             }
           case ViewModeEnum.SHOW_OLD_VERSION: {
             return of(
-              canvasActions.setInitial({
-                displayedFlowVersion: action.version,
+              canvasActions.viewVersion({
+                viewedFlowVersion: action.version,
               })
             );
           }

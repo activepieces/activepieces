@@ -95,12 +95,9 @@ const selectFlowStatus = createSelector(
     return flow.status;
   }
 );
-const selectShownFlowVersion = createSelector(
-  selectCanvasState,
-  (canvasState) => {
-    return canvasState.displayedFlowVersion;
-  }
-);
+const selectViewedVersion = createSelector(selectCanvasState, (canvasState) => {
+  return canvasState.viewedVersion;
+});
 const selectIsCurrentVersionPublished = createSelector(
   selectCurrentFlow,
   (flow) => {
@@ -477,7 +474,7 @@ const selectAppConnectionsForMentionsDropdown = createSelector(
 
 const selectAllStepsForMentionsDropdown = createSelector(
   selectCurrentStep,
-  selectShownFlowVersion,
+  selectViewedVersion,
   selectAllFlowItemsDetails,
   (
     currentStep,
@@ -503,7 +500,7 @@ const selectAllStepsForMentionsDropdown = createSelector(
 );
 
 const selectStepIndex = (stepName: string) => {
-  return createSelector(selectShownFlowVersion, (version) => {
+  return createSelector(selectViewedVersion, (version) => {
     return FlowStructureUtil.findStepIndex(version.trigger, stepName);
   });
 };
@@ -633,7 +630,7 @@ export const BuilderSelectors = {
   selectTriggerSelectedSampleData,
   selectStepValidity,
   selectCurrentFlowVersionId,
-  selectShownFlowVersion,
+  selectViewedVersion,
   selectIsSchduleTrigger,
   selectCurrentStepPieceVersionAndName,
   selectCurrentFlowFolderName,

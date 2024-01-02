@@ -45,7 +45,7 @@ export class VersionHistoryComponent {
       BuilderSelectors.selectCurrentFlowVersionId
     );
     this.viewedVersion$ = this.store.select(
-      BuilderSelectors.selectShownFlowVersion
+      BuilderSelectors.selectViewedVersion
     );
   }
 
