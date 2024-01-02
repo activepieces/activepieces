@@ -97,8 +97,8 @@ const selectFlowStatus = createSelector(
 );
 const selectShownFlowVersion = createSelector(
   selectCanvasState,
-  (cavnasState) => {
-    return cavnasState.displayedFlowVersion;
+  (canvasState) => {
+    return canvasState.displayedFlowVersion;
   }
 );
 const selectIsCurrentVersionPublished = createSelector(
@@ -503,8 +503,8 @@ const selectAllStepsForMentionsDropdown = createSelector(
 );
 
 const selectStepIndex = (stepName: string) => {
-  return createSelector(selectCurrentFlow, (flow) => {
-    return FlowStructureUtil.findStepIndex(flow.version.trigger, stepName);
+  return createSelector(selectShownFlowVersion, (version) => {
+    return FlowStructureUtil.findStepIndex(version.trigger, stepName);
   });
 };
 const selectStepValidity = createSelector(selectCurrentStep, (step) => {
