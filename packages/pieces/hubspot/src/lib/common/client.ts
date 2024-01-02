@@ -296,7 +296,7 @@ export const hubSpotClient = {
 
     return response.body;
   },
-  async listContactOwners(accessToken: string) {
+  async listContactOwners(accessToken: string, email?: string) {
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `${API}/crm/v3/owners`,
@@ -306,6 +306,9 @@ export const hubSpotClient = {
       },
       headers: {
         'Content-Type': 'application/json',
+      },
+      queryParams: {
+        email: email!,
       },
     });
     return response.body;
