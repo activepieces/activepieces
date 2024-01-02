@@ -68,6 +68,13 @@ export class FlowExecutorContext {
         })
     }
 
+    public increaseTask(tasks = 1): FlowExecutorContext {
+        return new FlowExecutorContext({
+            ...this,
+            tasks: this.tasks + tasks,
+        })
+    }
+
     public upsertStep(stepName: string, stepOutput: StepOutput): FlowExecutorContext {
         const steps = {
             ...this.steps,
@@ -77,7 +84,7 @@ export class FlowExecutorContext {
 
         return new FlowExecutorContext({
             ...this,
-            tasks: this.tasks + 1,
+            tasks: this.tasks,
             currentState: {
                 ...this.currentState,
                 [stepName]: stepOutput.output,

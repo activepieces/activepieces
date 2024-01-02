@@ -14,6 +14,7 @@ import {
   FlowOperationRequest,
   FlowOperationType,
   FlowRun,
+  FlowVersion,
   FlowVersionId,
   ListFlowsRequest,
   MakeKeyNonNullableAndRequired,
@@ -121,6 +122,12 @@ export class FlowService {
     return this.http.post<PopulatedFlow>(
       environment.apiUrl + '/flows/' + flowId,
       operation
+    );
+  }
+
+  listVersions(flowId: FlowId): Observable<SeekPage<FlowVersion>> {
+    return this.http.get<SeekPage<FlowVersion>>(
+      environment.apiUrl + '/flows/' + flowId + '/versions'
     );
   }
 

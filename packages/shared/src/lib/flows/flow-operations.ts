@@ -16,6 +16,7 @@ export enum FlowOperationType {
     UPDATE_ACTION = 'UPDATE_ACTION',
     DELETE_ACTION = 'DELETE_ACTION',
     DUPLICATE_ACTION = 'DUPLICATE_ACTION',
+    USE_AS_DRAFT = 'USE_AS_DRAFT',
 }
 
 export enum StepLocationRelativeToParent {
@@ -26,6 +27,11 @@ export enum StepLocationRelativeToParent {
 }
 
 const optionalNextAction = Type.Object({ nextAction: Type.Optional(Action) })
+
+export const UseAsDraftRequest = Type.Object({
+    versionId: Type.String(),
+})
+export type UseAsDraftRequest = Static<typeof UseAsDraftRequest>
 
 export const LockFlowRequest = Type.Object({
     flowId: Type.String({}),
@@ -91,6 +97,10 @@ export const FlowOperationRequest = Type.Union([
     Type.Object({
         type: Type.Literal(FlowOperationType.MOVE_ACTION),
         request: MoveActionRequest,
+    }),
+    Type.Object({
+        type: Type.Literal(FlowOperationType.USE_AS_DRAFT),
+        request: UseAsDraftRequest,
     }),
     Type.Object({
         type: Type.Literal(FlowOperationType.LOCK_FLOW),

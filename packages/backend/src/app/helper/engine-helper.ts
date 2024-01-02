@@ -27,6 +27,7 @@ import {
     assertNotNullOrUndefined,
     ActionType,
     FlowVersion,
+    ExecuteFlowOperation,
 } from '@activepieces/shared'
 import { Sandbox } from '../workers/sandbox'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
@@ -110,7 +111,7 @@ const execute = async <Result extends EngineHelperResult>(
 ): Promise<EngineHelperResponse<Result>> => {
     try {
         logger.debug({ operation, sandboxId: sandbox.boxId }, '[EngineHelper#execute]')
-
+        
         const sandboxPath = sandbox.getSandboxFolderPath()
 
 
@@ -162,7 +163,7 @@ export const engineHelper = {
             sandboxId: sandbox.boxId,
         }, '[EngineHelper#executeFlow]')
 
-        const input = {
+        const input: ExecuteFlowOperation = {
             ...operation,
             workerToken: await generateWorkerToken({ projectId: operation.projectId }),
             serverUrl: await getServerUrl(),

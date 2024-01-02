@@ -40,10 +40,10 @@
       "@activepieces/piece-bannerbear": [
         "packages/pieces/bannerbear/src/index.ts"
       ],
+      "@activepieces/piece-beamer": ["packages/pieces/beamer/src/index.ts"],
       "@activepieces/piece-bettermode": [
         "packages/pieces/bettermode/src/index.ts"
       ],
-      "@activepieces/piece-beamer": ["packages/pieces/beamer/src/index.ts"],
       "@activepieces/piece-binance": ["packages/pieces/binance/src/index.ts"],
       "@activepieces/piece-bonjoro": ["packages/pieces/bonjoro/src/index.ts"],
       "@activepieces/piece-box": ["packages/pieces/box/src/index.ts"],
@@ -253,6 +253,7 @@
       "@activepieces/piece-twilio": ["packages/pieces/twilio/src/index.ts"],
       "@activepieces/piece-twitter": ["packages/pieces/twitter/src/index.ts"],
       "@activepieces/piece-typeform": ["packages/pieces/typeform/src/index.ts"],
+      "@activepieces/piece-vbout": ["packages/pieces/vbout/src/index.ts"],
       "@activepieces/piece-vtex": ["packages/pieces/vtex/src/index.ts"],
       "@activepieces/piece-woocommerce": [
         "packages/pieces/woocommerce/src/index.ts"

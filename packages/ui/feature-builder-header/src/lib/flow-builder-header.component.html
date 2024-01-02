@@ -1,5 +1,5 @@
 <nav class="navbar-container ap-bg-header ap-py-4 ap-pr-3 navbar-expand ap-relative"
-  [class.ap-pl-3]="(showBackButtonAndFolderName$ | async )=== false">
+  [class.ap-pl-3]="(showNavigation$ | async )=== false">
   <div class="ap-absolute ap-w-full ap-flex ap-items-center ap-justify-center ap-p-3 ap-pointer-events-none">
     <div class="ap-h-[30px]">
       <img [src]=" (fullLogo$| async) ||'assets/img/custom/logo/full-logo.svg'" class="ap-max-w-full ap-h-full">
@@ -10,17 +10,14 @@
 
   <div class="ap-flex ap-items-center">
     <div class="ap-flex ap-items-center ap-gap-2">
-      <ap-icon-button *ngIf="showBackButtonAndFolderName$ | async" [width]="7" [height]="14" iconFilename="back.svg"
-        tooltipText="Home" i18n-tooltipText (buttonClicked)="redirectHome(false)"
-        (auxclick)="redirectHome(true)"></ap-icon-button>
+      <ap-icon-button *ngIf="showNavigation$ | async" [width]="20" [height]="20"
+        iconUrl="assets/img/custom/dashboard/dashboard.svg" tooltipText="Dashboard" i18n-tooltipText
+        (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)"></ap-icon-button>
       <div class="ap-flex-grow ap-flex ap-items-center ap-gap-2" #spacer>
-        <ng-container *ngIf="showBackButtonAndFolderName$ | async">
+        <ng-container *ngIf="showNavigation$ | async">
           <div class="ap-typography-body-1 ap-truncate ap-max-w-[150px] ap-cursor-pointer hover:ap-text-[#000000]"
-            #folderName (click)="openDashboardToFolder()" [matTooltip]="
-            folderName.scrollWidth > folderName.clientWidth
-              ? (folderDisplayName$ | async) || ''
-              : ''
-          ">
+            #folderName (click)="openDashboardToFolder()"
+            [matTooltip]=" goToFolder +' ('+ ((folderDisplayName$ | async) || '' ) +')'">
             {{ folderDisplayName$ | async }}
           </div>
           <div class="ap-typography-body-1 ap-text-placeholder">/</div>
@@ -67,7 +64,7 @@
           </div>
         </button>
         <ap-share-flow-template-dialog></ap-share-flow-template-dialog>
-        <ng-container *ngIf="(showBackButtonAndFolderName$ | async )">
+        <ng-container *ngIf="(showNavigation$ | async )">
           <button mat-menu-item *ngIf="flow$ | async as flow" (click)="deleteFlow(flow)">
             <div class="ap-flex ap-gap-3 ap-items-center">
               <svg-icon src="assets/img/custom/trash.svg" class="ap-fill-danger ap-w-[20px] ap-h-[20px]"
@@ -83,9 +80,10 @@
     <div class="ap-flex-grow"></div>
     <div class="ap-flex ap-items-center ap-gap-2">
       <app-support class="ap-z-50 ap-flex ap-items-center"></app-support>
+      <app-version-history-button></app-version-history-button>
+
       <ng-container *ngIf="(isInDebugMode$ | async) === false">
         <div class="ap-flex ap-items-center ap-gap-1">
-          <app-draft-status></app-draft-status>
           <ng-container *ngIf="hasFlowBeenPublished$ | async">
             <ng-container *ngIf="flowStatus$ | async as status">
               <app-toggle-instance-state [flowStatus]="status"></app-toggle-instance-state>

@@ -1,3 +1,4 @@
 <ng-container [ngSwitch]="leftSideBar$ | async">
   <app-run-details *ngSwitchCase="leftSideBarType.SHOW_RUN"></app-run-details>
+  <app-version-history *ngSwitchCase="leftSideBarType.VERSIONS_HISTORY"></app-version-history>
 </ng-container>
