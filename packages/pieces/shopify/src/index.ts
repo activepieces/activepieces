@@ -1,10 +1,10 @@
-
 import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework';
 import { newCancelledOrder } from './lib/triggers/new-cancelled-order';
 import { newCustomer } from './lib/triggers/new-customer';
 import { newOrder } from './lib/triggers/new-order';
 import { newPaidOrder } from './lib/triggers/new-paid-order';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { createCustomer } from './lib/actions/create-customer';
 
 const markdown = `
 To Obtain an Admin Token, follow these steps:
@@ -61,11 +61,13 @@ export const shopify = createPiece({
   displayName: 'Shopify',
   logoUrl: 'https://cdn.activepieces.com/pieces/shopify.png',
   authors: [
-    "abuaboud"
+    "abuaboud",
+    'MoShizzle'
   ],
   minimumSupportedRelease: '0.5.0',
   auth: shopifyAuth,
   actions: [
+    createCustomer
   ],
   triggers: [
     newCustomer,
