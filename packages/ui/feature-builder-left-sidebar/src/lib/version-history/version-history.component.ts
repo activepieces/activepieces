@@ -8,7 +8,7 @@ import {
   ViewModeEnum,
   canvasActions,
 } from '@activepieces/ui/feature-builder-store';
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { Store } from '@ngrx/store';
 import {
   Observable,
@@ -25,17 +25,16 @@ import {
   selector: 'app-version-history',
   templateUrl: './version-history.component.html',
 })
-export class VersionHistoryComponent implements OnInit {
+export class VersionHistoryComponent {
   sideBarDisplayName = $localize`Versions`;
   flowVersions$: Observable<SeekPage<FlowVersion>>;
-  rollbackVersion$: Observable<void>;
+  rollbackVersion$?: Observable<void>;
   rollingBack = false;
   publishedVersion$: Observable<FlowVersion | undefined>;
   draftVersionId$: Observable<string>;
-  displayVersion$: Observable<unknown>;
-  constructor(private flowService: FlowService, private store: Store) {}
-
-  ngOnInit(): void {
+  displayVersion$?: Observable<unknown>;
+  viewedVersion$: Observable<FlowVersion>;
+  constructor(private flowService: FlowService, private store: Store) {
     this.flowVersions$ = this.store
       .select(BuilderSelectors.selectCurrentFlow)
       .pipe(switchMap((flow) => this.flowService.listVersions(flow.id)));
@@ -44,6 +43,9 @@ export class VersionHistoryComponent implements OnInit {
     );
     this.draftVersionId$ = this.store.select(
       BuilderSelectors.selectCurrentFlowVersionId
+    );
+    this.viewedVersion$ = this.store.select(
+      BuilderSelectors.selectShownFlowVersion
     );
   }
 
