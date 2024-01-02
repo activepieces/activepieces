@@ -47,7 +47,6 @@ export class FlowBuilderHeaderComponent implements OnInit {
   setTitle$: Observable<void>;
   isInEmbedded$: Observable<boolean>;
   hasFlowBeenPublished$: Observable<boolean>;
-  logoIcon$: Observable<string>;
   showNavigation$: Observable<boolean>;
   goToFolder = $localize`Go to folder`;
   constructor(
@@ -70,9 +69,6 @@ export class FlowBuilderHeaderComponent implements OnInit {
     this.fullLogo$ = this.flagService
       .getLogos()
       .pipe(map((logos) => logos.fullLogoUrl));
-    this.logoIcon$ = this.flagService
-      .getLogos()
-      .pipe(map((logos) => logos.logoIconUrl));
   }
 
   ngOnInit(): void {
