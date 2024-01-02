@@ -9,13 +9,13 @@ export enum ViewModeActionType {
 
 export const setViewMode = createAction(
   ViewModeActionType.SET_VIEW_MODE,
-  props<{
-    viewMode:
-      | ViewModeEnum.BUILDING
-      | ViewModeEnum.SHOW_PUBLISHED
-      | (ViewModeEnum.SHOW_OLD_VERSION & { version: FlowVersion });
-  }>()
+  props<
+    // eslint-disable-next-line @ngrx/prefer-inline-action-props
+    | { viewMode: ViewModeEnum.BUILDING | ViewModeEnum.SHOW_PUBLISHED }
+    | { viewMode: ViewModeEnum.SHOW_OLD_VERSION; version: FlowVersion }
+  >()
 );
+
 export const setInitial = createAction(
   ViewModeActionType.SET_INITIAL,
   props<{ viewMode: ViewModeEnum }>()
