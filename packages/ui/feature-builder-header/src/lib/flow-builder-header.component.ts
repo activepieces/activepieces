@@ -20,7 +20,7 @@ import {
   LeftSideBarType,
   canvasActions,
 } from '@activepieces/ui/feature-builder-store';
-import { ApEdition, FlowStatus, PopulatedFlow } from '@activepieces/shared';
+import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
 import { EmbeddingService } from '@activepieces/ui/common';
 import { ImportFlowDialogueComponent } from './import-flow-dialogue/import-flow-dialogue.component';
 
