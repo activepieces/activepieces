@@ -6,8 +6,10 @@ import { PlatformApiKeyAuthnHandler } from './authn/platform-api-key-authn-handl
 import { PrincipalTypeAuthzHandler } from './authz/principal-type-authz-handler'
 import { ProjectAuthzHandler } from './authz/project-authz-handler'
 import { Principal } from '@activepieces/shared'
+import { AppSumoAuthnHandler } from './authn/app-sumo-authn-handler'
 
 const AUTHN_HANDLERS = [
+    new AppSumoAuthnHandler(),
     new GlobalApiKeyAuthnHandler(),
     new PlatformApiKeyAuthnHandler(),
     new AccessTokenAuthnHandler(),
