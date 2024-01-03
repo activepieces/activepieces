@@ -4,6 +4,7 @@ import { FastifyRequest } from 'fastify'
 import { flowFolderService as folderService } from './folder.service'
 import { StatusCodes } from 'http-status-codes'
 import { Static, Type } from '@sinclair/typebox'
+import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 
 const DEFUALT_PAGE_SIZE = 10
 
@@ -15,7 +16,7 @@ const FolderIdParam = Type.Object({
 type FolderIdParam = Static<typeof FolderIdParam>
 
 export const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
-
+    fastify.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
     fastify.post(
         '/',
         {

@@ -28,7 +28,11 @@ export class PublishButtonComponent implements OnInit {
   publishBtnText$: Observable<string>;
   isCurrentFlowVersionPublished$: Observable<boolean>;
   dispatchAction$: Observable<void>;
-  constructor(private store: Store) {}
+  viewMode$: Observable<ViewModeEnum>;
+  ViewModeEnum = ViewModeEnum;
+  constructor(private store: Store) {
+    this.viewMode$ = this.store.select(BuilderSelectors.selectViewMode);
+  }
 
   ngOnInit(): void {
     this.setFlowStateListener();

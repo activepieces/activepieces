@@ -64,6 +64,7 @@ export class CanvasEffects {
                 sidebarType: LeftSideBarType.NONE,
               })
             );
+          case LeftSideBarType.VERSIONS_HISTORY:
           case LeftSideBarType.NONE:
             return EMPTY;
         }

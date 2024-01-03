@@ -17,6 +17,8 @@ import {
   BuilderSelectors,
   CollectionBuilderService,
   FlowsActions,
+  LeftSideBarType,
+  canvasActions,
 } from '@activepieces/ui/feature-builder-store';
 import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
 import { EmbeddingService } from '@activepieces/ui/common';
@@ -45,7 +47,8 @@ export class FlowBuilderHeaderComponent implements OnInit {
   setTitle$: Observable<void>;
   isInEmbedded$: Observable<boolean>;
   hasFlowBeenPublished$: Observable<boolean>;
-  showBackButtonAndFolderName$: Observable<boolean>;
+  showNavigation$: Observable<boolean>;
+  goToFolder = $localize`Go to folder`;
   constructor(
     public dialogService: MatDialog,
     private store: Store,
@@ -62,8 +65,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
       BuilderSelectors.selectHasFlowBeenPublished
     );
     this.isInEmbedded$ = this.embeddingService.getIsInEmbedding$();
-    this.showBackButtonAndFolderName$ =
-      this.embeddingService.getShowFolderNameAndBackButton$();
+    this.showNavigation$ = this.embeddingService.getShowNavigationInBuilder$();
     this.fullLogo$ = this.flagService
       .getLogos()
       .pipe(map((logos) => logos.fullLogoUrl));
@@ -154,6 +156,13 @@ export class FlowBuilderHeaderComponent implements OnInit {
     );
   }
 
+  showVersions() {
+    this.store.dispatch(
+      canvasActions.setLeftSidebar({
+        sidebarType: LeftSideBarType.VERSIONS_HISTORY,
+      })
+    );
+  }
   openDashboardToFolder() {
     this.openDashboardOnFolder$ = this.store
       .select(BuilderSelectors.selectCurrentFlowFolderId)

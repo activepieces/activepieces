@@ -18,12 +18,7 @@ import {
   containsLowercaseCharacter,
   containsNumber,
 } from '@activepieces/ui/common';
-import {
-  ApEdition,
-  ApFlagId,
-  SignUpRequest,
-  UnhandledSwitchCaseError,
-} from '@activepieces/shared';
+import { ApEdition, ApFlagId, SignUpRequest } from '@activepieces/shared';
 import { OtpType } from '@activepieces/ee-shared';
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 
@@ -162,8 +157,6 @@ export class SignUpComponent implements OnInit {
               }
               case ApEdition.ENTERPRISE:
                 return false;
-              default:
-                throw new UnhandledSwitchCaseError(ed);
             }
           })
         );

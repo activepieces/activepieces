@@ -15,3 +15,9 @@ export const GetFlowQueryParamsRequest = Type.Object({
 
 export type GetFlowQueryParamsRequest = Static<typeof GetFlowQueryParamsRequest>
 
+export const ListFlowVersionRequest = Type.Object({
+    limit: Type.Optional(Type.Number({})),
+    cursor: Type.Optional(Type.String({})),
+})
+
+export type ListFlowVersionRequest = Omit<Static<typeof ListFlowVersionRequest>, 'cursor'> & { cursor: Cursor | undefined }

@@ -32,7 +32,7 @@ export class EmbeddingService {
   getIsInEmbedding$() {
     return this.getState$().pipe(map((res) => res.isEmbedded));
   }
-  getShowFolderNameAndBackButton$() {
+  getShowNavigationInBuilder$() {
     return this.getState$().pipe(map((res) => !res.disableNavigationInBuilder));
   }
 

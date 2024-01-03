@@ -48,13 +48,14 @@ const initialState: FlowState = {
 
 const _flowsReducer = createReducer(
   initialState,
-  on(FlowsActions.setInitial, (state, { flow, folder }): FlowState => {
-    return {
+  on(FlowsActions.setInitial, (state, { type, flow, folder }): FlowState => {
+    const newState: FlowState = {
       flow: flow,
       folder: folder,
       savingStatus: BuilderSavingStatusEnum.NONE,
       lastSaveId: '161f8c09-dea1-470e-8a90-5666a8f17bd4',
     };
+    return newState;
   }),
   on(FlowsActions.updateTrigger, (state, { operation }): FlowState => {
     const clonedState: FlowState = JSON.parse(JSON.stringify(state));
@@ -136,7 +137,6 @@ const _flowsReducer = createReducer(
     if (action.viewMode === ViewModeEnum.BUILDING) {
       clonedState.flow.version.state = FlowVersionState.DRAFT;
     }
-
     return clonedState;
   }),
   on(FlowsActions.savedSuccess, (state, action) => {
@@ -156,11 +156,15 @@ const _flowsReducer = createReducer(
   on(FlowsActions.publish, (state) => {
     const clonedState: FlowState = JSON.parse(JSON.stringify(state));
     clonedState.savingStatus |= BuilderSavingStatusEnum.PUBLISHING;
+
     return clonedState;
   }),
   on(FlowsActions.publishSuccess, (state, { publishedFlowVersionId }) => {
     const clonedState: FlowState = JSON.parse(JSON.stringify(state));
-    clonedState.flow.version.id = publishedFlowVersionId;
+    clonedState.flow.publishedFlowVersion = JSON.parse(
+      JSON.stringify(state.flow.version)
+    );
+    clonedState.flow.publishedVersionId = publishedFlowVersionId;
     clonedState.flow.version.state = FlowVersionState.LOCKED;
     clonedState.savingStatus &= ~BuilderSavingStatusEnum.PUBLISHING;
     return clonedState;
@@ -173,7 +177,22 @@ const _flowsReducer = createReducer(
   }),
   on(FlowsActions.importFlow, (state, { flow }) => {
     const clonedState: FlowState = JSON.parse(JSON.stringify(state));
-    clonedState.flow = flow;
+
+    if (state.flow.publishedFlowVersion) {
+      clonedState.flow = {
+        ...flow,
+        publishedFlowVersion: JSON.parse(
+          JSON.stringify(state.flow.publishedFlowVersion)
+        ),
+        publishedVersionId: state.flow.publishedVersionId,
+      };
+    } else {
+      clonedState.flow = {
+        ...flow,
+        publishedVersionId: state.flow.publishedVersionId,
+      };
+    }
+
     return clonedState;
   }),
   on(FlowsActions.toggleWaitingToSave, (state) => {

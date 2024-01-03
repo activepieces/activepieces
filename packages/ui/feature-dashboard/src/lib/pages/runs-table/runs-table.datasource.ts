@@ -11,7 +11,7 @@ import {
   BehaviorSubject,
   filter,
 } from 'rxjs';
-import { FlowRun } from '@activepieces/shared';
+import { ExecutionOutputStatus, FlowRun } from '@activepieces/shared';
 import {
   InstanceRunService,
   ApPaginatorComponent,
@@ -23,7 +23,7 @@ import {
 } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 import { Params } from '@angular/router';
-
+const REFRESH_TABLE_DELAY = 15000;
 /**
  * Data source for the LogsTable view. This class should
  * encapsulate all logic for fetching and manipulating the displayed data
@@ -32,6 +32,8 @@ import { Params } from '@angular/router';
 export class RunsTableDataSource extends DataSource<FlowRun> {
   data: FlowRun[] = [];
   isLoading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
+  refresh$: BehaviorSubject<boolean> = new BehaviorSubject(true);
+  refreshTimer: NodeJS.Timeout | undefined;
   constructor(
     private queryParams$: Observable<Params>,
     private paginator: ApPaginatorComponent,
@@ -54,6 +56,7 @@ export class RunsTableDataSource extends DataSource<FlowRun> {
         .select(ProjectSelectors.selectCurrentProject)
         .pipe(filter((project) => !!project))
         .pipe(take(1)),
+      refresh: this.refresh$.asObservable(),
     }).pipe(
       tap(() => {
         this.isLoading$.next(true);
@@ -78,6 +81,16 @@ export class RunsTableDataSource extends DataSource<FlowRun> {
         this.paginator.next = res.next;
         this.paginator.previous = res.previous;
         this.data = res.data;
+        if (this.refreshTimer) {
+          clearTimeout(this.refreshTimer);
+        }
+        if (
+          res.data.find((run) => run.status === ExecutionOutputStatus.RUNNING)
+        ) {
+          this.refreshTimer = setTimeout(() => {
+            this.refresh$.next(true);
+          }, REFRESH_TABLE_DELAY);
+        }
       }),
       map((res) => res.data)
     );
