@@ -362,7 +362,11 @@ async function validateAction({ projectId, settings }: { projectId: ProjectId, s
     if (isNil(action)) {
         return false
     }
-    return validateProps(action.props, settings.input)
+    const props = action.props
+    if (!isNil(piece.auth)) {
+        props.auth = piece.auth
+    }
+    return validateProps(props, settings.input)
 }
 
 async function validateTrigger({ settings, projectId }: { settings: PieceTriggerSettings, projectId: ProjectId }): Promise<boolean> {
@@ -388,7 +392,11 @@ async function validateTrigger({ settings, projectId }: { settings: PieceTrigger
     if (isNil(trigger)) {
         return false
     }
-    return validateProps(trigger.props, settings.input)
+    const props = trigger.props
+    if (!isNil(piece.auth)) {
+        props.auth = piece.auth
+    }
+    return validateProps(props, settings.input)
 }
 
 function validateProps(props: PiecePropertyMap, input: Record<string, unknown>): boolean {
