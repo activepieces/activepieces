@@ -32,13 +32,16 @@ const REFRESH_TABLE_DELAY = 15000;
 export class RunsTableDataSource extends DataSource<FlowRun> {
   data: FlowRun[] = [];
   isLoading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
-  refresh$: BehaviorSubject<boolean> = new BehaviorSubject(true);
+  refreshForExecutingRuns$: BehaviorSubject<boolean> = new BehaviorSubject(
+    true
+  );
   refreshTimer: NodeJS.Timeout | undefined;
   constructor(
     private queryParams$: Observable<Params>,
     private paginator: ApPaginatorComponent,
     private store: Store,
-    private instanceRunService: InstanceRunService
+    private instanceRunService: InstanceRunService,
+    private refreshForReruns$: Observable<boolean>
   ) {
     super();
   }
@@ -56,7 +59,8 @@ export class RunsTableDataSource extends DataSource<FlowRun> {
         .select(ProjectSelectors.selectCurrentProject)
         .pipe(filter((project) => !!project))
         .pipe(take(1)),
-      refresh: this.refresh$.asObservable(),
+      refresh: this.refreshForExecutingRuns$.asObservable(),
+      refreshForReruns: this.refreshForReruns$,
     }).pipe(
       tap(() => {
         this.isLoading$.next(true);
@@ -88,7 +92,7 @@ export class RunsTableDataSource extends DataSource<FlowRun> {
           res.data.find((run) => run.status === ExecutionOutputStatus.RUNNING)
         ) {
           this.refreshTimer = setTimeout(() => {
-            this.refresh$.next(true);
+            this.refreshForExecutingRuns$.next(true);
           }, REFRESH_TABLE_DELAY);
         }
       }),
