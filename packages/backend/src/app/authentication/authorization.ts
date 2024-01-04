@@ -1,7 +1,8 @@
-import { ActivepiecesError, ErrorCode, PrincipalType } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, PrincipalType, isObject } from '@activepieces/shared'
 import { onRequestHookHandler, preSerializationHookHandler } from 'fastify'
 import { logger } from '../helper/logger'
 
+// TODO REMOVE
 export const allowWorkersOnly: onRequestHookHandler = (request, _res, done) => {
     if (request.principal.type !== PrincipalType.WORKER) {
         throw new ActivepiecesError({
@@ -11,6 +12,13 @@ export const allowWorkersOnly: onRequestHookHandler = (request, _res, done) => {
     }
 
     done()
+}
+
+export function extractResourceName(url: string): string | undefined {
+    const resourceRegex = /\/v1\/(.+?)(\/|$)/
+    const resourceMatch = url.match(resourceRegex)
+    const resource = resourceMatch ? resourceMatch[1] : undefined
+    return resource
 }
 
 /**
@@ -52,11 +60,6 @@ export const entitiesMustBeOwnedByCurrentProject: preSerializationHookHandler<Pa
 
     done()
 }
-
-function isObject<T>(obj: T): obj is Exclude<T, null | undefined> {
-    return typeof obj === 'object' && obj !== null && !Array.isArray(obj)
-}
-
 
 type SingleEntity = {
     projectId?: string

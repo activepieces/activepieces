@@ -1,5 +1,5 @@
 import { Platform, PlatformId, ProjectMemberStatus } from '@activepieces/ee-shared'
-import { PrincipalType, Project, isNil, User, ActivepiecesError, ErrorCode, ApEdition } from '@activepieces/shared'
+import { PrincipalType, Project, isNil, User, ActivepiecesError, ErrorCode, ApEdition, PlatformRole } from '@activepieces/shared'
 import { platformService } from '../../../platform/platform.service'
 import { accessTokenManager } from '../../../../authentication/lib/access-token-manager'
 import { projectMemberService } from '../../../project-members/project-member.service'
@@ -25,6 +25,7 @@ async function getProjectForUserOrThrow(user: User): Promise<Project> {
     return invitedProject
 }
 
+
 const getProjectMemberOrThrow = async (user: User): Promise<Project | null> => {
     const platformProjects = await projectMemberService.listByUser(user)
 
@@ -44,7 +45,7 @@ const populateTokenWithPlatformInfo = async ({ user, project }: PopulateTokenWit
         projectType: project.type,
         platform: isNil(platform) ? undefined : {
             id: platform.id,
-            role: platform.ownerId === user.id ? 'OWNER' : 'MEMBER',
+            role: platform.ownerId === user.id ? PlatformRole.OWNER : PlatformRole.MEMBER,
         },
     })
 
@@ -64,19 +65,20 @@ type PopulateTokenWithPlatformInfoParams = {
     project: Project
 }
 
-async function autoVerifyUserIfEligible(user: User): Promise<User> {
+async function autoVerifyUserIfEligible(user: User): Promise<void> {
     const edition = getEdition()
     if (edition === ApEdition.ENTERPRISE) {
-        return userService.verify({ id: user.id })
+        await userService.verify({ id: user.id })
+        return
     }
     const projects = await projectMemberService.listByUser(user)
     const activeInAnyProject = !isNil(projects.find(f => f.status === ProjectMemberStatus.ACTIVE))
     if (activeInAnyProject) {
-        return userService.verify({
+        await userService.verify({
             id: user.id,
         })
+        return
     }
-    return user
 }
 
 async function getProjectAndTokenOrThrow(user: User): Promise<{ project: Project, token: string }> {
@@ -87,7 +89,29 @@ async function getProjectAndTokenOrThrow(user: User): Promise<{ project: Project
     }
 }
 
+async function isInvitedToProject({ email, platformId }: { email: string, platformId: string }): Promise<boolean> {
+    const platformProjects = await projectMemberService.listByUser({
+        email,
+        platformId,
+    })
+    return platformProjects.length > 0
+}
+
+async function assertUserIsInvitedToAnyProject({ email, platformId }: { email: string, platformId: string }): Promise<void> {
+    const isInvited = await isInvitedToProject({ email, platformId })
+    if (!isInvited) {
+        throw new ActivepiecesError({
+            code: ErrorCode.INVITATION_ONLY_SIGN_UP,
+            params: {},
+        })
+    }
+}
+
 export const authenticationHelper = {
     getProjectAndTokenOrThrow,
     autoVerifyUserIfEligible,
+    assertUserIsInvitedToAnyProject,
+
 }
+
+

@@ -24,27 +24,20 @@
 
   <ng-container *ngFor="let stepMention of stepsMentions$|async" #stepsListTemplate>
     <ng-container [ngSwitch]="stepMention.step.type">
-      <ng-container *ngSwitchCase="ActionType.CODE">
-        <app-code-step-mention-item [stepIndex]="stepMention.step.indexInDfsTraversal!"
-          (mentionClicked)="mentionClicked($event)" [stepMention]="stepMention"></app-code-step-mention-item>
-      </ng-container>
-      <ng-container *ngSwitchCase="ActionType.PIECE">
-        <app-piece-step-mention-item [stepIndex]="stepMention.step.indexInDfsTraversal!"
-          (mentionClicked)="mentionClicked($event)" [stepMention]="stepMention"></app-piece-step-mention-item>
-      </ng-container>
-      <ng-container *ngSwitchCase="ActionType.LOOP_ON_ITEMS">
-        <app-loop-step-mention-item [stepIndex]="stepMention.step.indexInDfsTraversal!"
-          (mentionClicked)="mentionClicked($event)" [stepMention]="stepMention"></app-loop-step-mention-item>
+      <ng-container
+        *ngIf="stepMention.step.type === ActionType.CODE || stepMention.step.type === ActionType.LOOP_ON_ITEMS ||  stepMention.step.type === ActionType.PIECE">
+        <app-action-mention-item [stepIndex]="stepMention.step.indexInDfsTraversal"
+          (mentionClicked)="mentionClicked($event)" [stepMention]="stepMention"></app-action-mention-item>
       </ng-container>
 
       <ng-container *ngSwitchCase="TriggerType.PIECE">
-        <app-piece-trigger-mention-item [stepIndex]="1" (mentionClicked)="mentionClicked($event)"
-          [stepMention]="stepMention"></app-piece-trigger-mention-item>
+        <app-piece-trigger-mention-item [stepIndex]="stepMention.step.indexInDfsTraversal"
+          (mentionClicked)="mentionClicked($event)" [stepMention]="stepMention"></app-piece-trigger-mention-item>
       </ng-container>
 
       <ng-container *ngSwitchCase="TriggerType.WEBHOOK">
-        <app-webhook-trigger-mention-item [stepIndex]="1" (mentionEmitted)="mentionClicked($event)"
-          [stepMention]="stepMention"></app-webhook-trigger-mention-item>
+        <app-webhook-trigger-mention-item [stepIndex]="stepMention.step.indexInDfsTraversal"
+          (mentionEmitted)="mentionClicked($event)" [stepMention]="stepMention"></app-webhook-trigger-mention-item>
       </ng-container>
 
 

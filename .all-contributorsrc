@@ -726,6 +726,51 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "denieler",
+      "name": "Daniel O.",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2836281?v=4",
+      "profile": "http://denieler.com",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "MrMYHuang",
+      "name": "Meng-Yuan Huang",
+      "avatar_url": "https://avatars.githubusercontent.com/u/12458706?v=4",
+      "profile": "http://myh.tw",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "bigfluffycookie",
+      "name": "Leyla",
+      "avatar_url": "https://avatars.githubusercontent.com/u/54935347?v=4",
+      "profile": "https://github.com/bigfluffycookie",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "i-nithin",
+      "name": "i-nithin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/97078688?v=4",
+      "profile": "https://i-nithin.netlify.app/",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "la3rence",
+      "name": "la3rence",
+      "avatar_url": "https://avatars.githubusercontent.com/u/24540598?v=4",
+      "profile": "https://lawrenceli.me",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

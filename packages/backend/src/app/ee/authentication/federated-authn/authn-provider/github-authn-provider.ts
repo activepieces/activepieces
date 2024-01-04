@@ -1,4 +1,4 @@
-import { ActivepiecesError, AuthenticationResponse, ErrorCode, UserStatus, isNil } from '@activepieces/shared'
+import { ActivepiecesError, AuthenticationResponse, ErrorCode, isNil } from '@activepieces/shared'
 import { AuthnProvider } from './authn-provider'
 import { authenticationService } from '../../../../authentication/authentication-service'
 import { system } from '../../../../helper/system/system'
@@ -24,10 +24,10 @@ export const gitHubAuthnProvider: AuthnProvider = {
         return loginUrl.href
     },
 
-    async authenticate(authorizationCode): Promise<AuthenticationResponse> {
+    async authenticate(platformId, authorizationCode): Promise<AuthenticationResponse> {
         const githubAccessToken = await getGitHubAccessToken(authorizationCode)
         const gitHubUserInfo = await getGitHubUserInfo(githubAccessToken)
-        return authenticateUser(gitHubUserInfo)
+        return authenticateUser(platformId, gitHubUserInfo)
     },
     isConfiguredByUser(): boolean {
         return !!system.get(SystemProp.FEDERATED_AUTHN_GITHUB_CLIENT_SECRET) && !!system.get(SystemProp.FEDERATED_AUTHN_GITHUB_CLIENT_ID)
@@ -113,13 +113,13 @@ const getGitHubUserEmail = async (gitHubAccessToken: string): Promise<string> =>
     }
     return email
 }
-const authenticateUser = async (gitHubUserInfo: GitHubUserInfo): Promise<AuthenticationResponse> => {
+const authenticateUser = async (platformId: string | null, gitHubUserInfo: GitHubUserInfo): Promise<AuthenticationResponse> => {
     return authenticationService.federatedAuthn({
         email: gitHubUserInfo.email,
-        userStatus: UserStatus.VERIFIED,
+        verified: true,
         firstName: gitHubUserInfo.name,
         lastName: '',
-        platformId: null,
+        platformId,
     })
 }
 

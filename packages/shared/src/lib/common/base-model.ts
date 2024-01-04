@@ -1,4 +1,4 @@
-import { Type } from '@sinclair/typebox'
+import { Type, Static, TSchema } from '@sinclair/typebox'
 
 export type BaseModel<T> = {
     id: T
@@ -11,3 +11,8 @@ export const BaseModelSchema = {
     created: Type.String(),
     updated: Type.String(),
 }
+
+// Used to generate valid nullable in OpenAPI Schema
+export const Nullable = <T extends TSchema>(schema: T) => Type.Optional(Type.Unsafe<Static<T> | null>({ 
+    ...schema, nullable: true, 
+}))

@@ -3,7 +3,6 @@ import { Store } from '@ngrx/store';
 import {
   BehaviorSubject,
   delay,
-  distinctUntilChanged,
   forkJoin,
   interval,
   map,
@@ -25,7 +24,7 @@ import {
   BuilderSelectors,
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
-import { PieceMetadataService } from 'ui-feature-pieces';
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 
 export interface TriggerHistoricalData {
   payload: unknown;
@@ -52,7 +51,6 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
   simulationMessage$: Observable<string | null>;
   isValid$: Observable<boolean>;
   deleteWebhookSimulation$: Observable<void>;
-  lastTestDate$: Observable<string | undefined>;
   useMockData$: Observable<void>;
   test: Observable<unknown>;
   constructor(
@@ -68,13 +66,6 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
   private initialObservables() {
     this.isValid$ = this.store.select(BuilderSelectors.selectStepValidity);
     this.setSelectedDataControlListener();
-    this.lastTestDate$ = this.store
-      .select(BuilderSelectors.selectLastTestDate)
-      .pipe(
-        distinctUntilChanged((prev, current) => {
-          return prev === current;
-        })
-      );
     this.initialHistoricalData$ = this.store
       .select(BuilderSelectors.selectCurrentFlow)
       .pipe(

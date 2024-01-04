@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot } from '@angular/router';
-import { Observable, map, of, switchMap } from 'rxjs';
+import { Observable, map, of, switchMap,forkJoin } from 'rxjs';
 
-import { Flow, FlowId, Folder } from '@activepieces/shared';
+import { PopulatedFlow, FlowId, Folder, FlowVersion } from '@activepieces/shared';
 import { FlowService, FoldersService } from '@activepieces/ui/common';
 
-export type FlowResolverData = { flow: Flow; folder?: Folder };
+export type FlowResolverData = { flow: PopulatedFlow; folder?: Folder , publishedFlowVersion?: FlowVersion };
 @Injectable({
   providedIn: 'root',
 })
@@ -19,17 +19,18 @@ export class GetFlowResolver {
     const flowId = snapshot.paramMap.get('id') as FlowId;
     return this.flowService.get(flowId, undefined).pipe(
       switchMap((flow) => {
+
+        const observables$:{publishedFlowVersion:Observable<FlowVersion|undefined>,folder:Observable<Folder|undefined>,flow:Observable<PopulatedFlow>} = { publishedFlowVersion:of(undefined), folder:of(undefined),flow:of(flow)}
+ 
         if (flow.folderId) {
-          return this.folderService.get(flow.folderId).pipe(
-            map((folder) => {
-              return {
-                folder,
-                flow,
-              };
-            })
-          );
+          observables$.folder= this.folderService.get(flow.folderId);
         }
-        return of({ flow });
+        if(flow.publishedVersionId)
+        {
+          observables$.publishedFlowVersion = this.flowService.get(flow.id, flow.publishedVersionId).pipe(map(flow=>flow.version));
+        }
+
+        return forkJoin(observables$);
       })
     );
   }

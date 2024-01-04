@@ -87,6 +87,13 @@ import { AddStateToOtp1701084418793 } from './migration/postgres/1701084418793-a
 import { AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822 } from './migration/common/1701096458822-add-partial-unique-index-for-email-and-platform-id-is-null'
 import { MigrateEeUsersToOldestPlatform1701261357197 } from './migration/postgres/1701261357197-migrate-ee-users-to-oldest-platform'
 import { ModifyProjectMembersAndRemoveUserId1701647565290 } from './migration/postgres/1701647565290-ModifyProjectMembersAndRemoveUserId'
+import { AddApiKeys1701716639135 } from './migration/postgres/1701716639135-AddApiKeys'
+import { AddEmbeddingFeatureToPlatform1701794452891 } from './migration/postgres/1701794452891-AddEmbeddingFeatureToPlatform'
+import { AddPlatformIdToFile1701807681821 } from './migration/postgres/1701807681821-AddPlatformIdToFile'
+import { AddPlatformIdToFlowTemplates1703411318826 } from './migration/postgres/1703411318826-AddPlatformIdToFlowTemplates'
+import { RemoveFlowInstance1702379794665 } from './migration/postgres/1702379794665-remove-flow-instance'
+import { RenameAppNameToPieceName1703711596105 } from './migration/postgres/1703711596105-RenameAppNameToPieceName'
+import { AddVerifiedAndChangeStatus1703769034497 } from './migration/postgres/1703769034497-AddVerifiedAndChangeStatus'
 
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -153,6 +160,10 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddPlatformIdToUser1699901161457,
         AddPlatformIdToPieceMetadata1700522340280,
         AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822,
+        AddPlatformIdToFile1701807681821,
+        RemoveFlowInstance1702379794665,
+        RenameAppNameToPieceName1703711596105,
+        AddVerifiedAndChangeStatus1703769034497,
     ]
 
     const edition = getEdition()
@@ -190,10 +201,19 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 MakeStripeCustomerIdNullable1700751925992,
                 AddStateToOtp1701084418793,
                 ModifyProjectMembersAndRemoveUserId1701647565290,
+                AddApiKeys1701716639135,
+                AddEmbeddingFeatureToPlatform1701794452891,
+                AddPlatformIdToFlowTemplates1703411318826,
             )
             break
         case ApEdition.ENTERPRISE:
             commonMigration.push(
+                AddTemplates1685538145476,
+                AddPinnedAndBlogUrlToTemplates1686133672743,
+                AddPinnedOrder1686154285890,
+                AddProjectIdToTemplate1688083336934,
+                FlowTemplateAddUserIdAndImageUrl1694379223109,
+                AddFeaturedDescriptionAndFlagToTemplates1694604120205,
                 AddProjectMembers1689177797092,
                 ProjectMemberRelations1694381968985,
                 AddPlatform1697717995884,
@@ -216,6 +236,9 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddStateToOtp1701084418793,
                 MigrateEeUsersToOldestPlatform1701261357197,
                 ModifyProjectMembersAndRemoveUserId1701647565290,
+                AddApiKeys1701716639135,
+                AddEmbeddingFeatureToPlatform1701794452891,
+                AddPlatformIdToFlowTemplates1703411318826,
             )
             break
         case ApEdition.COMMUNITY:

@@ -12,7 +12,7 @@ import {
   OAuth2AppsService,
   PieceMetadataModelSummary,
 } from '@activepieces/ui/common';
-import { PieceMetadataService } from 'ui-feature-pieces';
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 
 /**
  * Data source for the LogsTable view. This class should
@@ -60,7 +60,7 @@ export class PiecesTableDataSource extends DataSource<ManagedPieceMetadataModelS
           map((ps) => {
             if (search) {
               return ps.filter((p) =>
-                p.displayName.toLowerCase().startsWith(search.toLowerCase())
+                p.displayName.toLowerCase().includes(search.toLowerCase())
               );
             }
             return ps;

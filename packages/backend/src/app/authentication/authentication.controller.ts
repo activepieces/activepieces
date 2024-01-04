@@ -2,7 +2,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { authenticationService } from './authentication-service'
 import { resolvePlatformIdForRequest } from '../ee/platform/lib/platform-utils'
 import { getEdition } from '../helper/secret-helper'
-import { ApEdition, UserStatus, SignUpRequest, SignInRequest } from '@activepieces/shared'
+import { ApEdition, SignUpRequest, SignInRequest, ALL_PRINICPAL_TYPES } from '@activepieces/shared'
 
 const edition = getEdition()
 
@@ -12,7 +12,7 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (app) =
 
         return authenticationService.signUp({
             ...request.body,
-            status: edition === ApEdition.COMMUNITY ? UserStatus.VERIFIED : UserStatus.CREATED,
+            verified: edition === ApEdition.COMMUNITY,
             platformId,
         })
     })
@@ -28,12 +28,18 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (app) =
 }
 
 const SignUpRequestOptions = {
+    config: {
+        allowedPrincipals: ALL_PRINICPAL_TYPES,
+    },
     schema: {
         body: SignUpRequest,
     },
 }
 
 const SignInRequestOptions = {
+    config: {
+        allowedPrincipals: ALL_PRINICPAL_TYPES,
+    },
     schema: {
         body: SignInRequest,
     },

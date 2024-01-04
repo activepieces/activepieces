@@ -9,7 +9,6 @@ import {
     Principal,
     ProjectId,
     SeekPage,
-    User,
     UserId,
     apId,
     isNil,
@@ -21,7 +20,7 @@ import {
     ProjectMemberId,
     ProjectMemberRole,
     ProjectMemberStatus,
-    SendInvitationRequest,
+    AddProjectMemberRequestBody,
 } from '@activepieces/ee-shared'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { projectService } from '../../project/project-service'
@@ -31,6 +30,7 @@ import dayjs from 'dayjs'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { getEdition } from '../../helper/secret-helper'
 import { IsNull } from 'typeorm'
+import { jwtUtils } from '../../helper/jwt-utils'
 
 const projectMemberRepo = databaseConnection.getRepository(ProjectMemberEntity)
 
@@ -40,8 +40,15 @@ export const projectMemberService = {
             projectId,
         })
 
+        const existingProjectMember = await projectMemberRepo.findOneBy({
+            projectId,
+            email,
+            platformId: isNil(platformId) ? IsNull() : platformId,
+        })
+        const projectMemberId = existingProjectMember?.id ?? apId()
+
         const projectMember: NewProjectMember = {
-            id: apId(),
+            id: projectMemberId,
             updated: dayjs().toISOString(),
             email,
             platformId,
@@ -58,19 +65,23 @@ export const projectMemberService = {
         }
     },
 
-    async upsertAndSend({ platformId, projectId, email, role }: SendParams): Promise<UpsertAndSendResponse> {
+    async upsertAndSend({ platformId, projectId, email, role, status }: UpsertAndSendParams): Promise<UpsertAndSendResponse> {
+
         const projectMember = await this.upsert({
             platformId,
             email,
             projectId,
             role,
+            status,
         })
 
-        await emailService.sendInvitation({
-            invitationId: projectMember.id,
-            projectId,
-            email,
-        })
+        if (projectMember.status === ProjectMemberStatus.PENDING) {
+            await emailService.sendInvitation({
+                invitationId: projectMember.id,
+                projectId,
+                email,
+            })
+        }
 
         const invitationToken = await accessTokenManager.generateToken({
             id: projectMember.id,
@@ -149,10 +160,11 @@ export const projectMemberService = {
         })
         return member?.role ?? null
     },
-    async listByUser(user: User): Promise<ProjectMemberSchema[]> {
+    async listByUser({ email, platformId }: { email: string, platformId: null | string }): Promise<ProjectMemberSchema[]> {
         return projectMemberRepo.findBy({
-            email: user.email,
-            platformId: isNil(user.platformId) ? IsNull() : user.platformId,
+            email,
+            status: ProjectMemberStatus.ACTIVE,
+            platformId: isNil(platformId) ? IsNull() : platformId,
         })
     },
     async delete(
@@ -161,7 +173,6 @@ export const projectMemberService = {
     ): Promise<void> {
         await projectMemberRepo.delete({ projectId, id: invitationId })
     },
-
     async countTeamMembersIncludingOwner(projectId: ProjectId): Promise<number> {
         return await projectMemberRepo.countBy({
             projectId,
@@ -170,7 +181,10 @@ export const projectMemberService = {
 }
 
 async function getByInvitationTokenOrThrow(invitationToken: string): Promise<ProjectMember> {
-    const { id: projectMemberId } = await accessTokenManager.extractPrincipal(invitationToken) as ProjectMemberToken
+    const { id: projectMemberId } = await jwtUtils.decodeAndVerify<ProjectMemberToken>({
+        jwt: invitationToken,
+        key: await jwtUtils.getJwtSecret(),
+    })
     return getOrThrow(projectMemberId)
 }
 
@@ -213,7 +227,7 @@ type UpsertParams = {
 
 type NewProjectMember = Omit<ProjectMember, 'created'>
 
-type SendParams = SendInvitationRequest & {
+type UpsertAndSendParams = AddProjectMemberRequestBody & {
     projectId: ProjectId
     platformId: PlatformId | null
 }
@@ -222,7 +236,7 @@ type AcceptParams = {
     invitationToken: string
 }
 
-type ProjectMemberToken = {
+export type ProjectMemberToken = {
     id: string
 }
 

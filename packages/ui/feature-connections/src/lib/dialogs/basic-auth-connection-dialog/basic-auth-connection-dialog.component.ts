@@ -20,7 +20,10 @@ import {
   appConnectionsActions,
 } from '@activepieces/ui/feature-builder-store';
 import { BasicAuthProperty } from '@activepieces/pieces-framework';
-import { AppConnectionsService } from '@activepieces/ui/common';
+import {
+  AppConnectionsService,
+  AuthenticationService,
+} from '@activepieces/ui/common';
 import { connectionNameRegex } from '../utils';
 
 interface BasicAuthForm {
@@ -48,6 +51,7 @@ export class BasicAuthConnectionDialogComponent {
   constructor(
     private formBuilder: FormBuilder,
     private store: Store,
+    private authenticationService: AuthenticationService,
     private appConnectionsService: AppConnectionsService,
     private dialogRef: MatDialogRef<BasicAuthConnectionDialogComponent>,
     @Inject(MAT_DIALOG_DATA)
@@ -92,7 +96,8 @@ export class BasicAuthConnectionDialogComponent {
     if (this.settingsForm.valid) {
       this.loading = true;
       const upsertRequest: UpsertBasicAuthRequest = {
-        appName: this.dialogData.pieceName,
+        pieceName: this.dialogData.pieceName,
+        projectId: this.authenticationService.getProjectId(),
         name: this.settingsForm.getRawValue().name,
         type: AppConnectionType.BASIC_AUTH,
         value: {

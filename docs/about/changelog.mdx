@@ -14,6 +14,128 @@ Semantic versioning is a standardized way of versioning software projects. It us
 
 Here's the revised text with improved grammar and spelling:
 
+### 28/12/2023
+
+**✨ Exciting New Features**
+
+* feat: manage templates from platform (#3482) @abuaboud
+* feat: add new languages Indonesian, Vietnamese,  Chinese, and Portuguese (#3451) @abuaboud
+* feat: support app connections api (#3389) @abuaboud
+* feat: ability to test loop step to fill sample data (#3441) @AbdulTheActivePiecer
+* feat: listen to webhook sync response realtime instead of polling (#3431) @abuaboud
+* feat(languages): Increased coverage - Japanese 100%, Dutch 100%, Simplified Chinese 18% (#3394) @abuaboud
+* feat: viewable link for files when testing steps (#3396) @MoShizzle
+* feat: allow platform admins to choose between using our oauth2 apps or not (#3401) @AbdulTheActivePiecer
+* feat(i18n): increase coverage in Japanese 57% / Spanish 100% / dutch languages 100% (#3311) @abuaboud
+* feat(api): project / project members api (#3383) @abuaboud
+* feat(builder): complete revamp of branching and loop rendering (#3216) @abuaboud
+* feat: add api keys (#3345) @abuaboud
+
+**🧩 Pieces**
+
+* feat(telegram-bot): Fixes for critical issues /  Create Invite Link Action / Get Chat Member Action (#3492) @alerdenisov
+* fix(twitter): improve error messages shown when a tweet fails (#3497) @AbdulTheActivePiecer
+* fix(airtable): "Create record" action used to fail when there was number inputs, now it doesn't (#3488) @AbdulTheActivePiecer
+* feat(line): send message action / new message trigger (#3478) @abuaboud
+* feat(twitter): added two extra inputs to upload media and improved instructions for authentication (#3483) @AbdulTheActivePiecer
+* feat(telegram-bot): send media action and `reply_markup` field in messages (#3485) @alerdenisov
+* fix(monday): add missing oauth2 scopes (#3484) @AbdulTheActivePiecer
+* feat(discourse): add users to group / change trust level / create post  / create topic / send private message actions (#3456) @pfernandez98
+* fix(text-helper): replace all instances of found text, and make (replace) input optional (#3469) @AbdulTheActivePiecer
+* feat(stripe): retrieve customer action (#3459) @Doskyft
+* chore: update piece names to match brands (#3460) @MoShizzle
+* feat(kizeo-forms): adds output format property to triggers (#3452) @BastienMe
+* feat(slack): added attachment field to send message action (#3447) @MoShizzle
+* feat(google-gemini): add chat action (#3444) @pfernandez98
+* feat(imap): add all mailboxes option for gmail users (#3442) @MoShizzle
+* feat(jira-cloud): create issue and search issues actions / new issue and updated issue triggers (#3440) @MoShizzle
+* feat(google-gemini): generate content from image /  generate content action (#3437) @pfernandez98
+* feat(datehelper): get next day of week and get next day of year actions (#3315) @joeworkman
+* feat(bettermode): assign badge, revoke badge, create discussion, create question actions (#3314) @joeworkman
+* feat(retable): create record, project, workspace triggers, get all workspaces, get all projects, get all retables actions (#3343) @kishanprmr
+* feat(cartloom): create discount, get discount, discounts, order, orders date email, orders date, products actions (#3347) @joeworkman
+* feat(moxie-crm): 22 triggers, create a client, create a project, create a task actions (#3359) @kishanprmr
+* feat(matomo): add annotation action (#3364) @joeworkman
+* feat(bonjoro): create a greet action (#3366) @joeworkman
+* feat(clearout): instant verify action (#3367) @joeworkman
+* feat(sendy): subscribe multiple lists, unsubscribe multiple lists actions (#3368) @joeworkman
+* feat(totalcms): 13 actions, and new blog post trigger (#3378) @joeworkman
+* feat(Mastodon): add media file property to post status action (#3397) @denieler
+* fix(openai): support fine-tuned model by approximate tokens length  (#3392) @MoShizzle
+* fix: dynamic fields not working in certopus piece (#3349) @VrajGohil
+* feat(wordpress): get post details action (#3330) @pfernandez98
+
+**🛠️ Piece Framework**
+
+* feat: add project info to context (#3453) @MoShizzle
+* feat: add client credentials oauth2 (#3329) @abuaboud
+
+**🐞 Bug Fixes**
+
+* fix: show url when testing step instead of local path (#3486) @abuaboud
+* fix: install piece in platform level is fixed (#3454) @abuaboud
+* fix: sync webhook works with redis pubsub (#3439) @abuaboud
+* fix: remove package.json lint from new piece project.json (#3430) @MoShizzle
+* fix: some dropdowns don't show the selected value for step inputs (#3424) @AbdulTheActivePiecer
+* fix: corrects aspect ratio for home button to be 1:1 (#3425) @AbdulTheActivePiecer
+* fix: show delete flow within builder in flow actions list and hide the list when showing runs (#3421) @AbdulTheActivePiecer
+* fix: trigger not being trimmed when payload too large causing internal error (#3411) @MoShizzle
+* fix: better explanation for the Activepieces' OAuth2 apps toggle in platform pieces table (#3409) @AbdulTheActivePiecer
+* fix: correct date for chatbots deprecation (#3408) @AbdulTheActivePiecer
+* fix(openai): support fine-tuned model by approximate tokens length  (#3392) @MoShizzle
+* fix: send referring user id with sign up request (#3381) @AbdulTheActivePiecer
+* fix: calculation task limit (#3380) @abuaboud
+* fix: daily limit tasks query caused database to spike (#3375) @abuaboud
+* fix: never send newsletter to platform users (#3369) @abuaboud
+* fix: sync webhooks return error status now (#3370) @abuaboud
+* fix: webhook /sync response on errors (#3350) @MoShizzle
+* fix: project member permission (#3362) @abuaboud
+* fix: migrate to oldest ee platform (#3360) @abuaboud
+* fix: platform dashboard wasn't accessible for users on first sign in for EE (#3352) @AbdulTheActivePiecer
+
+**🎨 Enhancements & Polish**
+
+* feat: hide sign up link for platform, sign up are invite only (#3458) @abuaboud
+* feat: new design for fullscreen code editor (#3446) @AbdulTheActivePiecer
+* feat: improve the loading time of dropdowns with 1000+ options and prevent browser crashing (#3395) @AbdulTheActivePiecer
+* feat: introduce flag to hide/show back button and folder name in builder for embedding (#3361) @AbdulTheActivePiecer
+* feat: project membership api tweaks (#3344) @khaledmashaly
+
+**📚 Documentation**
+
+* docs: add i-nithin as a contributor for plugin (#3470) @allcontributors
+* docs: add bigfluffycookie as a contributor for bug (#3438) @allcontributors
+* docs: correct a word (#3417) @MrMYHuang
+* docs: add MrMYHuang as a contributor for doc (#3418) @allcontributors
+* docs: add denieler as a contributor for plugin (#3398) @allcontributors
+* docs(endpoints): delete / create project member (#3358) @abuaboud
+* docs: projects / flows / connections docs (#3346) @abuaboud
+* docs: update codespace instructions (#3323) @pfernandez98
+* docs: add pfernandez98 as a contributor for plugin (#3328) @allcontributors
+
+**🧹 Maintenance**
+
+* chore: rename app name to piece name in connections (#3481) @abuaboud
+* chore: convert cloud to platform (#3493) @abuaboud
+* chore: deprecate chatbots (#3480) @abuaboud
+* refactor: remove `FlowInstance` entity (#3377) @khaledmashaly
+* refactor: engine with test coverage (#3111) @abuaboud
+* fix: remove package.json lint from new piece project.json (#3430) @MoShizzle
+* refactor: move app webhooks secrets to environent variable (#3403) @abuaboud
+* refactor: platform owner should check jwt role (#3399) @abuaboud
+* refactor: authorization cleanup for unauthenticated endpoints (#3390) @abuaboud
+* [Snyk] Security upgrade @sendgrid/mail from 7.7.0 to 8.0.0 (#3355) @abuaboud
+* chore: upgrade node from 18.18.1-bullseye to 18.18.2-bullseye (#3331) @abuaboud
+
+**🖥️ API Changes**
+
+* chore: rename app name to piece name in connections (#3481) @abuaboud
+* feat: initial users management api  (#3443) @khaledmashaly
+* feat: support app connections api (#3389) @abuaboud
+
+**Thanks ❤️**
+@AbdulTheActivePiecer, @BastienMe, @Doskyft, @MoShizzle, @MrMYHuang, @VrajGohil, @abuaboud, @alerdenisov, @allcontributors, @allcontributors[bot], @crowdin-bot, @denieler, @joeworkman, @khaledmashaly, @kishanprmr, @pfernandez98 and @snyk-bot
+
 
 ### 1/12/2023
 
@@ -87,7 +209,7 @@ For more detailed information, you can check the [Full Changelog here](https://g
 - WooCommerce: Create Coupon / Find Coupon / Create Customer / Find Customer / Create Product / Find Product Actions by @TaskMagicKyle.
 - AirTable: Find record / delete record / update record actions by @TaskMagicKyle.
 - Bubble: create thing / delete thing / get thing / search thing actions by @TaskMagicKyle.
-- WebFlow: create collection item / delete collection item / find collection item / find order / fulfill order / get collection item / publish collection item / refund order / unfulfill order / update collection item actions by @TaskMagicKyle.
+- Webflow: create collection item / delete collection item / find collection item / find order / fulfill order / get collection item / publish collection item / refund order / unfulfill order / update collection item actions by @TaskMagicKyle.
 - Sendy: Count Subscribers / Create Campaign / Delete Subscriber / Get Brand Lists / Get Brands / Get Subscription Status / Subscribe / Unsubscribe Actions by @joeworkman.
 
 **Improvements & Fixes**:
@@ -133,7 +255,7 @@ Big shoutout to @fdundjer, @donthorp, @joeworkman, @Autumnlight02, @pankaj9296, 
 - Added the ability to whitelabel Activepieces using your custom domain (Cloud feature only).
 
 **Pieces**:
-- Airtable: Fixed Field Mapping when Updating a Record
+- AirTable: Fixed Field Mapping when Updating a Record
 - Microsoft Excel: Actions - Append Row to Worksheet, Get Worksheets, Get Worksheet Rows, Update Worksheet Row, Clear Worksheet, Delete Worksheet, Add a Worksheet to a Workbook, Get Table Rows, Get Table Columns, Create Table, Delete Table, Lookup Table Column, Append Row to a Table, and Convert to Range, all by @BastienMe
 - Saastic: Actions - Create/Update Customer and Create Customer Charge by @leolupianez
 - Shopify: Sample data for triggers is now fixed.
@@ -261,7 +383,7 @@ please visit the [Full Changelog](https://github.com/activepieces/activepieces/c
 - Brevo: Fixed Create Contact to add the contact to the selected list.
 - Whisper: Translate Audio / Transcribe Audio Action
 - Google My Business: Create Reply Action / New Review Trigger
-- Airtable: Added API Key Validation
+- AirTable: Added API Key Validation
 - Talkable: Added Find Coupon / Create Event / Create Batch of Events / Create Purchase / Update Person and more actions by @Vitalini
 - Salesforce: Added Conditions to Trigger / Bulk Upsert Action
 - Contentful: Create Record Action
@@ -825,7 +947,7 @@ https://github.com/activepieces/activepieces/compare/0.3.7...0.3.8
 
 **New Pieces:**
 - OpenAI: Additional optional parameters have been added.
-- Airtable: Create Record Action.
+- AirTable: Create Record Action.
 - Square: New Customer / Customer Updated / New Payment / New Order / Order Updated / New Booking / New Invoice Triggers.
 - Intercom: Create Contact / Create Or Get Contact / Send Message Actions.
 - Delay: An action that introduces a delay of up to 5 minutes.
@@ -850,7 +972,7 @@ https://github.com/activepieces/activepieces/compare/0.3.7...0.3.8
 - @J0LGER encoded code variable in malicious redirection by third party.
 - @veverkap fixed a typo in the frontend.
 - @berksmbl documented Easy Panel deployment.
-- @kanarelo created Airtable new record.
+- @kanarelo created AirTable new record.
 
 **Full Changelog:**
 https://github.com/activepieces/activepieces/compare/0.3.6...0.3.7

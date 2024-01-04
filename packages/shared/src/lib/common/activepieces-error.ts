@@ -2,7 +2,6 @@ import { AppConnectionId } from '../app-connection/app-connection'
 import { FileId } from '../file/file'
 import { FlowRunId } from '../flow-run/flow-run'
 import { FlowId } from '../flows/flow'
-import { FlowInstanceId } from '../flows/flow-instances'
 import { FlowVersionId } from '../flows/flow-version'
 import { ApId } from './id-generator'
 
@@ -14,6 +13,7 @@ export class ActivepiecesError extends Error {
 
 type ErrorParams =
     | AppConnectionNotFoundErrorParams
+    | AuthenticationParams
     | AuthorizationErrorParams
     | ConfigNotFoundErrorParams
     | EmailIsNotVerifiedErrorParams
@@ -22,7 +22,6 @@ type ErrorParams =
     | ExecutionTimeoutErrorParams
     | ExistingUserErrorParams
     | FileNotFoundErrorParams
-    | FlowInstanceNotFoundErrorParams
     | FlowNotFoundErrorParams
     | FlowOperationErrorParams
     | FlowRunNotFoundErrorParams
@@ -35,6 +34,7 @@ type ErrorParams =
     | InvalidCredentialsErrorParams
     | InvalidJwtTokenErrorParams
     | InvalidOtpParams
+    | InvitationOnlySignUpParams
     | JobRemovalFailureErrorParams
     | OpenAiFailedErrorParams
     | PauseMetadataMissingErrorParams
@@ -51,14 +51,21 @@ type ErrorParams =
     | TriggerEnableErrorParams
     | TriggerFailedErrorParams
     | ValidationErrorParams
+    | InvitationOnlySignUpParams
+    | UserIsInActiveErrorParams
 
 export type BaseErrorParams<T, V> = {
     code: T
     params: V
 }
 
+export type InvitationOnlySignUpParams = BaseErrorParams<
+ErrorCode.INVITATION_ONLY_SIGN_UP,
+Record<string, never>
+>
+
 export type InvalidClaimParams = BaseErrorParams<ErrorCode.INVALID_CLAIM, { redirectUrl: string, tokenUrl: string, clientId: string }>
-export type InvalidCloudClaimParams = BaseErrorParams<ErrorCode.INVALID_CLOUD_CLAIM, { appName: string }>
+export type InvalidCloudClaimParams = BaseErrorParams<ErrorCode.INVALID_CLOUD_CLAIM, { pieceName: string }>
 
 export type InvalidBearerTokenParams = BaseErrorParams<ErrorCode.INVALID_BEARER_TOKEN, {
     message?: string
@@ -103,13 +110,6 @@ ErrorCode.FLOW_NOT_FOUND,
 }
 >
 
-export type FlowInstanceNotFoundErrorParams = BaseErrorParams<
-ErrorCode.FLOW_INSTANCE_NOT_FOUND,
-{
-    id?: FlowInstanceId
-}
->
-
 export type FlowRunNotFoundErrorParams = BaseErrorParams<
 ErrorCode.FLOW_RUN_NOT_FOUND,
 {
@@ -131,6 +131,13 @@ null
 
 export type EmailIsNotVerifiedErrorParams = BaseErrorParams<
 ErrorCode.EMAIL_IS_NOT_VERIFIED,
+{
+    email: string
+}
+>
+
+export type UserIsInActiveErrorParams = BaseErrorParams<
+ErrorCode.USER_IS_INACTIVE,
 {
     email: string
 }
@@ -301,10 +308,18 @@ ErrorCode.SIGN_UP_DISABLED,
 Record<string, never>
 >
 
+export type AuthenticationParams = BaseErrorParams<
+ErrorCode.AUTHENTICATION,
+{
+    message: string
+}
+>
+
 export type InvalidOtpParams = BaseErrorParams<ErrorCode.INVALID_OTP, Record<string, never>>
 
 export enum ErrorCode {
     APP_CONNECTION_NOT_FOUND = 'APP_CONNECTION_NOT_FOUND',
+    AUTHENTICATION = 'AUTHENTICATION',
     AUTHORIZATION = 'AUTHORIZATION',
     CONFIG_NOT_FOUND = 'CONFIG_NOT_FOUND',
     EMAIL_IS_NOT_VERIFIED = 'EMAIL_IS_NOT_VERIFIED',
@@ -326,6 +341,7 @@ export enum ErrorCode {
     INVALID_CREDENTIALS = 'INVALID_CREDENTIALS',
     INVALID_OR_EXPIRED_JWT_TOKEN = 'INVALID_OR_EXPIRED_JWT_TOKEN',
     INVALID_OTP = 'INVALID_OTP',
+    INVITATION_ONLY_SIGN_UP = 'INVITATION_ONLY_SIGN_UP',
     JOB_REMOVAL_FAILURE = 'JOB_REMOVAL_FAILURE',
     OPEN_AI_FAILED = 'OPEN_AI_FAILED',
     PAUSE_METADATA_MISSING = 'PAUSE_METADATA_MISSING',
@@ -341,5 +357,6 @@ export enum ErrorCode {
     TRIGGER_DISABLE = 'TRIGGER_DISABLE',
     TRIGGER_ENABLE = 'TRIGGER_ENABLE',
     TRIGGER_FAILED = 'TRIGGER_FAILED',
+    USER_IS_INACTIVE = 'USER_IS_INACTIVE',
     VALIDATION = 'VALIDATION',
 }

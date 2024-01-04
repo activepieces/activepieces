@@ -11,17 +11,23 @@ type FlagsMap = Record<string, boolean | string | object | undefined>;
   providedIn: 'root',
 })
 export class FlagService {
-  flags$: Observable<FlagsMap> | undefined;
+  private flags$: Observable<FlagsMap> | undefined;
 
   constructor(private http: HttpClient) {}
 
   getAllFlags() {
     if (!this.flags$) {
-      this.flags$ = this.http
-        .get<FlagsMap>(environment.apiUrl + '/flags')
-        .pipe(shareReplay(1));
+      this.flags$ = this.initialiseFlags();
     }
     return this.flags$;
+  }
+  reinitialiseFlags() {
+    this.flags$ = this.initialiseFlags();
+  }
+  private initialiseFlags() {
+    return this.http
+      .get<FlagsMap>(environment.apiUrl + '/flags')
+      .pipe(shareReplay(1));
   }
 
   getStringFlag(flag: ApFlagId): Observable<string> {
@@ -57,14 +63,6 @@ export class FlagService {
           return true;
         }
         return flags['SIGN_UP_ENABLED'] as boolean;
-      })
-    );
-  }
-
-  isChatbotEnabled(): Observable<boolean> {
-    return this.getAllFlags().pipe(
-      map((flags) => {
-        return flags['CHATBOT_ENABLED'] as boolean;
       })
     );
   }
@@ -141,13 +139,6 @@ export class FlagService {
     );
   }
 
-  getTemplatesSourceUrl(): Observable<string> {
-    return this.getAllFlags().pipe(
-      map((flags) => {
-        return flags[ApFlagId.TEMPLATES_SOURCE_URL] as string;
-      })
-    );
-  }
   getTheme() {
     return this.getAllFlags().pipe(
       map((flags) => {
@@ -167,7 +158,7 @@ export class FlagService {
   }> {
     return this.getTheme().pipe(map((theme) => theme['logos']));
   }
-
+  /**Colors like formlabel, borders,dividers ... etc */
   getColors(): Observable<Record<string, string | Record<string, string>>> {
     return this.getTheme().pipe(map((theme) => theme['colors']));
   }

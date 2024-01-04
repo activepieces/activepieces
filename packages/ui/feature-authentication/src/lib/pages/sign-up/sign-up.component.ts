@@ -18,12 +18,7 @@ import {
   containsLowercaseCharacter,
   containsNumber,
 } from '@activepieces/ui/common';
-import {
-  ApEdition,
-  ApFlagId,
-  UnhandledSwitchCaseError,
-  UserStatus,
-} from '@activepieces/shared';
+import { ApEdition, ApFlagId, SignUpRequest } from '@activepieces/shared';
 import { OtpType } from '@activepieces/ee-shared';
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 
@@ -85,35 +80,26 @@ export class SignUpComponent implements OnInit {
   signUp() {
     if (this.registrationForm.valid && !this.loading) {
       this.loading = true;
-      const request = this.registrationForm.getRawValue();
+      const referringUserId =
+        this.activeRoute.snapshot.queryParamMap.get('referral') ?? undefined;
+      const request: SignUpRequest = {
+        ...this.registrationForm.getRawValue(),
+        referringUserId,
+      };
       this.signUp$ = this.authenticationService.signUp(request).pipe(
         tap((response) => {
           if (
             response &&
             response.body &&
             response.body.token &&
-            response.body.status === UserStatus.VERIFIED
+            response.body.verified
           ) {
             this.authenticationService.saveToken(response.body.token);
             this.authenticationService.saveUser(response);
           }
         }),
-        switchMap((response) => {
-          if (this.registrationForm.controls.newsLetter.value && response) {
-            return this.authenticationService
-              .saveNewsLetterSubscriber(request.email)
-              .pipe(
-                map(() => response),
-                catchError((err) => {
-                  console.error(err);
-                  return of(response);
-                })
-              );
-          }
-          return of(response);
-        }),
         tap((response) => {
-          if (response && response.body?.status === UserStatus.VERIFIED) {
+          if (response && response.body?.verified) {
             this.redirect();
           } else {
             this.signUpDone = true;
@@ -171,8 +157,6 @@ export class SignUpComponent implements OnInit {
               }
               case ApEdition.ENTERPRISE:
                 return false;
-              default:
-                throw new UnhandledSwitchCaseError(ed);
             }
           })
         );

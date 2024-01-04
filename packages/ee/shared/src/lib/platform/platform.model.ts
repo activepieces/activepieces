@@ -14,7 +14,11 @@ export enum LocalesEnum {
     ITALIAN = 'it',
     FRENCH = 'fr',
     SPANISH = 'es',
-    JAPANESE = 'ja'
+    JAPANESE = 'ja',
+    INDONESIAN = 'id',
+    VIETNAMESE = 'vi',
+    CHINESE_SIMPLIFIED = 'zh',
+    PORTUGUESE = 'pt'
 }
 
 export const Platform = Type.Object({
@@ -37,6 +41,7 @@ export const Platform = Type.Object({
     termsOfServiceUrl: Type.Optional(Type.String()),
     cloudAuthEnabled: Type.Boolean(),
     showPoweredBy: Type.Boolean(),
+    embeddingEnabled: Type.Boolean(),
     defaultLocale: Type.Optional(Type.Enum(LocalesEnum))
 })
 

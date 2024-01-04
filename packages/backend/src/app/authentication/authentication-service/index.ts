@@ -1,5 +1,5 @@
 import { QueryFailedError } from 'typeorm'
-import { AuthenticationResponse, UserStatus, ActivepiecesError, ErrorCode, isNil, User, ApFlagId, Project, TelemetryEventName, UserId } from '@activepieces/shared'
+import { AuthenticationResponse, UserStatus, ActivepiecesError, ErrorCode, isNil, User, ApFlagId, Project, TelemetryEventName, UserId, ApEnvironment } from '@activepieces/shared'
 import { userService } from '../../user/user-service'
 import { passwordHasher } from '../lib/password-hasher'
 import { authenticationServiceHooks as hooks } from './hooks'
@@ -15,6 +15,10 @@ const SIGN_UP_ENABLED = system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
 export const authenticationService = {
     async signUp(params: SignUpParams): Promise<AuthenticationResponse> {
         await assertSignUpIsEnabled()
+        await hooks.get().preSignUp({
+            email: params.email,
+            platformId: params.platformId,
+        })
         const user = await createUser(params)
 
         return this.signUpResponse({
@@ -56,7 +60,7 @@ export const authenticationService = {
 
         const newUser = {
             email: params.email,
-            status: params.userStatus,
+            verified: params.verified,
             firstName: params.firstName,
             lastName: params.lastName,
             trackEvents: true,
@@ -80,6 +84,7 @@ export const authenticationService = {
         await sendTelemetry({
             user, project: authnResponse.project,
         })
+        await saveNewsLetterSubscriber(user)
 
         return {
             ...userWithoutPassword,
@@ -119,7 +124,8 @@ const createUser = async (params: SignUpParams): Promise<User> => {
     try {
         const newUser: NewUser = {
             email: params.email,
-            status: params.status,
+            verified: params.verified,
+            status: UserStatus.ACTIVE,
             firstName: params.firstName,
             lastName: params.lastName,
             trackEvents: params.trackEvents,
@@ -152,8 +158,15 @@ const assertUserIsAllowedToSignIn: (user: User | null) => asserts user is User =
             params: null,
         })
     }
-
-    if (user.status !== UserStatus.VERIFIED) {
+    if (user.status === UserStatus.INACTIVE) {
+        throw new ActivepiecesError({
+            code: ErrorCode.USER_IS_INACTIVE,
+            params: {
+                email: user.email,
+            },
+        })
+    }
+    if (!user.verified) {
         throw new ActivepiecesError({
             code: ErrorCode.EMAIL_IS_NOT_VERIFIED,
             params: {
@@ -199,6 +212,26 @@ const sendTelemetry = async ({ user, project }: SendTelemetryParams): Promise<vo
     }
 }
 
+async function saveNewsLetterSubscriber(user: User): Promise<void> {
+    const isPlatformUserOrNotSubscribed = !isNil(user.platformId) || !user.newsLetter
+    const environment = system.get(SystemProp.ENVIRONMENT)
+    if (isPlatformUserOrNotSubscribed || environment !== ApEnvironment.PRODUCTION) {
+        return
+    }
+    try {
+        const response = await fetch('https://us-central1-activepieces-b3803.cloudfunctions.net/addContact', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email: user.email }),
+        })
+        return await response.json()
+    }
+    catch (error) {
+        logger.warn(error)
+    }
+}
 type SendTelemetryParams = {
     user: User
     project: Project
@@ -215,7 +248,7 @@ type SignUpParams = {
     lastName: string
     trackEvents: boolean
     newsLetter: boolean
-    status: UserStatus
+    verified: boolean
     platformId: string | null
     referringUserId?: string
 }
@@ -233,7 +266,7 @@ type AssertPasswordsMatchParams = {
 
 type FederatedAuthnParams = {
     email: string
-    userStatus: UserStatus
+    verified: boolean
     firstName: string
     lastName: string
     platformId: string | null

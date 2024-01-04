@@ -7,7 +7,6 @@ import { openapiModule } from './helper/openapi/openapi.module'
 import { flowModule } from './flows/flow.module'
 import { fileModule } from './file/file.module'
 import { pieceModule } from './pieces/base-piece-module'
-import { tokenVerifyMiddleware } from './authentication/token-verify-middleware'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
 import { flagModule } from './flags/flag.module'
@@ -19,35 +18,26 @@ import swagger from '@fastify/swagger'
 import { logger } from './helper/logger'
 import { appEventRoutingModule } from './app-event-routing/app-event-routing.module'
 import { triggerEventModule } from './flows/trigger-events/trigger-event.module'
-import { flowInstanceModule } from './flows/flow-instance/flow-instance.module'
-import { apiKeyAuthMiddleware } from './ee/authentication/api-key-auth-middleware.ee'
 import { fastifyRawBody } from 'fastify-raw-body'
 import { stepFileModule } from './flows/step-file/step-file.module'
-import { chatbotModule } from './chatbot/chatbot.module'
 import { rbacAuthMiddleware } from './ee/authentication/rbac-auth-middleware'
 import { userModule } from './user/user.module'
-import { ApEdition } from '@activepieces/shared'
+import { ApEdition, AppConnectionWithoutSensitiveData, Flow } from '@activepieces/shared'
 import { appConnectionsHooks } from './app-connection/app-connection-service/app-connection-hooks'
 import { authenticationModule } from './authentication/authentication.module'
-import { chatbotHooks } from './chatbot/chatbot.hooks'
-import { datasourceHooks } from './chatbot/datasources/datasource.hooks'
-import { embeddings } from './chatbot/embedings'
 import { cloudAppConnectionsHooks } from './ee/app-connections/cloud-app-connection-service'
 import { appCredentialModule } from './ee/app-credentials/app-credentials.module'
 import { appSumoModule } from './ee/appsumo/appsumo.module'
-import { cloudChatbotHooks } from './ee/chatbot/cloud/cloud-chatbot.hook'
-import { cloudDatasourceHooks } from './ee/chatbot/cloud/cloud-datasources.hook'
-import { qdrantEmbeddings } from './ee/chatbot/cloud/qdrant-embeddings'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
-import { cloudRunHooks } from './ee/flow-run/cloud-flow-run-hooks'
-import { flowTemplateModule } from './ee/flow-template/flow-template.module'
-import { cloudWorkerHooks } from './ee/flow-worker/cloud-flow-worker-hooks'
+import { platformRunHooks } from './ee/flow-run/cloud-flow-run-hooks'
+import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-template.module'
+import { platformWorkerHooks } from './ee/flow-worker/cloud-flow-worker-hooks'
 import { initilizeSentry } from './ee/helper/exception-handler'
 import { adminPieceModule } from './ee/pieces/admin-piece-module'
-import { cloudPieceServiceHooks } from './ee/pieces/piece-service/cloud-piece-service-hooks'
+import { platformPieceServiceHooks } from './ee/pieces/piece-service/platform-piece-service-hooks'
 import { platformModule } from './ee/platform/platform.module'
 import { projectMemberModule } from './ee/project-members/project-member.module'
-import { enterpriseProjectModule } from './ee/projects/platform-project-controller'
+import { platformProjectModule } from './ee/projects/platform-project-controller'
 import { referralModule } from './ee/referrals/referral.module'
 import { flowRunHooks } from './flows/flow-run/flow-run-hooks'
 import { getEdition } from './helper/secret-helper'
@@ -77,6 +67,14 @@ import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local
 import { billingModule } from './ee/billing/billing/billing.module'
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
 import fastifyFavicon from 'fastify-favicon'
+import { ProjectMember, ProjectWithUsageAndPlanResponse } from '@activepieces/ee-shared'
+import { apiKeyModule } from './ee/api-keys/api-key-module'
+import { domainHelper } from './helper/domain-helper'
+import { platformDomainHelper } from './ee/helper/platform-domain-helper'
+import { enterpriseUserModule } from './ee/user/enterprise-user-module'
+import { flowResponseWatcher } from './flows/flow-run/flow-response-watcher'
+import { securityHandlerChain } from './core/security/security-handler-chain'
+import { communityFlowTemplateModule } from './flow-templates/community-flow-template.module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -96,10 +94,25 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(fastifyFavicon)
 
     await app.register(swagger, {
+        hideUntagged: true,
         openapi: {
+            servers: [
+                {
+                    url: 'https://cloud.activepieces.com/api',
+                    description: 'Production Server',
+                },
+            ],
+            components: {
+                schemas: {
+                    'project-member': ProjectMember,
+                    'project': ProjectWithUsageAndPlanResponse,
+                    'flow': Flow,
+                    'app-connection': AppConnectionWithoutSensitiveData,
+                },
+            },
             info: {
                 title: 'Activepieces Documentation',
-                version: '0.3.6',
+                version: '0.14.3',
             },
             externalDocs: {
                 url: 'https://www.activepieces.com/docs',
@@ -150,13 +163,8 @@ export const setupApp = async (): Promise<FastifyInstance> => {
         }
     })
 
-    // BEGIN EE
-    app.addHook('onRequest', apiKeyAuthMiddleware)
-    // END EE
-    app.addHook('onRequest', tokenVerifyMiddleware)
-    // BEGIN EE
-    app.addHook('onRequest', rbacAuthMiddleware)
-    // END EE
+    app.addHook('preHandler', securityHandlerChain)
+    app.addHook('preHandler', rbacAuthMiddleware)
     app.setErrorHandler(errorHandler)
     await app.register(fileModule)
     await app.register(flagModule)
@@ -164,7 +172,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(flowModule)
     await app.register(flowWorkerModule)
     await app.register(pieceModule)
-    await app.register(flowInstanceModule)
     await app.register(flowRunModule)
     await app.register(webhookModule)
     await app.register(appConnectionModule)
@@ -172,7 +179,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(triggerEventModule)
     await app.register(appEventRoutingModule)
     await app.register(stepFileModule)
-    await app.register(chatbotModule)
     await app.register(userModule)
     await app.register(authenticationModule)
 
@@ -206,8 +212,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(billingModule)
             await app.register(appCredentialModule)
             await app.register(connectionKeyModule)
-            await app.register(flowTemplateModule)
-            await app.register(enterpriseProjectModule)
+            await app.register(platformProjectModule)
             await app.register(projectMemberModule)
             await app.register(appSumoModule)
             await app.register(referralModule)
@@ -221,24 +226,25 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(otpModule)
             await app.register(enterpriseLocalAuthnModule)
             await app.register(federatedAuthModule)
+            await app.register(apiKeyModule)
+            await app.register(enterpriseUserModule)
+            await app.register(platformFlowTemplateModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
-            chatbotHooks.setHooks(cloudChatbotHooks)
-            datasourceHooks.setHooks(cloudDatasourceHooks)
-            embeddings.set(qdrantEmbeddings)
             appConnectionsHooks.setHooks(cloudAppConnectionsHooks)
-            flowWorkerHooks.setHooks(cloudWorkerHooks)
-            flowRunHooks.setHooks(cloudRunHooks)
-            pieceServiceHooks.set(cloudPieceServiceHooks)
+            flowWorkerHooks.setHooks(platformWorkerHooks)
+            flowRunHooks.setHooks(platformRunHooks)
+            pieceServiceHooks.set(platformPieceServiceHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             flagHooks.set(enterpriseFlagsHooks)
             authenticationServiceHooks.set(cloudAuthenticationServiceHooks)
+            domainHelper.set(platformDomainHelper)
             initilizeSentry()
             break
         case ApEdition.ENTERPRISE:
             await app.register(customDomainModule)
-            await app.register(enterpriseProjectModule)
+            await app.register(platformProjectModule)
             await app.register(projectMemberModule)
             await app.register(platformModule)
             await app.register(signingKeyModule)
@@ -248,22 +254,30 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(otpModule)
             await app.register(enterpriseLocalAuthnModule)
             await app.register(federatedAuthModule)
+            await app.register(apiKeyModule)
+            await app.register(enterpriseUserModule)
+            await app.register(platformFlowTemplateModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
-            pieceServiceHooks.set(cloudPieceServiceHooks)
+            pieceServiceHooks.set(platformPieceServiceHooks)
+            flowRunHooks.setHooks(platformRunHooks)
+            flowWorkerHooks.setHooks(platformWorkerHooks)
             authenticationServiceHooks.set(enterpriseAuthenticationServiceHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             flagHooks.set(enterpriseFlagsHooks)
+            domainHelper.set(platformDomainHelper)
             break
         case ApEdition.COMMUNITY:
             await app.register(projectModule)
             await app.register(communityPiecesModule)
+            await app.register(communityFlowTemplateModule)
             break
     }
 
     app.addHook('onClose', async () => {
         await flowQueueConsumer.close()
+        await flowResponseWatcher.shutdown()
     })
 
     return app

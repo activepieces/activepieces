@@ -61,7 +61,7 @@ import { InterpolatingTextFormControlComponent } from '../interpolating-text-for
 import { PiecePropertiesFormValue } from '../models/piece-properties-form-value';
 import { AddEditConnectionButtonComponent } from '@activepieces/ui/feature-connections';
 import { PackageType, PieceType } from '@activepieces/shared';
-import { PieceMetadataService } from 'ui-feature-pieces';
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 
 type ConfigKey = string;
 
@@ -348,6 +348,11 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
           }
           return JSON.stringify(prev) === JSON.stringify(curr);
         }),
+        tap(() => {
+          if (obj.property.type !== PropertyType.DYNAMIC) {
+            this.form.controls[obj.propertyKey].setValue(undefined);
+          }
+        }),
         startWith(this.form.controls[rk].value),
         tap(() => {
           this.refreshableConfigsLoadingFlags$[obj.propertyKey].next(true);
@@ -427,7 +432,9 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
           break;
         }
         case PropertyType.CHECKBOX: {
-          controls[pk] = new UntypedFormControl(propValue || false);
+          controls[pk] = new UntypedFormControl(
+            propValue || prop.defaultValue || false
+          );
           break;
         }
         case PropertyType.DATE_TIME:

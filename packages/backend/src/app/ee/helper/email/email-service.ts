@@ -1,6 +1,5 @@
-import { accessTokenManager } from '../../../authentication/lib/access-token-manager'
 import { getEdition } from '../../../helper/secret-helper'
-import { ApEdition, Principal, User, UserStatus, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { ApEdition, User, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import fs from 'node:fs/promises'
 import Mustache from 'mustache'
 import nodemailer from 'nodemailer'
@@ -11,8 +10,10 @@ import { projectService } from '../../../project/project-service'
 import { system } from '../../../helper/system/system'
 import { SystemProp } from '../../../helper/system/system-prop'
 import { OtpType, Platform } from '@activepieces/ee-shared'
-import { customDomainService } from '../../custom-domains/custom-domain.service'
 import { logger } from '../../../helper/logger'
+import { platformDomainHelper } from '../platform-domain-helper'
+import { jwtUtils } from '../../../helper/jwt-utils'
+import { ProjectMemberToken } from '../../project-members/project-member.service'
 
 const EDITION = getEdition()
 const EDITION_IS_NOT_PAID = ![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(EDITION)
@@ -26,11 +27,17 @@ export const emailService = {
 
         const project = await projectService.getOne(projectId)
         assertNotNullOrUndefined(project, 'project')
-        const domain = await getFrontendDomain(EDITION, project.platformId)
-
-        const token = await accessTokenManager.generateToken({
+        const memberToken: ProjectMemberToken = {
             id: invitationId,
-        } as Principal)
+        }
+        const token = await jwtUtils.sign({
+            payload: memberToken,
+            key: await jwtUtils.getJwtSecret(),
+        })
+        const setupLink = await platformDomainHelper.constructUrlFrom({
+            platformId: project.platformId,
+            path: `invitation?token=${token}&email=${encodeURIComponent(email)}`,
+        })
 
         await sendEmail({
             email,
@@ -38,7 +45,7 @@ export const emailService = {
             template: {
                 templateName: 'invitation-email',
                 data: {
-                    setupLink: `${domain}invitation?token=${token}&email=${encodeURIComponent(email)}`,
+                    setupLink,
                     projectName: project.displayName,
                 },
             },
@@ -75,7 +82,7 @@ export const emailService = {
         if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
             return
         }
-        if (user.status === UserStatus.VERIFIED && type === OtpType.EMAIL_VERIFICATION) {
+        if (user.verified && type === OtpType.EMAIL_VERIFICATION) {
             return
         }
         logger.info('Sending OTP email', { email: user.email, otp, userId: user.id, firstName: user.email, type })
@@ -84,8 +91,7 @@ export const emailService = {
             [OtpType.PASSWORD_RESET]: 'reset-password',
         }
 
-        const setupLink = await constructUrlOnFrontend({
-            edition,
+        const setupLink = await platformDomainHelper.constructUrlFrom({
             platformId,
             path: frontendPath[type] + `?otpcode=${otp}&userId=${user.id}`,
         })
@@ -114,22 +120,7 @@ export const emailService = {
     },
 }
 
-async function constructUrlOnFrontend({ edition, platformId, path }: { edition: ApEdition, platformId: string | undefined | null, path: string }): Promise<string> {
-    const domain = await getFrontendDomain(edition, platformId)
-    return `${domain}${path}`
-}
-async function getFrontendDomain(edition: ApEdition, platformId: string | undefined | null): Promise<string> {
-    let domain = system.get(SystemProp.FRONTEND_URL)
-    if (edition === ApEdition.CLOUD && platformId) {
-        const customDomain = await customDomainService.getOneByPlatform({
-            platformId,
-        })
-        if (customDomain) {
-            domain = `https://${customDomain.domain}/`
-        }
-    }
-    return domain + (domain?.endsWith('/') ? '' : '/')
-}
+
 
 
 async function sendEmail({ platformId, email, template }: { template: EmailTemplate, email: string, platformId: string | undefined }): Promise<void> {

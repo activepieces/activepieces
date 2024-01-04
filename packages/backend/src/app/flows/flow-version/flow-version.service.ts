@@ -5,6 +5,7 @@ import {
     ActionType,
     apId,
     BranchActionSettingsWithValidation,
+    Cursor,
     flowHelper,
     FlowId,
     FlowOperationRequest,
@@ -18,6 +19,7 @@ import {
     PieceTriggerSettings,
     ProjectId,
     TriggerType,
+    SeekPage,
     UserId,
 } from '@activepieces/shared'
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity'
@@ -31,13 +33,18 @@ import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import dayjs from 'dayjs'
 import { logger } from '../../helper/logger'
 import { stepFileService } from '../step-file/step-file.service'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
 
 const branchSettingsValidator = TypeCompiler.Compile(BranchActionSettingsWithValidation)
 const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettingsWithValidation)
-const flowVersionRepo = databaseConnection.getRepository<FlowVersion>(FlowVersionEntity)
+const flowVersionRepo = databaseConnection.getRepository(FlowVersionEntity)
 
 export const flowVersionService = {
     async lockPieceVersions(projectId: ProjectId, mutatedFlowVersion: FlowVersion): Promise<FlowVersion> {
+        if (mutatedFlowVersion.state === FlowVersionState.LOCKED) {
+            return mutatedFlowVersion
+        }
         return flowHelper.transferFlowAsync(mutatedFlowVersion, async (step) => {
             const clonedStep = JSON.parse(JSON.stringify(step))
             switch (step.type) {
@@ -59,8 +66,17 @@ export const flowVersionService = {
     },
     async applyOperation(userId: UserId, projectId: ProjectId, flowVersion: FlowVersion, userOperation: FlowOperationRequest): Promise<FlowVersion> {
         let operations: FlowOperationRequest[] = []
-        let mutatedFlowVersion = flowVersion
+        let mutatedFlowVersion: FlowVersion = flowVersion
         switch (userOperation.type) {
+            case FlowOperationType.USE_AS_DRAFT: {
+                const previousVersion = await flowVersionService.getFlowVersion({
+                    flowId: flowVersion.flowId,
+                    versionId: userOperation.request.versionId,
+                    removeSecrets: false,
+                })
+                operations = handleImportFlowOperation(flowVersion, previousVersion)
+                break
+            }
             case FlowOperationType.IMPORT_FLOW:
                 operations = handleImportFlowOperation(flowVersion, userOperation.request)
                 break
@@ -74,7 +90,6 @@ export const flowVersionService = {
             case FlowOperationType.DUPLICATE_ACTION:
                 mutatedFlowVersion = await this.getFlowVersion({
                     flowId: flowVersion.flowId,
-                    removeSecrets: false,
                     versionId: flowVersion.id,
                 })
                 operations = [userOperation]
@@ -98,6 +113,17 @@ export const flowVersionService = {
             id,
         })
     },
+    async getLatestLockedVersionOrThrow(flowId: FlowId): Promise<FlowVersion> {
+        return flowVersionRepo.findOneOrFail({
+            where: {
+                flowId,
+                state: FlowVersionState.LOCKED,
+            },
+            order: {
+                created: 'DESC',
+            },
+        })
+    },
     async getOneOrThrow(id: FlowVersionId): Promise<FlowVersion> {
         const flowVersion = await flowVersionService.getOne(id)
         if (isNil(flowVersion)) {
@@ -111,12 +137,29 @@ export const flowVersionService = {
 
         return flowVersion
     },
-    async getFlowVersion({ flowId, versionId, removeSecrets }: { flowId: FlowId, versionId: FlowVersionId | undefined, removeSecrets: boolean }): Promise<FlowVersion> {
-        let flowVersion = await flowVersionRepo.findOneOrFail({
+    async list({ cursorRequest, limit, flowId }: { cursorRequest: Cursor | null, limit: number, flowId: string }): Promise<SeekPage<FlowVersion>> {
+        const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
+        const paginator = buildPaginator({
+            entity: FlowVersionEntity,
+            query: {
+                limit,
+                order: 'DESC',
+                afterCursor: decodedCursor.nextCursor,
+                beforeCursor: decodedCursor.previousCursor,
+            },
+        })
+        const paginationResult = await paginator.paginate(flowVersionRepo.createQueryBuilder('flow_version').where({
+            flowId,
+        }))
+        return paginationHelper.createPage<FlowVersion>(paginationResult.data, paginationResult.cursor)
+    },
+    async getFlowVersion({ flowId, versionId, removeSecrets }: { flowId: FlowId, versionId: FlowVersionId | undefined, removeSecrets?: boolean }): Promise<FlowVersion> {
+        let flowVersion: FlowVersion = await flowVersionRepo.findOneOrFail({
             where: {
                 flowId,
                 id: versionId,
             },
+            //This is needed to return draft by default because it is always the latest one
             order: {
                 created: 'DESC',
             },

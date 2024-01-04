@@ -1,4 +1,4 @@
-import { ExecutionType, FlowId, FlowRunId, FlowVersionId, ProjectId, RunEnvironment, TriggerType } from '@activepieces/shared'
+import { ExecutionType, FlowId, FlowRetryPayload, FlowRunId, FlowVersionId, ProjectId, RunEnvironment, TriggerType } from '@activepieces/shared'
 
 export const LATEST_JOB_DATA_SCHEMA_VERSION = 3
 
@@ -29,8 +29,10 @@ export type ScheduledJobData = RepeatingJobData | DelayedJobData
 export type OneTimeJobData = BaseJobData & {
     flowVersionId: FlowVersionId
     runId: FlowRunId
+    synchronousHandlerId?: string
     payload: unknown
     executionType: ExecutionType
+    retryPayload?: FlowRetryPayload
 }
 
 export type JobData = ScheduledJobData | OneTimeJobData

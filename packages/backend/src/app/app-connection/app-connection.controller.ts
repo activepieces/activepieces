@@ -1,52 +1,33 @@
 import {
-    ActivepiecesError,
     ApId,
     AppConnection,
     AppConnectionWithoutSensitiveData,
-    ErrorCode,
     ListAppConnectionsRequestQuery,
+    PrincipalType,
     SeekPage,
     UpsertAppConnectionRequestBody,
-    isNil,
 } from '@activepieces/shared'
 import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { appConnectionService } from './app-connection-service/app-connection-service'
 
 export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
-    app.post('/', UpsertAppConnectionRequest, async (request): Promise<AppConnectionWithoutSensitiveData> => {
+    app.post('/', UpsertAppConnectionRequest, async (request, reply) => {
         const appConnection = await appConnectionService.upsert({
             projectId: request.principal.projectId,
             request: request.body,
         })
 
-        return removeSensitiveData(appConnection)
+        await reply.status(StatusCodes.CREATED).send(removeSensitiveData(appConnection))
     })
 
-    app.get('/:connectionName', GetAppConnectionRequest, async (request): Promise<AppConnectionWithoutSensitiveData> => {
-        const appConnection = await appConnectionService.getOne({
-            projectId: request.principal.projectId,
-            name: request.params.connectionName,
-        })
-
-        if (isNil(appConnection)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.APP_CONNECTION_NOT_FOUND,
-                params: {
-                    id: request.params.connectionName,
-                },
-            })
-        }
-
-        return removeSensitiveData(appConnection)
-    })
 
     app.get('/', ListAppConnectionsRequest, async (request): Promise<SeekPage<AppConnectionWithoutSensitiveData>> => {
-        const { appName, cursor, limit } = request.query
+        const { pieceName, cursor, limit } = request.query
 
         const appConnections = await appConnectionService.list({
             projectId: request.principal.projectId,
-            appName,
+            pieceName,
             cursorRequest: cursor ?? null,
             limit: limit ?? DEFAULT_PAGE_SIZE,
         })
@@ -59,11 +40,12 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
         return appConnectionsWithoutSensitiveData
     })
 
-    app.delete('/:connectionId', DeleteAppConnectionRequest, async (request): Promise<void> => {
+    app.delete('/:id', DeleteAppConnectionRequest, async (request, reply): Promise<void> => {
         await appConnectionService.delete({
-            id: request.params.connectionId,
+            id: request.params.id,
             projectId: request.principal.projectId,
         })
+        await reply.status(StatusCodes.NO_CONTENT).send()
     })
 
     done()
@@ -77,25 +59,27 @@ const removeSensitiveData = (appConnection: AppConnection): AppConnectionWithout
 }
 
 const UpsertAppConnectionRequest = {
-    schema: {
-        body: UpsertAppConnectionRequestBody,
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
     },
-}
-
-const GetAppConnectionRequest = {
     schema: {
-        params: Type.Object({
-            connectionName: Type.String(),
-        }),
-        response: {
-            [StatusCodes.OK]: AppConnectionWithoutSensitiveData,
+        tags: ['app-connections'],
+        description: 'Upsert an app connection based on the app name',
+        body: UpsertAppConnectionRequestBody,
+        Response: {
+            [StatusCodes.CREATED]: AppConnectionWithoutSensitiveData,
         },
     },
 }
 
 const ListAppConnectionsRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+    },
     schema: {
+        tags: ['app-connections'],
         querystring: ListAppConnectionsRequestQuery,
+        description: 'List app connections',
         response: {
             [StatusCodes.OK]: SeekPage(AppConnectionWithoutSensitiveData),
         },
@@ -103,9 +87,17 @@ const ListAppConnectionsRequest = {
 }
 
 const DeleteAppConnectionRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+    },
     schema: {
+        tags: ['app-connections'],
+        description: 'Delete an app connection',
         params: Type.Object({
-            connectionId: ApId,
+            id: ApId,
         }),
+        response: {
+            [StatusCodes.NO_CONTENT]: Type.Undefined(),
+        },
     },
 }

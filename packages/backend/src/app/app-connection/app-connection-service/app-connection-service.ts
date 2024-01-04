@@ -9,7 +9,7 @@ import {
     Cursor,
     EngineResponseStatus,
     ErrorCode,
-    ExecuteValidateAuthOperation,
+    OAuth2GrantType,
     ProjectId,
     SeekPage,
     UpsertAppConnectionRequestBody,
@@ -27,7 +27,6 @@ import { isNil } from '@activepieces/shared'
 import { engineHelper } from '../../helper/engine-helper'
 import { acquireLock } from '../../helper/lock'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
-import { getServerUrl } from '../../helper/public-ip-utils'
 import { appConnectionsHooks } from './app-connection-hooks'
 import { oauth2Util } from './oauth2/oauth2-util'
 import { oauth2Handler } from './oauth2'
@@ -119,7 +118,7 @@ export const appConnectionService = {
 
     async list({
         projectId,
-        appName,
+        pieceName,
         cursorRequest,
         limit,
     }: ListParams): Promise<SeekPage<AppConnection>> {
@@ -138,8 +137,8 @@ export const appConnectionService = {
         const querySelector: Record<string, string> = {
             projectId,
         }
-        if (!isNil(appName)) {
-            querySelector.appName = appName
+        if (!isNil(pieceName)) {
+            querySelector.pieceName = pieceName
         }
         const queryBuilder = repo
             .createQueryBuilder('app_connection')
@@ -179,8 +178,9 @@ const validateConnectionValue = async (
         case AppConnectionType.PLATFORM_OAUTH2:
             return oauth2Handler[connection.value.type].claim({
                 projectId,
-                pieceName: connection.appName,
+                pieceName: connection.pieceName,
                 request: {
+                    grantType: OAuth2GrantType.AUTHORIZATION_CODE,
                     code: connection.value.code,
                     clientId: connection.value.client_id,
                     tokenUrl: connection.value.token_url!,
@@ -192,8 +192,9 @@ const validateConnectionValue = async (
         case AppConnectionType.CLOUD_OAUTH2:
             return oauth2Handler[connection.value.type].claim({
                 projectId,
-                pieceName: connection.appName,
+                pieceName: connection.pieceName,
                 request: {
+                    grantType: OAuth2GrantType.AUTHORIZATION_CODE,
                     code: connection.value.code,
                     clientId: connection.value.client_id,
                     tokenUrl: connection.value.token_url!,
@@ -204,11 +205,12 @@ const validateConnectionValue = async (
         case AppConnectionType.OAUTH2:
             return oauth2Handler[connection.value.type].claim({
                 projectId,
-                pieceName: connection.appName,
+                pieceName: connection.pieceName,
                 request: {
                     code: connection.value.code,
                     clientId: connection.value.client_id,
                     tokenUrl: connection.value.token_url!,
+                    grantType: connection.value.grant_type!,
                     redirectUrl: connection.value.redirect_url,
                     clientSecret: connection.value.client_secret,
                     authorizationMethod: connection.value.authorization_method,
@@ -220,7 +222,7 @@ const validateConnectionValue = async (
         case AppConnectionType.BASIC_AUTH:
         case AppConnectionType.SECRET_TEXT:
             await engineValidateAuth({
-                pieceName: connection.appName,
+                pieceName: connection.pieceName,
                 projectId,
                 auth: connection.value,
             })
@@ -251,20 +253,16 @@ const engineValidateAuth = async (
         version: undefined,
     })
 
-    const engineInput: ExecuteValidateAuthOperation = {
-        serverUrl: await getServerUrl(),
+    const engineResponse = await engineHelper.executeValidateAuth( {
         piece: {
             packageType: pieceMetadata.packageType,
             pieceType: pieceMetadata.pieceType,
             pieceName: pieceMetadata.name,
             pieceVersion: pieceMetadata.version,
-            projectId,
         },
         auth,
         projectId,
-    }
-
-    const engineResponse = await engineHelper.executeValidateAuth(engineInput)
+    })
 
     if (engineResponse.status !== EngineResponseStatus.OK) {
         logger.error(
@@ -359,21 +357,21 @@ async function refresh(connection: AppConnection): Promise<AppConnection> {
     switch (connection.value.type) {
         case AppConnectionType.PLATFORM_OAUTH2:
             connection.value = await oauth2Handler[connection.value.type].refresh({
-                pieceName: connection.appName,
+                pieceName: connection.pieceName,
                 projectId: connection.projectId,
                 connectionValue: connection.value,
             })
             break
         case AppConnectionType.CLOUD_OAUTH2:
             connection.value = await oauth2Handler[connection.value.type].refresh({
-                pieceName: connection.appName,
+                pieceName: connection.pieceName,
                 projectId: connection.projectId,
                 connectionValue: connection.value,
             })
             break
         case AppConnectionType.OAUTH2:
             connection.value = await oauth2Handler[connection.value.type].refresh({
-                pieceName: connection.appName,
+                pieceName: connection.pieceName,
                 projectId: connection.projectId,
                 connectionValue: connection.value,
             })
@@ -408,7 +406,7 @@ type DeleteParams = {
 
 type ListParams = {
     projectId: ProjectId
-    appName: string | undefined
+    pieceName: string | undefined
     cursorRequest: Cursor | null
     limit: number
 }
