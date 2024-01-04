@@ -2,11 +2,11 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { hubspotAuth } from '../../';
 import { hubSpotClient } from '../common/client';
 
-export const hubSpotSearchOwnerByEmailAction = createAction({
+export const hubSpotGetOwnerByEmailAction = createAction({
   auth: hubspotAuth,
-  name: 'search_owner_by_email',
-  displayName: 'Search Owner by Email',
-  description: 'Retrieves owner details by email.',
+  name: 'get_owner_by_email',
+  displayName: 'Get Owner by Email',
+  description: 'Retrieves an existing owner by email.',
   props: {
     email: Property.ShortText({
       displayName: 'Owner Email',
