@@ -4,14 +4,18 @@ import {
 	createAction,
 } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../..';
-import { createCustomer } from '../common';
+import { updateCustomer } from '../common';
 
-export const createCustomerAction = createAction({
+export const updateCustomerAction = createAction({
 	auth: shopifyAuth,
-	name: 'create_customer',
-	displayName: 'Create Customer',
-	description: 'Create a new customer.',
+	name: 'update_customer',
+	displayName: 'Update Customer',
+	description: 'Update an existing customer.',
 	props: {
+        customerId: Property.ShortText({
+            displayName: 'Customer ID',
+            required: true,
+        }),
 		email: Property.ShortText({
 			displayName: 'Email',
 			required: false,
@@ -48,9 +52,10 @@ export const createCustomerAction = createAction({
         }),
 	},
 	async run({ auth, propsValue }) {
-		const { email, verifiedEmail, sendEmailInvite, firstName, lastName, phoneNumber, tags } = propsValue;
+		const { customerId, email, verifiedEmail, sendEmailInvite, firstName, lastName, phoneNumber, tags } = propsValue;
 
-		return await createCustomer(
+		return await updateCustomer(
+            customerId,
 			{
 				email,
 				verified_email: verifiedEmail,
