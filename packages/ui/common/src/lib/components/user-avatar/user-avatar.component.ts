@@ -7,7 +7,7 @@ import { FlagService } from '../../service/flag.service';
 import { Store } from '@ngrx/store';
 import { ProjectSelectors } from '../../store/project/project.selector';
 import { LocalesService } from '../../service/locales.service';
-import { LocalesEnum } from '@activepieces/ee-shared';
+import { LocalesEnum } from '@activepieces/shared';
 import { localesMap } from '../../utils/locales';
 import { PlatformProjectService } from '../../service/platform-project.service';
 

@@ -1,10 +1,11 @@
-import { LocalesEnum } from '@activepieces/ee-shared';
+import { LocalesEnum } from '@activepieces/shared';
 
 export const localesMap = {
   [LocalesEnum.ENGLISH]: 'English',
   [LocalesEnum.SPANISH]: 'Español',
   [LocalesEnum.FRENCH]: 'Français',
   [LocalesEnum.GERMAN]: 'Deutsch',
+  [LocalesEnum.HUNGARIAN]: 'Magyar',
   [LocalesEnum.ITALIAN]: 'Italiano',
   [LocalesEnum.DUTCH]: 'Nederlands',
   [LocalesEnum.JAPANESE]: '日本語',
