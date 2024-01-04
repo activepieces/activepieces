@@ -11,7 +11,7 @@ import { getCustomerOrdersAction } from './lib/actions/get-customer-orders';
 import { getBaseUrl, sendShopifyRequest } from './lib/common';
 import { createProductAction } from './lib/actions/create-product';
 import { getProductsAction } from './lib/actions/get-products';
-import { updatedProduct } from './lib/triggers/new-or-updated-product';
+import { updatedProduct } from './lib./lib/triggers/updated-product
 import { createDraftOrderAction } from './lib/actions/create-draft-order';
 import { createOrderAction } from './lib/actions/create-order';
 import { createTransactionAction } from './lib/actions/create-transaction';
@@ -41,7 +41,7 @@ To Obtain an Admin Token, follow these steps:
 3. Click on Develop apps
 4. Create an App
 5. Fill the app name
-6. Click on Configure Admin API Scopes (Select the following scopes 'read_orders', 'read_customers')
+6. Click on Configure Admin API Scopes (Select the following scopes 'read_orders', 'write_orders', 'write_customers', 'read_customers', 'write_products', 'read_products', 'write_draft_orders', 'read_draft_orders')
 7. Click on Install app
 8. Copy the Admin Access Token
 
