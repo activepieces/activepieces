@@ -1,4 +1,4 @@
-import { ApId, BaseModelSchema } from "@activepieces/shared";
+import { ApId, BaseModelSchema, LocalesEnum } from "@activepieces/shared";
 import { Static, Type } from "@sinclair/typebox";
 
 export type PlatformId = ApId;
@@ -6,19 +6,6 @@ export type PlatformId = ApId;
 export enum FilteredPieceBehavior {
     ALLOWED = 'ALLOWED',
     BLOCKED = 'BLOCKED',
-}
-export enum LocalesEnum {
-    DUTCH = 'nl',
-    ENGLISH = 'en',
-    GERMAN = 'de',
-    ITALIAN = 'it',
-    FRENCH = 'fr',
-    SPANISH = 'es',
-    JAPANESE = 'ja',
-    INDONESIAN = 'id',
-    VIETNAMESE = 'vi',
-    CHINESE_SIMPLIFIED = 'zh',
-    PORTUGUESE = 'pt'
 }
 
 export const Platform = Type.Object({
