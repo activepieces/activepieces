@@ -11,7 +11,7 @@ import { getCustomerOrdersAction } from './lib/actions/get-customer-orders';
 import { getBaseUrl, sendShopifyRequest } from './lib/common';
 import { createProductAction } from './lib/actions/create-product';
 import { getProductsAction } from './lib/actions/get-products';
-import { updatedProduct } from './lib./lib/triggers/updated-product
+import { updatedProduct } from './lib/triggers/updated-product';
 import { createDraftOrderAction } from './lib/actions/create-draft-order';
 import { createOrderAction } from './lib/actions/create-order';
 import { createTransactionAction } from './lib/actions/create-transaction';
