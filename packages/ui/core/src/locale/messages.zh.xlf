@@ -60,27 +60,11 @@
         </context-group>
         <target state="final">博客网址 </target>
       </trans-unit>
-      <trans-unit id="1984826134993441246" datatype="html" approved="yes">
-        <source>Image url </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ee/components/src/lib/share-flow-template-dialog/share-flow-template-dialog.component.html</context>
-          <context context-type="linenumber">28</context>
-        </context-group>
-        <target state="final">图片链接 </target>
-      </trans-unit>
-      <trans-unit id="2637278026035363299" datatype="html" approved="yes">
-        <source>Featured Description</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ee/components/src/lib/share-flow-template-dialog/share-flow-template-dialog.component.html</context>
-          <context context-type="linenumber">36</context>
-        </context-group>
-        <target state="final">功能描述</target>
-      </trans-unit>
       <trans-unit id="4163272119298020373" datatype="html" approved="yes">
         <source>Filters</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/components/src/lib/share-flow-template-dialog/share-flow-template-dialog.component.html</context>
-          <context context-type="linenumber">40</context>
+          <context context-type="linenumber">27</context>
         </context-group>
         <target state="final">过滤器</target>
       </trans-unit>
@@ -88,7 +72,7 @@
         <source> Cancel </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/components/src/lib/share-flow-template-dialog/share-flow-template-dialog.component.html</context>
-          <context context-type="linenumber">55,57</context>
+          <context context-type="linenumber">42,44</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html</context>
@@ -113,6 +97,10 @@
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/import-flow-dialogue/import-flow-dialogue.component.html</context>
           <context context-type="linenumber">22,24</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-left-sidebar/src/lib/dialogs/use-as-draft-confirmation-dialog/use-as-draft-confirmation-dialog.component.html</context>
+          <context context-type="linenumber">23,25</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/basic-auth-connection-dialog/basic-auth-connection-dialog.component.html</context>
@@ -156,7 +144,7 @@
         <source> Confirm </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/components/src/lib/share-flow-template-dialog/share-flow-template-dialog.component.html</context>
-          <context context-type="linenumber">59,61</context>
+          <context context-type="linenumber">46,48</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/components/delete-enity-dialog/delete-entity-dialog.component.html</context>
@@ -165,6 +153,10 @@
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/custom-path-mention-dialog/custom-path-mention-dialog.component.html</context>
           <context context-type="linenumber">29,31</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-left-sidebar/src/lib/dialogs/use-as-draft-confirmation-dialog/use-as-draft-confirmation-dialog.component.html</context>
+          <context context-type="linenumber">26,28</context>
         </context-group>
         <target state="final"> 确认 </target>
       </trans-unit>
@@ -457,22 +449,6 @@
         </context-group>
         <target state="final">已创建</target>
       </trans-unit>
-      <trans-unit id="7484291313969220918" datatype="html" approved="yes">
-        <source>Chatbots</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
-          <context context-type="linenumber">91</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
-          <context context-type="linenumber">59</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
-          <context context-type="linenumber">81</context>
-        </context-group>
-        <target state="final">聊天机器人</target>
-      </trans-unit>
       <trans-unit id="7941428823403788384" datatype="html" approved="yes">
         <source> Create </source>
         <context-group purpose="location">
@@ -485,7 +461,7 @@
         <source>Edit</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts</context>
-          <context context-type="linenumber">79</context>
+          <context context-type="linenumber">83</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/basic-auth-connection-dialog/basic-auth-connection-dialog.component.html</context>
@@ -533,7 +509,7 @@
         <source>Projects</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
-          <context context-type="linenumber">42</context>
+          <context context-type="linenumber">41</context>
         </context-group>
         <target state="final">项目</target>
       </trans-unit>
@@ -541,7 +517,7 @@
         <source>Appearance</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
-          <context context-type="linenumber">48</context>
+          <context context-type="linenumber">47</context>
         </context-group>
         <target state="final">外观</target>
       </trans-unit>
@@ -549,17 +525,33 @@
         <source>Pieces</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
-          <context context-type="linenumber">55</context>
+          <context context-type="linenumber">53</context>
         </context-group>
         <target state="final">块</target>
+      </trans-unit>
+      <trans-unit id="5433675495457939071" datatype="html">
+        <source>Templates</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
+          <context context-type="linenumber">59</context>
+        </context-group>
+        <target state="translated">模板</target>
       </trans-unit>
       <trans-unit id="4930506384627295710" datatype="html" approved="yes">
         <source>Settings</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
-          <context context-type="linenumber">61</context>
+          <context context-type="linenumber">71</context>
         </context-group>
         <target state="final">设置</target>
+      </trans-unit>
+      <trans-unit id="4555457172864212828" datatype="html">
+        <source>Users</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
+          <context context-type="linenumber">65</context>
+        </context-group>
+        <target state="needs-translation">Users</target>
       </trans-unit>
       <trans-unit id="2724055831234181057" datatype="html" approved="yes">
         <source>Version</source>
@@ -569,13 +561,29 @@
         </context-group>
         <target state="final">版本</target>
       </trans-unit>
-      <trans-unit id="9211272372634231639" datatype="html" approved="yes">
-        <source> Add Piece </source>
+      <trans-unit id="7239750919884229270" datatype="html" approved="yes">
+        <source>Updated</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/community-pieces-table/community-pieces-table.component.html</context>
-          <context context-type="linenumber">29,31</context>
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.html</context>
+          <context context-type="linenumber">33</context>
         </context-group>
-        <target state="final"> 添加块 </target>
+        <target state="final">已更新</target>
+      </trans-unit>
+      <trans-unit id="7336734700471735506" datatype="html" approved="yes">
+        <source> + Add Item </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/common/src/lib/components/array-form-control/array-form-control.component.html</context>
+          <context context-type="linenumber">23,24</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/array-form-control/array-form-control.component.html</context>
+          <context context-type="linenumber">30,31</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/dictionary-form-control/dictionary-form-control.component.html</context>
+          <context context-type="linenumber">37,38</context>
+        </context-group>
+        <target state="final"> + 添加项目 </target>
       </trans-unit>
       <trans-unit id="3720371318294752429" datatype="html" approved="yes">
         <source>
@@ -716,7 +724,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
-          <context context-type="linenumber">103</context>
+          <context context-type="linenumber">53</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/community-pieces-table/community-pieces-table.component.html</context>
@@ -804,17 +812,9 @@
         <source>Import Flow</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/core/src/app/app-routing.module.ts</context>
-          <context context-type="linenumber">29</context>
+          <context context-type="linenumber">25</context>
         </context-group>
         <target state="final">导入流程</target>
-      </trans-unit>
-      <trans-unit id="833959964659558357" datatype="html" approved="yes">
-        <source>Chatbot</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/core/src/app/app-routing.module.ts</context>
-          <context context-type="linenumber">37</context>
-        </context-group>
-        <target state="final">聊天机器人</target>
       </trans-unit>
       <trans-unit id="4593401671892965174" datatype="html" approved="yes">
         <source> Upgrade</source>
@@ -1169,11 +1169,31 @@
         </context-group>
         <target state="final">无效的邮箱或密码</target>
       </trans-unit>
+      <trans-unit id="8639356833599440141" datatype="html">
+        <source> You are not invited to any project, please contact your administrator. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
+          <context context-type="linenumber">20,22</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
+          <context context-type="linenumber">58,60</context>
+        </context-group>
+        <target state="translated"> 您没有被邀请加入任何项目，请联系您的管理员。 </target>
+      </trans-unit>
+      <trans-unit id="1708757065069066961" datatype="html">
+        <source> Your user is inactive, please contact your administrator to activate it. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
+          <context context-type="linenumber">23,25</context>
+        </context-group>
+        <target state="needs-translation"> Your user is inactive, please contact your administrator to activate it. </target>
+      </trans-unit>
       <trans-unit id="6663783128602596673" datatype="html" approved="yes">
         <source> Sign in </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
-          <context context-type="linenumber">29,31</context>
+          <context context-type="linenumber">36,38</context>
         </context-group>
         <target state="final"> 登录 </target>
       </trans-unit>
@@ -1181,7 +1201,7 @@
         <source>Don't have an account?</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
-          <context context-type="linenumber">36</context>
+          <context context-type="linenumber">43</context>
         </context-group>
         <target state="final">还没有账户？</target>
       </trans-unit>
@@ -1189,7 +1209,7 @@
         <source>Sign up now</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
-          <context context-type="linenumber">36</context>
+          <context context-type="linenumber">43</context>
         </context-group>
         <target state="final">立即注册</target>
       </trans-unit>
@@ -1197,7 +1217,7 @@
         <source>Forgot password?</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
-          <context context-type="linenumber">40</context>
+          <context context-type="linenumber">47</context>
         </context-group>
         <target state="final">忘记密码？</target>
       </trans-unit>
@@ -1264,14 +1284,6 @@
           <context context-type="linenumber">54</context>
         </context-group>
         <target state="final">密码无效</target>
-      </trans-unit>
-      <trans-unit id="3371018857182408066" datatype="html" approved="yes">
-        <source> Contact your admin to send you an invite </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">58,60</context>
-        </context-group>
-        <target state="final"> 请联系您的管理员发送邀请 </target>
       </trans-unit>
       <trans-unit id="1831185355933631853" datatype="html" approved="yes">
         <source>Lowercase</source>
@@ -1539,7 +1551,7 @@
         <source>Test flow</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/widgets/test-flow-widget/test-flow-widget.component.ts</context>
-          <context context-type="linenumber">53</context>
+          <context context-type="linenumber">52</context>
         </context-group>
         <target state="final">测试流程</target>
       </trans-unit>
@@ -1547,7 +1559,7 @@
         <source>Saving...</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/components/widgets/test-flow-widget/test-flow-widget.component.ts</context>
-          <context context-type="linenumber">54</context>
+          <context context-type="linenumber">53</context>
         </context-group>
         <target state="final">保存中...</target>
       </trans-unit>
@@ -1560,18 +1572,6 @@
         </context-group>
         <target state="final"> 仅查看
 </target>
-      </trans-unit>
-      <trans-unit id="7336734700471735506" datatype="html" approved="yes">
-        <source> + Add Item </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/array-form-control/array-form-control.component.html</context>
-          <context context-type="linenumber">30,31</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/dictionary-form-control/dictionary-form-control.component.html</context>
-          <context context-type="linenumber">37,38</context>
-        </context-group>
-        <target state="final"> + 添加项目 </target>
       </trans-unit>
       <trans-unit id="4163163170493567215" datatype="html" approved="yes">
         <source>
@@ -1737,45 +1737,45 @@
         </context-group>
         <target state="final">测试代码 </target>
       </trans-unit>
-      <trans-unit id="6131680921696393746" datatype="html">
+      <trans-unit id="6131680921696393746" datatype="html" approved="yes">
         <source>Minimize Editor</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component.html</context>
           <context context-type="linenumber">13</context>
         </context-group>
-        <target state="needs-translation">Minimize Editor</target>
+        <target state="final">最小化编辑器</target>
       </trans-unit>
-      <trans-unit id="2588893911086802790" datatype="html">
+      <trans-unit id="2588893911086802790" datatype="html" approved="yes">
         <source> Output </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component.html</context>
           <context context-type="linenumber">74,76</context>
         </context-group>
-        <target state="needs-translation"> Output </target>
+        <target state="final"> 输出 </target>
       </trans-unit>
-      <trans-unit id="6287928812505781175" datatype="html">
+      <trans-unit id="6287928812505781175" datatype="html" approved="yes">
         <source> Console </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component.html</context>
           <context context-type="linenumber">81,83</context>
         </context-group>
-        <target state="needs-translation"> Console </target>
+        <target state="final"> 控制台 </target>
       </trans-unit>
-      <trans-unit id="969162659595657718" datatype="html">
+      <trans-unit id="969162659595657718" datatype="html" approved="yes">
         <source>Copied to clipboard</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component.ts</context>
           <context context-type="linenumber">198</context>
         </context-group>
-        <target state="needs-translation">Copied to clipboard</target>
+        <target state="final">已复制到剪切板</target>
       </trans-unit>
-      <trans-unit id="1884322386510747920" datatype="html">
+      <trans-unit id="1884322386510747920" datatype="html" approved="yes">
         <source> Test Step First </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/action-mention-item/action-mention-item.component.html</context>
           <context context-type="linenumber">42,44</context>
         </context-group>
-        <target state="needs-translation"> Test Step First </target>
+        <target state="final"> 请先测试步骤 </target>
       </trans-unit>
       <trans-unit id="6240237049554265257" datatype="html" approved="yes">
         <source> This step needs to be tested in order to view its data. </source>
@@ -1911,50 +1911,6 @@
         </context-group>
         <target state="final"> 此触发器需要先将数据发送给它，以作为示例数据 </target>
       </trans-unit>
-      <trans-unit id="465580375833195843" datatype="html" approved="yes">
-        <source> Switch Version </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/draft-status/draft-status.component.html</context>
-          <context context-type="linenumber">18,20</context>
-        </context-group>
-        <target state="final"> 切换版本 </target>
-      </trans-unit>
-      <trans-unit id="3413929662864508239" datatype="html" approved="yes">
-        <source> Draft </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/draft-status/draft-status.component.html</context>
-          <context context-type="linenumber">21,23</context>
-        </context-group>
-        <target state="final"> 草稿 </target>
-      </trans-unit>
-      <trans-unit id="8481607203070134929" datatype="html" approved="yes">
-        <source> Published </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/draft-status/draft-status.component.html</context>
-          <context context-type="linenumber">24,26</context>
-        </context-group>
-        <target state="final"> 已发布 </target>
-      </trans-unit>
-      <trans-unit id="4058575476871566236" datatype="html" approved="yes">
-        <source>Published</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/draft-status/draft-status.component.ts</context>
-          <context context-type="linenumber">36</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts</context>
-          <context context-type="linenumber">84</context>
-        </context-group>
-        <target state="final">已发布</target>
-      </trans-unit>
-      <trans-unit id="4808589666930368915" datatype="html" approved="yes">
-        <source>Draft</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/draft-status/draft-status.component.ts</context>
-          <context context-type="linenumber">38</context>
-        </context-group>
-        <target state="final">草稿</target>
-      </trans-unit>
       <trans-unit id="2288513108450439427" datatype="html" approved="yes">
         <source>Support</source>
         <context-group purpose="location">
@@ -1967,23 +1923,19 @@
         </context-group>
         <target state="final">支持</target>
       </trans-unit>
-      <trans-unit id="2821179408673282599" datatype="html" approved="yes">
-        <source>Home</source>
+      <trans-unit id="6570363013146073520" datatype="html">
+        <source>Dashboard</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html</context>
           <context context-type="linenumber">14</context>
         </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html</context>
-          <context context-type="linenumber">4</context>
-        </context-group>
-        <target state="final">首页</target>
+        <target state="needs-translation">Dashboard</target>
       </trans-unit>
       <trans-unit id="6041115344061899387" datatype="html" approved="yes">
         <source>Rename</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html</context>
-          <context context-type="linenumber">46</context>
+          <context context-type="linenumber">43</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/folders-list/folders-list.component.html</context>
@@ -1995,7 +1947,7 @@
         <source>Duplicate</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html</context>
-          <context context-type="linenumber">53</context>
+          <context context-type="linenumber">50</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html</context>
@@ -2007,7 +1959,7 @@
         <source>Import</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html</context>
-          <context context-type="linenumber">59</context>
+          <context context-type="linenumber">56</context>
         </context-group>
         <target state="final">导入</target>
       </trans-unit>
@@ -2015,7 +1967,7 @@
         <source>Export</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html</context>
-          <context context-type="linenumber">66</context>
+          <context context-type="linenumber">63</context>
         </context-group>
         <target state="final">导出</target>
       </trans-unit>
@@ -2023,7 +1975,7 @@
         <source>Delete</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html</context>
-          <context context-type="linenumber">75</context>
+          <context context-type="linenumber">72</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html</context>
@@ -2035,16 +1987,24 @@
         </context-group>
         <target state="final">删除</target>
       </trans-unit>
+      <trans-unit id="7532516694422682181" datatype="html">
+        <source>Go to folder</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/flow-builder-header.component.ts</context>
+          <context context-type="linenumber">51</context>
+        </context-group>
+        <target state="needs-translation">Go to folder</target>
+      </trans-unit>
       <trans-unit id="3564199105925922112" datatype="html" approved="yes">
         <source>This will permanently delete the flow, all its data and any background runs.
       You can't undo this action.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/flow-builder-header.component.ts</context>
-          <context context-type="linenumber">131,132</context>
+          <context context-type="linenumber">141,142</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts</context>
-          <context context-type="linenumber">121,122</context>
+          <context context-type="linenumber">119,120</context>
         </context-group>
         <target state="final">这将会永久删除此流程，包括它所有数据和后台。
       您不能撤消此操作。</target>
@@ -2103,15 +2063,27 @@
         <source>Add 1 more step to publish</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts</context>
-          <context context-type="linenumber">82</context>
+          <context context-type="linenumber">86</context>
         </context-group>
         <target state="final">再添加一个步骤发布</target>
+      </trans-unit>
+      <trans-unit id="4058575476871566236" datatype="html" approved="yes">
+        <source>Published</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts</context>
+          <context context-type="linenumber">88</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-left-sidebar/src/lib/version-history/version-history.component.html</context>
+          <context context-type="linenumber">29</context>
+        </context-group>
+        <target state="final">已发布</target>
       </trans-unit>
       <trans-unit id="3433912835588025867" datatype="html" approved="yes">
         <source>Your flow has invalid steps</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts</context>
-          <context context-type="linenumber">86</context>
+          <context context-type="linenumber">90</context>
         </context-group>
         <target state="final">您的流程存在无效的步骤</target>
       </trans-unit>
@@ -2119,7 +2091,7 @@
         <source>Publish Flow</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts</context>
-          <context context-type="linenumber">88</context>
+          <context context-type="linenumber">92</context>
         </context-group>
         <target state="final">发布流程</target>
       </trans-unit>
@@ -2127,7 +2099,7 @@
         <source>Saving</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts</context>
-          <context context-type="linenumber">94</context>
+          <context context-type="linenumber">98</context>
         </context-group>
         <target state="final">保存中</target>
       </trans-unit>
@@ -2135,7 +2107,7 @@
         <source>Publishing</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts</context>
-          <context context-type="linenumber">96</context>
+          <context context-type="linenumber">100</context>
         </context-group>
         <target state="final">发布中</target>
       </trans-unit>
@@ -2143,9 +2115,71 @@
         <source>Publish</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts</context>
-          <context context-type="linenumber">98</context>
+          <context context-type="linenumber">102</context>
         </context-group>
         <target state="final">发布</target>
+      </trans-unit>
+      <trans-unit id="3046849384077646112" datatype="html">
+        <source>Versions History</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/version-history-button/version-history-button.component.html</context>
+          <context context-type="linenumber">2</context>
+        </context-group>
+        <target state="needs-translation">Versions History</target>
+      </trans-unit>
+      <trans-unit id="2369423116644077158" datatype="html">
+        <source>Versions</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/version-history-button/version-history-button.component.html</context>
+          <context context-type="linenumber">6</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-left-sidebar/src/lib/version-history/version-history.component.ts</context>
+          <context context-type="linenumber">35</context>
+        </context-group>
+        <target state="needs-translation">Versions</target>
+      </trans-unit>
+      <trans-unit id="3980254400386807047" datatype="html">
+        <source>
+          Warning 
+          <x id="START_TAG_DIV_1" ctype="x-div_1" equiv-text="&lt;div class=&quot;ap-inline-block ap-h-[36px]  &quot;&gt;"/>
+          <x id="START_TAG_DIV" ctype="x-div" equiv-text="&lt;div class=&quot;ap-flex ap-gap-2&#10;        ap-items-center&quot;&gt;"/>
+          <x id="START_TAG_SVG_ICON" ctype="x-svg_icon" equiv-text="&lt;svg-icon [svgStyle]=&quot;{ width: '20px', height: '20px' }&quot; src=&quot;assets/img/custom/warn.svg&quot;&gt;"/>
+          <x id="CLOSE_TAG_SVG_ICON" ctype="x-svg_icon" equiv-text="&lt;/svg-icon&gt;"/>
+          <x id="CLOSE_TAG_DIV" ctype="x-div" equiv-text="&lt;/div&gt;"/>
+          <x id="CLOSE_TAG_DIV" ctype="x-div" equiv-text="&lt;/div&gt;"/>
+        </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-left-sidebar/src/lib/dialogs/use-as-draft-confirmation-dialog/use-as-draft-confirmation-dialog.component.html</context>
+          <context context-type="linenumber">2,7</context>
+        </context-group>
+        <target state="needs-translation">
+          Warning 
+          <x id="START_TAG_DIV_1" ctype="x-div_1" equiv-text="&lt;div class=&quot;ap-inline-block ap-h-[36px]  &quot;&gt;"/>
+          <x id="START_TAG_DIV" ctype="x-div" equiv-text="&lt;div class=&quot;ap-flex ap-gap-2&amp;#10;        ap-items-center&quot;&gt;"/>
+          <x id="START_TAG_SVG_ICON" ctype="x-svg_icon" equiv-text="&lt;svg-icon [svgStyle]=&quot;{ width: '20px', height: '20px' }&quot; src=&quot;assets/img/custom/warn.svg&quot;&gt;"/>
+          <x id="CLOSE_TAG_SVG_ICON" ctype="x-svg_icon" equiv-text="&lt;/svg-icon&gt;"/>
+          <x id="CLOSE_TAG_DIV" ctype="x-div" equiv-text="&lt;/div&gt;"/>
+          <x id="CLOSE_TAG_DIV" ctype="x-div" equiv-text="&lt;/div&gt;"/>
+        </target>
+      </trans-unit>
+      <trans-unit id="1154322758070876193" datatype="html">
+        <source>
+          Your current draft version will be overwritten with version #.
+          <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>
+          <x id="INTERPOLATION" equiv-text="{{data.versionNumber}}"/>
+          <x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="&lt;/b&gt;"/>
+        </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-left-sidebar/src/lib/dialogs/use-as-draft-confirmation-dialog/use-as-draft-confirmation-dialog.component.html</context>
+          <context context-type="linenumber">14,15</context>
+        </context-group>
+        <target state="needs-translation">
+          Your current draft version will be overwritten with version #.
+          <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>
+          <x id="INTERPOLATION" equiv-text="{{data.versionNumber}}"/>
+          <x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="&lt;/b&gt;"/>
+        </target>
       </trans-unit>
       <trans-unit id="6310395472139498755" datatype="html" approved="yes">
         <source>Run Details</source>
@@ -2222,6 +2256,54 @@
           <context context-type="linenumber">72,74</context>
         </context-group>
         <target state="final"> 所有迭代 </target>
+      </trans-unit>
+      <trans-unit id="3532447128426313609" datatype="html">
+        <source>Viewing</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-left-sidebar/src/lib/version-history/version-history.component.html</context>
+          <context context-type="linenumber">18</context>
+        </context-group>
+        <target state="needs-translation">Viewing</target>
+      </trans-unit>
+      <trans-unit id="4808589666930368915" datatype="html" approved="yes">
+        <source>Draft</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-left-sidebar/src/lib/version-history/version-history.component.html</context>
+          <context context-type="linenumber">23</context>
+        </context-group>
+        <target state="final">草稿</target>
+      </trans-unit>
+      <trans-unit id="2679053481868259036" datatype="html">
+        <source>
+           View 
+          <x id="START_TAG_SVG_ICON" ctype="x-svg_icon" equiv-text="g-icon src=&quot;assets/img/custom/eye.svg&quot; class=&quot;ap-w-[20px] ap-h-[20px]&quot;&#10;                                    [applyClass]=&quot;true&quot;&gt;"/>
+          <x id="CLOSE_TAG_SVG_ICON" ctype="x-svg_icon" equiv-text="View"/>
+        </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-left-sidebar/src/lib/version-history/version-history.component.html</context>
+          <context context-type="linenumber">40,42</context>
+        </context-group>
+        <target state="needs-translation">
+           View 
+          <x id="START_TAG_SVG_ICON" ctype="x-svg_icon" equiv-text="g-icon src=&quot;assets/img/custom/eye.svg&quot; class=&quot;ap-w-[20px] ap-h-[20px]&quot;&amp;#10;                                    [applyClass]=&quot;true&quot;&gt;"/>
+          <x id="CLOSE_TAG_SVG_ICON" ctype="x-svg_icon" equiv-text="View"/>
+        </target>
+      </trans-unit>
+      <trans-unit id="7079179593648311012" datatype="html">
+        <source>
+           Use as draft 
+          <x id="START_TAG_SVG_ICON" ctype="x-svg_icon" equiv-text="g-icon src=&quot;assets/img/custom/pencil-underline.svg&quot; class=&quot;ap-w-[20px] ap-h-[20px]&quot;&#10;                                    [applyClass]=&quot;true&quot;&gt;"/>
+          <x id="CLOSE_TAG_SVG_ICON" ctype="x-svg_icon" equiv-text="Use as draf"/>
+        </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-left-sidebar/src/lib/version-history/version-history.component.html</context>
+          <context context-type="linenumber">47,49</context>
+        </context-group>
+        <target state="needs-translation">
+           Use as draft 
+          <x id="START_TAG_SVG_ICON" ctype="x-svg_icon" equiv-text="g-icon src=&quot;assets/img/custom/pencil-underline.svg&quot; class=&quot;ap-w-[20px] ap-h-[20px]&quot;&amp;#10;                                    [applyClass]=&quot;true&quot;&gt;"/>
+          <x id="CLOSE_TAG_SVG_ICON" ctype="x-svg_icon" equiv-text="Use as draf"/>
+        </target>
       </trans-unit>
       <trans-unit id="892494322375448657" datatype="html" approved="yes">
         <source>
@@ -2453,7 +2535,7 @@
         <source>Uncategorized</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-store/src/lib/store/builder/builder.selector.ts</context>
-          <context context-type="linenumber">121</context>
+          <context context-type="linenumber">112</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table-title/flows-table-title.component.html</context>
@@ -2801,6 +2883,26 @@
         </context-group>
         <target state="final"> 请发送数据到 webhook 端点以便测试步骤。 </target>
       </trans-unit>
+      <trans-unit id="8096108831936282703" datatype="html" approved="yes">
+        <source>New Connection</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/basic-auth-connection-dialog/basic-auth-connection-dialog.component.html</context>
+          <context context-type="linenumber">3</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/custom-auth-connection-dialog/custom-auth-connection-dialog.component.html</context>
+          <context context-type="linenumber">2</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/managed-oauth2-connection-dialog/managed-oauth2-connection-dialog.component.html</context>
+          <context context-type="linenumber">3</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
+          <context context-type="linenumber">3</context>
+        </context-group>
+        <target state="final">新建连接</target>
+      </trans-unit>
       <trans-unit id="4042902315677630519" datatype="html" approved="yes">
         <source> Name is required </source>
         <context-group purpose="location">
@@ -2832,34 +2934,6 @@
           <context context-type="linenumber">14,16</context>
         </context-group>
         <target state="final"> 名称是必填项 </target>
-      </trans-unit>
-      <trans-unit id="6070859199120014907" datatype="html" approved="yes">
-        <source>Reconnect</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/custom-auth-connection-dialog/custom-auth-connection-dialog.component.html</context>
-          <context context-type="linenumber">3</context>
-        </context-group>
-        <target state="final">重新连接</target>
-      </trans-unit>
-      <trans-unit id="8096108831936282703" datatype="html" approved="yes">
-        <source>New Connection</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/basic-auth-connection-dialog/basic-auth-connection-dialog.component.html</context>
-          <context context-type="linenumber">3</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/custom-auth-connection-dialog/custom-auth-connection-dialog.component.html</context>
-          <context context-type="linenumber">2</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/managed-oauth2-connection-dialog/managed-oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">3</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">3</context>
-        </context-group>
-        <target state="final">新建连接</target>
       </trans-unit>
       <trans-unit id="828831341307092377" datatype="html" approved="yes">
         <source> Name can only contain letters, numbers and underscores </source>
@@ -2952,6 +3026,14 @@
           <context context-type="linenumber">37</context>
         </context-group>
         <target state="final">是必填项</target>
+      </trans-unit>
+      <trans-unit id="6070859199120014907" datatype="html" approved="yes">
+        <source>Reconnect</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/custom-auth-connection-dialog/custom-auth-connection-dialog.component.html</context>
+          <context context-type="linenumber">3</context>
+        </context-group>
+        <target state="final">重新连接</target>
       </trans-unit>
       <trans-unit id="2504830835198730128" datatype="html" approved="yes">
         <source> You have to connect an account to continue </source>
@@ -3063,6 +3145,14 @@
         <target state="final"> 请确保此连接的凭据是正确的。
 </target>
       </trans-unit>
+      <trans-unit id="2821179408673282599" datatype="html" approved="yes">
+        <source>Home</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html</context>
+          <context context-type="linenumber">4</context>
+        </context-group>
+        <target state="final">首页</target>
+      </trans-unit>
       <trans-unit id="5578202866683959807" datatype="html" approved="yes">
         <source>Ask the Community</source>
         <context-group purpose="location">
@@ -3091,11 +3181,11 @@
         <source>Flows</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
-          <context context-type="linenumber">82</context>
+          <context context-type="linenumber">92</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
-          <context context-type="linenumber">119</context>
+          <context context-type="linenumber">69</context>
         </context-group>
         <target state="final">流程</target>
       </trans-unit>
@@ -3103,11 +3193,11 @@
         <source>Runs</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
-          <context context-type="linenumber">105</context>
+          <context context-type="linenumber">101</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
-          <context context-type="linenumber">35</context>
+          <context context-type="linenumber">29</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.html</context>
@@ -3127,11 +3217,11 @@
         <source>Connections</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
-          <context context-type="linenumber">111</context>
+          <context context-type="linenumber">107</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
-          <context context-type="linenumber">111</context>
+          <context context-type="linenumber">61</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.ts</context>
@@ -3143,11 +3233,11 @@
         <source>Team</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
-          <context context-type="linenumber">117</context>
+          <context context-type="linenumber">113</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
-          <context context-type="linenumber">51</context>
+          <context context-type="linenumber">45</context>
         </context-group>
         <target state="final">团队</target>
       </trans-unit>
@@ -3163,27 +3253,15 @@
         <source>Plans</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
-          <context context-type="linenumber">43</context>
+          <context context-type="linenumber">37</context>
         </context-group>
         <target state="final">套餐</target>
-      </trans-unit>
-      <trans-unit id="5903633013884641340" datatype="html" approved="yes">
-        <source>Chatbot settings</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
-          <context context-type="linenumber">70</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
-          <context context-type="linenumber">92</context>
-        </context-group>
-        <target state="final">Chatbot 设置</target>
       </trans-unit>
       <trans-unit id="962765493084218985" datatype="html" approved="yes">
         <source>Platform</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
-          <context context-type="linenumber">131</context>
+          <context context-type="linenumber">81</context>
         </context-group>
         <target state="final">平台</target>
       </trans-unit>
@@ -3199,14 +3277,6 @@
         </context-group>
         <target state="final">应用</target>
       </trans-unit>
-      <trans-unit id="7239750919884229270" datatype="html" approved="yes">
-        <source>Updated</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.html</context>
-          <context context-type="linenumber">33</context>
-        </context-group>
-        <target state="final">已更新</target>
-      </trans-unit>
       <trans-unit id="3928717218923468734" datatype="html" approved="yes">
         <source>Delete Connection</source>
         <context-group purpose="location">
@@ -3219,7 +3289,7 @@
         <source> No connections created yet </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.html</context>
-          <context context-type="linenumber">58,60</context>
+          <context context-type="linenumber">59,61</context>
         </context-group>
         <target state="final"> 尚未创建连接 </target>
       </trans-unit>
@@ -3271,7 +3341,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table-title/flows-table-title.component.ts</context>
-          <context context-type="linenumber">38</context>
+          <context context-type="linenumber">41</context>
         </context-group>
         <target state="final">未命名</target>
       </trans-unit>
@@ -3347,11 +3417,11 @@
         <source>Real time flow</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts</context>
-          <context context-type="linenumber">195</context>
+          <context context-type="linenumber">193</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts</context>
-          <context context-type="linenumber">202</context>
+          <context context-type="linenumber">200</context>
         </context-group>
         <target state="final">实时流程</target>
       </trans-unit>
@@ -3362,7 +3432,7 @@
         </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts</context>
-          <context context-type="linenumber">199,201</context>
+          <context context-type="linenumber">197,199</context>
         </context-group>
         <target state="final">
           运行 
@@ -3373,7 +3443,7 @@
         <source>Please contact support as your published flow has a problem</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts</context>
-          <context context-type="linenumber">209</context>
+          <context context-type="linenumber">207</context>
         </context-group>
         <target state="final">由于您发布的流程有问题，请联系客服。</target>
       </trans-unit>
@@ -3567,11 +3637,23 @@
         </context-group>
         <target state="final">已完成</target>
       </trans-unit>
+      <trans-unit id="187187500641108332" datatype="html">
+        <source>
+          <x id="INTERPOLATION" equiv-text="option.label }}"/>
+        </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
+          <context context-type="linenumber">56,57</context>
+        </context-group>
+        <target state="needs-translation">
+          <x id="INTERPOLATION" equiv-text="option.label }}"/>
+        </target>
+      </trans-unit>
       <trans-unit id="2388673916006005004" datatype="html" approved="yes">
         <source> No runs instantiated yet </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
-          <context context-type="linenumber">49,51</context>
+          <context context-type="linenumber">72,74</context>
         </context-group>
         <target state="final"> 尚无运行实例 </target>
       </trans-unit>
@@ -3582,6 +3664,14 @@
           <context context-type="linenumber">4,6</context>
         </context-group>
         <target state="final"> 您可以在这里安装您自己或贡献者制作的块。 </target>
+      </trans-unit>
+      <trans-unit id="9211272372634231639" datatype="html" approved="yes">
+        <source> Add Piece </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/community-pieces-table/community-pieces-table.component.html</context>
+          <context context-type="linenumber">29,31</context>
+        </context-group>
+        <target state="final"> 添加块 </target>
       </trans-unit>
       <trans-unit id="3336001235735417463" datatype="html" approved="yes">
         <source> No pieces installed </source>
@@ -3649,46 +3739,6 @@
  请确保您信任该块的作者，它将有权访问您的流程数据，并且它可能与当前版本的 Activeges不兼容。
   </target>
       </trans-unit>
-      <trans-unit id="2930524874557603286" datatype="html" approved="yes">
-        <source>Activepieces Team</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-templates/src/lib/featured-template-card/featured-template-card.component.html</context>
-          <context context-type="linenumber">15</context>
-        </context-group>
-        <target state="final">Activepieces 团队</target>
-      </trans-unit>
-      <trans-unit id="954840788512180203" datatype="html" approved="yes">
-        <source>See less</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-templates/src/lib/featured-template-card/featured-template-card.component.html</context>
-          <context context-type="linenumber">36</context>
-        </context-group>
-        <target state="final">收起</target>
-      </trans-unit>
-      <trans-unit id="4462165726005928867" datatype="html" approved="yes">
-        <source>See more</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-templates/src/lib/featured-template-card/featured-template-card.component.html</context>
-          <context context-type="linenumber">39</context>
-        </context-group>
-        <target state="final">展开</target>
-      </trans-unit>
-      <trans-unit id="29870732231596621" datatype="html" approved="yes">
-        <source>Use Template </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-templates/src/lib/featured-template-card/featured-template-card.component.html</context>
-          <context context-type="linenumber">57</context>
-        </context-group>
-        <target state="final">使用该模版 </target>
-      </trans-unit>
-      <trans-unit id="2047936376758344367" datatype="html" approved="yes">
-        <source>Verified icons created by lakonicon - Flaticon</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-templates/src/lib/featured-template-card/featured-template-card.component.html</context>
-          <context context-type="linenumber">64,65</context>
-        </context-group>
-        <target state="final">由 lakonicon 创建的已验证图标 - Flaticon</target>
-      </trans-unit>
       <trans-unit id="5949896491927456436" datatype="html" approved="yes">
         <source> Learn about this flow </source>
         <context-group purpose="location">
@@ -3747,59 +3797,19 @@
         </context-group>
         <target state="final">选择</target>
       </trans-unit>
-      <trans-unit id="6703947649972852818" datatype="html" approved="yes">
-        <source>Featured</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html</context>
-          <context context-type="linenumber">9</context>
-        </context-group>
-        <target state="final">精选</target>
-      </trans-unit>
-      <trans-unit id="5688462374174490321" datatype="html" approved="yes">
-        <source> Load more </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html</context>
-          <context context-type="linenumber">23,25</context>
-        </context-group>
-        <target state="final"> 加载更多 </target>
-      </trans-unit>
-      <trans-unit id="2264989214104883907" datatype="html" approved="yes">
-        <source>All ideas</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html</context>
-          <context context-type="linenumber">41</context>
-        </context-group>
-        <target state="final">所有建议</target>
-      </trans-unit>
       <trans-unit id="5784653381187077675" datatype="html" approved="yes">
         <source>Browse Templates</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html</context>
-          <context context-type="linenumber">63</context>
+          <context context-type="linenumber">3</context>
         </context-group>
         <target state="final">浏览模板</target>
-      </trans-unit>
-      <trans-unit id="3632453124332504959" datatype="html" approved="yes">
-        <source> A new way to explore fresh ideas from our partners</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html</context>
-          <context context-type="linenumber">90</context>
-        </context-group>
-        <target state="final"> 探索合作伙伴新想法的新方式</target>
-      </trans-unit>
-      <trans-unit id="3467902316108509147" datatype="html" approved="yes">
-        <source>View featured ideas </source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html</context>
-          <context context-type="linenumber">92,93</context>
-        </context-group>
-        <target state="final">查看精选意见 </target>
       </trans-unit>
       <trans-unit id="2683765549895995966" datatype="html" approved="yes">
         <source>Search templates</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html</context>
-          <context context-type="linenumber">101</context>
+          <context context-type="linenumber">34</context>
         </context-group>
         <target state="final">搜索模板</target>
       </trans-unit>
@@ -3807,19 +3817,17 @@
         <source>Start from scratch</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html</context>
-          <context context-type="linenumber">114</context>
+          <context context-type="linenumber">47</context>
         </context-group>
         <target state="final">从头开始</target>
       </trans-unit>
-      <trans-unit id="3814533228057776001" datatype="html" approved="yes">
-        <source> Filters
-</source>
+      <trans-unit id="180660177324430106" datatype="html">
+        <source> Filters </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/templates-dialog/templates-filters/templates-filters.component.html</context>
-          <context context-type="linenumber">1,3</context>
+          <context context-type="linenumber">2,4</context>
         </context-group>
-        <target state="final"> 筛选
-</target>
+        <target state="translated"> 过滤器 </target>
       </trans-unit>
     </body>
   </file>
