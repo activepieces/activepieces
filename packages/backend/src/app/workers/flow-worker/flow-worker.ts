@@ -158,21 +158,6 @@ const loadInputAndLogFileId = async ({
             }
         }
         case ExecutionType.BEGIN:
-        default: {
-            if (!isNil(flowRun.logsFileId)) {
-                const logFile = await fileService.getOneOrThrow({
-                    fileId: flowRun.logsFileId,
-                    projectId: jobData.projectId,
-                })
-    
-                const serializedExecutionOutput = logFile.data.toString('utf-8')
-                const executionOutput: ExecutionOutput = JSON.parse(
-                    serializedExecutionOutput,
-                )
-                
-                jobData.payload = executionOutput.executionState.steps.trigger.output
-            }
-
             return {
                 input: {
                     triggerPayload: jobData.payload,
@@ -180,7 +165,6 @@ const loadInputAndLogFileId = async ({
                     ...baseInput,
                 },
             }
-        }
     }
 }
 
@@ -205,20 +189,21 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
 
     await flowWorkerHooks.getHooks().preExecute({ projectId: jobData.projectId, runId: jobData.runId })
 
-    const sandbox = await getSandbox({
-        projectId: jobData.projectId,
-        flowVersion,
-        runEnvironment: jobData.environment,
-    })
-
-    logger.info(`[FlowWorker#executeFlow] flowRunId=${jobData.runId} sandboxId=${sandbox.boxId} prepareTime=${Date.now() - startTime}ms`)
 
     try {
-        
+
         const { input, logFileId } = await loadInputAndLogFileId({
             flowVersion,
             jobData,
         })
+
+        const sandbox = await getSandbox({
+            projectId: jobData.projectId,
+            flowVersion,
+            runEnvironment: jobData.environment,
+        })
+
+        logger.info(`[FlowWorker#executeFlow] flowRunId=${jobData.runId} sandboxId=${sandbox.boxId} prepareTime=${Date.now() - startTime}ms`)
 
         const { result: executionOutput } = await engineHelper.executeFlow(
             sandbox,
