@@ -16,5 +16,22 @@ export const mondayGraphQLMutations = {
     ) {
       id
     }
-  }`,
+  }
+  `,
+  updateItem: `
+  mutation updateItem (
+    $itemId: ID!,
+    $boardId: ID!,
+    $columnValues: JSON!
+  ){
+    change_multiple_column_values(
+      item_id: $itemId,
+      board_id: $boardId,
+      column_values: $columnValues
+    ){
+      id
+      name
+    }
+  }
+`,
 };

@@ -90,8 +90,6 @@ export const mondayCommon = {
         const res = await client.listBoardGroups({
           boardId: board_id as string,
         });
-        console.log('RES');
-        console.log(res);
         return {
           disabled: false,
           options:
@@ -101,6 +99,37 @@ export const mondayCommon = {
                   value: group.id,
                 }))
               : [],
+        };
+      },
+    }),
+  item_id: (required = true) =>
+    Property.Dropdown({
+      displayName: 'Item ID',
+      required: required,
+      refreshers: ['board_id'],
+      options: async ({ auth, board_id }) => {
+        if (!auth || !board_id) {
+          return {
+            disabled: true,
+            placeholder:
+              'connect your account first and select workspace board.',
+            options: [],
+          };
+        }
+        const client = makeClient(auth as string);
+        const res = await client.listBoardItems({
+          boardId: board_id as string,
+        });
+
+        const items = res.data.boards[0]?.items_page.items;
+        return {
+          disabled: false,
+          options: items.map((item) => {
+            return {
+              label: item.name,
+              value: item.id,
+            };
+          }),
         };
       },
     }),

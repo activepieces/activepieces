@@ -43,4 +43,18 @@ export const mondayGraphQLQueries = {
             }
         }
     }`,
+  listBoardItems: `
+    query listBoardItems($boardId: ID!)
+    {
+        boards(ids: [$boardId])
+        {
+            items_page
+            {
+                items{
+                    id
+                    name
+                }
+            }
+        }
+    }`,
 };

@@ -13,7 +13,7 @@ export interface Board {
   name: string;
   groups: Group[];
   type: BoardType;
-  items: Item[];
+  items_page: { items: Item[] };
 }
 export interface Group {
   id: string;

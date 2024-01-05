@@ -1,5 +1,6 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { mondayCreateAnItem } from './lib/actions/create-item';
+import { createItemAction } from './lib/actions/create-item';
+import { updateColumnValuesOfItemAction } from './lib/actions/update-column-values-of-item';
 // import { mondayGetItemColumnValues } from './lib/actions/get-column-value-by-item';
 // import { mondayGetItemByColumnValues } from './lib/actions/get-item-by-column-value';
 // import { mondayUpdateAnItem } from './lib/actions/update-item';
@@ -26,7 +27,8 @@ export const monday = createPiece({
   authors: ['kanarelo'],
   auth: mondayAuth,
   actions: [
-    mondayCreateAnItem,
+    createItemAction,
+    updateColumnValuesOfItemAction,
     // mondayUpdateAnItem,
     // mondayGetItemColumnValues,
     // mondayGetItemByColumnValues,

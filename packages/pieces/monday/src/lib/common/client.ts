@@ -33,8 +33,19 @@ export class mondayClient {
       { variables: variables }
     );
   }
+  async listBoardItems(variables: object) {
+    return await this.client.api<{ boards: Board[] }>(
+      mondayGraphQLQueries.listBoardItems,
+      { variables: variables }
+    );
+  }
   async createItem(variables: object) {
     return await this.client.api(mondayGraphQLMutations.createItem, {
+      variables: variables,
+    });
+  }
+  async updateItem(variables: object) {
+    return await this.client.api(mondayGraphQLMutations.updateItem, {
       variables: variables,
     });
   }
