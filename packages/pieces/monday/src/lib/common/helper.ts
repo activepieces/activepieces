@@ -277,6 +277,19 @@ export const MondayColumnMapping: Record<string, any> = {
       timezone: property,
     }),
   },
+  people: {
+    buildMondayType: (property: DynamicPropsValue) => {
+      let res: { id: string; kind: string }[] = [];
+      if (Array.isArray(property)) {
+        property.forEach((person) => {
+          res.push({ id: person, kind: 'person' });
+        });
+      }
+      return {
+        personsAndTeams: res,
+      };
+    },
+  },
 };
 
 type ColumnIdTypeMap = {

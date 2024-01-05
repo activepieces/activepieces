@@ -149,5 +149,4 @@ export const MondayNotSupportedFields = [
   'tags',
   'time_tracking',
   'vote',
-  'people',
 ];

@@ -1,8 +1,7 @@
 import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
-import { isNil } from 'lodash';
 import { mondayClient } from './client';
 import { MondayColumnMapping } from './helper';
-import { MondayColumn, MondayNotSupportedFields } from './models';
+import { MondayNotSupportedFields } from './models';
 
 export function makeClient(apiKey: string): mondayClient {
   return new mondayClient(apiKey);
@@ -11,8 +10,7 @@ export function makeClient(apiKey: string): mondayClient {
 export const mondayCommon = {
   workspace_id: (required = true) =>
     Property.Dropdown({
-      displayName: 'Workspace',
-      description: "The workspace's unique identifier.",
+      displayName: 'Workspace ID',
       required: required,
       refreshers: [],
       options: async ({ auth }) => {
@@ -39,8 +37,7 @@ export const mondayCommon = {
     }),
   board_id: (required = true) =>
     Property.Dropdown({
-      displayName: 'Board',
-      description: "The board's unique identifier.",
+      displayName: 'Board ID',
       required: required,
       refreshers: ['workspace_id'],
       options: async ({ auth, workspace_id }) => {
@@ -73,8 +70,7 @@ export const mondayCommon = {
     }),
   group_id: (required = false) =>
     Property.Dropdown({
-      description: 'Board Group',
-      displayName: 'Group',
+      displayName: 'Board Group ID',
       required: required,
       refreshers: ['board_id'],
       options: async ({ auth, board_id }) => {
@@ -152,23 +148,29 @@ export const mondayCommon = {
           boardId: board_id as unknown as string,
         });
         const columns = res.data.boards[0]?.columns;
-        columns.forEach((column: MondayColumn) => {
+        for (const column of columns) {
           if (!MondayNotSupportedFields.includes(column.type)) {
-            const params = {
-              displayName: column.title,
-              required: false,
-              description: column.description ? column.description : '',
-            };
-            if (isNil(MondayColumnMapping[column.type])) {
-              fields[column.id] = Property.ShortText({
-                ...params,
+            if (column.type === 'people') {
+              const userData = await client.listUsers();
+              fields[column.id] = Property.StaticMultiSelectDropdown({
+                displayName: column.title,
+                required: false,
+                options: {
+                  disabled: false,
+                  options: userData.data.users.map((user) => {
+                    return {
+                      label: `${user.name} (${user.email})`,
+                      value: user.id,
+                    };
+                  }),
+                },
               });
             } else {
               fields[column.id] =
                 MondayColumnMapping[column.type].buildActivepieceType(column);
             }
           }
-        });
+        }
       } catch (e) {
         console.debug(e);
       }
