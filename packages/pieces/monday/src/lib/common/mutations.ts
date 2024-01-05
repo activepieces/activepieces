@@ -16,8 +16,7 @@ export const mondayGraphQLMutations = {
     ) {
       id
     }
-  }
-  `,
+  }`,
   updateItem: `
   mutation updateItem (
     $itemId: ID!,
@@ -32,6 +31,31 @@ export const mondayGraphQLMutations = {
       id
       name
     }
-  }
-`,
+  }`,
+  createWebhook: `
+  mutation createWebhook(
+    $boardId: ID!,
+    $url: String!,
+    $event: WebhookEventType!,
+    $config: JSON
+  ){
+    create_webhook(
+      board_id: $boardId,
+      url: $url,
+      event: $event,
+      config: $config
+    ){
+      id
+      board_id
+    }
+  }`,
+  deleteWebhook: `
+  mutation deleteWebhook($webhookId: ID!)
+  {
+    delete_webhook(id: $webhookId)
+    {
+      id
+      board_id
+    }
+  }`,
 };

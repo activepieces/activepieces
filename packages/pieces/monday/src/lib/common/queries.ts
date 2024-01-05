@@ -57,4 +57,14 @@ export const mondayGraphQLQueries = {
             }
         }
     }`,
+  listUsers: `
+    query listUsers
+    {
+        users(newest_first: true)
+        {
+            id
+            name
+            email
+        }
+    }`,
 };

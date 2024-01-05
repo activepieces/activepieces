@@ -187,8 +187,6 @@ export const MondayColumnMapping: Record<string, any> = {
       }),
     buildMondayType: (property: DynamicPropsValue) => {
       let [hour, minute] = property.split(':');
-      console.log('INSIDE HOURS');
-      console.log(typeof Number(hour));
       return {
         hour: Number(hour) ?? 0,
         minute: Number(minute) ?? 0,

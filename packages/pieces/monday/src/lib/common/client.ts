@@ -1,9 +1,8 @@
 import mondaySdk from 'monday-sdk-js';
 import { MondayClientSdk } from 'monday-sdk-js/types/client-sdk.interface';
-import { MondayColumn } from './models';
+import { Board, MondayColumn, User } from './models';
 import { mondayGraphQLMutations } from './mutations';
 import { mondayGraphQLQueries } from './queries';
-import { Board } from './types';
 export class mondayClient {
   private client: MondayClientSdk;
   constructor(apiKey: string) {
@@ -48,5 +47,23 @@ export class mondayClient {
     return await this.client.api(mondayGraphQLMutations.updateItem, {
       variables: variables,
     });
+  }
+  async createWebhook(variables: object) {
+    return await this.client.api<{ id: string; board_id: string }>(
+      mondayGraphQLMutations.createWebhook,
+      {
+        variables: variables,
+      }
+    );
+  }
+  async deleteWebhook(variables: object) {
+    return await this.client.api(mondayGraphQLMutations.deleteWebhook, {
+      variables: variables,
+    });
+  }
+  async listUsers() {
+    return await this.client.api<{ users: User[] }>(
+      mondayGraphQLQueries.listUsers
+    );
   }
 }
