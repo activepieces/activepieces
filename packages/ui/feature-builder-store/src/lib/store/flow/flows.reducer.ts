@@ -167,6 +167,7 @@ const _flowsReducer = createReducer(
     clonedState.flow.publishedVersionId = publishedFlowVersionId;
     clonedState.flow.version.state = FlowVersionState.LOCKED;
     clonedState.savingStatus &= ~BuilderSavingStatusEnum.PUBLISHING;
+    clonedState.flow.status = FlowStatus.ENABLED;
     return clonedState;
   }),
   on(FlowsActions.publishFailed, (state) => {

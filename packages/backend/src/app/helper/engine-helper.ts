@@ -293,7 +293,7 @@ export const engineHelper = {
         const lockedFlowVersion = await lockPieceAction(operation)
         const step = flowHelper.getStep(lockedFlowVersion, operation.stepName) as Action | undefined
         assertNotNullOrUndefined(step, 'Step not found')
-        const sandbox = await getSandboxForAction(operation.projectId, step)
+        const sandbox = await getSandboxForAction(operation.projectId, operation.flowVersion.flowId, step)
         const input: ExcuteStepOperation = {
             flowVersion: lockedFlowVersion,
             stepName: operation.stepName,
@@ -374,7 +374,7 @@ async function lockPieceAction({ projectId, flowVersion, stepName }: { projectId
     })
 }
 
-async function getSandboxForAction(projectId: string, action: Action): Promise<Sandbox> {
+async function getSandboxForAction(projectId: string, flowId: string, action: Action): Promise<Sandbox> {
     switch (action.type) {
         case ActionType.PIECE:{
             const { packageType, pieceType, pieceName, pieceVersion } = action.settings
@@ -398,6 +398,8 @@ async function getSandboxForAction(projectId: string, action: Action): Promise<S
             return sandboxProvisioner.provision({
                 type: SandBoxCacheType.CODE,
                 projectId,
+                flowId,
+                name: action.name,
                 sourceCodeHash: hashObject(action.settings.sourceCode),
                 codeSteps: [
                     {

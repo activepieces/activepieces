@@ -32,6 +32,7 @@ import { compareVersions } from 'compare-versions';
 import {
   ApEdition,
   ApFlagId,
+  LocalesEnum,
   FlowOperationType,
   User,
 } from '@activepieces/shared';
@@ -48,7 +49,7 @@ import {
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { LocalesEnum, Platform } from '@activepieces/ee-shared';
+import { Platform } from '@activepieces/ee-shared';
 
 interface UpgradeNotificationMetaDataInLocalStorage {
   latestVersion: string;
