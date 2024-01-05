@@ -63,7 +63,6 @@ export class RegistryPieceManager extends PieceManager {
         const archiveId = piece.archiveId ?? await this.getArchiveIdOrThrow(projectId, piece)
 
         const archiveFile = await fileService.getOneOrThrow({
-            projectId,
             fileId: archiveId,
         })
 

@@ -23,7 +23,9 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   ActionType,
   ApEdition,
+  BranchActionSettings,
   CodeActionSettings,
+  LoopOnItemsActionSettings,
   PieceActionSettings,
   PieceTriggerSettings,
   StepSettings,
@@ -39,7 +41,7 @@ import {
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
 import { TriggerBase, TriggerStrategy } from '@activepieces/pieces-framework';
-import { PieceMetadataService } from 'ui-feature-pieces';
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 
 @Component({
   selector: 'app-edit-step-form-container',
@@ -216,31 +218,44 @@ export class EditStepFormContainerComponent {
   createNewStepSettings(currentStep: Step) {
     const inputControlValue: StepSettings =
       this.stepForm.get('settings')?.value;
-    if (currentStep.type === ActionType.PIECE) {
-      const stepSettings: PieceActionSettings = {
-        ...currentStep.settings,
-        ...inputControlValue,
-        inputUiInfo: {
-          ...currentStep.settings.inputUiInfo,
-          customizedInputs: (inputControlValue as PieceActionSettings)
-            .inputUiInfo.customizedInputs,
-        },
-      };
-      return stepSettings;
-    }
-    if (currentStep.type === ActionType.CODE) {
-      const stepSettings: CodeActionSettings = {
-        ...currentStep.settings,
-        ...inputControlValue,
-        inputUiInfo: currentStep.settings.inputUiInfo,
-      };
-      return stepSettings;
-    }
 
-    if (currentStep.type === TriggerType.PIECE) {
-      return this.createPieceSettings(currentStep);
+    switch (currentStep.type) {
+      case ActionType.CODE: {
+        const stepSettings: CodeActionSettings = {
+          ...currentStep.settings,
+          ...inputControlValue,
+          inputUiInfo: currentStep.settings.inputUiInfo,
+        };
+        return stepSettings;
+      }
+      case ActionType.PIECE: {
+        const stepSettings: PieceActionSettings = {
+          ...currentStep.settings,
+          ...inputControlValue,
+          inputUiInfo: {
+            ...currentStep.settings.inputUiInfo,
+            customizedInputs: (inputControlValue as PieceActionSettings)
+              .inputUiInfo.customizedInputs,
+          },
+        };
+        return stepSettings;
+      }
+      case TriggerType.PIECE: {
+        return this.createPieceSettings(currentStep);
+      }
+      case TriggerType.EMPTY:
+      case TriggerType.WEBHOOK: {
+        return inputControlValue;
+      }
+      case ActionType.LOOP_ON_ITEMS:
+      case ActionType.BRANCH: {
+        const settings: BranchActionSettings | LoopOnItemsActionSettings = {
+          ...currentStep.settings,
+          ...inputControlValue,
+        };
+        return settings;
+      }
     }
-    return inputControlValue;
   }
 
   createPieceSettings(step: Step) {

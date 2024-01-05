@@ -18,6 +18,7 @@ import {
     ExecutionType,
     isNil,
     RunTerminationReason,
+    FlowRetryStrategy,
 } from '@activepieces/shared'
 import { APArrayContains, databaseConnection } from '../../database/database-connection'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
@@ -55,6 +56,14 @@ const getFlowRunOrCreate = async (params: GetOrCreateParams): Promise<Partial<Fl
     }
 }
 
+async function updateFlowRunToLatestFlowVersionId(flowRunId: FlowRunId): Promise<void> {
+    const flowRun = await flowRunRepo.findOneByOrFail({ id: flowRunId })
+    const flowVersion = await flowVersionService.getLatestLockedVersionOrThrow(flowRun.flowId)
+    await flowRunRepo.update(flowRunId, {
+        flowVersionId: flowVersion.id,
+    })
+}
+
 export const flowRunService = {
     async list({ projectId, flowId, status, cursor, limit, tags }: ListParams): Promise<SeekPage<FlowRun>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor)
@@ -80,9 +89,31 @@ export const flowRunService = {
         const { data, cursor: newCursor } = await paginator.paginate(query)
         return paginationHelper.createPage<FlowRun>(data, newCursor)
     },
-    async resume({ flowRunId, action }: {
+    async retry({ flowRunId, strategy }: RetryParams): Promise<void> {
+        switch (strategy) {
+            case FlowRetryStrategy.FROM_FAILED_STEP:
+                await flowRunService.addToQueue({
+                    flowRunId,
+                    payload: {},
+                    executionType: ExecutionType.RESUME,
+                })
+                break
+            case FlowRetryStrategy.ON_LATEST_VERSION: {
+                await updateFlowRunToLatestFlowVersionId(flowRunId)
+                await flowRunService.addToQueue({
+                    flowRunId,
+                    payload: {},
+                    executionType: ExecutionType.BEGIN,
+
+                })
+                break
+            }
+        }
+    },
+    async addToQueue({ flowRunId, payload, executionType }: {
         flowRunId: FlowRunId
-        action: string
+        payload: Record<string, unknown>
+        executionType: ExecutionType
     }): Promise<void> {
         logger.info(`[FlowRunService#resume] flowRunId=${flowRunId}`)
 
@@ -100,13 +131,11 @@ export const flowRunService = {
         }
 
         await flowRunService.start({
-            payload: {
-                action,
-            },
+            payload,
             flowRunId: flowRunToResume.id,
             projectId: flowRunToResume.projectId,
             flowVersionId: flowRunToResume.flowVersionId,
-            executionType: ExecutionType.RESUME,
+            executionType,
             environment: RunEnvironment.PRODUCTION,
         })
     },
@@ -231,7 +260,7 @@ export const flowRunService = {
 
     async getAllProdRuns(params: GetAllProdRuns): Promise<number> {
         const { projectId, created } = params
-    
+
         const sumOfTasks = await flowRunRepo.createQueryBuilder('flow_run')
             .select('COALESCE(SUM(flow_run.tasks), 0)', 'tasks')
             .where({
@@ -240,10 +269,9 @@ export const flowRunService = {
                 created: MoreThanOrEqual(created),
             })
             .getRawOne()
-    
+
         return Number(sumOfTasks.tasks)
     },
-    
 }
 
 type GetOrCreateParams = {
@@ -288,6 +316,11 @@ type PauseParams = {
     flowRunId: FlowRunId
     logFileId: FileId
     pauseMetadata: PauseMetadata
+}
+
+type RetryParams = {
+    flowRunId: FlowRunId
+    strategy: FlowRetryStrategy
 }
 
 type GetAllProdRuns = {

@@ -61,12 +61,14 @@ export const PieceActionSchema = Type.Object({
 // Loop Items
 export const LoopOnItemsActionSettingsWithValidation = Type.Object({
     items: Type.String({ minLength: 1 }),
+    inputUiInfo: SampleDataSettingsObject,
 })
 export type LoopOnItemsActionSettingsWithValidation = Static<typeof LoopOnItemsActionSettings>
 
 
 export const LoopOnItemsActionSettings = Type.Object({
     items: Type.String(),
+    inputUiInfo: SampleDataSettingsObject,
 })
 
 export type LoopOnItemsActionSettings = Static<typeof LoopOnItemsActionSettings>

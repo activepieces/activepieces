@@ -4,7 +4,7 @@ import {
 } from '@activepieces/pieces-framework';
 
 export const replace = createAction({
-  description: 'Replace a text with another (Regex or text).',
+  description: 'Replaces all instances of any word, character or phrase in text, with another.',
   displayName: 'Replace',
   name: 'replace',
   props: {
@@ -14,20 +14,34 @@ export const replace = createAction({
     }),
     searchValue: Property.ShortText({
       displayName: 'Search Value',
-      description: 'Regex or text.',
+      description: 'Can be plain text or a regex expression.',
       required: true,
       validators: [],
     }),
     replaceValue: Property.ShortText({
       displayName: 'Replace Value',
-      required: true,
+      required: false,
+      description:'Leave empty to delete found results.',
     }),
+    replaceOnlyFirst: Property.Checkbox({
+      displayName: 'Replace Only First Match',
+      required: false,
+      description:'Only replaces the first instance of the search value.',
+    })
   },
   run: async (ctx) => {
-    const expression = RegExp(ctx.propsValue.searchValue);
-    return ctx.propsValue.text.replace(
+ 
+    if(ctx.propsValue.replaceOnlyFirst){
+      const expression = RegExp(ctx.propsValue.searchValue);
+      return ctx.propsValue.text.replace(
+        expression,
+        ctx.propsValue.replaceValue || ''
+      );
+    }
+    const expression = RegExp(ctx.propsValue.searchValue,'g');
+    return ctx.propsValue.text.replaceAll(
       expression,
-      ctx.propsValue.replaceValue
+      ctx.propsValue.replaceValue || ''
     );
   },
 });

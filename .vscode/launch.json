@@ -10,7 +10,7 @@
                 "**/node_modules/**"
             ],
             "type": "node",
-            "localRoot": "${workspaceFolder}",
+            "localRoot": "${workspaceFolder}/packages/backend",
             "remoteRoot": "/usr/src/app",
             "restart": true,
             "autoAttachChildProcesses": false

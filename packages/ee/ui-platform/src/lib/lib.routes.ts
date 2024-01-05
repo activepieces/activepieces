@@ -5,6 +5,8 @@ import { ProjectsTableComponent } from './pages/projects-table/projects-table.co
 import { PlatformAppearanceComponent } from './pages/platform-appearance/platform-appearance.component';
 import { PlatformSettingsComponent } from './pages/platform-settings/platform-settings.component';
 import { PiecesTableComponent } from './pages/pieces-table/pieces-table.component';
+import { TemplatesTableComponent } from './pages/templates-table/templates-table.component';
+import { UsersTableComponent } from './pages/users-table/users-table.component';
 
 export const uiEePlatformRoutes: Route[] = [
   {
@@ -44,6 +46,16 @@ export const uiEePlatformRoutes: Route[] = [
         },
       },
       {
+        path: 'templates',
+        component: TemplatesTableComponent,
+        data: {
+          title: $localize`Templates`,
+        },
+        resolve: {
+          platform: platformResolver,
+        },
+      },
+      {
         path: 'settings',
         component: PlatformSettingsComponent,
         data: {
@@ -51,6 +63,13 @@ export const uiEePlatformRoutes: Route[] = [
         },
         resolve: {
           platform: platformResolver,
+        },
+      },
+      {
+        path: 'users',
+        component: UsersTableComponent,
+        data: {
+          title: $localize`Users`,
         },
       },
     ],

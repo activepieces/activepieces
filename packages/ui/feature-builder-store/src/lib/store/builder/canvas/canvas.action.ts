@@ -21,11 +21,16 @@ export enum CanvasActionType {
   EXIT_RUN = '[CANVAS] EXIT_RUN',
   SET_ADD_BUTTON_ID = '[CANVAS] SET_ADD_BUTTON_ID',
   CLEAR_ADD_BUTTON_ID = '[CANVAS] CLEAR_ADD_BUTTON_ID',
+  VIEW_VERSION = '[CANVAS] VIEW_VERSION',
 }
 
 const setInitial = createAction(
   CanvasActionType.SET_INITIAL,
   props<{ displayedFlowVersion: FlowVersion; run?: FlowRun }>()
+);
+const viewVersion = createAction(
+  CanvasActionType.VIEW_VERSION,
+  props<{ viewedFlowVersion: FlowVersion }>()
 );
 const setLeftSidebar = createAction(
   CanvasActionType.SET_LEFT_SIDEBAR,
@@ -73,4 +78,5 @@ export const canvasActions = {
   exitRun,
   setAddButtonId,
   clearAddButtonId,
+  viewVersion,
 };

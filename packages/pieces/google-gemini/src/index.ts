@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
 import { generateContentAction } from "./lib/actions/generate-content.action";
 import { generateContentFromImageAction } from "./lib/actions/generate-content-from-image.action";
+import { chatGemini } from "./lib/actions/chat-gemini.action";
 
 
 const markdownDescription = `
@@ -27,10 +28,11 @@ export const googleGeminiAuth = PieceAuth.SecretText({
             return {
                 valid: true,
             }
-        } catch (e) {
+        } catch (e:any) {
+            const extraErrorInfo = e.response?.body?.error?.message ? `${e.response?.body?.error?.message} status:${e.response?.body?.error?.code}`  :  e;
             return {
                 valid: false,
-                error: 'Invalid API key'
+                error: `${extraErrorInfo}`
             }
         }
     }
@@ -44,6 +46,6 @@ export const googleGemini = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: "https://cdn.activepieces.com/pieces/google-gemini.png",
   authors: ["pfernandez98"],
-  actions: [generateContentAction, generateContentFromImageAction],
+  actions: [generateContentAction, generateContentFromImageAction, chatGemini],
   triggers: [],
 });

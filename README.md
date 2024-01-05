@@ -92,7 +92,7 @@ Community templates provide inspiration and enable you to effortlessly build aut
 Activepieces' Community Edition is released as open source under the [MIT license](https://github.com/activepieces/activepieces/blob/main/LICENSE) and enterprise features are released under [Commerical License](https://github.com/activepieces/activepieces/blob/main/packages/ee/LICENSE)
 
 
-Read more about the feature comparsion here https://www.activepieces.com/docs/about/editions
+Read more about the feature comparison here https://www.activepieces.com/docs/about/editions
 <br>
 <br>
 
@@ -238,6 +238,8 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="http://denieler.com"><img src="https://avatars.githubusercontent.com/u/2836281?v=4?s=100" width="100px;" alt="Daniel O."/><br /><sub><b>Daniel O.</b></sub></a><br /><a href="#plugin-denieler" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://myh.tw"><img src="https://avatars.githubusercontent.com/u/12458706?v=4?s=100" width="100px;" alt="Meng-Yuan Huang"/><br /><sub><b>Meng-Yuan Huang</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=MrMYHuang" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/bigfluffycookie"><img src="https://avatars.githubusercontent.com/u/54935347?v=4?s=100" width="100px;" alt="Leyla"/><br /><sub><b>Leyla</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3Abigfluffycookie" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://i-nithin.netlify.app/"><img src="https://avatars.githubusercontent.com/u/97078688?v=4?s=100" width="100px;" alt="i-nithin"/><br /><sub><b>i-nithin</b></sub></a><br /><a href="#plugin-i-nithin" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://lawrenceli.me"><img src="https://avatars.githubusercontent.com/u/24540598?v=4?s=100" width="100px;" alt="la3rence"/><br /><sub><b>la3rence</b></sub></a><br /><a href="#plugin-la3rence" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>

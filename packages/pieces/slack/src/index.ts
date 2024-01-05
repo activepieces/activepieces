@@ -10,7 +10,6 @@ import { requestActionDirectMessageAction } from './lib/actions/request-action-d
 import { requestActionMessageAction } from './lib/actions/request-action-message';
 
 export const slackAuth = PieceAuth.OAuth2({
-
   description: '',
   authUrl: 'https://slack.com/oauth/authorize',
   tokenUrl: 'https://slack.com/api/oauth.access',
@@ -24,6 +23,8 @@ export const slackAuth = PieceAuth.OAuth2({
     'reactions:read',
     'mpim:read',
     'users:read',
+    'files:write:user',
+    'files:read'
   ],
 })
 

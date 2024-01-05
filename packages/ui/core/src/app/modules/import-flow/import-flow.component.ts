@@ -1,5 +1,5 @@
 import {
-  Flow,
+  PopulatedFlow,
   FlowOperationType,
   FlowTemplate,
   TelemetryEventName,
@@ -59,9 +59,6 @@ export class ImportFlowComponent implements OnInit {
         const templateId = encodeURIComponent(params['templateId']);
         return this.templatesService.getTemplate(templateId).pipe(
           catchError((err: HttpErrorResponse) => {
-            if (err.status === StatusCodes.NOT_FOUND) {
-              return this.templatesService.getTemplateDeprecated(templateId);
-            }
             throw err;
           })
         );
@@ -111,7 +108,7 @@ export class ImportFlowComponent implements OnInit {
                         request: templateJson.template,
                       })
                       .pipe(
-                        tap((updatedFlow: Flow) => {
+                        tap((updatedFlow: PopulatedFlow) => {
                           this.router.navigate(['flows', updatedFlow.id]);
                         })
                       );

@@ -56,7 +56,7 @@
         <div #menuTrigger="matMenuTrigger" [matMenuTriggerFor]="menu" class="hidden-trigger"></div>
       </mat-form-field>
       <mat-error class="ap-text-center" *ngIf="invitationOnlySignup && !emailChanged" i18n>
-        Contact your admin to send you an invite
+        You are not invited to any project, please contact your administrator.
       </mat-error>
       <mat-menu #menu="matMenu" [hasBackdrop]="true">
         <div class="ap-mx-2">

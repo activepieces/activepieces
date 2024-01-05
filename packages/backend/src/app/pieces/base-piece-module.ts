@@ -7,7 +7,6 @@ import { pieceMetadataService } from './piece-metadata-service'
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { flagService } from '../flags/flag.service'
 import { PieceMetadataModel, PieceMetadataModelSummary } from './piece-metadata-entity'
-import { getServerUrl } from '../helper/public-ip-utils'
 
 export const pieceModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(basePiecesController, { prefix: '/v1/pieces' })
@@ -88,7 +87,6 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         const { projectId } = req.principal
 
         const { result } = await engineHelper.executeProp({
-            serverUrl: await getServerUrl(),
             piece: {
                 packageType,
                 pieceType,

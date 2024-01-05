@@ -93,10 +93,12 @@ const appsumoController: FastifyPluginAsyncTypebox = async (fastify: FastifyInst
                 return reply.status(StatusCodes.UNAUTHORIZED).send()
             }
             else {
-                const { plan_id, activation_email, action, uuid } = request.body
+                const { plan_id, action, uuid } = request.body
+                const appSumoLicense = await appsumoService.getById(uuid)
+                const activation_email = appSumoLicense?.activation_email ?? request.body.activation_email
                 const appSumoPlan = appsumoService.getPlanInformation(plan_id)
                 const user = await userService.getByPlatformAndEmail({
-                    platformId: null,
+                    platformId: system.getOrThrow(SystemProp.CLOUD_PLATFORM_ID),
                     email: activation_email,
                 })
                 if (!isNil(user)) {

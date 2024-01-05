@@ -1,6 +1,6 @@
-import { ApId } from '@activepieces/shared'
+import { ApId, LocalesEnum } from '@activepieces/shared'
 import { Type, Static } from '@sinclair/typebox'
-import { FilteredPieceBehavior, LocalesEnum } from './platform.model'
+import { FilteredPieceBehavior } from './platform.model'
 
 export const UpdatePlatformRequestBody = Type.Object({
     name: Type.Optional(Type.String()),

@@ -1,7 +1,9 @@
-import { LicenseValidator } from './license-validator'
+import { LiceneseStatus, LicenseValidator } from './license-validator'
 
 export const noOpLicenseValidator: LicenseValidator = {
     async validate() {
-        return true
+        return {
+            status: LiceneseStatus.VALID,
+        }
     },
 }

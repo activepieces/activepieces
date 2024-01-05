@@ -1,7 +1,7 @@
 import { EntitySchema } from 'typeorm'
-import { FilteredPieceBehavior, LocalesEnum, Platform } from '@activepieces/ee-shared'
+import { FilteredPieceBehavior, Platform } from '@activepieces/ee-shared'
 import { ARRAY_COLUMN_TYPE, ApIdSchema, BaseColumnSchemaPart, isPostgres } from '../../database/database-common'
-import { User } from '@activepieces/shared'
+import { LocalesEnum, User } from '@activepieces/shared'
 
 type PlatformSchema = Platform & {
     owner: User

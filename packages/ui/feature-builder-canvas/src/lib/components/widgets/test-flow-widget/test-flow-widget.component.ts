@@ -13,16 +13,15 @@ import {
 import {
   FlowService,
   InstanceRunService,
-  fadeIn400ms,
-  fadeInUp400ms,
+  fadeIn400msWithoutOut,
   initializedRun,
 } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
 import {
   ExecutionOutputStatus,
-  Flow,
   FlowRun,
+  PopulatedFlow,
   TriggerType,
 } from '@activepieces/shared';
 import {
@@ -36,7 +35,7 @@ import { canvasActions } from '@activepieces/ui/feature-builder-store';
   selector: 'app-test-flow-widget',
   templateUrl: './test-flow-widget.component.html',
   styleUrls: ['./test-flow-widget.component.scss'],
-  animations: [fadeInUp400ms, fadeIn400ms],
+  animations: [fadeIn400msWithoutOut],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TestFlowWidgetComponent implements OnInit {
@@ -44,7 +43,7 @@ export class TestFlowWidgetComponent implements OnInit {
   statusEnum = ExecutionOutputStatus;
   instanceRunStatus$: Observable<undefined | ExecutionOutputStatus>;
   isSaving$: Observable<boolean> = of(false);
-  selectedFlow$: Observable<Flow | undefined>;
+  selectedFlow$: Observable<PopulatedFlow | undefined>;
   instanceRunStatusChecker$: Observable<FlowRun>;
   executeTest$: Observable<FlowRun | null>;
   shouldHideTestWidget$: Observable<boolean>;
@@ -87,14 +86,14 @@ export class TestFlowWidgetComponent implements OnInit {
     );
   }
 
-  testFlowButtonClicked(flow: Flow) {
+  testFlowButtonClicked(flow: PopulatedFlow) {
     this.executeTest$ = this.executeTest(flow);
   }
 
-  executeTest(flow: Flow) {
+  executeTest(flow: PopulatedFlow) {
     return this.flowService
       .execute({
-        flowVersionId: flow.version!.id,
+        flowVersionId: flow.version.id,
       })
       .pipe(
         tap({

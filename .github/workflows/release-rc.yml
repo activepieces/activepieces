@@ -9,7 +9,7 @@ on:
 
 jobs:
   Release:
-    if: contains(github.event.pull_request.labels.*.name, 'release')
+    if: contains(github.event.pull_request.labels.*.name, 'pre-release')
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code

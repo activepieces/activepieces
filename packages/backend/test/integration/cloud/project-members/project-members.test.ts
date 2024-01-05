@@ -51,7 +51,7 @@ describe('Project Member API', () => {
                 },
                 body: mockInviteProjectMemberRequest,
             })
-            expect(response?.statusCode).toBe(StatusCodes.UNAUTHORIZED)
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
 
 
@@ -227,12 +227,11 @@ describe('Project Member API', () => {
                         authorization: `Bearer ${mockApiKey.value}`,
                     },
                 })
-                expect(response?.statusCode).toBe(StatusCodes.UNAUTHORIZED)
+                expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
             })
-        },
-        )
-        
+        })
     })
+
     describe('Delete project member Endpoint', () => {
         it('Deletes project member', async () => {
             const { mockUserToken, mockProject } = await createBasicEnvironment()
@@ -295,7 +294,7 @@ describe('Project Member API', () => {
                     authorization: `Bearer ${mockApiKey.value}`,
                 },
             })
-            expect(response?.statusCode).toBe(StatusCodes.UNAUTHORIZED)
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
     })
 })

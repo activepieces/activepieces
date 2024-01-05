@@ -4,7 +4,7 @@ import { OAuth2AuthorizationMethod } from '../oauth2-authorization-method'
 
 const commonAuthProps = {
     name: Type.String({}),
-    appName: Type.String({}),
+    pieceName: Type.String({}),
     projectId: Type.String({}),
 }
 

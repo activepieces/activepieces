@@ -1,7 +1,7 @@
-import { ActivepiecesError, ErrorCode, ProjectId, UserId, apId, isNil, spreadIfDefined } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, LocalesEnum, ProjectId, UserId, apId, isNil, spreadIfDefined } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { PlatformEntity } from './platform.entity'
-import { FilteredPieceBehavior, LocalesEnum, Platform, PlatformId, UpdatePlatformRequestBody } from '@activepieces/ee-shared'
+import { FilteredPieceBehavior, Platform, PlatformId, UpdatePlatformRequestBody } from '@activepieces/ee-shared'
 import { defaultTheme } from '../../flags/theme'
 import { userService } from '../../user/user-service'
 import { projectService } from '../../project/project-service'
@@ -74,6 +74,8 @@ export const platformService = {
             ...spreadIfDefined('termsOfServiceUrl', params.termsOfServiceUrl),
             ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
             ...spreadIfDefined('defaultLocale', params.defaultLocale),
+            ...spreadIfDefined('showPoweredBy', params.showPoweredBy),
+            ...spreadIfDefined('embeddingEnabled', params.embeddingEnabled),
         }
 
         return repo.save(updatedPlatform)
@@ -155,6 +157,8 @@ type NewPlatform = Omit<Platform, 'created' | 'updated'>
 type UpdateParams = UpdatePlatformRequestBody & {
     id: PlatformId
     userId: UserId
+    showPoweredBy?: boolean
+    embeddingEnabled?: boolean
 }
 
 type GetOneByOwnerParams = {

@@ -12,7 +12,6 @@ export * from './flag.service';
 export * from './telemetry.service';
 export * from './instance-run.service';
 export * from './app-connections.service';
-export * from './flow-instance.service';
 export * from './folders.service';
 export * from './authentication.service';
 export * from './oauth-2-apps.service';

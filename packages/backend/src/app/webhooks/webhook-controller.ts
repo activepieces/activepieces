@@ -1,15 +1,15 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { ALL_PRINICPAL_TYPES, ActivepiecesError, ApEdition, ErrorCode, EventPayload, Flow, FlowId, FlowInstanceStatus, WebhookUrlParams } from '@activepieces/shared'
+import { ALL_PRINICPAL_TYPES, ActivepiecesError, ApEdition, ErrorCode, EventPayload, Flow, FlowId, FlowStatus, WebhookUrlParams } from '@activepieces/shared'
 import { webhookService } from './webhook-service'
 import { captureException, logger } from '../helper/logger'
 import { isNil } from '@activepieces/shared'
 import { flowRepo } from '../flows/flow/flow.repo'
-import { flowInstanceService } from '../flows/flow-instance/flow-instance.service'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { getEdition } from '../helper/secret-helper'
 import { tasksLimit } from '../ee/billing/limits/tasks-limit'
 import { flowResponseWatcher } from '../flows/flow-run/flow-response-watcher'
+import { flowService } from '../flows/flow/flow.service'
 
 export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -211,7 +211,11 @@ const getFlowOrThrow = async (flowId: FlowId): Promise<Flow> => {
         catch (e) {
             if (e instanceof ActivepiecesError && e.error.code === ErrorCode.QUOTA_EXCEEDED) {
                 logger.info(`[webhookController] removing flow.id=${flow.id} run out of flow quota`)
-                await flowInstanceService.update({ projectId: flow.projectId, flowId: flow.id, status: FlowInstanceStatus.DISABLED })
+                await flowService.updateStatus({
+                    id: flow.id,
+                    projectId: flow.projectId,
+                    newStatus: FlowStatus.DISABLED,
+                })
             }
             throw e
         }

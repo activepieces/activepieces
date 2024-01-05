@@ -3,11 +3,9 @@
   <div [style.transform]="transform$ | async"
     class="ap-relative ap-w-full ap-h-full ap-flex ap-flex-col ap-items-center">
     <div class="ap-flex ap-justify-center ap-mb-9 ap-w-full ap-items-center ap-z-40 ap-relative ap-mt-[50px]">
-
       <app-test-flow-widget></app-test-flow-widget>
       <app-view-only-mode-widget></app-view-only-mode-widget>
       <app-incomplete-steps-widget></app-incomplete-steps-widget>
-
     </div>
     <div [style.transform]="flowDrawer.centeringGraphTransform">
       <div class="ap-relative " [style.height]="flowDrawer.boundingBox.height + 'px'"

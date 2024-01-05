@@ -3,15 +3,6 @@ import { logger } from '../../../helper/logger'
 import { File, isNil } from '@activepieces/shared'
 import decompress from 'decompress'
 
-
-type FlowTemplate = {
-    id: string
-    projectId: string
-    template: {
-        trigger: Step
-    }
-}
-
 type FunctionTransformer = (s: CodeStep, fileRepo: Repository<File>, flowId: string, flowVersionId: string) => Promise<void>
 
 export class StoreCodeInsideFlow1697969398200 implements MigrationInterface {
@@ -54,8 +45,8 @@ export class StoreCodeInsideFlow1697969398200 implements MigrationInterface {
 
         if (doesTableExist) {
             logger.info('StoreCodeInsideFlow1697969398200: flow template table exists')
-            const flowTemplateRepo = queryRunner.connection.getRepository<FlowTemplate>('flow_template')
-            const templates = await flowTemplateRepo.find()
+
+            const templates = await queryRunner.query('SELECT * FROM flow_template')
 
             const fileRepo = queryRunner.connection.getRepository<File>('file')
 
@@ -63,7 +54,7 @@ export class StoreCodeInsideFlow1697969398200 implements MigrationInterface {
                 const updated = await traverseAndUpdateSubFlow(stepFunction, template.template.trigger, fileRepo, template.projectId, template.id)
 
                 if (updated) {
-                    await flowTemplateRepo.update(template.id, template)
+                    await queryRunner.query('UPDATE flow_template SET template = ? WHERE id = ?', [template.template, template.id])
                 }
             }
         }

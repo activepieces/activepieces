@@ -32,7 +32,6 @@ import { logger } from './logger'
 import { system } from './system/system'
 import { SystemProp } from './system/system-prop'
 import { JobType } from '../workers/flow-worker/queues/queue'
-import { getServerUrl } from './public-ip-utils'
 import { getEdition } from './secret-helper'
 import { plansService } from '../ee/billing/project-plan/project-plan.service'
 
@@ -128,7 +127,6 @@ export const triggerUtils = {
                 const { result } = await engineHelper.executeTrigger({
                     hookType: TriggerHookType.RUN,
                     flowVersion,
-                    serverUrl: await getServerUrl(),
                     triggerPayload: payload,
                     webhookUrl: await webhookService.getWebhookUrl({
                         flowId: flowVersion.flowId,
@@ -201,7 +199,6 @@ async function executeHandshake(
     const { result } = await engineHelper.executeTrigger({
         hookType: TriggerHookType.HANDSHAKE,
         flowVersion,
-        serverUrl: await getServerUrl(),
         triggerPayload: payload,
         webhookUrl: await webhookService.getWebhookUrl({
             flowId: flowVersion.flowId,
@@ -237,7 +234,6 @@ const disablePieceTrigger = async (params: EnableOrDisableParams) => {
     const engineHelperResponse = await engineHelper.executeTrigger({
         hookType: TriggerHookType.ON_DISABLE,
         flowVersion,
-        serverUrl: await getServerUrl(),
         webhookUrl: await webhookService.getWebhookUrl({
             flowId: flowVersion.flowId,
             simulate,
@@ -280,7 +276,6 @@ const enablePieceTrigger = async (params: EnableOrDisableParams) => {
     const engineHelperResponse = await engineHelper.executeTrigger({
         hookType: TriggerHookType.ON_ENABLE,
         flowVersion,
-        serverUrl: await getServerUrl(),
         webhookUrl,
         projectId,
     })

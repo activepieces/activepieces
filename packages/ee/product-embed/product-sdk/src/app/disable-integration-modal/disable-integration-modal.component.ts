@@ -40,7 +40,7 @@ export class DisableIntegrationModalComponent {
       this.loading = true;
       this.delete$ = this.connectionService
         .delete({
-          appName: this.connection.appName,
+          appName: this.connection.pieceName,
           projectId: getLocal(StorageName.PROJECT_ID),
           token: getLocal(StorageName.TOKEN),
         })

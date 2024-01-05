@@ -38,7 +38,7 @@ export const createShareUpdate = createAction({
                 image
             });
             const createPostHeaders: any = linkedinCommon.linkedinHeaders
-            createPostHeaders["LinkedIn-Version"] = '202306';
+            createPostHeaders["LinkedIn-Version"] = '202312';
 
             const request: HttpRequest = {
                 method: HttpMethod.POST,
