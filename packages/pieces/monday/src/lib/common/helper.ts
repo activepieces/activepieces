@@ -108,7 +108,7 @@ export const MondayColumnMapping: Record<string, any> = {
         displayName: column.title,
         required: false,
       }),
-    buildMondayType: (property: Boolean) => ({
+    buildMondayType: (property: DynamicPropsValue) => ({
       checked: property ? 'true' : 'false',
     }),
   },
@@ -186,7 +186,7 @@ export const MondayColumnMapping: Record<string, any> = {
         description: `Represent time in 24-hour format, like '16:30' or '2:00', ensuring removal of leading zeroes from data (e.g., send '9' instead of '09').`,
       }),
     buildMondayType: (property: DynamicPropsValue) => {
-      let [hour, minute] = property.split(':');
+      const [hour, minute] = property.split(':');
       return {
         hour: Number(hour) ?? 0,
         minute: Number(minute) ?? 0,
@@ -242,7 +242,7 @@ export const MondayColumnMapping: Record<string, any> = {
         description: `Enter the start and end dates in the YYYY-MM-DD format, separated by a symbol of semicolon(;) symbol. For example: '2022-01-01;2022-12-31`,
       }),
     buildMondayType: (property: string) => {
-      let [startDate, endDate] = property.split(';');
+      const [startDate, endDate] = property.split(';');
       return {
         from: startDate,
         to: endDate,
@@ -257,7 +257,7 @@ export const MondayColumnMapping: Record<string, any> = {
         description: `Enter the start and end dates in the YYYY-MM-DD format, separated by a symbol of semicolon(;) symbol. The dates must be 7 days apart (inclusive of the first and last date).\n For example: '2019-06-10;2019-06-16`,
       }),
     buildMondayType: (property: string) => {
-      let [startDate, endDate] = property.split(';');
+      const [startDate, endDate] = property.split(';');
       return {
         week: {
           startDate: startDate,
@@ -279,7 +279,7 @@ export const MondayColumnMapping: Record<string, any> = {
   },
   people: {
     buildMondayType: (property: DynamicPropsValue) => {
-      let res: { id: string; kind: string }[] = [];
+      const res: { id: string; kind: string }[] = [];
       if (Array.isArray(property)) {
         property.forEach((person) => {
           res.push({ id: person, kind: 'person' });
