@@ -1,4 +1,4 @@
-import { Flow, FlowScheduleOptions, FlowStatus, ScheduleOptions, ScheduleType, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { Flow, FlowScheduleOptions, FlowStatus, FlowVersion, ScheduleOptions, ScheduleType, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { triggerUtils } from '../../helper/trigger-utils'
 
@@ -47,7 +47,7 @@ export const flowServiceHooks = {
         }
     },
 
-    async preUpdatePublishedVersionId({ flowToUpdate, newPublishedVersionId }: PreUpdatePublishedVersionIdParams): Promise<PreUpdateReturn> {
+    async preUpdatePublishedVersionId({ flowToUpdate, flowVersionToPublish }: PreUpdatePublishedVersionIdParams): Promise<PreUpdateReturn> {
         if (flowToUpdate.status === FlowStatus.ENABLED && flowToUpdate.publishedVersionId) {
             await triggerUtils.disable({
                 flowVersion: await flowVersionService.getOneOrThrow(flowToUpdate.publishedVersionId),
@@ -55,11 +55,6 @@ export const flowServiceHooks = {
                 simulate: false,
             })
         }
-
-        const flowVersionToPublish = await flowVersionService.getFlowVersion({
-            flowId: flowToUpdate.id,
-            versionId: newPublishedVersionId,
-        })
 
         const enableResult = await triggerUtils.enable({
             flowVersion: flowVersionToPublish,
@@ -110,7 +105,7 @@ type PreUpdateStatusParams = PreUpdateParams & {
 }
 
 type PreUpdatePublishedVersionIdParams = PreUpdateParams & {
-    newPublishedVersionId: string
+    flowVersionToPublish: FlowVersion
 }
 
 type PreUpdateReturn = {
