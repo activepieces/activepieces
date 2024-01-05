@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Location } from '@angular/common';
-import { isNil } from '@activepieces/shared';
-import { LocalesEnum } from '@activepieces/ee-shared';
+import { isNil, LocalesEnum } from '@activepieces/shared';
 import { localesMap } from '../utils/locales';
 
 @Injectable({ providedIn: 'root' })

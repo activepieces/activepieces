@@ -8,17 +8,15 @@ import { Injectable } from '@angular/core';
 export class RunsService {
   constructor(private http: HttpClient) {}
 
-  async retry(runId: string, strategy: FlowRetryStrategy) {
-    return this.http
-      .post(
-        environment.apiUrl + `/flow-runs/${runId}/retry`,
-        {},
-        {
-          params: {
-            strategy,
-          },
-        }
-      )
-      .subscribe();
+  retry(runId: string, strategy: FlowRetryStrategy) {
+    return this.http.post<void>(
+      environment.apiUrl + `/flow-runs/${runId}/retry`,
+      {},
+      {
+        params: {
+          strategy,
+        },
+      }
+    );
   }
 }

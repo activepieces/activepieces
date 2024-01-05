@@ -13,7 +13,15 @@ import {
   SeekPage,
 } from '@activepieces/shared';
 import { ActivatedRoute, Router } from '@angular/router';
-import { distinctUntilChanged, map, Observable, switchMap, tap } from 'rxjs';
+import {
+  distinctUntilChanged,
+  map,
+  Observable,
+  startWith,
+  Subject,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { RunsTableDataSource } from './runs-table.datasource';
 import {
   InstanceRunService,
@@ -40,11 +48,13 @@ export class RunsTableComponent implements OnInit {
   dataSource!: RunsTableDataSource;
   displayedColumns = ['flowName', 'status', 'started', 'finished', 'action'];
   updateNotificationsValue$: Observable<boolean>;
+  refreshTableForReruns$: Subject<boolean> = new Subject();
   selectedStatus: FormControl<ExecutionOutputStatus | undefined> =
     new FormControl();
   changeRunStatus$: Observable<void>;
   readonly ExecutionOutputStatus = ExecutionOutputStatus;
   FlowRetryStrategy: typeof FlowRetryStrategy = FlowRetryStrategy;
+  retryFlow$?: Observable<void>;
   flowRetryOptions = [
     {
       label: 'Retry on Latest Version',
@@ -109,7 +119,8 @@ export class RunsTableComponent implements OnInit {
       this.activatedRoute.queryParams,
       this.paginator,
       this.store,
-      this.instanceRunService
+      this.instanceRunService,
+      this.refreshTableForReruns$.asObservable().pipe(startWith(true))
     );
   }
 
@@ -119,18 +130,11 @@ export class RunsTableComponent implements OnInit {
     this.navigationService.navigate(route, newWindow);
   }
 
-  async retryFlow(run: FlowRun, strategy: FlowRetryStrategy) {
-    this.runsService.retry(run.id, strategy);
-    run.status = ExecutionOutputStatus.RUNNING;
-  }
-
-  isRetryEnabled(run: FlowRun) {
-    const enabledStatuses = [
-      ExecutionOutputStatus.FAILED,
-      ExecutionOutputStatus.INTERNAL_ERROR,
-      ExecutionOutputStatus.QUOTA_EXCEEDED,
-    ];
-
-    return enabledStatuses.includes(run.status);
+  retryFlow(run: FlowRun, strategy: FlowRetryStrategy) {
+    this.retryFlow$ = this.runsService.retry(run.id, strategy).pipe(
+      tap(() => {
+        this.refreshTableForReruns$.next(true);
+      })
+    );
   }
 }

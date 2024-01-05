@@ -168,6 +168,7 @@
     "locales": {
       "es": "packages/ui/core/src/locale/messages.es.xlf",
       "fr": "packages/ui/core/src/locale/messages.fr.xlf",
+      "hu": "packages/ui/core/src/locale/messages.hu.xlf",
       "id": "packages/ui/core/src/locale/messages.id.xlf",
       "zh": "packages/ui/core/src/locale/messages.zh.xlf",
       "pt": "packages/ui/core/src/locale/messages.pt.xlf",

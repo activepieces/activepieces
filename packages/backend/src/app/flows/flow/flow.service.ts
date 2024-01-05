@@ -235,25 +235,23 @@ export const flowService = {
         try {
             const flowToUpdate = await this.getOneOrThrow({ id, projectId })
 
-            const lockedFlow = await this.update({
-                id,
-                userId,
-                projectId,
-                operation: {
-                    type: FlowOperationType.LOCK_FLOW,
-                    request: {
-                        flowId: id,
-                    },
-                },
-                lock: false,
+            const flowVersionToPublish = await flowVersionService.getFlowVersion({
+                flowId: id,
+                versionId: undefined,
             })
 
             const { scheduleOptions } = await hooks.preUpdatePublishedVersionId({
                 flowToUpdate,
-                newPublishedVersionId: lockedFlow.version.id,
+                flowVersionToPublish,
             })
 
-            flowToUpdate.publishedVersionId = lockedFlow.version.id
+            const lockedFlowVersion = await lockFlowVersionIfNotLocked({
+                flowVersion: flowVersionToPublish,
+                userId,
+                projectId,
+            })
+
+            flowToUpdate.publishedVersionId = lockedFlowVersion.id
             flowToUpdate.status = FlowStatus.ENABLED
             flowToUpdate.schedule = scheduleOptions
 
@@ -261,7 +259,7 @@ export const flowService = {
 
             return {
                 ...updatedFlow,
-                version: lockedFlow.version,
+                version: lockedFlowVersion,
             }
         }
         finally {
@@ -328,6 +326,19 @@ export const flowService = {
             projectId,
         })
     },
+}
+
+const lockFlowVersionIfNotLocked = async ({ flowVersion, userId, projectId }: LockFlowVersionIfNotLockedParams): Promise<FlowVersion> => {
+    if (flowVersion.state === FlowVersionState.LOCKED) {
+        return flowVersion
+    }
+
+    return flowVersionService.applyOperation(userId, projectId, flowVersion, {
+        type: FlowOperationType.LOCK_FLOW,
+        request: {
+            flowId: flowVersion.flowId,
+        },
+    })
 }
 
 const assertFlowIsNotNull: <T extends Flow>(flow: T | null) => asserts flow is T  = <T>(flow: T | null) => {
@@ -399,3 +410,9 @@ type DeleteParams = {
 }
 
 type NewFlow = Omit<Flow, 'created' | 'updated'>
+
+type LockFlowVersionIfNotLockedParams = {
+    flowVersion: FlowVersion
+    userId: UserId
+    projectId: ProjectId
+}
