@@ -17,6 +17,7 @@ import {
     TelemetryEventName,
     UserId,
     PopulatedFlow,
+    FlowVersion,
 } from '@activepieces/shared'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -235,7 +236,7 @@ export const flowService = {
         try {
             const flowToUpdate = await this.getOneOrThrow({ id, projectId })
 
-            const flowVersionToPublish = await flowVersionService.getFlowVersion({
+            const flowVersionToPublish = await flowVersionService.getFlowVersionOrThrow({
                 flowId: id,
                 versionId: undefined,
             })
