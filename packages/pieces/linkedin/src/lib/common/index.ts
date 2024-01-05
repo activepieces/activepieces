@@ -7,6 +7,7 @@ const processText: ProcessorFn<any, string> = (property, text) => {
     // LinkedIn Posts API has a list of characters that need to be escaped since it's type is "LittleText"
     // https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/posts-api?view=li-lms-2023-11&tabs=http
     // https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/little-text-format?view=li-lms-2023-11
+    // eslint-disable-next-line no-useless-escape
     return text.replace(/[\(*\)\[\]\{\}<>@|~_]/gm, (x:string) => "\\" + x);
 }
 
