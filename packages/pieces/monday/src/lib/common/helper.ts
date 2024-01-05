@@ -132,56 +132,31 @@ export const MondayColumnMapping: Record<string, any> = {
   },
   board_relation: {
     buildActivepieceType: (column: MondayColumn) =>
-      Property.Array({
+      Property.ShortText({
         displayName: column.title,
         description:
           'A list of item IDs to connect with. The items must be on boards that are connected to the column. Example: [125345, 5846475]',
         required: false,
       }),
-    buildMondayType: (property: DynamicPropsValue) => {
-      const values: number[] = [];
-      if (Array.isArray(property)) {
-        property.forEach((element) => {
-          if (!isNaN(Number(element))) {
-            values.push(Number(element));
-          }
-        });
-      }
+    buildMondayType: (property: string) => {
+      let values: number[] = [];
+      values = JSON.parse(property);
       return {
         item_ids: values,
       };
     },
   },
-  buildMondayType: (property: DynamicPropsValue) => {
-    const values: number[] = [];
-    if (Array.isArray(property)) {
-      property.forEach((element) => {
-        if (!isNaN(Number(element))) {
-          values.push(Number(element));
-        }
-      });
-    }
-    return {
-      item_ids: values,
-    };
-  },
   dependency: {
     buildActivepieceType: (column: MondayColumn) =>
-      Property.Array({
+      Property.ShortText({
         displayName: column.title,
         description:
           'A list of item IDs from the same board. Example: [188392, 20339]',
         required: false,
       }),
-    buildMondayType: (property: DynamicPropsValue) => {
-      const values: number[] = [];
-      if (Array.isArray(property)) {
-        property.forEach((element) => {
-          if (!isNaN(Number(element))) {
-            values.push(Number(element));
-          }
-        });
-      }
+    buildMondayType: (property: string) => {
+      let values: number[] = [];
+      values = JSON.parse(property);
       return {
         item_ids: values,
       };

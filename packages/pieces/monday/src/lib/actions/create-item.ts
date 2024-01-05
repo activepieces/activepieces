@@ -9,7 +9,7 @@ import { MondayColumnMapping, generateColumnIdTypeMap } from '../common/helper';
 
 export const mondayCreateAnItem = createAction({
   auth: mondayAuth,
-  name: 'monday_create_an_item',
+  name: 'monday_create_item',
   displayName: 'Create Item',
   description: 'Create a new item inside a board.',
   props: {
@@ -37,22 +37,15 @@ export const mondayCreateAnItem = createAction({
     const columnValuesInput = context.propsValue.column_values;
     const mondayColumnValues: DynamicPropsValue = {};
 
-    console.log('aCTION');
-    console.log(columnValuesInput);
-    Object.keys(columnValuesInput).forEach((key) => {
-      console.log(
-        `key : ${key}   value : ${
-          columnValuesInput[key]
-        }  type : ${typeof columnValuesInput[key]}`
-      );
-    });
-
     const client = makeClient(context.auth as string);
     const res = await client.listBoardColumns({
       boardId: board_id as unknown as string,
     });
     const columns = res.data.boards[0]?.columns;
+
+    // map board column id with column type
     const columnIdTypeMap = generateColumnIdTypeMap(columns);
+
     Object.keys(columnValuesInput).forEach((key) => {
       if (columnValuesInput[key] !== '') {
         const columnType: string = columnIdTypeMap[key];
@@ -61,15 +54,7 @@ export const mondayCreateAnItem = createAction({
         ].buildMondayType(columnValuesInput[key]);
       }
     });
-    console.log('FORMATEED VALUES');
-    console.log(mondayColumnValues);
-    Object.keys(mondayColumnValues).forEach((key) => {
-      console.log(
-        `key : ${key}   value : ${
-          mondayColumnValues[key]
-        }  type : ${typeof mondayColumnValues[key]}`
-      );
-    });
+
     return await client.createItem({
       itemName: item_name,
       boardId: board_id,
@@ -77,34 +62,5 @@ export const mondayCreateAnItem = createAction({
       columnValues: JSON.stringify(mondayColumnValues),
       craeteLables: create_labels_if_missing ?? false,
     });
-    // const query = `
-    //   mutation {
-    //     create_item (
-    //       item_name: "${itemValues.item_name}",
-    //       board_id: ${itemValues.board_id},
-    //       ${itemValues.group_id ? `group_id: ${itemValues.group_id},` : ``}
-    //       create_labels_if_missing: ${
-    //         itemValues.create_labels_if_missing ?? false
-    //       },
-    //       ${
-    //         itemValues.column_values
-    //           ? `column_values: " ${JSON.stringify(
-    //               itemValues?.column_values
-    //             ).replace(/"/g, '\\"')}",`
-    //           : ``
-    //       }
-    //     )
-    //     { id }
-    //   }
-    // `;
-    // const result = await mondayMakeRequest(
-    //   context.auth.access_token,
-    //   query,
-    //   HttpMethod.POST
-    // );
-    // if (result.status === 200) {
-    //   return result.body;
-    // }
-    // return result;
   },
 });
