@@ -11,11 +11,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { validColorValidator } from 'ngx-colors';
-import {
-  LocalesEnum,
-  Platform,
-  UpdatePlatformRequestBody,
-} from '@activepieces/ee-shared';
+import { Platform, UpdatePlatformRequestBody } from '@activepieces/ee-shared';
 import { Observable, map, tap } from 'rxjs';
 import {
   AuthenticationService,
@@ -23,7 +19,7 @@ import {
 } from '@activepieces/ui/common';
 import { ActivatedRoute } from '@angular/router';
 import { localesMap } from '@activepieces/ui/common';
-import { spreadIfDefined } from '@activepieces/shared';
+import { spreadIfDefined, LocalesEnum } from '@activepieces/shared';
 
 interface AppearanceForm {
   name: FormControl<string>;
