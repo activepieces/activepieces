@@ -5,7 +5,10 @@ import {
 } from '@activepieces/pieces-framework';
 import { mondayAuth } from '../..';
 import { makeClient, mondayCommon } from '../common';
-import { MondayColumnMapping, generateColumnIdTypeMap } from '../common/helper';
+import {
+  MondayColumnValueConverter,
+  generateColumnIdTypeMap,
+} from '../common/helper';
 
 export const createItemAction = createAction({
   auth: mondayAuth,
@@ -49,9 +52,10 @@ export const createItemAction = createAction({
     Object.keys(columnValuesInput).forEach((key) => {
       if (columnValuesInput[key] !== '') {
         const columnType: string = columnIdTypeMap[key];
-        mondayColumnValues[key] = MondayColumnMapping[
-          columnType
-        ].buildMondayType(columnValuesInput[key]);
+        mondayColumnValues[key] = MondayColumnValueConverter(
+          columnType,
+          columnValuesInput[key]
+        );
       }
     });
 

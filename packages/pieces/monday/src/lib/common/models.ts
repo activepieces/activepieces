@@ -23,6 +23,7 @@ export type MondayColumType =
   | 'mirror'
   | 'name'
   | 'numbers'
+  | 'phone'
   | 'people'
   | 'progress'
   | 'rating'
@@ -89,7 +90,12 @@ export interface Group {
   id: string;
   title: string;
 }
-
+export interface ColumnValue {
+  id: string;
+  value: JSON;
+  text: string;
+  type: MondayColumType;
+}
 export interface Item {
   id: string;
   board: Board;
@@ -97,6 +103,7 @@ export interface Item {
   name: string;
   email: string;
   created_at: string;
+  column_values: ColumnValue[];
   subitems: SubItem[];
 }
 export interface Update {
@@ -128,25 +135,3 @@ export enum BoardType {
   BOARD = 'board',
   SUB_ITEMS_BOARD = 'sub_items_board',
 }
-
-// Update/Write opertions are not supported for these fields.
-export const MondayNotSupportedFields = [
-  'unsupported',
-  'auto_number',
-  'name',
-  'person',
-  'color_picker',
-  'button',
-  'mirror',
-  'subtasks',
-  'item_id',
-  'creation_log',
-  'file',
-  'formula',
-  'doc',
-  'last_updated',
-  'progress',
-  'tags',
-  'time_tracking',
-  'vote',
-];

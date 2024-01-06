@@ -1,5 +1,8 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { createColumnAction } from './lib/actions/create-column';
+import { createGroupAction } from './lib/actions/create-group';
 import { createItemAction } from './lib/actions/create-item';
+import { createUpdateAction } from './lib/actions/create-update';
 import { updateColumnValuesOfItemAction } from './lib/actions/update-column-values-of-item';
 import { updateItemNameAction } from './lib/actions/update-item-name';
 
@@ -23,7 +26,10 @@ export const monday = createPiece({
   authors: ['kanarelo', 'kishanprmr'],
   auth: mondayAuth,
   actions: [
+    createColumnAction,
+    createGroupAction,
     createItemAction,
+    createUpdateAction,
     updateColumnValuesOfItemAction,
     updateItemNameAction,
   ],

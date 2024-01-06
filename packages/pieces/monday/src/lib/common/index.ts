@@ -1,7 +1,7 @@
 import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { mondayClient } from './client';
-import { MondayColumnMapping } from './helper';
-import { MondayNotSupportedFields } from './models';
+import { MONDAY_NOT_SUPPORTED_COLUMN_TYPES } from './constants';
+import { ActivepiecesPropConverter } from './helper';
 
 export function makeClient(apiKey: string): mondayClient {
   return new mondayClient(apiKey);
@@ -129,6 +129,35 @@ export const mondayCommon = {
         };
       },
     }),
+  columnIds: (required = true) =>
+    Property.MultiSelectDropdown({
+      displayName: 'Column',
+      required,
+      refreshers: ['board_id'],
+      options: async ({ auth, board_id }) => {
+        if (!auth || !board_id) {
+          return {
+            disabled: true,
+            placeholder:
+              'connect your account first and select workspace board.',
+            options: [],
+          };
+        }
+        const client = makeClient(auth as string);
+        const res = await client.listBoardColumns({
+          boardId: board_id as string,
+        });
+        return {
+          disabled: false,
+          options: res.data.boards[0].columns.map((column) => {
+            return {
+              label: column.title,
+              value: column.id,
+            };
+          }),
+        };
+      },
+    }),
   columnValues: Property.DynamicProperties({
     displayName: 'Columns',
     required: true,
@@ -149,7 +178,7 @@ export const mondayCommon = {
         });
         const columns = res.data.boards[0]?.columns;
         for (const column of columns) {
-          if (!MondayNotSupportedFields.includes(column.type)) {
+          if (!MONDAY_NOT_SUPPORTED_COLUMN_TYPES.includes(column.type)) {
             if (column.type === 'people') {
               const userData = await client.listUsers();
               fields[column.id] = Property.StaticMultiSelectDropdown({
@@ -166,8 +195,7 @@ export const mondayCommon = {
                 },
               });
             } else {
-              fields[column.id] =
-                MondayColumnMapping[column.type].buildActivepieceType(column);
+              fields[column.id] = ActivepiecesPropConverter(column);
             }
           }
         }

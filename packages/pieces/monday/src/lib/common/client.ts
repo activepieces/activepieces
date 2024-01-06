@@ -66,4 +66,30 @@ export class mondayClient {
       mondayGraphQLQueries.listUsers
     );
   }
+  async getItemColumnValues(variables: object) {
+    return await this.client.api<{ boards: Board[] }>(
+      mondayGraphQLQueries.getItemColumnValues,
+      {
+        variables: variables,
+      }
+    );
+  }
+  async createColumn(variables: object) {
+    return await this.client.api<{ id: string }>(
+      mondayGraphQLMutations.createColumn,
+      { variables: variables }
+    );
+  }
+  async createGroup(variables: object) {
+    return await this.client.api<{ id: string }>(
+      mondayGraphQLMutations.createGroup,
+      { variables: variables }
+    );
+  }
+  async createUpdate(variables: object) {
+    return await this.client.api<{ id: string }>(
+      mondayGraphQLMutations.createUpdate,
+      { variables: variables }
+    );
+  }
 }

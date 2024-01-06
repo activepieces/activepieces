@@ -5,31 +5,57 @@ import {
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { MondayColumn } from './models';
-export const MondayColumnMapping: Record<string, any> = {
-  status: {
-    buildActivepieceType: (column: MondayColumn) => {
-      const lables = JSON.parse(column.settings_str).labels;
-      const options: { label: string; value: string }[] = [];
-      Object.keys(lables).forEach((key) => {
-        if (lables[key] !== '') {
-          options.push({ value: lables[key], label: lables[key] });
-        }
-      });
-      return Property.StaticDropdown({
+
+type ColumnIdTypeMap = {
+  [key: string]: string;
+};
+export function generateColumnIdTypeMap(
+  columns: MondayColumn[]
+): ColumnIdTypeMap {
+  const result: ColumnIdTypeMap = {};
+  for (const column of columns) {
+    result[column.id] = column.type;
+  }
+  return result;
+}
+
+// creates activepiece prop type for monday column
+export const ActivepiecesPropConverter = (column: MondayColumn) => {
+  switch (column.type) {
+    case 'checkbox':
+      return Property.Checkbox({
         displayName: column.title,
         required: false,
-        options: {
-          disabled: false,
-          options: options,
-        },
       });
-    },
-    buildMondayType: (property: string) => ({
-      label: property,
-    }),
-  },
-  dropdown: {
-    buildActivepieceType: (column: MondayColumn) => {
+    case 'board_relation':
+      return Property.ShortText({
+        displayName: column.title,
+        description:
+          'A list of item IDs to connect with. The items must be on boards that are connected to the column. Example: [125345, 5846475]',
+        required: false,
+        validators: [Validators.pattern(/^\[\d+(,\d+)*]$/)],
+      });
+    case 'country':
+      return Property.ShortText({
+        displayName: column.title,
+        required: false,
+        description: `The ISO 2-letter code and the country's name are separated by a dash. Example: US-United States`,
+      });
+    case 'date':
+      return Property.DateTime({
+        displayName: column.title,
+        required: false,
+        description: 'Use YYYY-MM-DD HH:mm:ss format.',
+      });
+    case 'dependency':
+      return Property.ShortText({
+        displayName: column.title,
+        description:
+          'A list of item IDs from the same board. Example: [188392, 20339]',
+        required: false,
+        validators: [Validators.pattern(/^\[\d+(,\d+)*]$/)],
+      });
+    case 'dropdown':
       const labels: { id: string; name: string }[] = JSON.parse(
         column.settings_str
       ).labels;
@@ -49,78 +75,114 @@ export const MondayColumnMapping: Record<string, any> = {
               : [],
         },
       });
-    },
-    buildMondayType: (property: DynamicPropsValue) => ({
-      labels: property,
-    }),
-  },
-  email: {
-    buildActivepieceType: (column: MondayColumn) =>
-      Property.ShortText({
+    case 'email':
+    case 'link':
+    case 'text':
+      return Property.ShortText({
         displayName: column.title,
         required: false,
-      }),
-    buildMondayType: (property: string) => ({
-      email: property,
-      text: property,
-    }),
-  },
-  link: {
-    buildActivepieceType: (column: MondayColumn) =>
-      Property.ShortText({
+      });
+    case 'hour':
+      return Property.ShortText({
         displayName: column.title,
         required: false,
-      }),
-    buildMondayType: (propety: string) => ({
-      url: propety,
-      text: propety,
-    }),
-  },
-  numbers: {
-    buildActivepieceType: (column: MondayColumn) =>
-      Property.Number({
+        description: `Represent time in 24-hour format, like '16:30' or '2:00', ensuring removal of leading zeroes from data (e.g., send '9' instead of '09').`,
+        validators: [Validators.pattern(/^([01]?[0-9]|2[0-3]):([0-5][0-9])$/)],
+      });
+    case 'location':
+      return Property.ShortText({
         displayName: column.title,
         required: false,
-      }),
-    buildMondayType: (property: string | number) => String(property),
-  },
-  long_text: {
-    buildActivepieceType: (column: MondayColumn) =>
-      Property.LongText({
+        description: `Enter location details in the following format: **latitude|longitude|address(optional)**. For example: "37.7749|-122.4194|San Francisco, CA, USA."`,
+      });
+    case 'long_text':
+      return Property.LongText({
         displayName: column.title,
         required: false,
-      }),
-    buildMondayType: (property: string) => ({
-      text: property,
-    }),
-  },
-  text: {
-    buildActivepieceType: (column: MondayColumn) =>
-      Property.ShortText({
+      });
+    case 'numbers':
+      return Property.Number({
         displayName: column.title,
         required: false,
-      }),
-    buildMondayType: (property: string) => property,
-  },
-  checkbox: {
-    buildActivepieceType: (column: MondayColumn) =>
-      Property.Checkbox({
+      });
+    case 'phone':
+      return Property.ShortText({
         displayName: column.title,
         required: false,
-      }),
-    buildMondayType: (property: DynamicPropsValue) => ({
-      checked: property ? 'true' : 'false',
-    }),
-  },
-  date: {
-    buildActivepieceType: (column: MondayColumn) =>
-      Property.DateTime({
+        description: `Enter your phone number along with the country's ISO 2-letter code, separated by a dash. For ezample, 1234567890-US.`,
+      });
+    case 'rating':
+      return Property.Number({
         displayName: column.title,
         required: false,
-        description: 'Use YYYY-MM-DD HH:mm:ss format.',
-      }),
-    buildMondayType: (property: string) => {
-      let datevalue = dayjs(property);
+        description: `A number between 1 and 5.For example, 3.`,
+        validators: [Validators.inRange(1, 5)],
+      });
+    case 'status':
+      const lables = JSON.parse(column.settings_str).labels;
+      const options: { label: string; value: string }[] = [];
+      Object.keys(lables).forEach((key) => {
+        if (lables[key] !== '') {
+          options.push({ value: lables[key], label: lables[key] });
+        }
+      });
+      return Property.StaticDropdown({
+        displayName: column.title,
+        required: false,
+        options: {
+          disabled: false,
+          options: options,
+        },
+      });
+    case 'timeline':
+      return Property.ShortText({
+        displayName: column.title,
+        required: false,
+        description: `Enter the start and end dates in the YYYY-MM-DD format, separated by a symbol of semicolon(;) symbol. For example: '2022-01-01;2022-12-31`,
+        validators: [
+          Validators.pattern(/^\d{4}-\d{2}-\d{2};\d{4}-\d{2}-\d{2}$/),
+        ],
+      });
+    case 'week':
+      return Property.ShortText({
+        displayName: column.title,
+        required: false,
+        description: `Enter the start and end dates in the YYYY-MM-DD format, separated by a symbol of semicolon(;) symbol. The dates must be 7 days apart (inclusive of the first and last date).\n For example: '2019-06-10;2019-06-16`,
+        validators: [
+          Validators.pattern(/^\d{4}-\d{2}-\d{2};\d{4}-\d{2}-\d{2}$/),
+        ],
+      });
+    case 'world_clock':
+      return Property.ShortText({
+        displayName: column.title,
+        required: false,
+        description: `Enter the timezone in the 'Continent/City' format, for example, Europe/London.`,
+      });
+    default:
+      return null;
+  }
+};
+export const MondayColumnValueConverter = (
+  columnType: string,
+  propValue: DynamicPropsValue
+) => {
+  switch (columnType) {
+    case 'checkbox':
+      return {
+        checked: propValue ? 'true' : 'false',
+      };
+    case 'board_relation':
+    case 'dependency':
+      return {
+        item_ids: JSON.parse(propValue as unknown as string),
+      };
+    case 'country':
+      return {
+        countryCode: propValue.split('-')[0],
+        countryName: propValue.split('-')[1],
+      };
+    case 'date':
+      let datevalue = dayjs(propValue as unknown as string);
       if (!datevalue.isValid()) {
         datevalue = dayjs();
       }
@@ -128,179 +190,80 @@ export const MondayColumnMapping: Record<string, any> = {
         date: datevalue.format('YYYY-MM-DD'),
         time: datevalue.format('HH:mm:ss'),
       };
-    },
-  },
-  board_relation: {
-    buildActivepieceType: (column: MondayColumn) =>
-      Property.ShortText({
-        displayName: column.title,
-        description:
-          'A list of item IDs to connect with. The items must be on boards that are connected to the column. Example: [125345, 5846475]',
-        required: false,
-      }),
-    buildMondayType: (property: string) => {
-      let values: number[] = [];
-      values = JSON.parse(property);
+    case 'dropdown':
       return {
-        item_ids: values,
+        labels: propValue,
       };
-    },
-  },
-  dependency: {
-    buildActivepieceType: (column: MondayColumn) =>
-      Property.ShortText({
-        displayName: column.title,
-        description:
-          'A list of item IDs from the same board. Example: [188392, 20339]',
-        required: false,
-      }),
-    buildMondayType: (property: string) => {
-      let values: number[] = [];
-      values = JSON.parse(property);
+    case 'email':
       return {
-        item_ids: values,
+        email: propValue,
+        text: propValue,
       };
-    },
-  },
-  country: {
-    buildActivepieceType: (column: MondayColumn) =>
-      Property.ShortText({
-        displayName: column.title,
-        required: false,
-        description: `The ISO 2-letter code and the country's name are separated by a dash. Example: US-United States`,
-      }),
-
-    buildMondayType: (property: string) => {
-      const [countryCode, countryName] = property.split('-');
-      return {
-        countryCode: countryCode,
-        countryName: countryName,
-      };
-    },
-  },
-  hour: {
-    buildActivepieceType: (column: MondayColumn) =>
-      Property.ShortText({
-        displayName: column.title,
-        required: false,
-        description: `Represent time in 24-hour format, like '16:30' or '2:00', ensuring removal of leading zeroes from data (e.g., send '9' instead of '09').`,
-      }),
-    buildMondayType: (property: DynamicPropsValue) => {
-      const [hour, minute] = property.split(':');
+    case 'hour':
+      const [hour, minute] = propValue.split(':');
       return {
         hour: Number(hour) ?? 0,
         minute: Number(minute) ?? 0,
       };
-    },
-  },
-  location: {
-    buildActivepieceType: (column: MondayColumn) =>
-      Property.ShortText({
-        displayName: column.title,
-        required: false,
-        description: `Enter location details in the following format: **latitude|longitude|address(optional)**. For example: "37.7749|-122.4194|San Francisco, CA, USA."`,
-      }),
-    buildMondayType: (property: DynamicPropsValue) => {
-      const [lat, lng, address] = property.split('|');
+    case 'link':
+      return {
+        url: propValue,
+        text: propValue,
+      };
+    case 'location':
+      const [lat, lng, address] = propValue.split('|');
       return {
         lat: lat ?? '',
         lng: lng ?? '',
         address: address ?? '',
       };
-    },
-  },
-  phone: {
-    buildActivepieceType: (column: MondayColumn) =>
-      Property.ShortText({
-        displayName: column.title,
-        required: false,
-        description: `Enter your phone number along with the country's ISO 2-letter code, separated by a dash. For ezample, 1234567890-US.`,
-      }),
-    buildMondayType: (property: string) => {
-      const [phone, countryCode] = property.split('-');
+    case 'long_text':
       return {
-        phone: `+${phone}`,
-        countryShortName: countryCode,
+        text: propValue,
       };
-    },
-  },
-  rating: {
-    buildActivepieceType: (column: MondayColumn) =>
-      Property.Number({
-        displayName: column.title,
-        required: false,
-        description: `A number between 1 and 5.For example, 3.`,
-        validators: [Validators.inRange(1, 5)],
-      }),
-    buildMondayType: (property: string) => ({ rating: Number(property) }),
-  },
-  timeline: {
-    buildActivepieceType: (column: MondayColumn) =>
-      Property.ShortText({
-        displayName: column.title,
-        required: false,
-        description: `Enter the start and end dates in the YYYY-MM-DD format, separated by a symbol of semicolon(;) symbol. For example: '2022-01-01;2022-12-31`,
-      }),
-    buildMondayType: (property: string) => {
-      const [startDate, endDate] = property.split(';');
-      return {
-        from: startDate,
-        to: endDate,
-      };
-    },
-  },
-  week: {
-    buildActivepieceType: (column: MondayColumn) =>
-      Property.ShortText({
-        displayName: column.title,
-        required: false,
-        description: `Enter the start and end dates in the YYYY-MM-DD format, separated by a symbol of semicolon(;) symbol. The dates must be 7 days apart (inclusive of the first and last date).\n For example: '2019-06-10;2019-06-16`,
-      }),
-    buildMondayType: (property: string) => {
-      const [startDate, endDate] = property.split(';');
-      return {
-        week: {
-          startDate: startDate,
-          endDate: endDate,
-        },
-      };
-    },
-  },
-  world_clock: {
-    buildActivepieceType: (column: MondayColumn) =>
-      Property.ShortText({
-        displayName: column.title,
-        required: false,
-        description: `Enter the timezone in the 'Continent/City' format, for example, Europe/London.`,
-      }),
-    buildMondayType: (property: string) => ({
-      timezone: property,
-    }),
-  },
-  people: {
-    buildMondayType: (property: DynamicPropsValue) => {
+    case 'numbers':
+      return String(propValue);
+    case 'people':
       const res: { id: string; kind: string }[] = [];
-      if (Array.isArray(property)) {
-        property.forEach((person) => {
+      if (Array.isArray(propValue)) {
+        propValue.forEach((person) => {
           res.push({ id: person, kind: 'person' });
         });
       }
       return {
         personsAndTeams: res,
       };
-    },
-  },
-};
-
-type ColumnIdTypeMap = {
-  [key: string]: string;
-};
-export function generateColumnIdTypeMap(
-  columns: MondayColumn[]
-): ColumnIdTypeMap {
-  const result: ColumnIdTypeMap = {};
-  for (const column of columns) {
-    result[column.id] = column.type;
+    case 'phone':
+      const [phone, countryCode] = propValue.split('-');
+      return {
+        phone: `+${phone}`,
+        countryShortName: countryCode,
+      };
+    case 'rating':
+      return {
+        rating: Number(propValue),
+      };
+    case 'status':
+      return {
+        label: propValue,
+      };
+    case 'text':
+      return propValue;
+    case 'timeline':
+      return {
+        from: propValue.split(';')[0],
+        to: propValue.split(';')[1],
+      };
+    case 'week':
+      return {
+        startDate: propValue.split(';')[0],
+        endDate: propValue.split(';')[1],
+      };
+    case 'world_clock':
+      return {
+        timezone: propValue,
+      };
+    default:
+      return null;
   }
-  return result;
-}
+};
