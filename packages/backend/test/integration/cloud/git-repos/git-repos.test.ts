@@ -1,7 +1,7 @@
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupApp } from '../../../../src/app/app'
 import { FastifyInstance } from 'fastify'
-import { createMockProject, createMockUser } from 'packages/backend/test/helpers/mocks'
+import { createMockGitRepo, createMockProject, createMockUser } from 'packages/backend/test/helpers/mocks'
 import { StatusCodes } from 'http-status-codes'
 import { faker } from '@faker-js/faker'
 import { generateMockToken } from 'packages/backend/test/helpers/auth'
@@ -84,7 +84,6 @@ describe('Git API', () => {
                     authorization: `Bearer ${token}`,
                 },
             })
-            console.log(response?.json())
 
             expect(response?.statusCode).toBe(StatusCodes.CREATED)
             const responseBody = response?.json()
@@ -96,6 +95,52 @@ describe('Git API', () => {
             expect(responseBody.updated).toBeDefined()
             expect(responseBody.id).toBeDefined()
             expect(responseBody.projectId).toBe(mockProject.id)
+        })
+    })
+
+    describe('List API', () => {
+
+
+        it('should list a git repo', async () => {
+
+            const mockUser = createMockUser()
+            await databaseConnection.getRepository('user').save(mockUser)
+
+            const mockProject = createMockProject({ ownerId: mockUser.id })
+            const mockProject2 = createMockProject({ ownerId: mockUser.id })
+            await databaseConnection.getRepository('project').save([mockProject, mockProject2])
+
+            const mockGitRepo = createMockGitRepo({ projectId: mockProject.id })
+            const mockGitRepo2 = createMockGitRepo({ projectId: mockProject2.id })
+            await databaseConnection.getRepository('git_repo').save([mockGitRepo, mockGitRepo2])
+
+            const token = await generateMockToken({
+                id: mockUser.id,
+                projectId: mockProject.id,
+                type: PrincipalType.USER,
+            })
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/v1/git-repos?projectId=' + mockProject.id,
+                headers: {
+                    authorization: `Bearer ${token}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const responseBody = response?.json()
+            expect(responseBody.data.length).toBe(1)
+
+            const gitRepo = responseBody.data[0]
+            expect(Object.keys(gitRepo).length).toBe(6)
+            expect(gitRepo.sshPrivateKey).toBeUndefined()
+            expect(gitRepo.remoteUrl).toBe(mockGitRepo.remoteUrl)
+            expect(gitRepo.branch).toBe(mockGitRepo.branch)
+            expect(gitRepo.created).toBeDefined()
+            expect(gitRepo.updated).toBeDefined()
+            expect(gitRepo.id).toBeDefined()
+            expect(gitRepo.projectId).toBe(mockProject.id)
         })
     })
 
