@@ -1,26 +1,31 @@
 import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
 import { gitRepoService } from './git-repo.service'
 import { PrincipalType, SeekPage } from '@activepieces/shared'
-import { CreateRepoRequest as ConfigureRepoRequest, GitRepo, PullRepoRequest, PushGitRepoRequest } from '@activepieces/ee-shared'
+import { CreateRepoRequest as ConfigureRepoRequest, GitRepo, GitRepoWithoutSenestiveData, PushGitRepoRequest } from '@activepieces/ee-shared'
 import { StatusCodes } from 'http-status-codes'
 
 
 export const gitRepoController: FastifyPluginCallbackTypebox = (app, _options, done): void => {
 
-    app.post('/', ConfigureRepoRequestSchema, async (request) => {
-        return gitRepoService.upsert(request.body)
+    app.post('/', ConfigureRepoRequestSchema, async (request, reply) => {
+        await reply.status(StatusCodes.CREATED).send(await gitRepoService.upsert(request.body))
     })
 
     app.get('/', ListRepoRequestSchema, async (request) => {
         return gitRepoService.list(request.query)
     })
 
-    app.post('/push', PushRepoRequestSchema, async (request) => {
-        await gitRepoService.push(request.body)
+    app.post('/:id/push', PushRepoRequestSchema, async (request) => {
+        await gitRepoService.push({
+            id: request.params.id,
+            commitMessage: request.body.commitMessage,
+        })
     })
 
-    app.post('/pull', PullRepoRequestSchema, async (request) => {
-        await gitRepoService.pull(request.body)
+    app.post('/:id/pull', PullRepoRequestSchema, async (request) => {
+        await gitRepoService.pull({
+            id: request.params.id,
+        })
     })
 
     done()
@@ -33,7 +38,9 @@ const PullRepoRequestSchema = {
     schema: {
         tags: ['git-repo'],
         description: 'Pull all changes from the git repository and overwrite any conflicting changes in the project.',
-        body: PullRepoRequest,
+        params: Type.Object({
+            id: Type.String(),
+        }),
         response: {
             [StatusCodes.NO_CONTENT]: Type.Undefined(),
         },
@@ -48,6 +55,9 @@ const PushRepoRequestSchema = {
         tags: ['git-repo'],
         description: 'Push all changes from the project and overwrite any conflicting changes in the git repository.',
         body: PushGitRepoRequest,
+        params: Type.Object({
+            id: Type.String(),
+        }),
         response: {
             [StatusCodes.NO_CONTENT]: Type.Undefined(),
         },
@@ -60,10 +70,10 @@ const ConfigureRepoRequestSchema = {
     },
     schema: {
         tags: ['git-repo'],
-        description: 'Configure a git repository for a project.',
+        description: 'Upsert a git repository information for a project.',
         body: ConfigureRepoRequest,
         response: {
-            [StatusCodes.OK]: SeekPage(GitRepo),
+            [StatusCodes.CREATED]: GitRepoWithoutSenestiveData,
         },
     },
 }
@@ -78,7 +88,7 @@ const ListRepoRequestSchema = {
             projectId: Type.String(),
         }),
         response: {
-            [StatusCodes.OK]: SeekPage(GitRepo),
+            [StatusCodes.OK]: SeekPage(GitRepoWithoutSenestiveData),
         },
     },
 }

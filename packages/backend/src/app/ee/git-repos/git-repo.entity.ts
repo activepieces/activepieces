@@ -13,10 +13,22 @@ export const GitRepoEntity = new EntitySchema<GitRepoSchema>({
     columns: {
         ...BaseColumnSchemaPart,
         projectId: ApIdSchema,
+        remoteUrl: {
+            type: String,
+            nullable: false,
+        },
+        branch: {
+            type: String,
+            nullable: false,
+        },
+        sshPrivateKey: {
+            type: String,
+            nullable: true,
+        },
     },
     indices: [
         {
-            name: 'idx_plan_project_id',
+            name: 'idx_git_repo_project_id',
             columns: ['projectId'],
             unique: true,
         },
@@ -30,7 +42,7 @@ export const GitRepoEntity = new EntitySchema<GitRepoSchema>({
             joinColumn: {
                 name: 'projectId',
                 referencedColumnName: 'id',
-                foreignKeyConstraintName: 'fk_project_project_id',
+                foreignKeyConstraintName: 'fk_git_repo_project_id',
             },
         },
     },

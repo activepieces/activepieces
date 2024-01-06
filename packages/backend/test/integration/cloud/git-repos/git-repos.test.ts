@@ -1,6 +1,11 @@
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupApp } from '../../../../src/app/app'
 import { FastifyInstance } from 'fastify'
+import { createMockProject, createMockUser } from 'packages/backend/test/helpers/mocks'
+import { StatusCodes } from 'http-status-codes'
+import { faker } from '@faker-js/faker'
+import { generateMockToken } from 'packages/backend/test/helpers/auth'
+import { PrincipalType } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
@@ -15,18 +20,84 @@ afterAll(async () => {
 })
 
 describe('Git API', () => {
-    describe('Push API', () => {
-        it('should push flows', async () => {
+    describe('Create API', () => {
+        it('should not allow create git repo for other projects', async () => {
+
+            const mockUser = createMockUser()
+            const mockUser2 = createMockUser()
+            await databaseConnection.getRepository('user').save([mockUser, mockUser2])
+
+            const mockProject = createMockProject({ ownerId: mockUser.id })
+            const mockProject2 = createMockProject({ ownerId: mockUser2.id })
+            await databaseConnection.getRepository('project').save([mockProject, mockProject2])
+
+
+            const request = {
+                projectId: mockProject2.id,
+                remoteUrl: `git@${faker.internet.url()}`,
+                sshPrivateKey: faker.hacker.noun(),
+                branch: 'main',
+            }
+            const token = await generateMockToken({
+                id: mockUser.id,
+                projectId: mockProject.id,
+                type: PrincipalType.USER,
+            })
+
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/git',
-                body: {
-                    projectId: 'test',
+                url: '/v1/git-repos',
+                payload: request,
+                headers: {
+                    authorization: `Bearer ${token}`,
                 },
             })
 
-            expect(response?.statusCode).toBe(200)
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('should create a git repo', async () => {
+
+            const mockUser = createMockUser()
+            await databaseConnection.getRepository('user').save(mockUser)
+
+            const mockProject = createMockProject({ ownerId: mockUser.id })
+            await databaseConnection.getRepository('project').save(mockProject)
+
+            const request = {
+                projectId: mockProject.id,
+                remoteUrl: `git@${faker.internet.url()}`,
+                sshPrivateKey: faker.hacker.noun(),
+                branch: 'main',
+            }
+            const token = await generateMockToken({
+                id: mockUser.id,
+                projectId: mockProject.id,
+                type: PrincipalType.USER,
+            })
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/git-repos',
+                payload: request,
+                headers: {
+                    authorization: `Bearer ${token}`,
+                },
+            })
+            console.log(response?.json())
+
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
+            const responseBody = response?.json()
+            expect(Object.keys(responseBody).length).toBe(6)
+            expect(responseBody.sshPrivateKey).toBeUndefined()
+            expect(responseBody.remoteUrl).toBe(request.remoteUrl)
+            expect(responseBody.branch).toBe(request.branch)
+            expect(responseBody.created).toBeDefined()
+            expect(responseBody.updated).toBeDefined()
+            expect(responseBody.id).toBeDefined()
+            expect(responseBody.projectId).toBe(mockProject.id)
         })
     })
+
 
 })

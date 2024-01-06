@@ -182,7 +182,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(stepFileModule)
     await app.register(userModule)
     await app.register(authenticationModule)
-    await app.register(gitRepoModule)
 
     await setupBullMQBoard(app)
 
@@ -231,6 +230,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(apiKeyModule)
             await app.register(enterpriseUserModule)
             await app.register(platformFlowTemplateModule)
+            await app.register(gitRepoModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
@@ -259,6 +259,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(apiKeyModule)
             await app.register(enterpriseUserModule)
             await app.register(platformFlowTemplateModule)
+            await app.register(gitRepoModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })

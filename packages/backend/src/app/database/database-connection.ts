@@ -34,6 +34,7 @@ import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
 import { ProjectPlanEntity } from '../ee/billing/project-plan/project-plan.entity'
 import { OtpEntity } from '../ee/otp/otp-entity'
 import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
+import { GitRepoEntity } from '../ee/git-repos/git-repo.entity'
 
 const databaseType = system.get(SystemProp.DB_TYPE)
 
@@ -75,6 +76,7 @@ function getEntities(): EntitySchema<unknown>[] {
                 OAuthAppEntity,
                 OtpEntity,
                 ApiKeyEntity,
+                GitRepoEntity,
             )
             break
         case ApEdition.ENTERPRISE:
@@ -89,6 +91,7 @@ function getEntities(): EntitySchema<unknown>[] {
                 OtpEntity,
                 ApiKeyEntity,
                 FlowTemplateEntity,
+                GitRepoEntity,
             )
             break
         case ApEdition.COMMUNITY:
