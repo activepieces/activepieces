@@ -28,8 +28,8 @@ export class IsolateSandbox extends AbstractSandbox {
     public override async recreate(): Promise<void> {
         logger.debug({ boxId: this.boxId }, '[IsolateSandbox#recreate]')
 
-        await IsolateSandbox.runIsolate(`--box-id=${this.boxId} --cleanup`)
-        await IsolateSandbox.runIsolate(`--box-id=${this.boxId} --init`)
+        await IsolateSandbox.runIsolate([`--box-id=${this.boxId}`, '--cleanup'])
+        await IsolateSandbox.runIsolate([`--box-id=${this.boxId}`, '--init'])
     }
 
     public override async runOperation(operation: string): Promise<ExecuteSandboxResult> {
@@ -49,6 +49,7 @@ export class IsolateSandbox extends AbstractSandbox {
                 `--dir=${basePath}=/${basePath}:maybe`,
                 `--dir=${IsolateSandbox.cacheBindPath}=${this._cachePath}`,
                 '--share-net',
+                `--time=${AbstractSandbox.sandboxRunTimeSeconds}`,
                 `--box-id=${this.boxId}`,
                 '--processes',
                 `--wall-time=${AbstractSandbox.sandboxRunTimeSeconds}`,
@@ -63,7 +64,7 @@ export class IsolateSandbox extends AbstractSandbox {
                 AbstractSandbox.nodeExecutablePath,
                 `${IsolateSandbox.cacheBindPath}/main.js`,
                 operation,
-            ].join(' ')
+            ]
 
             await IsolateSandbox.runIsolate(fullCommand)
 
@@ -100,9 +101,14 @@ export class IsolateSandbox extends AbstractSandbox {
         logger.debug({ boxId: this.boxId, cacheKey: this._cacheKey, cachePath: this._cachePath }, '[IsolateSandbox#setupCache]')
     }
 
-    private static runIsolate(cmd: string): Promise<string> {
+    private static runIsolate(args: string[]): Promise<string> {
+        const finalArgs = [...args,
+            '--cg',
+            '--cg-mem=131072',
+            '--cg-timing',
+        ]
         const currentDir = cwd()
-        const fullCmd = `${currentDir}/packages/backend/src/assets/${this.isolateExecutableName} ${cmd}`
+        const fullCmd = `${currentDir}/packages/backend/src/assets/${this.isolateExecutableName} ${finalArgs.join(' ')}`
 
         logger.info(`sandbox, command: ${fullCmd}`)
 
@@ -120,4 +126,5 @@ export class IsolateSandbox extends AbstractSandbox {
             })
         })
     }
+
 }
