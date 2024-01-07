@@ -34,8 +34,8 @@ export class FileSandbox extends AbstractSandbox {
         const command = [
             `cd ${this.getSandboxFolderPath()}`,
             '&&',
-            `env -i AP_PIECES_SOURCE=${pieceSources} NODE_OPTIONS='--enable-source-maps'`,
-            AbstractSandbox.nodeExecutablePath,
+            this.setEnvForSandboxByOs(pieceSources!),
+            `"${AbstractSandbox.nodeExecutablePath}"`,
             'main.js',
             operation,
         ].join(' ')
@@ -75,6 +75,7 @@ export class FileSandbox extends AbstractSandbox {
         const standardOutputPath = this.getSandboxFilePath('_standardOutput.txt')
         const standardErrorPath = this.getSandboxFilePath('_standardError.txt')
 
+        console.log(process.execPath)
         await writeFile(standardOutputPath, '')
         await writeFile(standardErrorPath, '')
 
@@ -93,11 +94,8 @@ export class FileSandbox extends AbstractSandbox {
                 stderr += data
             })
 
-            process.on('error', (error: unknown) => {
-                reject(error)
-            })
-
             process.on('close', async (code: number) => {
+                console.log(stderr)
                 if (code !== 0) {
                     reject(new Error(`Command failed with code ${code}: ${cmd}`))
                     return
@@ -120,5 +118,14 @@ export class FileSandbox extends AbstractSandbox {
                 resolve({ verdict: EngineResponseStatus.TIMEOUT })
             }, AbstractSandbox.sandboxRunTimeSeconds * 1000)
         })
+    }
+
+    private setEnvForSandboxByOs(pieceSources: string): string {
+        if (process.platform === 'win32') {
+            return `set AP_PIECES_SOURCE=${pieceSources} && set NODE_OPTIONS=--enable-source-maps &&`
+        }
+        else {
+            return `env -i AP_PIECES_SOURCE=${pieceSources} && NODE_OPTIONS='--enable-source-maps'`
+        }
     }
 }
