@@ -5,10 +5,12 @@ import { ConfigureRepoRequest, GitRepo } from '@activepieces/ee-shared';
 import { SeekPage } from '@activepieces/shared';
 import { map } from 'rxjs';
 import { AuthenticationService } from '@activepieces/ui/common';
+import { PushGitRepoRequest } from '@activepieces/ee-shared';
 @Injectable({
   providedIn: 'root',
 })
 export class SyncProjectService {
+  prefix = `${environment.apiUrl}/git-repos`;
   constructor(
     private http: HttpClient,
     private authenticationService: AuthenticationService
@@ -26,6 +28,21 @@ export class SyncProjectService {
   }
 
   configureRepo(request: ConfigureRepoRequest) {
-    return this.http.post<void>(environment.apiUrl + '/git-repos', request, {});
+    return this.http.post<void>(this.prefix, request, {});
+  }
+  disconnect(repoId: string) {
+    return this.http.delete<void>(`${this.prefix}/${repoId}`);
+  }
+
+  push(
+    repoId: string,
+    request: PushGitRepoRequest = {
+      commitMessage: new Date().toISOString(),
+    }
+  ) {
+    return this.http.post<void>(`${this.prefix}/${repoId}/push`, request);
+  }
+  pull(repoId: string) {
+    return this.http.post<void>(`${this.prefix}/${repoId}/pull`, {});
   }
 }

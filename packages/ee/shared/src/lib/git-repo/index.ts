@@ -18,7 +18,7 @@ export const PushGitRepoRequest = Type.Object({
     commitMessage: Type.String(),
 })
 
-export type PushRepoRequest = Static<typeof PushGitRepoRequest>
+export type PushGitRepoRequest = Static<typeof PushGitRepoRequest>
 
 export const ConfigureRepoRequest = Type.Object({
     projectId: Type.String(),
