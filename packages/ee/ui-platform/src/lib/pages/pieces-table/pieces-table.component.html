@@ -1,10 +1,8 @@
-<div class="ap-flex ap-justify-between ap-items-center">
-    <ap-page-title [title]="title">
-    </ap-page-title>
-    <ap-button btnColor="primary" btnSize='medium' (click)="installPiece()" class="ap-float-right" i18n>
+<ap-page-title [title]="title">
+    <ap-button actionButton btnColor="primary" btnSize='medium' (click)="installPiece()" i18n>
         + Add Piece
     </ap-button>
-</div>
+</ap-page-title>
 
 <div class="ap-mb-4  ap-flex ap-items-center ap-gap-2 ap-justify-between">
 
@@ -22,8 +20,6 @@
 
 
 <div class="ap-w-full">
-
-
     <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" i18n-aria-label aria-label="Pieces">
         <ng-container matColumnDef="displayName">
             <th mat-header-cell *matHeaderCellDef i18n>Piece</th>

@@ -22,7 +22,7 @@ import { RenameFolderDialogComponent } from './pages/flows-table/rename-folder-d
 import { EeBillingUiModule } from '@activepieces/ee-billing-ui';
 import { UiFeatureTemplatesModule } from '@activepieces/ui/feature-templates';
 import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
-import { SyncComponent } from './pages/sync/sync.component';
+import { SyncProjectComponent } from './pages/sync-project/sync-project.component';
 
 @NgModule({
   imports: [
@@ -47,7 +47,7 @@ import { SyncComponent } from './pages/sync/sync.component';
     NewFolderDialogComponent,
     MoveFlowToFolderDialogComponent,
     RenameFolderDialogComponent,
-    SyncComponent,
+    SyncProjectComponent,
   ],
 })
 export class UiFeatureDashboardModule {}

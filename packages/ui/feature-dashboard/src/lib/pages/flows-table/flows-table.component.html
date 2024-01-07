@@ -9,7 +9,7 @@
         <div
           class=" ap-rounded ap-border ap-border-solid ap-border-dividers ap-p-[30px] ap-pb-[80px] ap-flex ap-flex-col">
           <app-flows-table-title></app-flows-table-title>
-          <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Flows">
+          <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Flows" i18n-aria-label>
             <ng-container matColumnDef="name">
               <th mat-header-cell *matHeaderCellDef i18n>Name</th>
               <td mat-cell *matCellDef="let flow"><a class="!ap-typography-body-2 !ap-no-underline !ap-text-body"
