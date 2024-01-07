@@ -1,11 +1,11 @@
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupApp } from '../../../../src/app/app'
 import { FastifyInstance } from 'fastify'
-import { createMockGitRepo, createMockProject, createMockUser } from 'packages/backend/test/helpers/mocks'
 import { StatusCodes } from 'http-status-codes'
 import { faker } from '@faker-js/faker'
-import { generateMockToken } from 'packages/backend/test/helpers/auth'
 import { PrincipalType } from '@activepieces/shared'
+import { createMockUser, createMockProject, createMockGitRepo } from '../../../helpers/mocks'
+import { generateMockToken } from '../../../helpers/auth'
 
 let app: FastifyInstance | null = null
 
@@ -96,6 +96,66 @@ describe('Git API', () => {
             expect(responseBody.id).toBeDefined()
             expect(responseBody.projectId).toBe(mockProject.id)
         })
+    })
+
+    describe('Delete API', () => {
+
+        it('should delete a git repo', async () => {  
+            const mockUser = createMockUser()
+            await databaseConnection.getRepository('user').save(mockUser)
+    
+            const mockProject = createMockProject({ ownerId: mockUser.id })
+            await databaseConnection.getRepository('project').save(mockProject)
+    
+            const mockGitRepo = createMockGitRepo({ projectId: mockProject.id })
+            await databaseConnection.getRepository('git_repo').save(mockGitRepo)
+    
+            const token = await generateMockToken({
+                id: mockUser.id,
+                projectId: mockProject.id,
+                type: PrincipalType.USER,
+            })
+    
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: '/v1/git-repos/' + mockGitRepo.id,
+                headers: {
+                    authorization: `Bearer ${token}`,
+                },
+            })
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+        })
+        it('should not allow delete git repo for other projects', async () => {
+
+            const mockUser = createMockUser()
+            await databaseConnection.getRepository('user').save(mockUser)
+
+            const mockProject = createMockProject({ ownerId: mockUser.id })
+            const mockProject2 = createMockProject({ ownerId: mockUser.id })
+            await databaseConnection.getRepository('project').save([mockProject, mockProject2])
+
+            const mockGitRepo = createMockGitRepo({ projectId: mockProject.id })
+            const mockGitRepo2 = createMockGitRepo({ projectId: mockProject2.id })
+            await databaseConnection.getRepository('git_repo').save([mockGitRepo, mockGitRepo2])
+
+            const token = await generateMockToken({
+                id: mockUser.id,
+                projectId: mockProject.id,
+                type: PrincipalType.USER,
+            })
+
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: '/v1/git-repos/' + mockGitRepo2.id,
+                headers: {
+                    authorization: `Bearer ${token}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+
+        })
+
     })
 
     describe('List API', () => {

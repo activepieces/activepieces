@@ -9,6 +9,7 @@ export type SuccessLicenseResponse = {
     status: LiceneseStatus.VALID
     showPoweredBy?: boolean
     embeddingEnabled?: boolean
+    gitSyncEnabled?: boolean
 }
 export type LicenseResponse = SuccessLicenseResponse | {
     status: LiceneseStatus.INVALID

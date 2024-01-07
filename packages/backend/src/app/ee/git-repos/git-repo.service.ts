@@ -8,7 +8,6 @@ import { ActivepiecesError, apId, ErrorCode, isNil, SeekPage } from '@activepiec
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { FlowSyncOperation, gitSyncHelper } from './git-sync-helper'
 
-
 const repo = databaseConnection.getRepository(GitRepoEntity)
 
 export const gitRepoService = {
@@ -54,6 +53,19 @@ export const gitRepoService = {
         const { flowFolderPath } = await createGitRepoAndReturnPaths(gitRepo)
         const operations: FlowSyncOperation[] = await planPullOperations(gitRepo.projectId, flowFolderPath)
         await gitSyncHelper.applyFlowOperations({ projectId: gitRepo.projectId, flowFolderPath, operations })
+    },
+    async delete({ id, projectId }: { id: string, projectId: string }): Promise<void> {
+        const gitRepo = await repo.findOneBy({ id, projectId })
+        if (isNil(gitRepo)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityId: id,
+                    entityType: 'git-repo',
+                },
+            })
+        }
+        await repo.delete({ id, projectId })
     },
 }
 

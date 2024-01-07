@@ -28,7 +28,31 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (app, _options, d
         })
     })
 
+    app.delete('/:id', DeleteRepoRequestSchema, async (request, reply) => {
+        await gitRepoService.delete({
+            id: request.params.id,
+            projectId: request.principal.projectId,
+        })
+        await reply.status(StatusCodes.NO_CONTENT).send()
+    })
+
     done()
+}
+
+const DeleteRepoRequestSchema = {
+    config: {
+        allowedPrincipals: [PrincipalType.SERVICE, PrincipalType.USER],
+    },
+    schema: {
+        tags: ['git-repo'],
+        description: 'Delete a git repository information for a project.',
+        params: Type.Object({
+            id: Type.String(),
+        }),
+        response: {
+            [StatusCodes.NO_CONTENT]: Type.Undefined(),
+        },
+    },
 }
 
 const PullRepoRequestSchema = {
