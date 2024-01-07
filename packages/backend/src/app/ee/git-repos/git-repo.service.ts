@@ -138,7 +138,7 @@ async function initGitRepo(gitRepo: GitRepo, baseDir: string): Promise<SimpleGit
     const git = simpleGit({
         baseDir,
         binary: 'git',
-    }).env('GIT_SSH_COMMAND', `ssh -i ${keyPath}`)
+    }).env('GIT_SSH_COMMAND', `ssh -i ${keyPath} -o StrictHostKeyChecking=no`)
     await git.init()
     await git.addRemote('origin', gitRepo.remoteUrl)
     await git.branch(['-M', gitRepo.branch])
