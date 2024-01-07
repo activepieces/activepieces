@@ -52,6 +52,7 @@ type ErrorParams =
     | ValidationErrorParams
     | InvitationOnlySignUpParams
     | UserIsInActiveErrorParams
+    | DomainIsNotAllowedErrorParams
 
 export type BaseErrorParams<T, V> = {
     code: T
@@ -119,6 +120,13 @@ ErrorCode.FLOW_RUN_NOT_FOUND,
 export type InvalidCredentialsErrorParams = BaseErrorParams<
 ErrorCode.INVALID_CREDENTIALS,
 null
+>
+
+export type DomainIsNotAllowedErrorParams = BaseErrorParams<
+ErrorCode.DOMAIN_NOT_ALLOWED,
+{
+    domain: string
+}
 >
 
 export type EmailIsNotVerifiedErrorParams = BaseErrorParams<
@@ -314,6 +322,7 @@ export enum ErrorCode {
     AUTHENTICATION = 'AUTHENTICATION',
     AUTHORIZATION = 'AUTHORIZATION',
     CONFIG_NOT_FOUND = 'CONFIG_NOT_FOUND',
+    DOMAIN_NOT_ALLOWED = 'DOMAIN_NOT_ALLOWED',
     EMAIL_IS_NOT_VERIFIED = 'EMAIL_IS_NOT_VERIFIED',
     ENGINE_OPERATION_FAILURE = 'ENGINE_OPERATION_FAILURE',
     ENTITY_NOT_FOUND = 'ENTITY_NOT_FOUND',

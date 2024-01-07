@@ -19,6 +19,8 @@ export const UpdatePlatformRequestBody = Type.Object({
     privacyPolicyUrl: Type.Optional(Type.String()),
     termsOfServiceUrl: Type.Optional(Type.String()),
     cloudAuthEnabled: Type.Optional(Type.Boolean()),
+    allowedAuthDomains: Type.Optional(Type.Array(Type.String())),
+    enforceAllowedAuthDomains: Type.Optional(Type.Boolean()),
     defaultLocale: Type.Optional(Type.Enum(LocalesEnum))
 })
 

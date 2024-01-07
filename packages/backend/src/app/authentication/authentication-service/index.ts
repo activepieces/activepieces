@@ -15,10 +15,7 @@ const SIGN_UP_ENABLED = system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
 export const authenticationService = {
     async signUp(params: SignUpParams): Promise<AuthenticationResponse> {
         await assertSignUpIsEnabled()
-        await hooks.get().preSignUp({
-            email: params.email,
-            platformId: params.platformId,
-        })
+        await hooks.get().preSignUp(params)
         const user = await createUser(params)
 
         return this.signUpResponse({
@@ -28,6 +25,7 @@ export const authenticationService = {
     },
 
     async signIn(request: SignInParams): Promise<AuthenticationResponse> {
+        await hooks.get().preSignIn(request)
         const user = await userService.getByPlatformAndEmail({
             platformId: request.platformId,
             email: request.email,

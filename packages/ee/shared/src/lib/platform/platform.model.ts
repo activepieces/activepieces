@@ -29,7 +29,10 @@ export const Platform = Type.Object({
     cloudAuthEnabled: Type.Boolean(),
     showPoweredBy: Type.Boolean(),
     embeddingEnabled: Type.Boolean(),
-    defaultLocale: Type.Optional(Type.Enum(LocalesEnum))
+    defaultLocale: Type.Optional(Type.Enum(LocalesEnum)),
+    ssoEnabled: Type.Boolean(),
+    enforceAllowedAuthDomains: Type.Boolean(),
+    allowedAuthDomains: Type.Array(Type.String()),
 })
 
 export type Platform = Static<typeof Platform>

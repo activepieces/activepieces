@@ -96,6 +96,18 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             enum: LocalesEnum,
             nullable: true,
         },
+        allowedAuthDomains: {
+            type: ARRAY_COLUMN_TYPE,
+            array: isPostgres(),
+        },
+        enforceAllowedAuthDomains: {
+            type: Boolean,
+            nullable: false,
+        },
+        ssoEnabled: {
+            type: Boolean,
+            nullable: false,
+        },
     },
     indices: [
     ],

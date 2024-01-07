@@ -20,11 +20,14 @@ export const platformService = {
             logoIconUrl: logoIconUrl ?? defaultTheme.logos.logoIconUrl,
             fullLogoUrl: fullLogoUrl ?? defaultTheme.logos.fullLogoUrl,
             favIconUrl: favIconUrl ?? defaultTheme.logos.favIconUrl,
-            embeddingEnabled: true,
+            embeddingEnabled: false,
             defaultLocale: LocalesEnum.ENGLISH,
             filteredPieceNames: [],
+            enforceAllowedAuthDomains: false,
+            allowedAuthDomains: [],
             filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
             showPoweredBy: false,
+            ssoEnabled: false,
             cloudAuthEnabled: true,
         }
 
@@ -76,6 +79,9 @@ export const platformService = {
             ...spreadIfDefined('defaultLocale', params.defaultLocale),
             ...spreadIfDefined('showPoweredBy', params.showPoweredBy),
             ...spreadIfDefined('embeddingEnabled', params.embeddingEnabled),
+            ...spreadIfDefined('ssoEnabled', params.ssoEnabled),
+            ...spreadIfDefined('enforceAllowedAuthDomains', params.enforceAllowedAuthDomains),
+            ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
         }
 
         return repo.save(updatedPlatform)
@@ -158,6 +164,7 @@ type UpdateParams = UpdatePlatformRequestBody & {
     id: PlatformId
     userId: UserId
     showPoweredBy?: boolean
+    ssoEnabled?: boolean
     embeddingEnabled?: boolean
 }
 

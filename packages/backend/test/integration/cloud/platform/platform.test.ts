@@ -39,6 +39,8 @@ describe('Platform API', () => {
                 filteredPieceNames: ['updated filtered piece names'],
                 filteredPieceBehavior: FilteredPieceBehavior.ALLOWED,
                 smtpHost: 'updated smtp host',
+                enforceAllowedAuthDomains: true,
+                allowedAuthDomains: ['yahoo.com'],
                 smtpPort: 123,
                 smtpUser: 'updated smtp user',
                 smtpPassword: 'updated smtp password',
@@ -63,10 +65,12 @@ describe('Platform API', () => {
             const responseBody = response?.json()
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(Object.keys(responseBody)).toHaveLength(23)
+            expect(Object.keys(responseBody)).toHaveLength(26)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.created).toBeDefined()
             expect(responseBody.updated).toBeDefined()
+            expect(responseBody.enforceAllowedAuthDomains).toBe(requestBody.enforceAllowedAuthDomains)
+            expect(responseBody.allowedAuthDomains).toEqual(requestBody.allowedAuthDomains)
             expect(responseBody.ownerId).toBe(mockUser.id)
             expect(responseBody.name).toBe('updated name')
             expect(responseBody.primaryColor).toBe('updated primary color')
@@ -173,7 +177,7 @@ describe('Platform API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
 
-            expect(Object.keys(responseBody)).toHaveLength(23)
+            expect(Object.keys(responseBody)).toHaveLength(26)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.ownerId).toBe(mockOwnerUser.id)
             expect(responseBody.name).toBe(mockPlatform.name)

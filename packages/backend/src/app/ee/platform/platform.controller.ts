@@ -7,7 +7,6 @@ import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authoriza
 export const platformController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/:id', UpdatePlatformRequest, async (req, res) => {
         await platformMustBeOwnedByCurrentUser.call(app, req, res)
-
         return platformService.update({
             id: req.params.id,
             userId: req.principal.id,
