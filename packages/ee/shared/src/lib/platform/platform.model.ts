@@ -1,5 +1,6 @@
 import { ApId, BaseModelSchema, LocalesEnum } from "@activepieces/shared";
 import { Static, Type } from "@sinclair/typebox";
+import { FederatedAuthnProviderConfig, FederatedAuthnProviderConfigWithoutSensitiveData } from "../authn";
 
 export type PlatformId = ApId;
 
@@ -33,6 +34,13 @@ export const Platform = Type.Object({
     ssoEnabled: Type.Boolean(),
     enforceAllowedAuthDomains: Type.Boolean(),
     allowedAuthDomains: Type.Array(Type.String()),
+    federatedAuthProviders: FederatedAuthnProviderConfig,
 })
 
 export type Platform = Static<typeof Platform>
+
+export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
+    federatedAuthProviders: FederatedAuthnProviderConfigWithoutSensitiveData,
+}), Type.Omit(Platform, ['smtpPassword', 'federatedAuthProviders'])] )
+
+export type PlatformWithoutSensitiveData = Static<typeof PlatformWithoutSensitiveData>

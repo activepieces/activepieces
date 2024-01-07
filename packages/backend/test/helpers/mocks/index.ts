@@ -80,6 +80,7 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         updated: platform?.updated ?? faker.date.recent().toISOString(),
         ownerId: platform?.ownerId ?? apId(),
         enforceAllowedAuthDomains: platform?.enforceAllowedAuthDomains ?? false,
+        federatedAuthProviders: platform?.federatedAuthProviders ?? {},
         allowedAuthDomains: platform?.allowedAuthDomains ?? [],
         name: platform?.name ?? faker.lorem.word(),
         primaryColor: platform?.primaryColor ?? faker.color.rgb(),

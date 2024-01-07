@@ -1,12 +1,14 @@
 import { AuthenticationResponse } from '@activepieces/shared'
 import { FederatedAuthnLoginResponse, ThirdPartyAuthnProviderEnum } from '@activepieces/ee-shared'
 import { providers } from './authn-provider/authn-provider'
+import { platformService } from '../../platform/platform.service'
 
 
 export const federatedAuthnService = {
-    async login({ providerName }: LoginParams): Promise<FederatedAuthnLoginResponse> {
+    async login({ providerName, platformId }: LoginParams): Promise<FederatedAuthnLoginResponse> {
         const provider = providers[providerName]
-        const loginUrl = await provider.getLoginUrl()
+        const platform = await platformService.getOneOrThrow(platformId)
+        const loginUrl = await provider.getLoginUrl(platform)
 
         return {
             loginUrl,
@@ -15,17 +17,19 @@ export const federatedAuthnService = {
 
     async claim({ platformId, providerName, code }: ClaimParams): Promise<AuthenticationResponse> {
         const provider = providers[providerName]
-        return provider.authenticate(platformId, code)
+        const platform = await platformService.getOneOrThrow(platformId)
+        return provider.authenticate(platform, code)
     },
 }
 
 type LoginParams = {
+    platformId: string
     providerName: ThirdPartyAuthnProviderEnum
 }
 
 
 type ClaimParams = {
-    platformId: string | null
+    platformId: string
     providerName: ThirdPartyAuthnProviderEnum
     code: string
 }

@@ -28,6 +28,7 @@ export const platformService = {
             filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
             showPoweredBy: false,
             ssoEnabled: false,
+            federatedAuthProviders: {},
             cloudAuthEnabled: true,
         }
 
@@ -69,6 +70,7 @@ export const platformService = {
             ...spreadIfDefined('filteredPieceBehavior', params.filteredPieceBehavior),
             ...spreadIfDefined('smtpHost', params.smtpHost),
             ...spreadIfDefined('smtpPort', params.smtpPort),
+            ...spreadIfDefined('federatedAuthProviders', params.federatedAuthProviders),
             ...spreadIfDefined('smtpUser', params.smtpUser),
             ...spreadIfDefined('smtpPassword', params.smtpPassword),
             ...spreadIfDefined('smtpSenderEmail', params.smtpSenderEmail),

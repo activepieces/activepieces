@@ -47,11 +47,12 @@ describe('admin add platform endpoint', () => {
         // assert
         const responseBody = response?.json()
         expect(response?.statusCode).toBe(StatusCodes.CREATED)
-        expect(Object.keys(responseBody)).toHaveLength(26)
+        expect(Object.keys(responseBody)).toHaveLength(27)
         expect(responseBody.allowedAuthDomains).toEqual([])
         expect(responseBody.enforceAllowedAuthDomains).toBe(false)
         expect(responseBody.ssoEnabled).toBe(false)
         expect(responseBody.id).toHaveLength(21)
+        expect(responseBody.federatedAuthProviders).toStrictEqual({})
         expect(responseBody.created).toBeDefined()
         expect(responseBody.updated).toBeDefined()
         expect(responseBody.ownerId).toBe(mockUser.id)
