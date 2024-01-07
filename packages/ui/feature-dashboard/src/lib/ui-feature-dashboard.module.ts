@@ -23,6 +23,7 @@ import { EeBillingUiModule } from '@activepieces/ee-billing-ui';
 import { UiFeatureTemplatesModule } from '@activepieces/ui/feature-templates';
 import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
 import { SyncProjectComponent } from './pages/sync-project/sync-project.component';
+import { ConfigureRepoDialogComponent } from './components/dialogs/configure-repo-dialog/configure-repo-dialog.component';
 
 @NgModule({
   imports: [
@@ -48,6 +49,7 @@ import { SyncProjectComponent } from './pages/sync-project/sync-project.componen
     MoveFlowToFolderDialogComponent,
     RenameFolderDialogComponent,
     SyncProjectComponent,
+    ConfigureRepoDialogComponent,
   ],
 })
 export class UiFeatureDashboardModule {}

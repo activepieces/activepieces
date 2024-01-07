@@ -4,7 +4,7 @@
             <div underTitle class="ap-text-description ap-typography-body-2 ap ap-mt-2" i18n>
                 Streamline environments management by integrating with Git repos.
             </div>
-            <ap-button actionButton btnColor="primary" btnSize='medium'>
+            <ap-button actionButton btnColor="primary" btnSize='medium' (buttonClicked)="configureNewRepo()">
                 + Configure Repo
             </ap-button>
         </ap-page-title>
@@ -22,7 +22,7 @@
 
         <ng-container matColumnDef="updated">
             <th mat-header-cell *matHeaderCellDef i18n>Configured</th>
-            <td mat-cell *matCellDef="let repo">{{ repo.updated }}</td>
+            <td mat-cell *matCellDef="let repo">{{ repo.updated | date:'medium' }}</td>
         </ng-container>
 
 
@@ -72,3 +72,4 @@
         </div>
     </ng-container>
 </div>
+<ng-container *ngIf="dialogOpened$ | async"></ng-container>

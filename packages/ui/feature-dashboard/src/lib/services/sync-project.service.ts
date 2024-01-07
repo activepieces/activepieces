@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '@activepieces/ui/common';
-import { GitRepo } from '@activepieces/ee-shared';
+import { ConfigureRepoRequest, GitRepo } from '@activepieces/ee-shared';
 import { SeekPage } from '@activepieces/shared';
 import { map } from 'rxjs';
 
@@ -19,5 +19,9 @@ export class SyncProjectService {
         },
       })
       .pipe(map((res) => res.data));
+  }
+
+  configureRepo(request: ConfigureRepoRequest) {
+    return this.http.post<void>(environment.apiUrl + '/git-repos', request, {});
   }
 }

@@ -12,7 +12,7 @@ import { FlowSyncOperation, gitSyncHelper } from './git-sync-helper'
 const repo = databaseConnection.getRepository(GitRepoEntity)
 
 export const gitRepoService = {
-    async upsert({ projectId, branch, remoteUrl, sshPrivateKey }: ConfigureRepoRequest): Promise<GitRepo> {
+    async upsert({ projectId, sshPrivateKey, branch, remoteUrl }: ConfigureRepoRequest): Promise<GitRepo> {
         const existingRepo = await repo.findOneBy({ projectId })
         const id = existingRepo?.id ?? apId()
         await repo.upsert({

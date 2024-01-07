@@ -24,7 +24,8 @@ export class SyncProjectDataSource extends DataSource<GitRepo> {
   isLoading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
   constructor(
     private synProjectService: SyncProjectService,
-    private store: Store
+    private store: Store,
+    private refresh$: Observable<boolean>
   ) {
     super();
   }
@@ -41,6 +42,7 @@ export class SyncProjectDataSource extends DataSource<GitRepo> {
         .select(ProjectSelectors.selectCurrentProject)
         .pipe(filter((project) => !!project))
         .pipe(take(1)),
+      refresh: this.refresh$,
     }).pipe(
       tap(() => {
         this.isLoading$.next(true);

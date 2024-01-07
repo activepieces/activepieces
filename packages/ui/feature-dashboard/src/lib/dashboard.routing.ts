@@ -9,13 +9,14 @@ import { ConnectionsTableComponent } from './pages/connections-table/connections
 import { FoldersResolver } from './resolvers/folders.resolver';
 import { DashboardContainerComponent } from './dashboard-container.component';
 import {
+  showBasedOnEditionGuard,
   showBasedOnFlagGuard,
   showPlatformSettingsGuard,
 } from '@activepieces/ui/common';
 import { PlansPageComponent } from '@activepieces/ee-billing-ui';
 import { ProjectMembersTableComponent } from '@activepieces/ee/project-members';
 import { CommunityPiecesTableComponent } from '@activepieces/ui/feature-pieces';
-import { ApFlagId } from '@activepieces/shared';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { SyncProjectComponent } from './pages/sync-project/sync-project.component';
 
 export const DashboardLayoutRouting: Routes = [
@@ -72,6 +73,9 @@ export const DashboardLayoutRouting: Routes = [
         path: 'sync',
         pathMatch: 'full',
         component: SyncProjectComponent,
+        canActivate: [
+          showBasedOnEditionGuard([ApEdition.ENTERPRISE, ApEdition.CLOUD]),
+        ],
       },
       {
         data: {
