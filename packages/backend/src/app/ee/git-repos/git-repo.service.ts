@@ -3,17 +3,16 @@ import fs from 'fs/promises'
 import path from 'path'
 import { databaseConnection } from '../../database/database-connection'
 import { GitRepoEntity } from './git-repo.entity'
-import { CreateRepoRequest, GitRepo } from '@activepieces/ee-shared'
+import { ConfigureRepoRequest, GitRepo } from '@activepieces/ee-shared'
 import { ActivepiecesError, apId, ErrorCode, isNil, SeekPage } from '@activepieces/shared'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { FlowSyncOperation, gitSyncHelper } from './git-sync-helper'
-import { logger } from '../../helper/logger'
 
 
 const repo = databaseConnection.getRepository(GitRepoEntity)
 
 export const gitRepoService = {
-    async upsert({ projectId, branch, remoteUrl, sshPrivateKey }: CreateRepoRequest): Promise<GitRepo> {
+    async upsert({ projectId, branch, remoteUrl, sshPrivateKey }: ConfigureRepoRequest): Promise<GitRepo> {
         const existingRepo = await repo.findOneBy({ projectId })
         const id = existingRepo?.id ?? apId()
         await repo.upsert({

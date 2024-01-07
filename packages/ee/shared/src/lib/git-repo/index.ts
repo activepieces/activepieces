@@ -20,7 +20,7 @@ export const PushGitRepoRequest = Type.Object({
 
 export type PushRepoRequest = Static<typeof PushGitRepoRequest>
 
-export const CreateRepoRequest = Type.Object({
+export const ConfigureRepoRequest = Type.Object({
     projectId: Type.String(),
     remoteUrl: Type.String({
         pattern: '^git@',
@@ -29,4 +29,4 @@ export const CreateRepoRequest = Type.Object({
     sshPrivateKey: Type.String(),
 })
 
-export type CreateRepoRequest = Static<typeof CreateRepoRequest>
+export type ConfigureRepoRequest = Static<typeof ConfigureRepoRequest>
