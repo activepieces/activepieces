@@ -94,7 +94,6 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
         gitSyncEnabled: {
             type: Boolean,
             nullable: false,
-            default: false,
         },
         defaultLocale: {
             type: String,
