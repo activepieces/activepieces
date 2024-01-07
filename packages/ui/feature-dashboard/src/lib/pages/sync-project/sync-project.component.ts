@@ -1,10 +1,9 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { SyncProjectDataSource } from './sync-project.datasource';
-import { SyncProjectService } from '../../services/sync-project.service';
-import { Store } from '@ngrx/store';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfigureRepoDialogComponent } from '../../components/dialogs/configure-repo-dialog/configure-repo-dialog.component';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
+import { GitRepo } from '@activepieces/ee-shared';
 
 @Component({
   selector: 'app-sync-project',
@@ -13,19 +12,14 @@ import { BehaviorSubject, Observable, tap } from 'rxjs';
 })
 export class SyncProjectComponent {
   displayedColumns = ['remoteUrl', 'branch', 'updated', 'action'];
-  dataSource: SyncProjectDataSource;
   refreshTable$ = new BehaviorSubject<true>(true);
   dialogOpened$?: Observable<boolean>;
+  currentRepo?: GitRepo;
   constructor(
-    private syncProjectService: SyncProjectService,
-    private store: Store,
-    private matDialog: MatDialog
+    private matDialog: MatDialog,
+    private activatedRoute: ActivatedRoute
   ) {
-    this.dataSource = new SyncProjectDataSource(
-      this.syncProjectService,
-      this.store,
-      this.refreshTable$.asObservable()
-    );
+    this.currentRepo = this.activatedRoute.snapshot.data['repo'];
   }
   configureNewRepo() {
     this.dialogOpened$ = this.matDialog

@@ -18,6 +18,7 @@ import { ProjectMembersTableComponent } from '@activepieces/ee/project-members';
 import { CommunityPiecesTableComponent } from '@activepieces/ui/feature-pieces';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { SyncProjectComponent } from './pages/sync-project/sync-project.component';
+import { RepoResolver } from './resolvers/repo.resolver';
 
 export const DashboardLayoutRouting: Routes = [
   {
@@ -68,14 +69,15 @@ export const DashboardLayoutRouting: Routes = [
       },
       {
         data: {
-          title: $localize`Sync`,
+          title: $localize`Settings`,
         },
-        path: 'sync',
+        path: 'settings',
         pathMatch: 'full',
         component: SyncProjectComponent,
         canActivate: [
           showBasedOnEditionGuard([ApEdition.ENTERPRISE, ApEdition.CLOUD]),
         ],
+        resolve: { repo: RepoResolver },
       },
       {
         data: {

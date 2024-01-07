@@ -66,6 +66,7 @@ import { ImgFallbackDirective } from './directives/image-fallback.directive';
 import { MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { ArrayFormControlComponent } from './components/array-form-control/array-form-control.component';
+import { UpgradeButtonComponent } from './components/upgrade-button/upgrade-button.component';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -173,7 +174,11 @@ export function markedOptionsFactory(): MarkedOptions {
       useValue: { appearance: 'outline' },
     },
   ],
-  declarations: [...exportedDeclarations, FileDroppedDirective],
+  declarations: [
+    ...exportedDeclarations,
+    FileDroppedDirective,
+    UpgradeButtonComponent,
+  ],
   exports: [...exportedImports, ...exportedDeclarations, MarkdownModule],
 })
 export class UiCommonModule {}

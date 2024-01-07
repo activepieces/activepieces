@@ -118,9 +118,9 @@ export class SidenavRoutesListComponent implements OnInit {
         showInSideNav$: of(true),
       },
       {
-        icon: 'assets/img/custom/dashboard/sync.svg',
-        caption: $localize`Sync`,
-        route: 'sync',
+        icon: 'assets/img/custom/dashboard/settings.svg',
+        caption: $localize`Settings`,
+        route: 'settings',
         showInSideNav$: this.showForEnterpriseAndCloud$,
       },
       {
