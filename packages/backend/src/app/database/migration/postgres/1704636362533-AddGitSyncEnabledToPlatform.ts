@@ -16,7 +16,7 @@ export class AddGitSyncEnabledToPlatform1704636362533 implements MigrationInterf
 
         await queryRunner.query(`
             ALTER TABLE "platform"
-            ALTER COLUMN "gitSyncEnabled" SET NOT NULL DEFAULT false
+            ALTER COLUMN "gitSyncEnabled" SET NOT NULL
         `)
     }
 
