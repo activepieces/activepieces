@@ -1,7 +1,14 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfigureRepoDialogComponent } from '../../components/dialogs/configure-repo-dialog/configure-repo-dialog.component';
-import { BehaviorSubject, Observable, catchError, tap } from 'rxjs';
+import {
+  BehaviorSubject,
+  Observable,
+  Subject,
+  catchError,
+  of,
+  tap,
+} from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { GitRepo } from '@activepieces/ee-shared';
 import { SyncProjectService } from '../../services/sync-project.service';
@@ -19,6 +26,7 @@ export class SyncProjectComponent {
   disconnect$?: Observable<void>;
   push$?: Observable<void>;
   pull$?: Observable<void>;
+  loading$ = new Subject<boolean>();
   constructor(
     private matDialog: MatDialog,
     private activatedRoute: ActivatedRoute,
@@ -33,6 +41,7 @@ export class SyncProjectComponent {
       .afterClosed()
       .pipe(
         tap((res) => {
+          debugger;
           if (res) {
             this.currentRepo$.next(res);
           }
@@ -54,29 +63,39 @@ export class SyncProjectComponent {
         );
     }
   }
+
+  private errorHanlderPipe = (obs: Observable<void>) =>
+    obs.pipe(
+      catchError((err) => {
+        console.error(err);
+        this.snackbar.open(
+          $localize`Error occured, please check your console`,
+          '',
+          {
+            panelClass: 'error',
+          }
+        );
+        return of(void 0);
+      }),
+      tap(() => {
+        this.loading$.next(false);
+      })
+    );
   push() {
+    this.loading$.next(true);
     const repoId = this.currentRepo$.value?.id;
     if (repoId) {
       this.push$ = this.syncProjectService.push(repoId).pipe(
         tap(() => {
           this.snackbar.open('Pushed successfully');
         }),
-        catchError((err) => {
-          console.error(err);
-          this.snackbar.open(
-            $localize`Error occured, please check your console`,
-            '',
-            {
-              panelClass: 'error',
-            }
-          );
-          throw err;
-        })
+        this.errorHanlderPipe.bind(this)
       );
     }
   }
 
   pull() {
+    this.loading$.next(true);
     const repoId = this.currentRepo$.value?.id;
     if (repoId) {
       this.pull$ = this.syncProjectService.pull(repoId).pipe(
@@ -84,17 +103,7 @@ export class SyncProjectComponent {
           this.snackbar.open('Pulled successfully');
           window.location.reload();
         }),
-        catchError((err) => {
-          console.error(err);
-          this.snackbar.open(
-            $localize`Error occured, please check your console`,
-            '',
-            {
-              panelClass: 'error',
-            }
-          );
-          throw err;
-        })
+        this.errorHanlderPipe.bind(this)
       );
     }
   }

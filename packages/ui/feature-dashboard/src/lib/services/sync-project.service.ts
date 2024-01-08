@@ -28,7 +28,7 @@ export class SyncProjectService {
   }
 
   configureRepo(request: ConfigureRepoRequest) {
-    return this.http.post<void>(this.prefix, request, {});
+    return this.http.post<GitRepo>(this.prefix, request, {});
   }
   disconnect(repoId: string) {
     return this.http.delete<void>(`${this.prefix}/${repoId}`);

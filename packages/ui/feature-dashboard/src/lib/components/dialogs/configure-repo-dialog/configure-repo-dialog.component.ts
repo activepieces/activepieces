@@ -29,7 +29,7 @@ export class ConfigureRepoDialogComponent {
   title = $localize`Configure Repo`;
   projectIds$ = this.store.select(ProjectSelectors.selectCurrentProject);
   configureRepoForm: FormGroup<ConfigreRepoDialogForm>;
-  configreRepo$?: Observable<void>;
+  configreRepo$?: Observable<GitRepo>;
   constructor(
     private store: Store,
     private syncProjectService: SyncProjectService,
@@ -68,8 +68,8 @@ export class ConfigureRepoDialogComponent {
                 projectId: project.id,
               })
               .pipe(
-                tap(() => {
-                  this.dialogRef.close(true);
+                tap((res) => {
+                  this.dialogRef.close(res);
                 })
               );
           })

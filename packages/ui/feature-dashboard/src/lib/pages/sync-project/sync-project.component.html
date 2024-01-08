@@ -41,7 +41,7 @@
                     </div>
 
                     <ap-button actionButton btnColor="primary" btnSize='medium' btnStyle="stroked"
-                        (buttonClicked)="push()">
+                        (buttonClicked)="push()" [loading]="(loading$ | async) || false" [darkLoadingSpinner]="true">
                         <div class="ap-flex ap-gap-2 ap-w-[3.9375rem]">
                             <svg-icon src="/assets/img/custom/upload.svg"
                                 class="ap-w-[20px] ap-h-[20px] ap-fill-primary" [applyClass]="true">
@@ -56,7 +56,7 @@
                         Pulling from your Git repo will <b>overwrite your current project</b>.
                     </div>
                     <ap-button actionButton btnColor="primary" btnSize='medium' btnStyle="stroked"
-                        (buttonClicked)="pull()">
+                        (buttonClicked)="pull()" [darkLoadingSpinner]="true" [loading]="(loading$ | async) || false">
                         <div class="ap-flex ap-gap-2 ap-w-[3.9375rem]">
                             <svg-icon src="/assets/img/custom/download.svg"
                                 class="ap-w-[20px] ap-h-[20px] ap-fill-primary " [applyClass]="true">
