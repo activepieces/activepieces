@@ -35,7 +35,8 @@ export class FileSandbox extends AbstractSandbox {
         const command = [
             `cd ${this.getSandboxFolderPath()}`,
             '&&',
-            this.setEnvForSandboxByOs(pieceSources),
+            `cross-env AP_PIECES_SOURCE=${pieceSources} NODE_OPTIONS=--enable-source-maps`,
+            '&&',
             `"${AbstractSandbox.nodeExecutablePath}"`,
             'main.js',
             operation,
@@ -117,14 +118,5 @@ export class FileSandbox extends AbstractSandbox {
                 resolve({ verdict: EngineResponseStatus.TIMEOUT })
             }, AbstractSandbox.sandboxRunTimeSeconds * 1000)
         })
-    }
-
-    private setEnvForSandboxByOs(pieceSources: string | undefined): string {
-        if (process.platform === 'win32') {
-            return `cross-env AP_PIECES_SOURCE=${pieceSources} && cross-env NODE_OPTIONS=--enable-source-maps &&`
-        }
-        else {
-            return `cross-env AP_PIECES_SOURCE=${pieceSources} && cross-env NODE_OPTIONS=--enable-source-maps &&`
-        }
     }
 }
