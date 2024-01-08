@@ -5,7 +5,7 @@ import {
 import { mondayAuth } from '../..';
 import { makeClient, mondayCommon } from '../common';
 import {
-  MondayColumnValueConverter,
+  convertPropValueToMondayColumnValue,
   generateColumnIdTypeMap,
 } from '../common/helper';
 
@@ -33,10 +33,11 @@ export const updateColumnValuesOfItemAction = createAction({
 
     // map board column id with column type
     const columnIdTypeMap = generateColumnIdTypeMap(columns);
+
     Object.keys(columnValuesInput).forEach((key) => {
       if (columnValuesInput[key] !== '') {
         const columnType: string = columnIdTypeMap[key];
-        mondayColumnValues[key] = MondayColumnValueConverter(
+        mondayColumnValues[key] = convertPropValueToMondayColumnValue(
           columnType,
           columnValuesInput[key]
         );

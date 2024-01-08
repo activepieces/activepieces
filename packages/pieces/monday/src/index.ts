@@ -3,8 +3,12 @@ import { createColumnAction } from './lib/actions/create-column';
 import { createGroupAction } from './lib/actions/create-group';
 import { createItemAction } from './lib/actions/create-item';
 import { createUpdateAction } from './lib/actions/create-update';
+import { getBoardItemValuesAction } from './lib/actions/get-board-values';
+import { getItemsColumnValuesAction } from './lib/actions/get-column-values';
 import { updateColumnValuesOfItemAction } from './lib/actions/update-column-values-of-item';
 import { updateItemNameAction } from './lib/actions/update-item-name';
+import { newItemInBoardTrigger } from './lib/triggers/new-item-in-board';
+import { specificColumnValueUpdatedTrigger } from './lib/triggers/specific-column-updated';
 
 const markdown = `
 1.Log into your monday.com account.\n
@@ -30,8 +34,10 @@ export const monday = createPiece({
     createGroupAction,
     createItemAction,
     createUpdateAction,
+    getBoardItemValuesAction,
+    getItemsColumnValuesAction,
     updateColumnValuesOfItemAction,
     updateItemNameAction,
   ],
-  triggers: [],
+  triggers: [newItemInBoardTrigger, specificColumnValueUpdatedTrigger],
 });

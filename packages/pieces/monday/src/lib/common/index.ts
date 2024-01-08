@@ -1,7 +1,7 @@
 import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { mondayClient } from './client';
-import { MONDAY_NOT_SUPPORTED_COLUMN_TYPES } from './constants';
-import { ActivepiecesPropConverter } from './helper';
+import { MondayColumnType, MondayNotWritableColumnType } from './constants';
+import { convertMondayColumnToActivepiecesProp } from './helper';
 
 export function makeClient(apiKey: string): mondayClient {
   return new mondayClient(apiKey);
@@ -131,7 +131,9 @@ export const mondayCommon = {
     }),
   columnIds: (required = true) =>
     Property.MultiSelectDropdown({
-      displayName: 'Column',
+      displayName: 'Column IDs',
+      description:
+        'Limit data output by specifying column IDs; leave empty to display all columns.',
       required,
       refreshers: ['board_id'],
       options: async ({ auth, board_id }) => {
@@ -178,8 +180,8 @@ export const mondayCommon = {
         });
         const columns = res.data.boards[0]?.columns;
         for (const column of columns) {
-          if (!MONDAY_NOT_SUPPORTED_COLUMN_TYPES.includes(column.type)) {
-            if (column.type === 'people') {
+          if (!MondayNotWritableColumnType.includes(column.type)) {
+            if (column.type === MondayColumnType.PEOPLE) {
               const userData = await client.listUsers();
               fields[column.id] = Property.StaticMultiSelectDropdown({
                 displayName: column.title,
@@ -195,7 +197,8 @@ export const mondayCommon = {
                 },
               });
             } else {
-              fields[column.id] = ActivepiecesPropConverter(column);
+              const prop = convertMondayColumnToActivepiecesProp(column);
+              if (prop != null) fields[column.id] = prop;
             }
           }
         }

@@ -6,7 +6,7 @@ import {
 import { mondayAuth } from '../..';
 import { makeClient, mondayCommon } from '../common';
 import {
-  MondayColumnValueConverter,
+  convertPropValueToMondayColumnValue,
   generateColumnIdTypeMap,
 } from '../common/helper';
 
@@ -52,7 +52,7 @@ export const createItemAction = createAction({
     Object.keys(columnValuesInput).forEach((key) => {
       if (columnValuesInput[key] !== '') {
         const columnType: string = columnIdTypeMap[key];
-        mondayColumnValues[key] = MondayColumnValueConverter(
+        mondayColumnValues[key] = convertPropValueToMondayColumnValue(
           columnType,
           columnValuesInput[key]
         );

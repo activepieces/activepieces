@@ -75,9 +75,61 @@ export const mondayGraphQLQueries = {
       items_page(query_params: {ids: [$itemId]})
       {
         items{
+          id
+          name
           column_values(ids: $columnIds){
             id
+            type
             value
+            text
+            ... on ButtonValue{
+              label
+            }
+            ... on StatusValue{
+              label
+            }
+            ... on VoteValue{
+              vote_count
+            }
+            ... on TagsValue{
+              tags{
+                  name
+              }
+          }
+          }
+        }
+      }
+    }
+  }`,
+  getBoardItemValues: `
+  query getItemColumnValues($boardId: ID!,$columnIds: [String!])
+  {
+    boards(ids: [$boardId])
+    {
+      items_page(query_params: {order_by: {column_id: "__last_updated__",direction: desc}})
+      {
+        items{
+          id
+          name
+          column_values(ids: $columnIds){
+            id
+            type
+            value
+            text
+            ... on ButtonValue{
+              label
+            }
+            ... on StatusValue{
+              label
+            }
+            ... on VoteValue{
+              vote_count
+            }
+            ... on TagsValue{
+              tags{
+                  name
+              }
+          }
           }
         }
       }

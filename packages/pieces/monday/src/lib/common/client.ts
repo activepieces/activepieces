@@ -66,6 +66,12 @@ export class mondayClient {
       mondayGraphQLQueries.listUsers
     );
   }
+  async getBoardItemValues(variables: object) {
+    return await this.client.api<{ boards: Board[] }>(
+      mondayGraphQLQueries.getBoardItemValues,
+      { variables: variables }
+    );
+  }
   async getItemColumnValues(variables: object) {
     return await this.client.api<{ boards: Board[] }>(
       mondayGraphQLQueries.getItemColumnValues,
