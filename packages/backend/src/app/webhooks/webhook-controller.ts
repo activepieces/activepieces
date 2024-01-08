@@ -108,6 +108,11 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
         async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
             logger.debug(`[WebhookController#simulate] flowId=${request.params.flowId}`)
             const flow = await getFlowOrThrow(request.params.flowId)
+            const payload = await convertRequest(request)
+            const isHandshake = await handshakeHandler(flow, payload, reply)
+            if (isHandshake) {
+                return
+            }
             await webhookService.simulationCallback({
                 flow,
                 payload: {
