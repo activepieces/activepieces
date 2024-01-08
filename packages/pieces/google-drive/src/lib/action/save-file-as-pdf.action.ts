@@ -1,18 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-
-
 import { googleDriveAuth } from '../../index';
 import { Property, createAction } from "@activepieces/pieces-framework";
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { Stream } from 'stream';
 
-export const exportDocumentAsPdf = createAction({
-    displayName: "Export Document as PDF",
+export const saveFileAsPdf = createAction({
+    displayName: "Save file as PDF",
     auth: googleDriveAuth,
-    name: "export_document_as_pdf",
-    description: "Export a document as PDF",
+    name: "save_file_as_pdf",
+    description: "Save a file as PDF in a Google Drive folder",
     props: {
         documentId: Property.ShortText({
             displayName: "Document ID",
