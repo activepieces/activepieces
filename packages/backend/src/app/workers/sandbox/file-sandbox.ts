@@ -1,4 +1,4 @@
-import { rmdir, mkdir, readFile, writeFile } from 'node:fs/promises'
+import { rmdir, mkdir, readFile, writeFile, cp } from 'node:fs/promises'
 import fs from 'fs-extra'
 import path from 'node:path'
 import { spawn } from 'node:child_process'
@@ -67,7 +67,12 @@ export class FileSandbox extends AbstractSandbox {
         logger.debug({ boxId: this.boxId, cacheKey: this._cacheKey, cachePath: this._cachePath }, '[FileSandbox#setupCache]')
 
         if (this._cachePath) {
-            await fs.copy(this._cachePath, this.getSandboxFolderPath())
+            if (process.platform === 'win32') {
+                await fs.copy(this._cachePath, this.getSandboxFolderPath())
+            }
+            else {
+                await cp(this._cachePath, this.getSandboxFolderPath(), { recursive: true })
+            }
         }
     }
 
