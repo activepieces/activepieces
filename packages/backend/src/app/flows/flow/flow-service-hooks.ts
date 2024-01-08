@@ -6,7 +6,7 @@ export const flowServiceHooks = {
     async preUpdateStatus({ flowToUpdate, newStatus }: PreUpdateStatusParams): Promise<PreUpdateReturn> {
         assertNotNullOrUndefined(flowToUpdate.publishedVersionId, 'publishedVersionId')
 
-        const publishedFlowVersion = await flowVersionService.getFlowVersion({
+        const publishedFlowVersion = await flowVersionService.getFlowVersionOrThrow({
             flowId: flowToUpdate.id,
             versionId: flowToUpdate.publishedVersionId,
         })
@@ -83,7 +83,7 @@ export const flowServiceHooks = {
             return
         }
 
-        const publishedFlowVersion = await flowVersionService.getFlowVersion({
+        const publishedFlowVersion = await flowVersionService.getFlowVersionOrThrow({
             flowId: flowToDelete.id,
             versionId: flowToDelete.publishedVersionId,
         })

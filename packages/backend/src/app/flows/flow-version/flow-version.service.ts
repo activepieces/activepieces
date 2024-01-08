@@ -69,7 +69,7 @@ export const flowVersionService = {
         let mutatedFlowVersion: FlowVersion = flowVersion
         switch (userOperation.type) {
             case FlowOperationType.USE_AS_DRAFT: {
-                const previousVersion = await flowVersionService.getFlowVersion({
+                const previousVersion = await flowVersionService.getFlowVersionOrThrow({
                     flowId: flowVersion.flowId,
                     versionId: userOperation.request.versionId,
                     removeSecrets: false,
@@ -88,7 +88,7 @@ export const flowVersionService = {
                 operations = [userOperation]
                 break
             case FlowOperationType.DUPLICATE_ACTION:
-                mutatedFlowVersion = await this.getFlowVersion({
+                mutatedFlowVersion = await this.getFlowVersionOrThrow({
                     flowId: flowVersion.flowId,
                     versionId: flowVersion.id,
                 })
@@ -126,11 +126,13 @@ export const flowVersionService = {
     },
     async getOneOrThrow(id: FlowVersionId): Promise<FlowVersion> {
         const flowVersion = await flowVersionService.getOne(id)
+
         if (isNil(flowVersion)) {
             throw new ActivepiecesError({
-                code: ErrorCode.FLOW_VERSION_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    id,
+                    entityId: id,
+                    entityType: 'FlowVersion',
                 },
             })
         }
@@ -153,8 +155,8 @@ export const flowVersionService = {
         }))
         return paginationHelper.createPage<FlowVersion>(paginationResult.data, paginationResult.cursor)
     },
-    async getFlowVersion({ flowId, versionId, removeSecrets }: { flowId: FlowId, versionId: FlowVersionId | undefined, removeSecrets?: boolean }): Promise<FlowVersion> {
-        let flowVersion: FlowVersion = await flowVersionRepo.findOneOrFail({
+    async getFlowVersionOrThrow({ flowId, versionId, removeSecrets = false }: GetFlowVersionOrThrowParams): Promise<FlowVersion> {
+        let flowVersion: FlowVersion | null = await flowVersionRepo.findOne({
             where: {
                 flowId,
                 id: versionId,
@@ -164,15 +166,28 @@ export const flowVersionService = {
                 created: 'DESC',
             },
         })
+
+        if (isNil(flowVersion)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityId: versionId,
+                    entityType: 'FlowVersion',
+                    message: `flowId=${flowId}`,
+                },
+            })
+        }
+
         if (removeSecrets) {
             flowVersion = await removeSecretsFromFlow(flowVersion)
         }
+
         return flowVersion
     },
     async createEmptyVersion(flowId: FlowId, request: {
         displayName: string
     }): Promise<FlowVersion> {
-        const flowVersion: Partial<FlowVersion> = {
+        const flowVersion: NewFlowVersion = {
             id: apId(),
             displayName: request.displayName,
             flowId,
@@ -471,3 +486,10 @@ function buildSchema(props: PiecePropertyMap): TSchema {
     return Type.Object(propsSchema)
 }
 
+type GetFlowVersionOrThrowParams = {
+    flowId: FlowId
+    versionId: FlowVersionId | undefined
+    removeSecrets?: boolean
+}
+
+type NewFlowVersion = Omit<FlowVersion, 'created' | 'updated'>

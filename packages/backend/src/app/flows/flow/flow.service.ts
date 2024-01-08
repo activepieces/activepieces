@@ -10,7 +10,6 @@ import {
     FlowOperationRequest,
     FlowOperationType,
     FlowTemplateWithoutProjectInformation,
-    FlowVersion,
     FlowVersionId,
     FlowVersionState,
     ProjectId,
@@ -18,6 +17,7 @@ import {
     TelemetryEventName,
     UserId,
     PopulatedFlow,
+    FlowVersion,
 } from '@activepieces/shared'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -65,8 +65,9 @@ export const flowService = {
         }
     },
 
-    async list({ projectId, cursorRequest, limit, folderId }: ListParams): Promise<SeekPage<PopulatedFlow>> {
+    async list({ projectId, cursorRequest, limit, folderId, status }: ListParams): Promise<SeekPage<PopulatedFlow>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
+
         const paginator = buildPaginator({
             entity: FlowEntity,
             query: {
@@ -76,24 +77,33 @@ export const flowService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
+
         const queryWhere: Record<string, unknown> = { projectId }
+
         if (folderId !== undefined) {
             queryWhere.folderId = (folderId === 'NULL' ? IsNull() : folderId)
         }
 
+        if (status !== undefined) {
+            queryWhere.status = status
+        }
+
         const paginationResult = await paginator.paginate(flowRepo.createQueryBuilder('flow').where(queryWhere))
-        const flowVersionsPromises: Promise<FlowVersion | null>[] = []
-        paginationResult.data.forEach((flow) => {
-            flowVersionsPromises.push(flowVersionService.getFlowVersion({
+
+        const populatedFlowPromises = paginationResult.data.map(async (flow) => {
+            const version = await flowVersionService.getFlowVersionOrThrow({
                 flowId: flow.id,
                 versionId: undefined,
-            }))
+            })
+
+            return {
+                ...flow,
+                version,
+            }
         })
-        const versions: (FlowVersion | null)[] = await Promise.all(flowVersionsPromises)
-        const populatedFlows: PopulatedFlow[] = paginationResult.data.map((flow, idx) => ({
-            ...flow,
-            version: versions[idx]!,
-        }))
+
+        const populatedFlows = await Promise.all(populatedFlowPromises)
+
         return paginationHelper.createPage(populatedFlows, paginationResult.cursor)
     },
 
@@ -120,7 +130,7 @@ export const flowService = {
             return null
         }
 
-        const flowVersion = await flowVersionService.getFlowVersion({
+        const flowVersion = await flowVersionService.getFlowVersionOrThrow({
             flowId: id,
             versionId,
             removeSecrets,
@@ -151,13 +161,13 @@ export const flowService = {
                 })
             }
             else {
-                let lastVersion = await flowVersionService.getFlowVersion({
+                let lastVersion = await flowVersionService.getFlowVersionOrThrow({
                     flowId: id,
                     versionId: undefined,
                 })
 
                 if (lastVersion.state === FlowVersionState.LOCKED) {
-                    const lastVersionWithArtifacts = await flowVersionService.getFlowVersion({
+                    const lastVersionWithArtifacts = await flowVersionService.getFlowVersionOrThrow({
                         flowId: id,
                         versionId: undefined,
                     })
@@ -226,7 +236,7 @@ export const flowService = {
         try {
             const flowToUpdate = await this.getOneOrThrow({ id, projectId })
 
-            const flowVersionToPublish = await flowVersionService.getFlowVersion({
+            const flowVersionToPublish = await flowVersionService.getFlowVersionOrThrow({
                 flowId: id,
                 versionId: undefined,
             })
@@ -351,6 +361,7 @@ type ListParams = {
     cursorRequest: Cursor | null
     limit: number
     folderId: string | undefined
+    status: FlowStatus | undefined
 }
 
 type GetOneParams = {

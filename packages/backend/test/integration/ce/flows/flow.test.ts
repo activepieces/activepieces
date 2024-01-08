@@ -235,4 +235,109 @@ describe('Flow API', () => {
             expect(responseBody?.version?.state).toBe('LOCKED')
         })
     })
+
+    describe('List Flows endpoint', () => {
+        it('Filters Flows by status', async () => {
+            // arrange
+            const mockUser = createMockUser()
+            await databaseConnection.getRepository('user').save([mockUser])
+
+            const mockProject = createMockProject({ ownerId: mockUser.id })
+            await databaseConnection.getRepository('project').save([mockProject])
+
+            const mockEnabledFlow = createMockFlow({ projectId: mockProject.id, status: FlowStatus.ENABLED })
+            const mockDisabledFlow = createMockFlow({ projectId: mockProject.id, status: FlowStatus.DISABLED })
+            await databaseConnection.getRepository('flow').save([mockEnabledFlow, mockDisabledFlow])
+
+            const mockEnabledFlowVersion = createMockFlowVersion({ flowId: mockEnabledFlow.id })
+            const mockDisabledFlowVersion = createMockFlowVersion({ flowId: mockDisabledFlow.id })
+            await databaseConnection.getRepository('flow_version').save([mockEnabledFlowVersion, mockDisabledFlowVersion])
+
+            const mockToken = await generateMockToken({ type: PrincipalType.USER, projectId: mockProject.id })
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/v1/flows',
+                query: {
+                    status: 'ENABLED',
+                },
+                headers: {
+                    authorization: `Bearer ${mockToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const responseBody = response?.json()
+
+            expect(responseBody.data).toHaveLength(1)
+            expect(responseBody.data[0].id).toBe(mockEnabledFlow.id)
+        })
+
+        it('Populates Flow version', async () => {
+            // arrange
+            const mockUser = createMockUser()
+            await databaseConnection.getRepository('user').save([mockUser])
+
+            const mockProject = createMockProject({ ownerId: mockUser.id })
+            await databaseConnection.getRepository('project').save([mockProject])
+
+            const mockFlow = createMockFlow({ projectId: mockProject.id })
+            await databaseConnection.getRepository('flow').save([mockFlow])
+
+            const mockFlowVersion = createMockFlowVersion({ flowId: mockFlow.id })
+            await databaseConnection.getRepository('flow_version').save([mockFlowVersion])
+
+            const mockToken = await generateMockToken({ type: PrincipalType.USER, projectId: mockProject.id })
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/v1/flows',
+                headers: {
+                    authorization: `Bearer ${mockToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const responseBody = response?.json()
+
+            expect(responseBody?.data).toHaveLength(1)
+            expect(responseBody?.data?.[0]?.id).toBe(mockFlow.id)
+            expect(responseBody?.data?.[0]?.version?.id).toBe(mockFlowVersion.id)
+        })
+
+        it('Fails if a flow with no version exists', async () => {
+            // arrange
+            const mockUser = createMockUser()
+            await databaseConnection.getRepository('user').save([mockUser])
+
+            const mockProject = createMockProject({ ownerId: mockUser.id })
+            await databaseConnection.getRepository('project').save([mockProject])
+
+            const mockFlow = createMockFlow({ projectId: mockProject.id })
+            await databaseConnection.getRepository('flow').save([mockFlow])
+
+            const mockToken = await generateMockToken({ type: PrincipalType.USER, projectId: mockProject.id })
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/v1/flows',
+                headers: {
+                    authorization: `Bearer ${mockToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            const responseBody = response?.json()
+
+            expect(responseBody?.code).toBe('ENTITY_NOT_FOUND')
+            expect(responseBody?.params?.entityType).toBe('FlowVersion')
+            expect(responseBody?.params?.message).toBe(`flowId=${mockFlow.id}`)
+        })
+    })
 })
