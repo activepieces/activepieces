@@ -14,6 +14,7 @@ import { GitRepo } from '@activepieces/ee-shared';
 import { SyncProjectService } from '../../services/sync-project.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { GenericSnackbarTemplateComponent } from '@activepieces/ui/common';
+import { RepoResolverData } from '../../resolvers/repo.resolver';
 @Component({
   selector: 'app-sync-project',
   templateUrl: './sync-project.component.html',
@@ -22,7 +23,8 @@ import { GenericSnackbarTemplateComponent } from '@activepieces/ui/common';
 export class SyncProjectComponent {
   displayedColumns = ['remoteUrl', 'branch', 'updated', 'action'];
   dialogOpened$?: Observable<null | GitRepo>;
-  currentRepo$ = new BehaviorSubject<null | GitRepo>(null);
+  currentRepo$ = new BehaviorSubject<null | GitRepo | undefined>(null);
+  showUpgrade = false;
   disconnect$?: Observable<void>;
   push$?: Observable<void>;
   pull$?: Observable<void>;
@@ -33,7 +35,12 @@ export class SyncProjectComponent {
     private syncProjectService: SyncProjectService,
     private snackbar: MatSnackBar
   ) {
-    this.currentRepo$.next(this.activatedRoute.snapshot.data['repo']);
+    const data = this.activatedRoute.snapshot.data as {
+      repo: RepoResolverData;
+    };
+
+    this.showUpgrade = data.repo.showUpgrade;
+    this.currentRepo$.next(data.repo.repo);
   }
   configureNewRepo() {
     this.dialogOpened$ = this.matDialog
@@ -41,7 +48,6 @@ export class SyncProjectComponent {
       .afterClosed()
       .pipe(
         tap((res) => {
-          debugger;
           if (res) {
             this.currentRepo$.next(res);
           }

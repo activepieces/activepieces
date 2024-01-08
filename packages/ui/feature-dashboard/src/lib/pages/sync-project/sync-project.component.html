@@ -6,69 +6,74 @@
             <div underTitle class="ap-text-description ap-typography-body-2 ap ap-mt-2" i18n>
                 Streamline environments management by integrating with Git repos.
             </div>
-
         </ap-page-title>
-
-        <div
-            class="ap-border ap-border-solid ap-border-border ap-rounded-md ap-typography-body-1 ap-p-4 ap-flex ap-items-center ap-justify-between ap-w-[700px] ap-mb-8">
-            <ng-container *ngIf="(currentRepo$ | async) === null || (currentRepo$ | async) === undefined ">
-                <div i18n>
-                    Configure the Git repo you want to sync with.
-                </div>
-                <ap-button actionButton btnColor="primary" btnSize='medium' (buttonClicked)="configureNewRepo()" i18n>
-                    Configure Repo
-                </ap-button>
-            </ng-container>
-            <ng-container *ngIf="currentRepo$ | async as currentRepo">
-                <div i18n>
-                    Remote URL: {{currentRepo?.remoteUrl}} <br>
-                    Branch: {{currentRepo?.branch}}
-                </div>
-
-                <ap-icon-button i18n-tooltipText tooltipText="Disconnect" iconFilename="disconnect.svg"
-                    (buttonClicked)="disconnect()" color="warn">
-                </ap-icon-button>
-            </ng-container>
-
-
-        </div>
-        <ng-container *ngIf="currentRepo$ | async as currentRepo">
-
-            <div class="ap-flex ap-flex-col ap-gap-4 ap-divide-y ap-divide-dividers  ap-w-[700px]">
-                <div class="ap-flex ap-justify-between ap-items-center">
-                    <div>
-                        Pushing your current project to your Git repo will <b>overwrite the repo</b>.
+        <ng-container *ngIf="!showUpgrade; else upgradeNote">
+            <div
+                class="ap-border ap-border-solid ap-border-border ap-rounded-md ap-typography-body-1 ap-p-4 ap-flex ap-items-center ap-justify-between ap-w-[700px] ap-mb-8">
+                <ng-container *ngIf="(currentRepo$ | async) === null || (currentRepo$ | async) === undefined ">
+                    <div i18n>
+                        Configure the Git repo you want to sync with.
+                    </div>
+                    <ap-button actionButton btnColor="primary" btnSize='medium' (buttonClicked)="configureNewRepo()"
+                        i18n>
+                        Configure Repo
+                    </ap-button>
+                </ng-container>
+                <ng-container *ngIf="currentRepo$ | async as currentRepo">
+                    <div i18n>
+                        Remote URL: {{currentRepo?.remoteUrl}} <br>
+                        Branch: {{currentRepo?.branch}}
                     </div>
 
-                    <ap-button actionButton btnColor="primary" btnSize='medium' btnStyle="stroked"
-                        (buttonClicked)="push()" [loading]="(loading$ | async) || false" [darkLoadingSpinner]="true">
-                        <div class="ap-flex ap-gap-2 ap-w-[3.9375rem]">
-                            <svg-icon src="/assets/img/custom/upload.svg"
-                                class="ap-w-[20px] ap-h-[20px] ap-fill-primary" [applyClass]="true">
+                    <ap-icon-button i18n-tooltipText tooltipText="Disconnect" iconFilename="disconnect.svg"
+                        (buttonClicked)="disconnect()" color="warn">
+                    </ap-icon-button>
+                </ng-container>
 
-                            </svg-icon> Push
-                        </div>
 
-                    </ap-button>
-                </div>
-                <div class="ap-flex ap-justify-between ap-items-center ap-pt-4">
-                    <div>
-                        Pulling from your Git repo will <b>overwrite your current project</b>.
-                    </div>
-                    <ap-button actionButton btnColor="primary" btnSize='medium' btnStyle="stroked"
-                        (buttonClicked)="pull()" [darkLoadingSpinner]="true" [loading]="(loading$ | async) || false">
-                        <div class="ap-flex ap-gap-2 ap-w-[3.9375rem]">
-                            <svg-icon src="/assets/img/custom/download.svg"
-                                class="ap-w-[20px] ap-h-[20px] ap-fill-primary " [applyClass]="true">
-
-                            </svg-icon>
-                            Pull
-                        </div>
-                    </ap-button>
-                </div>
             </div>
-        </ng-container>
+            <ng-container *ngIf="currentRepo$ | async as currentRepo">
 
+                <div class="ap-flex ap-flex-col ap-gap-4 ap-divide-y ap-divide-dividers  ap-w-[700px]">
+                    <div class="ap-flex ap-justify-between ap-items-center">
+                        <div>
+                            Pushing your current project to your Git repo will <b>overwrite the repo</b>.
+                        </div>
+
+                        <ap-button actionButton btnColor="primary" btnSize='medium' btnStyle="stroked"
+                            (buttonClicked)="push()" [loading]="(loading$ | async) || false"
+                            [darkLoadingSpinner]="true">
+                            <div class="ap-flex ap-gap-2 ap-w-[3.9375rem]">
+                                <svg-icon src="/assets/img/custom/upload.svg"
+                                    class="ap-w-[20px] ap-h-[20px] ap-fill-primary" [applyClass]="true">
+                                </svg-icon> Push
+                            </div>
+
+                        </ap-button>
+                    </div>
+                    <div class="ap-flex ap-justify-between ap-items-center ap-pt-4">
+                        <div>
+                            Pulling from your Git repo will <b>overwrite your current project</b>.
+                        </div>
+                        <ap-button actionButton btnColor="primary" btnSize='medium' btnStyle="stroked"
+                            (buttonClicked)="pull()" [darkLoadingSpinner]="true"
+                            [loading]="(loading$ | async) || false">
+                            <div class="ap-flex ap-gap-2 ap-w-[3.9375rem]">
+                                <svg-icon src="/assets/img/custom/download.svg"
+                                    class="ap-w-[20px] ap-h-[20px] ap-fill-primary " [applyClass]="true">
+
+                                </svg-icon>
+                                Pull
+                            </div>
+                        </ap-button>
+                    </div>
+                </div>
+            </ng-container>
+
+        </ng-container>
+        <ng-template #upgradeNote>
+            <ap-upgrade-note></ap-upgrade-note>
+        </ng-template>
     </div>
 
     <ng-container *ngIf="dialogOpened$ | async"></ng-container>
