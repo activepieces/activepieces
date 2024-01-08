@@ -9,6 +9,6 @@ export class UpgradeNoteComponent {
   @Input() urlToOpen = 'https://www.activepieces.com/pricing';
 
   openUrl() {
-    window.open(this.urlToOpen, '_blank', 'noopener noreferer');
+    window.open(this.urlToOpen, '_blank');
   }
 }

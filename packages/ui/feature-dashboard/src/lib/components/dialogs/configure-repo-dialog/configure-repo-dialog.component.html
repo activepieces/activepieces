@@ -27,10 +27,14 @@
                 <mat-label i18n>Private SSH Key</mat-label>
                 <textarea cdkFocusInitial rows="4" [formControl]="configureRepoForm.controls.sshPrivateKey"
                     matInput></textarea>
-                <mat-error *ngIf="configureRepoForm.controls.branch.invalid" i18n>
+                <mat-error *ngIf="configureRepoForm.controls.sshPrivateKey.invalid && configureRepoForm.controls.sshPrivateKey.hasError('pattern')" i18n>
+                    Invalid private key format. Please check your private key and make sure it ends with new line and try again.
+                </mat-error>
+                <mat-error *ngIf="configureRepoForm.controls.sshPrivateKey.invalid && configureRepoForm.controls.sshPrivateKey.hasError('required')" i18n>
                     Private SSH key is required
                 </mat-error>
             </mat-form-field>
+                
         </form>
     </div>
 

@@ -40,6 +40,7 @@ export class ConfigureRepoDialogComponent {
     if (this.data?.repo) {
       this.title = $localize`Edit ${this.data.repo.remoteUrl}`;
     }
+
     this.configureRepoForm = this.fb.group({
       branch: new FormControl(this.data?.repo?.branch || '', {
         nonNullable: true,
@@ -51,7 +52,12 @@ export class ConfigureRepoDialogComponent {
       }),
       sshPrivateKey: new FormControl(this.data?.repo?.sshPrivateKey || '', {
         nonNullable: true,
-        validators: Validators.required,
+        validators: [
+          Validators.required,
+          Validators.pattern(
+            /^-----BEGIN ((RSA|DSA|EC|OPENSSH) )?PRIVATE KEY-----\r?\n([A-Za-z0-9/+=]+\r?\n)+-----END ((RSA|DSA|EC|OPENSSH) )?PRIVATE KEY-----\n$/m
+          ),
+        ],
       }),
     });
   }

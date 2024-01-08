@@ -33,7 +33,8 @@ export class SyncProjectComponent {
   disconnect$?: Observable<void>;
   push$?: Observable<void>;
   pull$?: Observable<void>;
-  loading$ = new Subject<boolean>();
+  pushLoading$ = new Subject<boolean>();
+  pullLoading$ = new Subject<boolean>();
   currentProject$: Observable<Project>;
   configureButtonTooltip = $localize`Upgrade to enable`;
   constructor(
@@ -51,9 +52,8 @@ export class SyncProjectComponent {
     };
 
     this.showUpgrade = data.repo.showUpgrade;
-    if(!this.showUpgrade)
-    {
-      this.configureButtonTooltip='';
+    if (!this.showUpgrade) {
+      this.configureButtonTooltip = '';
     }
     this.currentRepo$.next(data.repo.repo);
   }
@@ -85,7 +85,7 @@ export class SyncProjectComponent {
     }
   }
 
-  private errorHanlderPipe = (obs: Observable<void>) =>
+  private errorHandlerPipe = (obs: Observable<void>) =>
     obs.pipe(
       catchError((err) => {
         console.error(err);
@@ -99,24 +99,25 @@ export class SyncProjectComponent {
         return of(void 0);
       }),
       tap(() => {
-        this.loading$.next(false);
+        this.pushLoading$.next(false);
+        this.pullLoading$.next(false);
       })
     );
   push() {
-    this.loading$.next(true);
+    this.pushLoading$.next(true);
     const repoId = this.currentRepo$.value?.id;
     if (repoId) {
       this.push$ = this.syncProjectService.push(repoId).pipe(
         tap(() => {
           this.snackbar.open('Pushed successfully');
         }),
-        this.errorHanlderPipe.bind(this)
+        this.errorHandlerPipe.bind(this)
       );
     }
   }
 
   pull() {
-    this.loading$.next(true);
+    this.pullLoading$.next(true);
     const repoId = this.currentRepo$.value?.id;
     if (repoId) {
       this.pull$ = this.syncProjectService.pull(repoId).pipe(
@@ -124,7 +125,7 @@ export class SyncProjectComponent {
           this.snackbar.open('Pulled successfully');
           window.location.reload();
         }),
-        this.errorHanlderPipe.bind(this)
+        this.errorHandlerPipe.bind(this)
       );
     }
   }

@@ -118,16 +118,16 @@ export class SidenavRoutesListComponent implements OnInit {
         showInSideNav$: of(true),
       },
       {
-        icon: 'assets/img/custom/dashboard/settings.svg',
-        caption: $localize`Settings`,
-        route: 'settings',
-        showInSideNav$: this.showForEnterpriseAndCloud$,
-      },
-      {
         icon: 'assets/img/custom/dashboard/members.svg',
         caption: $localize`Team`,
         route: 'team',
         showInSideNav$: this.showForEnterpriseAndCloud$,
+      },
+      {
+        icon: 'assets/img/custom/dashboard/settings.svg',
+        caption: $localize`Settings`,
+        route: 'settings',
+        showInSideNav$: of(true),
       },
     ];
   }
