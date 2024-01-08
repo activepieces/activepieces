@@ -35,6 +35,7 @@ export class SyncProjectComponent {
   pull$?: Observable<void>;
   loading$ = new Subject<boolean>();
   currentProject$: Observable<Project>;
+  configureButtonTooltip = $localize`Upgrade to enable`;
   constructor(
     private matDialog: MatDialog,
     private activatedRoute: ActivatedRoute,
@@ -50,6 +51,10 @@ export class SyncProjectComponent {
     };
 
     this.showUpgrade = data.repo.showUpgrade;
+    if(!this.showUpgrade)
+    {
+      this.configureButtonTooltip='';
+    }
     this.currentRepo$.next(data.repo.repo);
   }
   configureNewRepo() {
