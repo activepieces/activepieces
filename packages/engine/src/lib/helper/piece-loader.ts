@@ -101,7 +101,7 @@ const getPackageAlias = ({ pieceName, pieceVersion, piecesSource }: {
     piecesSource: string
     pieceVersion: string
 }) => {
-    if (piecesSource === 'FILE') {
+    if (piecesSource.trim() === 'FILE') {
         return pieceName
     }
 

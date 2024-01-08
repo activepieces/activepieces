@@ -21,9 +21,8 @@ if (requiredVersions.some(version=>nodeVersion.startsWith(version))) {
 // Proceed with your commands
 if (os === 'win32') {
   if (fs.existsSync('node_modules')) {
-    execSync('rmdir node_modules /S /Q');
+    execSync('rmdir node_modules /s /q');
   }
-  console.log('Installing packages, this might take ~5 minutes.')
 }
 else {
   execSync('rm -rf node_modules');

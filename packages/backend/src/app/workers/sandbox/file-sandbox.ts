@@ -1,4 +1,5 @@
-import { rmdir, mkdir, readFile, writeFile, cp } from 'node:fs/promises'
+import { rmdir, mkdir, readFile, writeFile } from 'node:fs/promises'
+import fs from 'fs-extra'
 import path from 'node:path'
 import { spawn } from 'node:child_process'
 import { AbstractSandbox, ExecuteSandboxResult, SandboxCtorParams } from './abstract-sandbox'
@@ -34,7 +35,7 @@ export class FileSandbox extends AbstractSandbox {
         const command = [
             `cd ${this.getSandboxFolderPath()}`,
             '&&',
-            this.setEnvForSandboxByOs(pieceSources!),
+            this.setEnvForSandboxByOs(pieceSources),
             `"${AbstractSandbox.nodeExecutablePath}"`,
             'main.js',
             operation,
@@ -65,7 +66,7 @@ export class FileSandbox extends AbstractSandbox {
         logger.debug({ boxId: this.boxId, cacheKey: this._cacheKey, cachePath: this._cachePath }, '[FileSandbox#setupCache]')
 
         if (this._cachePath) {
-            await cp(this._cachePath, this.getSandboxFolderPath(), { recursive: true })
+            await fs.copy(this._cachePath, this.getSandboxFolderPath())
         }
     }
 
@@ -75,7 +76,6 @@ export class FileSandbox extends AbstractSandbox {
         const standardOutputPath = this.getSandboxFilePath('_standardOutput.txt')
         const standardErrorPath = this.getSandboxFilePath('_standardError.txt')
 
-        console.log(process.execPath)
         await writeFile(standardOutputPath, '')
         await writeFile(standardErrorPath, '')
 
@@ -95,7 +95,6 @@ export class FileSandbox extends AbstractSandbox {
             })
 
             process.on('close', async (code: number) => {
-                console.log(stderr)
                 if (code !== 0) {
                     reject(new Error(`Command failed with code ${code}: ${cmd}`))
                     return
@@ -120,12 +119,12 @@ export class FileSandbox extends AbstractSandbox {
         })
     }
 
-    private setEnvForSandboxByOs(pieceSources: string): string {
+    private setEnvForSandboxByOs(pieceSources: string | undefined): string {
         if (process.platform === 'win32') {
-            return `set AP_PIECES_SOURCE=${pieceSources} && set NODE_OPTIONS=--enable-source-maps &&`
+            return `cross-env AP_PIECES_SOURCE=${pieceSources} && cross-env NODE_OPTIONS=--enable-source-maps &&`
         }
         else {
-            return `env -i AP_PIECES_SOURCE=${pieceSources} && NODE_OPTIONS='--enable-source-maps'`
+            return `cross-env AP_PIECES_SOURCE=${pieceSources} && cross-env NODE_OPTIONS=--enable-source-maps &&`
         }
     }
 }
