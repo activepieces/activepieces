@@ -7,7 +7,7 @@
                 Streamline environments management by integrating with Git repos.
             </div>
         </ap-page-title>
-        <ng-container *ngIf="!showUpgrade; else upgradeNote">
+        <ng-container *ngIf="true; else upgradeNote">
             <div
                 class="ap-border ap-border-solid ap-border-border ap-rounded-md ap-typography-body-1 ap-p-4 ap-flex ap-items-center ap-justify-between ap-w-[700px] ap-mb-8">
                 <ng-container *ngIf="(currentRepo$ | async) === null || (currentRepo$ | async) === undefined ">
@@ -37,7 +37,8 @@
                 <div class="ap-flex ap-flex-col ap-gap-4 ap-divide-y ap-divide-dividers  ap-w-[700px]">
                     <div class="ap-flex ap-justify-between ap-items-center">
                         <div>
-                            Pushing your current project to your Git repo will <b>overwrite the repo</b>.
+                            Pushing {{(currentProject$ | async)?.displayName}} to your Git repo will <b>overwrite
+                                the repo</b>.
                         </div>
 
                         <ap-button actionButton btnColor="primary" btnSize='medium' btnStyle="stroked"
@@ -53,7 +54,7 @@
                     </div>
                     <div class="ap-flex ap-justify-between ap-items-center ap-pt-4">
                         <div>
-                            Pulling from your Git repo will <b>overwrite your current project</b>.
+                            Pulling from your Git repo will <b>overwrite {{(currentProject$ | async)?.displayName}}</b>.
                         </div>
                         <ap-button actionButton btnColor="primary" btnSize='medium' btnStyle="stroked"
                             (buttonClicked)="pull()" [darkLoadingSpinner]="true"

@@ -13,8 +13,13 @@ import { ActivatedRoute } from '@angular/router';
 import { GitRepo } from '@activepieces/ee-shared';
 import { SyncProjectService } from '../../services/sync-project.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { GenericSnackbarTemplateComponent } from '@activepieces/ui/common';
+import {
+  GenericSnackbarTemplateComponent,
+  ProjectSelectors,
+} from '@activepieces/ui/common';
 import { RepoResolverData } from '../../resolvers/repo.resolver';
+import { Store } from '@ngrx/store';
+import { Project } from '@activepieces/shared';
 @Component({
   selector: 'app-sync-project',
   templateUrl: './sync-project.component.html',
@@ -29,12 +34,17 @@ export class SyncProjectComponent {
   push$?: Observable<void>;
   pull$?: Observable<void>;
   loading$ = new Subject<boolean>();
+  currentProject$: Observable<Project>;
   constructor(
     private matDialog: MatDialog,
     private activatedRoute: ActivatedRoute,
     private syncProjectService: SyncProjectService,
-    private snackbar: MatSnackBar
+    private snackbar: MatSnackBar,
+    private store: Store
   ) {
+    this.currentProject$ = this.store.select(
+      ProjectSelectors.selectCurrentProject
+    );
     const data = this.activatedRoute.snapshot.data as {
       repo: RepoResolverData;
     };
