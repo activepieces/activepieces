@@ -249,11 +249,11 @@ async function updateCronExpressionOfRedisToPostgresTable(job: Job): Promise<boo
         logger.error('Found unrepeatable job in repeatable queue')
         return false
     }
-    const flow = await flowRepo.findOneBy({
+    const flow = await flowRepo().findOneBy({
         publishedVersionId: job.data.flowVersionId,
     })
     if (flow) {
-        await flowRepo.update(flow.id, {
+        await flowRepo().update(flow.id, {
             schedule: {
                 type: ScheduleType.CRON_EXPRESSION,
                 timezone: tz,

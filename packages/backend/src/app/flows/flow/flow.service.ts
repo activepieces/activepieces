@@ -42,7 +42,7 @@ export const flowService = {
             schedule: null,
         }
 
-        const savedFlow = await flowRepo.save(newFlow)
+        const savedFlow = await flowRepo().save(newFlow)
 
         const savedFlowVersion = await flowVersionService.createEmptyVersion(savedFlow.id, {
             displayName: request.displayName,
@@ -88,7 +88,7 @@ export const flowService = {
             queryWhere.status = status
         }
 
-        const paginationResult = await paginator.paginate(flowRepo.createQueryBuilder('flow').where(queryWhere))
+        const paginationResult = await paginator.paginate(flowRepo().createQueryBuilder('flow').where(queryWhere))
 
         const populatedFlowPromises = paginationResult.data.map(async (flow) => {
             const version = await flowVersionService.getFlowVersionOrThrow({
@@ -108,7 +108,7 @@ export const flowService = {
     },
 
     async getOne({ id, projectId }: GetOneParams): Promise<Flow | null> {
-        return flowRepo.findOneBy({
+        return flowRepo().findOneBy({
             id,
             projectId,
         })
@@ -121,7 +121,7 @@ export const flowService = {
     },
 
     async getOnePopulated({ id, projectId, versionId, removeSecrets = false }: GetOnePopulatedParams): Promise<PopulatedFlow | null> {
-        const flow = await flowRepo.findOneBy({
+        const flow = await flowRepo().findOneBy({
             id,
             projectId,
         })
@@ -156,7 +156,7 @@ export const flowService = {
 
         try {
             if (operation.type === FlowOperationType.CHANGE_FOLDER) {
-                await flowRepo.update(id, {
+                await flowRepo().update(id, {
                     folderId: operation.request.folderId,
                 })
             }
@@ -214,7 +214,7 @@ export const flowService = {
                 flowToUpdate.status = newStatus
                 flowToUpdate.schedule = scheduleOptions
 
-                await flowRepo.save(flowToUpdate)
+                await flowRepo().save(flowToUpdate)
             }
         }
         finally {
@@ -256,7 +256,7 @@ export const flowService = {
             flowToUpdate.status = FlowStatus.ENABLED
             flowToUpdate.schedule = scheduleOptions
 
-            const updatedFlow = await flowRepo.save(flowToUpdate)
+            const updatedFlow = await flowRepo().save(flowToUpdate)
 
             return {
                 ...updatedFlow,
@@ -284,7 +284,7 @@ export const flowService = {
                 flowToDelete,
             })
 
-            await flowRepo.delete({ id })
+            await flowRepo().delete({ id })
         }
         finally {
             await lock.release()
@@ -292,7 +292,7 @@ export const flowService = {
     },
 
     async getAllEnabled(): Promise<Flow[]> {
-        return flowRepo.findBy({
+        return flowRepo().findBy({
             status: FlowStatus.ENABLED,
         })
     },
@@ -319,10 +319,10 @@ export const flowService = {
 
     async count({ projectId, folderId }: CountParams): Promise<number> {
         if (folderId === undefined) {
-            return flowRepo.countBy({ projectId })
+            return flowRepo().countBy({ projectId })
         }
 
-        return flowRepo.countBy({
+        return flowRepo().countBy({
             folderId: folderId !== 'NULL' ? folderId : IsNull(),
             projectId,
         })
