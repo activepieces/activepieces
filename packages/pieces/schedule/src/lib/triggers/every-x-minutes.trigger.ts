@@ -19,7 +19,7 @@ export const everyXMinutesTrigger = createTrigger({
       options: {
         disabled: false,
         options: Array.from({ length: 59 }, (_, index) => ({
-          label: `${index + 1} minutes`,
+          label: `${index + 1} minute${index !== 0 ? 's' : ''}`,
           value: index + 1,
         })),
       },
