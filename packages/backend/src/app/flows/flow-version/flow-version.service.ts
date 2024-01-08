@@ -24,7 +24,7 @@ import {
 } from '@activepieces/shared'
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { databaseConnection } from '../../database/database-connection'
+import { repoFactory } from '../../core/db/repo-factory'
 import { FlowVersionEntity } from './flow-version-entity'
 import { flowVersionSideEffects } from './flow-version-side-effects'
 import { DEFAULT_SAMPLE_DATA_SETTINGS } from '@activepieces/shared'
@@ -38,7 +38,7 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 
 const branchSettingsValidator = TypeCompiler.Compile(BranchActionSettingsWithValidation)
 const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettingsWithValidation)
-const flowVersionRepo = databaseConnection.getRepository(FlowVersionEntity)
+const flowVersionRepo = repoFactory(FlowVersionEntity)
 
 export const flowVersionService = {
     async lockPieceVersions(projectId: ProjectId, mutatedFlowVersion: FlowVersion): Promise<FlowVersion> {
@@ -100,8 +100,8 @@ export const flowVersionService = {
         }
         mutatedFlowVersion.updated = dayjs().toISOString()
         mutatedFlowVersion.updatedBy = userId
-        await flowVersionRepo.update(flowVersion.id, mutatedFlowVersion as QueryDeepPartialEntity<FlowVersion>)
-        return flowVersionRepo.findOneByOrFail({
+        await flowVersionRepo().update(flowVersion.id, mutatedFlowVersion as QueryDeepPartialEntity<FlowVersion>)
+        return flowVersionRepo().findOneByOrFail({
             id: flowVersion.id,
         })
     },
@@ -109,12 +109,12 @@ export const flowVersionService = {
         if (isNil(id)) {
             return null
         }
-        return flowVersionRepo.findOneBy({
+        return flowVersionRepo().findOneBy({
             id,
         })
     },
     async getLatestLockedVersionOrThrow(flowId: FlowId): Promise<FlowVersion> {
-        return flowVersionRepo.findOneOrFail({
+        return flowVersionRepo().findOneOrFail({
             where: {
                 flowId,
                 state: FlowVersionState.LOCKED,
@@ -150,13 +150,13 @@ export const flowVersionService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const paginationResult = await paginator.paginate(flowVersionRepo.createQueryBuilder('flow_version').where({
+        const paginationResult = await paginator.paginate(flowVersionRepo().createQueryBuilder('flow_version').where({
             flowId,
         }))
         return paginationHelper.createPage<FlowVersion>(paginationResult.data, paginationResult.cursor)
     },
     async getFlowVersionOrThrow({ flowId, versionId, removeSecrets = false }: GetFlowVersionOrThrowParams): Promise<FlowVersion> {
-        let flowVersion: FlowVersion | null = await flowVersionRepo.findOne({
+        let flowVersion: FlowVersion | null = await flowVersionRepo().findOne({
             where: {
                 flowId,
                 id: versionId,
@@ -201,7 +201,7 @@ export const flowVersionService = {
             valid: false,
             state: FlowVersionState.DRAFT,
         }
-        return flowVersionRepo.save(flowVersion)
+        return flowVersionRepo().save(flowVersion)
     },
 }
 
