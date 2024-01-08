@@ -148,6 +148,7 @@ const __CanvasReducer = createReducer(
     });
     return clonedState;
   }),
+  
   on(FlowsActions.duplicateStep, (state, { operation }): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
     const clonedFlowVersionWithArtifacts: FlowVersion = JSON.parse(
