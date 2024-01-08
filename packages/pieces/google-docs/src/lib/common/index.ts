@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Property } from "@activepieces/pieces-framework";
 import { HttpMethod, httpClient, AuthenticationType } from "@activepieces/pieces-common";
 
@@ -51,5 +52,5 @@ export const docsCommon = {
         })
 
         return writeRequest.body;
-    }
+    },
 }
