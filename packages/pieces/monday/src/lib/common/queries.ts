@@ -96,6 +96,16 @@ export const mondayGraphQLQueries = {
                   name
               }
           }
+          ... on BoardRelationValue {
+            linked_item_ids
+          }
+          ... on DependencyValue {
+            linked_item_ids
+          }
+          ... on WeekValue {
+            start_date
+            end_date
+          }
           }
         }
       }
@@ -129,6 +139,16 @@ export const mondayGraphQLQueries = {
               tags{
                   name
               }
+          }
+          ... on BoardRelationValue {
+            linked_item_ids
+          }
+          ... on DependencyValue {
+            linked_item_ids
+          }
+          ... on WeekValue {
+            start_date
+            end_date
           }
           }
         }

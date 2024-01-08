@@ -284,7 +284,9 @@ export const parseMondayColumnValue = (columnValue: ColumnValue) => {
     case MondayColumnType.CHECKBOX:
       return JSON.parse(columnValue.value)?.checked ?? false;
     case MondayColumnType.BOARD_RELATION:
+      return columnValue.linked_item_ids ?? [];
     case MondayColumnType.DEPENDENCY:
+      return JSON.parse(columnValue.linked_item_ids ?? '[]');
     case MondayColumnType.SUBTASKS: {
       const res: number[] = [];
       if (!isEmpty(JSON.parse(columnValue.value))) {
@@ -371,11 +373,10 @@ export const parseMondayColumnValue = (columnValue: ColumnValue) => {
     case MondayColumnType.VOTE:
       return columnValue?.vote_count ?? 0;
     case MondayColumnType.WEEK: {
-      if (isEmpty(columnValue.value)) {
-        return null;
-      }
-      const week = JSON.parse(columnValue.value).week;
-      return { startDate: week.startDate, endDate: week.endDate };
+      return {
+        startDate: columnValue.start_date,
+        endDate: columnValue.end_date,
+      };
     }
     case MondayColumnType.WORLD_CLOCK:
       return JSON.parse(columnValue.value)?.timezone ?? null;
