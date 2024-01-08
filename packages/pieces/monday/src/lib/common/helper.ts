@@ -57,7 +57,7 @@ export const convertMondayColumnToActivepiecesProp = (column: MondayColumn) => {
         required: false,
         validators: [Validators.pattern(/^\[\d+(,\d+)*]$/)],
       });
-    case MondayColumnType.DROPDOWN:
+    case MondayColumnType.DROPDOWN: {
       const labels: { id: string; name: string }[] = JSON.parse(
         column.settings_str
       ).labels;
@@ -77,6 +77,7 @@ export const convertMondayColumnToActivepiecesProp = (column: MondayColumn) => {
               : [],
         },
       });
+    }
     case MondayColumnType.EMAIL:
     case MondayColumnType.LINK:
     case MondayColumnType.TEXT:
@@ -120,7 +121,7 @@ export const convertMondayColumnToActivepiecesProp = (column: MondayColumn) => {
         description: `A number between 1 and 5.For example, 3.`,
         validators: [Validators.inRange(1, 5)],
       });
-    case MondayColumnType.STATUS:
+    case MondayColumnType.STATUS: {
       const lables = JSON.parse(column.settings_str).labels;
       const options: { label: string; value: string }[] = [];
       Object.keys(lables).forEach((key) => {
@@ -136,6 +137,7 @@ export const convertMondayColumnToActivepiecesProp = (column: MondayColumn) => {
           options: options,
         },
       });
+    }
     case MondayColumnType.TIMELINE:
       return Property.ShortText({
         displayName: column.title,
@@ -183,7 +185,7 @@ export const convertPropValueToMondayColumnValue = (
         countryCode: propValue.split('-')[0],
         countryName: propValue.split('-')[1],
       };
-    case MondayColumnType.DATE:
+    case MondayColumnType.DATE: {
       let datevalue = dayjs(propValue as unknown as string);
       if (!datevalue.isValid()) {
         datevalue = dayjs();
@@ -192,6 +194,7 @@ export const convertPropValueToMondayColumnValue = (
         date: datevalue.format('YYYY-MM-DD'),
         time: datevalue.format('HH:mm:ss'),
       };
+    }
     case MondayColumnType.DROPDOWN:
       return {
         labels: propValue,
@@ -201,31 +204,33 @@ export const convertPropValueToMondayColumnValue = (
         email: propValue,
         text: propValue,
       };
-    case MondayColumnType.HOUR:
+    case MondayColumnType.HOUR: {
       const [hour, minute] = propValue.split(':');
       return {
         hour: Number(hour) ?? 0,
         minute: Number(minute) ?? 0,
       };
+    }
     case MondayColumnType.LINK:
       return {
         url: propValue,
         text: propValue,
       };
-    case MondayColumnType.LOCATION:
+    case MondayColumnType.LOCATION: {
       const [lat, lng, address] = propValue.split('|');
       return {
         lat: lat ?? '',
         lng: lng ?? '',
         address: address ?? '',
       };
+    }
     case MondayColumnType.LONG_TEXT:
       return {
         text: propValue,
       };
     case MondayColumnType.NUMBERS:
       return String(propValue);
-    case MondayColumnType.PEOPLE:
+    case MondayColumnType.PEOPLE: {
       const res: { id: string; kind: string }[] = [];
       if (Array.isArray(propValue)) {
         propValue.forEach((person) => {
@@ -235,12 +240,14 @@ export const convertPropValueToMondayColumnValue = (
       return {
         personsAndTeams: res,
       };
-    case MondayColumnType.PHONE:
+    }
+    case MondayColumnType.PHONE: {
       const [phone, countryCode] = propValue.split('-');
       return {
         phone: `+${phone}`,
         countryShortName: countryCode,
       };
+    }
     case MondayColumnType.RATING:
       return {
         rating: Number(propValue),
@@ -278,8 +285,8 @@ export const parseMondayColumnValue = (columnValue: ColumnValue) => {
       return JSON.parse(columnValue.value)?.checked ?? false;
     case MondayColumnType.BOARD_RELATION:
     case MondayColumnType.DEPENDENCY:
-    case MondayColumnType.SUBTASKS:
-      let res: number[] = [];
+    case MondayColumnType.SUBTASKS: {
+      const res: number[] = [];
       if (!isEmpty(JSON.parse(columnValue.value))) {
         JSON.parse(columnValue.value).linkedPulseIds.map(
           (item: { linkedPulseId: number }) => {
@@ -288,18 +295,20 @@ export const parseMondayColumnValue = (columnValue: ColumnValue) => {
         );
       }
       return res;
+    }
     case MondayColumnType.COLOR_PICKER:
       return JSON.parse(columnValue.value)?.color.hex ?? null;
     case MondayColumnType.COUNTRY:
       return JSON.parse(columnValue.value)?.countryName ?? null;
     case MondayColumnType.CREATION_LOG:
       return JSON.parse(columnValue.value)?.created_at ?? null;
-    case MondayColumnType.DATE:
+    case MondayColumnType.DATE: {
       if (isEmpty(columnValue.value)) {
         return null;
       }
       const dateTime = JSON.parse(columnValue.value);
       return `${dateTime.date} ${dateTime.time}`;
+    }
     case MondayColumnType.DOC:
       return JSON.parse(columnValue.value)?.files[0].linkToFile ?? null;
     case MondayColumnType.DROPDOWN:
@@ -308,12 +317,13 @@ export const parseMondayColumnValue = (columnValue: ColumnValue) => {
       return JSON.parse(columnValue.value)?.email ?? null;
     case MondayColumnType.FILE:
       return columnValue.text;
-    case MondayColumnType.HOUR:
+    case MondayColumnType.HOUR: {
       if (isEmpty(columnValue.value)) {
         return null;
       }
       const hourTime = JSON.parse(columnValue.value);
       return `${hourTime.hour}:${hourTime.minute}`;
+    }
     case MondayColumnType.ITEM_ID:
       return JSON.parse(columnValue.value)?.item_id ?? null;
     case MondayColumnType.LAST_UPDATED:
@@ -328,8 +338,8 @@ export const parseMondayColumnValue = (columnValue: ColumnValue) => {
       return null;
     case MondayColumnType.NUMBERS:
       return Number(JSON.parse(columnValue.value));
-    case MondayColumnType.PEOPLE:
-      let people: number[] = [];
+    case MondayColumnType.PEOPLE: {
+      const people: number[] = [];
       if (!isEmpty(columnValue.value)) {
         JSON.parse(columnValue.value).personsAndTeams.map(
           (item: { id: number; kind: string }) => {
@@ -338,6 +348,7 @@ export const parseMondayColumnValue = (columnValue: ColumnValue) => {
         );
       }
       return people;
+    }
     case MondayColumnType.PHONE:
       return JSON.parse(columnValue.value)?.phone ?? null;
     case MondayColumnType.RATING:
@@ -348,22 +359,24 @@ export const parseMondayColumnValue = (columnValue: ColumnValue) => {
       return columnValue.tags.map((item: { name: string }) => item.name);
     case MondayColumnType.TEXT:
       return JSON.parse(columnValue.value);
-    case MondayColumnType.TIMELINE:
+    case MondayColumnType.TIMELINE: {
       if (isEmpty(columnValue.value)) {
         return null;
       }
       const timeline = JSON.parse(columnValue.value);
       return { from: timeline.from, to: timeline.to };
+    }
     case MondayColumnType.TIME_TRACKING:
       return JSON.parse(columnValue.value)?.duration ?? null;
     case MondayColumnType.VOTE:
       return columnValue?.vote_count ?? 0;
-    case MondayColumnType.WEEK:
+    case MondayColumnType.WEEK: {
       if (isEmpty(columnValue.value)) {
         return null;
       }
       const week = JSON.parse(columnValue.value).week;
       return { startDate: week.startDate, endDate: week.endDate };
+    }
     case MondayColumnType.WORLD_CLOCK:
       return JSON.parse(columnValue.value)?.timezone ?? null;
   }

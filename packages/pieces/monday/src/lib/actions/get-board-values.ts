@@ -25,7 +25,7 @@ export const getBoardItemValuesAction = createAction({
 
     const result = [];
     for (const item of items) {
-      let transformedValues: Record<string, any> = {
+      const transformedValues: Record<string, any> = {
         id: item.id,
         name: item.name,
       };
