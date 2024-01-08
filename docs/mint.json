@@ -110,6 +110,17 @@
                 "endpoints/connections/list",
                 "endpoints/connections/delete"
               ]
+            },
+            {
+              "group": "Flows",
+              "icon": "bolt",
+              "pages": [
+                "endpoints/flows/schema",
+                "endpoints/flows/create",
+                "endpoints/flows/get",
+                "endpoints/flows/list",
+                "endpoints/flows/delete"
+              ]
             }
           ]
         },
