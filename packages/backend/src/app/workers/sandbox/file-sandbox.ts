@@ -100,6 +100,10 @@ export class FileSandbox extends AbstractSandbox {
                 stderr += data
             })
 
+            process.on('error', (error: unknown) => {
+                reject(error)
+            })
+
             process.on('close', async (code: number) => {
                 if (code !== 0) {
                     reject(new Error(`Command failed with code ${code}: ${cmd}`))
