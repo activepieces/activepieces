@@ -21,6 +21,7 @@ export const UpdatePlatformRequestBody = Type.Object({
     federatedAuthProviders: Type.Optional(FederatedAuthnProviderConfig),
     termsOfServiceUrl: Type.Optional(Type.String()),
     cloudAuthEnabled: Type.Optional(Type.Boolean()),
+    emailAuthEnabled: Type.Optional(Type.Boolean()),
     allowedAuthDomains: Type.Optional(Type.Array(Type.String())),
     enforceAllowedAuthDomains: Type.Optional(Type.Boolean()),
     defaultLocale: Type.Optional(Type.Enum(LocalesEnum))

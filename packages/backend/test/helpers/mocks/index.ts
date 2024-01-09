@@ -86,6 +86,7 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         primaryColor: platform?.primaryColor ?? faker.color.rgb(),
         logoIconUrl: platform?.logoIconUrl ?? faker.image.urlPlaceholder(),
         fullLogoUrl: platform?.fullLogoUrl ?? faker.image.urlPlaceholder(),
+        emailAuthEnabled: platform?.emailAuthEnabled ?? true,
         favIconUrl: platform?.favIconUrl ?? faker.image.urlPlaceholder(),
         filteredPieceNames: platform?.filteredPieceNames ?? [],
         ssoEnabled: platform?.ssoEnabled ?? faker.datatype.boolean(),

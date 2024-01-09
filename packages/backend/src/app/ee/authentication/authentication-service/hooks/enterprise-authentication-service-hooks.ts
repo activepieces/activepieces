@@ -13,9 +13,11 @@ const DEFAULT_PLATFORM_NAME = 'platform'
 
 export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = {
     async preSignIn({ email, platformId }) {
+        await authenticationHelper.assertEmailAuthIsEnabled({ platformId })
         await authenticationHelper.assertDomainIsAllowed({ email, platformId })
     },
     async preSignUp({ email, platformId }) {
+        await authenticationHelper.assertEmailAuthIsEnabled({ platformId })
         await authenticationHelper.assertUserIsInvitedAndDomainIsAllowed({ email, platformId })
     },
     async postSignUp({ user }) {

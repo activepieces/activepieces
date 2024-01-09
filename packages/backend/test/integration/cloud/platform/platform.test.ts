@@ -49,6 +49,7 @@ describe('Platform API', () => {
                 privacyPolicyUrl: 'updated privacy policy url',
                 termsOfServiceUrl: 'updated terms of service url',
                 cloudAuthEnabled: false,
+                emailAuthEnabled: false,
                 defaultLocale: LocalesEnum.ENGLISH,
             }
             // act
@@ -65,13 +66,14 @@ describe('Platform API', () => {
             const responseBody = response?.json()
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(Object.keys(responseBody)).toHaveLength(26)
+            expect(Object.keys(responseBody)).toHaveLength(27)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.created).toBeDefined()
             expect(responseBody.updated).toBeDefined()
             expect(responseBody.enforceAllowedAuthDomains).toBe(requestBody.enforceAllowedAuthDomains)
             expect(responseBody.allowedAuthDomains).toEqual(requestBody.allowedAuthDomains)
             expect(responseBody.ownerId).toBe(mockUser.id)
+            expect(responseBody.emailAuthEnabled).toBe(requestBody.emailAuthEnabled)
             expect(responseBody.name).toBe('updated name')
             expect(responseBody.primaryColor).toBe('updated primary color')
             expect(responseBody.logoIconUrl).toBe('updated logo icon url')
@@ -79,6 +81,7 @@ describe('Platform API', () => {
             expect(responseBody.favIconUrl).toBe('updated fav icon url')
             expect(responseBody.filteredPieceNames).toStrictEqual(['updated filtered piece names'])
             expect(responseBody.filteredPieceBehavior).toBe('ALLOWED')
+            expect(responseBody.emailAuthEnabled).toBe(false)
             expect(responseBody.smtpHost).toBe('updated smtp host')
             expect(responseBody.smtpPort).toBe(123)
             expect(responseBody.smtpUser).toBe('updated smtp user')
@@ -178,7 +181,7 @@ describe('Platform API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
 
-            expect(Object.keys(responseBody)).toHaveLength(26)
+            expect(Object.keys(responseBody)).toHaveLength(27)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.ownerId).toBe(mockOwnerUser.id)
             expect(responseBody.name).toBe(mockPlatform.name)

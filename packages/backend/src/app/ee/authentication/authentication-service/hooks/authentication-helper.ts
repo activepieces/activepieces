@@ -108,6 +108,22 @@ async function assertUserIsInvitedToAnyProject({ email, platformId }: { email: s
     }
 }
 
+async function assertEmailAuthIsEnabled({ platformId }: { platformId: string | null }): Promise<void> {
+    if (isNil(platformId)) {
+        return
+    }
+    const platform = await platformService.getOneOrThrow(platformId)
+    if (!platform.ssoEnabled) {
+        return
+    }
+    if (!platform.emailAuthEnabled) {
+        throw new ActivepiecesError({
+            code: ErrorCode.EMAIL_AUTH_DISABLED,
+            params: {},
+        })
+    }
+}
+
 async function assertDomainIsAllowed({ email, platformId }: { email: string, platformId: string | null }): Promise<void> {
     if (isNil(platformId)) {
         return
@@ -142,6 +158,7 @@ export const authenticationHelper = {
     autoVerifyUserIfEligible,
     assertUserIsInvitedAndDomainIsAllowed,
     assertDomainIsAllowed,
+    assertEmailAuthIsEnabled,
 }
 
 

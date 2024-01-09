@@ -22,6 +22,7 @@ export const platformService = {
             favIconUrl: favIconUrl ?? defaultTheme.logos.favIconUrl,
             embeddingEnabled: false,
             defaultLocale: LocalesEnum.ENGLISH,
+            emailAuthEnabled: true,
             filteredPieceNames: [],
             enforceAllowedAuthDomains: false,
             allowedAuthDomains: [],
@@ -82,6 +83,7 @@ export const platformService = {
             ...spreadIfDefined('showPoweredBy', params.showPoweredBy),
             ...spreadIfDefined('embeddingEnabled', params.embeddingEnabled),
             ...spreadIfDefined('ssoEnabled', params.ssoEnabled),
+            ...spreadIfDefined('emailAuthEnabled', params.emailAuthEnabled),
             ...spreadIfDefined('enforceAllowedAuthDomains', params.enforceAllowedAuthDomains),
             ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
         }

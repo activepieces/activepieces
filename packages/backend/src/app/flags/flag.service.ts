@@ -91,6 +91,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.EMAIL_AUTH_ENABLED,
+                value: true,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.THEME,
                 value: defaultTheme,
                 created,

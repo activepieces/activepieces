@@ -53,6 +53,7 @@ type ErrorParams =
     | InvitationOnlySignUpParams
     | UserIsInActiveErrorParams
     | DomainIsNotAllowedErrorParams
+    | EmailAuthIsDisabledParams
 
 export type BaseErrorParams<T, V> = {
     code: T
@@ -72,6 +73,8 @@ export type InvalidBearerTokenParams = BaseErrorParams<ErrorCode.INVALID_BEARER_
 }>
 
 export type FileNotFoundErrorParams = BaseErrorParams<ErrorCode.FILE_NOT_FOUND, { id: FileId }>
+
+export type EmailAuthIsDisabledParams = BaseErrorParams<ErrorCode.EMAIL_AUTH_DISABLED, Record<string, never>>
 
 export type AppConnectionNotFoundErrorParams = BaseErrorParams<
 ErrorCode.APP_CONNECTION_NOT_FOUND,
@@ -327,6 +330,7 @@ export enum ErrorCode {
     ENGINE_OPERATION_FAILURE = 'ENGINE_OPERATION_FAILURE',
     ENTITY_NOT_FOUND = 'ENTITY_NOT_FOUND',
     EXECUTION_TIMEOUT = 'EXECUTION_TIMEOUT',
+    EMAIL_AUTH_DISABLED = 'EMAIL_AUTH_DISABLED',
     EXISTING_USER = 'EXISTING_USER',
     FILE_NOT_FOUND = 'FILE_NOT_FOUND',
     FLOW_INSTANCE_NOT_FOUND = 'INSTANCE_NOT_FOUND',

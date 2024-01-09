@@ -108,6 +108,10 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: Boolean,
             nullable: false,
         },
+        emailAuthEnabled: {
+            type: Boolean,
+            nullable: false,
+        },
         federatedAuthProviders: {
             type: JSONB_COLUMN_TYPE,
         },

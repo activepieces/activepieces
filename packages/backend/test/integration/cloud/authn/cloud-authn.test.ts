@@ -322,6 +322,54 @@ describe('Authentication API', () => {
 
     describe('Sign in Endpoint', () => {
 
+        it('Fails If the email auth is not enabled', async () => {
+            // arrange
+            const mockPlatformId = faker.string.nanoid()
+            const mockPlatformDomain = faker.internet.domainName()
+          
+            const rawPassword = faker.internet.password()
+            const mockUser = createMockUser({
+                email: faker.internet.email(),
+                password: rawPassword,
+                verified: true,
+                status: UserStatus.ACTIVE,
+                platformId: mockPlatformId,
+            })
+            await databaseConnection.getRepository('user').save(mockUser)
+          
+            const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id, emailAuthEnabled: false })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+          
+            const mockCustomDomain = createMockCustomDomain({ platformId: mockPlatformId, domain: mockPlatformDomain })
+            await databaseConnection.getRepository('custom_domain').save(mockCustomDomain)
+          
+            const mockProject = createMockProject({
+                ownerId: mockUser.id,
+                platformId: mockPlatformId,
+            })
+            await databaseConnection.getRepository('project').save(mockProject)
+          
+          
+            const mockSignInRequest = createMockSignInRequest({
+                email: mockUser.email,
+                password: rawPassword,
+            })
+          
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/authentication/sign-in',
+                headers: {
+                    Host: mockPlatformDomain,
+                },
+                body: mockSignInRequest,
+            })
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            const responseBody = response?.json()
+          
+            expect(responseBody?.code).toBe('EMAIL_AUTH_DISABLED')
+        })
+
         it('Fails If the domain is not allowed', async () => {
             // arrange
             const mockPlatformId = faker.string.nanoid()
