@@ -23,6 +23,7 @@ import { TemplatesTableComponent } from './pages/templates-table/templates-table
 import { CreateOrUpdateTemplateDialogueComponent } from './components/dialogs/create-or-update-template-dialogue/create-or-update-template-dialogue.component';
 import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
 import { UsersTableComponent } from './pages/users-table/users-table.component';
+import { SsoSettingsComponent } from './components/sso-settings/sso-settings.component';
 
 @NgModule({
   imports: [
@@ -51,6 +52,7 @@ import { UsersTableComponent } from './pages/users-table/users-table.component';
     TemplatesTableComponent,
     CustomDomainTableComponent,
     UsersTableComponent,
+    SsoSettingsComponent,
   ],
 })
 export class UiEePlatformModule {}
