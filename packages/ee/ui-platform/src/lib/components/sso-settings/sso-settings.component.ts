@@ -2,12 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { Platform } from '@activepieces/ee-shared';
-import {
-  FormBuilder,
-  FormControl,
-  FormGroup,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import { PlatformService, fadeInUp400ms } from '@activepieces/ui/common';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
@@ -20,10 +15,9 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 export class SsoSettingsComponent implements OnInit {
   loading$ = new BehaviorSubject<boolean>(false);
   ssoSettingsForm: FormGroup<{
-    enforceAllowedAuthDomains: FormControl<boolean>;
     allowedAuthDomains: FormControl<string[]>;
   }>;
-  toggleAuthDomainsArray$: Observable<boolean>;
+
   saving$?: Observable<void>;
   constructor(
     private route: ActivatedRoute,
@@ -34,26 +28,14 @@ export class SsoSettingsComponent implements OnInit {
     this.ssoSettingsForm = this.fb.group({
       allowedAuthDomains: new FormControl(
         {
-          disabled: true,
+          disabled: false,
           value: [] as string[],
         },
         {
-          validators: [Validators.required],
           nonNullable: true,
         }
       ),
-      enforceAllowedAuthDomains: new FormControl(false, {
-        nonNullable: true,
-      }),
     });
-    this.toggleAuthDomainsArray$ =
-      this.ssoSettingsForm.controls.enforceAllowedAuthDomains.valueChanges.pipe(
-        tap((val) => {
-          val
-            ? this.ssoSettingsForm.controls.allowedAuthDomains.enable()
-            : this.ssoSettingsForm.controls.allowedAuthDomains.disable();
-        })
-      );
   }
   ngOnInit() {
     const platform: Platform = this.route.snapshot.data['platform'];
@@ -64,8 +46,15 @@ export class SsoSettingsComponent implements OnInit {
     const platform: Platform = this.route.snapshot.data['platform'];
     this.ssoSettingsForm.markAllAsTouched();
     if (!this.loading$.value && this.ssoSettingsForm.valid) {
+      const allowedAuthDomains = this.ssoSettingsForm.value.allowedAuthDomains;
       this.saving$ = this.platformService
-        .updatePlatform(this.ssoSettingsForm.getRawValue(), platform.id)
+        .updatePlatform(
+          {
+            enforceAllowedAuthDomains: allowedAuthDomains ? true : false,
+            allowedAuthDomains: allowedAuthDomains ?? [],
+          },
+          platform.id
+        )
         .pipe(
           tap(() => {
             this.loading$.next(false);

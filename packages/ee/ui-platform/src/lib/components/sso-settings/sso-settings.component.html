@@ -1,26 +1,17 @@
 <div class="ap-h-full ap-pt-2 ap-flex ap-flex-col">
     <div class="ap-mb-4 ap-w-full">
-        <form [formGroup]="ssoSettingsForm"
-            class="ap-flex ap-w-full  ap-max-w-[327px] ap-w-full ap-flex-col  ap-gap-4 ap-mb-10">
-
-
-            <mat-checkbox color="primary" [formControl]="ssoSettingsForm.controls.enforceAllowedAuthDomains"
-                matTooltip="Only emails ending with specific domains can sign up" i18n-matTooltip>Enforce sign up
-                email domains</mat-checkbox>
+        <form [formGroup]="ssoSettingsForm" class="ap-flex ap-w-full  ap-w-full ap-flex-col  ap-gap-4 ap-mb-10">
             <div>
-                <div class="ap-mb-2 ap-pointer-events-none" i18n>Domains</div>
-                <ap-array-form-control placeholder="your-domain.com"
-                    [matTooltip]="ssoSettingsForm.controls.allowedAuthDomains.disabled? 'Enforce email domains first': ''"
-                    [formControl]="ssoSettingsForm.controls.allowedAuthDomains"></ap-array-form-control>
-                <ng-container
-                    *ngIf="ssoSettingsForm.controls.allowedAuthDomains.invalid && ssoSettingsForm.controls.allowedAuthDomains.touched">
-                    <div class="ap-typography-caption ap-text-danger" @fadeInUp>
-                        Must fill at least one domain
-                    </div>
-                </ng-container>
+                <div class="ap-typography-body-1  ap-mb-2" i18n><b>Allowed Email Domains</b></div>
+                <div class="ap-typography-body-2 ap-text-description ap-mb-2" i18n>
+                    Anyone with an email address at these domains is allowed to sign up for your platform.
+                    <br> Keep empty if you don't want this restriction.
+                </div>
+                <div class="ap-max-w-[327px]">
+                    <ap-array-form-control placeholder="your-domain.com" [addEmptyFieldAfterWriteValue]="false"
+                        [formControl]="ssoSettingsForm.controls.allowedAuthDomains"></ap-array-form-control>
+                </div>
             </div>
-
-
         </form>
         <div>
             <div
@@ -36,4 +27,3 @@
     </div>
 </div>
 <ng-container *ngIf="saving$ | async"></ng-container>
-<ng-container *ngIf="toggleAuthDomainsArray$ | async"></ng-container>
