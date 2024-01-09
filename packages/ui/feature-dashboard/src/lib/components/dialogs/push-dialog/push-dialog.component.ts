@@ -39,7 +39,7 @@ export class PushDialogComponent {
         })
         .pipe(
           tap(() => {
-            this.snackbar.open('Pushed successfully');
+            this.snackbar.open($localize`Pushed successfully`);
             this.matDialogRef.close();
           }),
           catchError((err) => {

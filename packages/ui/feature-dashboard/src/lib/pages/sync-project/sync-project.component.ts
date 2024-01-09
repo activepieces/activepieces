@@ -1,14 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfigureRepoDialogComponent } from '../../components/dialogs/configure-repo-dialog/configure-repo-dialog.component';
-import {
-  BehaviorSubject,
-  Observable,
-  Subject,
-  catchError,
-  of,
-  tap,
-} from 'rxjs';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { GitRepo } from '@activepieces/ee-shared';
 import { SyncProjectService } from '../../services/sync-project.service';
@@ -24,6 +17,10 @@ import {
   PushDialogComponent,
   PushDialogData,
 } from '../../components/dialogs/push-dialog/push-dialog.component';
+import {
+  PullDialogComponent,
+  PullDialogData,
+} from '../../components/dialogs/pull-dialog/pull-dialog.component';
 @Component({
   selector: 'app-sync-project',
   templateUrl: './sync-project.component.html',
@@ -35,10 +32,6 @@ export class SyncProjectComponent {
   currentRepo$ = new BehaviorSubject<null | GitRepo | undefined>(null);
   showUpgrade = false;
   disconnect$?: Observable<void>;
-  push$?: Observable<void>;
-  pull$?: Observable<void>;
-  pushLoading$ = new Subject<boolean>();
-  pullLoading$ = new Subject<boolean>();
   currentProject$: Observable<Project>;
   configureButtonTooltip = $localize`Upgrade to enable`;
   constructor(
@@ -54,7 +47,6 @@ export class SyncProjectComponent {
     const data = this.activatedRoute.snapshot.data as {
       repo: RepoResolverData;
     };
-
     this.showUpgrade = data.repo.showUpgrade;
     if (!this.showUpgrade) {
       this.configureButtonTooltip = '';
@@ -88,25 +80,6 @@ export class SyncProjectComponent {
         );
     }
   }
-
-  private errorHandlerPipe = (obs: Observable<void>) =>
-    obs.pipe(
-      catchError((err) => {
-        console.error(err);
-        this.snackbar.open(
-          $localize`Error occured, please check your console`,
-          '',
-          {
-            panelClass: 'error',
-          }
-        );
-        return of(void 0);
-      }),
-      tap(() => {
-        this.pushLoading$.next(false);
-        this.pullLoading$.next(false);
-      })
-    );
   push(projectDisplayName: string) {
     const repoId = this.currentRepo$.value?.id;
     if (repoId) {
@@ -122,17 +95,18 @@ export class SyncProjectComponent {
     }
   }
 
-  pull() {
-    this.pullLoading$.next(true);
+  pull(projectDisplayName: string) {
     const repoId = this.currentRepo$.value?.id;
     if (repoId) {
-      this.pull$ = this.syncProjectService.pull(repoId).pipe(
-        tap(() => {
-          this.snackbar.open('Pulled successfully');
-          window.location.reload();
-        }),
-        this.errorHandlerPipe.bind(this)
-      );
+      const data: PullDialogData = {
+        projectName: projectDisplayName,
+        repoId: repoId,
+      };
+      this.matDialog
+        .open(PullDialogComponent, {
+          data,
+        })
+        .afterClosed();
     }
   }
 }
