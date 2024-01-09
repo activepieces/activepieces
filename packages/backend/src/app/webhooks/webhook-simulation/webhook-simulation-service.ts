@@ -1,7 +1,7 @@
 import { isNil } from '@activepieces/shared'
 import { ActivepiecesError, apId, ErrorCode, FlowId, ProjectId, WebhookSimulation } from '@activepieces/shared'
 import { acquireLock, ApLock } from '../../helper/lock'
-import { databaseConnection } from '../../database/database-connection'
+import { repoFactory } from '../../core/db/repo-factory'
 import { WebhookSimulationEntity } from './webhook-simulation-entity'
 import { webhookSideEffects } from './webhook-simulation-side-effects'
 import { logger } from '../../helper/logger'
@@ -27,7 +27,7 @@ const createLock = async ({ flowId }: AcquireLockParams): Promise<ApLock> => {
     return acquireLock({ key, timeout: 5000 })
 }
 
-const webhookSimulationRepo = databaseConnection.getRepository(WebhookSimulationEntity)
+const webhookSimulationRepo = repoFactory(WebhookSimulationEntity)
 
 export const webhookSimulationService = {
     async create(params: CreateParams): Promise<WebhookSimulation> {
@@ -40,7 +40,7 @@ export const webhookSimulationService = {
         })
 
         try {
-            const webhookSimulationExists = await webhookSimulationRepo.exist({ where: { flowId } })
+            const webhookSimulationExists = await webhookSimulationRepo().exist({ where: { flowId } })
 
             if (webhookSimulationExists) {
                 await this.delete({
@@ -60,7 +60,7 @@ export const webhookSimulationService = {
                 projectId,
             })
 
-            return await webhookSimulationRepo.save(webhookSimulation)
+            return await webhookSimulationRepo().save(webhookSimulation)
         }
         finally {
             await lock.release()

@@ -35,6 +35,7 @@ import { logger } from '../../helper/logger'
 import { stepFileService } from '../step-file/step-file.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { EntityManager } from 'typeorm'
 
 const branchSettingsValidator = TypeCompiler.Compile(BranchActionSettingsWithValidation)
 const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettingsWithValidation)
@@ -64,21 +65,22 @@ export const flowVersionService = {
             return clonedStep
         })
     },
-    async applyOperation(userId: UserId, projectId: ProjectId, flowVersion: FlowVersion, userOperation: FlowOperationRequest): Promise<FlowVersion> {
+    async applyOperation({ flowVersion, projectId, userId, userOperation, entityManager }: ApplyOperationParams): Promise<FlowVersion> {
         let operations: FlowOperationRequest[] = []
         let mutatedFlowVersion: FlowVersion = flowVersion
         switch (userOperation.type) {
             case FlowOperationType.USE_AS_DRAFT: {
-                const previousVersion = await flowVersionService.getFlowVersionOrThrow({
+                const previousVersion = await flowVersionService.getFlowVersionOrThrow({ // done
                     flowId: flowVersion.flowId,
                     versionId: userOperation.request.versionId,
                     removeSecrets: false,
+                    entityManager,
                 })
-                operations = handleImportFlowOperation(flowVersion, previousVersion)
+                operations = handleImportFlowOperation(flowVersion, previousVersion) // done
                 break
             }
             case FlowOperationType.IMPORT_FLOW:
-                operations = handleImportFlowOperation(flowVersion, userOperation.request)
+                operations = handleImportFlowOperation(flowVersion, userOperation.request) // done
                 break
             case FlowOperationType.LOCK_FLOW:
                 mutatedFlowVersion = await this.lockPieceVersions(projectId, mutatedFlowVersion)
@@ -91,6 +93,7 @@ export const flowVersionService = {
                 mutatedFlowVersion = await this.getFlowVersionOrThrow({
                     flowId: flowVersion.flowId,
                     versionId: flowVersion.id,
+                    entityManager,
                 })
                 operations = [userOperation]
                 break
@@ -155,8 +158,8 @@ export const flowVersionService = {
         }))
         return paginationHelper.createPage<FlowVersion>(paginationResult.data, paginationResult.cursor)
     },
-    async getFlowVersionOrThrow({ flowId, versionId, removeSecrets = false }: GetFlowVersionOrThrowParams): Promise<FlowVersion> {
-        let flowVersion: FlowVersion | null = await flowVersionRepo().findOne({
+    async getFlowVersionOrThrow({ flowId, versionId, removeSecrets = false, entityManager }: GetFlowVersionOrThrowParams): Promise<FlowVersion> {
+        let flowVersion: FlowVersion | null = await flowVersionRepo(entityManager).findOne({
             where: {
                 flowId,
                 id: versionId,
@@ -490,6 +493,15 @@ type GetFlowVersionOrThrowParams = {
     flowId: FlowId
     versionId: FlowVersionId | undefined
     removeSecrets?: boolean
+    entityManager?: EntityManager
 }
 
 type NewFlowVersion = Omit<FlowVersion, 'created' | 'updated'>
+
+type ApplyOperationParams = {
+    userId: UserId
+    projectId: ProjectId
+    flowVersion: FlowVersion
+    userOperation: FlowOperationRequest
+    entityManager?: EntityManager
+}

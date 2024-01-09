@@ -54,14 +54,14 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
             })
         },
 
-        async getOrThrow({ name, version, projectId }): Promise<PieceMetadataModel> {
+        async getOrThrow({ name, version, projectId, entityManager }): Promise<PieceMetadataModel> {
 
             const filters = await constructPieceFilters({
                 name,
                 version,
                 projectId,
             })
-            const pieceMetadataEntity = await repo().createQueryBuilder()
+            const pieceMetadataEntity = await repo(entityManager).createQueryBuilder()
                 .where(filters)
                 .distinctOn(['name'])
                 .orderBy({
