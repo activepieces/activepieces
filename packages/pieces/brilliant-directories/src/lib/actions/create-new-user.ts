@@ -46,7 +46,7 @@ export const createNewUser = createAction({
             'email': context.propsValue.email,
             'password': context.propsValue.password,
             'subscription_id': context.propsValue.subscription,
-            ...context.propsValue.meta
+            ...JSON.parse(context.propsValue.meta)
         }
 
         // send the request
