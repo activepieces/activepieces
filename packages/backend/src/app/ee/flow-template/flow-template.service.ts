@@ -8,11 +8,12 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 const templateRepo = databaseConnection.getRepository<FlowTemplate>(FlowTemplateEntity)
 
 export const flowTemplateService = {
-    upsert: async (platformId: string | undefined, projectId: string | undefined, { description,  type, template, blogUrl, tags, id }: CreateFlowTemplateRequest): Promise<FlowTemplate> => {
+    upsert: async (platformId: string | undefined, projectId: string | undefined, { description, type, template, blogUrl, tags, id }: CreateFlowTemplateRequest): Promise<FlowTemplate> => {
         const flowTemplate: FlowVersionTemplate = template
         const newTags = tags ?? []
+        const newId = id ?? apId()
         await templateRepo.upsert({
-            id: id ?? apId(),
+            id: newId,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             template: flowTemplate as any,
             name: flowTemplate.displayName,
@@ -27,7 +28,7 @@ export const flowTemplateService = {
             projectId,
         }, ['id'])
         return templateRepo.findOneByOrFail({
-            id,
+            id: newId,
         })
     },
     list: async (platformId: string, { pieces, tags, search }: ListFlowTemplatesRequest): Promise<SeekPage<FlowTemplate>> => {

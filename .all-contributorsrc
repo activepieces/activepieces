@@ -771,6 +771,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "dennisrongo",
+      "name": "Dennis Rongo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/51771021?v=4",
+      "profile": "http://dennisrongo.com",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "commitType": "docs"
