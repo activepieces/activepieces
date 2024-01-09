@@ -29,7 +29,6 @@ import { MatDialog } from '@angular/material/dialog';
 @Component({
   selector: 'app-version-history',
   templateUrl: './version-history.component.html',
-
 })
 export class VersionHistoryComponent {
   sideBarDisplayName = $localize`Versions`;
