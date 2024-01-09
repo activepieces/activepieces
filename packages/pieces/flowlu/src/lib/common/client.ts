@@ -4,7 +4,14 @@ import {
   QueryParams,
   httpClient,
 } from '@activepieces/pieces-common';
-import { TaskListResponse } from './types';
+import {
+  CreateTaskAPIRequest,
+  ListAPIResponse,
+  Task,
+  TaskWorkflow,
+  TaskWorkflowStage,
+  User,
+} from './types';
 
 function emptyValueFilter(
   accessor: (key: string) => any
@@ -47,7 +54,7 @@ export class FlowluClient {
     return res.body;
   }
   async listAllTasks() {
-    return await this.makeRequest<{ response: TaskListResponse }>(
+    return await this.makeRequest<ListAPIResponse<Task[]>>(
       HttpMethod.GET,
       '/task/tasks/list'
     );
@@ -57,5 +64,31 @@ export class FlowluClient {
   }
   async deleteTask(id: number) {
     return await this.makeRequest(HttpMethod.GET, `/task/tasks/delete/${id}`);
+  }
+  async listAllUsers() {
+    return await this.makeRequest<ListAPIResponse<User[]>>(
+      HttpMethod.GET,
+      '/core/user/list'
+    );
+  }
+  async listAllTaskWorkflow() {
+    return await this.makeRequest<ListAPIResponse<TaskWorkflow[]>>(
+      HttpMethod.GET,
+      '/task/workflows/list'
+    );
+  }
+  async listAllTaskStages() {
+    return await this.makeRequest<ListAPIResponse<TaskWorkflowStage[]>>(
+      HttpMethod.GET,
+      '/task/stages/list'
+    );
+  }
+  async createTask(request: CreateTaskAPIRequest) {
+    return await this.makeRequest(
+      HttpMethod.POST,
+      '/task/tasks/create',
+      undefined,
+      request
+    );
   }
 }

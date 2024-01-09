@@ -3,6 +3,9 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
+import { createTaskAction } from './lib/actions/tasks/create-task';
+import { deleteTaskAction } from './lib/actions/tasks/delete-task';
+import { getTaskAction } from './lib/actions/tasks/get-task';
 
 export const flowluAuth = PieceAuth.CustomAuth({
   required: true,
@@ -31,6 +34,6 @@ export const flowlu = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/flowlu.png',
   authors: ['kishanprmr'],
-  actions: [],
+  actions: [createTaskAction, deleteTaskAction, getTaskAction],
   triggers: [],
 });

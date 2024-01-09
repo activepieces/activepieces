@@ -1,3 +1,5 @@
+import { HttpMessageBody } from '@activepieces/pieces-common';
+
 export interface Task {
   id: number;
   name: string;
@@ -59,11 +61,64 @@ export interface Task {
   project_checkitem_id: number;
   crm_account_id: number;
 }
-
-export interface TaskListResponse {
+export interface User {
+  id: string;
+  last_active: string;
+  username: string;
+  first_name: string;
+  second_name: string;
+  last_name: string;
+  birth_date: string;
+  lang_id: string;
+  timezone: string;
+  register_date: string;
+  image: string;
+  role_admin: number;
+  role_login: number;
+  name: string;
+}
+export interface TaskWorkflow {
+  id: number;
+  name: string;
+  description: string;
+  ordering: number;
+  created_by: number;
+  updated_by: number;
+  updated_date: string;
+  active: number;
+  deleted_at: string;
+}
+export interface TaskWorkflowStage {
+  id: number;
+  name: string;
+  description: string;
+  ordering: number;
+  created_by: number;
+  updated_by: number;
+  updated_date: string;
+  workflow_id: number;
+  color: string;
+  task_status: number;
+  deleted_at: string;
+}
+export interface ListAPIResponse<T> extends HttpMessageBody {
   total: number;
   total_result: number;
   page: number;
   count: number;
-  items: Task[];
+  items: T;
+}
+export interface CreateTaskAPIRequest {
+  name: string;
+  description?: string;
+  priority: number;
+  plan_start_date?: string;
+  plan_end_date?: string;
+  deadline_allowchange: boolean;
+  task_checkbyowner: boolean;
+  responsible_id?: string;
+  owner_id?: string;
+  type: number;
+  workflow_id?: number;
+  workflow_stage_id?: number;
 }
