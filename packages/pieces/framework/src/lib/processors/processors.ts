@@ -10,6 +10,18 @@ import { isNil, isString } from "@activepieces/shared";
 
 export class Processors {
 
+  static json: ProcessorFn<string | undefined | null, unknown | undefined> = (property, value) => {
+    if (isNil(value)) {
+      return value;
+    }
+    try {
+      return JSON.parse(value);
+    } catch (error) {
+      console.error(error);
+      return undefined;
+    }
+  }
+  
   static number: ProcessorFn<string | number | undefined | null, number | null | undefined> = (property, value) => {
     if (isNil(value)) {
       return value;
