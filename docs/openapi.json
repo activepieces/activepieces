@@ -412,6 +412,1127 @@
     }
   },
   "paths": {
+    "/v1/flows/": {
+      "post": {
+        "tags": [
+          "flows"
+        ],
+        "description": "Create a flow",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "displayName": {
+                    "type": "string"
+                  },
+                  "folderId": {
+                    "type": "string"
+                  },
+                  "projectId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "displayName",
+                  "projectId"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "created": {
+                      "type": "string"
+                    },
+                    "updated": {
+                      "type": "string"
+                    },
+                    "projectId": {
+                      "type": "string"
+                    },
+                    "folderId": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "status": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "ENABLED"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "DISABLED"
+                          ]
+                        }
+                      ]
+                    },
+                    "schedule": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "CRON_EXPRESSION"
+                          ]
+                        },
+                        "cronExpression": {
+                          "type": "string"
+                        },
+                        "timezone": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "cronExpression",
+                        "timezone"
+                      ],
+                      "nullable": true
+                    },
+                    "publishedVersionId": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "version": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "created": {
+                          "type": "string"
+                        },
+                        "updated": {
+                          "type": "string"
+                        },
+                        "flowId": {
+                          "type": "string"
+                        },
+                        "displayName": {
+                          "type": "string"
+                        },
+                        "trigger": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string"
+                                },
+                                "valid": {
+                                  "type": "boolean"
+                                },
+                                "displayName": {
+                                  "type": "string"
+                                },
+                                "nextAction": {},
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "WEBHOOK"
+                                  ]
+                                },
+                                "settings": {
+                                  "type": "object",
+                                  "properties": {
+                                    "inputUiInfo": {
+                                      "additionalProperties": true,
+                                      "type": "object",
+                                      "properties": {
+                                        "currentSelectedData": {},
+                                        "customizedInputs": {
+                                          "type": "object",
+                                          "additionalProperties": {}
+                                        },
+                                        "lastTestDate": {
+                                          "type": "string"
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "required": [
+                                    "inputUiInfo"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "name",
+                                "valid",
+                                "displayName",
+                                "type",
+                                "settings"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string"
+                                },
+                                "valid": {
+                                  "type": "boolean"
+                                },
+                                "displayName": {
+                                  "type": "string"
+                                },
+                                "nextAction": {},
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "PIECE_TRIGGER"
+                                  ]
+                                },
+                                "settings": {
+                                  "type": "object",
+                                  "properties": {
+                                    "pieceName": {
+                                      "type": "string"
+                                    },
+                                    "pieceVersion": {
+                                      "type": "string",
+                                      "pattern": "^([~^])?[0-9]+\\.[0-9]+\\.[0-9]+$"
+                                    },
+                                    "pieceType": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string",
+                                          "enum": [
+                                            "CUSTOM"
+                                          ]
+                                        },
+                                        {
+                                          "type": "string",
+                                          "enum": [
+                                            "OFFICIAL"
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    "packageType": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string",
+                                          "enum": [
+                                            "ARCHIVE"
+                                          ]
+                                        },
+                                        {
+                                          "type": "string",
+                                          "enum": [
+                                            "REGISTRY"
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    "triggerName": {
+                                      "type": "string"
+                                    },
+                                    "input": {
+                                      "type": "object",
+                                      "additionalProperties": {}
+                                    },
+                                    "inputUiInfo": {
+                                      "additionalProperties": true,
+                                      "type": "object",
+                                      "properties": {
+                                        "currentSelectedData": {},
+                                        "customizedInputs": {
+                                          "type": "object",
+                                          "additionalProperties": {}
+                                        },
+                                        "lastTestDate": {
+                                          "type": "string"
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "required": [
+                                    "pieceName",
+                                    "pieceVersion",
+                                    "pieceType",
+                                    "packageType",
+                                    "triggerName",
+                                    "input",
+                                    "inputUiInfo"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "name",
+                                "valid",
+                                "displayName",
+                                "type",
+                                "settings"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string"
+                                },
+                                "valid": {
+                                  "type": "boolean"
+                                },
+                                "displayName": {
+                                  "type": "string"
+                                },
+                                "nextAction": {},
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "EMPTY"
+                                  ]
+                                },
+                                "settings": {}
+                              },
+                              "required": [
+                                "name",
+                                "valid",
+                                "displayName",
+                                "type",
+                                "settings"
+                              ]
+                            }
+                          ]
+                        },
+                        "updatedBy": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "valid": {
+                          "type": "boolean"
+                        },
+                        "state": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "LOCKED"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "DRAFT"
+                              ]
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "created",
+                        "updated",
+                        "flowId",
+                        "displayName",
+                        "trigger",
+                        "valid",
+                        "state"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "created",
+                    "updated",
+                    "projectId",
+                    "status",
+                    "version"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "flows"
+        ],
+        "description": "List flows",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "folderId",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "number"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false
+          },
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "ENABLED"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "DISABLED"
+                  ]
+                }
+              ]
+            },
+            "in": "query",
+            "name": "status",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "projectId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "created": {
+                            "type": "string"
+                          },
+                          "updated": {
+                            "type": "string"
+                          },
+                          "projectId": {
+                            "type": "string"
+                          },
+                          "folderId": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "status": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "ENABLED"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "DISABLED"
+                                ]
+                              }
+                            ]
+                          },
+                          "schedule": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "CRON_EXPRESSION"
+                                ]
+                              },
+                              "cronExpression": {
+                                "type": "string"
+                              },
+                              "timezone": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "cronExpression",
+                              "timezone"
+                            ],
+                            "nullable": true
+                          },
+                          "publishedVersionId": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "version": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "created": {
+                                "type": "string"
+                              },
+                              "updated": {
+                                "type": "string"
+                              },
+                              "flowId": {
+                                "type": "string"
+                              },
+                              "displayName": {
+                                "type": "string"
+                              },
+                              "trigger": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "name": {
+                                        "type": "string"
+                                      },
+                                      "valid": {
+                                        "type": "boolean"
+                                      },
+                                      "displayName": {
+                                        "type": "string"
+                                      },
+                                      "nextAction": {},
+                                      "type": {
+                                        "type": "string",
+                                        "enum": [
+                                          "WEBHOOK"
+                                        ]
+                                      },
+                                      "settings": {
+                                        "type": "object",
+                                        "properties": {
+                                          "inputUiInfo": {
+                                            "additionalProperties": true,
+                                            "type": "object",
+                                            "properties": {
+                                              "currentSelectedData": {},
+                                              "customizedInputs": {
+                                                "type": "object",
+                                                "additionalProperties": {}
+                                              },
+                                              "lastTestDate": {
+                                                "type": "string"
+                                              }
+                                            }
+                                          }
+                                        },
+                                        "required": [
+                                          "inputUiInfo"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "name",
+                                      "valid",
+                                      "displayName",
+                                      "type",
+                                      "settings"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "name": {
+                                        "type": "string"
+                                      },
+                                      "valid": {
+                                        "type": "boolean"
+                                      },
+                                      "displayName": {
+                                        "type": "string"
+                                      },
+                                      "nextAction": {},
+                                      "type": {
+                                        "type": "string",
+                                        "enum": [
+                                          "PIECE_TRIGGER"
+                                        ]
+                                      },
+                                      "settings": {
+                                        "type": "object",
+                                        "properties": {
+                                          "pieceName": {
+                                            "type": "string"
+                                          },
+                                          "pieceVersion": {
+                                            "type": "string",
+                                            "pattern": "^([~^])?[0-9]+\\.[0-9]+\\.[0-9]+$"
+                                          },
+                                          "pieceType": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string",
+                                                "enum": [
+                                                  "CUSTOM"
+                                                ]
+                                              },
+                                              {
+                                                "type": "string",
+                                                "enum": [
+                                                  "OFFICIAL"
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          "packageType": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string",
+                                                "enum": [
+                                                  "ARCHIVE"
+                                                ]
+                                              },
+                                              {
+                                                "type": "string",
+                                                "enum": [
+                                                  "REGISTRY"
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          "triggerName": {
+                                            "type": "string"
+                                          },
+                                          "input": {
+                                            "type": "object",
+                                            "additionalProperties": {}
+                                          },
+                                          "inputUiInfo": {
+                                            "additionalProperties": true,
+                                            "type": "object",
+                                            "properties": {
+                                              "currentSelectedData": {},
+                                              "customizedInputs": {
+                                                "type": "object",
+                                                "additionalProperties": {}
+                                              },
+                                              "lastTestDate": {
+                                                "type": "string"
+                                              }
+                                            }
+                                          }
+                                        },
+                                        "required": [
+                                          "pieceName",
+                                          "pieceVersion",
+                                          "pieceType",
+                                          "packageType",
+                                          "triggerName",
+                                          "input",
+                                          "inputUiInfo"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "name",
+                                      "valid",
+                                      "displayName",
+                                      "type",
+                                      "settings"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "name": {
+                                        "type": "string"
+                                      },
+                                      "valid": {
+                                        "type": "boolean"
+                                      },
+                                      "displayName": {
+                                        "type": "string"
+                                      },
+                                      "nextAction": {},
+                                      "type": {
+                                        "type": "string",
+                                        "enum": [
+                                          "EMPTY"
+                                        ]
+                                      },
+                                      "settings": {}
+                                    },
+                                    "required": [
+                                      "name",
+                                      "valid",
+                                      "displayName",
+                                      "type",
+                                      "settings"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "updatedBy": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "valid": {
+                                "type": "boolean"
+                              },
+                              "state": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "LOCKED"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "DRAFT"
+                                    ]
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "created",
+                              "updated",
+                              "flowId",
+                              "displayName",
+                              "trigger",
+                              "valid",
+                              "state"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "created",
+                          "updated",
+                          "projectId",
+                          "status",
+                          "version"
+                        ]
+                      }
+                    },
+                    "next": {
+                      "description": "Cursor to the next page",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "previous": {
+                      "description": "Cursor to the previous page",
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/flows/{id}": {
+      "get": {
+        "tags": [
+          "flows"
+        ],
+        "description": "Get a flow by id",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "versionId",
+            "required": false
+          },
+          {
+            "schema": {
+              "pattern": "^[0-9a-zA-Z]{21}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "created": {
+                      "type": "string"
+                    },
+                    "updated": {
+                      "type": "string"
+                    },
+                    "projectId": {
+                      "type": "string"
+                    },
+                    "folderId": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "status": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "ENABLED"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "DISABLED"
+                          ]
+                        }
+                      ]
+                    },
+                    "schedule": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "CRON_EXPRESSION"
+                          ]
+                        },
+                        "cronExpression": {
+                          "type": "string"
+                        },
+                        "timezone": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "cronExpression",
+                        "timezone"
+                      ],
+                      "nullable": true
+                    },
+                    "publishedVersionId": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "version": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "created": {
+                          "type": "string"
+                        },
+                        "updated": {
+                          "type": "string"
+                        },
+                        "flowId": {
+                          "type": "string"
+                        },
+                        "displayName": {
+                          "type": "string"
+                        },
+                        "trigger": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string"
+                                },
+                                "valid": {
+                                  "type": "boolean"
+                                },
+                                "displayName": {
+                                  "type": "string"
+                                },
+                                "nextAction": {},
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "WEBHOOK"
+                                  ]
+                                },
+                                "settings": {
+                                  "type": "object",
+                                  "properties": {
+                                    "inputUiInfo": {
+                                      "additionalProperties": true,
+                                      "type": "object",
+                                      "properties": {
+                                        "currentSelectedData": {},
+                                        "customizedInputs": {
+                                          "type": "object",
+                                          "additionalProperties": {}
+                                        },
+                                        "lastTestDate": {
+                                          "type": "string"
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "required": [
+                                    "inputUiInfo"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "name",
+                                "valid",
+                                "displayName",
+                                "type",
+                                "settings"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string"
+                                },
+                                "valid": {
+                                  "type": "boolean"
+                                },
+                                "displayName": {
+                                  "type": "string"
+                                },
+                                "nextAction": {},
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "PIECE_TRIGGER"
+                                  ]
+                                },
+                                "settings": {
+                                  "type": "object",
+                                  "properties": {
+                                    "pieceName": {
+                                      "type": "string"
+                                    },
+                                    "pieceVersion": {
+                                      "type": "string",
+                                      "pattern": "^([~^])?[0-9]+\\.[0-9]+\\.[0-9]+$"
+                                    },
+                                    "pieceType": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string",
+                                          "enum": [
+                                            "CUSTOM"
+                                          ]
+                                        },
+                                        {
+                                          "type": "string",
+                                          "enum": [
+                                            "OFFICIAL"
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    "packageType": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string",
+                                          "enum": [
+                                            "ARCHIVE"
+                                          ]
+                                        },
+                                        {
+                                          "type": "string",
+                                          "enum": [
+                                            "REGISTRY"
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    "triggerName": {
+                                      "type": "string"
+                                    },
+                                    "input": {
+                                      "type": "object",
+                                      "additionalProperties": {}
+                                    },
+                                    "inputUiInfo": {
+                                      "additionalProperties": true,
+                                      "type": "object",
+                                      "properties": {
+                                        "currentSelectedData": {},
+                                        "customizedInputs": {
+                                          "type": "object",
+                                          "additionalProperties": {}
+                                        },
+                                        "lastTestDate": {
+                                          "type": "string"
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "required": [
+                                    "pieceName",
+                                    "pieceVersion",
+                                    "pieceType",
+                                    "packageType",
+                                    "triggerName",
+                                    "input",
+                                    "inputUiInfo"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "name",
+                                "valid",
+                                "displayName",
+                                "type",
+                                "settings"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string"
+                                },
+                                "valid": {
+                                  "type": "boolean"
+                                },
+                                "displayName": {
+                                  "type": "string"
+                                },
+                                "nextAction": {},
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "EMPTY"
+                                  ]
+                                },
+                                "settings": {}
+                              },
+                              "required": [
+                                "name",
+                                "valid",
+                                "displayName",
+                                "type",
+                                "settings"
+                              ]
+                            }
+                          ]
+                        },
+                        "updatedBy": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "valid": {
+                          "type": "boolean"
+                        },
+                        "state": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "LOCKED"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "DRAFT"
+                              ]
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "created",
+                        "updated",
+                        "flowId",
+                        "displayName",
+                        "trigger",
+                        "valid",
+                        "state"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "created",
+                    "updated",
+                    "projectId",
+                    "status",
+                    "version"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "flows"
+        ],
+        "description": "Delete a flow",
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[0-9a-zA-Z]{21}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
     "/v1/app-connections/": {
       "post": {
         "tags": [

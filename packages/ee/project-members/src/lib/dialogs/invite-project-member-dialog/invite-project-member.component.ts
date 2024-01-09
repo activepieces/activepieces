@@ -7,11 +7,12 @@ import {
 } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { catchError, map, Observable, of, tap } from 'rxjs';
-import { ProjectMemberService } from '../service/project-members.service';
+import { ProjectMemberService } from '../../service/project-members.service';
 import { DialogRef } from '@angular/cdk/dialog';
 import { HttpStatusCode } from '@angular/common/http';
 import { ProjectMemberRole } from '@activepieces/ee-shared';
 import { AuthenticationService } from '@activepieces/ui/common';
+import { RolesDisplayNames } from '../../utils';
 
 @Component({
   templateUrl: './invite-project-member.component.html',
@@ -25,6 +26,7 @@ export class InviteProjectMemberDialogComponent {
   inviteMember$: Observable<void> | undefined;
   loading = false;
   invalidEmail = false;
+  RolesDisplayNames = RolesDisplayNames;
   constructor(
     private formBuilder: FormBuilder,
     private snackbar: MatSnackBar,
@@ -88,18 +90,5 @@ export class InviteProjectMemberDialogComponent {
   }
   get ProjectMemberRole() {
     return Object.keys(ProjectMemberRole);
-  }
-
-  projectMemberRoleText(role: string): string {
-    switch (role) {
-      case ProjectMemberRole.ADMIN:
-        return $localize`ADMIN`;
-      case ProjectMemberRole.EDITOR:
-        return $localize`EDITOR`;
-      case ProjectMemberRole.VIEWER:
-        return $localize`VIEWER`;
-      default:
-        return $localize`UNKNOWN`;
-    }
   }
 }

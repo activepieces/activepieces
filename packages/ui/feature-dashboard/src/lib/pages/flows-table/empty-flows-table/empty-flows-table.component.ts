@@ -10,6 +10,7 @@ import {
   FlagService,
   FlowService,
   TelemetryService,
+  AuthenticationService,
 } from '@activepieces/ui/common';
 import { demoTemplate } from './demo-flow-template';
 
@@ -27,7 +28,8 @@ export class EmptyFlowsTableComponent {
     private router: Router,
     private flowService: FlowService,
     private telemetryService: TelemetryService,
-    private flagService: FlagService
+    private flagService: FlagService,
+    private authenticationService: AuthenticationService
   ) {
     this.showPoweredByAp$ = this.flagService.getShowPoweredByAp();
   }
@@ -39,6 +41,7 @@ export class EmptyFlowsTableComponent {
       this.createFlow$ = this.flowService
         .create({
           displayName: $localize`Untitled`,
+          projectId: this.authenticationService.getProjectId(),
         })
         .pipe(
           tap((flow) => {
@@ -54,6 +57,7 @@ export class EmptyFlowsTableComponent {
       this.creatingFlow = true;
       this.createFlow$ = this.flowService
         .create({
+          projectId: this.authenticationService.getProjectId(),
           displayName: demoTemplate.displayName,
         })
         .pipe(
