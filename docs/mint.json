@@ -110,16 +110,6 @@
                 "endpoints/connections/list",
                 "endpoints/connections/delete"
               ]
-            },
-            {
-              "group": "Git Sync",
-              "icon": "git",
-              "pages": [
-                "endpoints/git/configure",
-                "endpoints/git/list",
-                "endpoints/git/push",
-                "endpoints/git/pull"
-              ]
             }
           ]
         },
