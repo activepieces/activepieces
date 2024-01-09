@@ -26,22 +26,18 @@
                 </ap-button>
             </ng-container>
             <ng-container *ngIf="currentRepo$ | async as currentRepo">
-
-                <svg-icon src="assets/img/custom/git.svg" [svgStyle]="{width:32,height:32}" [applyClass]="true"></svg-icon>
+                <svg-icon src="assets/img/custom/git.svg" class="ap-fill-body ap-w-[32px] ap-h-[32px]"
+                    [applyClass]="true"></svg-icon>
                 <div i18n>
                     Remote URL: <b>{{currentRepo?.remoteUrl}}</b> <br>
                     Branch: <b>{{currentRepo?.branch}}</b>
                 </div>
-                <ap-icon-button i18n-tooltipText tooltipText="Disconnect" iconFilename="disconnect.svg"
-                    [width]="18" [height]="18"
-                    (buttonClicked)="disconnect()" color="warn">
+                <ap-icon-button i18n-tooltipText tooltipText="Disconnect" iconFilename="disconnect.svg" [width]="18"
+                    [height]="18" (buttonClicked)="disconnect()" color="warn">
                 </ap-icon-button>
             </ng-container>
-
-
         </div>
         <ng-container *ngIf="currentRepo$ | async as currentRepo">
-
             <div class="ap-flex ap-flex-col ap-gap-4 ap-divide-y ap-divide-dividers  ap-w-[700px]">
                 <div class="ap-flex ap-justify-between ap-items-center">
                     <div>
@@ -49,8 +45,8 @@
                             the repo</b>.
                     </div>
 
-                    <ap-button actionButton btnColor="primary" btnSize='medium' btnStyle="stroked"
-                        (buttonClicked)="push()" [disabled]="(pullLoading$ | async)" [loading]="(pushLoading$ | async) || false" [darkLoadingSpinner]="true">
+                    <ap-button *ngIf="(currentProject$ | async) as currentProject" actionButton btnColor="primary"
+                        btnSize='medium' btnStyle="stroked" (buttonClicked)="push(currentProject?.displayName || '')">
                         <div class="ap-flex ap-gap-2 ap-w-[3.9375rem]">
                             <svg-icon src="/assets/img/custom/upload.svg"
                                 class="ap-w-[20px] ap-h-[20px] ap-fill-primary" [applyClass]="true">
@@ -64,11 +60,11 @@
                         Pulling from your Git repo will <b>overwrite {{(currentProject$ | async)?.displayName}}</b>.
                     </div>
                     <ap-button actionButton btnColor="primary" btnSize='medium' btnStyle="stroked"
-                        (buttonClicked)="pull()" [darkLoadingSpinner]="true" [disabled]="pushLoading$ | async" [loading]="(pullLoading$ | async) || false">
+                        (buttonClicked)="pull()" [darkLoadingSpinner]="true" [disabled]="pushLoading$ | async"
+                        [loading]="(pullLoading$ | async) || false">
                         <div class="ap-flex ap-gap-2 ap-w-[3.9375rem]">
                             <svg-icon src="/assets/img/custom/download.svg"
-                                class="ap-w-[20px] ap-h-[20px] ap-fill-primary " [applyClass]="true">
-
+                                class="ap-w-[20px] ap-h-[20px] ap-fill-primary" [applyClass]="true">
                             </svg-icon>
                             Pull
                         </div>

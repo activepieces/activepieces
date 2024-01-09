@@ -20,6 +20,10 @@ import {
 import { RepoResolverData } from '../../resolvers/repo.resolver';
 import { Store } from '@ngrx/store';
 import { Project } from '@activepieces/shared';
+import {
+  PushDialogComponent,
+  PushDialogData,
+} from '../../components/dialogs/push-dialog/push-dialog.component';
 @Component({
   selector: 'app-sync-project',
   templateUrl: './sync-project.component.html',
@@ -103,16 +107,18 @@ export class SyncProjectComponent {
         this.pullLoading$.next(false);
       })
     );
-  push() {
-    this.pushLoading$.next(true);
+  push(projectDisplayName: string) {
     const repoId = this.currentRepo$.value?.id;
     if (repoId) {
-      this.push$ = this.syncProjectService.push(repoId).pipe(
-        tap(() => {
-          this.snackbar.open('Pushed successfully');
-        }),
-        this.errorHandlerPipe.bind(this)
-      );
+      const data: PushDialogData = {
+        projectName: projectDisplayName,
+        repoId: repoId,
+      };
+      this.matDialog
+        .open(PushDialogComponent, {
+          data,
+        })
+        .afterClosed();
     }
   }
 

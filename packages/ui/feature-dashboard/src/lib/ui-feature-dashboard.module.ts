@@ -24,6 +24,7 @@ import { UiFeatureTemplatesModule } from '@activepieces/ui/feature-templates';
 import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
 import { SyncProjectComponent } from './pages/sync-project/sync-project.component';
 import { ConfigureRepoDialogComponent } from './components/dialogs/configure-repo-dialog/configure-repo-dialog.component';
+import { PushDialogComponent } from './components/dialogs/push-dialog/push-dialog.component';
 
 @NgModule({
   imports: [
@@ -50,6 +51,7 @@ import { ConfigureRepoDialogComponent } from './components/dialogs/configure-rep
     RenameFolderDialogComponent,
     SyncProjectComponent,
     ConfigureRepoDialogComponent,
+    PushDialogComponent,
   ],
 })
 export class UiFeatureDashboardModule {}
