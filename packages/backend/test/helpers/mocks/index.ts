@@ -105,6 +105,7 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         smtpUseSSL: platform?.smtpUseSSL ?? faker.datatype.boolean(),
         smtpSenderEmail: platform?.smtpSenderEmail ?? faker.internet.email(),
         privacyPolicyUrl: platform?.privacyPolicyUrl ?? faker.internet.url(),
+        gitSyncEnabled: platform?.gitSyncEnabled ?? faker.datatype.boolean(),
         termsOfServiceUrl: platform?.termsOfServiceUrl ?? faker.internet.url(),
         embeddingEnabled: platform?.embeddingEnabled ?? faker.datatype.boolean(),
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),

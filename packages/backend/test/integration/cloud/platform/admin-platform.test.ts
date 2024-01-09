@@ -47,8 +47,9 @@ describe('admin add platform endpoint', () => {
         // assert
         const responseBody = response?.json()
         expect(response?.statusCode).toBe(StatusCodes.CREATED)
-        expect(Object.keys(responseBody)).toHaveLength(23)
+        expect(Object.keys(responseBody)).toHaveLength(24)
         expect(responseBody.id).toHaveLength(21)
+        expect(responseBody.gitSyncEnabled).toBe(false)
         expect(responseBody.created).toBeDefined()
         expect(responseBody.updated).toBeDefined()
         expect(responseBody.ownerId).toBe(mockUser.id)
