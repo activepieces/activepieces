@@ -86,6 +86,7 @@ async function upsertFlowToProject(flow: PopulatedFlow, projectId: string): Prom
             request: {
                 displayName: flow.version.displayName,
                 folderId: flow.folderId ?? undefined,
+                projectId,
             },
         })
         flowId = newFlow.id

@@ -44,6 +44,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.SHOW_GIT_SYNC,
+                value: true,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.CLOUD_AUTH_ENABLED,
                 value: system.getBoolean(SystemProp.CLOUD_AUTH_ENABLED) ?? true,
                 created,

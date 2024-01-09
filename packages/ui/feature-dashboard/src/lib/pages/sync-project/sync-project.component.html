@@ -26,10 +26,10 @@
                 </ap-button>
             </ng-container>
             <ng-container *ngIf="currentRepo$ | async as currentRepo">
-                <svg-icon src="assets/img/custom/git.svg" class="ap-fill-body ap-w-[32px] ap-h-[32px]"
+                <svg-icon src="assets/img/custom/git.svg" class="ap-fill-body ap-w-[28px] ap-h-[28px]"
                     [applyClass]="true"></svg-icon>
                 <div i18n>
-                    Remote URL: <b>{{currentRepo?.remoteUrl}}</b> <br>
+                    Connected Repo: <b>{{currentRepo?.remoteUrl}}</b> <br>
                     Branch: <b>{{currentRepo?.branch}}</b>
                 </div>
                 <ap-icon-button i18n-tooltipText tooltipText="Disconnect" iconFilename="disconnect.svg" [width]="18"
@@ -39,32 +39,22 @@
         </div>
         <ng-container *ngIf="currentRepo$ | async as currentRepo">
             <div class="ap-flex ap-flex-col ap-gap-4 ap-divide-y ap-divide-dividers  ap-w-[700px]">
-                <div class="ap-flex ap-justify-between ap-items-center">
-                    <div>
-                        Pushing {{(currentProject$ | async)?.displayName}} to your Git repo will <b>overwrite
-                            the repo</b>.
-                    </div>
-
+                <div class="ap-flex ap-gap-4 ap-items-center">
                     <ap-button *ngIf="(currentProject$ | async) as currentProject" actionButton btnColor="primary"
                         btnSize='medium' btnStyle="stroked" (buttonClicked)="push(currentProject?.displayName || '')">
-                        <div class="ap-flex ap-gap-2 ap-w-[3.9375rem]">
+                        <div class="ap-flex ap-gap-2">
                             <svg-icon src="/assets/img/custom/upload.svg"
                                 class="ap-w-[20px] ap-h-[20px] ap-fill-primary" [applyClass]="true">
-                            </svg-icon> Push
+                            </svg-icon> Push to Repo
                         </div>
                     </ap-button>
-                </div>
-                <div class="ap-flex ap-justify-between ap-items-center ap-pt-4">
-                    <div>
-                        Pulling from your Git repo will <b>overwrite {{(currentProject$ | async)?.displayName}}</b>.
-                    </div>
                     <ap-button *ngIf="(currentProject$ | async) as currentProject" actionButton btnColor="primary"
                         btnSize='medium' btnStyle="stroked" (buttonClicked)="pull(currentProject?.displayName || '')">
-                        <div class="ap-flex ap-gap-2 ap-w-[3.9375rem]">
+                        <div class="ap-flex ap-gap-2 ">
                             <svg-icon src="/assets/img/custom/download.svg"
                                 class="ap-w-[20px] ap-h-[20px] ap-fill-primary" [applyClass]="true">
                             </svg-icon>
-                            Pull
+                            Pull From Repo
                         </div>
                     </ap-button>
                 </div>

@@ -3,7 +3,7 @@
 </ap-dialog-title-template>
 
 <mat-dialog-content>
-    <div class="md:ap-min-w-[500px]">
+    <div class="md:ap-min-w-[500px] ap-max-w-[750px]">
 
         <ap-warning-box>
             <div class="ap-flex ap-items-center ap-gap-2 ap-ml-[-3px] ">
@@ -11,9 +11,8 @@
                 </svg-icon> <span i18n>Warning</span>
             </div>
             <p i18n>
-                Pushing {{data.projectName}} to your Git repo will <b>overwrite the repo</b>.
-            </p>
-
+                    All the flows in the Git repository will be replaced with the flows in <b>{{data.projectName}}</b>.
+                </p>
         </ap-warning-box>
 
         <form class="ap-flex ap-flex-col ap-gap-1 ap-mt-4" (submit)="submit()">

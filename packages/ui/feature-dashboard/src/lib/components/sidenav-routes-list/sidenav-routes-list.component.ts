@@ -127,7 +127,7 @@ export class SidenavRoutesListComponent implements OnInit {
         icon: 'assets/img/custom/dashboard/settings.svg',
         caption: $localize`Settings`,
         route: 'settings',
-        showInSideNav$: of(true),
+        showInSideNav$: this.flagServices.isFlagEnabled(ApFlagId.SHOW_GIT_SYNC),
       },
     ];
   }
