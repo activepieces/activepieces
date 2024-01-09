@@ -1,5 +1,5 @@
 import { FlowOperationType, FlowVersion, SeekPage } from '@activepieces/shared';
-import { FlowService, fadeIn400ms } from '@activepieces/ui/common';
+import { FlowService } from '@activepieces/ui/common';
 import {
   BuilderSelectors,
   FlowsActions,
@@ -29,7 +29,7 @@ import { MatDialog } from '@angular/material/dialog';
 @Component({
   selector: 'app-version-history',
   templateUrl: './version-history.component.html',
-  animations: [fadeIn400ms],
+
 })
 export class VersionHistoryComponent {
   sideBarDisplayName = $localize`Versions`;
