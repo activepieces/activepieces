@@ -6,6 +6,8 @@ import {
     GetFlowQueryParamsRequest,
     ListFlowsRequest,
     PopulatedFlow,
+    PrincipalType,
+    SeekPage,
     UpdateFlowStatusRequest,
 } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
@@ -114,8 +116,16 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
 }
 
 const CreateFlowRequestOptions = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+    },
     schema: {
+        tags: ['flows'],
+        description: 'Create a flow',
         body: CreateFlowRequest,
+        response: {
+            [StatusCodes.CREATED]: PopulatedFlow,
+        },
     },
 }
 
@@ -146,9 +156,16 @@ const UpdateFlowPublishedVersionIdRequestOptions = {
 }
 
 const ListFlowsRequestOptions = {
-    description: 'List flows',
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+    },
     schema: {
+        tags: ['flows'],
+        description: 'List flows',
         querystring: ListFlowsRequest,
+        response: {
+            [StatusCodes.OK]: SeekPage(PopulatedFlow),
+        },
     },
 }
 
@@ -170,8 +187,12 @@ const GetFlowTemplateRequestOptions = {
 }
 
 const GetFlowRequestOptions = {
-    description: 'Get a flow by id',
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+    },
     schema: {
+        tags: ['flows'],
+        description: 'Get a flow by id',
         params: Type.Object({
             id: ApId,
         }),
@@ -183,7 +204,11 @@ const GetFlowRequestOptions = {
 }
 
 const DeleteFlowRequestOptions = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+    },
     schema: {
+        tags: ['flows'],
         description: 'Delete a flow',
         params: Type.Object({
             id: ApId,

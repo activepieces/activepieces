@@ -17,6 +17,7 @@ import {
   FOLDER_QUERY_PARAM,
   FlowService,
   LIMIT_QUERY_PARAM,
+  ProjectSelectors,
 } from '@activepieces/ui/common';
 
 import { FormControl } from '@angular/forms';
@@ -59,6 +60,7 @@ export class FlowsTableDataSource extends DataSource<FlowListDtoWithInstanceStat
     return combineLatest({
       queryParams: this.queryParams$,
       refresh: this.refresh$,
+      project: this.store.select(ProjectSelectors.selectCurrentProject),
     }).pipe(
       tap((res) => {
         if (res.queryParams['folderId']) {
@@ -76,6 +78,7 @@ export class FlowsTableDataSource extends DataSource<FlowListDtoWithInstanceStat
         const { queryParams } = res;
         return forkJoin([
           this.flowService.list({
+            projectId: res.project.id,
             limit: queryParams[LIMIT_QUERY_PARAM] || DEFAULT_PAGE_SIZE,
             cursor: queryParams[CURSOR_QUERY_PARAM],
             folderId: queryParams[FOLDER_QUERY_PARAM] || undefined,

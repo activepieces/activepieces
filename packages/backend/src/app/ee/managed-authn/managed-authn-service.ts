@@ -44,6 +44,14 @@ const getOrCreateUser = async (params: GetOrCreateUserParams): Promise<GetOrCrea
         externalProjectId,
     })
 
+    await projectMemberService.upsert({
+        projectId: project.id,
+        email: params.externalEmail,
+        platformId,
+        role: ProjectMemberRole.EDITOR,
+        status: ProjectMemberStatus.ACTIVE,
+    })
+
     if (existingUser) {
         const { password: _, ...user } = existingUser
 
@@ -63,14 +71,6 @@ const getOrCreateUser = async (params: GetOrCreateUserParams): Promise<GetOrCrea
         verified: true,
         externalId: externalUserId,
         platformId,
-    })
-
-    await projectMemberService.upsert({
-        projectId: project.id,
-        email: newUser.email,
-        platformId,
-        role: ProjectMemberRole.EDITOR,
-        status: ProjectMemberStatus.ACTIVE,
     })
 
     return {

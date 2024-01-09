@@ -110,6 +110,17 @@
                 "endpoints/connections/list",
                 "endpoints/connections/delete"
               ]
+            },
+            {
+              "group": "Flows",
+              "icon": "bolt",
+              "pages": [
+                "endpoints/flows/schema",
+                "endpoints/flows/create",
+                "endpoints/flows/get",
+                "endpoints/flows/list",
+                "endpoints/flows/delete"
+              ]
             }
           ]
         },
@@ -119,15 +130,7 @@
         "flows/building-flows",
         "flows/passing-data",
         "flows/publishing-flows",
-        "flows/debugging-runs",
-        "flows/code"
-      ]
-    },
-    {
-      "group": "Security",
-      "pages": [
-        "security/permissions",
-        "security/sso"
+        "flows/debugging-runs"
       ]
     },
     {
@@ -215,11 +218,33 @@
       ]
     },
     {
-      "group": "Worker Architecture",
+      "group": "Architecture",
       "pages": [
-        "developers/architecture/repo-structure",
-        "developers/architecture/flow-worker",
-        "developers/architecture/code-worker"
+        "developers/architecture/repo-structure"
+      ]
+    },
+    {
+      "group": "Embedding",
+      "pages": [
+        {
+          "group": "Embed Builder",
+          "icon": "code",
+          "pages": [
+            "embedding/embed-builder/generate-jwt",
+            "embedding/embed-builder/embed-iframe"
+            
+          ]
+        },
+        {
+          "group": "Connection Cards",
+          "icon": "cards-blank",
+          "pages": [
+            "embedding/connection-cards/overview",
+            "embedding/connection-cards/user-authentication",
+            "embedding/connection-cards/frontend-sdk",
+            "embedding/connection-cards/user-flows"
+          ]
+        }
       ]
     },
     {
@@ -232,26 +257,14 @@
         "platform/manage-templates",
         "platform/manage-pieces",
         "platform/manage-oauth2",
-        "platform/customize-emails",
-        "platform/managed-users",
-        "platform/embedding"
+        "platform/customize-emails"
       ]
     },
     {
-      "group": "Enterprise Edition",
+      "group": "Security",
       "pages": [
-        "enterprise/whitelabel",
-        "enterprise/environments",
-        {
-          "group": "Connection Cards",
-          "icon": "cards-blank",
-          "pages": [
-            "enterprise/connection-cards/overview",
-            "enterprise/connection-cards/user-authentication",
-            "enterprise/connection-cards/frontend-sdk",
-            "enterprise/connection-cards/user-flows"
-          ]
-        }
+        "security/permissions",
+        "security/sso"
       ]
     },
     {

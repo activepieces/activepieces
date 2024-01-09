@@ -2,6 +2,7 @@ import { PieceAuth, createPiece } from "@activepieces/pieces-framework";
 
 import { createDocument } from "./lib/actions/create-document";
 import { createDocumentBasedOnTemplate } from "./lib/actions/create-document-based-on-template.action";
+import { readDocument } from "./lib/actions/read-document.action";
 
 export const googleDocsAuth = PieceAuth.OAuth2({
     
@@ -17,6 +18,6 @@ export const googleDocs = createPiece({
     logoUrl: "https://cdn.activepieces.com/pieces/google-docs.png",
     authors: ['MoShizzle', 'PFernandez98'],
     auth: googleDocsAuth,
-    actions: [createDocument, createDocumentBasedOnTemplate],
+    actions: [createDocument, createDocumentBasedOnTemplate, readDocument],
     triggers: [],
 });

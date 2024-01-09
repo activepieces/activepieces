@@ -110,7 +110,7 @@ export const Property = {
 	},
 
 	Json<R extends boolean>(request: Properties<JsonProperty<R>>): R extends true ? JsonProperty<true> : JsonProperty<false> {
-		return { ...request, valueSchema: undefined, type: PropertyType.JSON } as unknown as R extends true ? JsonProperty<true> : JsonProperty<false>;
+		return { ...request, valueSchema: undefined, type: PropertyType.JSON, defaultProcessors: [Processors.json] } as unknown as R extends true ? JsonProperty<true> : JsonProperty<false>;
 	},
 	Array<R extends boolean>(request: Properties<ArrayProperty<R>>): R extends true ? ArrayProperty<true> : ArrayProperty<false> {
 		return { ...request, valueSchema: undefined, type: PropertyType.ARRAY } as unknown as R extends true ? ArrayProperty<true> : ArrayProperty<false>;

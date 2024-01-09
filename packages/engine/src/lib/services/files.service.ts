@@ -6,6 +6,8 @@ import { API_URL } from '../constants'
 const DB_PREFIX_URL = 'db://'
 const FILE_PREFIX_URL = 'file://'
 const MEMORY_PREFIX_URL = 'memory://'
+const MAXIMUM = 4 * 1024 * 1024
+const MAXIMUM_MB = MAXIMUM / 1024 / 1024
 
 export type DefaultFileSystem = 'db' | 'local' | 'memory'
 
@@ -79,12 +81,21 @@ async function readMemoryFile(absolutePath: string): Promise<ApFile> {
     }
 }
 
+
 async function writeDbFile({ stepName, flowId, fileName, data, workerToken }: { stepName: string, flowId: string, fileName: string, data: Buffer, workerToken: string }): Promise<string> {
     const formData = new FormData()
     formData.append('stepName', stepName)
     formData.append('name', fileName)
     formData.append('flowId', flowId)
     formData.append('file', new Blob([data], { type: 'application/octet-stream' }))
+
+    if (data.length > MAXIMUM) {
+        throw new Error(JSON.stringify({
+            message: 'File size is larger than maximum supported size in test step mode, please use test flow instead of step as a workaround',
+            currentFileSize: `${(data.length / 1024 / 1024).toFixed(2)} MB`,
+            maximumSupportSize: `${MAXIMUM_MB.toFixed(2)} MB`,
+        }))
+    }
 
     const response = await fetch(API_URL + 'v1/step-files', {
         method: 'POST',
@@ -97,6 +108,7 @@ async function writeDbFile({ stepName, flowId, fileName, data, workerToken }: { 
     if (!response.ok) {
         throw new Error('Failed to store entry ' + response.body)
     }
+
     const result = await response.json()
     return result.url
 }
