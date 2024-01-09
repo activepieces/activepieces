@@ -1,5 +1,5 @@
 import { Action, createReducer, on } from '@ngrx/store';
-import { FlowsActions } from './flows.action';
+import { FlowsActions } from './flow.action';
 import {
   flowHelper,
   FlowStatus,

@@ -15,7 +15,7 @@ import {
   flowHelper,
 } from '@activepieces/shared';
 import { canvasActions } from './canvas.action';
-import { FlowsActions } from '../../flow/flows.action';
+import { FlowsActions } from '../../flow/flow.action';
 
 const initialState: CanvasState = {
   selectedRun: undefined,
@@ -73,6 +73,11 @@ const __CanvasReducer = createReducer(
         type: RightSideBarType.NONE,
       },
     };
+  }),
+  on(canvasActions.updateViewedVersionId, (state, action): CanvasState => {
+    const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
+    clonedState.viewedVersion.id = action.versionId;
+    return clonedState;
   }),
   on(canvasActions.deselectStep, (state): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
@@ -148,7 +153,7 @@ const __CanvasReducer = createReducer(
     });
     return clonedState;
   }),
-  
+
   on(FlowsActions.duplicateStep, (state, { operation }): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
     const clonedFlowVersionWithArtifacts: FlowVersion = JSON.parse(
