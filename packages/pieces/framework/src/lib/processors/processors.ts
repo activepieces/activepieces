@@ -15,6 +15,9 @@ export class Processors {
       return value;
     }
     try {
+      if (typeof value === 'object') {
+        return value;
+      }
       return JSON.parse(value);
     } catch (error) {
       console.error(error);
