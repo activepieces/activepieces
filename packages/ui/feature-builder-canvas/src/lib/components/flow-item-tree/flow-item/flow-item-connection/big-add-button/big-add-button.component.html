@@ -10,10 +10,21 @@
 
 
 
-<svg *ngIf="inReadOnlyMode" class="ap-stroke-border ap-absolute ap-overflow-visible" width="300" height="225"
-    [style.top]="top" stroke-width="2" [style.left]="left">
-    <line x1="20" y1="-40" x2="20" y2="84"></line>
-</svg>
+
+
+
+<div class="ap-absolute" [style.top]="top+'px'" [style.left]="left+'px'">
+    <svg class="ap-overflow-visible " shape-rendering="auto">
+        <g *ngIf="!inReadOnlyMode">
+            <path [attr.d]="fillerLinesCommand" class="ap-stroke-border" fill="transparent" stroke-width="2" />
+        </g>
+        <g *ngIf="inReadOnlyMode">
+            <path [attr.d]="replacementLineWhenViewingRun" class="ap-stroke-border" fill="transparent"
+                stroke-width="2" />
+        </g>
+    </svg>
+
+</div>
 
 
 
