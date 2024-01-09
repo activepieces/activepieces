@@ -7,7 +7,7 @@
     </div>
     <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="invitationForm" (submit)="submit()">
       <mat-form-field class="ap-w-full" appearance="outline">
-        <input cdkFocusInitial formControlName="email" matInput type="text" placeholder="bugs.bunny@gmail.com"/>
+        <input cdkFocusInitial formControlName="email" matInput type="text" placeholder="bugs.bunny@gmail.com" />
         <mat-error *ngIf="invitationForm.controls.email.invalid">
           <ng-container *ngIf="invitationForm.controls.email.getError('exists'); else emailRequired">
             <span i18n>The invited email already has an account. Please contact support for assistance.</span>
@@ -20,7 +20,7 @@
       <mat-form-field class="ap-w-full" appearance="outline">
         <mat-label i18n>Role</mat-label>
         <mat-select formControlName="role">
-            <mat-option *ngFor="let role of ProjectMemberRole" [value]="role">{{ projectMemberRoleText(role) }}</mat-option>
+          <mat-option *ngFor="let role of ProjectMemberRole" [value]="role">{{ RolesDisplayNames[role] }}</mat-option>
         </mat-select>
       </mat-form-field>
     </form>
@@ -33,8 +33,7 @@
     <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" [disabled]="loading" i18n>
       Cancel
     </ap-button>
-    <ap-button btnSize="default" type="submit" (click)="submit();" [loading]="loading"
-      btnColor="primary" i18n>
+    <ap-button btnSize="default" type="submit" (click)="submit();" [loading]="loading" btnColor="primary" i18n>
       Invite
     </ap-button>
   </div>
