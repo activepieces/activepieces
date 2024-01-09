@@ -241,6 +241,9 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://i-nithin.netlify.app/"><img src="https://avatars.githubusercontent.com/u/97078688?v=4?s=100" width="100px;" alt="i-nithin"/><br /><sub><b>i-nithin</b></sub></a><br /><a href="#plugin-i-nithin" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://lawrenceli.me"><img src="https://avatars.githubusercontent.com/u/24540598?v=4?s=100" width="100px;" alt="la3rence"/><br /><sub><b>la3rence</b></sub></a><br /><a href="#plugin-la3rence" title="Plugin/utility libraries">🔌</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="http://dennisrongo.com"><img src="https://avatars.githubusercontent.com/u/51771021?v=4?s=100" width="100px;" alt="Dennis Rongo"/><br /><sub><b>Dennis Rongo</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3Adennisrongo" title="Bug reports">🐛</a></td>
+    </tr>
   </tbody>
 </table>
 
