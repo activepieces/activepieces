@@ -41,6 +41,7 @@ const platformProjectController: FastifyPluginCallbackTypebox = (fastify, _opts,
         assertNotNullOrUndefined(platformId, 'platformId')
         return platformProjectService.getAll({
             platformId,
+            externalId: request.query.externalId,
             ownerId: undefined,
         })
     })
