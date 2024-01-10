@@ -94,6 +94,8 @@ import { AddPlatformIdToFlowTemplates1703411318826 } from './migration/postgres/
 import { RemoveFlowInstance1702379794665 } from './migration/postgres/1702379794665-remove-flow-instance'
 import { RenameAppNameToPieceName1703711596105 } from './migration/postgres/1703711596105-RenameAppNameToPieceName'
 import { AddVerifiedAndChangeStatus1703769034497 } from './migration/postgres/1703769034497-AddVerifiedAndChangeStatus'
+import { AddAuthOptionsToPlatform1704667304953 } from './migration/postgres/1704667304953-AddAuthOptionsToPlatform'
+import { AddEnableEmailAuthToPlatform1704797979825 } from './migration/postgres/1704797979825-AddEnableEmailAuthToPlatform'
 import { AddGitSyncEnabledToPlatform1704636362533 } from './migration/postgres/1704636362533-AddGitSyncEnabledToPlatform'
 import { AddGitRepoMigrationPostgres1704503804056 } from './migration/postgres/1704503804056-AddGitRepoMigrationPostgres'
 
@@ -206,6 +208,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddApiKeys1701716639135,
                 AddEmbeddingFeatureToPlatform1701794452891,
                 AddPlatformIdToFlowTemplates1703411318826,
+                AddAuthOptionsToPlatform1704667304953,
+                AddEnableEmailAuthToPlatform1704797979825,
                 AddGitRepoMigrationPostgres1704503804056,
                 AddGitSyncEnabledToPlatform1704636362533,
             )
@@ -243,6 +247,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddApiKeys1701716639135,
                 AddEmbeddingFeatureToPlatform1701794452891,
                 AddPlatformIdToFlowTemplates1703411318826,
+                AddAuthOptionsToPlatform1704667304953,
+                AddEnableEmailAuthToPlatform1704797979825,
                 AddGitRepoMigrationPostgres1704503804056,
                 AddGitSyncEnabledToPlatform1704636362533,
             )

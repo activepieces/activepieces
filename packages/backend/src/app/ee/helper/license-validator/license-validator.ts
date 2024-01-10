@@ -8,6 +8,7 @@ export enum LiceneseStatus {
 export type SuccessLicenseResponse = {
     status: LiceneseStatus.VALID
     showPoweredBy?: boolean
+    ssoEnabled?: boolean
     embeddingEnabled?: boolean
     gitSyncEnabled?: boolean
 }

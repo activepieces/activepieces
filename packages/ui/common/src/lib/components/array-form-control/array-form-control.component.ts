@@ -24,6 +24,7 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
   valueChanges$: Observable<void>;
   formArray: FormArray<FormControl<string>>;
   @Input({ required: true }) placeholder = '';
+  @Input() addEmptyFieldAfterWriteValue = true;
   onChange: (val: unknown) => void = () => {
     //ignore
   };
@@ -61,7 +62,8 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
       }
       if (
         this.formArray.length > 0 &&
-        this.formArray.controls[this.formArray.length - 1].value
+        this.formArray.controls[this.formArray.length - 1].value &&
+        this.addEmptyFieldAfterWriteValue
       ) {
         this.formArray.push(new FormControl<string>('', { nonNullable: true }));
       }

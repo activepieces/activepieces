@@ -1,6 +1,6 @@
 import { EntitySchema } from 'typeorm'
 import { FilteredPieceBehavior, Platform } from '@activepieces/ee-shared'
-import { ARRAY_COLUMN_TYPE, ApIdSchema, BaseColumnSchemaPart, isPostgres } from '../../database/database-common'
+import { ARRAY_COLUMN_TYPE, ApIdSchema, BaseColumnSchemaPart, JSONB_COLUMN_TYPE, isPostgres } from '../../database/database-common'
 import { LocalesEnum, User } from '@activepieces/shared'
 
 type PlatformSchema = Platform & {
@@ -99,6 +99,25 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: String,
             enum: LocalesEnum,
             nullable: true,
+        },
+        allowedAuthDomains: {
+            type: ARRAY_COLUMN_TYPE,
+            array: isPostgres(),
+        },
+        enforceAllowedAuthDomains: {
+            type: Boolean,
+            nullable: false,
+        },
+        ssoEnabled: {
+            type: Boolean,
+            nullable: false,
+        },
+        emailAuthEnabled: {
+            type: Boolean,
+            nullable: false,
+        },
+        federatedAuthProviders: {
+            type: JSONB_COLUMN_TYPE,
         },
     },
     indices: [

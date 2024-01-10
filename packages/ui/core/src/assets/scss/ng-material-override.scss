@@ -690,6 +690,13 @@ cdk-virtual-scroll-viewport
  
 }
 
+
+app-platform-settings {
+  .mat-mdc-tab-body-wrapper , .mat-mdc-tab-group-dynamic-height .mat-mdc-tab-body-content
+  {
+    overflow: visible;
+  }
+}
   
 
 .mat-mdc-outlined-button:disabled
