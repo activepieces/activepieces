@@ -1,0 +1,15 @@
+<div
+    class="ap-border ap-border-solid ap-border-border ap-rounded-md ap-typography-body-1 ap-p-4 ap-flex ap-items-center ap-justify-between ap-w-[700px] ap-mb-8">
+    <div i18n class="ap-flex ap-gap-4 ap-items-center">
+        <svg-icon src="/assets/img/custom/lock.svg" class="ap-w-[20px] ap-h-[20px] ap-fill-body" [applyClass]="true">
+        </svg-icon>Please upgrade your plan to unlock this feature and many more
+    </div>
+    <ap-button i18n btnSize="medium" (buttonClicked)="openUrl()" i18n>
+        <div class="ap-flex ap-gap-2">
+            <svg-icon src="/assets/img/custom/upgrade.svg" class="ap-w-[20px] ap-h-[20px] ap-fill-white"
+                [applyClass]="true">
+            </svg-icon>
+            Upgrade
+        </div>
+    </ap-button>
+</div>

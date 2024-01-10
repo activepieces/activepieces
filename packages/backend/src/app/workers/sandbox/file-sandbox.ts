@@ -60,7 +60,8 @@ export class FileSandbox extends AbstractSandbox {
     }
 
     public override getSandboxFolderPath(): string {
-        return path.join(__dirname, `../../sandbox/${this.boxId}`)
+        const systemCache = system.get(SystemProp.CACHE_PATH) ?? __dirname
+        return path.join(systemCache, 'sandbox', `${this.boxId}`)
     }
 
     protected override async setupCache(): Promise<void> {

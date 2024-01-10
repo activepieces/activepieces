@@ -10,6 +10,7 @@ export type SuccessLicenseResponse = {
     showPoweredBy?: boolean
     ssoEnabled?: boolean
     embeddingEnabled?: boolean
+    gitSyncEnabled?: boolean
 }
 export type LicenseResponse = SuccessLicenseResponse | {
     status: LiceneseStatus.INVALID

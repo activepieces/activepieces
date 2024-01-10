@@ -91,6 +91,10 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             enum: FilteredPieceBehavior,
             nullable: false,
         },
+        gitSyncEnabled: {
+            type: Boolean,
+            nullable: false,
+        },
         defaultLocale: {
             type: String,
             enum: LocalesEnum,

@@ -31,6 +31,7 @@ export const platformService = {
             ssoEnabled: false,
             federatedAuthProviders: {},
             cloudAuthEnabled: true,
+            gitSyncEnabled: false,
         }
 
         const savedPlatform = await repo.save(newPlatform)
@@ -81,6 +82,7 @@ export const platformService = {
             ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
             ...spreadIfDefined('defaultLocale', params.defaultLocale),
             ...spreadIfDefined('showPoweredBy', params.showPoweredBy),
+            ...spreadIfDefined('gitSyncEnabled', params.gitSyncEnabled),
             ...spreadIfDefined('embeddingEnabled', params.embeddingEnabled),
             ...spreadIfDefined('ssoEnabled', params.ssoEnabled),
             ...spreadIfDefined('emailAuthEnabled', params.emailAuthEnabled),
@@ -169,6 +171,7 @@ type UpdateParams = UpdatePlatformRequestBody & {
     userId: UserId
     showPoweredBy?: boolean
     ssoEnabled?: boolean
+    gitSyncEnabled?: boolean
     embeddingEnabled?: boolean
 }
 

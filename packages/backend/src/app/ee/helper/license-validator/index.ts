@@ -36,6 +36,7 @@ export async function enforceLimits(): Promise<void> {
                 showPoweredBy: license.showPoweredBy,
                 embeddingEnabled: license.embeddingEnabled,
                 ssoEnabled: license.ssoEnabled,
+                gitSyncEnabled: license.gitSyncEnabled,
             })
             break
         }

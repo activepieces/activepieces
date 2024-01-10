@@ -12,7 +12,7 @@ import {
 } from '@activepieces/pieces-common';
 
 export const airtableAuth = PieceAuth.SecretText({
-  displayName: 'Personal Token',
+  displayName: 'Personal Access Token',
   required: true,
   description: `
     To obtain your personal token, follow these steps:
@@ -39,7 +39,7 @@ export const airtableAuth = PieceAuth.SecretText({
     } catch (e) {
       return {
         valid: false,
-        error: 'Invalid API token',
+        error: 'Invalid personal access token',
       };
     }
   },

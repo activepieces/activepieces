@@ -699,3 +699,10 @@ app-platform-settings {
 }
   
 
+.mat-mdc-outlined-button:disabled
+{
+  svg{
+    fill: var(--mdc-outlined-button-disabled-label-text-color, rgba(0, 0, 0, 0.38)) !important
+  }
+}
+

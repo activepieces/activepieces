@@ -31,6 +31,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             modifiedFlags[ApFlagId.SHOW_SIGN_UP_LINK] = false
             modifiedFlags[ApFlagId.SHOW_POWERED_BY_AP] = platform.showPoweredBy
             modifiedFlags[ApFlagId.CLOUD_AUTH_ENABLED] = platform.cloudAuthEnabled
+            modifiedFlags[ApFlagId.SHOW_GIT_SYNC] = platform.gitSyncEnabled
             modifiedFlags[ApFlagId.FRONTEND_URL] = `https://${hostname}`
             modifiedFlags[ApFlagId.WEBHOOK_URL_PREFIX] = `https://${hostname}/api/v1/webhooks`
             modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL] = `https://${hostname}/redirect`
