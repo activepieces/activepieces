@@ -48,6 +48,9 @@ export class FlowluClient {
     const res = await httpClient.sendRequest<T>({
       method: method,
       url: `https://${this.domain}.flowlu.com/api/v1/module` + resourceUri,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
       queryParams: { api_key: this.apiKey, ...query },
       body: body,
     });
@@ -87,6 +90,14 @@ export class FlowluClient {
     return await this.makeRequest(
       HttpMethod.POST,
       '/task/tasks/create',
+      undefined,
+      request
+    );
+  }
+  async updateTask(id: number, request: CreateTaskAPIRequest) {
+    return await this.makeRequest(
+      HttpMethod.POST,
+      `/task/tasks/update${id}`,
       undefined,
       request
     );

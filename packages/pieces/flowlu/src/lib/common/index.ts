@@ -26,10 +26,10 @@ export const flowluCommon = {
         const client = makeClient(
           auth as PiecePropValueSchema<typeof flowluAuth>
         );
-        const res = await client.listAllTasks();
+        const { response } = await client.listAllTasks();
         return {
           disabled: false,
-          options: res.items.map((item) => {
+          options: response.items.map((item) => {
             return {
               label: item.name,
               value: item.id,
@@ -54,10 +54,10 @@ export const flowluCommon = {
         const client = makeClient(
           auth as PiecePropValueSchema<typeof flowluAuth>
         );
-        const res = await client.listAllUsers();
+        const { response } = await client.listAllUsers();
         return {
           disabled: false,
-          options: res.items.map((item) => {
+          options: response.items.map((item) => {
             return {
               label: item.name,
               value: item.id,
@@ -82,10 +82,10 @@ export const flowluCommon = {
         const client = makeClient(
           auth as PiecePropValueSchema<typeof flowluAuth>
         );
-        const res = await client.listAllTaskWorkflow();
+        const { response } = await client.listAllTaskWorkflow();
         return {
           disabled: false,
-          options: res.items.map((item) => {
+          options: response.items.map((item) => {
             return {
               label: item.name,
               value: item.id,
@@ -110,10 +110,10 @@ export const flowluCommon = {
         const client = makeClient(
           auth as PiecePropValueSchema<typeof flowluAuth>
         );
-        const res = await client.listAllTaskStages();
+        const { response } = await client.listAllTaskStages();
         return {
           disabled: false,
-          options: res.items.map((item) => {
+          options: response.items.map((item) => {
             return {
               label: item.name,
               value: item.id,

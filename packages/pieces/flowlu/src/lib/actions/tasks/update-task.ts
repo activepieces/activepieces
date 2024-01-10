@@ -7,12 +7,13 @@ import dayjs from 'dayjs';
 import { flowluAuth } from '../../../';
 import { flowluCommon, makeClient } from '../../common';
 
-export const createTaskAction = createAction({
+export const updateTaskAction = createAction({
   auth: flowluAuth,
-  name: 'flowlu_create_task',
-  displayName: 'Create Task',
-  description: 'Creates a new task.',
+  name: 'flowlu_update_task',
+  displayName: 'Update Task',
+  description: 'Updates an existing task.',
   props: {
+    task_id: flowluCommon.task_id(true),
     name: Property.ShortText({
       displayName: 'Name',
       required: true,
@@ -95,7 +96,7 @@ export const createTaskAction = createAction({
     const client = makeClient(
       context.auth as PiecePropValueSchema<typeof flowluAuth>
     );
-    return await client.createTask({
+    return await client.updateTask(context.propsValue.task_id!, {
       name: context.propsValue.name,
       description: context.propsValue.description,
       priority: context.propsValue.priority,

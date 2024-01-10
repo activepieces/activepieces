@@ -6,6 +6,7 @@ import {
 import { createTaskAction } from './lib/actions/tasks/create-task';
 import { deleteTaskAction } from './lib/actions/tasks/delete-task';
 import { getTaskAction } from './lib/actions/tasks/get-task';
+import { updateTaskAction } from './lib/actions/tasks/update-task';
 
 export const flowluAuth = PieceAuth.CustomAuth({
   required: true,
@@ -30,10 +31,15 @@ export const flowluAuth = PieceAuth.CustomAuth({
 
 export const flowlu = createPiece({
   displayName: 'Flowlu',
-  auth: PieceAuth.None(),
+  auth: flowluAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/flowlu.png',
   authors: ['kishanprmr'],
-  actions: [createTaskAction, deleteTaskAction, getTaskAction],
+  actions: [
+    createTaskAction,
+    deleteTaskAction,
+    getTaskAction,
+    updateTaskAction,
+  ],
   triggers: [],
 });

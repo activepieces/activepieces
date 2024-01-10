@@ -102,20 +102,22 @@ export interface TaskWorkflowStage {
   deleted_at: string;
 }
 export interface ListAPIResponse<T> extends HttpMessageBody {
-  total: number;
-  total_result: number;
-  page: number;
-  count: number;
-  items: T;
+  response: {
+    total: number;
+    total_result: number;
+    page: number;
+    count: number;
+    items: T;
+  };
 }
 export interface CreateTaskAPIRequest {
   name: string;
   description?: string;
   priority: number;
   plan_start_date?: string;
-  plan_end_date?: string;
-  deadline_allowchange: boolean;
-  task_checkbyowner: boolean;
+  deadline?: string;
+  deadline_allowchange: number;
+  task_checkbyowner: number;
   responsible_id?: string;
   owner_id?: string;
   type: number;
