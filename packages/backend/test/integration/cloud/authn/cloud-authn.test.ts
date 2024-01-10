@@ -337,7 +337,7 @@ describe('Authentication API', () => {
             })
             await databaseConnection.getRepository('user').save(mockUser)
           
-            const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id, emailAuthEnabled: false })
+            const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id, emailAuthEnabled: false, ssoEnabled: true })
             await databaseConnection.getRepository('platform').save(mockPlatform)
           
             const mockCustomDomain = createMockCustomDomain({ platformId: mockPlatformId, domain: mockPlatformDomain })
