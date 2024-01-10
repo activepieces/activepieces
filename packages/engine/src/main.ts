@@ -124,7 +124,7 @@ const execute = async (): Promise<void> => {
 
                 const output = await triggerHelper.executeTrigger({
                     params: input,
-                    piecesSource: EngineConstants.PIECE_SOURCES,
+                    constants: EngineConstants.fromExecuteTriggerInput(input),
                 })
                 await writeOutput({
                     status: EngineResponseStatus.OK,

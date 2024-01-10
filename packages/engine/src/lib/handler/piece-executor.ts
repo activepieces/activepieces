@@ -99,6 +99,7 @@ export const pieceExecutor: BaseExecutor<PieceAction> = {
                 resumePayload: constants.resumePayload,
                 project: {
                     id: constants.projectId,
+                    externalId: constants.externalProjectId,
                 },
             }
             const output = await pieceAction.run(context)
