@@ -18,9 +18,15 @@ import {
   containsLowercaseCharacter,
   containsNumber,
 } from '@activepieces/ui/common';
-import { ApEdition, ApFlagId, SignUpRequest } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  ErrorCode,
+  SignUpRequest,
+} from '@activepieces/shared';
 import { OtpType } from '@activepieces/ee-shared';
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
+import { StatusCodes } from 'http-status-codes';
 
 export interface UserInfo {
   firstName: FormControl<string>;
@@ -49,6 +55,7 @@ export class SignUpComponent implements OnInit {
   termsOfServiceUrl$: Observable<string>;
   signUpDone = false;
   invitationOnlySignup = false;
+  domainIsNotAllowed = false;
   showNewsLetterCheckbox$: Observable<boolean>;
   emailLoginsEnabled$: Observable<boolean>;
   readonly OtpType = OtpType;
@@ -90,6 +97,8 @@ export class SignUpComponent implements OnInit {
         ...this.registrationForm.getRawValue(),
         referringUserId,
       };
+      this.invitationOnlySignup = false;
+      this.domainIsNotAllowed = false;
       this.signUp$ = this.authenticationService.signUp(request).pipe(
         tap((response) => {
           if (
@@ -118,6 +127,12 @@ export class SignUpComponent implements OnInit {
             });
           }
           this.invitationOnlySignup = err.status === HttpStatusCode.Forbidden;
+          if (err.status === StatusCodes.FORBIDDEN) {
+            this.invitationOnlySignup =
+              err.error.code === ErrorCode.INVITATION_ONLY_SIGN_UP;
+            this.domainIsNotAllowed =
+              err.error.code === ErrorCode.DOMAIN_NOT_ALLOWED;
+          }
           this.emailChanged = false;
           this.loading = false;
           return of(err);

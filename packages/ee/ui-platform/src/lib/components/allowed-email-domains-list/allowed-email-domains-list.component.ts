@@ -63,16 +63,23 @@ export class AllowedEmailDomainsListComponent {
     platform.allowedAuthDomains = platform.allowedAuthDomains.filter(
       (d) => d !== domain
     );
+    platform.enforceAllowedAuthDomains = platform.allowedAuthDomains.length > 0;
     this.domainsBeingRemoved[domain] = true;
     this.removeDomain$ = this.platformService
-      .updatePlatform(platform, platform.id)
+      .updatePlatform(
+        {
+          enforceAllowedAuthDomains: platform.enforceAllowedAuthDomains,
+          allowedAuthDomains: platform.allowedAuthDomains,
+        },
+        platform.id
+      )
       .pipe(
         tap(() => {
           this.platformUpdated.emit(platform);
           this.matSnackbar.openFromComponent(GenericSnackbarTemplateComponent, {
             data: `Removed <b>${domain}</b>`,
           });
-          this.domainsBeingRemoved[domain] = true;
+          this.domainsBeingRemoved[domain] = false;
         }),
         catchError((err) => {
           console.error(err);

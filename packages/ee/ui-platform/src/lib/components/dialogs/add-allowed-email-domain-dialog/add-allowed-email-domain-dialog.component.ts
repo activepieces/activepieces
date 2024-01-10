@@ -45,7 +45,13 @@ export class AddAllowedEmailDomainDialogComponent {
       const platform: Platform = JSON.parse(JSON.stringify(this.data.platform));
       platform.allowedAuthDomains.push(this.formGroup.getRawValue().domain);
       this.addAllowedDomain$ = this.platformService
-        .updatePlatform(platform, platform.id)
+        .updatePlatform(
+          {
+            enforceAllowedAuthDomains: true,
+            allowedAuthDomains: platform.allowedAuthDomains,
+          },
+          platform.id
+        )
         .pipe(tap(() => this.dialogRef.close(this.formGroup.value.domain)));
     }
   }

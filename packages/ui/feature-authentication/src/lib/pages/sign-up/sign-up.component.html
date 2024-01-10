@@ -60,6 +60,9 @@
       <mat-error class="ap-text-center" *ngIf="invitationOnlySignup && !emailChanged" i18n>
         You are not invited to any project, please contact your administrator.
       </mat-error>
+      <mat-error class="ap-text-center" *ngIf="domainIsNotAllowed && !emailChanged" i18n>
+        Your email domain is not allowed to sign up, please contact your administrator.
+      </mat-error>
       <mat-menu #menu="matMenu" [hasBackdrop]="true">
         <div class="ap-mx-2">
           <div class="ap-flex ap-gap-4 ap-items-center"
