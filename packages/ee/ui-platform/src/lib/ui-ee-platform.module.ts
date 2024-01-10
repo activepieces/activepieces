@@ -24,6 +24,8 @@ import { CreateOrUpdateTemplateDialogueComponent } from './components/dialogs/cr
 import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
 import { UsersTableComponent } from './pages/users-table/users-table.component';
 import { SsoSettingsComponent } from './components/sso-settings/sso-settings.component';
+import { AddAllowedEmailDomainDialogComponent } from './components/dialogs/add-allowed-email-domain-dialog/add-allowed-email-domain-dialog.component';
+import { AllowedEmailDomainsListComponent } from './components/allowed-email-domains-list/allowed-email-domains-list.component';
 
 @NgModule({
   imports: [
@@ -53,6 +55,8 @@ import { SsoSettingsComponent } from './components/sso-settings/sso-settings.com
     CustomDomainTableComponent,
     UsersTableComponent,
     SsoSettingsComponent,
+    AddAllowedEmailDomainDialogComponent,
+    AllowedEmailDomainsListComponent,
   ],
 })
 export class UiEePlatformModule {}

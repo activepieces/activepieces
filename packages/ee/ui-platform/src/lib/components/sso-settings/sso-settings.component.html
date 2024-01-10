@@ -1,29 +1,11 @@
-<div class="ap-h-full ap-pt-2 ap-flex ap-flex-col">
-    <div class="ap-mb-4 ap-w-full">
-        <form [formGroup]="ssoSettingsForm" class="ap-flex ap-w-full  ap-w-full ap-flex-col  ap-gap-4 ap-mb-10">
-            <div>
-                <div class="ap-typography-body-1  ap-mb-2" i18n><b>Allowed Email Domains</b></div>
-                <div class="ap-typography-body-2 ap-text-description ap-mb-2" i18n>
-                    Anyone with an email address at these domains is allowed to sign up for your platform.
-                    <br> Keep empty if you don't want this restriction.
-                </div>
-                <div class="ap-max-w-[327px]">
-                    <ap-array-form-control placeholder="your-domain.com" [addEmptyFieldAfterWriteValue]="false"
-                        [formControl]="ssoSettingsForm.controls.allowedAuthDomains"></ap-array-form-control>
-                </div>
-            </div>
-        </form>
-        <div>
-            <div
-                class="ap-px-4 ap-pt-4  ap-flex ap-justify-end ap-items-center ap-gap-4 ap-w-full ap-border-t ap-border-solid ap-border-outline">
-                <ap-button btnStyle="flat" btnColor="primary" (buttonClicked)="save()"
-                    [loading]="(loading$ | async) || false">
-                    <div i18n>
-                        Save
-                    </div>
-                </ap-button>
-            </div>
-        </div>
+<div class="ap-h-full ap-pt-2 ap-flex ap-flex-col ap-gap-4">
+    <div class="ap-flex ap-max-w-[56.25rem] ap-flex-col ap-gap-4 ">
+        <app-allowed-email-domains-list [platform]="(platform$ | async)!"
+            (platformUpdated)="platformUpdated($event)"></app-allowed-email-domains-list>
     </div>
+
+
 </div>
-<ng-container *ngIf="saving$ | async"></ng-container>
+
+
+<ng-container *ngIf="addDomain$ | async"></ng-container>
