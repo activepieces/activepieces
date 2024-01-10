@@ -3,6 +3,8 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
+import { createContactAction } from './lib/actions/accounts/create-contact';
+import { createOrganizationAction } from './lib/actions/accounts/create-organization';
 import { createTaskAction } from './lib/actions/tasks/create-task';
 import { deleteTaskAction } from './lib/actions/tasks/delete-task';
 import { getTaskAction } from './lib/actions/tasks/get-task';
@@ -36,6 +38,8 @@ export const flowlu = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/flowlu.png',
   authors: ['kishanprmr'],
   actions: [
+    createContactAction,
+    createOrganizationAction,
     createTaskAction,
     deleteTaskAction,
     getTaskAction,

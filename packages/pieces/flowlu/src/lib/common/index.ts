@@ -122,4 +122,89 @@ export const flowluCommon = {
         };
       },
     }),
+  honorific_title_id: (required = false) =>
+    Property.Dropdown({
+      displayName: 'Title',
+      required,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Connect your account first',
+            options: [],
+          };
+        }
+        const client = makeClient(
+          auth as PiecePropValueSchema<typeof flowluAuth>
+        );
+        const res = await client.listAllHonorificTitles();
+        const { response } = res;
+        return {
+          disabled: false,
+          options: response.items.map((item) => {
+            return {
+              label: item.name,
+              value: item.id,
+            };
+          }),
+        };
+      },
+    }),
+  account_category_id: (required = false) =>
+    Property.Dropdown({
+      displayName: 'Account Category',
+      required,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Connect your account first',
+            options: [],
+          };
+        }
+        const client = makeClient(
+          auth as PiecePropValueSchema<typeof flowluAuth>
+        );
+        const { response } = await client.listAllAccountCategories();
+        return {
+          disabled: false,
+          options: response.items.map((item) => {
+            return {
+              label: item.name,
+              value: item.id,
+            };
+          }),
+        };
+      },
+    }),
+  industry_id: (required = false) =>
+    Property.Dropdown({
+      displayName: 'Account Industry',
+      required,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Connect your account first',
+            options: [],
+          };
+        }
+        const client = makeClient(
+          auth as PiecePropValueSchema<typeof flowluAuth>
+        );
+        const { response } = await client.listAllAccountIndustries();
+        return {
+          disabled: false,
+          options: response.items.map((item) => {
+            return {
+              label: item.name,
+              value: item.id,
+            };
+          }),
+        };
+      },
+    }),
 };

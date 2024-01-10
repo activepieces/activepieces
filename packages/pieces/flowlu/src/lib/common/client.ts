@@ -5,6 +5,10 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import {
+  AccountCategory,
+  AccountHonorificTitle,
+  AccountIndustry,
+  CreateCRMAccountAPIRequest,
   CreateTaskAPIRequest,
   ListAPIResponse,
   Task,
@@ -86,10 +90,36 @@ export class FlowluClient {
       '/task/stages/list'
     );
   }
+  async listAllHonorificTitles() {
+    return await this.makeRequest<ListAPIResponse<AccountHonorificTitle[]>>(
+      HttpMethod.GET,
+      '/crm/honorific_title/list'
+    );
+  }
+  async listAllAccountCategories() {
+    return await this.makeRequest<ListAPIResponse<AccountCategory[]>>(
+      HttpMethod.GET,
+      '/crm/account_category/list'
+    );
+  }
+  async listAllAccountIndustries() {
+    return await this.makeRequest<ListAPIResponse<AccountIndustry[]>>(
+      HttpMethod.GET,
+      '/crm/industry/list'
+    );
+  }
   async createTask(request: CreateTaskAPIRequest) {
     return await this.makeRequest(
       HttpMethod.POST,
       '/task/tasks/create',
+      undefined,
+      request
+    );
+  }
+  async createAccount(request: CreateCRMAccountAPIRequest) {
+    return await this.makeRequest(
+      HttpMethod.POST,
+      '/crm/account/create',
       undefined,
       request
     );

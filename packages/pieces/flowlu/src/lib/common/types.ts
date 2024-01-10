@@ -110,6 +110,26 @@ export interface ListAPIResponse<T> extends HttpMessageBody {
     items: T;
   };
 }
+export interface AccountHonorificTitle {
+  id: number;
+  name: string;
+  ordering: number;
+  active: number;
+}
+export interface AccountCategory {
+  id: number;
+  active: number;
+  ordering: number;
+  name: string;
+  deleted_at: string;
+}
+export interface AccountIndustry {
+  id: number;
+  name: string;
+  ordering: number;
+  active: number;
+  deleted_at: string;
+}
 export interface CreateTaskAPIRequest {
   name: string;
   description?: string;
@@ -123,4 +143,42 @@ export interface CreateTaskAPIRequest {
   type: number;
   workflow_id?: number;
   workflow_stage_id?: number;
+}
+
+export interface CreateCRMAccountAPIRequest {
+  id: number;
+  name: string;
+  name_legal_full?: string;
+  first_name?: string;
+  middle_name?: string;
+  last_name?: string;
+  owner_id?: string;
+  account_category_id?: number;
+  industry_id?: number;
+  web?: string;
+  email?: string;
+  phone?: string;
+  description?: string;
+  vat?: string;
+  bank_details?: string;
+  telegram?: string;
+  skype?: string;
+  link_google?: string;
+  link_facebook?: string;
+  link_linkedin?: string;
+  link_instagram?: string;
+  billing_country?: string;
+  billing_state?: string;
+  billing_city?: string;
+  billing_zip?: string;
+  billing_address_line_1?: string;
+  billing_address_line_2?: string;
+  billing_address_line_3?: string;
+  shipping_country?: string;
+  shipping_state?: string;
+  shipping_city?: string;
+  shipping_zip?: string;
+  shipping_address_line_1?: string;
+  shipping_address_line_2?: string;
+  shipping_address_line_3?: string;
 }
