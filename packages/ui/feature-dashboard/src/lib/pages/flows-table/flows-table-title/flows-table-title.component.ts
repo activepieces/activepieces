@@ -6,6 +6,7 @@ import { Store } from '@ngrx/store';
 import {
   CURRENT_FLOW_IS_NEW_KEY_IN_LOCAL_STORAGE,
   FlowService,
+  AuthenticationService,
 } from '@activepieces/ui/common';
 import { Router } from '@angular/router';
 
@@ -22,7 +23,8 @@ export class FlowsTableTitleComponent {
   constructor(
     private store: Store,
     private flowService: FlowService,
-    private router: Router
+    private router: Router,
+    private authenticationService: AuthenticationService
   ) {
     this.showAllFlows$ = this.store.select(
       FoldersSelectors.selectDisplayAllFlows
@@ -38,6 +40,7 @@ export class FlowsTableTitleComponent {
         switchMap((res) => {
           return this.flowService
             .create({
+              projectId: this.authenticationService.getProjectId(),
               displayName: $localize`Untitled`,
               folderId: res?.id,
             })

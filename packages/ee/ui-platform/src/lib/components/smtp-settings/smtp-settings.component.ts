@@ -80,7 +80,7 @@ export class SmtpSettingsComponent implements OnInit {
         .pipe(
           tap(() => {
             this.loading$.next(false);
-            this.matSnackbar.open('Saved successfully');
+            this.matSnackbar.open($localize`Saved successfully`);
           }),
           catchError((err) => {
             this.loading$.next(false);

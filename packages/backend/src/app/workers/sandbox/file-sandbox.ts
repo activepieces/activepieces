@@ -1,4 +1,5 @@
 import { rmdir, mkdir, readFile, writeFile, cp } from 'node:fs/promises'
+import fs from 'fs-extra'
 import path from 'node:path'
 import { spawn } from 'node:child_process'
 import { AbstractSandbox, ExecuteSandboxResult, SandboxCtorParams } from './abstract-sandbox'
@@ -34,8 +35,9 @@ export class FileSandbox extends AbstractSandbox {
         const command = [
             `cd ${this.getSandboxFolderPath()}`,
             '&&',
-            `env -i AP_PIECES_SOURCE=${pieceSources} NODE_OPTIONS='--enable-source-maps'`,
-            AbstractSandbox.nodeExecutablePath,
+            `cross-env AP_PIECES_SOURCE=${pieceSources} NODE_OPTIONS=--enable-source-maps`,
+            '&&',
+            `"${AbstractSandbox.nodeExecutablePath}"`,
             'main.js',
             operation,
         ].join(' ')
@@ -65,7 +67,12 @@ export class FileSandbox extends AbstractSandbox {
         logger.debug({ boxId: this.boxId, cacheKey: this._cacheKey, cachePath: this._cachePath }, '[FileSandbox#setupCache]')
 
         if (this._cachePath) {
-            await cp(this._cachePath, this.getSandboxFolderPath(), { recursive: true })
+            if (process.platform === 'win32') {
+                await fs.copy(this._cachePath, this.getSandboxFolderPath())
+            }
+            else {
+                await cp(this._cachePath, this.getSandboxFolderPath(), { recursive: true })
+            }
         }
     }
 

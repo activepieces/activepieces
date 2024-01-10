@@ -1,7 +1,11 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { EMPTY, Observable, catchError, switchMap, tap } from 'rxjs';
-import { FlowService, TelemetryService } from '@activepieces/ui/common';
+import {
+  FlowService,
+  TelemetryService,
+  AuthenticationService,
+} from '@activepieces/ui/common';
 import {
   FlowOperationType,
   FlowTemplate,
@@ -23,6 +27,7 @@ export class ImportFlowUriEncodedResolver {
       const combinationJson: FlowTemplate = JSON.parse(decodedFlow);
       return this.flowService
         .create({
+          projectId: this.authenticationService.getProjectId(),
           displayName: combinationJson.name,
         })
         .pipe(
@@ -60,6 +65,7 @@ export class ImportFlowUriEncodedResolver {
   constructor(
     private flowService: FlowService,
     private router: Router,
+    private authenticationService: AuthenticationService,
     private telemetryService: TelemetryService
   ) {}
 }

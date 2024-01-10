@@ -13,7 +13,7 @@ import {
   take,
 } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
-import { InviteProjectMemberDialogComponent } from '../invite-project-member-dialog/invite-project-member.component';
+import { InviteProjectMemberDialogComponent } from '../dialogs/invite-project-member-dialog/invite-project-member.component';
 import {
   ProjectMemberRole,
   ProjectMemberStatus,
@@ -25,6 +25,7 @@ import {
   AuthenticationService,
   ProjectSelectors,
 } from '@activepieces/ui/common';
+import { RolesDisplayNames } from '../utils';
 
 @Component({
   selector: 'app-project-members-table',
@@ -42,6 +43,11 @@ export class ProjectMembersTableComponent implements OnInit {
   refreshTableAtCurrentCursor$: Subject<boolean> = new Subject();
   displayedColumns = ['email', 'role', 'status', 'created', 'action'];
   title = $localize`Project Members`;
+  RolesDisplayNames = RolesDisplayNames;
+  StatusDisplayNames: { [k: string]: string } = {
+    [ProjectMemberStatus.ACTIVE]: $localize`Active`,
+    [ProjectMemberStatus.PENDING]: $localize`Pending`,
+  };
   constructor(
     private matDialog: MatDialog,
     private billingService: BillingService,
@@ -133,15 +139,6 @@ export class ProjectMembersTableComponent implements OnInit {
           this.refreshTableAtCurrentCursor$.next(true);
         })
       );
-  }
-
-  statusText(status: ProjectMemberStatus) {
-    switch (status) {
-      case ProjectMemberStatus.ACTIVE:
-        return $localize`Active`;
-      case ProjectMemberStatus.PENDING:
-        return $localize`Pending`;
-    }
   }
 
   get projectMemberRole() {

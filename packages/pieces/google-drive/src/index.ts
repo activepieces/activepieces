@@ -8,6 +8,8 @@ import { newFolder } from './lib/triggers/new-folder';
 import { readFile } from './lib/action/read-file';
 import { googleDriveListFiles } from './lib/action/list-files.action';
 import { googleDriveSearchFolder } from './lib/action/search-folder.action';
+import { duplicateFileAction } from './lib/action/duplicate-file.action';
+import { saveFileAsPdf } from './lib/action/save-file-as-pdf.action';
 
 export const googleDriveAuth = PieceAuth.OAuth2({
     description: "",
@@ -20,9 +22,9 @@ export const googleDriveAuth = PieceAuth.OAuth2({
 export const googleDrive = createPiece({
 	minimumSupportedRelease: '0.5.6',
     logoUrl: 'https://cdn.activepieces.com/pieces/google-drive.png',
-	actions: [googleDriveCreateNewFolder, googleDriveCreateNewTextFile, googleDriveUploadFile, readFile, googleDriveListFiles, googleDriveSearchFolder],
 	displayName: "Google Drive",
-	authors: ['kanarelo', 'BastienMe', 'MoShizzle', 'Armangiau', 'vitalini', 'pfernandez98'],
+	authors: ['kanarelo', 'BastienMe', 'MoShizzle', 'Armangiau', 'vitalini', 'PFernandez98'],
 	triggers: [newFile, newFolder],
+	actions: [googleDriveCreateNewFolder, googleDriveCreateNewTextFile, googleDriveUploadFile, readFile, googleDriveListFiles, googleDriveSearchFolder, duplicateFileAction, saveFileAsPdf],
     auth: googleDriveAuth,
 });
