@@ -92,6 +92,7 @@
         "packages/pieces/facebook-pages/src/index.ts"
       ],
       "@activepieces/piece-figma": ["packages/pieces/figma/src/index.ts"],
+      "@activepieces/piece-flowise": ["packages/pieces/flowise/src/index.ts"],
       "@activepieces/piece-freshdesk": [
         "packages/pieces/freshdesk/src/index.ts"
       ],
