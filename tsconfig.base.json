@@ -208,6 +208,7 @@
       ],
       "@activepieces/piece-retable": ["packages/pieces/retable/src/index.ts"],
       "@activepieces/piece-retune": ["packages/pieces/retune/src/index.ts"],
+      "@activepieces/piece-robolly": ["packages/pieces/robolly/src/index.ts"],
       "@activepieces/piece-rss": ["packages/pieces/rss/src/index.ts"],
       "@activepieces/piece-salesforce": [
         "packages/pieces/salesforce/src/index.ts"
