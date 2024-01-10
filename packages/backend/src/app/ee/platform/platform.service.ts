@@ -26,6 +26,7 @@ export const platformService = {
             filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
             showPoweredBy: false,
             cloudAuthEnabled: true,
+            gitSyncEnabled: false,
         }
 
         const savedPlatform = await repo.save(newPlatform)
@@ -75,6 +76,7 @@ export const platformService = {
             ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
             ...spreadIfDefined('defaultLocale', params.defaultLocale),
             ...spreadIfDefined('showPoweredBy', params.showPoweredBy),
+            ...spreadIfDefined('gitSyncEnabled', params.gitSyncEnabled),
             ...spreadIfDefined('embeddingEnabled', params.embeddingEnabled),
         }
 
@@ -158,6 +160,7 @@ type UpdateParams = UpdatePlatformRequestBody & {
     id: PlatformId
     userId: UserId
     showPoweredBy?: boolean
+    gitSyncEnabled?: boolean
     embeddingEnabled?: boolean
 }
 

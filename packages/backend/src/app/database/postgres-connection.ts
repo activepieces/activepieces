@@ -94,6 +94,8 @@ import { AddPlatformIdToFlowTemplates1703411318826 } from './migration/postgres/
 import { RemoveFlowInstance1702379794665 } from './migration/postgres/1702379794665-remove-flow-instance'
 import { RenameAppNameToPieceName1703711596105 } from './migration/postgres/1703711596105-RenameAppNameToPieceName'
 import { AddVerifiedAndChangeStatus1703769034497 } from './migration/postgres/1703769034497-AddVerifiedAndChangeStatus'
+import { AddGitSyncEnabledToPlatform1704636362533 } from './migration/postgres/1704636362533-AddGitSyncEnabledToPlatform'
+import { AddGitRepoMigrationPostgres1704503804056 } from './migration/postgres/1704503804056-AddGitRepoMigrationPostgres'
 
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -204,6 +206,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddApiKeys1701716639135,
                 AddEmbeddingFeatureToPlatform1701794452891,
                 AddPlatformIdToFlowTemplates1703411318826,
+                AddGitRepoMigrationPostgres1704503804056,
+                AddGitSyncEnabledToPlatform1704636362533,
             )
             break
         case ApEdition.ENTERPRISE:
@@ -239,6 +243,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddApiKeys1701716639135,
                 AddEmbeddingFeatureToPlatform1701794452891,
                 AddPlatformIdToFlowTemplates1703411318826,
+                AddGitRepoMigrationPostgres1704503804056,
+                AddGitSyncEnabledToPlatform1704636362533,
             )
             break
         case ApEdition.COMMUNITY:

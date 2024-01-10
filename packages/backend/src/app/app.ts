@@ -73,6 +73,7 @@ import { domainHelper } from './helper/domain-helper'
 import { platformDomainHelper } from './ee/helper/platform-domain-helper'
 import { enterpriseUserModule } from './ee/user/enterprise-user-module'
 import { flowResponseWatcher } from './flows/flow-run/flow-response-watcher'
+import { gitRepoModule } from './ee/git-repos/git-repo.module'
 import { securityHandlerChain } from './core/security/security-handler-chain'
 import { communityFlowTemplateModule } from './flow-templates/community-flow-template.module'
 
@@ -229,6 +230,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(apiKeyModule)
             await app.register(enterpriseUserModule)
             await app.register(platformFlowTemplateModule)
+            await app.register(gitRepoModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
@@ -257,6 +259,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(apiKeyModule)
             await app.register(enterpriseUserModule)
             await app.register(platformFlowTemplateModule)
+            await app.register(gitRepoModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })

@@ -27,6 +27,7 @@ export const Platform = Type.Object({
     privacyPolicyUrl: Type.Optional(Type.String()),
     termsOfServiceUrl: Type.Optional(Type.String()),
     cloudAuthEnabled: Type.Boolean(),
+    gitSyncEnabled: Type.Boolean(),
     showPoweredBy: Type.Boolean(),
     embeddingEnabled: Type.Boolean(),
     defaultLocale: Type.Optional(Type.Enum(LocalesEnum))

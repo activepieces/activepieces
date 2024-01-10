@@ -16,6 +16,8 @@ import { PlansPageComponent } from '@activepieces/ee-billing-ui';
 import { ProjectMembersTableComponent } from '@activepieces/ee/project-members';
 import { CommunityPiecesTableComponent } from '@activepieces/ui/feature-pieces';
 import { ApFlagId } from '@activepieces/shared';
+import { SyncProjectComponent } from './pages/sync-project/sync-project.component';
+import { RepoResolver } from './resolvers/repo.resolver';
 
 export const DashboardLayoutRouting: Routes = [
   {
@@ -63,6 +65,15 @@ export const DashboardLayoutRouting: Routes = [
         path: 'connections',
         pathMatch: 'full',
         component: ConnectionsTableComponent,
+      },
+      {
+        data: {
+          title: $localize`Settings`,
+        },
+        path: 'settings',
+        pathMatch: 'full',
+        component: SyncProjectComponent,
+        resolve: { repo: RepoResolver },
       },
       {
         data: {
