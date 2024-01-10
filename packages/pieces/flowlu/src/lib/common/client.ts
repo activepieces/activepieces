@@ -11,6 +11,7 @@ import {
   CreateCRMAccountAPIRequest,
   CreateTaskAPIRequest,
   ListAPIResponse,
+  OpportunitySource,
   Task,
   TaskWorkflow,
   TaskWorkflowStage,
@@ -106,6 +107,12 @@ export class FlowluClient {
     return await this.makeRequest<ListAPIResponse<AccountIndustry[]>>(
       HttpMethod.GET,
       '/crm/industry/list'
+    );
+  }
+  async listAllOpportunitySources() {
+    return await this.makeRequest<ListAPIResponse<OpportunitySource[]>>(
+      HttpMethod.GET,
+      '/crm/source/list'
     );
   }
   async createTask(request: CreateTaskAPIRequest) {

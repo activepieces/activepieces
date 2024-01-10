@@ -111,4 +111,28 @@ export const flowluProps = {
       required: false,
     }),
   },
+  opportunity: {
+    name: Property.ShortText({
+      displayName: 'Title',
+      required: true,
+    }),
+    budget: Property.Number({
+      displayName: 'Opportunity Amount',
+      required: false,
+    }),
+    description: Property.LongText({
+      displayName: 'Description',
+      required: false,
+    }),
+    source_id: flowluCommon.source_id(false),
+    start_date: Property.DateTime({
+      displayName: 'Start Date',
+      required: false,
+    }),
+    deadline: Property.DateTime({
+      displayName: 'End Date',
+      required: false,
+    }),
+    assignee_id: flowluCommon.user_id(false, 'Assignee ID'),
+  },
 };

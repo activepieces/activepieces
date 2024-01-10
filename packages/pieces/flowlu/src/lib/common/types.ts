@@ -130,6 +130,14 @@ export interface AccountIndustry {
   active: number;
   deleted_at: string;
 }
+export interface OpportunitySource {
+  id: number;
+  name: string;
+  ordering: number;
+  active: number;
+  description: string;
+  deleted_at: string;
+}
 export interface CreateTaskAPIRequest {
   name: string;
   description?: string;

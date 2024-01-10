@@ -207,4 +207,32 @@ export const flowluCommon = {
         };
       },
     }),
+  source_id: (required = false) =>
+    Property.Dropdown({
+      displayName: 'Opportunity Source',
+      required,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Connect your account first',
+            options: [],
+          };
+        }
+        const client = makeClient(
+          auth as PiecePropValueSchema<typeof flowluAuth>
+        );
+        const { response } = await client.listAllOpportunitySources();
+        return {
+          disabled: false,
+          options: response.items.map((item) => {
+            return {
+              label: item.name,
+              value: item.id,
+            };
+          }),
+        };
+      },
+    }),
 };
