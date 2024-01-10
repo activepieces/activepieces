@@ -50,6 +50,7 @@ export class SignUpComponent implements OnInit {
   signUpDone = false;
   invitationOnlySignup = false;
   showNewsLetterCheckbox$: Observable<boolean>;
+  emailLoginsEnabled$: Observable<boolean>;
   readonly OtpType = OtpType;
   constructor(
     private formBuilder: FormBuilder,
@@ -59,6 +60,9 @@ export class SignUpComponent implements OnInit {
     private router: Router,
     private activeRoute: ActivatedRoute
   ) {
+    this.emailLoginsEnabled$ = this.flagService.isFlagEnabled(
+      ApFlagId.EMAIL_AUTH_ENABLED
+    );
     this.privacyPolicyUrl$ = this.flagService.getStringFlag(
       ApFlagId.PRIVACY_POLICY_URL
     );

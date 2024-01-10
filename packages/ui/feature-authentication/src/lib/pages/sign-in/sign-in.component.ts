@@ -38,8 +38,10 @@ export class SignInComponent {
   sendingVerificationEmail = false;
   showDisabledUser = false;
   invitationOnlySignIn = false;
+  loginsWithEmailEnabled$: Observable<boolean>;
   showSignUpLink$: Observable<boolean>;
   sendVerificationEmail$?: Observable<void>;
+
   constructor(
     private formBuilder: FormBuilder,
     private authenticationService: AuthenticationService,
@@ -47,6 +49,10 @@ export class SignInComponent {
     private redirectService: RedirectService,
     private snackbar: MatSnackBar
   ) {
+    this.loginsWithEmailEnabled$ = this.flagsService.isFlagEnabled(
+      ApFlagId.EMAIL_AUTH_ENABLED
+    );
+
     this.showSignUpLink$ = this.flagsService.isFlagEnabled(
       ApFlagId.SHOW_SIGN_UP_LINK
     );

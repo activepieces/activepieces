@@ -1,6 +1,8 @@
 <div class="ap-typography-headline-5 ap-text-center ap-mb-4" i18n>Welcome Back</div>
 <ap-third-party-auth></ap-third-party-auth>
-<form [formGroup]="loginForm" (ngSubmit)="signIn()" class="ap-flex ap-flex-col ap-gap-2">
+<app-authentication-methods-separator></app-authentication-methods-separator>
+<form *ngIf="loginsWithEmailEnabled$ | async" [formGroup]="loginForm" (ngSubmit)="signIn()"
+  class="ap-flex ap-flex-col ap-gap-2">
   <mat-form-field class="ap-w-full" appearance="outline">
     <mat-label>Email</mat-label>
     <input matInput placeholder="Email" i18n-placeholder formControlName="email" />
@@ -43,8 +45,8 @@
   <span i18n>Don't have an account?</span> <a routerLink="/sign-up" i18n>Sign up now</a>
 </div>
 <div class="ap-typography-caption ap-text-body ap-text-center ap-mt-2 ap-flex ap-gap-2 ap-justify-center"
-  *ngIf="(isCommunityEdition$ | async )=== false">
-  <a routerLink="/forgot-password" i18n>Forgot password?</a>
+  *ngIf="(isCommunityEdition$ | async )=== false && (loginsWithEmailEnabled$ | async)">
+  <a routerLink=" /forgot-password" i18n>Forgot password?</a>
 </div>
 
 

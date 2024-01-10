@@ -19,6 +19,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             [ThirdPartyAuthnProviderEnum.GOOGLE]: !isNil(platform.federatedAuthProviders.google),
             [ThirdPartyAuthnProviderEnum.GITHUB]: !isNil(platform.federatedAuthProviders.github),
         }
+        modifiedFlags[ApFlagId.EMAIL_AUTH_ENABLED] = platform.emailAuthEnabled
         const isCustomerPlatform = !flagService.isCloudPlatform(platformId)
         if (isCustomerPlatform ) {
             modifiedFlags[ApFlagId.THEME] = await apperanceHelper.getTheme({ platformId })
