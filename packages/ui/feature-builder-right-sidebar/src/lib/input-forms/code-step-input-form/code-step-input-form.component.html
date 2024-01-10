@@ -9,14 +9,20 @@
       <app-dictonary-form-control formControlName="input"></app-dictonary-form-control>
     </div>
     <div>
-      <div class="ap-mb-2 ap-pointer-events-none" i18n>Code</div>
-      <app-code-artifact-form-control
-        formControlName="sourceCode"></app-code-artifact-form-control>
+      <div class="ap-mb-2 ap-flex ap-justify-between" style="align-items: center;">
+        <span class="ap-pointer-events-none" i18n>Code</span>
+        <button mat-stroked-button color="primary" (click)="openCodeWriterDialog()">
+          <mat-icon>android</mat-icon>
+          Write with AI
+        </button>
+      </div>
+      <app-code-artifact-form-control formControlName="sourceCode"></app-code-artifact-form-control>
     </div>
   </div>
 </form>
 
 <ng-container *ngIf="formValueChanged$ | async"></ng-container>
+<ng-container *ngIf="dialogClosed$ | async"></ng-container>
 <ng-template #loading>
   <div class="ap-flex ap-items-center ap-justify-center ap-h-[337px] ap-bg-[#193549]">
     <ap-loading-icon [whiteLoader]="true" [outlineLoader]="false"></ap-loading-icon>

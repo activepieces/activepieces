@@ -75,6 +75,7 @@ import { enterpriseUserModule } from './ee/user/enterprise-user-module'
 import { flowResponseWatcher } from './flows/flow-run/flow-response-watcher'
 import { securityHandlerChain } from './core/security/security-handler-chain'
 import { communityFlowTemplateModule } from './flow-templates/community-flow-template.module'
+import { copilotModule } from './copilot/copilot.module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -181,6 +182,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(stepFileModule)
     await app.register(userModule)
     await app.register(authenticationModule)
+    await app.register(copilotModule)
 
     await setupBullMQBoard(app)
 
