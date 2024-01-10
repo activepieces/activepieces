@@ -6,7 +6,7 @@ import { ActionContext, ConnectionsManager, PauseHook, PauseHookParams, PiecePro
 import { createContextStore } from '../services/storage.service'
 import { createFilesService } from '../services/files.service'
 import { createConnectionService } from '../services/connections.service'
-import { EngineConstantData } from './context/engine-constants-data'
+import { EngineConstants } from './context/engine-constants'
 import { pieceLoader } from '../helper/piece-loader'
 import { utils } from '../utils'
 
@@ -20,7 +20,7 @@ export const pieceExecutor: BaseExecutor<PieceAction> = {
     }: {
         action: PieceAction
         executionState: FlowExecutorContext
-        constants: EngineConstantData
+        constants: EngineConstants
     }) {
         if (executionState.isCompleted({ stepName: action.name })) {
             return executionState

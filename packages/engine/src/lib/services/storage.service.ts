@@ -1,11 +1,11 @@
 import { Store, StoreScope } from '@activepieces/pieces-framework'
 import { DeletStoreEntryRequest, FlowId, PutStoreEntryRequest, StoreEntry } from '@activepieces/shared'
-import { API_URL } from '../constants'
+import { EngineConstants } from '../handler/context/engine-constants'
 
 export const createStorageService = ({ workerToken }: { workerToken: string }) => {
     return {
         async get(key: string): Promise<StoreEntry | null> {
-            const response = await fetch(API_URL + 'v1/store-entries?key=' + encodeURIComponent(key), {
+            const response = await fetch(`${EngineConstants.API_URL}v1/store-entries?key=${encodeURIComponent(key)}`, {
                 headers: {
                     Authorization: 'Bearer ' + workerToken,
                 },
@@ -16,7 +16,7 @@ export const createStorageService = ({ workerToken }: { workerToken: string }) =
             return (await response.json()) ?? null
         },
         async put(request: PutStoreEntryRequest): Promise<StoreEntry | null> {
-            const response = await fetch(API_URL + 'v1/store-entries', {
+            const response = await fetch(`${EngineConstants.API_URL}v1/store-entries`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -30,7 +30,7 @@ export const createStorageService = ({ workerToken }: { workerToken: string }) =
             return (await response.json()) ?? null
         },
         async delete(request: DeletStoreEntryRequest): Promise<StoreEntry | null> {
-            const response = await fetch(API_URL + 'v1/store-entries?key=' + encodeURIComponent(request.key), {
+            const response = await fetch(`${EngineConstants.API_URL}v1/store-entries?key=${encodeURIComponent(request.key)}`, {
                 method: 'DELETE',
                 headers: {
                     Authorization: 'Bearer ' + workerToken,

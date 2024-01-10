@@ -2,7 +2,7 @@ import { Action, ActionType, BranchAction, BranchCondition, CodeAction, Executio
 import path from 'path'
 import { cwd } from 'process'
 import { VariableService } from '../../src/lib/services/variable-service'
-import { EngineConstantData } from '../../src/lib/handler/context/engine-constants-data'
+import { EngineConstantData } from '../../src/lib/handler/context/engine-constants'
 
 export const EXECUTE_CONSTANTS: EngineConstantData = {
     flowId: 'flowId',
