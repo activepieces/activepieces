@@ -24,7 +24,7 @@ export const robolly = createPiece({
   displayName: "Robolly",
   auth: robollyAuth,
   minimumSupportedRelease: '0.9.0',
-  logoUrl: "https://a.fsdn.com/allura/s/robolly/icon?05e06e27147066099265763f61c09547704fc1ea4769afa2e3e4a863905ef6bf?&w=148",
+  logoUrl: "https://cdn.activepieces.com/pieces/robolly.png",
   authors: ["PFernandez98"],
   actions: [generateImage],
   triggers: [],

@@ -52,8 +52,6 @@ export  const generateImage = createAction({
             queryParams[key as string] = value as string;
         }
 
-        console.log(queryParams);
-        
         const request = await httpClient.sendRequest({
             method: HttpMethod.GET,
             queryParams: queryParams,
@@ -64,7 +62,6 @@ export  const generateImage = createAction({
             body: propsValue.modifications
         });
 
-        console.log(request);
 
         return request.body;
     }
