@@ -52,8 +52,7 @@ const POLLING_FREQUENCY_CRON_EXPRESSON = constructEveryXMinuteCron(system.getNum
 
 export const triggerUtils = {
     async tryHandshake(params: ExecuteTrigger): Promise<WebhookResponse | null> {
-        const { payload, flowVersion, projectId, simulate } = params
-        if (simulate) return null
+        const { payload, flowVersion, projectId } = params
         const flowTrigger = flowVersion.trigger
         if (flowTrigger.type === TriggerType.PIECE) {
             const pieceTrigger = await getPieceTrigger({
@@ -64,8 +63,7 @@ export const triggerUtils = {
             if (isNil(handshakeConfig)) {
                 return null
             }
-            const strategy =
-        handshakeConfig.strategy ?? WebhookHandshakeStrategy.NONE
+            const strategy = handshakeConfig.strategy ?? WebhookHandshakeStrategy.NONE
             switch (strategy) {
                 case WebhookHandshakeStrategy.HEADER_PRESENT: {
                     if (

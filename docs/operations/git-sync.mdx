@@ -1,0 +1,35 @@
+---
+title: "Environments & Git Sync"
+description: ""
+icon: "git-alt"
+---
+
+<Snippet file="enterprise-feature.mdx" />
+
+The Git Sync feature allows for the creation of an **external backup**, **environments**, and maintaining a **version history**.
+
+
+### How It Works:
+
+This example explains a simple setup for creating development and production environments. The setup can be extended to include multiple environments and multiple Git branches.
+
+**Requirements:**
+- Empty Git Repository
+- Two Projects in Activepieces: one for Development and one for Production.
+
+#### 1. Push to the repository
+
+After making changes in the development project, you can click on the "Push to Repository" button on the Git Sync page in Activepieces to push the changes to the repository.
+
+All flows in the Git Repository will be replaced with the ones in the Project.
+
+#### 2. Pull from the repository
+<Note>
+Please note that the credentials will not be synced automatically. You should manually create the same credentials in both environments.
+</Note>
+
+You can trigger a pull from the Git Repository button in Activepeces, then all flows in the project will be replaced with the ones in the git repository.
+
+#### Approval Workflow (Optional)
+
+To manage your approval workflow, you can use Git by creating two branches: development and production. Then, you can use standard pull requests as the approval step.

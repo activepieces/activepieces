@@ -66,6 +66,7 @@ import { ImgFallbackDirective } from './directives/image-fallback.directive';
 import { MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { ArrayFormControlComponent } from './components/array-form-control/array-form-control.component';
+import { UpgradeNoteComponent } from '././components/upgrade-note/upgrade-note.component';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -128,6 +129,7 @@ const exportedDeclarations = [
   PoweredByActivepiecesComponent,
   ImgFallbackDirective,
   ArrayFormControlComponent,
+  UpgradeNoteComponent,
 ];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,

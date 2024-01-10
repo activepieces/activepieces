@@ -1,6 +1,7 @@
 import { ApId, LocalesEnum } from '@activepieces/shared'
 import { Type, Static } from '@sinclair/typebox'
 import { FilteredPieceBehavior } from './platform.model'
+import { FederatedAuthnProviderConfig } from '../authn'
 
 export const UpdatePlatformRequestBody = Type.Object({
     name: Type.Optional(Type.String()),
@@ -17,8 +18,12 @@ export const UpdatePlatformRequestBody = Type.Object({
     smtpSenderEmail: Type.Optional(Type.String()),
     smtpUseSSL: Type.Optional(Type.Boolean()),
     privacyPolicyUrl: Type.Optional(Type.String()),
+    federatedAuthProviders: Type.Optional(FederatedAuthnProviderConfig),
     termsOfServiceUrl: Type.Optional(Type.String()),
     cloudAuthEnabled: Type.Optional(Type.Boolean()),
+    emailAuthEnabled: Type.Optional(Type.Boolean()),
+    allowedAuthDomains: Type.Optional(Type.Array(Type.String())),
+    enforceAllowedAuthDomains: Type.Optional(Type.Boolean()),
     defaultLocale: Type.Optional(Type.Enum(LocalesEnum))
 })
 

@@ -1,13 +1,13 @@
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { Platform, UpdatePlatformRequestBody } from '@activepieces/ee-shared'
+import { Platform, PlatformWithoutSensitiveData, UpdatePlatformRequestBody } from '@activepieces/ee-shared'
 import { ApId, Principal, assertEqual } from '@activepieces/shared'
 import { platformService } from './platform.service'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
+import { StatusCodes } from 'http-status-codes'
 
 export const platformController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/:id', UpdatePlatformRequest, async (req, res) => {
         await platformMustBeOwnedByCurrentUser.call(app, req, res)
-
         return platformService.update({
             id: req.params.id,
             userId: req.principal.id,
@@ -28,7 +28,10 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
 
 const buildResponse = ({ platform, principal }: BuildResponseParams): Platform | PlatformBasics => {
     if (platform.ownerId === principal.id) {
-        return platform
+        return {
+            ...platform,
+            smtpPassword: undefined,
+        }
     }
 
     const { id, name, defaultLocale } = platform
@@ -48,6 +51,9 @@ const UpdatePlatformRequest = {
         params: Type.Object({
             id: ApId,
         }),
+        response: {
+            [StatusCodes.OK]: PlatformWithoutSensitiveData,
+        },
     },
 }
 
