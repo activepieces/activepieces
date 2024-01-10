@@ -12,6 +12,7 @@ import { AddAllowedEmailDomainDialogComponent } from '../dialogs/add-allowed-ema
 import {
   GenericSnackbarTemplateComponent,
   PlatformService,
+  unexpectedErrorMessage,
 } from '@activepieces/ui/common';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
@@ -75,11 +76,9 @@ export class AllowedEmailDomainsListComponent {
         }),
         catchError((err) => {
           console.error(err);
-          this.matSnackbar.open(
-            $localize`An unexpected error occured while removing ${domain}, please contact support`,
-            '',
-            { panelClass: 'error' }
-          );
+          this.matSnackbar.open(unexpectedErrorMessage, '', {
+            panelClass: 'error',
+          });
           platform.allowedAuthDomains.push(domain);
           this.platformUpdated.emit(platform);
           return of(void 0);

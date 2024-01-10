@@ -19,7 +19,6 @@ import { PlatformService } from '@activepieces/ui/common';
 export class AddAllowedEmailDomainDialogComponent {
   readonly ApEdition = ApEdition;
   readonly title = $localize`Add Allowed Email Domain`;
-
   loading$ = new BehaviorSubject(false);
   addAllowedDomain$?: Observable<void>;
   formGroup: FormGroup<{

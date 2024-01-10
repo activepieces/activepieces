@@ -26,7 +26,8 @@ import { UsersTableComponent } from './pages/users-table/users-table.component';
 import { SsoSettingsComponent } from './components/sso-settings/sso-settings.component';
 import { AddAllowedEmailDomainDialogComponent } from './components/dialogs/add-allowed-email-domain-dialog/add-allowed-email-domain-dialog.component';
 import { AllowedEmailDomainsListComponent } from './components/allowed-email-domains-list/allowed-email-domains-list.component';
-
+import { ConfigureConfederatedAuthnCardComponent } from './components/configure-confederated-authn-card/configure-confederated-authn-card.component';
+import { EnableFederatedAuthnProviderDialogComponent } from './components/dialogs/enable-federated-authn-provider-dialog/enable-federated-authn-provider-dialog.component';
 @NgModule({
   imports: [
     UiCommonModule,
@@ -57,6 +58,8 @@ import { AllowedEmailDomainsListComponent } from './components/allowed-email-dom
     SsoSettingsComponent,
     AddAllowedEmailDomainDialogComponent,
     AllowedEmailDomainsListComponent,
+    ConfigureConfederatedAuthnCardComponent,
+    EnableFederatedAuthnProviderDialogComponent,
   ],
 })
 export class UiEePlatformModule {}

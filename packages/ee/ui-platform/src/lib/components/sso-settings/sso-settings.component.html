@@ -1,7 +1,13 @@
-<div class="ap-h-full ap-pt-2 ap-flex ap-flex-col ap-gap-4">
+<div class="ap-h-full ap-pt-2 ">
     <div class="ap-flex ap-max-w-[56.25rem] ap-flex-col ap-gap-4 ">
         <app-allowed-email-domains-list [platform]="(platform$ | async)!"
             (platformUpdated)="platformUpdated($event)"></app-allowed-email-domains-list>
+        <app-configure-confederated-authn-card [platform]="(platform$ | async)!"
+            (platformUpdated)="platformUpdated($event)"
+            [federatedAuthnProvider]="FederatedAuthnProviderEnum.Google"></app-configure-confederated-authn-card>
+        <app-configure-confederated-authn-card [platform]="(platform$ | async)!"
+            (platformUpdated)="platformUpdated($event)"
+            [federatedAuthnProvider]="FederatedAuthnProviderEnum.Github"></app-configure-confederated-authn-card>
     </div>
 
 
