@@ -25,12 +25,13 @@ export const webhookService = {
     async handshake({
         flow,
         payload,
-    }: CallbackParams): Promise<WebhookResponse | null> {
+        simulate,
+    }: HandshakeParams): Promise<WebhookResponse | null> {
         logger.info(`[WebhookService#handshake] flowId=${flow.id}`)
 
         const { projectId } = flow
-
-        if (isNil(flow.publishedVersionId)) {
+        const flowVersionId = simulate ? (await flowVersionService.getFlowVersionOrThrow({ flowId: flow.id, versionId: undefined, removeSecrets: false })).id : flow.publishedVersionId
+        if (isNil(flowVersionId)) {
             logger.info(
                 `[WebhookService#handshake] flowInstance not found, flowId=${flow.id}`,
             )
@@ -38,12 +39,12 @@ export const webhookService = {
             return null
         }
 
-        const flowVersion = await flowVersionService.getOneOrThrow(flow.publishedVersionId)
+        const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
         const response = await triggerUtils.tryHandshake({
             projectId,
             flowVersion,
             payload,
-            simulate: false,
+            simulate,
         })
         if (response !== null) {
             logger.info(`[WebhookService#handshake] condition met, handshake executed, response:
@@ -206,6 +207,12 @@ type GetWebhookUrlParams = {
 type CallbackParams = {
     flow: Flow
     payload: EventPayload
+}
+
+type HandshakeParams = {
+    flow: Flow
+    payload: EventPayload
+    simulate: boolean
 }
 
 
