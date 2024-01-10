@@ -54,8 +54,7 @@
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
         "jestConfig": "packages/engine/jest.config.ts",
-        "passWithNoTests": true,
-        "testPathPattern": ["packages/engine/test/handler/flow-rerun.test.ts"]
+        "passWithNoTests": true
       }
     }
   },
