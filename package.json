@@ -115,6 +115,7 @@
     "marked": "4.3.0",
     "mime-types": "2.1.35",
     "monaco-editor": "0.34.1",
+    "monday-sdk-js": "0.5.2",
     "mustache": "4.2.0",
     "nanoid": "3.3.6",
     "ngx-autosize": "2.0.4",

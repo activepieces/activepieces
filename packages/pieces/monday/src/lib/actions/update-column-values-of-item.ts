@@ -1,6 +1,5 @@
 import {
   DynamicPropsValue,
-  Property,
   createAction,
 } from '@activepieces/pieces-framework';
 import { mondayAuth } from '../..';
@@ -10,33 +9,19 @@ import {
   generateColumnIdTypeMap,
 } from '../common/helper';
 
-export const createItemAction = createAction({
+export const updateColumnValuesOfItemAction = createAction({
   auth: mondayAuth,
-  name: 'monday_create_item',
-  displayName: 'Create Item',
-  description: 'Creates a new item inside a board.',
+  name: 'monday_update_column_values_of_item',
+  displayName: 'Update Column Values of Specific Item',
+  description: 'Updates multiple columns values of specific item.',
   props: {
     workspace_id: mondayCommon.workspace_id(true),
     board_id: mondayCommon.board_id(true),
-    group_id: mondayCommon.group_id(false),
-    item_name: Property.ShortText({
-      displayName: 'Item Name',
-      description: 'Item Name',
-      required: true,
-    }),
+    item_id: mondayCommon.item_id(true),
     column_values: mondayCommon.columnValues,
-    create_labels_if_missing: Property.Checkbox({
-      displayName: 'Create Labels if Missing',
-      description:
-        'Creates status/dropdown labels if they are missing. This requires permission to change the board structure.',
-      defaultValue: false,
-      required: false,
-    }),
   },
   async run(context) {
-    const { board_id, item_name, create_labels_if_missing } =
-      context.propsValue;
-    const group_id = context.propsValue.group_id!;
+    const { board_id, item_id } = context.propsValue;
     const columnValuesInput = context.propsValue.column_values;
     const mondayColumnValues: DynamicPropsValue = {};
 
@@ -59,12 +44,10 @@ export const createItemAction = createAction({
       }
     });
 
-    return await client.createItem({
-      itemName: item_name,
+    return await client.updateItem({
       boardId: board_id,
-      groupId: group_id,
+      itemId: item_id,
       columnValues: JSON.stringify(mondayColumnValues),
-      craeteLables: create_labels_if_missing ?? false,
     });
   },
 });
