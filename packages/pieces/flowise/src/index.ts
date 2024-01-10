@@ -1,7 +1,5 @@
 
 import {createAction, createPiece, PieceAuth, Property } from "@activepieces/pieces-framework";
-import isUrl from 'is-url';
-import { blob } from "stream/consumers";
 
 const flowiseAuth = PieceAuth.CustomAuth({
     description: 'Enter your Flowise URL and API Key',
@@ -23,8 +21,8 @@ const flowiseAuth = PieceAuth.CustomAuth({
 
 // /api/v1/prediction/{your-chatflowid}
 export const flowisePredict = createAction({
-  name: "run_flowise_predict",
-  displayName: "Flowise Predict API",
+  name: "make_prediction",
+  displayName: "Make Prediction",
   description: "Run Flowise Predict",
   auth: flowiseAuth,
   props: {
@@ -75,7 +73,7 @@ export const flowisePredict = createAction({
 
 export const flowise = createPiece({
   displayName: "Flowise",
-  logoUrl: "https://www.gitbook.com/cdn-cgi/image/width=36,dpr=2,height=36,fit=contain,format=auto/https%3A%2F%2F1778525056-files.gitbook.io%2F~%2Ffiles%2Fv0%2Fb%2Fgitbook-x-prod.appspot.com%2Fo%2Fspaces%252Fy8ifwt9BYklr92KDdr48%252Ficon%252F97nC5fsqCUgneLnMjAtJ%252FFloWiseAI_dark.png%3Falt%3Dmedia%26token%3D1083d5e8-2017-4273-afe7-f326846dffac",
+  logoUrl: "https://cdn.activepieces.com/pieces/flowise.png",
   auth: flowiseAuth,
   minimumSupportedRelease: '0.9.0',
   authors: [],
