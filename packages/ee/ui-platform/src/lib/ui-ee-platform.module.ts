@@ -28,6 +28,7 @@ import { AddAllowedEmailDomainDialogComponent } from './components/dialogs/add-a
 import { AllowedEmailDomainsListComponent } from './components/allowed-email-domains-list/allowed-email-domains-list.component';
 import { ConfigureConfederatedAuthnCardComponent } from './components/configure-confederated-authn-card/configure-confederated-authn-card.component';
 import { EnableFederatedAuthnProviderDialogComponent } from './components/dialogs/enable-federated-authn-provider-dialog/enable-federated-authn-provider-dialog.component';
+import { ConfigureAllowingEmailLoginsCardComponent } from './components/configure-allowing-email-logins-card/configure-allowing-email-logins-card.component';
 @NgModule({
   imports: [
     UiCommonModule,
@@ -60,6 +61,7 @@ import { EnableFederatedAuthnProviderDialogComponent } from './components/dialog
     AllowedEmailDomainsListComponent,
     ConfigureConfederatedAuthnCardComponent,
     EnableFederatedAuthnProviderDialogComponent,
+    ConfigureAllowingEmailLoginsCardComponent,
   ],
 })
 export class UiEePlatformModule {}

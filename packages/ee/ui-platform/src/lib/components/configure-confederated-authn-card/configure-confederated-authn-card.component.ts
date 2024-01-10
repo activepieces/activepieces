@@ -20,6 +20,10 @@ import {
 } from '@activepieces/ui/common';
 import { FederatedAuthnProviderEnum } from '../sso-settings/federated-authn-provider.enum';
 import { MatSlideToggleChange } from '@angular/material/slide-toggle';
+import {
+  AtLeastOneLoginMethodMsg,
+  doesPlatformHaveAtLeastOneLoginMethodEnabled,
+} from '../util';
 
 @Component({
   selector: 'app-configure-confederated-authn-card',
@@ -46,16 +50,26 @@ export class ConfigureConfederatedAuthnCardComponent implements OnInit {
         ? this.platform.federatedAuthProviders.google !== undefined
         : this.platform.federatedAuthProviders.github !== undefined;
   }
-  disableAuthnProvider() {
+  disableAuthnProvider($event: MatSlideToggleChange) {
     const platform: Platform = JSON.parse(JSON.stringify(this.platform));
+
     if (this.federatedAuthnProvider === 'Google') {
       delete platform.federatedAuthProviders.google;
     } else if (this.federatedAuthnProvider === 'Github') {
       delete platform.federatedAuthProviders.github;
     }
+    if (!doesPlatformHaveAtLeastOneLoginMethodEnabled(platform)) {
+      this.matSnackbar.open(AtLeastOneLoginMethodMsg);
+      $event.source.checked = true;
+      return;
+    }
+
     this.toggleDisabled = true;
     this.disableFederatedAuthn$ = this.platformService
-      .updatePlatform(platform, platform.id)
+      .updatePlatform(
+        { federatedAuthProviders: platform.federatedAuthProviders },
+        platform.id
+      )
       .pipe(
         tap(() => {
           this.toggleDisabled = false;
@@ -99,7 +113,7 @@ export class ConfigureConfederatedAuthnCardComponent implements OnInit {
     if (federatedAuthnProviderValue === undefined) {
       this.enableAuthnProvider();
     } else {
-      this.disableAuthnProvider();
+      this.disableAuthnProvider($event);
     }
   }
 }

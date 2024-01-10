@@ -5,7 +5,7 @@
 <mat-dialog-content>
     <div class="ap-min-w-[470px] ap-max-w-[470px]">
 
-        <form autocomplete="off" class="ap-flex ap-flex-col ap-gap-2" [formGroup]="formGroup" (submit)="submit()">
+        <form autocomplete="off" class="ap-flex ap-flex-col ap-gap-2" [formGroup]="formGroup" (keyup.enter)="submit()">
             <mat-form-field class="ap-w-full" appearance="outline">
                 <mat-label>Client ID </mat-label>
                 <input name="clientId" autocomplete="nope" cdkFocusInitial [formControl]="formGroup.controls.clientId"

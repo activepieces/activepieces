@@ -63,7 +63,10 @@ export class EnableFederatedAuthnProviderDialogComponent {
         platform.federatedAuthProviders.google = formData;
       }
       this.enableProvider$ = this.platformService
-        .updatePlatform(platform, platform.id)
+        .updatePlatform(
+          { federatedAuthProviders: platform.federatedAuthProviders },
+          platform.id
+        )
         .pipe(
           tap(() => {
             this.dialogRef.close(platform);

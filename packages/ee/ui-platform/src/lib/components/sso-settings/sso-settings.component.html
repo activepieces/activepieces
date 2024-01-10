@@ -8,6 +8,8 @@
         <app-configure-confederated-authn-card [platform]="(platform$ | async)!"
             (platformUpdated)="platformUpdated($event)"
             [federatedAuthnProvider]="FederatedAuthnProviderEnum.Github"></app-configure-confederated-authn-card>
+        <app-configure-allowing-email-logins-card [platform]="(platform$ | async)!"
+            (platformUpdated)="platformUpdated($event)"></app-configure-allowing-email-logins-card>
     </div>
 
 

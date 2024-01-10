@@ -1,12 +1,17 @@
 <div class="ap-flex ap-gap-3 ap-flex-col">
     <div
         class="ap-rounded ap-border ap-border-solid ap-border-border ap-p-4  ap-flex ap-items-center ap-justify-between ap-flex-col md:ap-flex-row ap-gap-5 ap-shadow">
-        <div>
-            <div class="ap-typography-body-1  ap-mb-2" i18n><b>Allowed Email Domains</b></div>
-            <div class="ap-typography-body-2 ap-text-description " i18n>
-                Anyone with an email address at these domains is allowed to sign up for your platform.
-                <br> Keep empty to allow all domains.
+        <div class="ap-flex ap-items-center ap-gap-4">
+            <svg-icon [svgStyle]="{ width: '24px', height: '24px' }" src="assets/img/custom/auth/domain.svg">
+            </svg-icon>
+            <div>
+                <div class="ap-typography-body-1  ap-mb-2" i18n><b>Allowed Email Domains</b></div>
+                <div class="ap-typography-body-2 ap-text-description " i18n>
+                    Anyone with an email address at these domains is allowed to sign up for your platform.
+                    <br> Keep empty to allow all domains.
+                </div>
             </div>
+
 
         </div>
         <ap-button btnSize="medium" (buttonClicked)="addDomain()">+ Add Domain</ap-button>
