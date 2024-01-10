@@ -1,6 +1,6 @@
 import { BranchCondition, BranchOperator } from '@activepieces/shared'
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
-import { EXECUTE_CONSTANTS, buildActionWithOneCondition } from './test-helper'
+import { buildActionWithOneCondition, generateMockEngineConstants } from './test-helper'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 
 function executeBranchActionWithOneCondition(condition: BranchCondition): Promise<FlowExecutorContext> {
@@ -9,7 +9,7 @@ function executeBranchActionWithOneCondition(condition: BranchCondition): Promis
             condition,
         }),
         executionState: FlowExecutorContext.empty(),
-        constants: EXECUTE_CONSTANTS,
+        constants: generateMockEngineConstants(),
     })
 }
 describe('flow with branching different conditions', () => {

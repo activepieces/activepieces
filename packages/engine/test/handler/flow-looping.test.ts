@@ -1,5 +1,5 @@
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
-import { EXECUTE_CONSTANTS, buildCodeAction, buildSimpleLoopAction } from './test-helper'
+import { buildCodeAction, buildSimpleLoopAction, generateMockEngineConstants } from './test-helper'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { LoopStepOutput } from '@activepieces/shared'
 
@@ -20,7 +20,7 @@ describe('flow with looping', () => {
                 firstLoopAction: codeAction,
             }),
             executionState: FlowExecutorContext.empty(),
-            constants: EXECUTE_CONSTANTS,
+            constants: generateMockEngineConstants(),
         })
 
         const loopOut = result.steps.loop as LoopStepOutput
@@ -48,7 +48,7 @@ describe('flow with looping', () => {
         const result = await flowExecutor.execute({
             action: generateArray,
             executionState: FlowExecutorContext.empty(),
-            constants: EXECUTE_CONSTANTS,
+            constants: generateMockEngineConstants(),
         })
 
         const loopOut = result.steps.loop as LoopStepOutput

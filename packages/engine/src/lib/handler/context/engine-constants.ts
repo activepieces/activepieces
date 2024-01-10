@@ -6,7 +6,7 @@ export class EngineConstants {
     public static readonly BASE_CODE_DIRECTORY = process.env.AP_BASE_CODE_DIRECTORY ?? './codes'
     public static readonly INPUT_FILE = './input.json'
     public static readonly OUTPUT_FILE = './output.json'
-    public static readonly PIECE_SOURCES = process.env.AP_PIECES_SOURCE ?? 'dev'
+    public static readonly PIECE_SOURCES = process.env.AP_PIECES_SOURCE ?? 'FILE'
 
     private project: Project | null = null
 
@@ -22,7 +22,7 @@ export class EngineConstants {
         return EngineConstants.PIECE_SOURCES
     }
 
-    private constructor(
+    public constructor(
         public readonly flowId: string,
         public readonly flowRunId: string,
         public readonly serverUrl: string,
