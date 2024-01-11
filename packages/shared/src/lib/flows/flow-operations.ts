@@ -1,11 +1,14 @@
 import {
     CodeActionSchema, BranchActionSchema, LoopOnItemsActionSchema, PieceActionSchema, Action,
 } from './actions/action'
+import { FlowStatus } from './flow'
 import { EmptyTrigger, PieceTrigger, WebhookTrigger } from './triggers/trigger'
 import { Static, Type } from '@sinclair/typebox'
 
 
 export enum FlowOperationType {
+    LOCK_AND_PUBLISH = 'LOCK_AND_PUBLISH',
+    CHANGE_STATUS = 'CHANGE_STATUS',
     LOCK_FLOW = 'LOCK_FLOW',
     CHANGE_FOLDER = 'CHANGE_FOLDER',
     CHANGE_NAME = 'CHANGE_NAME',
@@ -33,9 +36,7 @@ export const UseAsDraftRequest = Type.Object({
 })
 export type UseAsDraftRequest = Static<typeof UseAsDraftRequest>
 
-export const LockFlowRequest = Type.Object({
-    flowId: Type.String({}),
-})
+export const LockFlowRequest = Type.Object({})
 
 export type LockFlowRequest = Static<typeof LockFlowRequest>
 
@@ -92,11 +93,27 @@ export type AddActionRequest = Static<typeof AddActionRequest>
 export const UpdateTriggerRequest = Type.Union([EmptyTrigger, PieceTrigger, WebhookTrigger])
 export type UpdateTriggerRequest = Static<typeof UpdateTriggerRequest>
 
+export const UpdateFlowStatusRequest =  Type.Object({
+    status: Type.Enum(FlowStatus),
+})
+export type UpdateFlowStatusRequest = Static<typeof UpdateFlowStatusRequest>
+
+export const ChangePublishedVersionIdRequest = Type.Object({})
+export type ChangePublishedVersionIdRequest = Static<typeof ChangePublishedVersionIdRequest>
+
 
 export const FlowOperationRequest = Type.Union([
     Type.Object({
         type: Type.Literal(FlowOperationType.MOVE_ACTION),
         request: MoveActionRequest,
+    }),
+    Type.Object({
+        type: Type.Literal(FlowOperationType.CHANGE_STATUS),
+        request: UpdateFlowStatusRequest,
+    }),
+    Type.Object({
+        type: Type.Literal(FlowOperationType.LOCK_AND_PUBLISH),
+        request: ChangePublishedVersionIdRequest,
     }),
     Type.Object({
         type: Type.Literal(FlowOperationType.USE_AS_DRAFT),

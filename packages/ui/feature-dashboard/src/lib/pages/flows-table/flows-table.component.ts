@@ -8,6 +8,7 @@ import {
   FlowStatus,
   FolderId,
   TriggerType,
+  FlowOperationType,
 } from '@activepieces/shared';
 
 import {
@@ -142,11 +143,14 @@ export class FlowsTableComponent implements OnInit {
     if (control.enabled) {
       control.disable();
       this.flowsUpdateStatusRequest$[flow.id] = this.flowService
-        .updateStatus(flow.id, {
-          status:
-            flow.status === FlowStatus.ENABLED
-              ? FlowStatus.DISABLED
-              : FlowStatus.ENABLED,
+        .update(flow.id, {
+          type: FlowOperationType.CHANGE_STATUS,
+          request: {
+            status:
+              flow.status === FlowStatus.ENABLED
+                ? FlowStatus.DISABLED
+                : FlowStatus.ENABLED,
+          },
         })
         .pipe(
           tap((res) => {

@@ -44,7 +44,6 @@ const DeleteRepoRequestSchema = {
         allowedPrincipals: [PrincipalType.SERVICE, PrincipalType.USER],
     },
     schema: {
-        tags: ['git-repo'],
         description: 'Delete a git repository information for a project.',
         params: Type.Object({
             id: Type.String(),
@@ -60,7 +59,6 @@ const PullRepoRequestSchema = {
         allowedPrincipals: [PrincipalType.SERVICE, PrincipalType.USER],
     },
     schema: {
-        tags: ['git-repo'],
         description: 'Pull all changes from the git repository and overwrite any conflicting changes in the project.',
         params: Type.Object({
             id: Type.String(),
@@ -76,7 +74,6 @@ const PushRepoRequestSchema = {
         allowedPrincipals: [PrincipalType.SERVICE, PrincipalType.USER],
     },
     schema: {
-        tags: ['git-repo'],
         description: 'Push all changes from the project and overwrite any conflicting changes in the git repository.',
         body: PushGitRepoRequest,
         params: Type.Object({
@@ -93,7 +90,6 @@ const ConfigureRepoRequestSchema = {
         allowedPrincipals: [PrincipalType.SERVICE, PrincipalType.USER],
     },
     schema: {
-        tags: ['git-repo'],
         description: 'Upsert a git repository information for a project.',
         body: ConfigureRepoRequest,
         response: {
@@ -107,7 +103,6 @@ const ListRepoRequestSchema = {
         allowedPrincipals: [PrincipalType.SERVICE, PrincipalType.USER],
     },
     schema: {
-        tags: ['git-repo'],
         querystring: Type.Object({
             projectId: Type.String(),
         }),
