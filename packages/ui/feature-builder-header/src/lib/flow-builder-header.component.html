@@ -24,7 +24,7 @@
         </ng-container>
         <ap-editable-text [editing]="editingFlowName" (editingChanges)="changeEditValue($event)"
           [value]="(flow$ | async)?.version?.displayName" (valueChanges)="saveFlowName($event)" [disableEditing]="
-            (isInDebugMode$ | async | defaultTrue) ||
+           
             (isInReadOnlyMode$ | async | defaultTrue)
           " [allowClick]="true" [cssClasses]="'ap-typography-body-1 !ap-font-semibold'"
           class="ap-text-title"></ap-editable-text>
@@ -82,11 +82,12 @@
       <app-support class="ap-z-50 ap-flex ap-items-center"></app-support>
       <app-version-history-button></app-version-history-button>
 
-      <ng-container *ngIf="(isInDebugMode$ | async) === false">
+      <ng-container *ngIf="(isInDebugMode$ | async) === false ">
         <div class="ap-flex ap-items-center ap-gap-1">
           <ng-container *ngIf="hasFlowBeenPublished$ | async">
             <ng-container *ngIf="flowStatus$ | async as status">
-              <app-toggle-instance-state [flowStatus]="status"></app-toggle-instance-state>
+              <app-toggle-instance-state *ngIf="(isInReadOnlyMode$ | async)=== false"
+                [flowStatus]="status"></app-toggle-instance-state>
             </ng-container>
           </ng-container>
 
