@@ -77,6 +77,11 @@ export interface User {
   role_login: number;
   name: string;
 }
+export interface Account {
+  id: number;
+  name: string;
+  type: number;
+}
 export interface TaskWorkflow {
   id: number;
   name: string;
@@ -138,6 +143,10 @@ export interface OpportunitySource {
   description: string;
   deleted_at: string;
 }
+export interface Opportunity {
+  id: number;
+  name: string;
+}
 export interface CreateTaskAPIRequest {
   name: string;
   description?: string;
@@ -189,4 +198,15 @@ export interface CreateCRMAccountAPIRequest {
   shipping_address_line_1?: string;
   shipping_address_line_2?: string;
   shipping_address_line_3?: string;
+}
+export interface CreateOpportunityAPIRequest {
+  name: string;
+  budget?: number;
+  description?: string;
+  source_id?: number;
+  start_date?: string;
+  deadline?: string;
+  assignee_id?: string;
+  customer_id?: number;
+  contact_id?: number;
 }

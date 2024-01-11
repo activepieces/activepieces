@@ -6,6 +6,7 @@ import {
 import { flowluAuth } from '../../..';
 import { flowluCommon, makeClient } from '../../common';
 import { flowluProps } from '../../common/props';
+
 export const createContactAction = createAction({
   auth: flowluAuth,
   name: 'flowlu_create_contact',

@@ -18,6 +18,6 @@ export const deleteTaskAction = createAction({
     const client = makeClient(
       context.auth as PiecePropValueSchema<typeof flowluAuth>
     );
-    return await client.deleteTask(task_id);
+    return await client.deleteAction('task', 'tasks', task_id);
   },
 });

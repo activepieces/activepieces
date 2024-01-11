@@ -6,6 +6,7 @@ import {
 import { flowluAuth } from '../../..';
 import { makeClient } from '../../common';
 import { flowluProps } from '../../common/props';
+
 export const createOrganizationAction = createAction({
   auth: flowluAuth,
   name: 'flowlu_create_organization',

@@ -8,7 +8,9 @@ export function makeClient(
   const client = new FlowluClient(auth.domain, auth.apiKey);
   return client;
 }
-
+function mapItemsToOptions(items: { id: string | number; name: string }[]) {
+  return items.map((item) => ({ label: item.name, value: item.id }));
+}
 export const flowluCommon = {
   task_id: (required = true) =>
     Property.Dropdown({
@@ -224,6 +226,100 @@ export const flowluCommon = {
           auth as PiecePropValueSchema<typeof flowluAuth>
         );
         const { response } = await client.listAllOpportunitySources();
+        return {
+          disabled: false,
+          options: response.items.map((item) => {
+            return {
+              label: item.name,
+              value: item.id,
+            };
+          }),
+        };
+      },
+    }),
+  opportunity_id: (required = false) =>
+    Property.Dropdown({
+      displayName: 'Opportunity ID',
+      required,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Connect your account first',
+            options: [],
+          };
+        }
+        const client = makeClient(
+          auth as PiecePropValueSchema<typeof flowluAuth>
+        );
+        const { response } = await client.listAllOpportunities();
+        return {
+          disabled: false,
+          options: response.items.map((item) => {
+            return {
+              label: item.name,
+              value: item.id,
+            };
+          }),
+        };
+      },
+    }),
+  account_id: (
+    required = false,
+    displayName = 'Account ID',
+    description = ''
+  ) =>
+    Property.Dropdown({
+      displayName,
+      description,
+      required,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Connect your account first',
+            options: [],
+          };
+        }
+        const client = makeClient(
+          auth as PiecePropValueSchema<typeof flowluAuth>
+        );
+        const { response } = await client.listAllAccounts();
+        return {
+          disabled: false,
+          options: response.items.map((item) => {
+            return {
+              label: item.name,
+              value: item.id,
+            };
+          }),
+        };
+      },
+    }),
+  contact_id: (
+    required = false,
+    displayName = 'Contact ID',
+    description = ''
+  ) =>
+    Property.Dropdown({
+      displayName,
+      description,
+      required,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Connect your account first',
+            options: [],
+          };
+        }
+        const client = makeClient(
+          auth as PiecePropValueSchema<typeof flowluAuth>
+        );
+        const { response } = await client.listAllContacts();
         return {
           disabled: false,
           options: response.items.map((item) => {
