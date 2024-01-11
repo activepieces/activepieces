@@ -15,13 +15,9 @@ export const updateContactAction = createAction({
   props: {
     id: flowluCommon.contact_id(true),
     honorific_title_id: flowluCommon.honorific_title_id(false),
-    name: Property.ShortText({
-      displayName: 'Name',
-      required: true,
-    }),
     first_name: Property.ShortText({
       displayName: 'First Name',
-      required: false,
+      required: true,
     }),
     middle_name: Property.ShortText({
       displayName: 'Middle Name',

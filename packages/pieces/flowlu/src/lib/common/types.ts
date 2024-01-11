@@ -164,7 +164,6 @@ export interface CreateTaskAPIRequest {
 
 export interface CreateCRMAccountAPIRequest {
   type: number;
-  name: string;
   name_legal_full?: string;
   first_name?: string;
   middle_name?: string;

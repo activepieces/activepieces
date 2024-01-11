@@ -14,13 +14,9 @@ export const createContactAction = createAction({
   description: 'Creates a new contact in CRM.',
   props: {
     honorific_title_id: flowluCommon.honorific_title_id(false),
-    name: Property.ShortText({
-      displayName: 'Name',
-      required: true,
-    }),
     first_name: Property.ShortText({
       displayName: 'First Name',
-      required: false,
+      required: true,
     }),
     middle_name: Property.ShortText({
       displayName: 'Middle Name',

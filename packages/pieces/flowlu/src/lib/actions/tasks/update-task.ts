@@ -28,13 +28,15 @@ export const updateTaskAction = createAction({
         ? dayjs(context.propsValue.plan_start_date).format(
             'YYYY-MM-DD HH:mm:ss'
           )
-        : '',
+        : undefined,
       deadline: context.propsValue.deadline
         ? dayjs(context.propsValue.deadline).format('YYYY-MM-DD HH:mm:ss')
-        : '',
+        : undefined,
       deadline_allowchange: context.propsValue.deadline_allowchange ? 1 : 0,
       task_checkbyowner: context.propsValue.task_checkbyowner ? 1 : 0,
       type: context.propsValue.type,
+      responsible_id: context.propsValue.responsible_id,
+      owner_id: context.propsValue.owner_id,
       workflow_id: context.propsValue.workflow_id,
       workflow_stage_id: context.propsValue.workflow_stage_id,
     });
