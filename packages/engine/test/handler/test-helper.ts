@@ -16,6 +16,7 @@ export const generateMockEngineConstants = (params?: Partial<EngineConstants>): 
         }),
         params?.testSingleStepMode ?? false,
         params?.filesServiceType ?? 'local',
+        params?.resumePayload,
     )
 }
 
