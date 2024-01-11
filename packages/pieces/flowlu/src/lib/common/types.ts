@@ -163,7 +163,7 @@ export interface CreateTaskAPIRequest {
 }
 
 export interface CreateCRMAccountAPIRequest {
-  id: number;
+  type: number;
   name: string;
   name_legal_full?: string;
   first_name?: string;

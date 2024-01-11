@@ -5,6 +5,8 @@ import {
 } from '@activepieces/pieces-framework';
 import { createContactAction } from './lib/actions/accounts/create-contact';
 import { createOrganizationAction } from './lib/actions/accounts/create-organization';
+import { deleteContactAction } from './lib/actions/accounts/delete-contact';
+import { updateContactAction } from './lib/actions/accounts/update-contact';
 import { createOpportunityAction } from './lib/actions/opportunities/create-opportunity';
 import { deleteOpportunityAction } from './lib/actions/opportunities/delete-opportunity';
 import { updateOpportunityAction } from './lib/actions/opportunities/update-opportunity';
@@ -42,14 +44,16 @@ export const flowlu = createPiece({
   authors: ['kishanprmr'],
   actions: [
     createContactAction,
-    createOpportunityAction,
+    updateContactAction,
+    deleteContactAction,
     createOrganizationAction,
-    createTaskAction,
-    deleteOpportunityAction,
-    deleteTaskAction,
-    getTaskAction,
+    createOpportunityAction,
     updateOpportunityAction,
+    deleteOpportunityAction,
+    createTaskAction,
     updateTaskAction,
+    getTaskAction,
+    deleteTaskAction,
   ],
   triggers: [],
 });

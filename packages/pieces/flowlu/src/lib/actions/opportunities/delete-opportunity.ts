@@ -4,6 +4,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { flowluAuth } from '../../../';
 import { flowluCommon, makeClient } from '../../common';
+import { FlowluEntity, FlowluModule } from '../../common/constants';
 
 export const deleteOpportunityAction = createAction({
   auth: flowluAuth,
@@ -18,6 +19,10 @@ export const deleteOpportunityAction = createAction({
     const client = makeClient(
       context.auth as PiecePropValueSchema<typeof flowluAuth>
     );
-    return await client.deleteAction('crm', 'lead', id);
+    return await client.deleteAction(
+      FlowluModule.CRM,
+      FlowluEntity.OPPORTUNITY,
+      id
+    );
   },
 });

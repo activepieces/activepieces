@@ -4,6 +4,7 @@ import {
   QueryParams,
   httpClient,
 } from '@activepieces/pieces-common';
+import { FlowluEntity, FlowluModule } from './constants';
 import {
   Account,
   AccountCategory,
@@ -64,14 +65,81 @@ export class FlowluClient {
     });
     return res.body;
   }
+  async createAccount(request: CreateCRMAccountAPIRequest) {
+    return await this.makeRequest(
+      HttpMethod.POST,
+      '/crm/account/create',
+      undefined,
+      request
+    );
+  }
+  async updateContact(id: number, request: CreateCRMAccountAPIRequest) {
+    return await this.makeRequest(
+      HttpMethod.POST,
+      `/crm/account/update/${id}`,
+      undefined,
+      request
+    );
+  }
+  async listAllAccounts() {
+    return await this.makeRequest<ListAPIResponse<Account[]>>(
+      HttpMethod.GET,
+      '/crm/account/list'
+    );
+  }
+  async listAllContacts() {
+    return await this.makeRequest<ListAPIResponse<Account[]>>(
+      HttpMethod.GET,
+      '/crm/account/list',
+      { 'filter[type]': '2' }
+    );
+  }
+  async createTask(request: CreateTaskAPIRequest) {
+    return await this.makeRequest(
+      HttpMethod.POST,
+      '/task/tasks/create',
+      undefined,
+      request
+    );
+  }
+  async updateTask(id: number, request: CreateTaskAPIRequest) {
+    return await this.makeRequest(
+      HttpMethod.POST,
+      `/task/tasks/update/${id}`,
+      undefined,
+      request
+    );
+  }
+  async getTask(id: number) {
+    return await this.makeRequest(HttpMethod.GET, `/task/tasks/get/${id}`);
+  }
   async listAllTasks() {
     return await this.makeRequest<ListAPIResponse<Task[]>>(
       HttpMethod.GET,
       '/task/tasks/list'
     );
   }
-  async getTask(id: number) {
-    return await this.makeRequest(HttpMethod.GET, `/task/tasks/get/${id}`);
+  async createOpportunity(request: CreateOpportunityAPIRequest) {
+    return await this.makeRequest(
+      HttpMethod.POST,
+      '/crm/lead/create',
+      undefined,
+      request
+    );
+  }
+  async updateOpportunity(id: number, request: CreateOpportunityAPIRequest) {
+    return await this.makeRequest(
+      HttpMethod.POST,
+      `/crm/lead/update/${id}`,
+      undefined,
+      request
+    );
+  }
+  async listAllOpportunities() {
+    return await this.makeRequest<ListAPIResponse<Opportunity[]>>(
+      HttpMethod.GET,
+      '/crm/lead/list'
+    );
   }
   async listAllUsers() {
     return await this.makeRequest<ListAPIResponse<User[]>>(
@@ -103,19 +171,7 @@ export class FlowluClient {
       '/crm/account_category/list'
     );
   }
-  async listAllAccounts() {
-    return await this.makeRequest<ListAPIResponse<Account[]>>(
-      HttpMethod.GET,
-      '/crm/account/list'
-    );
-  }
-  async listAllContacts() {
-    return await this.makeRequest<ListAPIResponse<Account[]>>(
-      HttpMethod.GET,
-      '/crm/account/list',
-      { 'filter[type]': '2' }
-    );
-  }
+
   async listAllAccountIndustries() {
     return await this.makeRequest<ListAPIResponse<AccountIndustry[]>>(
       HttpMethod.GET,
@@ -128,53 +184,12 @@ export class FlowluClient {
       '/crm/source/list'
     );
   }
-  async listAllOpportunities() {
-    return await this.makeRequest<ListAPIResponse<Opportunity[]>>(
-      HttpMethod.GET,
-      '/crm/lead/list'
-    );
-  }
-  async createTask(request: CreateTaskAPIRequest) {
-    return await this.makeRequest(
-      HttpMethod.POST,
-      '/task/tasks/create',
-      undefined,
-      request
-    );
-  }
-  async createAccount(request: CreateCRMAccountAPIRequest) {
-    return await this.makeRequest(
-      HttpMethod.POST,
-      '/crm/account/create',
-      undefined,
-      request
-    );
-  }
-  async createOpportunity(request: CreateOpportunityAPIRequest) {
-    return await this.makeRequest(
-      HttpMethod.POST,
-      '/crm/lead/create',
-      undefined,
-      request
-    );
-  }
-  async updateOpportunity(id: number, request: CreateOpportunityAPIRequest) {
-    return await this.makeRequest(
-      HttpMethod.POST,
-      `/crm/lead/update/${id}`,
-      undefined,
-      request
-    );
-  }
-  async updateTask(id: number, request: CreateTaskAPIRequest) {
-    return await this.makeRequest(
-      HttpMethod.POST,
-      `/task/tasks/update/${id}`,
-      undefined,
-      request
-    );
-  }
-  async deleteAction(moduleName: string, entityName: string, id: number) {
+
+  async deleteAction(
+    moduleName: FlowluModule,
+    entityName: FlowluEntity,
+    id: number
+  ) {
     return await this.makeRequest(
       HttpMethod.GET,
       `/${moduleName}/${entityName}/delete/${id}`

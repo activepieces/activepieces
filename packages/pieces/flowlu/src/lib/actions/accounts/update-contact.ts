@@ -7,12 +7,13 @@ import { flowluAuth } from '../../..';
 import { flowluCommon, makeClient } from '../../common';
 import { flowluProps } from '../../common/props';
 
-export const createContactAction = createAction({
+export const updateContactAction = createAction({
   auth: flowluAuth,
-  name: 'flowlu_create_contact',
-  displayName: 'Create CRM Account(Contact)',
-  description: 'Creates a new contact in CRM.',
+  name: 'flowlu_update_contact',
+  displayName: 'Update CRM Account(Contact)',
+  description: 'Updates an existing contact in CRM.',
   props: {
+    id: flowluCommon.contact_id(true),
     honorific_title_id: flowluCommon.honorific_title_id(false),
     name: Property.ShortText({
       displayName: 'Name',
@@ -33,9 +34,10 @@ export const createContactAction = createAction({
     ...flowluProps.account,
   },
   async run(context) {
+    const id = context.propsValue.id!;
     const client = makeClient(
       context.auth as PiecePropValueSchema<typeof flowluAuth>
     );
-    return await client.createAccount({ type: 2, ...context.propsValue });
+    return await client.updateContact(id, { type: 2, ...context.propsValue });
   },
 });
