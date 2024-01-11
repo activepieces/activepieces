@@ -1,69 +1,70 @@
-import { HttpMethod } from "@activepieces/pieces-common"
-import { createAction, Property } from "@activepieces/pieces-framework"
-import { mondayProps } from "../common/props"
-import { mondayMakeRequest } from "../common/data"
-import { mondayAuth } from "../.."
+import {
+  DynamicPropsValue,
+  Property,
+  createAction,
+} from '@activepieces/pieces-framework';
+import { mondayAuth } from '../..';
+import { makeClient, mondayCommon } from '../common';
+import {
+  convertPropValueToMondayColumnValue,
+  generateColumnIdTypeMap,
+} from '../common/helper';
 
-export const mondayCreateAnItem = createAction({
+export const createItemAction = createAction({
   auth: mondayAuth,
-  name: 'monday_create_an_item',
+  name: 'monday_create_item',
   displayName: 'Create Item',
-  description: 'Create a new item inside a board.',
+  description: 'Creates a new item inside a board.',
   props: {
-    workspace_id: mondayProps.workspace_id(true),
-    board_id: mondayProps.board_id(true),
-    group_id: mondayProps.group_id(false),
+    workspace_id: mondayCommon.workspace_id(true),
+    board_id: mondayCommon.board_id(true),
+    group_id: mondayCommon.group_id(false),
     item_name: Property.ShortText({
-      displayName: "Item Name",
-      description: "Item Name",
-      required: true
+      displayName: 'Item Name',
+      description: 'Item Name',
+      required: true,
     }),
-    column_values: Property.Object({
-      displayName: "Column Values",
-      description: "The column values of the new item.",
-      required: false
-    }),
+    column_values: mondayCommon.columnValues,
     create_labels_if_missing: Property.Checkbox({
-      displayName: "Create Labels if Missing",
-      description: "Creates status/dropdown labels if they are missing. This requires permission to change the board structure.",
+      displayName: 'Create Labels if Missing',
+      description:
+        'Creates status/dropdown labels if they are missing. This requires permission to change the board structure.',
       defaultValue: false,
-      required: false
-    })
+      required: false,
+    }),
   },
   async run(context) {
-    const { ...itemValues } = context.propsValue
+    const { board_id, item_name, create_labels_if_missing } =
+      context.propsValue;
+    const group_id = context.propsValue.group_id!;
+    const columnValuesInput = context.propsValue.column_values;
+    const mondayColumnValues: DynamicPropsValue = {};
 
+    const client = makeClient(context.auth as string);
+    const res = await client.listBoardColumns({
+      boardId: board_id as unknown as string,
+    });
+    const columns = res.data.boards[0]?.columns;
 
-    const query = `
-      mutation {
-        create_item (
-          item_name: "${itemValues.item_name}",
-          board_id: ${itemValues.board_id},
-          ${itemValues.group_id ? `group_id: ${itemValues.group_id},` : ``}
-          create_labels_if_missing: ${
-            itemValues.create_labels_if_missing ?? false
-          },
-          ${
-            itemValues.column_values
-              ? `column_values: " ${JSON.stringify(
-                  itemValues?.column_values
-                ).replace(/"/g, '\\"')}",`
-              : ``
-          }
-        )
-        { id }
+    // map board column id with column type
+    const columnIdTypeMap = generateColumnIdTypeMap(columns);
+
+    Object.keys(columnValuesInput).forEach((key) => {
+      if (columnValuesInput[key] !== '') {
+        const columnType: string = columnIdTypeMap[key];
+        mondayColumnValues[key] = convertPropValueToMondayColumnValue(
+          columnType,
+          columnValuesInput[key]
+        );
       }
-    `
+    });
 
-    const result = await mondayMakeRequest(
-      context.auth.access_token,
-      query,
-      HttpMethod.POST
-    )
-
-    if (result.status === 200) {
-      return result.body
-    }
-    return result
-  }
-})
+    return await client.createItem({
+      itemName: item_name,
+      boardId: board_id,
+      groupId: group_id,
+      columnValues: JSON.stringify(mondayColumnValues),
+      craeteLables: create_labels_if_missing ?? false,
+    });
+  },
+});

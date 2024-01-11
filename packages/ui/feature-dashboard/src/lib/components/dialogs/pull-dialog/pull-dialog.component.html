@@ -1,0 +1,32 @@
+<ap-dialog-title-template i18n>
+    Pull from Repo
+</ap-dialog-title-template>
+
+<mat-dialog-content>
+    <div class="md:ap-min-w-[500px] ap-max-w-[750px]">
+
+        <ap-warning-box>
+            <div class="ap-flex ap-items-center ap-gap-2 ap-ml-[-3px] ">
+                <svg-icon [svgStyle]="{ width: '20px', height: '20px' }" src="assets/img/custom/warn.svg">
+                </svg-icon> <span i18n>Warning</span>
+            </div>
+            <div i18n>
+                    All the flows in <b>{{data.projectName}}</b> will be replaced with the flows from the Git repository.
+                </div>
+        </ap-warning-box>
+    </div>
+
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <div class="ap-flex ap-gap-2.5">
+        <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" i18n>
+            Cancel
+        </ap-button>
+        <ap-button btnSize="default" type="submit" (click)="submit();" btnColor="primary" i18n
+            [loading]="(loading$ | async) || false">
+            Confirm
+        </ap-button>
+    </div>
+</mat-dialog-actions>
+<ng-container *ngIf="pull$ | async"></ng-container>

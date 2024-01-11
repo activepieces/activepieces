@@ -1,5 +1,5 @@
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
-import { EXECUTE_CONSTANTS, buildActionWithOneCondition, buildCodeAction } from './test-helper'
+import { buildActionWithOneCondition, buildCodeAction, generateMockEngineConstants } from './test-helper'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { BranchAction, BranchCondition, BranchOperator } from '@activepieces/shared'
 
@@ -37,7 +37,7 @@ describe('flow with branching', () => {
 
             }),
             executionState: FlowExecutorContext.empty(),
-            constants: EXECUTE_CONSTANTS,
+            constants: generateMockEngineConstants(),
         })
 
         expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
@@ -57,7 +57,7 @@ describe('flow with branching', () => {
 
             }),
             executionState: FlowExecutorContext.empty(),
-            constants: EXECUTE_CONSTANTS,
+            constants: generateMockEngineConstants(),
         })
 
         expect(result.verdict).toBe(ExecutionVerdict.RUNNING)

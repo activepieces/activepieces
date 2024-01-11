@@ -1,7 +1,7 @@
 import { BranchOperator, ExecutionOutputStatus, ExecutionType, LoopStepOutput } from '@activepieces/shared'
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
-import { EXECUTE_CONSTANTS, buildActionWithOneCondition, buildCodeAction, buildPieceAction, buildSimpleLoopAction } from './test-helper'
+import { buildActionWithOneCondition, buildCodeAction, buildPieceAction, buildSimpleLoopAction, generateMockEngineConstants } from './test-helper'
 import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
 
 
@@ -35,7 +35,7 @@ describe('flow with pause', () => {
         const pauseResult = await flowExecutor.execute({
             action: pauseFlowWithLoopAndBranch,
             executionState: FlowExecutorContext.empty(),
-            constants: EXECUTE_CONSTANTS,
+            constants: generateMockEngineConstants(),
         })
         expect(pauseResult.verdict).toBe(ExecutionVerdict.PAUSED)
         expect(pauseResult.verdictResponse).toEqual({
@@ -50,13 +50,12 @@ describe('flow with pause', () => {
         const resumeResult = await flowExecutor.execute({
             action: pauseFlowWithLoopAndBranch,
             executionState: pauseResult.setCurrentPath(StepExecutionPath.empty()),
-            constants: {
-                ...EXECUTE_CONSTANTS,
+            constants: generateMockEngineConstants({
                 resumePayload: {
                     action: 'approve',
                 },
                 executionType: ExecutionType.RESUME,
-            },
+            }),
         })
         expect(resumeResult.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(Object.keys(resumeResult.steps)).toEqual(['loop'])
@@ -68,7 +67,7 @@ describe('flow with pause', () => {
         const pauseResult = await flowExecutor.execute({
             action: simplePauseFlow,
             executionState: FlowExecutorContext.empty(),
-            constants: EXECUTE_CONSTANTS,
+            constants: generateMockEngineConstants(),
         })
         expect(pauseResult.verdict).toBe(ExecutionVerdict.PAUSED)
         expect(pauseResult.verdictResponse).toEqual({
@@ -83,13 +82,12 @@ describe('flow with pause', () => {
         const resumeResult = await flowExecutor.execute({
             action: simplePauseFlow,
             executionState: pauseResult,
-            constants: {
-                ...EXECUTE_CONSTANTS,
+            constants: generateMockEngineConstants({
                 resumePayload: {
                     action: 'approve',
                 },
                 executionType: ExecutionType.RESUME,
-            },
+            }),
         })
         expect(resumeResult.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(resumeResult.currentState).toEqual({

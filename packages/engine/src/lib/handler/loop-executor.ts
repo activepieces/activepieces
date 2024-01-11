@@ -2,7 +2,7 @@ import { LoopOnItemsAction, LoopStepOutput, isNil } from '@activepieces/shared'
 import { BaseExecutor } from './base-executor'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
 import { flowExecutor } from './flow-executor'
-import { EngineConstantData } from './context/engine-constants-data'
+import { EngineConstants } from './context/engine-constants'
 
 type LoopOnActionResolvedSettings = {
     items: readonly unknown[]
@@ -16,7 +16,7 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
     }: {
         action: LoopOnItemsAction
         executionState: FlowExecutorContext
-        constants: EngineConstantData
+        constants: EngineConstants
     }) {
         const { resolvedInput, censoredInput } = await constants.variableService.resolve<LoopOnActionResolvedSettings>({
             unresolvedInput: {
@@ -44,12 +44,12 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
                     executionState: newExecutionContext,
                     constants,
                 })
-            }   
-    
+            }
+
             if (newExecutionContext.verdict !== ExecutionVerdict.RUNNING) {
                 return newExecutionContext
             }
-    
+
             newExecutionContext = newExecutionContext.setCurrentPath(newExecutionContext.currentPath.removeLast())
             if (constants.testSingleStepMode) {
                 break

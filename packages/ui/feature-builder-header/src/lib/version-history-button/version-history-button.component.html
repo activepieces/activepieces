@@ -1,8 +1,17 @@
-<ap-button btnStyle="basic" btnColor="basic" btnSize="medium" (buttonClicked)="showVersionHistory()" i18n-tooltipText
-    tooltipText="Versions History">
-    <div class="ap-flex ap-items-center ap-typography-body-2 ap-gap-2">
-        <svg-icon src="assets/img/custom/versions.svg" class="ap-fill-body ap-w-[20px] ap-h-[25px]"
-            [applyClass]="true"></svg-icon>
-        <span i18n>Versions</span>
-    </div>
-</ap-button>
+<div class="ap-gap-1 ap-flex ap-items-center">
+    <div class="ap-rounded-full ap-w-[6.5px] ap-h-[6.5px] ap-bg-success-light"
+        [class.ap-bg-primary]="(versionHistoricalStatus$ | async )=== 'OLDER_VERSION'"
+        [class.ap-bg-success-light]="(versionHistoricalStatus$ | async )=== 'PUBLISHED'"
+        [class.ap-bg-warn]="(versionHistoricalStatus$ | async )=== 'DRAFT'"
+        [matTooltip]="(versionHistoricalStatusTooltip$ | async) || ''"> </div>
+    <ap-button btnStyle="basic" btnColor="basic" btnSize="medium" (buttonClicked)="showVersionHistory()"
+        i18n-tooltipText tooltipText="Versions">
+        <div class="ap-flex ap-items-center ap-typography-body-2 ap-gap-2">
+            <svg-icon src="assets/img/custom/versions.svg" class="ap-fill-body ap-w-[20px] ap-h-[25px]"
+                [applyClass]="true"></svg-icon>
+            <div i18n>Versions
+            </div>
+        </div>
+    </ap-button>
+
+</div>

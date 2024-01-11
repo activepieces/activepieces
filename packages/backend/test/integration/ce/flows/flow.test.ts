@@ -20,6 +20,7 @@ afterAll(async () => {
 
 describe('Flow API', () => {
     describe('Create Flow endpoint', () => {
+
         it('Adds an empty flow', async () => {
             // arrange
             const mockUser = createMockUser()
@@ -32,12 +33,16 @@ describe('Flow API', () => {
 
             const mockCreateFlowRequest = {
                 displayName: 'test flow',
+                projectId: mockProject.id,
             }
 
             // act
             const response = await app?.inject({
                 method: 'POST',
                 url: '/v1/flows',
+                query: {
+                    projectId: mockProject.id,
+                },
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -260,6 +265,7 @@ describe('Flow API', () => {
                 method: 'GET',
                 url: '/v1/flows',
                 query: {
+                    projectId: mockProject.id,
                     status: 'ENABLED',
                 },
                 headers: {
@@ -295,6 +301,9 @@ describe('Flow API', () => {
             const response = await app?.inject({
                 method: 'GET',
                 url: '/v1/flows',
+                query: {
+                    projectId: mockProject.id,
+                },
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -326,6 +335,9 @@ describe('Flow API', () => {
             const response = await app?.inject({
                 method: 'GET',
                 url: '/v1/flows',
+                query: {
+                    projectId: mockProject.id,
+                },
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },

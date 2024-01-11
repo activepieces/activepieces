@@ -11,5 +11,8 @@
         <app-custom-domain-table></app-custom-domain-table>
     </mat-tab>
     <mat-tab [label]="apiKeysTabTitle"><app-api-keys-table></app-api-keys-table></mat-tab>
+    <mat-tab label="SSO" bodyClass="!ap-overflow-visible">
+        <app-sso-settings></app-sso-settings>
+    </mat-tab>
 </mat-tab-group>
 <ng-container *ngIf="fragmentChanged$ | async"></ng-container>

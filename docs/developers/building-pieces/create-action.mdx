@@ -64,7 +64,7 @@ You can ask ChatGPT3 to write the function to get top stories from hackernews.
 </Tip>
 
 ```typescript
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { createAction, Property, PieceAuth } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 
 export const fetchTopStories = createAction({
@@ -88,7 +88,7 @@ export const fetchTopStories = createAction({
 		});
         const topStoryIds: string[] = topStoryIdsResponse.body;
         const topStories = [];
-        for (let i = 0; i < Math.min(context.propsValue['number_of_stories']!, topStoryIds.length); i++) {
+        for (let i = 0; i < Math.min(context.propsValue['number_of_stories'], topStoryIds.length); i++) {
           const storyId = topStoryIds[i];
           const storyResponse = await httpClient.sendRequest({
             method: HttpMethod.GET,

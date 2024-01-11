@@ -6,7 +6,7 @@ on:
 jobs:
   Release:
     env:
-      MY_VERSION: appsumo3
+      MY_VERSION: sign1
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code

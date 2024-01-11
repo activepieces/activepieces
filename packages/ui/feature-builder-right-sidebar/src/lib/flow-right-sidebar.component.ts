@@ -97,11 +97,7 @@ export class FlowRightSidebarComponent implements OnInit {
   private checkIfCurrentStepIsPollingTrigger() {
     this.isCurrentStepPollingTrigger$ = this.currentStep$.pipe(
       switchMap((step) => {
-        if (
-          step &&
-          step.type === TriggerType.PIECE &&
-          step.settings.pieceName !== CORE_SCHEDULE
-        ) {
+        if (step && step.type === TriggerType.PIECE) {
           return this.pieceMetadaService
             .getPieceMetadata(
               step.settings.pieceName,
@@ -127,11 +123,7 @@ export class FlowRightSidebarComponent implements OnInit {
   private checkIfCurrentStepIsPieceWebhookTrigger() {
     this.isCurrentStepPieceWebhookTrigger$ = this.currentStep$.pipe(
       switchMap((step) => {
-        if (
-          step &&
-          step.type === TriggerType.PIECE &&
-          step.settings.pieceName !== CORE_SCHEDULE
-        ) {
+        if (step && step.type === TriggerType.PIECE) {
           return this.pieceMetadaService
             .getPieceMetadata(
               step.settings.pieceName,
@@ -156,6 +148,16 @@ export class FlowRightSidebarComponent implements OnInit {
     this.currentStep$ = this.store
       .select(BuilderSelectors.selectCurrentStep)
       .pipe(
+        switchMap((step) => {
+          if (
+            step &&
+            step.type === TriggerType.PIECE &&
+            step.settings.pieceName === CORE_SCHEDULE
+          ) {
+            return of(null);
+          }
+          return of(step);
+        }),
         tap(() => {
           setTimeout(() => {
             this.builderAutocompleteMentionsDropdownService.editStepSection =
