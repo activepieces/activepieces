@@ -261,6 +261,13 @@
       ]
     },
     {
+      "group": "Operations",
+      "pages": [
+        "operations/git-sync",
+        "operations/audit-logs"
+      ]
+    },
+    {
       "group": "Security",
       "pages": [
         "security/permissions",

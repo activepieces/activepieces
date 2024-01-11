@@ -1,19 +1,10 @@
 import jwksClient from 'jwks-rsa'
-import { AuthenticationResponse } from '@activepieces/shared'
+import { AuthenticationResponse, assertNotNullOrUndefined } from '@activepieces/shared'
 import { AuthnProvider } from './authn-provider'
 import { authenticationService } from '../../../../authentication/authentication-service'
 import { jwtUtils, JwtSignAlgorithm } from '../../../../helper/jwt-utils'
-import { system } from '../../../../helper/system/system'
-import { SystemProp } from '../../../../helper/system/system-prop'
 import { flagService } from '../../../../flags/flag.service'
-
-function getClientId(): string {
-    return system.getOrThrow(SystemProp.FEDERATED_AUTHN_GOOGLE_CLIENT_ID)
-}
-
-function getClientSecret(): string {
-    return system.getOrThrow(SystemProp.FEDERATED_AUTHN_GOOGLE_CLIENT_SECRET)
-}
+import { Platform } from '@activepieces/ee-shared'
 
 const JWKS_URI = 'https://www.googleapis.com/oauth2/v3/certs'
 
@@ -23,10 +14,20 @@ const keyLoader = jwksClient({
     jwksUri: JWKS_URI,
 })
 
+function getClientIdAndSecret(platform: Platform): { clientId: string, clientSecret: string } {
+    const clientInformation = platform.federatedAuthProviders.google
+    assertNotNullOrUndefined(clientInformation, 'Google information is not configured for this platform')
+    return {
+        clientId: clientInformation.clientId,
+        clientSecret: clientInformation.clientSecret,
+    }
+}
+
 export const googleAuthnProvider: AuthnProvider = {
-    async getLoginUrl(): Promise<string> {
+    async getLoginUrl(platform: Platform): Promise<string> {
+        const { clientId } = getClientIdAndSecret(platform)
         const loginUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
-        loginUrl.searchParams.set('client_id', getClientId())
+        loginUrl.searchParams.set('client_id', clientId)
         loginUrl.searchParams.set('redirect_uri', flagService.getThirdPartyRedirectUrl())
         loginUrl.searchParams.set('scope', 'email profile')
         loginUrl.searchParams.set('response_type', 'code')
@@ -34,17 +35,15 @@ export const googleAuthnProvider: AuthnProvider = {
         return loginUrl.href
     },
 
-    async authenticate(platformId, authorizationCode): Promise<AuthenticationResponse> {
-        const idToken = await exchangeCodeForIdToken(authorizationCode)
-        const idTokenPayload = await verifyIdToken(idToken)
-        return generateAuthenticationResponse(platformId, idTokenPayload)
-    },
-    isConfiguredByUser(): boolean {
-        return !!system.get(SystemProp.FEDERATED_AUTHN_GOOGLE_CLIENT_SECRET) && !!system.get(SystemProp.FEDERATED_AUTHN_GOOGLE_CLIENT_ID)
+    async authenticate(platform, authorizationCode): Promise<AuthenticationResponse> {
+        const { clientId, clientSecret } = getClientIdAndSecret(platform)
+        const idToken = await exchangeCodeForIdToken(clientId, clientSecret, authorizationCode)
+        const idTokenPayload = await verifyIdToken(clientId, idToken)
+        return generateAuthenticationResponse(platform.id, idTokenPayload)
     },
 }
 
-const exchangeCodeForIdToken = async (code: string): Promise<string> => {
+const exchangeCodeForIdToken = async (clientId: string, clientSecret: string, code: string): Promise<string> => {
     const response = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
         headers: {
@@ -52,8 +51,8 @@ const exchangeCodeForIdToken = async (code: string): Promise<string> => {
         },
         body: new URLSearchParams({
             code,
-            client_id: getClientId(),
-            client_secret: getClientSecret(),
+            client_id: clientId,
+            client_secret: clientSecret,
             redirect_uri: flagService.getThirdPartyRedirectUrl(),
             grant_type: 'authorization_code',
         }),
@@ -63,7 +62,7 @@ const exchangeCodeForIdToken = async (code: string): Promise<string> => {
     return idToken
 }
 
-const verifyIdToken = async (idToken: string): Promise<IdTokenPayload> => {
+const verifyIdToken = async (clientId: string, idToken: string): Promise<IdTokenPayload> => {
     const { header } = jwtUtils.decode({ jwt: idToken })
     const signingKey = await keyLoader.getSigningKey(header.kid)
     const publicKey = signingKey.getPublicKey()
@@ -73,7 +72,7 @@ const verifyIdToken = async (idToken: string): Promise<IdTokenPayload> => {
         key: publicKey,
         issuer: ['accounts.google.com', 'https://accounts.google.com'],
         algorithm: JwtSignAlgorithm.RS256,
-        audience: getClientId(),
+        audience: clientId,
     })
 
     return {

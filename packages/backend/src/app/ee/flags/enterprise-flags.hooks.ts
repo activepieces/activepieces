@@ -11,22 +11,27 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
         const modifiedFlags = { ...flags }
         const hostname = request.hostname
         const platformId = await resolvePlatformIdForRequest(request)
-        const isCustomerPlatform = !isNil(platformId) && !flagService.isCloudPlatform(platformId)
+        if (isNil(platformId)) {
+            return modifiedFlags
+        }
+        const platform = await platformService.getOneOrThrow(platformId)
+        modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP] = {
+            [ThirdPartyAuthnProviderEnum.GOOGLE]: !isNil(platform.federatedAuthProviders.google),
+            [ThirdPartyAuthnProviderEnum.GITHUB]: !isNil(platform.federatedAuthProviders.github),
+        }
+        modifiedFlags[ApFlagId.EMAIL_AUTH_ENABLED] = platform.emailAuthEnabled
+        const isCustomerPlatform = !flagService.isCloudPlatform(platformId)
         if (isCustomerPlatform ) {
-            const platform = await platformService.getOneOrThrow(platformId)
             modifiedFlags[ApFlagId.THEME] = await apperanceHelper.getTheme({ platformId })
             modifiedFlags[ApFlagId.SHOW_COMMUNITY] = false
             modifiedFlags[ApFlagId.SHOW_DOCS] = false
             modifiedFlags[ApFlagId.SHOW_BILLING] = false
-            modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP] = {
-                [ThirdPartyAuthnProviderEnum.GOOGLE]: false,
-                [ThirdPartyAuthnProviderEnum.GITHUB]: false,
-            },
             modifiedFlags[ApFlagId.SHOW_BLOG_GUIDE] = false
             modifiedFlags[ApFlagId.SHOW_COMMUNITY_PIECES] = false
             modifiedFlags[ApFlagId.SHOW_SIGN_UP_LINK] = false
             modifiedFlags[ApFlagId.SHOW_POWERED_BY_AP] = platform.showPoweredBy
             modifiedFlags[ApFlagId.CLOUD_AUTH_ENABLED] = platform.cloudAuthEnabled
+            modifiedFlags[ApFlagId.SHOW_GIT_SYNC] = platform.gitSyncEnabled
             modifiedFlags[ApFlagId.FRONTEND_URL] = `https://${hostname}`
             modifiedFlags[ApFlagId.WEBHOOK_URL_PREFIX] = `https://${hostname}/api/v1/webhooks`
             modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL] = `https://${hostname}/redirect`

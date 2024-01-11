@@ -92,6 +92,7 @@
         "packages/pieces/facebook-pages/src/index.ts"
       ],
       "@activepieces/piece-figma": ["packages/pieces/figma/src/index.ts"],
+      "@activepieces/piece-flowise": ["packages/pieces/flowise/src/index.ts"],
       "@activepieces/piece-flowlu": ["packages/pieces/flowlu/src/index.ts"],
       "@activepieces/piece-freshdesk": [
         "packages/pieces/freshdesk/src/index.ts"
@@ -209,6 +210,7 @@
       ],
       "@activepieces/piece-retable": ["packages/pieces/retable/src/index.ts"],
       "@activepieces/piece-retune": ["packages/pieces/retune/src/index.ts"],
+      "@activepieces/piece-robolly": ["packages/pieces/robolly/src/index.ts"],
       "@activepieces/piece-rss": ["packages/pieces/rss/src/index.ts"],
       "@activepieces/piece-salesforce": [
         "packages/pieces/salesforce/src/index.ts"

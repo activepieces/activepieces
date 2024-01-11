@@ -243,6 +243,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="http://dennisrongo.com"><img src="https://avatars.githubusercontent.com/u/51771021?v=4?s=100" width="100px;" alt="Dennis Rongo"/><br /><sub><b>Dennis Rongo</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3Adennisrongo" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/kartikmehta8"><img src="https://avatars.githubusercontent.com/u/77505989?v=4?s=100" width="100px;" alt="Kartik Mehta"/><br /><sub><b>Kartik Mehta</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=kartikmehta8" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>

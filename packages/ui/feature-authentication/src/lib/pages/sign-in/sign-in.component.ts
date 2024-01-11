@@ -37,9 +37,12 @@ export class SignInComponent {
   showResendVerification = false;
   sendingVerificationEmail = false;
   showDisabledUser = false;
+  domainIsNotAllowed = false;
   invitationOnlySignIn = false;
+  loginsWithEmailEnabled$: Observable<boolean>;
   showSignUpLink$: Observable<boolean>;
   sendVerificationEmail$?: Observable<void>;
+
   constructor(
     private formBuilder: FormBuilder,
     private authenticationService: AuthenticationService,
@@ -47,6 +50,10 @@ export class SignInComponent {
     private redirectService: RedirectService,
     private snackbar: MatSnackBar
   ) {
+    this.loginsWithEmailEnabled$ = this.flagsService.isFlagEnabled(
+      ApFlagId.EMAIL_AUTH_ENABLED
+    );
+
     this.showSignUpLink$ = this.flagsService.isFlagEnabled(
       ApFlagId.SHOW_SIGN_UP_LINK
     );
@@ -72,6 +79,7 @@ export class SignInComponent {
       this.showResendVerification = false;
       this.invitationOnlySignIn = false;
       this.showDisabledUser = false;
+      this.domainIsNotAllowed = false;
       const request = this.loginForm.getRawValue();
       this.authenticate$ = this.authenticationService.signIn(request).pipe(
         catchError((error: HttpErrorResponse) => {
@@ -83,6 +91,8 @@ export class SignInComponent {
               error.error.code === ErrorCode.EMAIL_IS_NOT_VERIFIED;
             this.showDisabledUser =
               error.error.code === ErrorCode.USER_IS_INACTIVE;
+            this.domainIsNotAllowed =
+              error.error.code === ErrorCode.DOMAIN_NOT_ALLOWED;
             this.invitationOnlySignIn =
               error.error.code === ErrorCode.INVITATION_ONLY_SIGN_UP;
           }

@@ -33,7 +33,7 @@ import {
 } from '@activepieces/ui/common';
 import { FormControl } from '@angular/forms';
 import { Store } from '@ngrx/store';
-import { RunsService } from './runs.service';
+import { RunsService } from '../../services/runs.service';
 
 @Component({
   templateUrl: './runs-table.component.html',
