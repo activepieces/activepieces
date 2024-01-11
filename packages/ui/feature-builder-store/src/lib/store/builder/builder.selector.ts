@@ -597,14 +597,16 @@ const selectFlowTriggerIsTested = createSelector(selectCurrentFlow, (flow) => {
   }
 });
 
-const selectViewedVersionHistoricalStatus = createSelector(selectDraftVersionId,selectPublishedFlowVersion,selectViewedVersion , 
-  (draftVersionId,publishedFlowVersion,viewedFlowVersion,) =>{
-    if(draftVersionId === viewedFlowVersion.id)
-    return 'DRAFT';
-    if(publishedFlowVersion?.id === viewedFlowVersion.id)
-    return 'PUBLISHED';
-    return 'OLDER_VERSION'
-})
+const selectViewedVersionHistoricalStatus = createSelector(
+  selectDraftVersionId,
+  selectPublishedFlowVersion,
+  selectViewedVersion,
+  (draftVersionId, publishedFlowVersion, viewedFlowVersion) => {
+    if (publishedFlowVersion?.id === viewedFlowVersion.id) return 'PUBLISHED';
+    if (draftVersionId === viewedFlowVersion.id) return 'DRAFT';
+    return 'OLDER_VERSION';
+  }
+);
 
 export const BuilderSelectors = {
   selectReadOnly,
@@ -662,5 +664,5 @@ export const BuilderSelectors = {
   selectAppConnectionsDropdownOptionsWithIds,
   selectStepIndex,
   selectFlowStatus,
-  selectViewedVersionHistoricalStatus
+  selectViewedVersionHistoricalStatus,
 };

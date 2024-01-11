@@ -4,7 +4,7 @@ import {
   BuilderSelectors,
   LeftSideBarType,
   canvasActions,
-  VersionHistoricalStatus
+  VersionHistoricalStatus,
 } from '@activepieces/ui/feature-builder-store';
 import { Observable, map } from 'rxjs';
 
@@ -14,21 +14,24 @@ import { Observable, map } from 'rxjs';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VersionHistroryButtonComponent {
-  versionHistoricalStatus$:Observable<VersionHistoricalStatus>;
-  versionHistoricalStatusTooltip$:Observable<string>;
+  versionHistoricalStatus$: Observable<VersionHistoricalStatus>;
+  versionHistoricalStatusTooltip$: Observable<string>;
   constructor(private store: Store) {
-    this.versionHistoricalStatus$ = this.store.select(BuilderSelectors.selectViewedVersionHistoricalStatus);
-    this.versionHistoricalStatusTooltip$ = this.versionHistoricalStatus$.pipe(map(res=>{
-      switch(res)
-      {
-        case 'DRAFT':
-          return $localize `Viewing draft`;
-        case 'PUBLISHED':
-          return $localize `Viewing published version`
-        case 'OLDER_VERSION':
-            return $localize `Viewing older version`
-      }
-    }))
+    this.versionHistoricalStatus$ = this.store.select(
+      BuilderSelectors.selectViewedVersionHistoricalStatus
+    );
+    this.versionHistoricalStatusTooltip$ = this.versionHistoricalStatus$.pipe(
+      map((res) => {
+        switch (res) {
+          case 'DRAFT':
+            return $localize`Viewing draft`;
+          case 'PUBLISHED':
+            return $localize`Viewing published version`;
+          case 'OLDER_VERSION':
+            return $localize`Viewing older version`;
+        }
+      })
+    );
   }
 
   showVersionHistory() {
