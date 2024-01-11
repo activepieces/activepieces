@@ -1,13 +1,13 @@
-<div class="ap-w-full  ap-px-[30px] ap-pt-[50px]">
+<div class="ap-w-full ap-px-[30px] ap-pt-[50px]">
   <div class="ap-h-full">
     <ap-page-title title="Runs" i18n-title></ap-page-title>
     <mat-form-field>
       <mat-label i18n>Filter by status</mat-label>
       <mat-select [formControl]="selectedStatus">
         <mat-option value="null" i18n>All</mat-option>
-        <mat-option value="{{ExecutionOutputStatus.RUNNING}}" i18n>Running</mat-option>
-        <mat-option value="{{ExecutionOutputStatus.FAILED}}" i18n>Failed</mat-option>
-        <mat-option value="{{ExecutionOutputStatus.SUCCEEDED}}" i18n>Succeeded</mat-option>
+        <mat-option value="{{ ExecutionOutputStatus.RUNNING }}" i18n>Running</mat-option>
+        <mat-option value="{{ ExecutionOutputStatus.FAILED }}" i18n>Failed</mat-option>
+        <mat-option value="{{ ExecutionOutputStatus.SUCCEEDED }}" i18n>Succeeded</mat-option>
       </mat-select>
     </mat-form-field>
     <mat-slide-toggle *ngIf="nonCommunityEdition$ | async" [formControl]="toggleNotificationFormControl"
@@ -23,53 +23,59 @@
 
         <ng-container matColumnDef="started">
           <th mat-header-cell *matHeaderCellDef i18n>Started</th>
-          <td mat-cell *matCellDef="let run">{{ run.startTime | date: 'short' }}</td>
+          <td mat-cell *matCellDef="let run">
+            {{ run.startTime | date : 'short' }}
+          </td>
         </ng-container>
 
         <ng-container matColumnDef="finished">
           <th mat-header-cell *matHeaderCellDef i18n>Finished</th>
-          <td mat-cell *matCellDef="let run">{{ run.finishTime | date: 'short' }}</td>
+          <td mat-cell *matCellDef="let run">
+            {{ run.finishTime | date : 'short' }}
+          </td>
         </ng-container>
         <ng-container matColumnDef="status">
           <th mat-header-cell *matHeaderCellDef i18n>Status</th>
           <td mat-cell *matCellDef="let run">
-            <div class="ap-flex" style="align-items: center;">
+            <div class="ap-flex" style="align-items: center">
               <ap-state-icon [status]="run.status" [showStatusText]="true" class="ap-mr-4"></ap-state-icon>
-
             </div>
           </td>
         </ng-container>
 
         <ng-container matColumnDef="action">
-          <th mat-header-cell class="!ap-text-center" *matHeaderCellDef>
-
-          </th>
+          <th mat-header-cell class="!ap-text-center" *matHeaderCellDef></th>
           <td mat-cell *matCellDef="let run" class="!ap-text-center">
-            <button mat-icon-button (click)="$event.stopImmediatePropagation()" [matMenuTriggerFor]="menu"
-              *ngIf="run.status ===  ExecutionOutputStatus.FAILED || run.status === ExecutionOutputStatus.INTERNAL_ERROR || run.status === ExecutionOutputStatus.QUOTA_EXCEEDED">
+            <button mat-icon-button (click)="$event.stopImmediatePropagation()" [matMenuTriggerFor]="menu">
               <mat-icon>more_vert</mat-icon>
             </button>
             <mat-menu #menu="matMenu" xPosition="before">
-              <button mat-menu-item *ngFor="let option of flowRetryOptions" (click)="retryFlow(run, option.strategy)">
-                <div class="ap-flex ap-items-center">
-                  <mat-icon>{{ option.icon }}</mat-icon>
-                  <span i18n>{{ option.label }}</span>
-                </div>
-              </button>
+              <ng-container *ngFor="let option of flowRetryOptions">
+                <button mat-menu-item (click)="retryFlow(run, option.strategy)" *ngIf="option.allowedRunStatuses.length > 0 ? option.allowedRunStatuses.includes(run.status) : true">
+                  <div class="ap-flex ap-items-center">
+                    <mat-icon>{{ option.icon }}</mat-icon>
+                    <span i18n>{{ option.label }}</span>
+                  </div>
+                </button>
+              </ng-container>
             </mat-menu>
           </td>
         </ng-container>
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr class="ap-cursor-pointer hover:!ap-bg-hover" (click)="openInstanceRun(row,$event)" mat-row
+        <tr class="ap-cursor-pointer hover:!ap-bg-hover" (click)="openInstanceRun(row, $event)" mat-row
           [class.ap-hidden]="dataSource.isLoading$ | async" *matRowDef="let row; columns: displayedColumns"></tr>
       </table>
       <ng-container *ngIf="(dataSource.isLoading$ | async) === true">
         <div class="ap-flex ap-items-center ap-justify-center ap-flex-grow ap-h-[500px]">
-          <ap-loading-icon height="50px" width="51px" [outlineLoader]="true" [whiteLoader]="false"> </ap-loading-icon>
+          <ap-loading-icon height="50px" width="51px" [outlineLoader]="true" [whiteLoader]="false">
+          </ap-loading-icon>
         </div>
       </ng-container>
-      <ng-container *ngIf="dataSource.data.length===0 && (dataSource.isLoading$ | async) === false">
-        <div class="ap-flex ap-items-center ap-justify-center  ap-h-full ap-h-[500px] ap-py-8" i18n>
+      <ng-container *ngIf="
+          dataSource.data.length === 0 &&
+          (dataSource.isLoading$ | async) === false
+        ">
+        <div class="ap-flex ap-items-center ap-justify-center ap-h-full ap-h-[500px] ap-py-8" i18n>
           No runs instantiated yet
         </div>
       </ng-container>

@@ -60,11 +60,17 @@ export class RunsTableComponent implements OnInit {
       label: 'Retry on Latest Version',
       strategy: FlowRetryStrategy.ON_LATEST_VERSION,
       icon: 'loop',
+      allowedRunStatuses: [],
     },
     {
       label: 'Retry From Failed Step',
       strategy: FlowRetryStrategy.FROM_FAILED_STEP,
       icon: 'replay',
+      allowedRunStatuses: [
+        ExecutionOutputStatus.FAILED,
+        ExecutionOutputStatus.INTERNAL_ERROR,
+        ExecutionOutputStatus.QUOTA_EXCEEDED,
+      ],
     },
   ];
 
@@ -136,5 +142,13 @@ export class RunsTableComponent implements OnInit {
         this.refreshTableForReruns$.next(true);
       })
     );
+  }
+
+  shouldShowRetryOption(run: FlowRun, option: any) {
+    console.log(option.allowedRunStatuses);
+    console.log(run.status);
+    console.log(option.allowedRunStatuses.length > 0);
+    if (option.allowedRunStatuses.length === 0) return true;
+    return option.allowedRunStatuses.includes(run.status);
   }
 }
