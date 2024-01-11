@@ -143,12 +143,4 @@ export class RunsTableComponent implements OnInit {
       })
     );
   }
-
-  shouldShowRetryOption(run: FlowRun, option: any) {
-    console.log(option.allowedRunStatuses);
-    console.log(run.status);
-    console.log(option.allowedRunStatuses.length > 0);
-    if (option.allowedRunStatuses.length === 0) return true;
-    return option.allowedRunStatuses.includes(run.status);
-  }
 }
