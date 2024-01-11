@@ -2,7 +2,7 @@ import { BranchAction, BranchActionSettings, BranchCondition, BranchOperator, Br
 import { BaseExecutor } from './base-executor'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
 import { flowExecutor } from './flow-executor'
-import { EngineConstantData } from './context/engine-constants-data'
+import { EngineConstants } from './context/engine-constants'
 
 export const branchExecutor: BaseExecutor<BranchAction> = {
     async handle({
@@ -12,7 +12,7 @@ export const branchExecutor: BaseExecutor<BranchAction> = {
     }: {
         action: BranchAction
         executionState: FlowExecutorContext
-        constants: EngineConstantData
+        constants: EngineConstants
     }) {
         const { censoredInput, resolvedInput } = await constants.variableService.resolve<BranchActionSettings>({
             unresolvedInput: action.settings,
