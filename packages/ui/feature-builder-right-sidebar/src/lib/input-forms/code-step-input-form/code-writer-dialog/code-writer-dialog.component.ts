@@ -6,9 +6,11 @@ import {
   FormBuilder,
   Validators,
 } from '@angular/forms';
-import { Observable, map, tap } from 'rxjs';
+import { BehaviorSubject, Observable, map, tap } from 'rxjs';
 import { CodeWriterService } from './code-writer.service';
-
+export interface CodeWriterDialogData {
+  existingCode: string;
+}
 @Component({
   selector: 'app-code-writer-dialog',
   templateUrl: './code-writer-dialog.component.html',
@@ -19,10 +21,9 @@ export class CodeWriterDialogComponent {
     prompt: FormControl<string>;
     passExistingCode: FormControl<boolean>;
   }>;
-  repromptForm: FormGroup<{ prompt: FormControl<string> }>;
-  promptOperation$: Observable<void> | undefined;
-  receivedCode: string | undefined;
-
+  promptOperation$?: Observable<void>;
+  receivedCode = '';
+  loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   constructor(
     private formBuilder: FormBuilder,
     private dialogRef: MatDialogRef<CodeWriterDialogComponent>,
@@ -39,44 +40,22 @@ export class CodeWriterDialogComponent {
         nonNullable: true,
       }),
     });
-    this.repromptForm = this.formBuilder.group({
-      prompt: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required],
-      }),
-    });
   }
 
   prompt() {
-    if (this.promptForm.valid && !this.promptOperation$) {
+    if (this.promptForm.valid && !this.loading$.value) {
+      this.loading$.next(true);
+      this.promptForm.disable();
       let prompt: string = this.promptForm.controls.prompt.value;
       if (this.promptForm.controls.passExistingCode.value) {
         prompt = this.data.existingCode + '\n' + prompt;
       }
-
       this.promptOperation$ = this.codeWriterService.prompt(prompt).pipe(
         tap((response) => {
-          const result = (response as unknown as { result: string }).result;
+          this.promptForm.enable();
+          const result = response.result;
           this.receivedCode = result;
-          this.promptOperation$ = undefined;
-          this.repromptForm.reset();
-        }),
-        map(() => void 0)
-      );
-    }
-  }
-
-  update() {
-    if (this.repromptForm.valid && !this.promptOperation$) {
-      let prompt: string = this.repromptForm.controls.prompt.value;
-      prompt = this.receivedCode + '\n' + prompt;
-
-      this.promptOperation$ = this.codeWriterService.prompt(prompt).pipe(
-        tap((response) => {
-          const result = (response as unknown as { result: string }).result;
-          this.receivedCode = result;
-          this.promptOperation$ = undefined;
-          this.repromptForm.controls.prompt.reset();
+          this.loading$.next(false);
         }),
         map(() => void 0)
       );
@@ -84,17 +63,12 @@ export class CodeWriterDialogComponent {
   }
 
   reset() {
-    this.receivedCode = undefined;
-    this.promptOperation$ = undefined;
-    this.repromptForm.reset();
+    this.receivedCode = '';
+    this.promptForm.reset();
   }
 
   useCode() {
     this.dialogRef.close(this.receivedCode);
     this.reset();
   }
-}
-
-export interface CodeWriterDialogData {
-  existingCode: string;
 }

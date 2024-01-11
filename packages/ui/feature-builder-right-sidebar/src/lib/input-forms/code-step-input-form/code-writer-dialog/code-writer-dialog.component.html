@@ -6,24 +6,14 @@
         <div class="ap-typography-body-1 ap-text-description ap-mb-4" i18n>
             Let AI help you write code for this step. Write your prompt below to get started.
         </div>
-        <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="promptForm" (submit)="prompt()">
-            <mat-form-field class="ap-w-full" appearance="outline">
-                <textarea cdkFocusInitial formControlName="prompt" matInput cdkTextareaAutosize
-                    cdkAutosizeMinRows="5"></textarea>
-            </mat-form-field>
-            <mat-slide-toggle formControlName="passExistingCode" color="primary">Pass existing code to
-                AI</mat-slide-toggle>
-        </form>
+        <ng-container [ngTemplateOutlet]="promptFormTemplate"></ng-container>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
         <div class="ap-flex ap-gap-2.5">
             <ap-button btnColor="basic" mat-dialog-close btnSize="default" i18n>
-                Cancel
+                Close
             </ap-button>
-            <ap-button cdkFocusInitial btnSize="default" btnColor="primary" (click)="prompt()"
-                [loading]="!!promptOperation$" i18n>
-                Prompt
-            </ap-button>
+
         </div>
     </mat-dialog-actions>
 </ng-template>
@@ -34,26 +24,16 @@
             Here is the code our AI wrote for you. Ask for changes or use the code in your action.
         </div>
         <pre class="ap-text-sm ap-px-4 ap-py-2 ap-bg-header ap-mb-4"><code>{{ receivedCode }}</code></pre>
-        <form class="ap-flex ap-flex-row ap-gap-1 ap-justify-center" style="align-items: center;" [formGroup]="repromptForm" (submit)="update()">
-            <mat-form-field class="ap-w-full" appearance="outline">
-                <input cdkFocusInitial formControlName="prompt" matInput type="text" />
-            </mat-form-field>
-            <ap-button cdkFocusInitial btnStyle="stroked" btnSize="default" btnColor="primary" (click)="update()"
-                [loading]="!!promptOperation$" i18n>
-                Prompt
-            </ap-button>
-        </form>
+        <ng-container [ngTemplateOutlet]="promptFormTemplate"></ng-container>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
         <div class="ap-flex ap-gap-2.5">
-            <ap-button btnColor="basic" (click)="reset()" btnSize="default" i18n>
-                Start Over
-            </ap-button>
+
             <ap-button btnColor="basic" mat-dialog-close btnSize="default" i18n>
-                Cancel
+                Close
             </ap-button>
             <ap-button cdkFocusInitial btnSize="default" btnColor="primary" (click)="useCode()"
-                [loading]="!!promptOperation$" i18n>
+                [loading]="loading$ | async | defaultFalse" i18n>
                 Use Code
             </ap-button>
         </div>
@@ -61,3 +41,29 @@
 </ng-template>
 
 <ng-container *ngIf="promptOperation$ | async"></ng-container>
+
+<ng-template #promptFormTemplate>
+    <form class="ap-flex ap-flex-col ap-gap-2 " [formGroup]="promptForm" (submit)="prompt()">
+        <mat-form-field class="ap-w-full" appearance="outline">
+            <mat-label i18n>Prompt </mat-label>
+            <textarea class="!ap-resize-none" cdkFocusInitial (keyup.enter)="prompt()"
+                [formControl]="promptForm.controls.prompt" matInput type="text" rows="4"></textarea>
+            <div matSuffix>
+                <div *ngIf="(loading$ | async )" class="ap-px-4">
+                    <div class="dark-spinner spinner-border  ap-w-[16px] ap-h-[16px]" role="status"></div>
+                </div>
+
+                <div *ngIf="((loading$ | async) === false)" class="ap-px-2">
+                    <ap-icon-button i18n-tooltipText tooltipText="Send prompt" iconFilename="send.svg"
+                        (click)="prompt()">
+                    </ap-icon-button>
+                </div>
+
+            </div>
+
+        </mat-form-field>
+        <mat-checkbox *ngIf="!receivedCode" [formControl]="promptForm.controls.passExistingCode" color="primary"
+            i18n>Pass existing code to
+            AI </mat-checkbox>
+    </form>
+</ng-template>

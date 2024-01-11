@@ -9,9 +9,12 @@ import { Observable } from 'rxjs';
 export class CodeWriterService {
   constructor(private http: HttpClient) {}
 
-  prompt(prompt: string): Observable<void> {
-    return this.http.post<void>(environment.apiUrl + `/copilot/code`, {
-      prompt: prompt,
-    });
+  prompt(prompt: string): Observable<{ result: string }> {
+    return this.http.post<{ result: string }>(
+      environment.apiUrl + `/copilot/code`,
+      {
+        prompt: prompt,
+      }
+    );
   }
 }

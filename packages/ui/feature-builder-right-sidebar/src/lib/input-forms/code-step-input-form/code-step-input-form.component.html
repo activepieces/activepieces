@@ -9,12 +9,16 @@
       <app-dictonary-form-control formControlName="input"></app-dictonary-form-control>
     </div>
     <div>
-      <div class="ap-mb-2 ap-flex ap-justify-between" style="align-items: center;">
+      <div class="ap-mb-2 ap-flex ap-justify-between ap-items-center">
         <span class="ap-pointer-events-none" i18n>Code</span>
-        <button mat-stroked-button color="primary" (click)="openCodeWriterDialog()">
-          <mat-icon>android</mat-icon>
-          Write with AI
-        </button>
+        <ap-button btnStyle="stroked" btnSize="medium" (click)="openCodeWriterDialog()"
+          tooltipText="Write code with assistance from AI" i18n-tooltipText>
+          <div class="ap-flex ap-gap-3 ap-items-center">
+            <svg-icon src="assets/img/custom/AI.svg" class="ap-w-[20px] ap-h-[20px] ap-fill-primary"
+              [applyClass]="true"></svg-icon>
+            Asistant
+          </div>
+        </ap-button>
       </div>
       <app-code-artifact-form-control formControlName="sourceCode"></app-code-artifact-form-control>
     </div>
