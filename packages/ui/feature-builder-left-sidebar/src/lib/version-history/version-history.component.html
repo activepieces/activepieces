@@ -26,6 +26,7 @@
                                 [applyClass]="true" i18n-matTooltip matTooltip="Draft"></svg-icon>
                         </div>
                     </ng-container>
+
                     <ng-container *ngIf="(publishedVersion$| async)?.id === version.id">
                         <div class="ap-flex ap-items-center ap-justify-center ap-w-[2.8125rem]">
                             <svg-icon src="assets/img/custom/published.svg"

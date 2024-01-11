@@ -9,13 +9,13 @@
             </div>
         </ap-page-title>
         <ng-container *ngIf="showUpgrade">
-            <div class="ap-mb-4">
+            <div class="ap-mb-4 ap-w-[700px]">
                 <ap-upgrade-note></ap-upgrade-note>
             </div>
 
         </ng-container>
-        <div
-            class="ap-border ap-border-solid ap-border-border ap-rounded-md ap-typography-body-1 ap-p-4 ap-flex ap-items-center ap-justify-between ap-w-[700px] ap-mb-8">
+        <div apCard
+            class=" ap-w-[700px] ap-flex ap-items-center ap-justify-between ap-flex-col md:ap-flex-row ap-gap-4  ap-mb-8">
             <ng-container *ngIf="(currentRepo$ | async) === null || (currentRepo$ | async) === undefined ">
                 <div i18n>
                     Configure the Git repo you want to sync with.

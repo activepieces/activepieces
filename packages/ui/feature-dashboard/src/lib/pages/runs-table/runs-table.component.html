@@ -33,7 +33,7 @@
         <ng-container matColumnDef="status">
           <th mat-header-cell *matHeaderCellDef i18n>Status</th>
           <td mat-cell *matCellDef="let run">
-            <div class="ap-flex" style="align-items: center;">
+            <div class="ap-flex ap-items-center">
               <ap-state-icon [status]="run.status" [showStatusText]="true" class="ap-mr-4"></ap-state-icon>
 
             </div>
@@ -46,14 +46,21 @@
           </th>
           <td mat-cell *matCellDef="let run" class="!ap-text-center">
             <button mat-icon-button (click)="$event.stopImmediatePropagation()" [matMenuTriggerFor]="menu"
-              *ngIf="run.status ===  ExecutionOutputStatus.FAILED || run.status === ExecutionOutputStatus.INTERNAL_ERROR || run.status === ExecutionOutputStatus.QUOTA_EXCEEDED">
+              *ngIf="run.status !==  ExecutionOutputStatus.RUNNING">
               <mat-icon>more_vert</mat-icon>
             </button>
             <mat-menu #menu="matMenu" xPosition="before">
-              <button mat-menu-item *ngFor="let option of flowRetryOptions" (click)="retryFlow(run, option.strategy)">
+              <button mat-menu-item (click)="retryFlow(run, FlowRetryStrategy.ON_LATEST_VERSION)">
                 <div class="ap-flex ap-items-center">
-                  <mat-icon>{{ option.icon }}</mat-icon>
-                  <span i18n>{{ option.label }}</span>
+                  <mat-icon>loop</mat-icon>
+                  <span i18n>Retry on Latest Version</span>
+                </div>
+              </button>
+              <button *ngIf="run.status !== ExecutionOutputStatus.SUCCEEDED" mat-menu-item
+                (click)="retryFlow(run, FlowRetryStrategy.FROM_FAILED_STEP)">
+                <div class="ap-flex ap-items-center">
+                  <mat-icon>replay</mat-icon>
+                  <span i18n>Retry From Failed Step</span>
                 </div>
               </button>
             </mat-menu>

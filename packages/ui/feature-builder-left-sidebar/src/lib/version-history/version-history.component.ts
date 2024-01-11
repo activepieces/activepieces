@@ -51,7 +51,7 @@ export class VersionHistoryComponent {
       BuilderSelectors.selectPublishedFlowVersion
     );
     this.draftVersionId$ = this.store.select(
-      BuilderSelectors.selectCurrentFlowVersionId
+      BuilderSelectors.selectDraftVersionId
     );
     this.viewedVersion$ = this.store.select(
       BuilderSelectors.selectViewedVersion
@@ -116,7 +116,7 @@ export class VersionHistoryComponent {
         .select(BuilderSelectors.selectPublishedFlowVersion)
         .pipe(take(1)),
       draftId: this.store
-        .select(BuilderSelectors.selectCurrentFlowVersionId)
+        .select(BuilderSelectors.selectDraftVersionId)
         .pipe(take(1)),
     }).pipe(
       tap(({ flow, published, draftId }) => {
