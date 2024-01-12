@@ -17,30 +17,37 @@ export const triggerTaskTagUpdated = createTrigger({
   displayName: 'Task Tag Updated',
   description: 'Triggered when a tag is added or removed or renamed on a task.',
   sampleData: {
-    event: 'taskTagUpdated',
-    history_items: [
-      { 
-        id: '1394258655167106175',
-        type: 1,
-        date: '1378109721053',
-        field: 'status',
-        parent_id: '900900799744',
-        data: {},
-        source: null,
-        user: {
-          id: 55053258,
-          username: 'Activepieces Apps',
-          email: 'apps@activepieces.com',
-          color: '#aa2fff',
-          initials: 'AA',
-          profilePicture: null,
+    "event": "taskTagUpdated",
+    "history_items": [
+      {
+        "id": "2800797048554170804",
+        "type": 1,
+        "date": "1642736652800",
+        "field": "tag",
+        "parent_id": "162641062",
+        "data": {},
+        "source": null,
+        "user": {
+          "id": 183,
+          "username": "John",
+          "email": "john@company.com",
+          "color": "#7b68ee",
+          "initials": "J",
+          "profilePicture": null
         },
-        before: null,
-        after: '90040005586783',
-      },
+        "before": null,
+        "after": [
+          {
+            "name": "def",
+            "tag_fg": "#FF4081",
+            "tag_bg": "#FF4081",
+            "creator": 2770032
+          }
+        ]
+      }
     ],
-    task_id: '8669p1zvv',
-    webhook_id: '9b2708b6-87e8-4fff-851a-2ebf0e35130f',
+    "task_id": "1vj38vv",
+    "webhook_id": "7fa3ec74-69a8-4530-a251-8a13730bd204"
   },
   props: {
     workspace_id: clickupCommon.workspace_id(true),

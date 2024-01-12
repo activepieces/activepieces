@@ -53,10 +53,10 @@ export const clickupRegisterTrigger = ({
       const response = await httpClient.sendRequest<WebhookInformation>(request);
       console.debug(`clickup.${eventType}.onEnable`, response)
 
-      await context.store.put<WebhookInformation>(`clickup_${name}_trigger`, response.body);
+      await context.store.put<WebhookInformation>(`clickup_task_tag_updated_trigger`, response.body);
     },
     async onDisable(context) {
-      const webhook = await context.store.get<WebhookInformation>(`clickup_${name}_trigger`);
+      const webhook = await context.store.get<WebhookInformation>(`clickup_task_tag_updated_trigger`);
       if (webhook != null) {
         const request: HttpRequest = {
           method: HttpMethod.DELETE,
