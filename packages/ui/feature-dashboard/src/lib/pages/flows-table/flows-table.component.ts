@@ -12,6 +12,7 @@ import {
 
 import {
   ApPaginatorComponent,
+  AuthenticationService,
   FoldersService,
   NavigationService,
 } from '@activepieces/ui/common';
@@ -61,6 +62,7 @@ export class FlowsTableComponent implements OnInit {
     private flowService: FlowService,
     private foldersService: FoldersService,
     private store: Store,
+    private authenticationService: AuthenticationService,
     private navigationService: NavigationService,
     @Inject(LOCALE_ID) private locale: string
   ) {
@@ -95,6 +97,7 @@ export class FlowsTableComponent implements OnInit {
       this.activatedRoute.queryParams,
       this.foldersService,
       this.paginator,
+      this.authenticationService,
       this.flowService,
       this.refreshTableAtCurrentCursor$.asObservable().pipe(startWith(true)),
       this.store
