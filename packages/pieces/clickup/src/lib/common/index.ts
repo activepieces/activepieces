@@ -413,7 +413,7 @@ async function listFolderlessList(accessToken: string, spaceId: string) {
   ).body;
 }
 
-async function listTasks(accessToken: string, listId: string) {
+export async function listTasks(accessToken: string, listId: string) {
   return (
     await callClickUpApi<{
       tasks: {
