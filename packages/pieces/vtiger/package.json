@@ -1,7 +1,5 @@
 {
   "name": "@activepieces/piece-vtiger",
   "version": "0.1.7",
-  "dependencies": {
-    "@bowbridge/vtiger-js": "^1.17.0"
-  }
+  "dependencies": {}
 }

@@ -95,7 +95,7 @@ export const vtiger = createPiece({
   displayName: "Vtiger",
   auth: vtigerAuth,
   minimumSupportedRelease: '0.9.0',
-  logoUrl: "https://vtiger-website.cdn.prismic.io/vtiger-website/dd7afe10-8740-44ec-abe2-4ed24cea9555_Vtiger+CRM+Logo.svg",
+  logoUrl: "https://cdn.activepieces.com/pieces/vtiger.png",
   authors: ['kanarelo'],
   actions: [
     createRecord,
