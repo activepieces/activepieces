@@ -1,4 +1,6 @@
-<ap-dialog-title-template i18n>Write Code with AI</ap-dialog-title-template>
+<ap-dialog-title-template i18n>Write Code with AI
+    <span class="ap-typography-caption ap-text-primary ap-mt-1">BETA</span>
+</ap-dialog-title-template>
 <ng-container *ngIf="!receivedCode; then promptTemplate else editTemplate"></ng-container>
 
 <ng-template #promptTemplate>
@@ -63,7 +65,6 @@
 
         </mat-form-field>
         <mat-checkbox *ngIf="!receivedCode" [formControl]="promptForm.controls.passExistingCode" color="primary"
-            i18n>Pass existing code to
-            AI </mat-checkbox>
+            i18n>Pass existing code to AI </mat-checkbox>
     </form>
 </ng-template>

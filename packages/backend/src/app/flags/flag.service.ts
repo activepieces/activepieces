@@ -1,4 +1,4 @@
-import { ApEdition, ApFlagId, Flag } from '@activepieces/shared'
+import { ApEdition, ApFlagId, Flag, isNil } from '@activepieces/shared'
 import { databaseConnection } from '../database/database-connection'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
@@ -46,6 +46,18 @@ export const flagService = {
             {
                 id: ApFlagId.CLOUD_AUTH_ENABLED,
                 value: system.getBoolean(SystemProp.CLOUD_AUTH_ENABLED) ?? true,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.COPILOT_ENABLED,
+                value: !isNil(system.get(SystemProp.OPENAI_API_KEY)),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_COPILOT,
+                value: true,
                 created,
                 updated,
             },

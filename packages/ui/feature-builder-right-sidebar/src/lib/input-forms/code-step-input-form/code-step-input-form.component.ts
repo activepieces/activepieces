@@ -7,10 +7,11 @@ import {
   FormControl,
 } from '@angular/forms';
 import { Observable, tap } from 'rxjs';
-import { ActionType, SourceCode } from '@activepieces/shared';
+import { ActionType, ApFlagId, SourceCode } from '@activepieces/shared';
 import { CodeStepInputFormSchema } from '../input-forms-schema';
 import { MatDialog } from '@angular/material/dialog';
 import { CodeWriterDialogComponent } from './code-writer-dialog/code-writer-dialog.component';
+import { FlagService } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-code-step-input-form',
@@ -30,6 +31,8 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
   }>;
   formValueChanged$: Observable<unknown>;
   dialogClosed$?: Observable<unknown>;
+  generateCodeEnabled$: Observable<boolean>;
+  showGenerateCode$: Observable<boolean>;
 
   markdown = `
   To use data from previous steps in your code, include them as pairs of keys and values below.
@@ -52,8 +55,15 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
 
   constructor(
     private formBuilder: FormBuilder,
-    private dialogService: MatDialog
+    private dialogService: MatDialog,
+    private flagService: FlagService
   ) {
+    this.generateCodeEnabled$ = this.flagService.isFlagEnabled(
+      ApFlagId.COPILOT_ENABLED
+    );
+    this.showGenerateCode$ = this.flagService.isFlagEnabled(
+      ApFlagId.SHOW_COPILOT
+    );
     this.codeStepForm = this.formBuilder.group({
       input: new FormControl({}, { nonNullable: true }),
       sourceCode: new FormControl(
