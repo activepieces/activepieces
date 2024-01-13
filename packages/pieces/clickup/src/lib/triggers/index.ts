@@ -1,7 +1,8 @@
 import { ClickupEventType } from '../common/models';
 import { clickupRegisterTrigger } from './register-trigger';
+import { triggerTaskTagUpdated } from './task-tag-updated';
 
-const sampleTask = {
+export const sampleTask = {
   id: 'string',
   custom_id: 'string',
   name: 'string',
@@ -64,7 +65,7 @@ const sampleTask = {
   url: 'string',
 };
 
-export const clickupTriggers = [
+export const triggers = [
   {
     name: 'task_created',
     eventType: ClickupEventType.TASK_CREATED,
@@ -232,3 +233,5 @@ export const clickupTriggers = [
     },
   },
 ].map((props) => clickupRegisterTrigger(props));
+
+export const clickupTriggers = [...triggers, triggerTaskTagUpdated];

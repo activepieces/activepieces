@@ -77,7 +77,7 @@ export const clickupCommon = {
       description: 'The ID of the ClickUp space to create the task in',
       displayName: 'List',
       required,
-      refreshers: ['space_id'],
+      refreshers: ['space_id', 'workspace_id'],
       defaultValue: null,
       options: async ({ auth, space_id }) => {
         if (!auth || !space_id) {
@@ -121,7 +121,7 @@ export const clickupCommon = {
       displayName: 'Task Id',
       required,
       defaultValue: null,
-      refreshers: ['space_id', 'list_id'],
+      refreshers: ['space_id', 'list_id', 'workspace_id'],
       options: async ({ auth, space_id, list_id }) => {
         if (!auth || !list_id || !space_id) {
           return {
@@ -413,7 +413,7 @@ async function listFolderlessList(accessToken: string, spaceId: string) {
   ).body;
 }
 
-async function listTasks(accessToken: string, listId: string) {
+export async function listTasks(accessToken: string, listId: string) {
   return (
     await callClickUpApi<{
       tasks: {
