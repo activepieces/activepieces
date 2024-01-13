@@ -1,0 +1,43 @@
+{
+  "name": "pieces-acumbamail",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/acumbamail/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/acumbamail",
+        "tsConfig": "packages/pieces/acumbamail/tsconfig.lib.json",
+        "packageJson": "packages/pieces/acumbamail/package.json",
+        "main": "packages/pieces/acumbamail/src/index.ts",
+        "assets": [
+          "packages/pieces/acumbamail/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-acumbamail {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/acumbamail/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

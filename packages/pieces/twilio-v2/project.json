@@ -1,0 +1,43 @@
+{
+  "name": "pieces-twilio-v2",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/twilio-v2/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/twilio-v2",
+        "tsConfig": "packages/pieces/twilio-v2/tsconfig.lib.json",
+        "packageJson": "packages/pieces/twilio-v2/package.json",
+        "main": "packages/pieces/twilio-v2/src/index.ts",
+        "assets": [
+          "packages/pieces/twilio-v2/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-twilio-v2 {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/twilio-v2/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

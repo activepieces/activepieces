@@ -27,12 +27,21 @@
         "packages/ee/project-members/src/index.ts"
       ],
       "@activepieces/engine": ["packages/engine/src/main.ts"],
+      "@activepieces/piece-acp-twilio-response": [
+        "packages/pieces/acp-twilio-response/src/index.ts"
+      ],
       "@activepieces/piece-activepieces": [
         "packages/pieces/activepieces/src/index.ts"
+      ],
+      "@activepieces/piece-acumbamail": [
+        "packages/pieces/acumbamail/src/index.ts"
       ],
       "@activepieces/piece-airtable": ["packages/pieces/airtable/src/index.ts"],
       "@activepieces/piece-amazon-s3": [
         "packages/pieces/amazon-s3/src/index.ts"
+      ],
+      "@activepieces/piece-amazon-s3-v2": [
+        "packages/pieces/amazon-s3-v2/src/index.ts"
       ],
       "@activepieces/piece-apitable": ["packages/pieces/apitable/src/index.ts"],
       "@activepieces/piece-approval": ["packages/pieces/approval/src/index.ts"],
@@ -40,10 +49,10 @@
       "@activepieces/piece-bannerbear": [
         "packages/pieces/bannerbear/src/index.ts"
       ],
+      "@activepieces/piece-beamer": ["packages/pieces/beamer/src/index.ts"],
       "@activepieces/piece-bettermode": [
         "packages/pieces/bettermode/src/index.ts"
       ],
-      "@activepieces/piece-beamer": ["packages/pieces/beamer/src/index.ts"],
       "@activepieces/piece-binance": ["packages/pieces/binance/src/index.ts"],
       "@activepieces/piece-bonjoro": ["packages/pieces/bonjoro/src/index.ts"],
       "@activepieces/piece-box": ["packages/pieces/box/src/index.ts"],
@@ -132,6 +141,9 @@
       "@activepieces/piece-gotify": ["packages/pieces/gotify/src/index.ts"],
       "@activepieces/piece-gravityforms": [
         "packages/pieces/gravityforms/src/index.ts"
+      ],
+      "@activepieces/piece-hacker-news": [
+        "packages/pieces/hacker-news/src/index.ts"
       ],
       "@activepieces/piece-hackernews": [
         "packages/pieces/hackernews/src/index.ts"
@@ -251,6 +263,9 @@
       "@activepieces/piece-totalcms": ["packages/pieces/totalcms/src/index.ts"],
       "@activepieces/piece-trello": ["packages/pieces/trello/src/index.ts"],
       "@activepieces/piece-twilio": ["packages/pieces/twilio/src/index.ts"],
+      "@activepieces/piece-twilio-v2": [
+        "packages/pieces/twilio-v2/src/index.ts"
+      ],
       "@activepieces/piece-twitter": ["packages/pieces/twitter/src/index.ts"],
       "@activepieces/piece-typeform": ["packages/pieces/typeform/src/index.ts"],
       "@activepieces/piece-vtex": ["packages/pieces/vtex/src/index.ts"],

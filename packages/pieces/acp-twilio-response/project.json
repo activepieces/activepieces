@@ -1,0 +1,43 @@
+{
+  "name": "pieces-acp-twilio-response",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/acp-twilio-response/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/acp-twilio-response",
+        "tsConfig": "packages/pieces/acp-twilio-response/tsconfig.lib.json",
+        "packageJson": "packages/pieces/acp-twilio-response/package.json",
+        "main": "packages/pieces/acp-twilio-response/src/index.ts",
+        "assets": [
+          "packages/pieces/acp-twilio-response/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-acp-twilio-response {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/acp-twilio-response/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

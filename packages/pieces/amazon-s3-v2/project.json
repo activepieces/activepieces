@@ -1,0 +1,33 @@
+{
+  "name": "pieces-amazon-s3-v2",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/amazon-s3-v2/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/amazon-s3-v2",
+        "tsConfig": "packages/pieces/amazon-s3-v2/tsconfig.lib.json",
+        "packageJson": "packages/pieces/amazon-s3-v2/package.json",
+        "main": "packages/pieces/amazon-s3-v2/src/index.ts",
+        "assets": ["packages/pieces/amazon-s3-v2/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-amazon-s3-v2 {args.ver} {args.tag}",
+      "dependsOn": ["build"]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/amazon-s3-v2/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}
