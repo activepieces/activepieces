@@ -1,7 +1,7 @@
 import fs from 'fs/promises'
 import { ApFile } from '@activepieces/pieces-framework'
 import { isString } from '@activepieces/shared'
-import { API_URL } from '../constants'
+import { EngineConstants } from '../handler/context/engine-constants'
 
 const DB_PREFIX_URL = 'db://'
 const FILE_PREFIX_URL = 'file://'
@@ -97,7 +97,7 @@ async function writeDbFile({ stepName, flowId, fileName, data, workerToken }: { 
         }))
     }
 
-    const response = await fetch(API_URL + 'v1/step-files', {
+    const response = await fetch(EngineConstants.API_URL + 'v1/step-files', {
         method: 'POST',
         headers: {
             Authorization: 'Bearer ' + workerToken,
@@ -115,7 +115,7 @@ async function writeDbFile({ stepName, flowId, fileName, data, workerToken }: { 
 
 async function readDbFile({ workerToken, absolutePath }: { workerToken: string, absolutePath: string }): Promise<ApFile> {
     const fileId = absolutePath.replace(DB_PREFIX_URL, '')
-    const response = await fetch(API_URL + `v1/step-files/${encodeURIComponent(fileId)}`, {
+    const response = await fetch(`${EngineConstants.API_URL}v1/step-files/${encodeURIComponent(fileId)}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',

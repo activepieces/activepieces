@@ -6,3 +6,4 @@ export * from './drag-drop.directive';
 export * from './element-ref.directive';
 export * from './element-ref.directive';
 export * from './image-fallback.directive';
+export * from './card.directive';

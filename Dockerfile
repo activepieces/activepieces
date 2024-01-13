@@ -41,12 +41,13 @@ COPY --from=build /usr/src/app/dist dist
 # Copy Output files to appropriate directory from build stage
 COPY --from=build /usr/src/app/packages packages
 
+LABEL service=activepieces
+
 # Copy frontend files to Nginx document root directory from build stage
 COPY --from=build /usr/src/app/dist/packages/ui/core/ /usr/share/nginx/html/
 
 VOLUME ${AP_CACHE_PATH}
 VOLUME ${AP_PACKAGE_ARCHIVE_PATH}
-
 
 # Set up entrypoint script
 COPY docker-entrypoint.sh .

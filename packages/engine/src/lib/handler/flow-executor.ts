@@ -5,7 +5,7 @@ import { branchExecutor } from './branch-executor'
 import { BaseExecutor } from './base-executor'
 import { loopExecutor } from './loop-executor'
 import { pieceExecutor } from './piece-executor'
-import { EngineConstantData } from './context/engine-constants-data'
+import { EngineConstants } from './context/engine-constants'
 
 const executeFunction: Record<ActionType, BaseExecutor<Action>> = {
     [ActionType.CODE]: codeExecutor,
@@ -25,7 +25,7 @@ export const flowExecutor = {
     async execute({ action, constants, executionState }: {
         action: Action
         executionState: FlowExecutorContext
-        constants: EngineConstantData
+        constants: EngineConstants
     }): Promise<FlowExecutorContext> {
         const startTime = new Date().getMilliseconds()
         let flowExecutionContext = executionState

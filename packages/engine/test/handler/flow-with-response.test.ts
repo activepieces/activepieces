@@ -1,6 +1,6 @@
 import { ExecutionOutputStatus } from '@activepieces/shared'
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
-import { EXECUTE_CONSTANTS, buildPieceAction } from './test-helper'
+import { buildPieceAction, generateMockEngineConstants } from './test-helper'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 
 describe('flow with response', () => {
@@ -21,7 +21,7 @@ describe('flow with response', () => {
                 pieceName: '@activepieces/piece-http',
                 actionName: 'return_response',
                 input: response,
-            }), executionState: FlowExecutorContext.empty(), constants: EXECUTE_CONSTANTS,
+            }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
         })
         expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
         expect(result.verdictResponse).toEqual({

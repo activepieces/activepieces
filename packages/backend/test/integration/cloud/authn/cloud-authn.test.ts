@@ -21,7 +21,7 @@ beforeAll(async () => {
 beforeEach(async () => {
     emailService.sendOtpEmail = jest.fn()
     stripeHelper.getOrCreateCustomer = jest.fn().mockResolvedValue(faker.string.alphanumeric())
-    
+
     await databaseConnection.getRepository('flag').delete({})
 })
 
@@ -32,6 +32,69 @@ afterAll(async () => {
 
 describe('Authentication API', () => {
     describe('Sign up Endpoint', () => {
+
+        it('Add new user if the domain is allowed', async () => {
+            // arrange
+            const { mockPlatform, mockUser, mockCustomDomain } = await createMockPlatformAndDomain()
+            const mockSignUpRequest = createMockSignUpRequest()
+            await databaseConnection.getRepository('platform').update(mockPlatform.id, {
+                enforceAllowedAuthDomains: true,
+                allowedAuthDomains: [mockSignUpRequest.email.split('@')[1]],
+            })
+
+            const mockProject = createMockProject({ ownerId: mockUser.id, platformId: mockPlatform.id })
+            await databaseConnection.getRepository('project').save(mockProject)
+
+            const mockProjectMember = createProjectMember({
+                projectId: mockProject.id,
+                email: mockSignUpRequest.email,
+                platformId: mockPlatform.id,
+                status: ProjectMemberStatus.ACTIVE,
+                role: ProjectMemberRole.ADMIN,
+            })
+            await databaseConnection.getRepository('project_member').save(mockProjectMember)
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/authentication/sign-up',
+                body: mockSignUpRequest,
+                headers: {
+                    Host: mockCustomDomain.domain,
+                },
+            })
+
+            // assert
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+        })
+        it('Fails If the domain is not allowed', async () => {
+            // arrange
+            const { mockPlatform, mockCustomDomain } = await createMockPlatformAndDomain()
+            await databaseConnection.getRepository('platform').update(mockPlatform.id, {
+                enforceAllowedAuthDomains: true,
+                allowedAuthDomains: [],
+                ssoEnabled: true,
+            })
+            const mockSignUpRequest = createMockSignUpRequest()
+
+            // act
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/authentication/sign-up',
+                body: mockSignUpRequest,
+                headers: {
+                    Host: mockCustomDomain.domain,
+                },
+            })
+            // assert
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            const responseBody = response?.json()
+            expect(responseBody?.code).toBe('DOMAIN_NOT_ALLOWED')
+        })
+
         it('Adds new user', async () => {
 
             const { mockPlatform, mockCustomDomain } = await createMockPlatformAndDomain(CLOUD_PLATFORM_ID)
@@ -69,7 +132,7 @@ describe('Authentication API', () => {
             expect(responseBody?.projectId).toHaveLength(21)
             expect(responseBody?.token).toBeDefined()
         })
-        
+
         it('Sends a verification email', async () => {
             // arrange
             const mockSignUpRequest = createMockSignUpRequest()
@@ -137,7 +200,7 @@ describe('Authentication API', () => {
             expect(responseBody?.status).toBe('ACTIVE')
             expect(responseBody?.verified).toBe(true)
             expect(responseBody?.projectId).toBe(mockProject.id)
-        }) 
+        })
 
         it('fails to sign up invited user platform if no project exist', async () => {
             // arrange
@@ -162,7 +225,7 @@ describe('Authentication API', () => {
 
             expect(responseBody?.code).toBe('INVITATION_ONLY_SIGN_UP')
         })
-    
+
         it('Adds tasks for referrals', async () => {
             // arrange
             const { mockCustomDomain, mockPlatform } = await createMockPlatformAndDomain(CLOUD_PLATFORM_ID)
@@ -204,7 +267,7 @@ describe('Authentication API', () => {
             expect(referredUserPlan?.tasks).toBe(1500)
         })
 
-    
+
         it('Fails if USER_CREATED flag is set, and sign-up is disabled', async () => {
             // arrange
             const mockSignUpRequest = createMockSignUpRequest()
@@ -253,11 +316,108 @@ describe('Authentication API', () => {
             expect(project?.displayName).toBe(`${responseBody.firstName}'s Project`)
             expect(project?.type).toBe(ProjectType.PLATFORM_MANAGED)
             expect(project?.platformId).toBe(mockPlatform.id)
-        }) 
+        })
 
     })
 
     describe('Sign in Endpoint', () => {
+
+        it('Fails If the email auth is not enabled', async () => {
+            // arrange
+            const mockPlatformId = faker.string.nanoid()
+            const mockPlatformDomain = faker.internet.domainName()
+          
+            const rawPassword = faker.internet.password()
+            const mockUser = createMockUser({
+                email: faker.internet.email(),
+                password: rawPassword,
+                verified: true,
+                status: UserStatus.ACTIVE,
+                platformId: mockPlatformId,
+            })
+            await databaseConnection.getRepository('user').save(mockUser)
+          
+            const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id, emailAuthEnabled: false, ssoEnabled: true })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+          
+            const mockCustomDomain = createMockCustomDomain({ platformId: mockPlatformId, domain: mockPlatformDomain })
+            await databaseConnection.getRepository('custom_domain').save(mockCustomDomain)
+          
+            const mockProject = createMockProject({
+                ownerId: mockUser.id,
+                platformId: mockPlatformId,
+            })
+            await databaseConnection.getRepository('project').save(mockProject)
+          
+          
+            const mockSignInRequest = createMockSignInRequest({
+                email: mockUser.email,
+                password: rawPassword,
+            })
+          
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/authentication/sign-in',
+                headers: {
+                    Host: mockPlatformDomain,
+                },
+                body: mockSignInRequest,
+            })
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            const responseBody = response?.json()
+          
+            expect(responseBody?.code).toBe('EMAIL_AUTH_DISABLED')
+        })
+
+        it('Fails If the domain is not allowed', async () => {
+            // arrange
+            const mockPlatformId = faker.string.nanoid()
+            const mockPlatformDomain = faker.internet.domainName()
+
+            const rawPassword = faker.internet.password()
+            const mockUser = createMockUser({
+                email: faker.internet.email(),
+                password: rawPassword,
+                verified: true,
+                status: UserStatus.ACTIVE,
+                platformId: mockPlatformId,
+            })
+            await databaseConnection.getRepository('user').save(mockUser)
+
+            const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id, allowedAuthDomains: [mockPlatformDomain], enforceAllowedAuthDomains: true, ssoEnabled: true })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
+            const mockCustomDomain = createMockCustomDomain({ platformId: mockPlatformId, domain: mockPlatformDomain })
+            await databaseConnection.getRepository('custom_domain').save(mockCustomDomain)
+
+            const mockProject = createMockProject({
+                ownerId: mockUser.id,
+                platformId: mockPlatformId,
+            })
+            await databaseConnection.getRepository('project').save(mockProject)
+
+
+            const mockSignInRequest = createMockSignInRequest({
+                email: mockUser.email,
+                password: rawPassword,
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/authentication/sign-in',
+                headers: {
+                    Host: mockPlatformDomain,
+                },
+                body: mockSignInRequest,
+            })
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            const responseBody = response?.json()
+
+            expect(responseBody?.code).toBe('DOMAIN_NOT_ALLOWED')
+        })
+
         it('Logs in existing users', async () => {
             // arrange
             const mockEmail = faker.internet.email()

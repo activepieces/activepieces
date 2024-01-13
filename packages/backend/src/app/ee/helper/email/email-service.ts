@@ -25,8 +25,7 @@ export const emailService = {
             return
         }
 
-        const project = await projectService.getOne(projectId)
-        assertNotNullOrUndefined(project, 'project')
+        const project = await projectService.getOneOrThrow(projectId)
         const memberToken: ProjectMemberToken = {
             id: invitationId,
         }

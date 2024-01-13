@@ -1,6 +1,6 @@
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { pieceExecutor } from '../../src/lib/handler/piece-executor'
-import { EXECUTE_CONSTANTS, buildPieceAction } from './test-helper'
+import { buildPieceAction, generateMockEngineConstants } from './test-helper'
 
 describe('pieceExecutor', () => {
 
@@ -15,7 +15,7 @@ describe('pieceExecutor', () => {
                         'key': '{{ 1 + 2 }}',
                     },
                 },
-            }), executionState: FlowExecutorContext.empty(), constants: EXECUTE_CONSTANTS,
+            }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
         })
         expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(result.steps.data_mapper.output).toEqual({ 'key': 3 })
@@ -34,7 +34,7 @@ describe('pieceExecutor', () => {
                     'failsafe': false,
                     'queryParams': {},
                 },
-            }), executionState: FlowExecutorContext.empty(), constants: EXECUTE_CONSTANTS,
+            }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
         })
         expect(result.verdict).toBe(ExecutionVerdict.FAILED)
         expect(result.steps.send_http.status).toBe('FAILED')
