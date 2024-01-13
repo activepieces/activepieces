@@ -40,6 +40,7 @@
       "@activepieces/piece-bannerbear": [
         "packages/pieces/bannerbear/src/index.ts"
       ],
+      "@activepieces/piece-baserow": ["packages/pieces/baserow/src/index.ts"],
       "@activepieces/piece-beamer": ["packages/pieces/beamer/src/index.ts"],
       "@activepieces/piece-bettermode": [
         "packages/pieces/bettermode/src/index.ts"
