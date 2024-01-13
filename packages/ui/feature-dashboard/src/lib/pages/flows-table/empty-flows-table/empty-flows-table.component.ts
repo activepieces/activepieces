@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, switchMap, tap } from 'rxjs';
 import {
+  Flow,
   PopulatedFlow,
   FlowOperationType,
   TelemetryEventName,
@@ -23,6 +24,7 @@ import { demoTemplate } from './demo-flow-template';
 export class EmptyFlowsTableComponent {
   creatingFlow = false;
   createFlow$: Observable<PopulatedFlow>;
+  openToDemo$: Observable<Flow>;
   showPoweredByAp$: Observable<boolean>;
   constructor(
     private router: Router,
@@ -55,7 +57,7 @@ export class EmptyFlowsTableComponent {
   openToDemo() {
     if (!this.creatingFlow) {
       this.creatingFlow = true;
-      this.createFlow$ = this.flowService
+      this.openToDemo$ = this.flowService
         .create({
           projectId: this.authenticationService.getProjectId(),
           displayName: demoTemplate.displayName,
@@ -68,7 +70,7 @@ export class EmptyFlowsTableComponent {
                 request: demoTemplate,
               })
               .pipe(
-                tap((updatedFlow: PopulatedFlow) => {
+                tap((updatedFlow: Flow) => {
                   this.telemetryService.capture({
                     name: TelemetryEventName.DEMO_IMPORTED,
                     payload: {},

@@ -1,4 +1,4 @@
-import { AppConnectionValue, ExecutionType, FlowRunId, PauseMetadata, Project, StopResponse, TriggerPayload } from "@activepieces/shared";
+import { AppConnectionValue, ExecutionType, FlowRunId, PauseMetadata, ProjectId, StopResponse, TriggerPayload } from "@activepieces/shared";
 import { TriggerStrategy } from "./trigger/trigger";
 import { NonAuthPiecePropertyMap, PieceAuthProperty, PiecePropValueSchema, PiecePropertyMap, StaticPropsValue } from "./property";
 
@@ -6,7 +6,10 @@ type BaseContext<PieceAuth extends PieceAuthProperty, Props extends PiecePropert
     auth: PiecePropValueSchema<PieceAuth>,
     propsValue: StaticPropsValue<Props>
     store: Store
-    project: Pick<Project, 'id'>
+    project: {
+        id: ProjectId,
+        externalId: () => Promise<string | undefined>
+    }
 }
 
 type AppWebhookTriggerHookContext<PieceAuth extends PieceAuthProperty, TriggerProps extends PiecePropertyMap> =

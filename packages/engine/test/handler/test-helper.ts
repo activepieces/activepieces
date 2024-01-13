@@ -1,25 +1,23 @@
 import { Action, ActionType, BranchAction, BranchCondition, CodeAction, ExecutionType, LoopOnItemsAction, PackageType, PieceAction, PieceType } from '@activepieces/shared'
-import path from 'path'
-import { cwd } from 'process'
 import { VariableService } from '../../src/lib/services/variable-service'
-import { EngineConstantData } from '../../src/lib/handler/context/engine-constants-data'
+import { EngineConstants } from '../../src/lib/handler/context/engine-constants'
 
-export const EXECUTE_CONSTANTS: EngineConstantData = {
-    flowId: 'flowId',
-    flowRunId: 'flowRunId',
-    serverUrl: 'http://localhost:3000',
-    apiUrl: 'http://localhost:3000',
-    projectId: 'projectId',
-    workerToken: 'workerToken',
-    variableService: new VariableService({
-        projectId: 'projectId',
-        workerToken: 'workerToken',
-    }),
-    baseCodeDirectory: path.resolve(cwd(), 'packages', 'engine', 'test', 'resources', 'codes'),
-    executionType: ExecutionType.BEGIN,
-    piecesSource: 'FILE',
-    filesServiceType: 'local',
-    testSingleStepMode: false,
+export const generateMockEngineConstants = (params?: Partial<EngineConstants>): EngineConstants => {
+    return new EngineConstants(
+        params?.flowId ?? 'flowId',
+        params?.flowRunId ?? 'flowRunId',
+        params?.serverUrl ?? 'http://127.0.0.1:3000',
+        params?.executionType ?? ExecutionType.BEGIN,
+        params?.workerToken ?? 'workerToken',
+        params?.projectId ?? 'projectId',
+        params?.variableService ?? new VariableService({
+            projectId: 'projectId',
+            workerToken: 'workerToken',
+        }),
+        params?.testSingleStepMode ?? false,
+        params?.filesServiceType ?? 'local',
+        params?.resumePayload,
+    )
 }
 
 export function buildSimpleLoopAction({

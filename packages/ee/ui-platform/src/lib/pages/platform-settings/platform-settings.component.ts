@@ -24,12 +24,14 @@ export class PlatformSettingsComponent implements AfterViewInit, OnInit {
   readonly customDomainTabTitle = $localize`Custom Domains`;
   readonly privacyAndTermsTabTitle = $localize`Privacy & Terms`;
   readonly accountManagementEmailTabTitle = $localize`Mail Server`;
+
   readonly tabIndexFragmentMap: { [index: number]: string } = {
     0: 'SigningKeys',
     1: 'MailServer',
     2: 'TermsAndServices',
     3: 'CustomDomains',
     4: 'ApiKeys',
+    5: 'SSO',
   };
   platform!: Platform;
 

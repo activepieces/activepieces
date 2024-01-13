@@ -8,7 +8,7 @@ import { createCustomerAction } from './lib/actions/create-customer';
 import { getCustomerAction } from './lib/actions/get-customer';
 import { updateCustomerAction } from './lib/actions/update-customer';
 import { getCustomerOrdersAction } from './lib/actions/get-customer-orders';
-import { getBaseUrl, sendShopifyRequest } from './lib/common';
+import { sendShopifyRequest } from './lib/common';
 import { createProductAction } from './lib/actions/create-product';
 import { getProductsAction } from './lib/actions/get-products';
 import { updatedProduct } from './lib/triggers/updated-product';
@@ -67,7 +67,7 @@ export const shopifyAuth = PieceAuth.CustomAuth({
             await sendShopifyRequest({
                 auth,
                 method: HttpMethod.GET,
-                url: `${getBaseUrl(auth.shopName)}/shop.json`
+                url: '/shop.json'
             })
             return {
                 valid: true

@@ -2176,6 +2176,9 @@
                 "properties": {
                   "displayName": {
                     "type": "string"
+                  },
+                  "externalId": {
+                    "type": "string"
                   }
                 },
                 "required": [

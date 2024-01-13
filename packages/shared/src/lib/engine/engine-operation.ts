@@ -24,7 +24,7 @@ export enum TriggerHookType {
 }
 
 export type EngineOperation =
-    | ExcuteStepOperation
+    | ExecuteStepOperation
     | ExecuteFlowOperation
     | ExecutePropsOptions
     | ExecuteTriggerOperation<TriggerHookType>
@@ -44,7 +44,7 @@ export type ExecuteValidateAuthOperation = BaseEngineOperation & {
 
 export type ExecuteExtractPieceMetadata = PiecePackage & { projectId: string }
 
-export type ExcuteStepOperation = BaseEngineOperation &  {
+export type ExecuteStepOperation = BaseEngineOperation &  {
     stepName: string
     flowVersion: FlowVersion
 }
