@@ -258,6 +258,7 @@
       "@activepieces/piece-typeform": ["packages/pieces/typeform/src/index.ts"],
       "@activepieces/piece-vbout": ["packages/pieces/vbout/src/index.ts"],
       "@activepieces/piece-vtex": ["packages/pieces/vtex/src/index.ts"],
+      "@activepieces/piece-vtiger": ["packages/pieces/vtiger/src/index.ts"],
       "@activepieces/piece-woocommerce": [
         "packages/pieces/woocommerce/src/index.ts"
       ],
