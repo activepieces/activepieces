@@ -9,20 +9,16 @@ type GenerateCodeParams = {
     prompt: string
 }
 
-let openai: OpenAI
-if (system.get(SystemProp.OPENAI_API_KEY)) {
-    openai = new OpenAI({
-        apiKey: system.get(SystemProp.OPENAI_API_KEY),
+function getOpenAI(): OpenAI {
+    return new OpenAI({
+        apiKey: system.getOrThrow(SystemProp.OPENAI_API_KEY),
     })
-}
-else {
-    logger.warn('[CopilotService] OpenAI API key not found, copilot will not work.')
 }
 
 export const copilotService = {
     async generateCode({ prompt }: GenerateCodeParams): Promise<string> {
         logger.debug({ prompt }, '[CopilotService#generateCode] Prompting...')
-        const result = await openai.chat.completions.create({
+        const result = await getOpenAI().chat.completions.create({
             model: 'gpt-3.5-turbo',
             messages: [
                 ...this.createCodeMessageContext(),
