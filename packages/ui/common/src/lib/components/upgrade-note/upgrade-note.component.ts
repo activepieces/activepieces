@@ -7,8 +7,11 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 })
 export class UpgradeNoteComponent {
   @Input() urlToOpen = 'https://www.activepieces.com/pricing';
-
+  @Input() docsLink = '';
   openUrl() {
-    window.open(this.urlToOpen, '_blank');
+    window.open(this.urlToOpen, '_blank', 'noopener noreferrer');
+  }
+  openDocs() {
+    window.open(this.docsLink, '_blank', 'noopener noreferrer');
   }
 }
