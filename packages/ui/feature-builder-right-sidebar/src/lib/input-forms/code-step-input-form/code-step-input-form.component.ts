@@ -119,14 +119,26 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
     });
 
     this.dialogClosed$ = dialogRef.afterClosed().pipe(
-      tap((result) => {
-        if (result) {
-          this.codeStepForm.controls.sourceCode.setValue({
-            code: result as string,
-            packageJson: this.codeStepForm.value.sourceCode!.packageJson,
-          });
+      tap(
+        (result: {
+          code: string;
+          inputs: { key: string; value: unknown }[];
+        }) => {
+          if (result) {
+            this.codeStepForm.controls.sourceCode.setValue({
+              code: result.code as string,
+              packageJson: this.codeStepForm.value.sourceCode!.packageJson,
+            });
+            const inputs: Record<string, unknown> = {};
+            result.inputs.forEach((input) => {
+              inputs[input.key] =
+                this.codeStepForm.controls.input.value[input.key] ??
+                input.value;
+            });
+            this.codeStepForm.controls.input.setValue(inputs);
+          }
         }
-      })
+      )
     );
   }
 }
