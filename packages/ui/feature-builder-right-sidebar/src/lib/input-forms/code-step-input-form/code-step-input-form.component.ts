@@ -133,7 +133,9 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
               ...this.codeStepForm.controls.input.value,
             };
             result.inputs.forEach((input) => {
-              inputs[input.key] = input.value;
+              if (!inputs[input.key]) {
+                inputs[input.key] = input.value;
+              }
             });
             this.codeStepForm.controls.input.setValue(inputs);
           }

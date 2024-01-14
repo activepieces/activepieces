@@ -94,15 +94,15 @@ export class CodeWriterDialogComponent {
               '\n'
             );
             this.receivedInputs = result.inputs;
+            this.capturePromptTelemetry({
+              prompt,
+              code: result.code,
+            });
           } catch (e) {
             console.error('Copilot response not valid JSON.');
             console.error((e as Error).message);
           }
           this.loading$.next(false);
-          this.capturePromptTelemetry({
-            prompt,
-            code: result,
-          });
         }),
         map(() => void 0)
       );
