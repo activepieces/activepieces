@@ -60,6 +60,7 @@ export class CodeWriterDialogComponent {
       name: TelemetryEventName.COPILOT_GENERATED_CODE,
       payload,
     });
+    this.telemetryService.saveCopilotResult(payload);
   }
   prompt(reprompt = false) {
     if (this.promptForm.valid && !this.loading$.value) {
