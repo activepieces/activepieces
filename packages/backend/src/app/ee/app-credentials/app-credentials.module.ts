@@ -57,7 +57,11 @@ const appCredentialController: FastifyPluginAsyncTypebox = async (fastify) => {
             }>,
             reply,
         ) => {
-            await appCredentialService.delete(request.params.credentialId)
+            await appCredentialService.delete({
+                id: request.params.credentialId,
+                projectId: request.principal.projectId,
+            })
+
             return reply.status(StatusCodes.OK).send()
         },
     )

@@ -38,9 +38,15 @@ export const appCredentialService = {
         }, ['projectId', 'appName'])
         return appCredentialRepo.findOneBy({ projectId, appName: request.appName })
     },
-    async delete(id: AppCredentialId): Promise<void> {
+    async delete({ id, projectId }: DeleteParams): Promise<void> {
         await appCredentialRepo.delete({
             id,
+            projectId,
         })
     },
+}
+
+type DeleteParams = {
+    id: AppCredentialId
+    projectId: ProjectId
 }
