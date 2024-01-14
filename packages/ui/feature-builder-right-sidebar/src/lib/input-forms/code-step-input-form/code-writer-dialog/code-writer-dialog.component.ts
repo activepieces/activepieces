@@ -8,8 +8,8 @@ import {
 } from '@angular/forms';
 import { BehaviorSubject, Observable, map, tap } from 'rxjs';
 import { CodeWriterService } from './code-writer.service';
-import { FlagService } from '@activepieces/ui/common';
-import { ApEdition } from '@activepieces/shared';
+import { FlagService, TelemetryService } from '@activepieces/ui/common';
+import { ApEdition, TelemetryEventName } from '@activepieces/shared';
 export interface CodeWriterDialogData {
   existingCode: string;
 }
@@ -32,11 +32,13 @@ export class CodeWriterDialogComponent {
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   betaNote = $localize`<b> Note: </b> This feature uses OpenAi's API to generate code, it will be available for free during the beta period.`;
   isCloudEdition$: Observable<boolean>;
+
   constructor(
     private formBuilder: FormBuilder,
     private dialogRef: MatDialogRef<CodeWriterDialogComponent>,
     private codeWriterService: CodeWriterService,
     private flagService: FlagService,
+    private telemetryService: TelemetryService,
     @Inject(MAT_DIALOG_DATA)
     public data: CodeWriterDialogData
   ) {
@@ -53,7 +55,12 @@ export class CodeWriterDialogComponent {
       .getEdition()
       .pipe(map((edition) => edition === ApEdition.CLOUD));
   }
-
+  capturePromptTelemetry(payload: { prompt: string; code: string }) {
+    this.telemetryService.capture({
+      name: TelemetryEventName.COPILOT_GENERATED_CODE,
+      payload,
+    });
+  }
   prompt(reprompt = false) {
     if (this.promptForm.valid && !this.loading$.value) {
       this.loading$.next(true);
@@ -92,6 +99,10 @@ export class CodeWriterDialogComponent {
             console.error((e as Error).message);
           }
           this.loading$.next(false);
+          this.capturePromptTelemetry({
+            prompt,
+            code: result,
+          });
         }),
         map(() => void 0)
       );
