@@ -111,7 +111,7 @@ const execute = async <Result extends EngineHelperResult>(
 ): Promise<EngineHelperResponse<Result>> => {
     try {
         logger.debug({ operation, sandboxId: sandbox.boxId }, '[EngineHelper#execute]')
-        
+
         const sandboxPath = sandbox.getSandboxFolderPath()
 
 
@@ -176,10 +176,10 @@ export const engineHelper = {
     ): Promise<EngineHelperResponse<EngineHelperTriggerResult<T>>> {
         logger.debug({ hookType: operation.hookType, projectId: operation.projectId }, '[EngineHelper#executeTrigger]')
 
-        const lockedFlowVersion = await flowVersionService.lockPieceVersions(
-            operation.projectId,
-            operation.flowVersion,
-        )
+        const lockedFlowVersion = await flowVersionService.lockPieceVersions({
+            projectId: operation.projectId,
+            flowVersion: operation.flowVersion,
+        })
 
         const triggerSettings = (lockedFlowVersion.trigger as PieceTrigger).settings
         const { packageType, pieceType, pieceName, pieceVersion } = triggerSettings
@@ -407,10 +407,10 @@ async function getSandboxForAction(projectId: string, flowId: string, action: Ac
                         sourceCode: action.settings.sourceCode,
                     },
                 ],
-            })    
+            })
         }
         case ActionType.BRANCH:
-        case ActionType.LOOP_ON_ITEMS: 
+        case ActionType.LOOP_ON_ITEMS:
             return sandboxProvisioner.provision({
                 type: SandBoxCacheType.NONE,
                 projectId,

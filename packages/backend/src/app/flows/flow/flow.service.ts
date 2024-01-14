@@ -26,10 +26,11 @@ import { acquireLock } from '../../helper/lock'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowRepo } from './flow.repo'
 import { telemetry } from '../../helper/telemetry.utils'
-import { IsNull } from 'typeorm'
+import { EntityManager, IsNull } from 'typeorm'
 import { isNil } from '@activepieces/shared'
 import { logger } from '../../helper/logger'
 import { flowServiceHooks as hooks } from './flow-service-hooks'
+import { transaction } from '../../core/db/transaction'
 
 export const flowService = {
     async create({ projectId, request }: CreateParams): Promise<PopulatedFlow> {
@@ -177,13 +178,23 @@ export const flowService = {
                     })
 
                     // Duplicate the artifacts from the previous version, otherwise they will be deleted during update operation
-                    lastVersion = await flowVersionService.applyOperation(userId, projectId, lastVersion, {
-                        type: FlowOperationType.IMPORT_FLOW,
-                        request: lastVersionWithArtifacts,
+                    lastVersion = await flowVersionService.applyOperation({
+                        userId,
+                        projectId,
+                        flowVersion: lastVersion,
+                        userOperation: {
+                            type: FlowOperationType.IMPORT_FLOW,
+                            request: lastVersionWithArtifacts,
+                        },
                     })
                 }
 
-                await flowVersionService.applyOperation(userId, projectId, lastVersion, operation)
+                await flowVersionService.applyOperation({
+                    userId,
+                    projectId,
+                    flowVersion: lastVersion,
+                    userOperation: operation,
+                })
             }
         }
         finally {
@@ -246,22 +257,25 @@ export const flowService = {
                 flowVersionToPublish,
             })
 
-            const lockedFlowVersion = await lockFlowVersionIfNotLocked({
-                flowVersion: flowVersionToPublish,
-                userId,
-                projectId,
+            return await transaction(async (entityManager) => {
+                const lockedFlowVersion = await lockFlowVersionIfNotLocked({
+                    flowVersion: flowVersionToPublish,
+                    userId,
+                    projectId,
+                    entityManager,
+                })
+
+                flowToUpdate.publishedVersionId = lockedFlowVersion.id
+                flowToUpdate.status = FlowStatus.ENABLED
+                flowToUpdate.schedule = scheduleOptions
+
+                const updatedFlow = await flowRepo(entityManager).save(flowToUpdate)
+
+                return {
+                    ...updatedFlow,
+                    version: lockedFlowVersion,
+                }
             })
-
-            flowToUpdate.publishedVersionId = lockedFlowVersion.id
-            flowToUpdate.status = FlowStatus.ENABLED
-            flowToUpdate.schedule = scheduleOptions
-
-            const updatedFlow = await flowRepo().save(flowToUpdate)
-
-            return {
-                ...updatedFlow,
-                version: lockedFlowVersion,
-            }
         }
         finally {
             await lock.release()
@@ -329,16 +343,22 @@ export const flowService = {
     },
 }
 
-const lockFlowVersionIfNotLocked = async ({ flowVersion, userId, projectId }: LockFlowVersionIfNotLockedParams): Promise<FlowVersion> => {
+const lockFlowVersionIfNotLocked = async ({ flowVersion, userId, projectId, entityManager }: LockFlowVersionIfNotLockedParams): Promise<FlowVersion> => {
     if (flowVersion.state === FlowVersionState.LOCKED) {
         return flowVersion
     }
 
-    return flowVersionService.applyOperation(userId, projectId, flowVersion, {
-        type: FlowOperationType.LOCK_FLOW,
-        request: {
-            flowId: flowVersion.flowId,
+    return flowVersionService.applyOperation({
+        userId,
+        projectId,
+        flowVersion,
+        userOperation: {
+            type: FlowOperationType.LOCK_FLOW,
+            request: {
+                flowId: flowVersion.flowId,
+            },
         },
+        entityManager,
     })
 }
 
@@ -416,4 +436,5 @@ type LockFlowVersionIfNotLockedParams = {
     flowVersion: FlowVersion
     userId: UserId
     projectId: ProjectId
+    entityManager: EntityManager
 }
