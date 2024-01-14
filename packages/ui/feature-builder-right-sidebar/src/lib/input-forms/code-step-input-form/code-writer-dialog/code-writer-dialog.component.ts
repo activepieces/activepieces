@@ -8,6 +8,8 @@ import {
 } from '@angular/forms';
 import { BehaviorSubject, Observable, map, tap } from 'rxjs';
 import { CodeWriterService } from './code-writer.service';
+import { FlagService } from '@activepieces/ui/common';
+import { ApEdition } from '@activepieces/shared';
 export interface CodeWriterDialogData {
   existingCode: string;
 }
@@ -24,10 +26,13 @@ export class CodeWriterDialogComponent {
   promptOperation$?: Observable<void>;
   receivedCode = '';
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  betaNote = $localize`<b> Note: </b> This feature uses OpenAi's API to generate code, it will be available for free during the beta period.`;
+  isCloudEdition$: Observable<boolean>;
   constructor(
     private formBuilder: FormBuilder,
     private dialogRef: MatDialogRef<CodeWriterDialogComponent>,
     private codeWriterService: CodeWriterService,
+    private flagService: FlagService,
     @Inject(MAT_DIALOG_DATA)
     public data: CodeWriterDialogData
   ) {
@@ -40,14 +45,17 @@ export class CodeWriterDialogComponent {
         nonNullable: true,
       }),
     });
+    this.isCloudEdition$ = this.flagService
+      .getEdition()
+      .pipe(map((edition) => edition === ApEdition.CLOUD));
   }
 
-  prompt() {
+  prompt(reprompt = false) {
     if (this.promptForm.valid && !this.loading$.value) {
       this.loading$.next(true);
       this.promptForm.disable();
       let prompt: string = this.promptForm.controls.prompt.value;
-      if (this.promptForm.controls.passExistingCode.value) {
+      if (this.promptForm.controls.passExistingCode.value || reprompt) {
         prompt = this.data.existingCode + '\n' + prompt;
       }
       this.promptOperation$ = this.codeWriterService.prompt(prompt).pipe(
