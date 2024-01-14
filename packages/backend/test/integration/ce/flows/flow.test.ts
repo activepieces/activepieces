@@ -4,7 +4,7 @@ import { generateMockToken } from '../../../helpers/auth'
 import { createMockUser, createMockProject, createMockFlow, createMockFlowVersion } from '../../../helpers/mocks'
 import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
-import { FlowStatus, FlowVersionState, PrincipalType } from '@activepieces/shared'
+import { FlowOperationType, FlowStatus, FlowVersionState, PrincipalType } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
@@ -103,13 +103,16 @@ describe('Flow API', () => {
             const mockToken = await generateMockToken({ type: PrincipalType.USER, projectId: mockProject.id })
 
             const mockUpdateFlowStatusRequest = {
-                status: 'ENABLED',
+                type: FlowOperationType.CHANGE_STATUS,
+                request: {
+                    status: 'ENABLED',
+                },
             }
 
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/flows/${mockFlow.id}/status`,
+                url: `/v1/flows/${mockFlow.id}`,
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -155,13 +158,16 @@ describe('Flow API', () => {
             const mockToken = await generateMockToken({ type: PrincipalType.USER, projectId: mockProject.id })
 
             const mockUpdateFlowStatusRequest = {
-                status: 'DISABLED',
+                type: FlowOperationType.CHANGE_STATUS,
+                request: {
+                    status: 'DISABLED',
+                },
             }
 
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/flows/${mockFlow.id}/status`,
+                url: `/v1/flows/${mockFlow.id}`,
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -215,7 +221,11 @@ describe('Flow API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/flows/${mockFlow.id}/published-version-id`,
+                url: `/v1/flows/${mockFlow.id}`,
+                body: {
+                    type: FlowOperationType.LOCK_AND_PUBLISH,
+                    request: {},
+                },
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },

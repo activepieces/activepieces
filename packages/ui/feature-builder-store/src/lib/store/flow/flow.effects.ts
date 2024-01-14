@@ -422,15 +422,16 @@ export class FlowsEffects {
       ),
       switchMap(([_, flow]) => {
         return this.flowService
-          .publish({
-            id: flow.id,
+          .update(flow.id, {
+            type: FlowOperationType.LOCK_AND_PUBLISH,
+            request: {},
           })
           .pipe(
             map((flow) => {
               return FlowsActions.publishSuccess({
                 status: flow.status,
                 showSnackbar: true,
-                publishedFlowVersionId: flow.publishedVersionId,
+                publishedFlowVersionId: flow.publishedVersionId!,
               });
             }),
             catchError((err) => {
@@ -450,8 +451,11 @@ export class FlowsEffects {
       ),
       switchMap(([_, flow]) => {
         return this.flowService
-          .updateStatus(flow.id, {
-            status: FlowStatus.ENABLED,
+          .update(flow.id, {
+            type: FlowOperationType.CHANGE_STATUS,
+            request: {
+              status: FlowStatus.ENABLED,
+            },
           })
           .pipe(
             switchMap((flow) => {
@@ -478,8 +482,11 @@ export class FlowsEffects {
       ),
       switchMap(([_, flow]) => {
         return this.flowService
-          .updateStatus(flow.id, {
-            status: FlowStatus.DISABLED,
+          .update(flow.id, {
+            type: FlowOperationType.CHANGE_STATUS,
+            request: {
+              status: FlowStatus.DISABLED,
+            },
           })
           .pipe(
             switchMap((flow) => {
