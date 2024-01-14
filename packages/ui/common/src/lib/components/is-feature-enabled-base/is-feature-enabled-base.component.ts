@@ -5,7 +5,7 @@ export const IS_FEATURE_ENABLED_RESOLVER_KEY = 'isFeatureEnabled';
 @Component({
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './is-feature-enabled-base.component.html',
+  template: ``,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IsFeatureEnabledBaseComponent {
