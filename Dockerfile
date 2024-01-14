@@ -23,6 +23,7 @@ FROM activepieces/ap-base:7 AS run
 ARG AP_CACHE_PATH=/usr/src/cache
 ARG AP_PACKAGE_ARCHIVE_PATH=/usr/src/packages
 
+RUN npm i -g cross-env@7.0.3
 
 # Set up backend
 WORKDIR /usr/src/app
