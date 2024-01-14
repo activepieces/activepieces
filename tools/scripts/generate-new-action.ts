@@ -67,10 +67,25 @@ export const ${combinedName} = createAction({
   await writeFile(filePath, actionTemplate);
 };
 
+const checkIfPieceExists = async (pieceName: string) => {
+  const dirPath = `packages/pieces/${pieceName}`;
+  try {
+    await access(dirPath, constants.F_OK);
+  } catch {
+    throw new Error(
+      chalk.bgRed.white(`Piece "${pieceName}" doesn't exist,`) +
+        ' ' +
+        'For more info check https://www.activepieces.com/docs/developers/building-pieces/create-action#piece-definition'
+    );
+  }
+};
+
 const main = async () => {
   const [, , pieceName, actionName] = argv;
 
   validateInput(pieceName, actionName);
+  await checkIfPieceExists(pieceName); // Check if the piece exists
+
   await generateActionFile(pieceName, actionName);
 
   console.log(`Action ${actionName} created for ${pieceName} piece`);
