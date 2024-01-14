@@ -1,5 +1,5 @@
 import { ListProjectMembersRequestQuery, AcceptProjectResponse, AddProjectMemberRequestBody, ProjectMember, ProjectMemberStatus } from '@activepieces/ee-shared'
-import { ALL_PRINICPAL_TYPES, ActivepiecesError, ErrorCode, PrincipalType, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { ALL_PRINICPAL_TYPES, ActivepiecesError,  ErrorCode, PrincipalType, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -11,60 +11,65 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { platformService } from '../platform/platform.service'
 
 const DEFAULT_LIMIT_SIZE = 10
-
-export const projectMemberController: FastifyPluginAsyncTypebox = async (app) => {
-    app.get('/', ListProjectMembersRequestQueryOptions, async (request) => {
-        return projectMemberService.list(
-            request.principal.projectId,
-            request.query.cursor ?? null,
-            request.query.limit ?? DEFAULT_LIMIT_SIZE,
-        )
-    })
-
-    app.post('/', AddProjectMemberRequest, async (request, reply) => {
-        const { status } = request.body
-        if (status === ProjectMemberStatus.ACTIVE) {
-            await assertFeatureIsEnabled(app, request, reply)
-        }
-        const { projectMember } = await projectMemberService.upsertAndSend({
-            ...request.body,
-            projectId: request.principal.projectId,
-            platformId: request.principal.platform?.id ?? null,
+export const projectMemberController:((req: { viewOnly: boolean }) => FastifyPluginAsyncTypebox) = ({ viewOnly }) => {
+    const controller: FastifyPluginAsyncTypebox = async (app) => {
+        app.get('/', ListProjectMembersRequestQueryOptions, async (request) => {
+            return projectMemberService.list(
+                request.principal.projectId,
+                request.query.cursor ?? null,
+                request.query.limit ?? DEFAULT_LIMIT_SIZE,
+            )
         })
-
-        await reply.status(StatusCodes.CREATED).send(projectMember)
-    })
-
-    app.post('/accept', AcceptProjectMemberRequest, async (request, reply) => {
-        try {
-            const projectMember = await projectMemberService.accept({
-                invitationToken: request.body.token,
+        if (!viewOnly) {
+            app.post('/', AddProjectMemberRequest, async (request, reply) => {
+                const { status } = request.body
+                if (status === ProjectMemberStatus.ACTIVE) {
+                    await assertFeatureIsEnabled(app, request, reply)
+                }
+                const { projectMember } = await projectMemberService.upsertAndSend({
+                    ...request.body,
+                    projectId: request.principal.projectId,
+                    platformId: request.principal.platform?.id ?? null,
+                })
+        
+                await reply.status(StatusCodes.CREATED).send(projectMember)
             })
-
-            const user = await userService.getByPlatformAndEmail({
-                email: projectMember.email,
-                platformId: request.principal.platform?.id ?? null,
+        
+            app.post('/accept', AcceptProjectMemberRequest, async (request, reply) => {
+                try {
+                    const projectMember = await projectMemberService.accept({
+                        invitationToken: request.body.token,
+                    })
+        
+                    const user = await userService.getByPlatformAndEmail({
+                        email: projectMember.email,
+                        platformId: request.principal.platform?.id ?? null,
+                    })
+        
+                    return {
+                        registered: !isNil(user),
+                    }
+                }
+                catch (e) {
+                    logger.error(e)
+                    return reply.status(StatusCodes.UNAUTHORIZED).send()
+                }
             })
-
-            return {
-                registered: !isNil(user),
-            }
+        
+            app.delete('/:id', DeleteProjectMemberRequest, async (request, reply) => {
+                await projectMemberService.delete(
+                    request.principal.projectId,
+                    request.params.id,
+                )
+                await reply.status(StatusCodes.NO_CONTENT).send()
+            })
         }
-        catch (e) {
-            logger.error(e)
-            return reply.status(StatusCodes.UNAUTHORIZED).send()
-        }
-    })
-
-    app.delete('/:id', DeleteProjectMemberRequest, async (request, reply) => {
-        await projectMemberService.delete(
-            request.principal.projectId,
-            request.params.id,
-        )
-        await reply.status(StatusCodes.NO_CONTENT).send()
-    })
-
+       
+    
+    }
+    return controller
 }
+
 
 async function assertFeatureIsEnabled(app: FastifyInstance, request: FastifyRequest, reply: FastifyReply): Promise<void> {
     await platformMustBeOwnedByCurrentUser.call(app, request, reply)

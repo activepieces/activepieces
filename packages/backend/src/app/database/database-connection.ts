@@ -57,12 +57,12 @@ function getEntities(): EntitySchema<unknown>[] {
         FolderEntity,
         PieceMetadataEntity,
         StepFileEntity,
+        ProjectMemberEntity,
     ]
 
     switch (edition) {
         case ApEdition.CLOUD:
             entities.push(
-                ProjectMemberEntity,
                 AppSumoEntity,
                 ReferralEntity,
                 ProjectPlanEntity,
@@ -81,7 +81,6 @@ function getEntities(): EntitySchema<unknown>[] {
             break
         case ApEdition.ENTERPRISE:
             entities.push(
-                ProjectMemberEntity,
                 ProjectPlanEntity,
                 ProjectUsageEntity,
                 PlatformEntity,
