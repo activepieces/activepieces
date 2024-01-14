@@ -13,7 +13,8 @@
     "dev:frontend": "cross-env FORCE_COLOR=true && concurrently -n \"GUI,API,ENG\" -c \"bgBlue.bold,bgGreen.bold,bgRed.bold\" \"npm:serve:frontend\" \"npm:serve:backend\" \"npm:serve:engine\"",
     "start": "npm i && npm run dev",
     "publish-piece": "npx ts-node tools/scripts/utils/publish-piece.ts",
-    "create-piece": "npx ts-node tools/scripts/generate-new-piece.ts"
+    "create-piece": "npx ts-node tools/scripts/generate-new-piece.ts",
+    "create-action": "npx ts-node tools/scripts/generate-new-action.ts"
   },
   "private": true,
   "dependencies": {
