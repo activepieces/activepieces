@@ -28,7 +28,7 @@ export class CodeWriterDialogComponent {
   receivedInputs: {
     key: string;
     value: unknown;
-  }[];
+  }[] = [];
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   betaNote = $localize`<b> Note: </b> This feature uses OpenAi's API to generate code, it will be available for free during the beta period.`;
   isCloudEdition$: Observable<boolean>;
@@ -111,6 +111,7 @@ export class CodeWriterDialogComponent {
 
   reset() {
     this.receivedCode = '';
+    this.receivedInputs = [];
     this.promptForm.reset();
   }
 
