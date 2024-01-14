@@ -1,4 +1,4 @@
-import { ApEdition, ApFlagId, Flag } from '@activepieces/shared'
+import { ApEdition, ApFlagId, Flag, isNil } from '@activepieces/shared'
 import { databaseConnection } from '../database/database-connection'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
@@ -7,7 +7,6 @@ import axios from 'axios'
 import { webhookService } from '../webhooks/webhook-service'
 import { getEdition } from '../helper/secret-helper'
 import { defaultTheme } from './theme'
-import { showThirdPartyProvidersMap } from '../ee/authentication/federated-authn/authn-provider/authn-provider'
 
 const flagRepo = databaseConnection.getRepository(FlagEntity)
 
@@ -44,8 +43,26 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.SHOW_GIT_SYNC,
+                value: true,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.CLOUD_AUTH_ENABLED,
                 value: system.getBoolean(SystemProp.CLOUD_AUTH_ENABLED) ?? true,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.COPILOT_ENABLED,
+                value: !isNil(system.get(SystemProp.OPENAI_API_KEY)),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_COPILOT,
+                value: true,
                 created,
                 updated,
             },
@@ -75,8 +92,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
-                //show only for cloud and hide it for platform users in flags hook
-                value: getEdition() === ApEdition.CLOUD ? showThirdPartyProvidersMap : {},
+                value: {},
                 created,
                 updated,
             },
@@ -89,6 +105,12 @@ export const flagService = {
             {
                 id: ApFlagId.PROJECT_MEMBERS_ENABLED,
                 value: getEdition() !== ApEdition.COMMUNITY,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.EMAIL_AUTH_ENABLED,
+                value: true,
                 created,
                 updated,
             },
@@ -187,7 +209,9 @@ export const flagService = {
         return flags
     },
     getThirdPartyRedirectUrl(): string {
-        return `${system.get(SystemProp.FRONTEND_URL)}/redirect`
+        const frontendUrl = system.get(SystemProp.FRONTEND_URL)
+        const trimmedFrontendUrl = frontendUrl?.endsWith('/') ? frontendUrl.slice(0, -1) : frontendUrl
+        return `${trimmedFrontendUrl}/redirect`
     },
     async getCurrentRelease(): Promise<string> {
         const packageJson = await import('package.json')

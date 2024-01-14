@@ -12,6 +12,7 @@ import {
 } from 'rxjs';
 import {
   ApPaginatorComponent,
+  AuthenticationService,
   CURSOR_QUERY_PARAM,
   DEFAULT_PAGE_SIZE,
   FOLDER_QUERY_PARAM,
@@ -43,6 +44,7 @@ export class FlowsTableDataSource extends DataSource<FlowListDtoWithInstanceStat
     private queryParams$: Observable<Params>,
     private folderService: FoldersService,
     private paginator: ApPaginatorComponent,
+    private authenticationService: AuthenticationService,
     private flowService: FlowService,
     private refresh$: Observable<boolean>,
     private store: Store
@@ -76,6 +78,7 @@ export class FlowsTableDataSource extends DataSource<FlowListDtoWithInstanceStat
         const { queryParams } = res;
         return forkJoin([
           this.flowService.list({
+            projectId: this.authenticationService.getProjectId(),
             limit: queryParams[LIMIT_QUERY_PARAM] || DEFAULT_PAGE_SIZE,
             cursor: queryParams[CURSOR_QUERY_PARAM],
             folderId: queryParams[FOLDER_QUERY_PARAM] || undefined,

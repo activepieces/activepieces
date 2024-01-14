@@ -1,5 +1,5 @@
 import { FlowOperationType, FlowVersion, SeekPage } from '@activepieces/shared';
-import { FlowService, fadeIn400ms } from '@activepieces/ui/common';
+import { FlowService } from '@activepieces/ui/common';
 import {
   BuilderSelectors,
   FlowsActions,
@@ -29,7 +29,6 @@ import { MatDialog } from '@angular/material/dialog';
 @Component({
   selector: 'app-version-history',
   templateUrl: './version-history.component.html',
-  animations: [fadeIn400ms],
 })
 export class VersionHistoryComponent {
   sideBarDisplayName = $localize`Versions`;
@@ -52,7 +51,7 @@ export class VersionHistoryComponent {
       BuilderSelectors.selectPublishedFlowVersion
     );
     this.draftVersionId$ = this.store.select(
-      BuilderSelectors.selectCurrentFlowVersionId
+      BuilderSelectors.selectDraftVersionId
     );
     this.viewedVersion$ = this.store.select(
       BuilderSelectors.selectViewedVersion
@@ -117,7 +116,7 @@ export class VersionHistoryComponent {
         .select(BuilderSelectors.selectPublishedFlowVersion)
         .pipe(take(1)),
       draftId: this.store
-        .select(BuilderSelectors.selectCurrentFlowVersionId)
+        .select(BuilderSelectors.selectDraftVersionId)
         .pipe(take(1)),
     }).pipe(
       tap(({ flow, published, draftId }) => {

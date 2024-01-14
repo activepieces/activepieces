@@ -1,6 +1,6 @@
 export enum ThirdPartyAuthnProviderEnum {
-    GOOGLE = 'GOOGLE',
-    GITHUB = 'GITHUB',
+    GOOGLE = 'google',
+    GITHUB = 'github',
 }
 
 export type ThirdPartyAuthnProvidersToShowMap = {

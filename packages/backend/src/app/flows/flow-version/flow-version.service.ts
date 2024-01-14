@@ -397,7 +397,7 @@ async function validateAction({ projectId, settings }: { projectId: ProjectId, s
         return false
     }
     const props = action.props
-    if (!isNil(piece.auth)) {
+    if (!isNil(piece.auth) && action.requireAuth) {
         props.auth = piece.auth
     }
     return validateProps(props, settings.input)

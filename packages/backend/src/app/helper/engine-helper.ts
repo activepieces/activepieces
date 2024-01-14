@@ -21,7 +21,7 @@ import {
     EngineTestOperation,
     BeginExecuteFlowOperation,
     ResumeExecuteFlowOperation,
-    ExcuteStepOperation,
+    ExecuteStepOperation,
     flowHelper,
     Action,
     assertNotNullOrUndefined,
@@ -285,7 +285,7 @@ export const engineHelper = {
         )
     },
 
-    async executeAction(operation: Omit<ExcuteStepOperation, EngineConstants>): Promise<EngineHelperResponse<EngineHelperActionResult>> {
+    async executeAction(operation: Omit<ExecuteStepOperation, EngineConstants>): Promise<EngineHelperResponse<EngineHelperActionResult>> {
         logger.debug({
             flowVersionId: operation.flowVersion.id,
             stepName: operation.stepName,
@@ -294,7 +294,7 @@ export const engineHelper = {
         const step = flowHelper.getStep(lockedFlowVersion, operation.stepName) as Action | undefined
         assertNotNullOrUndefined(step, 'Step not found')
         const sandbox = await getSandboxForAction(operation.projectId, operation.flowVersion.flowId, step)
-        const input: ExcuteStepOperation = {
+        const input: ExecuteStepOperation = {
             flowVersion: lockedFlowVersion,
             stepName: operation.stepName,
             projectId: operation.projectId,

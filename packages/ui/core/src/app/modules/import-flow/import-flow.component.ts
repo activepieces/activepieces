@@ -9,6 +9,7 @@ import {
   FlowService,
   RedirectService,
   TelemetryService,
+  AuthenticationService,
   TemplatesService,
 } from '@activepieces/ui/common';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -45,6 +46,7 @@ export class ImportFlowComponent implements OnInit {
     private router: Router,
     private metaService: Meta,
     private telemetryService: TelemetryService,
+    private authenticationService: AuthenticationService,
     private flagService: FlagService,
     private redirectService: RedirectService
   ) {
@@ -88,6 +90,7 @@ export class ImportFlowComponent implements OnInit {
             switchMap(() => {
               return this.flowService
                 .create({
+                  projectId: this.authenticationService.getProjectId(),
                   displayName: templateJson.template.displayName,
                 })
                 .pipe(

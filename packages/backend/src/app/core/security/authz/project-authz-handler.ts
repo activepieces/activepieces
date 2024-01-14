@@ -8,6 +8,7 @@ export class ProjectAuthzHandler extends BaseSecurityHandler {
         '/v1/users/projects/:projectId/token',
         '/v1/admin/platforms',
         '/v1/admin/pieces',
+        '/v1/app-credentials',
     ]
 
     protected canHandle(request: FastifyRequest): Promise<boolean> {

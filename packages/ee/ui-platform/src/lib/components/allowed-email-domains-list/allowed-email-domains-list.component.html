@@ -1,0 +1,36 @@
+<div class="ap-flex ap-gap-3 ap-flex-col">
+    <div class="ap-flex ap-items-center ap-justify-between ap-flex-col md:ap-flex-row ap-gap-5" apCard>
+        <div class="ap-flex ap-items-center ap-gap-4">
+            <svg-icon [svgStyle]="{ width: '24px', height: '24px' }" src="assets/img/custom/auth/domain.svg">
+            </svg-icon>
+            <div>
+                <div class="ap-typography-body-1  ap-mb-2" i18n><b>Allowed Email Domains</b></div>
+                <div class="ap-typography-body-2 ap-text-description " i18n>
+                    Anyone with an email address at these domains is allowed to sign up for your platform.
+                    <br> Keep empty to allow all domains.
+                </div>
+            </div>
+
+
+        </div>
+        <ap-button btnSize="medium" (buttonClicked)="addDomain()" [disabled]="!platform.ssoEnabled">+ Add
+            Domain</ap-button>
+    </div>
+    <div *ngFor="let domain of platform.allowedAuthDomains"
+        class="ap-rounded ap-border-b ap-border-solid ap-px-4 ap-py-2  ap-flex ap-items-center ap-justify-between ap-gap-5">
+        {{
+        domain
+        }}
+        <ap-icon-button *ngIf="!domainsBeingRemoved[domain]" iconFilename="trash.svg" color="warn"
+            tooltipText="Remove domain" (buttonClicked)="removeDomain(domain)" loading
+            i18n-tooltipText></ap-icon-button>
+        <div *ngIf="domainsBeingRemoved[domain]"
+            class="ap-flex ap-items-center ap-justify-center ap-w-[48px] ap-h-[48px]">
+            <div class="spinner-border dark-spinner ap-w-[16px] ap-h-[16px]" role="status">
+
+            </div>
+        </div>
+    </div>
+</div>
+<ng-container *ngIf="addDomain$ | async"></ng-container>
+<ng-container *ngIf="removeDomain$ | async"></ng-container>

@@ -165,7 +165,7 @@ export class PieceTriggerInputFormComponent {
               },
               value: {
                 triggerName: triggerName,
-                auth: trigger.requireAuth ? pieceMetadata.auth : undefined,
+                auth: pieceMetadata.auth,
                 properties: trigger.props,
               },
             };

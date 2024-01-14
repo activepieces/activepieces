@@ -156,7 +156,21 @@ export const flowService = {
         }) : null
 
         try {
-            if (operation.type === FlowOperationType.CHANGE_FOLDER) {
+            if (operation.type === FlowOperationType.LOCK_AND_PUBLISH) {
+                await this.updatedPublishedVersionId({
+                    id,
+                    userId,
+                    projectId,
+                })
+            }
+            else if (operation.type === FlowOperationType.CHANGE_STATUS) {
+                await this.updateStatus({
+                    id,
+                    projectId,
+                    newStatus: operation.request.status,
+                })
+            }
+            else if (operation.type === FlowOperationType.CHANGE_FOLDER) {
                 await flowRepo().update(id, {
                     folderId: operation.request.folderId,
                 })
@@ -208,28 +222,18 @@ export const flowService = {
     },
 
     async updateStatus({ id, projectId, newStatus }: UpdateStatusParams): Promise<PopulatedFlow> {
-        const lock = await acquireLock({
-            key: id,
-            timeout: 10000,
-        })
+        const flowToUpdate = await this.getOneOrThrow({ id, projectId })
 
-        try {
-            const flowToUpdate = await this.getOneOrThrow({ id, projectId })
+        if (flowToUpdate.status !== newStatus) {
+            const { scheduleOptions } = await hooks.preUpdateStatus({
+                flowToUpdate,
+                newStatus,
+            })
 
-            if (flowToUpdate.status !== newStatus) {
-                const { scheduleOptions } = await hooks.preUpdateStatus({
-                    flowToUpdate,
-                    newStatus,
-                })
+            flowToUpdate.status = newStatus
+            flowToUpdate.schedule = scheduleOptions
 
-                flowToUpdate.status = newStatus
-                flowToUpdate.schedule = scheduleOptions
-
-                await flowRepo().save(flowToUpdate)
-            }
-        }
-        finally {
-            await lock.release()
+            await flowRepo().save(flowToUpdate)
         }
 
         return this.getOnePopulatedOrThrow({
@@ -239,47 +243,37 @@ export const flowService = {
     },
 
     async updatedPublishedVersionId({ id, userId, projectId }: UpdatePublishedVersionIdParams): Promise<PopulatedFlow> {
-        const lock = await acquireLock({
-            key: id,
-            timeout: 10000,
+        const flowToUpdate = await this.getOneOrThrow({ id, projectId })
+
+        const flowVersionToPublish = await flowVersionService.getFlowVersionOrThrow({
+            flowId: id,
+            versionId: undefined,
         })
 
-        try {
-            const flowToUpdate = await this.getOneOrThrow({ id, projectId })
+        const { scheduleOptions } = await hooks.preUpdatePublishedVersionId({
+            flowToUpdate,
+            flowVersionToPublish,
+        })
 
-            const flowVersionToPublish = await flowVersionService.getFlowVersionOrThrow({
-                flowId: id,
-                versionId: undefined,
+        return transaction(async (entityManager) => {
+            const lockedFlowVersion = await lockFlowVersionIfNotLocked({
+                flowVersion: flowVersionToPublish,
+                userId,
+                projectId,
+                entityManager,
             })
 
-            const { scheduleOptions } = await hooks.preUpdatePublishedVersionId({
-                flowToUpdate,
-                flowVersionToPublish,
-            })
+            flowToUpdate.publishedVersionId = lockedFlowVersion.id
+            flowToUpdate.status = FlowStatus.ENABLED
+            flowToUpdate.schedule = scheduleOptions
 
-            return await transaction(async (entityManager) => {
-                const lockedFlowVersion = await lockFlowVersionIfNotLocked({
-                    flowVersion: flowVersionToPublish,
-                    userId,
-                    projectId,
-                    entityManager,
-                })
+            const updatedFlow = await flowRepo(entityManager).save(flowToUpdate)
 
-                flowToUpdate.publishedVersionId = lockedFlowVersion.id
-                flowToUpdate.status = FlowStatus.ENABLED
-                flowToUpdate.schedule = scheduleOptions
-
-                const updatedFlow = await flowRepo(entityManager).save(flowToUpdate)
-
-                return {
-                    ...updatedFlow,
-                    version: lockedFlowVersion,
-                }
-            })
-        }
-        finally {
-            await lock.release()
-        }
+            return {
+                ...updatedFlow,
+                version: lockedFlowVersion,
+            }
+        })
     },
 
     async delete({ id, projectId }: DeleteParams): Promise<void> {
@@ -362,7 +356,7 @@ const lockFlowVersionIfNotLocked = async ({ flowVersion, userId, projectId, enti
     })
 }
 
-const assertFlowIsNotNull: <T extends Flow>(flow: T | null) => asserts flow is T  = <T>(flow: T | null) => {
+const assertFlowIsNotNull: <T extends Flow>(flow: T | null) => asserts flow is T = <T>(flow: T | null) => {
     if (isNil(flow)) {
         throw new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,

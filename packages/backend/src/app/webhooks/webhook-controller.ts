@@ -26,7 +26,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
         async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
             const flow = await getFlowOrThrow(request.params.flowId)
             const payload = await convertRequest(request)
-            const isHandshake = await handshakeHandler(flow, payload, reply)
+            const isHandshake = await handshakeHandler(flow, payload, false, reply)
             if (isHandshake) {
                 return
             }
@@ -62,7 +62,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
         async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
             const flow = await getFlowOrThrow(request.params.flowId)
             const payload = await convertRequest(request)
-            const isHandshake = await handshakeHandler(flow, payload, reply)
+            const isHandshake = await handshakeHandler(flow, payload, false, reply)
             if (isHandshake) {
                 return
             }
@@ -85,7 +85,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
         async (request: FastifyRequest<{ Querystring: WebhookUrlParams }>, reply) => {
             const flow = await getFlowOrThrow(request.query.flowId)
             const payload = await convertRequest(request)
-            const isHandshake = await handshakeHandler(flow, payload, reply)
+            const isHandshake = await handshakeHandler(flow, payload, false, reply)
             if (isHandshake) {
                 return
             }
@@ -108,6 +108,11 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
         async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
             logger.debug(`[WebhookController#simulate] flowId=${request.params.flowId}`)
             const flow = await getFlowOrThrow(request.params.flowId)
+            const payload = await convertRequest(request)
+            const isHandshake = await handshakeHandler(flow, payload, true, reply)
+            if (isHandshake) {
+                return
+            }
             await webhookService.simulationCallback({
                 flow,
                 payload: {
@@ -150,12 +155,13 @@ const convertBody = async (request: FastifyRequest): Promise<unknown> => {
 
 }
 
-async function handshakeHandler(flow: Flow, payload: EventPayload, reply: FastifyReply): Promise<boolean> {
+async function handshakeHandler(flow: Flow, payload: EventPayload, simulate: boolean, reply: FastifyReply): Promise<boolean> {
     const handshakeResponse = await webhookService.handshake({
         flow,
         payload,
+        simulate,
     })
-    if (handshakeResponse !== null) {
+    if (!isNil(handshakeResponse)) {
         reply = reply.status(handshakeResponse.status)
         if (handshakeResponse.headers !== undefined) {
             for (const header of Object.keys(handshakeResponse.headers)) {

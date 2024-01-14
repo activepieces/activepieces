@@ -25,7 +25,7 @@ export type ActionBase = {
   requireAuth: boolean;
 }
 
-export type TriggerBase = ActionBase & {
+export type TriggerBase = Omit<ActionBase,"requireAuth"> & {
   type: TriggerStrategy;
   sampleData: unknown,
   handshakeConfiguration?: WebhookHandshakeConfiguration;
