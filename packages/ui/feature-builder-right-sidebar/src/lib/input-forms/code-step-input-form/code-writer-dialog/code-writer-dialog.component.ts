@@ -25,6 +25,10 @@ export class CodeWriterDialogComponent {
   }>;
   promptOperation$?: Observable<void>;
   receivedCode = '';
+  receivedInputs: {
+    key: string;
+    value: unknown;
+  }[] = [];
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   betaNote = $localize`<b> Note: </b> This feature uses OpenAi's API to generate code, it will be available for free during the beta period.`;
   isCloudEdition$: Observable<boolean>;
@@ -56,6 +60,7 @@ export class CodeWriterDialogComponent {
       name: TelemetryEventName.COPILOT_GENERATED_CODE,
       payload,
     });
+    this.telemetryService.saveCopilotResult(payload);
   }
   prompt(reprompt = false) {
     if (this.promptForm.valid && !this.loading$.value) {
@@ -68,13 +73,37 @@ export class CodeWriterDialogComponent {
       this.promptOperation$ = this.codeWriterService.prompt(prompt).pipe(
         tap((response) => {
           this.promptForm.enable();
-          const result = response.result;
-          this.receivedCode = result;
+          let result:
+            | string
+            | {
+                code: string;
+                inputs: {
+                  key: string;
+                  value: unknown;
+                }[];
+              } = response.result;
+          try {
+            result = JSON.parse(response.result) as {
+              code: string;
+              inputs: {
+                key: string;
+                value: unknown;
+              }[];
+            };
+            this.receivedCode = result.code.replace(
+              /\*\*\*NEW_LINE\*\*\*/g,
+              '\n'
+            );
+            this.receivedInputs = result.inputs;
+            this.capturePromptTelemetry({
+              prompt,
+              code: result.code,
+            });
+          } catch (e) {
+            console.error('Copilot response not valid JSON.');
+            console.error((e as Error).message);
+          }
           this.loading$.next(false);
-          this.capturePromptTelemetry({
-            prompt,
-            code: result,
-          });
         }),
         map(() => void 0)
       );
@@ -83,11 +112,15 @@ export class CodeWriterDialogComponent {
 
   reset() {
     this.receivedCode = '';
+    this.receivedInputs = [];
     this.promptForm.reset();
   }
 
   useCode() {
-    this.dialogRef.close(this.receivedCode);
+    this.dialogRef.close({
+      code: this.receivedCode,
+      inputs: this.receivedInputs,
+    });
     this.reset();
   }
 }
