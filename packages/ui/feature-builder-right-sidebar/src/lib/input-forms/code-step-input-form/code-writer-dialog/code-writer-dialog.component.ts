@@ -23,6 +23,10 @@ export class CodeWriterDialogComponent {
   }>;
   promptOperation$?: Observable<void>;
   receivedCode = '';
+  receivedInputs: {
+    key: string;
+    value: unknown;
+  }[];
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   constructor(
     private formBuilder: FormBuilder,
@@ -53,8 +57,32 @@ export class CodeWriterDialogComponent {
       this.promptOperation$ = this.codeWriterService.prompt(prompt).pipe(
         tap((response) => {
           this.promptForm.enable();
-          const result = response.result;
-          this.receivedCode = result;
+          let result:
+            | string
+            | {
+                code: string;
+                inputs: {
+                  key: string;
+                  value: unknown;
+                }[];
+              } = response.result;
+          try {
+            result = JSON.parse(response.result) as {
+              code: string;
+              inputs: {
+                key: string;
+                value: unknown;
+              }[];
+            };
+            this.receivedCode = result.code.replace(
+              /\*\*\*NEW_LINE\*\*\*/g,
+              '\n'
+            );
+            this.receivedInputs = result.inputs;
+          } catch (e) {
+            console.error('Copilot response not valid JSON.');
+            console.error((e as Error).message);
+          }
           this.loading$.next(false);
         }),
         map(() => void 0)
@@ -68,7 +96,10 @@ export class CodeWriterDialogComponent {
   }
 
   useCode() {
-    this.dialogRef.close(this.receivedCode);
+    this.dialogRef.close({
+      code: this.receivedCode,
+      inputs: this.receivedInputs,
+    });
     this.reset();
   }
 }

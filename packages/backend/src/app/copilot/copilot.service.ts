@@ -3,7 +3,7 @@ import { logger } from '../helper/logger'
 import OpenAI from 'openai'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
-import { ChatCompletionMessageParam } from 'openai/resources'
+import { ChatCompletionMessageParam, ChatCompletionTool } from 'openai/resources'
 
 type GenerateCodeParams = {
     prompt: string
@@ -27,11 +27,59 @@ export const copilotService = {
                     content: prompt,
                 },
             ],
+            tools: this.createCodeTools(),
+            tool_choice: {
+                type: 'function',
+                function: {
+                    name: 'generate_code',
+                },
+            },
+            temperature: 1,
         })
+        assertNotNullOrUndefined(result.choices[0].message.tool_calls, 'OpenAICodeResponse')
+        logger.debug({ response: result.choices[0].message.tool_calls[0] }, '[CopilotService#generateCode] Response received...')
+        return result.choices[0].message.tool_calls[0].function.arguments
+    },
 
-        assertNotNullOrUndefined(result.choices[0].message.content, 'OpenAICodeResponse')
-        logger.debug({ response: result.choices[0] }, '[CopilotService#generateCode] Response received')
-        return result.choices[0].message.content
+    createCodeTools(): ChatCompletionTool[] {
+        const tools = [
+            {
+                type: 'function',
+                function: {
+                    name: 'generate_code',
+                    description: 'Write TypeScript code snippet based on user prompt.',
+                    parameters: {
+                        type: 'object',
+                        properties: {
+                            code: {
+                                type: 'string',
+                                description: 'The code snippet to write.',
+                            },
+                            inputs: {
+                                type: 'array',
+                                description: 'The inputs used in the code snippet.',
+                                items: {
+                                    type: 'object',
+                                    properties: {
+                                        key: {
+                                            type: 'string',
+                                            description: 'The name of the input property.',
+                                        },
+                                        value: {
+                                            type: 'string',
+                                            description: 'The value to fill the property with.',
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                        required: ['code'],
+                    },
+                },
+            },
+        ]
+
+        return tools as ChatCompletionTool[]
     },
 
     createCodeMessageContext(): ChatCompletionMessageParam[] {
@@ -43,11 +91,10 @@ export const copilotService = {
 You are a TypeScript coding bot that helps users turn natural language into useable code, for an open-source automation platform called Activepieces.
 
 # RESPONSE FORMAT
-The code you write will run inside an exported constant function called "code" with a single parameter "inputs".
 You will not respond to any messages that require a conversational answer.
 You will not elaborate.
-You MUST respond ONLY with code.
-If the user says something conversational, you will respond with code returning your text response.
+You will write the code in a single line, and add ***NEW_LINE*** at the end of every statement you write.
+You MUST respond ONLY with a function call.
                 `,
             },
             {
@@ -56,11 +103,11 @@ If the user says something conversational, you will respond with code returning 
             },
             {
                 role: 'assistant',
-                content: `export const code = async (inputs) => {
-  const combinedArray = [...inputs.array1, ...inputs.array2]
-  const uniqueArray = Array.from(new Set(combinedArray))
-  return uniqueArray
-};`,
+                content: null,
+                function_call: {
+                    name: 'generate_code',
+                    arguments: '{ "code": "export const code = async (inputs) => {***NEW_LINE***  const combinedArray = [...inputs.array1, ...inputs.array2]***NEW_LINE***  const uniqueArray = Array.from(new Set(combinedArray))***NEW_LINE***  return uniqueArray***NEW_LINE***};", "inputs": [ { "key": "array1", "value": "[1,2,3]" }, { "key": "array2", "value": "[4,5,6]" } ] }',
+                },
             },
             {
                 role: 'user',
@@ -68,12 +115,11 @@ If the user says something conversational, you will respond with code returning 
             },
             {
                 role: 'assistant',
-                content: `export const code = async (inputs) => {
-  const nameParts = inputs.fullName.split(' ')
-  const firstName = nameParts[0]
-  const lastName = nameParts.slice(1).join('')
-  return { firstName, lastName }
-};`,
+                content: null,
+                function_call: {
+                    name: 'generate_code',
+                    arguments: '{ "code": "export const code = async (inputs) => {***NEW_LINE***  const nameParts = inputs.fullName.split(\' \')***NEW_LINE***  const firstName = nameParts[0]***NEW_LINE***  const lastName = nameParts.slice(1).join(\'\')***NEW_LINE***  return { firstName, lastName }***NEW_LINE***};", "inputs": [ { "key": "fullName","value": "John Doe" } ] }',
+                },
             },
             {
                 role: 'user',
@@ -81,10 +127,11 @@ If the user says something conversational, you will respond with code returning 
             },
             {
                 role: 'assistant',
-                content: `export const code = async (inputs) => {
-  const isoStrings = inputs.array.map(obj => new Date(obj.created_at).toISOString())
-  return isoStrings;
-};`,
+                content: null,
+                function_call: {
+                    'name': 'generate_code',
+                    'arguments': '{ "code": "export const code = async (inputs) => {***NEW_LINE***  const isoStrings = inputs.array.map(obj => new Date(obj.created_at).toISOString())***NEW_LINE***  return isoStrings;***NEW_LINE***};", "inputs": [ { "key": "array","value": "[{ "created_at": "2022-01-14T12:34:56Z" }, { "created_at": "2022-01-15T09:45:30Z" } ]" } ] }',
+                },
             },
             {
                 role: 'user',
@@ -92,9 +139,11 @@ If the user says something conversational, you will respond with code returning 
             },
             {
                 role: 'assistant',
-                content: `export const code = async (inputs) => {
-  return 'Hi'
-};`,
+                content: null,
+                function_call: {
+                    name: 'generate_code',
+                    arguments: '{ "code": "export const code = async (inputs) => {***NEW_LINE*** return \'Hi\'***NEW_LINE***};", "inputs": [] }',
+                },
             },
             {
                 role: 'user',
@@ -102,9 +151,11 @@ If the user says something conversational, you will respond with code returning 
             },
             {
                 role: 'assistant',
-                content: `export const code = async (inputs) => {
-  return 'How are you?'
-};`,
+                content: null,
+                function_call: {
+                    name: 'generate_code',
+                    arguments: '{ "code": "export const code = async (inputs) => {***NEW_LINE*** return \'How are you?\'***NEW_LINE***};", "inputs": [] }',
+                },
             },
         ]
     },
