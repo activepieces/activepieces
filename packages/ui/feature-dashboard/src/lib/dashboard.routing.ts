@@ -9,6 +9,8 @@ import { ConnectionsTableComponent } from './pages/connections-table/connections
 import { FoldersResolver } from './resolvers/folders.resolver';
 import { DashboardContainerComponent } from './dashboard-container.component';
 import {
+  IS_FEATURE_ENABLED_RESOLVER_KEY,
+  isFeatureFlagEnabledResolver,
   showBasedOnFlagGuard,
   showPlatformSettingsGuard,
 } from '@activepieces/ui/common';
@@ -46,9 +48,13 @@ export const DashboardLayoutRouting: Routes = [
         data: {
           title: $localize`Team`,
         },
-        canActivate: [showBasedOnFlagGuard(ApFlagId.PROJECT_MEMBERS_ENABLED)],
         path: 'team',
         component: ProjectMembersTableComponent,
+        resolve: {
+          [IS_FEATURE_ENABLED_RESOLVER_KEY]: isFeatureFlagEnabledResolver(
+            ApFlagId.PROJECT_MEMBERS_ENABLED
+          ),
+        },
       },
       {
         data: {

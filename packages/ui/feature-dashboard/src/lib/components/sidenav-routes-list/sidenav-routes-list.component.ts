@@ -8,8 +8,8 @@ import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { FolderActions } from '../../store/folders/folders.actions';
 import { EmbeddingService, NavigationService } from '@activepieces/ui/common';
-import { Observable, map, of, switchMap } from 'rxjs';
-import { ApEdition, ApFlagId, supportUrl } from '@activepieces/shared';
+import { Observable, map, of } from 'rxjs';
+import { ApFlagId, supportUrl } from '@activepieces/shared';
 import { DashboardService, FlagService } from '@activepieces/ui/common';
 
 type SideNavRoute = {
@@ -33,7 +33,6 @@ export class SidenavRoutesListComponent implements OnInit {
   showBilling$: Observable<boolean>;
   isInEmbedding$: Observable<boolean>;
   sideNavRoutes$: Observable<SideNavRoute[]>;
-  showForEnterpriseAndCloud$: Observable<boolean>;
   mainDashboardRoutes: SideNavRoute[] = [];
   platformDashboardRoutes: SideNavRoute[] = [
     {
@@ -83,15 +82,6 @@ export class SidenavRoutesListComponent implements OnInit {
     private navigationService: NavigationService
   ) {
     this.isInEmbedding$ = this.embeddingService.getIsInEmbedding$();
-    this.showForEnterpriseAndCloud$ = this.isInEmbedding$.pipe(
-      switchMap((embedded) => {
-        return this.flagServices.getEdition().pipe(
-          map((ed) => {
-            return ed !== ApEdition.COMMUNITY && !embedded;
-          })
-        );
-      })
-    );
     this.logoUrl$ = this.flagServices
       .getLogos()
       .pipe(map((logos) => logos.logoIconUrl));
@@ -121,7 +111,7 @@ export class SidenavRoutesListComponent implements OnInit {
         icon: 'assets/img/custom/dashboard/members.svg',
         caption: $localize`Team`,
         route: 'team',
-        showInSideNav$: this.showForEnterpriseAndCloud$,
+        showInSideNav$: of(true),
       },
       {
         icon: 'assets/img/custom/dashboard/settings.svg',
