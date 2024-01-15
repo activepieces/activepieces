@@ -12,7 +12,7 @@ import { createCustomerAction } from './lib/actions/create-customer';
 import { getCustomerAction } from './lib/actions/get-customer';
 import { updateCustomerAction } from './lib/actions/update-customer';
 import { getCustomerOrdersAction } from './lib/actions/get-customer-orders';
-import { getBaseUrl, sendShopifyRequest } from './lib/common';
+import { sendShopifyRequest } from './lib/common';
 import { createProductAction } from './lib/actions/create-product';
 import { getProductsAction } from './lib/actions/get-products';
 import { updatedProduct } from './lib/triggers/updated-product';
@@ -54,36 +54,36 @@ To Obtain an Admin Token, follow these steps:
 `;
 
 export const shopifyAuth = PieceAuth.CustomAuth({
-  description: markdown,
-  required: true,
-  props: {
-    shopName: Property.ShortText({
-      displayName: 'Shop Name',
-      required: true,
-    }),
-    adminToken: PieceAuth.SecretText({
-      displayName: 'Admin Token',
-      required: true,
-    }),
-  },
-  validate: async ({ auth }) => {
-    try {
-      await sendShopifyRequest({
-        auth,
-        method: HttpMethod.GET,
-        url: `${getBaseUrl(auth.shopName)}/shop.json`,
-      });
-      return {
-        valid: true,
-      };
-    } catch (e) {
-      return {
-        valid: false,
-        error: 'Invalid Shop Name or Admin Token',
-      };
-    }
-  },
-});
+    description: markdown,
+    required: true,
+    props: {
+        shopName: Property.ShortText({
+            displayName: 'Shop Name',
+            required: true
+        }),
+        adminToken: PieceAuth.SecretText({
+            displayName: 'Admin Token',
+            required: true
+        })
+    },
+    validate: async ({ auth }) => {
+        try {
+            await sendShopifyRequest({
+                auth,
+                method: HttpMethod.GET,
+                url: '/shop.json'
+            })
+            return {
+                valid: true
+            }
+        } catch (e) {
+            return {
+                valid: false,
+                error: 'Invalid Shop Name or Admin Token'
+            }
+        }
+    },
+})
 
 export const shopify = createPiece({
   displayName: 'Shopify',

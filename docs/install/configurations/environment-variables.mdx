@@ -42,6 +42,7 @@ To configure activepieces, you will need to set some environment variables, Ther
 | `AP_RESIS_DB`                      | The Redis database index to use                                                                                                                   | `0`                                                    |                                                                                                                                 |
 | `AP_REDIS_USE_SSL`                 | Connect to Redis with SSL                                                                                                                         | `false`                                                |                                                                                                                                 |
 | `AP_NOTIFICATION_URL`              | The notification URL is triggered whenever a run fails.                                                                                           | `false`                                                | [https://cloud.activepieces.com/flows/WEBHOOK\_TRIGGER\_FLOW\_ID](https://cloud.activepieces.com/flows/WEBHOOK_TRIGGER_FLOW_ID) |
+| `AP_OPENAI_API_KEY`                | This is required only if you want to enable code copilot                                                                                                                   | `None`                                                 |                                                                                                                                 |
 | `AP_SIGN_UP_ENABLED`               | Enable the Sign up, It requires sandboxing to be on                                                                                               | `false`                                                |                                                                                                                                 |
 | `AP_TELEMETRY_ENABLED`             | Collect telemetry information                                                                                                                     | `true`                                                 |                                                                                                                                 |
 | `AP_TEMPLATES_SOURCE_URL`          | This is the endpoint we query for templates, remove it and templates will be removed from UI                                                      | `https://cloud.activepieces.com/api/v1/flow-templates` |                                                                                                                                 |
@@ -63,6 +64,10 @@ To enable the sign-up feature, you need to ensure the code runs safely on the ma
 1.  Make the Docker container privileged: Edit the `docker-compose.yml` file and add `privileged: true`. This allows the container to have additional permissions to sandbox.
 2.  Change the execution mode to sandboxing: Modify the `AP_EXECUTION_MODE` setting to `SANDBOXED`. This ensures the code runs within a secure environment, isolated from the rest of the system.
 3.  Modify the `AP_SIGN_UP_ENABLED` to true , the environment variable.
+
+### Enable Code Generator
+
+To enable the code generator button, please provide a value for the `AP_OPENAI_API_KEY` environment variable.
 
 ### Setting Webhook (Frontend URL):
 

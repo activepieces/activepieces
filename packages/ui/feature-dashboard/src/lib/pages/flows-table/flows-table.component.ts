@@ -8,10 +8,12 @@ import {
   FlowStatus,
   FolderId,
   TriggerType,
+  FlowOperationType,
 } from '@activepieces/shared';
 
 import {
   ApPaginatorComponent,
+  AuthenticationService,
   FoldersService,
   NavigationService,
 } from '@activepieces/ui/common';
@@ -61,6 +63,7 @@ export class FlowsTableComponent implements OnInit {
     private flowService: FlowService,
     private foldersService: FoldersService,
     private store: Store,
+    private authenticationService: AuthenticationService,
     private navigationService: NavigationService,
     @Inject(LOCALE_ID) private locale: string
   ) {
@@ -95,6 +98,7 @@ export class FlowsTableComponent implements OnInit {
       this.activatedRoute.queryParams,
       this.foldersService,
       this.paginator,
+      this.authenticationService,
       this.flowService,
       this.refreshTableAtCurrentCursor$.asObservable().pipe(startWith(true)),
       this.store
@@ -142,11 +146,14 @@ export class FlowsTableComponent implements OnInit {
     if (control.enabled) {
       control.disable();
       this.flowsUpdateStatusRequest$[flow.id] = this.flowService
-        .updateStatus(flow.id, {
-          status:
-            flow.status === FlowStatus.ENABLED
-              ? FlowStatus.DISABLED
-              : FlowStatus.ENABLED,
+        .update(flow.id, {
+          type: FlowOperationType.CHANGE_STATUS,
+          request: {
+            status:
+              flow.status === FlowStatus.ENABLED
+                ? FlowStatus.DISABLED
+                : FlowStatus.ENABLED,
+          },
         })
         .pipe(
           tap((res) => {

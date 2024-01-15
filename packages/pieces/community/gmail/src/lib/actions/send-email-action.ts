@@ -60,6 +60,11 @@ export const gmailSendEmailAction = createAction({
       description: 'File to attach to the email you want to send',
       required: false,
     }),
+    attachment_name: Property.ShortText({
+			displayName: 'Attachment Name',
+			description: 'In case you want to change the name of the attachment',
+			required: false,
+		}),
   },
   async run(configValue) {
     const subjectBase64 = Buffer.from(
