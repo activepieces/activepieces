@@ -2,11 +2,18 @@
 import { readdir, stat } from 'node:fs/promises'
 import { resolve, join } from 'node:path'
 import { cwd } from 'node:process'
-import { Piece, PieceMetadata } from '../../../packages/pieces/community/framework/src'
-import importFresh from 'import-fresh'
+import { PieceMetadata } from '../../../packages/pieces/community/framework/src'
 import { extractPieceFromModule } from '../../../packages/shared/src'
 import * as semver from 'semver'
-
+import { readPackageJson } from './files'
+type Piece = {
+    name: string;
+    displayName: string;
+    version: string;
+    minimumSupportedRelease?: string;
+    maximumSupportedRelease?: string;
+    metadata(): Omit<PieceMetadata, 'name' | 'version'>;
+  };
 
 export const PIECES_FOLDER = 'packages/pieces'
 export const COMMUNITY_PIECE_FOLDER = 'packages/pieces/community'
@@ -75,10 +82,9 @@ async function traverseFolder(folderPath: string): Promise<string[]> {
 
 async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | null> {
     try {
-        const packageJson = importFresh<Record<string, string>>(
-            join(folderPath, 'package.json'),
-        )
-        const module = importFresh<Record<string, unknown>>(
+        const packageJson = await readPackageJson(folderPath);
+
+        const module = await import(
             join(folderPath, 'src', 'index'),
         )
 
@@ -109,3 +115,4 @@ async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | 
     }
     return null
 }
+

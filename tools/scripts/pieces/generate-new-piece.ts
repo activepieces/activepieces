@@ -5,17 +5,13 @@ import { exec } from '../utils/exec'
 import { readPackageEslint, readProjectJson, writePackageEslint, writeProjectJson } from '../utils/files'
 import chalk from 'chalk';
 import { join } from 'node:path'
-import { findAllPieces, getCommunityPieceFolder } from '../utils/piece-script-utils'
+import { getCommunityPieceFolder } from '../utils/piece-script-utils'
 
 const validatePieceName = async (pieceName: string) => {
   assert(pieceName, 'pieceName is not provided')
 
   const pieceNamePattern = /^[A-Za-z0-9\-]+$/
   assert(pieceNamePattern.test(pieceName), 'piece name should contain alphanumeric characters and hyphens only')
-
-  const pieces = await findAllPieces()
-  const nameAlreadyExists = pieces.some(p => p.name === pieceName)
-  assert(!nameAlreadyExists, 'piece name already exists')
 }
 
 const nxGenerateNodeLibrary = async (pieceName: string) => {
@@ -36,8 +32,10 @@ const nxGenerateNodeLibrary = async (pieceName: string) => {
 }
 
 const removeUnusedFiles = async (piecePath: string, pieceName: string) => {
-  const pieceTsFile = join(piecePath, 'src', 'lib', `pieces-${pieceName}.ts`)
-  await rm(pieceTsFile)
+  const pieceTsFile = join(piecePath, 'src', 'lib');
+
+  // Empty the folder
+  await rm(pieceTsFile, { recursive: true, force: true });
 }
 
 const generateIndexTsFile = async (piecePath: string, pieceName: string) => {
