@@ -28,6 +28,8 @@ export const CodeActionSettings = Type.Object({
     sourceCode: SourceCode,
     input: Type.Record(Type.String({}), Type.Any()),
     inputUiInfo: Type.Optional(SampleDataSettingsObject),
+    continueOnFailure: Type.Boolean(),
+    retryOnFailure: Type.Boolean(),
 })
 
 

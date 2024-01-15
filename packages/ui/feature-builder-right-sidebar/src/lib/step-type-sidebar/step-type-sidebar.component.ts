@@ -315,6 +315,8 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
             settings: {
               sourceCode: this.codeService.helloWorldArtifact(),
               input: {},
+              continueOnFailure: false,
+              retryOnFailure: false,
             },
           },
         };

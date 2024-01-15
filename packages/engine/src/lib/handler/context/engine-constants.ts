@@ -7,6 +7,7 @@ export class EngineConstants {
     public static readonly INPUT_FILE = './input.json'
     public static readonly OUTPUT_FILE = './output.json'
     public static readonly PIECE_SOURCES = process.env.AP_PIECES_SOURCE ?? 'FILE'
+    public static readonly MAX_RETRIES = 4
 
     private project: Project | null = null
 

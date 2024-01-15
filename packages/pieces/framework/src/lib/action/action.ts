@@ -17,7 +17,7 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty, ActionProps extends
   run: ActionRunner<PieceAuth, ActionProps>
   test?: ActionRunner<PieceAuth, ActionProps>
   requireAuth?: boolean
-  disableOnFailureOptions?: boolean
+  hideOnFailureOptions?: boolean
 }
 
 export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends NonAuthPiecePropertyMap> implements ActionBase {
@@ -29,7 +29,7 @@ export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends No
     public readonly run: ActionRunner<PieceAuth, ActionProps>,
     public readonly test: ActionRunner<PieceAuth, ActionProps>,
     public readonly requireAuth: boolean,
-    public readonly disableOnFailureOptions: boolean,
+    public readonly hideOnFailureOptions: boolean,
   ) { }
 }
 
@@ -52,6 +52,6 @@ export const createAction = <
     params.run,
     params.test ?? params.run,
     params.requireAuth ?? true,
-    params.disableOnFailureOptions ?? false,
+    params.hideOnFailureOptions ?? false,
   )
 }

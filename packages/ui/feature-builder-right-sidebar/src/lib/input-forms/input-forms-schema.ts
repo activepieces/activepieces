@@ -17,6 +17,8 @@ export interface LoopStepInputFormSchema
 export interface CodeStepInputFormSchema extends InputFormsSchemaBase {
   sourceCode: SourceCode;
   input: Record<string, unknown>;
+  continueOnFailure: boolean;
+  retryOnFailure: boolean;
 }
 
 export interface BranchInputFormSchema extends InputFormsSchemaBase {

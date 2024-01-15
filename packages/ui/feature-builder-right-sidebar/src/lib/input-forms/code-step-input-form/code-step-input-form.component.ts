@@ -28,6 +28,8 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
   codeStepForm: FormGroup<{
     input: FormControl<Record<string, unknown>>;
     sourceCode: FormControl<SourceCode>;
+    continueOnFailure: FormControl<boolean>;
+    retryOnFailure: FormControl<boolean>;
   }>;
   formValueChanged$: Observable<unknown>;
   dialogClosed$?: Observable<unknown>;
@@ -72,6 +74,8 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
         { code: '', packageJson: '' },
         { nonNullable: true }
       ),
+      continueOnFailure: new FormControl(false, { nonNullable: true }),
+      retryOnFailure: new FormControl(false, { nonNullable: true }),
     });
     this.formValueChanged$ = this.codeStepForm.valueChanges.pipe(
       tap((formValue) => {
@@ -79,6 +83,8 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
           input: this.codeStepForm.value.input || {},
           sourceCode: formValue.sourceCode!,
           type: ActionType.CODE,
+          continueOnFailure: formValue.continueOnFailure ?? false,
+          retryOnFailure: formValue.retryOnFailure ?? false,
         });
       })
     );
@@ -90,6 +96,15 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
         emitEvent: false,
       });
       this.codeStepForm.controls.input.setValue(obj.input, {
+        emitEvent: false,
+      });
+      this.codeStepForm.controls.continueOnFailure.setValue(
+        obj.continueOnFailure,
+        {
+          emitEvent: false,
+        }
+      );
+      this.codeStepForm.controls.retryOnFailure.setValue(obj.retryOnFailure, {
         emitEvent: false,
       });
       if (this.codeStepForm.disabled) {

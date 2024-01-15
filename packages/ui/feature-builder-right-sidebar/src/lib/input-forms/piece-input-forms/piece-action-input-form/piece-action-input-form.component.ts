@@ -56,7 +56,7 @@ declare type ActionDropdownOptionValue = {
   actionName: string;
   auth?: PieceAuthProperty;
   properties: PiecePropertyMap;
-  disableOnFailureOptions?: boolean;
+  hideOnFailureOptions?: boolean;
 };
 
 declare type ActionDropdownOption = {
@@ -187,7 +187,7 @@ export class PieceActionInputFormComponent
                 actionName: actionName,
                 auth: action.requireAuth ? pieceMetadata.auth : undefined,
                 properties: action.props,
-                disableOnFailureOptions: action.disableOnFailureOptions,
+                hideOnFailureOptions: action.hideOnFailureOptions,
               },
             };
           }
@@ -251,6 +251,22 @@ export class PieceActionInputFormComponent
         properties = {
           [AUTHENTICATION_PROPERTY_NAME]: selectedAction.value.auth,
           ...properties,
+        };
+      }
+      if (!selectedAction.value.hideOnFailureOptions) {
+        properties = {
+          ...properties,
+          continueOnFailure: Property.Checkbox({
+            displayName: 'Continue on Failure',
+            description:
+              'Enable to skip this step and continue the flow normally if it fails.',
+            required: false,
+          }),
+          retryOnFailure: Property.Checkbox({
+            displayName: 'Retry on Failure',
+            description: 'Enable to retry this step if it fails.',
+            required: false,
+          }),
         };
       }
       const propertiesValues = this.initialComponentInputFormValue.input;
@@ -325,26 +341,8 @@ export class PieceActionInputFormComponent
     const piecePropertiesForm = this.pieceActionForm.get(
       PIECE_PROPERTIES_FORM_CONTROL_NAME
     );
-    console.log('selecetd action: ', selectedActionValue);
-    let properties = selectedActionValue.properties;
-    if (!selectedActionValue.disableOnFailureOptions) {
-      properties = {
-        ...properties,
-        continueOnFail: Property.Checkbox({
-          displayName: 'Continue on Fail',
-          description:
-            'Enable to skip this step and continue the flow normally if it fails.',
-          required: false,
-        }),
-        retryOnFail: Property.Checkbox({
-          displayName: 'Retry on Fail',
-          description: 'Enable to retry this step if it fails.',
-          required: false,
-        }),
-      };
-    }
     const propertiesFormValue: PiecePropertiesFormValue = {
-      properties,
+      properties: selectedActionValue.properties,
       setDefaultValues: true,
       customizedInputs: {},
       propertiesValues: {},
@@ -353,6 +351,22 @@ export class PieceActionInputFormComponent
       propertiesFormValue.properties = {
         [AUTHENTICATION_PROPERTY_NAME]: selectedActionValue.auth,
         ...propertiesFormValue.properties,
+      };
+    }
+    if (!selectedActionValue.hideOnFailureOptions) {
+      propertiesFormValue.properties = {
+        ...propertiesFormValue.properties,
+        continueOnFailure: Property.Checkbox({
+          displayName: 'Continue on Failure',
+          description:
+            'Enable to skip this step and continue the flow normally if it fails.',
+          required: false,
+        }),
+        retryOnFailure: Property.Checkbox({
+          displayName: 'Retry on Failure',
+          description: 'Enable to retry this step if it fails.',
+          required: false,
+        }),
       };
     }
     if (!piecePropertiesForm) {

@@ -209,7 +209,7 @@ export class VariableService {
         }
         for (const [key, value] of Object.entries(resolvedInput)) {
             const property = props[key]
-            if (key === AUTHENTICATION_PROPERTY_NAME || ['continueOnFail', 'retryOnFail'].includes(key)) {
+            if ([AUTHENTICATION_PROPERTY_NAME, 'continueOnFailure', 'retryOnFailure'].includes(key)) {
                 continue
             }
             if (property.type === PropertyType.MARKDOWN) {

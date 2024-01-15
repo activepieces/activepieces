@@ -6,7 +6,6 @@ export const discordSendMessageWebhook = createAction({
     description: 'Send a discord message via webhook',
     displayName: 'Send Message Webhook',
     requireAuth: false,
-    disableOnFailureOptions: true,
     props: {
       webhook_url: Property.ShortText({
         displayName: 'Webhook URL',
