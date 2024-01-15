@@ -6,7 +6,7 @@ on:
 jobs:
   Release:
     env:
-      MY_VERSION: sign4
+      MY_VERSION: sign5
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
