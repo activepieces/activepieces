@@ -176,10 +176,10 @@ export const engineHelper = {
     ): Promise<EngineHelperResponse<EngineHelperTriggerResult<T>>> {
         logger.debug({ hookType: operation.hookType, projectId: operation.projectId }, '[EngineHelper#executeTrigger]')
 
-        const lockedFlowVersion = await flowVersionService.lockPieceVersions(
-            operation.projectId,
-            operation.flowVersion,
-        )
+        const lockedFlowVersion = await flowVersionService.lockPieceVersions({
+            projectId: operation.projectId,
+            flowVersion: operation.flowVersion,
+        })
 
         const triggerSettings = (lockedFlowVersion.trigger as PieceTrigger).settings
         const { packageType, pieceType, pieceName, pieceVersion } = triggerSettings
