@@ -342,7 +342,9 @@ export class PieceActionInputFormComponent
       PIECE_PROPERTIES_FORM_CONTROL_NAME
     );
     const propertiesFormValue: PiecePropertiesFormValue = {
-      properties: selectedActionValue.properties,
+      properties: {
+        ...selectedActionValue.properties,
+      },
       setDefaultValues: true,
       customizedInputs: {},
       propertiesValues: {},
