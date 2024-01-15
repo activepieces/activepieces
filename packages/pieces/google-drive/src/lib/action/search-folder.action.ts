@@ -17,7 +17,7 @@ export const googleDriveSearchFolder = createAction({
         }),
         folderId: Property.ShortText({
             displayName: 'Folder ID',
-            description: '*(Optional) The ID of the folder where the folder will be searched',
+            description: '(Optional) The ID of the folder where the folder will be searched',
             required: false,
         }),
     },

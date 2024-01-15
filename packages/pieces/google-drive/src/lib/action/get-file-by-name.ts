@@ -17,12 +17,12 @@ export const googleDriveGetFileByName = createAction({
     }),
     folderId: Property.ShortText({
       displayName: 'Folder ID',
-      description: 'Parent folder to find the file (optional)',
+      description: '(Optional) Parent folder to find the file. Will search in root folder if not selected.',
       required: false,
     }),
     type: Property.StaticDropdown({
-      displayName: 'Name',
-      description: 'Name to search for',
+      displayName: 'File Type',
+      description: '(Optional) The Mime type of the file.',
       required: false,
       defaultValue: "all",
       options: {
@@ -61,11 +61,13 @@ export const googleDriveGetFileByName = createAction({
 
     const files = response.data.files ?? [];
 
-    if (files.length > 0) {
-      return files;
+    if (files.length == 1) {
+      return files[0]
+    } else if (files.length > 1) {
+      return files
     } else {
       console.log('File not found');
-      return [];
+      return []
     }
   }
 });
