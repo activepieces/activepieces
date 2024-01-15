@@ -23,7 +23,7 @@ export const frame = createPiece({
   displayName: "Frame",
   auth: frameAuth,
   minimumSupportedRelease: '0.9.0',
-  logoUrl: "https://asset.brandfetch.io/idKZYqdo-7/idxIQ0UveY.svg", //TODO: Change URL
+  logoUrl: "https://cdn.activepieces.com/pieces/frameio.png",
   authors: ['kanarelo'],
   actions: [],
   triggers
