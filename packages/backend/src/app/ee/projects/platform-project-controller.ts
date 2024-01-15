@@ -1,20 +1,13 @@
 import { EndpointScope, PrincipalType, ProjectType, SeekPage, assertNotNullOrUndefined } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
+import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
 import { platformProjectService } from './platform-project-service'
 import { projectService } from '../../project/project-service'
 import { CreatePlatformProjectRequest, DEFAULT_PLATFORM_PLAN, ProjectWithUsageAndPlanResponse, UpdateProjectPlatformRequest } from '@activepieces/ee-shared'
 import { plansService } from '../billing/project-plan/project-plan.service'
 import { StatusCodes } from 'http-status-codes'
-import { usersProjectController } from './platform-user-project-controller'
 import { platformService } from '../platform/platform.service'
 
-export const platformProjectModule: FastifyPluginAsyncTypebox = async (app) => {
-    await app.register(platformProjectController, { prefix: '/v1/projects' })
-    await app.register(usersProjectController, { prefix: '/v1/users/projects' })
-}
-
-const platformProjectController: FastifyPluginCallbackTypebox = (fastify, _opts, done) => {
-
+export const platformProjectController: FastifyPluginCallbackTypebox = (fastify, _opts, done) => {
     fastify.post('/', CreateProjectRequest, async (request, reply) => {
         const platformId = request.principal.platform?.id
         assertNotNullOrUndefined(platformId, 'platformId')
