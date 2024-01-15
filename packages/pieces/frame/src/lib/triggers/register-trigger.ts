@@ -52,8 +52,6 @@ export const frameRegisterTrigger = ({
           return {
             disabled: false,
             options: response.body.map(account => {
-              console.debug(">>>>>>>>>>>>> account", account)
-  
               return {
                 label: account.display_name,
                 value: account.id
@@ -106,12 +104,9 @@ export const frameRegisterTrigger = ({
   sampleData,
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const team_id = ''
-    // const { team_id } = context.propsValue
-
-    const request: HttpRequest = {
+    const response = await httpClient.sendRequest<WebhookInformation>({
       method: HttpMethod.POST,
-      url: `https://api.frame.com/api/v2/teams/${team_id}/hooks`,
+      url: `https://api.frame.com/api/v2/teams/${context.propsValue.team_id}/hooks`,
       body: {
         endpoint: context.webhookUrl,
         events: [eventType]
@@ -121,11 +116,7 @@ export const frameRegisterTrigger = ({
         token: context.auth
       },
       queryParams: {},
-    }
-
-    const response = await httpClient.sendRequest<WebhookInformation>(request);
-    console.debug(`frame.${eventType}.onEnable`, response)
-
+    });
     await context.store.put<WebhookInformation>(`frame_${name}_trigger`, response.body);
   },
   async onDisable(context) {
@@ -139,9 +130,7 @@ export const frameRegisterTrigger = ({
           token: context.auth
         },
       };
-      const response = await httpClient.sendRequest(request)
-      
-      console.debug(`frame.${eventType}.onDisable`, response)
+      await httpClient.sendRequest(request)
     }
   },
   async run(context) {
