@@ -38,7 +38,7 @@ export const googleDriveGetFileByName = createAction({
     authClient.setCredentials(context.auth)
 
     const drive = google.drive({ version: 'v3', auth: authClient });
-    let query = `name contains '${context.propsValue.name}'`;
+    let query = `name='${context.propsValue.name}'`;
 
     if (context.propsValue.type === "folder") {
       query = `${query} and mimeType='application/vnd.google-apps.folder'`
