@@ -5,10 +5,9 @@ import {
 import {
   httpClient,
   HttpRequest,
-  HttpMethod,
-  AuthenticationType,
+  HttpMethod
 } from "@activepieces/pieces-common";
-import { frameAuth } from '../..';
+import { formBricksAuth } from '../..';
 
 export const formBricksRegisterTrigger = ({
   name,
@@ -23,14 +22,14 @@ export const formBricksRegisterTrigger = ({
   description: string,
   sampleData: unknown
 }) => createTrigger({
-  auth: frameAuth,
-  name: `frame_trigger_${name}`,
+  auth: formBricksAuth,
+  name: `formbricks_trigger_${name}`,
   displayName,
   description,
   props: {
-    account_id: Property.Dropdown({
-      displayName: "Account",
-      description: "Accounts accessible via a given User",
+    survey_id: Property.MultiSelectDropdown({
+      displayName: "Survey",
+      description: "A selection of surveys that will trigger. Else, all surveys will trigger.",
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
@@ -38,31 +37,29 @@ export const formBricksRegisterTrigger = ({
           return { options: [], disabled: true, placeholder: 'Please authenticate first' };
         }
 
-        const response = await httpClient.sendRequest<Account[]>({
+        const response = await httpClient.sendRequest<{data: Survey[]}>({
           method: HttpMethod.GET,
-          url: `https://api.formbricks.com/v2/accounts`,
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: auth as unknown as string
-          },
-          queryParams: {},
+          url: `https://app.formbricks.com/api/v1/management/surveys`,
+          headers: {
+            'x-Api-Key': auth as unknown as string
+          }
         });
 
         try {
           return {
             disabled: false,
-            options: response.body.map(account => {
+            options: response.body.data.map(survey => {
               return {
-                label: account.display_name,
-                value: account.id
+                label: survey.name,
+                value: survey.id
               }
-            }),
+            })
           };
         } catch (error) {
           return {
             options: [],
             disabled: true,
-            placeholder: `Couldn't load Accounts:\n${error}`
+            placeholder: `Couldn't load Surveys:\n${error}`
           }
         }
       }
@@ -75,27 +72,25 @@ export const formBricksRegisterTrigger = ({
       method: HttpMethod.POST,
       url: `https://app.formbricks.com/api/v1/webhooks`,
       body: {
-        endpoint: context.webhookUrl,
-        events: [eventType]
+        url: context.webhookUrl,
+        triggers: [eventType],
+        surveyIds: context.propsValue.survey_id ?? []
       },
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth
-      },
-      queryParams: {},
+      headers: {
+        'x-Api-Key': context.auth as unknown as string
+      }
     });
-    await context.store.put<WebhookInformation>(`frame_${name}_trigger`, response.body);
+    await context.store.put<WebhookInformation>(`formbricks_${name}_trigger`, response.body);
   },
   async onDisable(context) {
-    const webhook = await context.store.get<WebhookInformation>(`frame_${name}_trigger`);
+    const webhook = await context.store.get<WebhookInformation>(`formbricks_${name}_trigger`);
     if (webhook != null) {
       const request: HttpRequest = {
         method: HttpMethod.DELETE,
-        url: `https://api.formbricks.com/v2/hooks/${webhook.id}`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: context.auth
-        },
+        url: `https://app.formbricks.com/api/v1/webhooks/${webhook.webhookId}`,
+        headers: {
+          'x-Api-Key': context.auth as unknown as string
+        }
       };
       await httpClient.sendRequest(request)
     }
@@ -103,31 +98,32 @@ export const formBricksRegisterTrigger = ({
   async run(context) {
     return [context.payload.body]
   },
-});
+})
 
 interface WebhookInformation {
-  id: string
-  name: string
-  project_id: string
-  app_id: string
-  account_id: string
-  team_id: string
-  team: Team[]
-  url: string
-  active: boolean
-  events: string[],
-  secret: string
-  deleted_at: string
-  inserted_at: string
-  updated_at: string
+  webhookId: string
+  event: string
+  data: {
+    id: string
+    createdAt: string
+    updatedAt: string
+    surveyId: string
+    finished: boolean
+    data: Record<string, string>
+    meta: Record<string, unknown>
+    personAttributes: Record<string, string>
+    person: {
+      id: string
+      attributes: Record<string, string>
+      createdAt: string
+      updatedAt: string
+    },
+    notes: []
+    tags: []
+  }
 }
 
-interface Team {
+interface Survey {
   id: string
   name: string
-}
-
-interface Account {
-  id: string
-  display_name: string
 }
