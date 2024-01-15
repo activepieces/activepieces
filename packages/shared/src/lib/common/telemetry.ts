@@ -73,6 +73,10 @@ type FlowShared = {
 type OpenedFromDasahboard = {
     location: 'sidenav' | 'tasks-progress'
 }
+type CopilotGeneratedCode = {
+    code: string
+    prompt: string
+}
 export enum TelemetryEventName {
     SIGNED_UP = 'signed.up',
     QUOTA_ALERT = 'quota.alert',
@@ -89,6 +93,7 @@ export enum TelemetryEventName {
     REFERRAL_LINK_COPIED = 'referral.link.copied',
     FLOW_SHARED = 'flow.shared',
     TEMPLATE_SEARCH = 'template.search',
+    COPILOT_GENERATED_CODE = 'copilot.code.generated',
 }
 
 type BaseTelemetryEvent<T, P> = {
@@ -112,3 +117,4 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.FLOW_SHARED, FlowShared>
     | BaseTelemetryEvent<TelemetryEventName.DEMO_IMPORTED, Record<string, never>>
     | BaseTelemetryEvent<TelemetryEventName.OPENED_PRICING_FROM_DASHBOARD, OpenedFromDasahboard>
+    | BaseTelemetryEvent<TelemetryEventName.COPILOT_GENERATED_CODE, CopilotGeneratedCode>
