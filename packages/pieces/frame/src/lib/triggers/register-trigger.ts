@@ -58,11 +58,11 @@ export const frameRegisterTrigger = ({
               }
             }),
           };
-        } catch( error ) {
-          return{
-              options: [],
-              disabled: true,
-              placeholder: `Couldn't Load Models:\n${error}`
+        } catch (error) {
+          return {
+            options: [],
+            disabled: true,
+            placeholder: `Couldn't load Accounts:\n${error}`
           }
         }
       }
@@ -90,14 +90,23 @@ export const frameRegisterTrigger = ({
           queryParams: {},
         });
 
-        return {
-          options: response.body.map(team => {
-            return {
-              label: team.name,
-              value: team.id
-            }
-          }),
-        };
+        try {
+          return {
+            disabled: false,
+            options: response.body.map(team => {
+              return {
+                label: team.name,
+                value: team.id
+              }
+            }),
+          }
+        } catch (error) {
+          return {
+            options: [],
+            disabled: true,
+            placeholder: `Couldn't load Teams:\n${error}`
+          }
+        }
       }
     })
   },
