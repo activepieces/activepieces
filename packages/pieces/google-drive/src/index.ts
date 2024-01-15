@@ -10,6 +10,7 @@ import { googleDriveListFiles } from './lib/action/list-files.action';
 import { googleDriveSearchFolder } from './lib/action/search-folder.action';
 import { duplicateFileAction } from './lib/action/duplicate-file.action';
 import { saveFileAsPdf } from './lib/action/save-file-as-pdf.action';
+import { googleDriveGetFileByName } from './lib/action/get-file-by-name';
 
 export const googleDriveAuth = PieceAuth.OAuth2({
     description: "",
@@ -25,6 +26,16 @@ export const googleDrive = createPiece({
 	displayName: "Google Drive",
 	authors: ['kanarelo', 'BastienMe', 'MoShizzle', 'Armangiau', 'vitalini', 'PFernandez98'],
 	triggers: [newFile, newFolder],
-	actions: [googleDriveCreateNewFolder, googleDriveCreateNewTextFile, googleDriveUploadFile, readFile, googleDriveListFiles, googleDriveSearchFolder, duplicateFileAction, saveFileAsPdf],
+	actions: [
+        googleDriveCreateNewFolder, 
+        googleDriveCreateNewTextFile, 
+        googleDriveUploadFile, 
+        googleDriveGetFileByName, 
+        readFile, 
+        googleDriveListFiles, 
+        googleDriveSearchFolder, 
+        duplicateFileAction, 
+        saveFileAsPdf
+    ],
     auth: googleDriveAuth,
 });
