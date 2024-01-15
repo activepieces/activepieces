@@ -117,14 +117,14 @@ export const frameRegisterTrigger = ({
       method: HttpMethod.POST,
       url: `https://api.frame.com/api/v2/teams/${context.propsValue.team_id}/hooks`,
       body: {
-        endpoint: context.webhookUrl,
+        name: displayName,
+        url: context.webhookUrl,
         events: [eventType]
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth
-      },
-      queryParams: {},
+      }
     });
     await context.store.put<WebhookInformation>(`frame_${name}_trigger`, response.body);
   },
