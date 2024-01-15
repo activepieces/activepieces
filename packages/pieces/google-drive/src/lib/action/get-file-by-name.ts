@@ -6,7 +6,7 @@ import { OAuth2Client } from 'googleapis-common';
 
 export const googleDriveGetFileByName = createAction({
   auth: googleDriveAuth,
-  name: 'search-folder',
+  name: 'get-file-by-name',
   displayName: 'Get File By Name',
   description: 'Get file/folder from the Google Drive root or folder provided',
   props: {
