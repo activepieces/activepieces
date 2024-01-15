@@ -23,6 +23,7 @@ export type ActionBase = {
   description: string,
   props: PiecePropertyMap,
   requireAuth: boolean;
+  disableOnFailureOptions?: boolean;
 }
 
 export type TriggerBase = Omit<ActionBase,"requireAuth"> & {

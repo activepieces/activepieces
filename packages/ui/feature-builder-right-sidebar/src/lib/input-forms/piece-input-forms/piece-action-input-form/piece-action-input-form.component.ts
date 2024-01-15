@@ -48,6 +48,7 @@ import {
 import {
   PieceAuthProperty,
   PiecePropertyMap,
+  Property,
 } from '@activepieces/pieces-framework';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 
@@ -55,6 +56,7 @@ declare type ActionDropdownOptionValue = {
   actionName: string;
   auth?: PieceAuthProperty;
   properties: PiecePropertyMap;
+  disableOnFailureOptions?: boolean;
 };
 
 declare type ActionDropdownOption = {
@@ -185,6 +187,7 @@ export class PieceActionInputFormComponent
                 actionName: actionName,
                 auth: action.requireAuth ? pieceMetadata.auth : undefined,
                 properties: action.props,
+                disableOnFailureOptions: action.disableOnFailureOptions,
               },
             };
           }
@@ -322,10 +325,26 @@ export class PieceActionInputFormComponent
     const piecePropertiesForm = this.pieceActionForm.get(
       PIECE_PROPERTIES_FORM_CONTROL_NAME
     );
+    console.log('selecetd action: ', selectedActionValue);
+    let properties = selectedActionValue.properties;
+    if (!selectedActionValue.disableOnFailureOptions) {
+      properties = {
+        ...properties,
+        continueOnFail: Property.Checkbox({
+          displayName: 'Continue on Fail',
+          description:
+            'Enable to skip this step and continue the flow normally if it fails.',
+          required: false,
+        }),
+        retryOnFail: Property.Checkbox({
+          displayName: 'Retry on Fail',
+          description: 'Enable to retry this step if it fails.',
+          required: false,
+        }),
+      };
+    }
     const propertiesFormValue: PiecePropertiesFormValue = {
-      properties: {
-        ...selectedActionValue.properties,
-      },
+      properties,
       setDefaultValues: true,
       customizedInputs: {},
       propertiesValues: {},

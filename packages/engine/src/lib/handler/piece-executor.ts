@@ -25,113 +25,130 @@ export const pieceExecutor: BaseExecutor<PieceAction> = {
         if (executionState.isCompleted({ stepName: action.name })) {
             return executionState
         }
-        const {
-            censoredInput,
-            resolvedInput,
-        } = await variableService({
-            projectId: constants.projectId,
-            workerToken: constants.workerToken,
-        }).resolve<StaticPropsValue<PiecePropertyMap>>({
-            unresolvedInput: action.settings.input,
-            executionState,
-        })
 
-        const stepOutput = GenricStepOutput.create({
-            input: censoredInput,
-            type: ActionType.PIECE,
-            status: StepOutputStatus.SUCCEEDED,
-        })
-        try {
-
-            assertNotNullOrUndefined(action.settings.actionName, 'actionName')
-            const { pieceAction, piece } = await pieceLoader.getPieceAndActionOrThrow({
-                pieceName: action.settings.pieceName,
-                pieceVersion: action.settings.pieceVersion,
-                actionName: action.settings.actionName,
-                piecesSource: constants.piecesSource,
+        const runWithExponentialBackoff = async (retryCount = 0): Promise<FlowExecutorContext> => {
+            const {
+                censoredInput,
+                resolvedInput,
+            } = await variableService({
+                projectId: constants.projectId,
+                workerToken: constants.workerToken,
+            }).resolve<StaticPropsValue<PiecePropertyMap>>({
+                unresolvedInput: action.settings.input,
+                executionState,
             })
 
-            const { processedInput, errors } = await constants.variableService.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth)
-            if (Object.keys(errors).length > 0) {
-                throw new Error(JSON.stringify(errors))
-            }
+            const stepOutput = GenricStepOutput.create({
+                input: censoredInput,
+                type: ActionType.PIECE,
+                status: StepOutputStatus.SUCCEEDED,
+            })
+            try {
+                assertNotNullOrUndefined(action.settings.actionName, 'actionName')
+                const { pieceAction, piece } = await pieceLoader.getPieceAndActionOrThrow({
+                    pieceName: action.settings.pieceName,
+                    pieceVersion: action.settings.pieceVersion,
+                    actionName: action.settings.actionName,
+                    piecesSource: constants.piecesSource,
+                })
 
-            const hookResponse: HookResponse = {
-                stopResponse: undefined,
-                stopped: false,
-                pauseResponse: undefined,
-                paused: false,
-                tags: [],
-            }
+                const { processedInput, errors } = await constants.variableService.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth)
+                if (Object.keys(errors).length > 0) {
+                    throw new Error(JSON.stringify(errors))
+                }
 
-            const context: ActionContext = {
-                executionType: constants.executionType,
-                store: createContextStore({
-                    prefix: '',
-                    flowId: constants.flowId,
-                    workerToken: constants.workerToken,
-                }),
-                auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
-                files: createFilesService({
-                    workerToken: constants.workerToken,
-                    stepName: action.name,
-                    flowId: constants.flowId,
-                    type: constants.filesServiceType,
-                }),
-                server: {
-                    token: constants.workerToken,
-                    apiUrl: constants.apiUrl,
-                    publicUrl: constants.serverUrl,
-                },
-                propsValue: processedInput,
-                tags: createTagsManager(hookResponse),
-                connections: createConnectionManager({
-                    projectId: constants.projectId,
-                    workerToken: constants.workerToken,
-                    hookResponse,
-                }),
-                serverUrl: constants.serverUrl,
-                run: {
-                    id: constants.flowRunId,
-                    stop: createStopHook(hookResponse),
-                    pause: createPauseHook(hookResponse),
-                },
-                resumePayload: constants.resumePayload,
-                project: {
-                    id: constants.projectId,
-                    externalId: constants.externalProjectId,
-                },
-            }
-            const output = await pieceAction.run(context)
-            const newExecutionContext = executionState.addTags(hookResponse.tags)
+                const hookResponse: HookResponse = {
+                    stopResponse: undefined,
+                    stopped: false,
+                    pauseResponse: undefined,
+                    paused: false,
+                    tags: [],
+                }
 
-            if (hookResponse.stopped) {
-                assertNotNullOrUndefined(hookResponse.stopResponse, 'stopResponse')
-                return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).setVerdict(ExecutionVerdict.SUCCEEDED, {
-                    reason: ExecutionOutputStatus.STOPPED,
-                    stopResponse: hookResponse.stopResponse.response,
-                }).increaseTask()
-            }
-            if (hookResponse.paused) {
-                assertNotNullOrUndefined(hookResponse.pauseResponse, 'pauseResponse')
-                return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)
-                    .setStatus(StepOutputStatus.PAUSED))
-                    .setVerdict(ExecutionVerdict.PAUSED, {
-                        reason: ExecutionOutputStatus.PAUSED,
-                        pauseMetadata: hookResponse.pauseResponse.pauseMetadata,
-                    })
-            }
+                const context: ActionContext = {
+                    executionType: constants.executionType,
+                    store: createContextStore({
+                        prefix: '',
+                        flowId: constants.flowId,
+                        workerToken: constants.workerToken,
+                    }),
+                    auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
+                    files: createFilesService({
+                        workerToken: constants.workerToken,
+                        stepName: action.name,
+                        flowId: constants.flowId,
+                        type: constants.filesServiceType,
+                    }),
+                    server: {
+                        token: constants.workerToken,
+                        apiUrl: constants.apiUrl,
+                        publicUrl: constants.serverUrl,
+                    },
+                    propsValue: processedInput,
+                    tags: createTagsManager(hookResponse),
+                    connections: createConnectionManager({
+                        projectId: constants.projectId,
+                        workerToken: constants.workerToken,
+                        hookResponse,
+                    }),
+                    serverUrl: constants.serverUrl,
+                    run: {
+                        id: constants.flowRunId,
+                        stop: createStopHook(hookResponse),
+                        pause: createPauseHook(hookResponse),
+                    },
+                    resumePayload: constants.resumePayload,
+                    project: {
+                        id: constants.projectId,
+                        externalId: constants.externalProjectId,
+                    },
+                }
+                const output = await pieceAction.run(context)
+                const newExecutionContext = executionState.addTags(hookResponse.tags)
 
-            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).increaseTask().setVerdict(ExecutionVerdict.RUNNING, undefined)
+                if (hookResponse.stopped) {
+                    assertNotNullOrUndefined(hookResponse.stopResponse, 'stopResponse')
+                    return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).setVerdict(ExecutionVerdict.SUCCEEDED, {
+                        reason: ExecutionOutputStatus.STOPPED,
+                        stopResponse: hookResponse.stopResponse.response,
+                    }).increaseTask()
+                }
+                if (hookResponse.paused) {
+                    assertNotNullOrUndefined(hookResponse.pauseResponse, 'pauseResponse')
+                    return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)
+                        .setStatus(StepOutputStatus.PAUSED))
+                        .setVerdict(ExecutionVerdict.PAUSED, {
+                            reason: ExecutionOutputStatus.PAUSED,
+                            pauseMetadata: hookResponse.pauseResponse.pauseMetadata,
+                        })
+                }
+
+                return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).increaseTask().setVerdict(ExecutionVerdict.RUNNING, undefined)
+            }
+            catch (e) {
+                const errorMessage = await utils.tryParseJson((e as Error).message)
+                console.error(errorMessage)
+
+                if (!constants.testSingleStepMode && action.settings.input.retryOnFail && retryCount < 3) {
+                    const backoffTime = Math.pow(2, retryCount) * 1000
+                    await new Promise(resolve => setTimeout(resolve, backoffTime))
+                    return runWithExponentialBackoff(retryCount + 1)
+                }
+
+                if (action.settings.input.continueOnFail) {
+                    return executionState.upsertStep(action.name, stepOutput.setStatus(StepOutputStatus.FAILED).setErrorMessage(errorMessage)).increaseTask().setVerdict(ExecutionVerdict.RUNNING, undefined)
+                }
+                else {
+                    return executionState
+                        .upsertStep(action.name, stepOutput.setStatus(StepOutputStatus.FAILED).setErrorMessage(errorMessage))
+                        .setVerdict(ExecutionVerdict.FAILED, undefined)
+                }
+
+            }
         }
-        catch (e) {
-            const errorMessage = await utils.tryParseJson((e as Error).message)
-            console.error(errorMessage)
-            return executionState
-                .upsertStep(action.name, stepOutput.setStatus(StepOutputStatus.FAILED).setErrorMessage(errorMessage))
-                .setVerdict(ExecutionVerdict.FAILED, undefined)
 
-        }
+        // Initial call
+        return runWithExponentialBackoff()
     },
 }
 
