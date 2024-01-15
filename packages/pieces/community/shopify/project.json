@@ -1,0 +1,29 @@
+{
+  "name": "pieces-shopify",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/shopify/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/shopify",
+        "tsConfig": "packages/pieces/community/shopify/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/shopify/package.json",
+        "main": "packages/pieces/community/shopify/src/index.ts",
+        "assets": ["packages/pieces/community/shopify/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/community/shopify/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

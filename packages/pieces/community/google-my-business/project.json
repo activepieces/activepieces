@@ -1,0 +1,31 @@
+{
+  "name": "pieces-google-my-business",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/google-my-business/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/google-my-business",
+        "tsConfig": "packages/pieces/community/google-my-business/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/google-my-business/package.json",
+        "main": "packages/pieces/community/google-my-business/src/index.ts",
+        "assets": ["packages/pieces/community/google-my-business/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/community/google-my-business/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

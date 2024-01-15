@@ -1,4 +1,5 @@
 import { readFile, writeFile } from 'node:fs/promises'
+import { access, constants } from 'node:fs/promises'
 
 export type PackageJson = {
   name: string
@@ -22,6 +23,7 @@ export type ProjectJson = {
     }
   }
 }
+
 
 const readJsonFile = async <T> (path: string): Promise<T> => {
   const jsonFile = await readFile(path, { encoding: 'utf-8' })

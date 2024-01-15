@@ -1,0 +1,29 @@
+{
+  "name": "pieces-google-forms",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/google-forms/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/google-forms",
+        "tsConfig": "packages/pieces/community/google-forms/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/google-forms/package.json",
+        "main": "packages/pieces/community/google-forms/src/index.ts",
+        "assets": ["packages/pieces/community/google-forms/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/community/google-forms/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}
