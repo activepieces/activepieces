@@ -10,7 +10,7 @@ export const googleDriveListFiles = createAction({
     props: {
         folderId: Property.ShortText({
             displayName: 'Folder ID',
-            description: 'Folder ID comming from | New Folder -> id | (or any other source)',
+            description: 'Folder ID coming from | New Folder -> id | (or any other source)',
             required: true,
         }),
     },

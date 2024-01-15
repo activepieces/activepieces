@@ -10,7 +10,7 @@ export const readFile = createAction({
   props: {
     fileId: Property.ShortText({
       displayName: 'File ID',
-      description: 'File ID comming from | New File -> id |',
+      description: 'File ID coming from | New File -> id |',
       required: true,
     }),
     fileName: Property.ShortText({

@@ -15,6 +15,11 @@ export const googleDriveSearchFolder = createAction({
             description: 'Name to search for',
             required: true,
         }),
+        folderId: Property.ShortText({
+            displayName: 'Folder ID',
+            description: '*(Optional) The ID of the folder where the folder will be searched',
+            required: false,
+        }),
     },
     async run (context) {
 
@@ -22,12 +27,14 @@ export const googleDriveSearchFolder = createAction({
         authClient.setCredentials(context.auth)
 
         const drive = google.drive({ version: 'v3', auth: authClient });
-        const query = `name contains '${context.propsValue.query}' and mimeType='application/vnd.google-apps.folder'`;
-
+        
+        let query = `name contains '${context.propsValue.query}' and mimeType='application/vnd.google-apps.folder'`;
+        if (context.propsValue.folderId)
+            query = `${query} and '${context.propsValue.folderId}' in parents`
 
         const response = await drive.files.list({
-        q: query,
-        fields: 'files(id, name)'
+            q: query,
+            fields: 'files(id, name)'
         });
         
         if (response.status !== 200) {
