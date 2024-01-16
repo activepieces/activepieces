@@ -1,4 +1,18 @@
-import { CodeExecutorSandbox } from './code-executor-common'
+import { CodeExecutorSandbox, CodeExecutorSandboxType } from './code-executor-common'
+import { isolateCodeExecutorSandbox } from './isolate-executor-sandbox'
 import { noOpCodeExecutorSandbox } from './no-op-code-executor-sandbox'
 
-export const codeExecutorSandbox: CodeExecutorSandbox = noOpCodeExecutorSandbox
+const CODE_EXECUTOR_SANDBOX_TYPE =
+    (process.env.AP_CODE_EXECUTOR_SANDBOX as CodeExecutorSandboxType | undefined)
+    ?? CodeExecutorSandboxType.NO_OP
+
+const getCodeExecutorSandbox = (): CodeExecutorSandbox => {
+    const variants: Record<CodeExecutorSandboxType, CodeExecutorSandbox> = {
+        [CodeExecutorSandboxType.NO_OP]: noOpCodeExecutorSandbox,
+        [CodeExecutorSandboxType.ISOLATE]: isolateCodeExecutorSandbox,
+    }
+
+    return variants[CODE_EXECUTOR_SANDBOX_TYPE]
+}
+
+export const codeExecutorSandbox = getCodeExecutorSandbox()

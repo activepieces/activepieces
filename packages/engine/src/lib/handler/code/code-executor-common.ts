@@ -1,3 +1,8 @@
+export enum CodeExecutorSandboxType {
+    NO_OP = 'NO_OP',
+    ISOLATE = 'ISOLATE',
+}
+
 export type CodeModule = {
     code(input: unknown): Promise<unknown>
 }
