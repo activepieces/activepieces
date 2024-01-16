@@ -40,6 +40,7 @@
       "@activepieces/piece-bannerbear": [
         "packages/pieces/bannerbear/src/index.ts"
       ],
+      "@activepieces/piece-baserow": ["packages/pieces/baserow/src/index.ts"],
       "@activepieces/piece-beamer": ["packages/pieces/beamer/src/index.ts"],
       "@activepieces/piece-bettermode": [
         "packages/pieces/bettermode/src/index.ts"
@@ -93,7 +94,9 @@
       ],
       "@activepieces/piece-figma": ["packages/pieces/figma/src/index.ts"],
       "@activepieces/piece-flowise": ["packages/pieces/flowise/src/index.ts"],
+      "@activepieces/piece-frame": ["packages/pieces/frame/src/index.ts"],
       "@activepieces/piece-flowlu": ["packages/pieces/flowlu/src/index.ts"],
+      "@activepieces/piece-formbricks": ["packages/pieces/formbricks/src/index.ts"],
       "@activepieces/piece-freshdesk": [
         "packages/pieces/freshdesk/src/index.ts"
       ],

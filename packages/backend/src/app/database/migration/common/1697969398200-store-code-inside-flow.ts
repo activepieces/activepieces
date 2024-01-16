@@ -1,9 +1,9 @@
-import { MigrationInterface, QueryRunner, Repository } from 'typeorm'
+import { MigrationInterface, QueryRunner } from 'typeorm'
 import { logger } from '../../../helper/logger'
-import { File, isNil } from '@activepieces/shared'
+import { isNil } from '@activepieces/shared'
 import decompress from 'decompress'
 
-type FunctionTransformer = (s: CodeStep, fileRepo: Repository<File>, flowId: string, flowVersionId: string) => Promise<void>
+type FunctionTransformer = (s: CodeStep, fileRepo: QueryRunner, flowId: string, flowVersionId: string) => Promise<void>
 
 export class StoreCodeInsideFlow1697969398200 implements MigrationInterface {
 
@@ -23,14 +23,13 @@ export class StoreCodeInsideFlow1697969398200 implements MigrationInterface {
 
     private async processFlowVersions(queryRunner: QueryRunner, stepFunction: FunctionTransformer) {
         const flowVersionRepo = queryRunner.connection.getRepository<FlowVersion>('flow_version')
-        const fileRepo = queryRunner.connection.getRepository<File>('file')
         const flowVersionIds = await queryRunner.query('SELECT id FROM flow_version')
 
         for (const { id } of flowVersionIds) {
             const flowVersion = await flowVersionRepo.findOneBy({ id })
 
             if (flowVersion) {
-                const updated = await traverseAndUpdateSubFlow(stepFunction, flowVersion.trigger, fileRepo, flowVersion.flowId, flowVersion.id)
+                const updated = await traverseAndUpdateSubFlow(stepFunction, flowVersion.trigger, queryRunner, flowVersion.flowId, flowVersion.id)
 
                 if (updated) {
                     await flowVersionRepo.update(flowVersion.id, flowVersion)
@@ -47,11 +46,8 @@ export class StoreCodeInsideFlow1697969398200 implements MigrationInterface {
             logger.info('StoreCodeInsideFlow1697969398200: flow template table exists')
 
             const templates = await queryRunner.query('SELECT * FROM flow_template')
-
-            const fileRepo = queryRunner.connection.getRepository<File>('file')
-
             for (const template of templates) {
-                const updated = await traverseAndUpdateSubFlow(stepFunction, template.template.trigger, fileRepo, template.projectId, template.id)
+                const updated = await traverseAndUpdateSubFlow(stepFunction, template.template.trigger, queryRunner, template.projectId, template.id)
 
                 if (updated) {
                     await queryRunner.query('UPDATE flow_template SET template = ? WHERE id = ?', [template.template, template.id])
@@ -61,7 +57,7 @@ export class StoreCodeInsideFlow1697969398200 implements MigrationInterface {
     }
 }
 
-const traverseAndUpdateSubFlow = async (updater: FunctionTransformer, root: Step | undefined, fileRepo: Repository<File>, flowId: string, flowVersionId: string): Promise<boolean> => {
+const traverseAndUpdateSubFlow = async (updater: FunctionTransformer, root: Step | undefined, queryRunner: QueryRunner, flowId: string, flowVersionId: string): Promise<boolean> => {
     if (!root) {
         return false
     }
@@ -70,31 +66,29 @@ const traverseAndUpdateSubFlow = async (updater: FunctionTransformer, root: Step
 
     switch (root.type) {
         case 'BRANCH':
-            updated = await traverseAndUpdateSubFlow(updater, root.onSuccessAction, fileRepo, flowId, flowVersionId) || updated
-            updated = await traverseAndUpdateSubFlow(updater, root.onFailureAction, fileRepo, flowId, flowVersionId) || updated
+            updated = await traverseAndUpdateSubFlow(updater, root.onSuccessAction, queryRunner, flowId, flowVersionId) || updated
+            updated = await traverseAndUpdateSubFlow(updater, root.onFailureAction, queryRunner, flowId, flowVersionId) || updated
             break
         case 'LOOP_ON_ITEMS':
-            updated = await traverseAndUpdateSubFlow(updater, root.firstLoopAction, fileRepo, flowId, flowVersionId) || updated
+            updated = await traverseAndUpdateSubFlow(updater, root.firstLoopAction, queryRunner, flowId, flowVersionId) || updated
             break
         case 'CODE':
-            await updater(root, fileRepo, flowId, flowVersionId)
+            await updater(root, queryRunner, flowId, flowVersionId)
             updated = true
             break
         default:
             break
     }
 
-    updated = await traverseAndUpdateSubFlow(updater, root.nextAction, fileRepo, flowId, flowVersionId) || updated
+    updated = await traverseAndUpdateSubFlow(updater, root.nextAction, queryRunner, flowId, flowVersionId) || updated
     return updated
 }
 
-const flattenCodeStep = async (codeStep: CodeStep, fileRepo: Repository<File>, flowVersionId: string, flowId: string): Promise<void> => {
+const flattenCodeStep = async (codeStep: CodeStep, queryRunner: QueryRunner, flowVersionId: string, flowId: string): Promise<void> => {
     const sourceCodeId = codeStep.settings.artifactSourceId
     const sourceCode = codeStep.settings.sourceCode
     if (!isNil(sourceCodeId) && isNil(sourceCode)) {
-        const file = await fileRepo.findOneBy({
-            id: sourceCodeId,
-        })
+        const [file] = await queryRunner.query('SELECT * FROM file WHERE id = ? LIMIT 1', [sourceCodeId])
         if (isNil(file)) {
             logger.warn(`StoreCodeInsideFlow1697969398100: file not found for file id ${sourceCodeId} in flow ${flowId} of flow version ${flowVersionId}`)
             return
@@ -113,7 +107,7 @@ const flattenCodeStep = async (codeStep: CodeStep, fileRepo: Repository<File>, f
     }
 }
 
-const removeNewCodeField = async (codeStep: CodeStep, _fileRepo: Repository<File>): Promise<void> => {
+const removeNewCodeField = async (codeStep: CodeStep, _queryRunner: QueryRunner): Promise<void> => {
     delete codeStep.settings.sourceCode
 }
 
