@@ -7,7 +7,7 @@ import { clickupAuth } from '../../../';
 export const deleteClickupTask = createAction({
   auth: clickupAuth,
   name: 'delete_task',
-  description: 'Delete task in a ClickUp workspace and list',
+  description: 'Delete a task in a workspace and list',
   displayName: 'Delete Task',
   props: {
     workspace_id: clickupCommon.workspace_id(),

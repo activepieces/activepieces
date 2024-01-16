@@ -6,7 +6,7 @@ import { clickupAuth } from "../../../";
 export const getClickupTasks = createAction({
   auth: clickupAuth,
   name: 'get_list_tasks',
-  description: 'Gets a list of task from a list',
+  description: 'Gets a list of tasks from a list, folder, space or workspace',
   displayName: 'Get Tasks',
   props: {
     workspace_id: clickupCommon.workspace_id(true),
