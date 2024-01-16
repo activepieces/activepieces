@@ -22,6 +22,21 @@ export class CanvasEffects {
       })
     );
   });
+  openRunDetails$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(BuilderActions.loadInitial),
+      switchMap((action) => {
+        if (action.run) {
+          return of(
+            canvasActions.setLeftSidebar({
+              sidebarType: LeftSideBarType.SHOW_RUN,
+            })
+          );
+        }
+        return EMPTY;
+      })
+    );
+  });
   clearAddBtnIdOnClosingRightSidebar$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(canvasActions.setRightSidebar),
