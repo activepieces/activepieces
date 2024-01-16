@@ -80,7 +80,7 @@ export class TestActionComponent extends TestStepCoreComponent {
       this.errorResponse = null;
       const observables = {
         flowVersionId: this.store
-          .select(BuilderSelectors.selectCurrentFlowVersionId)
+          .select(BuilderSelectors.selectDraftVersionId)
           .pipe(take(1)),
         stepName: this.store
           .select(BuilderSelectors.selectCurrentStepName)

@@ -41,7 +41,7 @@ export class DuplicateStepActionComponent {
       .select(BuilderSelectors.selectCurrentFlow)
       .pipe(take(1));
     const currentFlowVersionId = this.store
-      .select(BuilderSelectors.selectCurrentFlowVersionId)
+      .select(BuilderSelectors.selectDraftVersionId)
       .pipe(take(1));
     const flowVersion$: Observable<FlowVersion> = forkJoin({
       currentFlowVersionId,

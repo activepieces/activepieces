@@ -55,19 +55,6 @@ export class RunsTableComponent implements OnInit {
   readonly ExecutionOutputStatus = ExecutionOutputStatus;
   FlowRetryStrategy: typeof FlowRetryStrategy = FlowRetryStrategy;
   retryFlow$?: Observable<void>;
-  flowRetryOptions = [
-    {
-      label: 'Retry on Latest Version',
-      strategy: FlowRetryStrategy.ON_LATEST_VERSION,
-      icon: 'loop',
-    },
-    {
-      label: 'Retry From Failed Step',
-      strategy: FlowRetryStrategy.FROM_FAILED_STEP,
-      icon: 'replay',
-    },
-  ];
-
   constructor(
     private router: Router,
     private activatedRoute: ActivatedRoute,

@@ -207,7 +207,7 @@ export const selectCurrentStepDisplayName = createSelector(
   }
 );
 
-export const selectCurrentFlowVersionId = createSelector(
+export const selectDraftVersionId = createSelector(
   selectCurrentFlow,
   (flow: PopulatedFlow) => {
     return flow.version.id;
@@ -596,6 +596,18 @@ const selectFlowTriggerIsTested = createSelector(selectCurrentFlow, (flow) => {
       return !!flow.version.trigger.settings.inputUiInfo.currentSelectedData;
   }
 });
+
+const selectViewedVersionHistoricalStatus = createSelector(
+  selectDraftVersionId,
+  selectPublishedFlowVersion,
+  selectViewedVersion,
+  (draftVersionId, publishedFlowVersion, viewedFlowVersion) => {
+    if (publishedFlowVersion?.id === viewedFlowVersion.id) return 'PUBLISHED';
+    if (draftVersionId === viewedFlowVersion.id) return 'DRAFT';
+    return 'OLDER_VERSION';
+  }
+);
+
 export const BuilderSelectors = {
   selectReadOnly,
   selectViewMode,
@@ -629,7 +641,7 @@ export const BuilderSelectors = {
   selectCurrentStepSettings,
   selectTriggerSelectedSampleData,
   selectStepValidity,
-  selectCurrentFlowVersionId,
+  selectDraftVersionId,
   selectViewedVersion,
   selectIsSchduleTrigger,
   selectCurrentStepPieceVersionAndName,
@@ -652,4 +664,5 @@ export const BuilderSelectors = {
   selectAppConnectionsDropdownOptionsWithIds,
   selectStepIndex,
   selectFlowStatus,
+  selectViewedVersionHistoricalStatus,
 };

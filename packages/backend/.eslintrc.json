@@ -94,7 +94,8 @@
                 "@typescript-eslint/no-floating-promises": "error",
                 "@typescript-eslint/no-misused-promises": "warn",
                 "no-return-await": "off",
-                "@typescript-eslint/return-await": ["error", "in-try-catch"]
+                "@typescript-eslint/return-await": ["error", "in-try-catch"],
+                "default-case-last": "error"
             }
         }
     ]

@@ -23,6 +23,7 @@ FROM activepieces/ap-base:7 AS run
 ARG AP_CACHE_PATH=/usr/src/cache
 ARG AP_PACKAGE_ARCHIVE_PATH=/usr/src/packages
 
+RUN npm i -g cross-env@7.0.3
 
 # Set up backend
 WORKDIR /usr/src/app
@@ -41,12 +42,13 @@ COPY --from=build /usr/src/app/dist dist
 # Copy Output files to appropriate directory from build stage
 COPY --from=build /usr/src/app/packages packages
 
+LABEL service=activepieces
+
 # Copy frontend files to Nginx document root directory from build stage
 COPY --from=build /usr/src/app/dist/packages/ui/core/ /usr/share/nginx/html/
 
 VOLUME ${AP_CACHE_PATH}
 VOLUME ${AP_PACKAGE_ARCHIVE_PATH}
-
 
 # Set up entrypoint script
 COPY docker-entrypoint.sh .

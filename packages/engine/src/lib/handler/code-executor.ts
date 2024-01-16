@@ -1,7 +1,7 @@
 import { ActionType, CodeAction, GenricStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { BaseExecutor } from './base-executor'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
-import { EngineConstantData } from './context/engine-constants-data'
+import { EngineConstants } from './context/engine-constants'
 
 type CodePieceModule = {
     code(params: unknown): Promise<unknown>
@@ -15,7 +15,7 @@ export const codeExecutor: BaseExecutor<CodeAction> = {
     }: {
         action: CodeAction
         executionState: FlowExecutorContext
-        constants: EngineConstantData
+        constants: EngineConstants
     }) {
         if (executionState.isCompleted({ stepName: action.name })) {
             return executionState
