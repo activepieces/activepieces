@@ -114,6 +114,8 @@ const CreateFlowRequestOptions = {
 
 const UpdateFlowRequestOptions = {
     schema: {
+        tags: ['flows'],
+        description: 'Apply an operation to a flow',
         body: FlowOperationRequest,
         params: Type.Object({
             id: ApId,
