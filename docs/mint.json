@@ -117,6 +117,7 @@
               "pages": [
                 "endpoints/flows/schema",
                 "endpoints/flows/create",
+                "endpoints/flows/update",
                 "endpoints/flows/get",
                 "endpoints/flows/list",
                 "endpoints/flows/delete"
