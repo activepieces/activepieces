@@ -8,5 +8,5 @@ export type CodeExecutorSandbox = {
 
 type RunParams = {
     codeModule: CodeModule
-    input: Record<string, unknown>
+    inputs: Record<string, unknown>
 }

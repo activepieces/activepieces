@@ -36,7 +36,7 @@ export const codeExecutor: BaseExecutor<CodeAction> = {
 
             const output = await codeExecutorSandbox.run({
                 codeModule,
-                input: resolvedInput,
+                inputs: resolvedInput,
             })
 
             return executionState.upsertStep(action.name, stepOutput.setOutput(output)).increaseTask()
