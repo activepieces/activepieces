@@ -270,6 +270,7 @@
     {
       "group": "Security",
       "pages": [
+        "security/practices",
         "security/permissions",
         "security/sso"
       ]

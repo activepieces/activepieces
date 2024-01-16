@@ -47,6 +47,7 @@ export const flowRunSideEffects = {
         await flowQueue.add({
             id: flowRun.id,
             type: JobType.ONE_TIME,
+            priority: isNil(synchronousHandlerId) ? 'medium' : 'high',
             data: {
                 synchronousHandlerId,
                 projectId: flowRun.projectId,

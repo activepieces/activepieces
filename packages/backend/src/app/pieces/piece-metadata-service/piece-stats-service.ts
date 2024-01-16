@@ -25,7 +25,7 @@ export const pieceStatsService = {
         if (cachedStats && (Date.now() - cacheTime) < TWENTY_FOUR_HOURS_IN_MILLISECONDS) {
             return cachedStats
         }
-        const flows = await flowRepo.find()
+        const flows = await flowRepo().find()
         const stats: Record<string, PieceStats> = {}
         const uniqueStatsPerPiece: Record<string, {
             flows: Set<FlowId>

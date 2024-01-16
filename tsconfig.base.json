@@ -94,6 +94,7 @@
       ],
       "@activepieces/piece-figma": ["packages/pieces/figma/src/index.ts"],
       "@activepieces/piece-flowise": ["packages/pieces/flowise/src/index.ts"],
+      "@activepieces/piece-frame": ["packages/pieces/frame/src/index.ts"],
       "@activepieces/piece-flowlu": ["packages/pieces/flowlu/src/index.ts"],
       "@activepieces/piece-freshdesk": [
         "packages/pieces/freshdesk/src/index.ts"
@@ -259,6 +260,7 @@
       "@activepieces/piece-typeform": ["packages/pieces/typeform/src/index.ts"],
       "@activepieces/piece-vbout": ["packages/pieces/vbout/src/index.ts"],
       "@activepieces/piece-vtex": ["packages/pieces/vtex/src/index.ts"],
+      "@activepieces/piece-vtiger": ["packages/pieces/vtiger/src/index.ts"],
       "@activepieces/piece-woocommerce": [
         "packages/pieces/woocommerce/src/index.ts"
       ],
