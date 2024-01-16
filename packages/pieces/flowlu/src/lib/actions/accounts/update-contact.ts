@@ -17,7 +17,7 @@ export const updateContactAction = createAction({
     honorific_title_id: flowluCommon.honorific_title_id(false),
     first_name: Property.ShortText({
       displayName: 'First Name',
-      required: true,
+      required: false,
     }),
     middle_name: Property.ShortText({
       displayName: 'Middle Name',
