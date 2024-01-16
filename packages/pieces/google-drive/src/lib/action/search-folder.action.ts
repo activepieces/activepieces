@@ -3,6 +3,7 @@ import { googleDriveAuth } from '../../index';
 import { Property, createAction } from "@activepieces/pieces-framework";
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
+import { common } from '../common';
 
 export const googleDriveSearchFolder = createAction({
     auth: googleDriveAuth,
@@ -15,11 +16,8 @@ export const googleDriveSearchFolder = createAction({
             description: 'Name to search for',
             required: true,
         }),
-        folderId: Property.ShortText({
-            displayName: 'Folder ID',
-            description: '(Optional) The ID of the folder where the folder will be searched',
-            required: false,
-        }),
+        parentFolder: common.properties.parentFolder,
+        include_team_drives: common.properties.include_team_drives
     },
     async run (context) {
 
@@ -29,8 +27,8 @@ export const googleDriveSearchFolder = createAction({
         const drive = google.drive({ version: 'v3', auth: authClient });
         
         let query = `name contains '${context.propsValue.query}' and mimeType='application/vnd.google-apps.folder'`;
-        if (context.propsValue.folderId)
-            query = `${query} and '${context.propsValue.folderId}' in parents`
+        if (context.propsValue.parentFolder)
+            query = `${query} and '${context.propsValue.parentFolder}' in parents`
 
         const response = await drive.files.list({
             q: query,

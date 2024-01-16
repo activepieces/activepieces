@@ -3,22 +3,18 @@ import { googleDriveAuth } from '../../index';
 import { Property, createAction } from "@activepieces/pieces-framework";
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
+import { common } from '../common';
 
 export const googleDriveGetFileByName = createAction({
   auth: googleDriveAuth,
   name: 'get-file-by-name',
-  displayName: 'Get File By Name',
+  displayName: 'Get File/Folder By Name',
   description: 'Get file/folder from the Google Drive root or folder provided',
   props: {
     name: Property.ShortText({
       displayName: 'Name',
       description: 'Name to search for',
       required: true,
-    }),
-    folderId: Property.ShortText({
-      displayName: 'Folder ID',
-      description: '(Optional) Parent folder to find the file. Will search in root folder if not selected.',
-      required: false,
     }),
     type: Property.StaticDropdown({
       displayName: 'File Type',
@@ -32,24 +28,20 @@ export const googleDriveGetFileByName = createAction({
         ]
       }
     }),
+    parentFolder: common.properties.parentFolder,
+    include_team_drives: common.properties.include_team_drives,
   },
   async run(context) {
     const authClient = new OAuth2Client();
     authClient.setCredentials(context.auth)
 
     const drive = google.drive({ version: 'v3', auth: authClient });
-    let query = `name='${context.propsValue.name}'`;
+    let query = `name='${context.propsValue.name}' and '${context.propsValue.parentFolder ?? 'root'}' in parents`;
 
     if (context.propsValue.type === "folder") {
       query = `${query} and mimeType='application/vnd.google-apps.folder'`
     } else if (context.propsValue.type === "file") {
       query = `${query} and mimeType!='application/vnd.google-apps.folder'`
-    }
-
-    if (context.propsValue.folderId) {
-      query = `${query} and '${context.propsValue.folderId}' in parents`
-    } else {
-      query = `${query} and 'root' in parents`
     }
 
     const response = await drive.files.list({ q: query, fields: 'files(id, name, mimeType)' });
