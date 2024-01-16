@@ -12,6 +12,7 @@ import { createClickupTaskFromTemplate } from './lib/actions/tasks/create-task-f
 import { updateClickupTask } from './lib/actions/tasks/update-task';
 import { getClickupTasks } from './lib/actions/tasks/get-tasks';
 import { getClickupTask } from './lib/actions/tasks/get-task';
+import { deleteClickupTask } from './lib/actions/tasks/delete-task';
 
 export const clickupAuth = PieceAuth.OAuth2({
   description: '',
@@ -39,6 +40,7 @@ export const clickup = createPiece({
     createClickupTaskComment,
     createClickupSubtask,
     updateClickupTask,
+    deleteClickupTask
   ],
   authors: ['abuaboud', 'ShayPunter', 'kanarelo'],
   triggers,
