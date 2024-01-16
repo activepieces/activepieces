@@ -38,7 +38,7 @@
     "@fastify/basic-auth": "5.0.0",
     "@fastify/cors": "8.3.0",
     "@fastify/formbody": "7.4.0",
-    "@fastify/multipart": "7.7.3",
+    "@fastify/multipart": "8.1.0",
     "@fastify/swagger": "8.9.0",
     "@fastify/type-provider-typebox": "3.5.0",
     "@fortawesome/angular-fontawesome": "0.12.1",
