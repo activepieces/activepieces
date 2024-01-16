@@ -1,6 +1,7 @@
-import { ActionErrorHandlingOptions, ProjectId } from "@activepieces/shared";
+import { ProjectId } from "@activepieces/shared";
 import { PieceAuthProperty, PiecePropertyMap } from "./property";
 import { TriggerStrategy, WebhookHandshakeConfiguration } from "./trigger/trigger";
+import { ErrorHandlingOptionsParam } from "./action/action";
 
 export type PieceBase = {
   id?: string;
@@ -23,7 +24,7 @@ export type ActionBase = {
   description: string,
   props: PiecePropertyMap,
   requireAuth: boolean;
-  errorHandlingOptions?: ActionErrorHandlingOptions;
+  errorHandlingOptions?: ErrorHandlingOptionsParam;
 }
 
 export type TriggerBase = Omit<ActionBase,"requireAuth"> & {

@@ -1,10 +1,20 @@
-import { ActionErrorHandlingOptions } from '@activepieces/shared';
 import { ActionContext } from '../context';
 import { ActionBase } from '../piece-metadata';
 import { NonAuthPiecePropertyMap, PieceAuthProperty } from '../property/property';
 
 export type ActionRunner<PieceAuth extends PieceAuthProperty, ActionProps extends NonAuthPiecePropertyMap> =
   (ctx: ActionContext<PieceAuth, ActionProps>) => Promise<unknown | void>
+
+export type ErrorHandlingOptionsParam = {
+    retryOnFailure: {
+        defaultValue: boolean,
+        hide: boolean,
+    },
+    continueOnFailure: {
+        defaultValue: boolean,
+        hide: boolean,
+    },
+}
 
 type CreateActionParams<PieceAuth extends PieceAuthProperty, ActionProps extends NonAuthPiecePropertyMap> = {
   /**
@@ -18,7 +28,7 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty, ActionProps extends
   run: ActionRunner<PieceAuth, ActionProps>
   test?: ActionRunner<PieceAuth, ActionProps>
   requireAuth?: boolean
-  errorHandlingOptions?: ActionErrorHandlingOptions
+  errorHandlingOptions?: ErrorHandlingOptionsParam
 }
 
 export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends NonAuthPiecePropertyMap> implements ActionBase {
@@ -30,7 +40,7 @@ export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends No
     public readonly run: ActionRunner<PieceAuth, ActionProps>,
     public readonly test: ActionRunner<PieceAuth, ActionProps>,
     public readonly requireAuth: boolean,
-    public readonly errorHandlingOptions: ActionErrorHandlingOptions,
+    public readonly errorHandlingOptions: ErrorHandlingOptionsParam,
   ) { }
 }
 
@@ -54,10 +64,14 @@ export const createAction = <
     params.test ?? params.run,
     params.requireAuth ?? true,
     params.errorHandlingOptions ?? {
-      continueOnFailure: false,
-      retryOnFailure: false,
-      hideContinueOnFailure: false,
-      hideRetryOnFailure: false,
+      continueOnFailure: {
+        defaultValue: false,
+        hide: false,
+      },
+      retryOnFailure: {
+        defaultValue: false,
+        hide: false,
+      }
     },
   )
 }

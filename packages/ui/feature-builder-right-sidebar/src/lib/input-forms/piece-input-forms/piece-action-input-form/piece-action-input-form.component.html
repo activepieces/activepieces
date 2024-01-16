@@ -42,7 +42,7 @@
     <ng-container
       *ngIf="pieceActionForm.get(ACTION_FORM_CONTROL_NAME)!.value && pieceActionForm.get('errorHandlingOptions')">
       <div>
-        <app-action-error-handling-form-control
+        <app-action-error-handling-form-control [hideContinueOnFailure]="pieceActionForm.get(ACTION_FORM_CONTROL_NAME)!.value.errorHandlingOptions.continueOnFailure.hide" [hideRetryOnFailure]="pieceActionForm.get(ACTION_FORM_CONTROL_NAME)!.value.errorHandlingOptions.retryOnFailure.hide"
           formControlName="errorHandlingOptions"></app-action-error-handling-form-control>
       </div>
     </ng-container>

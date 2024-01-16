@@ -80,10 +80,12 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
       ),
       errorHandlingOptions: new FormControl(
         {
-          continueOnFailure: false,
-          retryOnFailure: false,
-          hideContinueOnFailure: false,
-          hideRetryOnFailure: false,
+          continueOnFailure: {
+            value: false,
+          },
+          retryOnFailure: {
+            value: false,
+          },
         },
         { nonNullable: true }
       ),
@@ -95,10 +97,12 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
           sourceCode: formValue.sourceCode!,
           type: ActionType.CODE,
           errorHandlingOptions: formValue.errorHandlingOptions ?? {
-            continueOnFailure: false,
-            retryOnFailure: false,
-            hideContinueOnFailure: false,
-            hideRetryOnFailure: false,
+            continueOnFailure: {
+              value: false,
+            },
+            retryOnFailure: {
+              value: false,
+            },
           },
         });
       })

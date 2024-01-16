@@ -47,6 +47,7 @@ import {
   FlowItemsDetailsState,
 } from '@activepieces/ui/feature-builder-store';
 import {
+  ErrorHandlingOptionsParam,
   PieceAuthProperty,
   PiecePropertyMap,
 } from '@activepieces/pieces-framework';
@@ -56,7 +57,7 @@ declare type ActionDropdownOptionValue = {
   actionName: string;
   auth?: PieceAuthProperty;
   properties: PiecePropertyMap;
-  errorHandlingOptions: ActionErrorHandlingOptions;
+  errorHandlingOptions: ErrorHandlingOptionsParam;
 };
 
 declare type ActionDropdownOption = {
@@ -211,6 +212,8 @@ export class PieceActionInputFormComponent
     this.triggerInitialSetup$.next(true);
   }
   private setInitialFormValue(items: ActionDropdownOption[]) {
+    console.log('setting init values');
+    console.log(this.initialComponentInputFormValue);
     if (
       this.initialComponentInputFormValue &&
       this.initialComponentInputFormValue.actionName
@@ -244,6 +247,8 @@ export class PieceActionInputFormComponent
   private setInitialPropertiesFormValue(
     selectedAction: ActionDropdownOption | undefined
   ) {
+    console.log('setting 2');
+    console.log(selectedAction);
     if (selectedAction && this.initialComponentInputFormValue?.input) {
       let properties = {
         ...selectedAction.value.properties,
@@ -263,6 +268,24 @@ export class PieceActionInputFormComponent
           this.initialComponentInputFormValue.inputUiInfo?.customizedInputs ||
           {},
       };
+      const errorHandlingOptionsValue = {
+        continueOnFailure: {
+          value:
+            this.initialComponentInputFormValue.errorHandlingOptions
+              ?.continueOnFailure.value ??
+            this.initialComponentInputFormValue.errorHandlingOptions
+              ?.continueOnFailure.defaultValue ??
+            false,
+        },
+        retryOnFailure: {
+          value:
+            this.initialComponentInputFormValue.errorHandlingOptions
+              ?.retryOnFailure.value ??
+            this.initialComponentInputFormValue.errorHandlingOptions
+              ?.retryOnFailure.defaultValue ??
+            false,
+        },
+      };
       this.pieceActionForm.addControl(
         PIECE_PROPERTIES_FORM_CONTROL_NAME,
         new UntypedFormControl({
@@ -276,7 +299,7 @@ export class PieceActionInputFormComponent
       this.pieceActionForm.addControl(
         'errorHandlingOptions',
         new UntypedFormControl({
-          value: this.initialComponentInputFormValue.errorHandlingOptions,
+          value: errorHandlingOptionsValue,
           disabled: this.pieceActionForm.disabled,
         }),
         { emitEvent: false }
@@ -290,6 +313,8 @@ export class PieceActionInputFormComponent
     this.pieceType = obj.pieceType;
     this.pieceName = obj.pieceName;
     this.pieceVersion = obj.pieceVersion;
+    console.log('writevalue');
+    console.log(obj);
 
     this.pieceActionForm
       .get(ACTION_FORM_CONTROL_NAME)
@@ -323,7 +348,7 @@ export class PieceActionInputFormComponent
     selectedActionValue: {
       actionName: string;
       properties: PiecePropertyMap;
-      errorHandlingOptions: ActionErrorHandlingOptions;
+      errorHandlingOptions: ErrorHandlingOptionsParam;
     } | null
   ) {
     if (selectedActionValue) {
@@ -349,6 +374,18 @@ export class PieceActionInputFormComponent
     const errorHandlingOptionsForm = this.pieceActionForm.get(
       'errorHandlingOptions'
     );
+    const errorHandlingOptionsValue = {
+      continueOnFailure: {
+        value:
+          selectedActionValue.errorHandlingOptions.continueOnFailure
+            .defaultValue ?? false,
+      },
+      retryOnFailure: {
+        value:
+          selectedActionValue.errorHandlingOptions.retryOnFailure
+            .defaultValue ?? false,
+      },
+    };
     if (selectedActionValue.auth) {
       propertiesFormValue.properties = {
         [AUTHENTICATION_PROPERTY_NAME]: selectedActionValue.auth,
@@ -367,15 +404,13 @@ export class PieceActionInputFormComponent
       this.pieceActionForm.addControl(
         'errorHandlingOptions',
         new UntypedFormControl({
-          value: selectedActionValue.errorHandlingOptions,
+          value: errorHandlingOptionsValue,
           disabled: this.pieceActionForm.disabled,
         }),
         { emitEvent: false }
       );
     } else {
-      errorHandlingOptionsForm.setValue(
-        selectedActionValue.errorHandlingOptions
-      );
+      errorHandlingOptionsForm.setValue(errorHandlingOptionsValue);
     }
     this.cd.detectChanges();
     this.pieceActionForm.updateValueAndValidity();
@@ -417,6 +452,7 @@ export class PieceActionInputFormComponent
     }
     const errorHandlingOptions: ActionErrorHandlingOptions =
       this.pieceActionForm.get('errorHandlingOptions')?.value;
+    console.log(errorHandlingOptions);
     const res = {
       actionName: action?.actionName,
       input,

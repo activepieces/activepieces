@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -25,13 +25,15 @@ export class ActionErrorHandlingFormControlComponent
   implements ControlValueAccessor
 {
   errorHandlingOptionsForm: FormGroup<{
-    continueOnFailure: FormControl<boolean>;
-    retryOnFailure: FormControl<boolean>;
-    hideContinueOnFailure: FormControl<boolean>;
-    hideRetryOnFailure: FormControl<boolean>;
+    continueOnFailure: FormGroup<{
+      value: FormControl<boolean>;
+    }>;
+    retryOnFailure: FormGroup<{
+      value: FormControl<boolean>;
+    }>;
   }>;
-  hideContinueOnFailure: boolean;
-  hideRetryOnFailure: boolean;
+  @Input() hideContinueOnFailure: boolean;
+  @Input() hideRetryOnFailure: boolean;
   valueChanges$: Observable<void>;
   onChange: (val: unknown) => void = () => {
     //ignore
@@ -42,17 +44,15 @@ export class ActionErrorHandlingFormControlComponent
 
   constructor(private fb: FormBuilder) {
     this.errorHandlingOptionsForm = this.fb.group({
-      continueOnFailure: new FormControl(false, {
-        nonNullable: true,
+      continueOnFailure: this.fb.group({
+        value: new FormControl(false, {
+          nonNullable: true,
+        }),
       }),
-      retryOnFailure: new FormControl(false, {
-        nonNullable: true,
-      }),
-      hideContinueOnFailure: new FormControl(false, {
-        nonNullable: true,
-      }),
-      hideRetryOnFailure: new FormControl(false, {
-        nonNullable: true,
+      retryOnFailure: this.fb.group({
+        value: new FormControl(false, {
+          nonNullable: true,
+        }),
       }),
     });
     this.valueChanges$ = this.errorHandlingOptionsForm.valueChanges.pipe(
@@ -66,14 +66,27 @@ export class ActionErrorHandlingFormControlComponent
   }
 
   writeValue(obj: ActionErrorHandlingOptions): void {
+    console.log('inside');
+    console.log(obj);
     if (obj) {
-      this.errorHandlingOptionsForm.setValue(obj, { emitEvent: false });
-      this.hideContinueOnFailure = obj.hideContinueOnFailure;
-      this.hideRetryOnFailure = obj.hideRetryOnFailure;
+      this.errorHandlingOptionsForm.setValue(
+        {
+          continueOnFailure: {
+            value:
+              obj.continueOnFailure.value ?? obj.continueOnFailure.defaultValue,
+          },
+          retryOnFailure: {
+            value: obj.retryOnFailure.value ?? obj.retryOnFailure.defaultValue,
+          },
+        },
+        { emitEvent: false }
+      );
+      console.log(
+        this.errorHandlingOptionsForm.controls.continueOnFailure.value
+      );
+      console.log(this.errorHandlingOptionsForm.controls.retryOnFailure.value);
     } else {
       this.errorHandlingOptionsForm.reset({}, { emitEvent: false });
-      this.hideContinueOnFailure = false;
-      this.hideRetryOnFailure = false;
     }
   }
   registerOnChange(fn: (val: unknown) => void): void {

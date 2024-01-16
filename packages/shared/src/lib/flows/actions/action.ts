@@ -18,10 +18,16 @@ const commonActionProps = {
 }
 
 export const ActionErrorHandlingOptions = Type.Optional(Type.Object({
-    hideContinueOnFailure: Type.Boolean({}),
-    hideRetryOnFailure: Type.Boolean({}),
-    retryOnFailure: Type.Boolean({}),
-    continueOnFailure: Type.Boolean({}),
+    continueOnFailure: Type.Object({
+        value: Type.Boolean(),
+        hide: Type.Optional(Type.Boolean()),
+        defaultValue: Type.Optional(Type.Boolean()),
+    }),
+    retryOnFailure: Type.Object({
+        value: Type.Boolean(),
+        hide: Type.Optional(Type.Boolean()),
+        defaultValue: Type.Optional(Type.Boolean()),
+    }),
 }))
 export type ActionErrorHandlingOptions = Static<typeof ActionErrorHandlingOptions>
 

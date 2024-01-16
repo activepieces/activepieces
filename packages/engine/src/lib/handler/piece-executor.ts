@@ -129,13 +129,13 @@ export const pieceExecutor: BaseExecutor<PieceAction> = {
                 const errorMessage = await utils.tryParseJson((e as Error).message)
                 console.error(errorMessage)
 
-                if (!constants.testSingleStepMode && action.settings.errorHandlingOptions?.retryOnFailure && retryCount < EngineConstants.MAX_RETRIES) {
+                if (!constants.testSingleStepMode && action.settings.errorHandlingOptions?.retryOnFailure.value && retryCount < EngineConstants.MAX_RETRIES) {
                     const backoffTime = Math.pow(6, retryCount) * 1000
                     await new Promise(resolve => setTimeout(resolve, backoffTime))
                     return runWithExponentialBackoff(retryCount + 1)
                 }
  
-                if (!constants.testSingleStepMode && action.settings.errorHandlingOptions?.continueOnFailure) {
+                if (!constants.testSingleStepMode && action.settings.errorHandlingOptions?.continueOnFailure.value) {
                     return executionState.upsertStep(action.name, stepOutput.setStatus(StepOutputStatus.FAILED).setErrorMessage(errorMessage)).increaseTask().setVerdict(ExecutionVerdict.RUNNING, undefined)
                 }
                 else {

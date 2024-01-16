@@ -316,10 +316,12 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
               sourceCode: this.codeService.helloWorldArtifact(),
               input: {},
               errorHandlingOptions: {
-                continueOnFailure: false,
-                retryOnFailure: false,
-                hideContinueOnFailure: false,
-                hideRetryOnFailure: false,
+                continueOnFailure: {
+                  value: false,
+                },
+                retryOnFailure: {
+                  value: false,
+                },
               },
             },
           },
@@ -361,10 +363,12 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
                 customizedInputs: {},
               },
               errorHandlingOptions: {
-                continueOnFailure: false,
-                retryOnFailure: false,
-                hideContinueOnFailure: false,
-                hideRetryOnFailure: false,
+                continueOnFailure: {
+                  value: false,
+                },
+                retryOnFailure: {
+                  value: false,
+                },
               },
             },
           },
