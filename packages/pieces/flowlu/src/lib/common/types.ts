@@ -148,16 +148,16 @@ export interface Opportunity {
   name: string;
 }
 export interface CreateTaskAPIRequest {
-  name: string;
+  name?: string;
   description?: string;
-  priority: number;
+  priority?: number;
   plan_start_date?: string;
   deadline?: string;
-  deadline_allowchange: number;
-  task_checkbyowner: number;
+  deadline_allowchange?: number;
+  task_checkbyowner?: number;
   responsible_id?: string;
   owner_id?: string;
-  type: number;
+  type?: number;
   workflow_id?: number;
   workflow_stage_id?: number;
 }
@@ -199,7 +199,7 @@ export interface CreateCRMAccountAPIRequest {
   shipping_address_line_3?: string;
 }
 export interface CreateOpportunityAPIRequest {
-  name: string;
+  name?: string;
   budget?: number;
   description?: string;
   source_id?: number;

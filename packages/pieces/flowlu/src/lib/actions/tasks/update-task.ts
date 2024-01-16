@@ -1,5 +1,5 @@
 import {
-  PiecePropValueSchema,
+  PiecePropValueSchema, Property,
   createAction,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
@@ -14,6 +14,10 @@ export const updateTaskAction = createAction({
   description: 'Updates an existing task.',
   props: {
     task_id: flowluCommon.task_id(true),
+    name: Property.ShortText({
+      displayName: 'Name',
+      required: false,
+    }),
     ...flowluProps.task,
   },
   async run(context) {
@@ -26,8 +30,8 @@ export const updateTaskAction = createAction({
       priority: context.propsValue.priority,
       plan_start_date: context.propsValue.plan_start_date
         ? dayjs(context.propsValue.plan_start_date).format(
-            'YYYY-MM-DD HH:mm:ss'
-          )
+          'YYYY-MM-DD HH:mm:ss'
+        )
         : undefined,
       deadline: context.propsValue.deadline
         ? dayjs(context.propsValue.deadline).format('YYYY-MM-DD HH:mm:ss')
