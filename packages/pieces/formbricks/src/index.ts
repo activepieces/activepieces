@@ -23,7 +23,7 @@ export const formbricks = createPiece({
   displayName: "Formbricks",
   auth: formBricksAuth,
   minimumSupportedRelease: '0.9.0',
-  logoUrl: "https://images.saasworthy.com/tr:w-160,h-0,c-at_max,q-95,e-sharpen-1/formbricks_42422_logo_1677563947_j3svn.jpg", //TODO: Fetch logo
+  logoUrl: "https://cdn.activepieces.com/pieces/formbricks.png", 
   authors: ['kanarelo'],
   actions: [],
   triggers
