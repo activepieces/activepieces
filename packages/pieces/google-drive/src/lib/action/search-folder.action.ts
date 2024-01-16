@@ -9,7 +9,7 @@ export const googleDriveSearchFolder = createAction({
     auth: googleDriveAuth,
     name: 'search-folder',
     displayName: 'Search folder',
-    description: 'Search folder from a Google Drive folder',
+    description: 'Search folder by name',
     props: {
         query: Property.ShortText({
             displayName: 'Name',

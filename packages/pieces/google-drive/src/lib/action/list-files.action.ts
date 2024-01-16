@@ -1,4 +1,4 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, HttpClient } from '@activepieces/pieces-common';
 import { googleDriveAuth } from '../../index';
 import { Property, createAction } from "@activepieces/pieces-framework";
 
@@ -15,11 +15,11 @@ export const googleDriveListFiles = createAction({
         }),
     },
     async run (context) {
-        const response = await httpClient.sendRequest({
+        const response = await HttpClient.sendRequest({
             method: HttpMethod.GET,
             url: `https://www.googleapis.com/drive/v3/files?q='${context.propsValue.folderId}'+in+parents`,
             headers: {
-                Authorization: `Bearer ${context.auth.access_token}`,
+                Authorization: `Bearer ${context.auth.accessToken}`,
             },
         });
 
