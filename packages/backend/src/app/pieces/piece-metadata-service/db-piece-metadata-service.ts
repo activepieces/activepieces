@@ -1,5 +1,5 @@
 import { Equal, FindOperator, IsNull, LessThan, LessThanOrEqual, MoreThanOrEqual } from 'typeorm'
-import { databaseConnection } from '../../database/database-connection'
+import { repoFactory } from '../../core/db/repo-factory'
 import { PieceMetadataEntity, PieceMetadataModel, PieceMetadataModelSummary, PieceMetadataSchema } from '../piece-metadata-entity'
 import { PieceMetadataService } from './piece-metadata-service'
 import { EXACT_VERSION_PATTERN, PieceType, isNil } from '@activepieces/shared'
@@ -9,7 +9,7 @@ import * as semver from 'semver'
 import { pieceMetadataServiceHooks as hooks } from './hooks'
 import { projectService } from '../../project/project-service'
 
-const repo = databaseConnection.getRepository(PieceMetadataEntity)
+const repo = repoFactory(PieceMetadataEntity)
 
 export const DbPieceMetadataService = (): PieceMetadataService => {
     return {
@@ -19,7 +19,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                 version: 'DESC',
             } as const
 
-            const pieceMetadataEntityList = await repo.createQueryBuilder()
+            const pieceMetadataEntityList = await repo().createQueryBuilder()
                 .where([
                     {
                         minimumSupportedRelease: LessThanOrEqual(release),
@@ -54,14 +54,14 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
             })
         },
 
-        async getOrThrow({ name, version, projectId }): Promise<PieceMetadataModel> {
+        async getOrThrow({ name, version, projectId, entityManager }): Promise<PieceMetadataModel> {
 
             const filters = await constructPieceFilters({
                 name,
                 version,
                 projectId,
             })
-            const pieceMetadataEntity = await repo.createQueryBuilder()
+            const pieceMetadataEntity = await repo(entityManager).createQueryBuilder()
                 .where(filters)
                 .distinctOn(['name'])
                 .orderBy({
@@ -83,7 +83,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
         },
 
         async create({ pieceMetadata, projectId, platformId, packageType, pieceType, archiveId }): Promise<PieceMetadataSchema> {
-            const existingMetadata = await repo.findOneBy({
+            const existingMetadata = await repo().findOneBy({
                 name: pieceMetadata.name,
                 version: pieceMetadata.version,
                 projectId: projectId ?? IsNull(),
@@ -98,7 +98,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                 })
             }
 
-            return repo.save({
+            return repo().save({
                 id: apId(),
                 projectId,
                 packageType,
@@ -110,7 +110,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
         },
 
         async delete({ projectId, id }): Promise<void> {
-            const existingMetadata = await repo.findOneBy({
+            const existingMetadata = await repo().findOneBy({
                 id,
                 projectId: projectId ?? IsNull(),
             })
@@ -122,7 +122,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                     },
                 })
             }
-            await repo.delete({
+            await repo().delete({
                 id,
                 projectId: projectId ?? undefined,
             })

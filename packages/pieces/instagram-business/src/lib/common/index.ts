@@ -18,7 +18,7 @@ export const instagramCommon = {
         authUrl: "https://graph.facebook.com/oauth/authorize",
         tokenUrl: "https://graph.facebook.com/oauth/access_token",
         required: true,
-        scope: ['instagram_basic', 'instagram_content_publish', 'pages_show_list'],
+        scope: ['instagram_basic', 'instagram_content_publish', 'business_management', 'pages_show_list'],
     }),
 
     page: Property.Dropdown<FacebookPageDropdown>({

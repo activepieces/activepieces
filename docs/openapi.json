@@ -1166,6 +1166,1648 @@
       }
     },
     "/v1/flows/{id}": {
+      "post": {
+        "tags": [
+          "flows"
+        ],
+        "description": "Apply an operation to a flow",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "title": "Move Action",
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "MOVE_ACTION"
+                        ]
+                      },
+                      "request": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "newParentStep": {
+                            "type": "string"
+                          },
+                          "stepLocationRelativeToNewParent": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "INSIDE_TRUE_BRANCH"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "INSIDE_FALSE_BRANCH"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "AFTER"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "INSIDE_LOOP"
+                                ]
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "newParentStep"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "request"
+                    ]
+                  },
+                  {
+                    "title": "Change Status",
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "CHANGE_STATUS"
+                        ]
+                      },
+                      "request": {
+                        "type": "object",
+                        "properties": {
+                          "status": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "ENABLED"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "DISABLED"
+                                ]
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "status"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "request"
+                    ]
+                  },
+                  {
+                    "title": "Lock and Publish",
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "LOCK_AND_PUBLISH"
+                        ]
+                      },
+                      "request": {
+                        "type": "object",
+                        "properties": {}
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "request"
+                    ]
+                  },
+                  {
+                    "title": "Use as Draft",
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "USE_AS_DRAFT"
+                        ]
+                      },
+                      "request": {
+                        "type": "object",
+                        "properties": {
+                          "versionId": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "versionId"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "request"
+                    ]
+                  },
+                  {
+                    "title": "Lock Flow",
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "LOCK_FLOW"
+                        ]
+                      },
+                      "request": {
+                        "type": "object",
+                        "properties": {}
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "request"
+                    ]
+                  },
+                  {
+                    "title": "Import Flow",
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "IMPORT_FLOW"
+                        ]
+                      },
+                      "request": {
+                        "type": "object",
+                        "properties": {
+                          "displayName": {
+                            "type": "string"
+                          },
+                          "trigger": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "valid": {
+                                    "type": "boolean"
+                                  },
+                                  "displayName": {
+                                    "type": "string"
+                                  },
+                                  "nextAction": {},
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "WEBHOOK"
+                                    ]
+                                  },
+                                  "settings": {
+                                    "type": "object",
+                                    "properties": {
+                                      "inputUiInfo": {
+                                        "additionalProperties": true,
+                                        "type": "object",
+                                        "properties": {
+                                          "currentSelectedData": {},
+                                          "customizedInputs": {
+                                            "type": "object",
+                                            "additionalProperties": {}
+                                          },
+                                          "lastTestDate": {
+                                            "type": "string"
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "required": [
+                                      "inputUiInfo"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "name",
+                                  "valid",
+                                  "displayName",
+                                  "type",
+                                  "settings"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "valid": {
+                                    "type": "boolean"
+                                  },
+                                  "displayName": {
+                                    "type": "string"
+                                  },
+                                  "nextAction": {},
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "PIECE_TRIGGER"
+                                    ]
+                                  },
+                                  "settings": {
+                                    "type": "object",
+                                    "properties": {
+                                      "pieceName": {
+                                        "type": "string"
+                                      },
+                                      "pieceVersion": {
+                                        "type": "string",
+                                        "pattern": "^([~^])?[0-9]+\\.[0-9]+\\.[0-9]+$"
+                                      },
+                                      "pieceType": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string",
+                                            "enum": [
+                                              "CUSTOM"
+                                            ]
+                                          },
+                                          {
+                                            "type": "string",
+                                            "enum": [
+                                              "OFFICIAL"
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      "packageType": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string",
+                                            "enum": [
+                                              "ARCHIVE"
+                                            ]
+                                          },
+                                          {
+                                            "type": "string",
+                                            "enum": [
+                                              "REGISTRY"
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      "triggerName": {
+                                        "type": "string"
+                                      },
+                                      "input": {
+                                        "type": "object",
+                                        "additionalProperties": {}
+                                      },
+                                      "inputUiInfo": {
+                                        "additionalProperties": true,
+                                        "type": "object",
+                                        "properties": {
+                                          "currentSelectedData": {},
+                                          "customizedInputs": {
+                                            "type": "object",
+                                            "additionalProperties": {}
+                                          },
+                                          "lastTestDate": {
+                                            "type": "string"
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "required": [
+                                      "pieceName",
+                                      "pieceVersion",
+                                      "pieceType",
+                                      "packageType",
+                                      "triggerName",
+                                      "input",
+                                      "inputUiInfo"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "name",
+                                  "valid",
+                                  "displayName",
+                                  "type",
+                                  "settings"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "valid": {
+                                    "type": "boolean"
+                                  },
+                                  "displayName": {
+                                    "type": "string"
+                                  },
+                                  "nextAction": {},
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "EMPTY"
+                                    ]
+                                  },
+                                  "settings": {}
+                                },
+                                "required": [
+                                  "name",
+                                  "valid",
+                                  "displayName",
+                                  "type",
+                                  "settings"
+                                ]
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "displayName",
+                          "trigger"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "request"
+                    ]
+                  },
+                  {
+                    "title": "Change Name",
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "CHANGE_NAME"
+                        ]
+                      },
+                      "request": {
+                        "type": "object",
+                        "properties": {
+                          "displayName": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "displayName"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "request"
+                    ]
+                  },
+                  {
+                    "title": "Delete Action",
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "DELETE_ACTION"
+                        ]
+                      },
+                      "request": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "name"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "request"
+                    ]
+                  },
+                  {
+                    "title": "Update Action",
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "UPDATE_ACTION"
+                        ]
+                      },
+                      "request": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "valid": {
+                                "type": "boolean"
+                              },
+                              "displayName": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "CODE"
+                                ]
+                              },
+                              "settings": {
+                                "type": "object",
+                                "properties": {
+                                  "sourceCode": {
+                                    "type": "object",
+                                    "properties": {
+                                      "packageJson": {
+                                        "type": "string"
+                                      },
+                                      "code": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "packageJson",
+                                      "code"
+                                    ]
+                                  },
+                                  "input": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                  },
+                                  "inputUiInfo": {
+                                    "additionalProperties": true,
+                                    "type": "object",
+                                    "properties": {
+                                      "currentSelectedData": {},
+                                      "customizedInputs": {
+                                        "type": "object",
+                                        "additionalProperties": {}
+                                      },
+                                      "lastTestDate": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "sourceCode",
+                                  "input"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "valid",
+                              "displayName",
+                              "type",
+                              "settings"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "valid": {
+                                "type": "boolean"
+                              },
+                              "displayName": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "LOOP_ON_ITEMS"
+                                ]
+                              },
+                              "settings": {
+                                "type": "object",
+                                "properties": {
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "inputUiInfo": {
+                                    "additionalProperties": true,
+                                    "type": "object",
+                                    "properties": {
+                                      "currentSelectedData": {},
+                                      "customizedInputs": {
+                                        "type": "object",
+                                        "additionalProperties": {}
+                                      },
+                                      "lastTestDate": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "items",
+                                  "inputUiInfo"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "valid",
+                              "displayName",
+                              "type",
+                              "settings"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "valid": {
+                                "type": "boolean"
+                              },
+                              "displayName": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "PIECE"
+                                ]
+                              },
+                              "settings": {
+                                "type": "object",
+                                "properties": {
+                                  "packageType": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "enum": [
+                                          "ARCHIVE"
+                                        ]
+                                      },
+                                      {
+                                        "type": "string",
+                                        "enum": [
+                                          "REGISTRY"
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  "pieceType": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "enum": [
+                                          "CUSTOM"
+                                        ]
+                                      },
+                                      {
+                                        "type": "string",
+                                        "enum": [
+                                          "OFFICIAL"
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  "pieceName": {
+                                    "type": "string"
+                                  },
+                                  "pieceVersion": {
+                                    "type": "string",
+                                    "pattern": "^([~^])?[0-9]+\\.[0-9]+\\.[0-9]+$"
+                                  },
+                                  "actionName": {
+                                    "type": "string"
+                                  },
+                                  "input": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                  },
+                                  "inputUiInfo": {
+                                    "additionalProperties": true,
+                                    "type": "object",
+                                    "properties": {
+                                      "currentSelectedData": {},
+                                      "customizedInputs": {
+                                        "type": "object",
+                                        "additionalProperties": {}
+                                      },
+                                      "lastTestDate": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "packageType",
+                                  "pieceType",
+                                  "pieceName",
+                                  "pieceVersion",
+                                  "input",
+                                  "inputUiInfo"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "valid",
+                              "displayName",
+                              "type",
+                              "settings"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "valid": {
+                                "type": "boolean"
+                              },
+                              "displayName": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "BRANCH"
+                                ]
+                              },
+                              "settings": {
+                                "type": "object",
+                                "properties": {
+                                  "conditions": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "array",
+                                      "items": {
+                                        "anyOf": [
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "firstValue": {
+                                                "type": "string"
+                                              },
+                                              "secondValue": {
+                                                "type": "string"
+                                              },
+                                              "caseSensitive": {
+                                                "type": "boolean"
+                                              },
+                                              "operator": {
+                                                "anyOf": [
+                                                  {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "TEXT_CONTAINS"
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "TEXT_DOES_NOT_CONTAIN"
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "TEXT_EXACTLY_MATCHES"
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "TEXT_DOES_NOT_EXACTLY_MATCH"
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "TEXT_START_WITH"
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "TEXT_DOES_NOT_START_WITH"
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "TEXT_ENDS_WITH"
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "TEXT_DOES_NOT_END_WITH"
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            "required": [
+                                              "firstValue",
+                                              "secondValue"
+                                            ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "firstValue": {
+                                                "type": "string"
+                                              },
+                                              "secondValue": {
+                                                "type": "string"
+                                              },
+                                              "operator": {
+                                                "anyOf": [
+                                                  {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "NUMBER_IS_GREATER_THAN"
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "NUMBER_IS_LESS_THAN"
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            "required": [
+                                              "firstValue",
+                                              "secondValue"
+                                            ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "firstValue": {
+                                                "type": "string"
+                                              },
+                                              "operator": {
+                                                "anyOf": [
+                                                  {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "EXISTS"
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "DOES_NOT_EXIST"
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "BOOLEAN_IS_TRUE"
+                                                    ]
+                                                  },
+                                                  {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "BOOLEAN_IS_FALSE"
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            "required": [
+                                              "firstValue"
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  },
+                                  "inputUiInfo": {
+                                    "additionalProperties": true,
+                                    "type": "object",
+                                    "properties": {
+                                      "currentSelectedData": {},
+                                      "customizedInputs": {
+                                        "type": "object",
+                                        "additionalProperties": {}
+                                      },
+                                      "lastTestDate": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "conditions",
+                                  "inputUiInfo"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "valid",
+                              "displayName",
+                              "type",
+                              "settings"
+                            ]
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "request"
+                    ]
+                  },
+                  {
+                    "title": "Add Action",
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "ADD_ACTION"
+                        ]
+                      },
+                      "request": {
+                        "type": "object",
+                        "properties": {
+                          "parentStep": {
+                            "type": "string"
+                          },
+                          "stepLocationRelativeToParent": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "INSIDE_TRUE_BRANCH"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "INSIDE_FALSE_BRANCH"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "AFTER"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "INSIDE_LOOP"
+                                ]
+                              }
+                            ]
+                          },
+                          "action": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "valid": {
+                                    "type": "boolean"
+                                  },
+                                  "displayName": {
+                                    "type": "string"
+                                  },
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "CODE"
+                                    ]
+                                  },
+                                  "settings": {
+                                    "type": "object",
+                                    "properties": {
+                                      "sourceCode": {
+                                        "type": "object",
+                                        "properties": {
+                                          "packageJson": {
+                                            "type": "string"
+                                          },
+                                          "code": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "packageJson",
+                                          "code"
+                                        ]
+                                      },
+                                      "input": {
+                                        "type": "object",
+                                        "additionalProperties": {}
+                                      },
+                                      "inputUiInfo": {
+                                        "additionalProperties": true,
+                                        "type": "object",
+                                        "properties": {
+                                          "currentSelectedData": {},
+                                          "customizedInputs": {
+                                            "type": "object",
+                                            "additionalProperties": {}
+                                          },
+                                          "lastTestDate": {
+                                            "type": "string"
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "required": [
+                                      "sourceCode",
+                                      "input"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "name",
+                                  "valid",
+                                  "displayName",
+                                  "type",
+                                  "settings"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "valid": {
+                                    "type": "boolean"
+                                  },
+                                  "displayName": {
+                                    "type": "string"
+                                  },
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "LOOP_ON_ITEMS"
+                                    ]
+                                  },
+                                  "settings": {
+                                    "type": "object",
+                                    "properties": {
+                                      "items": {
+                                        "type": "string"
+                                      },
+                                      "inputUiInfo": {
+                                        "additionalProperties": true,
+                                        "type": "object",
+                                        "properties": {
+                                          "currentSelectedData": {},
+                                          "customizedInputs": {
+                                            "type": "object",
+                                            "additionalProperties": {}
+                                          },
+                                          "lastTestDate": {
+                                            "type": "string"
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "required": [
+                                      "items",
+                                      "inputUiInfo"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "name",
+                                  "valid",
+                                  "displayName",
+                                  "type",
+                                  "settings"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "valid": {
+                                    "type": "boolean"
+                                  },
+                                  "displayName": {
+                                    "type": "string"
+                                  },
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "PIECE"
+                                    ]
+                                  },
+                                  "settings": {
+                                    "type": "object",
+                                    "properties": {
+                                      "packageType": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string",
+                                            "enum": [
+                                              "ARCHIVE"
+                                            ]
+                                          },
+                                          {
+                                            "type": "string",
+                                            "enum": [
+                                              "REGISTRY"
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      "pieceType": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string",
+                                            "enum": [
+                                              "CUSTOM"
+                                            ]
+                                          },
+                                          {
+                                            "type": "string",
+                                            "enum": [
+                                              "OFFICIAL"
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      "pieceName": {
+                                        "type": "string"
+                                      },
+                                      "pieceVersion": {
+                                        "type": "string",
+                                        "pattern": "^([~^])?[0-9]+\\.[0-9]+\\.[0-9]+$"
+                                      },
+                                      "actionName": {
+                                        "type": "string"
+                                      },
+                                      "input": {
+                                        "type": "object",
+                                        "additionalProperties": {}
+                                      },
+                                      "inputUiInfo": {
+                                        "additionalProperties": true,
+                                        "type": "object",
+                                        "properties": {
+                                          "currentSelectedData": {},
+                                          "customizedInputs": {
+                                            "type": "object",
+                                            "additionalProperties": {}
+                                          },
+                                          "lastTestDate": {
+                                            "type": "string"
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "required": [
+                                      "packageType",
+                                      "pieceType",
+                                      "pieceName",
+                                      "pieceVersion",
+                                      "input",
+                                      "inputUiInfo"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "name",
+                                  "valid",
+                                  "displayName",
+                                  "type",
+                                  "settings"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "valid": {
+                                    "type": "boolean"
+                                  },
+                                  "displayName": {
+                                    "type": "string"
+                                  },
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "BRANCH"
+                                    ]
+                                  },
+                                  "settings": {
+                                    "type": "object",
+                                    "properties": {
+                                      "conditions": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "array",
+                                          "items": {
+                                            "anyOf": [
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "firstValue": {
+                                                    "type": "string"
+                                                  },
+                                                  "secondValue": {
+                                                    "type": "string"
+                                                  },
+                                                  "caseSensitive": {
+                                                    "type": "boolean"
+                                                  },
+                                                  "operator": {
+                                                    "anyOf": [
+                                                      {
+                                                        "type": "string",
+                                                        "enum": [
+                                                          "TEXT_CONTAINS"
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "string",
+                                                        "enum": [
+                                                          "TEXT_DOES_NOT_CONTAIN"
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "string",
+                                                        "enum": [
+                                                          "TEXT_EXACTLY_MATCHES"
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "string",
+                                                        "enum": [
+                                                          "TEXT_DOES_NOT_EXACTLY_MATCH"
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "string",
+                                                        "enum": [
+                                                          "TEXT_START_WITH"
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "string",
+                                                        "enum": [
+                                                          "TEXT_DOES_NOT_START_WITH"
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "string",
+                                                        "enum": [
+                                                          "TEXT_ENDS_WITH"
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "string",
+                                                        "enum": [
+                                                          "TEXT_DOES_NOT_END_WITH"
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                },
+                                                "required": [
+                                                  "firstValue",
+                                                  "secondValue"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "firstValue": {
+                                                    "type": "string"
+                                                  },
+                                                  "secondValue": {
+                                                    "type": "string"
+                                                  },
+                                                  "operator": {
+                                                    "anyOf": [
+                                                      {
+                                                        "type": "string",
+                                                        "enum": [
+                                                          "NUMBER_IS_GREATER_THAN"
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "string",
+                                                        "enum": [
+                                                          "NUMBER_IS_LESS_THAN"
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                },
+                                                "required": [
+                                                  "firstValue",
+                                                  "secondValue"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "firstValue": {
+                                                    "type": "string"
+                                                  },
+                                                  "operator": {
+                                                    "anyOf": [
+                                                      {
+                                                        "type": "string",
+                                                        "enum": [
+                                                          "EXISTS"
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "string",
+                                                        "enum": [
+                                                          "DOES_NOT_EXIST"
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "string",
+                                                        "enum": [
+                                                          "BOOLEAN_IS_TRUE"
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "string",
+                                                        "enum": [
+                                                          "BOOLEAN_IS_FALSE"
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                },
+                                                "required": [
+                                                  "firstValue"
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      },
+                                      "inputUiInfo": {
+                                        "additionalProperties": true,
+                                        "type": "object",
+                                        "properties": {
+                                          "currentSelectedData": {},
+                                          "customizedInputs": {
+                                            "type": "object",
+                                            "additionalProperties": {}
+                                          },
+                                          "lastTestDate": {
+                                            "type": "string"
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "required": [
+                                      "conditions",
+                                      "inputUiInfo"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "name",
+                                  "valid",
+                                  "displayName",
+                                  "type",
+                                  "settings"
+                                ]
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "parentStep",
+                          "action"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "request"
+                    ]
+                  },
+                  {
+                    "title": "Update Trigger",
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "UPDATE_TRIGGER"
+                        ]
+                      },
+                      "request": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "valid": {
+                                "type": "boolean"
+                              },
+                              "displayName": {
+                                "type": "string"
+                              },
+                              "nextAction": {},
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "EMPTY"
+                                ]
+                              },
+                              "settings": {}
+                            },
+                            "required": [
+                              "name",
+                              "valid",
+                              "displayName",
+                              "type",
+                              "settings"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "valid": {
+                                "type": "boolean"
+                              },
+                              "displayName": {
+                                "type": "string"
+                              },
+                              "nextAction": {},
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "PIECE_TRIGGER"
+                                ]
+                              },
+                              "settings": {
+                                "type": "object",
+                                "properties": {
+                                  "pieceName": {
+                                    "type": "string"
+                                  },
+                                  "pieceVersion": {
+                                    "type": "string",
+                                    "pattern": "^([~^])?[0-9]+\\.[0-9]+\\.[0-9]+$"
+                                  },
+                                  "pieceType": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "enum": [
+                                          "CUSTOM"
+                                        ]
+                                      },
+                                      {
+                                        "type": "string",
+                                        "enum": [
+                                          "OFFICIAL"
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  "packageType": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "enum": [
+                                          "ARCHIVE"
+                                        ]
+                                      },
+                                      {
+                                        "type": "string",
+                                        "enum": [
+                                          "REGISTRY"
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  "triggerName": {
+                                    "type": "string"
+                                  },
+                                  "input": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                  },
+                                  "inputUiInfo": {
+                                    "additionalProperties": true,
+                                    "type": "object",
+                                    "properties": {
+                                      "currentSelectedData": {},
+                                      "customizedInputs": {
+                                        "type": "object",
+                                        "additionalProperties": {}
+                                      },
+                                      "lastTestDate": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "pieceName",
+                                  "pieceVersion",
+                                  "pieceType",
+                                  "packageType",
+                                  "triggerName",
+                                  "input",
+                                  "inputUiInfo"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "valid",
+                              "displayName",
+                              "type",
+                              "settings"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "valid": {
+                                "type": "boolean"
+                              },
+                              "displayName": {
+                                "type": "string"
+                              },
+                              "nextAction": {},
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "WEBHOOK"
+                                ]
+                              },
+                              "settings": {
+                                "type": "object",
+                                "properties": {
+                                  "inputUiInfo": {
+                                    "additionalProperties": true,
+                                    "type": "object",
+                                    "properties": {
+                                      "currentSelectedData": {},
+                                      "customizedInputs": {
+                                        "type": "object",
+                                        "additionalProperties": {}
+                                      },
+                                      "lastTestDate": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "inputUiInfo"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "valid",
+                              "displayName",
+                              "type",
+                              "settings"
+                            ]
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "request"
+                    ]
+                  },
+                  {
+                    "title": "Change Folder",
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "CHANGE_FOLDER"
+                        ]
+                      },
+                      "request": {
+                        "type": "object",
+                        "properties": {
+                          "folderId": {
+                            "type": "string",
+                            "nullable": true
+                          }
+                        }
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "request"
+                    ]
+                  },
+                  {
+                    "title": "Duplicate Action",
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "DUPLICATE_ACTION"
+                        ]
+                      },
+                      "request": {
+                        "type": "object",
+                        "properties": {
+                          "stepName": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "stepName"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "request"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[0-9a-zA-Z]{21}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
       "get": {
         "tags": [
           "flows"

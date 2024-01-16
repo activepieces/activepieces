@@ -124,7 +124,6 @@ export const redisQueueManager: QueueManager = {
     },
     async add(params: AddParams): Promise<void> {
         logger.debug(params, '[flowQueue#add] params')
-
         if (params.type === JobType.REPEATING) {
             const { id, data, scheduleOptions } = params
             const job = await scheduledJobQueue.add(id, data, {
@@ -159,6 +158,7 @@ export const redisQueueManager: QueueManager = {
 
             await oneTimeJobQueue.add(id, data, {
                 jobId: id,
+                priority: params.priority === 'high' ? 1 : 2,
             })
         }
     },
@@ -224,14 +224,14 @@ const migrateScheduledJobs = async (): Promise<void> => {
                     triggerType,
                 }
                 migratedJobs++
-                await job.update(modifiedJobData)
+                await job.updateData(modifiedJobData)
             }
             if (modifiedJobData.schemaVersion === 2) {
                 const updated = await updateCronExpressionOfRedisToPostgresTable(job)
                 if (updated) {
                     modifiedJobData.schemaVersion = 3
                     migratedJobs++
-                    await job.update(modifiedJobData)
+                    await job.updateData(modifiedJobData)
                 }
             }
         }
@@ -249,11 +249,11 @@ async function updateCronExpressionOfRedisToPostgresTable(job: Job): Promise<boo
         logger.error('Found unrepeatable job in repeatable queue')
         return false
     }
-    const flow = await flowRepo.findOneBy({
+    const flow = await flowRepo().findOneBy({
         publishedVersionId: job.data.flowVersionId,
     })
     if (flow) {
-        await flowRepo.update(flow.id, {
+        await flowRepo().update(flow.id, {
             schedule: {
                 type: ScheduleType.CRON_EXPRESSION,
                 timezone: tz,

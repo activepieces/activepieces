@@ -3,13 +3,11 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../environments/environment';
 import { map, Observable, of, switchMap, tap } from 'rxjs';
 import {
-  ApId,
   CountFlowsRequest,
   CreateFlowRequest,
   ExecutionOutputStatus,
   ExecutionState,
   FileId,
-  Flow,
   FlowId,
   FlowOperationRequest,
   FlowOperationType,
@@ -17,11 +15,9 @@ import {
   FlowVersion,
   FlowVersionId,
   ListFlowsRequest,
-  MakeKeyNonNullableAndRequired,
   PopulatedFlow,
   SeekPage,
   TestFlowRunRequestBody,
-  UpdateFlowStatusRequest,
 } from '@activepieces/shared';
 import { AuthenticationService } from './authentication.service';
 export const CURRENT_FLOW_IS_NEW_KEY_IN_LOCAL_STORAGE = 'newFlow';
@@ -172,25 +168,5 @@ export class FlowService {
     return this.http.get<number>(environment.apiUrl + '/flows/count', {
       params: params,
     });
-  }
-  publish(request: {
-    id: ApId;
-  }): Observable<MakeKeyNonNullableAndRequired<Flow, 'publishedVersionId'>> {
-    return this.http.post<
-      MakeKeyNonNullableAndRequired<Flow, 'publishedVersionId'>
-    >(
-      environment.apiUrl + `/flows/${request.id}/published-version-id`,
-      request
-    );
-  }
-
-  updateStatus(
-    flowId: ApId,
-    request: UpdateFlowStatusRequest
-  ): Observable<Flow> {
-    return this.http.post<Flow>(
-      environment.apiUrl + `/flows/${flowId}/status`,
-      request
-    );
   }
 }

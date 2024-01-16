@@ -24,7 +24,7 @@ export const common = {
                   method: HttpMethod.GET,
                   url: `https://www.googleapis.com/drive/v3/files`,
                   queryParams: {
-                    q: "mimeType='application/vnd.google-apps.folder'",
+                    q: "mimeType='application/vnd.google-apps.folder' and trashed = false",
                     includeItemsFromAllDrives: include_team_drives ? "true" : "false",
                     supportsAllDrives: "true"
                   },
@@ -77,7 +77,7 @@ export const common = {
         const q: string[] = [];
         if (search?.parent) q.push(`'${search.parent}' in parents`);
         if (search?.createdTime) q.push(`createdTime ${search.createdTimeOp ?? '>'} '${dayjs(search.createdTime).format()}'`);
-
+        q.push(`trashed = false`)
         const response = await httpClient.sendRequest<{ files: { id: string, name: string }[] }>({
             method: HttpMethod.GET,
             url: `https://www.googleapis.com/drive/v3/files`,
@@ -103,7 +103,7 @@ export const common = {
         const q: string[] = [`mimeType='application/vnd.google-apps.folder'`];
         if (search?.parent) q.push(`'${search.parent}' in parents`);
         if (search?.createdTime) q.push(`createdTime ${search.createdTimeOp ?? '>'} '${dayjs(search.createdTime).format()}'`);
-        
+        q.push(`trashed = false`)
         const response = await httpClient.sendRequest<{ files: { id: string, name: string }[] }>({
             method: HttpMethod.GET,
             url: `https://www.googleapis.com/drive/v3/files`,
