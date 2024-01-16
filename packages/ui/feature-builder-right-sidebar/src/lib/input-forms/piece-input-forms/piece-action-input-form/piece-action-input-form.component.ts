@@ -119,6 +119,8 @@ export class PieceActionInputFormComponent
   actionDropdownValueChanged$: Observable<ActionDropdownOptionValue>;
   allAuthConfigs$: Observable<ConnectionDropdownItem[]>;
   flowItemDetails$: Observable<FlowItemsDetailsState>;
+  hideContinueOnFailure: boolean;
+  hideRetryOnFailure: boolean;
   isOverflown = isOverflown;
   onChange: (val: unknown) => void = (value) => {
     value;
@@ -212,8 +214,6 @@ export class PieceActionInputFormComponent
     this.triggerInitialSetup$.next(true);
   }
   private setInitialFormValue(items: ActionDropdownOption[]) {
-    console.log('setting init values');
-    console.log(this.initialComponentInputFormValue);
     if (
       this.initialComponentInputFormValue &&
       this.initialComponentInputFormValue.actionName
@@ -247,8 +247,6 @@ export class PieceActionInputFormComponent
   private setInitialPropertiesFormValue(
     selectedAction: ActionDropdownOption | undefined
   ) {
-    console.log('setting 2');
-    console.log(selectedAction);
     if (selectedAction && this.initialComponentInputFormValue?.input) {
       let properties = {
         ...selectedAction.value.properties,
@@ -313,8 +311,6 @@ export class PieceActionInputFormComponent
     this.pieceType = obj.pieceType;
     this.pieceName = obj.pieceName;
     this.pieceVersion = obj.pieceVersion;
-    console.log('writevalue');
-    console.log(obj);
 
     this.pieceActionForm
       .get(ACTION_FORM_CONTROL_NAME)
@@ -452,7 +448,6 @@ export class PieceActionInputFormComponent
     }
     const errorHandlingOptions: ActionErrorHandlingOptions =
       this.pieceActionForm.get('errorHandlingOptions')?.value;
-    console.log(errorHandlingOptions);
     const res = {
       actionName: action?.actionName,
       input,

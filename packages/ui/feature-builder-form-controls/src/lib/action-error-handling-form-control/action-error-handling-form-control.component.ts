@@ -66,8 +66,6 @@ export class ActionErrorHandlingFormControlComponent
   }
 
   writeValue(obj: ActionErrorHandlingOptions): void {
-    console.log('inside');
-    console.log(obj);
     if (obj) {
       this.errorHandlingOptionsForm.setValue(
         {
@@ -81,10 +79,6 @@ export class ActionErrorHandlingFormControlComponent
         },
         { emitEvent: false }
       );
-      console.log(
-        this.errorHandlingOptionsForm.controls.continueOnFailure.value
-      );
-      console.log(this.errorHandlingOptionsForm.controls.retryOnFailure.value);
     } else {
       this.errorHandlingOptionsForm.reset({}, { emitEvent: false });
     }
