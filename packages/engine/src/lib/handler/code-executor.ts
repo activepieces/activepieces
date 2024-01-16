@@ -1,4 +1,4 @@
-import { ActionType, CodeAction, GenricStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { ActionType, CodeAction, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { BaseExecutor } from './base-executor'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
 import { EngineConstants } from './context/engine-constants'
@@ -24,7 +24,7 @@ export const codeExecutor: BaseExecutor<CodeAction> = {
             unresolvedInput: action.settings.input,
             executionState,
         })
-        const stepOutput = GenricStepOutput.create({
+        const stepOutput = GenericStepOutput.create({
             input: censoredInput,
             type: ActionType.CODE,
             status: StepOutputStatus.SUCCEEDED,
