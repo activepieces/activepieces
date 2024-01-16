@@ -6,6 +6,7 @@ import {
   PieceType,
   SourceCode,
   LoopOnItemsActionSettings,
+  ActionErrorHandlingOptions,
 } from '@activepieces/shared';
 declare type ConfigsAndTheirValues = { [key: string]: any };
 interface InputFormsSchemaBase {
@@ -17,8 +18,7 @@ export interface LoopStepInputFormSchema
 export interface CodeStepInputFormSchema extends InputFormsSchemaBase {
   sourceCode: SourceCode;
   input: Record<string, unknown>;
-  continueOnFailure: boolean;
-  retryOnFailure: boolean;
+  errorHandlingOptions: ActionErrorHandlingOptions;
 }
 
 export interface BranchInputFormSchema extends InputFormsSchemaBase {
@@ -39,6 +39,7 @@ export interface PieceActionInputFormSchema extends InputFormsSchemaBase {
   inputUiInfo: {
     customizedInputs: Record<string, boolean>;
   };
+  errorHandlingOptions: ActionErrorHandlingOptions;
 }
 
 export interface ComponentTriggerInputFormSchema extends InputFormsSchemaBase {

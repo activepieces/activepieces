@@ -1,0 +1,24 @@
+<form [formGroup]="errorHandlingOptionsForm">
+  <div class="ap-flex ap-flex-col ap-mt-4 ap-mr-[5px] ap-gap-4">
+    <div apTrackHover #slider="hoverTrackerDirective" class="ap-flex ap-flex-col ap-align-center" *ngIf="!hideContinueOnFailure">
+      <mat-slide-toggle formControlName="continueOnFailure" color="primary" class="ap-flex-grow-1">Continue on
+        Failure</mat-slide-toggle>
+      <div class="ap-py-2 ap-flex ap-gap-2 ap-justify-between ap-markdown">
+        <div class="ap-typography-caption">
+          <markdown>Enable to skip this step and continue the flow normally if it fails.</markdown>
+        </div>
+      </div>
+    </div>
+    <div apTrackHover #slider="hoverTrackerDirective" class="ap-flex ap-flex-col ap-align-center" *ngIf="!hideRetryOnFailure">
+      <mat-slide-toggle formControlName="retryOnFailure" color="primary" class="ap-flex-grow-1">Retry on
+        Failure</mat-slide-toggle>
+      <div class="ap-py-2 ap-flex ap-gap-2 ap-justify-between ap-markdown">
+        <div class="ap-typography-caption">
+          <markdown>Enable to retry this step if it fails.</markdown>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+
+<ng-container *ngIf="valueChanges$|async"></ng-container>

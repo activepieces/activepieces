@@ -40,13 +40,13 @@ export const codeExecutor: BaseExecutor<CodeAction> = {
             catch (e) {
                 console.error(e)
 
-                if (!constants.testSingleStepMode && action.settings.retryOnFailure && retryCount < EngineConstants.MAX_RETRIES) {
+                if (!constants.testSingleStepMode && action.settings.errorHandlingOptions?.retryOnFailure && retryCount < EngineConstants.MAX_RETRIES) {
                     const backoffTime = Math.pow(6, retryCount) * 1000
                     await new Promise(resolve => setTimeout(resolve, backoffTime))
                     return runWithExponentialBackoff(retryCount + 1)
                 }
 
-                if (!constants.testSingleStepMode && action.settings.continueOnFailure) {
+                if (!constants.testSingleStepMode && action.settings.errorHandlingOptions?.continueOnFailure) {
                     return executionState.upsertStep(action.name, stepOutput.setStatus(StepOutputStatus.FAILED).setErrorMessage((e as Error).message)).increaseTask()
                 }
                 else {

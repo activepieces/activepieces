@@ -17,6 +17,14 @@ const commonActionProps = {
     displayName: Type.String({}),
 }
 
+export const ActionErrorHandlingOptions = Type.Optional(Type.Object({
+    hideContinueOnFailure: Type.Boolean({}),
+    hideRetryOnFailure: Type.Boolean({}),
+    retryOnFailure: Type.Boolean({}),
+    continueOnFailure: Type.Boolean({}),
+}))
+export type ActionErrorHandlingOptions = Static<typeof ActionErrorHandlingOptions>
+
 export const SourceCode = Type.Object({
     packageJson: Type.String({}),
     code: Type.String({}),
@@ -28,10 +36,8 @@ export const CodeActionSettings = Type.Object({
     sourceCode: SourceCode,
     input: Type.Record(Type.String({}), Type.Any()),
     inputUiInfo: Type.Optional(SampleDataSettingsObject),
-    continueOnFailure: Type.Boolean(),
-    retryOnFailure: Type.Boolean(),
+    errorHandlingOptions: ActionErrorHandlingOptions,
 })
-
 
 export type CodeActionSettings = Static<typeof CodeActionSettings>
 
@@ -50,6 +56,7 @@ export const PieceActionSettings = Type.Object({
     actionName: Type.Optional(Type.String({})),
     input: Type.Record(Type.String({}), Type.Any()),
     inputUiInfo: SampleDataSettingsObject,
+    errorHandlingOptions: ActionErrorHandlingOptions,
 })
 
 export type PieceActionSettings = Static<typeof PieceActionSettings>

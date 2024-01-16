@@ -29,6 +29,7 @@ import {
 } from 'rxjs';
 import { Store } from '@ngrx/store';
 import {
+  ActionErrorHandlingOptions,
   ActionType,
   AUTHENTICATION_PROPERTY_NAME,
   PackageType,
@@ -48,7 +49,6 @@ import {
 import {
   PieceAuthProperty,
   PiecePropertyMap,
-  Property,
 } from '@activepieces/pieces-framework';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 
@@ -56,7 +56,7 @@ declare type ActionDropdownOptionValue = {
   actionName: string;
   auth?: PieceAuthProperty;
   properties: PiecePropertyMap;
-  hideOnFailureOptions?: boolean;
+  errorHandlingOptions: ActionErrorHandlingOptions;
 };
 
 declare type ActionDropdownOption = {
@@ -72,6 +72,7 @@ const PIECE_PROPERTIES_FORM_CONTROL_NAME = 'configs';
 declare type ConfigsFormControlValue = {
   input: Record<string, string | Array<any> | object>;
   customizedInputs: Record<string, boolean>;
+  propertiesValues?: Record<string, string | Array<any> | object>;
 };
 
 declare type ComponentFormValue = {
@@ -187,7 +188,7 @@ export class PieceActionInputFormComponent
                 actionName: actionName,
                 auth: action.requireAuth ? pieceMetadata.auth : undefined,
                 properties: action.props,
-                hideOnFailureOptions: action.hideOnFailureOptions,
+                errorHandlingOptions: action.errorHandlingOptions!,
               },
             };
           }
@@ -253,22 +254,6 @@ export class PieceActionInputFormComponent
           ...properties,
         };
       }
-      if (!selectedAction.value.hideOnFailureOptions) {
-        properties = {
-          ...properties,
-          continueOnFailure: Property.Checkbox({
-            displayName: 'Continue on Failure',
-            description:
-              'Enable to skip this step and continue the flow normally if it fails.',
-            required: false,
-          }),
-          retryOnFailure: Property.Checkbox({
-            displayName: 'Retry on Failure',
-            description: 'Enable to retry this step if it fails.',
-            required: false,
-          }),
-        };
-      }
       const propertiesValues = this.initialComponentInputFormValue.input;
       const propertiesFormValue: PiecePropertiesFormValue = {
         properties: properties,
@@ -288,6 +273,14 @@ export class PieceActionInputFormComponent
           emitEvent: false,
         }
       );
+      this.pieceActionForm.addControl(
+        'errorHandlingOptions',
+        new UntypedFormControl({
+          value: this.initialComponentInputFormValue.errorHandlingOptions,
+          disabled: this.pieceActionForm.disabled,
+        }),
+        { emitEvent: false }
+      );
     }
   }
 
@@ -302,6 +295,9 @@ export class PieceActionInputFormComponent
       .get(ACTION_FORM_CONTROL_NAME)
       ?.setValue(undefined, { emitEvent: false });
     this.pieceActionForm.removeControl(PIECE_PROPERTIES_FORM_CONTROL_NAME, {
+      emitEvent: false,
+    });
+    this.pieceActionForm.removeControl('errorHandlingOptions', {
       emitEvent: false,
     });
 
@@ -327,6 +323,7 @@ export class PieceActionInputFormComponent
     selectedActionValue: {
       actionName: string;
       properties: PiecePropertyMap;
+      errorHandlingOptions: ActionErrorHandlingOptions;
     } | null
   ) {
     if (selectedActionValue) {
@@ -349,26 +346,13 @@ export class PieceActionInputFormComponent
       customizedInputs: {},
       propertiesValues: {},
     };
+    const errorHandlingOptionsForm = this.pieceActionForm.get(
+      'errorHandlingOptions'
+    );
     if (selectedActionValue.auth) {
       propertiesFormValue.properties = {
         [AUTHENTICATION_PROPERTY_NAME]: selectedActionValue.auth,
         ...propertiesFormValue.properties,
-      };
-    }
-    if (!selectedActionValue.hideOnFailureOptions) {
-      propertiesFormValue.properties = {
-        ...propertiesFormValue.properties,
-        continueOnFailure: Property.Checkbox({
-          displayName: 'Continue on Failure',
-          description:
-            'Enable to skip this step and continue the flow normally if it fails.',
-          required: false,
-        }),
-        retryOnFailure: Property.Checkbox({
-          displayName: 'Retry on Failure',
-          description: 'Enable to retry this step if it fails.',
-          required: false,
-        }),
       };
     }
     if (!piecePropertiesForm) {
@@ -378,6 +362,20 @@ export class PieceActionInputFormComponent
       );
     } else {
       piecePropertiesForm.setValue(propertiesFormValue);
+    }
+    if (!errorHandlingOptionsForm) {
+      this.pieceActionForm.addControl(
+        'errorHandlingOptions',
+        new UntypedFormControl({
+          value: selectedActionValue.errorHandlingOptions,
+          disabled: this.pieceActionForm.disabled,
+        }),
+        { emitEvent: false }
+      );
+    } else {
+      errorHandlingOptionsForm.setValue(
+        selectedActionValue.errorHandlingOptions
+      );
     }
     this.cd.detectChanges();
     this.pieceActionForm.updateValueAndValidity();
@@ -404,16 +402,32 @@ export class PieceActionInputFormComponent
     )!.value;
     const configs: ConfigsFormControlValue =
       this.pieceActionForm.get(PIECE_PROPERTIES_FORM_CONTROL_NAME)?.value || {};
+    let input: Record<string, string | Array<any> | object> = {};
+    if (configs.input) {
+      input = {
+        ...configs.input,
+      };
+    } else {
+      input = {
+        ...(configs.propertiesValues as Record<
+          string,
+          string | Array<any> | object
+        >),
+      };
+    }
+    const errorHandlingOptions: ActionErrorHandlingOptions =
+      this.pieceActionForm.get('errorHandlingOptions')?.value;
     const res = {
       actionName: action?.actionName,
-      input: {
-        ...configs.input,
-      },
+      input,
       packageType: this.packageType,
       pieceType: this.pieceType,
       pieceName: this.pieceName,
       pieceVersion: this.pieceVersion,
       inputUiInfo: { customizedInputs: customizedInputs },
+      errorHandlingOptions: {
+        ...errorHandlingOptions,
+      },
     };
 
     return res;

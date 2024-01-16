@@ -1,3 +1,4 @@
+import { ActionErrorHandlingOptions } from '@activepieces/shared';
 import { ActionContext } from '../context';
 import { ActionBase } from '../piece-metadata';
 import { NonAuthPiecePropertyMap, PieceAuthProperty } from '../property/property';
@@ -17,7 +18,7 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty, ActionProps extends
   run: ActionRunner<PieceAuth, ActionProps>
   test?: ActionRunner<PieceAuth, ActionProps>
   requireAuth?: boolean
-  hideOnFailureOptions?: boolean
+  errorHandlingOptions?: ActionErrorHandlingOptions
 }
 
 export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends NonAuthPiecePropertyMap> implements ActionBase {
@@ -29,7 +30,7 @@ export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends No
     public readonly run: ActionRunner<PieceAuth, ActionProps>,
     public readonly test: ActionRunner<PieceAuth, ActionProps>,
     public readonly requireAuth: boolean,
-    public readonly hideOnFailureOptions: boolean,
+    public readonly errorHandlingOptions: ActionErrorHandlingOptions,
   ) { }
 }
 
@@ -52,6 +53,11 @@ export const createAction = <
     params.run,
     params.test ?? params.run,
     params.requireAuth ?? true,
-    params.hideOnFailureOptions ?? false,
+    params.errorHandlingOptions ?? {
+      continueOnFailure: false,
+      retryOnFailure: false,
+      hideContinueOnFailure: false,
+      hideRetryOnFailure: false,
+    },
   )
 }

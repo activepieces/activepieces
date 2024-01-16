@@ -7,7 +7,12 @@ import {
   FormControl,
 } from '@angular/forms';
 import { Observable, tap } from 'rxjs';
-import { ActionType, ApFlagId, SourceCode } from '@activepieces/shared';
+import {
+  ActionErrorHandlingOptions,
+  ActionType,
+  ApFlagId,
+  SourceCode,
+} from '@activepieces/shared';
 import { CodeStepInputFormSchema } from '../input-forms-schema';
 import { MatDialog } from '@angular/material/dialog';
 import { CodeWriterDialogComponent } from './code-writer-dialog/code-writer-dialog.component';
@@ -28,8 +33,7 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
   codeStepForm: FormGroup<{
     input: FormControl<Record<string, unknown>>;
     sourceCode: FormControl<SourceCode>;
-    continueOnFailure: FormControl<boolean>;
-    retryOnFailure: FormControl<boolean>;
+    errorHandlingOptions: FormControl<ActionErrorHandlingOptions>;
   }>;
   formValueChanged$: Observable<unknown>;
   dialogClosed$?: Observable<unknown>;
@@ -74,8 +78,15 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
         { code: '', packageJson: '' },
         { nonNullable: true }
       ),
-      continueOnFailure: new FormControl(false, { nonNullable: true }),
-      retryOnFailure: new FormControl(false, { nonNullable: true }),
+      errorHandlingOptions: new FormControl(
+        {
+          continueOnFailure: false,
+          retryOnFailure: false,
+          hideContinueOnFailure: false,
+          hideRetryOnFailure: false,
+        },
+        { nonNullable: true }
+      ),
     });
     this.formValueChanged$ = this.codeStepForm.valueChanges.pipe(
       tap((formValue) => {
@@ -83,8 +94,12 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
           input: this.codeStepForm.value.input || {},
           sourceCode: formValue.sourceCode!,
           type: ActionType.CODE,
-          continueOnFailure: formValue.continueOnFailure ?? false,
-          retryOnFailure: formValue.retryOnFailure ?? false,
+          errorHandlingOptions: formValue.errorHandlingOptions ?? {
+            continueOnFailure: false,
+            retryOnFailure: false,
+            hideContinueOnFailure: false,
+            hideRetryOnFailure: false,
+          },
         });
       })
     );
@@ -98,15 +113,12 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
       this.codeStepForm.controls.input.setValue(obj.input, {
         emitEvent: false,
       });
-      this.codeStepForm.controls.continueOnFailure.setValue(
-        obj.continueOnFailure,
+      this.codeStepForm.controls.errorHandlingOptions.setValue(
+        obj.errorHandlingOptions,
         {
           emitEvent: false,
         }
       );
-      this.codeStepForm.controls.retryOnFailure.setValue(obj.retryOnFailure, {
-        emitEvent: false,
-      });
       if (this.codeStepForm.disabled) {
         this.codeStepForm.disable();
       }
