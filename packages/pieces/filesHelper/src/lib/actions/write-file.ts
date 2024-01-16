@@ -11,7 +11,7 @@ export const writeFileAction = createAction({
       required: true
     }),
     content_type: Property.StaticDropdown({
-      displayName: "Content",
+      displayName: "Content Type",
       description: "Text file content",
       required: true,
       defaultValue: "text",
