@@ -8,7 +8,6 @@ export class migrateSchedule1679014156667 implements MigrationInterface {
         logger.info('migrateSchedule1679014156667, started')
 
         let count = 0
-        const flowVersionRepo = queryRunner.connection.getRepository(FLOW_VERSION_TABLE)
         const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
 
         for (const flowVersion of flowVersions) {
@@ -24,7 +23,7 @@ export class migrateSchedule1679014156667 implements MigrationInterface {
                     pieceVersion: '0.0.2',
                 }
                 count++
-                await flowVersionRepo.update(flowVersion.id, flowVersion)
+                await queryRunner.query(`UPDATE ${FLOW_VERSION_TABLE} SET trigger = $1 WHERE id = $2`, [flowVersion.trigger, flowVersion.id])
             }
         }
         logger.info('migrateSchedule1679014156667, finished flows ' + count)
@@ -35,7 +34,6 @@ export class migrateSchedule1679014156667 implements MigrationInterface {
         logger.info('rolling back migrateSchedule1679014156667, started')
 
         let count = 0
-        const flowVersionRepo = queryRunner.connection.getRepository(FLOW_VERSION_TABLE)
         const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
 
         for (const flowVersion of flowVersions) {
@@ -47,7 +45,7 @@ export class migrateSchedule1679014156667 implements MigrationInterface {
                         cronExpression: step.settings.input.cronExpression,
                     }
                     count++
-                    await flowVersionRepo.update(flowVersion.id, flowVersion)
+                    await queryRunner.query(`UPDATE ${FLOW_VERSION_TABLE} SET trigger = $1 WHERE id = $2`, [flowVersion.trigger, flowVersion.id])
                 }
             }
         }
