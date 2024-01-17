@@ -57,11 +57,25 @@ describe('runWithExponentialBackoff', () => {
 
         requestFunction.mockResolvedValue(resultExecutionState)
 
-        const output = await runWithExponentialBackoff(executionState, action, constants, requestFunction)
+
+        const actionWithDisabledRetry = buildCodeAction({
+            name: 'runtime',
+            input: {},
+            errorHandlingOptions: {
+                continueOnFailure: {
+                    value: false,
+                },
+                retryOnFailure: {
+                    value: false,
+                },
+            },
+        })
+
+        const output = await runWithExponentialBackoff(executionState, actionWithDisabledRetry, constants, requestFunction)
 
         expect(output).toEqual(resultExecutionState)
         expect(requestFunction).toHaveBeenCalledTimes(1)
-        expect(requestFunction).toHaveBeenCalledWith({ action, executionState, constants })
+        expect(requestFunction).toHaveBeenCalledWith({ action: actionWithDisabledRetry, executionState, constants })
 
     })
 
