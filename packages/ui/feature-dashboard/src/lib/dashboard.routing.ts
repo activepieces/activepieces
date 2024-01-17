@@ -9,7 +9,6 @@ import { ConnectionsTableComponent } from './pages/connections-table/connections
 import { FoldersResolver } from './resolvers/folders.resolver';
 import { DashboardContainerComponent } from './dashboard-container.component';
 import {
-  IS_FEATURE_ENABLED_RESOLVER_KEY,
   isFeatureFlagEnabledResolver,
   showBasedOnFlagGuard,
   showPlatformSettingsGuard,
@@ -51,7 +50,7 @@ export const DashboardLayoutRouting: Routes = [
         path: 'team',
         component: ProjectMembersTableComponent,
         resolve: {
-          [IS_FEATURE_ENABLED_RESOLVER_KEY]: isFeatureFlagEnabledResolver(
+          [ApFlagId.PROJECT_MEMBERS_ENABLED]: isFeatureFlagEnabledResolver(
             ApFlagId.PROJECT_MEMBERS_ENABLED
           ),
         },

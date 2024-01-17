@@ -28,6 +28,7 @@ import {
 } from '@activepieces/ui/common';
 import { RolesDisplayNames } from '../utils';
 import { ActivatedRoute } from '@angular/router';
+import { ApFlagId } from '@activepieces/shared';
 
 @Component({
   selector: 'app-project-members-table',
@@ -62,11 +63,12 @@ export class ProjectMembersTableComponent
     private authenticationService: AuthenticationService,
     activatedRoute: ActivatedRoute
   ) {
-    super(activatedRoute);
+    super(activatedRoute, ApFlagId.PROJECT_MEMBERS_ENABLED);
     this.dataSource = new ProjectMembersTableDataSource(
       this.authenticationService,
       this.projectMemberService,
-      this.refreshTableAtCurrentCursor$.asObservable().pipe(startWith(true))
+      this.refreshTableAtCurrentCursor$.asObservable().pipe(startWith(true)),
+      !this.isFeatureEnabled
     );
   }
   ngOnInit(): void {
