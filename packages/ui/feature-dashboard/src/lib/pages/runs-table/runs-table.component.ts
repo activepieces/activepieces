@@ -10,10 +10,13 @@ import {
   FlowRetryStrategy,
   FlowRun,
   NotificationStatus,
+  PopulatedFlow,
+  ProjectId,
   SeekPage,
 } from '@activepieces/shared';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
+  combineLatest,
   distinctUntilChanged,
   map,
   Observable,
@@ -30,6 +33,8 @@ import {
   ProjectSelectors,
   ProjectActions,
   NavigationService,
+  AuthenticationService,
+  FlowService,
 } from '@activepieces/ui/common';
 import { FormControl } from '@angular/forms';
 import { Store } from '@ngrx/store';
@@ -51,7 +56,10 @@ export class RunsTableComponent implements OnInit {
   refreshTableForReruns$: Subject<boolean> = new Subject();
   selectedStatus: FormControl<ExecutionOutputStatus | undefined> =
     new FormControl();
-  changeRunStatus$: Observable<void>;
+  selectedFlow = new FormControl();
+  flows$: Observable<SeekPage<PopulatedFlow>>;
+  currentProject: ProjectId;
+  filtersChanged$: Observable<void>;
   readonly ExecutionOutputStatus = ExecutionOutputStatus;
   FlowRetryStrategy: typeof FlowRetryStrategy = FlowRetryStrategy;
   retryFlow$?: Observable<void>;
@@ -62,22 +70,39 @@ export class RunsTableComponent implements OnInit {
     private store: Store,
     private instanceRunService: InstanceRunService,
     private navigationService: NavigationService,
-    private runsService: RunsService
+    private runsService: RunsService,
+    private flowsService: FlowService,
+    private authenticationService: AuthenticationService
   ) {}
 
   ngOnInit(): void {
-    this.changeRunStatus$ = this.selectedStatus.valueChanges.pipe(
+    this.currentProject = this.authenticationService.getProjectId();
+    this.flows$ = this.flowsService.list({
+      projectId: this.currentProject,
+      cursor: undefined,
+    });
+
+    this.filtersChanged$ = combineLatest([
+      this.selectedFlow.valueChanges.pipe(startWith(this.selectedFlow.value)),
+      this.selectedStatus.valueChanges.pipe(
+        startWith(this.selectedStatus.value)
+      ),
+    ]).pipe(
       distinctUntilChanged(),
-      tap((status) => {
+      tap(([selectedFlow, selectedStatus]) => {
         this.router.navigate(['runs'], {
           queryParams: {
+            flowId: selectedFlow ? selectedFlow : undefined,
             status:
-              status && status in ExecutionOutputStatus ? status : undefined,
+              selectedStatus && selectedStatus in ExecutionOutputStatus
+                ? selectedStatus
+                : undefined,
           },
         });
       }),
       map(() => undefined)
     );
+
     this.nonCommunityEdition$ = this.flagsService
       .getEdition()
       .pipe(map((res) => res !== ApEdition.COMMUNITY));
