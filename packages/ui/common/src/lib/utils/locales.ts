@@ -1,16 +1,18 @@
 import { LocalesEnum } from '@activepieces/shared';
 
 export const localesMap = {
+  [LocalesEnum.CHINESE_SIMPLIFIED]: '简体中文',
+  [LocalesEnum.DUTCH]: 'Nederlands',
   [LocalesEnum.ENGLISH]: 'English',
-  [LocalesEnum.SPANISH]: 'Español',
   [LocalesEnum.FRENCH]: 'Français',
   [LocalesEnum.GERMAN]: 'Deutsch',
   [LocalesEnum.HUNGARIAN]: 'Magyar',
-  [LocalesEnum.ITALIAN]: 'Italiano',
-  [LocalesEnum.DUTCH]: 'Nederlands',
-  [LocalesEnum.JAPANESE]: '日本語',
   [LocalesEnum.INDONESIAN]: 'Bahasa Indonesia',
-  [LocalesEnum.VIETNAMESE]: 'Tiếng Việt',
-  [LocalesEnum.CHINESE_SIMPLIFIED]: '简体中文',
+  [LocalesEnum.ITALIAN]: 'Italiano',
+  [LocalesEnum.JAPANESE]: '日本語',
   [LocalesEnum.PORTUGUESE]: 'Português (Brasil)',
+  [LocalesEnum.SPANISH]: 'Español',
+  [LocalesEnum.UKRAINIAN]: 'Українська',
+  [LocalesEnum.VIETNAMESE]: 'Tiếng Việt',
+  [LocalesEnum.BULGARIAN]: 'Български',
 };

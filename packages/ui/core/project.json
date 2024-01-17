@@ -166,6 +166,8 @@
       "baseHref": "/"
     },
     "locales": {
+      "bg": "packages/ui/core/src/locale/messages.bg.xlf",
+      "uk": "packages/ui/core/src/locale/messages.uk.xlf",
       "es": "packages/ui/core/src/locale/messages.es.xlf",
       "fr": "packages/ui/core/src/locale/messages.fr.xlf",
       "hu": "packages/ui/core/src/locale/messages.hu.xlf",
