@@ -80,6 +80,7 @@ export class RunsTableComponent implements OnInit {
     this.flows$ = this.flowsService.list({
       projectId: this.currentProject,
       cursor: undefined,
+      limit: 100,
     });
 
     this.filtersChanged$ = combineLatest([
