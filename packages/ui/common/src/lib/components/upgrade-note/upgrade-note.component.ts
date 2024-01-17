@@ -6,10 +6,10 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UpgradeNoteComponent {
-  @Input() urlToOpen = 'https://www.activepieces.com/pricing';
+  @Input() pricingUrl = 'https://www.activepieces.com/pricing';
   @Input() docsLink = '';
-  openUrl() {
-    window.open(this.urlToOpen, '_blank', 'noopener noreferrer');
+  openPricing() {
+    window.open(this.pricingUrl, '_blank', 'noopener noreferrer');
   }
   openDocs() {
     window.open(this.docsLink, '_blank', 'noopener noreferrer');
