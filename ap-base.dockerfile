@@ -16,7 +16,8 @@ ENV LC_ALL en_US.UTF-8
 
 RUN npm i -g \
   npm@9.3.1 \
-  pnpm@7.28.0
+  pnpm@7.28.0 \
+  isolated-vm@4.6.0
 
 RUN pnpm store add \
   @tsconfig/node18@1.0.0 \
