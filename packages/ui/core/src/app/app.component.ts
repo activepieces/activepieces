@@ -95,7 +95,7 @@ export class AppComponent implements OnInit {
     private localesService: LocalesService,
     private platformService: PlatformService
   ) {
-    this.registerSearchIconIntoMaterialIconRegistery();
+    this.registerMaterialIcons();
     this.listenToImportFlow();
     this.theme$ = this.apperanceService.setTheme().pipe(
       tap(() => this.loadingTheme$.next(false)),
@@ -144,13 +144,7 @@ export class AppComponent implements OnInit {
       );
   }
 
-  private registerSearchIconIntoMaterialIconRegistery() {
-    this.maticonRegistry.addSvgIcon(
-      'info',
-      this.domSanitizer.bypassSecurityTrustResourceUrl(
-        '../assets/img/custom/info.svg'
-      )
-    );
+  private registerMaterialIcons() {
     this.maticonRegistry.addSvgIcon(
       'search',
       this.domSanitizer.bypassSecurityTrustResourceUrl(
