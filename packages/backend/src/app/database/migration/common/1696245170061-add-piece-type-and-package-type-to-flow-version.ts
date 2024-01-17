@@ -126,8 +126,3 @@ type Step =
     | LoopOnItemsStep
     | GenericStep
     | PieceStep
-
-type FlowVersion = {
-    id: string
-    trigger?: Step
-}
