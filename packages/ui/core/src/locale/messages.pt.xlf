@@ -613,7 +613,7 @@
         </context-group>
         <target state="final">Excluir
 
-<x id="INTERPOLACAO" equiv-text="{{data.entityName}}"/></target>
+<x id="INTERPOLATION" equiv-text="{{data.entityName}}"/></target>
       </trans-unit>
       <trans-unit id="6560405483623875453" datatype="html" approved="yes">
         <source>

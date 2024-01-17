@@ -1,7 +1,7 @@
 version: '3.0'
 services:
   activepieces:
-    image: activepieces/activepieces:0.17.0
+    image: ghcr.io/activepieces/activepieces:0.18.0
     container_name: activepieces
     restart: unless-stopped
     ## Enable the following line if you already use AP_EXECUTION_MODE with SANDBOXED or old activepieces, checking the breaking change documentation for more info.
