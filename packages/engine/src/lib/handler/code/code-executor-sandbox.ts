@@ -1,5 +1,5 @@
 import { CodeExecutorSandbox, CodeExecutorSandboxType } from './code-executor-common'
-import { isolateCodeExecutorSandbox } from './isolate-executor-sandbox'
+import { isolateCodeExecutorSandbox } from './isolate-code-executor-sandbox'
 import { noOpCodeExecutorSandbox } from './no-op-code-executor-sandbox'
 
 const CODE_EXECUTOR_SANDBOX_TYPE =
