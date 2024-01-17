@@ -108,7 +108,7 @@ export const clickupCommon = {
       displayName: 'Task Id',
       required,
       defaultValue: null,
-      refreshers: ['space_id', 'list_id', 'workspace_id'],
+      refreshers: ['space_id', 'list_id', 'workspace_id', 'folder_id'],
       options: async ({ auth, space_id, list_id }) => {
         if (!auth || !list_id || !space_id) {
           return {
@@ -155,6 +155,35 @@ export const clickupCommon = {
             return {
               label: task.name,
               value: task.id,
+            };
+          }),
+        };
+      },
+    }),
+  field_id: (required = false) =>
+    Property.Dropdown({
+      displayName: 'Field',
+      description: 'The ID of the ClickUp custom field',
+      refreshers: ['task_id', 'list_id'],
+      defaultValue: null,
+      required,
+      options: async ({ auth, task_id, list_id }) => {
+        if (!auth || !task_id || !list_id) {
+          return {
+            disabled: true,
+            placeholder:
+              'connect your account first and select a task',
+            options: [],
+          };
+        }
+        const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
+        const response = await listAccessibleCustomFields(accessToken, list_id as string);
+        return {
+          disabled: false,
+          options: response.fields.map((field) => {
+            return {
+              label: field.name,
+              value: field.id,
             };
           }),
         };
@@ -406,6 +435,22 @@ export async function listFolders(accessToken: string, spaceId: string) {
     }>(HttpMethod.GET, `space/${spaceId}/folder`, accessToken, undefined)
   ).body;
 }
+
+export async function listAccessibleCustomFields(accessToken: string, listId: string) {
+  return (
+    await callClickUpApi<{
+      fields: {
+        id: string;
+        name: string;
+        type: string;
+        type_config: Record<string, unknown>
+        date_created: string;
+        hide_from_guests: false
+      }[];
+    }>(HttpMethod.GET, `list/${listId}/field`, accessToken, undefined)
+  ).body;
+}
+
 
 async function listFolderlessList(accessToken: string, spaceId: string) {
   return (
