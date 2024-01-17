@@ -4,7 +4,6 @@ import {
   createPiece,
 } from '@activepieces/pieces-framework';
 
-import { wooCreateCustomer } from './lib/actions/create-customer';
 import { wooCreateCoupon } from './lib/actions/create-coupon';
 import { wooCreateCustomer } from './lib/actions/create-customer';
 import { wooCreateProduct } from './lib/actions/create-product';
