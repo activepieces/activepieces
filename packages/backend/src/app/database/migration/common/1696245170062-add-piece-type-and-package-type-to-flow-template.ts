@@ -1,39 +1,40 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { logger } from '../../../helper/logger'
 
-type FlowTemplate = {
-    id: string
-    template: {
-        trigger: Step
-    }
-}
-
 export class AddPieceTypeAndPackageTypeToFlowTemplate1696245170062 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
-        const flowTemplateRepo = queryRunner.connection.getRepository<FlowTemplate>('flow_template')
-        const templates = await flowTemplateRepo.find()
+        const templates = await queryRunner.query('SELECT * FROM flow_template')
         for (const template of templates) {
             const updated = traverseAndUpdateSubFlow(
                 addPackageTypeAndPieceTypeToPieceStepSettings,
                 template.template.trigger,
             )
             if (updated) {
-                await flowTemplateRepo.update(template.id, template)
+                const stringifiedTrigger = JSON.stringify(template.template.trigger)
+                await queryRunner.query(`
+                    UPDATE flow_version
+                        SET trigger = '${stringifiedTrigger}'
+                        WHERE id = '${template.id}
+                `)
             }
         }
         logger.info('AddPieceTypeAndPackageTypeToFlowTemplate1696245170062: up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        const flowTemplateRepo = queryRunner.connection.getRepository<FlowTemplate>('flow_template')
-        const templates = await flowTemplateRepo.find()
+        const templates = await queryRunner.query('SELECT * FROM flow_template')
         for (const template of templates) {
             const updated = traverseAndUpdateSubFlow(
                 removePackageTypeAndPieceTypeFromPieceStepSettings,
                 template.template.trigger,
             )
             if (updated) {
-                await flowTemplateRepo.update(template.id, template)
+                const stringifiedTrigger = JSON.stringify(template.template.trigger)
+                await queryRunner.query(`
+                    UPDATE flow_version
+                        SET trigger = '${stringifiedTrigger}'
+                        WHERE id = '${template.id}
+                `)
             }
         }
         logger.info('AddPieceTypeAndPackageTypeToFlowTemplate1696245170062: down')

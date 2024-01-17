@@ -5,21 +5,27 @@ export class AddPieceTypeAndPackageTypeToFlowVersion1696245170061 implements Mig
     public async up(queryRunner: QueryRunner): Promise<void> {
         // Execute raw SQL query to fetch IDs of FlowVersion records
         const flowVersionIds = await queryRunner.query('SELECT id FROM flow_version')
-        const flowVersionRepo = queryRunner.connection.getRepository<FlowVersion>('flow_version')
         logger.info('AddPieceTypeAndPackageTypeToFlowVersion1696245170061: found ' + flowVersionIds.length + ' versions')
         let updatedFlows = 0
         for (const { id } of flowVersionIds) {
-            // Fetch FlowVersion record by ID
-            const flowVersion = await flowVersionRepo.findOneBy({
-                id,
-            })
+            const flowVersion = await queryRunner.query(`
+                SELECT * from flow_version
+                    where id = '${id}
+            `)
+
             if (flowVersion) {
                 const updated = traverseAndUpdateSubFlow(
                     addPackageTypeAndPieceTypeToPieceStepSettings,
                     flowVersion.trigger,
                 )
+
                 if (updated) {
-                    await flowVersionRepo.update(flowVersion.id, flowVersion)
+                    const triggerStringified = JSON.stringify(flowVersion.trigger)
+                    await queryRunner.query(`
+                        UPDATE flow_version
+                            SET trigger = '${triggerStringified}'
+                            WHERE id = '${id}
+                    `)
                 }
             }
             updatedFlows++
@@ -34,12 +40,12 @@ export class AddPieceTypeAndPackageTypeToFlowVersion1696245170061 implements Mig
     public async down(queryRunner: QueryRunner): Promise<void> {
         // Execute raw SQL query to fetch IDs of FlowVersion records
         const flowVersionIds = await queryRunner.query('SELECT id FROM flow_version')
-        const flowVersionRepo = queryRunner.connection.getRepository<FlowVersion>('flow_version')
         for (const { id } of flowVersionIds) {
             // Fetch FlowVersion record by ID
-            const flowVersion = await flowVersionRepo.findOneBy({
-                id,
-            })
+            const flowVersion = await queryRunner.query(`
+                SELECT * from flow_version
+                    where id = '${id}
+            `)
 
             if (flowVersion) {
                 const updated = traverseAndUpdateSubFlow(
@@ -47,7 +53,12 @@ export class AddPieceTypeAndPackageTypeToFlowVersion1696245170061 implements Mig
                     flowVersion.trigger,
                 )
                 if (updated) {
-                    await flowVersionRepo.update(flowVersion.id, flowVersion)
+                    const triggerStringified = JSON.stringify(flowVersion.trigger)
+                    await queryRunner.query(`
+                        UPDATE flow_version
+                            SET trigger = '${triggerStringified}'
+                            WHERE id = '${id}
+                    `)
                 }
             }
         }
@@ -132,8 +143,3 @@ type Step =
     | LoopOnItemsStep
     | GenericStep
     | PieceStep
-
-type FlowVersion = {
-    id: string
-    trigger?: Step
-}
