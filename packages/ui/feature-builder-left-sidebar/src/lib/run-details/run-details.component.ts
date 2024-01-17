@@ -49,9 +49,10 @@ export class RunDetailsComponent implements OnInit {
   >;
   selectedStepName$: Observable<string | null>;
   @ViewChild('stepsResultsAccordion', { read: ElementRef })
-  stepsResultsAccordion: ElementRef;
+  stepsResultsAccordion: ElementRef<HTMLDivElement>;
   @ViewChild('selectedStepResultContainer', { read: ElementRef })
-  selectedStepResultContainer: ElementRef;
+  selectedStepResultContainer: ElementRef<HTMLDivElement>;
+
   constructor(
     private store: Store,
     private runDetailsService: RunDetailsService,
@@ -146,12 +147,12 @@ export class RunDetailsComponent implements OnInit {
       this.renderer2.setStyle(
         this.stepsResultsAccordion.nativeElement,
         'height',
-        `calc(50% - 29px)`
+        `calc(50% - 1.8125rem)`
       );
       this.renderer2.setStyle(
         this.selectedStepResultContainer.nativeElement,
         'max-height',
-        `calc(50% - 29px)`
+        `calc(50% - 1.8125rem)`
       );
     });
   }

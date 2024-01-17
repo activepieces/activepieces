@@ -12,3 +12,4 @@ export const LIMIT_QUERY_PARAM = 'limit';
 export const CURSOR_QUERY_PARAM = 'cursor';
 export const FOLDER_QUERY_PARAM = 'folderId';
 export const STATUS_QUERY_PARAM = 'status';
+export const FLOW_QUERY_PARAM = 'flowId';

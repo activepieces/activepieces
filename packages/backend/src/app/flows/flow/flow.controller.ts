@@ -6,6 +6,7 @@ import {
     GetFlowQueryParamsRequest,
     ListFlowsRequest,
     PopulatedFlow,
+    Principal,
     PrincipalType,
     SeekPage,
 } from '@activepieces/shared'
@@ -16,6 +17,7 @@ import dayjs from 'dayjs'
 import { isNil } from 'lodash'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { projectService } from '../../project/project-service'
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -39,8 +41,10 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
 
         // BEGIN EE
         const currentTime = dayjs()
+        const userId = await extractUserIdFromPrincipal(request.principal)
+
         if (!isNil(flow.version.updatedBy) &&
-            flow.version.updatedBy !== request.principal.id &&
+            flow.version.updatedBy !== userId &&
             currentTime.diff(dayjs(flow.version.updated), 'minute') <= 1
         ) {
             return reply.status(StatusCodes.CONFLICT).send()
@@ -49,7 +53,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
 
         return flowService.update({
             id: request.params.id,
-            userId: request.principal.id,
+            userId,
             projectId: request.principal.projectId,
             operation: request.body,
         })
@@ -96,6 +100,15 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
 
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
+}
+
+async function extractUserIdFromPrincipal(principal: Principal): Promise<string> {
+    if (principal.type === PrincipalType.USER) {
+        return principal.id
+    }
+    // TODO currently it's same as api service, but it's better to get it from api key service, in case we introduced more admin users
+    const project = await projectService.getOneOrThrow(principal.projectId)
+    return project.ownerId
 }
 
 const CreateFlowRequestOptions = {
