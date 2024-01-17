@@ -7,12 +7,12 @@ const CODE_EXECUTOR_SANDBOX_TYPE =
     ?? CodeExecutorSandboxType.NO_OP
 
 const getCodeExecutorSandbox = (): CodeExecutorSandbox => {
-    const variants: Record<CodeExecutorSandboxType, CodeExecutorSandbox> = {
-        [CodeExecutorSandboxType.NO_OP]: noOpCodeExecutorSandbox,
-        [CodeExecutorSandboxType.ISOLATE]: isolateCodeExecutorSandbox,
-    }
+    const variants = new Map([
+        [CodeExecutorSandboxType.ISOLATE, isolateCodeExecutorSandbox],
+        [CodeExecutorSandboxType.NO_OP, noOpCodeExecutorSandbox],
+    ])
 
-    return variants[CODE_EXECUTOR_SANDBOX_TYPE]
+    return variants.get(CODE_EXECUTOR_SANDBOX_TYPE) ?? noOpCodeExecutorSandbox
 }
 
 export const codeExecutorSandbox = getCodeExecutorSandbox()
