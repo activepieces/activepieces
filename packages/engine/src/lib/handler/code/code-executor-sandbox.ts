@@ -3,7 +3,7 @@ import { isolateCodeExecutorSandbox } from './isolate-executor-sandbox'
 import { noOpCodeExecutorSandbox } from './no-op-code-executor-sandbox'
 
 const CODE_EXECUTOR_SANDBOX_TYPE =
-    (process.env.AP_CODE_EXECUTOR_SANDBOX as CodeExecutorSandboxType | undefined)
+    (process.env.AP_CODE_EXECUTOR_SANDBOX_TYPE as CodeExecutorSandboxType | undefined)
     ?? CodeExecutorSandboxType.NO_OP
 
 const getCodeExecutorSandbox = (): CodeExecutorSandbox => {
