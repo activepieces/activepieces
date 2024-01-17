@@ -1,4 +1,4 @@
-import { TriggerStrategy } from '@activepieces/pieces-framework'
+import { TriggerStrategy, WebhookHandshakeConfiguration } from '@activepieces/pieces-framework'
 import { ExactVersionType, PrincipalType } from '@activepieces/shared'
 import { Type } from '@fastify/type-provider-typebox'
 
@@ -13,6 +13,7 @@ const Action = Type.Object({
 const Trigger = Type.Composite([
     Type.Omit(Action, ['requireAuth']),
     Type.Object({
+        handshakeConfiguration: WebhookHandshakeConfiguration,
         sampleData: Type.Unknown(),
         type: Type.Enum(TriggerStrategy),
     }),
