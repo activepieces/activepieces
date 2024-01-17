@@ -1,3 +1,4 @@
+import { Static, Type } from '@sinclair/typebox';
 import { TestOrRunHookContext, TriggerHookContext } from '../context';
 import { TriggerBase } from '../piece-metadata';
 import { NonAuthPiecePropertyMap, PieceAuthProperty } from '../property/property';
@@ -15,10 +16,12 @@ export enum WebhookHandshakeStrategy {
   BODY_PARAM_PRESENT = 'BODY_PARAM_PRESENT'
 }
 
-export interface WebhookHandshakeConfiguration {
-  strategy: WebhookHandshakeStrategy,
-  paramName?: string
-}
+export const WebhookHandshakeConfiguration = Type.Object({
+  strategy: Type.Enum(WebhookHandshakeStrategy),
+  paramName: Type.Optional(Type.String()),
+})
+
+export type WebhookHandshakeConfiguration = Static<typeof WebhookHandshakeConfiguration>
 
 export interface WebhookResponse {
   status: number,
