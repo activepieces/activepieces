@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -7,7 +7,7 @@ import {
   NG_VALUE_ACCESSOR,
 } from '@angular/forms';
 import { map, Observable, tap } from 'rxjs';
-import { ActionErrorHandlingOptions, isNil } from '@activepieces/shared';
+import { ActionErrorHandlingOptions } from '@activepieces/shared';
 
 @Component({
   selector: 'app-action-error-handling-form-control',
@@ -20,20 +20,19 @@ import { ActionErrorHandlingOptions, isNil } from '@activepieces/shared';
       useExisting: ActionErrorHandlingFormControlComponent,
     },
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ActionErrorHandlingFormControlComponent
   implements ControlValueAccessor
 {
   errorHandlingOptionsForm: FormGroup<{
-    continueOnFailure: FormGroup<{
-      value: FormControl<boolean>;
-    }>;
-    retryOnFailure: FormGroup<{
-      value: FormControl<boolean>;
-    }>;
+    continueOnFailure: FormControl<boolean>;
+    retryOnFailure: FormControl<boolean>;
   }>;
-  @Input() hideContinueOnFailure: boolean;
-  @Input() hideRetryOnFailure: boolean;
+  continueOnFailureDescriptionExpanded = false;
+  continueOnFailureDescriptionOverflows = false;
+  @Input() hideContinueOnFailure = true;
+  @Input() hideRetryOnFailure = true;
   valueChanges$: Observable<void>;
   onChange: (val: unknown) => void = () => {
     //ignore
@@ -44,31 +43,25 @@ export class ActionErrorHandlingFormControlComponent
 
   constructor(private fb: FormBuilder) {
     this.errorHandlingOptionsForm = this.fb.group({
-      continueOnFailure: this.fb.group({
-        value: new FormControl(false, {
-          nonNullable: true,
-        }),
+      continueOnFailure: this.fb.control(false, {
+        nonNullable: true,
       }),
-      retryOnFailure: this.fb.group({
-        value: new FormControl(false, {
-          nonNullable: true,
-        }),
+      retryOnFailure: this.fb.control(false, {
+        nonNullable: true,
       }),
     });
     this.valueChanges$ = this.errorHandlingOptionsForm.valueChanges.pipe(
       tap((val) => {
-        const continueOnFailureValue = val.continueOnFailure?.value;
-        const retryOnFailureValue = val.retryOnFailure?.value;
         this.onChange({
-          continueOnFailure: isNil(continueOnFailureValue)
+          continueOnFailure: this.hideContinueOnFailure
             ? undefined
             : {
-                value: continueOnFailureValue,
+                value: val.continueOnFailure,
               },
-          retryOnFailure: isNil(retryOnFailureValue)
+          retryOnFailure: this.hideRetryOnFailure
             ? undefined
             : {
-                value: val.retryOnFailure.value,
+                value: val.retryOnFailure,
               },
         });
       }),
@@ -82,21 +75,15 @@ export class ActionErrorHandlingFormControlComponent
     if (obj) {
       this.errorHandlingOptionsForm.setValue(
         {
-          continueOnFailure: !isNil(obj.continueOnFailure?.value)
-            ? {
-                value: obj.continueOnFailure?.value,
-              }
-            : undefined,
-          retryOnFailure: !isNil(obj.retryOnFailure)
-            ? {
-                value: obj.retryOnFailure?.value,
-              }
-            : undefined,
+          continueOnFailure: this.hideRetryOnFailure
+            ? false
+            : obj.continueOnFailure?.value || false,
+          retryOnFailure: this.hideRetryOnFailure
+            ? false
+            : obj.retryOnFailure?.value || false,
         },
         { emitEvent: false }
       );
-    } else {
-      this.errorHandlingOptionsForm.reset({}, { emitEvent: false });
     }
   }
   registerOnChange(fn: (val: unknown) => void): void {
