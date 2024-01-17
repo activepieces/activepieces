@@ -6,7 +6,7 @@
         <ap-markdown [data]="markdown" [smallText]="true">
         </ap-markdown>
       </div>
-      <app-dictonary-form-control formControlName="input"></app-dictonary-form-control>
+      <app-dictonary-form-control [formControl]="codeStepForm.controls.input"></app-dictonary-form-control>
     </div>
     <div>
       <div class="ap-mb-2 ap-flex ap-justify-between ap-items-center">
@@ -25,7 +25,9 @@
         </ng-container>
 
       </div>
-      <app-code-artifact-form-control formControlName="sourceCode"></app-code-artifact-form-control>
+      <app-code-artifact-form-control [formControl]="codeStepForm.controls.sourceCode"></app-code-artifact-form-control>
+      <app-action-error-handling-form-control
+        [formControl]="codeStepForm.controls.errorHandlingOptions"></app-action-error-handling-form-control>
     </div>
   </div>
 </form>

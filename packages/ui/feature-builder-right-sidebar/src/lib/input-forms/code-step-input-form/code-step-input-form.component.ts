@@ -7,7 +7,12 @@ import {
   FormControl,
 } from '@angular/forms';
 import { Observable, tap } from 'rxjs';
-import { ActionType, ApFlagId, SourceCode } from '@activepieces/shared';
+import {
+  ActionErrorHandlingOptions,
+  ActionType,
+  ApFlagId,
+  SourceCode,
+} from '@activepieces/shared';
 import { CodeStepInputFormSchema } from '../input-forms-schema';
 import { MatDialog } from '@angular/material/dialog';
 import { CodeWriterDialogComponent } from './code-writer-dialog/code-writer-dialog.component';
@@ -28,6 +33,7 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
   codeStepForm: FormGroup<{
     input: FormControl<Record<string, unknown>>;
     sourceCode: FormControl<SourceCode>;
+    errorHandlingOptions: FormControl<ActionErrorHandlingOptions>;
   }>;
   formValueChanged$: Observable<unknown>;
   dialogClosed$?: Observable<unknown>;
@@ -72,6 +78,17 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
         { code: '', packageJson: '' },
         { nonNullable: true }
       ),
+      errorHandlingOptions: new FormControl<ActionErrorHandlingOptions>(
+        {
+          continueOnFailure: {
+            value: false,
+          },
+          retryOnFailure: {
+            value: false,
+          },
+        },
+        { nonNullable: true }
+      ),
     });
     this.formValueChanged$ = this.codeStepForm.valueChanges.pipe(
       tap((formValue) => {
@@ -79,6 +96,14 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
           input: this.codeStepForm.value.input || {},
           sourceCode: formValue.sourceCode!,
           type: ActionType.CODE,
+          errorHandlingOptions: formValue.errorHandlingOptions ?? {
+            continueOnFailure: {
+              value: false,
+            },
+            retryOnFailure: {
+              value: false,
+            },
+          },
         });
       })
     );
@@ -92,6 +117,12 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
       this.codeStepForm.controls.input.setValue(obj.input, {
         emitEvent: false,
       });
+      this.codeStepForm.controls.errorHandlingOptions.setValue(
+        obj.errorHandlingOptions,
+        {
+          emitEvent: false,
+        }
+      );
       if (this.codeStepForm.disabled) {
         this.codeStepForm.disable();
       }
