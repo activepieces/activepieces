@@ -787,7 +787,18 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/77505989?v=4",
       "profile": "https://github.com/kartikmehta8",
       "contributions": [
-        "doc"
+        "doc",
+        "code"
+      ]
+    },
+    {
+      "login": "zaaakher",
+      "name": "Zakher Masri",
+      "avatar_url": "https://avatars.githubusercontent.com/u/46135573?v=4",
+      "profile": "https://zakher.me",
+      "contributions": [
+        "doc",
+        "code"
       ]
     }
   ],

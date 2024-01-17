@@ -152,7 +152,7 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
     const testCodeParams$ = forkJoin({
       step: this.store.select(BuilderSelectors.selectCurrentStep).pipe(take(1)),
       flowVersionId: this.store
-        .select(BuilderSelectors.selectCurrentFlowVersionId)
+        .select(BuilderSelectors.selectDraftVersionId)
         .pipe(take(1)),
     });
 

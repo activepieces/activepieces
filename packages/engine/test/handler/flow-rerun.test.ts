@@ -1,6 +1,6 @@
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
-import { EXECUTE_CONSTANTS, buildPieceAction } from './test-helper'
+import { buildPieceAction, generateMockEngineConstants } from './test-helper'
 import { ExecutionType } from '@activepieces/shared'
 
 const failedHttpAction = buildPieceAction({
@@ -33,13 +33,10 @@ describe('flow retry', () => {
     const context = FlowExecutorContext.empty()
     it('should retry entire flow', async () => {
         const failedResult = await flowExecutor.execute({
-            action: failedHttpAction, executionState: context, constants: EXECUTE_CONSTANTS,
+            action: failedHttpAction, executionState: context, constants: generateMockEngineConstants(),
         })
         const retryEntireFlow = await flowExecutor.execute({
-            action: successHttpAction, executionState: context, constants: {
-                ...EXECUTE_CONSTANTS,
-                executionType: ExecutionType.BEGIN,
-            },
+            action: successHttpAction, executionState: context, constants: generateMockEngineConstants(),
         })
         expect(failedResult.verdict).toBe(ExecutionVerdict.FAILED)
         expect(retryEntireFlow.verdict).toBe(ExecutionVerdict.RUNNING)
@@ -47,14 +44,13 @@ describe('flow retry', () => {
 
     it('should retry flow from failed step', async () => {
         const failedResult = await flowExecutor.execute({
-            action: failedHttpAction, executionState: context, constants: EXECUTE_CONSTANTS,
+            action: failedHttpAction, executionState: context, constants: generateMockEngineConstants(),
         })
 
         const retryFromFailed = await flowExecutor.execute({
-            action: successHttpAction, executionState: context, constants: {
-                ...EXECUTE_CONSTANTS,
+            action: successHttpAction, executionState: context, constants: generateMockEngineConstants({
                 executionType: ExecutionType.RESUME,
-            },
+            }),
         })
         expect(failedResult.verdict).toBe(ExecutionVerdict.FAILED)
         expect(retryFromFailed.verdict).toBe(ExecutionVerdict.RUNNING)

@@ -8,7 +8,6 @@ import {
     PopulatedFlow,
     PrincipalType,
     SeekPage,
-    UpdateFlowStatusRequest,
 } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 import { flowService } from './flow.service'
@@ -53,22 +52,6 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             userId: request.principal.id,
             projectId: request.principal.projectId,
             operation: request.body,
-        })
-    })
-
-    app.post('/:id/status', UpdateFlowStatusRequestOptions, async (request) => {
-        return flowService.updateStatus({
-            id: request.params.id,
-            projectId: request.principal.projectId,
-            newStatus: request.body.status,
-        })
-    })
-
-    app.post('/:id/published-version-id', UpdateFlowPublishedVersionIdRequestOptions, async (request) => {
-        return flowService.updatedPublishedVersionId({
-            id: request.params.id,
-            userId: request.principal.id,
-            projectId: request.principal.projectId,
         })
     })
 
@@ -131,6 +114,8 @@ const CreateFlowRequestOptions = {
 
 const UpdateFlowRequestOptions = {
     schema: {
+        tags: ['flows'],
+        description: 'Apply an operation to a flow',
         body: FlowOperationRequest,
         params: Type.Object({
             id: ApId,
@@ -138,22 +123,7 @@ const UpdateFlowRequestOptions = {
     },
 }
 
-const UpdateFlowStatusRequestOptions = {
-    schema: {
-        body: UpdateFlowStatusRequest,
-        params: Type.Object({
-            id: ApId,
-        }),
-    },
-}
 
-const UpdateFlowPublishedVersionIdRequestOptions = {
-    schema: {
-        params: Type.Object({
-            id: ApId,
-        }),
-    },
-}
 
 const ListFlowsRequestOptions = {
     config: {

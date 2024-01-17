@@ -10,6 +10,9 @@ import { createClickupSubtask } from './lib/actions/tasks/create-subtask';
 import { clickupTriggers as triggers } from './lib/triggers';
 import { createClickupTaskFromTemplate } from './lib/actions/tasks/create-task-from-template';
 import { updateClickupTask } from './lib/actions/tasks/update-task';
+import { getClickupTasks } from './lib/actions/tasks/get-tasks';
+import { getClickupTask } from './lib/actions/tasks/get-task';
+import { deleteClickupTask } from './lib/actions/tasks/delete-task';
 
 export const clickupAuth = PieceAuth.OAuth2({
   description: '',
@@ -29,12 +32,15 @@ export const clickup = createPiece({
     createClickupTaskFromTemplate,
     createClickupFolderlessList,
     getClickupList,
+    getClickupTask,
+    getClickupTasks,
     getClickupSpace,
     getClickupSpaces,
     getClickupTaskComments,
     createClickupTaskComment,
     createClickupSubtask,
     updateClickupTask,
+    deleteClickupTask
   ],
   authors: ['abuaboud', 'ShayPunter', 'kanarelo'],
   triggers,

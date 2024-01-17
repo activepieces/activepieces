@@ -1,10 +1,10 @@
-import { API_URL } from '../constants'
+import { EngineConstants } from '../handler/context/engine-constants'
 import { AppConnection, AppConnectionType, CloudOAuth2ConnectionValue, BasicAuthConnectionValue, OAuth2ConnectionValueWithApp } from '@activepieces/shared'
 
 export const createConnectionService = ({ projectId, workerToken }: { projectId: string, workerToken: string }) => {
     return {
         async obtain(connectionName: string): Promise<null | OAuth2ConnectionValueWithApp | CloudOAuth2ConnectionValue | BasicAuthConnectionValue | string | Record<string, unknown>> {
-            const url = API_URL + `v1/worker/app-connections/${encodeURIComponent(connectionName)}?projectId=${projectId}`
+            const url = `${EngineConstants.API_URL}v1/worker/app-connections/${encodeURIComponent(connectionName)}?projectId=${projectId}`
             try {
                 const response = await fetch(url, {
                     method: 'GET',

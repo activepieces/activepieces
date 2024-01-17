@@ -23,7 +23,7 @@ import {
 } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 import { Params } from '@angular/router';
-const REFRESH_TABLE_DELAY = 15000;
+const REFRESH_TABLE_DELAY = 10000;
 /**
  * Data source for the LogsTable view. This class should
  * encapsulate all logic for fetching and manipulating the displayed data

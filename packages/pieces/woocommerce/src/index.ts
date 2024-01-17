@@ -1,16 +1,15 @@
-import { PieceAuth, Property, createPiece } from "@activepieces/pieces-framework";
+import {
+  PieceAuth,
+  Property,
+  createPiece,
+} from '@activepieces/pieces-framework';
 
-import { customer } from "./lib/triggers/customer";
-import { coupon } from "./lib/triggers/coupon";
-import { order } from "./lib/triggers/order";
-import { product } from "./lib/triggers/product";
-import { lineItemInOrder } from "./lib/triggers/line-item-in-order";
-
-import { wooCreateCustomer } from './lib/actions/create-customer';
 import { wooCreateCoupon } from './lib/actions/create-coupon';
+import { wooCreateCustomer } from './lib/actions/create-customer';
 import { wooCreateProduct } from './lib/actions/create-product';
 import { wooFindCustomer } from './lib/actions/find-customer';
 import { wooFindProduct } from './lib/actions/find-product';
+import { triggers } from './lib/triggers';
 
 const authDescription = `
 To generate your API credentials, follow the steps below:
@@ -24,41 +23,44 @@ Note that the base URL of your WooCommerce instance needs to be on a secure (HTT
 `;
 
 export const wooAuth = PieceAuth.CustomAuth({
-    
-    description: authDescription,
-    required: true,
-    props: {
-        baseUrl: Property.ShortText({
-            displayName: 'Base URL',
-            description: 'The base URL of your app (e.g https://mystore.com) and it should start with HTTPS only',
-            required: true,
-        }),
-        consumerKey: Property.ShortText({
-            displayName: 'Consumer Key',
-            description: 'The consumer key generated from your app',
-            required: true,
-        }),
-        consumerSecret: PieceAuth.SecretText({
-            displayName: 'Consumer Secret',
-            description: 'The consumer secret generated from your app',
-            required: true,
-        })
-    },
-    async validate( {auth}) {
-        const baseUrl = auth.baseUrl;
-        if (!baseUrl.match(/^(https):\/\//)) {
-            return { valid: false, error: 'Base URL must start with https (e.g https://mystore.com)' }
-        }
-        return { valid: true}
+  description: authDescription,
+  required: true,
+  props: {
+    baseUrl: Property.ShortText({
+      displayName: 'Base URL',
+      description:
+        'The base URL of your app (e.g https://mystore.com) and it should start with HTTPS only',
+      required: true,
+    }),
+    consumerKey: Property.ShortText({
+      displayName: 'Consumer Key',
+      description: 'The consumer key generated from your app',
+      required: true,
+    }),
+    consumerSecret: PieceAuth.SecretText({
+      displayName: 'Consumer Secret',
+      description: 'The consumer secret generated from your app',
+      required: true,
+    }),
+  },
+  async validate({ auth }) {
+    const baseUrl = auth.baseUrl;
+    if (!baseUrl.match(/^(https):\/\//)) {
+      return {
+        valid: false,
+        error: 'Base URL must start with https (e.g https://mystore.com)',
+      };
     }
-})
+    return { valid: true };
+  },
+});
 
 export const woocommerce = createPiece({
   displayName: 'WooCommerce',
   logoUrl: 'https://cdn.activepieces.com/pieces/woocommerce.png',
   auth: wooAuth,
   minimumSupportedRelease: '0.7.1',
-  authors: ['MoShizzle', 'TaskMagicKyle'],
+  authors: ['MoShizzle', 'TaskMagicKyle', 'kishanprmr'],
   actions: [
     wooCreateCustomer,
     wooCreateCoupon,
@@ -66,5 +68,5 @@ export const woocommerce = createPiece({
     wooFindCustomer,
     wooFindProduct,
   ],
-  triggers: [customer, coupon, order, product, lineItemInOrder],
+  triggers: triggers,
 });

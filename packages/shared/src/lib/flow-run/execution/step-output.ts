@@ -96,7 +96,7 @@ export class BranchStepOutput extends GenricStepOutput<ActionType.BRANCH, Branch
 }
 
 
-type LoopStepResult = {
+export type LoopStepResult = {
     item: unknown
     index: number
     iterations: Record<string, StepOutput>[]

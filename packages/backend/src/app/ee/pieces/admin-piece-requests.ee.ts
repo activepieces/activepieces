@@ -11,7 +11,7 @@ const Action = Type.Object({
 })
 
 const Trigger = Type.Composite([
-    Action,
+    Type.Omit(Action, ['requireAuth']),
     Type.Object({
         sampleData: Type.Unknown(),
         type: Type.Enum(TriggerStrategy),
