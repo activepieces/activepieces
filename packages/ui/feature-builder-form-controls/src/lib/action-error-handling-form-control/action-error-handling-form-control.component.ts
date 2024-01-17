@@ -31,8 +31,8 @@ export class ActionErrorHandlingFormControlComponent
   }>;
   continueOnFailureDescriptionExpanded = false;
   continueOnFailureDescriptionOverflows = false;
-  @Input() hideContinueOnFailure = true;
-  @Input() hideRetryOnFailure = true;
+  @Input() hideContinueOnFailure = false;
+  @Input() hideRetryOnFailure = false;
   valueChanges$: Observable<void>;
   onChange: (val: unknown) => void = () => {
     //ignore

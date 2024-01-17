@@ -78,7 +78,7 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
         { code: '', packageJson: '' },
         { nonNullable: true }
       ),
-      errorHandlingOptions: new FormControl(
+      errorHandlingOptions: new FormControl<ActionErrorHandlingOptions>(
         {
           continueOnFailure: {
             value: false,
