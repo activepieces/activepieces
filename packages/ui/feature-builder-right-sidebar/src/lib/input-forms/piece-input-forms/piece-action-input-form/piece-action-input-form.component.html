@@ -40,9 +40,10 @@
       </div>
     </ng-container>
     <ng-container
-      *ngIf="pieceActionForm.get(ACTION_FORM_CONTROL_NAME)!.value && pieceActionForm.get('errorHandlingOptions')">
+      *ngIf="pieceActionForm.get(ACTION_FORM_CONTROL_NAME)!.value && pieceActionForm.get(ERROR_HANDLING_FORM_CONTROL_NAME)">
       <div>
-        <app-action-error-handling-form-control [hideContinueOnFailure]="pieceActionForm.get(ACTION_FORM_CONTROL_NAME)!.value.errorHandlingOptions.continueOnFailure.hide" [hideRetryOnFailure]="pieceActionForm.get(ACTION_FORM_CONTROL_NAME)!.value.errorHandlingOptions.retryOnFailure.hide"
+        <app-action-error-handling-form-control [hideContinueOnFailure]="hideContinueOnFailure"
+          [hideRetryOnFailure]="hideRetryOnFailure"
           formControlName="errorHandlingOptions"></app-action-error-handling-form-control>
       </div>
     </ng-container>

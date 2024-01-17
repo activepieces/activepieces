@@ -39,7 +39,7 @@ export interface PieceActionInputFormSchema extends InputFormsSchemaBase {
   inputUiInfo: {
     customizedInputs: Record<string, boolean>;
   };
-  errorHandlingOptions: ActionErrorHandlingOptions;
+  errorHandlingOptions?: ActionErrorHandlingOptions;
 }
 
 export interface ComponentTriggerInputFormSchema extends InputFormsSchemaBase {
