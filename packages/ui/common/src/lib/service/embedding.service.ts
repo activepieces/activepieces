@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, map } from 'rxjs';
-import { ActivepiecesClientEventName } from '@activepieces/ee-embed-sdk';
 export type EmbeddingState = {
   isEmbedded: boolean;
   hideSideNav: boolean;
@@ -39,7 +38,7 @@ export class EmbeddingService {
   activepiecesRouteChanged(route: string) {
     window.parent.postMessage(
       {
-        type: ActivepiecesClientEventName,
+        type: 'CLIENT_ROUTE_CHANGED',
         data: {
           route: route,
         },
