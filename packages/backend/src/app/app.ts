@@ -216,7 +216,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(appCredentialModule)
             await app.register(connectionKeyModule)
             await app.register(platformProjectModule)
-            await app.register(projectMemberModule({ viewOnly: false }))
+            await app.register(projectMemberModule)
             await app.register(appSumoModule)
             await app.register(referralModule)
             await app.register(adminPieceModule)
@@ -249,7 +249,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
         case ApEdition.ENTERPRISE:
             await app.register(customDomainModule)
             await app.register(platformProjectModule)
-            await app.register(projectMemberModule({ viewOnly: false }))
+            await app.register(projectMemberModule)
             await app.register(platformModule)
             await app.register(signingKeyModule)
             await app.register(managedAuthnModule)
@@ -277,7 +277,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(projectModule)
             await app.register(communityPiecesModule)
             await app.register(communityFlowTemplateModule)
-            await app.register(projectMemberModule({ viewOnly: true }))
             break
     }
 
