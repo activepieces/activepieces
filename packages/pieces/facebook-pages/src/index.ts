@@ -23,7 +23,7 @@ export const facebookPagesAuth = PieceAuth.OAuth2({
     authUrl: "https://graph.facebook.com/oauth/authorize",
     tokenUrl: "https://graph.facebook.com/oauth/access_token",
     required: true,
-    scope: ['pages_show_list', 'pages_manage_posts', 'pages_read_engagement'],
+    scope: ['pages_show_list', 'pages_manage_posts', 'business_management', 'pages_read_engagement'],
 })
 
 export const facebookPages = createPiece({

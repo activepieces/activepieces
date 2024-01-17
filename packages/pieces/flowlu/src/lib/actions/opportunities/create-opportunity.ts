@@ -1,6 +1,7 @@
 import {
-  createAction,
   PiecePropValueSchema,
+  Property,
+  createAction,
 } from '@activepieces/pieces-framework';
 import { flowluAuth } from '../../../';
 import { makeClient } from '../../common';
@@ -12,6 +13,10 @@ export const createOpportunityAction = createAction({
   displayName: 'Create Opportunity',
   description: 'Creates a new opportunity.',
   props: {
+    name: Property.ShortText({
+      displayName: 'Title',
+      required: true,
+    }),
     ...flowluProps.opportunity,
   },
   async run(context) {
