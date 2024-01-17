@@ -1,7 +1,8 @@
 import { ActionType, CodeAction, GenricStepOutput, StepOutputStatus } from '@activepieces/shared'
-import { BaseExecutor } from './base-executor'
+import { ActionHandler, BaseExecutor } from './base-executor'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
 import { EngineConstants } from './context/engine-constants'
+import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
 
 type CodePieceModule = {
     code(params: unknown): Promise<unknown>
@@ -20,44 +21,34 @@ export const codeExecutor: BaseExecutor<CodeAction> = {
         if (executionState.isCompleted({ stepName: action.name })) {
             return executionState
         }
-
-        const runWithExponentialBackoff = async (retryCount = 0): Promise<FlowExecutorContext> => {
-            const { censoredInput, resolvedInput } = await constants.variableService.resolve({
-                unresolvedInput: action.settings.input,
-                executionState,
-            })
-            const stepOutput = GenricStepOutput.create({
-                input: censoredInput,
-                type: ActionType.CODE,
-                status: StepOutputStatus.SUCCEEDED,
-            })
-            try {
-                const artifactPath = `${constants.baseCodeDirectory}/${action.name}/index.js`
-                const codePieceModule: CodePieceModule = await import(artifactPath)
-                const output = await codePieceModule.code(resolvedInput)
-                return executionState.upsertStep(action.name, stepOutput.setOutput(output)).increaseTask()
-            }
-            catch (e) {
-                console.error(e)
-
-                if (!constants.testSingleStepMode && action.settings.errorHandlingOptions?.retryOnFailure.value && retryCount < EngineConstants.MAX_RETRIES) {
-                    const backoffTime = Math.pow(6, retryCount) * 1000
-                    await new Promise(resolve => setTimeout(resolve, backoffTime))
-                    return runWithExponentialBackoff(retryCount + 1)
-                }
-
-                if (!constants.testSingleStepMode && action.settings.errorHandlingOptions?.continueOnFailure.value) {
-                    return executionState.upsertStep(action.name, stepOutput.setStatus(StepOutputStatus.FAILED).setErrorMessage((e as Error).message)).increaseTask()
-                }
-                else {
-                    return executionState
-                        .upsertStep(action.name, stepOutput.setStatus(StepOutputStatus.FAILED).setErrorMessage((e as Error).message))
-                        .setVerdict(ExecutionVerdict.FAILED, undefined)
-                }
-            }
-        }
-
-        // Initial call
-        return runWithExponentialBackoff()
+        const resultExecution = await runWithExponentialBackoff(executionState, action, constants, executeAction)
+        return continueIfFailureHandler(resultExecution, action, constants)
     },
+}
+
+const executeAction: ActionHandler<CodeAction> = async ({ action, executionState, constants }) => {
+    const { censoredInput, resolvedInput } = await constants.variableService.resolve({
+        unresolvedInput: action.settings.input,
+        executionState,
+    })
+
+    const stepOutput = GenricStepOutput.create({
+        input: censoredInput,
+        type: ActionType.CODE,
+        status: StepOutputStatus.SUCCEEDED,
+    })
+
+    try {
+        const artifactPath = `${constants.baseCodeDirectory}/${action.name}/index.js`
+        const codePieceModule: CodePieceModule = await import(artifactPath)
+        const output = await codePieceModule.code(resolvedInput)
+
+        return executionState.upsertStep(action.name, stepOutput.setOutput(output)).increaseTask()
+    }
+    catch (e) {
+        console.error(e)
+        return executionState
+            .upsertStep(action.name, stepOutput.setStatus(StepOutputStatus.FAILED).setErrorMessage((e as Error).message))
+            .setVerdict(ExecutionVerdict.FAILED, undefined)
+    }
 }

@@ -7,7 +7,7 @@ import {
   NG_VALUE_ACCESSOR,
 } from '@angular/forms';
 import { map, Observable, tap } from 'rxjs';
-import { ActionErrorHandlingOptions } from '@activepieces/shared';
+import { ActionErrorHandlingOptions, isNil } from '@activepieces/shared';
 
 @Component({
   selector: 'app-action-error-handling-form-control',
@@ -57,7 +57,20 @@ export class ActionErrorHandlingFormControlComponent
     });
     this.valueChanges$ = this.errorHandlingOptionsForm.valueChanges.pipe(
       tap((val) => {
-        this.onChange(val);
+        const continueOnFailureValue = val.continueOnFailure?.value;
+        const retryOnFailureValue = val.retryOnFailure?.value;
+        this.onChange({
+          continueOnFailure: isNil(continueOnFailureValue)
+            ? undefined
+            : {
+                value: continueOnFailureValue,
+              },
+          retryOnFailure: isNil(retryOnFailureValue)
+            ? undefined
+            : {
+                value: val.retryOnFailure.value,
+              },
+        });
       }),
       map(() => {
         return void 0;
@@ -69,13 +82,16 @@ export class ActionErrorHandlingFormControlComponent
     if (obj) {
       this.errorHandlingOptionsForm.setValue(
         {
-          continueOnFailure: {
-            value:
-              obj.continueOnFailure.value ?? obj.continueOnFailure.defaultValue,
-          },
-          retryOnFailure: {
-            value: obj.retryOnFailure.value ?? obj.retryOnFailure.defaultValue,
-          },
+          continueOnFailure: !isNil(obj.continueOnFailure?.value)
+            ? {
+                value: obj.continueOnFailure?.value,
+              }
+            : undefined,
+          retryOnFailure: !isNil(obj.retryOnFailure)
+            ? {
+                value: obj.retryOnFailure?.value,
+              }
+            : undefined,
         },
         { emitEvent: false }
       );

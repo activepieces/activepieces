@@ -32,6 +32,7 @@ import {
   ActionErrorHandlingOptions,
   ActionType,
   AUTHENTICATION_PROPERTY_NAME,
+  isNil,
   PackageType,
   PieceActionSettings,
   PieceType,
@@ -266,24 +267,23 @@ export class PieceActionInputFormComponent
           this.initialComponentInputFormValue.inputUiInfo?.customizedInputs ||
           {},
       };
-      const errorHandlingOptionsValue = {
-        continueOnFailure: {
-          value:
-            this.initialComponentInputFormValue.errorHandlingOptions
-              ?.continueOnFailure.value ??
-            this.initialComponentInputFormValue.errorHandlingOptions
-              ?.continueOnFailure.defaultValue ??
-            false,
-        },
-        retryOnFailure: {
-          value:
-            this.initialComponentInputFormValue.errorHandlingOptions
-              ?.retryOnFailure.value ??
-            this.initialComponentInputFormValue.errorHandlingOptions
-              ?.retryOnFailure.defaultValue ??
-            false,
-        },
-      };
+      let errorHandlingOptionsValue =
+        this.initialComponentInputFormValue.errorHandlingOptions;
+      const pieceErrorHandling = selectedAction.value.errorHandlingOptions;
+      if (isNil(errorHandlingOptionsValue)) {
+        errorHandlingOptionsValue = {
+          continueOnFailure: pieceErrorHandling.continueOnFailure.hide
+            ? undefined
+            : {
+                value: pieceErrorHandling.continueOnFailure.defaultValue,
+              },
+          retryOnFailure: pieceErrorHandling.retryOnFailure.hide
+            ? undefined
+            : {
+                value: pieceErrorHandling.retryOnFailure.defaultValue,
+              },
+        };
+      }
       this.pieceActionForm.addControl(
         PIECE_PROPERTIES_FORM_CONTROL_NAME,
         new UntypedFormControl({
