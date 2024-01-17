@@ -28,7 +28,7 @@ type UpsertFlowOperation = {
 export type FlowSyncOperation = DeleteFlowFromGitOperation | UpsertFlowIntoProjectOperation | DeleteFlowFromProjectOperation | UpsertFlowOperation
 
 async function fetchFlowsForProject(projectId: string): Promise<PopulatedFlow[]> {
-    const flows = await flowRepo.findBy({
+    const flows = await flowRepo().findBy({
         projectId,
     })
     return Promise.all(flows.map(f => {

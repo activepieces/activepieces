@@ -1,4 +1,4 @@
-<div class="step-result-accordion" [class.opacity-0]="!finishedBuilding">
+<div class="step-result-accordion">
   <mat-accordion>
     <ng-container *ngIf="isLoopStep; else nonLoopStepTemplate">
       <ng-container *ngIf="iteration$ | async as selectedIteration">
@@ -54,8 +54,9 @@
                               doneButtonSection.clientWidth +
                               'px)'
                             : ''
-                        " [attr.min]="1" [attr.max]="iterationLength" #iterationInputFocusDirective="focusTrackerDirective" #iterationInput apTrackFocus
-                        type="number" (keydown.enter)="iterationInput.blur()" (keydown)="$event.stopPropagation()"
+                        " [attr.min]="1" [attr.max]="iterationLength"
+                        #iterationInputFocusDirective="focusTrackerDirective" #iterationInput apTrackFocus type="number"
+                        (keydown.enter)="iterationInput.blur()" (keydown)="$event.stopPropagation()"
                         class="form-control iteration-index-control ap-text-center"
                         [formControl]="iterationIndexControl" (click)="indexSearchClicked($event)"
                         [class.expand-iteration-control]="
@@ -121,11 +122,12 @@
 
 <ng-template #statusIconTemplate>
   <svg-icon
-    *ngIf="ActionStatus.SUCCEEDED === stepResult.output?.status || ActionStatus.STOPPED === stepResult.output?.status"
+    *ngIf="StepOutputStatus.SUCCEEDED === stepResult.output?.status || StepOutputStatus.STOPPED === stepResult.output?.status"
     matTooltip="Step succeeded" src="assets/img/custom/success-step-result.svg"
     [svgStyle]="{ width: '21px', height: '20px' }" class="icon-padding"></svg-icon>
-  <svg-icon *ngIf="ActionStatus.FAILED === stepResult.output?.status" src="assets/img/custom/failure-step-result.svg"
-    [svgStyle]="{ width: '21px', height: '20px' }" class="icon-padding" matTooltip="Step failed"></svg-icon>
-  <svg-icon *ngIf="ActionStatus.PAUSED === stepResult.output?.status" src="assets/img/custom/status/paused.svg"
+  <svg-icon *ngIf="StepOutputStatus.FAILED === stepResult.output?.status"
+    src="assets/img/custom/failure-step-result.svg" [svgStyle]="{ width: '21px', height: '20px' }" class="icon-padding"
+    matTooltip="Step failed"></svg-icon>
+  <svg-icon *ngIf="StepOutputStatus.PAUSED === stepResult.output?.status" src="assets/img/custom/status/paused.svg"
     class="icon-padding" [svgStyle]="{ width: '21px', height: '20px' }" matTooltip="Step paused"></svg-icon>
 </ng-template>

@@ -26,10 +26,11 @@ import { acquireLock } from '../../helper/lock'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowRepo } from './flow.repo'
 import { telemetry } from '../../helper/telemetry.utils'
-import { IsNull } from 'typeorm'
+import { EntityManager, IsNull } from 'typeorm'
 import { isNil } from '@activepieces/shared'
 import { logger } from '../../helper/logger'
 import { flowServiceHooks as hooks } from './flow-service-hooks'
+import { transaction } from '../../core/db/transaction'
 
 export const flowService = {
     async create({ projectId, request }: CreateParams): Promise<PopulatedFlow> {
@@ -42,7 +43,7 @@ export const flowService = {
             schedule: null,
         }
 
-        const savedFlow = await flowRepo.save(newFlow)
+        const savedFlow = await flowRepo().save(newFlow)
 
         const savedFlowVersion = await flowVersionService.createEmptyVersion(savedFlow.id, {
             displayName: request.displayName,
@@ -88,7 +89,7 @@ export const flowService = {
             queryWhere.status = status
         }
 
-        const paginationResult = await paginator.paginate(flowRepo.createQueryBuilder('flow').where(queryWhere))
+        const paginationResult = await paginator.paginate(flowRepo().createQueryBuilder('flow').where(queryWhere))
 
         const populatedFlowPromises = paginationResult.data.map(async (flow) => {
             const version = await flowVersionService.getFlowVersionOrThrow({
@@ -108,7 +109,7 @@ export const flowService = {
     },
 
     async getOne({ id, projectId }: GetOneParams): Promise<Flow | null> {
-        return flowRepo.findOneBy({
+        return flowRepo().findOneBy({
             id,
             projectId,
         })
@@ -121,7 +122,7 @@ export const flowService = {
     },
 
     async getOnePopulated({ id, projectId, versionId, removeSecrets = false }: GetOnePopulatedParams): Promise<PopulatedFlow | null> {
-        const flow = await flowRepo.findOneBy({
+        const flow = await flowRepo().findOneBy({
             id,
             projectId,
         })
@@ -156,21 +157,21 @@ export const flowService = {
 
         try {
             if (operation.type === FlowOperationType.LOCK_AND_PUBLISH) {
-                await flowService.updatedPublishedVersionId({
+                await this.updatedPublishedVersionId({
                     id,
                     userId,
                     projectId,
                 })
             }
             else if (operation.type === FlowOperationType.CHANGE_STATUS) {
-                await flowService.updateStatus({
+                await this.updateStatus({
                     id,
                     projectId,
                     newStatus: operation.request.status,
                 })
             }
             else if (operation.type === FlowOperationType.CHANGE_FOLDER) {
-                await flowRepo.update(id, {
+                await flowRepo().update(id, {
                     folderId: operation.request.folderId,
                 })
             }
@@ -191,13 +192,23 @@ export const flowService = {
                     })
 
                     // Duplicate the artifacts from the previous version, otherwise they will be deleted during update operation
-                    lastVersion = await flowVersionService.applyOperation(userId, projectId, lastVersion, {
-                        type: FlowOperationType.IMPORT_FLOW,
-                        request: lastVersionWithArtifacts,
+                    lastVersion = await flowVersionService.applyOperation({
+                        userId,
+                        projectId,
+                        flowVersion: lastVersion,
+                        userOperation: {
+                            type: FlowOperationType.IMPORT_FLOW,
+                            request: lastVersionWithArtifacts,
+                        },
                     })
                 }
 
-                await flowVersionService.applyOperation(userId, projectId, lastVersion, operation)
+                await flowVersionService.applyOperation({
+                    userId,
+                    projectId,
+                    flowVersion: lastVersion,
+                    userOperation: operation,
+                })
             }
         }
         finally {
@@ -222,7 +233,7 @@ export const flowService = {
             flowToUpdate.status = newStatus
             flowToUpdate.schedule = scheduleOptions
 
-            await flowRepo.save(flowToUpdate)
+            await flowRepo().save(flowToUpdate)
         }
 
         return this.getOnePopulatedOrThrow({
@@ -232,8 +243,6 @@ export const flowService = {
     },
 
     async updatedPublishedVersionId({ id, userId, projectId }: UpdatePublishedVersionIdParams): Promise<PopulatedFlow> {
-
-
         const flowToUpdate = await this.getOneOrThrow({ id, projectId })
 
         const flowVersionToPublish = await flowVersionService.getFlowVersionOrThrow({
@@ -246,23 +255,25 @@ export const flowService = {
             flowVersionToPublish,
         })
 
-        const lockedFlowVersion = await lockFlowVersionIfNotLocked({
-            flowVersion: flowVersionToPublish,
-            userId,
-            projectId,
+        return transaction(async (entityManager) => {
+            const lockedFlowVersion = await lockFlowVersionIfNotLocked({
+                flowVersion: flowVersionToPublish,
+                userId,
+                projectId,
+                entityManager,
+            })
+
+            flowToUpdate.publishedVersionId = lockedFlowVersion.id
+            flowToUpdate.status = FlowStatus.ENABLED
+            flowToUpdate.schedule = scheduleOptions
+
+            const updatedFlow = await flowRepo(entityManager).save(flowToUpdate)
+
+            return {
+                ...updatedFlow,
+                version: lockedFlowVersion,
+            }
         })
-
-        flowToUpdate.publishedVersionId = lockedFlowVersion.id
-        flowToUpdate.status = FlowStatus.ENABLED
-        flowToUpdate.schedule = scheduleOptions
-
-        const updatedFlow = await flowRepo.save(flowToUpdate)
-
-        return {
-            ...updatedFlow,
-            version: lockedFlowVersion,
-        }
-
     },
 
     async delete({ id, projectId }: DeleteParams): Promise<void> {
@@ -281,7 +292,7 @@ export const flowService = {
                 flowToDelete,
             })
 
-            await flowRepo.delete({ id })
+            await flowRepo().delete({ id })
         }
         finally {
             await lock.release()
@@ -289,7 +300,7 @@ export const flowService = {
     },
 
     async getAllEnabled(): Promise<Flow[]> {
-        return flowRepo.findBy({
+        return flowRepo().findBy({
             status: FlowStatus.ENABLED,
         })
     },
@@ -316,26 +327,32 @@ export const flowService = {
 
     async count({ projectId, folderId }: CountParams): Promise<number> {
         if (folderId === undefined) {
-            return flowRepo.countBy({ projectId })
+            return flowRepo().countBy({ projectId })
         }
 
-        return flowRepo.countBy({
+        return flowRepo().countBy({
             folderId: folderId !== 'NULL' ? folderId : IsNull(),
             projectId,
         })
     },
 }
 
-const lockFlowVersionIfNotLocked = async ({ flowVersion, userId, projectId }: LockFlowVersionIfNotLockedParams): Promise<FlowVersion> => {
+const lockFlowVersionIfNotLocked = async ({ flowVersion, userId, projectId, entityManager }: LockFlowVersionIfNotLockedParams): Promise<FlowVersion> => {
     if (flowVersion.state === FlowVersionState.LOCKED) {
         return flowVersion
     }
 
-    return flowVersionService.applyOperation(userId, projectId, flowVersion, {
-        type: FlowOperationType.LOCK_FLOW,
-        request: {
-            flowId: flowVersion.flowId,
+    return flowVersionService.applyOperation({
+        userId,
+        projectId,
+        flowVersion,
+        userOperation: {
+            type: FlowOperationType.LOCK_FLOW,
+            request: {
+                flowId: flowVersion.flowId,
+            },
         },
+        entityManager,
     })
 }
 
@@ -413,4 +430,5 @@ type LockFlowVersionIfNotLockedParams = {
     flowVersion: FlowVersion
     userId: UserId
     projectId: ProjectId
+    entityManager: EntityManager
 }

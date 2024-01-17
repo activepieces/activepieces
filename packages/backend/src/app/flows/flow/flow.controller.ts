@@ -6,6 +6,7 @@ import {
     GetFlowQueryParamsRequest,
     ListFlowsRequest,
     PopulatedFlow,
+    Principal,
     PrincipalType,
     SeekPage,
 } from '@activepieces/shared'
@@ -16,6 +17,7 @@ import dayjs from 'dayjs'
 import { isNil } from 'lodash'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { projectService } from '../../project/project-service'
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -47,9 +49,10 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         }
         // END EE
 
+        const userId = await extractUserIdFromPrincipal(request.principal)
         return flowService.update({
             id: request.params.id,
-            userId: request.principal.id,
+            userId,
             projectId: request.principal.projectId,
             operation: request.body,
         })
@@ -98,6 +101,15 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     })
 }
 
+async function extractUserIdFromPrincipal(principal: Principal): Promise<string> {
+    if (principal.type === PrincipalType.USER) {
+        return principal.id
+    }
+    // TODO currently it's same as api service, but it's better to get it from api key service, in case we introduced more admin users
+    const project = await projectService.getOneOrThrow(principal.projectId)
+    return project.ownerId
+}
+
 const CreateFlowRequestOptions = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
@@ -114,6 +126,8 @@ const CreateFlowRequestOptions = {
 
 const UpdateFlowRequestOptions = {
     schema: {
+        tags: ['flows'],
+        description: 'Apply an operation to a flow',
         body: FlowOperationRequest,
         params: Type.Object({
             id: ApId,

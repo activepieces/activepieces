@@ -182,10 +182,10 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
         })
         return
     }
-    const flowVersion = await flowVersionService.lockPieceVersions(
-        jobData.projectId,
-        flowVersionWithLockedPieces,
-    )
+    const flowVersion = await flowVersionService.lockPieceVersions({
+        projectId: jobData.projectId,
+        flowVersion: flowVersionWithLockedPieces,
+    })
 
     await flowWorkerHooks.getHooks().preExecute({ projectId: jobData.projectId, runId: jobData.runId })
 

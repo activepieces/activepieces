@@ -26,10 +26,6 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             modifiedFlags[ApFlagId.SHOW_COMMUNITY] = false
             modifiedFlags[ApFlagId.SHOW_DOCS] = false
             modifiedFlags[ApFlagId.SHOW_BILLING] = false
-            modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP] = {
-                [ThirdPartyAuthnProviderEnum.GOOGLE]: false,
-                [ThirdPartyAuthnProviderEnum.GITHUB]: false,
-            },
             modifiedFlags[ApFlagId.SHOW_COPILOT] = false
             modifiedFlags[ApFlagId.SHOW_BLOG_GUIDE] = false
             modifiedFlags[ApFlagId.SHOW_COMMUNITY_PIECES] = false

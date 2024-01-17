@@ -23,9 +23,12 @@ import { UpgradeDialogComponent } from '@activepieces/ee-billing-ui';
 import { Store } from '@ngrx/store';
 import {
   AuthenticationService,
+  IsFeatureEnabledBaseComponent,
   ProjectSelectors,
 } from '@activepieces/ui/common';
 import { RolesDisplayNames } from '../utils';
+import { ActivatedRoute } from '@angular/router';
+import { ApFlagId } from '@activepieces/shared';
 
 @Component({
   selector: 'app-project-members-table',
@@ -33,7 +36,10 @@ import { RolesDisplayNames } from '../utils';
   styleUrls: [],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ProjectMembersTableComponent implements OnInit {
+export class ProjectMembersTableComponent
+  extends IsFeatureEnabledBaseComponent
+  implements OnInit
+{
   dataSource!: ProjectMembersTableDataSource;
   dialogClosed$: Observable<void> | undefined;
   deleteInvitation$: Observable<void> | undefined;
@@ -48,17 +54,21 @@ export class ProjectMembersTableComponent implements OnInit {
     [ProjectMemberStatus.ACTIVE]: $localize`Active`,
     [ProjectMemberStatus.PENDING]: $localize`Pending`,
   };
+
   constructor(
     private matDialog: MatDialog,
     private billingService: BillingService,
     private store: Store,
     private projectMemberService: ProjectMemberService,
-    private authenticationService: AuthenticationService
+    private authenticationService: AuthenticationService,
+    activatedRoute: ActivatedRoute
   ) {
+    super(activatedRoute, ApFlagId.PROJECT_MEMBERS_ENABLED);
     this.dataSource = new ProjectMembersTableDataSource(
       this.authenticationService,
       this.projectMemberService,
-      this.refreshTableAtCurrentCursor$.asObservable().pipe(startWith(true))
+      this.refreshTableAtCurrentCursor$.asObservable().pipe(startWith(true)),
+      !this.isFeatureEnabled
     );
   }
   ngOnInit(): void {

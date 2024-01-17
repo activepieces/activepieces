@@ -1,13 +1,17 @@
 import {
+  AuthenticationType,
   HttpMethod,
   httpClient,
+<<<<<<< HEAD:packages/pieces/community/woocommerce/src/lib/common/index.ts
   AuthenticationType,
+=======
+>>>>>>> origin/main:packages/pieces/woocommerce/src/lib/common/index.ts
 } from '@activepieces/pieces-common';
-
-import axios from 'axios';
-import https from 'https';
+import { PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { wooAuth } from '../../';
 
 export const wooCommon = {
+<<<<<<< HEAD:packages/pieces/community/woocommerce/src/lib/common/index.ts
   /**
    * Creates a WooCommerce webhook creation object for the request body.
    * @param type The topic type to listen for (Customer, Order, Product, Coupon).
@@ -33,10 +37,15 @@ export const wooCommon = {
   }),
 
   async subscribeWebhook(
+=======
+  async createWebhook(
+    name: string,
+>>>>>>> origin/main:packages/pieces/woocommerce/src/lib/common/index.ts
     webhookUrl: string,
-    type: string,
-    authentication: any
+    topic: string,
+    auth: PiecePropValueSchema<typeof wooAuth>
   ) {
+<<<<<<< HEAD:packages/pieces/community/woocommerce/src/lib/common/index.ts
     let webhookIds: number[] = [];
     const actions = ['created', 'updated', 'deleted'];
 
@@ -108,5 +117,53 @@ export const wooCommon = {
     });
 
     return req.body;
+=======
+    const trimmedBaseUrl = auth.baseUrl.replace(/\/$/, '');
+    return await httpClient.sendRequest<WebhookInformation>({
+      url: `${trimmedBaseUrl}/wp-json/wc/v3/webhooks`,
+      method: HttpMethod.POST,
+      body: {
+        name: name,
+        topic: topic,
+        delivery_url: webhookUrl,
+      },
+      authentication: {
+        type: AuthenticationType.BASIC,
+        username: auth.consumerKey,
+        password: auth.consumerSecret,
+      },
+    });
+  },
+  async deleteWebhook(
+    webhookId: number,
+    auth: PiecePropValueSchema<typeof wooAuth>
+  ) {
+    const trimmedBaseUrl = auth.baseUrl.replace(/\/$/, '');
+    return await httpClient.sendRequest({
+      url: `${trimmedBaseUrl}/wp-json/wc/v3/webhooks/${webhookId}`,
+      method: HttpMethod.DELETE,
+      queryParams: { force: 'true' },
+      authentication: {
+        type: AuthenticationType.BASIC,
+        username: auth.consumerKey,
+        password: auth.consumerSecret,
+      },
+    });
+>>>>>>> origin/main:packages/pieces/woocommerce/src/lib/common/index.ts
   },
 };
+
+export interface WebhookInformation {
+  id: number;
+  name: string;
+  status: string;
+  topic: string;
+  resource: string;
+  event: string;
+  hooks: string[];
+  delivery_url: string;
+  date_created: string;
+  date_created_gmt: string;
+  date_modified: string;
+  date_modified_gmt: string;
+}

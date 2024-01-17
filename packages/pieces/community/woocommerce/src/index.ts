@@ -4,17 +4,13 @@ import {
   createPiece,
 } from '@activepieces/pieces-framework';
 
-import { customer } from './lib/triggers/customer';
-import { coupon } from './lib/triggers/coupon';
-import { order } from './lib/triggers/order';
-import { product } from './lib/triggers/product';
-import { lineItemInOrder } from './lib/triggers/line-item-in-order';
-
 import { wooCreateCustomer } from './lib/actions/create-customer';
 import { wooCreateCoupon } from './lib/actions/create-coupon';
+import { wooCreateCustomer } from './lib/actions/create-customer';
 import { wooCreateProduct } from './lib/actions/create-product';
 import { wooFindCustomer } from './lib/actions/find-customer';
 import { wooFindProduct } from './lib/actions/find-product';
+import { triggers } from './lib/triggers';
 
 const authDescription = `
 To generate your API credentials, follow the steps below:
@@ -65,7 +61,7 @@ export const woocommerce = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/woocommerce.png',
   auth: wooAuth,
   minimumSupportedRelease: '0.7.1',
-  authors: ['MoShizzle', 'TaskMagicKyle'],
+  authors: ['MoShizzle', 'TaskMagicKyle', 'kishanprmr'],
   actions: [
     wooCreateCustomer,
     wooCreateCoupon,
@@ -73,5 +69,5 @@ export const woocommerce = createPiece({
     wooFindCustomer,
     wooFindProduct,
   ],
-  triggers: [customer, coupon, order, product, lineItemInOrder],
+  triggers: triggers,
 });

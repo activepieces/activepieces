@@ -2,6 +2,7 @@ import { PieceMetadata } from '@activepieces/pieces-framework'
 import { AllPiecesStats } from './piece-stats-service'
 import { ApEdition, PackageType, PieceType, ProjectId } from '@activepieces/shared'
 import { PieceMetadataModel, PieceMetadataModelSummary } from '../piece-metadata-entity'
+import { EntityManager } from 'typeorm'
 
 type ListParams = {
     release: string
@@ -15,6 +16,7 @@ type GetOrThrowParams = {
     name: string
     version?: string
     projectId?: string
+    entityManager?: EntityManager
 }
 
 type DeleteParams = {

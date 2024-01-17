@@ -68,6 +68,7 @@
       "@activepieces/piece-beamer": [
         "packages/pieces/community/beamer/src/index.ts"
       ],
+      "@activepieces/piece-baserow": ["packages/pieces/baserow/src/index.ts"],
       "@activepieces/piece-bettermode": [
         "packages/pieces/community/bettermode/src/index.ts"
       ],
@@ -170,6 +171,8 @@
       "@activepieces/piece-flowlu": [
         "packages/pieces/community/flowlu/src/index.ts"
       ],
+      "@activepieces/piece-frame": ["packages/pieces/frame/src/index.ts"],
+      "@activepieces/piece-formbricks": ["packages/pieces/formbricks/src/index.ts"],
       "@activepieces/piece-freshdesk": [
         "packages/pieces/community/freshdesk/src/index.ts"
       ],
