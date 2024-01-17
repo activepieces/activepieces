@@ -10,7 +10,7 @@ export async function runWithExponentialBackoff<T extends CodeAction | PieceActi
     attemptCount = 1,
 ): Promise<FlowExecutorContext> {
     const resultExecutionState = await requestFunction({ action, executionState, constants })
-    const retryEnabled = action.settings.errorHandlingOptions?.retryOnFailure.value
+    const retryEnabled = action.settings.errorHandlingOptions?.retryOnFailure?.value
 
     if (resultExecutionState.verdict === ExecutionVerdict.FAILED && attemptCount < constants.retryConstants.maxAttempts && retryEnabled && !constants.testSingleStepMode) {
         const backoffTime = Math.pow(constants.retryConstants.retryExponential, attemptCount) * constants.retryConstants.retryInterval
@@ -25,7 +25,7 @@ export async function continueIfFailureHandler<T extends CodeAction | PieceActio
     action: T,
     constants: EngineConstants,
 ): Promise<FlowExecutorContext> {
-    const continueOnFailure = action.settings.errorHandlingOptions?.continueOnFailure.value
+    const continueOnFailure = action.settings.errorHandlingOptions?.continueOnFailure?.value
 
     if (executionState.verdict === ExecutionVerdict.FAILED && continueOnFailure && !constants.testSingleStepMode) {
         return executionState.setVerdict(ExecutionVerdict.RUNNING, undefined).increaseTask()
