@@ -40,6 +40,7 @@ export class FileSandbox extends AbstractSandbox {
             `AP_CODE_EXECUTOR_SANDBOX_TYPE=${codeExecutorSandboxType}`,
             `AP_PIECES_SOURCE=${pieceSources}`,
             'NODE_OPTIONS=--enable-source-maps',
+            `${process.platform === 'win32' ? '&&' : ''}`,
             `"${AbstractSandbox.nodeExecutablePath}"`,
             'main.js',
             operation,

@@ -7,36 +7,32 @@ export class ChangeVariableSyntax1683898241599 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         logger.info('ChangeVariableSyntax1683898241599, started')
-        const flowVersionRepo = queryRunner.connection.getRepository(FLOW_VERSION_TABLE)
-        const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
+        const flowVersions = await queryRunner.query(`SELECT * FROM ${FLOW_VERSION_TABLE}`)
         let count = 0
         for (const flowVersion of flowVersions) {
             const step = flowVersion.trigger
             const update = updateStep(step, true)
             if (update) {
                 count++
-                await flowVersionRepo.update(flowVersion.id, flowVersion)
+                await queryRunner.query(`UPDATE ${FLOW_VERSION_TABLE} SET trigger = $1 WHERE id = $2`, [flowVersion.trigger, flowVersion.id])
             }
         }
         logger.info(`ChangeVariableSyntax1683898241599, updated ${count} flow versions`)
-
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         logger.info('ChangeVariableSyntax1683898241599 down, started')
-        const flowVersionRepo = queryRunner.connection.getRepository(FLOW_VERSION_TABLE)
-        const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
+        const flowVersions = await queryRunner.query(`SELECT * FROM ${FLOW_VERSION_TABLE}`)
         let count = 0
         for (const flowVersion of flowVersions) {
             const step = flowVersion.trigger
             const update = updateStep(step, false)
             if (update) {
                 count++
-                await flowVersionRepo.update(flowVersion.id, flowVersion)
+                await queryRunner.query(`UPDATE ${FLOW_VERSION_TABLE} SET trigger = $1 WHERE id = $2`, [flowVersion.trigger, flowVersion.id])
             }
         }
         logger.info(`ChangeVariableSyntax1683898241599, down ${count} flow versions`)
-
     }
 }
 
@@ -50,7 +46,6 @@ type Step = {
     onSuccessAction?: Step
     firstLoopAction?: Step
 }
-
 
 function updateStep(step: Step | undefined, forward: boolean): boolean {
     let update = false
@@ -76,13 +71,14 @@ function updateStep(step: Step | undefined, forward: boolean): boolean {
     }
     return update
 }
+
 function traverse(input: unknown, forward: boolean): unknown {
     if (input === undefined || input === null) {
         return input
     }
     if (typeof input === 'string') {
         if (forward) {
-        // Replace anything ${var.asd } to {{ var.asd }}
+            // Replace anything ${var.asd } to {{ var.asd }}
             return input.replace(/\$\{([^}]+)\}/g, '{{$1}}')
         }
         else {

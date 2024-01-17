@@ -3,38 +3,30 @@ import { logger } from '../../../helper/logger'
 
 export class AddPieceTypeAndPackageTypeToFlowTemplate1696245170062 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
-        const templates = await queryRunner.query('SELECT * FROM flow_template')
+        const connection = queryRunner.connection
+        const templates = await connection.query('SELECT * FROM flow_template')
         for (const template of templates) {
             const updated = traverseAndUpdateSubFlow(
                 addPackageTypeAndPieceTypeToPieceStepSettings,
                 template.template.trigger,
             )
             if (updated) {
-                const stringifiedTrigger = JSON.stringify(template.template.trigger)
-                await queryRunner.query(`
-                    UPDATE flow_version
-                        SET trigger = '${stringifiedTrigger}'
-                        WHERE id = '${template.id}
-                `)
+                await connection.query('UPDATE flow_template SET template = $1 WHERE id = $2', [template.template, template.id])
             }
         }
         logger.info('AddPieceTypeAndPackageTypeToFlowTemplate1696245170062: up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        const templates = await queryRunner.query('SELECT * FROM flow_template')
+        const connection = queryRunner.connection
+        const templates = await connection.query('SELECT * FROM flow_template')
         for (const template of templates) {
             const updated = traverseAndUpdateSubFlow(
                 removePackageTypeAndPieceTypeFromPieceStepSettings,
                 template.template.trigger,
             )
             if (updated) {
-                const stringifiedTrigger = JSON.stringify(template.template.trigger)
-                await queryRunner.query(`
-                    UPDATE flow_version
-                        SET trigger = '${stringifiedTrigger}'
-                        WHERE id = '${template.id}
-                `)
+                await connection.query('UPDATE flow_template SET template = $1 WHERE id = $2', [template.template, template.id])
             }
         }
         logger.info('AddPieceTypeAndPackageTypeToFlowTemplate1696245170062: down')

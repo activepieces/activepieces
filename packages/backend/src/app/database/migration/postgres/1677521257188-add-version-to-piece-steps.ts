@@ -9,7 +9,6 @@ export class addVersionToPieceSteps1677521257188 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         logger.info('addVersionToPieceSteps1677521257188, started')
 
-        const flowVersionRepo = queryRunner.connection.getRepository(FLOW_VERSION_TABLE)
         const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
 
         for (const flowVersion of flowVersions) {
@@ -26,7 +25,7 @@ export class addVersionToPieceSteps1677521257188 implements MigrationInterface {
             }
 
             if (update) {
-                await flowVersionRepo.update(flowVersion.id, flowVersion)
+                await queryRunner.query(`UPDATE ${FLOW_VERSION_TABLE} SET trigger = $1 WHERE id = $2`, [flowVersion.trigger, flowVersion.id])
             }
         }
 
@@ -36,7 +35,6 @@ export class addVersionToPieceSteps1677521257188 implements MigrationInterface {
     public async down(queryRunner: QueryRunner): Promise<void> {
         logger.info('addVersionToPieceSteps1677521257188, started')
 
-        const flowVersionRepo = queryRunner.connection.getRepository(FLOW_VERSION_TABLE)
         const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
 
         for (const flowVersion of flowVersions) {
@@ -53,7 +51,7 @@ export class addVersionToPieceSteps1677521257188 implements MigrationInterface {
             }
 
             if (update) {
-                await flowVersionRepo.update(flowVersion.id, flowVersion)
+                await queryRunner.query(`UPDATE ${FLOW_VERSION_TABLE} SET trigger = $1 WHERE id = $2`, [flowVersion.trigger, flowVersion.id])
             }
         }
 

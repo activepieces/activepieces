@@ -8,24 +8,15 @@ export class AddPieceTypeAndPackageTypeToFlowVersion1696245170061 implements Mig
         logger.info('AddPieceTypeAndPackageTypeToFlowVersion1696245170061: found ' + flowVersionIds.length + ' versions')
         let updatedFlows = 0
         for (const { id } of flowVersionIds) {
-            const flowVersion = await queryRunner.query(`
-                SELECT * from flow_version
-                    where id = '${id}
-            `)
-
-            if (flowVersion) {
+            // Fetch FlowVersion record by ID
+            const flowVersion = await queryRunner.query('SELECT * FROM flow_version WHERE id = ?', [id])
+            if (flowVersion.length > 0) {
                 const updated = traverseAndUpdateSubFlow(
                     addPackageTypeAndPieceTypeToPieceStepSettings,
-                    flowVersion.trigger,
+                    flowVersion[0].trigger,
                 )
-
                 if (updated) {
-                    const triggerStringified = JSON.stringify(flowVersion.trigger)
-                    await queryRunner.query(`
-                        UPDATE flow_version
-                            SET trigger = '${triggerStringified}'
-                            WHERE id = '${id}
-                    `)
+                    await queryRunner.query('UPDATE flow_version SET trigger = ? WHERE id = ?', [flowVersion[0].trigger, flowVersion[0].id])
                 }
             }
             updatedFlows++
@@ -42,23 +33,15 @@ export class AddPieceTypeAndPackageTypeToFlowVersion1696245170061 implements Mig
         const flowVersionIds = await queryRunner.query('SELECT id FROM flow_version')
         for (const { id } of flowVersionIds) {
             // Fetch FlowVersion record by ID
-            const flowVersion = await queryRunner.query(`
-                SELECT * from flow_version
-                    where id = '${id}
-            `)
+            const flowVersion = await queryRunner.query('SELECT * FROM flow_version WHERE id = ?', [id])
 
-            if (flowVersion) {
+            if (flowVersion.length > 0) {
                 const updated = traverseAndUpdateSubFlow(
                     removePackageTypeAndPieceTypeFromPieceStepSettings,
-                    flowVersion.trigger,
+                    flowVersion[0].trigger,
                 )
                 if (updated) {
-                    const triggerStringified = JSON.stringify(flowVersion.trigger)
-                    await queryRunner.query(`
-                        UPDATE flow_version
-                            SET trigger = '${triggerStringified}'
-                            WHERE id = '${id}
-                    `)
+                    await queryRunner.query('UPDATE flow_version SET trigger = ? WHERE id = ?', [flowVersion[0].trigger, flowVersion[0].id])
                 }
             }
         }

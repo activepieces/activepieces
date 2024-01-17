@@ -14,7 +14,9 @@
       "dark": "#121212"
     }
   },
-  "openapi": ["/openapi.json"],
+  "openapi": [
+    "/openapi.json"
+  ],
   "metadata": {
     "og:image": "https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/62c4ecbe6b2d76719d890ae7_Screenshot%202022-07-06%20at%2004.59.45-p-2600.png",
     "description": "Open source alternative to zapier"
@@ -71,60 +73,59 @@
         "getting-started/principles"
       ]
     },
-       {
-        "group": "Get Started",
-        "pages": [
-          "endpoints/overview"
-        ]
-       },
-       {
-          "group": "Endpoints",
+    {
+      "group": "Get Started",
+      "pages": [
+        "endpoints/overview"
+      ]
+    },
+    {
+      "group": "Endpoints",
+      "pages": [
+        {
+          "group": "Projects",
+          "icon": "building",
           "pages": [
-            {
-              "group": "Projects",
-              "icon": "building",
-              "pages": [
-                "endpoints/projects/schema",
-                "endpoints/projects/create",
-                "endpoints/projects/update",
-                "endpoints/projects/list"
-
-              ]
-            },
-            {
-              "group": "Project Members",
-              "icon": "user",
-              "pages": [
-                "endpoints/project-members/schema",
-                "endpoints/project-members/create",
-                "endpoints/project-members/list",
-                "endpoints/project-members/delete"
-              ]
-            },
-            {
-              "group": "Connections",
-              "icon": "link",
-              "pages": [
-                "endpoints/connections/schema",
-                "endpoints/connections/upsert",
-                "endpoints/connections/list",
-                "endpoints/connections/delete"
-              ]
-            },
-            {
-              "group": "Flows",
-              "icon": "bolt",
-              "pages": [
-                "endpoints/flows/schema",
-                "endpoints/flows/create",
-                "endpoints/flows/update",
-                "endpoints/flows/get",
-                "endpoints/flows/list",
-                "endpoints/flows/delete"
-              ]
-            }
+            "endpoints/projects/schema",
+            "endpoints/projects/create",
+            "endpoints/projects/update",
+            "endpoints/projects/list"
           ]
         },
+        {
+          "group": "Project Members",
+          "icon": "user",
+          "pages": [
+            "endpoints/project-members/schema",
+            "endpoints/project-members/create",
+            "endpoints/project-members/list",
+            "endpoints/project-members/delete"
+          ]
+        },
+        {
+          "group": "Connections",
+          "icon": "link",
+          "pages": [
+            "endpoints/connections/schema",
+            "endpoints/connections/upsert",
+            "endpoints/connections/list",
+            "endpoints/connections/delete"
+          ]
+        },
+        {
+          "group": "Flows",
+          "icon": "bolt",
+          "pages": [
+            "endpoints/flows/schema",
+            "endpoints/flows/create",
+            "endpoints/flows/update",
+            "endpoints/flows/get",
+            "endpoints/flows/list",
+            "endpoints/flows/delete"
+          ]
+        }
+      ]
+    },
     {
       "group": "Flows",
       "pages": [
@@ -233,7 +234,6 @@
           "pages": [
             "embedding/embed-builder/generate-jwt",
             "embedding/embed-builder/embed-iframe"
-            
           ]
         },
         {
@@ -259,6 +259,12 @@
         "platform/manage-pieces",
         "platform/manage-oauth2",
         "platform/customize-emails"
+      ]
+    },
+    {
+      "group": "team",
+      "pages": [
+        "team/overview"
       ]
     },
     {
