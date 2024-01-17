@@ -1,18 +1,21 @@
 import ivm from 'isolated-vm'
 import { CodeExecutorSandbox, CodeModule } from './code-executor-common'
 
+const ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES = 128
+const INPUTS_VARIABLE_NAME = 'inputs'
+
 /**
  * Runs code in a V8 Isolate sandbox
  */
 export const isolateCodeExecutorSandbox: CodeExecutorSandbox = {
     async run({ codeModule, inputs }) {
-        const isolate = new ivm.Isolate({ memoryLimit: 128 })
+        const isolate = new ivm.Isolate({ memoryLimit: ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES })
 
         try {
             const sourceCode = serializeCodeModule(codeModule)
 
             const context = await isolate.createContext()
-            await context.global.set('inputs', new ivm.ExternalCopy(inputs).copyInto())
+            await context.global.set(INPUTS_VARIABLE_NAME, new ivm.ExternalCopy(inputs).copyInto())
 
             const script = await isolate.compileScript(sourceCode)
 
