@@ -10,7 +10,6 @@ import { googleDriveListFiles } from './lib/action/list-files.action';
 import { googleDriveSearchFolder } from './lib/action/search-folder.action';
 import { duplicateFileAction } from './lib/action/duplicate-file.action';
 import { saveFileAsPdf } from './lib/action/save-file-as-pdf.action';
-import { googleDriveGetFileByName } from './lib/action/get-file-by-name';
 
 export const googleDriveAuth = PieceAuth.OAuth2({
     description: "",
@@ -30,7 +29,6 @@ export const googleDrive = createPiece({
         googleDriveCreateNewFolder, 
         googleDriveCreateNewTextFile, 
         googleDriveUploadFile, 
-        googleDriveGetFileByName, 
         readFile, 
         googleDriveListFiles, 
         googleDriveSearchFolder, 
