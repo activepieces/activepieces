@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Input,
+  OnInit,
+} from '@angular/core';
 import { CustomDomainDataSource } from './custom-domain-table.datasource';
 import { Observable, Subject, tap } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
@@ -7,6 +12,7 @@ import { CustomDomain, Platform } from '@activepieces/ee-shared';
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
+  featureDisabledTooltip,
 } from '@activepieces/ui/common';
 import { CustomDomainService } from '../../service/custom-domain.service';
 import { CreateCustomDomainDialogComponent } from '../dialogs/create-custom-domain-dialog/create-custom-domain-dialog.component';
@@ -16,19 +22,22 @@ import { CreateCustomDomainDialogComponent } from '../dialogs/create-custom-doma
   templateUrl: './custom-domain-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CustomDomainTableComponent {
+export class CustomDomainTableComponent implements OnInit {
   displayedColumns = ['domain', 'created', 'action'];
-  dataSource: CustomDomainDataSource;
+  dataSource!: CustomDomainDataSource;
   refresh$: Subject<boolean> = new Subject();
   dialogClosed$?: Observable<unknown>;
+  featureDisabledTooltip = featureDisabledTooltip;
   @Input({ required: true }) platform!: Platform;
   constructor(
     private matDialog: MatDialog,
     private customDomainService: CustomDomainService
-  ) {
+  ) {}
+  ngOnInit(): void {
     this.dataSource = new CustomDomainDataSource(
       this.refresh$.asObservable().pipe(startWith(false)),
-      this.customDomainService
+      this.customDomainService,
+      !!this.platform.isDemo
     );
   }
   createKey() {
