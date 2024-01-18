@@ -8,8 +8,6 @@ on:
 
 jobs:
   Release:
-    env:
-      MY_VERSION: v8isolate1
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
