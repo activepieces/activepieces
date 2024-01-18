@@ -1,5 +1,7 @@
 import {
     ActivepiecesError,
+    ApEnvironment,
+    CodeExecutorSandboxType,
     ErrorCode,
     isNil,
 } from '@activepieces/shared'
@@ -103,8 +105,30 @@ const getEnvVar = (prop: SystemProp): string | undefined => {
 }
 
 export const validateEnvPropsOnStartup = async (): Promise<void> => {
+    const codeExecutorSandboxType = system.get<CodeExecutorSandboxType>(SystemProp.CODE_EXECUTOR_SANDBOX_TYPE)
+    const executionMode = system.get<ExecutionMode>(SystemProp.EXECUTION_MODE)
+    const signedUpEnabled =
+        system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
     const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
+    const environment = system.get(SystemProp.ENVIRONMENT)
     await loadEncryptionKey(queueMode)
+
+    if (
+        executionMode === ExecutionMode.UNSANDBOXED &&
+        codeExecutorSandboxType !== CodeExecutorSandboxType.ISOLATE &&
+        signedUpEnabled &&
+        environment === ApEnvironment.PRODUCTION
+    ) {
+        throw new ActivepiecesError(
+            {
+                code: ErrorCode.SYSTEM_PROP_INVALID,
+                params: {
+                    prop: SystemProp.EXECUTION_MODE,
+                },
+            },
+            'Allowing users to sign up is not allowed in unsandboxed mode, please check the configuration section in the documentation',
+        )
+    }
 }
 
 export enum ExecutionMode {

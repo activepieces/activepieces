@@ -1,4 +1,5 @@
-import { CodeExecutorSandbox, CodeExecutorSandboxType } from './code-executor-common'
+import { CodeExecutorSandboxType } from '@activepieces/shared'
+import { CodeExecutorSandbox } from './code-executor-common'
 import { isolateCodeExecutorSandbox } from './isolate-code-executor-sandbox'
 import { noOpCodeExecutorSandbox } from './no-op-code-executor-sandbox'
 
