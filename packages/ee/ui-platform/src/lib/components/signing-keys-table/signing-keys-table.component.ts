@@ -4,12 +4,15 @@ import { Observable, Subject, tap } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { CreateSigningKeyDialogComponent } from '../dialogs/create-signing-key-dialog/create-signing-key-dialog.component';
 import { startWith } from 'rxjs';
-import { SigningKey } from '@activepieces/ee-shared';
+import { Platform, SigningKey } from '@activepieces/ee-shared';
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
+  featureDisabledTooltip,
 } from '@activepieces/ui/common';
 import { SigningKeysService } from '../../service/signing-keys.service';
+import { ActivatedRoute } from '@angular/router';
+import { PLATFORM_RESOLVER_KEY } from '../../platform.resolver';
 
 @Component({
   selector: 'app-signing-keys-table',
@@ -21,13 +24,18 @@ export class SigningKeysTableComponent {
   dataSource: SigningKeysDataSource;
   refresh$: Subject<boolean> = new Subject();
   dialogClosed$?: Observable<unknown>;
+  platform: Platform;
+  featureDisabledTooltip = featureDisabledTooltip;
   constructor(
     private matDialog: MatDialog,
-    private signingKeysService: SigningKeysService
+    private signingKeysService: SigningKeysService,
+    private route: ActivatedRoute
   ) {
+    this.platform = this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
     this.dataSource = new SigningKeysDataSource(
       this.refresh$.asObservable().pipe(startWith(false)),
-      this.signingKeysService
+      this.signingKeysService,
+      !this.platform.embeddingEnabled
     );
   }
   createKey() {

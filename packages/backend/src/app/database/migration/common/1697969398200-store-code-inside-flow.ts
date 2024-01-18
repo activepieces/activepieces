@@ -22,17 +22,16 @@ export class StoreCodeInsideFlow1697969398200 implements MigrationInterface {
     }
 
     private async processFlowVersions(queryRunner: QueryRunner, stepFunction: FunctionTransformer) {
-        const flowVersionRepo = queryRunner.connection.getRepository<FlowVersion>('flow_version')
         const flowVersionIds = await queryRunner.query('SELECT id FROM flow_version')
 
         for (const { id } of flowVersionIds) {
-            const flowVersion = await flowVersionRepo.findOneBy({ id })
+            const flowVersion = await this.findFlowVersionById(queryRunner, id)
 
             if (flowVersion) {
                 const updated = await traverseAndUpdateSubFlow(stepFunction, flowVersion.trigger, queryRunner, flowVersion.flowId, flowVersion.id)
 
                 if (updated) {
-                    await flowVersionRepo.update(flowVersion.id, flowVersion)
+                    await this.updateFlowVersion(queryRunner, flowVersion.id, flowVersion)
                 }
             }
         }
@@ -54,6 +53,15 @@ export class StoreCodeInsideFlow1697969398200 implements MigrationInterface {
                 }
             }
         }
+    }
+
+    private async findFlowVersionById(queryRunner: QueryRunner, id: string): Promise<FlowVersion | undefined> {
+        const flowVersion = await queryRunner.query('SELECT * FROM flow_version WHERE id = ? LIMIT 1', [id])
+        return flowVersion[0]
+    }
+
+    private async updateFlowVersion(queryRunner: QueryRunner, id: string, flowVersion: FlowVersion): Promise<void> {
+        await queryRunner.query('UPDATE flow_version SET "flowId" = ?, trigger = ? WHERE id = ?', [flowVersion.flowId, flowVersion.trigger, id])
     }
 }
 

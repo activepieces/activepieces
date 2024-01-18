@@ -41,15 +41,16 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
 
         // BEGIN EE
         const currentTime = dayjs()
+        const userId = await extractUserIdFromPrincipal(request.principal)
+
         if (!isNil(flow.version.updatedBy) &&
-            flow.version.updatedBy !== request.principal.id &&
+            flow.version.updatedBy !== userId &&
             currentTime.diff(dayjs(flow.version.updated), 'minute') <= 1
         ) {
             return reply.status(StatusCodes.CONFLICT).send()
         }
         // END EE
 
-        const userId = await extractUserIdFromPrincipal(request.principal)
         return flowService.update({
             id: request.params.id,
             userId,

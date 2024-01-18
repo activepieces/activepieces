@@ -1,4 +1,4 @@
-import { codeExecutor } from '../../src/lib/handler/code-executor'
+import { codeExecutor } from '../../src/lib/handler/code/code-executor'
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { buildCodeAction, generateMockEngineConstants } from './test-helper'
 

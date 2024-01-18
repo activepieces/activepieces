@@ -111,10 +111,12 @@ const checkForClientRouteChanges = (client: ActivepiecesEmbedded) => {
       if (
         event.data.type === ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED
       ) {
+        const prefixStartsWithSlash = client._prefix.startsWith('/')? client._prefix : `/${client._prefix}`;
+        const routeWithPrefix = prefixStartsWithSlash + event.data.data.route;
         if (!client.handleClientNavigation) {
-          this.history.replaceState({}, '', event.data.data.route);
+          this.history.replaceState({}, '', routeWithPrefix);
         } else {
-          client.handleClientNavigation({ route: event.data.data.route });
+          client.handleClientNavigation({ route: routeWithPrefix });
         }
       }
     }

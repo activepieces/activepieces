@@ -14,6 +14,133 @@ Semantic versioning is a standardized way of versioning software projects. It us
 
 Here's the revised text with improved grammar and spelling:
 
+
+### 17/1/2024
+
+**✨ Exciting New Features**
+
+* feat: add Ukrainian and Bulgarian language / update other languages (#3682) @abuaboud
+* feat: continue on failure and retry on failure (#3662) @MoShizzle
+* feat: filter runs by flow (#3673) @MoShizzle
+
+**🧩 Pieces**
+
+* feat(clickup): set custom fields action / get custom fields action (#3675) @kanarelo
+* fix: monday & woocommerce & onfleet triggers (#3680) @abuaboud
+* feat(google-drive): add permission action / remove permission action (#3666) @pfernandez98
+* fix(woocommerce): triggers saving issue (#3668) @kishanprmr
+* feat(clickup): delete task action, get tasks with ability to filter by a space, a list or a workspace  (#3657) @kanarelo
+* fix(google-drive): hide trashed files (#3663) @abuaboud
+* fix(facebook): list pages (#3660) @abuaboud
+* feat(formbricks): Response Created, Response Updated, Response Finished triggers (#3648) @kanarelo
+* feat(baserow): all actions related to table row (#3646) @kishanprmr
+* fix(flowlu): make name/title field optional in update actions (#3647) @kishanprmr
+* feat(frame.io): Asset Created Trigger / Project Created Trigger / Comment Created Trigger (#3622) @kanarelo
+* feat(robolly): add properties for custom modification  (#3631) @pfernandez98
+
+**🐞 Bug Fixes**
+
+* fix(embed): prefix should be included in routing (#3681) @abuaboud
+* fix(copilot): code writer should use import for packages (#3674) @MoShizzle
+* fix: extract user id from principal in import flow (#3671) @abuaboud
+* fix: add instructions for google & github sso (#3650) @abuaboud
+* fix: StoreCodeInsideFlow1697969398200 migration (#3642) @abuaboud
+
+**🎨 Enhancements & Polish**
+
+* fix: Show failed iteration in case the failed step is within a loop in runs/test (#3658) @AbdulTheActivePiecer
+* feat: prioritize webhook sync calls (#3644) @abuaboud
+* feat(project): add worker project endpoints to ee (#3637) @khaledmashaly
+
+**📚 Documentation**
+
+* docs: add update flow documentation (#3651) @abuaboud
+* chore: fixed wrong date in changelog (#3633) @zaaakher
+* docs: add zaaakher as a contributor for doc (#3638) @allcontributors
+
+**👩‍💻 Developer Experience**
+
+* fix: sandbox error on windows (#3670) @MoShizzle
+
+**🧹 Maintenance**
+
+* fix: database migration (#3678) @abuaboud
+* chore: view teams in community (#3669) @AbdulTheActivePiecer
+* feat: add .nvmrc file (#3641) @zaaakher
+* chore: use db transactions for "update published flow version" request (#3630) @khaledmashaly
+* chore: clean update flow endpoint (#3615) @abuaboud
+
+**🖥️ API Changes**
+
+* chore: clean update flow endpoint (#3615) @abuaboud
+
+**Thanks ❤️**
+@AbdulTheActivePiecer, @MoShizzle, @abuaboud, @allcontributors, @allcontributors[bot], @kanarelo, @khaledmashaly, @kishanprmr, @pfernandez98 and @zaaakher
+
+
+### 14/1/2024
+
+**✨ Exciting New Features**
+
+* feat: write code with AI (#3595) @MoShizzle
+* feat(ee): Google & Github SSO / Enforce allowed domains / Disable email auth (#3584) @abuaboud
+* feat(ee): support for git environments  (#3564) @abuaboud
+
+**🧩 Pieces**
+
+* feat(Vtiger): Create Record Action / Delete Record  Action / Get Record Action / Make Api Call  Action/ Search Record Action / Update Record Action / New or Updated Records (#3550) @kanarelo
+* feat(gmail): add capability to change attachment name for send email (#3621) @pfernandez98
+* feat(clickup): Get Task Action / Get Tasks Action / Task Tag Updated Trigger (#3616) @kanarelo
+* fix(shopify): fix authentication issue (#3619) @kishanprmr
+* feat(flowlu): all actions related to task / opportunity / contact (#3605) @kishanprmr
+* fix(google-drive): pass folder ID in duplicate file action (#3608) @kishanprmr
+* feat(Flowise.ai): make prediction action (#3588) @aasimsani
+* feat(robolly): generate image action (#3589) @pfernandez98
+* fix(airtable): fix auth error message (#3593) @kishanprmr
+* feat(monday): api token authentication / create and update actions for group / column / item actions (#3561) @kishanprmr
+* feat(google-drive): export as pdf action (#3569) @pfernandez98
+* fix(schedule): add static dropdown for minutes selection to ensure valid values (#3570) @kishanprmr
+* feat(google-documents): create document based on template / read document action (#3567) @pfernandez98
+* feat(shopify): 25 new actions 2 new triggers (#3559) @MoShizzle
+* fix(approval): test step sample data (#3560) @abuaboud
+* fix(LinkedIn): no longer truncates posts at the first opening round brackets (#3545) @aasimsani
+
+**🐞 Bug Fixes**
+
+* fix(authz): remove project check for list app-credentials endpoint (#3625) @khaledmashaly
+* fix: dashboard loaders on /flows (#3612) @kartikmehta8
+* fix: add external id to list projects / create project endpoint (#3599) @abuaboud
+* fix(backend): fix action auth validation for actions that doesn't require auth (#3592) @kishanprmr
+* fix: parse string as json object for json properties (#3579) @dennisrongo
+* fix: flow becomes no longer become empty on trigger hook failure (#3554) @khaledmashaly
+
+**🎨 Enhancements & Polish**
+
+
+* feat: ai code writer now fills inputs (#3628) @MoShizzle
+* feat: add getter for `externalProjectId` in engine run context (#3598) @khaledmashaly
+* feat: Add indicator to currently viewed version in builder, Add option to retry successful runs on latest version. (#3609) @AbdulTheActivePiecer
+* fix(backend): db index option for redis connection (#3602) @kishanprmr
+* style: adjusting big button spacing, fix role text, and stop version history icons flickering (#3582) @AbdulTheActivePiecer
+* chore: display human readable error when the file is large (#3575) @abuaboud
+* feat: filter flows by status (#3528) @khaledmashaly
+
+**📚 Documentation**
+
+* docs: add one-click template on the repocloud (#3618) @cosark
+* docs: add dependency in create action tutorial (#3586) @kartikmehta8
+* feat: add flow api documentation (#3576) @abuaboud
+
+**🧹 Maintenance**
+
+* chore: add telemetry to co-pilot (#3627) @AbdulTheActivePiecer
+* chore(deps): bump follow-redirects from 1.15.3 to 1.15.4 (#3577) @dependabot
+* chore: npm start should work on windows (#3574) @MoShizzle
+
+**Thanks ❤️**
+@AbdulTheActivePiecer, @MoShizzle, @aasimsani, @abuaboud, @allcontributors, @allcontributors[bot], @cosark, @dennisrongo, @dependabot, @dependabot[bot], @kanarelo, @kartikmehta8, @khaledmashaly, @kishanprmr and @pfernandez98
+
+
 ### 4/1/2024
 
 **✨ Exciting New Features**

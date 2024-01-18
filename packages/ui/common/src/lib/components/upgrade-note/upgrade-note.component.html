@@ -5,9 +5,9 @@
     </div>
     <div class="ap-flex ap-gap-2 ap-items-center">
         <ap-icon-button *ngIf="docsLink" [height]="24" [width]="24" iconFilename="info.svg" i18n-tooltipText
-            tooltipText="Learn more" (buttonClicked)="openPricing()">
+            tooltipText="Learn more" (buttonClicked)="openDocs()">
         </ap-icon-button>
-        <ap-button i18n btnSize="medium" *ngIf="docsLink" (buttonClicked)="openDocs()" i18n>
+        <ap-button i18n btnSize="medium" *ngIf="pricingUrl" (buttonClicked)="openPricing()" i18n>
             <div class="ap-flex ap-gap-2">
                 <svg-icon src="/assets/img/custom/upgrade.svg" class="ap-w-[20px] ap-h-[20px] ap-fill-white"
                     [applyClass]="true">

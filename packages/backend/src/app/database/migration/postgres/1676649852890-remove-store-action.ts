@@ -5,7 +5,6 @@ export class removeStoreAction1676649852890 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         logger.info('Running migration removeStoreAction1676649852890')
-        const flowVersionRepo = queryRunner.connection.getRepository('flow_version')
         const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
         let count = 0
         for (let i = 0; i < flowVersions.length; ++i) {
@@ -34,7 +33,7 @@ export class removeStoreAction1676649852890 implements MigrationInterface {
             }
 
             if (changed) {
-                await flowVersionRepo.update(currentFlowVersion.id, currentFlowVersion)
+                await queryRunner.query(`UPDATE flow_version SET trigger = '${JSON.stringify(currentFlowVersion.trigger)}' WHERE id = ${currentFlowVersion.id}`)
             }
         }
 
@@ -42,7 +41,6 @@ export class removeStoreAction1676649852890 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        const flowVersionRepo = queryRunner.connection.getRepository('flow_version')
         const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
         for (let i = 0; i < flowVersions.length; ++i) {
             const currentFlowVersion = flowVersions[i]
@@ -61,7 +59,7 @@ export class removeStoreAction1676649852890 implements MigrationInterface {
                 action = action.nextAction
             }
             if (changed) {
-                await flowVersionRepo.update(currentFlowVersion.id, currentFlowVersion)
+                await queryRunner.query(`UPDATE flow_version SET trigger = '${JSON.stringify(currentFlowVersion.trigger)}' WHERE id = ${currentFlowVersion.id}`)
             }
         }
     }

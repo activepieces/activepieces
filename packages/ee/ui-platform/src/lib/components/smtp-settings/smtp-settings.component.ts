@@ -10,6 +10,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Platform } from '@activepieces/ee-shared';
 import { BehaviorSubject, Observable, catchError, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { PLATFORM_RESOLVER_KEY } from '../../platform.resolver';
 
 interface SmtpForm {
   smtpHost: FormControl<string>;
@@ -62,13 +63,14 @@ export class SmtpSettingsComponent implements OnInit {
     });
   }
   ngOnInit(): void {
-    const platform: Platform = this.route.snapshot.data['platform'];
+    const platform: Platform = this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
     this.smtpSettingsForm.patchValue(platform);
   }
   save(): void {
     this.smtpSettingsForm.markAllAsTouched();
     if (this.smtpSettingsForm.valid && this.loading$.value === false) {
-      const platform: Platform = this.route.snapshot.data['platform'];
+      const platform: Platform =
+        this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
       this.loading$.next(true);
       this.saving$ = this.platformService
         .updatePlatform(
