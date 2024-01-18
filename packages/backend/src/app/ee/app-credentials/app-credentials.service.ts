@@ -31,8 +31,7 @@ export const appCredentialService = {
         return appCredentialRepo.findOneByOrFail({ id })
     },
     async upsert({ projectId, request }: { projectId: ProjectId, request: UpsertAppCredentialRequest }): Promise<AppCredential | null> {
-        const appCredential = await appCredentialRepo.findOneBy({ projectId, id: request.id, appName: request.appName })
-        const newId = appCredential?.id ?? apId()
+        const newId = request.id ?? apId()
         await appCredentialRepo.upsert({
             id: newId,
             projectId,
