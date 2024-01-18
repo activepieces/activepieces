@@ -13,7 +13,7 @@ type Piece = {
     minimumSupportedRelease?: string;
     maximumSupportedRelease?: string;
     metadata(): Omit<PieceMetadata, 'name' | 'version'>;
-  };
+};
 
 export const PIECES_FOLDER = 'packages/pieces'
 export const COMMUNITY_PIECE_FOLDER = 'packages/pieces/community'
@@ -85,7 +85,7 @@ async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | 
         const packageJson = await readPackageJson(folderPath);
 
         const module = await import(
-            join(folderPath, 'src', 'index'),
+            join(folderPath, 'src', 'index')
         )
 
         const { name: pieceName, version: pieceVersion } = packageJson
