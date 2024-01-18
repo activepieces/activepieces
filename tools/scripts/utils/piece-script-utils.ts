@@ -65,16 +65,20 @@ export async function findAllPieces(): Promise<PieceMetadata[]> {
 
 async function traverseFolder(folderPath: string): Promise<string[]> {
     const paths: string[] = []
-    const files = await readdir(folderPath)
+    const directoryExists = await stat(folderPath).catch(() => null)
 
-    for (const file of files) {
-        const filePath = join(folderPath, file)
-        const fileStats = await stat(filePath)
-        if (fileStats.isDirectory() && file !== 'node_modules' && file !== 'dist') {
-            paths.push(...await traverseFolder(filePath))
-        }
-        else if (file === 'package.json') {
-            paths.push(folderPath)
+    if (directoryExists && directoryExists.isDirectory()) {
+        const files = await readdir(folderPath)
+
+        for (const file of files) {
+            const filePath = join(folderPath, file)
+            const fileStats = await stat(filePath)
+            if (fileStats.isDirectory() && file !== 'node_modules' && file !== 'dist') {
+                paths.push(...await traverseFolder(filePath))
+            }
+            else if (file === 'package.json') {
+                paths.push(folderPath)
+            }
         }
     }
     return paths
@@ -100,6 +104,7 @@ async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | 
             name: packageJson.name,
             version: packageJson.version
         };
+        metadata.directoryPath = folderPath;
         metadata.name = packageJson.name;
         metadata.version = packageJson.version;
         metadata.minimumSupportedRelease = piece.minimumSupportedRelease ?? '0.0.0';
