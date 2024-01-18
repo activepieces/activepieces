@@ -47,7 +47,6 @@ export class ProjectsTableComponent {
     private route: ActivatedRoute
   ) {
     this.platform = this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
-
     this.dataSource = new ProjectsDataSource(
       this.projectsService,
       this.refreshTable$.asObservable().pipe(startWith(true)),
