@@ -34,7 +34,6 @@ export class PlatformSettingsComponent implements AfterViewInit {
   platform: Platform;
   constructor(private router: Router, private route: ActivatedRoute) {
     this.platform = this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
-    this.platform.isDemo = true;
     this.fragmentChanged$ = this.route.fragment.pipe(
       tap((fragment) => {
         if (fragment === null) {
