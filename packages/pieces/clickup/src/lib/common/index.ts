@@ -77,7 +77,7 @@ export const clickupCommon = {
       description: 'The ID of the ClickUp space to create the task in',
       displayName: 'List',
       required,
-      refreshers: ['space_id', 'workspace_id'],
+      refreshers: ['space_id', 'workspace_id', 'folder_id'],
       defaultValue: null,
       options: async ({ auth, space_id }) => {
         if (!auth || !space_id) {
@@ -87,23 +87,10 @@ export const clickupCommon = {
             options: [],
           };
         }
+        
         const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
-        const responseFolders = await listFolders(
-          accessToken,
-          space_id as string
-        );
-        const promises: Promise<{ lists: { id: string; name: string }[] }>[] = [
-          listFolderlessList(accessToken, space_id as string),
-        ];
-        for (let i = 0; i < responseFolders.folders.length; ++i) {
-          promises.push(listLists(accessToken, responseFolders.folders[i].id));
-        }
-        const listsResponses = await Promise.all(promises);
+        const lists: {name:string, id:string}[] = await listAllLists(accessToken, space_id as string)
 
-        let lists: { name: string; id: string }[] = [];
-        for (let i = 0; i < listsResponses.length; ++i) {
-          lists = [...lists, ...listsResponses[i].lists];
-        }
         return {
           disabled: false,
           options: lists.map((list) => {
@@ -121,7 +108,7 @@ export const clickupCommon = {
       displayName: 'Task Id',
       required,
       defaultValue: null,
-      refreshers: ['space_id', 'list_id', 'workspace_id'],
+      refreshers: ['space_id', 'list_id', 'workspace_id', 'folder_id'],
       options: async ({ auth, space_id, list_id }) => {
         if (!auth || !list_id || !space_id) {
           return {
@@ -148,15 +135,11 @@ export const clickupCommon = {
     Property.Dropdown({
       description: 'The ID of the ClickUp folder',
       displayName: 'Folder Id',
-      refreshers: ['space_id', 'workplace_id'],
+      refreshers: ['space_id', 'workspace_id'],
       defaultValue: null,
       required,
-      options: async ({ auth, space_id, workplace_id }) => {
-        if (
-          auth === undefined ||
-          workplace_id === undefined ||
-          space_id === undefined
-        ) {
+      options: async ({ auth, space_id, workspace_id }) => {
+        if (!auth || !workspace_id || !space_id) {
           return {
             disabled: true,
             placeholder:
@@ -172,6 +155,35 @@ export const clickupCommon = {
             return {
               label: task.name,
               value: task.id,
+            };
+          }),
+        };
+      },
+    }),
+  field_id: (required = false) =>
+    Property.Dropdown({
+      displayName: 'Field',
+      description: 'The ID of the ClickUp custom field',
+      refreshers: ['task_id', 'list_id'],
+      defaultValue: null,
+      required,
+      options: async ({ auth, task_id, list_id }) => {
+        if (!auth || !task_id || !list_id) {
+          return {
+            disabled: true,
+            placeholder:
+              'connect your account first and select a task',
+            options: [],
+          };
+        }
+        const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
+        const response = await listAccessibleCustomFields(accessToken, list_id as string);
+        return {
+          disabled: false,
+          options: response.fields.map((field) => {
+            return {
+              label: field.name,
+              value: field.id,
             };
           }),
         };
@@ -359,7 +371,8 @@ async function listWorkspaceTemplates(
     )
   ).body;
 }
-async function listSpaces(accessToken: string, workspaceId: string) {
+
+export async function listSpaces(accessToken: string, workspaceId: string) {
   return (
     await callClickUpApi<{
       spaces: {
@@ -370,7 +383,28 @@ async function listSpaces(accessToken: string, workspaceId: string) {
   ).body;
 }
 
-async function listLists(accessToken: string, folderId: string) {
+export async function listAllLists(accessToken: string, spaceId: string) {
+  const responseFolders = await listFolders(
+    accessToken,
+    spaceId as string
+  );
+  const promises: Promise<{ lists: { id: string; name: string }[] }>[] = [
+    listFolderlessList(accessToken, spaceId as string),
+  ];
+  for (let i = 0; i < responseFolders.folders.length; ++i) {
+    promises.push(listLists(accessToken, responseFolders.folders[i].id));
+  }
+  const listsResponses = await Promise.all(promises);
+
+  let lists: { name: string; id: string }[] = [];
+  for (let i = 0; i < listsResponses.length; ++i) {
+    lists = [...lists, ...listsResponses[i].lists];
+  }
+
+  return lists
+}
+
+export async function listLists(accessToken: string, folderId: string) {
   return (
     await callClickUpApi<{
       lists: {
@@ -391,7 +425,7 @@ async function getList(accessToken: string, listId: string) {
   ).body;
 }
 
-async function listFolders(accessToken: string, spaceId: string) {
+export async function listFolders(accessToken: string, spaceId: string) {
   return (
     await callClickUpApi<{
       folders: {
@@ -401,6 +435,22 @@ async function listFolders(accessToken: string, spaceId: string) {
     }>(HttpMethod.GET, `space/${spaceId}/folder`, accessToken, undefined)
   ).body;
 }
+
+export async function listAccessibleCustomFields(accessToken: string, listId: string) {
+  return (
+    await callClickUpApi<{
+      fields: {
+        id: string;
+        name: string;
+        type: string;
+        type_config: Record<string, unknown>
+        date_created: string;
+        hide_from_guests: false
+      }[];
+    }>(HttpMethod.GET, `list/${listId}/field`, accessToken, undefined)
+  ).body;
+}
+
 
 async function listFolderlessList(accessToken: string, spaceId: string) {
   return (

@@ -192,7 +192,7 @@ const getFlowOrThrow = async (flowId: FlowId): Promise<Flow> => {
         })
     }
 
-    const flow = await flowRepo.findOneBy({ id: flowId })
+    const flow = await flowRepo().findOneBy({ id: flowId })
 
     if (isNil(flow)) {
         logger.error(`[WebhookService#getFlowOrThrow] error=flow_not_found flowId=${flowId}`)

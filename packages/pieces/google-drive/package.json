@@ -1,4 +1,8 @@
 {
   "name": "@activepieces/piece-google-drive",
+<<<<<<< HEAD
   "version": "0.5.10"
+=======
+  "version": "0.5.11"
+>>>>>>> c2179e040907d22e4d92ac6fd86518d968b868a5
 }

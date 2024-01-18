@@ -3,17 +3,13 @@ import { flowluCommon } from '.';
 
 export const flowluProps = {
   task: {
-    name: Property.ShortText({
-      displayName: 'Name',
-      required: true,
-    }),
     description: Property.LongText({
       displayName: 'Description',
       required: false,
     }),
     priority: Property.StaticDropdown({
       displayName: 'Priority',
-      required: true,
+      required: false,
       options: {
         disabled: false,
         options: [
@@ -35,26 +31,28 @@ export const flowluProps = {
     plan_start_date: Property.DateTime({
       displayName: 'Start Date',
       required: false,
+      description: 'Please use YYYY-MM-DD HH:mm:ss format.'
     }),
     deadline: Property.DateTime({
       displayName: 'End Date',
       required: false,
+      description: 'Please use YYYY-MM-DD HH:mm:ss format.'
     }),
     deadline_allowchange: Property.Checkbox({
       displayName: 'The assignee can change the end date for this task?',
-      required: true,
+      required: false,
       defaultValue: false,
     }),
     task_checkbyowner: Property.Checkbox({
       displayName: 'This task needs approval from the owner?',
-      required: true,
+      required: false,
       defaultValue: false,
     }),
     responsible_id: flowluCommon.user_id(false, 'Assignee ID'),
     owner_id: flowluCommon.user_id(false, 'Owner ID'),
     type: Property.StaticDropdown({
       displayName: 'Task Type',
-      required: true,
+      required: false,
       defaultValue: 0,
       options: {
         disabled: false,
@@ -191,10 +189,6 @@ export const flowluProps = {
     }),
   },
   opportunity: {
-    name: Property.ShortText({
-      displayName: 'Title',
-      required: true,
-    }),
     budget: Property.Number({
       displayName: 'Opportunity Amount',
       required: false,
@@ -207,10 +201,12 @@ export const flowluProps = {
     start_date: Property.DateTime({
       displayName: 'Start Date',
       required: false,
+      description: 'Please use YYYY-MM-DD HH:mm:ss format.'
     }),
     deadline: Property.DateTime({
       displayName: 'End Date',
       required: false,
+      description: 'Please use YYYY-MM-DD HH:mm:ss format.'
     }),
     assignee_id: flowluCommon.user_id(false, 'Assignee ID'),
     customer_id: flowluCommon.account_id(

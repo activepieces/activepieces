@@ -1,6 +1,7 @@
 import {
-  createAction,
   PiecePropValueSchema,
+  Property,
+  createAction,
 } from '@activepieces/pieces-framework';
 import { flowluAuth } from '../../../';
 import { flowluCommon, makeClient } from '../../common';
@@ -13,6 +14,10 @@ export const updateOpportunityAction = createAction({
   description: 'Updates an existing opportunity.',
   props: {
     id: flowluCommon.opportunity_id(true),
+    name: Property.ShortText({
+      displayName: 'Title',
+      required: false,
+    }),
     ...flowluProps.opportunity,
   },
   async run(context) {

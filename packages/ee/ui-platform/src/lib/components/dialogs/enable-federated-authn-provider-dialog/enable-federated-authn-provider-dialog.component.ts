@@ -6,10 +6,10 @@ import {
   Validators,
 } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, map, tap } from 'rxjs';
 import { Platform } from '@activepieces/ee-shared';
-import { ApEdition } from '@activepieces/shared';
-import { PlatformService } from '@activepieces/ui/common';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { FlagService, PlatformService } from '@activepieces/ui/common';
 import { FederatedAuthnProviderEnum } from '../../sso-settings/federated-authn-provider.enum';
 export type EnableFederatedAuthnProviderDialogData = {
   platform: Platform;
@@ -30,13 +30,22 @@ export class EnableFederatedAuthnProviderDialogComponent {
     clientId: FormControl<string>;
     clientSecret: FormControl<string>;
   }>;
+  redirectUrl$: Observable<string>;
   constructor(
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<EnableFederatedAuthnProviderDialogComponent>,
     @Inject(MAT_DIALOG_DATA)
     private data: EnableFederatedAuthnProviderDialogData,
-    private platformService: PlatformService
+    private platformService: PlatformService,
+    private flagService: FlagService
   ) {
+    this.redirectUrl$ = this.flagService
+      .getStringFlag(ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL)
+      .pipe(
+        map((redirectUrl) => {
+          return $localize`Please make a new OAuth2 app and set ${redirectUrl} as the redirect URL in your OAuth2 app`;
+        })
+      );
     this.formGroup = this.fb.group({
       clientId: this.fb.control<string>('', {
         nonNullable: true,

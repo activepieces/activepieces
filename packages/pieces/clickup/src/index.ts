@@ -12,6 +12,9 @@ import { createClickupTaskFromTemplate } from './lib/actions/tasks/create-task-f
 import { updateClickupTask } from './lib/actions/tasks/update-task';
 import { getClickupTasks } from './lib/actions/tasks/get-tasks';
 import { getClickupTask } from './lib/actions/tasks/get-task';
+import { deleteClickupTask } from './lib/actions/tasks/delete-task';
+import { getClickupAccessibleCustomFields } from './lib/actions/custom-fields/get-accessible-custom-fields';
+import { setClickupCustomFieldValue } from './lib/actions/custom-fields/set-custom-fields-value';
 
 export const clickupAuth = PieceAuth.OAuth2({
   description: '',
@@ -39,6 +42,9 @@ export const clickup = createPiece({
     createClickupTaskComment,
     createClickupSubtask,
     updateClickupTask,
+    deleteClickupTask,
+    getClickupAccessibleCustomFields,
+    setClickupCustomFieldValue
   ],
   authors: ['abuaboud', 'ShayPunter', 'kanarelo'],
   triggers,

@@ -4,6 +4,8 @@ export enum LocalesEnum {
     GERMAN = 'de',
     ITALIAN = 'it',
     FRENCH = 'fr',
+    BULGARIAN = 'bg',
+    UKRAINIAN = 'uk',
     HUNGARIAN = 'hu',
     SPANISH = 'es',
     JAPANESE = 'ja',

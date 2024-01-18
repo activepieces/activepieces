@@ -35,8 +35,7 @@ export class FileSandbox extends AbstractSandbox {
         const command = [
             `cd ${this.getSandboxFolderPath()}`,
             '&&',
-            `cross-env AP_PIECES_SOURCE=${pieceSources} NODE_OPTIONS=--enable-source-maps`,
-            '&&',
+            `cross-env-shell AP_PIECES_SOURCE=${pieceSources} NODE_OPTIONS=--enable-source-maps ${process.platform === 'win32' ? '&&' : ''}`,
             `"${AbstractSandbox.nodeExecutablePath}"`,
             'main.js',
             operation,

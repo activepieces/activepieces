@@ -45,7 +45,9 @@ DelayedJobData
 export type OneTimeJobAddParams = BaseAddParams<
 JobType.ONE_TIME,
 OneTimeJobData
->
+> & {
+    priority: 'high' | 'medium'
+}
 
 export type ScheduledJobAddParams = RepeatingJobAddParams | DelayedJobAddParams
 

@@ -37,6 +37,7 @@ import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
 import { DropdownPropertyInitialValuePipe } from './piece-properties-form/dropdown-initial-value.pipe';
 import { isDropdownItemSelectedPipe } from './piece-properties-form/is-selected.pipe';
 import { MatPseudoCheckboxModule } from '@angular/material/core';
+import { ActionErrorHandlingFormControlComponent } from './action-error-handling-form-control/action-error-handling-form-control.component';
 const exportedDeclarations = [
   ArrayFormControlComponent,
   BranchConditionFormControlComponent,
@@ -47,6 +48,7 @@ const exportedDeclarations = [
   PiecePropertiesFormComponent,
   BuilderAutocompleteMentionsDropdownComponent,
   BuilderAutocompleteDropdownHandlerComponent,
+  ActionErrorHandlingFormControlComponent,
 ];
 @NgModule({
   imports: [

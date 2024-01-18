@@ -32,13 +32,13 @@
         </context-group>
         <target state="final">Frissítés</target>
       </trans-unit>
-      <trans-unit id="81394443656404829" datatype="html" approved="yes">
-        <source>Share template</source>
+      <trans-unit id="6503852142706491254" datatype="html" approved="yes">
+        <source>Share Template</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/components/src/lib/share-flow-template-dialog/share-flow-template-dialog.component.html</context>
           <context context-type="linenumber">8</context>
         </context-group>
-        <target state="final">Megosztási forma</target>
+        <target state="final">Sablon megosztása</target>
       </trans-unit>
       <trans-unit id="4902817035128594900" datatype="html" approved="yes">
         <source>Description</source>
@@ -48,8 +48,8 @@
         </context-group>
         <target state="final">Leírás</target>
       </trans-unit>
-      <trans-unit id="8289400513068937763" datatype="html" approved="yes">
-        <source>Blog Url </source>
+      <trans-unit id="3947139728854318367" datatype="html" approved="yes">
+        <source>Blog URL </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/components/src/lib/share-flow-template-dialog/share-flow-template-dialog.component.html</context>
           <context context-type="linenumber">24</context>
@@ -71,7 +71,7 @@
           <context context-type="linenumber">42,44</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html</context>
+          <context context-type="sourcefile">packages/ee/project-members/src/lib/dialogs/invite-project-member-dialog/invite-project-member.component.html</context>
           <context context-type="linenumber">33,35</context>
         </context-group>
         <context-group purpose="location">
@@ -119,6 +119,18 @@
           <context context-type="linenumber">48,50</context>
         </context-group>
         <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/dialogs/configure-repo-dialog/configure-repo-dialog.component.html</context>
+          <context context-type="linenumber">45,47</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/dialogs/pull-dialog/pull-dialog.component.html</context>
+          <context context-type="linenumber">23,25</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/dialogs/push-dialog/push-dialog.component.html</context>
+          <context context-type="linenumber">34,36</context>
+        </context-group>
+        <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/move-flow-to-folder-dialog/move-flow-to-folder-dialog.component.html</context>
           <context context-type="linenumber">26,28</context>
         </context-group>
@@ -154,15 +166,19 @@
           <context context-type="sourcefile">packages/ui/feature-builder-left-sidebar/src/lib/dialogs/use-as-draft-confirmation-dialog/use-as-draft-confirmation-dialog.component.html</context>
           <context context-type="linenumber">26,28</context>
         </context-group>
-        <target state="final"> Megerősítés </target>
-      </trans-unit>
-      <trans-unit id="631520980743150884" datatype="html" approved="yes">
-        <source> OR </source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ee/components/src/lib/third-party-auth/third-party-auth.component.html</context>
-          <context context-type="linenumber">29,31</context>
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/dialogs/configure-repo-dialog/configure-repo-dialog.component.html</context>
+          <context context-type="linenumber">49,51</context>
         </context-group>
-        <target state="final"> VAGY </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/dialogs/pull-dialog/pull-dialog.component.html</context>
+          <context context-type="linenumber">27,29</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/dialogs/push-dialog/push-dialog.component.html</context>
+          <context context-type="linenumber">38,40</context>
+        </context-group>
+        <target state="final"> Megerősítés </target>
       </trans-unit>
       <trans-unit id="4103400345525770187" datatype="html" approved="yes">
         <source>Sign up with</source>
@@ -208,7 +224,7 @@
         <source>Invite Project Member
 </source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html</context>
+          <context context-type="sourcefile">packages/ee/project-members/src/lib/dialogs/invite-project-member-dialog/invite-project-member.component.html</context>
           <context context-type="linenumber">1,2</context>
         </context-group>
         <target state="final">Projekttagok meghívása
@@ -217,7 +233,7 @@
       <trans-unit id="1104679811553007900" datatype="html" approved="yes">
         <source> Type the email address of the user you want to invite. </source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html</context>
+          <context context-type="sourcefile">packages/ee/project-members/src/lib/dialogs/invite-project-member-dialog/invite-project-member.component.html</context>
           <context context-type="linenumber">5,7</context>
         </context-group>
         <target state="final"> Írja be azon felhasználó e-mail címét, akit meghívni szeretne. </target>
@@ -225,7 +241,7 @@
       <trans-unit id="5637407793093197884" datatype="html" approved="yes">
         <source>The invited email already has an account. Please contact support for assistance.</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html</context>
+          <context context-type="sourcefile">packages/ee/project-members/src/lib/dialogs/invite-project-member-dialog/invite-project-member.component.html</context>
           <context context-type="linenumber">13</context>
         </context-group>
         <target state="final">A meghívott e-mail címhez már tartozik egy fiók. Kérjük, lépjen kapcsolatba a támogatással segítségért.</target>
@@ -233,7 +249,7 @@
       <trans-unit id="1257197684303803009" datatype="html" approved="yes">
         <source>Email is Required</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html</context>
+          <context context-type="sourcefile">packages/ee/project-members/src/lib/dialogs/invite-project-member-dialog/invite-project-member.component.html</context>
           <context context-type="linenumber">16</context>
         </context-group>
         <target state="final">Email cím kötelező</target>
@@ -241,72 +257,40 @@
       <trans-unit id="4145496584631696119" datatype="html" approved="yes">
         <source>Role</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html</context>
+          <context context-type="sourcefile">packages/ee/project-members/src/lib/dialogs/invite-project-member-dialog/invite-project-member.component.html</context>
           <context context-type="linenumber">21</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html</context>
-          <context context-type="linenumber">19</context>
+          <context context-type="linenumber">22</context>
         </context-group>
         <target state="final">Szerepkör</target>
       </trans-unit>
       <trans-unit id="7927354222438929134" datatype="html" approved="yes">
         <source> Invite </source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html</context>
-          <context context-type="linenumber">37,39</context>
+          <context context-type="sourcefile">packages/ee/project-members/src/lib/dialogs/invite-project-member-dialog/invite-project-member.component.html</context>
+          <context context-type="linenumber">36,38</context>
         </context-group>
         <target state="final"> Meghív </target>
       </trans-unit>
       <trans-unit id="2177891213716569763" datatype="html" approved="yes">
         <source>Internal error occurred please contact support</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.ts</context>
-          <context context-type="linenumber">65</context>
+          <context context-type="sourcefile">packages/ee/project-members/src/lib/dialogs/invite-project-member-dialog/invite-project-member.component.ts</context>
+          <context context-type="linenumber">67</context>
         </context-group>
         <target state="final">Belső hiba történt, kérjük, forduljon az ügyfélszolgálathoz</target>
-      </trans-unit>
-      <trans-unit id="1483298785952962987" datatype="html" approved="yes">
-        <source>ADMIN</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.ts</context>
-          <context context-type="linenumber">96</context>
-        </context-group>
-        <target state="final">ADMIN</target>
-      </trans-unit>
-      <trans-unit id="2086645557074934337" datatype="html" approved="yes">
-        <source>EDITOR</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.ts</context>
-          <context context-type="linenumber">98</context>
-        </context-group>
-        <target state="final">Szerkesztő</target>
-      </trans-unit>
-      <trans-unit id="2739133472258186788" datatype="html" approved="yes">
-        <source>VIEWER</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.ts</context>
-          <context context-type="linenumber">100</context>
-        </context-group>
-        <target state="final">Néző</target>
-      </trans-unit>
-      <trans-unit id="3169427932576895164" datatype="html" approved="yes">
-        <source>UNKNOWN</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.ts</context>
-          <context context-type="linenumber">102</context>
-        </context-group>
-        <target state="final">ISMERETLEN</target>
       </trans-unit>
       <trans-unit id="2304614617903385642" datatype="html" approved="yes">
         <source>Project Members</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html</context>
-          <context context-type="linenumber">5</context>
+          <context context-type="linenumber">8</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/project-members-table/project-members-table.component.ts</context>
-          <context context-type="linenumber">44</context>
+          <context context-type="linenumber">51</context>
         </context-group>
         <target state="final">Projekt tagok</target>
       </trans-unit>
@@ -314,19 +298,19 @@
         <source>Email</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html</context>
-          <context context-type="linenumber">7</context>
+          <context context-type="linenumber">10</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
-          <context context-type="linenumber">6</context>
+          <context context-type="linenumber">8</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">26</context>
+          <context context-type="linenumber">28</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">27</context>
+          <context context-type="linenumber">29</context>
         </context-group>
         <target state="final">E-mail</target>
       </trans-unit>
@@ -334,7 +318,7 @@
         <source>Status</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html</context>
-          <context context-type="linenumber">14</context>
+          <context context-type="linenumber">17</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.html</context>
@@ -346,7 +330,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
-          <context context-type="linenumber">34</context>
+          <context context-type="linenumber">43</context>
         </context-group>
         <target state="final">Státusz</target>
       </trans-unit>
@@ -354,7 +338,7 @@
         <source>Invited At</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html</context>
-          <context context-type="linenumber">24</context>
+          <context context-type="linenumber">27</context>
         </context-group>
         <target state="final">Meghívva</target>
       </trans-unit>
@@ -362,7 +346,7 @@
         <source>+ Invite</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html</context>
-          <context context-type="linenumber">31</context>
+          <context context-type="linenumber">36,37</context>
         </context-group>
         <target state="final">+ Meghív</target>
       </trans-unit>
@@ -370,7 +354,7 @@
         <source>Delete Invitation</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html</context>
-          <context context-type="linenumber">36</context>
+          <context context-type="linenumber">44</context>
         </context-group>
         <target state="final">Meghívó törlése</target>
       </trans-unit>
@@ -378,7 +362,7 @@
         <source>Active</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/project-members-table/project-members-table.component.ts</context>
-          <context context-type="linenumber">141</context>
+          <context context-type="linenumber">54</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/components/status-icon/state-icon.component.ts</context>
@@ -390,9 +374,33 @@
         <source>Pending</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/project-members-table/project-members-table.component.ts</context>
-          <context context-type="linenumber">143</context>
+          <context context-type="linenumber">55</context>
         </context-group>
         <target state="final">Függőben levő</target>
+      </trans-unit>
+      <trans-unit id="5041354590769758251" datatype="html" approved="yes">
+        <source>Admin</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ee/project-members/src/lib/utils.ts</context>
+          <context context-type="linenumber">4</context>
+        </context-group>
+        <target state="final">Adminisztrátor</target>
+      </trans-unit>
+      <trans-unit id="3742657416068781599" datatype="html" approved="yes">
+        <source>Editor</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ee/project-members/src/lib/utils.ts</context>
+          <context context-type="linenumber">5</context>
+        </context-group>
+        <target state="final">Szerkesztő</target>
+      </trans-unit>
+      <trans-unit id="6239936537351977310" datatype="html" approved="yes">
+        <source>Viewer</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ee/project-members/src/lib/utils.ts</context>
+          <context context-type="linenumber">6</context>
+        </context-group>
+        <target state="final">Néző</target>
       </trans-unit>
       <trans-unit id="8953033926734869941" datatype="html" approved="yes">
         <source>Name</source>
@@ -506,7 +514,7 @@
         <source>Projects</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
-          <context context-type="linenumber">41</context>
+          <context context-type="linenumber">40</context>
         </context-group>
         <target state="final">Projektek</target>
       </trans-unit>
@@ -514,7 +522,7 @@
         <source>Appearance</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
-          <context context-type="linenumber">47</context>
+          <context context-type="linenumber">46</context>
         </context-group>
         <target state="final">Megjelenés</target>
       </trans-unit>
@@ -522,7 +530,7 @@
         <source>Pieces</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
-          <context context-type="linenumber">53</context>
+          <context context-type="linenumber">52</context>
         </context-group>
         <target state="final">Elemek</target>
       </trans-unit>
@@ -530,7 +538,7 @@
         <source>Templates</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
-          <context context-type="linenumber">59</context>
+          <context context-type="linenumber">58</context>
         </context-group>
         <target state="final">Sablonok</target>
       </trans-unit>
@@ -538,7 +546,15 @@
         <source>Settings</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
-          <context context-type="linenumber">71</context>
+          <context context-type="linenumber">70</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
+          <context context-type="linenumber">118</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
+          <context context-type="linenumber">76</context>
         </context-group>
         <target state="final">Beállítások</target>
       </trans-unit>
@@ -546,7 +562,7 @@
         <source>Users</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
-          <context context-type="linenumber">65</context>
+          <context context-type="linenumber">64</context>
         </context-group>
         <target state="final">Felhasználók</target>
       </trans-unit>
@@ -622,11 +638,27 @@
         </context-group>
         <target state="final"> Irja be a Törlés szót, majd kattintson a megerősítéshez </target>
       </trans-unit>
+      <trans-unit id="3972457424900607382" datatype="html">
+        <source>Please upgrade your plan</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/common/src/lib/components/is-feature-enabled-base/is-feature-enabled-base.component.ts</context>
+          <context context-type="linenumber">5</context>
+        </context-group>
+        <target state="needs-translation">Please upgrade your plan</target>
+      </trans-unit>
       <trans-unit id="5547981558491672240" datatype="html" approved="yes">
         <source> Close </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/components/json-view/json-view-dialog/json-view-dialog.component.html</context>
           <context context-type="linenumber">13,15</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/code-step-input-form/code-writer-dialog/code-writer-dialog.component.html</context>
+          <context context-type="linenumber">25,27</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/code-step-input-form/code-writer-dialog/code-writer-dialog.component.html</context>
+          <context context-type="linenumber">47,49</context>
         </context-group>
         <target state="final"> Bezárás </target>
       </trans-unit>
@@ -634,7 +666,7 @@
         <source>BETA</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/components/page-title/page-title.component.html</context>
-          <context context-type="linenumber">6</context>
+          <context context-type="linenumber">7</context>
         </context-group>
         <target state="final">BÉTA</target>
       </trans-unit>
@@ -714,6 +746,50 @@
         </context-group>
         <target state="final">Hiba</target>
       </trans-unit>
+      <trans-unit id="461643095934196481" datatype="html">
+        <source>
+          Please upgrade your plan to unlock this feature. 
+          <x id="START_TAG_SVG_ICON" ctype="x-svg_icon" equiv-text="&lt;svg-icon src=&quot;/assets/img/custom/lock.svg&quot; class=&quot;ap-w-[20px] ap-h-[20px] ap-fill-body&quot; [applyClass]=&quot;true&quot;&gt;"/>
+          <x id="CLOSE_TAG_SVG_ICON" ctype="x-svg_icon" equiv-text="&lt;/svg-icon&gt;"/>
+        </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/common/src/lib/components/upgrade-note/upgrade-note.component.html</context>
+          <context context-type="linenumber">3,5</context>
+        </context-group>
+        <target state="needs-translation">
+          Please upgrade your plan to unlock this feature. 
+          <x id="START_TAG_SVG_ICON" ctype="x-svg_icon" equiv-text="&lt;svg-icon src=&quot;/assets/img/custom/lock.svg&quot; class=&quot;ap-w-[20px] ap-h-[20px] ap-fill-body&quot; [applyClass]=&quot;true&quot;&gt;"/>
+          <x id="CLOSE_TAG_SVG_ICON" ctype="x-svg_icon" equiv-text="&lt;/svg-icon&gt;"/>
+        </target>
+      </trans-unit>
+      <trans-unit id="819996403327805209" datatype="html">
+        <source>Learn more</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/common/src/lib/components/upgrade-note/upgrade-note.component.html</context>
+          <context context-type="linenumber">8</context>
+        </context-group>
+        <target state="needs-translation">Learn more</target>
+      </trans-unit>
+      <trans-unit id="9014114747424049495" datatype="html">
+        <source>
+           Upgrade 
+          <x id="START_TAG_DIV" ctype="x-div" equiv-text="&lt;div class=&quot;ap-flex ap-gap-2&quot;&gt;"/>
+          <x id="START_TAG_SVG_ICON" ctype="x-svg_icon" equiv-text="&lt;svg-icon src=&quot;/assets/img/custom/upgrade.svg&quot; class=&quot;ap-w-[20px] ap-h-[20px] ap-fill-white&quot;&#10;                    [applyClass]=&quot;true&quot;&gt;"/>
+          <x id="CLOSE_TAG_SVG_ICON" ctype="x-svg_icon" equiv-text="&lt;/svg-icon&gt;"/>
+          <x id="CLOSE_TAG_DIV" ctype="x-div" equiv-text="&lt;/div&gt;"/>
+        </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/common/src/lib/components/upgrade-note/upgrade-note.component.html</context>
+          <context context-type="linenumber">11,16</context>
+        </context-group>
+        <target state="needs-translation">
+           Upgrade 
+          <x id="START_TAG_DIV" ctype="x-div" equiv-text="&lt;div class=&quot;ap-flex ap-gap-2&quot;&gt;"/>
+          <x id="START_TAG_SVG_ICON" ctype="x-svg_icon" equiv-text="&lt;svg-icon src=&quot;/assets/img/custom/upgrade.svg&quot; class=&quot;ap-w-[20px] ap-h-[20px] ap-fill-white&quot;&amp;#10;                    [applyClass]=&quot;true&quot;&gt;"/>
+          <x id="CLOSE_TAG_SVG_ICON" ctype="x-svg_icon" equiv-text="&lt;/svg-icon&gt;"/>
+          <x id="CLOSE_TAG_DIV" ctype="x-div" equiv-text="&lt;/div&gt;"/>
+        </target>
+      </trans-unit>
       <trans-unit id="3708656846739179305" datatype="html" approved="yes">
         <source>My Pieces</source>
         <context-group purpose="location">
@@ -722,7 +798,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
-          <context context-type="linenumber">53</context>
+          <context context-type="linenumber">60</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/community-pieces-table/community-pieces-table.component.html</context>
@@ -782,7 +858,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/code-step-input-form/code-step-input-form.component.html</context>
-          <context context-type="linenumber">12</context>
+          <context context-type="linenumber">13</context>
         </context-group>
         <target state="final">Kód</target>
       </trans-unit>
@@ -885,6 +961,14 @@
           <context context-type="linenumber">1</context>
         </context-group>
         <target state="final">az átirányítás-url működik!</target>
+      </trans-unit>
+      <trans-unit id="631520980743150884" datatype="html" approved="yes">
+        <source> OR </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/components/authentication-methods-separator/authentication-methods-separator.component.html</context>
+          <context context-type="linenumber">5,7</context>
+        </context-group>
+        <target state="final"> VAGY </target>
       </trans-unit>
       <trans-unit id="7500577610906589634" datatype="html" approved="yes">
         <source>
@@ -1008,7 +1092,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/ui-feature-authentication.module.ts</context>
-          <context context-type="linenumber">52</context>
+          <context context-type="linenumber">53</context>
         </context-group>
         <target state="final">Belépés</target>
       </trans-unit>
@@ -1116,11 +1200,11 @@
         <source> Email is invalid </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
-          <context context-type="linenumber">8,10</context>
+          <context context-type="linenumber">10,12</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">33,35</context>
+          <context context-type="linenumber">35,37</context>
         </context-group>
         <target state="final"> Érvénytelen email cím </target>
       </trans-unit>
@@ -1128,11 +1212,11 @@
         <source>Email is required</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
-          <context context-type="linenumber">11</context>
+          <context context-type="linenumber">13</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">39,40</context>
+          <context context-type="linenumber">41,42</context>
         </context-group>
         <target state="final">Email cím kötelező</target>
       </trans-unit>
@@ -1140,19 +1224,19 @@
         <source>Password</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
-          <context context-type="linenumber">15</context>
+          <context context-type="linenumber">17</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
-          <context context-type="linenumber">16</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">47</context>
+          <context context-type="linenumber">18</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">49</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
+          <context context-type="linenumber">51</context>
         </context-group>
         <target state="final">Jelszó</target>
       </trans-unit>
@@ -1160,7 +1244,7 @@
         <source>Password is required</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
-          <context context-type="linenumber">17</context>
+          <context context-type="linenumber">19</context>
         </context-group>
         <target state="final">Jelszó megadása kötelező</target>
       </trans-unit>
@@ -1168,7 +1252,7 @@
         <source>Invalid email or password</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
-          <context context-type="linenumber">19</context>
+          <context context-type="linenumber">21</context>
         </context-group>
         <target state="final">Érvénytelen e-mail cím vagy jelszó</target>
       </trans-unit>
@@ -1176,11 +1260,11 @@
         <source> You are not invited to any project, please contact your administrator. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
-          <context context-type="linenumber">20,22</context>
+          <context context-type="linenumber">22,24</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">58,60</context>
+          <context context-type="linenumber">60,62</context>
         </context-group>
         <target state="final"> Nem vagy meghívva egyetlen projektbe sem, kérjük, lépjen kapcsolatba az adminisztrátorával. </target>
       </trans-unit>
@@ -1188,15 +1272,27 @@
         <source> Your user is inactive, please contact your administrator to activate it. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
-          <context context-type="linenumber">23,25</context>
+          <context context-type="linenumber">25,27</context>
         </context-group>
         <target state="final"> A felhasználód nem aktív, kérlek lépj kapcsolatba az adminisztrátoroddal az aktiválás érdekében. </target>
+      </trans-unit>
+      <trans-unit id="4380965679238497608" datatype="html" approved="yes">
+        <source> Your email domain is not allowed to sign up, please contact your administrator. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
+          <context context-type="linenumber">28,30</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
+          <context context-type="linenumber">63,65</context>
+        </context-group>
+        <target state="final"> Az Ön e-mail tartományát nem engedélyezik a regisztrációhoz. Kérjük, lépjen kapcsolatba az adminisztrátorával. </target>
       </trans-unit>
       <trans-unit id="6663783128602596673" datatype="html" approved="yes">
         <source> Sign in </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
-          <context context-type="linenumber">36,38</context>
+          <context context-type="linenumber">41,43</context>
         </context-group>
         <target state="final"> Belépés </target>
       </trans-unit>
@@ -1204,7 +1300,7 @@
         <source>Don't have an account?</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
-          <context context-type="linenumber">43</context>
+          <context context-type="linenumber">48</context>
         </context-group>
         <target state="final">Nincs még fiókod?</target>
       </trans-unit>
@@ -1212,7 +1308,7 @@
         <source>Sign up now</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
-          <context context-type="linenumber">43</context>
+          <context context-type="linenumber">48</context>
         </context-group>
         <target state="final">Regisztrálj most</target>
       </trans-unit>
@@ -1220,7 +1316,7 @@
         <source>Forgot password?</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
-          <context context-type="linenumber">47</context>
+          <context context-type="linenumber">52</context>
         </context-group>
         <target state="final">Elfelejtette a jelszavát?</target>
       </trans-unit>
@@ -1236,7 +1332,7 @@
         <source>First Name</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">10</context>
+          <context context-type="linenumber">12</context>
         </context-group>
         <target state="final">Keresztnév</target>
       </trans-unit>
@@ -1244,7 +1340,7 @@
         <source> First name is required </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">12,14</context>
+          <context context-type="linenumber">14,16</context>
         </context-group>
         <target state="final"> Keresztnév megadása kötelező </target>
       </trans-unit>
@@ -1252,7 +1348,7 @@
         <source>Last Name</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">17</context>
+          <context context-type="linenumber">19</context>
         </context-group>
         <target state="final">Vezetéknév</target>
       </trans-unit>
@@ -1260,7 +1356,7 @@
         <source> Last name is required </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">19,21</context>
+          <context context-type="linenumber">21,23</context>
         </context-group>
         <target state="final"> Vezetéknév megadása kötelező </target>
       </trans-unit>
@@ -1268,7 +1364,7 @@
         <source> Email is used </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">36,38</context>
+          <context context-type="linenumber">38,40</context>
         </context-group>
         <target state="final"> Email cím kötelező </target>
       </trans-unit>
@@ -1276,7 +1372,7 @@
         <source> Password is required </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">51,53</context>
+          <context context-type="linenumber">53,55</context>
         </context-group>
         <target state="final"> Jelszó megadása kötelező </target>
       </trans-unit>
@@ -1284,7 +1380,7 @@
         <source>Password is invalid</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">54</context>
+          <context context-type="linenumber">56</context>
         </context-group>
         <target state="final">A jelszó érvénytelen</target>
       </trans-unit>
@@ -1292,7 +1388,7 @@
         <source>Lowercase</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">71</context>
+          <context context-type="linenumber">76</context>
         </context-group>
         <target state="final">Kisbetű</target>
       </trans-unit>
@@ -1300,7 +1396,7 @@
         <source>Uppercase</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">81</context>
+          <context context-type="linenumber">86</context>
         </context-group>
         <target state="final">Nagybetűs</target>
       </trans-unit>
@@ -1308,7 +1404,7 @@
         <source>Special Character</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">92</context>
+          <context context-type="linenumber">97</context>
         </context-group>
         <target state="final">Speciális karakterek</target>
       </trans-unit>
@@ -1316,7 +1412,7 @@
         <source>Number</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">101</context>
+          <context context-type="linenumber">106</context>
         </context-group>
         <target state="final">Szám</target>
       </trans-unit>
@@ -1324,7 +1420,7 @@
         <source>8-64 Characters</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">114</context>
+          <context context-type="linenumber">119</context>
         </context-group>
         <target state="final">8-64 karakter</target>
       </trans-unit>
@@ -1332,7 +1428,7 @@
         <source>Receive updates and newsletters from activepieces</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">120,123</context>
+          <context context-type="linenumber">125,128</context>
         </context-group>
         <target state="final">Frissítéseket és hírleveleket kaphat</target>
       </trans-unit>
@@ -1340,7 +1436,7 @@
         <source> Sign up </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">126,128</context>
+          <context context-type="linenumber">131,133</context>
         </context-group>
         <target state="final"> Regisztrálj </target>
       </trans-unit>
@@ -1348,7 +1444,7 @@
         <source>By creating an account, you agree to our </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">134</context>
+          <context context-type="linenumber">139</context>
         </context-group>
         <target state="final">A fiók létrehozásával elfogadja az alábbiakat </target>
       </trans-unit>
@@ -1356,7 +1452,7 @@
         <source>terms of service</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">136,137</context>
+          <context context-type="linenumber">141,142</context>
         </context-group>
         <target state="final">felhasználási feltételek</target>
       </trans-unit>
@@ -1364,7 +1460,7 @@
         <source> and </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">138</context>
+          <context context-type="linenumber">143</context>
         </context-group>
         <target state="final"> és </target>
       </trans-unit>
@@ -1372,7 +1468,7 @@
         <source>privacy policy</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">139</context>
+          <context context-type="linenumber">144</context>
         </context-group>
         <target state="final">adatvédelmi nyilatkozat</target>
       </trans-unit>
@@ -1380,7 +1476,7 @@
         <source>Already have an account? </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">143</context>
+          <context context-type="linenumber">148</context>
         </context-group>
         <target state="final">Van már fiókod? </target>
       </trans-unit>
@@ -1388,7 +1484,7 @@
         <source>Signing up is disabled.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">150</context>
+          <context context-type="linenumber">155</context>
         </context-group>
         <target state="final">A regisztráció le van tiltva.</target>
       </trans-unit>
@@ -1396,7 +1492,7 @@
         <source> If you are the owner, please refer to the configuration section in the documentation to learn how to enable it. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
-          <context context-type="linenumber">151,154</context>
+          <context context-type="linenumber">156,159</context>
         </context-group>
         <target state="final"> Ha Ön a tulajdonos, kérjük, tekintse meg a dokumentáció konfigurációs részét, hogy megtudja, hogyan lehet engedélyezni. </target>
       </trans-unit>
@@ -1404,7 +1500,7 @@
         <source>Sign up</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/ui-feature-authentication.module.ts</context>
-          <context context-type="linenumber">60</context>
+          <context context-type="linenumber">61</context>
         </context-group>
         <target state="final">Regisztráció</target>
       </trans-unit>
@@ -1412,7 +1508,7 @@
         <source>Verify email</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/ui-feature-authentication.module.ts</context>
-          <context context-type="linenumber">68</context>
+          <context context-type="linenumber">69</context>
         </context-group>
         <target state="final">E-mail cím megerősítése</target>
       </trans-unit>
@@ -1420,7 +1516,7 @@
         <source>Reset password</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/ui-feature-authentication.module.ts</context>
-          <context context-type="linenumber">78</context>
+          <context context-type="linenumber">79</context>
         </context-group>
         <target state="final">Jelszó visszaállítása</target>
       </trans-unit>
@@ -1428,7 +1524,7 @@
         <source>Forgot password</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/ui-feature-authentication.module.ts</context>
-          <context context-type="linenumber">88</context>
+          <context context-type="linenumber">89</context>
         </context-group>
         <target state="final">Elfelejtette a jelszavát</target>
       </trans-unit>
@@ -1575,6 +1671,38 @@
         </context-group>
         <target state="final"> Csak megtekintés
 </target>
+      </trans-unit>
+      <trans-unit id="5855865366427546912" datatype="html">
+        <source>Continue on Failure</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/action-error-handling-form-control/action-error-handling-form-control.component.html</context>
+          <context context-type="linenumber">6</context>
+        </context-group>
+        <target state="needs-translation">Continue on Failure</target>
+      </trans-unit>
+      <trans-unit id="6063814133624714267" datatype="html">
+        <source>Enable this option to skip this step and continue the flow normally if it fails.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/action-error-handling-form-control/action-error-handling-form-control.component.html</context>
+          <context context-type="linenumber">11</context>
+        </context-group>
+        <target state="needs-translation">Enable this option to skip this step and continue the flow normally if it fails.</target>
+      </trans-unit>
+      <trans-unit id="5505017550836259128" datatype="html">
+        <source>Auto Retry on Failure</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/action-error-handling-form-control/action-error-handling-form-control.component.html</context>
+          <context context-type="linenumber">25</context>
+        </context-group>
+        <target state="needs-translation">Auto Retry on Failure</target>
+      </trans-unit>
+      <trans-unit id="2480714118967619045" datatype="html">
+        <source>Automatically retry up to four attempts when failed.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/action-error-handling-form-control/action-error-handling-form-control.component.html</context>
+          <context context-type="linenumber">28</context>
+        </context-group>
+        <target state="needs-translation">Automatically retry up to four attempts when failed.</target>
       </trans-unit>
       <trans-unit id="4163163170493567215" datatype="html" approved="yes">
         <source>
@@ -1926,13 +2054,17 @@
         </context-group>
         <target state="final">Támogatás</target>
       </trans-unit>
-      <trans-unit id="6570363013146073520" datatype="html">
-        <source>Dashboard</source>
+      <trans-unit id="2821179408673282599" datatype="html" approved="yes">
+        <source>Home</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html</context>
           <context context-type="linenumber">14</context>
         </context-group>
-        <target state="needs-translation">Dashboard</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html</context>
+          <context context-type="linenumber">4</context>
+        </context-group>
+        <target state="final">Kezdőlap</target>
       </trans-unit>
       <trans-unit id="6041115344061899387" datatype="html" approved="yes">
         <source>Rename</source>
@@ -1990,13 +2122,13 @@
         </context-group>
         <target state="final">Törlés</target>
       </trans-unit>
-      <trans-unit id="7532516694422682181" datatype="html">
+      <trans-unit id="7532516694422682181" datatype="html" approved="yes">
         <source>Go to folder</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/flow-builder-header.component.ts</context>
           <context context-type="linenumber">51</context>
         </context-group>
-        <target state="needs-translation">Go to folder</target>
+        <target state="final">Mappához ugrás</target>
       </trans-unit>
       <trans-unit id="3564199105925922112" datatype="html" approved="yes">
         <source>This will permanently delete the flow, all its data and any background runs.
@@ -2007,7 +2139,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts</context>
-          <context context-type="linenumber">119,120</context>
+          <context context-type="linenumber">123,124</context>
         </context-group>
         <target state="final">Ez véglegesen törli az áramlatot, minden adatát és háttérfutását.
       Ezt a műveletet nem lehet visszavonni.</target>
@@ -2078,7 +2210,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-left-sidebar/src/lib/version-history/version-history.component.html</context>
-          <context context-type="linenumber">29</context>
+          <context context-type="linenumber">34</context>
         </context-group>
         <target state="final">Publikálva</target>
       </trans-unit>
@@ -2122,25 +2254,49 @@
         </context-group>
         <target state="final">Közzététel</target>
       </trans-unit>
-      <trans-unit id="3046849384077646112" datatype="html" approved="yes">
-        <source>Versions History</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/version-history-button/version-history-button.component.html</context>
-          <context context-type="linenumber">2</context>
-        </context-group>
-        <target state="final">Változások listája</target>
-      </trans-unit>
       <trans-unit id="2369423116644077158" datatype="html" approved="yes">
         <source>Versions</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/version-history-button/version-history-button.component.html</context>
-          <context context-type="linenumber">6</context>
+          <context context-type="linenumber">8</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-left-sidebar/src/lib/version-history/version-history.component.ts</context>
-          <context context-type="linenumber">35</context>
+          <context context-type="linenumber">34</context>
         </context-group>
         <target state="final">Verziók</target>
+      </trans-unit>
+      <trans-unit id="4909541636656025006" datatype="html" approved="yes">
+        <source>Versions </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/version-history-button/version-history-button.component.html</context>
+          <context context-type="linenumber">12,13</context>
+        </context-group>
+        <target state="final">Verziók </target>
+      </trans-unit>
+      <trans-unit id="7789922582915451623" datatype="html" approved="yes">
+        <source>Viewing draft</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/version-history-button/version-history-button.component.ts</context>
+          <context context-type="linenumber">27</context>
+        </context-group>
+        <target state="final">Vázlatok megtekintése</target>
+      </trans-unit>
+      <trans-unit id="7002403278065668912" datatype="html" approved="yes">
+        <source>Viewing published version</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/version-history-button/version-history-button.component.ts</context>
+          <context context-type="linenumber">29</context>
+        </context-group>
+        <target state="final">A közzétett verzió megtekintése</target>
+      </trans-unit>
+      <trans-unit id="7784562668465202532" datatype="html" approved="yes">
+        <source>Viewing older version</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/version-history-button/version-history-button.component.ts</context>
+          <context context-type="linenumber">31</context>
+        </context-group>
+        <target state="final">Régebbi verzió megtekintése</target>
       </trans-unit>
       <trans-unit id="3980254400386807047" datatype="html" approved="yes">
         <source>
@@ -2196,7 +2352,7 @@
         <source>No details available for this run.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-left-sidebar/src/lib/run-details/run-details.component.html</context>
-          <context context-type="linenumber">49</context>
+          <context context-type="linenumber">47</context>
         </context-group>
         <target state="final">Nincsenek részletek elérhetők ehhez a futtatáshoz.</target>
       </trans-unit>
@@ -2256,7 +2412,7 @@
         <source> All Iterations </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-left-sidebar/src/lib/run-details/steps-results-list/step-result.component.html</context>
-          <context context-type="linenumber">72,74</context>
+          <context context-type="linenumber">73,75</context>
         </context-group>
         <target state="final"> Minden iteráció </target>
       </trans-unit>
@@ -2272,7 +2428,7 @@
         <source>Draft</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-left-sidebar/src/lib/version-history/version-history.component.html</context>
-          <context context-type="linenumber">23</context>
+          <context context-type="linenumber">26</context>
         </context-group>
         <target state="final">Piszkozat</target>
       </trans-unit>
@@ -2284,7 +2440,7 @@
         </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-left-sidebar/src/lib/version-history/version-history.component.html</context>
-          <context context-type="linenumber">40,42</context>
+          <context context-type="linenumber">47,49</context>
         </context-group>
         <target state="final">
            Nézet 
@@ -2292,7 +2448,7 @@
           <x id="CLOSE_TAG_SVG_ICON" ctype="x-svg_icon" equiv-text="View"/>
         </target>
       </trans-unit>
-      <trans-unit id="7079179593648311012" datatype="html">
+      <trans-unit id="7079179593648311012" datatype="html" approved="yes">
         <source>
            Use as draft 
           <x id="START_TAG_SVG_ICON" ctype="x-svg_icon" equiv-text="g-icon src=&quot;assets/img/custom/pencil-underline.svg&quot; class=&quot;ap-w-[20px] ap-h-[20px]&quot;&#10;                                    [applyClass]=&quot;true&quot;&gt;"/>
@@ -2300,10 +2456,10 @@
         </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-left-sidebar/src/lib/version-history/version-history.component.html</context>
-          <context context-type="linenumber">47,49</context>
+          <context context-type="linenumber">54,56</context>
         </context-group>
-        <target state="needs-translation">
-           Use as draft 
+        <target state="final">
+           Használja piszkozatként 
           <x id="START_TAG_SVG_ICON" ctype="x-svg_icon" equiv-text="g-icon src=&quot;assets/img/custom/pencil-underline.svg&quot; class=&quot;ap-w-[20px] ap-h-[20px]&quot;&amp;#10;                                    [applyClass]=&quot;true&quot;&gt;"/>
           <x id="CLOSE_TAG_SVG_ICON" ctype="x-svg_icon" equiv-text="Use as draf"/>
         </target>
@@ -2358,6 +2514,94 @@
         </context-group>
         <target state="final">Bemenetek</target>
       </trans-unit>
+      <trans-unit id="954357994182037195" datatype="html" approved="yes">
+        <source>Write code with assistance from AI</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/code-step-input-form/code-step-input-form.component.ts</context>
+          <context context-type="linenumber">42</context>
+        </context-group>
+        <target state="final">Írjon kódot az AI segítségével</target>
+      </trans-unit>
+      <trans-unit id="4867113172409032513" datatype="html" approved="yes">
+        <source>Configure api key in the envrionment variables to generate code using AI</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/code-step-input-form/code-step-input-form.component.ts</context>
+          <context context-type="linenumber">43</context>
+        </context-group>
+        <target state="final">Konfigurálja az API-kulcsot a környezeti változókban, hogy kódot generáljon AI segítségével</target>
+      </trans-unit>
+      <trans-unit id="2589829015945515072" datatype="html" approved="yes">
+        <source>
+          Write Code with AI BETA
+          <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;ap-typography-caption ap-text-primary ap-mt-1&quot;&gt;"/>
+          <x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/>
+        </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/code-step-input-form/code-writer-dialog/code-writer-dialog.component.html</context>
+          <context context-type="linenumber">1,3</context>
+        </context-group>
+        <target state="final">
+          Írjon kódot AI BETA-val
+          <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;ap-typography-caption ap-text-primary ap-mt-1&quot;&gt;"/>
+          <x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/>
+        </target>
+      </trans-unit>
+      <trans-unit id="6873991280426832904" datatype="html" approved="yes">
+        <source> Let AI help you write code for this step. Write your prompt below to get started. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/code-step-input-form/code-writer-dialog/code-writer-dialog.component.html</context>
+          <context context-type="linenumber">16,18</context>
+        </context-group>
+        <target state="final"> Hagyja, hogy a mesterséges intelligencia segítsen Önnek kódolni ezen lépés során. Írja be a kérdését lent, hogy elkezdje. </target>
+      </trans-unit>
+      <trans-unit id="8089373036516093770" datatype="html" approved="yes">
+        <source> Here is the code our AI wrote for you. Ask for changes or use the code in your action. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/code-step-input-form/code-writer-dialog/code-writer-dialog.component.html</context>
+          <context context-type="linenumber">35,37</context>
+        </context-group>
+        <target state="final"> Itt van a kód, amit a AI írt Önnek. Kérjen változtatásokat, vagy használja a kódot a tevékenységéhez. </target>
+      </trans-unit>
+      <trans-unit id="7598616229666649512" datatype="html" approved="yes">
+        <source> Use Code </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/code-step-input-form/code-writer-dialog/code-writer-dialog.component.html</context>
+          <context context-type="linenumber">51,53</context>
+        </context-group>
+        <target state="final"> Kód használata </target>
+      </trans-unit>
+      <trans-unit id="2124970382614415342" datatype="html" approved="yes">
+        <source>Prompt </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/code-step-input-form/code-writer-dialog/code-writer-dialog.component.html</context>
+          <context context-type="linenumber">63</context>
+        </context-group>
+        <target state="final">Gyors </target>
+      </trans-unit>
+      <trans-unit id="5315374423278749746" datatype="html" approved="yes">
+        <source>Send prompt</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/code-step-input-form/code-writer-dialog/code-writer-dialog.component.html</context>
+          <context context-type="linenumber">73</context>
+        </context-group>
+        <target state="final">Üzenet küldése</target>
+      </trans-unit>
+      <trans-unit id="7398079316579726964" datatype="html" approved="yes">
+        <source>Pass existing code to AI </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/code-step-input-form/code-writer-dialog/code-writer-dialog.component.html</context>
+          <context context-type="linenumber">82</context>
+        </context-group>
+        <target state="final">Adja át a meglévő kódot az AI-nak </target>
+      </trans-unit>
+      <trans-unit id="1626847100266361365" datatype="html">
+        <source>&lt;b&gt; Note: &lt;/b&gt; This feature uses OpenAi's API to generate code, it will be available for free during the beta period.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/code-step-input-form/code-writer-dialog/code-writer-dialog.component.ts</context>
+          <context context-type="linenumber">33</context>
+        </context-group>
+        <target state="needs-translation">&lt;b&gt; Note: &lt;/b&gt; This feature uses OpenAi's API to generate code, it will be available for free during the beta period.</target>
+      </trans-unit>
       <trans-unit id="6162691442834560200" datatype="html" approved="yes">
         <source>Items</source>
         <context-group purpose="location">
@@ -2386,7 +2630,7 @@
         <source> No options available </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/piece-input-forms/piece-action-input-form/piece-action-input-form.component.html</context>
-          <context context-type="linenumber">23,25</context>
+          <context context-type="linenumber">24,26</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/piece-input-forms/piece-trigger-input-form/piece-trigger-input-form.component.html</context>
@@ -2398,7 +2642,7 @@
         <source> Action is required </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/piece-input-forms/piece-action-input-form/piece-action-input-form.component.html</context>
-          <context context-type="linenumber">27,29</context>
+          <context context-type="linenumber">28,30</context>
         </context-group>
         <target state="final"> Művelet szükséges </target>
       </trans-unit>
@@ -2492,6 +2736,10 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
           <context context-type="linenumber">7</context>
         </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
+          <context context-type="linenumber">16</context>
+        </context-group>
         <target state="final">Összes</target>
       </trans-unit>
       <trans-unit id="2995024767956767595" datatype="html" approved="yes">
@@ -2546,7 +2794,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.datasource.ts</context>
-          <context context-type="linenumber">102</context>
+          <context context-type="linenumber">105</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/folders-list/folders-list.component.html</context>
@@ -3136,6 +3384,10 @@
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/form-controls/o-auth2-connect-control/o-auth2-connect-control.component.html</context>
           <context context-type="linenumber">4</context>
         </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/sync-project/sync-project.component.html</context>
+          <context context-type="linenumber">34</context>
+        </context-group>
         <target state="final">Szétkapcsolás</target>
       </trans-unit>
       <trans-unit id="5175055549231295483" datatype="html" approved="yes">
@@ -3148,13 +3400,195 @@
         <target state="final"> Kérjük, győződjön meg róla, hogy ez a kapcsolat hitelei helyesek.
 </target>
       </trans-unit>
-      <trans-unit id="2821179408673282599" datatype="html" approved="yes">
-        <source>Home</source>
+      <trans-unit id="7731095411137069666" datatype="html">
+        <source>Remote URL</source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html</context>
-          <context context-type="linenumber">4</context>
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/dialogs/configure-repo-dialog/configure-repo-dialog.component.html</context>
+          <context context-type="linenumber">10</context>
         </context-group>
-        <target state="final">Kezdőlap</target>
+        <target state="needs-translation">Remote URL</target>
+      </trans-unit>
+      <trans-unit id="7448534430345011063" datatype="html">
+        <source> Remote URL is required </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/dialogs/configure-repo-dialog/configure-repo-dialog.component.html</context>
+          <context context-type="linenumber">13,15</context>
+        </context-group>
+        <target state="needs-translation"> Remote URL is required </target>
+      </trans-unit>
+      <trans-unit id="1374329908723449513" datatype="html">
+        <source>Branch Name</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/dialogs/configure-repo-dialog/configure-repo-dialog.component.html</context>
+          <context context-type="linenumber">18</context>
+        </context-group>
+        <target state="needs-translation">Branch Name</target>
+      </trans-unit>
+      <trans-unit id="9212457004033265754" datatype="html">
+        <source> Branch is required </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/dialogs/configure-repo-dialog/configure-repo-dialog.component.html</context>
+          <context context-type="linenumber">21,23</context>
+        </context-group>
+        <target state="needs-translation"> Branch is required </target>
+      </trans-unit>
+      <trans-unit id="2862771907836042336" datatype="html">
+        <source>Private SSH Key</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/dialogs/configure-repo-dialog/configure-repo-dialog.component.html</context>
+          <context context-type="linenumber">27</context>
+        </context-group>
+        <target state="needs-translation">Private SSH Key</target>
+      </trans-unit>
+      <trans-unit id="1605235191034718807" datatype="html">
+        <source> Invalid private key format. Please check your private key and make sure it ends with new line and try again. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/dialogs/configure-repo-dialog/configure-repo-dialog.component.html</context>
+          <context context-type="linenumber">30,32</context>
+        </context-group>
+        <target state="needs-translation"> Invalid private key format. Please check your private key and make sure it ends with new line and try again. </target>
+      </trans-unit>
+      <trans-unit id="5069526264050943922" datatype="html">
+        <source> Private SSH key is required </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/dialogs/configure-repo-dialog/configure-repo-dialog.component.html</context>
+          <context context-type="linenumber">33,35</context>
+        </context-group>
+        <target state="needs-translation"> Private SSH key is required </target>
+      </trans-unit>
+      <trans-unit id="7510069507182195048" datatype="html">
+        <source>Configure Repo</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/dialogs/configure-repo-dialog/configure-repo-dialog.component.ts</context>
+          <context context-type="linenumber">29</context>
+        </context-group>
+        <target state="needs-translation">Configure Repo</target>
+      </trans-unit>
+      <trans-unit id="8417917245707164827" datatype="html">
+        <source>
+          Edit 
+          <x id="PH" equiv-text="this.data.repo.remoteUrl"/>
+        </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/dialogs/configure-repo-dialog/configure-repo-dialog.component.ts</context>
+          <context context-type="linenumber">41</context>
+        </context-group>
+        <target state="needs-translation">
+          Edit 
+          <x id="PH" equiv-text="this.data.repo.remoteUrl"/>
+        </target>
+      </trans-unit>
+      <trans-unit id="1111192101464671346" datatype="html">
+        <source> Pull from Repo
+</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/dialogs/pull-dialog/pull-dialog.component.html</context>
+          <context context-type="linenumber">1,3</context>
+        </context-group>
+        <target state="needs-translation"> Pull from Repo
+</target>
+      </trans-unit>
+      <trans-unit id="6759205696902713848" datatype="html">
+        <source>Warning</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/dialogs/pull-dialog/pull-dialog.component.html</context>
+          <context context-type="linenumber">11</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/dialogs/push-dialog/push-dialog.component.html</context>
+          <context context-type="linenumber">11</context>
+        </context-group>
+        <target state="needs-translation">Warning</target>
+      </trans-unit>
+      <trans-unit id="7481849508944321565" datatype="html">
+        <source>
+           All the flows in  will be replaced with the flows from the Git repository. 
+          <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>
+          <x id="INTERPOLATION"/>
+          <x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="will be repla"/>
+        </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/dialogs/pull-dialog/pull-dialog.component.html</context>
+          <context context-type="linenumber">13,15</context>
+        </context-group>
+        <target state="needs-translation">
+           All the flows in  will be replaced with the flows from the Git repository. 
+          <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>
+          <x id="INTERPOLATION"/>
+          <x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="will be repla"/>
+        </target>
+      </trans-unit>
+      <trans-unit id="3759619924372224970" datatype="html">
+        <source>Pulled successfully</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/dialogs/pull-dialog/pull-dialog.component.ts</context>
+          <context context-type="linenumber">32</context>
+        </context-group>
+        <target state="needs-translation">Pulled successfully</target>
+      </trans-unit>
+      <trans-unit id="1267785002392985643" datatype="html">
+        <source>Error occured, please check your console</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/dialogs/pull-dialog/pull-dialog.component.ts</context>
+          <context context-type="linenumber">39</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/dialogs/push-dialog/push-dialog.component.ts</context>
+          <context context-type="linenumber">48</context>
+        </context-group>
+        <target state="needs-translation">Error occured, please check your console</target>
+      </trans-unit>
+      <trans-unit id="1413182718760265253" datatype="html">
+        <source> Push to Repo
+</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/dialogs/push-dialog/push-dialog.component.html</context>
+          <context context-type="linenumber">1,3</context>
+        </context-group>
+        <target state="needs-translation"> Push to Repo
+</target>
+      </trans-unit>
+      <trans-unit id="9202571177288431174" datatype="html">
+        <source>
+           All the flows in the Git repository will be replaced with the flows in . 
+          <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>
+          <x id="INTERPOLATION"/>
+          <x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="."/>
+        </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/dialogs/push-dialog/push-dialog.component.html</context>
+          <context context-type="linenumber">13,15</context>
+        </context-group>
+        <target state="needs-translation">
+           All the flows in the Git repository will be replaced with the flows in . 
+          <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>
+          <x id="INTERPOLATION"/>
+          <x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="."/>
+        </target>
+      </trans-unit>
+      <trans-unit id="418088136198258780" datatype="html">
+        <source>Commit Message</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/dialogs/push-dialog/push-dialog.component.html</context>
+          <context context-type="linenumber">20</context>
+        </context-group>
+        <target state="needs-translation">Commit Message</target>
+      </trans-unit>
+      <trans-unit id="6262386110829726752" datatype="html">
+        <source> Commit message is required </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/dialogs/push-dialog/push-dialog.component.html</context>
+          <context context-type="linenumber">22,24</context>
+        </context-group>
+        <target state="needs-translation"> Commit message is required </target>
+      </trans-unit>
+      <trans-unit id="6440305533845548136" datatype="html">
+        <source>Pushed successfully</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/dialogs/push-dialog/push-dialog.component.ts</context>
+          <context context-type="linenumber">42</context>
+        </context-group>
+        <target state="needs-translation">Pushed successfully</target>
       </trans-unit>
       <trans-unit id="5578202866683959807" datatype="html" approved="yes">
         <source>Ask the Community</source>
@@ -3184,11 +3618,15 @@
         <source>Flows</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
-          <context context-type="linenumber">92</context>
+          <context context-type="linenumber">91</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
-          <context context-type="linenumber">69</context>
+          <context context-type="linenumber">85</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html</context>
+          <context context-type="linenumber">12</context>
         </context-group>
         <target state="final">Folyamatok</target>
       </trans-unit>
@@ -3196,19 +3634,19 @@
         <source>Runs</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
-          <context context-type="linenumber">101</context>
+          <context context-type="linenumber">100</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
-          <context context-type="linenumber">29</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.html</context>
-          <context context-type="linenumber">5</context>
+          <context context-type="linenumber">32</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
           <context context-type="linenumber">3</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
+          <context context-type="linenumber">27</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-pieces/src/lib/community-pieces-table/community-pieces-table.component.html</context>
@@ -3220,11 +3658,15 @@
         <source>Connections</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
-          <context context-type="linenumber">107</context>
+          <context context-type="linenumber">106</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
-          <context context-type="linenumber">61</context>
+          <context context-type="linenumber">68</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.html</context>
+          <context context-type="linenumber">5</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.ts</context>
@@ -3236,11 +3678,11 @@
         <source>Team</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
-          <context context-type="linenumber">113</context>
+          <context context-type="linenumber">112</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
-          <context context-type="linenumber">45</context>
+          <context context-type="linenumber">48</context>
         </context-group>
         <target state="final">Csapat</target>
       </trans-unit>
@@ -3256,7 +3698,7 @@
         <source>Plans</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
-          <context context-type="linenumber">37</context>
+          <context context-type="linenumber">40</context>
         </context-group>
         <target state="final">Díjcsomagok</target>
       </trans-unit>
@@ -3264,7 +3706,7 @@
         <source>Platform</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
-          <context context-type="linenumber">81</context>
+          <context context-type="linenumber">97</context>
         </context-group>
         <target state="final">Platform</target>
       </trans-unit>
@@ -3340,11 +3782,11 @@
         <source>Untitled</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/empty-flows-table/empty-flows-table.component.ts</context>
-          <context context-type="linenumber">41</context>
+          <context context-type="linenumber">45</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table-title/flows-table-title.component.ts</context>
-          <context context-type="linenumber">41</context>
+          <context context-type="linenumber">44</context>
         </context-group>
         <target state="final">Névtelen</target>
       </trans-unit>
@@ -3420,11 +3862,11 @@
         <source>Real time flow</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts</context>
-          <context context-type="linenumber">193</context>
+          <context context-type="linenumber">200</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts</context>
-          <context context-type="linenumber">200</context>
+          <context context-type="linenumber">207</context>
         </context-group>
         <target state="final">Valós idejű folyamat</target>
       </trans-unit>
@@ -3435,7 +3877,7 @@
         </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts</context>
-          <context context-type="linenumber">197,199</context>
+          <context context-type="linenumber">204,206</context>
         </context-group>
         <target state="final">
           Futtatások 
@@ -3446,7 +3888,7 @@
         <source>Please contact support as your published flow has a problem</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts</context>
-          <context context-type="linenumber">207</context>
+          <context context-type="linenumber">214</context>
         </context-group>
         <target state="final">Kérjük, lépjen kapcsolatba a támogatással, mivel az ön közzétett folyamata problémát okoz</target>
       </trans-unit>
@@ -3454,7 +3896,7 @@
         <source>Please publish the flow</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts</context>
-          <context context-type="linenumber">234</context>
+          <context context-type="linenumber">241</context>
         </context-group>
         <target state="final">Kérjük, publikálja a folyamatot</target>
       </trans-unit>
@@ -3462,7 +3904,7 @@
         <source>Flow is on</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts</context>
-          <context context-type="linenumber">238</context>
+          <context context-type="linenumber">245</context>
         </context-group>
         <target state="final">A folyamat aktív</target>
       </trans-unit>
@@ -3470,7 +3912,7 @@
         <source>Flow is off</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts</context>
-          <context context-type="linenumber">239</context>
+          <context context-type="linenumber">246</context>
         </context-group>
         <target state="final">A folyamat kikapcsolt</target>
       </trans-unit>
@@ -3608,11 +4050,19 @@
         </context-group>
         <target state="final">Szűrés állapot szerint</target>
       </trans-unit>
+      <trans-unit id="4069898921384908264" datatype="html">
+        <source>Filter by flow</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
+          <context context-type="linenumber">14</context>
+        </context-group>
+        <target state="needs-translation">Filter by flow</target>
+      </trans-unit>
       <trans-unit id="8803075308102273847" datatype="html" approved="yes">
         <source> Send email notifications about failed runs </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
-          <context context-type="linenumber">14,16</context>
+          <context context-type="linenumber">23,25</context>
         </context-group>
         <target state="final"> E-mail értesítések küldése a sikertelen folyamatokról </target>
       </trans-unit>
@@ -3620,7 +4070,7 @@
         <source>Flow</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
-          <context context-type="linenumber">20</context>
+          <context context-type="linenumber">29</context>
         </context-group>
         <target state="final">Folyamat</target>
       </trans-unit>
@@ -3628,7 +4078,7 @@
         <source>Started</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
-          <context context-type="linenumber">25</context>
+          <context context-type="linenumber">34</context>
         </context-group>
         <target state="final">Indítva</target>
       </trans-unit>
@@ -3636,29 +4086,121 @@
         <source>Finished</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
-          <context context-type="linenumber">30</context>
+          <context context-type="linenumber">39</context>
         </context-group>
         <target state="final">Kész</target>
       </trans-unit>
-      <trans-unit id="187187500641108332" datatype="html">
-        <source>
-          <x id="INTERPOLATION" equiv-text="option.label }}"/>
-        </source>
+      <trans-unit id="3473622823939491397" datatype="html">
+        <source>Retry on Latest Version</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
-          <context context-type="linenumber">56,57</context>
+          <context context-type="linenumber">65</context>
         </context-group>
-        <target state="needs-translation">
-          <x id="INTERPOLATION" equiv-text="option.label }}"/>
-        </target>
+        <target state="needs-translation">Retry on Latest Version</target>
+      </trans-unit>
+      <trans-unit id="2123207318662950451" datatype="html">
+        <source>Retry From Failed Step</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
+          <context context-type="linenumber">72</context>
+        </context-group>
+        <target state="needs-translation">Retry From Failed Step</target>
       </trans-unit>
       <trans-unit id="2388673916006005004" datatype="html" approved="yes">
         <source> No runs instantiated yet </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
-          <context context-type="linenumber">72,74</context>
+          <context context-type="linenumber">88,90</context>
         </context-group>
         <target state="final"> Még nincs elindított folyamat </target>
+      </trans-unit>
+      <trans-unit id="8875789930725499850" datatype="html">
+        <source>Project Settings</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/sync-project/sync-project.component.html</context>
+          <context context-type="linenumber">3</context>
+        </context-group>
+        <target state="needs-translation">Project Settings</target>
+      </trans-unit>
+      <trans-unit id="7412504146893560417" datatype="html">
+        <source>Git Sync</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/sync-project/sync-project.component.html</context>
+          <context context-type="linenumber">6</context>
+        </context-group>
+        <target state="needs-translation">Git Sync</target>
+      </trans-unit>
+      <trans-unit id="2462897199099463515" datatype="html">
+        <source> Streamline environments management by integrating with Git repos. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/sync-project/sync-project.component.html</context>
+          <context context-type="linenumber">7,9</context>
+        </context-group>
+        <target state="needs-translation"> Streamline environments management by integrating with Git repos. </target>
+      </trans-unit>
+      <trans-unit id="5888524075194039222" datatype="html">
+        <source> Configure the Git repo you want to sync with. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/sync-project/sync-project.component.html</context>
+          <context context-type="linenumber">19,21</context>
+        </context-group>
+        <target state="needs-translation"> Configure the Git repo you want to sync with. </target>
+      </trans-unit>
+      <trans-unit id="7320495149620852519" datatype="html" approved="yes">
+        <source> Configure Repo </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/sync-project/sync-project.component.html</context>
+          <context context-type="linenumber">23,25</context>
+        </context-group>
+        <target state="final"> Repo konfigurálása </target>
+      </trans-unit>
+      <trans-unit id="7511518849296799979" datatype="html" approved="yes">
+        <source>
+           Connected Repo:  Branch: 
+          <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>
+          <x id="INTERPOLATION" equiv-text="eUrl}}"/>
+          <x id="CLOSE_BOLD_TEXT" ctype="x-b"/>
+          <x id="LINE_BREAK" ctype="lb" equiv-text="&lt;br&gt;"/>
+          <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>
+          <x id="INTERPOLATION_1" equiv-text="h}}"/>
+          <x id="CLOSE_BOLD_TEXT" ctype="x-b"/>
+        </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/sync-project/sync-project.component.html</context>
+          <context context-type="linenumber">30,33</context>
+        </context-group>
+        <target state="final">
+           Csatlakoztatott Repo: Ág: 
+          <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>
+          <x id="INTERPOLATION" equiv-text="eUrl}}"/>
+          <x id="CLOSE_BOLD_TEXT" ctype="x-b"/>
+          <x id="LINE_BREAK" ctype="lb" equiv-text="&lt;br&gt;"/>
+          <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>
+          <x id="INTERPOLATION_1" equiv-text="h}}"/>
+          <x id="CLOSE_BOLD_TEXT" ctype="x-b"/>
+        </target>
+      </trans-unit>
+      <trans-unit id="5996811132715881318" datatype="html" approved="yes">
+        <source>Upgrade to enable</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/sync-project/sync-project.component.ts</context>
+          <context context-type="linenumber">36</context>
+        </context-group>
+        <target state="final">A frissítés engedélyezéséhez</target>
+      </trans-unit>
+      <trans-unit id="2850517692090624212" datatype="html" approved="yes">
+        <source>
+          Disconnected from  &lt;b&gt;&lt;/b&gt;
+          <x id="PH" equiv-text="this.currentRepo$.value?.remoteUrl"/>
+        </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/sync-project/sync-project.component.ts</context>
+          <context context-type="linenumber">76</context>
+        </context-group>
+        <target state="final">
+          Lekapcsolva  &lt;b&gt;&lt;/b&gt;
+          <x id="PH" equiv-text="this.currentRepo$.value?.remoteUrl"/>
+        </target>
       </trans-unit>
       <trans-unit id="694236538889679195" datatype="html" approved="yes">
         <source> This is where you can install pieces made by yourself or contributors. </source>

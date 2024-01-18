@@ -22,6 +22,9 @@ categories:
   - title: "📚 Documentation"
     labels:
       - "📚 documentation"
+  - title: "👩‍💻 Developer Experience"
+    labels:
+      - "👨‍💻 dev-experience"
   - title: "🧹 Maintenance"
     labels:
       - "🧹 clean up"

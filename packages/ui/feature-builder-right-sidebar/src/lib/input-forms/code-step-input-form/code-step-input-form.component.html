@@ -6,17 +6,34 @@
         <ap-markdown [data]="markdown" [smallText]="true">
         </ap-markdown>
       </div>
-      <app-dictonary-form-control formControlName="input"></app-dictonary-form-control>
+      <app-dictonary-form-control [formControl]="codeStepForm.controls.input"></app-dictonary-form-control>
     </div>
     <div>
-      <div class="ap-mb-2 ap-pointer-events-none" i18n>Code</div>
-      <app-code-artifact-form-control
-        formControlName="sourceCode"></app-code-artifact-form-control>
+      <div class="ap-mb-2 ap-flex ap-justify-between ap-items-center">
+        <span class="ap-pointer-events-none" i18n>Code</span>
+        <ng-container *ngIf="showGenerateCode$ | async as showCode">
+          <ap-button btnStyle="stroked" btnSize="medium" (buttonClicked)="openCodeWriterDialog()"
+            [disabled]="(generateCodeEnabled$ | async) === false"
+            [tooltipText]="(generateCodeEnabled$ | async) ? codeGeneratorTooltip: disabledCodeGeneratorTooltip"
+            i18n-tooltipText>
+            <div class="ap-flex ap-gap-3 ap-items-center">
+              <svg-icon src="assets/img/custom/AI.svg" class="ap-w-[20px] ap-h-[20px] ap-fill-primary"
+                [applyClass]="true"></svg-icon>
+              Generate
+            </div>
+          </ap-button>
+        </ng-container>
+
+      </div>
+      <app-code-artifact-form-control [formControl]="codeStepForm.controls.sourceCode"></app-code-artifact-form-control>
+      <app-action-error-handling-form-control
+        [formControl]="codeStepForm.controls.errorHandlingOptions"></app-action-error-handling-form-control>
     </div>
   </div>
 </form>
 
 <ng-container *ngIf="formValueChanged$ | async"></ng-container>
+<ng-container *ngIf="dialogClosed$ | async"></ng-container>
 <ng-template #loading>
   <div class="ap-flex ap-items-center ap-justify-center ap-h-[337px] ap-bg-[#193549]">
     <ap-loading-icon [whiteLoader]="true" [outlineLoader]="false"></ap-loading-icon>
