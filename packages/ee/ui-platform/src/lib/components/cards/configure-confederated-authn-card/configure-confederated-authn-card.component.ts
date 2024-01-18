@@ -11,19 +11,19 @@ import { Observable, tap } from 'rxjs';
 import {
   EnableFederatedAuthnProviderDialogComponent,
   EnableFederatedAuthnProviderDialogData,
-} from '../dialogs/enable-federated-authn-provider-dialog/enable-federated-authn-provider-dialog.component';
+} from '../../dialogs/enable-federated-authn-provider-dialog/enable-federated-authn-provider-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   GenericSnackbarTemplateComponent,
   PlatformService,
 } from '@activepieces/ui/common';
-import { FederatedAuthnProviderEnum } from '../sso-settings/federated-authn-provider.enum';
+import { FederatedAuthnProviderEnum } from '../../sso-settings/federated-authn-provider.enum';
 import { MatSlideToggleChange } from '@angular/material/slide-toggle';
 import {
   AtLeastOneLoginMethodMsg,
   doesPlatformHaveAtLeastOneLoginMethodEnabled,
-} from '../util';
+} from '../../util';
 
 @Component({
   selector: 'app-configure-confederated-authn-card',

@@ -7,6 +7,8 @@ import {
 import { MatTabChangeEvent, MatTabGroup } from '@angular/material/tabs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
+import { Platform } from '@activepieces/ee-shared';
+import { PLATFORM_RESOLVER_KEY } from '../../platform.resolver';
 @Component({
   selector: 'app-platform-settings',
   templateUrl: './platform-settings.component.html',
@@ -21,7 +23,6 @@ export class PlatformSettingsComponent implements AfterViewInit {
   readonly customDomainTabTitle = $localize`Custom Domains`;
   readonly privacyAndTermsTabTitle = $localize`Privacy & Terms`;
   readonly accountManagementEmailTabTitle = $localize`Mail Server`;
-
   readonly tabIndexFragmentMap: { [index: number]: string } = {
     0: 'SigningKeys',
     1: 'MailServer',
@@ -30,8 +31,9 @@ export class PlatformSettingsComponent implements AfterViewInit {
     4: 'ApiKeys',
     5: 'SSO',
   };
-
+  platform: Platform;
   constructor(private router: Router, private route: ActivatedRoute) {
+    this.platform = this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
     this.fragmentChanged$ = this.route.fragment.pipe(
       tap((fragment) => {
         if (fragment === null) {

@@ -1,11 +1,14 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Input,
+  OnInit,
+} from '@angular/core';
 import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import { PlatformService } from '@activepieces/ui/common';
-import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, Observable, catchError, tap } from 'rxjs';
 import { Platform } from '@activepieces/ee-shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { PLATFORM_RESOLVER_KEY } from '../../platform.resolver';
 
 interface TermsAndServicesForm {
   privacyPolicyUrl: FormControl<string>;
@@ -20,10 +23,11 @@ export class TermsAndServicesSettingsComponent implements OnInit {
   termsAndServicesForm: FormGroup<TermsAndServicesForm>;
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   saving$?: Observable<void>;
+  @Input({ required: true }) platform!: Platform;
   constructor(
     private fb: FormBuilder,
     private platformService: PlatformService,
-    private route: ActivatedRoute,
+
     private matSnackbar: MatSnackBar
   ) {
     this.termsAndServicesForm = this.fb.group({
@@ -36,12 +40,10 @@ export class TermsAndServicesSettingsComponent implements OnInit {
     });
   }
   ngOnInit(): void {
-    const platform: Platform = this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
-    this.termsAndServicesForm.patchValue(platform);
+    this.termsAndServicesForm.patchValue(this.platform);
   }
 
   save() {
-    const platform: Platform = this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
     this.termsAndServicesForm.markAllAsTouched();
     if (!this.loading$.value && !this.termsAndServicesForm.invalid) {
       this.loading$.next(true);
@@ -50,7 +52,7 @@ export class TermsAndServicesSettingsComponent implements OnInit {
           {
             ...this.termsAndServicesForm.value,
           },
-          platform.id
+          this.platform.id
         )
         .pipe(
           tap(() => {

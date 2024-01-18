@@ -1,17 +1,22 @@
 <ap-page-title [title]="title"></ap-page-title>
 <mat-tab-group #tabs class="ap-gap-4 " dynamicHeight mat-stretch-tabs="false" mat-align-tabs="start"
     animationDuration="0" (selectedTabChange)="tabChanged($event)">
-    <mat-tab [label]="signingKeysTabTitle"><app-signing-keys-table></app-signing-keys-table>
+    <mat-tab [label]="signingKeysTabTitle">
+        <app-signing-keys-table [platform]="platform"></app-signing-keys-table>
     </mat-tab>
-    <mat-tab [label]="accountManagementEmailTabTitle"> <app-smtp-settings></app-smtp-settings></mat-tab>
+    <mat-tab [label]="accountManagementEmailTabTitle">
+        <app-smtp-settings [platform]="platform"></app-smtp-settings></mat-tab>
     <mat-tab [label]="privacyAndTermsTabTitle">
-        <app-terms-and-services-settings></app-terms-and-services-settings></mat-tab>
-    <mat-tab [label]="customDomainTabTitle">
-        <app-custom-domain-table></app-custom-domain-table>
+        <app-terms-and-services-settings [platform]="platform"></app-terms-and-services-settings>
     </mat-tab>
-    <mat-tab [label]="apiKeysTabTitle"><app-api-keys-table></app-api-keys-table></mat-tab>
+    <mat-tab [label]="customDomainTabTitle">
+        <app-custom-domain-table [platform]="platform"></app-custom-domain-table>
+    </mat-tab>
+    <mat-tab [label]="apiKeysTabTitle">
+        <app-api-keys-table [platform]="platform"></app-api-keys-table>
+    </mat-tab>
     <mat-tab label="SSO" bodyClass="!ap-overflow-visible">
-        <app-sso-settings></app-sso-settings>
+        <app-sso-settings [platform]="platform"></app-sso-settings>
     </mat-tab>
 </mat-tab-group>
 <ng-container *ngIf="fragmentChanged$ | async"></ng-container>

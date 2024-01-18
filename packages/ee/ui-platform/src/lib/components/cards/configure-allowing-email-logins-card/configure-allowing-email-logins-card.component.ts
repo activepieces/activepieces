@@ -13,7 +13,7 @@ import { PlatformService } from '@activepieces/ui/common';
 import {
   AtLeastOneLoginMethodMsg,
   doesPlatformHaveAtLeastOneLoginMethodEnabled,
-} from '../util';
+} from '../../util';
 import { MatSlideToggleChange } from '@angular/material/slide-toggle';
 
 @Component({

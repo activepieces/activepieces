@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Input,
+  OnInit,
+} from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -6,11 +11,9 @@ import {
   Validators,
 } from '@angular/forms';
 import { PlatformService } from '@activepieces/ui/common';
-import { ActivatedRoute } from '@angular/router';
 import { Platform } from '@activepieces/ee-shared';
 import { BehaviorSubject, Observable, catchError, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { PLATFORM_RESOLVER_KEY } from '../../platform.resolver';
 
 interface SmtpForm {
   smtpHost: FormControl<string>;
@@ -29,10 +32,11 @@ export class SmtpSettingsComponent implements OnInit {
   smtpSettingsForm: FormGroup<SmtpForm>;
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   saving$?: Observable<void>;
+  @Input({ required: true }) platform!: Platform;
   constructor(
     private fb: FormBuilder,
     private platformService: PlatformService,
-    private route: ActivatedRoute,
+
     private matSnackbar: MatSnackBar
   ) {
     this.smtpSettingsForm = this.fb.group({
@@ -63,21 +67,18 @@ export class SmtpSettingsComponent implements OnInit {
     });
   }
   ngOnInit(): void {
-    const platform: Platform = this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
-    this.smtpSettingsForm.patchValue(platform);
+    this.smtpSettingsForm.patchValue(this.platform);
   }
   save(): void {
     this.smtpSettingsForm.markAllAsTouched();
     if (this.smtpSettingsForm.valid && this.loading$.value === false) {
-      const platform: Platform =
-        this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
       this.loading$.next(true);
       this.saving$ = this.platformService
         .updatePlatform(
           {
             ...this.smtpSettingsForm.value,
           },
-          platform.id
+          this.platform.id
         )
         .pipe(
           tap(() => {

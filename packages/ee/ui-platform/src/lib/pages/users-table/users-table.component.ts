@@ -66,6 +66,7 @@ export class UsersTableComponent {
         })
       );
   }
+
   activateUser(user: UserResponse) {
     this.activate$ = this.platformService
       .updateUser(user.id, { status: UserStatus.ACTIVE })

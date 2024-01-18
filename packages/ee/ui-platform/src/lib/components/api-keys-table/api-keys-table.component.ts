@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { Observable, Subject, tap, startWith } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import {
@@ -7,7 +7,7 @@ import {
 } from '@activepieces/ui/common';
 import { ApiKeysService } from '../../service/api-keys.service';
 import { ApiKeysDataSource } from './api-keys-table.datasource';
-import { ApiKey } from '@activepieces/ee-shared';
+import { ApiKey, Platform } from '@activepieces/ee-shared';
 import { CreateApiKeyDialogComponent } from '../dialogs/create-api-key-dialog/create-api-key-dialog.component';
 
 @Component({
@@ -20,6 +20,7 @@ export class ApiKeysTableComponent {
   dataSource: ApiKeysDataSource;
   refresh$: Subject<boolean> = new Subject();
   dialogClosed$?: Observable<unknown>;
+  @Input({ required: true }) platform!: Platform;
   constructor(
     private matDialog: MatDialog,
     private apiKeysService: ApiKeysService

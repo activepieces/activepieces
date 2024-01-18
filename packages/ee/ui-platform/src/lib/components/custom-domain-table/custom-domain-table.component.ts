@@ -1,9 +1,9 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { CustomDomainDataSource } from './custom-domain-table.datasource';
 import { Observable, Subject, tap } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { startWith } from 'rxjs';
-import { CustomDomain } from '@activepieces/ee-shared';
+import { CustomDomain, Platform } from '@activepieces/ee-shared';
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
@@ -21,6 +21,7 @@ export class CustomDomainTableComponent {
   dataSource: CustomDomainDataSource;
   refresh$: Subject<boolean> = new Subject();
   dialogClosed$?: Observable<unknown>;
+  @Input({ required: true }) platform!: Platform;
   constructor(
     private matDialog: MatDialog,
     private customDomainService: CustomDomainService
