@@ -216,7 +216,8 @@
         "developers/piece-reference/files",
         "developers/piece-reference/external-libraries",
         "developers/piece-reference/piece-versioning",
-        "developers/piece-reference/examples"
+        "developers/piece-reference/examples",
+        "developers/piece-reference/custom-api-calls"
       ]
     },
     {
