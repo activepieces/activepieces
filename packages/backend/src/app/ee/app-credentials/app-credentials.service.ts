@@ -31,11 +31,13 @@ export const appCredentialService = {
         return appCredentialRepo.findOneByOrFail({ id })
     },
     async upsert({ projectId, request }: { projectId: ProjectId, request: UpsertAppCredentialRequest }): Promise<AppCredential | null> {
+        const appCredential = await appCredentialRepo.findOneBy({ projectId, id: request.id, appName: request.appName })
+        const newId = appCredential?.id ?? apId()
         await appCredentialRepo.upsert({
-            id: apId(),
+            id: newId,
             projectId,
             ...request,
-        }, ['projectId', 'appName'])
+        }, ['id'])
         return appCredentialRepo.findOneBy({ projectId, appName: request.appName })
     },
     async delete({ id, projectId }: DeleteParams): Promise<void> {
