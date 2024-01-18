@@ -100,6 +100,7 @@ async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | 
             name: packageJson.name,
             version: packageJson.version
         };
+        metadata.directoryPath = folderPath;
         metadata.name = packageJson.name;
         metadata.version = packageJson.version;
         metadata.minimumSupportedRelease = piece.minimumSupportedRelease ?? '0.0.0';
