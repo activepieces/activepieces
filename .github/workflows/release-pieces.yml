@@ -36,22 +36,22 @@ jobs:
         run: cp .npmrc $HOME/.npmrc
 
       - name: publish shared package
-        run: npx ts-node tools/scripts/utils/publish-nx-project.ts packages/shared
+        run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/shared
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: publish pieces-common package
-        run: npx ts-node tools/scripts/utils/publish-nx-project.ts packages/pieces/community/common
+        run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/pieces/community/common
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: publish pieces-framework package
-        run: npx ts-node tools/scripts/utils/publish-nx-project.ts packages/pieces/community/framework
+        run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/pieces/community/framework
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: publish pieces packages
-        run: npx ts-node tools/scripts/pieces/publish-pieces-to-npm.ts
+        run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/pieces/publish-pieces-to-npm.ts
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
