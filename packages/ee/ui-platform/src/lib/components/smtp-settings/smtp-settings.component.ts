@@ -10,7 +10,10 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { PlatformService } from '@activepieces/ui/common';
+import {
+  PlatformService,
+  featureDisabledTooltip,
+} from '@activepieces/ui/common';
 import { Platform } from '@activepieces/ee-shared';
 import { BehaviorSubject, Observable, catchError, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -32,6 +35,7 @@ export class SmtpSettingsComponent implements OnInit {
   smtpSettingsForm: FormGroup<SmtpForm>;
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   saving$?: Observable<void>;
+  featureDisabledTooltip = featureDisabledTooltip;
   @Input({ required: true }) platform!: Platform;
   constructor(
     private fb: FormBuilder,
@@ -68,6 +72,9 @@ export class SmtpSettingsComponent implements OnInit {
   }
   ngOnInit(): void {
     this.smtpSettingsForm.patchValue(this.platform);
+    if (this.platform.isDemo) {
+      this.smtpSettingsForm.disable();
+    }
   }
   save(): void {
     this.smtpSettingsForm.markAllAsTouched();

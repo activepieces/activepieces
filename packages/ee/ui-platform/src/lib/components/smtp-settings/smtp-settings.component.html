@@ -1,4 +1,5 @@
 <div class="ap-h-full ap-pt-2 ap-flex ap-flex-col">
+    <ap-upgrade-note *ngIf="platform.isDemo"></ap-upgrade-note>
     <div class="ap-mb-4 ap-max-w-[44.6875rem]">
         <ap-markdown [fullWidth]="true"
             [data]="'Configure your email server and sender details for sending messages to your users.'"></ap-markdown>
@@ -42,8 +43,8 @@
     <div>
         <div
             class="ap-px-4 ap-pt-4  ap-flex ap-justify-end ap-items-center ap-gap-4 ap-w-full ap-border-t ap-border-solid ap-border-outline">
-            <ap-button btnStyle="flat" btnColor="primary" (buttonClicked)="save()"
-                [loading]="(loading$ | async) || false">
+            <ap-button btnStyle="flat" btnColor="primary" (buttonClicked)="save()" [disabled]="!!platform.isDemo"
+                [tooltipText]="platform.isDemo? featureDisabledTooltip: ''" [loading]="(loading$ | async) || false">
                 <div i18n>
                     Save
                 </div>
