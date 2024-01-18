@@ -94,9 +94,11 @@
       ],
       "@activepieces/piece-figma": ["packages/pieces/figma/src/index.ts"],
       "@activepieces/piece-flowise": ["packages/pieces/flowise/src/index.ts"],
-      "@activepieces/piece-frame": ["packages/pieces/frame/src/index.ts"],
       "@activepieces/piece-flowlu": ["packages/pieces/flowlu/src/index.ts"],
-      "@activepieces/piece-formbricks": ["packages/pieces/formbricks/src/index.ts"],
+      "@activepieces/piece-formbricks": [
+        "packages/pieces/formbricks/src/index.ts"
+      ],
+      "@activepieces/piece-frame": ["packages/pieces/frame/src/index.ts"],
       "@activepieces/piece-freshdesk": [
         "packages/pieces/freshdesk/src/index.ts"
       ],
@@ -143,6 +145,9 @@
       ],
       "@activepieces/piece-http": ["packages/pieces/http/src/index.ts"],
       "@activepieces/piece-hubspot": ["packages/pieces/hubspot/src/index.ts"],
+      "@activepieces/piece-image-helper": [
+        "packages/pieces/image-helper/src/index.ts"
+      ],
       "@activepieces/piece-imap": ["packages/pieces/imap/src/index.ts"],
       "@activepieces/piece-instagram-business": [
         "packages/pieces/instagram-business/src/index.ts"
