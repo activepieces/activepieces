@@ -33,6 +33,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [SystemProp.ENGINE_EXECUTABLE_PATH]: 'dist/packages/engine/main.js',
     [SystemProp.ENVIRONMENT]: 'prod',
     [SystemProp.EXECUTION_MODE]: 'UNSANDBOXED',
+    [SystemProp.CODE_EXECUTOR_SANDBOX_TYPE]: CodeExecutorSandboxType.NO_OP,
     [SystemProp.FLOW_WORKER_CONCURRENCY]: '10',
     [SystemProp.LOG_LEVEL]: 'info',
     [SystemProp.LOG_PRETTY]: 'false',
