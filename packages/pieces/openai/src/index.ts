@@ -1,8 +1,8 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceAuth, PieceAuthProperty, createPiece } from '@activepieces/pieces-framework';
 import { askOpenAI } from './lib/actions/send-prompt';
 import { transcribeAction } from './lib/actions/transcriptions';
 import { translateAction } from './lib/actions/translation';
-import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, createArbitraryHttpRequestAction, httpClient } from '@activepieces/pieces-common';
 import { generateImage } from './lib/actions/generate-image';
 import { visionPrompt } from './lib/actions/vision-prompt';
 import { textToSpeech } from './lib/actions/text-to-speech';
@@ -59,7 +59,16 @@ export const openai = createPiece({
     textToSpeech,
     transcribeAction,
     translateAction,
+    createArbitraryHttpRequestAction({
+        auth: openaiAuth,
+        baseUrl: 'https://api.openai.com/v1',
+        authMapping: (auth: PieceAuthProperty) => {
+            return {
+                'Authorization': `Bearer ${auth}`
+            }
+        }
+    })
   ],
   authors: ['aboudzein', 'creed983', 'astorozhevsky', 'Salem-Alaa', 'MoShizzle'],
-  triggers: []
+  triggers: [],
 });
