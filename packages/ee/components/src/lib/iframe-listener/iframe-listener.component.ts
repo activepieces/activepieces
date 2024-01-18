@@ -41,7 +41,7 @@ export class IframeListenerComponent {
       const targetRoute = event.data.data.vendorRoute;
       const routeToNavigateTo = targetRoute.endsWith('/')
         ? targetRoute
-        : `/${targetRoute}`;
+        : `${targetRoute}/`;
       const [path, queryString] = routeToNavigateTo.split('?');
       const urlSearchParams = new URLSearchParams(queryString);
       const queryParams: Record<string, unknown> = {};
@@ -52,6 +52,7 @@ export class IframeListenerComponent {
         queryParams,
         skipLocationChange: true,
       });
+
       const clientRouteChangedEvent: ActivepiecesClientRouteChanged = {
         data: {
           route: routeToNavigateTo,
