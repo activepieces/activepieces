@@ -45,6 +45,7 @@ export class IsolateSandbox extends AbstractSandbox {
         try {
             const basePath = path.resolve(__dirname.split('/dist')[0])
             const pieceSource = system.getOrThrow(SystemProp.PIECES_SOURCE)
+            const codeExecutorSandboxType = system.get(SystemProp.CODE_EXECUTOR_SANDBOX_TYPE)
             const fullCommand = [
                 '--dir=/usr/bin/',
                 `--dir=/etc/=${etcDir}`,
@@ -61,7 +62,7 @@ export class IsolateSandbox extends AbstractSandbox {
                 '--env=HOME=/tmp/',
                 '--env=NODE_OPTIONS=\'--enable-source-maps\'',
                 `--env=AP_PIECES_SOURCE=${pieceSource}`,
-                '--env=AP_CODE_EXECUTOR_SANDBOX_TYPE',
+                `--env=AP_CODE_EXECUTOR_SANDBOX_TYPE=${codeExecutorSandboxType}`,
                 `--env=AP_BASE_CODE_DIRECTORY=${IsolateSandbox.cacheBindPath}/codes`,
                 AbstractSandbox.nodeExecutablePath,
                 `${IsolateSandbox.cacheBindPath}/main.js`,
