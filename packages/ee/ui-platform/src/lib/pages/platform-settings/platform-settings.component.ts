@@ -3,19 +3,17 @@ import {
   AfterViewInit,
   ChangeDetectionStrategy,
   Component,
-  OnInit,
   ViewChild,
 } from '@angular/core';
 import { MatTabChangeEvent, MatTabGroup } from '@angular/material/tabs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
-
 @Component({
   selector: 'app-platform-settings',
   templateUrl: './platform-settings.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PlatformSettingsComponent implements AfterViewInit, OnInit {
+export class PlatformSettingsComponent {
   @ViewChild('tabs') tabGroup?: MatTabGroup;
   title = $localize`Settings`;
   fragmentChanged$: Observable<string | null>;
@@ -33,7 +31,6 @@ export class PlatformSettingsComponent implements AfterViewInit, OnInit {
     4: 'ApiKeys',
     5: 'SSO',
   };
-  platform!: Platform;
 
   constructor(private router: Router, private route: ActivatedRoute) {
     this.fragmentChanged$ = this.route.fragment.pipe(
@@ -45,9 +42,6 @@ export class PlatformSettingsComponent implements AfterViewInit, OnInit {
         }
       })
     );
-  }
-  ngOnInit(): void {
-    this.platform = this.route.snapshot.data['platform'];
   }
   ngAfterViewInit(): void {
     const fragment = this.route.snapshot.fragment;

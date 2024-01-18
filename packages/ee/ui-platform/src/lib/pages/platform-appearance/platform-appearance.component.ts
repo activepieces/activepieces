@@ -20,6 +20,7 @@ import {
 import { ActivatedRoute } from '@angular/router';
 import { localesMap } from '@activepieces/ui/common';
 import { spreadIfDefined, LocalesEnum } from '@activepieces/shared';
+import { PLATFORM_RESOLVER_KEY } from '../../platform.resolver';
 
 interface AppearanceForm {
   name: FormControl<string>;
@@ -107,7 +108,7 @@ export class PlatformAppearanceComponent implements OnInit {
     });
   }
   ngOnInit(): void {
-    this.platform = this.route.snapshot.data['platform'];
+    this.platform = this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
     this.formGroup.patchValue({
       name: this.platform.name,
       favIconUrl: this.platform.favIconUrl,
