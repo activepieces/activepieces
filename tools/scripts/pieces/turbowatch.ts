@@ -2,22 +2,23 @@ import chalk from 'chalk'; // Import the chalk library
 import { config } from 'dotenv';
 import { watch } from 'turbowatch';
 import { exec } from 'child_process';
-import { findPiece } from '../utils/piece-script-utils';
+import { findPieceDirectoryInSource } from '../utils/piece-script-utils';
 import path from 'path';
+import { assertNotNullOrUndefined } from '../../../packages/shared/src';
 
 config({ path: 'packages/backend/.env' });
 
 const packages = process.env.AP_DEV_PIECES?.split(',') || [];
 
-async function main(){
-  for(const packageName of packages){
+async function main() {
+  for (const packageName of packages) {
     console.log(chalk.blue(`Starting Turbowatch for package: ${packageName}`));
-  
     // Define the inline configuration
-    const piece = await findPiece(packageName)
+    const pieceDirectory = await findPieceDirectoryInSource(packageName)
+    assertNotNullOrUndefined(pieceDirectory, 'pieceDirectory')
     const piecePackageName = `pieces-${packageName}`;
     void watch({
-      project: path.resolve(piece?.directoryPath!),
+      project: path.resolve(pieceDirectory),
       triggers: [
         {
           expression: ['match', '**/*.ts', 'basename'],

@@ -56,6 +56,17 @@ export async function findPiece(pieceName: string): Promise<PieceMetadata | null
     return pieces.find((p) => p.name === pieceName) ?? null
 }
 
+export async function findAllPiecesDirectoryInSource(): Promise<string[]> {
+    const piecesPath = resolve(cwd(), 'packages', 'pieces')
+    const paths = await traverseFolder(piecesPath)
+    return paths
+}
+export async function findPieceDirectoryInSource(pieceName: string): Promise<string | null> {
+    const piecesPath =  await findAllPiecesDirectoryInSource()
+    const piecePath = piecesPath.find((p) => p.includes(pieceName))
+    return piecePath ?? null
+}
+
 export async function findAllPieces(): Promise<PieceMetadata[]> {
     const piecesPath = resolve(cwd(), 'dist', 'packages', 'pieces')
     const paths = await traverseFolder(piecesPath)
