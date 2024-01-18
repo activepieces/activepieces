@@ -37,7 +37,7 @@ export class SigningKeysTableComponent implements OnInit {
     this.dataSource = new SigningKeysDataSource(
       this.refresh$.asObservable().pipe(startWith(false)),
       this.signingKeysService,
-      !this.platform.embeddingEnabled
+      !this.platform.embeddingEnabled || !!this.platform.isDemo
     );
   }
 
