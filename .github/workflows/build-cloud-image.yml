@@ -2,6 +2,9 @@ name: Build Cloud Image
 
 on:
   workflow_dispatch:
+    inputs:
+      MY_VERSION:
+        required: true
 
 jobs:
   Release:
@@ -33,4 +36,4 @@ jobs:
             linux/amd64
           push: true
           tags: |
-            ghcr.io/activepieces/activepieces-cloud:${{ env.RELEASE }}.${{ env.MY_VERSION }}
+            ghcr.io/activepieces/activepieces-cloud:${{ env.RELEASE }}.${{ inputs.MY_VERSION }}
