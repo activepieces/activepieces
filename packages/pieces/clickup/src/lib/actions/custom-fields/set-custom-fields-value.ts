@@ -11,7 +11,7 @@ export const setClickupCustomFieldValue = createAction({
   props: {
     workspace_id: clickupCommon.workspace_id(true),
     space_id: clickupCommon.space_id(true),
-    list_id: clickupCommon.list_id(true),
+    list_id: clickupCommon.list_id(false),
     task_id: clickupCommon.task_id(true),
     field_id: clickupCommon.field_id(true),
     value: Property.LongText({
