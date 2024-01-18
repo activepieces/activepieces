@@ -1,5 +1,13 @@
 import { DataSource } from '@angular/cdk/collections';
-import { Observable, BehaviorSubject, tap, switchMap, map } from 'rxjs';
+import {
+  Observable,
+  BehaviorSubject,
+  tap,
+  switchMap,
+  map,
+  of,
+  delay,
+} from 'rxjs';
 import { combineLatest } from 'rxjs';
 import { SigningKey } from '@activepieces/ee-shared';
 import { SigningKeysService } from '../../service/signing-keys.service';
@@ -14,7 +22,8 @@ export class SigningKeysDataSource extends DataSource<SigningKey> {
   isLoading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
   constructor(
     private refresh$: Observable<boolean>,
-    private signingKeysService: SigningKeysService
+    private signingKeysService: SigningKeysService,
+    private fakeData: boolean
   ) {
     super();
   }
@@ -26,6 +35,15 @@ export class SigningKeysDataSource extends DataSource<SigningKey> {
    */
 
   connect(): Observable<SigningKey[]> {
+    if (this.fakeData) {
+      this.data = [];
+      return of([]).pipe(
+        delay(100),
+        tap(() => {
+          this.isLoading$.next(false);
+        })
+      );
+    }
     return combineLatest([this.refresh$]).pipe(
       tap(() => {
         this.isLoading$.next(true);
