@@ -7,13 +7,13 @@
     "serve:frontend": "nx serve ui-core",
     "serve:backend": "nx serve backend",
     "serve:engine": "nx serve engine",
-    "serve:pieces": "turbowatch turbowatch.ts",
+    "serve:pieces": "turbowatch tools/scripts/pieces/turbowatch.ts",
     "dev": "cross-env-shell FORCE_COLOR=true concurrently -n \"GUI,API,ENG,PCS\" -c \"bgBlue.bold,bgGreen.bold,bgRed.bold,bgYellow.bold\" \"npm:serve:frontend\" \"npm:serve:backend\" \"npm:serve:engine\" \"npm:serve:pieces\"",
     "dev:backend": "cross-env-shell FORCE_COLOR=true concurrently -n \"API,ENG\" -c \"bgGreen.bold,bgRed.bold\" \"npm:serve:backend\" \"npm:serve:engine\"",
     "dev:frontend": "cross-env-shell FORCE_COLOR=true concurrently -n \"GUI,API,ENG\" -c \"bgBlue.bold,bgGreen.bold,bgRed.bold\" \"npm:serve:frontend\" \"npm:serve:backend\" \"npm:serve:engine\"",
     "start": "npm i && npm run dev",
     "publish-piece": "npx ts-node tools/scripts/utils/publish-piece.ts",
-    "create-piece": "npx ts-node tools/scripts/generate-new-piece.ts"
+    "create-piece": "npx ts-node tools/scripts/pieces/generate-new-piece.ts"
   },
   "private": true,
   "dependencies": {

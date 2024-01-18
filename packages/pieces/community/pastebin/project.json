@@ -1,0 +1,29 @@
+{
+  "name": "pieces-pastebin",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/pastebin/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/pastebin",
+        "tsConfig": "packages/pieces/community/pastebin/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/pastebin/package.json",
+        "main": "packages/pieces/community/pastebin/src/index.ts",
+        "assets": ["packages/pieces/community/pastebin/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/community/pastebin/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

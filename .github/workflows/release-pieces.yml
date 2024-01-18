@@ -41,21 +41,21 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: publish pieces-common package
-        run: npx ts-node tools/scripts/utils/publish-nx-project.ts packages/pieces/common
+        run: npx ts-node tools/scripts/utils/publish-nx-project.ts packages/pieces/community/common
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: publish pieces-framework package
-        run: npx ts-node tools/scripts/utils/publish-nx-project.ts packages/pieces/framework
+        run: npx ts-node tools/scripts/utils/publish-nx-project.ts packages/pieces/community/framework
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: publish pieces packages
-        run: npx ts-node tools/scripts/publish-pieces-to-npm.ts
+        run: npx ts-node tools/scripts/pieces/publish-pieces-to-npm.ts
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: update pieces metadata
-        run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/update-pieces-metadata/main.ts packages/pieces/framework
+        run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/pieces/update-pieces-metadata.ts packages/pieces/community/framework
         env:
           AP_CLOUD_API_KEY: ${{ secrets.AP_CLOUD_API_KEY }}

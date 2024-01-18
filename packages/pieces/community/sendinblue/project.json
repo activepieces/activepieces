@@ -1,0 +1,29 @@
+{
+  "name": "pieces-sendinblue",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/sendinblue/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/sendinblue",
+        "tsConfig": "packages/pieces/community/sendinblue/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/sendinblue/package.json",
+        "main": "packages/pieces/community/sendinblue/src/index.ts",
+        "assets": ["packages/pieces/community/sendinblue/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/community/sendinblue/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

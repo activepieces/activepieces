@@ -103,7 +103,7 @@ describe('Piece Metadata API', () => {
             expect(responseBody.archiveId).toBe(mockPieceMetadata.archiveId)
             expect(responseBody.auth).toEqual(mockPieceMetadata.auth)
             expect(responseBody.description).toBe(mockPieceMetadata.description)
-            expect(responseBody.directoryName).toBe(mockPieceMetadata.directoryName)
+            expect(responseBody.directoryPath).toBe(mockPieceMetadata.directoryPath)
             expect(responseBody.displayName).toBe(mockPieceMetadata.displayName)
             expect(responseBody.id).toBe(mockPieceMetadata.id)
             expect(responseBody.logoUrl).toBe(mockPieceMetadata.logoUrl)

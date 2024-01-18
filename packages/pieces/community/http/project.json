@@ -1,0 +1,29 @@
+{
+  "name": "pieces-http",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/http/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/http",
+        "tsConfig": "packages/pieces/community/http/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/http/package.json",
+        "main": "packages/pieces/community/http/src/index.ts",
+        "assets": ["packages/pieces/community/http/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/community/http/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}
