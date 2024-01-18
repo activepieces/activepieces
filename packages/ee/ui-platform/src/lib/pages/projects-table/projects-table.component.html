@@ -2,10 +2,12 @@
     <div class="ap-h-full">
         <div class="ap-flex ap-items-center ap-justify-between">
             <ap-page-title [title]="title"></ap-page-title>
-            <ap-button btnColor="primary" btnSize="medium" (buttonClicked)="createProject()">
+            <ap-button btnColor="primary" btnSize="medium" (buttonClicked)="createProject()"
+                [disabled]="platform.isDemo || false" [tooltipText]="platform.isDemo? featureDisabledTooltip:''">
                 + New project
             </ap-button>
         </div>
+        <ap-upgrade-note *ngIf="platform.isDemo"></ap-upgrade-note>
 
         <div class="ap-min-h-[70%]">
             <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Projects table">
@@ -38,13 +40,11 @@
                     </th>
                     <td mat-cell *matCellDef="let project">
                         <div class="ap-float-right ap-w-[7.3125rem] ap-text-center">
-                            <ap-icon-button (click)="$event.stopPropagation();updateProject(project)"
-                                tooltipText="Edit project" iconFilename="pencil-underline.svg" [width]="20"
-                                [height]="20" [height]="16"></ap-icon-button>
-
+                            <ap-icon-button *ngIf="!platform.isDemo"
+                                (click)="$event.stopPropagation();updateProject(project)" tooltipText="Edit project"
+                                iconFilename="pencil-underline.svg" [width]="20" [height]="20"
+                                [height]="16"></ap-icon-button>
                         </div>
-
-
                     </td>
                 </ng-container>
 

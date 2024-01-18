@@ -24,6 +24,9 @@ export const uiEePlatformRoutes: Route[] = [
         data: {
           title: $localize`Projects`,
         },
+        resolve: {
+          [PLATFORM_RESOLVER_KEY]: platformResolver,
+        },
       },
       {
         path: 'appearance',
