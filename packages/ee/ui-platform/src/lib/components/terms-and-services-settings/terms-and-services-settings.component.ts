@@ -5,7 +5,10 @@ import {
   OnInit,
 } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
-import { PlatformService } from '@activepieces/ui/common';
+import {
+  PlatformService,
+  featureDisabledTooltip,
+} from '@activepieces/ui/common';
 import { BehaviorSubject, Observable, catchError, tap } from 'rxjs';
 import { Platform } from '@activepieces/ee-shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -24,6 +27,7 @@ export class TermsAndServicesSettingsComponent implements OnInit {
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   saving$?: Observable<void>;
   @Input({ required: true }) platform!: Platform;
+  featureDisabledTooltip = featureDisabledTooltip;
   constructor(
     private fb: FormBuilder,
     private platformService: PlatformService,
@@ -41,6 +45,9 @@ export class TermsAndServicesSettingsComponent implements OnInit {
   }
   ngOnInit(): void {
     this.termsAndServicesForm.patchValue(this.platform);
+    if (this.platform.isDemo) {
+      this.termsAndServicesForm.disable();
+    }
   }
 
   save() {
