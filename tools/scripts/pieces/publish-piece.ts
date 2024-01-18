@@ -11,7 +11,7 @@ export const publishPiece = async (name: string): Promise<void> => {
   if (!piece) {
     throw new Error(`[publishPiece] piece not found, name=${name}`)
   }
-  const directory = piece.directoryName!
+  const directory = piece.directoryPath!
   const { version } = await readPackageJson(directory)
   const { name: nxProjectName } = await readProjectJson(directory)
 

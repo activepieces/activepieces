@@ -17,7 +17,7 @@ async function main(){
     const piece = await findPiece(packageName)
     const piecePackageName = `pieces-${packageName}`;
     void watch({
-      project: path.resolve(piece?.directoryName!),
+      project: path.resolve(piece?.directoryPath!),
       triggers: [
         {
           expression: ['match', '**/*.ts', 'basename'],

@@ -8,7 +8,7 @@ const publishPiece = async (nxProjectPath: string, pieceName: string): Promise<v
 
 const main = async () => {
   const pieceNames = await findAllPieces()
-  const publishResults = pieceNames.map(p => publishPiece(p.directoryName!, p.name))
+  const publishResults = pieceNames.map(p => publishPiece(p.directoryPath!, p.name))
   await Promise.all(publishResults)
 }
 
