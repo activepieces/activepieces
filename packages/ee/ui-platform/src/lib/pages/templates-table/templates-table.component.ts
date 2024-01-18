@@ -5,6 +5,7 @@ import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
   TemplatesService,
+  featureDisabledTooltip,
 } from '@activepieces/ui/common';
 import { TemplatesDataSource } from './templates-table.datasource';
 import { MatDialog } from '@angular/material/dialog';
@@ -13,6 +14,9 @@ import {
   CreateOrUpdateTemplateDialogueComponent,
 } from '../../components/dialogs/create-or-update-template-dialogue/create-or-update-template-dialogue.component';
 import { FlowTemplate } from '@activepieces/shared';
+import { ActivatedRoute } from '@angular/router';
+import { PLATFORM_RESOLVER_KEY } from '../../platform.resolver';
+import { Platform } from '@activepieces/ee-shared';
 
 @Component({
   selector: 'app-template-table',
@@ -25,13 +29,18 @@ export class TemplatesTableComponent {
   dataSource: TemplatesDataSource;
   refresh$: Subject<boolean> = new Subject();
   dialogClosed$?: Observable<unknown>;
+  platform: Platform;
+  featureDisabledTooltip = featureDisabledTooltip;
   constructor(
     private templateService: TemplatesService,
-    private matDialog: MatDialog
+    private matDialog: MatDialog,
+    private route: ActivatedRoute
   ) {
+    this.platform = this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
     this.dataSource = new TemplatesDataSource(
       this.refresh$.asObservable().pipe(startWith(false)),
-      this.templateService
+      this.templateService,
+      this.platform.isDemo || false
     );
   }
   create() {
