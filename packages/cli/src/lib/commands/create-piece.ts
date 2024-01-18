@@ -11,7 +11,7 @@ import {
 
 import { getAvailablePieceNames } from '../utils/get-available-piece-names';
 
-const validatePieceName = (pieceName: string) => {
+const validatePieceName = async (pieceName: string) => {
   console.log(chalk.yellow('Validating piece name....'));
   const pieceNamePattern = /^[A-Za-z0-9\-]+$/;
   if (!pieceNamePattern.test(pieceName)) {
@@ -24,8 +24,8 @@ const validatePieceName = (pieceName: string) => {
   }
 };
 
-const validatePackageName = (packageName: string) => {
-  console.log(chalk.yellow('Validating piece name....'));
+const validatePackageName = async (packageName: string) => {
+  console.log(chalk.yellow('Validating package name....'));
   const packageNamePattern = /^[A-Za-z0-9\-]+$/;
   if (!packageNamePattern.test(packageName)) {
     console.log(
@@ -37,10 +37,12 @@ const validatePackageName = (packageName: string) => {
   }
 };
 
-const validatePieceType = (pieceType: string) => {
+const validatePieceType = async (pieceType: string) => {
   if (!['community', 'custom'].includes(pieceType)) {
     console.log(
-      chalk.red('> piece type can be either custom or community only.')
+      chalk.red(
+        `> piece type can be either custom or community only.provided type :${pieceType}`
+      )
     );
     process.exit(1);
   }
@@ -75,7 +77,7 @@ const checkExistingPieceName = async (pieceName: string, pieceType: string) => {
 };
 const removeUnusedFiles = async (pieceName: string, pieceType: string) => {
   await rm(
-    `packages/pieces/${pieceType}/${pieceName}/src/lib/pieces-${pieceName}.ts`
+    `packages/pieces/${pieceType}/${pieceName}/src/lib/pieces-${pieceType}-${pieceName}.ts`
   );
 };
 function capitalizeFirstLetter(str: string): string {
@@ -165,10 +167,16 @@ export const createPieceCommand = async (
   packageName: string,
   pieceType: string
 ) => {
-  validatePieceName(pieceName);
-  validatePackageName(packageName);
-  validatePieceType(pieceType);
+  await validatePieceName(pieceName);
+  await validatePackageName(packageName);
+  await validatePieceType(pieceType);
   await checkExistingPieceName(pieceName, pieceType);
   await nxGenerateNodeLibrary(pieceName, packageName, pieceType);
   await setupGeneratedLibrary(pieceName, pieceType);
+  console.log(chalk.green('✨  Done!'));
+  console.log(
+    chalk.yellow(
+      `The piece has been generated at: packages/pieces/${pieceType}/${pieceName}`
+    )
+  );
 };
