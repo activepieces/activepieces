@@ -12,7 +12,7 @@ export const getAccessTokenOrThrow = (auth: OAuth2PropertyValue | undefined): st
   return accessToken;
 };
 
-export function createArbitraryHttpRequestAction({ auth, baseUrl, authMapping }: {
+export function createCustomApiCallAction({ auth, baseUrl, authMapping }: {
   auth?: PieceAuthProperty,
   baseUrl: string,
   authMapping?: (auth: PieceAuthProperty) => HttpHeaders
