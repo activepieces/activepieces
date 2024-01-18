@@ -3,10 +3,6 @@ import { FlowId } from '../flows/flow'
 import { ProjectId } from '../project/project'
 import { UserId } from '../user/user'
 
-type ChatbotCreated = {
-    chatbotId: string
-}
-
 type FlowCreated = {
     flowId: FlowId
 }
@@ -51,11 +47,14 @@ type FlowImported = {
 }
 
 type UpgradeClicked = {
-    limit?: 'team' | 'connections'
+    limitType?: 'team' | 'connections'
+    limit: number
 }
 
 type UpgradePopup = {
-    limit?: 'team' | 'connections'
+    limitType?: 'team' | 'connections'
+    limit: number
+    
 }
 
 type ReferralLinkCopied = {
@@ -71,12 +70,19 @@ type FlowShared = {
     projectId: ProjectId
 }
 
+type OpenedFromDasahboard = {
+    location: 'sidenav' | 'tasks-progress'
+}
+type CopilotGeneratedCode = {
+    code: string
+    prompt: string
+}
 export enum TelemetryEventName {
     SIGNED_UP = 'signed.up',
     QUOTA_ALERT = 'quota.alert',
     UPGRADE_CLICKED = 'upgrade.clicked',
+    OPENED_PRICING_FROM_DASHBOARD = 'pricing.viewed',
     UPGRADE_POPUP = 'upgrade.popup',
-    CHATBOT_CREATED = 'chatbot.created',
     FLOW_CREATED = 'flow.created',
     DEMO_IMPORTED = 'demo.imported',
     FLOW_RUN_CREATED = 'run.created',
@@ -86,13 +92,10 @@ export enum TelemetryEventName {
     REFERRAL = 'referral',
     REFERRAL_LINK_COPIED = 'referral.link.copied',
     FLOW_SHARED = 'flow.shared',
-    FEATURED_TAB_VIEWED = 'template.featured-tab-viewed',
     TEMPLATE_SEARCH = 'template.search',
+    COPILOT_GENERATED_CODE = 'copilot.code.generated',
 }
 
-type FeaturedTabViewed = {
-    buttonPressed: 'banner button' | 'tab button'
-}
 type BaseTelemetryEvent<T, P> = {
     name: T
     payload: P
@@ -113,5 +116,5 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.REFERRAL_LINK_COPIED, ReferralLinkCopied>
     | BaseTelemetryEvent<TelemetryEventName.FLOW_SHARED, FlowShared>
     | BaseTelemetryEvent<TelemetryEventName.DEMO_IMPORTED, Record<string, never>>
-    | BaseTelemetryEvent<TelemetryEventName.CHATBOT_CREATED, ChatbotCreated>
-    | BaseTelemetryEvent<TelemetryEventName.FEATURED_TAB_VIEWED, FeaturedTabViewed>
+    | BaseTelemetryEvent<TelemetryEventName.OPENED_PRICING_FROM_DASHBOARD, OpenedFromDasahboard>
+    | BaseTelemetryEvent<TelemetryEventName.COPILOT_GENERATED_CODE, CopilotGeneratedCode>

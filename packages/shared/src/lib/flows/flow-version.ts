@@ -1,4 +1,4 @@
-import { BaseModelSchema } from '../common/base-model'
+import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
 import { Trigger } from './triggers/trigger'
 import { Static, Type } from '@sinclair/typebox'
@@ -15,9 +15,19 @@ export const FlowVersion = Type.Object({
     flowId: Type.String(),
     displayName: Type.String(),
     trigger: Trigger,
-    updatedBy: Type.String(),
+    updatedBy: Nullable(Type.String()),
     valid: Type.Boolean(),
     state: Type.Enum(FlowVersionState),
 })
 
 export type FlowVersion = Static<typeof FlowVersion>
+
+export const FlowVersionMetadata = Type.Object({
+    ...BaseModelSchema,
+    flowId: Type.String(),
+    displayName: Type.String(),
+    valid: Type.Boolean(),
+    state: Type.Enum(FlowVersionState),
+})
+
+export type FlowVersionMetadata = Static<typeof FlowVersionMetadata>

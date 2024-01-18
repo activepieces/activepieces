@@ -1,13 +1,12 @@
 import { EntitySchema } from 'typeorm'
 import {  BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../../database/database-common'
-import { ApId, BaseModel, FlowTemplate, Project, ProjectId, User } from '@activepieces/shared'
+import { FlowTemplate, Project, User } from '@activepieces/shared'
+import { Platform } from '@activepieces/ee-shared'
 
-export type FlowTemplateSchema = FlowTemplate & BaseModel<ApId> & {
+type FlowTemplateSchema = FlowTemplate & {
     project: Project
-    projectId: ProjectId
+    platform: Platform
     user: User | null
-    isFeatured: boolean
-    featuredDescription: string
 }
 
 export const FlowTemplateEntity = new EntitySchema<FlowTemplateSchema>({
@@ -19,6 +18,13 @@ export const FlowTemplateEntity = new EntitySchema<FlowTemplateSchema>({
         },
         description: {
             type: String,
+        },
+        type: {
+            type: String,
+        },
+        platformId: {
+            type: String,
+            nullable: false,
         },
         projectId: {
             type: String,
@@ -35,22 +41,6 @@ export const FlowTemplateEntity = new EntitySchema<FlowTemplateSchema>({
             array: true,
         },
         blogUrl: {
-            type: String,
-            nullable: true,
-        },
-        userId: {
-            type: String,
-            nullable: true,
-        },
-        imageUrl: {
-            type: String,
-            nullable: true,
-        },
-        isFeatured: {
-            type: Boolean,
-            nullable: true,
-        },
-        featuredDescription: {
             type: String,
             nullable: true,
         },
@@ -78,17 +68,16 @@ export const FlowTemplateEntity = new EntitySchema<FlowTemplateSchema>({
                 foreignKeyConstraintName: 'fk_flow_template_project_id',
             },
         },
-        user: {
+        platform: {
             type: 'many-to-one',
-            target: 'user',
+            target: 'platform',
             cascade: true,
             onDelete: 'CASCADE',
+            nullable: true,
             joinColumn: {
-                name: 'userId',
-                foreignKeyConstraintName: 'fk_flow_template_user_id',
+                name: 'platformId',
+                foreignKeyConstraintName: 'fk_flow_template_platform_id',
             },
-
-
         },
     },
 })

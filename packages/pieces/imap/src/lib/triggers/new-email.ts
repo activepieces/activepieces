@@ -44,6 +44,13 @@ export const newEmail = createTrigger({
                     });
                     imapClient.connect();
                 });
+                // Add all boxes option for gmail
+                if ((auth as any).host.includes('gmail.com')) {
+                    options.unshift({
+                        label: 'All',
+                        value: '[Gmail]/All Mail'
+                    })
+                }
                 return {
                     disabled: false,
                     options: options,

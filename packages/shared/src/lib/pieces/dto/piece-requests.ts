@@ -24,6 +24,7 @@ export type GetPieceRequestParams = Static<typeof GetPieceRequestParams>
 
 export const ListPiecesRequestQuery = Type.Object({
     release: Type.Optional(ExactVersionType),
+    includeHidden: Type.Optional(Type.Boolean()),
     edition: Type.Optional(Type.Enum(ApEdition)),
 })
 
@@ -49,6 +50,7 @@ export const PieceOptionRequest = Type.Object({
 export type PieceOptionRequest = Static<typeof PieceOptionRequest>
 
 export const AddPieceRequestBody = Type.Object({
+    platformId: Type.Optional(Type.String()),
     packageType: Type.Enum(PackageType),
     pieceName: Type.String(),
     pieceVersion: ExactVersionType,

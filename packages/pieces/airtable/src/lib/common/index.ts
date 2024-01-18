@@ -236,27 +236,44 @@ export const airtableCommon = {
     },
   }),
 
-  fieldNames: Property.DynamicProperties({
-    displayName: 'Table',
+  fieldNames: Property.Dropdown({
+    displayName: 'Search Field',
     required: true,
     refreshers: ['base', 'tableId'],
-
-    props: async ({ auth, base, tableId }) => {
-      if (!auth) return {};
-      if (!base) return {};
-      if (!tableId) return {};
-
-      let fieldNames = {};
-
+    options: async ({ auth, base, tableId }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please connect your account',
+        };
+      }
+      if (!base) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please select a base first',
+        };
+      }
+      if (!tableId) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please select a table first',
+        };
+      }
       const airtable: AirtableTable = await airtableCommon.fetchTable({
         token: auth as unknown as string,
         baseId: base as unknown as string,
         tableId: tableId as unknown as string,
       });
-
-      fieldNames = airtable.fields.map((field: AirtableField) => field.name);
-
-      return fieldNames;
+      return {
+        disabled: false,
+        options: airtable.fields.map((field: AirtableField) => ({
+          label: field.name,
+          value: field.name,
+        })),
+      };
     },
   }),
 
@@ -387,6 +404,7 @@ export const airtableCommon = {
       },
       body: {
         fields,
+        typecast: true,
       },
     };
 
@@ -493,4 +511,5 @@ interface Params {
   searchField?: string;
   fieldNames?: string[];
   limitToView?: string;
+  sortField?: string;
 }

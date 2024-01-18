@@ -34,7 +34,7 @@ export const demoTemplate: FlowVersionTemplate = {
       nextAction: {
         name: 'step_2',
         type: ActionType.PIECE,
-        valid: true,
+        valid: false,
         settings: {
           input: {
             cc: [],
@@ -69,5 +69,5 @@ export const demoTemplate: FlowVersionTemplate = {
       inputUiInfo: {},
     },
   },
-  valid: true,
+  valid: false,
 };

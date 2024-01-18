@@ -61,15 +61,15 @@ export const packageManager = {
         ]
 
         const dependencyArgs = dependencies.map(d => `${d.alias}@${d.spec}`)
-        return await runCommand(path, 'add', ...dependencyArgs, ...config)
+        return runCommand(path, 'add', ...dependencyArgs, ...config)
     },
 
     async init({ path }: InitParams): Promise<PackageManagerOutput> {
-        return await runCommand(path, 'init')
+        return runCommand(path, 'init')
     },
 
     async exec({ path, command }: ExecParams): Promise<PackageManagerOutput> {
-        return await runCommand(path, command)
+        return runCommand(path, command)
     },
 
     async link({ path, linkPath }: LinkParams): Promise<PackageManagerOutput> {
@@ -78,7 +78,7 @@ export const packageManager = {
             '--config.auto-install-peers=true',
         ]
 
-        return await runCommand(path, 'link', linkPath, ...config)
+        return runCommand(path, 'link', linkPath, ...config)
     },
 }
 

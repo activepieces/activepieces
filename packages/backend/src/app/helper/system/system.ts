@@ -1,6 +1,19 @@
-import { ActivepiecesError, ApEnvironment, ErrorCode, isNil } from '@activepieces/shared'
+import {
+    ActivepiecesError,
+    ApEnvironment,
+    ErrorCode,
+    isNil,
+} from '@activepieces/shared'
 import { SystemProp } from './system-prop'
 import { loadEncryptionKey } from '../encryption'
+import path from 'path'
+import os from 'os'
+
+export enum PiecesSource {
+    CLOUD_AND_DB = 'CLOUD_AND_DB',
+    DB = 'DB',
+    FILE = 'FILE',
+}
 
 export enum QueueMode {
     REDIS = 'REDIS',
@@ -24,13 +37,15 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [SystemProp.LOG_PRETTY]: 'false',
     [SystemProp.QUEUE_MODE]: QueueMode.REDIS,
     [SystemProp.SANDBOX_MEMORY_LIMIT]: '131072',
+    [SystemProp.CONFIG_PATH]: path.join(os.homedir(), '.activepieces'),
     [SystemProp.SANDBOX_RUN_TIME_SECONDS]: '600',
     [SystemProp.SIGN_UP_ENABLED]: 'false',
     [SystemProp.STATS_ENABLED]: 'false',
     [SystemProp.PACKAGE_ARCHIVE_PATH]: 'dist/archives',
-    [SystemProp.CHATBOT_ENABLED]: 'true',
     [SystemProp.TELEMETRY_ENABLED]: 'true',
-    [SystemProp.TEMPLATES_SOURCE_URL]: 'https://cloud.activepieces.com/api/v1/flow-templates',
+    [SystemProp.PIECES_SOURCE]: PiecesSource.CLOUD_AND_DB,
+    [SystemProp.TEMPLATES_SOURCE_URL]:
+        'https://cloud.activepieces.com/api/v1/flow-templates',
     [SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: '5',
     [SystemProp.QUEUE_UI_ENABLED]: 'false',
 }
@@ -69,12 +84,15 @@ export const system = {
         const value = getEnvVar(prop) as T | undefined
 
         if (value === undefined) {
-            throw new ActivepiecesError({
-                code: ErrorCode.SYSTEM_PROP_NOT_DEFINED,
-                params: {
-                    prop,
+            throw new ActivepiecesError(
+                {
+                    code: ErrorCode.SYSTEM_PROP_NOT_DEFINED,
+                    params: {
+                        prop,
+                    },
                 },
-            }, `System property AP_${prop} is not defined, please check the documentation`)
+                `System property AP_${prop} is not defined, please check the documentation`,
+            )
         }
 
         return value
@@ -87,18 +105,26 @@ const getEnvVar = (prop: SystemProp): string | undefined => {
 
 export const validateEnvPropsOnStartup = async (): Promise<void> => {
     const executionMode = system.get(SystemProp.EXECUTION_MODE)
-    const signedUpEnabled = system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
+    const signedUpEnabled =
+        system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
     const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
     const environment = system.get(SystemProp.ENVIRONMENT)
     await loadEncryptionKey(queueMode)
 
-    if (executionMode === ExecutionMode.UNSANDBOXED && signedUpEnabled && environment === ApEnvironment.PRODUCTION) {
-        throw new ActivepiecesError({
-            code: ErrorCode.SYSTEM_PROP_INVALID,
-            params: {
-                prop: SystemProp.EXECUTION_MODE,
+    if (
+        executionMode === ExecutionMode.UNSANDBOXED &&
+        signedUpEnabled &&
+        environment === ApEnvironment.PRODUCTION
+    ) {
+        throw new ActivepiecesError(
+            {
+                code: ErrorCode.SYSTEM_PROP_INVALID,
+                params: {
+                    prop: SystemProp.EXECUTION_MODE,
+                },
             },
-        }, 'Allowing users to sign up is not allowed in unsandboxed mode, please check the configuration section in the documentation')
+            'Allowing users to sign up is not allowed in unsandboxed mode, please check the configuration section in the documentation',
+        )
     }
 }
 

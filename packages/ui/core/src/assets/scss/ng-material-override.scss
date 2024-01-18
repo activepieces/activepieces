@@ -505,8 +505,10 @@ mat-form-field {
 .fullscreen-dialog {
   max-width: 100% !important;
   max-height: 100% !important;
-  width: 100%;
-  height: 100%;
+  border-radius: .25rem ;
+  width: 95%;
+  height: 95%;
+  overflow:hidden;
   .mat-mdc-dialog-surface.mdc-dialog__surface {
     border-radius: 0px;
   }
@@ -671,3 +673,36 @@ ngx-colors-panel {
     }
   }
 }
+
+
+cdk-virtual-scroll-viewport
+{
+  /* Hide the original mat-option selected check for single dropdowns, this is because it doesn't get re-rendered when viewport is scrolled, so we show a one we insert manually  */
+  mat-option mat-pseudo-checkbox:nth-child(2)
+  {
+    display: none !important;
+  }
+  mat-option mat-pseudo-checkbox
+  {
+    transition:none !important
+  }
+  
+ 
+}
+
+
+app-platform-settings {
+  .mat-mdc-tab-body-wrapper , .mat-mdc-tab-group-dynamic-height .mat-mdc-tab-body-content
+  {
+    overflow: visible;
+  }
+}
+  
+
+.mat-mdc-outlined-button:disabled
+{
+  svg{
+    fill: var(--mdc-outlined-button-disabled-label-text-color, rgba(0, 0, 0, 0.38)) !important
+  }
+}
+

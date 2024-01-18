@@ -8,24 +8,10 @@ const selectProjectState = createSelector(
   (state: CommonStateModel): ProjectsState => state.projectsState
 );
 
-const selectProject = createSelector(
-  selectProjectState,
-  (state: ProjectsState) => {
-    return state.projects[state.selectedIndex];
-  }
-);
-
 const selectAllProjects = createSelector(
   selectProjectState,
   (state: ProjectsState) => {
     return state.projects;
-  }
-);
-
-const selectIsNotificationsEnabled = createSelector(
-  selectProject,
-  (project) => {
-    return project.notifyStatus === NotificationStatus.ALWAYS;
   }
 );
 
@@ -36,8 +22,22 @@ const selectCurrentProject = createSelector(
   }
 );
 
+const selectIsNotificationsEnabled = createSelector(
+  selectCurrentProject,
+  (project) => {
+    return project.notifyStatus === NotificationStatus.ALWAYS;
+  }
+);
+
+const selectCurrentProjectOwnerId = createSelector(
+  selectProjectState,
+  (state: ProjectsState) => {
+    return state.projects[state.selectedIndex]?.ownerId;
+  }
+);
+
 export const ProjectSelectors = {
-  selectProject,
+  selectCurrentProjectOwnerId,
   selectIsNotificationsEnabled,
   selectAllProjects,
   selectCurrentProject,

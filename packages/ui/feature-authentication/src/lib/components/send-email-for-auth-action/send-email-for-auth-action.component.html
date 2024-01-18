@@ -1,0 +1,23 @@
+<div class="ap-max-w-[425px] ap-text-center">
+	<div class="ap-typography-headline-5 ap-text-center ap-mb-4">Check Your Inbox</div>
+
+	<div class="ap-mb-4 ap-flex ap-items-center ap-justify-center">
+		<img class="ap-m-auto" src="/assets/img/custom/auth/mail_sent.png" />
+	</div>
+	<div class="ap-text-center ap-typography-body-1 ap-mb-2">
+
+	</div>
+	<div class="ap-typography-body-1 ap-border-solid ap-border-t-[1px] ap-border-dividers">
+		{{
+		actionNote
+		}} <strong>{{email}}</strong>
+		<div class="ap-mt-2" i18n>
+			Didn't receive an email?
+			<a class="ap-text-blueLink ap-cursor-pointer"
+				(click)="otpType === OtpType.EMAIL_VERIFICATION ?  resendVerification() :  sendPasswordReset() ">Resend</a>
+		</div>
+		<a class="ap-text-blueLink" routerLink="/sign-in" i18n>Go back to sign in</a>
+	</div>
+	<ng-container *ngIf="resendVerification$ | async"></ng-container>
+	<ng-container *ngIf="sendPasswordReset$ | async"></ng-container>
+</div>

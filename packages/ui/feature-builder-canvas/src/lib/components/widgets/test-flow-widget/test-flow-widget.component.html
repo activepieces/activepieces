@@ -1,0 +1,19 @@
+<ng-container *ngIf="selectedFlow$ | async as currentFlow">
+  <div class="ap-min-h-[35px]">
+    <ng-container
+      *ngIf="(instanceRunStatus$ | async) !== statusEnum.RUNNING && (shouldHideTestWidget$| async )===false">
+      <div [matTooltip]="(isTriggerTested$ | async) === false ? 'Test trigger first' : ''">
+        <div (click)="testFlowButtonClicked(currentFlow)" @fadeIn
+          [class.ap-grayscale]="(isTriggerTested$ | async) === false"
+          [class.ap-pointer-events-none]="(isSaving$ | async) || (isTriggerTested$ | async) === false"
+          [class.ap-cursor-auto]="isSaving$ | async" class="ap-typography-body-2 ap-bg-primary-light ap-rounded-full
+         ap-border ap-border-solid ap-border-primary-medium ap-transition-all
+          ap-py-1.5 ap-px-2.5 ap-text-primary ap-cursor-pointer hover:ap-border-primary-dark" i18n>
+          {{(isSaving$ | async)? savingText: testFlowText}}
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</ng-container>
+<ng-container *ngIf="executeTest$ |async"></ng-container>
+<ng-container *ngIf="instanceRunStatusChecker$ | async"></ng-container>

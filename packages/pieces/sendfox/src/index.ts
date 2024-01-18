@@ -10,7 +10,7 @@ export const sendfoxAuth = PieceAuth.SecretText({
 });
 
 export const sendfox = createPiece({
-  displayName: "Sendfox",
+  displayName: "SendFox",
   auth: sendfoxAuth,
   minimumSupportedRelease: '0.7.1',
   logoUrl: "https://cdn.activepieces.com/pieces/sendfox.png",

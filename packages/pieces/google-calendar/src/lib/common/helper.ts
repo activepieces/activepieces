@@ -71,17 +71,14 @@ export async function getCalendars(
   return response.body.items;
 }
 
-export async function getLatestEvent(
-  calendarId: string,
-  authProp: OAuth2PropertyValue
-): Promise<GoogleCalendarEvent> {
-  // docs: https://developers.google.com/calendar/api/v3/reference/events/list
+export async function getEvents(calendarId: string, authProp: OAuth2PropertyValue, minUpdated?: Date): Promise<GoogleCalendarEvent[]> {
+    // docs: https://developers.google.com/calendar/api/v3/reference/events/list
   const now = new Date();
   const yesterday = new Date();
   yesterday.setDate(now.getDate() - 1);
 
   const qParams: Record<string, string> = {
-    updatedMin: yesterday.toISOString(),
+    updatedMin: minUpdated?.toISOString() ?? yesterday.toISOString(),
     maxResults: '2500', // Modified
     orderBy: 'updated',
     singleEvents: 'true',
@@ -110,6 +107,15 @@ export async function getLatestEvent(
     }
     pageToken = res.nextPageToken;
   } while (pageToken);
+
+  return eventList;
+}
+
+export async function getLatestEvent(
+  calendarId: string,
+  authProp: OAuth2PropertyValue
+): Promise<GoogleCalendarEvent> {
+  const eventList = await getEvents(calendarId, authProp);
   const lastUpdatedEvent = eventList.pop()!; // You can retrieve the last updated event.
   return lastUpdatedEvent;
 }

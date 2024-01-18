@@ -31,6 +31,7 @@ import {
   flowHelper,
   PieceType,
   PackageType,
+  ApFlagId,
 } from '@activepieces/shared';
 import { FormControl } from '@angular/forms';
 import {
@@ -44,6 +45,7 @@ import {
   StepTypeSideBarProps,
 } from '@activepieces/ui/feature-builder-store';
 import {
+  FlagService,
   FlowItemDetails,
   getDefaultDisplayNameForPiece,
   getDisplayNameForTrigger,
@@ -64,6 +66,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
   //EE
   searchControlTelemetry$: Observable<void>;
   //EE end
+  showCommunity$: Observable<boolean>;
   @Input() set showTriggers(shouldShowTriggers: boolean) {
     this._showTriggers = shouldShowTriggers;
     if (this._showTriggers) {
@@ -87,6 +90,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
     private store: Store,
     private codeService: CodeService,
     private actions: Actions,
+    private flagsService: FlagService,
     private telemetryService: TelemetryService
   ) {
     this.focusSearchInput$ = this.actions.pipe(
@@ -95,6 +99,9 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
         this.searchInput.nativeElement.focus();
       }),
       map(() => void 0)
+    );
+    this.showCommunity$ = this.flagsService.isFlagEnabled(
+      ApFlagId.SHOW_COMMUNITY
     );
     //EE
     this.searchControlTelemetry$ = this.searchFormControl.valueChanges.pipe(
@@ -308,6 +315,14 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
             settings: {
               sourceCode: this.codeService.helloWorldArtifact(),
               input: {},
+              errorHandlingOptions: {
+                continueOnFailure: {
+                  value: false,
+                },
+                retryOnFailure: {
+                  value: false,
+                },
+              },
             },
           },
         };
@@ -321,6 +336,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
             type: ActionType.LOOP_ON_ITEMS,
             settings: {
               items: '',
+              inputUiInfo: {},
             },
             valid: false,
           },
@@ -345,6 +361,14 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
               input: {},
               inputUiInfo: {
                 customizedInputs: {},
+              },
+              errorHandlingOptions: {
+                continueOnFailure: {
+                  value: false,
+                },
+                retryOnFailure: {
+                  value: false,
+                },
               },
             },
           },

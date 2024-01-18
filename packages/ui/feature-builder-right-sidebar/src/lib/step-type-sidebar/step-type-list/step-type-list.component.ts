@@ -17,6 +17,7 @@ export class StepTypeListComponent {
   @Input() typesList: FlowItemDetails[];
   @Output() typeSelected: EventEmitter<FlowItemDetails> = new EventEmitter();
   @Input() emptyListText: string;
+  @Input() showRequestPieceButton: boolean | null;
 
   requestPiece() {
     window.open(

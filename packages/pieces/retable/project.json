@@ -1,0 +1,33 @@
+{
+  "name": "pieces-retable",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/retable/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/retable",
+        "tsConfig": "packages/pieces/retable/tsconfig.lib.json",
+        "packageJson": "packages/pieces/retable/package.json",
+        "main": "packages/pieces/retable/src/index.ts",
+        "assets": ["packages/pieces/retable/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-retable {args.ver} {args.tag}",
+      "dependsOn": ["build"]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/retable/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

@@ -1,0 +1,44 @@
+{
+  "name": "pieces-cartloom",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/cartloom/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/cartloom",
+        "tsConfig": "packages/pieces/cartloom/tsconfig.lib.json",
+        "packageJson": "packages/pieces/cartloom/package.json",
+        "main": "packages/pieces/cartloom/src/index.ts",
+        "assets": [
+          "packages/pieces/cartloom/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-cartloom {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/cartloom/**/*.ts",
+          "packages/pieces/cartloom/package.json"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

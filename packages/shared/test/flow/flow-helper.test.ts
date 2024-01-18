@@ -498,6 +498,7 @@ describe('Flow Helper', () => {
                     valid: true,
                     settings: {
                         items: 'items',
+                        inputUiInfo: {},
                     },
                 },
             },
@@ -546,6 +547,7 @@ describe('Flow Helper', () => {
                 'type': 'LOOP_ON_ITEMS',
                 'settings': {
                     'items': 'items',
+                    'inputUiInfo': {},
                 },
                 'firstLoopAction': {
                     'displayName': 'Code',
@@ -822,6 +824,7 @@ test('Duplicate Flow With Loops using Import', () => {
                 'valid': false,
                 'settings': {
                     'items': '',
+                    'inputUiInfo': {},
                 },
                 'nextAction': {
                     'name': 'step_3',
@@ -871,6 +874,7 @@ test('Duplicate Flow With Loops using Import', () => {
                     valid: false,
                     settings: {
                         items: '',
+                        inputUiInfo: {},
                     },
                     displayName: 'Loop on Items',
                 },

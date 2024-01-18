@@ -8,7 +8,6 @@
       "executor": "@nx/webpack:webpack",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "statsJson": true,
         "target": "node",
         "compiler": "tsc",
         "outputPath": "dist/packages/engine",
@@ -17,13 +16,15 @@
         "assets": [],
         "webpackConfig": "packages/engine/webpack.config.js",
         "isolatedConfig": true,
-        "babelUpwardRootMode": true
+        "babelUpwardRootMode": true,
+        "statsJson": false
       },
       "configurations": {
         "production": {
           "optimization": true,
           "extractLicenses": true,
-          "inspect": false
+          "inspect": false,
+          "statsJson": false
         }
       }
     },

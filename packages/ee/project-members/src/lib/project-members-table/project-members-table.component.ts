@@ -1,15 +1,34 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ProjectMembersTableDataSource } from './project-members.datasource';
 import { ProjectMemberService } from '../service/project-members.service';
-import { Observable, Subject, map, startWith, tap, switchMap } from 'rxjs';
+import {
+  Observable,
+  Subject,
+  map,
+  startWith,
+  tap,
+  switchMap,
+  shareReplay,
+  forkJoin,
+  take,
+} from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
-import { InviteProjectMemberDialogComponent } from '../invite-project-member-dialog/invite-project-member.component';
+import { InviteProjectMemberDialogComponent } from '../dialogs/invite-project-member-dialog/invite-project-member.component';
 import {
   ProjectMemberRole,
   ProjectMemberStatus,
 } from '@activepieces/ee-shared';
-import { BillingService } from '@activepieces/ee-billing-ui';
+import { BillingService, UpgradeDialogData } from '@activepieces/ee-billing-ui';
 import { UpgradeDialogComponent } from '@activepieces/ee-billing-ui';
+import { Store } from '@ngrx/store';
+import {
+  AuthenticationService,
+  IsFeatureEnabledBaseComponent,
+  ProjectSelectors,
+} from '@activepieces/ui/common';
+import { RolesDisplayNames } from '../utils';
+import { ActivatedRoute } from '@angular/router';
+import { ApFlagId } from '@activepieces/shared';
 
 @Component({
   selector: 'app-project-members-table',
@@ -17,22 +36,71 @@ import { UpgradeDialogComponent } from '@activepieces/ee-billing-ui';
   styleUrls: [],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ProjectMembersTableComponent {
+export class ProjectMembersTableComponent
+  extends IsFeatureEnabledBaseComponent
+  implements OnInit
+{
   dataSource!: ProjectMembersTableDataSource;
   dialogClosed$: Observable<void> | undefined;
   deleteInvitation$: Observable<void> | undefined;
+  projectOwnerId$: Observable<string> | undefined;
+  isCurrentUserAdmin$: Observable<boolean> | undefined;
   inviteLoading = false;
   refreshTableAtCurrentCursor$: Subject<boolean> = new Subject();
   displayedColumns = ['email', 'role', 'status', 'created', 'action'];
   title = $localize`Project Members`;
+  RolesDisplayNames = RolesDisplayNames;
+  StatusDisplayNames: { [k: string]: string } = {
+    [ProjectMemberStatus.ACTIVE]: $localize`Active`,
+    [ProjectMemberStatus.PENDING]: $localize`Pending`,
+  };
+
   constructor(
-    private dialogRef: MatDialog,
+    private matDialog: MatDialog,
     private billingService: BillingService,
-    private projectMemberService: ProjectMemberService
+    private store: Store,
+    private projectMemberService: ProjectMemberService,
+    private authenticationService: AuthenticationService,
+    activatedRoute: ActivatedRoute
   ) {
+    super(activatedRoute, ApFlagId.PROJECT_MEMBERS_ENABLED);
     this.dataSource = new ProjectMembersTableDataSource(
+      this.authenticationService,
       this.projectMemberService,
-      this.refreshTableAtCurrentCursor$.asObservable().pipe(startWith(true))
+      this.refreshTableAtCurrentCursor$.asObservable().pipe(startWith(true)),
+      !this.isFeatureEnabled
+    );
+  }
+  ngOnInit(): void {
+    this.projectOwnerId$ = this.store
+      .select(ProjectSelectors.selectCurrentProjectOwnerId)
+      .pipe(take(1));
+    // TODO OPTMIZE THIS and use role from centerlized place
+    this.isCurrentUserAdmin$ = forkJoin([
+      this.projectMemberService.list({
+        limit: 100,
+        projectId: this.authenticationService.getProjectId(),
+      }),
+      this.projectOwnerId$,
+    ]).pipe(
+      map(([members, ownerId]) => {
+        const currentUser = this.authenticationService.currentUser;
+
+        // Check if the current user is an admin
+        const isAdmin =
+          members.data.find(
+            (member) =>
+              currentUser.email === member.email &&
+              member.platformId === currentUser.platformId
+          )?.role === ProjectMemberRole.ADMIN;
+
+        // Check if the current user is the project owner
+        const isOwner = currentUser.id === ownerId;
+
+        // Return true if the user is either an admin or the owner
+        return isAdmin || isOwner;
+      }),
+      shareReplay(1)
     );
   }
 
@@ -45,13 +113,22 @@ export class ProjectMembersTableComponent {
       switchMap((billing) => {
         this.inviteLoading = false;
         if (billing.exceeded) {
-          return this.dialogRef
-            .open(UpgradeDialogComponent)
-            .afterClosed()
-            .pipe(map(() => void 0));
+          return this.store.select(ProjectSelectors.selectCurrentProject).pipe(
+            switchMap((proj) => {
+              const data: UpgradeDialogData = {
+                limitType: 'team',
+                limit: billing.limit,
+                projectType: proj.type,
+              };
+              return this.matDialog
+                .open(UpgradeDialogComponent, { data })
+                .afterClosed()
+                .pipe(map(() => void 0));
+            })
+          );
         }
 
-        return this.dialogRef
+        return this.matDialog
           .open(InviteProjectMemberDialogComponent)
           .afterClosed()
           .pipe(
@@ -72,15 +149,6 @@ export class ProjectMembersTableComponent {
           this.refreshTableAtCurrentCursor$.next(true);
         })
       );
-  }
-
-  statusText(status: ProjectMemberStatus) {
-    switch (status) {
-      case ProjectMemberStatus.ACTIVE:
-        return $localize`Active`;
-      case ProjectMemberStatus.PENDING:
-        return $localize`Pending`;
-    }
   }
 
   get projectMemberRole() {

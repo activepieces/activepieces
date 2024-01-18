@@ -18,7 +18,10 @@ import {
   BuilderSelectors,
   appConnectionsActions,
 } from '@activepieces/ui/feature-builder-store';
-import { AppConnectionsService } from '@activepieces/ui/common';
+import {
+  AppConnectionsService,
+  AuthenticationService,
+} from '@activepieces/ui/common';
 import { connectionNameRegex } from '../utils';
 
 interface SecretTextForm {
@@ -48,6 +51,7 @@ export class SecretTextConnectionDialogComponent {
     public dialogData: SecretTextConnectionDialogData,
     private fb: FormBuilder,
     private store: Store,
+    private authenticatiionService: AuthenticationService,
     private appConnectionsService: AppConnectionsService,
     public dialogRef: MatDialogRef<SecretTextConnectionDialogComponent>
   ) {
@@ -87,7 +91,8 @@ export class SecretTextConnectionDialogComponent {
       this.loading = true;
       this.upsert$ = this.appConnectionsService
         .upsert({
-          appName: this.dialogData.pieceName,
+          projectId: this.authenticatiionService.getProjectId(),
+          pieceName: this.dialogData.pieceName,
           name: this.settingsForm.controls.name.value,
           type: AppConnectionType.SECRET_TEXT,
           value: {

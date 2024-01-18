@@ -1,18 +1,13 @@
 import { SigningKey, SigningKeyId, PlatformId, AddSigningKeyResponse } from '@activepieces/ee-shared'
-import { ActivepiecesError, ErrorCode, SeekPage, UserId, apId, spreadIfDefined } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, SeekPage, UserId, apId, isNil } from '@activepieces/shared'
 import { signingKeyGenerator } from './signing-key-generator'
 import { databaseConnection } from '../../database/database-connection'
 import { SigningKeyEntity } from './signing-key-entity'
-import { platformService } from '../platform/platform.service'
 
 const repo = databaseConnection.getRepository<SigningKey>(SigningKeyEntity)
 
 export const signingKeyService = {
     async add({ userId, platformId, displayName }: AddParams): Promise<AddSigningKeyResponse> {
-        await assertUserIsPlatformOwner({
-            userId,
-            platformId,
-        })
 
         const generatedSigningKey = await signingKeyGenerator.generate()
 
@@ -35,7 +30,7 @@ export const signingKeyService = {
 
     async list({ platformId }: ListParams): Promise<SeekPage<SigningKey>> {
         const data = await repo.findBy({
-            ...spreadIfDefined('platformId', platformId),
+            platformId,
         })
 
         return {
@@ -51,12 +46,19 @@ export const signingKeyService = {
         })
     },
 
-    async delete({ userId, platformId, id }: DeleteParams): Promise<void> {
-        await assertUserIsPlatformOwner({
-            userId,
+    async delete({ platformId, id }: DeleteParams): Promise<void> {
+        const entity = await repo.findOneBy({
             platformId,
+            id,
         })
-
+        if (isNil(entity)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    message: `signing key with id ${id} not found`,
+                },
+            })
+        }
         await repo.delete({
             platformId,
             id,
@@ -64,24 +66,6 @@ export const signingKeyService = {
     },
 }
 
-const assertUserIsPlatformOwner = async ({ userId, platformId }: AssertUserIsPlatformOwnerParams): Promise<void> => {
-    const userIsOwner = await platformService.checkUserIsOwner({
-        userId,
-        platformId,
-    })
-
-    if (!userIsOwner) {
-        throw new ActivepiecesError({
-            code: ErrorCode.AUTHORIZATION,
-            params: {},
-        })
-    }
-}
-
-type AssertUserIsPlatformOwnerParams = {
-    userId: UserId
-    platformId: PlatformId
-}
 
 type AddParams = {
     userId: UserId
@@ -95,7 +79,6 @@ type GetParams = {
 
 type DeleteParams = {
     id: SigningKeyId
-    userId: UserId
     platformId: PlatformId
 }
 

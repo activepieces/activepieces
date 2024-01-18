@@ -37,7 +37,7 @@ export const addNoteToSubscriber = createAction({
     const { access_token } = context.auth;
 
     const subscriberHash = mailchimpCommon.getMD5EmailHash(email);
-    const serverPrefix = mailchimpCommon.getMailChimpServerPrefix(access_token);
+    const serverPrefix = await mailchimpCommon.getMailChimpServerPrefix(access_token);
     const url = `https://${serverPrefix}.api.mailchimp.com/3.0/lists/${list_id}/members/${subscriberHash}/notes`;
 
     const request: HttpRequest = {

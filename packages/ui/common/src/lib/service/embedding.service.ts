@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, map } from 'rxjs';
-
 export type EmbeddingState = {
   isEmbedded: boolean;
   hideSideNav: boolean;
   prefix: string;
+  disableNavigationInBuilder: boolean;
 };
 @Injectable({
   providedIn: 'root',
@@ -16,6 +16,7 @@ export class EmbeddingService {
       isEmbedded: false,
       hideSideNav: false,
       prefix: '',
+      disableNavigationInBuilder: false,
     });
   }
   getState() {
@@ -29,6 +30,9 @@ export class EmbeddingService {
   }
   getIsInEmbedding$() {
     return this.getState$().pipe(map((res) => res.isEmbedded));
+  }
+  getShowNavigationInBuilder$() {
+    return this.getState$().pipe(map((res) => !res.disableNavigationInBuilder));
   }
 
   activepiecesRouteChanged(route: string) {

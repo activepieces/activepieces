@@ -1,4 +1,4 @@
-import { BaseModel, ProjectId } from "@activepieces/shared";
+import { BaseModel, OAuth2GrantType, ProjectId } from "@activepieces/shared";
 
 export type AppCredentialId = string;
 
@@ -6,6 +6,7 @@ export interface AppOAuth2Settings {
   type: AppCredentialType.OAUTH2;
   authUrl: string;
   tokenUrl: string;
+  grantType: OAuth2GrantType,
   clientId: string;
   clientSecret?: string;
   scope: string;

@@ -1,6 +1,6 @@
-import { ActionType } from '../../flows/actions/action'
-import { ExecutionState } from './execution-state'
-import { StopResponse } from './step-output'
+import { StepOutput } from './step-output'
+
+export const MAX_LOG_SIZE = 2048 * 1024
 
 export enum ExecutionOutputStatus {
     FAILED = 'FAILED',
@@ -13,9 +13,19 @@ export enum ExecutionOutputStatus {
     TIMEOUT = 'TIMEOUT',
 }
 
+export enum ExecutionType {
+    BEGIN = 'BEGIN',
+    RESUME = 'RESUME',
+}
+
 export type ExecutionError = {
     stepName: string
     errorMessage: string
+}
+
+
+export type ExecutionState = {
+    steps: Record<string, StepOutput>
 }
 
 type BaseExecutionOutput<T extends ExecutionOutputStatus> = {
@@ -27,32 +37,6 @@ type BaseExecutionOutput<T extends ExecutionOutputStatus> = {
     errorMessage?: ExecutionError
 }
 
-type BaseResumeStepMetadata<T extends ActionType> = {
-    type: T
-    name: string
-}
-
-export type LoopResumeStepMetadata = BaseResumeStepMetadata<ActionType.LOOP_ON_ITEMS> & {
-    iteration: number
-    childResumeStepMetadata: ResumeStepMetadata
-}
-
-export type BranchResumeStepMetadata = BaseResumeStepMetadata<ActionType.BRANCH> & {
-    conditionEvaluation: boolean
-    childResumeStepMetadata: ResumeStepMetadata
-}
-
-type NormalResumeStepMetadata = BaseResumeStepMetadata<Exclude<
-ActionType,
-ActionType.BRANCH | ActionType.LOOP_ON_ITEMS
->>
-
-export type ResumeStepMetadata =
-  | NormalResumeStepMetadata
-  | BranchResumeStepMetadata
-  | LoopResumeStepMetadata
-
-
 export enum PauseType {
     DELAY = 'DELAY',
     WEBHOOK = 'WEBHOOK',
@@ -60,14 +44,13 @@ export enum PauseType {
 
 type BasePauseMetadata<T extends PauseType> = {
     type: T
-    resumeStepMetadata: ResumeStepMetadata
 }
 
 export type DelayPauseMetadata = BasePauseMetadata<PauseType.DELAY> & {
     resumeDateTime: string
 }
 
-export type WebhookPauseMetadata =  BasePauseMetadata<PauseType.WEBHOOK> & {
+export type WebhookPauseMetadata = BasePauseMetadata<PauseType.WEBHOOK> & {
     actions: string[]
 }
 
@@ -76,6 +59,12 @@ export type PauseMetadata = DelayPauseMetadata | WebhookPauseMetadata
 
 export type PauseExecutionOutput = BaseExecutionOutput<ExecutionOutputStatus.PAUSED> & {
     pauseMetadata: PauseMetadata
+}
+
+export type StopResponse = {
+    status?: number
+    body?: unknown
+    headers?: Record<string, string>
 }
 
 export type FinishExecutionOutput = BaseExecutionOutput<
@@ -91,6 +80,6 @@ export type StopExecutionOutput = BaseExecutionOutput<ExecutionOutputStatus.STOP
 }
 
 export type ExecutionOutput =
-  | FinishExecutionOutput
-  | PauseExecutionOutput
-  | StopExecutionOutput
+    | FinishExecutionOutput
+    | PauseExecutionOutput
+    | StopExecutionOutput

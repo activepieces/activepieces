@@ -3,15 +3,14 @@ import { ActivepiecesError, ApId, ErrorCode, assertNotNullOrUndefined, isNil } f
 import { signingKeyService } from './signing-key-service'
 import { StatusCodes } from 'http-status-codes'
 import { AddSigningKeyRequestBody } from '@activepieces/ee-shared'
-import { platformService } from '../platform/platform.service'
 
 export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', AddSigningKeyRequest, async (req, res) => {
-        const { id: userId, platformId } = req.principal
+        const platformId = req.principal.platform?.id
         assertNotNullOrUndefined(platformId, 'platformId')
 
         const newSigningKey = await signingKeyService.add({
-            userId,
+            userId: req.principal.id,
             platformId,
             displayName: req.body.displayName,
         })
@@ -22,15 +21,15 @@ export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.get('/', {}, async (req) => {
-        const { platformId } = req.principal
+        const platformId = req.principal.platform?.id
         assertNotNullOrUndefined(platformId, 'platformId')
         return signingKeyService.list({
-            platformId: req.principal.platformId,
+            platformId,
         })
     })
 
     app.get('/:id', GetSigningKeyRequest, async (req) => {
-        const { platformId } = req.principal
+        const platformId = req.principal.platform?.id
         assertNotNullOrUndefined(platformId, 'platformId')
         const signingKey = await signingKeyService.get({
             id: req.params.id,
@@ -43,36 +42,22 @@ export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
                 },
             })
         }
-        await assertUserOwnPlatformId({ userId: req.principal.id, platformId: signingKey.platformId })
         return signingKey
     })
 
     app.delete('/:id', DeleteSigningKeyRequest, async (req, res) => {
-        const { platformId } = req.principal
+        const platformId = req.principal.platform?.id
         assertNotNullOrUndefined(platformId, 'platformId')
         await signingKeyService.delete({
             id: req.params.id,
             platformId,
-            userId: req.principal.id,
         })
         return res.status(StatusCodes.OK).send()
     })
 }
 
 
-const assertUserOwnPlatformId = async ({ userId, platformId }: { userId: string, platformId: string }): Promise<void> => {
-    const userIsOwner = await platformService.checkUserIsOwner({
-        userId,
-        platformId,
-    })
 
-    if (!userIsOwner) {
-        throw new ActivepiecesError({
-            code: ErrorCode.AUTHORIZATION,
-            params: {},
-        })
-    }
-}
 const AddSigningKeyRequest = {
     schema: {
         body: AddSigningKeyRequestBody,

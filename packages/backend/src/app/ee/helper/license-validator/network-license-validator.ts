@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { logger } from '../../../helper/logger'
-import { LicenseValidator } from './license-validator'
+import { LiceneseStatus, LicenseValidator } from './license-validator'
 import { system } from '../../../helper/system/system'
 import { SystemProp } from '../../../helper/system/system-prop'
 
@@ -10,12 +10,24 @@ export const networkLicenseValidator: LicenseValidator = {
         try {
             const res = await axios.post('https://secrets.activepieces.com/verify', { licenseKey: license })
             logger.debug({ name: 'NetworkLicenseValidator#validate', response: res.data })
-            return res.status === 200
+            if (res.status !== 200) {
+                return {
+                    status: LiceneseStatus.INVALID,
+                }
+            }
+            return {
+                status: LiceneseStatus.VALID,
+                showPoweredBy: res.data.showPoweredBy,
+                embeddingEnabled: res.data.embeddingEnabled,
+                gitSyncEnabled: res.data.gitSyncEnabled,
+                ssoEnabled: res.data.ssoEnabled,
+            }
         }
         catch (err) {
             logger.error({ name: 'NetworkLicenseValidator#validate', err })
-            // TODO FIX
-            return true
+            return {
+                status: LiceneseStatus.UNKNOWN,
+            }
         }
     },
 }

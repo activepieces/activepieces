@@ -1,9 +1,13 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Observable, switchMap, take, tap } from 'rxjs';
-import { Flow, FolderDto } from '@activepieces/shared';
+import { PopulatedFlow, FolderDto } from '@activepieces/shared';
 import { FoldersSelectors } from '../../../store/folders/folders.selector';
 import { Store } from '@ngrx/store';
-import { FlowService } from '@activepieces/ui/common';
+import {
+  CURRENT_FLOW_IS_NEW_KEY_IN_LOCAL_STORAGE,
+  FlowService,
+  AuthenticationService,
+} from '@activepieces/ui/common';
 import { Router } from '@angular/router';
 
 @Component({
@@ -14,12 +18,13 @@ import { Router } from '@angular/router';
 export class FlowsTableTitleComponent {
   creatingFlow = false;
   currentFolder$: Observable<FolderDto | undefined>;
-  createFlow$: Observable<Flow>;
+  createFlow$: Observable<PopulatedFlow>;
   showAllFlows$: Observable<boolean>;
   constructor(
     private store: Store,
     private flowService: FlowService,
-    private router: Router
+    private router: Router,
+    private authenticationService: AuthenticationService
   ) {
     this.showAllFlows$ = this.store.select(
       FoldersSelectors.selectDisplayAllFlows
@@ -35,12 +40,16 @@ export class FlowsTableTitleComponent {
         switchMap((res) => {
           return this.flowService
             .create({
+              projectId: this.authenticationService.getProjectId(),
               displayName: $localize`Untitled`,
               folderId: res?.id,
             })
             .pipe(
               tap((flow) => {
-                localStorage.setItem('newFlow', 'true');
+                localStorage.setItem(
+                  CURRENT_FLOW_IS_NEW_KEY_IN_LOCAL_STORAGE,
+                  'true'
+                );
                 this.router.navigate(['/flows/', flow.id]);
               })
             );

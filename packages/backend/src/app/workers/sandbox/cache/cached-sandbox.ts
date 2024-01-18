@@ -53,7 +53,7 @@ export class CachedSandbox {
         })
     }
 
-    async prepare({ pieces, codeSteps = [] }: PrepareParams): Promise<void> {
+    async prepare({ projectId, pieces, codeSteps = [] }: PrepareParams): Promise<void> {
         logger.debug({ key: this.key, state: this._state, activeSandboxes: this._activeSandboxCount }, '[CachedSandbox#prepare]')
 
         try {
@@ -72,6 +72,7 @@ export class CachedSandbox {
                 }
 
                 await pieceManager.install({
+                    projectId,
                     projectPath: this.path(),
                     pieces,
                 })
@@ -145,6 +146,7 @@ type CodeArtifact = {
 }
 
 type PrepareParams = {
+    projectId: string
     pieces: PiecePackage[]
     codeSteps?: CodeArtifact[]
 }

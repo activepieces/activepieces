@@ -3,7 +3,7 @@ import { ProjectMember } from '@activepieces/ee-shared'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 import { Project, User } from '@activepieces/shared'
 
-export type ProjectMemberSchema = Omit<ProjectMember, 'email'> & {
+export type ProjectMemberSchema = ProjectMember & {
     user: User
     project: Project
 }
@@ -12,8 +12,14 @@ export const ProjectMemberEntity = new EntitySchema<ProjectMemberSchema>({
     name: 'project_member',
     columns: {
         ...BaseColumnSchemaPart,
-        userId: ApIdSchema,
+        email: {
+            type: String,
+        },
         projectId: ApIdSchema,
+        platformId: {
+            type: String,
+            nullable: true,
+        },
         role: {
             type: String,
         },
@@ -23,22 +29,13 @@ export const ProjectMemberEntity = new EntitySchema<ProjectMemberSchema>({
     },
     indices: [
         {
-            name: 'idx_project_member_project_id_user_id',
-            columns: ['projectId', 'userId'],
+            name: 'idx_project_member_project_id_email_platform_id',
+            columns: ['projectId', 'email', 'platformId'],
             unique: true,
         },
     ],
     relations: {
-        user: {
-            type: 'many-to-one',
-            target: 'user',
-            cascade: true,
-            onDelete: 'CASCADE',
-            joinColumn: {
-                name: 'userId',
-                foreignKeyConstraintName: 'fk_project_member_user_id',
-            },
-        },
+
         project: {
             type: 'many-to-one',
             target: 'project',

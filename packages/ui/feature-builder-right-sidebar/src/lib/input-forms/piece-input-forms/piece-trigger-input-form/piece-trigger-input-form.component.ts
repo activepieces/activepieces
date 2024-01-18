@@ -23,11 +23,7 @@ import {
   PieceAuthProperty,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import {
-  PieceMetadataService,
-  CORE_SCHEDULE,
-  fadeInUp400ms,
-} from '@activepieces/ui/common';
+import { fadeInUp400ms } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 import {
   BuilderSelectors,
@@ -37,6 +33,10 @@ import {
 import { PiecePropertiesFormValue } from '@activepieces/ui/feature-builder-form-controls';
 import { ComponentTriggerInputFormSchema } from '../../input-forms-schema';
 import { PiecePropertyMap } from '@activepieces/pieces-framework';
+import {
+  CORE_SCHEDULE,
+  PieceMetadataService,
+} from '@activepieces/ui/feature-pieces';
 
 declare type TriggerDropdownOption = {
   label: {
@@ -165,7 +165,7 @@ export class PieceTriggerInputFormComponent {
               },
               value: {
                 triggerName: triggerName,
-                auth: trigger.requireAuth ? pieceMetadata.auth : undefined,
+                auth: pieceMetadata.auth,
                 properties: trigger.props,
               },
             };

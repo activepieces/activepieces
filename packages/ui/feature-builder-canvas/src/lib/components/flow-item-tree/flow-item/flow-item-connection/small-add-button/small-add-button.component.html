@@ -1,0 +1,10 @@
+<div class="add-button ap-cursor-pointer ap-absolute ap-z-40" tabindex="-1"
+    [class.ap-cursor-pointer]="showCursorOnHover$ | async"
+    [class.add-button-drop-indicator]="(isInDragginStepMode$ | async) || (selectedAddBtnId$ | async) === addButtonId"
+    [class.show-shadow]="showButtonShadow || (selectedAddBtnId$ | async) === addButtonId"
+    (click)="setSelectedAddBtnId();add()" [style.top]="top+'px'" [style.left]="left+'px'">
+</div>
+
+<app-drop-zone [btnLeft]="left" [btnTop]="top" [btnHeight]="BUTTON_SIZE" [btnWidth]="BUTTON_SIZE"
+    (dropped)="drop($event)" (dragEnter)="toggleButtonShadow(true)" (dragLeave)="toggleButtonShadow(false)">
+</app-drop-zone>

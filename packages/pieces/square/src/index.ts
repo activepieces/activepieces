@@ -23,7 +23,7 @@ export const squareAuth = PieceAuth.OAuth2({
 })
 
 export const square = createPiece({
-  displayName: 'square',
+  displayName: 'Square',
       minimumSupportedRelease: '0.5.0',
     logoUrl: 'https://cdn.activepieces.com/pieces/square.png',
   authors: [

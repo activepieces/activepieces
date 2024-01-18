@@ -20,5 +20,6 @@ export enum ErrorMessages {
   ONE_OF = 'The {userInput} is not a valid value, valid choices are: {choices}',
   REQUIRE_KEYS = 'The following keys are required: {keys}',
   SIZE = 'The {property} size must be less than 0:{size}KB',
-  NON_ZERO = 'The value: {userInput} must be a non-zero value'
+  NON_ZERO = 'The value: {userInput} must be a non-zero value',
+  PHONE_NUMBER = 'The phone number entered is not a valid phone number'
 }

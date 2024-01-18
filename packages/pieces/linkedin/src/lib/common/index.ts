@@ -1,7 +1,15 @@
-import { ApFile, Property } from "@activepieces/pieces-framework";
+import { ApFile, Property, ProcessorFn} from "@activepieces/pieces-framework";
 import { HttpMethod, httpClient, AuthenticationType } from "@activepieces/pieces-common";
 
 import FormData from 'form-data';
+
+const processText: ProcessorFn<any, string> = (property, text) => {
+    // LinkedIn Posts API has a list of characters that need to be escaped since it's type is "LittleText"
+    // https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/posts-api?view=li-lms-2023-11&tabs=http
+    // https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/little-text-format?view=li-lms-2023-11
+    // eslint-disable-next-line no-useless-escape
+    return text.replace(/[\(*\)\[\]\{\}<>@|~_]/gm, (x:string) => "\\" + x);
+}
 
 export const linkedinCommon = {
     baseUrl: 'https://api.linkedin.com',
@@ -10,6 +18,7 @@ export const linkedinCommon = {
     },
     text: Property.LongText({
         displayName: 'Text',
+        processors: [processText],
         required: true
     }),
     imageUrl: Property.File({
@@ -109,7 +118,7 @@ export const linkedinCommon = {
 
     generatePostRequestBody: (data: {
         urn: string,
-        text: string,
+        text: any,
         link?: string | undefined,
         linkTitle?: string | undefined,
         linkDescription?: string | undefined,

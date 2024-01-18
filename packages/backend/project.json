@@ -47,20 +47,46 @@
         "lintFilePatterns": ["packages/backend/**/*.ts"]
       }
     },
-    "test-jest": {
+    "test-ce": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
         "jestConfig": "packages/backend/jest.config.ts",
-        "passWithNoTests": true,
+        "passWithNoTests": false,
         "bail": true,
-        "codeCoverage": true
+        "testPathPattern": ["packages/backend/test/integration/ce"]
+      }
+    },
+    "test-cloud": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "packages/backend/jest.config.ts",
+        "passWithNoTests": false,
+        "bail": true,
+        "testPathPattern": ["packages/backend/test/integration/cloud"]
+      }
+    },
+    "test-ee": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "packages/backend/jest.config.ts",
+        "passWithNoTests": false,
+        "bail": true,
+        "testPathPattern": ["packages/backend/test/integration/ee"]
       }
     },
     "test": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "export $(cat packages/backend/.env.tests | xargs) && nx test-jest backend --output-style stream-without-prefixes"
+        "commands": [
+          "nx build backend",
+          "export $(cat packages/backend/.env.tests | xargs) && AP_EDITION=cloud nx test-cloud backend --output-style stream-without-prefixes",
+          "export $(cat packages/backend/.env.tests | xargs) && AP_EDITION=ce nx test-ce backend --output-style stream-without-prefixes",
+          "export $(cat packages/backend/.env.tests | xargs) && AP_EDITION=ee nx test-ee backend --output-style stream-without-prefixes"  
+        ],
+        "parallel": false
       }
     },
     "test:docker": {

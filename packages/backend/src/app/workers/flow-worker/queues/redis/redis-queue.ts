@@ -6,7 +6,6 @@ import { logger } from '../../../../helper/logger'
 import { isNil } from '@activepieces/shared'
 import { OneTimeJobData, ScheduledJobData } from '../../job-data'
 import { AddParams, JobType, QueueManager, RemoveParams } from '../queue'
-import { flowInstanceRepo } from '../../../../flows/flow-instance/flow-instance.service'
 import { ExecutionType, RunEnvironment, ScheduleType } from '@activepieces/shared'
 import { LATEST_JOB_DATA_SCHEMA_VERSION } from '../../job-data'
 import { Job } from 'bullmq'
@@ -19,6 +18,7 @@ import basicAuth from '@fastify/basic-auth'
 import { system } from '../../../../helper/system/system'
 import { SystemProp } from '../../../../helper/system/system-prop'
 import { getEdition } from '../../../../helper/secret-helper'
+import { flowRepo } from '../../../../flows/flow/flow.repo'
 
 export const ONE_TIME_JOB_QUEUE = 'oneTimeJobs'
 export const SCHEDULED_JOB_QUEUE = 'repeatableJobs'
@@ -124,7 +124,6 @@ export const redisQueueManager: QueueManager = {
     },
     async add(params: AddParams): Promise<void> {
         logger.debug(params, '[flowQueue#add] params')
-
         if (params.type === JobType.REPEATING) {
             const { id, data, scheduleOptions } = params
             const job = await scheduledJobQueue.add(id, data, {
@@ -159,6 +158,7 @@ export const redisQueueManager: QueueManager = {
 
             await oneTimeJobQueue.add(id, data, {
                 jobId: id,
+                priority: params.priority === 'high' ? 1 : 2,
             })
         }
     },
@@ -224,14 +224,14 @@ const migrateScheduledJobs = async (): Promise<void> => {
                     triggerType,
                 }
                 migratedJobs++
-                await job.update(modifiedJobData)
+                await job.updateData(modifiedJobData)
             }
             if (modifiedJobData.schemaVersion === 2) {
                 const updated = await updateCronExpressionOfRedisToPostgresTable(job)
                 if (updated) {
                     modifiedJobData.schemaVersion = 3
                     migratedJobs++
-                    await job.update(modifiedJobData)
+                    await job.updateData(modifiedJobData)
                 }
             }
         }
@@ -249,12 +249,11 @@ async function updateCronExpressionOfRedisToPostgresTable(job: Job): Promise<boo
         logger.error('Found unrepeatable job in repeatable queue')
         return false
     }
-    const flowInstance = await flowInstanceRepo.findOneBy({
-        flowVersionId: job.data.flowVersionId,
+    const flow = await flowRepo().findOneBy({
+        publishedVersionId: job.data.flowVersionId,
     })
-    if (!isNil(flowInstance)) {
-        await flowInstanceRepo.update(flowInstance.id, {
-            ...flowInstance,
+    if (flow) {
+        await flowRepo().update(flow.id, {
             schedule: {
                 type: ScheduleType.CRON_EXPRESSION,
                 timezone: tz,

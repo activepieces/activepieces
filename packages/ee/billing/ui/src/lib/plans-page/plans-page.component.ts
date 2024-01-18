@@ -1,14 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import { FormControl } from '@angular/forms';
-import { Observable, map, shareReplay, startWith } from 'rxjs';
+import { Observable, map, shareReplay } from 'rxjs';
 import {
   BillingResponse,
-  FlowPricingPlan,
-  FlowPricingSubPlan,
   Referral,
-  freePlanPrice,
+  pricingPlans,
 } from '@activepieces/ee-shared';
-import { BillingService } from '../billing.service';
+import { BillingService } from '../service/billing.service';
 import { ReferralService } from '../service/referral.service';
 import {
   AuthenticationService,
@@ -18,22 +15,9 @@ import { TelemetryEventName } from '@activepieces/shared';
 import utc from 'dayjs/plugin/utc';
 import dayjs from 'dayjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
-
-import {
-  formatNumberWithCommas,
-  formatPrice,
-  loadPlansObs,
-  openPortal,
-} from './utils';
+import { loadPlansObs, openPortal } from './utils';
 
 dayjs.extend(utc);
-
-type Plan = {
-  formControl: FormControl<FlowPricingSubPlan>;
-  selectedPrice$: Observable<string> | undefined;
-  selectedTasks$: Observable<string> | undefined;
-  loading: boolean;
-} & FlowPricingPlan;
 
 @Component({
   selector: 'app-plans-page',
@@ -41,8 +25,9 @@ type Plan = {
   styleUrls: [],
 })
 export class PlansPageComponent implements OnInit {
-  readonly freePlanPrice = freePlanPrice;
+  readonly freePlanPrice = 0;
   readonly openPortal = openPortal;
+  readonly pricingPlans = pricingPlans;
   tasksStats$: Observable<{
     tasksCap: number;
     tasksExecuted: number;
@@ -55,7 +40,6 @@ export class PlansPageComponent implements OnInit {
   };
   referralUrl = 'https://cloud.activepieces.com/sign-up?referral=';
   referrals$: Observable<Referral[]> | undefined;
-  chatbotsEnabled$: Observable<boolean>;
   constructor(
     private referralService: ReferralService,
     private telemetryService: TelemetryService,
@@ -63,36 +47,8 @@ export class PlansPageComponent implements OnInit {
     private authenticationService: AuthenticationService,
     private matSnackbar: MatSnackBar
   ) {
-    this.chatbotsEnabled$ = this.telemetryService.isFeatureEnabled('chatbots');
     this.loadPlans$ = this.billingService.getUsage().pipe(
       map((response: BillingResponse) => {
-        const newPlans: Plan[] = [];
-        response.plans.forEach((plan) => {
-          const formControl = new FormControl();
-          const initialTask = plan.tasks[0];
-          newPlans.push({
-            loading: false,
-            ...plan,
-            formControl,
-            selectedPrice$: formControl.valueChanges.pipe(
-              map((task: { price: string; amount: number }) =>
-                formatPrice(task.price)
-              ),
-              startWith(formatPrice(initialTask.price))
-            ),
-            selectedTasks$: formControl.valueChanges.pipe(
-              map((task: { price: string; amount: number }) =>
-                formatNumberWithCommas(task.amount)
-              ),
-              startWith(
-                typeof initialTask.amount === 'string'
-                  ? initialTask.amount
-                  : formatNumberWithCommas(initialTask.amount)
-              )
-            ),
-          });
-          formControl.setValue(plan.tasks[0]);
-        });
         const nextResetDatetime = response.plan.tasksPerDay
           ? dayjs().utc().endOf('day')
           : dayjs(response.usage.nextResetDatetime);
@@ -104,7 +60,6 @@ export class PlansPageComponent implements OnInit {
           nextResetDatetime.diff(dayjs(), 'hour', true)
         );
         return {
-          plans: newPlans,
           defaultPlan: response.defaultPlan,
           currentPlan: response.plan,
           currentUsage: {

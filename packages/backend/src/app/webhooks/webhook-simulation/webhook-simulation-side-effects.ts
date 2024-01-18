@@ -1,4 +1,4 @@
-import { ActivepiecesError, EngineResponseStatus, ErrorCode, Flow, FlowId, ProjectId } from '@activepieces/shared'
+import { ActivepiecesError, EngineResponseStatus, ErrorCode, FlowId, PopulatedFlow, ProjectId } from '@activepieces/shared'
 import { flowService } from '../../flows/flow/flow.service'
 import { triggerUtils } from '../../helper/trigger-utils'
 import { isNil } from '@activepieces/shared'
@@ -12,8 +12,8 @@ type GetFlowParams = BaseParams
 type PreCreateParams = BaseParams
 type PreDeleteParams = BaseParams
 
-const getFlowOrThrow = async ({ projectId, flowId }: GetFlowParams): Promise<Flow> => {
-    return await flowService.getOneOrThrow({
+const getFlowOrThrow = async ({ projectId, flowId }: GetFlowParams): Promise<PopulatedFlow> => {
+    return flowService.getOnePopulatedOrThrow({
         id: flowId,
         projectId,
     })

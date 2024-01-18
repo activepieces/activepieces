@@ -48,7 +48,6 @@ const polling: Polling<PiecePropValueSchema<typeof APITableAuth>, { datasheet: s
 
 export const ApiTableNewRecord = createTrigger({
     auth: APITableAuth,
-    requireAuth: true,
     name: 'new_record',
     displayName: 'New Record',
     description: 'Triggers when a new record is added to a datasheet.',

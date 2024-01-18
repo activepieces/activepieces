@@ -1,5 +1,4 @@
-import { ApEdition, ApEnvironment } from '@activepieces/shared'
-import { system } from '../../helper/system/system'
+import { PiecesSource, system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { PieceMetadataService } from './piece-metadata-service'
 import { FilePieceMetadataService } from './file-piece-metadata-service'
@@ -7,19 +6,13 @@ import { DbPieceMetadataService } from './db-piece-metadata-service'
 import { AggregatedPieceMetadataService } from './aggregated-metadata-service'
 
 const initPieceMetadataService = (): PieceMetadataService => {
-    const env = system.get(SystemProp.ENVIRONMENT)
-
-    if (env === ApEnvironment.DEVELOPMENT) {
-        return FilePieceMetadataService()
-    }
-
-    const edition = system.get(SystemProp.EDITION)
-    switch (edition) {
-        case ApEdition.CLOUD:
+    const source = system.getOrThrow<PiecesSource>(SystemProp.PIECES_SOURCE)
+    switch (source) {
+        case PiecesSource.DB:
             return DbPieceMetadataService()
-        case ApEdition.COMMUNITY:
-        case ApEdition.ENTERPRISE:
-        default:
+        case PiecesSource.FILE:
+            return FilePieceMetadataService()
+        case PiecesSource.CLOUD_AND_DB:
             return AggregatedPieceMetadataService()
     }
 }

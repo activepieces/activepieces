@@ -1,6 +1,6 @@
 import { randomBytes as randomBytesCallback } from 'node:crypto'
 import { promisify } from 'node:util'
-import { AuthenticationResponse, PrincipalType, Project, ProjectId, ProjectType, User, UserStatus } from '@activepieces/shared'
+import { AuthenticationResponse, PlatformRole, PrincipalType, Project, ProjectId, ProjectType, User } from '@activepieces/shared'
 import { userService } from '../../user/user-service'
 import { PlatformId, ProjectMemberRole, ProjectMemberStatus } from '@activepieces/ee-shared'
 import { platformService } from '../platform/platform.service'
@@ -19,7 +19,10 @@ export const managedAuthnService = {
             type: PrincipalType.USER,
             projectId: user.projectId,
             projectType: ProjectType.PLATFORM_MANAGED,
-            platformId: externalPrincipal.platformId,
+            platform: {
+                id: externalPrincipal.platformId,
+                role: PlatformRole.MEMBER,
+            },
         })
 
         return {
@@ -31,12 +34,22 @@ export const managedAuthnService = {
 
 const getOrCreateUser = async (params: GetOrCreateUserParams): Promise<GetOrCreateUserReturn> => {
     const { platformId, externalUserId, externalProjectId, externalEmail, externalFirstName, externalLastName } = params
-    const externalId = generateExternalId(platformId, externalUserId)
-    const existingUser = await userService.getByExternalId(externalId)
+    const existingUser = await userService.getByPlatformAndExternalId({
+        platformId,
+        externalId: externalUserId,
+    })
 
     const project = await getOrCreateProject({
         platformId,
         externalProjectId,
+    })
+
+    await projectMemberService.upsert({
+        projectId: project.id,
+        email: params.externalEmail,
+        platformId,
+        role: ProjectMemberRole.EDITOR,
+        status: ProjectMemberStatus.ACTIVE,
     })
 
     if (existingUser) {
@@ -55,15 +68,9 @@ const getOrCreateUser = async (params: GetOrCreateUserParams): Promise<GetOrCrea
         lastName: externalLastName,
         trackEvents: true,
         newsLetter: true,
-        status: UserStatus.EXTERNAL,
-        externalId,
-    })
-
-    await projectMemberService.add({
-        projectId: project.id,
-        userId: newUser.id,
-        role: ProjectMemberRole.EDITOR,
-        status: ProjectMemberStatus.ACTIVE,
+        verified: true,
+        externalId: externalUserId,
+        platformId,
     })
 
     return {
@@ -98,10 +105,6 @@ const randomBytes = promisify(randomBytesCallback)
 const generateRandomPassword = async (): Promise<string> => {
     const passwordBytes = await randomBytes(32)
     return passwordBytes.toString('hex')
-}
-
-const generateExternalId = (platformId: PlatformId, externalUserId: string): string => {
-    return `${platformId}_${externalUserId}`
 }
 
 type AuthenticateParams = {

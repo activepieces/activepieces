@@ -8,8 +8,8 @@ import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { FolderActions } from '../../store/folders/folders.actions';
 import { EmbeddingService, NavigationService } from '@activepieces/ui/common';
-import { Observable, map, of, switchMap } from 'rxjs';
-import { ApEdition, ApFlagId, supportUrl } from '@activepieces/shared';
+import { Observable, map, of } from 'rxjs';
+import { ApFlagId, supportUrl } from '@activepieces/shared';
 import { DashboardService, FlagService } from '@activepieces/ui/common';
 
 type SideNavRoute = {
@@ -27,14 +27,12 @@ type SideNavRoute = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SidenavRoutesListComponent implements OnInit {
-  removeChatbots$: Observable<void>;
   logoUrl$: Observable<string>;
   showSupport$: Observable<boolean>;
   showDocs$: Observable<boolean>;
   showBilling$: Observable<boolean>;
   isInEmbedding$: Observable<boolean>;
   sideNavRoutes$: Observable<SideNavRoute[]>;
-
   mainDashboardRoutes: SideNavRoute[] = [];
   platformDashboardRoutes: SideNavRoute[] = [
     {
@@ -47,6 +45,24 @@ export class SidenavRoutesListComponent implements OnInit {
       icon: 'assets/img/custom/dashboard/appearance.svg',
       caption: $localize`Appearance`,
       route: 'platform/appearance',
+      showInSideNav$: of(true),
+    },
+    {
+      icon: 'assets/img/custom/dashboard/pieces.svg',
+      caption: $localize`Pieces`,
+      route: 'platform/pieces',
+      showInSideNav$: of(true),
+    },
+    {
+      icon: 'assets/img/custom/dashboard/templates.svg',
+      caption: $localize`Templates`,
+      route: 'platform/templates',
+      showInSideNav$: of(true),
+    },
+    {
+      icon: 'assets/img/custom/dashboard/users.svg',
+      caption: $localize`Users`,
+      route: 'platform/users',
       showInSideNav$: of(true),
     },
     {
@@ -80,20 +96,6 @@ export class SidenavRoutesListComponent implements OnInit {
         showInSideNav$: of(true),
       },
       {
-        icon: 'assets/img/custom/dashboard/chatbots.svg',
-        caption: $localize`Chatbots`,
-        route: 'chatbots',
-        showInSideNav$: this.isInEmbedding$.pipe(
-          switchMap((isInEmbedding) =>
-            this.flagServices.isChatbotEnabled().pipe(
-              map((chatbotsEnabled) => {
-                return !isInEmbedding && chatbotsEnabled;
-              })
-            )
-          )
-        ),
-      },
-      {
         icon: 'assets/img/custom/dashboard/runs.svg',
         caption: $localize`Runs`,
         route: 'runs',
@@ -109,15 +111,13 @@ export class SidenavRoutesListComponent implements OnInit {
         icon: 'assets/img/custom/dashboard/members.svg',
         caption: $localize`Team`,
         route: 'team',
-        showInSideNav$: this.isInEmbedding$.pipe(
-          switchMap((embedded) => {
-            return this.flagServices.getEdition().pipe(
-              map((ed) => {
-                return ed !== ApEdition.COMMUNITY && !embedded;
-              })
-            );
-          })
-        ),
+        showInSideNav$: of(true),
+      },
+      {
+        icon: 'assets/img/custom/dashboard/settings.svg',
+        caption: $localize`Settings`,
+        route: 'settings',
+        showInSideNav$: this.isInEmbedding$.pipe(map((embedded) => !embedded)),
       },
     ];
   }

@@ -1,15 +1,15 @@
 <ap-dialog-title-template>
-    <ng-container *ngIf="!dialogData.connectionToUpdate; else editConfigHeader">
-        <span i18n>New Connection</span>
-    </ng-container>
-    <ng-template #editConfigHeader>
-        <span i18n>Edit</span> {{dialogData.connectionToUpdate!.name}}
-    </ng-template>
+  <ng-container *ngIf="!dialogData.connectionToUpdate; else editConfigHeader">
+    <span i18n>New Connection</span>
+  </ng-container>
+  <ng-template #editConfigHeader>
+    <span i18n>Edit</span> {{dialogData.connectionToUpdate!.name}}
+  </ng-template>
 </ap-dialog-title-template>
 
 <mat-dialog-content>
   <ap-markdown *ngIf="dialogData.pieceAuthProperty.description"
-  [data]="dialogData.pieceAuthProperty.description"></ap-markdown>
+    [data]="dialogData.pieceAuthProperty.description"></ap-markdown>
   <form class="ap-pt-4 ap-flex ap-flex-col ap-gap-2 ap-max-w-[720px] ap-min-w-[420px]" [formGroup]="settingsForm"
     (keyup.enter)="submit()">
     <mat-form-field class="ap-w-full" appearance="outline">
@@ -29,23 +29,25 @@
         </ng-template></mat-error>
     </mat-form-field>
 
-    <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-form-field class="ap-w-full" appearance="outline"
+      *ngIf="dialogData.pieceAuthProperty.grantType !== OAuth2GrantType.CLIENT_CREDENTIALS">
       <mat-label>Redirect URL</mat-label>
-      <input [matTooltip]="redirectUrlTooltip" formControlName="redirect_url" matInput type="text" />
+      <input placeholder="Redirect URL" [matTooltip]="redirectUrlTooltip" formControlName="redirect_url" matInput
+        type="text" />
       <mat-error *ngIf="settingsForm.controls.redirect_url.invalid" i18n>
         Redirect URL is required</mat-error>
     </mat-form-field>
 
     <mat-form-field class="ap-w-full" appearance="outline">
       <mat-label i18n>Client ID</mat-label>
-      <input [matTooltip]="clientIdTooltip" formControlName="client_id" matInput type="text" />
+      <input placeholder="Client ID" [matTooltip]="clientIdTooltip" formControlName="client_id" matInput type="text" />
       <mat-error *ngIf="settingsForm.controls.client_id.invalid" i18n>
         Client ID is required</mat-error>
     </mat-form-field>
     <mat-form-field class="ap-w-full" appearance="outline">
       <mat-label i18n>Client Secret</mat-label>
       <input [matTooltip]="clientSecretTooltip" formControlName="client_secret" matInput type="password"
-        placeholder="Key" />
+        placeholder="Client Secret" />
       <mat-error *ngIf="settingsForm.controls.client_secret.invalid" i18n>
         Client Secret is required</mat-error>
     </mat-form-field>
@@ -55,7 +57,7 @@
           <mat-label>{{prop.value.displayName}}</mat-label>
           <input [matTooltip]="prop.value.description||''" [formControlName]="prop.key" matInput type="text" />
           <mat-error *ngIf="settingsForm.controls.props.controls[prop.key]!.invalid">
-              {{prop.value.displayName}} <span i18n>is required</span>
+            {{prop.value.displayName}} <span i18n>is required</span>
           </mat-error>
         </mat-form-field>
         <ng-container *ngIf="prop.value.type === PropertyType.STATIC_DROPDOWN">
@@ -77,7 +79,7 @@
 
     </div>
 
-    <div>
+    <div *ngIf="dialogData.pieceAuthProperty.grantType !== OAuth2GrantType.CLIENT_CREDENTIALS">
       <app-o-auth2-connect-control [popupParams]="getOAuth2Settings()"
         [settingsValid]="authenticationSettingsControlsValid" formControlName="value"></app-o-auth2-connect-control>
       <p @fadeInUp class="ap-typography-caption ap-text-danger"
@@ -88,7 +90,7 @@
   </form>
   <a class="ap-cursor-pointer ap-mt-2" *ngIf="(hasCloudAuthCred$ | async) && !dialogData.connectionToUpdate"
     (click)="useCloudCreds()" i18n>I would like to
-    use activepieces app credentials </a>
+    use predefined app credentials </a>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">

@@ -254,14 +254,18 @@ export const youtubeNewVideoTrigger = createTrigger({
             return [];
         }
 
-        await store.put('lastFetchedYoutubeVideo', items?.[0]?.guid);
-        await store.put('lastUpdatedYoutubeVideo', getUpdateDate(items?.[0]));
 
         const newItems = [];
         for (const item of items) {
             if (item.guid === lastItemId) break;
+            if (storedLastUpdated && dayjs(getUpdateDate(item)).isBefore(dayjs(storedLastUpdated))) {
+                continue;
+            }
             newItems.push(item);
         }
+
+        await store.put('lastFetchedYoutubeVideo', items?.[0]?.guid);
+        await store.put('lastUpdatedYoutubeVideo', getUpdateDate(items?.[0]));
 
         return newItems;
     },

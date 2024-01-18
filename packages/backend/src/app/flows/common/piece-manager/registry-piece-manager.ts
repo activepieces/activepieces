@@ -15,9 +15,9 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
 
 export class RegistryPieceManager extends PieceManager {
-    protected override async installDependencies({ projectPath, pieces }: InstallParams): Promise<void> {
-        await this.savePackageArchivesToDiskIfNotCached(pieces)
-        const dependencies = pieces.map(this.pieceToDependency, this)
+    protected override async installDependencies({ projectId, projectPath, pieces }: InstallParams): Promise<void> {
+        await this.savePackageArchivesToDiskIfNotCached(projectId, pieces)
+        const dependencies = pieces.map(piece => this.pieceToDependency(projectId, piece))
 
         await packageManager.add({
             path: projectPath,
@@ -25,13 +25,13 @@ export class RegistryPieceManager extends PieceManager {
         })
     }
 
-    private async savePackageArchivesToDiskIfNotCached(pieces: PiecePackage[]): Promise<void> {
-        const packages = await this.getUncachedArchivePackages(pieces)
-        const saveToDiskJobs = packages.map(this.getArchiveAndSaveToDisk, this)
+    private async savePackageArchivesToDiskIfNotCached(projectId: string, pieces: PiecePackage[]): Promise<void> {
+        const packages = await this.getUncachedArchivePackages(projectId, pieces)
+        const saveToDiskJobs = packages.map((piece) => this.getArchiveAndSaveToDisk(projectId, piece))
         await Promise.all(saveToDiskJobs)
     }
 
-    private async getUncachedArchivePackages(pieces: PiecePackage[]): Promise<PiecePackage[]> {
+    private async getUncachedArchivePackages(projectId: string, pieces: PiecePackage[]): Promise<PiecePackage[]> {
         const packages: PiecePackage[] = []
 
         for (const piece of pieces) {
@@ -40,7 +40,7 @@ export class RegistryPieceManager extends PieceManager {
             }
 
             const projectPackageArchivePath = this.getProjectPackageArchivePath({
-                projectId: piece.projectId,
+                projectId,
             })
 
             const archivePath = getPackageArchivePathForPiece({
@@ -59,16 +59,15 @@ export class RegistryPieceManager extends PieceManager {
         return packages
     }
 
-    private async getArchiveAndSaveToDisk(piece: PiecePackage): Promise<void> {
-        const archiveId = piece.archiveId ?? await this.getArchiveIdOrThrow(piece)
+    private async getArchiveAndSaveToDisk(projectId: string, piece: PiecePackage): Promise<void> {
+        const archiveId = piece.archiveId ?? await this.getArchiveIdOrThrow(projectId, piece)
 
         const archiveFile = await fileService.getOneOrThrow({
-            projectId: piece.projectId,
             fileId: archiveId,
         })
 
         const projectPackageArchivePath = this.getProjectPackageArchivePath({
-            projectId: piece.projectId,
+            projectId,
         })
 
         const archivePath = getPackageArchivePathForPiece({
@@ -81,11 +80,11 @@ export class RegistryPieceManager extends PieceManager {
         await writeFile(archivePath, archiveFile.data)
     }
 
-    private async getArchiveIdOrThrow(piece: PiecePackage): Promise<string> {
+    private async getArchiveIdOrThrow(projectId: string, piece: PiecePackage): Promise<string> {
         const pieceMetadata = await pieceMetadataService.getOrThrow({
             name: piece.pieceName,
             version: piece.pieceVersion,
-            projectId: piece.projectId,
+            projectId,
         })
 
         if (isNil(pieceMetadata.archiveId)) {
@@ -103,6 +102,7 @@ export class RegistryPieceManager extends PieceManager {
 }
 
 type InstallParams = {
+    projectId: string
     projectPath: string
     pieces: PiecePackage[]
 }

@@ -28,3 +28,9 @@ export const StepFileGet = Type.Object({
 })
 
 export type StepFileGet = Static<typeof StepFileGet>
+
+export const StepFileWithUrl = Type.Composite([StepFile, Type.Object({
+    url: Type.String(),
+})])
+
+export type StepFileWithUrl = Static<typeof StepFileWithUrl>

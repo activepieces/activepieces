@@ -6,7 +6,7 @@
         class="logo"
         [src]="
           'https://cdn.activepieces.com/pieces/' +
-          data.connection.appName.replace('@activepieces/piece-', '') +
+          data.connection.pieceName.replace('@activepieces/piece-', '') +
           '.png'
         "
       />
@@ -19,7 +19,7 @@
           Are you sure you want to disconnect?
         </h1>
         <p class="text-center">
-          You would need to re-connect to {{ data.connection.appName.replace('@activepieces/piece-', '') }} if you
+          You would need to re-connect to {{ data.connection.pieceName.replace('@activepieces/piece-', '') }} if you
           decide to enable it again.
         </p>
       </section>

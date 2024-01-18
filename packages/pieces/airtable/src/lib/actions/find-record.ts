@@ -11,7 +11,7 @@ export const airtableFindRecordAction = createAction({
   props: {
     base: airtableCommon.base,
     tableId: airtableCommon.tableId,
-    fieldNames: airtableCommon.fieldNames,
+    searchField: airtableCommon.fieldNames,
     searchValue: Property.ShortText({
       displayName: 'Search Value',
       required: true,
@@ -23,7 +23,7 @@ export const airtableFindRecordAction = createAction({
     const {
       base: baseId,
       tableId,
-      fieldNames,
+      searchField,
       searchValue,
       limitToView,
     } = context.propsValue;
@@ -32,7 +32,7 @@ export const airtableFindRecordAction = createAction({
       personalToken,
       baseId: baseId as string,
       tableId: tableId as string,
-      fieldNames: fieldNames as string[],
+      searchField: searchField as string,
       searchValue: searchValue as string,
       limitToView: limitToView as string,
     });

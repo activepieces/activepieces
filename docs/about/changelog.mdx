@@ -14,6 +14,412 @@ Semantic versioning is a standardized way of versioning software projects. It us
 
 Here's the revised text with improved grammar and spelling:
 
+
+### 17/1/2024
+
+**✨ Exciting New Features**
+
+* feat: add Ukrainian and Bulgarian language / update other languages (#3682) @abuaboud
+* feat: continue on failure and retry on failure (#3662) @MoShizzle
+* feat: filter runs by flow (#3673) @MoShizzle
+
+**🧩 Pieces**
+
+* feat(clickup): set custom fields action / get custom fields action (#3675) @kanarelo
+* fix: monday & woocommerce & onfleet triggers (#3680) @abuaboud
+* feat(google-drive): add permission action / remove permission action (#3666) @pfernandez98
+* fix(woocommerce): triggers saving issue (#3668) @kishanprmr
+* feat(clickup): delete task action, get tasks with ability to filter by a space, a list or a workspace  (#3657) @kanarelo
+* fix(google-drive): hide trashed files (#3663) @abuaboud
+* fix(facebook): list pages (#3660) @abuaboud
+* feat(formbricks): Response Created, Response Updated, Response Finished triggers (#3648) @kanarelo
+* feat(baserow): all actions related to table row (#3646) @kishanprmr
+* fix(flowlu): make name/title field optional in update actions (#3647) @kishanprmr
+* feat(frame.io): Asset Created Trigger / Project Created Trigger / Comment Created Trigger (#3622) @kanarelo
+* feat(robolly): add properties for custom modification  (#3631) @pfernandez98
+
+**🐞 Bug Fixes**
+
+* fix(embed): prefix should be included in routing (#3681) @abuaboud
+* fix(copilot): code writer should use import for packages (#3674) @MoShizzle
+* fix: extract user id from principal in import flow (#3671) @abuaboud
+* fix: add instructions for google & github sso (#3650) @abuaboud
+* fix: StoreCodeInsideFlow1697969398200 migration (#3642) @abuaboud
+
+**🎨 Enhancements & Polish**
+
+* fix: Show failed iteration in case the failed step is within a loop in runs/test (#3658) @AbdulTheActivePiecer
+* feat: prioritize webhook sync calls (#3644) @abuaboud
+* feat(project): add worker project endpoints to ee (#3637) @khaledmashaly
+
+**📚 Documentation**
+
+* docs: add update flow documentation (#3651) @abuaboud
+* chore: fixed wrong date in changelog (#3633) @zaaakher
+* docs: add zaaakher as a contributor for doc (#3638) @allcontributors
+
+**👩‍💻 Developer Experience**
+
+* fix: sandbox error on windows (#3670) @MoShizzle
+
+**🧹 Maintenance**
+
+* fix: database migration (#3678) @abuaboud
+* chore: view teams in community (#3669) @AbdulTheActivePiecer
+* feat: add .nvmrc file (#3641) @zaaakher
+* chore: use db transactions for "update published flow version" request (#3630) @khaledmashaly
+* chore: clean update flow endpoint (#3615) @abuaboud
+
+**🖥️ API Changes**
+
+* chore: clean update flow endpoint (#3615) @abuaboud
+
+**Thanks ❤️**
+@AbdulTheActivePiecer, @MoShizzle, @abuaboud, @allcontributors, @allcontributors[bot], @kanarelo, @khaledmashaly, @kishanprmr, @pfernandez98 and @zaaakher
+
+
+### 14/1/2024
+
+**✨ Exciting New Features**
+
+* feat: write code with AI (#3595) @MoShizzle
+* feat(ee): Google & Github SSO / Enforce allowed domains / Disable email auth (#3584) @abuaboud
+* feat(ee): support for git environments  (#3564) @abuaboud
+
+**🧩 Pieces**
+
+* feat(Vtiger): Create Record Action / Delete Record  Action / Get Record Action / Make Api Call  Action/ Search Record Action / Update Record Action / New or Updated Records (#3550) @kanarelo
+* feat(gmail): add capability to change attachment name for send email (#3621) @pfernandez98
+* feat(clickup): Get Task Action / Get Tasks Action / Task Tag Updated Trigger (#3616) @kanarelo
+* fix(shopify): fix authentication issue (#3619) @kishanprmr
+* feat(flowlu): all actions related to task / opportunity / contact (#3605) @kishanprmr
+* fix(google-drive): pass folder ID in duplicate file action (#3608) @kishanprmr
+* feat(Flowise.ai): make prediction action (#3588) @aasimsani
+* feat(robolly): generate image action (#3589) @pfernandez98
+* fix(airtable): fix auth error message (#3593) @kishanprmr
+* feat(monday): api token authentication / create and update actions for group / column / item actions (#3561) @kishanprmr
+* feat(google-drive): export as pdf action (#3569) @pfernandez98
+* fix(schedule): add static dropdown for minutes selection to ensure valid values (#3570) @kishanprmr
+* feat(google-documents): create document based on template / read document action (#3567) @pfernandez98
+* feat(shopify): 25 new actions 2 new triggers (#3559) @MoShizzle
+* fix(approval): test step sample data (#3560) @abuaboud
+* fix(LinkedIn): no longer truncates posts at the first opening round brackets (#3545) @aasimsani
+
+**🐞 Bug Fixes**
+
+* fix(authz): remove project check for list app-credentials endpoint (#3625) @khaledmashaly
+* fix: dashboard loaders on /flows (#3612) @kartikmehta8
+* fix: add external id to list projects / create project endpoint (#3599) @abuaboud
+* fix(backend): fix action auth validation for actions that doesn't require auth (#3592) @kishanprmr
+* fix: parse string as json object for json properties (#3579) @dennisrongo
+* fix: flow becomes no longer become empty on trigger hook failure (#3554) @khaledmashaly
+
+**🎨 Enhancements & Polish**
+
+
+* feat: ai code writer now fills inputs (#3628) @MoShizzle
+* feat: add getter for `externalProjectId` in engine run context (#3598) @khaledmashaly
+* feat: Add indicator to currently viewed version in builder, Add option to retry successful runs on latest version. (#3609) @AbdulTheActivePiecer
+* fix(backend): db index option for redis connection (#3602) @kishanprmr
+* style: adjusting big button spacing, fix role text, and stop version history icons flickering (#3582) @AbdulTheActivePiecer
+* chore: display human readable error when the file is large (#3575) @abuaboud
+* feat: filter flows by status (#3528) @khaledmashaly
+
+**📚 Documentation**
+
+* docs: add one-click template on the repocloud (#3618) @cosark
+* docs: add dependency in create action tutorial (#3586) @kartikmehta8
+* feat: add flow api documentation (#3576) @abuaboud
+
+**🧹 Maintenance**
+
+* chore: add telemetry to co-pilot (#3627) @AbdulTheActivePiecer
+* chore(deps): bump follow-redirects from 1.15.3 to 1.15.4 (#3577) @dependabot
+* chore: npm start should work on windows (#3574) @MoShizzle
+
+**Thanks ❤️**
+@AbdulTheActivePiecer, @MoShizzle, @aasimsani, @abuaboud, @allcontributors, @allcontributors[bot], @cosark, @dennisrongo, @dependabot, @dependabot[bot], @kanarelo, @kartikmehta8, @khaledmashaly, @kishanprmr and @pfernandez98
+
+
+### 4/1/2024
+
+**✨ Exciting New Features**
+
+* feat: add hungarian language (#3557) @abuaboud
+* feat: support version history (#3281) @abuaboud
+* feat: rerun failed flows from runs page (#3505) @MoShizzle
+* feat: add users table in platform dashboard (#3508) @abuaboud
+
+**🧩 Pieces**
+
+* feat(hubspot): fix contact owner dropdown bug / get owner by email action (#3551) @kishanprmr
+* feat(vbout): create contact,tag,email list,email campaign,social media post, remove tag, update contact, unsubscribe contact actions (#3526) @kishanprmr
+* fix(ntfy): support unicode api header (#3530) @la3rence
+* feat(text-helper): added option to replace only first match for (replace action) (#3524) @AbdulTheActivePiecer
+* feat(google-docs): create document using template (#3514) @pfernandez98
+* feat(airtable): fix find record bug / updated record trigger (#3512) @kishanprmr
+* feat(google-drive): search folder by name  (#3511) @pfernandez98
+* feat(beamer): add changelog and notification center tool (#3468) @i-nithin
+
+**🐞 Bug Fixes**
+
+* fix: global api key should be optional (#3555) @abuaboud
+* fix: show correct flow status after first publish (on) and refresh runs table after a retry  (#3546) @AbdulTheActivePiecer
+* fix: AppSumo authn (#3542) @khaledmashaly
+* fix: automatically refresh runs table when there is a run still being executed (#3538) @AbdulTheActivePiecer
+* fix: skip completed step after resume (#3523) @abuaboud
+* fix: verified user migration in sqlite3 (#3521) @abuaboud
+* fix: add raw link to emails incase button didn't work (#3507) @khaledmashaly
+
+**🎨 Enhancements & Polish**
+* chore(release): skip building arm/v7 and arm/v8 images for RCs (#3541) @khaledmashaly
+* fix: build docker image for raspberry pi arm v7/v8 (#3536) @abuaboud
+
+**📚 Documentation**
+
+* docs: add la3rence as a contributor for plugin (#3532) @allcontributors
+
+**🧹 Maintenance**
+
+* chore: upgrade typeorm from 0.3.17 to 0.3.18 (#3549) @abuaboud
+* chore: enforce license limits (#3525) @abuaboud
+* refactor: authorization middleware (#3490) @khaledmashaly
+* test: simple flow test for worker (production builds) (#3520) @abuaboud
+* chore(deps): bump msgpackr from 1.10.0 to 1.10.1 (#3509) @dependabot
+
+**Thanks ❤️**
+@AbdulTheActivePiecer, @MoShizzle, @abuaboud, @allcontributors, @allcontributors[bot], @dependabot, @dependabot[bot], @eltociear, @i-nithin, @khaledmashaly, @kishanprmr, @la3rence, @pfernandez98 and @snyk-bot
+
+
+### 28/12/2023
+
+**✨ Exciting New Features**
+
+* feat: manage templates from platform (#3482) @abuaboud
+* feat: add new languages Indonesian, Vietnamese,  Chinese, and Portuguese (#3451) @abuaboud
+* feat: support app connections api (#3389) @abuaboud
+* feat: ability to test loop step to fill sample data (#3441) @AbdulTheActivePiecer
+* feat: listen to webhook sync response realtime instead of polling (#3431) @abuaboud
+* feat(languages): Increased coverage - Japanese 100%, Dutch 100%, Simplified Chinese 18% (#3394) @abuaboud
+* feat: viewable link for files when testing steps (#3396) @MoShizzle
+* feat: allow platform admins to choose between using our oauth2 apps or not (#3401) @AbdulTheActivePiecer
+* feat(i18n): increase coverage in Japanese 57% / Spanish 100% / dutch languages 100% (#3311) @abuaboud
+* feat(api): project / project members api (#3383) @abuaboud
+* feat(builder): complete revamp of branching and loop rendering (#3216) @abuaboud
+* feat: add api keys (#3345) @abuaboud
+
+**🧩 Pieces**
+
+* feat(telegram-bot): Fixes for critical issues /  Create Invite Link Action / Get Chat Member Action (#3492) @alerdenisov
+* fix(twitter): improve error messages shown when a tweet fails (#3497) @AbdulTheActivePiecer
+* fix(airtable): "Create record" action used to fail when there was number inputs, now it doesn't (#3488) @AbdulTheActivePiecer
+* feat(line): send message action / new message trigger (#3478) @abuaboud
+* feat(twitter): added two extra inputs to upload media and improved instructions for authentication (#3483) @AbdulTheActivePiecer
+* feat(telegram-bot): send media action and `reply_markup` field in messages (#3485) @alerdenisov
+* fix(monday): add missing oauth2 scopes (#3484) @AbdulTheActivePiecer
+* feat(discourse): add users to group / change trust level / create post  / create topic / send private message actions (#3456) @pfernandez98
+* fix(text-helper): replace all instances of found text, and make (replace) input optional (#3469) @AbdulTheActivePiecer
+* feat(stripe): retrieve customer action (#3459) @Doskyft
+* chore: update piece names to match brands (#3460) @MoShizzle
+* feat(kizeo-forms): adds output format property to triggers (#3452) @BastienMe
+* feat(slack): added attachment field to send message action (#3447) @MoShizzle
+* feat(google-gemini): add chat action (#3444) @pfernandez98
+* feat(imap): add all mailboxes option for gmail users (#3442) @MoShizzle
+* feat(jira-cloud): create issue and search issues actions / new issue and updated issue triggers (#3440) @MoShizzle
+* feat(google-gemini): generate content from image /  generate content action (#3437) @pfernandez98
+* feat(datehelper): get next day of week and get next day of year actions (#3315) @joeworkman
+* feat(bettermode): assign badge, revoke badge, create discussion, create question actions (#3314) @joeworkman
+* feat(retable): create record, project, workspace triggers, get all workspaces, get all projects, get all retables actions (#3343) @kishanprmr
+* feat(cartloom): create discount, get discount, discounts, order, orders date email, orders date, products actions (#3347) @joeworkman
+* feat(moxie-crm): 22 triggers, create a client, create a project, create a task actions (#3359) @kishanprmr
+* feat(matomo): add annotation action (#3364) @joeworkman
+* feat(bonjoro): create a greet action (#3366) @joeworkman
+* feat(clearout): instant verify action (#3367) @joeworkman
+* feat(sendy): subscribe multiple lists, unsubscribe multiple lists actions (#3368) @joeworkman
+* feat(totalcms): 13 actions, and new blog post trigger (#3378) @joeworkman
+* feat(Mastodon): add media file property to post status action (#3397) @denieler
+* fix(openai): support fine-tuned model by approximate tokens length  (#3392) @MoShizzle
+* fix: dynamic fields not working in certopus piece (#3349) @VrajGohil
+* feat(wordpress): get post details action (#3330) @pfernandez98
+
+**🛠️ Piece Framework**
+
+* feat: add project info to context (#3453) @MoShizzle
+* feat: add client credentials oauth2 (#3329) @abuaboud
+
+**🐞 Bug Fixes**
+
+* fix: show url when testing step instead of local path (#3486) @abuaboud
+* fix: install piece in platform level is fixed (#3454) @abuaboud
+* fix: sync webhook works with redis pubsub (#3439) @abuaboud
+* fix: remove package.json lint from new piece project.json (#3430) @MoShizzle
+* fix: some dropdowns don't show the selected value for step inputs (#3424) @AbdulTheActivePiecer
+* fix: corrects aspect ratio for home button to be 1:1 (#3425) @AbdulTheActivePiecer
+* fix: show delete flow within builder in flow actions list and hide the list when showing runs (#3421) @AbdulTheActivePiecer
+* fix: trigger not being trimmed when payload too large causing internal error (#3411) @MoShizzle
+* fix: better explanation for the Activepieces' OAuth2 apps toggle in platform pieces table (#3409) @AbdulTheActivePiecer
+* fix: correct date for chatbots deprecation (#3408) @AbdulTheActivePiecer
+* fix(openai): support fine-tuned model by approximate tokens length  (#3392) @MoShizzle
+* fix: send referring user id with sign up request (#3381) @AbdulTheActivePiecer
+* fix: calculation task limit (#3380) @abuaboud
+* fix: daily limit tasks query caused database to spike (#3375) @abuaboud
+* fix: never send newsletter to platform users (#3369) @abuaboud
+* fix: sync webhooks return error status now (#3370) @abuaboud
+* fix: webhook /sync response on errors (#3350) @MoShizzle
+* fix: project member permission (#3362) @abuaboud
+* fix: migrate to oldest ee platform (#3360) @abuaboud
+* fix: platform dashboard wasn't accessible for users on first sign in for EE (#3352) @AbdulTheActivePiecer
+
+**🎨 Enhancements & Polish**
+
+* feat: hide sign up link for platform, sign up are invite only (#3458) @abuaboud
+* feat: new design for fullscreen code editor (#3446) @AbdulTheActivePiecer
+* feat: improve the loading time of dropdowns with 1000+ options and prevent browser crashing (#3395) @AbdulTheActivePiecer
+* feat: introduce flag to hide/show back button and folder name in builder for embedding (#3361) @AbdulTheActivePiecer
+* feat: project membership api tweaks (#3344) @khaledmashaly
+
+**📚 Documentation**
+
+* docs: add i-nithin as a contributor for plugin (#3470) @allcontributors
+* docs: add bigfluffycookie as a contributor for bug (#3438) @allcontributors
+* docs: correct a word (#3417) @MrMYHuang
+* docs: add MrMYHuang as a contributor for doc (#3418) @allcontributors
+* docs: add denieler as a contributor for plugin (#3398) @allcontributors
+* docs(endpoints): delete / create project member (#3358) @abuaboud
+* docs: projects / flows / connections docs (#3346) @abuaboud
+* docs: update codespace instructions (#3323) @pfernandez98
+* docs: add pfernandez98 as a contributor for plugin (#3328) @allcontributors
+
+**🧹 Maintenance**
+
+* chore: rename app name to piece name in connections (#3481) @abuaboud
+* chore: convert cloud to platform (#3493) @abuaboud
+* chore: deprecate chatbots (#3480) @abuaboud
+* refactor: remove `FlowInstance` entity (#3377) @khaledmashaly
+* refactor: engine with test coverage (#3111) @abuaboud
+* fix: remove package.json lint from new piece project.json (#3430) @MoShizzle
+* refactor: move app webhooks secrets to environent variable (#3403) @abuaboud
+* refactor: platform owner should check jwt role (#3399) @abuaboud
+* refactor: authorization cleanup for unauthenticated endpoints (#3390) @abuaboud
+* [Snyk] Security upgrade @sendgrid/mail from 7.7.0 to 8.0.0 (#3355) @abuaboud
+* chore: upgrade node from 18.18.1-bullseye to 18.18.2-bullseye (#3331) @abuaboud
+
+**🖥️ API Changes**
+
+* chore: rename app name to piece name in connections (#3481) @abuaboud
+* feat: initial users management api  (#3443) @khaledmashaly
+* feat: support app connections api (#3389) @abuaboud
+
+**Thanks ❤️**
+@AbdulTheActivePiecer, @BastienMe, @Doskyft, @MoShizzle, @MrMYHuang, @VrajGohil, @abuaboud, @alerdenisov, @allcontributors, @allcontributors[bot], @crowdin-bot, @denieler, @joeworkman, @khaledmashaly, @kishanprmr, @pfernandez98 and @snyk-bot
+
+
+### 1/12/2023
+
+**Pieces:**
+- feat(mixpanel): track event action by @yann120 in https://github.com/activepieces/activepieces/pull/3290
+- feat(localai): fix fetch models link by @MoShizzle in https://github.com/activepieces/activepieces/pull/3316
+- feat(sessions.us): booking / event / session / takeway ready / transcript ready triggers and create event / create session / publish event action by @MoShizzle in https://github.com/activepieces/activepieces/pull/3291
+
+**Fixes**:
+- fix: floating labels by @abuaboud in https://github.com/activepieces/activepieces/pull/3309
+- fix: stripe billing by @abuaboud in https://github.com/activepieces/activepieces/pull/3308
+- fix: auth popup not closing by @abuaboud in https://github.com/activepieces/activepieces/pull/3313
+
+**Security**:
+- chore(deps-dev): bump @adobe/css-tools from 4.3.1 to 4.3.2 by @dependabot in https://github.com/activepieces/activepieces/pull/3312
+
+**Contributors:**
+- @yann120 made their first contribution in https://github.com/activepieces/activepieces/pull/3290
+
+### 30/11/2023
+
+**Fixes:**
+- OAuth claiming using your own credentials method by @abuaboud in https://github.com/activepieces/activepieces/pull/3299.
+- Skip sending verification emails on EE by @khaledmashaly in https://github.com/activepieces/activepieces/pull/3300.
+- Fix Sign in to users managed by the platform by @abuaboud in https://github.com/activepieces/activepieces/pull/3304.
+
+**Full Changelog**: https://github.com/activepieces/activepieces/compare/0.14.1...0.14.2
+
+### 29/11/2023
+
+**Pieces** 
+- Google Calendar: Fixed New Event Trigger by @MoShizzle in [PR #3219](https://github.com/activepieces/activepieces/pull/3219) / Get All Events Action by @Vitalini in [PR #3238](https://github.com/activepieces/activepieces/pull/3238)
+- Notion: Create page / appended to page / updated database item triggered by @MoShizzle in [PR #3225](https://github.com/activepieces/activepieces/pull/3225)
+- Trello: Authentication instructions by @MoShizzle in [PR #3237](https://github.com/activepieces/activepieces/pull/3237)
+- Retune: Chatbot action added by @MoShizzle in [PR #3236](https://github.com/activepieces/activepieces/pull/3236)
+- Lead Connector (GoHighLevel):** Addition of 10 actions and 4 triggers by @MoShizzle in [PR #3261](https://github.com/activepieces/activepieces/pull/3261)
+- Youtube: Fixed Duplicate Item Triggers
+
+**Features:**
+- Added German (de), Dutch (nl), and Dutch translations by various contributors (@jan hogler, @abuaboud) in multiple PRs ([#3214](https://github.com/activepieces/activepieces/pull/3214), [#3246](https://github.com/activepieces/activepieces/pull/3246), [#3247](https://github.com/activepieces/activepieces/pull/3247))
+  - Allowed self-serve purchasing for users and fixed upgrade dialogs by @AbdulTheActivePiecer in [PR #3268](https://github.com/activepieces/activepieces/pull/3268)
+- (Platform) Ability to Add Custom Domains from Platform Dashboard
+- (Platform) Ability to set limits for each project from the platform dashboard.
+
+**Fixes:**
+- Locale fixes resolved language-related redirection issues 
+- Fixed upgrade banner not showing in cloud by @abuaboud in [PR #3217](https://github.com/activepieces/activepieces/pull/3217)
+- Fixed infinite test flow loading for flow with large output by @abuaboud in [PR #3234](https://github.com/activepieces/activepieces/pull/3234)
+  
+**Technical Debt:**
+- Removed Firebase Authentication
+- Switched to in-house authentication system by @khaledmashaly in [PR #3222](https://github.com/activepieces/activepieces/pull/3222) , [PR #3263](https://github.com/activepieces/activepieces/pull/3263)
+- Added Google and GitHub federated authentication to in-house authentication system by @khaledmashaly and @abuaboud in PRs [#3248](https://github.com/activepieces/activepieces/pull/3248), [#3263](https://github.com/activepieces/activepieces/pull/3263)
+- Changed config path for the dev environment to handle technical debt ([Pull Request #3244](https://github.com/activepieces/activepieces/pull/3244)) - @abuaboud
+  
+**Contributors:**
+- Contributions made by various contributors including @abuaboud, @MoShizzle, @khaledmashaly, @AbdulTheActivePiecer, @JanHogler, @Vitalini.
+
+
+For more detailed information, you can check the [Full Changelog here](https://github.com/activepieces/activepieces/compare/0.13.0...0.14.0).
+
+### 17/11/2023
+
+**Features**:
+- Language Switcher is now available with French and Italian language contributions from the community.
+- Streamlined language contribution is now available through Crowdin (Help Us Translate): [https://www.activepieces.com/docs/about/i18n](https://www.activepieces.com/docs/about/i18n).
+
+**Pieces**:
+- OpenAI: Ask Assistant / Image Generation / Computer Vision / Text-To-Speech Actions by @MoShizzle.
+- Mailchimp: Add note to subscriber / add member to list / add tag to subscriber / update subscriber status / remove tag from subscriber actions and new subscriber trigger by @TaskMagicKyle.
+- WooCommerce: Create Coupon / Find Coupon / Create Customer / Find Customer / Create Product / Find Product Actions by @TaskMagicKyle.
+- AirTable: Find record / delete record / update record actions by @TaskMagicKyle.
+- Bubble: create thing / delete thing / get thing / search thing actions by @TaskMagicKyle.
+- Webflow: create collection item / delete collection item / find collection item / find order / fulfill order / get collection item / publish collection item / refund order / unfulfill order / update collection item actions by @TaskMagicKyle.
+- Sendy: Count Subscribers / Create Campaign / Delete Subscriber / Get Brand Lists / Get Brands / Get Subscription Status / Subscribe / Unsubscribe Actions by @joeworkman.
+
+**Improvements & Fixes**:
+- Dashboard Header now displays the current Project Name.
+- Webhook Response now returns the headers correctly.
+- Docker Invalid Mounts issue is now fixed.
+- Demo Flow is now fixed.
+- Webhook Sync timeout is now configurable for self-hosters via environment variables.
+- Email Verification is no longer required after the user accepts the project member invite.
+- Docker volume binding issue is now fixed.
+- Delete Project Member button now shows up correctly.
+
+**Platform Features**:
+- Embed Builder SDK through Iframe for Platform Plan (Commercial Edition).
+- Automatically authenticate your users using Signing Keys in Platform (Commercial Edition).
+- Ability to Customize SMTP to whitelabel emails.
+- Ability to Whitelabel terms of service and privacy URL.
+- Ability to Whitelabel OAuth2 apps across the instance.
+- Ability to Show / Hide Pieces for your managed users.
+
+**Tech Debt & Developer Experience**:
+- Upgrade Quill to prepare for inline JS functions.
+- Upgraded to NX 17.
+- Turbowatch only watches given files and skips NX cache by @awais000.
+- Pulumi deployment issue fixed by @awais000 in [https://github.com/activepieces/activepieces/pull/3127](https://github.com/activepieces/activepieces/pull/3127).
+- Activepieces Local Config File is now configurable via environment variables by @Autumnlight02.
+- Doubling down on integration tests, Add Integration tests for signing keys / authentication endpoint / platform / managed users / piece management / customize OAuth2 apps.
+
+**Contributors**:
+Big shoutout to @fdundjer, @donthorp, @joeworkman, @Autumnlight02, @pankaj9296, @TaskMagicKyle, @maor-rozenfeld, @awais000.
+
+**Full Changelog**: [https://github.com/activepieces/activepieces/compare/0.12.0...0.13.0](https://github.com/activepieces/activepieces/compare/0.12.0...0.13.0).
+
 ### 27/10/2023
 
 **Features**:
@@ -26,7 +432,7 @@ Here's the revised text with improved grammar and spelling:
 - Added the ability to whitelabel Activepieces using your custom domain (Cloud feature only).
 
 **Pieces**:
-- Airtable: Fixed Field Mapping when Updating a Record
+- AirTable: Fixed Field Mapping when Updating a Record
 - Microsoft Excel: Actions - Append Row to Worksheet, Get Worksheets, Get Worksheet Rows, Update Worksheet Row, Clear Worksheet, Delete Worksheet, Add a Worksheet to a Workbook, Get Table Rows, Get Table Columns, Create Table, Delete Table, Lookup Table Column, Append Row to a Table, and Convert to Range, all by @BastienMe
 - Saastic: Actions - Create/Update Customer and Create Customer Charge by @leolupianez
 - Shopify: Sample data for triggers is now fixed.
@@ -154,7 +560,7 @@ please visit the [Full Changelog](https://github.com/activepieces/activepieces/c
 - Brevo: Fixed Create Contact to add the contact to the selected list.
 - Whisper: Translate Audio / Transcribe Audio Action
 - Google My Business: Create Reply Action / New Review Trigger
-- Airtable: Added API Key Validation
+- AirTable: Added API Key Validation
 - Talkable: Added Find Coupon / Create Event / Create Batch of Events / Create Purchase / Update Person and more actions by @Vitalini
 - Salesforce: Added Conditions to Trigger / Bulk Upsert Action
 - Contentful: Create Record Action
@@ -718,7 +1124,7 @@ https://github.com/activepieces/activepieces/compare/0.3.7...0.3.8
 
 **New Pieces:**
 - OpenAI: Additional optional parameters have been added.
-- Airtable: Create Record Action.
+- AirTable: Create Record Action.
 - Square: New Customer / Customer Updated / New Payment / New Order / Order Updated / New Booking / New Invoice Triggers.
 - Intercom: Create Contact / Create Or Get Contact / Send Message Actions.
 - Delay: An action that introduces a delay of up to 5 minutes.
@@ -743,7 +1149,7 @@ https://github.com/activepieces/activepieces/compare/0.3.7...0.3.8
 - @J0LGER encoded code variable in malicious redirection by third party.
 - @veverkap fixed a typo in the frontend.
 - @berksmbl documented Easy Panel deployment.
-- @kanarelo created Airtable new record.
+- @kanarelo created AirTable new record.
 
 **Full Changelog:**
 https://github.com/activepieces/activepieces/compare/0.3.6...0.3.7

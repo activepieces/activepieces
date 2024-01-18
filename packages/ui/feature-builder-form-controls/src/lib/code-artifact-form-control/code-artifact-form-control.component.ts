@@ -21,7 +21,6 @@ export interface CodeArtifactForm {
 @Component({
   selector: 'app-code-artifact-form-control',
   templateUrl: './code-artifact-form-control.component.html',
-  styleUrls: ['./code-artifact-form-control.component.css'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -40,7 +39,7 @@ export class CodeArtifactFormControlComponent
   codeArtifactForm: FormGroup<CodeArtifactForm>;
   codeEditorOptions = {
     minimap: { enabled: false },
-    theme: 'cobalt2',
+    theme: 'apTheme',
     language: 'typescript',
     readOnly: false,
     automaticLayout: true,

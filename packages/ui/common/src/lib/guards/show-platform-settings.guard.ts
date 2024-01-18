@@ -5,9 +5,9 @@ import { Router } from '@angular/router';
 export const showPlatformSettingsGuard: () => boolean = () => {
   const authenticationService = inject(AuthenticationService);
   const router = inject(Router);
-  const decodedToken = authenticationService.getDecodedToken();
+  const platformAdmin = authenticationService.isPlatformOwner();
 
-  if (!decodedToken || !decodedToken['platformId']) {
+  if (!platformAdmin) {
     router.navigate(['/404']);
     return false;
   }

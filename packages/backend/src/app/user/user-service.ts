@@ -1,48 +1,61 @@
-import { apId, SignUpRequest, User, UserId, UserMeta, UserStatus } from '@activepieces/shared'
+import { apId, SignUpRequest, User, UserId, UserMeta, UserStatus, isNil, ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { passwordHasher } from '../authentication/lib/password-hasher'
 import { databaseConnection } from '../database/database-connection'
 import { UserEntity } from './user-entity'
-import { isNil } from 'lodash'
+import { PlatformId } from '@activepieces/ee-shared'
+import { IsNull } from 'typeorm'
+import dayjs from 'dayjs'
 
 const userRepo = databaseConnection.getRepository(UserEntity)
 
-type GetOneQuery = {
-    email: string
-}
-
 export const userService = {
     async create(params: CreateParams): Promise<User> {
-        const { email, password } = params
-        const hashedPassword = await passwordHasher.hash(password)
+        const hashedPassword = await passwordHasher.hash(params.password)
 
         const user: NewUser = {
             id: apId(),
             ...params,
+            status: UserStatus.ACTIVE,
             password: hashedPassword,
-        }
-
-        const existingUser = await userRepo.findOneBy({
-            email,
-        })
-
-        if (!isNil(existingUser) && existingUser.status === UserStatus.SHADOW) {
-            user.id = existingUser.id
-            await userRepo.update(user.id, user)
-            return userRepo.findOneByOrFail({
-                email,
-            })
         }
 
         return userRepo.save(user)
     },
-    async getMetaInfo({ id }: { id: UserId }): Promise<UserMeta | null> {
-        const user = await userRepo.findOneBy({ id })
-        if (!user) {
+
+    async verify({ id }: IdParams): Promise<User> {
+        const user = await userRepo.findOneByOrFail({ id })
+        if (user.verified) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'User is already verified',
+                },
+            })
+        }
+        return userRepo.save({
+            ...user,
+            verified: true,
+        })
+    },
+
+    async get({ id }: IdParams): Promise<User | null> {
+        return userRepo.findOneBy({ id })
+    },
+    async getOneOrFail({ id }: IdParams): Promise<User> {
+        return userRepo.findOneByOrFail({ id })
+    },
+
+    async getMetaInfo({ id }: IdParams): Promise<UserMeta | null> {
+        const user = await this.get({ id })
+
+        if (isNil(user)) {
             return null
         }
+
         return {
             id: user.id,
             email: user.email,
+            platformId: user.platformId,
             firstName: user.firstName,
             lastName: user.lastName,
             imageUrl: user.imageUrl,
@@ -50,22 +63,67 @@ export const userService = {
         }
     },
 
-    async getOneByEmail(query: GetOneQuery): Promise<User | null> {
-        const { email } = query
-        const user = await userRepo.createQueryBuilder().where('LOWER(email) LIKE LOWER(:email)', { email: `${email}` }).getOne()
-        return user || null
+    async getByPlatformAndEmail({ platformId, email }: GetByPlatformAndEmailParams): Promise<User | null> {
+        const platformWhereQuery = platformId ? { platformId } : { platformId: IsNull() }
+
+        return userRepo.createQueryBuilder()
+            .where(platformWhereQuery)
+            .andWhere('LOWER(email) = LOWER(:email)', { email })
+            .getOne()
     },
 
-    async getByExternalId(externalId: string): Promise<User | null> {
+    async getByPlatformAndExternalId({ platformId, externalId }: GetByPlatformAndExternalIdParams): Promise<User | null> {
         return userRepo.findOneBy({
+            platformId,
             externalId,
+        })
+    },
+
+    async updatePassword({ id, newPassword }: UpdatePasswordParams): Promise<void> {
+        const hashedPassword = await passwordHasher.hash(newPassword)
+
+        await userRepo.update(id, {
+            updated: dayjs().toISOString(),
+            password: hashedPassword,
+        })
+    },
+
+    async updatePlatformId({ id, platformId }: UpdatePlatformIdParams): Promise<void> {
+        await userRepo.update(id, {
+            updated: dayjs().toISOString(),
+            platformId,
         })
     },
 }
 
 type CreateParams = SignUpRequest & {
-    status: UserStatus
+    verified: boolean
+    platformId: PlatformId | null
     externalId?: string
 }
 
 type NewUser = Omit<User, 'created' | 'updated'>
+
+type GetByPlatformAndEmailParams = {
+    platformId: PlatformId | null
+    email: string
+}
+
+type GetByPlatformAndExternalIdParams = {
+    platformId: PlatformId
+    externalId: string
+}
+
+type IdParams = {
+    id: UserId
+}
+
+type UpdatePasswordParams = {
+    id: UserId
+    newPassword: string
+}
+
+type UpdatePlatformIdParams = {
+    id: UserId
+    platformId: PlatformId
+}

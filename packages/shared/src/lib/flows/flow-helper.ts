@@ -115,8 +115,8 @@ function traverseInternal(
     while (step !== undefined && step !== null) {
         steps.push(step)
         if (step.type === ActionType.BRANCH) {
-            steps.push(...traverseInternal(step.onFailureAction))
             steps.push(...traverseInternal(step.onSuccessAction))
+            steps.push(...traverseInternal(step.onFailureAction))
         }
         if (step.type === ActionType.LOOP_ON_ITEMS) {
             steps.push(...traverseInternal(step.firstLoopAction))
@@ -236,9 +236,11 @@ function getAllSteps(trigger: Trigger): (Action | Trigger)[] {
 
 function getAllStepsAtFirstLevel(step: Trigger): (Action | Trigger)[] {
     const steps: (Action | Trigger)[] = []
-    while (step !== undefined && step !== null) {
-        steps.push(step)
-        step = step.nextAction
+    steps.push(step)
+    let nextAction: Step | undefined = step.nextAction
+    while (nextAction !== undefined) {
+        steps.push(nextAction)
+        nextAction = nextAction.nextAction
     }
     return steps
 }
@@ -252,6 +254,38 @@ function getAllChildSteps(action: LoopOnItemsAction | BranchAction): Action[] {
                 ...traverseInternal(action.onFailureAction),
             ] as Action[]
     }
+}
+
+function getAllDirectChildStepsForLoop(action: LoopOnItemsAction ): Action[] {
+    const actions: Action[] = []
+    
+    let child = action.firstLoopAction
+    while (child) {
+        actions.push(child)
+        child = child.nextAction
+    }
+   
+    return actions
+}
+
+function getAllDirectChildStepsForBranch(action: BranchAction, branch: 'success' | 'failure' ): Action[] {
+    const actions: Action[] = []
+    if (branch === 'success') {
+        let child = action.onSuccessAction
+        while (child) {
+            actions.push(child)
+            child = child.nextAction
+        }
+    }
+    else {
+        let child = action.onFailureAction
+        while (child) {
+            actions.push(child)
+            child = child.nextAction
+        }
+    }   
+    return actions
+   
 }
 
 function getStep(
@@ -531,18 +565,15 @@ function createAction(
     return action
 }
 
-function isChildOf(parent: LoopOnItemsAction | BranchAction, child: Action) {
+function isChildOf(parent: LoopOnItemsAction | BranchAction, childStepName: string): boolean {
     switch (parent.type) {
         case ActionType.LOOP_ON_ITEMS: {
             const children = getAllChildSteps(parent)
-            return children.findIndex((c) => c.name === child.name) > -1
+            return children.findIndex((c) => c.name === childStepName) > -1
         }
         default: {
-            const children = [
-                ...getAllChildSteps(parent),
-                ...getAllChildSteps(parent),
-            ]
-            return children.findIndex((c) => c.name === child.name) > -1
+            const children = getAllChildSteps(parent)
+            return children.findIndex((c) => c.name === childStepName) > -1
         }
     }
 }
@@ -596,88 +627,89 @@ export function getImportOperations(
                 type: FlowOperationType.ADD_ACTION,
                 request: {
                     parentStep: step.name,
-                    action: keepBaseAction(step.nextAction),
+                    action: removeAnySubsequentAction(step.nextAction),
                 },
             })
         }
-        if (step.type === ActionType.BRANCH) {
-            if (step.onFailureAction) {
-                steps.push({
-                    type: FlowOperationType.ADD_ACTION,
-                    request: {
-                        parentStep: step.name,
-                        stepLocationRelativeToParent:
-              StepLocationRelativeToParent.INSIDE_FALSE_BRANCH,
-                        action: keepBaseAction(step.onFailureAction),
-                    },
-                })
-                steps.push(...getImportOperations(step.onFailureAction))
+        switch (step.type) {
+            case ActionType.BRANCH: {
+                if (step.onFailureAction) {
+                    steps.push({
+                        type: FlowOperationType.ADD_ACTION,
+                        request: {
+                            parentStep: step.name,
+                            stepLocationRelativeToParent:
+                  StepLocationRelativeToParent.INSIDE_FALSE_BRANCH,
+                            action: removeAnySubsequentAction(step.onFailureAction),
+                        },
+                    })
+                    steps.push(...getImportOperations(step.onFailureAction))
+                }
+                if (step.onSuccessAction) {
+                    steps.push({
+                        type: FlowOperationType.ADD_ACTION,
+                        request: {
+                            parentStep: step.name,
+                            stepLocationRelativeToParent:
+                  StepLocationRelativeToParent.INSIDE_TRUE_BRANCH,
+                            action: removeAnySubsequentAction(step.onSuccessAction),
+                        },
+                    })
+                    steps.push(...getImportOperations(step.onSuccessAction))
+                }
+                break
             }
-            if (step.onSuccessAction) {
-                steps.push({
-                    type: FlowOperationType.ADD_ACTION,
-                    request: {
-                        parentStep: step.name,
-                        stepLocationRelativeToParent:
-              StepLocationRelativeToParent.INSIDE_TRUE_BRANCH,
-                        action: keepBaseAction(step.onSuccessAction),
-                    },
-                })
-                steps.push(...getImportOperations(step.onSuccessAction))
+            case ActionType.LOOP_ON_ITEMS: {
+                if (step.firstLoopAction) {
+                    steps.push({
+                        type: FlowOperationType.ADD_ACTION,
+                        request: {
+                            parentStep: step.name,
+                            stepLocationRelativeToParent:
+                StepLocationRelativeToParent.INSIDE_LOOP,
+                            action: removeAnySubsequentAction(step.firstLoopAction),
+                        },
+                    })
+                    steps.push(...getImportOperations(step.firstLoopAction))
+                }
+                break
+
+            }
+            case ActionType.CODE:
+            case ActionType.PIECE: 
+            case TriggerType.PIECE:
+            case TriggerType.WEBHOOK:
+            case TriggerType.EMPTY:
+            {
+                break
             }
         }
-        if (step.type === ActionType.LOOP_ON_ITEMS && step.firstLoopAction) {
-            steps.push({
-                type: FlowOperationType.ADD_ACTION,
-                request: {
-                    parentStep: step.name,
-                    stepLocationRelativeToParent:
-            StepLocationRelativeToParent.INSIDE_LOOP,
-                    action: keepBaseAction(step.firstLoopAction),
-                },
-            })
-            steps.push(...getImportOperations(step.firstLoopAction))
-        }
+      
+      
         step = step.nextAction
     }
     return steps
 }
 
-// It's better to use switch case, to enforce that all actions are covered
-// TODO this can be simplified
-function keepBaseAction(action: Action): Action {
-    const commonProps = {
-        name: action.name,
-        displayName: action.displayName,
-        valid: action.valid,
-    }
-    switch (action.type) {
-        case ActionType.BRANCH:
-            // PICK type and settings from action
-            return {
-                type: ActionType.BRANCH,
-                settings: action.settings,
-                ...commonProps,
-            }
-        case ActionType.LOOP_ON_ITEMS:
-            return {
-                type: ActionType.LOOP_ON_ITEMS,
-                settings: action.settings,
-                ...commonProps,
-            }
-        case ActionType.CODE:
-            return {
-                type: action.type,
-                settings: action.settings,
-                ...commonProps,
-            }
+
+function removeAnySubsequentAction(action: Action): Action {
+    const clonedAction: Action = JSON.parse(JSON.stringify(action))
+    switch (clonedAction.type) {
+        case ActionType.BRANCH: {
+            delete clonedAction.onSuccessAction
+            delete clonedAction.onFailureAction
+            break
+        }
+        case ActionType.LOOP_ON_ITEMS: {
+            delete clonedAction.firstLoopAction
+            break
+        }
         case ActionType.PIECE:
-            return {
-                type: action.type,
-                settings: action.settings,
-                ...commonProps,
-            }
+        case ActionType.CODE:
+            break
     }
+    delete clonedAction.nextAction
+    return clonedAction
 }
 
 function upgradePiece(step: Step, stepName: string): Step {
@@ -775,7 +807,7 @@ function duplicateStep(stepName: string, flowVersionWithArtifacts: FlowVersion):
     return finalFlow
 }
 
-function replaceOldStepNameWithNewOne({ input, oldStepName, newStepName }: { input: string, oldStepName: string, newStepName: string }) {
+function replaceOldStepNameWithNewOne({ input, oldStepName, newStepName }: { input: string, oldStepName: string, newStepName: string }): string {
     const regex = /{{(.*?)}}/g // Regular expression to match strings inside {{ }}
     return input.replace(regex, (match, content) => {
     // Replace the content inside {{ }} using the provided function
@@ -784,6 +816,11 @@ function replaceOldStepNameWithNewOne({ input, oldStepName, newStepName }: { inp
         // Reconstruct the {{ }} with the replaced content
         return `{{${replacedContent}}}`
     })
+}
+
+function doesActionHaveChildren(action: Action ): action  is (LoopOnItemsAction | BranchAction)   {
+    const actionTypesWithChildren = [ActionType.BRANCH, ActionType.LOOP_ON_ITEMS]
+    return actionTypesWithChildren.includes(action.type) 
 }
 
 
@@ -806,6 +843,75 @@ function findAvailableStepName(flowVersion: FlowVersion, stepPrefix: string): st
     return findUnusedName(steps, stepPrefix)
 }
 
+function getDirectParentStep(child: Step, parent: Trigger | Step | undefined): Step | Trigger | undefined {
+    if (!parent) {
+        return undefined
+    }
+    if (isTrigger(parent.type)) {
+        let next = parent.nextAction
+        while (next) {
+            if (next.name === child.name) {
+                return parent
+            }
+            next = next.nextAction
+        }
+    }
+   
+    if (parent.type === ActionType.BRANCH) {
+           
+        const isChildOfBranch = isChildOf(parent, child.name)
+        if (isChildOfBranch) {
+            const directTrueBranchChildren = getAllDirectChildStepsForBranch(parent, 'success')
+            const directFalseBranchChildren = getAllDirectChildStepsForBranch(parent, 'failure')
+            if (directTrueBranchChildren.at(-1)?.name === child.name || directFalseBranchChildren.at(-1)?.name === child.name ) {
+                return parent
+            }
+           
+            return getDirectParentStep(child, parent.onSuccessAction) ?? getDirectParentStep(child, parent.onFailureAction)       
+             
+        }
+    }
+    if (parent.type === ActionType.LOOP_ON_ITEMS) {
+        const isChildOfLoop = isChildOf(parent, child.name)
+        if ( isChildOfLoop) {
+            const directChildren = getAllDirectChildStepsForLoop(parent)
+            if (directChildren.at(-1)?.name === child.name) {
+                return parent
+            }
+            return getDirectParentStep(child, parent.firstLoopAction)
+        }
+    }
+    return getDirectParentStep(child, parent.nextAction)
+}
+
+function isStepLastChildOfParent(child: Step, trigger: Trigger): boolean {
+  
+    const parent = getDirectParentStep(child, trigger)
+    if (parent) {
+        if (doesStepHaveChildren(parent)) {
+            if (parent.type === ActionType.LOOP_ON_ITEMS) {
+                const children = getAllDirectChildStepsForLoop(parent)
+                return children[children.length - 1]?.name === child.name
+            }
+            const trueBranchChildren = getAllDirectChildStepsForBranch(parent, 'success')
+            const falseBranchChildren = getAllDirectChildStepsForBranch(parent, 'failure')
+            return trueBranchChildren[trueBranchChildren.length - 1]?.name === child.name || falseBranchChildren[falseBranchChildren.length - 1]?.name === child.name
+        }
+        let next = parent.nextAction
+        while (next) {
+            if (next.nextAction === undefined && next.name === child.name) {
+                return true
+            }
+            next = next.nextAction
+        }
+    }
+
+    return false
+}
+
+function doesStepHaveChildren(step: Step): step is LoopOnItemsAction | BranchAction {
+    return step.type === ActionType.BRANCH || step.type === ActionType.LOOP_ON_ITEMS
+} 
 export const flowHelper = {
     isValid,
     apply(
@@ -860,10 +966,12 @@ export const flowHelper = {
         return clonedVersion
     },
 
+
     getStep,
     isAction,
     isTrigger,
     getAllSteps,
+    isStepLastChildOfParent,
     getUsedPieces,
     getImportOperations,
     getAllSubFlowSteps,
@@ -874,4 +982,6 @@ export const flowHelper = {
     getAllStepsAtFirstLevel,
     duplicateStep,
     findAvailableStepName,
+    doesActionHaveChildren,
+ 
 }

@@ -1,4 +1,4 @@
-import { ApEdition, ApFlagId, Flag } from '@activepieces/shared'
+import { ApEdition, ApFlagId, Flag, isNil } from '@activepieces/shared'
 import { databaseConnection } from '../database/database-connection'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
@@ -12,13 +12,13 @@ const flagRepo = databaseConnection.getRepository(FlagEntity)
 
 export const flagService = {
     save: async (flag: FlagType): Promise<Flag> => {
-        return await flagRepo.save({
+        return flagRepo.save({
             id: flag.id,
             value: flag.value,
         })
     },
     async getOne(flagId: ApFlagId): Promise<Flag | null> {
-        return await flagRepo.findOneBy({
+        return flagRepo.findOneBy({
             id: flagId,
         })
     },
@@ -37,14 +37,44 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.CHATBOT_ENABLED,
-                value: getEdition() === ApEdition.ENTERPRISE ? false : system.getBoolean(SystemProp.CHATBOT_ENABLED),
+                id: ApFlagId.OWN_AUTH2_ENABLED,
+                value: true,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_GIT_SYNC,
+                value: true,
                 created,
                 updated,
             },
             {
                 id: ApFlagId.CLOUD_AUTH_ENABLED,
                 value: system.getBoolean(SystemProp.CLOUD_AUTH_ENABLED) ?? true,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.COPILOT_ENABLED,
+                value: !isNil(system.get(SystemProp.OPENAI_API_KEY)),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_COPILOT,
+                value: true,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_COMMUNITY_PIECES,
+                value: true,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_SIGN_UP_LINK,
+                value: true,
                 created,
                 updated,
             },
@@ -61,14 +91,26 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.SHOW_AUTH_PROVIDERS,
-                value: getEdition() === ApEdition.CLOUD,
+                id: ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
+                value: {},
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
+                value: [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(getEdition()) ? this.getThirdPartyRedirectUrl() : undefined,
                 created,
                 updated,
             },
             {
                 id: ApFlagId.PROJECT_MEMBERS_ENABLED,
                 value: getEdition() !== ApEdition.COMMUNITY,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.EMAIL_AUTH_ENABLED,
+                value: true,
                 created,
                 updated,
             },
@@ -93,6 +135,18 @@ export const flagService = {
             {
                 id: ApFlagId.PRIVATE_PIECES_ENABLED,
                 value: getEdition() !== ApEdition.COMMUNITY,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.PRIVACY_POLICY_URL,
+                value: 'https://www.activepieces.com/privacy',
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.TERMS_OF_SERVICE_URL,
+                value: 'https://www.activepieces.com/terms',
                 created,
                 updated,
             },
@@ -145,14 +199,8 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.TEMPLATES_SOURCE_URL,
-                value: system.get(SystemProp.TEMPLATES_SOURCE_URL),
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.TEMPLATES_PROJECT_ID,
-                value: system.get(SystemProp.TEMPLATES_PROJECT_ID),
+                id: ApFlagId.SHOW_POWERED_BY_AP,
+                value: false,
                 created,
                 updated,
             },
@@ -160,7 +208,11 @@ export const flagService = {
 
         return flags
     },
-
+    getThirdPartyRedirectUrl(): string {
+        const frontendUrl = system.get(SystemProp.FRONTEND_URL)
+        const trimmedFrontendUrl = frontendUrl?.endsWith('/') ? frontendUrl.slice(0, -1) : frontendUrl
+        return `${trimmedFrontendUrl}/redirect`
+    },
     async getCurrentRelease(): Promise<string> {
         const packageJson = await import('package.json')
         return packageJson.version
@@ -174,6 +226,13 @@ export const flagService = {
         catch (ex) {
             return '0.0.0'
         }
+    },
+    isCloudPlatform(platformId: string | null): boolean {
+        const cloudPlatformId = system.get(SystemProp.CLOUD_PLATFORM_ID)
+        if (!cloudPlatformId || !platformId) {
+            return false
+        }
+        return platformId === cloudPlatformId
     },
 }
 

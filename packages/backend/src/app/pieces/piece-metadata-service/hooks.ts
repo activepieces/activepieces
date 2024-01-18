@@ -24,6 +24,7 @@ export type PieceMetadataServiceHooks = {
 }
 
 export type FilterPiecesParams = {
+    includeHidden?: boolean
     pieces: PieceMetadataModelSummary[]
     platformId?: PlatformId
 }

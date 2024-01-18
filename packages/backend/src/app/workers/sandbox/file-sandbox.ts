@@ -1,4 +1,5 @@
 import { rmdir, mkdir, readFile, writeFile, cp } from 'node:fs/promises'
+import fs from 'fs-extra'
 import path from 'node:path'
 import { spawn } from 'node:child_process'
 import { AbstractSandbox, ExecuteSandboxResult, SandboxCtorParams } from './abstract-sandbox'
@@ -29,13 +30,13 @@ export class FileSandbox extends AbstractSandbox {
 
     public override async runOperation(operation: string): Promise<ExecuteSandboxResult> {
         const startTime = Date.now()
-        const environment = system.get(SystemProp.ENVIRONMENT)
+        const pieceSources = system.get(SystemProp.PIECES_SOURCE)
 
         const command = [
             `cd ${this.getSandboxFolderPath()}`,
             '&&',
-            `env -i AP_ENVIRONMENT=${environment} NODE_OPTIONS='--enable-source-maps'`,
-            AbstractSandbox.nodeExecutablePath,
+            `cross-env-shell AP_PIECES_SOURCE=${pieceSources} NODE_OPTIONS=--enable-source-maps ${process.platform === 'win32' ? '&&' : ''}`,
+            `"${AbstractSandbox.nodeExecutablePath}"`,
             'main.js',
             operation,
         ].join(' ')
@@ -58,14 +59,20 @@ export class FileSandbox extends AbstractSandbox {
     }
 
     public override getSandboxFolderPath(): string {
-        return path.join(__dirname, `../../sandbox/${this.boxId}`)
+        const systemCache = system.get(SystemProp.CACHE_PATH) ?? __dirname
+        return path.join(systemCache, 'sandbox', `${this.boxId}`)
     }
 
     protected override async setupCache(): Promise<void> {
         logger.debug({ boxId: this.boxId, cacheKey: this._cacheKey, cachePath: this._cachePath }, '[FileSandbox#setupCache]')
 
         if (this._cachePath) {
-            await cp(this._cachePath, this.getSandboxFolderPath(), { recursive: true })
+            if (process.platform === 'win32') {
+                await fs.copy(this._cachePath, this.getSandboxFolderPath())
+            }
+            else {
+                await cp(this._cachePath, this.getSandboxFolderPath(), { recursive: true })
+            }
         }
     }
 

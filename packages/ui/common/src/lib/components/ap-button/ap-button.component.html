@@ -1,4 +1,4 @@
-<div class="btn-container ap-relative" [matTooltip]="tooltipText" *ngIf="!onlyShowContent">
+<div class="btn-container ap-relative " [matTooltip]="tooltipText" *ngIf="!onlyShowContent">
   <ng-container [ngSwitch]="btnStyle">
     <button [type]="type" [class]="btnSizeClass" [class.ap-w-full]="fullWidthOfContainer" *ngSwitchCase="'flat'"
       mat-flat-button [color]="btnColor" [disabled]="disabled ? true : false" (click)="click()"

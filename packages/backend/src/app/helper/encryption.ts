@@ -1,7 +1,7 @@
 import * as crypto from 'crypto'
 import { QueueMode, system } from './system/system'
 import { SystemProp } from './system/system-prop'
-import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { localFileStore } from './store'
 import { promisify } from 'util'
 import { randomBytes } from 'node:crypto'
@@ -43,11 +43,12 @@ export type EncryptedObject = {
     data: string
 }
 
-export function encryptObject(object: unknown): EncryptedObject {
+export function encryptString(inputString: string): EncryptedObject {
     const iv = crypto.randomBytes(ivLength) // Generate a random initialization vector
-    const key = Buffer.from(secret!, 'binary')
+    assertNotNullOrUndefined(secret, 'secret')
+    const key = Buffer.from(secret, 'binary')
     const cipher = crypto.createCipheriv(algorithm, key, iv) // Create a cipher with the key and initialization vector
-    let encrypted = cipher.update(JSON.stringify(object), 'utf8', 'hex')
+    let encrypted = cipher.update(inputString, 'utf8', 'hex')
     encrypted += cipher.final('hex')
     return {
         iv: iv.toString('hex'),
@@ -55,15 +56,29 @@ export function encryptObject(object: unknown): EncryptedObject {
     }
 }
 
+export function encryptObject(object: unknown): EncryptedObject {
+    const objectString = JSON.stringify(object) // Convert the object to a JSON string
+    return encryptString(objectString)
+}
+
 
 export function decryptObject<T>(encryptedObject: EncryptedObject): T {
     const iv = Buffer.from(encryptedObject.iv, 'hex')
-    const key = Buffer.from(secret!, 'binary') 
+    const key = Buffer.from(secret!, 'binary')
     const decipher = crypto.createDecipheriv(algorithm, key, iv)
     let decrypted = decipher.update(encryptedObject.data, 'hex', 'utf8')
     decrypted += decipher.final('utf8')
     return JSON.parse(decrypted)
 }
+export function decryptString(encryptedObject: EncryptedObject): string {
+    const iv = Buffer.from(encryptedObject.iv, 'hex')
+    const key = Buffer.from(secret!, 'binary')
+    const decipher = crypto.createDecipheriv(algorithm, key, iv)
+    let decrypted = decipher.update(encryptedObject.data, 'hex', 'utf8')
+    decrypted += decipher.final('utf8')
+    return decrypted
+}
+
 
 export function hashObject(object: Record<string, unknown>) {
     const algorithm = 'sha256'

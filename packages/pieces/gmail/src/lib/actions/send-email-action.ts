@@ -55,10 +55,16 @@ export const gmailSendEmailAction = createAction({
 			description: 'File to attach to the email you want to send',
 			required: false,
 		}),
+		attachment_name: Property.ShortText({
+			displayName: 'Attachment Name',
+			description: 'In case you want to change the name of the attachment',
+			required: false,
+		}),
 	},
 	async run(configValue) {
 		const subjectBase64 = Buffer.from(configValue.propsValue['subject']).toString("base64");
 		const attachment = configValue.propsValue['attachment'];
+		const attachment_name = configValue.propsValue['attachment_name'];
 		const replyTo = configValue.propsValue['reply_to']?.filter((email) => email !== '');
 		const reciever = configValue.propsValue['receiver']?.filter((email) => email !== '');
 		const cc = configValue.propsValue['cc']?.filter((email) => email !== '');
@@ -81,7 +87,7 @@ export const gmailSendEmailAction = createAction({
 		if (attachment) {
 			const lookupResult = mime.lookup(attachment?.extension ? attachment?.extension : '');
 			const attachmentOption: Attachment[] = [{
-				filename: attachment?.filename,
+				filename: attachment_name ? attachment_name : attachment?.filename,
 				content: attachment?.base64,
 				contentType: lookupResult ? lookupResult : undefined,
 				encoding: 'base64',

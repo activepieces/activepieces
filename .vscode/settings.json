@@ -5,5 +5,9 @@
         "mpim",
         "sendgrid"
     ],
-    "typescript.tsdk": "node_modules/typescript/lib"
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "explicit"
+    },
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "javascript.preferences.importModuleSpecifier": "project-relative"
 }

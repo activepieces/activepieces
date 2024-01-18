@@ -3,7 +3,7 @@ import {
   Property,
   Validators
 } from '@activepieces/pieces-framework';
-import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from 'openai';
+import OpenAI from 'openai';
 import {
   AuthenticationType,
   httpClient,
@@ -50,7 +50,7 @@ export const askLocalAI = createAction({
           const response = await httpClient.sendRequest<{
             data: { id: string }[];
           }>({
-            url: (<any>auth).base_url +'/v1/models',
+            url: (<any>auth).base_url +'/models',
             method: HttpMethod.GET,
             authentication: {
               type: AuthenticationType.BEARER_TOKEN,
@@ -120,11 +120,10 @@ export const askLocalAI = createAction({
     })
   },
   async run({ auth, propsValue }) {
-    const configuration = new Configuration({
-      basePath: auth.base_url,
+    const openai = new OpenAI({
+      baseURL: auth.base_url,
       apiKey: auth.access_token
     });
-    const openai = new OpenAIApi(configuration);
     let billingIssue = false;
     let unaurthorized = false;
     let model = 'gpt-3.5-turbo';
@@ -153,7 +152,7 @@ export const askLocalAI = createAction({
     }
 
     const rolesArray = propsValue.roles
-      ? (propsValue.roles as unknown as ChatCompletionRequestMessage[])
+      ? (propsValue.roles as unknown as any[])
       : [];
     const roles = rolesArray.map((item) => {
       const rolesEnum = ['system', 'user', 'assistant'];
@@ -175,7 +174,7 @@ export const askLocalAI = createAction({
     while (retries < maxRetries) {
       try {
         response = (
-          await openai.createChatCompletion({
+          await openai.chat.completions.create({
             model: model,
             messages: [
               ...roles,
@@ -190,7 +189,7 @@ export const askLocalAI = createAction({
             frequency_penalty: frequencyPenalty,
             presence_penalty: presencePenalty
           })
-        )?.data?.choices[0]?.message?.content?.trim();
+        )?.choices[0]?.message?.content?.trim();
         break; // Break out of the loop if the request is successful
       } catch (error: any) {
         if (error?.message?.includes('code 429')) {

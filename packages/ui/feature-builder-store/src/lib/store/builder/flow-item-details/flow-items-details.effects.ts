@@ -3,12 +3,12 @@ import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { forkJoin, map, of, switchMap, take } from 'rxjs';
 import { ActionType, TriggerType } from '@activepieces/shared';
 import { FlowItemDetailsActions } from './flow-items-details.action';
+import { FlowItemDetails } from '@activepieces/ui/common';
 import {
   PieceMetadataService,
   CORE_PIECES_ACTIONS_NAMES,
   CORE_PIECES_TRIGGERS,
-  FlowItemDetails,
-} from '@activepieces/ui/common';
+} from '@activepieces/ui/feature-pieces';
 import { PieceMetadataModelSummary } from '@activepieces/ui/common';
 
 @Injectable()

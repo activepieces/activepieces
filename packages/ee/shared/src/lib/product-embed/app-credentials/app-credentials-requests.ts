@@ -33,6 +33,4 @@ export const UpsertOAuth2CredentialRequest = Type.Object({
 
 export const UpsertAppCredentialRequest = Type.Union([UpsertOAuth2CredentialRequest, UpsertApiKeyCredentialRequest]);
 
-export type UpsertOAuth2AppRequest = Static<typeof UpsertOAuth2CredentialRequest>;
-export type UpsertApiKeyAppRequest = Static<typeof UpsertApiKeyCredentialRequest>;
 export type UpsertAppCredentialRequest = Static<typeof UpsertAppCredentialRequest>;

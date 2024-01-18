@@ -6,6 +6,7 @@ import { stripeNewSubscription } from './lib/trigger/new-subscription';
 import { stripeCreateCustomer } from './lib/actions/create-customer';
 import { stripeCreateInvoice } from './lib/actions/create-invoice';
 import { stripeSearchCustomer } from './lib/actions/search-customer';
+import { stripeRetrieveCustomer } from './lib/actions/retrieve-customer';
 
 
 export const stripeAuth = PieceAuth.SecretText({
@@ -16,10 +17,10 @@ export const stripeAuth = PieceAuth.SecretText({
 
 export const stripe = createPiece({
 	displayName: "Stripe",
-	    minimumSupportedRelease: '0.5.0',
-    logoUrl: 'https://cdn.activepieces.com/pieces/stripe.png',
-	authors: ['ashrafsamhouri', 'lldiegon'],
-    auth: stripeAuth,
-	actions: [stripeCreateCustomer, stripeCreateInvoice, stripeSearchCustomer],
+  minimumSupportedRelease: '0.5.0',
+  logoUrl: 'https://cdn.activepieces.com/pieces/stripe.png',
+	authors: ['ashrafsamhouri', 'lldiegon', 'doskyft'],
+  auth: stripeAuth,
+	actions: [stripeCreateCustomer, stripeCreateInvoice, stripeSearchCustomer, stripeRetrieveCustomer],
 	triggers: [stripeNewPayment, stripeNewCustomer, stripePaymentFailed, stripeNewSubscription],
 });

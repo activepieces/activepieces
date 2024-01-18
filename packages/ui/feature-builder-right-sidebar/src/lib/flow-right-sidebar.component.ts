@@ -15,20 +15,22 @@ import { ActionType, ApFlagId, TriggerType } from '@activepieces/shared';
 import {
   BuilderSelectors,
   CollectionBuilderService,
-  FlowItem,
+  Step,
   RightSideBarType,
   ViewModeEnum,
 } from '@activepieces/ui/feature-builder-store';
 import { forkJoin } from 'rxjs';
 import {
   TestStepService,
-  PieceMetadataService,
   isOverflown,
-  CORE_SCHEDULE,
   FlagService,
 } from '@activepieces/ui/common';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/common';
+import {
+  CORE_SCHEDULE,
+  PieceMetadataService,
+} from '@activepieces/ui/feature-pieces';
 
 @Component({
   selector: 'app-flow-right-sidebar',
@@ -43,7 +45,7 @@ export class FlowRightSidebarComponent implements OnInit {
   testFormControl: FormControl<string> = new FormControl('', {
     nonNullable: true,
   });
-  currentStep$: Observable<FlowItem | null | undefined>;
+  currentStep$: Observable<Step | null | undefined>;
   editStepSectionRect: DOMRect;
   @ViewChild('editStepSection', { read: ElementRef })
   editStepSection: ElementRef;
@@ -95,11 +97,7 @@ export class FlowRightSidebarComponent implements OnInit {
   private checkIfCurrentStepIsPollingTrigger() {
     this.isCurrentStepPollingTrigger$ = this.currentStep$.pipe(
       switchMap((step) => {
-        if (
-          step &&
-          step.type === TriggerType.PIECE &&
-          step.settings.pieceName !== CORE_SCHEDULE
-        ) {
+        if (step && step.type === TriggerType.PIECE) {
           return this.pieceMetadaService
             .getPieceMetadata(
               step.settings.pieceName,
@@ -125,11 +123,7 @@ export class FlowRightSidebarComponent implements OnInit {
   private checkIfCurrentStepIsPieceWebhookTrigger() {
     this.isCurrentStepPieceWebhookTrigger$ = this.currentStep$.pipe(
       switchMap((step) => {
-        if (
-          step &&
-          step.type === TriggerType.PIECE &&
-          step.settings.pieceName !== CORE_SCHEDULE
-        ) {
+        if (step && step.type === TriggerType.PIECE) {
           return this.pieceMetadaService
             .getPieceMetadata(
               step.settings.pieceName,
@@ -154,6 +148,16 @@ export class FlowRightSidebarComponent implements OnInit {
     this.currentStep$ = this.store
       .select(BuilderSelectors.selectCurrentStep)
       .pipe(
+        switchMap((step) => {
+          if (
+            step &&
+            step.type === TriggerType.PIECE &&
+            step.settings.pieceName === CORE_SCHEDULE
+          ) {
+            return of(null);
+          }
+          return of(step);
+        }),
         tap(() => {
           setTimeout(() => {
             this.builderAutocompleteMentionsDropdownService.editStepSection =

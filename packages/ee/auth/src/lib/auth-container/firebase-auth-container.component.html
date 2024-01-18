@@ -1,9 +1,0 @@
-<div *ngIf="fullLogoUrl$ | async as fullLogo"
-	class="ap-h-screen ap-w-full ap-flex ap-items-center ap-justify-center  ap-bg-center ap-bg-cover ap-bg-authBg ap-flex-col">
-	<div class="ap-h-[52px] ap-mb-2 ap-bg-white">
-		<img alt="Activepieces Website" [src]="fullLogo" class="ap-h-full">
-	</div>
-	<mat-card class="md:ap-min-w-[480px] md:ap-max-w-initial ap-min-w-[350px] ap-max-w-[350px] auth-card">
-		<router-outlet></router-outlet>
-	</mat-card>
-</div>

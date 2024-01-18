@@ -1,5 +1,5 @@
 import {
-  Flow,
+  PopulatedFlow,
   FlowOperationType,
   FlowTemplate,
   TelemetryEventName,
@@ -7,7 +7,9 @@ import {
 import {
   FlagService,
   FlowService,
+  RedirectService,
   TelemetryService,
+  AuthenticationService,
   TemplatesService,
 } from '@activepieces/ui/common';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -44,7 +46,9 @@ export class ImportFlowComponent implements OnInit {
     private router: Router,
     private metaService: Meta,
     private telemetryService: TelemetryService,
-    private flagService: FlagService
+    private authenticationService: AuthenticationService,
+    private flagService: FlagService,
+    private redirectService: RedirectService
   ) {
     this.fullLogoUrl$ = this.flagService
       .getLogos()
@@ -57,9 +61,6 @@ export class ImportFlowComponent implements OnInit {
         const templateId = encodeURIComponent(params['templateId']);
         return this.templatesService.getTemplate(templateId).pipe(
           catchError((err: HttpErrorResponse) => {
-            if (err.status === StatusCodes.NOT_FOUND) {
-              return this.templatesService.getTemplateDeprecated(templateId);
-            }
             throw err;
           })
         );
@@ -89,6 +90,7 @@ export class ImportFlowComponent implements OnInit {
             switchMap(() => {
               return this.flowService
                 .create({
+                  projectId: this.authenticationService.getProjectId(),
                   displayName: templateJson.template.displayName,
                 })
                 .pipe(
@@ -109,7 +111,7 @@ export class ImportFlowComponent implements OnInit {
                         request: templateJson.template,
                       })
                       .pipe(
-                        tap((updatedFlow: Flow) => {
+                        tap((updatedFlow: PopulatedFlow) => {
                           this.router.navigate(['flows', updatedFlow.id]);
                         })
                       );
@@ -121,11 +123,8 @@ export class ImportFlowComponent implements OnInit {
         catchError((error) => {
           console.error(error);
           if (error.status === StatusCodes.UNAUTHORIZED) {
-            this.router.navigate(['/sign-up'], {
-              queryParams: {
-                redirect_url: `${window.location.pathname}`.split('?')[0],
-              },
-            });
+            this.redirectService.setRedirectRouteToCurrentRoute();
+            this.router.navigate(['/sign-in']);
             return EMPTY;
           }
           this.router.navigate(['not-found']);

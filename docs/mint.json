@@ -14,6 +14,9 @@
       "dark": "#121212"
     }
   },
+  "openapi": [
+    "/openapi.json"
+  ],
   "metadata": {
     "og:image": "https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/62c4ecbe6b2d76719d890ae7_Screenshot%202022-07-06%20at%2004.59.45-p-2600.png",
     "description": "Open source alternative to zapier"
@@ -33,25 +36,33 @@
       "url": "https://github.com/activepieces/activepieces"
     }
   ],
+  "anchors": [
+    {
+      "name": "Discord",
+      "icon": "discord",
+      "url": "https://discord.gg/2jUXBKDdP8"
+    },
+    {
+      "name": "Pieces",
+      "icon": "plug",
+      "url": "https://www.activepieces.com/pieces"
+    }
+  ],
   "primaryTab": {
     "name": "Learn"
   },
   "tabs": [
     {
-      "name": "Developers",
+      "name": "Develop Pieces",
       "url": "developers"
-    },
-    {
-      "name": "Pieces",
-      "url": "https://www.activepieces.com/pieces"
     },
     {
       "name": "Deploy",
       "url": "install"
     },
     {
-      "name": "Discord",
-      "url": "https://discord.gg/2jUXBKDdP8"
+      "name": "API",
+      "url": "endpoints"
     }
   ],
   "navigation": [
@@ -63,20 +74,65 @@
       ]
     },
     {
+      "group": "Get Started",
+      "pages": [
+        "endpoints/overview"
+      ]
+    },
+    {
+      "group": "Endpoints",
+      "pages": [
+        {
+          "group": "Projects",
+          "icon": "building",
+          "pages": [
+            "endpoints/projects/schema",
+            "endpoints/projects/create",
+            "endpoints/projects/update",
+            "endpoints/projects/list"
+          ]
+        },
+        {
+          "group": "Project Members",
+          "icon": "user",
+          "pages": [
+            "endpoints/project-members/schema",
+            "endpoints/project-members/create",
+            "endpoints/project-members/list",
+            "endpoints/project-members/delete"
+          ]
+        },
+        {
+          "group": "Connections",
+          "icon": "link",
+          "pages": [
+            "endpoints/connections/schema",
+            "endpoints/connections/upsert",
+            "endpoints/connections/list",
+            "endpoints/connections/delete"
+          ]
+        },
+        {
+          "group": "Flows",
+          "icon": "bolt",
+          "pages": [
+            "endpoints/flows/schema",
+            "endpoints/flows/create",
+            "endpoints/flows/update",
+            "endpoints/flows/get",
+            "endpoints/flows/list",
+            "endpoints/flows/delete"
+          ]
+        }
+      ]
+    },
+    {
       "group": "Flows",
       "pages": [
         "flows/building-flows",
         "flows/passing-data",
         "flows/publishing-flows",
-        "flows/debugging-runs",
-        "flows/code"
-      ]
-    },
-    {
-      "group": "Security",
-      "pages": [
-        "security/permissions",
-        "security/sso"
+        "flows/debugging-runs"
       ]
     },
     {
@@ -98,12 +154,13 @@
           "icon": "gear",
           "pages": [
             "install/configurations/environment-variables",
-            "install/configurations/error-notifications",
-            "install/configurations/troubleshooting"
+            "install/configurations/error-notifications"
           ]
         },
+        "install/setup-ssl",
         "install/architecture",
-        "install/enterprise"
+        "install/enterprise",
+        "install/troubleshooting"
       ]
     },
     {
@@ -163,11 +220,32 @@
       ]
     },
     {
-      "group": "Worker Architecture",
+      "group": "Architecture",
       "pages": [
-        "developers/architecture/repo-structure",
-        "developers/architecture/flow-worker",
-        "developers/architecture/code-worker"
+        "developers/architecture/repo-structure"
+      ]
+    },
+    {
+      "group": "Embedding",
+      "pages": [
+        {
+          "group": "Embed Builder",
+          "icon": "code",
+          "pages": [
+            "embedding/embed-builder/generate-jwt",
+            "embedding/embed-builder/embed-iframe"
+          ]
+        },
+        {
+          "group": "Connection Cards",
+          "icon": "cards-blank",
+          "pages": [
+            "embedding/connection-cards/overview",
+            "embedding/connection-cards/user-authentication",
+            "embedding/connection-cards/frontend-sdk",
+            "embedding/connection-cards/user-flows"
+          ]
+        }
       ]
     },
     {
@@ -175,30 +253,39 @@
       "pages": [
         "platform/overview",
         "platform/appearance",
-        "platform/managed-projects",
-        "platform/managed-users",
-        "platform/embedding"
+        "platform/manage-projects",
+        "platform/custom-domain",
+        "platform/manage-templates",
+        "platform/manage-pieces",
+        "platform/manage-oauth2",
+        "platform/customize-emails"
       ]
     },
     {
-      "group": "Enterprise Edition",
+      "group": "team",
       "pages": [
-        "enterprise/whitelabel",
-        {
-          "group": "Connection Cards",
-          "icon": "cards-blank",
-          "pages": [
-            "enterprise/connection-cards/overview",
-            "enterprise/connection-cards/user-authentication",
-            "enterprise/connection-cards/frontend-sdk",
-            "enterprise/connection-cards/user-flows"
-          ]
-        }
+        "team/overview"
+      ]
+    },
+    {
+      "group": "Operations",
+      "pages": [
+        "operations/git-sync",
+        "operations/audit-logs"
+      ]
+    },
+    {
+      "group": "Security",
+      "pages": [
+        "security/practices",
+        "security/permissions",
+        "security/sso"
       ]
     },
     {
       "group": "About",
       "pages": [
+        "about/i18n",
         "about/editions",
         "about/changelog",
         "about/telemetry",

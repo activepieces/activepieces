@@ -1,4 +1,5 @@
-<nav class="navbar-container navbar-expand ap-relative">
+<nav class="navbar-container ap-bg-header ap-py-4 ap-pr-3 navbar-expand ap-relative"
+  [class.ap-pl-3]="(showNavigation$ | async )=== false">
   <div class="ap-absolute ap-w-full ap-flex ap-items-center ap-justify-center ap-p-3 ap-pointer-events-none">
     <div class="ap-h-[30px]">
       <img [src]=" (fullLogo$| async) ||'assets/img/custom/logo/full-logo.svg'" class="ap-max-w-full ap-h-full">
@@ -9,27 +10,28 @@
 
   <div class="ap-flex ap-items-center">
     <div class="ap-flex ap-items-center ap-gap-2">
-      <ap-icon-button [width]="7" [height]="14" iconFilename="back.svg" tooltipText="Home" i18n-tooltipText
+      <ap-icon-button *ngIf="showNavigation$ | async" [width]="20" [height]="20"
+        iconUrl="assets/img/custom/dashboard/home.svg" tooltipText="Home" i18n-tooltipText
         (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)"></ap-icon-button>
       <div class="ap-flex-grow ap-flex ap-items-center ap-gap-2" #spacer>
-        <div class="ap-typography-body-1 ap-truncate ap-max-w-[150px] ap-cursor-pointer hover:ap-text-[#000000]"
-          #folderName (click)="openDashboardToFolder()" [matTooltip]="
-            folderName.scrollWidth > folderName.clientWidth
-              ? (folderDisplayName$ | async) || ''
-              : ''
-          ">
-          {{ folderDisplayName$ | async }}
-        </div>
-        <div class="ap-typography-body-1 ap-text-placeholder">/</div>
+        <ng-container *ngIf="showNavigation$ | async">
+          <div class="ap-typography-body-1 ap-truncate ap-max-w-[150px] ap-cursor-pointer hover:ap-text-[#000000]"
+            #folderName (click)="openDashboardToFolder()"
+            [matTooltip]=" goToFolder +' ('+ ((folderDisplayName$ | async) || '' ) +')'">
+            {{ folderDisplayName$ | async }}
+          </div>
+          <div class="ap-typography-body-1 ap-text-placeholder">/</div>
+        </ng-container>
         <ap-editable-text [editing]="editingFlowName" (editingChanges)="changeEditValue($event)"
-          [value]="(flow$ | async)?.version?.displayName || ''" (valueChanges)="saveFlowName($event)" [disableEditing]="
-            (isInDebugMode$ | async | defaultTrue) ||
+          [value]="(flow$ | async)?.version?.displayName" (valueChanges)="saveFlowName($event)" [disableEditing]="
+           
             (isInReadOnlyMode$ | async | defaultTrue)
           " [allowClick]="true" [cssClasses]="'ap-typography-body-1 !ap-font-semibold'"
           class="ap-text-title"></ap-editable-text>
       </div>
-      <div class="ap-p-1 ap-cursor-pointer" [matMenuTriggerFor]="menu" xPosition="after">
-        <svg-icon [svgStyle]="{ width: '12px', height: '7px' }" src="assets/img/custom/chevron.svg">
+      <div *ngIf="(isInReadOnlyMode$ | async) === false" class="ap-p-1 ap-cursor-pointer" [matMenuTriggerFor]="menu"
+        xPosition="after">
+        <svg-icon [svgStyle]="{ width: '18px', height: '18px' }" src="assets/img/custom/chevron.svg">
         </svg-icon>
       </div>
       <mat-menu #menu="matMenu">
@@ -62,25 +64,33 @@
           </div>
         </button>
         <ap-share-flow-template-dialog></ap-share-flow-template-dialog>
-        <button mat-menu-item *ngIf="flow$ | async as flow" (click)="deleteFlow(flow)">
-          <div class="ap-flex ap-gap-3 ap-items-center">
-            <svg-icon src="assets/img/custom/trash.svg" class="ap-fill-danger ap-w-[20px] ap-h-[20px]"
-              [applyClass]="true"></svg-icon>
-            <span class="ap-text-danger" i18n>Delete</span>
-          </div>
-        </button>
+        <ng-container *ngIf="(showNavigation$ | async )">
+          <button mat-menu-item *ngIf="flow$ | async as flow" (click)="deleteFlow(flow)">
+            <div class="ap-flex ap-gap-3 ap-items-center">
+              <svg-icon src="assets/img/custom/trash.svg" class="ap-fill-danger ap-w-[20px] ap-h-[20px]"
+                [applyClass]="true"></svg-icon>
+              <span class="ap-text-danger" i18n>Delete</span>
+            </div>
+          </button>
+        </ng-container>
+
       </mat-menu>
     </div>
 
     <div class="ap-flex-grow"></div>
     <div class="ap-flex ap-items-center ap-gap-2">
       <app-support class="ap-z-50 ap-flex ap-items-center"></app-support>
-      <ng-container *ngIf="(isInDebugMode$ | async) === false">
+      <app-version-history-button *ngIf="(isInDebugMode$ | async) === false"></app-version-history-button>
+
+      <ng-container *ngIf="(isInDebugMode$ | async) === false ">
         <div class="ap-flex ap-items-center ap-gap-1">
-          <app-draft-status></app-draft-status>
-          <ng-container *ngIf="instance$ | async as instance">
-            <app-toggle-instance-state [instance]="instance"></app-toggle-instance-state>
+          <ng-container *ngIf="hasFlowBeenPublished$ | async">
+            <ng-container *ngIf="flowStatus$ | async as status">
+              <app-toggle-instance-state *ngIf="(isInReadOnlyMode$ | async)=== false"
+                [flowStatus]="status"></app-toggle-instance-state>
+            </ng-container>
           </ng-container>
+
         </div>
         <app-publish-button></app-publish-button>
         <ap-user-avatar *ngIf="(isInEmbedded$ | async) === undefined || (isInEmbedded$ | async) === false "

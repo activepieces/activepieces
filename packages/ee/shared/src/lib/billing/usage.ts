@@ -1,16 +1,24 @@
-import { ProjectId, BaseModel} from "@activepieces/shared";
+import { BaseModelSchema, Cursor } from "@activepieces/shared";
+import { Static, Type } from "@sinclair/typebox";
 
 export type ProjectUsageId = string;
 
-export interface ProjectUsage extends BaseModel<ProjectUsageId> {
-    id: ProjectUsageId;
-    projectId: ProjectId;
-    consumedTasks: number;
-    activeFlows: number;
-    connections: number;
-    bots: number,
-    datasourcesSize: number;
-    teamMembers: number;
-    consumedTasksToday: number;
-    nextResetDatetime: string;
-}
+export const ProjectUsage = Type.Object({
+    ...BaseModelSchema,
+    projectId: Type.String(),
+    consumedTasks: Type.Number(),
+    connections: Type.Number(),
+    teamMembers: Type.Number(),
+    consumedTasksToday: Type.Number(),
+    nextResetDatetime: Type.String(),
+})
+
+export type ProjectUsage = Static<typeof ProjectUsage>;
+
+export const ListProjectUsageRequest = Type.Object({
+    limit: Type.Optional(Type.Number({})),
+    projectIds: Type.Optional(Type.Array(Type.String({}))),
+    cursor: Type.Optional(Type.String({})),
+})
+
+export type ListProjectUsageRequest = Static<typeof ListProjectUsageRequest> & { cursor: Cursor }

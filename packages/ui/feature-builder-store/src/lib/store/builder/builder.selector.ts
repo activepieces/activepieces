@@ -4,28 +4,27 @@ import { GlobalBuilderState } from '../../model/global-builder-state.model';
 import {
   AppConnectionWithoutSensitiveData,
   ExecutionOutputStatus,
-  Flow,
   FlowRun,
   FlowVersionState,
+  PopulatedFlow,
   flowHelper,
 } from '@activepieces/shared';
 import { ViewModeEnum } from '../../model/enums/view-mode.enum';
 import { FlowItemsDetailsState } from '../../model/flow-items-details-state.model';
 import { ActionType, TriggerType } from '@activepieces/shared';
-import { FlowItem } from '../../model/flow-item';
+import { Step, StepWithIndex } from '../../model/step';
 import { MentionListItem } from '../../model/mention-list-item';
 import { FlowStructureUtil } from '../../utils/flowStructureUtil';
 import { ConnectionDropdownItem } from '../../model/connections-dropdown-item';
 import { BuilderSavingStatusEnum, CanvasState } from '../../model';
+import { FlowItemDetails } from '@activepieces/ui/common';
+import { StepRunResult } from '../../utils/stepRunResult';
 import {
   CORE_PIECES_ACTIONS_NAMES,
   CORE_PIECES_TRIGGERS,
   CORE_SCHEDULE,
-  FlowItemDetails,
   corePieceIconUrl,
-} from '@activepieces/ui/common';
-import { FlowInstanceState } from './flow-instance/flow-instance.reducer';
-import { StepRunResult } from '../../utils/stepRunResult';
+} from '@activepieces/ui/feature-pieces';
 
 export const BUILDER_STATE_NAME = 'builderState';
 
@@ -50,10 +49,13 @@ export const selectIsSaving = createSelector(
     (state.savingStatus & BuilderSavingStatusEnum.WAITING_TO_SAVE) ===
       BuilderSavingStatusEnum.WAITING_TO_SAVE
 );
+export const selectCurrentFlow = createSelector(selectFlowState, (state) => {
+  return state.flow;
+});
 
 export const selectFlowHasAnySteps = createSelector(
-  selectFlowState,
-  (state) => !!state.flow.version.trigger?.nextAction
+  selectCurrentFlow,
+  (flow) => !!flow.version.trigger?.nextAction
 );
 
 export const selectViewMode = createSelector(
@@ -75,37 +77,27 @@ export const selectReadOnly = createSelector(
   selectGlobalBuilderState,
   (state: GlobalBuilderState) => state.viewMode !== ViewModeEnum.BUILDING
 );
-const selectInstanceState = createSelector(
-  selectGlobalBuilderState,
-  (state: GlobalBuilderState) => state.instance
-);
 
-const selectCurrentInstance = createSelector(
-  selectInstanceState,
-  (state: FlowInstanceState) => {
-    return state?.instance;
-  }
-);
-const selectHasFlowBeenPublished = createSelector(
-  selectInstanceState,
-  (state: FlowInstanceState) => {
-    return !!state?.instance;
-  }
-);
 const selectCanvasState = createSelector(selectGlobalBuilderState, (state) => {
   return state.canvasState;
 });
 
-export const selectCurrentFlow = createSelector(selectFlowState, (state) => {
-  return state.flow;
-});
-
-const selectShownFlowVersion = createSelector(
-  selectCanvasState,
-  (cavnasState) => {
-    return cavnasState.displayedFlowVersion;
+const selectHasFlowBeenPublished = createSelector(
+  selectCurrentFlow,
+  (flow: PopulatedFlow) => {
+    return flow.publishedVersionId !== null;
   }
 );
+
+const selectFlowStatus = createSelector(
+  selectCurrentFlow,
+  (flow: PopulatedFlow) => {
+    return flow.status;
+  }
+);
+const selectViewedVersion = createSelector(selectCanvasState, (canvasState) => {
+  return canvasState.viewedVersion;
+});
 const selectIsCurrentVersionPublished = createSelector(
   selectCurrentFlow,
   (flow) => {
@@ -130,7 +122,7 @@ const selectCurrentFlowFolderId = createSelector(selectFlowState, (state) => {
 });
 export const selectCurrentFlowValidity = createSelector(
   selectCurrentFlow,
-  (flow: Flow | undefined) => {
+  (flow: PopulatedFlow | undefined) => {
     if (!flow) return false;
     return flow.version?.valid || false;
   }
@@ -169,7 +161,8 @@ const selectStepTestSampleData = createSelector(selectCurrentStep, (step) => {
     (step.type === ActionType.PIECE ||
       step.type === ActionType.CODE ||
       step.type === ActionType.BRANCH ||
-      step.type === TriggerType.PIECE) &&
+      step.type === TriggerType.PIECE ||
+      step.type === ActionType.LOOP_ON_ITEMS) &&
     step.settings.inputUiInfo
   ) {
     if (step.settings.inputUiInfo.currentSelectedData === '') {
@@ -190,7 +183,8 @@ const selectLastTestDate = createSelector(selectCurrentStep, (step) => {
     step &&
     (step.type === ActionType.PIECE ||
       step.type === ActionType.CODE ||
-      step.type === ActionType.BRANCH) &&
+      step.type === ActionType.BRANCH ||
+      step.type === ActionType.LOOP_ON_ITEMS) &&
     step.settings.inputUiInfo
   ) {
     return step.settings.inputUiInfo.lastTestDate;
@@ -213,11 +207,10 @@ export const selectCurrentStepDisplayName = createSelector(
   }
 );
 
-export const selectCurrentFlowVersionId = createSelector(
+export const selectDraftVersionId = createSelector(
   selectCurrentFlow,
-  (flow: Flow | undefined) => {
-    if (!flow) return undefined;
-    return flow.version?.id;
+  (flow: PopulatedFlow) => {
+    return flow.version.id;
   }
 );
 export const selectNumberOfInvalidSteps = createSelector(
@@ -233,12 +226,9 @@ export const selectCurrentFlowRun = createSelector(
     return state.selectedRun;
   }
 );
-const selectPublishedFlowVersion = createSelector(
-  selectInstanceState,
-  (instanceState) => {
-    return instanceState.publishedFlowVersion;
-  }
-);
+const selectPublishedFlowVersion = createSelector(selectCurrentFlow, (flow) => {
+  return flow.publishedFlowVersion;
+});
 export const selectCurrentFlowRunStatus = createSelector(
   selectCurrentFlowRun,
   (run: FlowRun | undefined) => {
@@ -376,7 +366,7 @@ export const selectFlowItemDetailsForCustomPiecesTriggers = createSelector(
   }
 );
 
-export const selectFlowItemDetails = (flowItem: FlowItem) =>
+export const selectFlowItemDetails = (flowItem: Step) =>
   createSelector(selectAllFlowItemsDetails, (state: FlowItemsDetailsState) => {
     if (flowItem.type === ActionType.PIECE) {
       if (
@@ -432,7 +422,7 @@ const selectAppConnectionsDropdownOptions = createSelector(
   (connections: AppConnectionWithoutSensitiveData[]) => {
     return [...connections].map((c) => {
       const result: ConnectionDropdownItem = {
-        label: { appName: c.appName, name: c.name },
+        label: { pieceName: c.pieceName, name: c.name },
         value: `{{connections['${c.name}']}}`,
       };
       return result;
@@ -445,7 +435,7 @@ const selectAppConnectionsDropdownOptionsWithIds = createSelector(
   (connections: AppConnectionWithoutSensitiveData[]) => {
     return [...connections].map((c) => {
       const result: ConnectionDropdownItem = {
-        label: { appName: c.appName, name: c.name },
+        label: { pieceName: c.pieceName, name: c.name },
         value: c.id,
       };
       return result;
@@ -458,10 +448,10 @@ const selectAppConnectionsDropdownOptionsForAppWithIds = (appName: string) => {
     selectAppConnectionsDropdownOptionsWithIds,
     (connections) => {
       return connections
-        .filter((opt) => opt.label.appName === appName)
+        .filter((opt) => opt.label.pieceName === appName)
         .map((c) => {
           const result: ConnectionDropdownItem = {
-            label: { appName: c.label.appName, name: c.label.name },
+            label: { pieceName: c.label.pieceName, name: c.label.name },
             value: c.value,
           };
           return result;
@@ -484,13 +474,13 @@ const selectAppConnectionsForMentionsDropdown = createSelector(
 
 const selectAllStepsForMentionsDropdown = createSelector(
   selectCurrentStep,
-  selectShownFlowVersion,
+  selectViewedVersion,
   selectAllFlowItemsDetails,
   (
     currentStep,
     flowVersion,
     flowItemDetails
-  ): (MentionListItem & { step: FlowItem })[] => {
+  ): (MentionListItem & { step: StepWithIndex })[] => {
     if (!currentStep || !flowVersion || !flowVersion.trigger) {
       return [];
     }
@@ -508,11 +498,17 @@ const selectAllStepsForMentionsDropdown = createSelector(
     });
   }
 );
+
+const selectStepIndex = (stepName: string) => {
+  return createSelector(selectViewedVersion, (version) => {
+    return FlowStructureUtil.findStepIndex(version.trigger, stepName);
+  });
+};
 const selectStepValidity = createSelector(selectCurrentStep, (step) => {
   return step?.valid || false;
 });
 function findStepLogoUrlForMentions(
-  step: FlowItem,
+  step: Step,
   flowItemsDetailsState: FlowItemsDetailsState
 ) {
   switch (step.type) {
@@ -570,7 +566,7 @@ const selectStepLogoUrl = (stepName: string) => {
     (flow, flowItemsDetails) => {
       const step = flowHelper
         .getAllSteps(flow?.version?.trigger)
-        .find((s: FlowItem) => s.name === stepName);
+        .find((s: Step) => s.name === stepName);
       if (!step) {
         throw new Error(`Couldn't find the step ${stepName}`);
       }
@@ -600,13 +596,24 @@ const selectFlowTriggerIsTested = createSelector(selectCurrentFlow, (flow) => {
       return !!flow.version.trigger.settings.inputUiInfo.currentSelectedData;
   }
 });
+
+const selectViewedVersionHistoricalStatus = createSelector(
+  selectDraftVersionId,
+  selectPublishedFlowVersion,
+  selectViewedVersion,
+  (draftVersionId, publishedFlowVersion, viewedFlowVersion) => {
+    if (publishedFlowVersion?.id === viewedFlowVersion.id) return 'PUBLISHED';
+    if (draftVersionId === viewedFlowVersion.id) return 'DRAFT';
+    return 'OLDER_VERSION';
+  }
+);
+
 export const BuilderSelectors = {
   selectReadOnly,
   selectViewMode,
   selectIsInPublishedVersionViewMode,
   selectCurrentFlowRun,
   selectCurrentFlow,
-  selectCurrentInstance,
   selectCurrentRightSideBar,
   selectCurrentStep,
   selectIsPublishing,
@@ -634,8 +641,8 @@ export const BuilderSelectors = {
   selectCurrentStepSettings,
   selectTriggerSelectedSampleData,
   selectStepValidity,
-  selectCurrentFlowVersionId,
-  selectShownFlowVersion,
+  selectDraftVersionId,
+  selectViewedVersion,
   selectIsSchduleTrigger,
   selectCurrentStepPieceVersionAndName,
   selectCurrentFlowFolderName,
@@ -655,4 +662,7 @@ export const BuilderSelectors = {
   selectFlowTriggerIsTested,
   selectAppConnectionsDropdownOptionsForAppWithIds,
   selectAppConnectionsDropdownOptionsWithIds,
+  selectStepIndex,
+  selectFlowStatus,
+  selectViewedVersionHistoricalStatus,
 };

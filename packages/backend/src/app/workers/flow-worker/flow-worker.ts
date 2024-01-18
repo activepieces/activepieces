@@ -2,9 +2,9 @@ import {
     Action,
     ActionType,
     ActivepiecesError,
+    BeginExecuteFlowOperation,
     CodeAction,
     ErrorCode,
-    ExecuteFlowOperation,
     ExecutionOutput,
     ExecutionOutputStatus,
     ExecutionType,
@@ -17,10 +17,10 @@ import {
     FlowVersion,
     PiecePackage,
     ProjectId,
+    ResumeExecuteFlowOperation,
     RunEnvironment,
     RunTerminationReason,
     SourceCode,
-    StepOutputStatus,
     Trigger,
     TriggerType,
 } from '@activepieces/shared'
@@ -32,12 +32,12 @@ import { OneTimeJobData } from './job-data'
 import { engineHelper } from '../../helper/engine-helper'
 import { captureException, logger } from '../../helper/logger'
 import { isNil } from '@activepieces/shared'
-import { getServerUrl } from '../../helper/public-ip-utils'
 import { MAX_LOG_SIZE } from '@activepieces/shared'
 import { sandboxProvisioner } from '../sandbox/provisioner/sandbox-provisioner'
 import { SandBoxCacheType } from '../sandbox/provisioner/sandbox-cache-key'
 import { flowWorkerHooks } from './flow-worker-hooks'
 import { logSerializer } from '../../flows/common/log-serializer'
+import { flowResponseWatcher } from '../../flows/flow-run/flow-response-watcher'
 
 type FinishExecutionParams = {
     flowRunId: FlowRunId
@@ -51,11 +51,11 @@ type LoadInputAndLogFileIdParams = {
 }
 
 type LoadInputAndLogFileIdResponse = {
-    input: ExecuteFlowOperation
+    input: Omit<BeginExecuteFlowOperation, 'serverUrl' | 'workerToken'> | Omit<ResumeExecuteFlowOperation, 'serverUrl' | 'workerToken'>
     logFileId?: FileId | undefined
 }
 
-const extractFlowPieces = async ({ flowVersion, projectId }: ExtractFlowPiecesParams): Promise<PiecePackage[]> => {
+const extractFlowPieces = async ({ flowVersion }: ExtractFlowPiecesParams): Promise<PiecePackage[]> => {
     const pieces: PiecePackage[] = []
     const steps = flowHelper.getAllSteps(flowVersion.trigger)
 
@@ -67,7 +67,6 @@ const extractFlowPieces = async ({ flowVersion, projectId }: ExtractFlowPiecesPa
                 pieceType,
                 pieceName,
                 pieceVersion,
-                projectId,
             })
         }
     }
@@ -100,7 +99,7 @@ const finishExecution = async (params: FinishExecutionParams): Promise<void> => 
 }
 
 const getTerminalStatus = (executionOutputStatus: ExecutionOutputStatus): ExecutionOutputStatus => {
-    return executionOutputStatus == ExecutionOutputStatus.STOPPED ?  ExecutionOutputStatus.SUCCEEDED : executionOutputStatus
+    return executionOutputStatus == ExecutionOutputStatus.STOPPED ? ExecutionOutputStatus.SUCCEEDED : executionOutputStatus
 }
 
 
@@ -119,58 +118,53 @@ const loadInputAndLogFileId = async ({
         flowVersion,
         flowRunId: jobData.runId,
         projectId: jobData.projectId,
-        triggerPayload: {
-            duration: 0,
-            input: {},
-            output: jobData.payload,
-            status: StepOutputStatus.SUCCEEDED,
-        },
-    }
-
-    if (jobData.executionType === ExecutionType.BEGIN) {
-        return {
-            input: {
-                serverUrl: await getServerUrl(),
-                executionType: ExecutionType.BEGIN,
-                ...baseInput,
-            },
-        }
     }
 
     const flowRun = await flowRunService.getOneOrThrow({
         id: jobData.runId,
         projectId: jobData.projectId,
     })
+    switch (jobData.executionType) {
+        case ExecutionType.RESUME: {
+            if (isNil(flowRun.logsFileId)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: `flowRunId=${flowRun.id}`,
+                    },
+                })
+            }
 
-    if (isNil(flowRun.pauseMetadata) || isNil(flowRun.logsFileId)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: `flowRunId=${flowRun.id}`,
-            },
-        })
-    }
+            const logFile = await fileService.getOneOrThrow({
+                fileId: flowRun.logsFileId,
+                projectId: jobData.projectId,
+            })
 
-    const logFile = await fileService.getOneOrThrow({
-        fileId: flowRun.logsFileId,
-        projectId: jobData.projectId,
-    })
+            const serializedExecutionOutput = logFile.data.toString('utf-8')
+            const executionOutput: ExecutionOutput = JSON.parse(
+                serializedExecutionOutput,
+            )
 
-    const serializedExecutionOutput = logFile.data.toString('utf-8')
-    const executionOutput = JSON.parse(
-        serializedExecutionOutput,
-    ) as ExecutionOutput
 
-    return {
-        input: {
-            serverUrl: await getServerUrl(),
-            executionType: ExecutionType.RESUME,
-            executionState: executionOutput.executionState,
-            resumeStepMetadata: flowRun.pauseMetadata.resumeStepMetadata,
-            resumePayload: jobData.payload,
-            ...baseInput,
-        },
-        logFileId: logFile.id,
+            return {
+                input: {
+                    ...baseInput,
+                    executionType: ExecutionType.RESUME,
+                    tasks: executionOutput.tasks,
+                    executionState: executionOutput.executionState,
+                    resumePayload: jobData.payload,
+                },
+                logFileId: logFile.id,
+            }
+        }
+        case ExecutionType.BEGIN:
+            return {
+                input: {
+                    triggerPayload: jobData.payload,
+                    executionType: ExecutionType.BEGIN,
+                    ...baseInput,
+                },
+            }
     }
 }
 
@@ -188,20 +182,13 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
         })
         return
     }
-    const flowVersion = await flowVersionService.lockPieceVersions(
-        jobData.projectId,
-        flowVersionWithLockedPieces,
-    )
+    const flowVersion = await flowVersionService.lockPieceVersions({
+        projectId: jobData.projectId,
+        flowVersion: flowVersionWithLockedPieces,
+    })
 
     await flowWorkerHooks.getHooks().preExecute({ projectId: jobData.projectId, runId: jobData.runId })
 
-    const sandbox = await getSandbox({
-        projectId: jobData.projectId,
-        flowVersion,
-        runEnvironment: jobData.environment,
-    })
-
-    logger.info(`[FlowWorker#executeFlow] flowRunId=${jobData.runId} sandboxId=${sandbox.boxId} prepareTime=${Date.now() - startTime}ms`)
 
     try {
 
@@ -210,11 +197,22 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             jobData,
         })
 
+        const sandbox = await getSandbox({
+            projectId: jobData.projectId,
+            flowVersion,
+            runEnvironment: jobData.environment,
+        })
+
+        logger.info(`[FlowWorker#executeFlow] flowRunId=${jobData.runId} sandboxId=${sandbox.boxId} prepareTime=${Date.now() - startTime}ms`)
+
         const { result: executionOutput } = await engineHelper.executeFlow(
             sandbox,
             input,
         )
 
+        if (jobData.synchronousHandlerId) {
+            await flowResponseWatcher.publish(jobData.runId, jobData.synchronousHandlerId, executionOutput)
+        }
 
         const logsFile = await saveToLogFile({
             fileId: logFileId,
@@ -258,9 +256,6 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             })
             throwErrorToRetry(e as Error, jobData.runId)
         }
-    }
-    finally {
-        await sandboxProvisioner.release({ sandbox })
     }
 }
 
@@ -310,15 +305,17 @@ const getSandbox = async ({ projectId, flowVersion, runEnvironment }: GetSandbox
     const codeSteps = getCodeSteps(flowVersion)
     switch (runEnvironment) {
         case RunEnvironment.PRODUCTION:
-            return await sandboxProvisioner.provision({
+            return sandboxProvisioner.provision({
+                projectId,
                 type: SandBoxCacheType.FLOW,
                 flowVersionId: flowVersion.id,
                 pieces,
                 codeSteps,
             })
         case RunEnvironment.TESTING:
-            return await sandboxProvisioner.provision({
+            return sandboxProvisioner.provision({
                 type: SandBoxCacheType.NONE,
+                projectId,
                 pieces,
                 codeSteps,
             })

@@ -4,6 +4,6 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 
 export const storeEntryModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
-    app.addHook('onRequest', allowWorkersOnly)
+    app.addHook('preHandler', allowWorkersOnly)
     await app.register(storeEntryController, { prefix: '/v1/store-entries' })
 }

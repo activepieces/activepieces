@@ -12,11 +12,10 @@ COPY .npmrc package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
-RUN npx nx run-many --target=build --projects=backend,ui-core --skip-nx-cache
+RUN npx nx run-many --target=build --projects=backend,ui-core --configuration production --skip-nx-cache
 
 # Install backend production dependencies
-RUN cd dist/packages/backend && \
-    npm install --production --force
+RUN cd dist/packages/backend && npm install --production --force
 
 ### STAGE 2: Run ###
 FROM activepieces/ap-base:7 AS run
@@ -24,36 +23,36 @@ FROM activepieces/ap-base:7 AS run
 ARG AP_CACHE_PATH=/usr/src/cache
 ARG AP_PACKAGE_ARCHIVE_PATH=/usr/src/packages
 
-# Set default environment to "standard" if not specified
-ARG ENVIRONMENT=standard
+RUN npm i -g cross-env@7.0.3
 
 # Set up backend
 WORKDIR /usr/src/app
 
 # Install Nginx and gettext for envsubst
-RUN apt-get update && \
-    apt-get install -y nginx gettext
+RUN apt-get update && apt-get install -y nginx gettext
 
 # Copy Nginx configuration template
-COPY packages/ui/core/nginx.${ENVIRONMENT}.conf /etc/nginx/nginx.conf
+COPY packages/ui/core/nginx.standard.conf /etc/nginx/nginx.conf
 
-COPY --from=build /usr/src/app/LICENSE /usr/src/app/LICENSE
-
-# Copy Output files to appropriate directory from build stage
-COPY --from=build /usr/src/app/dist/ /usr/src/app/dist/
+COPY --from=build /usr/src/app/LICENSE .
 
 # Copy Output files to appropriate directory from build stage
-COPY --from=build /usr/src/app/packages/ /usr/src/app/packages/
+COPY --from=build /usr/src/app/dist dist
 
+# Copy Output files to appropriate directory from build stage
+COPY --from=build /usr/src/app/packages packages
+
+LABEL service=activepieces
 
 # Copy frontend files to Nginx document root directory from build stage
 COPY --from=build /usr/src/app/dist/packages/ui/core/ /usr/share/nginx/html/
 
-VOLUME [${AP_CACHE_PATH}, ${AP_PACKAGE_ARCHIVE_PATH}]
+VOLUME ${AP_CACHE_PATH}
+VOLUME ${AP_PACKAGE_ARCHIVE_PATH}
 
 # Set up entrypoint script
-COPY docker-entrypoint.sh /
-RUN chmod +x /docker-entrypoint.sh
-ENTRYPOINT ["/docker-entrypoint.sh"]
+COPY docker-entrypoint.sh .
+RUN chmod +x docker-entrypoint.sh
+ENTRYPOINT ["./docker-entrypoint.sh"]
 
 EXPOSE 80

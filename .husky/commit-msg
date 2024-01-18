@@ -1,4 +1,10 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
+# Check if the commit includes changes to the backend's .env file
+if git diff --cached --name-only -- packages/backend/.env | grep -q '^packages/backend/.env$'; then
+  echo "Error: You're attempting to commit the backend's .env file. Please avoid committing this file."
+  exit 1
+fi
+
 npx --no -- commitlint --edit ${1}

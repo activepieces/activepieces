@@ -9,7 +9,6 @@ import {
 @Component({
   selector: 'app-flow-left-sidebar',
   templateUrl: './flow-left-sidebar.component.html',
-  styleUrls: ['./flow-left-sidebar.component.css'],
 })
 export class FlowLeftSidebarComponent implements OnInit {
   leftSideBar$: Observable<LeftSideBarType>;

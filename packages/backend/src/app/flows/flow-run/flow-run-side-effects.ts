@@ -12,6 +12,7 @@ type StartParams = {
     flowRun: FlowRun
     executionType: ExecutionType
     payload: unknown
+    synchronousHandlerId?: string
 }
 
 type PauseParams = {
@@ -36,18 +37,19 @@ export const flowRunSideEffects = {
         flowRun: FlowRun
     }): Promise<void> {
         await flowRunHooks.getHooks().onFinish({ projectId: flowRun.projectId, tasks: flowRun.tasks! })
-
         await notifications.notifyRun({
             flowRun,
         })
     },
-    async start({ flowRun, executionType, payload }: StartParams): Promise<void> {
+    async start({ flowRun, executionType, payload, synchronousHandlerId }: StartParams): Promise<void> {
         logger.info(`[FlowRunSideEffects#start] flowRunId=${flowRun.id} executionType=${executionType}`)
 
         await flowQueue.add({
             id: flowRun.id,
             type: JobType.ONE_TIME,
+            priority: isNil(synchronousHandlerId) ? 'medium' : 'high',
             data: {
+                synchronousHandlerId,
                 projectId: flowRun.projectId,
                 environment: flowRun.environment,
                 runId: flowRun.id,

@@ -1,15 +1,20 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { airtableCreateRecordAction } from './lib/actions/create-record';
 import { airtableNewRecordTrigger } from './lib/trigger/new-record.trigger';
+import { airtableUpdatedRecordTrigger } from './lib/trigger/update-record.trigger';
 import { airtableFindRecordAction } from './lib/actions/find-record';
 import { airtableUpdateRecordAction } from './lib/actions/update-record';
 import { airtableDeleteRecordAction } from './lib/actions/delete-record';
-import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
+import {
+  AuthenticationType,
+  HttpMethod,
+  httpClient,
+} from '@activepieces/pieces-common';
 
 export const airtableAuth = PieceAuth.SecretText({
-    displayName: 'Personal Token',
-    required: true,
-    description: `
+  displayName: 'Personal Access Token',
+  required: true,
+  description: `
     To obtain your personal token, follow these steps:
 
     1. Log in to your Airtable account.
@@ -18,27 +23,27 @@ export const airtableAuth = PieceAuth.SecretText({
     4. Click on "+ Add a scope" and select "data.records.read", "data.records.write" and "schema.bases.read".
     5. Click on "Create token" and copy the token.
     `,
-    validate: async (auth) => {
-        try{
-            await httpClient.sendRequest({
-                method: HttpMethod.GET,
-                url: "https://api.airtable.com/v0/meta/bases",
-                authentication: {
-                  type: AuthenticationType.BEARER_TOKEN,
-                  token: auth.auth
-                }
-            })
-            return{
-                valid: true,
-            }
-        }catch(e){
-            return{
-                valid: false,
-                error: 'Invalid API token'
-            }
-        }
+  validate: async (auth) => {
+    try {
+      await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: 'https://api.airtable.com/v0/meta/bases',
+        authentication: {
+          type: AuthenticationType.BEARER_TOKEN,
+          token: auth.auth,
+        },
+      });
+      return {
+        valid: true,
+      };
+    } catch (e) {
+      return {
+        valid: false,
+        error: 'Invalid personal access token',
+      };
     }
-})
+  },
+});
 
 export const airtable = createPiece({
   displayName: 'Airtable',
@@ -52,5 +57,5 @@ export const airtable = createPiece({
     airtableUpdateRecordAction,
     airtableDeleteRecordAction,
   ],
-  triggers: [airtableNewRecordTrigger],
+  triggers: [airtableNewRecordTrigger, airtableUpdatedRecordTrigger],
 });

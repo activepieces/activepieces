@@ -1,66 +1,63 @@
-import { ActionType, ExecutionState, StepOutput, StepOutputStatus } from '@activepieces/shared'
+import { ActionType, GenricStepOutput, StepOutputStatus, TriggerType } from '@activepieces/shared'
 import { VariableService } from '../../src/lib/services/variable-service'
 import { PieceAuth, Validators, Property, ApFile } from '@activepieces/pieces-framework'
+import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 
-const variableService = new VariableService()
+const variableService = new VariableService({
+    projectId: 'PROJECT_ID',
+    workerToken: 'WORKER_TOKEN',
+})
 
-const executionState = new ExecutionState()
+const executionState = FlowExecutorContext.empty()
+    .upsertStep(
+        'trigger',
+        GenricStepOutput.create({
+            type: TriggerType.PIECE,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: {
+                items: [5, 'a'],
+                name: 'John',
+                price: 6.4,
+            },
+        }),
+    )
+    .upsertStep('step_1',
+        GenricStepOutput.create({
 
-const stepOutput: StepOutput = {
-    type: ActionType.PIECE,
-    status: StepOutputStatus.SUCCEEDED,
-    input: {},
-    output: {
-        items: [5, 'a'],
-        name: 'John',
-        price: 6.4,
-    },
-}
-executionState.insertStep(
-    stepOutput,
-    'trigger',
-    [],
-)
-
-executionState.insertStep(
-    {
-        type: ActionType.PIECE,
-        status: StepOutputStatus.SUCCEEDED,
-        input: {},
-        output: {
-            success: true,
-        },
-    },
-    'step_1',
-    [],
-)
-
-executionState.insertStep(
-    {
+            type: ActionType.PIECE,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: {
+                success: true,
+            },
+        }))
+    .upsertStep('step_2', GenricStepOutput.create({
         type: ActionType.PIECE,
         status: StepOutputStatus.SUCCEEDED,
         input: {},
         output: 'memory://{"fileName":"hello.png","data":"iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z"}',
-    },
-    'step_2',
-    [],
-)
+    }))
+
+
 
 describe('Variable Service', () => {
     test('Test resolve text with no variables', async () => {
-        expect(await variableService.resolve({ unresolvedInput: 'Hello world!', executionState, logs: false })).toEqual(
+        const { resolvedInput } = await variableService.resolve({ unresolvedInput: 'Hello world!', executionState })
+        expect(resolvedInput).toEqual(
             'Hello world!',
         )
     })
 
     test('Test resolve text with double variables', async () => {
-        expect(
-            await variableService.resolve({ unresolvedInput: 'Price is {{ trigger.price }}', executionState, logs: false }),
+        const { resolvedInput } = await variableService.resolve({ unresolvedInput: 'Price is {{ trigger.price }}', executionState })
+        expect(resolvedInput,
         ).toEqual('Price is 6.4')
     })
 
     test('Test resolve object steps variables', async () => {
-        expect(await variableService.resolve({ unresolvedInput: '{{trigger}}', executionState, logs: false })).toEqual(
+        const { resolvedInput } = await variableService.resolve({ unresolvedInput: '{{trigger}}', executionState })
+        expect(resolvedInput).toEqual(
             {
                 items: [5, 'a'],
                 name: 'John',
@@ -70,114 +67,125 @@ describe('Variable Service', () => {
     })
 
     test('Test resolve steps variables', async () => {
-        expect(await variableService.resolve({ unresolvedInput: '{{trigger.name}}', executionState, logs: false })).toEqual(
+        const { resolvedInput } = await variableService.resolve({ unresolvedInput: '{{trigger.name}}', executionState })
+        expect(resolvedInput).toEqual(
             'John',
         )
     })
 
     test('Test resolve multiple variables', async () => {
+        const { resolvedInput } = await variableService.resolve({ unresolvedInput: '{{trigger.name}} {{trigger.name}}', executionState })
         expect(
-            await variableService.resolve({ unresolvedInput: '{{trigger.name}} {{trigger.name}}', executionState, logs: false }),
+            resolvedInput,
         ).toEqual('John John')
     })
 
     test('Test resolve variable array items', async () => {
+        const { resolvedInput } = await variableService.resolve({
+            unresolvedInput:
+                '{{trigger.items[0]}} {{trigger.items[1]}}',
+            executionState,
+        })
         expect(
-            await variableService.resolve({
-                unresolvedInput:
-          '{{trigger.items[0]}} {{trigger.items[1]}}',
-                executionState,
-                logs: false,
-            }),
+            resolvedInput,
         ).toEqual('5 a')
     })
 
     test('Test resolve array variable', async () => {
-        expect(await variableService.resolve({ unresolvedInput: '{{trigger.items}}', executionState, logs: false })).toEqual(
+        const { resolvedInput } = await variableService.resolve({ unresolvedInput: '{{trigger.items}}', executionState })
+        expect(resolvedInput).toEqual(
             [5, 'a'],
         )
     })
 
     test('Test resolve integer from variables', async () => {
+        const { resolvedInput } = await variableService.resolve({ unresolvedInput: '{{trigger.items[0]}}', executionState })
         expect(
-            await variableService.resolve({ unresolvedInput: '{{trigger.items[0]}}', executionState, logs: false }),
+            resolvedInput,
         ).toEqual(5)
     })
 
     test('Test resolve text with undefined variables', async () => {
+        const { resolvedInput } = await variableService.resolve({
+            unresolvedInput:
+                'test {{configs.bar}} {{trigger.items[4]}}',
+            executionState,
+        })
         expect(
-            await variableService.resolve({
-                unresolvedInput:
-          'test {{configs.bar}} {{trigger.items[4]}}',
-                executionState,
-                logs: false,
-            }),
+            resolvedInput,
         ).toEqual('test  ')
     })
 
     test('Test resolve empty text', async () => {
-        expect(await variableService.resolve({ unresolvedInput: '', executionState, logs: false })).toEqual('')
+        const { resolvedInput } = await variableService.resolve({ unresolvedInput: '', executionState })
+        expect(resolvedInput).toEqual('')
     })
 
 
     test('Test resolve empty variable operator', async () => {
-        expect(await variableService.resolve({ unresolvedInput: '{{}}', executionState, logs: false })).toEqual('')
+        const { resolvedInput } = await variableService.resolve({ unresolvedInput: '{{}}', executionState })
+        expect(resolvedInput).toEqual('')
     })
 
     test('Test resolve object', async () => {
-        expect(
-            await variableService.resolve({
-                unresolvedInput:
-        {
-            input: {
-                foo: 'bar',
-                nums: [1, 2, '{{trigger.items[0]}}'],
-                var: '{{trigger.price}}',
+        const { resolvedInput } = await variableService.resolve({
+            unresolvedInput:
+            {
+                input: {
+                    foo: 'bar',
+                    nums: [1, 2, '{{trigger.items[0]}}'],
+                    var: '{{trigger.price}}',
+                },
             },
-        },
-                executionState,
-                logs: false,
-            }),
+            executionState,
+        })
+        expect(
+            resolvedInput,
         ).toEqual({ input: { foo: 'bar', nums: [1, 2, 5], var: 6.4 } })
     })
 
     test('Test resolve boolean from variables', async () => {
-        expect(await variableService.resolve({ unresolvedInput: '{{step_1.success}}', executionState, logs: false })).toEqual(
+        const { resolvedInput } = await variableService.resolve({ unresolvedInput: '{{step_1.success}}', executionState })
+        expect(resolvedInput).toEqual(
             true,
         )
     })
 
     test('Test resolve addition from variables', async () => {
-        expect(await variableService.resolve({ unresolvedInput: '{{trigger.price + 2 - 3}}', executionState, logs: false })).toEqual(
+        const { resolvedInput } = await variableService.resolve({ unresolvedInput: '{{trigger.price + 2 - 3}}', executionState })
+        expect(resolvedInput).toEqual(
             6.4 + 2 - 3,
         )
     })
 
     test('Test resolve text with array variable', async () => {
+        const { resolvedInput } = await variableService.resolve({ unresolvedInput: 'items are {{trigger.items}}', executionState })
         expect(
-            await variableService.resolve({ unresolvedInput: 'items are {{trigger.items}}', executionState, logs: false }),
+            resolvedInput,
         ).toEqual('items are [5,"a"]')
     })
 
     test('Test resolve text with object variable', async () => {
+        const { resolvedInput } = await variableService.resolve({
+            unresolvedInput:
+                'values from trigger step: {{trigger}}',
+            executionState,
+        })
         expect(
-            await variableService.resolve({
-                unresolvedInput:
-          'values from trigger step: {{trigger}}',
-                executionState,
-                logs: false,
-            }),
+            resolvedInput,
         ).toEqual('values from trigger step: {"items":[5,"a"],"name":"John","price":6.4}')
     })
 
     test('Test use built-in Math Min function', async () => {
-        expect(await variableService.resolve({ unresolvedInput: '{{Math.min(trigger.price + 2 - 3, 2)}}', executionState, logs: false })).toEqual(
+        const { resolvedInput } = await variableService.resolve({ unresolvedInput: '{{Math.min(trigger.price + 2 - 3, 2)}}', executionState })
+        expect(resolvedInput).toEqual(
             2,
         )
     })
 
     test('Test use built-in Math Max function', async () => {
-        expect(await variableService.resolve({ unresolvedInput: '{{Math.max(trigger.price + 2, 2)}}', executionState, logs: false })).toEqual(
+        const { resolvedInput } = await variableService.resolve({ unresolvedInput: '{{Math.max(trigger.price + 2, 2)}}', executionState })
+        expect(resolvedInput).toEqual(
             8.4,
         )
     })
@@ -186,10 +194,9 @@ describe('Variable Service', () => {
         const input = {
             base64: 'memory://{"fileName":"hello.png","data":"iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z"}',
         }
-        const resolvedInput = await variableService.resolve({
+        const { resolvedInput } = await variableService.resolve({
             unresolvedInput: input,
             executionState,
-            logs: false,
         })
         expect(resolvedInput).toEqual({
             base64: 'memory://{"fileName":"hello.png","data":"iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z"}',
@@ -200,10 +207,9 @@ describe('Variable Service', () => {
         const input = {
             base64: '{{step_2}}',
         }
-        const resolvedInput = await variableService.resolve({
+        const { resolvedInput } = await variableService.resolve({
             unresolvedInput: input,
             executionState,
-            logs: false,
         })
         expect(resolvedInput).toEqual({
             base64: 'memory://{"fileName":"hello.png","data":"iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z"}',
@@ -241,7 +247,6 @@ describe('Variable Service', () => {
 
     // Test with invalid url
     it('should return error for invalid data', async () => {
-        const variableService = new VariableService()
         const input = {
             file: 'https://google.com',
             nullFile: null,
@@ -537,7 +542,6 @@ describe('Variable Service', () => {
     })
 
     it('Test url and oneOf validators', async () => {
-        const variableService = new VariableService()
         const input = {
             text: 'activepiecescom.',
         }

@@ -10,7 +10,6 @@ import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { AppEventRoutingEntity } from '../app-event-routing/app-event-routing.entity'
 import { TriggerEventEntity } from '../flows/trigger-events/trigger-event.entity'
 import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
-import { FlowInstanceEntity } from '../flows/flow-instance/flow-instance.entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
 import { FlowTemplateEntity } from '../ee/flow-template/flow-template.entity'
 import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
@@ -24,15 +23,18 @@ import { DatabaseType, system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
 import { ArrayContains, EntitySchema, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { StepFileEntity } from '../flows/step-file/step-file.entity'
-import { ProjectPlanEntity } from '../ee/billing/plans/plan.entity'
-import { ProjectUsageEntity } from '../ee/billing/usage/usage-entity'
-import { ChatbotEntity } from '../chatbot/chatbot.entity'
+import { ProjectUsageEntity } from '../ee/billing/project-usage/project-usage.entity'
 import { ProjectMemberEntity } from '../ee/project-members/project-member.entity'
 import { getEdition } from '../helper/secret-helper'
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
 import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
 import { PlatformEntity } from '../ee/platform/platform.entity'
 import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
+import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
+import { ProjectPlanEntity } from '../ee/billing/project-plan/project-plan.entity'
+import { OtpEntity } from '../ee/otp/otp-entity'
+import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
+import { GitRepoEntity } from '../ee/git-repos/git-repo.entity'
 
 const databaseType = system.get(SystemProp.DB_TYPE)
 
@@ -41,7 +43,6 @@ function getEntities(): EntitySchema<unknown>[] {
 
     const entities: EntitySchema[] = [
         TriggerEventEntity,
-        FlowInstanceEntity,
         AppEventRoutingEntity,
         FileEntity,
         FlagEntity,
@@ -56,7 +57,6 @@ function getEntities(): EntitySchema<unknown>[] {
         FolderEntity,
         PieceMetadataEntity,
         StepFileEntity,
-        ChatbotEntity,
     ]
 
     switch (edition) {
@@ -65,7 +65,6 @@ function getEntities(): EntitySchema<unknown>[] {
                 ProjectMemberEntity,
                 AppSumoEntity,
                 ReferralEntity,
-                ChatbotEntity,
                 ProjectPlanEntity,
                 ProjectUsageEntity,
                 FlowTemplateEntity,
@@ -74,14 +73,25 @@ function getEntities(): EntitySchema<unknown>[] {
                 PlatformEntity,
                 CustomDomainEntity,
                 SigningKeyEntity,
+                OAuthAppEntity,
+                OtpEntity,
+                ApiKeyEntity,
+                GitRepoEntity,
             )
             break
         case ApEdition.ENTERPRISE:
             entities.push(
                 ProjectMemberEntity,
+                ProjectPlanEntity,
+                ProjectUsageEntity,
                 PlatformEntity,
                 CustomDomainEntity,
                 SigningKeyEntity,
+                OAuthAppEntity,
+                OtpEntity,
+                ApiKeyEntity,
+                FlowTemplateEntity,
+                GitRepoEntity,
             )
             break
         case ApEdition.COMMUNITY:

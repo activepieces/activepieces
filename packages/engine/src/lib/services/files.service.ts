@@ -1,20 +1,23 @@
 import fs from 'fs/promises'
-import { globals } from '../globals'
 import { ApFile } from '@activepieces/pieces-framework'
 import { isString } from '@activepieces/shared'
+import { EngineConstants } from '../handler/context/engine-constants'
 
 const DB_PREFIX_URL = 'db://'
 const FILE_PREFIX_URL = 'file://'
 const MEMORY_PREFIX_URL = 'memory://'
+const MAXIMUM = 4 * 1024 * 1024
+const MAXIMUM_MB = MAXIMUM / 1024 / 1024
 
 export type DefaultFileSystem = 'db' | 'local' | 'memory'
 
-export function createFilesService({ stepName, type, flowId }: { stepName: string, type: DefaultFileSystem, flowId: string }) {
+export function createFilesService({ stepName, type, flowId, workerToken }: { stepName: string, type: DefaultFileSystem, flowId: string, workerToken: string }) {
     return {
         async write({ fileName, data }: { fileName: string, data: Buffer }): Promise<string> {
             switch (type) {
+                // TODO remove db as it now generates a signed url
                 case 'db':
-                    return writeDbFile({ stepName, flowId, fileName, data })
+                    return writeDbFile({ stepName, flowId, fileName, data, workerToken })
                 case 'local':
                     return writeLocalFile({ stepName, fileName, data })
                 case 'memory':
@@ -39,12 +42,13 @@ export function isApFilePath(dbPath: unknown): dbPath is string {
     return dbPath.startsWith(FILE_PREFIX_URL) || dbPath.startsWith(DB_PREFIX_URL) || dbPath.startsWith(MEMORY_PREFIX_URL)
 }
 
-export async function handleAPFile(path: string) {
+export async function handleAPFile({ workerToken, path }: { workerToken: string, path: string }) {
     if (path.startsWith(MEMORY_PREFIX_URL)) {
         return readMemoryFile(path)
     }
+    // TODO REMOVE DB AS IT NOW GENERATES A SIGNED URL
     else if (path.startsWith(DB_PREFIX_URL)) {
-        return readDbFile(path)
+        return readDbFile({ workerToken, absolutePath: path })
     }
     else if (path.startsWith(FILE_PREFIX_URL)) {
         return readLocalFile(path)
@@ -77,17 +81,26 @@ async function readMemoryFile(absolutePath: string): Promise<ApFile> {
     }
 }
 
-async function writeDbFile({ stepName, flowId, fileName, data }: { stepName: string, flowId: string, fileName: string, data: Buffer }): Promise<string> {
+
+async function writeDbFile({ stepName, flowId, fileName, data, workerToken }: { stepName: string, flowId: string, fileName: string, data: Buffer, workerToken: string }): Promise<string> {
     const formData = new FormData()
     formData.append('stepName', stepName)
     formData.append('name', fileName)
     formData.append('flowId', flowId)
     formData.append('file', new Blob([data], { type: 'application/octet-stream' }))
 
-    const response = await fetch(globals.apiUrl + 'v1/step-files', {
+    if (data.length > MAXIMUM) {
+        throw new Error(JSON.stringify({
+            message: 'File size is larger than maximum supported size in test step mode, please use test flow instead of step as a workaround',
+            currentFileSize: `${(data.length / 1024 / 1024).toFixed(2)} MB`,
+            maximumSupportSize: `${MAXIMUM_MB.toFixed(2)} MB`,
+        }))
+    }
+
+    const response = await fetch(EngineConstants.API_URL + 'v1/step-files', {
         method: 'POST',
         headers: {
-            Authorization: 'Bearer ' + globals.workerToken,
+            Authorization: 'Bearer ' + workerToken,
         },
         body: formData,
     })
@@ -95,17 +108,18 @@ async function writeDbFile({ stepName, flowId, fileName, data }: { stepName: str
     if (!response.ok) {
         throw new Error('Failed to store entry ' + response.body)
     }
+
     const result = await response.json()
-    return DB_PREFIX_URL + `${result.id}`
+    return result.url
 }
 
-async function readDbFile(absolutePath: string): Promise<ApFile> {
+async function readDbFile({ workerToken, absolutePath }: { workerToken: string, absolutePath: string }): Promise<ApFile> {
     const fileId = absolutePath.replace(DB_PREFIX_URL, '')
-    const response = await fetch(globals.apiUrl + `v1/step-files/${encodeURIComponent(fileId)}`, {
+    const response = await fetch(`${EngineConstants.API_URL}v1/step-files/${encodeURIComponent(fileId)}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
-            Authorization: 'Bearer ' + globals.workerToken,
+            Authorization: 'Bearer ' + workerToken,
         },
     })
     if (!response.ok) {

@@ -5,8 +5,8 @@ import { PieceMetadataServiceHooks } from '../../pieces/piece-metadata-service/h
 import { platformService } from '../platform/platform.service'
 
 export const enterprisePieceMetadataServiceHooks: PieceMetadataServiceHooks = {
-    async filterPieces({ pieces, platformId }) {
-        if (isNil(platformId)) {
+    async filterPieces({ pieces, platformId, includeHidden }) {
+        if (isNil(platformId) || includeHidden) {
             return pieces
         }
 

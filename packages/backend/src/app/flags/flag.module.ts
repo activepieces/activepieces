@@ -1,9 +1,8 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { flagService } from './flag.service'
-import { getEdition } from '../helper/secret-helper'
-import { ApEdition, ApFlagId } from '@activepieces/shared'
-import { apperanceHelper } from '../ee/helper/apperance-helper'
 import { FastifyRequest } from 'fastify'
+import { flagHooks } from './flags.hooks'
+import { ALL_PRINICPAL_TYPES } from '@activepieces/shared'
 
 export const flagModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(flagController, { prefix: '/v1/flags' })
@@ -13,29 +12,18 @@ export const flagController: FastifyPluginAsyncTypebox = async (app) => {
     app.get(
         '/',
         {
+            config: {
+                allowedPrincipals: ALL_PRINICPAL_TYPES,
+            },
             logLevel: 'silent',
         },
         async (request: FastifyRequest) => {
             const flags = await flagService.getAll()
-            const edition = getEdition()
             const flagsMap: Record<string, unknown> = flags.reduce((map, flag) => ({ ...map, [flag.id as string]: flag.value }), {})
-            if (edition !== ApEdition.COMMUNITY) {
-                // TODO MOVE totally inside ee
-                const whitelabeled = await apperanceHelper.isWhiteLabeled({ projectId: request.principal.projectId, hostname: request.hostname })
-                if (whitelabeled) {
-                    flagsMap[ApFlagId.THEME] = await apperanceHelper.getTheme({ projectId: request.principal.projectId, hostname: request.hostname })
-                    flagsMap[ApFlagId.SHOW_COMMUNITY] = false
-                    flagsMap[ApFlagId.SHOW_DOCS] = false
-                    flagsMap[ApFlagId.SHOW_BILLING] = false
-                    flagsMap[ApFlagId.SHOW_AUTH_PROVIDERS] = false
-                    flagsMap[ApFlagId.SHOW_BLOG_GUIDE] = false
-                    flagsMap[ApFlagId.CLOUD_AUTH_ENABLED] = false
-                    flagsMap[ApFlagId.FRONTEND_URL] = `https://${request.hostname}`
-                    // TODO USE EXISTING METHODS
-                    flagsMap[ApFlagId.WEBHOOK_URL_PREFIX] = `https://${request.hostname}/api/v1/webhooks`
-                }
-            }
-            return flagsMap
+            return flagHooks.get().modify({
+                flags: flagsMap,
+                request,
+            })
         },
     )
 }

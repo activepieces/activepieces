@@ -3,6 +3,11 @@ import { askOpenAI } from './lib/actions/send-prompt';
 import { transcribeAction } from './lib/actions/transcriptions';
 import { translateAction } from './lib/actions/translation';
 import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { generateImage } from './lib/actions/generate-image';
+import { visionPrompt } from './lib/actions/vision-prompt';
+import { textToSpeech } from './lib/actions/text-to-speech';
+import { askAssistant } from './lib/actions/ask-assistant';
+
 const markdownDescription = `
 Follow these instructions to get your OpenAI API Key:
 
@@ -14,10 +19,10 @@ It is strongly recommended that you add your credit card information to your Ope
 
 export const openaiAuth = PieceAuth.SecretText({
   description: markdownDescription,
-  displayName: 'Api Key',
+  displayName: 'API Key',
   required: true,
   validate: async (auth) => {
-    try{
+    try {
       await httpClient.sendRequest<{
         data: { id: string }[];
       }>({
@@ -28,13 +33,13 @@ export const openaiAuth = PieceAuth.SecretText({
           token: auth.auth as string
         }
       });
-      return{
+      return {
         valid: true,
       }
-    }catch(e){
-      return{
+    } catch (e) {
+      return {
         valid: false,
-        error: 'Invalid API token'
+        error: 'Invalid API key'
       }
     }
   }
@@ -42,11 +47,19 @@ export const openaiAuth = PieceAuth.SecretText({
 
 export const openai = createPiece({
   displayName: 'OpenAI',
-  description: 'Use ChatGPT to generate text',
+  description: 'Use the many tools ChatGPT has to offer.',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
   auth: openaiAuth,
-  actions: [ askOpenAI , transcribeAction , translateAction ],
-  authors: ['aboudzein', 'creed983', 'astorozhevsky' , 'Salem-Alaa'],
+  actions: [
+    askOpenAI,
+    askAssistant,
+    generateImage,
+    visionPrompt,
+    textToSpeech,
+    transcribeAction,
+    translateAction,
+  ],
+  authors: ['aboudzein', 'creed983', 'astorozhevsky', 'Salem-Alaa', 'MoShizzle'],
   triggers: []
 });

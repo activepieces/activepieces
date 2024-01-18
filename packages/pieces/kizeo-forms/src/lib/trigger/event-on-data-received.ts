@@ -1,5 +1,5 @@
 import { HttpRequest, HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { TriggerStrategy, createTrigger } from "@activepieces/pieces-framework";
+import { Property, TriggerStrategy, createTrigger } from "@activepieces/pieces-framework";
 import { endpoint, kizeoFormsCommon } from '../common';
 import { kizeoFormsAuth } from '../..';
 
@@ -10,6 +10,24 @@ export const eventOnDataPulled = createTrigger({
   displayName: 'Event On Data Received',
   description: 'Handle EventOnData receive event via webhooks',
   props: {
+    format: Property.StaticDropdown({
+        displayName: 'Output Format',
+        description: 'Select the output format',
+        required: true,
+        defaultValue: 'simple',
+        options: {
+            options: [
+                {
+                    label: 'Simple format',
+                    value: 'simple'
+                },
+                {
+                    label: 'Advanced format',
+                    value: 'advanced'
+                }
+            ]
+        }
+    }),
     formId: kizeoFormsCommon.formId,
   },
   sampleData: {
@@ -82,11 +100,41 @@ export const eventOnDataPulled = createTrigger({
     if (!context.payload.body) {
       return []
     }
-    return [context.payload.body];
+    const body = context.payload.body as BodyDataType;
+    const formattedData : FormattedData = {
+        id: body.id,
+      };
+    if(context.propsValue.format === 'simple'){
+      for (const fieldKey in body.data.fields) {
+        if (body.data.fields[fieldKey].result && body.data.fields[fieldKey].result?.value !== undefined) {
+          const newFieldKey = fieldKey;
+          formattedData[newFieldKey] = body.data.fields[fieldKey].result?.value;
+        }
+      }
+      return [formattedData]
+    }
+
+    return [body];
   },
 });
 
+interface FormattedData {
+    id: string;
+    [key: string]: any;
+}
 
+interface BodyDataType {
+    id: string;
+    data: {
+        fields: {
+            [key: string]: {
+                result?: {
+                    value: any;
+                }
+            }
+        }
+    };
+}
 
 interface KizeoFormsWebhookInformation {
   webhookId: string;

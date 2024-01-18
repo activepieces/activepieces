@@ -1,0 +1,44 @@
+{
+  "name": "pieces-bettermode",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/bettermode/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/bettermode",
+        "tsConfig": "packages/pieces/bettermode/tsconfig.lib.json",
+        "packageJson": "packages/pieces/bettermode/package.json",
+        "main": "packages/pieces/bettermode/src/index.ts",
+        "assets": [
+          "packages/pieces/bettermode/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-bettermode {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/bettermode/**/*.ts",
+          "packages/pieces/bettermode/package.json"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

@@ -5,21 +5,18 @@ export class AddPieceTypeAndPackageTypeToFlowVersion1696245170061 implements Mig
     public async up(queryRunner: QueryRunner): Promise<void> {
         // Execute raw SQL query to fetch IDs of FlowVersion records
         const flowVersionIds = await queryRunner.query('SELECT id FROM flow_version')
-        const flowVersionRepo = queryRunner.connection.getRepository<FlowVersion>('flow_version')
         logger.info('AddPieceTypeAndPackageTypeToFlowVersion1696245170061: found ' + flowVersionIds.length + ' versions')
         let updatedFlows = 0
         for (const { id } of flowVersionIds) {
             // Fetch FlowVersion record by ID
-            const flowVersion = await flowVersionRepo.findOneBy({
-                id,
-            })
-            if (flowVersion) {
+            const flowVersion = await queryRunner.query('SELECT * FROM flow_version WHERE id = ?', [id])
+            if (flowVersion.length > 0) {
                 const updated = traverseAndUpdateSubFlow(
                     addPackageTypeAndPieceTypeToPieceStepSettings,
-                    flowVersion.trigger,
+                    flowVersion[0].trigger,
                 )
                 if (updated) {
-                    await flowVersionRepo.update(flowVersion.id, flowVersion)
+                    await queryRunner.query('UPDATE flow_version SET trigger = ? WHERE id = ?', [flowVersion[0].trigger, flowVersion[0].id])
                 }
             }
             updatedFlows++
@@ -34,20 +31,17 @@ export class AddPieceTypeAndPackageTypeToFlowVersion1696245170061 implements Mig
     public async down(queryRunner: QueryRunner): Promise<void> {
         // Execute raw SQL query to fetch IDs of FlowVersion records
         const flowVersionIds = await queryRunner.query('SELECT id FROM flow_version')
-        const flowVersionRepo = queryRunner.connection.getRepository<FlowVersion>('flow_version')
         for (const { id } of flowVersionIds) {
             // Fetch FlowVersion record by ID
-            const flowVersion = await flowVersionRepo.findOneBy({
-                id,
-            })
+            const flowVersion = await queryRunner.query('SELECT * FROM flow_version WHERE id = ?', [id])
 
-            if (flowVersion) {
+            if (flowVersion.length > 0) {
                 const updated = traverseAndUpdateSubFlow(
                     removePackageTypeAndPieceTypeFromPieceStepSettings,
-                    flowVersion.trigger,
+                    flowVersion[0].trigger,
                 )
                 if (updated) {
-                    await flowVersionRepo.update(flowVersion.id, flowVersion)
+                    await queryRunner.query('UPDATE flow_version SET trigger = ? WHERE id = ?', [flowVersion[0].trigger, flowVersion[0].id])
                 }
             }
         }
@@ -132,8 +126,3 @@ type Step =
     | LoopOnItemsStep
     | GenericStep
     | PieceStep
-
-type FlowVersion = {
-    id: string
-    trigger?: Step
-}

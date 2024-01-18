@@ -13,6 +13,7 @@ import { ModalCommunicationService } from '../service/modal-communication.servic
 import { AuthService } from '../service/auth.service';
 import { FormControl } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
+import { OAuth2GrantType, assertNotEqual } from '@activepieces/shared';
 
 @Component({
   selector: 'app-enable-integration-modal',
@@ -86,6 +87,7 @@ export class EnableIntegrationModalComponent {
           OAuth2Settings.tokenUrl = OAuth2Settings.tokenUrl.replace('login.', 'test.');
         }
       }
+      assertNotEqual(OAuth2Settings.grantType, OAuth2GrantType.CLIENT_CREDENTIALS, 'OAuth2GrantType', 'AUTHORIZATION_CODE');
       this.popUpOpen$ = this.authenticationService
         .openPopUp(OAuth2Settings)
         .pipe(
@@ -109,6 +111,7 @@ export class EnableIntegrationModalComponent {
             throw err;
           })
         );
+
     }
   }
 

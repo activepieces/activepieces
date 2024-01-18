@@ -12,6 +12,7 @@ import {
 } from 'rxjs';
 import {
   ApPaginatorComponent,
+  AuthenticationService,
   CURSOR_QUERY_PARAM,
   DEFAULT_PAGE_SIZE,
   FOLDER_QUERY_PARAM,
@@ -20,13 +21,13 @@ import {
 } from '@activepieces/ui/common';
 
 import { FormControl } from '@angular/forms';
-import { Flow, FlowInstanceStatus } from '@activepieces/shared';
+import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
 import { Params } from '@angular/router';
 import { FoldersService } from '@activepieces/ui/common';
 import { FolderActions } from '../../store/folders/folders.actions';
 import { Store } from '@ngrx/store';
 
-type FlowListDtoWithInstanceStatusToggleControl = Flow & {
+type FlowListDtoWithInstanceStatusToggleControl = PopulatedFlow & {
   instanceToggleControl: FormControl<boolean>;
   folderDisplayName: string;
 };
@@ -43,6 +44,7 @@ export class FlowsTableDataSource extends DataSource<FlowListDtoWithInstanceStat
     private queryParams$: Observable<Params>,
     private folderService: FoldersService,
     private paginator: ApPaginatorComponent,
+    private authenticationService: AuthenticationService,
     private flowService: FlowService,
     private refresh$: Observable<boolean>,
     private store: Store
@@ -76,6 +78,7 @@ export class FlowsTableDataSource extends DataSource<FlowListDtoWithInstanceStat
         const { queryParams } = res;
         return forkJoin([
           this.flowService.list({
+            projectId: this.authenticationService.getProjectId(),
             limit: queryParams[LIMIT_QUERY_PARAM] || DEFAULT_PAGE_SIZE,
             cursor: queryParams[CURSOR_QUERY_PARAM],
             folderId: queryParams[FOLDER_QUERY_PARAM] || undefined,
@@ -115,12 +118,12 @@ export class FlowsTableDataSource extends DataSource<FlowListDtoWithInstanceStat
   disconnect(): void {
     //ignore
   }
-  createTogglesControls(flows: Flow[]) {
+  createTogglesControls(flows: PopulatedFlow[]) {
     const controls: Record<string, FormControl> = {};
     flows.forEach((f) => {
       controls[f.id] = new FormControl({
-        value: f.status === FlowInstanceStatus.ENABLED,
-        disabled: f.status === FlowInstanceStatus.UNPUBLISHED,
+        value: f.status === FlowStatus.ENABLED,
+        disabled: f.publishedVersionId === null,
       });
     });
     return controls;

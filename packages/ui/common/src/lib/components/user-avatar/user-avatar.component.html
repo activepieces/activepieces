@@ -47,20 +47,27 @@
         </ng-container>
     </ng-container>
     <div class="ap-border-b ap-border-solid  ap-border-outline ap-mx-2"
-        *ngIf="(projectEnabled$ | async) || showPlatform "></div>
+        *ngIf="(projectEnabled$ | async) || (showPlatform) "></div>
     <!-- END EE -->
-    <div mat-menu-item (click)="showWhatIsNew()" *ngIf="showCommunity$ | async">
-        What's new
+    <div mat-menu-item [matMenuTriggerFor]="languagesList" class="ap-flex ap-items-center">
+
+        <div class="ap-flex ap-items-center ap-gap-2">
+            <svg-icon src='assets/img/custom/language.svg' class="ap-w-[20px] ap-h-[20px] ap-fill-disable"
+                [applyClass]="true">
+            </svg-icon> {{selectedLanguage.languageName}}
+        </div>
+
+    </div>
+    <div mat-menu-item (click)="goToDeveloperPage()" *ngIf="myPiecesEnabled$ | async">
+        <div i18n>My Pieces</div>
     </div>
     <div mat-menu-item (click)="viewPlans()" *ngIf="billingEnabled$ | async">
         Subscription
     </div>
-    <div mat-menu-item (click)="goToDeveloperPage()">
-        <div i18n>My Pieces</div>
-    </div>
     <div mat-menu-item (click)="goToCommunity()" *ngIf="showCommunity$ | async">
         <div class="ap-flex ap-items-center ap-min-w-[214px]">Community <div class="ap-flex-grow"></div><svg-icon
-                src="assets/img/custom/external-link.svg" class="ap-h-[16px] ap-w-[16px] ap-fill-[#989898]"></svg-icon>
+                [applyClass]="true" src="assets/img/custom/external-link.svg"
+                class="ap-h-[16px] ap-w-[16px] ap-fill-[#989898]"></svg-icon>
         </div>
     </div>
     <div mat-menu-item (click)="logout()">
@@ -71,3 +78,22 @@
 <!-- BEGIN EE -->
 <ng-container *ngIf="switchProject$ | async"></ng-container>
 <!-- END EE -->
+
+<mat-menu #languagesList="matMenu">
+    <div mat-menu-item *ngFor="let pair of locales|objectToArray" (click)="redirectToLocale(pair.key)">
+        <div class="ap-flex ap-gap-2 ap-items-center ap-min-w-[120px]">
+            {{pair.value}} <svg-icon *ngIf="pair.key === selectedLanguage.locale" src="assets/img/custom/check.svg"
+                [applyClass]="true" class="ap-h-[20px] ap-w-[20px] ap-fill-primary"></svg-icon>
+        </div>
+    </div>
+    <a href="https://www.activepieces.com/docs/about/i18n" target="_blank" rel="noopener noreferrer" mat-menu-item
+        *ngIf="showCommunity$ | async">
+
+        <div class="ap-flex ap-items-center ap-gap-2 ap-min-w-[140px]">
+            Help us translate
+            <svg-icon src="assets/img/custom/external-link.svg" [applyClass]="true"
+                class="ap-h-[16px] ap-w-[16px] ap-fill-[#989898]"></svg-icon>
+        </div>
+    </a>
+
+</mat-menu>

@@ -40,6 +40,9 @@ export const telegramNewMessage = createTrigger({
             await telegramCommons.subscribeWebhook(
                 context.auth,
                 context.webhookUrl,
+                { 
+                    allowed_updates: []
+                }
             );
         },
         async onDisable(context) {

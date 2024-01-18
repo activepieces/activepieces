@@ -17,10 +17,12 @@ import {
   BuilderSelectors,
   CollectionBuilderService,
   FlowsActions,
+  LeftSideBarType,
+  canvasActions,
 } from '@activepieces/ui/feature-builder-store';
-import { Flow, FlowInstance } from '@activepieces/shared';
-import { ImportFlowDialogueComponent } from './import-flow-dialogue/import-flow-dialogue.component';
+import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
 import { EmbeddingService } from '@activepieces/ui/common';
+import { ImportFlowDialogueComponent } from './import-flow-dialogue/import-flow-dialogue.component';
 
 @Component({
   selector: 'app-flow-builder-header',
@@ -31,8 +33,8 @@ import { EmbeddingService } from '@activepieces/ui/common';
 export class FlowBuilderHeaderComponent implements OnInit {
   isInDebugMode$: Observable<boolean>;
   isInReadOnlyMode$: Observable<boolean>;
-  instance$: Observable<FlowInstance | undefined>;
-  flow$: Observable<Flow>;
+  flowStatus$: Observable<FlowStatus>;
+  flow$: Observable<PopulatedFlow>;
   editingFlowName = false;
   downloadFile$: Observable<void>;
   shareFlow$: Observable<void>;
@@ -44,6 +46,9 @@ export class FlowBuilderHeaderComponent implements OnInit {
   fullLogo$: Observable<string>;
   setTitle$: Observable<void>;
   isInEmbedded$: Observable<boolean>;
+  hasFlowBeenPublished$: Observable<boolean>;
+  showNavigation$: Observable<boolean>;
+  goToFolder = $localize`Go to folder`;
   constructor(
     public dialogService: MatDialog,
     private store: Store,
@@ -56,14 +61,18 @@ export class FlowBuilderHeaderComponent implements OnInit {
     private embeddingService: EmbeddingService,
     private navigationService: NavigationService
   ) {
+    this.hasFlowBeenPublished$ = this.store.select(
+      BuilderSelectors.selectHasFlowBeenPublished
+    );
     this.isInEmbedded$ = this.embeddingService.getIsInEmbedding$();
+    this.showNavigation$ = this.embeddingService.getShowNavigationInBuilder$();
     this.fullLogo$ = this.flagService
       .getLogos()
       .pipe(map((logos) => logos.fullLogoUrl));
   }
 
   ngOnInit(): void {
-    this.instance$ = this.store.select(BuilderSelectors.selectCurrentInstance);
+    this.flowStatus$ = this.store.select(BuilderSelectors.selectFlowStatus);
     this.isInDebugMode$ = this.store.select(
       BuilderSelectors.selectIsInDebugMode
     );
@@ -77,7 +86,11 @@ export class FlowBuilderHeaderComponent implements OnInit {
     this.editingFlowName = event;
   }
   redirectHome(newWindow: boolean) {
-    this.navigationService.navigate('/flows', newWindow);
+    if (this.router.url.includes('/runs')) {
+      this.navigationService.navigate('/runs', newWindow);
+    } else {
+      this.navigationService.navigate('/flows', newWindow);
+    }
   }
   saveFlowName(flowName: string) {
     this.setTitle$ = this.appearanceService.setTitle(flowName);
@@ -121,7 +134,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
     this.matDialog.open(ImportFlowDialogueComponent);
   }
 
-  deleteFlow(flow: Flow) {
+  deleteFlow(flow: PopulatedFlow) {
     const dialogData: DeleteEntityDialogData = {
       deleteEntity$: this.flowService.delete(flow.id),
       entityName: flow.version.displayName,
@@ -143,6 +156,13 @@ export class FlowBuilderHeaderComponent implements OnInit {
     );
   }
 
+  showVersions() {
+    this.store.dispatch(
+      canvasActions.setLeftSidebar({
+        sidebarType: LeftSideBarType.VERSIONS_HISTORY,
+      })
+    );
+  }
   openDashboardToFolder() {
     this.openDashboardOnFolder$ = this.store
       .select(BuilderSelectors.selectCurrentFlowFolderId)

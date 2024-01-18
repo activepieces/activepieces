@@ -1,3 +1,5 @@
+import { encoding_for_model } from "tiktoken";
+
 export const Languages = [
     { "value": "es", "label": "Spanish" },
     { "value": "it", "label": "Italian" },
@@ -54,6 +56,114 @@ export const Languages = [
     { "value": "ur", "label": "Urdu" },
     { "value": "vi", "label": "Vietnamese" },
     { "value": "zh", "label": "Chinese (Simplified)" },
-    { "value": "cy", "label": "Welsh"},
-    { "value": "be", "label": "Belarusian"},
+    { "value": "cy", "label": "Welsh" },
+    { "value": "be", "label": "Belarusian" },
 ]
+
+export const billingIssueMessage = `Error Occurred: 429 \n
+1. Ensure that billing is enabled on your OpenAI platform. \n
+2. Generate a new API key. \n
+3. Attempt the process again. \n
+For guidance, visit: https://beta.openai.com/account/billing`;
+
+export const unauthorizedMessage = `Error Occurred: 401 \n
+Ensure that your API key is valid. \n`;
+
+export const sleep = (ms: number) => {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export const streamToBuffer = (stream: any) => {
+    const chunks: any[] = [];
+    return new Promise((resolve, reject) => {
+        stream.on('data', (chunk: any) => chunks.push(Buffer.from(chunk)));
+        stream.on('error', (err: any) => reject(err));
+        stream.on('end', () => resolve(Buffer.concat(chunks)));
+    })
+}
+
+export const calculateTokensFromString = (string: string, model: string) => {
+    try {
+        const encoder = encoding_for_model(model as any);
+        const tokens = encoder.encode(string);
+        encoder.free();
+
+        return tokens.length;
+    }
+    catch (e) {
+        // Model not supported by tiktoken, every 4 chars is a token
+        return Math.round(string.length / 4);
+    }
+}
+
+export const calculateMessagesTokenSize = async (messages: any[], model: string) => {
+    let tokenLength = 0;
+    await Promise.all(messages.map((message: any) => {
+        return new Promise(resolve => {
+            tokenLength += calculateTokensFromString(message.content, model);
+            resolve(tokenLength);
+        })
+    }))
+
+    return tokenLength;
+}
+
+export const reduceContextSize = async (messages: any[], model: string, maxTokens: number) => {
+    // TODO: Summarize context instead of cutoff
+    const cutoffSize = Math.round(messages.length * 0.1);
+    const cutoffMessages = messages.splice(cutoffSize, messages.length - 1);
+
+    if (await calculateMessagesTokenSize(cutoffMessages, model) > (maxTokens / 1.5)) {
+        reduceContextSize(cutoffMessages, model, maxTokens);
+    }
+
+    return cutoffMessages;
+}
+
+export const exceedsHistoryLimit = (tokenLength: number, model: string, maxTokens: number) => {
+    if (tokenLength >= tokenLimit / 1.1 || tokenLength >= (modelTokenLimit(model) - maxTokens) / 1.1) {
+        return true;
+    }
+
+    return false;
+}
+
+export const tokenLimit = 32000;
+
+export const modelTokenLimit = (model: string) => {
+    switch (model) {
+        case 'gpt-4-1106-preview': return 128000;
+        case 'gpt-4-vision-preview': return 128000;
+        case 'gpt-4': return 8192;
+        case 'gpt-4-32k': return 32768;
+        case 'gpt-4-0613': return 8192;
+        case 'gpt-4-32k-0613': return 32768;
+        case 'gpt-4-0314': return 8192;
+        case 'gpt-4-32k-0314': return 32768;
+        case 'gpt-3.5-turbo-1106': return 16385;
+        case 'gpt-3.5-turbo': return 4096;
+        case 'gpt-3.5-turbo-16k': return 16385;
+        case 'gpt-3.5-turbo-instruct': return 4096;
+        case 'gpt-3.5-turbo-0613': return 4096;
+        case 'gpt-3.5-turbo-16k-0613': return 16385;
+        case 'gpt-3.5-turbo-0301': return 4096;
+        case 'text-davinci-003': return 4096;
+        case 'text-davinci-002': return 4096;
+        case 'code-davinci-002': return 8001;
+        case 'text-moderation-latest': return 32768;
+        case 'text-moderation-stable': return 32768;
+        default: return 2048;
+    }
+};
+
+// List of non-text models to filter out in Ask GPT action
+export const notLLMs = [
+    'whisper-1',
+    'canary-whisper',
+    'canary-tts',
+    'tts-1',
+    'tts-1-hd',
+    'tts-1-1106',
+    'dall-e-3',
+    'dall-e-2',
+];

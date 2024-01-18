@@ -25,7 +25,7 @@ export const dropbox = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/dropbox.png',
   actions: [dropboxSearch, dropboxCreateNewTextFile, dropboxUploadFile,
     dropboxGetFileLink, dropboxDeleteFile, dropboxMoveFile, dropboxCopyFile, dropboxCreateNewFolder, dropboxDeleteFolder, dropboxMoveFolder, dropboxCopyFolder, dropboxListAFolder],
-  displayName: "DropBox",
+  displayName: "Dropbox",
   authors: ['kanarelo', 'BastienMe'],
   triggers: [],
   auth: dropboxAuth,

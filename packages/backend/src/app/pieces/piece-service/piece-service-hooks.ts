@@ -1,3 +1,4 @@
+import { PlatformId } from '@activepieces/ee-shared'
 import { PackageType, PiecePackage, ProjectId } from '@activepieces/shared'
 
 const defaultHooks: PieceServiceHooks = {
@@ -28,4 +29,5 @@ export type GetPieceArchivePackageParams = {
     pieceName: string
     pieceVersion: string
     projectId: ProjectId
+    platformId?: PlatformId
 }

@@ -8,9 +8,9 @@ import { apiTableFindRecord } from "./lib/actions/find-record";
 export const APITableAuth = PieceAuth.CustomAuth({
     required: true,
     description: `
-    To obtain your APITable token, follow these steps:
+    To obtain your AITable token, follow these steps:
 
-    1. Log in to your ApiTable account.
+    1. Log in to your AITable account.
     2. Visit https://apitable.com/workbench
     3. Click on your profile picture (Bottom left).
     4. Click on "My Settings".
@@ -28,13 +28,13 @@ export const APITableAuth = PieceAuth.CustomAuth({
         displayName: 'Instance Url',
         description: 'The url of the APITable instance.',
         required: true,
-        defaultValue: 'https://api.apitable.com',
+        defaultValue: 'https://api.aitable.ai',
       }),
     }
 })
 
 export const apitable = createPiece({
-  displayName: "APITable",
+  displayName: "AITable",
   auth: APITableAuth,
   description: `Interactive spreadsheets with collaboration`,
   minimumSupportedRelease: '0.5.0',

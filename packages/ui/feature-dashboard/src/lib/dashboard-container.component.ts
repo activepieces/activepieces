@@ -6,7 +6,7 @@ import {
   ProjectSelectors,
   environment,
 } from '@activepieces/ui/common';
-import { Observable, map } from 'rxjs';
+import { Observable, combineLatest, map } from 'rxjs';
 import { ApFlagId, Project } from '@activepieces/shared';
 import { Store } from '@ngrx/store';
 
@@ -22,12 +22,24 @@ export class DashboardContainerComponent {
   showSidnav$: Observable<boolean>;
   isInPlatformRoute$: Observable<boolean>;
   currentProject$: Observable<Project>;
+  showPoweredByAp$: Observable<boolean>;
   constructor(
     private flagService: FlagService,
     private embeddedService: EmbeddingService,
     private dashboardService: DashboardService,
     private store: Store
   ) {
+    this.showPoweredByAp$ = combineLatest({
+      showPoweredByAp: this.flagService.isFlagEnabled(
+        ApFlagId.SHOW_POWERED_BY_AP
+      ),
+      isInPlatformRoute: this.dashboardService.getIsInPlatformRoute(),
+    }).pipe(
+      map((res) => {
+        return !res.isInPlatformRoute && res.showPoweredByAp;
+      })
+    );
+
     this.isEmbedded$ = this.embeddedService.getIsInEmbedding$();
     this.showSidnav$ = this.embeddedService
       .getState$()

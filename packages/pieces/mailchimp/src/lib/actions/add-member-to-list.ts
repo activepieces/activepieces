@@ -26,14 +26,14 @@ export const addMemberToList = createAction({
       required: true,
     }),
     list_id: mailchimpCommon.mailChimpListIdDropdown,
-    status: Property.StaticDropdown<MailChimpWebhookType>({
+    status: Property.StaticDropdown<Status>({
       displayName: 'Status',
       required: true,
       options: {
         disabled: false,
         options: [
-          { label: 'Subscribed', value: MailChimpWebhookType.SUBSCRIBE },
-          { label: 'Unsubscribed', value: MailChimpWebhookType.UNSUBSCRIBE },
+          { label: 'Subscribed', value: 'subscribed' },
+          { label: 'Unsubscribed', value: 'unsubscribed' },
           { label: 'Cleaned', value: MailChimpWebhookType.CLEANED },
           { label: 'Pending', value: MailChimpWebhookType.PENDING },
           { label: 'Transactional', value: MailChimpWebhookType.TRANSACTIONAL },
@@ -49,13 +49,17 @@ export const addMemberToList = createAction({
       accessToken: access_token,
       server: mailChimpServerPrefix,
     });
-    return await mailchimp.lists.addListMember(context.propsValue.list_id!, {
-      email_address: context.propsValue.email!,
-      status: context.propsValue.status! as Status,
-      merge_fields: {
-        FNAME: context.propsValue.first_name || '',
-        LNAME: context.propsValue.last_name || '',
-      },
-    });
+    try {
+      return await mailchimp.lists.addListMember(context.propsValue.list_id!, {
+        email_address: context.propsValue.email!,
+        status: context.propsValue.status,
+        merge_fields: {
+          FNAME: context.propsValue.first_name || '',
+          LNAME: context.propsValue.last_name || '',
+        },
+      });
+    } catch (e) {
+      throw new Error(JSON.stringify(e))
+    }
   },
 });

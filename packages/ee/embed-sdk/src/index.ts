@@ -35,7 +35,8 @@ export interface ActivepiecesVendorInit {
   data: {
     prefix: string;
     initialRoute: string;
-    hideSidebar:boolean
+    hideSidebar: boolean;
+    disableNavigationInBuilder: boolean;
   };
 }
 export const jwtTokenQueryParamName = "jwtToken"
@@ -44,7 +45,8 @@ export const jwtTokenQueryParamName = "jwtToken"
 class ActivepiecesEmbedded {
   _prefix = '';
   _initialRoute = '';
-  _hideSidebar=false;
+  _hideSidebar = false;
+  _disableNavigationInBuilder = true;
   iframeParentOrigin = window.location.origin;
   handleVendorNavigation?: (data: { route: string }) => void;
   handleClientNavigation?: (data: { route: string }) => void;
@@ -52,15 +54,18 @@ class ActivepiecesEmbedded {
   configure({
     prefix,
     initialRoute,
-    hideSidebar
+    hideSidebar,
+    disableNavigationInBuilder
   }: {
     prefix?: string;
     initialRoute?: string;
-    hideSidebar?:boolean
+    hideSidebar?: boolean;
+    disableNavigationInBuilder?: boolean;
   }) {
     this._prefix = prefix || '/';
     this._initialRoute = initialRoute || '/';
-    this._hideSidebar= hideSidebar || false;
+    this._hideSidebar = hideSidebar || false;
+    this._disableNavigationInBuilder = disableNavigationInBuilder === undefined ? true : disableNavigationInBuilder;
     setIframeChecker(this);
   }
 }
@@ -82,7 +87,8 @@ const setIframeChecker = (client: ActivepiecesEmbedded) => {
                 data: {
                   prefix: client._prefix,
                   initialRoute: client._initialRoute,
-                  hideSidebar : client._hideSidebar
+                  hideSidebar: client._hideSidebar,
+                  disableNavigationInBuilder: client._disableNavigationInBuilder,
                 },
               };
               iframeWindow.postMessage(apEvent, '*');
@@ -105,10 +111,12 @@ const checkForClientRouteChanges = (client: ActivepiecesEmbedded) => {
       if (
         event.data.type === ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED
       ) {
+        const prefixStartsWithSlash = client._prefix.startsWith('/')? client._prefix : `/${client._prefix}`;
+        const routeWithPrefix = prefixStartsWithSlash + event.data.data.route;
         if (!client.handleClientNavigation) {
-          this.history.replaceState({}, '', event.data.data.route);
+          this.history.replaceState({}, '', routeWithPrefix);
         } else {
-          client.handleClientNavigation({ route: event.data.data.route });
+          client.handleClientNavigation({ route: routeWithPrefix });
         }
       }
     }

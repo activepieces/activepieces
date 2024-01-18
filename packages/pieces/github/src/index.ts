@@ -11,7 +11,7 @@ export const githubAuth = PieceAuth.OAuth2({
 })
 
 export const github = createPiece({
-  displayName: "Github",
+  displayName: "GitHub",
       minimumSupportedRelease: '0.5.0',
     logoUrl: 'https://cdn.activepieces.com/pieces/github.png',
   auth: githubAuth,

@@ -1,3 +1,4 @@
+import { TriggerType } from '../../flows/triggers/trigger'
 import { ActionType } from '../../flows/actions/action'
 
 export enum StepOutputStatus {
@@ -8,37 +9,126 @@ export enum StepOutputStatus {
     SUCCEEDED = 'SUCCEEDED',
 }
 
-export type StopResponse = {
-    status?: number
-    body?: unknown
-    headers?: Record<string, string>
-}
-
-export type StepOutput<T extends ActionType = ActionType, O = unknown> = {
+type BaseStepOutputParams<T extends ActionType | TriggerType, OUTPUT> = {
     type: T
     status: StepOutputStatus
     input: unknown
-    output?: O
+    output?: OUTPUT
     duration?: number
     errorMessage?: unknown
-    standardOutput?: unknown
 }
 
-type LoopOnItemsOutput = {
+export class GenricStepOutput<T extends ActionType | TriggerType, OUTPUT> {
+    type: T
+    status: StepOutputStatus
+    input: unknown
+    output?: OUTPUT
+    duration?: number
+    errorMessage?: unknown
+
+    constructor(step: BaseStepOutputParams<T, OUTPUT>) {
+        this.type = step.type
+        this.status = step.status
+        this.input = step.input
+        this.output = step.output
+        this.duration = step.duration
+        this.errorMessage = step.errorMessage
+    }
+
+    setOutput(output: OUTPUT): GenricStepOutput<T, OUTPUT> {
+        return new GenricStepOutput<T, OUTPUT>({
+            ...this,
+            output,
+        })
+    }
+
+    setStatus(status: StepOutputStatus): GenricStepOutput<T, OUTPUT> {
+        return new GenricStepOutput<T, OUTPUT>({
+            ...this,
+            status,
+        })
+    }
+
+    setErrorMessage(errorMessage: unknown): GenricStepOutput<T, OUTPUT> {
+        return new GenricStepOutput<T, OUTPUT>({
+            ...this,
+            errorMessage,
+        })
+    }
+
+    setDuration(duration: number): GenricStepOutput<T, OUTPUT> {
+        return new GenricStepOutput<T, OUTPUT>({
+            ...this,
+            duration,
+        })
+    }
+
+    static create<T extends ActionType | TriggerType, OUTPUT>({ input, type, status, output }: { input: unknown, type: T, status: StepOutputStatus, output?: OUTPUT }): GenricStepOutput<T, OUTPUT> {
+        return new GenricStepOutput<T, OUTPUT>({
+            input,
+            type,
+            status,
+            output,
+        })
+    }
+
+}
+
+export type StepOutput = GenricStepOutput<ActionType.LOOP_ON_ITEMS, LoopStepResult> | GenricStepOutput<ActionType.BRANCH, BranchStepResult> | GenricStepOutput<Exclude<ActionType, ActionType.LOOP_ON_ITEMS | ActionType.BRANCH> | TriggerType, unknown>
+
+type BranchStepResult = {
+    condition: boolean
+}
+
+export class BranchStepOutput extends GenricStepOutput<ActionType.BRANCH, BranchStepResult> {
+    constructor(step: BaseStepOutputParams<ActionType.BRANCH, BranchStepResult>) {
+        super(step)
+    }
+
+    static init({ input }: { input: unknown }): BranchStepOutput {
+        return new BranchStepOutput({
+            type: ActionType.BRANCH,
+            input,
+            status: StepOutputStatus.SUCCEEDED,
+        })
+    }
+
+}
+
+
+export type LoopStepResult = {
     item: unknown
     index: number
     iterations: Record<string, StepOutput>[]
 }
 
-export type LoopOnItemsStepOutput = StepOutput<ActionType.LOOP_ON_ITEMS, LoopOnItemsOutput>
+export class LoopStepOutput extends GenricStepOutput<ActionType.LOOP_ON_ITEMS, LoopStepResult> {
+    constructor(step: BaseStepOutputParams<ActionType.LOOP_ON_ITEMS, LoopStepResult>) {
+        super(step)
+        this.output = step.output ?? {
+            item: undefined,
+            index: 0,
+            iterations: [],
+        }
+    }
 
-type BranchOutput = {
-    condition: boolean
+    static init({ input }: { input: unknown }): LoopStepOutput {
+        return new LoopStepOutput({
+            type: ActionType.LOOP_ON_ITEMS,
+            input,
+            status: StepOutputStatus.SUCCEEDED,
+        })
+    }
+
+    addIteration({ item, index }: { item: unknown, index: number }): LoopStepOutput {
+        return new LoopStepOutput({
+            ...this,
+            output: {
+                item,
+                index,
+                iterations: [...(this.output?.iterations ?? []), {}],
+            },
+        })
+    }
+
 }
-
-export type BranchStepOutput = StepOutput<ActionType.BRANCH, BranchOutput>
-
-export type StepOutputForActionType<T extends ActionType, O = unknown> =
-  T extends ActionType.BRANCH ? BranchStepOutput :
-      T extends ActionType.LOOP_ON_ITEMS ? LoopOnItemsStepOutput :
-          StepOutput<T, O>
