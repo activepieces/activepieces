@@ -16,6 +16,7 @@ import { Observable, map, tap } from 'rxjs';
 import {
   AuthenticationService,
   PlatformService,
+  featureDisabledTooltip,
 } from '@activepieces/ui/common';
 import { ActivatedRoute } from '@angular/router';
 import { localesMap } from '@activepieces/ui/common';
@@ -43,6 +44,7 @@ export class PlatformAppearanceComponent implements OnInit {
   updatePlatform$?: Observable<void>;
   locales = localesMap;
   title = $localize`Appearance`;
+  featureDisabledTooltip = featureDisabledTooltip;
   @Input({ required: true }) platform!: Platform;
   constructor(
     private fb: FormBuilder,
@@ -118,6 +120,10 @@ export class PlatformAppearanceComponent implements OnInit {
       pickerCtrl: this.platform.primaryColor,
       ...spreadIfDefined('defaultLocale', this.platform.defaultLocale),
     });
+
+    if (this.platform.isDemo) {
+      this.formGroup.disable();
+    }
   }
   save() {
     this.formGroup.markAllAsTouched();
