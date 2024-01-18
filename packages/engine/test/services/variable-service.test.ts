@@ -1,4 +1,4 @@
-import { ActionType, GenricStepOutput, StepOutputStatus, TriggerType } from '@activepieces/shared'
+import { ActionType, GenericStepOutput, StepOutputStatus, TriggerType } from '@activepieces/shared'
 import { VariableService } from '../../src/lib/services/variable-service'
 import { PieceAuth, Validators, Property, ApFile } from '@activepieces/pieces-framework'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
@@ -11,7 +11,7 @@ const variableService = new VariableService({
 const executionState = FlowExecutorContext.empty()
     .upsertStep(
         'trigger',
-        GenricStepOutput.create({
+        GenericStepOutput.create({
             type: TriggerType.PIECE,
             status: StepOutputStatus.SUCCEEDED,
             input: {},
@@ -23,7 +23,7 @@ const executionState = FlowExecutorContext.empty()
         }),
     )
     .upsertStep('step_1',
-        GenricStepOutput.create({
+        GenericStepOutput.create({
 
             type: ActionType.PIECE,
             status: StepOutputStatus.SUCCEEDED,
@@ -32,7 +32,7 @@ const executionState = FlowExecutorContext.empty()
                 success: true,
             },
         }))
-    .upsertStep('step_2', GenricStepOutput.create({
+    .upsertStep('step_2', GenericStepOutput.create({
         type: ActionType.PIECE,
         status: StepOutputStatus.SUCCEEDED,
         input: {},

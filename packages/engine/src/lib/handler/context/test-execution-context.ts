@@ -1,4 +1,4 @@
-import { ActionType, BranchStepOutput, FlowVersion, GenricStepOutput, LoopStepOutput, StepOutputStatus, TriggerType, flowHelper } from '@activepieces/shared'
+import { ActionType, BranchStepOutput, FlowVersion, GenericStepOutput, LoopStepOutput, StepOutputStatus, TriggerType, flowHelper } from '@activepieces/shared'
 import { FlowExecutorContext } from './flow-execution-context'
 import { variableService } from '../../services/variable-service'
 
@@ -47,7 +47,7 @@ export const testExecutionContext = {
                 case TriggerType.EMPTY:
                 case TriggerType.PIECE:
                 case TriggerType.WEBHOOK:
-                    flowExecutionContext = flowExecutionContext.upsertStep(step.name, GenricStepOutput.create({
+                    flowExecutionContext = flowExecutionContext.upsertStep(step.name, GenericStepOutput.create({
                         input: step.settings,
                         type: stepType,
                         status: StepOutputStatus.SUCCEEDED,

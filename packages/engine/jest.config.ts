@@ -12,6 +12,6 @@ export default {
       },
     ],
   },
-  moduleFileExtensions: ['ts', 'js', 'html'],
+  moduleFileExtensions: ['ts', 'js', 'html', 'node'],
   coverageDirectory: '../../coverage/packages/engine',
 };

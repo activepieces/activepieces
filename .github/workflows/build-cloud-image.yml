@@ -2,11 +2,12 @@ name: Build Cloud Image
 
 on:
   workflow_dispatch:
+    inputs:
+      MY_VERSION:
+        required: true
 
 jobs:
   Release:
-    env:
-      MY_VERSION: sign9
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
@@ -33,4 +34,4 @@ jobs:
             linux/amd64
           push: true
           tags: |
-            ghcr.io/activepieces/activepieces-cloud:${{ env.RELEASE }}.${{ env.MY_VERSION }}
+            ghcr.io/activepieces/activepieces-cloud:${{ env.RELEASE }}.${{ inputs.MY_VERSION }}
