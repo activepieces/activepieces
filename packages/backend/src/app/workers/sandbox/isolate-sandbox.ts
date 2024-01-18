@@ -5,6 +5,8 @@ import { exec } from 'node:child_process'
 import { ExecuteSandboxResult, AbstractSandbox, SandboxCtorParams } from './abstract-sandbox'
 import { EngineResponseStatus } from '@activepieces/shared'
 import { logger } from '../../helper/logger'
+import { system } from '../../helper/system/system'
+import { SystemProp } from '../../helper/system/system-prop'
 
 const getIsolateExecutableName = (): string => {
     const defaultName = 'isolate'
@@ -42,7 +44,7 @@ export class IsolateSandbox extends AbstractSandbox {
 
         try {
             const basePath = path.resolve(__dirname.split('/dist')[0])
-
+            const pieceSource = system.getOrThrow(SystemProp.PIECES_SOURCE)
             const fullCommand = [
                 '--dir=/usr/bin/',
                 `--dir=/etc/=${etcDir}`,
@@ -58,7 +60,7 @@ export class IsolateSandbox extends AbstractSandbox {
                 '--run',
                 '--env=HOME=/tmp/',
                 '--env=NODE_OPTIONS=\'--enable-source-maps\'',
-                '--env=AP_PIECES_SOURCE',
+                `--env=AP_PIECES_SOURCE=${pieceSource}`,
                 `--env=AP_BASE_CODE_DIRECTORY=${IsolateSandbox.cacheBindPath}/codes`,
                 AbstractSandbox.nodeExecutablePath,
                 `${IsolateSandbox.cacheBindPath}/main.js`,
