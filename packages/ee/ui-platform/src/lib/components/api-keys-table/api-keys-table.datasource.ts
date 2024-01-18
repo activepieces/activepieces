@@ -1,5 +1,13 @@
 import { DataSource } from '@angular/cdk/collections';
-import { Observable, BehaviorSubject, tap, switchMap, map } from 'rxjs';
+import {
+  Observable,
+  BehaviorSubject,
+  tap,
+  switchMap,
+  map,
+  of,
+  delay,
+} from 'rxjs';
 import { combineLatest } from 'rxjs';
 import { ApiKeyResponseWithoutValue } from '@activepieces/ee-shared';
 import { ApiKeysService } from '../../service/api-keys.service';
@@ -14,7 +22,8 @@ export class ApiKeysDataSource extends DataSource<ApiKeyResponseWithoutValue> {
   isLoading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
   constructor(
     private refresh$: Observable<boolean>,
-    private apiKeyService: ApiKeysService
+    private apiKeyService: ApiKeysService,
+    private fakeData: boolean
   ) {
     super();
   }
@@ -26,6 +35,12 @@ export class ApiKeysDataSource extends DataSource<ApiKeyResponseWithoutValue> {
    */
 
   connect(): Observable<ApiKeyResponseWithoutValue[]> {
+    if (this.fakeData) {
+      return of([]).pipe(
+        delay(100),
+        tap(() => this.isLoading$.next(false))
+      );
+    }
     return combineLatest([this.refresh$]).pipe(
       tap(() => {
         this.isLoading$.next(true);
