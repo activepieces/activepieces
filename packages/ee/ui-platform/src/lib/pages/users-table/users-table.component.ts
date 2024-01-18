@@ -8,6 +8,9 @@ import {
 import { Observable, Subject, startWith, tap } from 'rxjs';
 import { UserResponse, UserStatus } from '@activepieces/shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { Platform } from '@activepieces/ee-shared';
+import { ActivatedRoute } from '@angular/router';
+import { PLATFORM_RESOLVER_KEY } from '../../platform.resolver';
 
 @Component({
   selector: 'app-users-table',
@@ -24,6 +27,7 @@ export class UsersTableComponent {
   UserStatus = UserStatus;
   refresh$ = new Subject<boolean>();
   platformOwnerId: string;
+  platform: Platform;
   displayedColumns = [
     'email',
     'name',
@@ -35,12 +39,16 @@ export class UsersTableComponent {
   constructor(
     private platformService: PlatformService,
     private snackBar: MatSnackBar,
-    private authenticationService: AuthenticationService
+    private authenticationService: AuthenticationService,
+    private route: ActivatedRoute
   ) {
+    this.platform = this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
     this.platformOwnerId = this.authenticationService.currentUser.id;
     this.dataSource = new UsersDataSource(
       this.refresh$.asObservable().pipe(startWith(true)),
-      this.platformService
+      this.platformService,
+      this.authenticationService,
+      !!this.platform.isDemo
     );
   }
 
