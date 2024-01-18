@@ -3,7 +3,8 @@
     type="button" [disabled]="buttonDisabled" (click)="emit()" [tabIndex]="tabIndex">
     <svg-icon *ngIf="iconFilename && !iconUrl"
       [svgStyle]="{ width:width? width + 'px':'initial', height:height? height + 'px':'initial' }"
-      src="assets/img/custom/{{ iconFilename }}" [class]="'ap-flex ap-items-center ap-justify-center '+ extraClasses"
+      src="assets/img/custom/{{ iconFilename }}"
+      [class]="'ap-flex ap-items-center ap-justify-center '+ extraClasses +(buttonDisabled? disabledClass:'')"
       [applyClass]="true"></svg-icon>
     <div *ngIf="iconUrl" [class]="'ap-flex ap-items-center ap-justify-center '+ extraClasses">
       <img [src]="iconUrl" [style]="{ width:width? width + 'px':'initial', height:height? height + 'px':'initial' }">

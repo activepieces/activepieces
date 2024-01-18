@@ -13,6 +13,7 @@ import {
   DeleteEntityDialogData,
   OAuth2AppsService,
   PlatformService,
+  featureDisabledTooltip,
 } from '@activepieces/ui/common';
 import { Platform } from '@activepieces/ee-shared';
 import { ActivatedRoute } from '@angular/router';
@@ -59,6 +60,7 @@ export class PiecesTableComponent implements OnInit {
   addPackageDialogClosed$!: Observable<Record<string, string> | null>;
   cloudAuthToggleFormControl = new FormControl(false, { nonNullable: true });
   toggelCloudOAuth2$: Observable<void>;
+  featDisabledTooltipText = featureDisabledTooltip;
   constructor(
     private piecesService: PieceMetadataService,
     private route: ActivatedRoute,
@@ -70,18 +72,21 @@ export class PiecesTableComponent implements OnInit {
     this.toggelCloudOAuth2$ = this.getCloudOAuth2ToggleListener();
   }
   ngOnInit(): void {
-    this.platform$ = new BehaviorSubject(
-      this.route.snapshot.data[PLATFORM_RESOLVER_KEY]
-    );
+    const platform: Platform = this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
+    this.platform$ = new BehaviorSubject(platform);
     this.dataSource = new PiecesTableDataSource(
       this.piecesService,
       this.searchFormControl.valueChanges.pipe(startWith('')),
       this.oauth2AppsService,
-      this.refresh$.asObservable().pipe(startWith(true as const))
+      this.refresh$.asObservable().pipe(startWith(true as const)),
+      this.platform$.value.isDemo || false
     );
     this.cloudAuthToggleFormControl.setValue(
       this.platform$.value.cloudAuthEnabled
     );
+    if (this.platform$.value.isDemo) {
+      this.cloudAuthToggleFormControl.disable();
+    }
   }
 
   getCloudOAuth2ToggleListener() {
