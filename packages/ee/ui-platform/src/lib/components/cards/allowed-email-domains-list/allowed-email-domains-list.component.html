@@ -13,7 +13,8 @@
 
 
         </div>
-        <ap-button btnSize="medium" (buttonClicked)="addDomain()" [disabled]="!platform.ssoEnabled">+ Add
+        <ap-button btnSize="medium" (buttonClicked)="addDomain()"
+            [disabled]="!platform.ssoEnabled || !!platform.isDemo">+ Add
             Domain</ap-button>
     </div>
     <div *ngFor="let domain of platform.allowedAuthDomains"

@@ -1,15 +1,13 @@
 <div class="ap-h-full ap-pt-2 " *ngIf="platform$ | async as platform">
     <div class="ap-flex ap-max-w-[56.25rem] ap-flex-col ap-gap-4 ">
-        <div class="ap-mb-2 ap-mt-2" *ngIf="!platform.ssoEnabled">
+        <div class="ap-mb-2 ap-mt-2" *ngIf="!platform.ssoEnabled || platform.isDemo">
             <ap-upgrade-note></ap-upgrade-note>
         </div>
         <app-allowed-email-domains-list [platform]="platform"
             (platformUpdated)="platformUpdated($event)"></app-allowed-email-domains-list>
-        <app-configure-confederated-authn-card [platform]="platform"
-            (platformUpdated)="platformUpdated($event)"
+        <app-configure-confederated-authn-card [platform]="platform" (platformUpdated)="platformUpdated($event)"
             [federatedAuthnProvider]="FederatedAuthnProviderEnum.Google"></app-configure-confederated-authn-card>
-        <app-configure-confederated-authn-card [platform]="platform"
-            (platformUpdated)="platformUpdated($event)"
+        <app-configure-confederated-authn-card [platform]="platform" (platformUpdated)="platformUpdated($event)"
             [federatedAuthnProvider]="FederatedAuthnProviderEnum.Github"></app-configure-confederated-authn-card>
         <app-configure-allowing-email-logins-card [platform]="platform"
             (platformUpdated)="platformUpdated($event)"></app-configure-allowing-email-logins-card>

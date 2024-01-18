@@ -15,7 +15,7 @@
             [class.!ap-opacity-100]="toggleDisabled" role="status">
         </div>
         <mat-slide-toggle [disabled]="toggleDisabled" (change)="toggleClicked($event)" [checked]="toggleChecked"
-            [disabled]="!platform.ssoEnabled" color="primary">
+            [disabled]="!platform.ssoEnabled || !!platform.isDemo" color="primary">
         </mat-slide-toggle>
     </div>
 
