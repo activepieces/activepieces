@@ -18,9 +18,9 @@ export function createCustomApiCallAction({ auth, baseUrl, authMapping }: {
   authMapping?: (auth: PieceAuthProperty) => HttpHeaders
 }) {
   return createAction({
-    name: 'arbitrary_http_request',
-    displayName: 'Send Arbitrary HTTP Request',
-    description: 'Send an arbitrary HTTP request to a specific endpoint',
+    name: 'custom_api_call',
+    displayName: 'Custom API Call',
+    description: 'Send a custom API call to a specific endpoint',
     auth: auth ? auth : undefined,
     props: {
       url: Property.ShortText({
