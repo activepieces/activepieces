@@ -1,0 +1,29 @@
+{
+  "name": "pieces-wordpress",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/wordpress/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/wordpress",
+        "tsConfig": "packages/pieces/community/wordpress/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/wordpress/package.json",
+        "main": "packages/pieces/community/wordpress/src/index.ts",
+        "assets": ["packages/pieces/community/wordpress/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/community/wordpress/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

@@ -1,0 +1,29 @@
+{
+  "name": "pieces-gravityforms",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/gravityforms/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/gravityforms",
+        "tsConfig": "packages/pieces/community/gravityforms/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/gravityforms/package.json",
+        "main": "packages/pieces/community/gravityforms/src/index.ts",
+        "assets": ["packages/pieces/community/gravityforms/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/community/gravityforms/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

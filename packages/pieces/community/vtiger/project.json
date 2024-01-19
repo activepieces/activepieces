@@ -1,0 +1,36 @@
+{
+  "name": "pieces-vtiger",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/vtiger/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/vtiger",
+        "tsConfig": "packages/pieces/community/vtiger/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/vtiger/package.json",
+        "main": "packages/pieces/community/vtiger/src/index.ts",
+        "assets": ["packages/pieces/community/vtiger/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-vtiger {args.ver} {args.tag}",
+      "dependsOn": ["build"]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/community/vtiger/**/*.ts",
+          "packages/pieces/community/vtiger/package.json"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

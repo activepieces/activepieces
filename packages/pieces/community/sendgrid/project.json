@@ -1,0 +1,29 @@
+{
+  "name": "pieces-sendgrid",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/sendgrid/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/sendgrid",
+        "tsConfig": "packages/pieces/community/sendgrid/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/sendgrid/package.json",
+        "main": "packages/pieces/community/sendgrid/src/index.ts",
+        "assets": ["packages/pieces/community/sendgrid/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/community/sendgrid/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

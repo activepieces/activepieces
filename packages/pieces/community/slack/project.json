@@ -1,0 +1,29 @@
+{
+  "name": "pieces-slack",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/slack/src",
+  "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/community/slack/**/*.ts"]
+      }
+    },
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/slack",
+        "tsConfig": "packages/pieces/community/slack/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/slack/package.json",
+        "main": "packages/pieces/community/slack/src/index.ts",
+        "assets": ["packages/pieces/community/slack/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    }
+  },
+  "tags": []
+}

@@ -19,13 +19,7 @@ export const AppCredentialEntity = new EntitySchema<AppCredentialSchema>({
             type: JSONB_COLUMN_TYPE,
         },
     },
-    indices: [
-        {
-            name: 'idx_app_credentials_projectId_appName',
-            columns: ['appName', 'projectId'],
-            unique: true,
-        },
-    ],
+    indices: [],
     relations: {
         project: {
             type: 'many-to-one',

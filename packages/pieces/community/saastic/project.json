@@ -1,0 +1,36 @@
+{
+  "name": "pieces-saastic",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/saastic/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/saastic",
+        "tsConfig": "packages/pieces/community/saastic/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/saastic/package.json",
+        "main": "packages/pieces/community/saastic/src/index.ts",
+        "assets": ["packages/pieces/community/saastic/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-saastic {args.ver} {args.tag}",
+      "dependsOn": ["build"]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/community/saastic/**/*.ts",
+          "packages/pieces/community/saastic/package.json"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

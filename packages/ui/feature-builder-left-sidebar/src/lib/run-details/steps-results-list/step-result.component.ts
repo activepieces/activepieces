@@ -11,7 +11,7 @@ import { map, Observable, startWith, tap } from 'rxjs';
 import { RunDetailsService } from '../iteration-details.service';
 import {
   ActionType,
-  GenricStepOutput,
+  GenericStepOutput,
   LoopStepResult,
   StepOutput,
   StepOutputStatus,
@@ -180,7 +180,7 @@ export class StepResultComponent implements OnInit {
     });
   }
   private checkIfLoopStepOutputFailed(
-    stepOutput: GenricStepOutput<ActionType.LOOP_ON_ITEMS, LoopStepResult>
+    stepOutput: GenericStepOutput<ActionType.LOOP_ON_ITEMS, LoopStepResult>
   ): boolean {
     return stepOutput.output
       ? stepOutput.output.iterations.some((iteration) => {
