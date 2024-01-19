@@ -10,9 +10,11 @@ import { createClickupSubtask } from './lib/actions/tasks/create-subtask';
 import { clickupTriggers as triggers } from './lib/triggers';
 import { createClickupTaskFromTemplate } from './lib/actions/tasks/create-task-from-template';
 import { updateClickupTask } from './lib/actions/tasks/update-task';
-import { getClickupTasks } from './lib/actions/tasks/get-tasks';
 import { getClickupTask } from './lib/actions/tasks/get-task';
 import { deleteClickupTask } from './lib/actions/tasks/delete-task';
+import { getClickupAccessibleCustomFields } from './lib/actions/custom-fields/get-accessible-custom-fields';
+import { setClickupCustomFieldValue } from './lib/actions/custom-fields/set-custom-fields-value';
+import { filterClickupWorkspaceTasks } from './lib/actions/tasks/get-tasks';
 
 export const clickupAuth = PieceAuth.OAuth2({
   description: '',
@@ -33,14 +35,16 @@ export const clickup = createPiece({
     createClickupFolderlessList,
     getClickupList,
     getClickupTask,
-    getClickupTasks,
+    filterClickupWorkspaceTasks,
     getClickupSpace,
     getClickupSpaces,
     getClickupTaskComments,
     createClickupTaskComment,
     createClickupSubtask,
     updateClickupTask,
-    deleteClickupTask
+    deleteClickupTask,
+    getClickupAccessibleCustomFields,
+    setClickupCustomFieldValue
   ],
   authors: ['abuaboud', 'ShayPunter', 'kanarelo'],
   triggers,

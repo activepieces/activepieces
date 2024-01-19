@@ -1,12 +1,25 @@
 import { ExecuteFlowOperation, ExecuteStepOperation, ExecuteTriggerOperation, ExecutionType, Project, ProjectId, TriggerHookType } from '@activepieces/shared'
 import { VariableService } from '../../services/variable-service'
 
+type RetryConstants = {
+    maxAttempts: number
+    retryExponential: number
+    retryInterval: number
+}
+const DEFAULT_RETRY_CONSTANTS: RetryConstants = {
+    maxAttempts: 4,
+    retryExponential: 6,
+    retryInterval: 1000,
+}
+
+
 export class EngineConstants {
     public static readonly API_URL = 'http://127.0.0.1:3000/'
     public static readonly BASE_CODE_DIRECTORY = process.env.AP_BASE_CODE_DIRECTORY ?? './codes'
     public static readonly INPUT_FILE = './input.json'
     public static readonly OUTPUT_FILE = './output.json'
     public static readonly PIECE_SOURCES = process.env.AP_PIECES_SOURCE ?? 'FILE'
+
 
     private project: Project | null = null
 
@@ -26,6 +39,7 @@ export class EngineConstants {
         public readonly flowId: string,
         public readonly flowRunId: string,
         public readonly serverUrl: string,
+        public readonly retryConstants: RetryConstants,
         public readonly executionType: ExecutionType,
         public readonly workerToken: string,
         public readonly projectId: ProjectId,
@@ -40,6 +54,7 @@ export class EngineConstants {
             input.flowVersion.flowId,
             input.flowRunId,
             input.serverUrl,
+            DEFAULT_RETRY_CONSTANTS,
             input.executionType,
             input.workerToken,
             input.projectId,
@@ -58,6 +73,7 @@ export class EngineConstants {
             input.flowVersion.flowId,
             'test-run',
             input.serverUrl,
+            DEFAULT_RETRY_CONSTANTS,
             ExecutionType.BEGIN,
             input.workerToken,
             input.projectId,
@@ -75,6 +91,7 @@ export class EngineConstants {
             input.flowVersion.flowId,
             'execute-trigger',
             input.serverUrl,
+            DEFAULT_RETRY_CONSTANTS,
             ExecutionType.BEGIN,
             input.workerToken,
             input.projectId,

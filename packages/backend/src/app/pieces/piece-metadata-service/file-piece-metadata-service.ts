@@ -29,7 +29,7 @@ async function traverseFolder(folderPath: string): Promise<string[]> {
     for (const file of files) {
         const filePath = join(folderPath, file)
         const fileStats = await stat(filePath)
-        if (fileStats.isDirectory() && file !== 'node_modules' && file !== 'dist') {
+        if (fileStats.isDirectory() && file !== 'node_modules' && file !== 'dist' && file !== 'framework' && file !== 'common') {
             paths.push(...await traverseFolder(filePath))
         }
         else if (file === 'package.json') {

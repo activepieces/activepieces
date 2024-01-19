@@ -95,6 +95,7 @@ You will not respond to any messages that require a conversational answer.
 You will not elaborate.
 You will write the code in a single line, and add ***NEW_LINE*** at the end of every statement you write.
 You MUST respond ONLY with a function call.
+You will use import to import any libraries you need. You will be penalized for using require. You will be punished for using libraries that are not imported.
                 `,
             },
             {
@@ -155,6 +156,18 @@ You MUST respond ONLY with a function call.
                 function_call: {
                     name: 'generate_code',
                     arguments: '{ "code": "export const code = async (inputs) => {***NEW_LINE*** return \'How are you?\'***NEW_LINE***};", "inputs": [] }',
+                },
+            },
+            {
+                role: 'user',
+                content: 'Using axios, send a GET request to https://cloud.activepieces.com/api/v1/pieces',
+            },
+            {
+                role: 'assistant',
+                content: null,
+                function_call: {
+                    name: 'generate_code',
+                    arguments: '{ "code": "import axios from \'axios\'***NEW_LINE***export const code = async (inputs) => {***NEW_LINE***  const response = await axios.get(\'https://cloud.activepieces.com/api/v1/pieces\');***NEW_LINE***  return response.data;***NEW_LINE***};", "inputs": [] }',
                 },
             },
         ]

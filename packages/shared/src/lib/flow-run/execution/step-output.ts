@@ -18,7 +18,7 @@ type BaseStepOutputParams<T extends ActionType | TriggerType, OUTPUT> = {
     errorMessage?: unknown
 }
 
-export class GenricStepOutput<T extends ActionType | TriggerType, OUTPUT> {
+export class GenericStepOutput<T extends ActionType | TriggerType, OUTPUT> {
     type: T
     status: StepOutputStatus
     input: unknown
@@ -35,36 +35,36 @@ export class GenricStepOutput<T extends ActionType | TriggerType, OUTPUT> {
         this.errorMessage = step.errorMessage
     }
 
-    setOutput(output: OUTPUT): GenricStepOutput<T, OUTPUT> {
-        return new GenricStepOutput<T, OUTPUT>({
+    setOutput(output: OUTPUT): GenericStepOutput<T, OUTPUT> {
+        return new GenericStepOutput<T, OUTPUT>({
             ...this,
             output,
         })
     }
 
-    setStatus(status: StepOutputStatus): GenricStepOutput<T, OUTPUT> {
-        return new GenricStepOutput<T, OUTPUT>({
+    setStatus(status: StepOutputStatus): GenericStepOutput<T, OUTPUT> {
+        return new GenericStepOutput<T, OUTPUT>({
             ...this,
             status,
         })
     }
 
-    setErrorMessage(errorMessage: unknown): GenricStepOutput<T, OUTPUT> {
-        return new GenricStepOutput<T, OUTPUT>({
+    setErrorMessage(errorMessage: unknown): GenericStepOutput<T, OUTPUT> {
+        return new GenericStepOutput<T, OUTPUT>({
             ...this,
             errorMessage,
         })
     }
 
-    setDuration(duration: number): GenricStepOutput<T, OUTPUT> {
-        return new GenricStepOutput<T, OUTPUT>({
+    setDuration(duration: number): GenericStepOutput<T, OUTPUT> {
+        return new GenericStepOutput<T, OUTPUT>({
             ...this,
             duration,
         })
     }
 
-    static create<T extends ActionType | TriggerType, OUTPUT>({ input, type, status, output }: { input: unknown, type: T, status: StepOutputStatus, output?: OUTPUT }): GenricStepOutput<T, OUTPUT> {
-        return new GenricStepOutput<T, OUTPUT>({
+    static create<T extends ActionType | TriggerType, OUTPUT>({ input, type, status, output }: { input: unknown, type: T, status: StepOutputStatus, output?: OUTPUT }): GenericStepOutput<T, OUTPUT> {
+        return new GenericStepOutput<T, OUTPUT>({
             input,
             type,
             status,
@@ -74,13 +74,13 @@ export class GenricStepOutput<T extends ActionType | TriggerType, OUTPUT> {
 
 }
 
-export type StepOutput = GenricStepOutput<ActionType.LOOP_ON_ITEMS, LoopStepResult> | GenricStepOutput<ActionType.BRANCH, BranchStepResult> | GenricStepOutput<Exclude<ActionType, ActionType.LOOP_ON_ITEMS | ActionType.BRANCH> | TriggerType, unknown>
+export type StepOutput = GenericStepOutput<ActionType.LOOP_ON_ITEMS, LoopStepResult> | GenericStepOutput<ActionType.BRANCH, BranchStepResult> | GenericStepOutput<Exclude<ActionType, ActionType.LOOP_ON_ITEMS | ActionType.BRANCH> | TriggerType, unknown>
 
 type BranchStepResult = {
     condition: boolean
 }
 
-export class BranchStepOutput extends GenricStepOutput<ActionType.BRANCH, BranchStepResult> {
+export class BranchStepOutput extends GenericStepOutput<ActionType.BRANCH, BranchStepResult> {
     constructor(step: BaseStepOutputParams<ActionType.BRANCH, BranchStepResult>) {
         super(step)
     }
@@ -102,7 +102,7 @@ export type LoopStepResult = {
     iterations: Record<string, StepOutput>[]
 }
 
-export class LoopStepOutput extends GenricStepOutput<ActionType.LOOP_ON_ITEMS, LoopStepResult> {
+export class LoopStepOutput extends GenericStepOutput<ActionType.LOOP_ON_ITEMS, LoopStepResult> {
     constructor(step: BaseStepOutputParams<ActionType.LOOP_ON_ITEMS, LoopStepResult>) {
         super(step)
         this.output = step.output ?? {

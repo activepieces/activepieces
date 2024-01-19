@@ -27,6 +27,15 @@ export const googleDrive = createPiece({
 	displayName: "Google Drive",
 	authors: ['kanarelo', 'BastienMe', 'MoShizzle', 'Armangiau', 'vitalini', 'PFernandez98'],
 	triggers: [newFile, newFolder],
-	actions: [googleDriveCreateNewFolder, googleDriveCreateNewTextFile, googleDriveUploadFile, readFile, googleDriveListFiles, googleDriveSearchFolder, duplicateFileAction, saveFileAsPdf, addPermission, deletePermission],
+	actions: [
+        googleDriveCreateNewFolder, 
+        googleDriveCreateNewTextFile, 
+        googleDriveUploadFile, 
+        readFile, 
+        googleDriveListFiles, 
+        googleDriveSearchFolder, 
+        duplicateFileAction, 
+        saveFileAsPdf
+    ],
     auth: googleDriveAuth,
 });

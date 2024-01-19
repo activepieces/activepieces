@@ -1,6 +1,6 @@
 
 import { readdir, stat } from 'node:fs/promises'
-import { resolve, join } from 'node:path'
+import { resolve, join, normalize } from 'node:path'
 import { cwd } from 'node:process'
 import { PieceMetadata } from '../../../packages/pieces/community/framework/src'
 import { extractPieceFromModule } from '../../../packages/shared/src'
@@ -13,7 +13,7 @@ type Piece = {
     minimumSupportedRelease?: string;
     maximumSupportedRelease?: string;
     metadata(): Omit<PieceMetadata, 'name' | 'version'>;
-  };
+};
 
 export const PIECES_FOLDER = 'packages/pieces'
 export const COMMUNITY_PIECE_FOLDER = 'packages/pieces/community'
@@ -56,6 +56,24 @@ export async function findPiece(pieceName: string): Promise<PieceMetadata | null
     return pieces.find((p) => p.name === pieceName) ?? null
 }
 
+
+export function getSourceDirectory(directoryPath: string): string {
+    const normalizedPath = normalize(directoryPath);
+    const sourceDirectory = normalizedPath.replace(join('dist', ''), '');
+    return sourceDirectory;
+}
+
+export async function findAllPiecesDirectoryInSource(): Promise<string[]> {
+    const piecesPath = resolve(cwd(), 'packages', 'pieces')
+    const paths = await traverseFolder(piecesPath)
+    return paths
+}
+export async function findPieceDirectoryInSource(pieceName: string): Promise<string | null> {
+    const piecesPath =  await findAllPiecesDirectoryInSource()
+    const piecePath = piecesPath.find((p) => p.includes(pieceName))
+    return piecePath ?? null
+}
+
 export async function findAllPieces(): Promise<PieceMetadata[]> {
     const piecesPath = resolve(cwd(), 'dist', 'packages', 'pieces')
     const paths = await traverseFolder(piecesPath)
@@ -65,16 +83,20 @@ export async function findAllPieces(): Promise<PieceMetadata[]> {
 
 async function traverseFolder(folderPath: string): Promise<string[]> {
     const paths: string[] = []
-    const files = await readdir(folderPath)
+    const directoryExists = await stat(folderPath).catch(() => null)
 
-    for (const file of files) {
-        const filePath = join(folderPath, file)
-        const fileStats = await stat(filePath)
-        if (fileStats.isDirectory() && file !== 'node_modules' && file !== 'dist') {
-            paths.push(...await traverseFolder(filePath))
-        }
-        else if (file === 'package.json') {
-            paths.push(folderPath)
+    if (directoryExists && directoryExists.isDirectory()) {
+        const files = await readdir(folderPath)
+
+        for (const file of files) {
+            const filePath = join(folderPath, file)
+            const fileStats = await stat(filePath)
+            if (fileStats.isDirectory() && file !== 'node_modules' && file !== 'dist') {
+                paths.push(...await traverseFolder(filePath))
+            }
+            else if (file === 'package.json') {
+                paths.push(folderPath)
+            }
         }
     }
     return paths
@@ -85,7 +107,7 @@ async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | 
         const packageJson = await readPackageJson(folderPath);
 
         const module = await import(
-            join(folderPath, 'src', 'index'),
+            join(folderPath, 'src', 'index')
         )
 
         const { name: pieceName, version: pieceVersion } = packageJson
@@ -100,6 +122,7 @@ async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | 
             name: packageJson.name,
             version: packageJson.version
         };
+        metadata.directoryPath = folderPath;
         metadata.name = packageJson.name;
         metadata.version = packageJson.version;
         metadata.minimumSupportedRelease = piece.minimumSupportedRelease ?? '0.0.0';

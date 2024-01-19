@@ -1,4 +1,4 @@
-import { Action, ActionType, BranchAction, BranchCondition, CodeAction, ExecutionType, LoopOnItemsAction, PackageType, PieceAction, PieceType } from '@activepieces/shared'
+import { Action, ActionErrorHandlingOptions, ActionType, BranchAction, BranchCondition, CodeAction, ExecutionType, LoopOnItemsAction, PackageType, PieceAction, PieceType } from '@activepieces/shared'
 import { VariableService } from '../../src/lib/services/variable-service'
 import { EngineConstants } from '../../src/lib/handler/context/engine-constants'
 
@@ -7,6 +7,11 @@ export const generateMockEngineConstants = (params?: Partial<EngineConstants>): 
         params?.flowId ?? 'flowId',
         params?.flowRunId ?? 'flowRunId',
         params?.serverUrl ?? 'http://127.0.0.1:3000',
+        params?.retryConstants ?? {
+            maxAttempts: 2,
+            retryExponential: 1,
+            retryInterval: 1,
+        },
         params?.executionType ?? ExecutionType.BEGIN,
         params?.workerToken ?? 'workerToken',
         params?.projectId ?? 'projectId',
@@ -62,7 +67,7 @@ export function buildActionWithOneCondition({ condition, onSuccessAction, onFail
 }
 
 
-export function buildCodeAction({ name, input, nextAction }: { name: 'echo_step' | 'runtime' | 'echo_step_1', input: Record<string, unknown>, nextAction?: Action }): CodeAction {
+export function buildCodeAction({ name, input, nextAction, errorHandlingOptions }: { name: 'echo_step' | 'runtime' | 'echo_step_1', input: Record<string, unknown>, errorHandlingOptions?: ActionErrorHandlingOptions, nextAction?: Action }): CodeAction {
     return {
         name,
         displayName: 'Your Action Name',
@@ -73,13 +78,14 @@ export function buildCodeAction({ name, input, nextAction }: { name: 'echo_step'
                 packageJson: '',
                 code: '',
             },
+            errorHandlingOptions,
         },
         nextAction,
         valid: true,
     }
 }
 
-export function buildPieceAction({ name, input, pieceName, actionName, nextAction }: { name: string, input: Record<string, unknown>, nextAction?: Action, pieceName: string, actionName: string }): PieceAction {
+export function buildPieceAction({ name, input, pieceName, actionName, nextAction, errorHandlingOptions }: { errorHandlingOptions?: ActionErrorHandlingOptions, name: string, input: Record<string, unknown>, nextAction?: Action, pieceName: string, actionName: string }): PieceAction {
     return {
         name,
         displayName: 'Your Action Name',
@@ -94,6 +100,7 @@ export function buildPieceAction({ name, input, pieceName, actionName, nextActio
             inputUiInfo: {
                 currentSelectedData: {},
             },
+            errorHandlingOptions,
         },
         nextAction,
         valid: true,
