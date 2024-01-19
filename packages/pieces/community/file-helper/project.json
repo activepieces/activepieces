@@ -1,18 +1,18 @@
 {
-  "name": "pieces-files-helper",
+  "name": "pieces-file-helper",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/pieces/community/filesHelper/src",
+  "sourceRoot": "packages/pieces/community/file-helper/src",
   "projectType": "library",
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/packages/pieces/community/filesHelper",
-        "tsConfig": "packages/pieces/community/filesHelper/tsconfig.lib.json",
-        "packageJson": "packages/pieces/community/filesHelper/package.json",
-        "main": "packages/pieces/community/filesHelper/src/index.ts",
-        "assets": ["packages/pieces/community/filesHelper/*.md"],
+        "outputPath": "dist/packages/pieces/community/file-helper",
+        "tsConfig": "packages/pieces/community/file-helper/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/file-helper/package.json",
+        "main": "packages/pieces/community/file-helper/src/index.ts",
+        "assets": ["packages/pieces/community/file-helper/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       }
@@ -26,8 +26,8 @@
       "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": [
-          "packages/pieces/community/filesHelper/**/*.ts",
-          "packages/pieces/community/filesHelper/package.json"
+          "packages/pieces/community/file-helper/**/*.ts",
+          "packages/pieces/community/file-helper/package.json"
         ]
       }
     }

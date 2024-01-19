@@ -1,5 +1,5 @@
 {
-  "name": "@activepieces/piece-filesHelper",
+  "name": "@activepieces/piece-file-helper",
   "version": "0.0.1",
   "dependencies": {
     "@activepieces/pieces-framework": "*",

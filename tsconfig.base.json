@@ -143,8 +143,8 @@
       "@activepieces/piece-figma": [
         "packages/pieces/community/figma/src/index.ts"
       ],
-      "@activepieces/piece-filesHelper": [
-        "packages/pieces/community/filesHelper/src/index.ts"
+      "@activepieces/piece-file-helper": [
+        "packages/pieces/community/file-helper/src/index.ts"
       ],
       "@activepieces/piece-flowise": [
         "packages/pieces/community/flowise/src/index.ts"
