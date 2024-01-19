@@ -81,10 +81,28 @@ export class EnableIntegrationModalComponent {
     if (!this.loading) {
       this.loading = true;
       const OAuth2Settings: AppOAuth2Settings = JSON.parse(JSON.stringify(this.data.credential.settings));
+      let props: Record<string, string> = {}
       if (this.data.credential.appName === 'salesforce') {
+        props = {
+          environment: this.propsForm.value ? 'test' : 'login'
+        }
         if (this.propsForm.value) {
-          OAuth2Settings.authUrl = OAuth2Settings.authUrl.replace('login.', 'test.');
-          OAuth2Settings.tokenUrl = OAuth2Settings.tokenUrl.replace('login.', 'test.');
+          OAuth2Settings.authUrl = 'https://test.salesforce.com/services/oauth2/authorize'
+          OAuth2Settings.tokenUrl = 'https://test.salesforce.com/services/oauth2/token';
+        }else {
+          OAuth2Settings.authUrl = 'https://login.salesforce.com/services/oauth2/authorize'
+          OAuth2Settings.tokenUrl = 'https://login.salesforce.com/services/oauth2/token';
+        }
+      }
+      if(this.data.credential.appName === 'kindful'){
+        if (this.propsForm.value) {
+          this.data.credential.id = 'rEi7s453CBAlRdnn7A3hn'
+          OAuth2Settings.authUrl = 'https://app-playground.kindful.com/admin/oauth2/authorize';
+          OAuth2Settings.tokenUrl = 'https://app-playground.kindful.com/admin/oauth2/token';
+        }else {
+          this.data.credential.id = 'Uw2PfQ1J52z3qSnl6eir5'
+          OAuth2Settings.authUrl = 'https://app.kindful.com/admin/oauth2/authorize';
+          OAuth2Settings.tokenUrl = 'https://app.kindful.com/admin/oauth2/token';
         }
       }
       assertNotEqual(OAuth2Settings.grantType, OAuth2GrantType.CLIENT_CREDENTIALS, 'OAuth2GrantType', 'AUTHORIZATION_CODE');
@@ -93,7 +111,7 @@ export class EnableIntegrationModalComponent {
         .pipe(
           switchMap((params) => {
             return this.connectionService.create({
-              props: {},
+              props,
               redirectUrl: getRedrectUrl(),
               appCredentialId: this.data.credential.id,
               token: getLocal(StorageName.TOKEN),

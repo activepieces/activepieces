@@ -1,0 +1,29 @@
+{
+  "name": "pieces-gmail",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/gmail/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/gmail",
+        "tsConfig": "packages/pieces/community/gmail/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/gmail/package.json",
+        "main": "packages/pieces/community/gmail/src/index.ts",
+        "assets": ["packages/pieces/community/gmail/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/community/gmail/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

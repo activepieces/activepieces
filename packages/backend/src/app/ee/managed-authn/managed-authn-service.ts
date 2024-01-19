@@ -47,7 +47,6 @@ const getOrCreateUser = async (params: GetOrCreateUserParams): Promise<GetOrCrea
     await projectMemberService.upsert({
         projectId: project.id,
         email: params.externalEmail,
-        platformId,
         role: ProjectMemberRole.EDITOR,
         status: ProjectMemberStatus.ACTIVE,
     })

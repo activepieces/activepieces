@@ -236,7 +236,7 @@ export const createMockPieceMetadata = (pieceMetadata?: Partial<Omit<PieceMetada
         logoUrl: pieceMetadata?.logoUrl ?? faker.image.urlPlaceholder(),
         description: pieceMetadata?.description ?? faker.lorem.sentence(),
         projectId: pieceMetadata?.projectId,
-        directoryName: pieceMetadata?.directoryName,
+        directoryPath: pieceMetadata?.directoryPath,
         auth: pieceMetadata?.auth,
         platformId: pieceMetadata?.platformId,
         version: pieceMetadata?.version ?? faker.system.semver(),

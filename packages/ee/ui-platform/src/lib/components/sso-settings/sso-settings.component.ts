@@ -4,6 +4,7 @@ import { Platform } from '@activepieces/ee-shared';
 import { fadeInUp400ms } from '@activepieces/ui/common';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { FederatedAuthnProviderEnum } from './federated-authn-provider.enum';
+import { PLATFORM_RESOLVER_KEY } from '../../platform.resolver';
 
 @Component({
   selector: 'app-sso-settings',
@@ -17,7 +18,7 @@ export class SsoSettingsComponent {
   removeDomain$?: Observable<void>;
   FederatedAuthnProviderEnum = FederatedAuthnProviderEnum;
   constructor(private route: ActivatedRoute) {
-    const platform: Platform = this.route.snapshot.data['platform'];
+    const platform: Platform = this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
     this.platform$ = new BehaviorSubject(platform);
   }
   platformUpdated(platform: Platform) {

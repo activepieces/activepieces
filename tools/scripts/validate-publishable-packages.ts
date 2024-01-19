@@ -1,14 +1,14 @@
-import { getAvailablePieceNames } from './utils/get-available-piece-names';
+import { findAllPieces } from './utils/piece-script-utils';
 import { packagePrePublishChecks } from './utils/package-pre-publish-checks';
 
 const main = async () => {
-  const piecePackageNames = await getAvailablePieceNames()
+  const piecesMetadata = await findAllPieces()
 
   const packages = [
-    ...piecePackageNames.map(p => `packages/pieces/${p}`),
-    'packages/pieces/framework',
+    ...piecesMetadata.map(p => p.directoryPath!),
+    'packages/pieces/community/framework',
     'packages/shared',
-    'packages/pieces/common',
+    'packages/pieces/community/common',
   ]
 
   const validationResults = packages.map(p => packagePrePublishChecks(p))

@@ -32,6 +32,7 @@ import {
   InstallCommunityPieceModalComponent,
   PieceMetadataService,
 } from '@activepieces/ui/feature-pieces';
+import { PLATFORM_RESOLVER_KEY } from '../../platform.resolver';
 
 @Component({
   selector: 'app-pieces-table',
@@ -69,7 +70,9 @@ export class PiecesTableComponent implements OnInit {
     this.toggelCloudOAuth2$ = this.getCloudOAuth2ToggleListener();
   }
   ngOnInit(): void {
-    this.platform$ = new BehaviorSubject(this.route.snapshot.data['platform']);
+    this.platform$ = new BehaviorSubject(
+      this.route.snapshot.data[PLATFORM_RESOLVER_KEY]
+    );
     this.dataSource = new PiecesTableDataSource(
       this.piecesService,
       this.searchFormControl.valueChanges.pipe(startWith('')),

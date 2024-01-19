@@ -1,0 +1,29 @@
+{
+  "name": "pieces-invoiceninja",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/invoiceninja/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/invoiceninja",
+        "tsConfig": "packages/pieces/community/invoiceninja/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/invoiceninja/package.json",
+        "main": "packages/pieces/community/invoiceninja/src/index.ts",
+        "assets": ["packages/pieces/community/invoiceninja/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/community/invoiceninja/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}
