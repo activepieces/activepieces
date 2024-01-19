@@ -16,6 +16,7 @@ async function main() {
     // Define the inline configuration
     const pieceDirectory = await findPieceDirectoryInSource(packageName)
     assertNotNullOrUndefined(pieceDirectory, 'pieceDirectory')
+    console.debug(chalk.yellow(`Found piece directory: ${pieceDirectory}`))
     const piecePackageName = `pieces-${packageName}`;
     void watch({
       project: path.resolve(pieceDirectory),

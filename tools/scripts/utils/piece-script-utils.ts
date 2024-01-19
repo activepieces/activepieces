@@ -1,6 +1,6 @@
 
 import { readdir, stat } from 'node:fs/promises'
-import { resolve, join } from 'node:path'
+import { resolve, join, normalize } from 'node:path'
 import { cwd } from 'node:process'
 import { PieceMetadata } from '../../../packages/pieces/community/framework/src'
 import { extractPieceFromModule } from '../../../packages/shared/src'
@@ -54,6 +54,13 @@ export function getCommunityPieceFolder(pieceName: string): string {
 export async function findPiece(pieceName: string): Promise<PieceMetadata | null> {
     const pieces = await findAllPieces()
     return pieces.find((p) => p.name === pieceName) ?? null
+}
+
+
+export function getSourceDirectory(directoryPath: string): string {
+    const normalizedPath = normalize(directoryPath);
+    const sourceDirectory = normalizedPath.replace(join('dist', ''), '');
+    return sourceDirectory;
 }
 
 export async function findAllPiecesDirectoryInSource(): Promise<string[]> {
