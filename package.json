@@ -12,8 +12,9 @@
     "dev:backend": "cross-env-shell FORCE_COLOR=true concurrently -n \"API,ENG\" -c \"bgGreen.bold,bgRed.bold\" \"npm:serve:backend\" \"npm:serve:engine\"",
     "dev:frontend": "cross-env-shell FORCE_COLOR=true concurrently -n \"GUI,API,ENG\" -c \"bgBlue.bold,bgGreen.bold,bgRed.bold\" \"npm:serve:frontend\" \"npm:serve:backend\" \"npm:serve:engine\"",
     "start": "npm i && npm run dev",
-    "publish-piece": "npx ts-node tools/scripts/utils/publish-piece.ts",
-    "create-piece": "npx ts-node tools/scripts/pieces/generate-new-piece.ts"
+    "cli": "npx ts-node packages/cli/src/index.ts",
+    "create-piece": "npx ts-node packages/cli/src/index.ts pieces create",
+    "publish-piece": "npx ts-node tools/scripts/utils/publish-piece.ts"
   },
   "private": true,
   "dependencies": {
@@ -74,6 +75,7 @@
     "cli-table3": "0.6.3",
     "clipboard": "2.0.11",
     "codemirror": "5.65.14",
+    "commander": "11.1.0",
     "compare-versions": "6.1.0",
     "concat": "1.0.3",
     "contentful-management": "10.42.0",
@@ -230,6 +232,7 @@
     "eslint-plugin-rxjs": "5.0.3",
     "eslint-plugin-rxjs-angular": "2.0.1",
     "husky": "8.0.3",
+    "inquirer": "8.2.6",
     "jasmine-core": "4.2.0",
     "jasmine-spec-reporter": "7.0.0",
     "jest": "29.4.3",

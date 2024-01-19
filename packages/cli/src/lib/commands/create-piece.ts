@@ -9,15 +9,14 @@ import {
   writeProjectJson,
 } from '../utils/files';
 
-import { getAvailablePieceNames } from '../utils/get-available-piece-names';
 
 const validatePieceName = async (pieceName: string) => {
   console.log(chalk.yellow('Validating piece name....'));
-  const pieceNamePattern = /^[A-Za-z0-9\-]+$/;
+  const pieceNamePattern = /^[A-Za-z0-9-]+$/;
   if (!pieceNamePattern.test(pieceName)) {
     console.log(
       chalk.red(
-        `> piece name should contain alphanumeric characters and hyphens only, provided name : ${pieceName}`
+        '> piece name should contain alphanumeric characters and hyphens only, provided name : ${pieceName}'
       )
     );
     process.exit(1);
@@ -26,11 +25,11 @@ const validatePieceName = async (pieceName: string) => {
 
 const validatePackageName = async (packageName: string) => {
   console.log(chalk.yellow('Validating package name....'));
-  const packageNamePattern = /^[A-Za-z0-9\-]+$/;
+  const packageNamePattern = /^(?:@[a-zA-Z0-9-]+\/)?[a-zA-Z0-9-]+$/;
   if (!packageNamePattern.test(packageName)) {
     console.log(
       chalk.red(
-        `> package name should contain alphanumeric characters and hyphens only, provided name : ${packageName}`
+        '> Invalid package name: ${packageName}. Package names can only contain lowercase letters, numbers, and hyphens.'
       )
     );
     process.exit(1);
@@ -41,7 +40,7 @@ const validatePieceType = async (pieceType: string) => {
   if (!['community', 'custom'].includes(pieceType)) {
     console.log(
       chalk.red(
-        `> piece type can be either custom or community only.provided type :${pieceType}`
+        '> piece type can be either custom or community only.provided type :${pieceType}'
       )
     );
     process.exit(1);
@@ -55,7 +54,7 @@ const nxGenerateNodeLibrary = async (
   const nxGenerateCommand = `
         npx nx generate @nx/node:library ${pieceName} \
           --directory=pieces/${pieceType} \
-          --importPath=@activepieces/piece-${packageName} \
+          --importPath=${packageName} \
           --publishable \
           --buildable \
           --standaloneConfig \
@@ -63,18 +62,11 @@ const nxGenerateNodeLibrary = async (
           --unitTestRunner=none
       `;
 
-  console.log(nxGenerateCommand);
+  console.log(chalk.blue('Executing nx command: ${nxGenerateCommand}'));
 
   await exec(nxGenerateCommand);
 };
-const checkExistingPieceName = async (pieceName: string, pieceType: string) => {
-  const pieces = await getAvailablePieceNames(pieceType);
-  const nameAlreadyExists = pieces.some((p) => p === pieceName);
-  if (nameAlreadyExists) {
-    console.log(chalk.red('> piece name already exists'));
-    process.exit(1);
-  }
-};
+
 const removeUnusedFiles = async (pieceName: string, pieceType: string) => {
   await rm(
     `packages/pieces/${pieceType}/${pieceName}/src/lib/pieces-${pieceType}-${pieceName}.ts`
@@ -170,13 +162,12 @@ export const createPieceCommand = async (
   await validatePieceName(pieceName);
   await validatePackageName(packageName);
   await validatePieceType(pieceType);
-  await checkExistingPieceName(pieceName, pieceType);
   await nxGenerateNodeLibrary(pieceName, packageName, pieceType);
   await setupGeneratedLibrary(pieceName, pieceType);
   console.log(chalk.green('✨  Done!'));
   console.log(
     chalk.yellow(
-      `The piece has been generated at: packages/pieces/${pieceType}/${pieceName}`
+      'The piece has been generated at: packages/pieces/${pieceType}/${pieceName}'
     )
   );
 };
