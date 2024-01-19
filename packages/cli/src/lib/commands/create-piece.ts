@@ -1,5 +1,7 @@
 import chalk from 'chalk';
+import { Command } from 'commander';
 import { rm, writeFile } from 'fs/promises';
+import inquirer from 'inquirer';
 import assert from 'node:assert';
 import { exec } from '../utils/exec';
 import {
@@ -8,8 +10,7 @@ import {
   writePackageEslint,
   writeProjectJson,
 } from '../utils/files';
-import { Command } from 'commander';
-import inquirer from 'inquirer';
+import { findPieceSourceDirectory } from '../utils/piece-utils';
 
 const validatePieceName = async (pieceName: string) => {
   console.log(chalk.yellow('Validating piece name....'));
@@ -17,7 +18,7 @@ const validatePieceName = async (pieceName: string) => {
   if (!pieceNamePattern.test(pieceName)) {
     console.log(
       chalk.red(
-        '> piece name should contain alphanumeric characters and hyphens only, provided name : ${pieceName}'
+        `🚨 Invalid piece name: ${pieceName}. Piece names can only contain lowercase letters, numbers, and hyphens.`
       )
     );
     process.exit(1);
@@ -30,23 +31,21 @@ const validatePackageName = async (packageName: string) => {
   if (!packageNamePattern.test(packageName)) {
     console.log(
       chalk.red(
-        '> Invalid package name: ${packageName}. Package names can only contain lowercase letters, numbers, and hyphens.'
+        `🚨 Invalid package name: ${packageName}. Package names can only contain lowercase letters, numbers, and hyphens.`
       )
     );
     process.exit(1);
   }
 };
 
-const validatePieceType = async (pieceType: string) => {
-  if (!['community', 'custom'].includes(pieceType)) {
-    console.log(
-      chalk.red(
-        '> piece type can be either custom or community only.provided type :${pieceType}'
-      )
-    );
+const checkIfPieceExists = async (pieceName: string) => {
+  const path = await findPieceSourceDirectory(pieceName);
+  if (path) {
+    console.log(chalk.red(`🚨 Piece already exists at ${path}`));
     process.exit(1);
   }
 };
+
 const nxGenerateNodeLibrary = async (
   pieceName: string,
   packageName: string,
@@ -63,7 +62,7 @@ const nxGenerateNodeLibrary = async (
           --unitTestRunner=none
       `;
 
-  console.log(chalk.blue('Executing nx command: ${nxGenerateCommand}'));
+  console.log(chalk.blue(`🛠️ Executing nx command: ${nxGenerateCommand}`));
 
   await exec(nxGenerateCommand);
 };
@@ -162,13 +161,13 @@ const createPiece = async (
 ) => {
   await validatePieceName(pieceName);
   await validatePackageName(packageName);
-  await validatePieceType(pieceType);
+  await checkIfPieceExists(pieceName);
   await nxGenerateNodeLibrary(pieceName, packageName, pieceType);
   await setupGeneratedLibrary(pieceName, pieceType);
   console.log(chalk.green('✨  Done!'));
   console.log(
     chalk.yellow(
-      'The piece has been generated at: packages/pieces/${pieceType}/${pieceName}'
+      `The piece has been generated at: packages/pieces/${pieceType}/${pieceName}`
     )
   );
 };
