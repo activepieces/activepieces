@@ -15,19 +15,6 @@ export const googleDriveGetResourceById = createAction({
             description: 'The Id of the file/folder to search for.',
             required: true,
         }),
-        type: Property.StaticDropdown({
-            displayName: 'File Type',
-            description: '(Optional) Choose between files and folders.',
-            required: false,
-            options: {
-                options: [
-                    { label: "All", value: "all" },
-                    { label: "Files", value: "file" },
-                    { label: "Folders", value: "folder" },
-                ],
-            },
-            defaultValue: 'all'
-        }),
         parentFolder: common.properties.parentFolder,
     },
     async run(context) {
@@ -36,25 +23,12 @@ export const googleDriveGetResourceById = createAction({
         const drive = google.drive({ version: 'v3', auth: authClient });
         const response = await drive.files.get({ fileId: context.propsValue.id });
 
-        const type = context.propsValue.type ?? "all";
-        switch(type){
-            case "all":
-                return response.data;
-            case "file":
-                if (response.data.mimeType !== 'application/vnd.google-apps.folder') {
-                    return response.data;
-                }
-                break;
-            case "folder":
-                if (response.data.mimeType === 'application/vnd.google-apps.folder') {
-                    return response.data;
-                }
-                break;
-            default:
-                break;
+        if (response.data) {
+            return response.data;
+        } else {
+            console.log('The specified ID corresponds to a folder. Returning null.');
+            return null;
         }
-
-        console.log('The specified ID corresponds to a folder. Returning null.');
-        return null;
+        
     }
 });
