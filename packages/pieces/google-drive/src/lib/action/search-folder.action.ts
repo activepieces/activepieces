@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { googleDriveAuth } from '../../index';
 import { Property, createAction } from "@activepieces/pieces-framework";
 import { google } from 'googleapis';
@@ -8,12 +7,12 @@ import { common } from '../common';
 export const googleDriveSearchFolder = createAction({
     auth: googleDriveAuth,
     name: 'search-folder',
-    displayName: 'Search a Folder',
+    displayName: 'Search',
     description: 'Search a Google Drive folder for files/sub-folders',
     props: {
-        name: Property.ShortText({
+        query: Property.ShortText({
             displayName: 'Name',
-            description: 'Name to search for',
+            description: 'Part of the name of the file/folder to search for.',
             required: true,
         }),
         type: Property.StaticDropdown({
@@ -22,38 +21,44 @@ export const googleDriveSearchFolder = createAction({
             required: false,
             options: {
                 options: [
+                    { label: "All", value: "all"},
                     { label: "Files", value: "file" },
                     { label: "Folders", value: "folder" },
-                ]
-            }
+                ],
+            },
+            defaultValue: 'all'
         }),
         parentFolder: common.properties.parentFolder,
-        include_team_drives: common.properties.include_team_drives,
     },
     async run(context) {
         const authClient = new OAuth2Client();
         authClient.setCredentials(context.auth)
 
         const drive = google.drive({ version: 'v3', auth: authClient });
-        let query = `name contains '${context.propsValue.name}' and '${context.propsValue.parentFolder ?? 'root'}' in parents`;
-
-        if (context.propsValue.type === "folder") {
-            query = `${query} and mimeType='application/vnd.google-apps.folder'`
-        } else if (context.propsValue.type === "file") {
-            query = `${query} and mimeType!='application/vnd.google-apps.folder'`
+        let finalQuery = `name contains '${context.propsValue.query}' and '${context.propsValue.parentFolder ?? 'root'}' in parents`;
+        const type = context.propsValue.type ?? "all";
+        switch(type){
+            case "file":
+                finalQuery = `${finalQuery} and mimeType!='application/vnd.google-apps.folder'`
+                break;
+            case "folder":
+                finalQuery = `${finalQuery} and mimeType='application/vnd.google-apps.folder'`
+                break;
+            default:
+                break;
         }
 
-        const response = await drive.files.list({ q: query, fields: 'files(id, name, mimeType)' });
+        const response = await drive.files.list({ q: finalQuery, fields: 'files(id, name, mimeType)' });
         if (response.status !== 200) {
             console.error(response);
-            throw new Error('Error searching file');
+            throw new Error('Error searching for the file/folder');
         }
 
         const files = response.data.files ?? [];
         if (files.length > 0) {
             return files
         } else {
-            console.log('File not found');
+            console.log('Resource not found');
             return []
         }
     }
