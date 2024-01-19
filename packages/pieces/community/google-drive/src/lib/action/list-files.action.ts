@@ -1,6 +1,6 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { googleDriveAuth } from '../../index';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { Property, createAction } from "@activepieces/pieces-framework";
 
 export const googleDriveListFiles = createAction({
   auth: googleDriveAuth,
@@ -10,8 +10,7 @@ export const googleDriveListFiles = createAction({
   props: {
     folderId: Property.ShortText({
       displayName: 'Folder ID',
-      description:
-        'Folder ID comming from | New Folder -> id | (or any other source)',
+      description: 'Folder ID coming from | New Folder -> id | (or any other source)',
       required: true,
     }),
   },
@@ -25,5 +24,5 @@ export const googleDriveListFiles = createAction({
     });
 
     return response.body;
-  },
+  }
 });
