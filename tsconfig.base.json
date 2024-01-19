@@ -225,7 +225,7 @@
         "packages/pieces/community/hubspot/src/index.ts"
       ],
       "@activepieces/piece-image-helper": [
-        "packages/pieces/image-helper/src/index.ts"
+        "packages/pieces/community/image-helper/src/index.ts"
       ],
       "@activepieces/piece-imap": [
         "packages/pieces/community/imap/src/index.ts"
