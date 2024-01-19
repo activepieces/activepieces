@@ -3,7 +3,6 @@ import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { logger } from '../../helper/logger'
 import { packageManager } from '../../helper/package-manager'
-import { CodeExecutorSandboxType } from '@activepieces/shared'
 
 const engineExecutablePath = system.getOrThrow(SystemProp.ENGINE_EXECUTABLE_PATH)
 
@@ -16,10 +15,7 @@ export const engineInstaller = {
 
         await copyFile(engineExecutablePath, `${path}/main.js`)
         await copyFile(`${engineExecutablePath}.map`, `${path}/main.js.map`)
-        const codeExecutionType = system.getOrThrow<CodeExecutorSandboxType>(SystemProp.CODE_EXECUTOR_SANDBOX_TYPE)
-        if (codeExecutionType === CodeExecutorSandboxType.ISOLATE) {
-            await installDependencies(path)
-        }
+        await installDependencies(path)
     },
 }
 
