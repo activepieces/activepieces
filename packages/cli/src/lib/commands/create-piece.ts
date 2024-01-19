@@ -8,7 +8,8 @@ import {
   writePackageEslint,
   writeProjectJson,
 } from '../utils/files';
-
+import { Command } from 'commander';
+import inquirer from 'inquirer';
 
 const validatePieceName = async (pieceName: string) => {
   console.log(chalk.yellow('Validating piece name....'));
@@ -154,7 +155,7 @@ const setupGeneratedLibrary = async (pieceName: string, pieceType: string) => {
   await updateEslintFile(pieceName, pieceType);
 };
 
-export const createPieceCommand = async (
+const createPiece = async (
   pieceName: string,
   packageName: string,
   pieceType: string
@@ -171,3 +172,33 @@ export const createPieceCommand = async (
     )
   );
 };
+
+
+export const createPieceCommand = new Command('create')
+  .description('Create a new piece')
+  .action(async () => {
+    const questions = [
+      {
+        type: 'input',
+        name: 'pieceName',
+        message: 'Enter the piece name:',
+      },
+      {
+        type: 'input',
+        name: 'packageName',
+        message: 'Enter the package name:',
+        default: (answers: any) => `@activepieces/piece-${answers.pieceName}`,
+        when: (answers: any) => answers.pieceName !== undefined,
+      },
+      {
+        type: 'list',
+        name: 'pieceType',
+        message: 'Select the piece type:',
+        choices: ['community', 'custom'],
+        default: 'community',
+      },
+    ];
+
+    const answers = await inquirer.prompt(questions);
+    createPiece(answers.pieceName, answers.packageName, answers.pieceType);
+  });

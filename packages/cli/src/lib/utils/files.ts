@@ -1,4 +1,4 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { constants, readFile, access, writeFile, mkdir } from 'node:fs/promises';
 
 export type PackageJson = {
   name: string;
@@ -12,8 +12,8 @@ export type ProjectJson = {
     build?: {
       options?: {
         buildableProjectDepsInPackageJsonType?:
-          | 'peerDependencies'
-          | 'dependencies';
+        | 'peerDependencies'
+        | 'dependencies';
         updateBuildableProjectDepsInPackageJson: boolean;
       };
     };
@@ -23,6 +23,15 @@ export type ProjectJson = {
       };
     };
   };
+};
+
+export const checkIfFileExists = async (filePath: string) => {
+  try {
+    await access(filePath, constants.F_OK);
+    return true;
+  } catch (e) {
+    return false;
+  }
 };
 
 const readJsonFile = async <T>(path: string): Promise<T> => {
@@ -60,3 +69,7 @@ export const writeProjectJson = async (
 ): Promise<void> => {
   return await writeJsonFile(`${path}/project.json`, projectJson);
 };
+
+export const makeFolderRecursive = async (path: string): Promise<void> => {
+  await mkdir(path, { recursive: true });
+}
