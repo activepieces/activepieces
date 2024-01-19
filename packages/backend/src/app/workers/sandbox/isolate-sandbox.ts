@@ -3,7 +3,7 @@ import { arch, cwd } from 'node:process'
 import path from 'node:path'
 import { exec } from 'node:child_process'
 import { ExecuteSandboxResult, AbstractSandbox, SandboxCtorParams } from './abstract-sandbox'
-import { EngineResponseStatus } from '@activepieces/shared'
+import { EngineResponseStatus, assertNotNullOrUndefined } from '@activepieces/shared'
 import { logger } from '../../helper/logger'
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
@@ -46,11 +46,15 @@ export class IsolateSandbox extends AbstractSandbox {
             const basePath = path.resolve(__dirname.split('/dist')[0])
             const pieceSource = system.getOrThrow(SystemProp.PIECES_SOURCE)
             const codeExecutorSandboxType = system.get(SystemProp.CODE_EXECUTOR_SANDBOX_TYPE)
+            const cachePath = this._cachePath
+            assertNotNullOrUndefined(cachePath, 'cachePath')
             const fullCommand = [
                 '--dir=/usr/bin/',
                 `--dir=/etc/=${etcDir}`,
-                `--dir=${basePath}=/${basePath}:maybe`,
-                `--dir=${IsolateSandbox.cacheBindPath}=${this._cachePath}`,
+                `--dir=${path.join(basePath, '.pnpm')}=/${path.join(basePath, '.pnpm')}:maybe`,
+                `--dir=${path.join(basePath, 'dist')}=/${path.join(basePath, 'dist')}:maybe`,
+                `--dir=${path.join(basePath, 'node_modules')}=/${path.join(basePath, 'node_modules')}:maybe`,
+                `--dir=${IsolateSandbox.cacheBindPath}=${path.resolve(cachePath)}`,
                 '--share-net',
                 `--box-id=${this.boxId}`,
                 '--processes',

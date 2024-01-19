@@ -31,6 +31,7 @@ export class LocalPieceManager extends PieceManager {
             })
             await updatePackageJson(pieceMetadata.directoryPath!, frameworkPackages)
             await packageManager.link({
+                packageName: pieceMetadata.name,
                 path: projectPath,
                 linkPath: pieceMetadata.directoryPath!,
             })
@@ -41,11 +42,13 @@ export class LocalPieceManager extends PieceManager {
 const linkFrameworkPackages = async (projectPath: string, baseLinkPath: string, frameworkPackages: Record<string, string>): Promise<void> => {
     await updatePackageJson(join(baseLinkPath, 'framework'), frameworkPackages)
     await packageManager.link({
+        packageName: '@activepieces/pieces-framework',
         path: projectPath,
         linkPath: `${baseLinkPath}/framework`,
     })
     await updatePackageJson(join(baseLinkPath, 'common'), frameworkPackages)
     await packageManager.link({
+        packageName: '@activepieces/pieces-common',
         path: projectPath,
         linkPath: `${baseLinkPath}/common`,
     })
