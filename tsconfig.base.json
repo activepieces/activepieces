@@ -218,7 +218,7 @@
       "@activepieces/piece-hackernews": [
         "packages/pieces/community/hackernews/src/index.ts"
       ],
-      "@activepieces/piece-http": [
+            "@activepieces/piece-http": [
         "packages/pieces/community/http/src/index.ts"
       ],
       "@activepieces/piece-hubspot": [
