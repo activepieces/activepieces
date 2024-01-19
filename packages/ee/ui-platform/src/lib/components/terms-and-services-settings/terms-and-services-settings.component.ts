@@ -5,6 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, Observable, catchError, tap } from 'rxjs';
 import { Platform } from '@activepieces/ee-shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { PLATFORM_RESOLVER_KEY } from '../../platform.resolver';
 
 interface TermsAndServicesForm {
   privacyPolicyUrl: FormControl<string>;
@@ -35,12 +36,12 @@ export class TermsAndServicesSettingsComponent implements OnInit {
     });
   }
   ngOnInit(): void {
-    const platform: Platform = this.route.snapshot.data['platform'];
+    const platform: Platform = this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
     this.termsAndServicesForm.patchValue(platform);
   }
 
   save() {
-    const platform: Platform = this.route.snapshot.data['platform'];
+    const platform: Platform = this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
     this.termsAndServicesForm.markAllAsTouched();
     if (!this.loading$.value && !this.termsAndServicesForm.invalid) {
       this.loading$.next(true);

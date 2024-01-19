@@ -1,0 +1,29 @@
+{
+  "name": "pieces-clickup",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/clickup/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/clickup",
+        "tsConfig": "packages/pieces/community/clickup/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/clickup/package.json",
+        "main": "packages/pieces/community/clickup/src/index.ts",
+        "assets": ["packages/pieces/community/clickup/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/community/clickup/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

@@ -6,9 +6,9 @@ import {
     GetFlowQueryParamsRequest,
     ListFlowsRequest,
     PopulatedFlow,
+    Principal,
     PrincipalType,
     SeekPage,
-    UpdateFlowStatusRequest,
 } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 import { flowService } from './flow.service'
@@ -17,6 +17,7 @@ import dayjs from 'dayjs'
 import { isNil } from 'lodash'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { projectService } from '../../project/project-service'
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -40,8 +41,10 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
 
         // BEGIN EE
         const currentTime = dayjs()
+        const userId = await extractUserIdFromPrincipal(request.principal)
+
         if (!isNil(flow.version.updatedBy) &&
-            flow.version.updatedBy !== request.principal.id &&
+            flow.version.updatedBy !== userId &&
             currentTime.diff(dayjs(flow.version.updated), 'minute') <= 1
         ) {
             return reply.status(StatusCodes.CONFLICT).send()
@@ -50,25 +53,9 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
 
         return flowService.update({
             id: request.params.id,
-            userId: request.principal.id,
+            userId,
             projectId: request.principal.projectId,
             operation: request.body,
-        })
-    })
-
-    app.post('/:id/status', UpdateFlowStatusRequestOptions, async (request) => {
-        return flowService.updateStatus({
-            id: request.params.id,
-            projectId: request.principal.projectId,
-            newStatus: request.body.status,
-        })
-    })
-
-    app.post('/:id/published-version-id', UpdateFlowPublishedVersionIdRequestOptions, async (request) => {
-        return flowService.updatedPublishedVersionId({
-            id: request.params.id,
-            userId: request.principal.id,
-            projectId: request.principal.projectId,
         })
     })
 
@@ -115,6 +102,15 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     })
 }
 
+async function extractUserIdFromPrincipal(principal: Principal): Promise<string> {
+    if (principal.type === PrincipalType.USER) {
+        return principal.id
+    }
+    // TODO currently it's same as api service, but it's better to get it from api key service, in case we introduced more admin users
+    const project = await projectService.getOneOrThrow(principal.projectId)
+    return project.ownerId
+}
+
 const CreateFlowRequestOptions = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
@@ -131,6 +127,8 @@ const CreateFlowRequestOptions = {
 
 const UpdateFlowRequestOptions = {
     schema: {
+        tags: ['flows'],
+        description: 'Apply an operation to a flow',
         body: FlowOperationRequest,
         params: Type.Object({
             id: ApId,
@@ -138,22 +136,7 @@ const UpdateFlowRequestOptions = {
     },
 }
 
-const UpdateFlowStatusRequestOptions = {
-    schema: {
-        body: UpdateFlowStatusRequest,
-        params: Type.Object({
-            id: ApId,
-        }),
-    },
-}
 
-const UpdateFlowPublishedVersionIdRequestOptions = {
-    schema: {
-        params: Type.Object({
-            id: ApId,
-        }),
-    },
-}
 
 const ListFlowsRequestOptions = {
     config: {

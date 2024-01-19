@@ -14,7 +14,7 @@ export class LocalPieceManager extends PieceManager {
 
         const { projectPath, pieces } = params
         const basePath = resolve(__dirname.split(`${sep}dist`)[0])
-        const baseLinkPath = join(basePath, 'dist', 'packages', 'pieces')
+        const baseLinkPath = join(basePath, 'dist', 'packages', 'pieces', 'community')
 
         const frameworkPackages = {
             '@activepieces/pieces-common': `link:${baseLinkPath}/common`,
@@ -29,30 +29,33 @@ export class LocalPieceManager extends PieceManager {
                 name: piece.pieceName,
                 version: piece.pieceVersion,
             })
-            await updatePackageJson(pieceMetadata.directoryName!, baseLinkPath, frameworkPackages)
+            await updatePackageJson(pieceMetadata.directoryPath!, frameworkPackages)
             await packageManager.link({
+                packageName: pieceMetadata.name,
                 path: projectPath,
-                linkPath: `${baseLinkPath}/${pieceMetadata.directoryName}`,
+                linkPath: pieceMetadata.directoryPath!,
             })
         }
     }
 }
 
 const linkFrameworkPackages = async (projectPath: string, baseLinkPath: string, frameworkPackages: Record<string, string>): Promise<void> => {
-    await updatePackageJson('framework', baseLinkPath, frameworkPackages)
+    await updatePackageJson(join(baseLinkPath, 'framework'), frameworkPackages)
     await packageManager.link({
+        packageName: '@activepieces/pieces-framework',
         path: projectPath,
         linkPath: `${baseLinkPath}/framework`,
     })
-    await updatePackageJson('common', baseLinkPath, frameworkPackages)
+    await updatePackageJson(join(baseLinkPath, 'common'), frameworkPackages)
     await packageManager.link({
+        packageName: '@activepieces/pieces-common',
         path: projectPath,
         linkPath: `${baseLinkPath}/common`,
     })
 }
 
-const updatePackageJson = async (directoryName: string, baseLinkPath: string, frameworkPackages: Record<string, string>): Promise<void> => {
-    const packageJsonForPiece = `${baseLinkPath}/${directoryName}/package.json`
+const updatePackageJson = async (directoryPath: string, frameworkPackages: Record<string, string>): Promise<void> => {
+    const packageJsonForPiece = join(directoryPath, 'package.json')
 
     const packageJson = await readFile(packageJsonForPiece, 'utf-8').then(JSON.parse)
     for (const [key, value] of Object.entries(frameworkPackages)) {

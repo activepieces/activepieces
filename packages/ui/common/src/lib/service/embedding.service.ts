@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, map } from 'rxjs';
-
 export type EmbeddingState = {
   isEmbedded: boolean;
   hideSideNav: boolean;

@@ -1,0 +1,36 @@
+{
+  "name": "pieces-bonjoro",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/bonjoro/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/bonjoro",
+        "tsConfig": "packages/pieces/community/bonjoro/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/bonjoro/package.json",
+        "main": "packages/pieces/community/bonjoro/src/index.ts",
+        "assets": ["packages/pieces/community/bonjoro/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-bonjoro {args.ver} {args.tag}",
+      "dependsOn": ["build"]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/community/bonjoro/**/*.ts",
+          "packages/pieces/community/bonjoro/package.json"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

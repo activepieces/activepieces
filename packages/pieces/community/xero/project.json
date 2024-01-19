@@ -1,0 +1,29 @@
+{
+  "name": "pieces-xero",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/xero/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/xero",
+        "tsConfig": "packages/pieces/community/xero/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/xero/package.json",
+        "main": "packages/pieces/community/xero/src/index.ts",
+        "assets": ["packages/pieces/community/xero/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/community/xero/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

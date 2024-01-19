@@ -1,0 +1,29 @@
+{
+  "name": "pieces-mindee",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/mindee/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/mindee",
+        "tsConfig": "packages/pieces/community/mindee/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/mindee/package.json",
+        "main": "packages/pieces/community/mindee/src/index.ts",
+        "assets": ["packages/pieces/community/mindee/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/community/mindee/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

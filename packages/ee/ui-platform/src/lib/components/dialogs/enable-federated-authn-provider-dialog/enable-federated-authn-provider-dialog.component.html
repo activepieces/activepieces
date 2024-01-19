@@ -5,6 +5,8 @@
 <mat-dialog-content>
     <div class="ap-min-w-[470px] ap-max-w-[470px]">
 
+        <ap-markdown [data]="(redirectUrl$ | async) || ''">
+        </ap-markdown>
         <form autocomplete="off" class="ap-flex ap-flex-col ap-gap-2" [formGroup]="formGroup" (keyup.enter)="submit()">
             <mat-form-field class="ap-w-full" appearance="outline">
                 <mat-label>Client ID </mat-label>

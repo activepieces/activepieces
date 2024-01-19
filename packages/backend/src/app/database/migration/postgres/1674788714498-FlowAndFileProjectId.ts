@@ -15,58 +15,50 @@ export class FlowAndFileProjectId1674788714498 implements MigrationInterface {
         )
 
         const flowTableNotExist =
-          flowTableExistsQueryResponse &&
-          flowTableExistsQueryResponse.length > 0 &&
-          !flowTableExistsQueryResponse[0].exists
+            flowTableExistsQueryResponse &&
+            flowTableExistsQueryResponse.length > 0 &&
+            !flowTableExistsQueryResponse[0].exists
 
         if (flowTableNotExist) {
             logger.info('FlowAndFileProjectId1674788714498: skipped')
             return
         }
 
-        const flowRepo = queryRunner.connection.getRepository('flow')
-        const fileRepo = queryRunner.connection.getRepository('file')
-        const flowRunRepo = queryRunner.connection.getRepository('flow_run')
-        const flowVersionRepo = queryRunner.connection.getRepository('flow_version')
-        const collectionRepo = queryRunner.connection.getRepository('collection')
-
-        logger.info('Running Flow migeration')
-        const flows = await flowRepo.find({})
+        const flows = await queryRunner.query('SELECT * FROM flow')
         for (let i = 0; i < flows.length; ++i) {
             const currentFlow = flows[i]
-            const collection = await collectionRepo.findOneBy({ id: currentFlow.collectionId })
-            currentFlow.projectId = collection!.projectId
-            await flowRepo.update(currentFlow.id, currentFlow)
+            const collection = await queryRunner.query('SELECT * FROM collection WHERE id = $1', [currentFlow.collectionId])
+            currentFlow.projectId = collection[0].projectId
+            await queryRunner.query('UPDATE flow SET "projectId" = $1 WHERE id = $2', [currentFlow.projectId, currentFlow.id])
         }
 
-        logger.info('Running File migeration')
-        const flowVersions = await flowVersionRepo.find({})
+        const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
         for (let i = 0; i < flowVersions.length; ++i) {
             const currentFlowVersion = flowVersions[i]
-            const currentFlow = await flowRepo.findOneBy({ id: currentFlowVersion.flowId })
+            const currentFlow = await queryRunner.query('SELECT * FROM flow WHERE id = $1', [currentFlowVersion.flowId])
             let action = currentFlowVersion.trigger?.nextAction
             while (action !== undefined && action !== null) {
                 if (action.type === 'CODE') {
                     const packagedFileId = action.settings.artifactPackagedId
                     if (packagedFileId !== undefined && packagedFileId !== null) {
-                        const packagedFileToUpdate = await fileRepo.findOneBy({ id: packagedFileId })
-                        if (packagedFileToUpdate === null) {
-                            logger.error('Found an old packaged artifact file id without file ' + packagedFileId + ' and for flow ' + currentFlow!.id)
+                        const packagedFileToUpdate = await queryRunner.query('SELECT * FROM file WHERE id = $1', [packagedFileId])
+                        if (packagedFileToUpdate.length === 0) {
+                            logger.error('Found an old packaged artifact file id without file ' + packagedFileId + ' and for flow ' + currentFlow[0].id)
                         }
                         else {
-                            packagedFileToUpdate.projectId = currentFlow!.projectId
-                            await fileRepo.update(packagedFileId, packagedFileToUpdate)
+                            packagedFileToUpdate[0].projectId = currentFlow[0].projectId
+                            await queryRunner.query('UPDATE file SET "projectId" = $1 WHERE id = $2', [packagedFileToUpdate[0].projectId, packagedFileId])
                         }
                     }
                     const sourceFileId = action.settings.artifactSourceId
                     if (sourceFileId !== undefined && sourceFileId !== null) {
-                        const sourceFileToUpdate = await fileRepo.findOneBy({ id: sourceFileId })
-                        if (sourceFileToUpdate === null) {
-                            logger.error('Found an old source artifact file id without file ' + sourceFileId + ' and for flow ' + currentFlow!.id)
+                        const sourceFileToUpdate = await queryRunner.query('SELECT * FROM file WHERE id = $1', [sourceFileId])
+                        if (sourceFileToUpdate.length === 0) {
+                            logger.error('Found an old source artifact file id without file ' + sourceFileId + ' and for flow ' + currentFlow[0].id)
                         }
                         else {
-                            sourceFileToUpdate.projectId = currentFlow!.projectId
-                            await fileRepo.update(sourceFileId, sourceFileToUpdate)
+                            sourceFileToUpdate[0].projectId = currentFlow[0].projectId
+                            await queryRunner.query('UPDATE file SET "projectId" = $1 WHERE id = $2', [sourceFileToUpdate[0].projectId, sourceFileId])
                         }
                     }
                 }
@@ -74,14 +66,13 @@ export class FlowAndFileProjectId1674788714498 implements MigrationInterface {
             }
         }
 
-        logger.info('Running Flow Run migration')
-        const flowRuns = await flowRunRepo.find()
+        const flowRuns = await queryRunner.query('SELECT * FROM flow_run')
         for (let i = 0; i < flowRuns.length; ++i) {
             const currentFlowRun = flowRuns[i]
             if (currentFlowRun.logsFileId !== undefined && currentFlowRun.logsFileId !== null) {
-                const logFlowRunFile = await fileRepo.findOneBy({ id: currentFlowRun.logsFileId })
-                logFlowRunFile!.projectId = currentFlowRun.projectId
-                await fileRepo.update(logFlowRunFile!.id, logFlowRunFile!)
+                const logFlowRunFile = await queryRunner.query('SELECT * FROM file WHERE id = $1', [currentFlowRun.logsFileId])
+                logFlowRunFile[0].projectId = currentFlowRun.projectId
+                await queryRunner.query('UPDATE file SET "projectId" = $1 WHERE id = $2', [logFlowRunFile[0].projectId, logFlowRunFile[0].id])
             }
         }
     }

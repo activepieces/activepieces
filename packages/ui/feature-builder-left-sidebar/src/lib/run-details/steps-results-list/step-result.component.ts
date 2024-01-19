@@ -1,11 +1,4 @@
-import {
-  AfterViewInit,
-  Component,
-  EventEmitter,
-  Input,
-  OnInit,
-  Output,
-} from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { UntypedFormControl } from '@angular/forms';
 import { MatExpansionPanel } from '@angular/material/expansion';
 import { Store } from '@ngrx/store';
@@ -17,7 +10,9 @@ import {
 import { map, Observable, startWith, tap } from 'rxjs';
 import { RunDetailsService } from '../iteration-details.service';
 import {
-  LoopStepOutput,
+  ActionType,
+  GenericStepOutput,
+  LoopStepResult,
   StepOutput,
   StepOutputStatus,
 } from '@activepieces/shared';
@@ -29,9 +24,9 @@ import { fadeInAnimation } from '@activepieces/ui/common';
   styleUrls: ['./step-result.component.scss'],
   animations: [fadeInAnimation(400, false)],
 })
-export class StepResultComponent implements OnInit, AfterViewInit {
-  @Input() stepResult: StepRunResult;
-  @Input() set selectedStepName(stepName: string | null) {
+export class StepResultComponent implements OnInit {
+  @Input({ required: true }) stepResult: StepRunResult;
+  @Input({ required: true }) set selectedStepName(stepName: string | null) {
     this._selectedStepName = stepName;
 
     if (this._selectedStepName === this.stepResult.stepName) {
@@ -40,12 +35,11 @@ export class StepResultComponent implements OnInit, AfterViewInit {
     }
   }
   @Input() nestingLevel = 0;
-  @Input() isTrigger = false;
+  @Input({ required: true }) isTrigger = false;
   @Output() childStepSelected = new EventEmitter();
   stepLogoUrl$: Observable<string | undefined>;
   isLoopStep = false;
   nestingLevelPadding = '0px';
-  finishedBuilding = false;
   iterationIndexControl = new UntypedFormControl(1);
   iteration$: Observable<Pick<StepRunResult, 'stepName' | 'output'>[]>;
   iterationsAccordionList: Pick<StepRunResult, 'stepName' | 'output'>[][] = [];
@@ -54,6 +48,7 @@ export class StepResultComponent implements OnInit, AfterViewInit {
   showIterationInput = false;
   iterationInputMinWidth = '0px';
   _selectedStepName: string | null = '';
+  StepOutputStatus = StepOutputStatus;
   constructor(
     private store: Store,
     private runDetailsService: RunDetailsService
@@ -71,18 +66,22 @@ export class StepResultComponent implements OnInit, AfterViewInit {
     this.stepLogoUrl$ = this.store.select(
       BuilderSelectors.selectStepLogoUrl(this.stepResult.stepName)
     );
-    const stepOutput = this.stepResult.output?.output as any;
-    if (stepOutput?.iterations !== undefined) {
+
+    if (this.stepResult.output?.type === ActionType.LOOP_ON_ITEMS) {
       this.isLoopStep = true;
-      const loopOutput = this.stepResult.output as LoopStepOutput;
+      const loopOutput = this.stepResult.output;
       loopOutput.output?.iterations.forEach((iteration) => {
         this.iterationsAccordionList.push(
           this.createStepResultsForDetailsAccordion(iteration)
         );
       });
+      const startingIndex = this.hasAnIterationFailed()
+        ? this.stepResult.output.output?.iterations.length
+        : 1;
       this.iteration$ = this.iterationIndexControl.valueChanges.pipe(
-        startWith(1),
+        startWith(startingIndex),
         tap((newIndex: number | null) => {
+          console.log(newIndex);
           this.setInputMinWidth(newIndex);
         }),
         map((newIndex: number | null) => {
@@ -134,7 +133,13 @@ export class StepResultComponent implements OnInit, AfterViewInit {
     });
   }
   private minMaxIterationIndex(newIndex: number | null) {
-    const stepOutput = this.stepResult.output?.output as any;
+    if (
+      this.stepResult.output?.type !== ActionType.LOOP_ON_ITEMS ||
+      !this.stepResult.output?.output
+    ) {
+      return 0;
+    }
+    const stepOutput = this.stepResult.output.output;
     if (newIndex === null || newIndex < 1) {
       return 1;
     } else if (
@@ -153,16 +158,43 @@ export class StepResultComponent implements OnInit, AfterViewInit {
     }
   }
 
-  ngAfterViewInit(): void {
-    setTimeout(() => {
-      this.finishedBuilding = true;
-    }, 1);
+  private hasAnIterationFailed() {
+    if (this.stepResult.output?.type === ActionType.LOOP_ON_ITEMS) {
+      const loopOutput = this.stepResult.output;
+      return loopOutput.output?.iterations.some((iteration) =>
+        this.checkIfIterationFailed(iteration)
+      );
+    }
+    return false;
   }
-
-  get ActionStatus() {
-    return StepOutputStatus;
+  private checkIfIterationFailed(
+    iteration: Record<string, StepOutput>
+  ): boolean {
+    const iterationStepsNames = Object.keys(iteration);
+    return iterationStepsNames.some((stepName) => {
+      const it = iteration[stepName];
+      if (it.type === ActionType.LOOP_ON_ITEMS) {
+        return this.checkIfLoopStepOutputFailed(it);
+      }
+      return iteration[stepName].status === StepOutputStatus.FAILED;
+    });
   }
-
+  private checkIfLoopStepOutputFailed(
+    stepOutput: GenericStepOutput<ActionType.LOOP_ON_ITEMS, LoopStepResult>
+  ): boolean {
+    return stepOutput.output
+      ? stepOutput.output.iterations.some((iteration) => {
+          const iterationStepsNames = Object.keys(iteration);
+          return iterationStepsNames.some((stepName) => {
+            const it = iteration[stepName];
+            if (it.type === ActionType.LOOP_ON_ITEMS) {
+              return this.checkIfLoopStepOutputFailed(it);
+            }
+            return iteration[stepName].status === StepOutputStatus.FAILED;
+          });
+        })
+      : false;
+  }
   selectStepOrToggleExpansionPanel(
     $event: MouseEvent,
     expansionPanel: MatExpansionPanel
@@ -206,17 +238,21 @@ export class StepResultComponent implements OnInit, AfterViewInit {
       stepName: stepWithinLoop.stepName,
       output: undefined,
     });
+
     if (
       stepWithinLoop.stepName ===
       this.runDetailsService.currentStepResult$.value?.stepName
     ) {
       this.runDetailsService.currentStepResult$.next(undefined);
     }
-    const stepWithinLoopOutput = stepWithinLoop.output?.output as any;
-    if (stepWithinLoopOutput?.iterations) {
-      if (stepWithinLoopOutput.iterations[0]) {
+
+    if (
+      stepWithinLoop.output?.type === ActionType.LOOP_ON_ITEMS &&
+      stepWithinLoop.output?.output
+    ) {
+      if (stepWithinLoop.output.output.iterations[0]) {
         const firstIterationResult = this.createStepResultsForDetailsAccordion(
-          stepWithinLoopOutput.iterations[0]
+          stepWithinLoop.output.output.iterations[0]
         );
         firstIterationResult.forEach((st) => {
           this.clearStepsThatWereNotReached(st);
@@ -234,7 +270,12 @@ export class StepResultComponent implements OnInit, AfterViewInit {
   }
 
   get iterationLength(): number {
-    const stepOutput = this.stepResult.output?.output as any;
-    return stepOutput.iterations ? stepOutput.iterations.length : 0;
+    if (
+      this.stepResult.output?.type !== ActionType.LOOP_ON_ITEMS ||
+      !this.stepResult.output?.output
+    ) {
+      return 0;
+    }
+    return this.stepResult.output?.output.iterations.length;
   }
 }
