@@ -14,6 +14,7 @@
     "start": "npm i && npm run dev",
     "cli": "npx ts-node packages/cli/src/index.ts",
     "create-piece": "npx ts-node packages/cli/src/index.ts pieces create",
+    "create-action": "npx ts-node packages/cli/src/index.ts actions create",
     "publish-piece": "npx ts-node tools/scripts/utils/publish-piece.ts"
   },
   "private": true,
