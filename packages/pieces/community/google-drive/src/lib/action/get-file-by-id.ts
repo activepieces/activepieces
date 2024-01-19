@@ -14,8 +14,7 @@ export const googleDriveGetResourceById = createAction({
             displayName: 'File / Folder Id',
             description: 'The Id of the file/folder to search for.',
             required: true,
-        }),
-        parentFolder: common.properties.parentFolder,
+        })
     },
     async run(context) {
         const authClient = new OAuth2Client();
