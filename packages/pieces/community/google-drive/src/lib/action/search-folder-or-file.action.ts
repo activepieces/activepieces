@@ -10,7 +10,7 @@ export const googleDriveSearchFolder = createAction({
     displayName: 'Search',
     description: 'Search a Google Drive folder for files/sub-folders',
     props: {
-        query_term: Property.StaticDropdown({
+        queryTerm: Property.StaticDropdown({
             displayName: 'Query Term',
             description: 'The Query term or field of file/folder to search upon.',
             defaultValue: 'name',
@@ -61,7 +61,7 @@ export const googleDriveSearchFolder = createAction({
 
         const drive = google.drive({ version: 'v3', auth: authClient });
         const operator = context.propsValue.operator ?? 'contains';
-        const queryTerm = context.propsValue.query_term ?? 'name';
+        const queryTerm = context.propsValue.queryTerm ?? 'name';
         let finalQuery = `${queryTerm} ${operator} '${context.propsValue.query}'`
         finalQuery = `${finalQuery} and '${context.propsValue.parentFolder ?? 'root'}' in parents`;
 
