@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.18.1",
+  "version": "0.18.2",
   "rcVersion": "0.19.0-rc.0",
   "scripts": {
     "prepare": "husky install",
