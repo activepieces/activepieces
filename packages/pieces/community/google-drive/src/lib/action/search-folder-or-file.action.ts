@@ -13,15 +13,15 @@ export const googleDriveSearchFolder = createAction({
         query_term: Property.StaticDropdown({
             displayName: 'Query Term',
             description: 'The Query term or field of file/folder to search upon.',
-            required: true,
             defaultValue: 'name',
             options: {
                 options: [
-                    {label: 'File name', value: 'name'},
-                    {label: 'Full text search', value: 'fullText'},
-                    {label: 'Content type', value: 'mimeType'},
+                    { label: 'File name', value: 'name' },
+                    { label: 'Full text search', value: 'fullText' },
+                    { label: 'Content type', value: 'mimeType' },
                 ]
-            }
+            },
+            required: true,
         }),
         operator: Property.StaticDropdown({
             displayName: 'Operator',
@@ -29,10 +29,11 @@ export const googleDriveSearchFolder = createAction({
             required: true,
             options: {
                 options: [
-                    {label: 'Contains', value: 'contains'},
-                    {label: 'Equals', value: '='},
+                    { label: 'Contains', value: 'contains' },
+                    { label: 'Equals', value: '=' },
                 ]
-            }
+            },
+            defaultValue: 'contains'
         }),
         query: Property.ShortText({
             displayName: 'Value',
@@ -45,7 +46,7 @@ export const googleDriveSearchFolder = createAction({
             required: false,
             options: {
                 options: [
-                    { label: "All", value: "all"},
+                    { label: "All", value: "all" },
                     { label: "Files", value: "file" },
                     { label: "Folders", value: "folder" },
                 ],
@@ -59,11 +60,13 @@ export const googleDriveSearchFolder = createAction({
         authClient.setCredentials(context.auth)
 
         const drive = google.drive({ version: 'v3', auth: authClient });
-        let finalQuery = `${context.propsValue.query_term ?? 'name'} ${context.propsValue.operator} '${context.propsValue.query}'` 
+        const operator = context.propsValue.operator ?? 'contains';
+        const queryTerm = context.propsValue.query_term ?? 'name';
+        let finalQuery = `${queryTerm} ${operator} '${context.propsValue.query}'`
         finalQuery = `${finalQuery} and '${context.propsValue.parentFolder ?? 'root'}' in parents`;
-    
+
         const type = context.propsValue.type ?? "all";
-        switch(type){
+        switch (type) {
             case "file":
                 finalQuery = `${finalQuery} and mimeType!='application/vnd.google-apps.folder'`
                 break;
