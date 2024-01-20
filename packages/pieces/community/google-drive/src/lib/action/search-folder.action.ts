@@ -10,9 +10,33 @@ export const googleDriveSearchFolder = createAction({
     displayName: 'Search',
     description: 'Search a Google Drive folder for files/sub-folders',
     props: {
+        query_term: Property.StaticDropdown({
+            displayName: 'Query Term',
+            description: 'The Query term or field of file/folder to search upon.',
+            required: true,
+            defaultValue: 'name',
+            options: {
+                options: [
+                    {label: 'File name', value: 'name'},
+                    {label: 'Content', value: 'fullText'},
+                    {label: 'Content Type', value: 'mimeType'},
+                ]
+            }
+        }),
+        operator: Property.StaticDropdown({
+            displayName: 'Operator',
+            description: 'The operator to create criteria.',
+            required: true,
+            options: {
+                options: [
+                    {label: 'Contains', value: 'contains'},
+                    {label: 'Equals', value: '='},
+                ]
+            }
+        }),
         query: Property.ShortText({
-            displayName: 'Name',
-            description: 'Part of the name of the file/folder to search for.',
+            displayName: 'Value',
+            description: 'Value of the field of file/folder to search for.',
             required: true,
         }),
         type: Property.StaticDropdown({
@@ -35,7 +59,9 @@ export const googleDriveSearchFolder = createAction({
         authClient.setCredentials(context.auth)
 
         const drive = google.drive({ version: 'v3', auth: authClient });
-        let finalQuery = `name contains '${context.propsValue.query}' and '${context.propsValue.parentFolder ?? 'root'}' in parents`;
+        let finalQuery = `${context.propsValue.query_term ?? 'name'} ${context.propsValue.operator} '${context.propsValue.query}'` 
+        finalQuery = `${finalQuery} '${context.propsValue.parentFolder ?? 'root'}' in parents`;
+    
         const type = context.propsValue.type ?? "all";
         switch(type){
             case "file":
