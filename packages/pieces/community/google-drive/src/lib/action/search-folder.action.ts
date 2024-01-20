@@ -60,7 +60,7 @@ export const googleDriveSearchFolder = createAction({
 
         const drive = google.drive({ version: 'v3', auth: authClient });
         let finalQuery = `${context.propsValue.query_term ?? 'name'} ${context.propsValue.operator} '${context.propsValue.query}'` 
-        finalQuery = `${finalQuery} '${context.propsValue.parentFolder ?? 'root'}' in parents`;
+        finalQuery = `${finalQuery} and '${context.propsValue.parentFolder ?? 'root'}' in parents`;
     
         const type = context.propsValue.type ?? "all";
         switch(type){
