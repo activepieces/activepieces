@@ -7,12 +7,12 @@ import { newFile } from './lib/triggers/new-file';
 import { newFolder } from './lib/triggers/new-folder';
 import { readFile } from './lib/action/read-file';
 import { googleDriveListFiles } from './lib/action/list-files.action';
-import { googleDriveSearchFolder } from './lib/action/search-folder.action';
 import { duplicateFileAction } from './lib/action/duplicate-file.action';
 import { saveFileAsPdf } from './lib/action/save-file-as-pdf.action';
 import { addPermission } from './lib/action/add-permission.action';
 import { deletePermission } from './lib/action/delete-permission.action';
 import { googleDriveGetResourceById } from './lib/action/get-file-by-id';
+import { googleDriveSearchFolder } from './lib/action/search-folder-or-file.action';
 
 export const googleDriveAuth = PieceAuth.OAuth2({
   description: '',
