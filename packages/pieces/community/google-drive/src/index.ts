@@ -37,7 +37,9 @@ export const googleDrive = createPiece({
     googleDriveListFiles,
     googleDriveSearchFolder,
     duplicateFileAction,
-    saveFileAsPdf
+    saveFileAsPdf,
+    addPermission,
+    deletePermission
   ],
-  auth: googleDriveAuth,
+  auth: googleDriveAuth
 });
