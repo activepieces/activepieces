@@ -9,8 +9,11 @@ const useSsl = system.get(SystemProp.REDIS_USE_SSL) ?? false
 const db = system.getNumber(SystemProp.REDIS_DB) ?? 0
 
 export const createRedisClient = (): Redis => {
-    if (url) return new Redis(url)
-
+    if (url) {
+        return new Redis(url, {
+            maxRetriesPerRequest: null,
+        })
+    }
     const host = system.getOrThrow(SystemProp.REDIS_HOST)
     const serializedPort = system.getOrThrow(SystemProp.REDIS_PORT)
     const port = Number.parseInt(serializedPort, 10)
