@@ -8,7 +8,7 @@ import { displayNameToCamelCase, displayNameToKebabCase, findPieceSourceDirector
 
 function createTriggerTemplate(displayName: string, description: string, technique: string) {
     const camelCase = displayNameToCamelCase(displayName)
-    let triggerTemplate: string = ''
+    let triggerTemplate = ''
     if (technique === 'polling') {
         triggerTemplate = `
 import { createTrigger, TriggerStrategy, PiecePropValueSchema  } from '@activepieces/pieces-framework';

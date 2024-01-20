@@ -51,16 +51,16 @@ const nxGenerateNodeLibrary = async (
   packageName: string,
   pieceType: string
 ) => {
-  const nxGenerateCommand = `
-        npx nx generate @nx/node:library ${pieceName} \
-          --directory=pieces/${pieceType} \
-          --importPath=${packageName} \
-          --publishable \
-          --buildable \
-          --standaloneConfig \
-          --strict \
-          --unitTestRunner=none
-      `;
+  const nxGenerateCommand = [
+    `npx nx generate @nx/node:library ${pieceName}`,
+    `--directory=pieces/${pieceType}`,
+    `--importPath=${packageName}`,
+    '--publishable',
+    '--buildable',
+    '--standaloneConfig',
+    '--strict',
+    '--unitTestRunner=none'
+  ].join(' ')
 
   console.log(chalk.blue(`🛠️ Executing nx command: ${nxGenerateCommand}`));
 
