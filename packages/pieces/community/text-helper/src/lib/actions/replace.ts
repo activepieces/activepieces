@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { Property, Validators, createAction } from '@activepieces/pieces-framework';
 
 export const replace = createAction({
   description:
@@ -9,6 +9,7 @@ export const replace = createAction({
     text: Property.ShortText({
       displayName: 'Text',
       required: true,
+      validators: [Validators.string]
     }),
     searchValue: Property.ShortText({
       displayName: 'Search Value',

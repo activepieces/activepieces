@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { Property, Validators, createAction } from '@activepieces/pieces-framework';
 
 export const find = createAction({
   description: 'Find substring (Regex or Text).',
@@ -8,6 +8,7 @@ export const find = createAction({
     text: Property.ShortText({
       displayName: 'text',
       required: true,
+      validators: [Validators.string]
     }),
     expression: Property.ShortText({
       displayName: 'Expression',
