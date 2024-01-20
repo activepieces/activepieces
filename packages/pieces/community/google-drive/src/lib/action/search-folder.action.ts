@@ -18,8 +18,8 @@ export const googleDriveSearchFolder = createAction({
             options: {
                 options: [
                     {label: 'File name', value: 'name'},
-                    {label: 'Content', value: 'fullText'},
-                    {label: 'Content Type', value: 'mimeType'},
+                    {label: 'Full text search', value: 'fullText'},
+                    {label: 'Content type', value: 'mimeType'},
                 ]
             }
         }),
