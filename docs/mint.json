@@ -123,6 +123,14 @@
             "endpoints/flows/list",
             "endpoints/flows/delete"
           ]
+        },
+        {
+          "group": "Pieces",
+          "icon": "plug",
+          "pages": [
+            "endpoints/pieces/schema",
+            "endpoints/pieces/install"
+          ]
         }
       ]
     },

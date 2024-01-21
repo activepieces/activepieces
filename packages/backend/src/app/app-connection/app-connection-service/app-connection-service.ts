@@ -26,7 +26,7 @@ import { captureException, logger } from '../../helper/logger'
 import { isNil } from '@activepieces/shared'
 import { engineHelper } from '../../helper/engine-helper'
 import { acquireLock } from '../../helper/lock'
-import { pieceMetadataService } from '../../pieces/piece-metadata-service'
+import { getPiecePackage, pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { appConnectionsHooks } from './app-connection-hooks'
 import { oauth2Util } from './oauth2/oauth2-util'
 import { oauth2Handler } from './oauth2'
@@ -253,13 +253,14 @@ const engineValidateAuth = async (
         version: undefined,
     })
 
+
     const engineResponse = await engineHelper.executeValidateAuth( {
-        piece: {
-            packageType: pieceMetadata.packageType,
-            pieceType: pieceMetadata.pieceType,
-            pieceName: pieceMetadata.name,
+        piece: await getPiecePackage({
+            pieceName,
             pieceVersion: pieceMetadata.version,
-        },
+            pieceType: pieceMetadata.pieceType,
+            packageType: pieceMetadata.packageType,
+        }),
         auth,
         projectId,
     })

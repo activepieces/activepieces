@@ -1,3 +1,4 @@
+import { Static, Type } from '@sinclair/typebox';
 import { ActionContext } from '../context';
 import { ActionBase } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
@@ -6,16 +7,17 @@ import { PieceAuthProperty } from '../property/authentication';
 export type ActionRunner<PieceAuth extends PieceAuthProperty, ActionProps extends InputPropertyMap> =
   (ctx: ActionContext<PieceAuth, ActionProps>) => Promise<unknown | void>
 
-export type ErrorHandlingOptionsParam = {
-    retryOnFailure: {
-        defaultValue: boolean,
-        hide: boolean,
-    },
-    continueOnFailure: {
-        defaultValue: boolean,
-        hide: boolean,
-    },
-}
+export const ErrorHandlingOptionsParam = Type.Object({
+  retryOnFailure: Type.Object({
+    defaultValue: Type.Boolean(),
+    hide: Type.Boolean(),
+  }),
+  continueOnFailure: Type.Object({
+    defaultValue: Type.Boolean(),
+    hide: Type.Boolean(),
+  }),
+})
+export type ErrorHandlingOptionsParam = Static<typeof ErrorHandlingOptionsParam>
 
 type CreateActionParams<PieceAuth extends PieceAuthProperty, ActionProps extends InputPropertyMap> = {
   /**
