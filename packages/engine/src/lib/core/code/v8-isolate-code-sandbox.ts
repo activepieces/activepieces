@@ -1,5 +1,5 @@
 import ivm from 'isolated-vm'
-import { CodeExecutorSandbox, CodeModule } from './code-executor-common'
+import { CodeSandbox, CodeModule } from '../../core/code/code-sandbox-common'
 
 const ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES = 128
 const INPUTS_VARIABLE_NAME = 'inputs'
@@ -7,7 +7,7 @@ const INPUTS_VARIABLE_NAME = 'inputs'
 /**
  * Runs code in a V8 Isolate sandbox
  */
-export const isolateCodeExecutorSandbox: CodeExecutorSandbox = {
+export const v8IsolateCodeSandbox: CodeSandbox = {
     async run({ codeModule, inputs }) {
         const isolate = new ivm.Isolate({ memoryLimit: ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES })
 

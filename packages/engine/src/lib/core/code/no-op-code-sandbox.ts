@@ -1,9 +1,9 @@
-import { CodeExecutorSandbox } from './code-executor-common'
+import { CodeSandbox } from '../../core/code/code-sandbox-common'
 
 /**
  * Runs code without a sandbox.
  */
-export const noOpCodeExecutorSandbox: CodeExecutorSandbox = {
+export const noOpCodeSandbox: CodeSandbox = {
     run({ codeModule, inputs }) {
         return codeModule.code(inputs)
     },
