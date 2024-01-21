@@ -41,8 +41,10 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
         const codeModule: CodeModule = await import(artifactPath)
 
         const output = await codeSandbox.run({
-            codeModule,
-            inputs: resolvedInput,
+            code: codeModule.code.toString(),
+            codeContext: {
+                inputs: resolvedInput,
+            },
         })
 
         return executionState.upsertStep(action.name, stepOutput.setOutput(output)).increaseTask()

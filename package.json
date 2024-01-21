@@ -155,6 +155,7 @@
     "soap": "1.0.0",
     "sqlite3": "5.1.6",
     "ssh2-sftp-client": "9.1.0",
+    "string-replace-async": "3.0.2",
     "stripe": "14.3.0",
     "subsink": "1.0.2",
     "tiktoken": "1.0.11",

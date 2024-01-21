@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import replaceAsync from 'string-replace-async'
 import {
     AUTHENTICATION_PROPERTY_NAME,
     isNil,
@@ -14,13 +15,14 @@ import {
 import { handleAPFile, isApFilePath } from './files.service'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createConnectionService } from './connections.service'
+import { codeSandbox } from '../core/code/code-sandbox'
 
 export class VariableService {
-    private VARIABLE_TOKEN = RegExp('\\{\\{(.*?)\\}\\}', 'g')
+    private static readonly VARIABLE_PATTERN = RegExp('\\{\\{(.*?)\\}\\}', 'g')
+    private static readonly CONNECTIONS = 'connections'
+
     private workerToken: string
     private projectId: string
-    private static CONNECTIONS = 'connections'
-
 
     constructor(data: { workerToken: string, projectId: string }) {
         this.workerToken = data.workerToken
@@ -31,9 +33,9 @@ export class VariableService {
         input: string,
         valuesMap: Record<string, unknown>,
         logs: boolean,
-    ): Promise<any> {
+    ): Promise<unknown> {
         // If input contains only a variable token, return the value of the variable while maintaining the variable type.
-        const matchedTokens = input.match(this.VARIABLE_TOKEN)
+        const matchedTokens = input.match(VariableService.VARIABLE_PATTERN)
         if (
             matchedTokens !== null &&
             matchedTokens.length === 1 &&
@@ -45,11 +47,14 @@ export class VariableService {
             }
             return this.evalInScope(variableName, valuesMap)
         }
-        return input.replace(this.VARIABLE_TOKEN, (_match, variable) => {
-            const result = this.evalInScope(variable, valuesMap)
+
+        return replaceAsync(input, VariableService.VARIABLE_PATTERN, async (_fullMatch, variableName) => {
+            const result = await this.evalInScope(variableName, valuesMap)
+
             if (!isString(result)) {
                 return JSON.stringify(result)
             }
+
             return result
         })
     }
@@ -57,7 +62,7 @@ export class VariableService {
     private async handleTypeAndResolving(
         path: string,
         censorConnections: boolean,
-    ): Promise<any> {
+    ): Promise<unknown> {
         // Need to be resolved dynamically
         const connectionName = this.findConnectionName(path)
         if (isNil(connectionName)) {
@@ -106,13 +111,15 @@ export class VariableService {
         return paths[1]
     }
 
-    private evalInScope(js: string, contextAsScope: Record<string, unknown>): any {
+    private async evalInScope(js: string, contextAsScope: Record<string, unknown>): Promise<unknown> {
         try {
-            const keys = Object.keys(contextAsScope)
-            const values = Object.values(contextAsScope)
-            const functionBody = `return (${js})`
-            const evaluatedFn = new Function(...keys, functionBody)
-            const result = evaluatedFn(...values)
+            const code = `() => { return ${js} }`
+
+            const result = await codeSandbox.run({
+                code,
+                codeContext: contextAsScope,
+            })
+
             return result ?? ''
         }
         catch (exception) {

@@ -3,10 +3,14 @@ export type CodeSandbox = {
 }
 
 type RunParams = {
-    codeModule: CodeModule
-    inputs: Record<string, unknown>
-}
+    /**
+     * A serialized function that will be executed in the sandbox.
+     * The function can either be sync or async.
+     */
+    code: string
 
-export type CodeModule = {
-    code(input: unknown): Promise<unknown>
+    /**
+     * A key-value map of variables available to code during execution.
+     */
+    codeContext: Record<string, unknown>
 }
