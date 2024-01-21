@@ -37,6 +37,7 @@ import {
   PropertyType,
   OAuth2Property,
   OAuth2Props,
+  StaticDropdownProperty,
 } from '@activepieces/pieces-framework';
 import { connectionNameRegex } from '../utils';
 
@@ -298,4 +299,8 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
   dropdownCompareWithFunction = (opt: any, formControlValue: any) => {
     return formControlValue && deepEqual(opt, formControlValue);
   };
+
+  castToStaticDropdown(t: unknown) {
+    return t as StaticDropdownProperty<unknown, true>;
+  }
 }

@@ -20,6 +20,7 @@ import {
   OAuth2Property,
   OAuth2Props,
   PropertyType,
+  StaticMultiSelectDropdownProperty,
 } from '@activepieces/pieces-framework';
 import deepEqual from 'deep-equal';
 import {
@@ -290,5 +291,9 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
       authUrl: authUrl,
       tokenUrl: tokenUrl,
     };
+  }
+
+  castToStaticDropdown(t: unknown) {
+    return t as StaticMultiSelectDropdownProperty<unknown, true>;
   }
 }

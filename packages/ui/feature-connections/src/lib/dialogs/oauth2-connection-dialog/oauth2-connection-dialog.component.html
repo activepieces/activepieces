@@ -65,7 +65,7 @@
             <mat-label> {{prop.value.displayName}}</mat-label>
             <mat-select [formControlName]="prop.key" [matTooltip]="prop.value.description || ''"
               [compareWith]="dropdownCompareWithFunction">
-              <mat-option *ngFor="let opt of prop.value.options!.options" [value]="opt.value">
+              <mat-option *ngFor="let opt of castToStaticDropdown(prop.value).options.options" [value]="opt.value">
                 {{opt.label}}
               </mat-option>
             </mat-select>

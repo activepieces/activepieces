@@ -1,4 +1,4 @@
-import { TSchema, Type } from "@sinclair/typebox";
+import { Type } from "@sinclair/typebox";
 
 export const BasePieceAuthSchema = Type.Object({
     displayName: Type.String(),

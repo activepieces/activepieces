@@ -11,11 +11,9 @@ import { TriggerStrategy } from './trigger/trigger';
 import {
   InputPropertyMap,
   PiecePropValueSchema,
-  PiecePropertyMap,
   StaticPropsValue,
 } from './property';
 import { PieceAuthProperty } from './property/authentication';
-import { InputProperty } from './property/input';
 
 type BaseContext<
   PieceAuth extends PieceAuthProperty,

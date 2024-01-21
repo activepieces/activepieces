@@ -1,6 +1,6 @@
 import { ValidationInputType } from '../../validators/types';
-import { Static, Type } from '@sinclair/typebox';
-import { BasePropertySchema, TPropertyValue } from '../input/common';
+import { Type } from '@sinclair/typebox';
+import { TPropertyValue } from '../input/common';
 import { PropertyType } from '../input/property-type';
 import { LongTextProperty, ShortTextProperty } from '../input/text-property';
 import { NumberProperty } from '../input/number-property';

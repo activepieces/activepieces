@@ -1,4 +1,4 @@
-import { Static, Type } from "@sinclair/typebox";
+import { Type } from "@sinclair/typebox";
 import { StaticDropdownProperty, StaticMultiSelectDropdownProperty } from "./dropdown/static-dropdown";
 import { ShortTextProperty } from "./text-property";
 import { BasePropertySchema, TPropertyValue } from "./common";

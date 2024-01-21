@@ -8,12 +8,12 @@ import {
     formatErrorMessage,
     ErrorMessages,
     InputPropertyMap,
+    PieceAuthProperty,
+    PropertyType,
 } from '@activepieces/pieces-framework'
 import { handleAPFile, isApFilePath } from './files.service'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createConnectionService } from './connections.service'
-import { PieceAuthProperty } from 'packages/pieces/community/framework/src/lib/property/authentication'
-import { PropertyType } from 'packages/pieces/community/framework/src/lib/property/input/property-type'
 
 export class VariableService {
     private VARIABLE_TOKEN = RegExp('\\{\\{(.*?)\\}\\}', 'g')
