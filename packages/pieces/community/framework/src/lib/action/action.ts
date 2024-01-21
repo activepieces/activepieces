@@ -1,8 +1,9 @@
 import { ActionContext } from '../context';
 import { ActionBase } from '../piece-metadata';
-import { NonAuthPiecePropertyMap, PieceAuthProperty } from '../property/property';
+import { InputPropertyMap } from '../property';
+import { PieceAuthProperty } from '../property/authentication';
 
-export type ActionRunner<PieceAuth extends PieceAuthProperty, ActionProps extends NonAuthPiecePropertyMap> =
+export type ActionRunner<PieceAuth extends PieceAuthProperty, ActionProps extends InputPropertyMap> =
   (ctx: ActionContext<PieceAuth, ActionProps>) => Promise<unknown | void>
 
 export type ErrorHandlingOptionsParam = {
@@ -16,7 +17,7 @@ export type ErrorHandlingOptionsParam = {
     },
 }
 
-type CreateActionParams<PieceAuth extends PieceAuthProperty, ActionProps extends NonAuthPiecePropertyMap> = {
+type CreateActionParams<PieceAuth extends PieceAuthProperty, ActionProps extends InputPropertyMap> = {
   /**
    * A dummy parameter used to infer {@code PieceAuth} type
    */
@@ -31,7 +32,7 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty, ActionProps extends
   errorHandlingOptions?: ErrorHandlingOptionsParam
 }
 
-export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends NonAuthPiecePropertyMap> implements ActionBase {
+export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends InputPropertyMap> implements ActionBase {
   constructor(
     public readonly name: string,
     public readonly displayName: string,
@@ -46,12 +47,12 @@ export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends No
 
 export type Action<
   PieceAuth extends PieceAuthProperty = any,
-  ActionProps extends NonAuthPiecePropertyMap = any,
+  ActionProps extends InputPropertyMap = any,
 > = IAction<PieceAuth, ActionProps>
 
 export const createAction = <
   PieceAuth extends PieceAuthProperty = PieceAuthProperty,
-  ActionProps extends NonAuthPiecePropertyMap = any
+  ActionProps extends InputPropertyMap = any
 >(
   params: CreateActionParams<PieceAuth, ActionProps>,
 ) => {

@@ -1,0 +1,42 @@
+import { Static, Type } from "@sinclair/typebox";
+import { StaticDropdownProperty, StaticMultiSelectDropdownProperty } from "./dropdown/static-dropdown";
+import { ShortTextProperty } from "./text-property";
+import { BasePropertySchema, TPropertyValue } from "./common";
+import { PropertyContext } from "../../context";
+import { ValidationInputType } from "../../validators/types";
+import { PropertyType } from "./property-type";
+
+const DynamicProp = Type.Union([
+  ShortTextProperty,
+  StaticDropdownProperty,
+  StaticMultiSelectDropdownProperty,
+])
+
+type DynamicProp = Static<typeof DynamicProp>;
+
+const DynamicPropsValue = Type.Record(Type.String(), DynamicProp);
+
+type DynamicPropsValue = Static<typeof DynamicPropsValue>;
+
+export const DynamicProperties = Type.Composite([
+  Type.Object({
+    refreshers: Type.Array(Type.String()),
+  }),
+  BasePropertySchema,
+  TPropertyValue(Type.Unknown(), PropertyType.DYNAMIC),
+])
+
+export type DynamicProperties<R extends boolean> = BasePropertySchema &
+{
+  props: (
+    propsValue: Record<string, DynamicPropsValue>,
+    ctx: PropertyContext
+  ) => Promise<Record<string, DynamicProp>>;
+  refreshers: string[];
+} &
+  TPropertyValue<
+    DynamicPropsValue,
+    PropertyType.DYNAMIC,
+    ValidationInputType.ANY,
+    R
+  >;

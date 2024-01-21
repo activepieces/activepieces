@@ -1,7 +1,8 @@
 import { ProjectId } from "@activepieces/shared";
-import { PieceAuthProperty, PiecePropertyMap } from "./property";
+import { PiecePropertyMap } from "./property";
 import { TriggerStrategy, WebhookHandshakeConfiguration } from "./trigger/trigger";
 import { ErrorHandlingOptionsParam } from "./action/action";
+import { PieceAuthProperty } from "./property/authentication";
 
 export type PieceBase = {
   id?: string;

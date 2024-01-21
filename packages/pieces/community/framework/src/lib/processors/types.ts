@@ -1,8 +1,8 @@
-import { PieceProperty } from '../property';
+import { PieceAuthProperty } from '../property/authentication';
 import { Processors } from './processors';
 
 export type ProcessorFn<INPUT = any, OUTPUT = any> = (
-  property: PieceProperty,
+  property: PieceAuthProperty,
   value: INPUT
 ) => OUTPUT;
 
