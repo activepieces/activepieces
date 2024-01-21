@@ -48,7 +48,7 @@ interface AuthConfigSettings {
 
 export const USE_MY_OWN_CREDENTIALS = 'USE_MY_OWN_CREDENTIALS';
 export type ManagedOAuth2ConnectionDialogData = {
-  pieceAuthProperty: OAuth2Property<boolean, OAuth2Props>;
+  pieceAuthProperty: OAuth2Property<OAuth2Props>;
   pieceName: string;
   connectionToUpdate?: AppConnectionWithoutSensitiveData;
   clientId: string;

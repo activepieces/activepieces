@@ -12,7 +12,7 @@ export const localaiAuth = PieceAuth.CustomAuth({
       description: 'LocalAI Instance URL',
       required: true,
     }),
-    access_token: PieceAuth.SecretText({
+    access_token: Property.ShortText({
       displayName: 'Access Token',
       description: 'LocalAI Access Token',
       required: false,

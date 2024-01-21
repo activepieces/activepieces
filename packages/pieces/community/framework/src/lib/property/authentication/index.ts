@@ -13,7 +13,7 @@ export const PieceAuthProperty = Type.Union([
   SecretTextProperty,
 ])
 
-export type PieceAuthProperty = BasicAuthProperty | CustomAuthProperty<any> | OAuth2Property<any> | SecretTextProperty;
+export type PieceAuthProperty = BasicAuthProperty | CustomAuthProperty<any> | OAuth2Property<any> | SecretTextProperty<boolean>;
 
 type AuthProperties<T> = Omit<Properties<T>, 'displayName'>;
 
@@ -24,15 +24,15 @@ type Properties<T> = Omit<
 
 
 export const PieceAuth = {
-  SecretText(
-    request: Properties<SecretTextProperty>
-  ): SecretTextProperty {
+  SecretText<R extends boolean>(
+    request: Properties<SecretTextProperty<R>>
+  ): R extends true ? SecretTextProperty<true> : SecretTextProperty<false> {
     return {
       ...request,
       valueSchema: undefined,
       type: PropertyType.SECRET_TEXT,
       required: true
-    } as unknown as SecretTextProperty;
+    } as unknown as R extends true ? SecretTextProperty<true> : SecretTextProperty<false>;
   },
   OAuth2<T extends OAuth2Props>(
     request: AuthProperties<OAuth2Property<T>>

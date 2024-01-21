@@ -12,11 +12,11 @@ export const SecretTextProperty = Type.Composite([
 ])
 
 
-export type SecretTextProperty =
+export type SecretTextProperty<R extends boolean> =
     BasePieceAuthSchema<string> &
     TPropertyValue<
         string,
         PropertyType.SECRET_TEXT,
         ValidationInputType.STRING,
-        true
+        R
     >;

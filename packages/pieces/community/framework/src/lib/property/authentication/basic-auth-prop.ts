@@ -4,12 +4,12 @@ import { PropertyType } from '../input/property-type';
 import { BasePieceAuthSchema } from './common';
 import { ValidationInputType } from '../../validators/types';
 
-const BasicAuthPropertyValue = Type.Object({
+export const BasicAuthPropertyValue = Type.Object({
   username: Type.String(),
   password: Type.String(),
 })
 
-type BasicAuthPropertyValue = Static<typeof BasicAuthPropertyValue>
+export type BasicAuthPropertyValue = Static<typeof BasicAuthPropertyValue>
 
 export const BasicAuthProperty = Type.Composite([
   BasePieceAuthSchema,

@@ -22,7 +22,7 @@ export type CustomAuthProps = Record<
   string,
   | ShortTextProperty<boolean>
   | LongTextProperty<boolean>
-  | SecretTextProperty
+  | SecretTextProperty<boolean>
   | NumberProperty<boolean>
   | StaticDropdownProperty<unknown, boolean>
   | CheckboxProperty<boolean>

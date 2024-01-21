@@ -6,7 +6,7 @@ import { ValidationInputType } from "../../validators/types";
 export const JsonProperty = Type.Composite([
   BasePropertySchema,
   TPropertyValue(
-    Type.Record(Type.String(), Type.Unknown()),
+    Type.Union([Type.Record(Type.String(), Type.Unknown())]),
     PropertyType.JSON,
   ),
 ]);

@@ -12,11 +12,14 @@ const DynamicProp = Type.Union([
   StaticMultiSelectDropdownProperty,
 ])
 
-type DynamicProp = Static<typeof DynamicProp>;
+type DynamicProp =
+  | ShortTextProperty<boolean>
+  | StaticDropdownProperty<any, boolean>
+  | StaticMultiSelectDropdownProperty<any, boolean>;
 
-const DynamicPropsValue = Type.Record(Type.String(), DynamicProp);
+export const DynamicPropsValue = Type.Record(Type.String(), DynamicProp);
 
-type DynamicPropsValue = Static<typeof DynamicPropsValue>;
+export type DynamicPropsValue = Record<string, DynamicProp['valueSchema']>;
 
 export const DynamicProperties = Type.Composite([
   Type.Object({

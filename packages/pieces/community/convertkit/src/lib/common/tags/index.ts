@@ -1,7 +1,6 @@
 import {
   Property,
-  Validators,
-  DynamicDropdownOptions,
+  Validators
 } from '@activepieces/pieces-framework';
 import {
   fetchSubscriberByEmail,
@@ -113,60 +112,61 @@ export const subscriberState = Property.StaticDropdown({
 
 // Generate options for tags based on email address
 
-export const tagIdByEmailOptionsFn = async ({ auth, email }: AuthEmail) => {
-  if (!auth) {
-    return {
-      disabled: true,
-      placeholder: 'Connect your account.',
-      options: [],
-    };
-  }
-  if (!email) {
-    return {
-      disabled: true,
-      placeholder: 'Provide a subscriber email address.',
-      options: [],
-    };
-  }
-  const subscriber = await fetchSubscriberByEmail(
-    auth.toString(),
-    email.toString()
-  );
-
-  if (!subscriber) {
-    return {
-      disabled: true,
-      placeholder: 'No subscribers found for this email address.',
-      options: [],
-    };
-  }
-
-  const subscriberId = subscriber.id;
-  const tags = await fetchSubscribedTags(
-    auth.toString(),
-    subscriberId.toString()
-  );
-
-  // loop through data and map to options
-  const options = tags.map((tag: Tag) => {
-    return {
-      label: tag.name,
-      value: tag.id,
-    };
-  });
-
-  return {
-    disabled: false,
-    options,
-  };
-};
 
 export const tagIdByEmail = Property.Dropdown({
   displayName: 'Tag',
   description: 'The tag to remove',
   required: true,
   refreshers: ['auth', 'email'],
-  options: tagIdByEmailOptionsFn as unknown as DynamicDropdownOptions<unknown>,
+  options: async (params: unknown) => {
+    const { auth, email } = params as AuthEmail;
+    if (!auth) {
+      return {
+        disabled: true,
+        placeholder: 'Connect your account.',
+        options: [],
+      };
+    }
+    if (!email) {
+      return {
+        disabled: true,
+        placeholder: 'Provide a subscriber email address.',
+        options: [],
+      };
+    }
+    const subscriber = await fetchSubscriberByEmail(
+      auth.toString(),
+      email.toString()
+    );
+
+    if (!subscriber) {
+      return {
+        disabled: true,
+        placeholder: 'No subscribers found for this email address.',
+        options: [],
+      };
+    }
+
+    const subscriberId = subscriber.id;
+    const tags = await fetchSubscribedTags(
+      auth.toString(),
+      subscriberId.toString()
+    );
+
+    // loop through data and map to options
+    const options = tags.map((tag: Tag) => {
+      return {
+        label: tag.name,
+        value: tag.id,
+      };
+    });
+
+    return {
+      disabled: false,
+      placeholder: 'Choose a tag',
+      options,
+    };
+  },
 });
 
 export const tagIdBySubscriberId = Property.Dropdown({

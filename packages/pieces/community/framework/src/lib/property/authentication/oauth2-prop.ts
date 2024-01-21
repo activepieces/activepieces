@@ -23,7 +23,7 @@ const OAuthProp = Type.Union([
 
 type OAuthProp =
   | ShortTextProperty<true>
-  | SecretTextProperty
+  | SecretTextProperty<boolean>
   | StaticDropdownProperty<any, true>;
 
 
