@@ -16,7 +16,7 @@ export const gmail = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/gmail.png',
   actions: [gmailSendEmailAction],
   displayName: 'Gmail',
-  authors: ['AbdulTheActivePiecer', 'kanarelo', 'BastienMe', 'PFernandez98'],
+  authors: ['AbdulTheActivePiecer', 'kanarelo', 'BastienMe', 'PFernandez98', 'kishanprmr'],
   triggers: [],
   auth: gmailAuth,
 });
