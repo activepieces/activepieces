@@ -50,7 +50,6 @@ export class CachedSandbox {
 
             await this.deletePathIfExists()
             await mkdir(this.path(), { recursive: true })
-            await packageManager.init({ path: this.path() })
 
             this._state = CachedSandboxState.INITIALIZED
         })
@@ -73,6 +72,8 @@ export class CachedSandbox {
                 if (alreadyPrepared) {
                     return
                 }
+
+                await packageManager.init({ path: this.path() })
 
                 await pieceManager.install({
                     projectId,
