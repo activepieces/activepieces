@@ -100,6 +100,7 @@ export const Property = {
       ...request,
       valueSchema: undefined,
       type: PropertyType.SHORT_TEXT,
+      defaultProcessors: [Processors.string],
       defaultValidators: [Validators.string],
     } as unknown as R extends true
       ? ShortTextProperty<true>
