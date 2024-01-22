@@ -113,11 +113,9 @@ export class VariableService {
 
     private async evalInScope(js: string, contextAsScope: Record<string, unknown>): Promise<unknown> {
         try {
-            const code = `() => { return ${js} }`
-
-            const result = await codeSandbox.run({
-                code,
-                codeContext: contextAsScope,
+            const result = await codeSandbox.runScript({
+                script: js,
+                scriptContext: contextAsScope,
             })
 
             return result ?? ''

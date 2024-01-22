@@ -1,5 +1,5 @@
 import ivm from 'isolated-vm'
-import { CodeSandbox } from '../../core/code/code-sandbox-common'
+import { CodeModule, CodeSandbox } from '../../core/code/code-sandbox-common'
 
 const ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES = 128
 
@@ -7,19 +7,43 @@ const ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES = 128
  * Runs code in a V8 Isolate sandbox
  */
 export const v8IsolateCodeSandbox: CodeSandbox = {
-    async run({ code, codeContext }) {
+    async runCodeModule({ codeModule, inputs }) {
         const isolate = new ivm.Isolate({ memoryLimit: ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES })
 
         try {
             const isolateContext = await initIsolateContext({
                 isolate,
-                codeContext,
+                codeContext: {
+                    inputs,
+                },
+            })
+
+            const serializedCodeModule = serializeCodeModule(codeModule)
+
+            return await executeIsolate({
+                isolate,
+                isolateContext,
+                code: serializedCodeModule,
+            })
+        }
+        finally {
+            isolate.dispose()
+        }
+    },
+
+    async runScript({ script, scriptContext }) {
+        const isolate = new ivm.Isolate({ memoryLimit: ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES })
+
+        try {
+            const isolateContext = await initIsolateContext({
+                isolate,
+                codeContext: scriptContext,
             })
 
             return await executeIsolate({
                 isolate,
                 isolateContext,
-                code,
+                code: script,
             })
         }
         finally {
@@ -39,8 +63,7 @@ const initIsolateContext = async ({ isolate, codeContext }: InitContextParams): 
 }
 
 const executeIsolate = async ({ isolate, isolateContext, code }: ExecuteIsolateParams): Promise<unknown> => {
-    const sourceCode = `const code = ${code}; code();`
-    const isolateScript = await isolate.compileScript(sourceCode)
+    const isolateScript = await isolate.compileScript(code)
 
     const outRef = await isolateScript.run(isolateContext, {
         reference: true,
@@ -48,6 +71,11 @@ const executeIsolate = async ({ isolate, isolateContext, code }: ExecuteIsolateP
     })
 
     return outRef.copy()
+}
+
+const serializeCodeModule = (codeModule: CodeModule): string => {
+    const serializedCodeFunction = codeModule.code.toString()
+    return `const code = ${serializedCodeFunction}; code(inputs);`
 }
 
 type InitContextParams = {

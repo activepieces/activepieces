@@ -1,10 +1,10 @@
 import { ActionType, CodeAction, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
-import { ActionHandler, BaseExecutor } from '../base-executor'
-import { ExecutionVerdict, FlowExecutorContext } from '../context/flow-execution-context'
-import { EngineConstants } from '../context/engine-constants'
-import { continueIfFailureHandler, runWithExponentialBackoff } from '../../helper/error-handling'
-import { codeSandbox } from '../../core/code/code-sandbox'
-import { CodeModule } from './code-executor-common'
+import { ActionHandler, BaseExecutor } from './base-executor'
+import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
+import { EngineConstants } from './context/engine-constants'
+import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
+import { codeSandbox } from '../core/code/code-sandbox'
+import { CodeModule } from '../core/code/code-sandbox-common'
 
 export const codeExecutor: BaseExecutor<CodeAction> = {
     async handle({
@@ -40,11 +40,9 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
         const artifactPath = `${constants.baseCodeDirectory}/${action.name}/index.js`
         const codeModule: CodeModule = await import(artifactPath)
 
-        const output = await codeSandbox.run({
-            code: codeModule.code.toString(),
-            codeContext: {
-                inputs: resolvedInput,
-            },
+        const output = await codeSandbox.runCodeModule({
+            codeModule,
+            inputs: resolvedInput,
         })
 
         return executionState.upsertStep(action.name, stepOutput.setOutput(output)).increaseTask()
