@@ -86,6 +86,7 @@ export class RunsTableDataSource extends DataSource<FlowRun> {
         this.isLoading$.next(false);
         this.paginator.next = res.next;
         this.paginator.previous = res.previous;
+
         this.data = res.data;
         if (this.refreshTimer) {
           clearTimeout(this.refreshTimer);

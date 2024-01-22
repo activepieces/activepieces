@@ -22,20 +22,19 @@ import { StepMentionsTreeComponent } from './interpolating-text-form-control/men
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { AuthConfigsPipe } from './piece-properties-form/auth-configs.pipe';
+import { AuthConfigsPipe } from './pipes/auth-configs.pipe';
 import { PiecePropertiesFormComponent } from './piece-properties-form/piece-properties-form.component';
 import { MatTreeModule } from '@angular/material/tree';
 import { QuillModule } from 'ngx-quill';
 import { WebhookTriggerMentionItemComponent } from './interpolating-text-form-control/mentions-list/webhook-trigger-mention-item/webhook-trigger-mention-item.component';
 import { BuilderAutocompleteDropdownHandlerComponent } from './interpolating-text-form-control/builder-autocomplete-dropdown-handler/builder-autocomplete-dropdown-handler.component';
 import { AutocompleteDropdownSizesButtonsComponent } from './interpolating-text-form-control/mentions-list/autocomplete-dropdown-sizes-buttons/autocomplete-dropdown-sizes-buttons.component';
-import { DropdownPropertySearchPipe } from './piece-properties-form/dropdown-search.pipe';
 import { MarkdownModule } from 'ngx-markdown';
-import { SelectedAuthConfigsPipe } from './piece-properties-form/selected-auth-config.pipe';
+import { SelectedAuthConfigsPipe } from './pipes/selected-auth-config.pipe';
 import { init } from './interpolating-text-form-control/fixed-selection-mention';
 import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
-import { DropdownPropertyInitialValuePipe } from './piece-properties-form/dropdown-initial-value.pipe';
-import { isDropdownItemSelectedPipe } from './piece-properties-form/is-selected.pipe';
+import { DropdownPropertyInitialValuePipe } from './pipes/dropdown-initial-value.pipe';
+import { isDropdownItemSelectedPipe } from './pipes/is-selected.pipe';
 import { MatPseudoCheckboxModule } from '@angular/material/core';
 import { ActionErrorHandlingFormControlComponent } from './action-error-handling-form-control/action-error-handling-form-control.component';
 const exportedDeclarations = [
@@ -80,7 +79,6 @@ const exportedDeclarations = [
     WebhookTriggerMentionItemComponent,
     AuthConfigsPipe,
     AutocompleteDropdownSizesButtonsComponent,
-    DropdownPropertySearchPipe,
     SelectedAuthConfigsPipe,
     DropdownPropertyInitialValuePipe,
     isDropdownItemSelectedPipe,
