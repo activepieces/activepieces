@@ -325,7 +325,7 @@ describe('Authentication API', () => {
             // arrange
             const mockPlatformId = faker.string.nanoid()
             const mockPlatformDomain = faker.internet.domainName()
-          
+
             const rawPassword = faker.internet.password()
             const mockUser = createMockUser({
                 email: faker.internet.email(),
@@ -335,25 +335,25 @@ describe('Authentication API', () => {
                 platformId: mockPlatformId,
             })
             await databaseConnection.getRepository('user').save(mockUser)
-          
+
             const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id, emailAuthEnabled: false, ssoEnabled: true })
             await databaseConnection.getRepository('platform').save(mockPlatform)
-          
+
             const mockCustomDomain = createMockCustomDomain({ platformId: mockPlatformId, domain: mockPlatformDomain })
             await databaseConnection.getRepository('custom_domain').save(mockCustomDomain)
-          
+
             const mockProject = createMockProject({
                 ownerId: mockUser.id,
                 platformId: mockPlatformId,
             })
             await databaseConnection.getRepository('project').save(mockProject)
-          
-          
+
+
             const mockSignInRequest = createMockSignInRequest({
                 email: mockUser.email,
                 password: rawPassword,
             })
-          
+
             // act
             const response = await app?.inject({
                 method: 'POST',
@@ -365,7 +365,7 @@ describe('Authentication API', () => {
             })
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
             const responseBody = response?.json()
-          
+
             expect(responseBody?.code).toBe('EMAIL_AUTH_DISABLED')
         })
 
@@ -431,9 +431,13 @@ describe('Authentication API', () => {
             await databaseConnection.getRepository('user').save(mockUser)
 
             const mockPlatform = createMockPlatform({
+                id: CLOUD_PLATFORM_ID,
                 ownerId: mockUser.id,
             })
             await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection.getRepository('user').update(mockUser.id, {
+                platformId: mockPlatform.id,
+            })
             const mockProject = createMockProject({
                 platformId: mockPlatform.id,
                 ownerId: mockUser.id,
@@ -466,7 +470,7 @@ describe('Authentication API', () => {
             expect(responseBody?.password).toBeUndefined()
             expect(responseBody?.status).toBe(mockUser.status)
             expect(responseBody?.verified).toBe(mockUser.verified)
-            expect(responseBody?.platformId).toBe(null)
+            expect(responseBody?.platformId).toBe(CLOUD_PLATFORM_ID)
             expect(responseBody?.externalId).toBe(null)
             expect(responseBody?.projectId).toBe(mockProject.id)
             expect(responseBody?.token).toBeDefined()
@@ -543,7 +547,9 @@ describe('Authentication API', () => {
 
             const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id })
             await databaseConnection.getRepository('platform').save(mockPlatform)
-
+            await databaseConnection.getRepository('user').update(mockUser.id, {
+                platformId: mockPlatform.id,
+            })
             const mockCustomDomain = createMockCustomDomain({ platformId: mockPlatformId, domain: mockPlatformDomain })
             await databaseConnection.getRepository('custom_domain').save(mockCustomDomain)
 
@@ -585,6 +591,7 @@ describe('Authentication API', () => {
             await databaseConnection.getRepository('user').save(mockUser)
 
             const mockPlatform = createMockPlatform({
+                id: CLOUD_PLATFORM_ID,
                 ownerId: mockUser.id,
             })
             await databaseConnection.getRepository('platform').save(mockPlatform)
@@ -626,9 +633,13 @@ describe('Authentication API', () => {
             await databaseConnection.getRepository('user').save(mockUser)
 
             const mockPlatform = createMockPlatform({
+                id: CLOUD_PLATFORM_ID,
                 ownerId: mockUser.id,
             })
             await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection.getRepository('user').update(mockUser.id, {
+                platformId: mockPlatform.id,
+            })
 
             const mockProject = createMockProject({
                 ownerId: mockUser.id,

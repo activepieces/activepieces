@@ -4,7 +4,7 @@ import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { faker } from '@faker-js/faker'
 import { PrincipalType } from '@activepieces/shared'
-import { createMockUser, createMockProject, createMockGitRepo } from '../../../helpers/mocks'
+import { createMockUser, createMockProject, createMockGitRepo, createMockPlatform } from '../../../helpers/mocks'
 import { generateMockToken } from '../../../helpers/auth'
 
 let app: FastifyInstance | null = null
@@ -27,8 +27,11 @@ describe('Git API', () => {
             const mockUser2 = createMockUser()
             await databaseConnection.getRepository('user').save([mockUser, mockUser2])
 
-            const mockProject = createMockProject({ ownerId: mockUser.id })
-            const mockProject2 = createMockProject({ ownerId: mockUser2.id })
+            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
+            const mockProject = createMockProject({ ownerId: mockUser.id, platformId: mockPlatform.id })
+            const mockProject2 = createMockProject({ ownerId: mockUser2.id, platformId: mockPlatform.id })
             await databaseConnection.getRepository('project').save([mockProject, mockProject2])
 
 
@@ -61,7 +64,11 @@ describe('Git API', () => {
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save(mockUser)
 
-            const mockProject = createMockProject({ ownerId: mockUser.id })
+
+            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
+            const mockProject = createMockProject({ ownerId: mockUser.id, platformId: mockPlatform.id })
             await databaseConnection.getRepository('project').save(mockProject)
 
             const request = {
@@ -100,22 +107,26 @@ describe('Git API', () => {
 
     describe('Delete API', () => {
 
-        it('should delete a git repo', async () => {  
+        it('should delete a git repo', async () => {
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save(mockUser)
-    
-            const mockProject = createMockProject({ ownerId: mockUser.id })
+
+
+            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
+            const mockProject = createMockProject({ ownerId: mockUser.id, platformId: mockPlatform.id })
             await databaseConnection.getRepository('project').save(mockProject)
-    
+
             const mockGitRepo = createMockGitRepo({ projectId: mockProject.id })
             await databaseConnection.getRepository('git_repo').save(mockGitRepo)
-    
+
             const token = await generateMockToken({
                 id: mockUser.id,
                 projectId: mockProject.id,
                 type: PrincipalType.USER,
             })
-    
+
             const response = await app?.inject({
                 method: 'DELETE',
                 url: '/v1/git-repos/' + mockGitRepo.id,
@@ -130,8 +141,11 @@ describe('Git API', () => {
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save(mockUser)
 
-            const mockProject = createMockProject({ ownerId: mockUser.id })
-            const mockProject2 = createMockProject({ ownerId: mockUser.id })
+            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
+            const mockProject = createMockProject({ ownerId: mockUser.id, platformId: mockPlatform.id })
+            const mockProject2 = createMockProject({ ownerId: mockUser.id, platformId: mockPlatform.id })
             await databaseConnection.getRepository('project').save([mockProject, mockProject2])
 
             const mockGitRepo = createMockGitRepo({ projectId: mockProject.id })
@@ -166,8 +180,12 @@ describe('Git API', () => {
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save(mockUser)
 
-            const mockProject = createMockProject({ ownerId: mockUser.id })
-            const mockProject2 = createMockProject({ ownerId: mockUser.id })
+
+            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
+            const mockProject = createMockProject({ ownerId: mockUser.id, platformId: mockPlatform.id })
+            const mockProject2 = createMockProject({ ownerId: mockUser.id, platformId: mockPlatform.id })
             await databaseConnection.getRepository('project').save([mockProject, mockProject2])
 
             const mockGitRepo = createMockGitRepo({ projectId: mockProject.id })

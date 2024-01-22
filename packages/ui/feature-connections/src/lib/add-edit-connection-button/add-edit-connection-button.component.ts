@@ -32,7 +32,7 @@ import {
   take,
   tap,
 } from 'rxjs';
-import { FlagService, ProjectSelectors } from '@activepieces/ui/common';
+import { FlagService } from '@activepieces/ui/common';
 import { CloudAuthConfigsService } from '../services/cloud-auth-configs.service';
 import {
   CustomAuthConnectionDialogComponent,
@@ -137,14 +137,14 @@ export class AddEditConnectionButtonComponent {
   }
 
   private checkThenOpenConnection() {
-    this.checkConnectionLimitThenOpenDialog$ =
-      this.getCurrentProjectAndConnectionLimit$().pipe(
+    this.checkConnectionLimitThenOpenDialog$ = this.billingService
+      .checkConnectionLimit()
+      .pipe(
         tap((res) => {
-          if (res.limit.exceeded) {
+          if (res.exceeded) {
             const data: UpgradeDialogData = {
-              limit: res.limit.limit,
+              limit: res.limit,
               limitType: 'connections',
-              projectType: res.project.type,
             };
             this.dialogService.open(UpgradeDialogComponent, {
               data,
@@ -173,20 +173,7 @@ export class AddEditConnectionButtonComponent {
     const authDialog = authDialogMap[this.authProperty.type];
     authDialog.call(this);
   }
-  private getCurrentProjectAndConnectionLimit$() {
-    return this.store.select(ProjectSelectors.selectCurrentProject).pipe(
-      switchMap((project) => {
-        return this.billingService.checkConnectionLimit().pipe(
-          map((limit) => {
-            return {
-              project,
-              limit,
-            };
-          })
-        );
-      })
-    );
-  }
+
   private openNewCustomAuthConnection() {
     const dialogData: CustomAuthDialogData = {
       pieceAuthProperty: this.authProperty as CustomAuthProperty<

@@ -1,10 +1,9 @@
 import { ProjectMemberStatus } from '@activepieces/ee-shared'
-import { PrincipalType, Project, isNil, User, ActivepiecesError, ErrorCode, ApEdition, PlatformRole } from '@activepieces/shared'
+import { PrincipalType, Project, isNil, User, ActivepiecesError, ErrorCode, PlatformRole } from '@activepieces/shared'
 import { platformService } from '../../../../platform/platform.service'
 import { accessTokenManager } from '../../../../authentication/lib/access-token-manager'
 import { projectMemberService } from '../../../project-members/project-member.service'
 import { projectService } from '../../../../project/project-service'
-import { getEdition } from '../../../../helper/secret-helper'
 import { userService } from '../../../../user/user-service'
 import { flagService } from '../../../../flags/flag.service'
 

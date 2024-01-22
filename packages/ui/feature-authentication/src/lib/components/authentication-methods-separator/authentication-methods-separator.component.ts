@@ -2,10 +2,10 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FlagService } from '@activepieces/ui/common';
 import { Observable } from 'rxjs';
 import {
+  ApFlagId,
   ThirdPartyAuthnProvidersToShowMap,
   ThirdPartyAuthnProviderEnum,
-} from '@activepieces/ee-shared';
-import { ApFlagId } from '@activepieces/shared';
+} from '@activepieces/shared';
 @Component({
   selector: 'app-authentication-methods-separator',
   templateUrl: './authentication-methods-separator.component.html',

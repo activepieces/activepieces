@@ -6,7 +6,7 @@ import {
   OnInit,
   Output,
 } from '@angular/core';
-import { Platform } from '@activepieces/ee-shared';
+import { Platform } from '@activepieces/shared';
 import { Observable, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { PlatformService } from '@activepieces/ui/common';

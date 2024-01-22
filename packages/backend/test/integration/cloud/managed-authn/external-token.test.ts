@@ -113,7 +113,6 @@ describe('Managed Authentication API', () => {
 
             expect(generatedProject?.displayName).toBe(mockExternalTokenPayload.externalProjectId)
             expect(generatedProject?.ownerId).toBe(mockPlatform.ownerId)
-            expect(generatedProject?.type).toBe('PLATFORM_MANAGED')
             expect(generatedProject?.platformId).toBe(mockPlatform.id)
             expect(generatedProject?.externalId).toBe(mockExternalTokenPayload.externalProjectId)
         })

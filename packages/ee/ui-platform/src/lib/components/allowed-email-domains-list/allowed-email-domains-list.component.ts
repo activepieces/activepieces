@@ -5,7 +5,7 @@ import {
   Input,
   Output,
 } from '@angular/core';
-import { Platform } from '@activepieces/ee-shared';
+import { Platform } from '@activepieces/shared';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, catchError, of, tap } from 'rxjs';
 import { AddAllowedEmailDomainDialogComponent } from '../dialogs/add-allowed-email-domain-dialog/add-allowed-email-domain-dialog.component';

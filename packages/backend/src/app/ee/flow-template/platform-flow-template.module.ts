@@ -39,7 +39,7 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
             querystring: ListFlowTemplatesRequest,
         },
     }, async (request) => {
-        const platformId = request.principal.platform.id ?? system.getOrThrow(SystemProp.CLOUD_PLATFORM_ID)
+        const platformId = request.principal.type === PrincipalType.UNKNOWN ? system.getOrThrow(SystemProp.CLOUD_PLATFORM_ID) : request.principal.platform.id
         return flowTemplateService.list(platformId, request.query)
     })
 
@@ -77,7 +77,7 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
             id: request.params.id,
         })
         return reply.status(StatusCodes.NO_CONTENT).send()
-        
+
     })
 }
 

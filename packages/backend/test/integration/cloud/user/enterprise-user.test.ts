@@ -90,10 +90,17 @@ describe('Enterprise User API', () => {
 
         it('Requires principal to be platform owner', async () => {
             // arrange
-            const mockPlatformId = apId()
+
+
+            const { mockPlatform, mockOwner } = createMockPlatformWithOwner()
 
             const testToken = await generateMockToken({
+                id: mockOwner.id,
                 type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                    role: PlatformRole.MEMBER,
+                },
             })
 
             // act
@@ -101,7 +108,7 @@ describe('Enterprise User API', () => {
                 method: 'GET',
                 url: '/v1/users',
                 query: {
-                    platformId: mockPlatformId,
+                    platformId: mockPlatform.id,
                 },
                 headers: {
                     authorization: `Bearer ${testToken}`,
@@ -158,7 +165,7 @@ describe('Enterprise User API', () => {
             expect(responseJson.password).toBeUndefined()
             expect(responseJson.status).toBe(UserStatus.INACTIVE)
         })
-        
+
         it('Fails if user doesn\'t exist', async () => {
             // arrange
             const nonExistentUserId = apId()
@@ -185,7 +192,7 @@ describe('Enterprise User API', () => {
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
-            
+
         })
 
         it('Allows service accounts to activate', async () => {
@@ -216,7 +223,7 @@ describe('Enterprise User API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-    
+
             const responseJson = response?.json()
             expect(responseJson.id).toBe(mockUser.id)
             expect(responseJson.password).toBeUndefined()
@@ -225,16 +232,22 @@ describe('Enterprise User API', () => {
 
         it('Requires principal to be platform owner', async () => {
             // arrange
-            const mockUserId = apId()
+
+            const { mockPlatform, mockOwner } = createMockPlatformWithOwner()
 
             const testToken = await generateMockToken({
+                id: mockOwner.id,
                 type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                    role: PlatformRole.MEMBER,
+                },
             })
 
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/users/${mockUserId}`,
+                url: `/v1/users/${mockOwner.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },

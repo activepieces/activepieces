@@ -7,7 +7,7 @@ import {
 import {
   ThirdPartyAuthnProviderEnum,
   ThirdPartyAuthnProvidersToShowMap,
-} from '@activepieces/ee-shared';
+} from '@activepieces/shared';
 import { Observable, map, switchMap, tap } from 'rxjs';
 import { Oauth2Service } from '@activepieces/ui/feature-connections';
 

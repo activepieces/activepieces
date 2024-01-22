@@ -1,4 +1,4 @@
-import { ApFlagId, PlatformRole, PrincipalType, Project, User, assertNotNullOrUndefined } from '@activepieces/shared'
+import { ApFlagId, PlatformRole, PrincipalType, Project, User } from '@activepieces/shared'
 import { projectService } from '../../../project/project-service'
 import { AuthenticationServiceHooks } from './authentication-service-hooks'
 import { accessTokenManager } from '../../lib/access-token-manager'

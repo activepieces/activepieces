@@ -113,7 +113,7 @@ export const emailService = {
 
         await sendEmail({
             email: user.email,
-            platformId: platformId,
+            platformId,
             template: otpToTemplate[type],
         })
     },
@@ -125,13 +125,13 @@ export const emailService = {
 async function sendEmail({ platformId, email, template }: { template: EmailTemplate, email: string, platformId: string }): Promise<void> {
     const platform = await platformService.getOneOrThrow(platformId)
     const transporter = nodemailer.createTransport({
-        host: platform?.smtpHost ?? system.getOrThrow(SystemProp.SMTP_HOST),
-        port: platform?.smtpPort ?? system.getNumber(SystemProp.SMTP_PORT)!,
+        host: platform.smtpHost ?? system.getOrThrow(SystemProp.SMTP_HOST),
+        port: platform.smtpPort ?? system.getNumber(SystemProp.SMTP_PORT)!,
         auth: {
-            user: platform?.smtpUser ?? system.getOrThrow(SystemProp.SMTP_USERNAME),
-            pass: platform?.smtpPassword ?? system.getOrThrow(SystemProp.SMTP_PASSWORD),
+            user: platform.smtpUser ?? system.getOrThrow(SystemProp.SMTP_USERNAME),
+            pass: platform.smtpPassword ?? system.getOrThrow(SystemProp.SMTP_PASSWORD),
         },
-        secure: platform?.smtpUseSSL ?? system.getBoolean(SystemProp.SMTP_USE_SSL),
+        secure: platform.smtpUseSSL ?? system.getBoolean(SystemProp.SMTP_USE_SSL),
     })
     const templateToSubject = {
         'invitation-email': 'You have been invited to a team',
@@ -157,9 +157,9 @@ async function renderTemplate({
     const templateHtml = await readTemplateFile(request.templateName)
     return Mustache.render(templateHtml, {
         ...request.data,
-        primaryColor: platform?.primaryColor ?? defaultTheme.colors.primary.default,
-        fullLogoUrl: platform?.fullLogoUrl ?? defaultTheme.logos.fullLogoUrl,
-        platformName: platform?.name ?? defaultTheme.websiteName,
+        primaryColor: platform.primaryColor ?? defaultTheme.colors.primary.default,
+        fullLogoUrl: platform.fullLogoUrl ?? defaultTheme.logos.fullLogoUrl,
+        platformName: platform.name ?? defaultTheme.websiteName,
     })
 }
 

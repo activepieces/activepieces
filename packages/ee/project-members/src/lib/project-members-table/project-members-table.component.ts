@@ -113,19 +113,14 @@ export class ProjectMembersTableComponent
       switchMap((billing) => {
         this.inviteLoading = false;
         if (billing.exceeded) {
-          return this.store.select(ProjectSelectors.selectCurrentProject).pipe(
-            switchMap((proj) => {
-              const data: UpgradeDialogData = {
-                limitType: 'team',
-                limit: billing.limit,
-                projectType: proj.type,
-              };
-              return this.matDialog
-                .open(UpgradeDialogComponent, { data })
-                .afterClosed()
-                .pipe(map(() => void 0));
-            })
-          );
+          const data: UpgradeDialogData = {
+            limitType: 'team',
+            limit: billing.limit,
+          };
+          return this.matDialog
+            .open(UpgradeDialogComponent, { data })
+            .afterClosed()
+            .pipe(map(() => void 0));
         }
 
         return this.matDialog

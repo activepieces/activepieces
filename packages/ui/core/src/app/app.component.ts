@@ -49,7 +49,7 @@ import {
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Platform } from '@activepieces/ee-shared';
+import { Platform } from '@activepieces/shared';
 
 interface UpgradeNotificationMetaDataInLocalStorage {
   latestVersion: string;

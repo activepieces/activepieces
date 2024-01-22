@@ -8,15 +8,15 @@ import {
   Principal,
   SignInRequest,
   SignUpRequest,
+  ClaimTokenRequest,
+  FederatedAuthnLoginResponse,
+  ThirdPartyAuthnProviderEnum,
   User,
 } from '@activepieces/shared';
 import { environment } from '../environments/environment';
 import {
-  ClaimTokenRequest,
   CreateOtpRequestBody,
-  FederatedAuthnLoginResponse,
   ResetPasswordRequestBody,
-  ThirdPartyAuthnProviderEnum,
   VerifyEmailRequestBody,
 } from '@activepieces/ee-shared';
 import { FlagService } from './flag.service';

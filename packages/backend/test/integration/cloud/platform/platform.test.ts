@@ -129,6 +129,10 @@ describe('Platform API', () => {
             const randomPlatformId = apId()
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
+                platform: {
+                    id: randomPlatformId,
+                    role: PlatformRole.OWNER,
+                },
             })
 
             // act
@@ -144,7 +148,7 @@ describe('Platform API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
         })
     })
 

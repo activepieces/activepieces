@@ -2,7 +2,7 @@ import { inject } from '@angular/core';
 import { ResolveFn } from '@angular/router';
 import { PlatformService } from '@activepieces/ui/common';
 import { AuthenticationService } from '@activepieces/ui/common';
-import { Platform } from '@activepieces/ee-shared';
+import { Platform } from '@activepieces/shared';
 export const PLATFORM_RESOLVER_KEY = 'platform';
 export const platformResolver: ResolveFn<Platform | null> = () => {
   const platformService: PlatformService = inject(PlatformService);

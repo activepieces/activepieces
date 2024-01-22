@@ -118,7 +118,7 @@ describe('Authentication API', () => {
             })
             await databaseConnection.getRepository('user').save(mockUser)
 
-            const mockPlatform = createMockPlatform({ownerId: mockUser.id})
+            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
             await databaseConnection.getRepository('platform').save(mockPlatform)
 
             await databaseConnection.getRepository('user').update(mockUser.id, {
@@ -176,7 +176,7 @@ describe('Authentication API', () => {
             })
             await databaseConnection.getRepository('user').save(mockUser)
 
-            const mockPlatform = createMockPlatform({ownerId: mockUser.id})
+            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
             await databaseConnection.getRepository('platform').save(mockPlatform)
 
             const mockProject = createMockProject({

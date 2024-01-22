@@ -7,7 +7,7 @@ import {
 } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
-import { Platform } from '@activepieces/ee-shared';
+import { Platform } from '@activepieces/shared';
 import { ApEdition } from '@activepieces/shared';
 import { PlatformService } from '@activepieces/ui/common';
 

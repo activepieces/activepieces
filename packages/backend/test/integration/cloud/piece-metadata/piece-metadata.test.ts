@@ -43,7 +43,6 @@ describe('Piece Metadata API', () => {
 
             const mockProject = createMockProject({
                 platformId: mockPlatform.id,
-                type: ProjectType.PLATFORM_MANAGED,
                 ownerId: mockUser.id,
             })
             await databaseConnection.getRepository('project').save([mockProject])
@@ -184,6 +183,8 @@ describe('Piece Metadata API', () => {
                 filteredPieceNames: [],
                 filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
             })
+            await databaseConnection.getRepository('platform').save([mockPlatform])
+
             const mockProject = createMockProject({
                 ownerId: mockUser.id,
                 platformId: mockPlatform.id,
@@ -204,6 +205,10 @@ describe('Piece Metadata API', () => {
                 type: PrincipalType.USER,
                 projectId: mockProject.id,
                 id: mockUser.id,
+                platform: {
+                    id: mockPlatform.id,
+                    role: PlatformRole.MEMBER,
+                },
             })
 
             // act
@@ -230,7 +235,15 @@ describe('Piece Metadata API', () => {
             const mockPieceMetadataB = createMockPieceMetadata({ name: 'b', pieceType: PieceType.OFFICIAL })
             await databaseConnection.getRepository('piece_metadata').save([mockPieceMetadataA, mockPieceMetadataB])
 
-            const testToken = await generateMockToken()
+            const testToken = await generateMockToken({
+                type: PrincipalType.UNKNOWN,
+                id: apId(),
+                projectId: apId(),
+                platform: {
+                    id: apId(),
+                    role: PlatformRole.MEMBER,
+                },
+            })
 
             // act
             const response = await app?.inject({

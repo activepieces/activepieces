@@ -49,9 +49,8 @@ export const platformProjectService = {
             displayName: request.displayName,
             notifyStatus: request.notifyStatus,
         })
-        // TODO FIX URGENT
-        /*
-        if (project.type === ProjectType.PLATFORM_MANAGED && !isNil(request.plan)) {
+
+        if (!isNil(request.plan)) {
             await plansService.update({
                 projectId,
                 planLimits: {
@@ -61,7 +60,7 @@ export const platformProjectService = {
                 subscription: null,
             })
         }
-        */
+
         return this.getWithPlanAndUsageOrThrow(projectId)
     },
     async getWithPlanAndUsageOrThrow(projectId: string): Promise<ProjectWithUsageAndPlanResponse> {

@@ -152,7 +152,7 @@ describe('Project API', () => {
                 ownerId: mockUser.id,
             })
             const mockPlatform2 = createMockPlatform({
-                ownerId: mockUser.id,
+                ownerId: mockUser2.id,
             })
             await databaseConnection.getRepository('platform').save([mockPlatform, mockPlatform2])
 

@@ -556,9 +556,12 @@ describe('API Security', () => {
                 id: expect.stringMatching(/ANONYMOUS_.{21}/),
                 type: PrincipalType.UNKNOWN,
                 projectId: expect.stringMatching(/ANONYMOUS_.{21}/),
+                platform: {
+                    id: expect.stringMatching(/ANONYMOUS_.{21}/),
+                    role: PlatformRole.MEMBER,
+                },
             }))
 
-            expect(mockRequest.principal).not.toHaveProperty('platform')
         })
 
         it('Fails if route is authenticated', async () => {

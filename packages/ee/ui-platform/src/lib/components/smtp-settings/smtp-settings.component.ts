@@ -7,7 +7,7 @@ import {
 } from '@angular/forms';
 import { PlatformService } from '@activepieces/ui/common';
 import { ActivatedRoute } from '@angular/router';
-import { Platform } from '@activepieces/ee-shared';
+import { Platform } from '@activepieces/shared';
 import { BehaviorSubject, Observable, catchError, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { PLATFORM_RESOLVER_KEY } from '../../platform.resolver';
