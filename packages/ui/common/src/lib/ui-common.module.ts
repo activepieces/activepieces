@@ -68,6 +68,7 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
 import { ArrayFormControlComponent } from './components/array-form-control/array-form-control.component';
 import { UpgradeNoteComponent } from '././components/upgrade-note/upgrade-note.component';
 import { CardDirective } from './directives/card.directive';
+import { DropdownPropertySearchPipe } from './pipe/dropdown-search.pipe';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -132,6 +133,7 @@ const exportedDeclarations = [
   ArrayFormControlComponent,
   UpgradeNoteComponent,
   CardDirective,
+  DropdownPropertySearchPipe,
 ];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,
