@@ -28,7 +28,6 @@ export class DropdownPropertyInitialValuePipe implements PipeTransform {
             return deepEqual(o.value, formGroup.get(formControlName)?.value);
           });
           if (initialValue) {
-            console.log(initialValue);
             return [initialValue];
           }
         } else {

@@ -7,10 +7,10 @@ import {
 import {
   ApEdition,
   ExecutionOutputStatus,
+  FlowId,
   FlowRetryStrategy,
   FlowRun,
   NotificationStatus,
-  PopulatedFlow,
   ProjectId,
   SeekPage,
 } from '@activepieces/shared';
@@ -20,6 +20,7 @@ import {
   distinctUntilChanged,
   map,
   Observable,
+  shareReplay,
   startWith,
   Subject,
   switchMap,
@@ -39,7 +40,8 @@ import {
 import { FormControl } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { RunsService } from '../../services/runs.service';
-
+import { DropdownOption } from '@activepieces/pieces-framework';
+const allOptionValue = 'all';
 @Component({
   templateUrl: './runs-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -47,17 +49,25 @@ import { RunsService } from '../../services/runs.service';
 export class RunsTableComponent implements OnInit {
   @ViewChild(ApPaginatorComponent, { static: true })
   paginator!: ApPaginatorComponent;
+  readonly allOptionValue = allOptionValue;
   runsPage$: Observable<SeekPage<FlowRun>>;
+  searchControl: FormControl<string> = new FormControl('', {
+    nonNullable: true,
+  });
   nonCommunityEdition$: Observable<boolean>;
   toggleNotificationFormControl: FormControl<boolean> = new FormControl();
   dataSource!: RunsTableDataSource;
   displayedColumns = ['flowName', 'status', 'started', 'finished', 'action'];
   updateNotificationsValue$: Observable<boolean>;
   refreshTableForReruns$: Subject<boolean> = new Subject();
-  selectedStatus: FormControl<ExecutionOutputStatus | undefined> =
-    new FormControl();
-  selectedFlow = new FormControl();
-  flows$: Observable<SeekPage<PopulatedFlow>>;
+  statusFilterControl: FormControl<
+    ExecutionOutputStatus | typeof allOptionValue
+  > = new FormControl(allOptionValue, { nonNullable: true });
+  flowFilterControl = new FormControl<string>(allOptionValue, {
+    nonNullable: true,
+  });
+  selectedFlowName$: Observable<string | undefined>;
+  flows$: Observable<DropdownOption<FlowId>[]>;
   currentProject: ProjectId;
   filtersChanged$: Observable<void>;
   readonly ExecutionOutputStatus = ExecutionOutputStatus;
@@ -77,27 +87,54 @@ export class RunsTableComponent implements OnInit {
 
   ngOnInit(): void {
     this.currentProject = this.authenticationService.getProjectId();
-    this.flows$ = this.flowsService.list({
-      projectId: this.currentProject,
-      cursor: undefined,
-      limit: 100,
-    });
+    this.flows$ = this.flowsService
+      .list({
+        projectId: this.currentProject,
+        cursor: undefined,
+        limit: 1000,
+      })
+      .pipe(
+        map((res) => {
+          return res.data.map((flow) => {
+            return {
+              label: flow.version.displayName,
+              value: flow.id,
+            };
+          });
+        }),
+        shareReplay(1)
+      );
 
-    this.filtersChanged$ = combineLatest([
-      this.selectedFlow.valueChanges.pipe(startWith(this.selectedFlow.value)),
-      this.selectedStatus.valueChanges.pipe(
-        startWith(this.selectedStatus.value)
+    this.selectedFlowName$ = this.flowFilterControl.valueChanges.pipe(
+      startWith(this.flowFilterControl.value),
+      switchMap((flowId) => {
+        return this.flows$.pipe(
+          map((flows) => {
+            return (
+              flows.find((flow) => flow.value === flowId)?.label ||
+              $localize`All`
+            );
+          })
+        );
+      }),
+      tap(console.log)
+    );
+    this.filtersChanged$ = combineLatest({
+      flowId: this.flowFilterControl.valueChanges.pipe(
+        startWith(this.flowFilterControl.value)
       ),
-    ]).pipe(
+      status: this.statusFilterControl.valueChanges.pipe(
+        startWith(this.statusFilterControl.value)
+      ),
+    }).pipe(
       distinctUntilChanged(),
-      tap(([selectedFlow, selectedStatus]) => {
+      tap((result) => {
         this.router.navigate(['runs'], {
           queryParams: {
-            flowId: selectedFlow ? selectedFlow : undefined,
+            flowId:
+              result.flowId === this.allOptionValue ? undefined : result.flowId,
             status:
-              selectedStatus && selectedStatus in ExecutionOutputStatus
-                ? selectedStatus
-                : undefined,
+              result.status === this.allOptionValue ? undefined : result.status,
           },
         });
       }),

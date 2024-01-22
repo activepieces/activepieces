@@ -1,24 +1,47 @@
 <div class="ap-w-full  ap-px-[30px] ap-pt-[50px]">
   <div class="ap-h-full">
     <ap-page-title title="Runs" i18n-title></ap-page-title>
-    <mat-form-field>
-      <mat-label i18n>Filter by status</mat-label>
-      <mat-select [formControl]="selectedStatus">
-        <mat-option value="null" i18n>All</mat-option>
-        <mat-option value="{{ExecutionOutputStatus.RUNNING}}" i18n>Running</mat-option>
-        <mat-option value="{{ExecutionOutputStatus.FAILED}}" i18n>Failed</mat-option>
-        <mat-option value="{{ExecutionOutputStatus.SUCCEEDED}}" i18n>Succeeded</mat-option>
-      </mat-select>
-    </mat-form-field>
-    <mat-form-field *ngIf="flows$ | async as flows" class="ap-ml-2">
-      <mat-label i18n>Filter by flow</mat-label>
-      <mat-select [formControl]="selectedFlow">
-        <mat-option value="" i18n>All</mat-option>
-        <mat-option *ngFor="let flow of flows.data" [value]="flow.id">
-          {{flow.version.displayName}}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
+    <div class="ap-flex ap-gap-2">
+      <mat-form-field class="!ap-min-w-[15.625rem]">
+        <mat-label i18n>Filter by status</mat-label>
+        <mat-select [formControl]="statusFilterControl">
+          <mat-option [value]="allOptionValue" i18n>All</mat-option>
+          <mat-option [value]="ExecutionOutputStatus.RUNNING" i18n>Running</mat-option>
+          <mat-option [value]="ExecutionOutputStatus.FAILED" i18n>Failed</mat-option>
+          <mat-option [value]="ExecutionOutputStatus.SUCCEEDED" i18n>Succeeded</mat-option>
+          <mat-option [value]="ExecutionOutputStatus.PAUSED" i18n>Paused</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field class="!ap-min-w-[15.625rem]" *ngIf="flows$ | async as flows">
+        <mat-label i18n>Filter by flow</mat-label>
+        <mat-select [formControl]="flowFilterControl" (closed)="searchControl.setValue('')">
+          <mat-select-trigger>
+            <div class="ap-mx-2">
+              {{ selectedFlowName$ | async }}
+            </div>
+
+          </mat-select-trigger>
+          <div>
+            <mat-form-field subscriptSizing="dynamic" appearance="fill" (click)="$event.stopPropagation();"
+              class="ap-w-full">
+
+              <input #searchInput [formControl]="searchControl" matInput placeholder="Search" autocomplete="off"
+                (keydown.Space)="$event.stopPropagation()">
+              <mat-icon matPrefix color="placeholder-icon" svgIcon="search"></mat-icon>
+            </mat-form-field>
+          </div>
+
+          <mat-option [value]="allOptionValue" i18n>All</mat-option>
+          <mat-option *ngFor="let opt of (flows | dropdownSearch:searchControl | async)" [value]="opt.value">
+            {{opt.label}}
+          </mat-option>
+          <mat-option *ngFor="let opt of (flows)" class="!ap-hidden" [value]="opt.value">
+            {{opt.label}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
     <mat-slide-toggle *ngIf="nonCommunityEdition$ | async" [formControl]="toggleNotificationFormControl"
       class="ap-mt-[-62px] ap-mb-2 ap-float-right" color="primary" [labelPosition]="'before'" i18n>
       Send email notifications about failed runs
