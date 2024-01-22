@@ -6,7 +6,7 @@ import { ValidationInputType } from "../../validators/types";
 export const MarkDownProperty = Type.Composite([
     BasePropertySchema,
     TPropertyValue(
-        Type.Undefined(),
+        Type.Void(),
         PropertyType.MARKDOWN,
     )
 ])

@@ -1,18 +1,17 @@
 import { Sandbox } from '..'
 import { sandboxCachePool } from '../cache/sandbox-cache-pool'
 import { sandboxManager } from '../sandbox-manager'
-import { PiecePackage, ProjectId, SourceCode } from '@activepieces/shared'
+import { PiecePackage, SourceCode } from '@activepieces/shared'
 import { SandBoxCacheType, TypedProvisionCacheInfo } from './sandbox-cache-key'
 import { logger } from '../../../helper/logger'
 import { enrichErrorContext } from '../../../helper/error-handler'
 
 export const sandboxProvisioner = {
-    async provision({ projectId, pieces = [], codeSteps = [], ...cacheInfo }: ProvisionParams): Promise<Sandbox> {
+    async provision({ pieces = [], codeSteps = [], ...cacheInfo }: ProvisionParams): Promise<Sandbox> {
         try {
             const cachedSandbox = await sandboxCachePool.findOrCreate(cacheInfo)
 
             await cachedSandbox.prepare({
-                projectId,
                 pieces,
                 codeSteps,
             })
@@ -60,7 +59,6 @@ type CodeArtifact = {
 
 type ProvisionParams<T extends SandBoxCacheType = SandBoxCacheType> = TypedProvisionCacheInfo<T> & {
     pieces?: PiecePackage[]
-    projectId: ProjectId
     codeSteps?: CodeArtifact[]
 }
 

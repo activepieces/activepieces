@@ -3,7 +3,7 @@ import { ALL_PRINICPAL_TYPES, ActivepiecesError, ApEdition, ErrorCode, GetPieceR
 import { engineHelper } from '../helper/engine-helper'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
-import { pieceMetadataService } from './piece-metadata-service'
+import { getPiecePackage, pieceMetadataService } from './piece-metadata-service'
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { flagService } from '../flags/flag.service'
 import { PieceMetadataModel, PieceMetadataModelSummary } from './piece-metadata-entity'
@@ -87,12 +87,12 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         const { projectId } = req.principal
 
         const { result } = await engineHelper.executeProp({
-            piece: {
+            piece: await getPiecePackage({
                 packageType,
                 pieceType,
                 pieceName,
                 pieceVersion,
-            },
+            }),
             propertyName,
             stepName,
             input,
