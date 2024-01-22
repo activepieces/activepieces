@@ -16,7 +16,7 @@
         <mat-label i18n>Filter by flow</mat-label>
         <mat-select [formControl]="flowFilterControl" (closed)="searchControl.setValue('')">
           <mat-select-trigger>
-            <div class="ap-mx-2">
+            <div class="ap-mx-3">
               {{ selectedFlowName$ | async }}
             </div>
 
@@ -24,7 +24,6 @@
           <div>
             <mat-form-field subscriptSizing="dynamic" appearance="fill" (click)="$event.stopPropagation();"
               class="ap-w-full">
-
               <input #searchInput [formControl]="searchControl" matInput placeholder="Search" autocomplete="off"
                 (keydown.Space)="$event.stopPropagation()">
               <mat-icon matPrefix color="placeholder-icon" svgIcon="search"></mat-icon>
@@ -35,6 +34,7 @@
           <mat-option *ngFor="let opt of (flows | dropdownSearch:searchControl | async)" [value]="opt.value">
             {{opt.label}}
           </mat-option>
+          <!-- you need them to stay in html so the mat-select-trigger renders, otherwise they disappear while searching -->
           <mat-option *ngFor="let opt of (flows)" class="!ap-hidden" [value]="opt.value">
             {{opt.label}}
           </mat-option>

@@ -36,6 +36,8 @@ import {
   NavigationService,
   AuthenticationService,
   FlowService,
+  FLOW_QUERY_PARAM,
+  STATUS_QUERY_PARAM,
 } from '@activepieces/ui/common';
 import { FormControl } from '@angular/forms';
 import { Store } from '@ngrx/store';
@@ -73,6 +75,7 @@ export class RunsTableComponent implements OnInit {
   readonly ExecutionOutputStatus = ExecutionOutputStatus;
   FlowRetryStrategy: typeof FlowRetryStrategy = FlowRetryStrategy;
   retryFlow$?: Observable<void>;
+  setInitialFilters$?: Observable<void>;
   constructor(
     private router: Router,
     private activatedRoute: ActivatedRoute,
@@ -83,7 +86,17 @@ export class RunsTableComponent implements OnInit {
     private runsService: RunsService,
     private flowsService: FlowService,
     private authenticationService: AuthenticationService
-  ) {}
+  ) {
+    this.flowFilterControl.setValue(
+      this.activatedRoute.snapshot.queryParamMap.get(FLOW_QUERY_PARAM) ||
+        this.allOptionValue
+    );
+    this.statusFilterControl.setValue(
+      (this.activatedRoute.snapshot.queryParamMap.get(
+        STATUS_QUERY_PARAM
+      ) as ExecutionOutputStatus) || this.allOptionValue
+    );
+  }
 
   ngOnInit(): void {
     this.currentProject = this.authenticationService.getProjectId();
@@ -116,8 +129,7 @@ export class RunsTableComponent implements OnInit {
             );
           })
         );
-      }),
-      tap(console.log)
+      })
     );
     this.filtersChanged$ = combineLatest({
       flowId: this.flowFilterControl.valueChanges.pipe(
@@ -136,6 +148,7 @@ export class RunsTableComponent implements OnInit {
             status:
               result.status === this.allOptionValue ? undefined : result.status,
           },
+          queryParamsHandling: 'merge',
         });
       }),
       map(() => undefined)
@@ -165,6 +178,7 @@ export class RunsTableComponent implements OnInit {
           )
         )
       );
+
     this.dataSource = new RunsTableDataSource(
       this.activatedRoute.queryParams,
       this.paginator,
