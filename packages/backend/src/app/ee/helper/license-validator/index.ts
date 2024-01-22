@@ -5,7 +5,7 @@ import { networkLicenseValidator } from './network-license-validator'
 import { ApEdition } from '@activepieces/shared'
 import { system } from '../../../helper/system/system'
 import { SystemProp } from '../../../helper/system/system-prop'
-import { platformService } from '../../platform/platform.service'
+import { platformService } from '../../../platform/platform.service'
 import { logger } from '../../../helper/logger'
 
 const variant: Record<ApEnvironment, LicenseValidator> = {

@@ -4,11 +4,11 @@ import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { createMockSignInRequest, createMockSignUpRequest } from '../../../helpers/mocks/authn'
 import { CLOUD_PLATFORM_ID, createMockCustomDomain, createMockPlatform, createMockProject, createMockUser, createProjectMember } from '../../../helpers/mocks'
-import { ApFlagId, ProjectType, User, UserStatus, apId } from '@activepieces/shared'
+import { ApFlagId, Platform, User, UserStatus, apId } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { emailService } from '../../../../src/app/ee/helper/email/email-service'
 import { stripeHelper } from '../../../../src/app/ee/billing/billing/stripe-helper'
-import { CustomDomain, OtpType, Platform, ProjectMemberRole, ProjectMemberStatus } from '@activepieces/ee-shared'
+import { CustomDomain, OtpType, ProjectMemberRole, ProjectMemberStatus } from '@activepieces/ee-shared'
 import { decodeToken } from '../../../helpers/auth'
 
 let app: FastifyInstance | null = null
@@ -314,7 +314,6 @@ describe('Authentication API', () => {
 
             expect(project?.ownerId).toBe(responseBody.id)
             expect(project?.displayName).toBe(`${responseBody.firstName}'s Project`)
-            expect(project?.type).toBe(ProjectType.PLATFORM_MANAGED)
             expect(project?.platformId).toBe(mockPlatform.id)
         })
 
@@ -431,7 +430,12 @@ describe('Authentication API', () => {
             })
             await databaseConnection.getRepository('user').save(mockUser)
 
+            const mockPlatform = createMockPlatform({
+                ownerId: mockUser.id,
+            })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
             const mockProject = createMockProject({
+                platformId: mockPlatform.id,
                 ownerId: mockUser.id,
             })
             await databaseConnection.getRepository('project').save(mockProject)
@@ -580,7 +584,12 @@ describe('Authentication API', () => {
             })
             await databaseConnection.getRepository('user').save(mockUser)
 
+            const mockPlatform = createMockPlatform({
+                ownerId: mockUser.id,
+            })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
             const mockProject = createMockProject({
+                platformId: mockPlatform.id,
                 ownerId: mockUser.id,
             })
             await databaseConnection.getRepository('project').save(mockProject)
@@ -616,8 +625,14 @@ describe('Authentication API', () => {
             })
             await databaseConnection.getRepository('user').save(mockUser)
 
+            const mockPlatform = createMockPlatform({
+                ownerId: mockUser.id,
+            })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
             const mockProject = createMockProject({
                 ownerId: mockUser.id,
+                platformId: mockPlatform.id,
             })
             await databaseConnection.getRepository('project').save(mockProject)
 

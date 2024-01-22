@@ -1,5 +1,5 @@
+import { PlatformId } from '@activepieces/shared'
 import { PieceMetadataModelSummary } from '../piece-metadata-entity'
-import { PlatformId } from '@activepieces/ee-shared'
 
 const defaultHooks: PieceMetadataServiceHooks = {
     async filterPieces({ pieces }) {

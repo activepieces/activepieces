@@ -1,6 +1,6 @@
 import { FastifyRequest } from 'fastify'
 import { BaseSecurityHandler } from '../security-handler'
-import { ActivepiecesError, EndpointScope, ErrorCode, PlatformRole, Principal, PrincipalType, Project, ProjectId, ProjectType, isNil, isObject } from '@activepieces/shared'
+import { ActivepiecesError, EndpointScope, ErrorCode, PlatformRole, Principal, PrincipalType, Project, ProjectId, isNil, isObject } from '@activepieces/shared'
 import { apiKeyService } from '../../../ee/api-keys/api-key-service'
 import { nanoid } from 'nanoid'
 import { ApiKey } from '@activepieces/ee-shared'
@@ -52,7 +52,6 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
             id: apiKey.id,
             type: PrincipalType.SERVICE,
             projectId: 'ANONYMOUS_' + nanoid(),
-            projectType: ProjectType.PLATFORM_MANAGED,
             platform: {
                 id: apiKey.platformId,
                 role: PlatformRole.OWNER,

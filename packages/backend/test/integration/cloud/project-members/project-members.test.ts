@@ -7,9 +7,9 @@ import { generateMockToken } from '../../../helpers/auth'
 import { stripeHelper } from '../../../../src/app/ee/billing/billing/stripe-helper'
 import { emailService } from '../../../../src/app/ee/helper/email/email-service'
 import { faker } from '@faker-js/faker'
-import { PlatformRole, Project, User } from '@activepieces/shared'
+import { Platform, PlatformRole, Project, User } from '@activepieces/shared'
 import { PrincipalType } from '@activepieces/shared'
-import { AddProjectMemberRequestBody, ApiKeyResponseWithValue, Platform, ProjectMemberRole, ProjectMemberStatus } from '@activepieces/ee-shared'
+import { AddProjectMemberRequestBody, ApiKeyResponseWithValue, ProjectMemberRole, ProjectMemberStatus } from '@activepieces/ee-shared'
 
 let app: FastifyInstance | null = null
 

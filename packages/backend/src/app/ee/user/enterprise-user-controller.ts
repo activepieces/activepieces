@@ -6,7 +6,7 @@ import { UpdateUserRequestBody } from '@activepieces/ee-shared'
 
 export const enterpriseUserController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListUsersRequest, async (req) => {
-        const platformId = req.principal.platform?.id
+        const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
 
         return enterpriseUserService.list({
@@ -15,7 +15,7 @@ export const enterpriseUserController: FastifyPluginAsyncTypebox = async (app) =
     })
 
     app.post('/:id', UpdateUserRequest, async (req) => {
-        const platformId = req.principal.platform?.id
+        const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
 
         return enterpriseUserService.update({

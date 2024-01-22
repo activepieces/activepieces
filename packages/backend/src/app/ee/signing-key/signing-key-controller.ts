@@ -6,7 +6,7 @@ import { AddSigningKeyRequestBody } from '@activepieces/ee-shared'
 
 export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', AddSigningKeyRequest, async (req, res) => {
-        const platformId = req.principal.platform?.id
+        const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
 
         const newSigningKey = await signingKeyService.add({
@@ -21,7 +21,7 @@ export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.get('/', {}, async (req) => {
-        const platformId = req.principal.platform?.id
+        const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
         return signingKeyService.list({
             platformId,
@@ -29,7 +29,7 @@ export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.get('/:id', GetSigningKeyRequest, async (req) => {
-        const platformId = req.principal.platform?.id
+        const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
         const signingKey = await signingKeyService.get({
             id: req.params.id,
@@ -46,7 +46,7 @@ export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.delete('/:id', DeleteSigningKeyRequest, async (req, res) => {
-        const platformId = req.principal.platform?.id
+        const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
         await signingKeyService.delete({
             id: req.params.id,

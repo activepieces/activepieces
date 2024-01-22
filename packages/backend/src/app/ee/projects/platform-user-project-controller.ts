@@ -1,8 +1,8 @@
-import { ActivepiecesError, ErrorCode, PlatformRole, PrincipalType, SeekPage, isNil } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, PlatformRole, PrincipalType, SeekPage } from '@activepieces/shared'
 import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
 import { platformProjectService } from './platform-project-service'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
-import { platformService } from '../platform/platform.service'
+import { platformService } from '../../platform/platform.service'
 import { StatusCodes } from 'http-status-codes'
 import { ProjectWithUsageAndPlanResponse } from '@activepieces/ee-shared'
 
@@ -29,14 +29,13 @@ export const usersProjectController: FastifyPluginCallbackTypebox = (fastify, _o
                 },
             })
         }
-        const platform = isNil(project.platformId) ? null : await platformService.getOne(project.platformId)
+        const platform = await platformService.getOneOrThrow(project.platformId)
         return {
             token: await accessTokenManager.generateToken({
                 id: request.principal.id,
                 type: request.principal.type,
                 projectId: request.params.projectId,
-                projectType: project.type,
-                platform: isNil(platform) ? undefined : {
+                platform: {
                     id: platform.id,
                     role: platform.ownerId === request.principal.id ? PlatformRole.OWNER : PlatformRole.MEMBER,
                 },

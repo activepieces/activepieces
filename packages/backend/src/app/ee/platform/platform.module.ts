@@ -1,6 +1,6 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { platformController } from './platform.controller'
 import { adminPlatformController } from './admin-platform.controller'
+import { platformController } from '../../platform/platform.controller'
 
 export const platformModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(adminPlatformController, { prefix: '/v1/admin/platforms' })

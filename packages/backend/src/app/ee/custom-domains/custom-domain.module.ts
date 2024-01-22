@@ -30,7 +30,7 @@ const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
             request,
             reply,
         ) => {
-            const platformId = request.principal.platform?.id
+            const platformId = request.principal.platform.id
             assertNotNullOrUndefined(platformId, 'platformId')
 
             const domain = await customDomainService.getOneByDomain({
@@ -61,7 +61,7 @@ const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
             querystring: ListCustomDomainsRequest,
         },
     }, async (request) => {
-        const platformId = request.principal.platform?.id
+        const platformId = request.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
 
         return customDomainService.list({
@@ -80,7 +80,7 @@ const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
         async (
             request,
         ) => {
-            const platformId = request.principal.platform?.id
+            const platformId = request.principal.platform.id
             assertNotNullOrUndefined(platformId, 'platformId')
             return customDomainService.delete({
                 id: request.params.id,

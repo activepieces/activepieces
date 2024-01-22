@@ -1,6 +1,6 @@
-import { ActivepiecesError, ErrorCode, Project, ProjectId, ProjectType, UserId, isNil, SeekPage, assertNotNullOrUndefined, spreadIfDefined } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, Project, ProjectId, UserId, isNil, SeekPage, assertNotNullOrUndefined, spreadIfDefined, PlatformId } from '@activepieces/shared'
 import { Equal, In, IsNull } from 'typeorm'
-import { PlatformId, ProjectMemberStatus, ProjectWithUsageAndPlanResponse, UpdateProjectPlatformRequest } from '@activepieces/ee-shared'
+import { ProjectMemberStatus, ProjectWithUsageAndPlanResponse, UpdateProjectPlatformRequest } from '@activepieces/ee-shared'
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
 import { ProjectEntity } from '../../project/project-entity'
 import { databaseConnection } from '../../database/database-connection'
@@ -25,7 +25,7 @@ export const platformProjectService = {
         return paginationHelper.createPage<ProjectWithUsageAndPlanResponse>(projects, null)
     },
 
-    async update({ userId, projectId, request }: { userId: string, projectId: ProjectId, request: UpdateProjectPlatformRequest, platformId?: PlatformId }): Promise<ProjectWithUsageAndPlanResponse> {
+    async update({ userId, projectId, request }: { userId: string, projectId: ProjectId, request: UpdateProjectPlatformRequest }): Promise<ProjectWithUsageAndPlanResponse> {
         const project = await projectRepo.findOneBy({
             id: projectId,
         })
@@ -49,6 +49,8 @@ export const platformProjectService = {
             displayName: request.displayName,
             notifyStatus: request.notifyStatus,
         })
+        // TODO FIX URGENT
+        /*
         if (project.type === ProjectType.PLATFORM_MANAGED && !isNil(request.plan)) {
             await plansService.update({
                 projectId,
@@ -59,6 +61,7 @@ export const platformProjectService = {
                 subscription: null,
             })
         }
+        */
         return this.getWithPlanAndUsageOrThrow(projectId)
     },
     async getWithPlanAndUsageOrThrow(projectId: string): Promise<ProjectWithUsageAndPlanResponse> {

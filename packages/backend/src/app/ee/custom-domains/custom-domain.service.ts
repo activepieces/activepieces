@@ -5,7 +5,7 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { SeekPage, apId } from '@activepieces/shared'
 
-const customDomainRepo = databaseConnection.getRepository<CustomDomain>(CustomDomainEntity)
+const customDomainRepo = databaseConnection.getRepository(CustomDomainEntity)
 
 export const customDomainService = {
     async delete(request: { id: string, platformId: string }): Promise<void> {

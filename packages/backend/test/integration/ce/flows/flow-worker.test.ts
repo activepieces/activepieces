@@ -2,7 +2,7 @@ import { ActionType, ExecutionOutputStatus, ExecutionType, FlowStatus, FlowVersi
 import { FastifyInstance } from 'fastify'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupApp } from '../../../../src/app/app'
-import { createMockFlow, createMockFlowRun, createMockFlowVersion, createMockProject, createMockUser } from '../../../helpers/mocks'
+import { createMockFlow, createMockFlowRun, createMockFlowVersion, createMockPlatform, createMockProject, createMockUser } from '../../../helpers/mocks'
 import { flowWorker } from '../../../../src/app/workers/flow-worker/flow-worker'
 import { fileCompressor } from '../../../../src/app/file/utils/file-compressor'
 
@@ -24,7 +24,10 @@ describe('flow execution', () => {
         const mockUser = createMockUser()
         await databaseConnection.getRepository('user').save([mockUser])
 
-        const mockProject = createMockProject({ ownerId: mockUser.id })
+        const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
+        await databaseConnection.getRepository('platform').save([mockPlatform])
+
+        const mockProject = createMockProject({ ownerId: mockUser.id, platformId: mockPlatform.id })
         await databaseConnection.getRepository('project').save([mockProject])
 
         const mockFlow = createMockFlow({ projectId: mockProject.id, status: FlowStatus.ENABLED })

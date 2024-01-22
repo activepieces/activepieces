@@ -1,5 +1,5 @@
-import { PlatformId, ApiKeyResponseWithValue, ApiKey } from '@activepieces/ee-shared'
-import { ActivepiecesError, ErrorCode, SeekPage, apId, assertNotNullOrUndefined, isNil, secureApId } from '@activepieces/shared'
+import { ApiKeyResponseWithValue, ApiKey } from '@activepieces/ee-shared'
+import { ActivepiecesError, ErrorCode, PlatformId, SeekPage, apId, assertNotNullOrUndefined, isNil, secureApId } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { ApiKeyEntity } from './api-key-entity'
 import { hashSHA256 } from '../../helper/crypto'

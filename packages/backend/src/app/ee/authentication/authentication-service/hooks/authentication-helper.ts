@@ -1,6 +1,6 @@
-import { Platform, PlatformId, ProjectMemberStatus } from '@activepieces/ee-shared'
+import { ProjectMemberStatus } from '@activepieces/ee-shared'
 import { PrincipalType, Project, isNil, User, ActivepiecesError, ErrorCode, ApEdition, PlatformRole } from '@activepieces/shared'
-import { platformService } from '../../../platform/platform.service'
+import { platformService } from '../../../../platform/platform.service'
 import { accessTokenManager } from '../../../../authentication/lib/access-token-manager'
 import { projectMemberService } from '../../../project-members/project-member.service'
 import { projectService } from '../../../../project/project-service'
@@ -38,13 +38,12 @@ const getProjectMemberOrThrow = async (user: User): Promise<Project | null> => {
 }
 
 const populateTokenWithPlatformInfo = async ({ user, project }: PopulateTokenWithPlatformInfoParams): Promise<string> => {
-    const platform = await getPlatform(user.platformId)
+    const platform = await platformService.getOneOrThrow(project.platformId)
     const updatedToken = await accessTokenManager.generateToken({
         id: user.id,
         type: PrincipalType.USER,
         projectId: project.id,
-        projectType: project.type,
-        platform: isNil(platform) ? undefined : {
+        platform: {
             id: platform.id,
             role: platform.ownerId === user.id ? PlatformRole.OWNER : PlatformRole.MEMBER,
         },
@@ -53,13 +52,6 @@ const populateTokenWithPlatformInfo = async ({ user, project }: PopulateTokenWit
     return updatedToken
 }
 
-const getPlatform = async (platformId: PlatformId | null): Promise<Platform | null> => {
-    if (isNil(platformId)) {
-        return null
-    }
-
-    return platformService.getOne(platformId)
-}
 
 type PopulateTokenWithPlatformInfoParams = {
     user: User
@@ -67,11 +59,6 @@ type PopulateTokenWithPlatformInfoParams = {
 }
 
 async function autoVerifyUserIfEligible(user: User): Promise<void> {
-    const edition = getEdition()
-    if (edition === ApEdition.ENTERPRISE) {
-        await userService.verify({ id: user.id })
-        return
-    }
     const projects = await projectMemberService.listByUser(user)
     const activeInAnyProject = !isNil(projects.find(f => f.status === ProjectMemberStatus.ACTIVE))
     if (activeInAnyProject) {
@@ -82,9 +69,11 @@ async function autoVerifyUserIfEligible(user: User): Promise<void> {
     }
 }
 
-async function getProjectAndTokenOrThrow(user: User): Promise<{ project: Project, token: string }> {
+async function getProjectAndTokenOrThrow(user: User): Promise<{ user: User, project: Project, token: string }> {
     const project = await getProjectForUserOrThrow(user)
+    const updatedUser = await userService.getOneOrFail({ id: user.id })
     return {
+        user: updatedUser,
         project,
         token: await populateTokenWithPlatformInfo({ user, project }),
     }

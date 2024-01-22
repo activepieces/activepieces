@@ -25,7 +25,7 @@ const readOauthAppController: FastifyPluginAsyncTypebox = async (app) => {
         },
     },
     async (request) => {
-        const platformId = request.principal.platform?.id
+        const platformId = request.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
         return oauthAppService.list({
             platformId,
@@ -48,7 +48,7 @@ const oauthAppController: FastifyPluginAsyncTypebox = async (app) => {
         },
     },
     async (request) => {
-        const platformId = request.principal.platform?.id
+        const platformId = request.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
         return oauthAppService.upsert({
             platformId,
@@ -64,7 +64,7 @@ const oauthAppController: FastifyPluginAsyncTypebox = async (app) => {
         },
     },
     async (request) => {
-        const platformId = request.principal.platform?.id
+        const platformId = request.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
         return oauthAppService.delete({
             platformId,

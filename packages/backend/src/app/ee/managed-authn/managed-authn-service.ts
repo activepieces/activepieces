@@ -1,9 +1,9 @@
 import { randomBytes as randomBytesCallback } from 'node:crypto'
 import { promisify } from 'node:util'
-import { AuthenticationResponse, PlatformRole, PrincipalType, Project, ProjectId, ProjectType, User } from '@activepieces/shared'
+import { PlatformId, AuthenticationResponse, PlatformRole, PrincipalType, Project, ProjectId, User } from '@activepieces/shared'
 import { userService } from '../../user/user-service'
-import { PlatformId, ProjectMemberRole, ProjectMemberStatus } from '@activepieces/ee-shared'
-import { platformService } from '../platform/platform.service'
+import { ProjectMemberRole, ProjectMemberStatus } from '@activepieces/ee-shared'
+import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { projectMemberService } from '../project-members/project-member.service'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
@@ -18,7 +18,6 @@ export const managedAuthnService = {
             id: user.id,
             type: PrincipalType.USER,
             projectId: user.projectId,
-            projectType: ProjectType.PLATFORM_MANAGED,
             platform: {
                 id: externalPrincipal.platformId,
                 role: PlatformRole.MEMBER,
@@ -94,7 +93,6 @@ const getOrCreateProject = async ({ platformId, externalProjectId }: GetOrCreate
         displayName: externalProjectId,
         ownerId: platform.ownerId,
         platformId,
-        type: ProjectType.PLATFORM_MANAGED,
         externalId: externalProjectId,
     })
 }

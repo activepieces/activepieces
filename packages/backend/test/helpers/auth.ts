@@ -1,5 +1,5 @@
 import { SigningKeyId } from '@activepieces/ee-shared'
-import { Principal, PrincipalType, apId } from '@activepieces/shared'
+import { PlatformRole, Principal, PrincipalType, apId } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import jwt, { Algorithm, JwtPayload, SignOptions } from 'jsonwebtoken'
 import { ExternalPrincipal, ExternalTokenPayload } from '../../src/app/ee/managed-authn/lib/external-token-extractor'
@@ -30,8 +30,10 @@ export const generateMockToken = async (principal?: Partial<Principal>): Promise
         id: principal?.id ?? apId(),
         type: principal?.type ?? faker.helpers.enumValue(PrincipalType),
         projectId: principal?.projectId ?? apId(),
-        projectType: principal?.projectType,
-        platform: principal?.platform,
+        platform: principal?.platform ?? {
+            id: apId(),
+            role: faker.helpers.enumValue(PlatformRole),
+        },
     }
 
     return generateToken({

@@ -2,8 +2,8 @@ import {
     AuthenticationServiceHooks,
 } from '../../../../authentication/authentication-service/hooks/authentication-service-hooks'
 import { flagService } from '../../../../flags/flag.service'
-import { ApFlagId, ProjectType } from '@activepieces/shared'
-import { platformService } from '../../../platform/platform.service'
+import { ApFlagId } from '@activepieces/shared'
+import { platformService } from '../../../../platform/platform.service'
 import { userService } from '../../../../user/user-service'
 import { authenticationHelper } from './authentication-helper'
 import { projectService } from '../../../../project/project-service'
@@ -23,52 +23,36 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
     async postSignUp({ user }) {
         const platformCreated = await flagService.getOne(ApFlagId.PLATFORM_CREATED)
         if (platformCreated?.value) {
-            const { project, token } = await authenticationHelper.getProjectAndTokenOrThrow(user)
-            return {
-                user,
-                project,
-                token,
-            }
+            await authenticationHelper.autoVerifyUserIfEligible(user)
+            return authenticationHelper.getProjectAndTokenOrThrow(user)
         }
 
-        const project = await projectService.create({
-            displayName: `${user.firstName}'s Project`,
+
+        const platform = await platformService.create({
             ownerId: user.id,
-            platformId: undefined,
-            type: ProjectType.STANDALONE,
+            name: DEFAULT_PLATFORM_NAME,
         })
 
-        const platform = await platformService.add({
+        await projectService.create({
+            displayName: `${user.firstName}'s Project`,
             ownerId: user.id,
-            projectId: project.id,
-            name: DEFAULT_PLATFORM_NAME,
+            platformId: platform.id,
         })
 
         await userService.updatePlatformId({ id: user.id, platformId: platform.id })
 
-        await enforceLimits()
 
         await flagService.save({
             id: ApFlagId.PLATFORM_CREATED,
             value: true,
         })
 
-        await authenticationHelper.autoVerifyUserIfEligible(user)
-        const updatedUser = await userService.getOneOrFail({ id: user.id })
-        const { project: updatedProject, token } = await authenticationHelper.getProjectAndTokenOrThrow(updatedUser)
-        return {
-            user: updatedUser,
-            project: updatedProject,
-            token,
-        }
+        await userService.verify({ id: user.id })
+        await enforceLimits()
+        return authenticationHelper.getProjectAndTokenOrThrow(user)
     },
 
     async postSignIn({ user }) {
-        const { project, token } = await authenticationHelper.getProjectAndTokenOrThrow(user)
-        return {
-            user,
-            project,
-            token,
-        }
+        return authenticationHelper.getProjectAndTokenOrThrow(user)
     },
 }

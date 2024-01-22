@@ -14,7 +14,7 @@ export const apiKeyModule: FastifyPluginAsyncTypebox = async (app) => {
 
 export const apiKeyController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', CreateRequest, async (req, res) => {
-        const platformId = req.principal.platform?.id
+        const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
 
         const newApiKey = await apiKeyService.add({
@@ -26,7 +26,7 @@ export const apiKeyController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.get('/', ListRequest, async (req) => {
-        const platformId = req.principal.platform?.id
+        const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
         return apiKeyService.list({
             platformId,
@@ -34,7 +34,7 @@ export const apiKeyController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.delete('/:id', DeleteRequest, async (req, res) => {
-        const platformId = req.principal.platform?.id
+        const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
         await apiKeyService.delete({
             id: req.params.id,

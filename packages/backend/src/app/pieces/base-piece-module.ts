@@ -31,7 +31,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             release,
             includeHidden: req.query.includeHidden ?? false,
             projectId: req.principal.projectId,
-            platformId: req.principal.platform?.id,
+            platformId: req.principal.platform.id,
             edition,
         })
         return pieceMetadataSummary

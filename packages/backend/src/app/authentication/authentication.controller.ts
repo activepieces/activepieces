@@ -1,6 +1,6 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { authenticationService } from './authentication-service'
-import { resolvePlatformIdForRequest } from '../ee/platform/lib/platform-utils'
+import { resolvePlatformIdForRequest } from '../platform/lib/platform-utils'
 import { getEdition } from '../helper/secret-helper'
 import { ApEdition, SignUpRequest, SignInRequest, ALL_PRINICPAL_TYPES } from '@activepieces/shared'
 

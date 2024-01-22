@@ -1,9 +1,9 @@
 import {  ApFlagId, isNil } from '@activepieces/shared'
 import { FlagsServiceHooks } from '../../flags/flags.hooks'
 import { apperanceHelper } from '../helper/apperance-helper'
-import { platformService } from '../platform/platform.service'
-import { ThirdPartyAuthnProviderEnum } from '@activepieces/ee-shared'
-import { resolvePlatformIdForRequest } from '../platform/lib/platform-utils'
+import { platformService } from '../../platform/platform.service'
+import { ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
+import { resolvePlatformIdForRequest } from '../../platform/lib/platform-utils'
 import { flagService } from '../../flags/flag.service'
 
 export const enterpriseFlagsHooks: FlagsServiceHooks = {

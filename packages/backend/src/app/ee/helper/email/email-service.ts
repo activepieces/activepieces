@@ -1,15 +1,15 @@
 import { getEdition } from '../../../helper/secret-helper'
-import { ApEdition, User, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { ApEdition, Platform, User, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import fs from 'node:fs/promises'
 import Mustache from 'mustache'
 import nodemailer from 'nodemailer'
 
-import { platformService } from '../../platform/platform.service'
+import { platformService } from '../../../platform/platform.service'
 import { defaultTheme } from '../../../flags/theme'
 import { projectService } from '../../../project/project-service'
 import { system } from '../../../helper/system/system'
 import { SystemProp } from '../../../helper/system/system-prop'
-import { OtpType, Platform } from '@activepieces/ee-shared'
+import { OtpType } from '@activepieces/ee-shared'
 import { logger } from '../../../helper/logger'
 import { platformDomainHelper } from '../platform-domain-helper'
 import { jwtUtils } from '../../../helper/jwt-utils'
@@ -113,7 +113,7 @@ export const emailService = {
 
         await sendEmail({
             email: user.email,
-            platformId: platformId ?? undefined,
+            platformId: platformId,
             template: otpToTemplate[type],
         })
     },
@@ -122,8 +122,8 @@ export const emailService = {
 
 
 
-async function sendEmail({ platformId, email, template }: { template: EmailTemplate, email: string, platformId: string | undefined }): Promise<void> {
-    const platform = isNil(platformId) ? null : await platformService.getOne(platformId)
+async function sendEmail({ platformId, email, template }: { template: EmailTemplate, email: string, platformId: string }): Promise<void> {
+    const platform = await platformService.getOneOrThrow(platformId)
     const transporter = nodemailer.createTransport({
         host: platform?.smtpHost ?? system.getOrThrow(SystemProp.SMTP_HOST),
         port: platform?.smtpPort ?? system.getNumber(SystemProp.SMTP_PORT)!,
@@ -143,7 +143,7 @@ async function sendEmail({ platformId, email, template }: { template: EmailTempl
     }
 
     await transporter.sendMail({
-        from: `${platform?.name ?? 'Activepieces'} <${platform?.smtpSenderEmail ?? 'notifications@activepieces.com'}>`,
+        from: `${platform.name ?? 'Activepieces'} <${platform.smtpSenderEmail ?? 'notifications@activepieces.com'}>`,
         to: email,
         subject: templateToSubject[template.templateName],
         html: await renderTemplate({ platform, request: template }),
@@ -153,7 +153,7 @@ async function sendEmail({ platformId, email, template }: { template: EmailTempl
 async function renderTemplate({
     platform,
     request,
-}: { request: EmailTemplate, platform: Platform | null }): Promise<string> {
+}: { request: EmailTemplate, platform: Platform }): Promise<string> {
     const templateHtml = await readTemplateFile(request.templateName)
     return Mustache.render(templateHtml, {
         ...request.data,
@@ -206,7 +206,7 @@ type EmailTemplate =
 
 type SendOtpEmailParams = {
     type: OtpType
-    platformId: string | undefined | null
+    platformId: string
     otp: string
     user: User
 }

@@ -35,7 +35,6 @@ import { platformWorkerHooks } from './ee/flow-worker/cloud-flow-worker-hooks'
 import { initilizeSentry } from './ee/helper/exception-handler'
 import { adminPieceModule } from './ee/pieces/admin-piece-module'
 import { platformPieceServiceHooks } from './ee/pieces/piece-service/platform-piece-service-hooks'
-import { platformModule } from './ee/platform/platform.module'
 import { projectMemberModule } from './ee/project-members/project-member.module'
 import { platformProjectModule } from './ee/projects/platform-project-module'
 import { referralModule } from './ee/referrals/referral.module'
@@ -77,6 +76,7 @@ import { gitRepoModule } from './ee/git-repos/git-repo.module'
 import { securityHandlerChain } from './core/security/security-handler-chain'
 import { communityFlowTemplateModule } from './flow-templates/community-flow-template.module'
 import { copilotModule } from './copilot/copilot.module'
+import { platformModule } from './ee/platform/platform.module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -184,6 +184,8 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(userModule)
     await app.register(authenticationModule)
     await app.register(copilotModule)
+    await app.register(platformModule)
+
 
     await setupBullMQBoard(app)
 
@@ -220,7 +222,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(appSumoModule)
             await app.register(referralModule)
             await app.register(adminPieceModule)
-            await app.register(platformModule)
             await app.register(customDomainModule)
             await app.register(signingKeyModule)
             await app.register(managedAuthnModule)
@@ -250,7 +251,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(customDomainModule)
             await app.register(platformProjectModule)
             await app.register(projectMemberModule)
-            await app.register(platformModule)
             await app.register(signingKeyModule)
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)

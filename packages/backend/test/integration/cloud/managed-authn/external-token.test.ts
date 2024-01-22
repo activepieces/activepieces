@@ -4,7 +4,7 @@ import { createMockUser, createMockPlatform, createMockSigningKey, createMockPro
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { generateMockExternalToken } from '../../../helpers/auth'
-import { ProjectType, apId } from '@activepieces/shared'
+import {  apId } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { stripeHelper } from '../../../../src/app/ee/billing/billing/stripe-helper'
 
@@ -184,7 +184,6 @@ describe('Managed Authentication API', () => {
 
             const mockProject = createMockProject({
                 ownerId: mockUser.id,
-                type: ProjectType.PLATFORM_MANAGED,
                 platformId: mockPlatform.id,
                 externalId: mockExternalProjectId,
             })
@@ -239,7 +238,6 @@ describe('Managed Authentication API', () => {
 
             const mockProject = createMockProject({
                 ownerId: mockPlatformOwner.id,
-                type: ProjectType.PLATFORM_MANAGED,
                 platformId: mockPlatform.id,
                 externalId: mockExternalTokenPayload.externalProjectId,
             })

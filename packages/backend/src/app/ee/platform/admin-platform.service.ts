@@ -1,17 +1,24 @@
 import { ActivepiecesError, ErrorCode, Project, ProjectId, UserId, isNil } from '@activepieces/shared'
 import { projectService } from '../../project/project-service'
-import { platformService } from './platform.service'
-import { Platform } from '@activepieces/ee-shared'
+import { platformService } from '../../platform/platform.service'
 
 export const adminPlatformService = {
-    async add({ userId, projectId, name }: AdminAddPlatformParams): Promise<Platform> {
+    async add({ userId, projectId, name }: AdminAddPlatformParams): Promise<AdminAddPlatformParams> {
         const project = await getProjectOrThrow(projectId)
 
-        return platformService.add({
+        await platformService.create({
             ownerId: userId,
-            projectId: project.id,
             name,
         })
+        await projectService.addProjectToPlatform({
+            projectId,
+            platformId: project.platformId,
+        })
+        return {
+            userId,
+            projectId,
+            name,
+        }
     },
 }
 

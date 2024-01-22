@@ -1,7 +1,5 @@
-import { ApId, LocalesEnum } from '@activepieces/shared'
+import { ApId, FederatedAuthnProviderConfig, FilteredPieceBehavior, LocalesEnum } from '@activepieces/shared'
 import { Type, Static } from '@sinclair/typebox'
-import { FilteredPieceBehavior } from './platform.model'
-import { FederatedAuthnProviderConfig } from '../authn'
 
 export const UpdatePlatformRequestBody = Type.Object({
     name: Type.Optional(Type.String()),

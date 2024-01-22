@@ -1,6 +1,7 @@
-import { Platform, ApiKey } from '@activepieces/ee-shared'
+import { ApiKey } from '@activepieces/ee-shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
+import { Platform } from '@activepieces/shared'
 
 type ApiKeySchema = ApiKey & {
     platform: Platform

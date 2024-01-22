@@ -2,7 +2,7 @@ import { FastifyInstance, FastifyRequest } from 'fastify'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupApp } from '../../../../src/app/app'
 import { securityHandlerChain } from '../../../../src/app/core/security/security-handler-chain'
-import { ActivepiecesError, EndpointScope, ErrorCode, PlatformRole, Principal, PrincipalType, ProjectType, apId } from '@activepieces/shared'
+import { ActivepiecesError, EndpointScope, ErrorCode, PlatformRole, Principal, PrincipalType, apId } from '@activepieces/shared'
 import { createMockFlow, createMockPlatformWithOwner, createMockProject, setupMockApiKeyServiceAccount } from '../../../helpers/mocks'
 import { generateMockToken } from '../../../helpers/auth'
 
@@ -103,7 +103,6 @@ describe('API Security', () => {
                 id: mockApiKey.id,
                 type: PrincipalType.SERVICE,
                 projectId: expect.stringMatching(/ANONYMOUS_.{21}/),
-                projectType: ProjectType.PLATFORM_MANAGED,
                 platform: {
                     id: mockPlatform.id,
                     role: PlatformRole.OWNER,
@@ -146,7 +145,6 @@ describe('API Security', () => {
                 id: mockApiKey.id,
                 type: PrincipalType.SERVICE,
                 projectId: mockProject.id,
-                projectType: ProjectType.PLATFORM_MANAGED,
                 platform: {
                     id: mockPlatform.id,
                     role: PlatformRole.OWNER,
@@ -189,7 +187,6 @@ describe('API Security', () => {
                 id: mockApiKey.id,
                 type: PrincipalType.SERVICE,
                 projectId: mockProject.id,
-                projectType: ProjectType.PLATFORM_MANAGED,
                 platform: {
                     id: mockPlatform.id,
                     role: PlatformRole.OWNER,
@@ -234,7 +231,6 @@ describe('API Security', () => {
                 id: mockApiKey.id,
                 type: PrincipalType.SERVICE,
                 projectId: mockProject.id,
-                projectType: ProjectType.PLATFORM_MANAGED,
                 platform: {
                     id: mockPlatform.id,
                     role: PlatformRole.OWNER,
@@ -416,7 +412,6 @@ describe('API Security', () => {
                 id: apId(),
                 type: PrincipalType.USER,
                 projectId: apId(),
-                projectType: ProjectType.PLATFORM_MANAGED,
                 platform: {
                     id: apId(),
                     role: PlatformRole.OWNER,
@@ -444,9 +439,8 @@ describe('API Security', () => {
                 id: mockPrincipal.id,
                 type: PrincipalType.USER,
                 projectId: mockPrincipal.projectId,
-                projectType: ProjectType.PLATFORM_MANAGED,
                 platform: {
-                    id: mockPrincipal.platform?.id,
+                    id: mockPrincipal.platform.id,
                     role: PlatformRole.OWNER,
                 },
             }))
@@ -562,7 +556,6 @@ describe('API Security', () => {
                 id: expect.stringMatching(/ANONYMOUS_.{21}/),
                 type: PrincipalType.UNKNOWN,
                 projectId: expect.stringMatching(/ANONYMOUS_.{21}/),
-                projectType: ProjectType.STANDALONE,
             }))
 
             expect(mockRequest.principal).not.toHaveProperty('platform')

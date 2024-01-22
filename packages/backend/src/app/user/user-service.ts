@@ -1,8 +1,7 @@
-import { apId, SignUpRequest, User, UserId, UserMeta, UserStatus, isNil, ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { apId, SignUpRequest, User, UserId, UserMeta, UserStatus, isNil, ActivepiecesError, ErrorCode, PlatformId } from '@activepieces/shared'
 import { passwordHasher } from '../authentication/lib/password-hasher'
 import { databaseConnection } from '../database/database-connection'
 import { UserEntity } from './user-entity'
-import { PlatformId } from '@activepieces/ee-shared'
 import { IsNull } from 'typeorm'
 import dayjs from 'dayjs'
 

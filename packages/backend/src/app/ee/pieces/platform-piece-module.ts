@@ -2,7 +2,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyPluginCallbackTypebox } from '@fastify/type-provider-typebox'
 import { ActivepiecesError, AddPieceRequestBody, ErrorCode, isNil } from '@activepieces/shared'
 import { PieceMetadataModel } from '../../pieces/piece-metadata-entity'
-import { platformService } from '../platform/platform.service'
+import { platformService } from '../../platform/platform.service'
 import { pieceService } from '../../pieces/piece-service'
 
 

@@ -4,8 +4,7 @@ import { generateMockToken } from '../../../helpers/auth'
 import { createMockPieceMetadata, createMockPlatform, createMockProject, createMockUser } from '../../../helpers/mocks'
 import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
-import { FilteredPieceBehavior } from '@activepieces/ee-shared'
-import { PieceType, PlatformRole, PrincipalType, ProjectType, apId } from '@activepieces/shared'
+import { FilteredPieceBehavior, PieceType, PlatformRole, PrincipalType, apId } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
@@ -131,12 +130,10 @@ describe('Piece Metadata API', () => {
 
             const mockProject = createMockProject({
                 platformId: mockPlatform.id,
-                type: ProjectType.PLATFORM_MANAGED,
                 ownerId: mockUser.id,
             })
             const mockProject2 = createMockProject({
                 platformId: mockPlatform.id,
-                type: ProjectType.PLATFORM_MANAGED,
                 ownerId: mockUser.id,
             })
             await databaseConnection.getRepository('project').save([mockProject, mockProject2])
@@ -182,11 +179,18 @@ describe('Piece Metadata API', () => {
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save([mockUser])
 
+            const mockPlatform = createMockPlatform({
+                ownerId: mockUser.id,
+                filteredPieceNames: [],
+                filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
+            })
             const mockProject = createMockProject({
                 ownerId: mockUser.id,
+                platformId: mockPlatform.id,
             })
             const mockProject2 = createMockProject({
                 ownerId: mockUser.id,
+                platformId: mockPlatform.id,
             })
             await databaseConnection.getRepository('project').save([mockProject, mockProject2])
 

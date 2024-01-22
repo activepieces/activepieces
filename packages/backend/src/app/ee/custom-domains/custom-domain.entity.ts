@@ -1,9 +1,10 @@
-import { CustomDomain, CustomDomainStatus, Platform } from '@activepieces/ee-shared'
+import { CustomDomain, CustomDomainStatus } from '@activepieces/ee-shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
+import { Platform } from '@activepieces/shared'
 
 type CustomDomainSchema = CustomDomain & {
-    platform?: Platform
+    platform: Platform
 }
 
 export const CustomDomainEntity = new EntitySchema<CustomDomainSchema>({

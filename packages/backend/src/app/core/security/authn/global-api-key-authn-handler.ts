@@ -2,7 +2,7 @@ import { FastifyRequest } from 'fastify'
 import { BaseSecurityHandler } from '../security-handler'
 import { system } from '../../../helper/system/system'
 import { SystemProp } from '../../../helper/system/system-prop'
-import { ActivepiecesError, ErrorCode, PrincipalType, apId, isNil } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, PlatformRole, PrincipalType, apId, isNil } from '@activepieces/shared'
 
 export class GlobalApiKeyAuthnHandler extends BaseSecurityHandler {
     private static readonly HEADER_NAME = 'api-key'
@@ -28,6 +28,10 @@ export class GlobalApiKeyAuthnHandler extends BaseSecurityHandler {
             id: `SUPER_USER_${apId()}`,
             type: PrincipalType.SUPER_USER,
             projectId: `SUPER_USER_${apId()}`,
+            platform: {
+                id: `SUPER_USER_${apId()}`,
+                role: PlatformRole.MEMBER,
+            },
         }
 
         return Promise.resolve()

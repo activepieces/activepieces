@@ -1,8 +1,8 @@
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { Platform, PlatformWithoutSensitiveData, UpdatePlatformRequestBody } from '@activepieces/ee-shared'
-import { ApId, Principal, assertEqual } from '@activepieces/shared'
+import { UpdatePlatformRequestBody } from '@activepieces/ee-shared'
+import { Platform, PlatformWithoutSensitiveData, ApId, Principal, assertEqual } from '@activepieces/shared'
 import { platformService } from './platform.service'
-import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
+import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { StatusCodes } from 'http-status-codes'
 
 export const platformController: FastifyPluginAsyncTypebox = async (app) => {
@@ -16,7 +16,7 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.get('/:id', GetPlatformRequest, async (req) => {
-        assertEqual(req.principal.platform?.id, req.params.id, 'userPlatformId', 'paramId')
+        assertEqual(req.principal.platform.id, req.params.id, 'userPlatformId', 'paramId')
         const platform = await platformService.getOneOrThrow(req.params.id)
 
         return buildResponse({

@@ -1,5 +1,5 @@
-import { KeyAlgorithm, SigningKey, Platform, OAuthApp, FilteredPieceBehavior, CustomDomain, CustomDomainStatus, OtpModel, OtpType, OtpState, ProjectMember, ApiKey, ProjectMemberRole, ProjectMemberStatus, GitRepo } from '@activepieces/ee-shared'
-import { UserStatus, User, apId, Project, NotificationStatus, ProjectType, PieceType, PackageType, Flow, FlowStatus, FlowVersion, TriggerType, FlowVersionState, FlowTemplate, TemplateType, FlowRun, ExecutionOutputStatus, RunEnvironment } from '@activepieces/shared'
+import { KeyAlgorithm, SigningKey, OAuthApp, CustomDomain, CustomDomainStatus, OtpModel, OtpType, OtpState, ProjectMember, ApiKey, ProjectMemberRole, ProjectMemberStatus, GitRepo } from '@activepieces/ee-shared'
+import { UserStatus, User, apId, Project, Platform, FilteredPieceBehavior, NotificationStatus, PieceType, PackageType, Flow, FlowStatus, FlowVersion, TriggerType, FlowVersionState, FlowTemplate, TemplateType, FlowRun, ExecutionOutputStatus, RunEnvironment } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
 import bcrypt from 'bcrypt'
@@ -59,7 +59,7 @@ export const createMockTemplate = (template?: Partial<FlowTemplate>): FlowTempla
     }
 }
 
-export const createMockProject = (project?: Partial<Project>): Project => {
+export const createMockProject = (project?: Partial<Omit<Project, 'platformId'>> & { platformId: string }): Project => {
     return {
         id: project?.id ?? apId(),
         created: project?.created ?? faker.date.recent().toISOString(),
@@ -67,7 +67,6 @@ export const createMockProject = (project?: Partial<Project>): Project => {
         ownerId: project?.ownerId ?? apId(),
         displayName: project?.displayName ?? faker.lorem.word(),
         notifyStatus: project?.notifyStatus ?? faker.helpers.enumValue(NotificationStatus),
-        type: project?.type ?? faker.helpers.enumValue(ProjectType),
         platformId: project?.platformId ?? apId(),
         externalId: project?.externalId ?? apId(),
     }

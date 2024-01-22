@@ -1,5 +1,4 @@
-import { AuthenticationResponse } from '@activepieces/shared'
-import { Platform, ThirdPartyAuthnProviderEnum } from '@activepieces/ee-shared'
+import { Platform, ThirdPartyAuthnProviderEnum, AuthenticationResponse } from '@activepieces/shared'
 import { googleAuthnProvider } from './google-authn-provider'
 import { gitHubAuthnProvider } from './github-authn-provider'
 

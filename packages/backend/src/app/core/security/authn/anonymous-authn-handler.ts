@@ -1,6 +1,6 @@
 import { FastifyRequest } from 'fastify'
 import { BaseSecurityHandler } from '../security-handler'
-import { Principal, PrincipalType, ProjectType, apId, isNil } from '@activepieces/shared'
+import { PlatformRole, Principal, PrincipalType, apId, isNil } from '@activepieces/shared'
 
 export class AnonymousAuthnHandler extends BaseSecurityHandler {
     protected canHandle(_request: FastifyRequest): Promise<boolean> {
@@ -15,7 +15,10 @@ export class AnonymousAuthnHandler extends BaseSecurityHandler {
                 id: `ANONYMOUS_${apId()}`,
                 type: PrincipalType.UNKNOWN,
                 projectId: `ANONYMOUS_${apId()}`,
-                projectType: ProjectType.STANDALONE,
+                platform: {
+                    id: `ANONYMOUS_${apId()}`,
+                    role: PlatformRole.MEMBER,
+                },
             }
         }
 

@@ -1,16 +1,15 @@
-import { ActivepiecesError, ErrorCode, LocalesEnum, ProjectId, UserId, apId, isNil, spreadIfDefined } from '@activepieces/shared'
-import { databaseConnection } from '../../database/database-connection'
+import { FilteredPieceBehavior, Platform, PlatformId, ActivepiecesError, ErrorCode, LocalesEnum, UserId, apId, isNil, spreadIfDefined } from '@activepieces/shared'
+import { databaseConnection } from '../database/database-connection'
+import { UpdatePlatformRequestBody } from '@activepieces/ee-shared'
+import { defaultTheme } from '../flags/theme'
+import { userService } from '../user/user-service'
 import { PlatformEntity } from './platform.entity'
-import { FilteredPieceBehavior, Platform, PlatformId, UpdatePlatformRequestBody } from '@activepieces/ee-shared'
-import { defaultTheme } from '../../flags/theme'
-import { userService } from '../../user/user-service'
-import { projectService } from '../../project/project-service'
 
 const repo = databaseConnection.getRepository<Platform>(PlatformEntity)
 
 export const platformService = {
-    async add(params: AddParams): Promise<Platform> {
-        const { ownerId, projectId, name, primaryColor, logoIconUrl, fullLogoUrl, favIconUrl } = params
+    async create(params: AddParams): Promise<Platform> {
+        const { ownerId, name, primaryColor, logoIconUrl, fullLogoUrl, favIconUrl } = params
 
         const newPlatform: NewPlatform = {
             id: apId(),
@@ -39,11 +38,6 @@ export const platformService = {
         await addOwnerToPlatform({
             platformId: newPlatform.id,
             ownerId,
-        })
-
-        await addProjectToPlatform({
-            platformId: newPlatform.id,
-            projectId,
         })
 
         return savedPlatform
@@ -147,16 +141,8 @@ const addOwnerToPlatform = ({ platformId, ownerId }: AddOwnerToPlatformParams): 
     })
 }
 
-const addProjectToPlatform = ({ platformId, projectId }: AddProjectToPlatformParams): Promise<void> => {
-    return projectService.addProjectToPlatform({
-        projectId,
-        platformId,
-    })
-}
-
 type AddParams = {
     ownerId: UserId
-    projectId: ProjectId
     name: string
     primaryColor?: string
     logoIconUrl?: string
@@ -189,7 +175,3 @@ type AddOwnerToPlatformParams = {
     ownerId: UserId
 }
 
-type AddProjectToPlatformParams = {
-    platformId: PlatformId
-    projectId: ProjectId
-}
