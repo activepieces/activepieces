@@ -9,7 +9,6 @@ export const replace = createAction({
     text: Property.ShortText({
       displayName: 'Text',
       required: true,
-      validators: [Validators.string]
     }),
     searchValue: Property.ShortText({
       displayName: 'Search Value',

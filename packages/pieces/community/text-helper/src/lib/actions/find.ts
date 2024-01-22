@@ -8,7 +8,6 @@ export const find = createAction({
     text: Property.ShortText({
       displayName: 'text',
       required: true,
-      validators: [Validators.string]
     }),
     expression: Property.ShortText({
       displayName: 'Expression',

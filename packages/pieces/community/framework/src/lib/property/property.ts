@@ -83,10 +83,10 @@ export interface NonAuthPiecePropertyMap {
 
 export type PiecePropValueSchema<T extends PieceProperty | PieceAuthProperty> =
   T extends undefined
-    ? undefined
-    : T extends { required: true }
-    ? T['valueSchema']
-    : T['valueSchema'] | undefined;
+  ? undefined
+  : T extends { required: true }
+  ? T['valueSchema']
+  : T['valueSchema'] | undefined;
 
 export type StaticPropsValue<T extends PiecePropertyMap> = {
   [P in keyof T]: PiecePropValueSchema<T[P]>;
@@ -100,6 +100,7 @@ export const Property = {
       ...request,
       valueSchema: undefined,
       type: PropertyType.SHORT_TEXT,
+      defaultValidators: [Validators.string],
     } as unknown as R extends true
       ? ShortTextProperty<true>
       : ShortTextProperty<false>;

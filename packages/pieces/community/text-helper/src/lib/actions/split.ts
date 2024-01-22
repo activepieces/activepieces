@@ -8,7 +8,6 @@ export const split = createAction({
     text: Property.ShortText({
       displayName: 'Text',
       required: true,
-      validators: [Validators.string]
     }),
     delimeter: Property.ShortText({
       displayName: 'Delimeter',
