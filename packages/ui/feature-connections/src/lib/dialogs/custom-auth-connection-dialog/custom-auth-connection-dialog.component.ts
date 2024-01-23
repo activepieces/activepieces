@@ -32,7 +32,7 @@ import {
 import { connectionNameRegex } from '../utils';
 
 export interface CustomAuthDialogData {
-  pieceAuthProperty: CustomAuthProperty<boolean, CustomAuthProps>;
+  pieceAuthProperty: CustomAuthProperty<CustomAuthProps>;
   pieceName: string;
   connectionToUpdate?: AppConnectionWithoutSensitiveData;
 }
