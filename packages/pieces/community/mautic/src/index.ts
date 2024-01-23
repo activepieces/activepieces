@@ -11,6 +11,7 @@ import {
   updateCompany,
   updateContact,
 } from './lib/actions';
+import { triggers } from './lib/triggers';
 
 const markdownDescription = `
 Follow these steps:
@@ -44,7 +45,7 @@ export const mautic = createPiece({
   displayName: 'Mautic',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/mautic.png',
-  authors: ['bibhuty-did-this'],
+  authors: ['bibhuty-did-this', 'kanarelo'],
   auth: mauticAuth,
   actions: [
     createContact,
@@ -54,5 +55,5 @@ export const mautic = createPiece({
     searchCompany,
     updateCompany,
   ],
-  triggers: [],
+  triggers
 });
