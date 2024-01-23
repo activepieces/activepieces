@@ -15,8 +15,6 @@ import {
 } from '../../components/dialogs/create-or-update-template-dialogue/create-or-update-template-dialogue.component';
 import { FlowTemplate } from '@activepieces/shared';
 import { ActivatedRoute } from '@angular/router';
-import { PLATFORM_RESOLVER_KEY } from '../../platform.resolver';
-import { Platform } from '@activepieces/ee-shared';
 import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
 
 @Component({
@@ -30,7 +28,6 @@ export class TemplatesTableComponent {
   dataSource: TemplatesDataSource;
   refresh$: Subject<boolean> = new Subject();
   dialogClosed$?: Observable<unknown>;
-  platform: Platform;
   featureDisabledTooltip = featureDisabledTooltip;
   isDemo = false;
   constructor(
@@ -38,7 +35,6 @@ export class TemplatesTableComponent {
     private matDialog: MatDialog,
     private route: ActivatedRoute
   ) {
-    this.platform = this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
     this.isDemo = this.route.snapshot.data[PLATFORM_DEMO_RESOLVER_KEY];
     this.dataSource = new TemplatesDataSource(
       this.refresh$.asObservable().pipe(startWith(false)),

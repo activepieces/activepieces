@@ -9,8 +9,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { Platform } from '@activepieces/ee-shared';
 import { PLATFORM_RESOLVER_KEY } from '../../platform.resolver';
-import { FlagService } from '@activepieces/ui/common';
-import { ApFlagId } from '@activepieces/shared';
+import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
 @Component({
   selector: 'app-platform-settings',
   templateUrl: './platform-settings.component.html',
@@ -33,14 +32,10 @@ export class PlatformSettingsComponent implements AfterViewInit {
     4: 'ApiKeys',
     5: 'SSO',
   };
-  isDemo$: Observable<boolean>;
-  platform: Platform;
-  constructor(
-    private router: Router,
-    private route: ActivatedRoute,
-    private flagService: FlagService
-  ) {
-    this.isDemo$ = this.flagService.isFlagEnabled(ApFlagId.SHOW_PLATFORM_DEMO);
+  isDemo = false;
+  platform?: Platform;
+  constructor(private router: Router, private route: ActivatedRoute) {
+    this.isDemo = this.route.snapshot.data[PLATFORM_DEMO_RESOLVER_KEY];
     this.platform = this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
     this.fragmentChanged$ = this.route.fragment.pipe(
       tap((fragment) => {

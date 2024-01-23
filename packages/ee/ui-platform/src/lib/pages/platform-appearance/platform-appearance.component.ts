@@ -41,7 +41,7 @@ export class PlatformAppearanceComponent implements OnInit {
   locales = localesMap;
   title = $localize`Appearance`;
   featureDisabledTooltip = featureDisabledTooltip;
-  platform: Platform;
+  platform?: Platform;
   isDemo = false;
   constructor(
     private fb: FormBuilder,
@@ -111,7 +111,7 @@ export class PlatformAppearanceComponent implements OnInit {
   ngOnInit(): void {
     if (this.isDemo) {
       this.formGroup.disable();
-    } else {
+    } else if (this.platform) {
       this.formGroup.patchValue({
         name: this.platform.name,
         favIconUrl: this.platform.favIconUrl,

@@ -29,7 +29,6 @@ export const uiEePlatformRoutes: Route[] = [
           title: $localize`Projects`,
         },
         resolve: {
-          [PLATFORM_RESOLVER_KEY]: platformResolver,
           [PLATFORM_DEMO_RESOLVER_KEY]: isPlatformDemoResolver,
         },
       },
@@ -62,7 +61,6 @@ export const uiEePlatformRoutes: Route[] = [
           title: $localize`Templates`,
         },
         resolve: {
-          [PLATFORM_RESOLVER_KEY]: platformResolver,
           [PLATFORM_DEMO_RESOLVER_KEY]: isPlatformDemoResolver,
         },
       },
@@ -74,6 +72,7 @@ export const uiEePlatformRoutes: Route[] = [
         },
         resolve: {
           [PLATFORM_RESOLVER_KEY]: platformResolver,
+          [PLATFORM_DEMO_RESOLVER_KEY]: isPlatformDemoResolver,
         },
       },
       {
@@ -83,7 +82,6 @@ export const uiEePlatformRoutes: Route[] = [
           title: $localize`Users`,
         },
         resolve: {
-          [PLATFORM_RESOLVER_KEY]: platformResolver,
           [PLATFORM_DEMO_RESOLVER_KEY]: isPlatformDemoResolver,
         },
       },
