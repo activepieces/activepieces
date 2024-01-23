@@ -36,19 +36,32 @@ export const gmailSendEmailAction = createAction({
       description: undefined,
       required: true,
     }),
-    body_text: Property.ShortText({
-      displayName: 'Body (Text)',
-      description: 'Text version of the body for the email you want to send',
+    body_type: Property.StaticDropdown({
+      displayName: 'Body Type',
+      required: true,
+      defaultValue: 'plain_text',
+      options: {
+        disabled: false,
+        options: [
+          {
+            label: 'plain text',
+            value: 'plain_text'
+          },
+          {
+            label: 'html',
+            value: 'html'
+          }
+        ]
+      }
+    }),
+    body: Property.ShortText({
+      displayName: 'Body',
+      description: 'Body for the email you want to send',
       required: true,
     }),
     reply_to: Property.Array({
       displayName: 'Reply-To Email',
       description: 'Email address to set as the "Reply-To" header',
-      required: false,
-    }),
-    body_html: Property.ShortText({
-      displayName: 'Body (HTML)',
-      description: 'HTML version of the body for the email you want to send',
       required: false,
     }),
     sender_name: Property.ShortText({
@@ -61,10 +74,10 @@ export const gmailSendEmailAction = createAction({
       required: false,
     }),
     attachment_name: Property.ShortText({
-			displayName: 'Attachment Name',
-			description: 'In case you want to change the name of the attachment',
-			required: false,
-		}),
+      displayName: 'Attachment Name',
+      description: 'In case you want to change the name of the attachment',
+      required: false,
+    }),
   },
   async run(configValue) {
     const subjectBase64 = Buffer.from(
@@ -85,8 +98,8 @@ export const gmailSendEmailAction = createAction({
       bcc: bcc ? bcc.join(', ') : undefined,
       subject: `=?UTF-8?B?${subjectBase64}?=`,
       replyTo: replyTo ? replyTo.join(', ') : '',
-      text: configValue.propsValue['body_text'].replace(/\n/g, '<br>'),
-      html: configValue.propsValue['body_html'],
+      text: configValue.propsValue.body_type === 'plain_text' ? configValue.propsValue['body'] : undefined,
+      html: configValue.propsValue.body_type === 'html' ? configValue.propsValue['body'].replace(/\n/g, '<br>') : undefined,
       attachments: [],
     };
     const gmailResponse = await getEmail(configValue.auth.access_token);

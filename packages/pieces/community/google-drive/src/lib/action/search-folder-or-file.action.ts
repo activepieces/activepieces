@@ -10,9 +10,34 @@ export const googleDriveSearchFolder = createAction({
     displayName: 'Search',
     description: 'Search a Google Drive folder for files/sub-folders',
     props: {
+        queryTerm: Property.StaticDropdown({
+            displayName: 'Query Term',
+            description: 'The Query term or field of file/folder to search upon.',
+            defaultValue: 'name',
+            options: {
+                options: [
+                    { label: 'File name', value: 'name' },
+                    { label: 'Full text search', value: 'fullText' },
+                    { label: 'Content type', value: 'mimeType' },
+                ]
+            },
+            required: true,
+        }),
+        operator: Property.StaticDropdown({
+            displayName: 'Operator',
+            description: 'The operator to create criteria.',
+            required: true,
+            options: {
+                options: [
+                    { label: 'Contains', value: 'contains' },
+                    { label: 'Equals', value: '=' },
+                ]
+            },
+            defaultValue: 'contains'
+        }),
         query: Property.ShortText({
-            displayName: 'Name',
-            description: 'Part of the name of the file/folder to search for.',
+            displayName: 'Value',
+            description: 'Value of the field of file/folder to search for.',
             required: true,
         }),
         type: Property.StaticDropdown({
@@ -21,7 +46,7 @@ export const googleDriveSearchFolder = createAction({
             required: false,
             options: {
                 options: [
-                    { label: "All", value: "all"},
+                    { label: "All", value: "all" },
                     { label: "Files", value: "file" },
                     { label: "Folders", value: "folder" },
                 ],
@@ -35,9 +60,13 @@ export const googleDriveSearchFolder = createAction({
         authClient.setCredentials(context.auth)
 
         const drive = google.drive({ version: 'v3', auth: authClient });
-        let finalQuery = `name contains '${context.propsValue.query}' and '${context.propsValue.parentFolder ?? 'root'}' in parents`;
+        const operator = context.propsValue.operator ?? 'contains';
+        const queryTerm = context.propsValue.queryTerm ?? 'name';
+        let finalQuery = `${queryTerm} ${operator} '${context.propsValue.query}'`
+        finalQuery = `${finalQuery} and '${context.propsValue.parentFolder ?? 'root'}' in parents`;
+
         const type = context.propsValue.type ?? "all";
-        switch(type){
+        switch (type) {
             case "file":
                 finalQuery = `${finalQuery} and mimeType!='application/vnd.google-apps.folder'`
                 break;

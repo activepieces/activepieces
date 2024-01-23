@@ -31,13 +31,13 @@ export class FileSandbox extends AbstractSandbox {
     public override async runOperation(operation: string): Promise<ExecuteSandboxResult> {
         const startTime = Date.now()
         const pieceSource = system.getOrThrow(SystemProp.PIECES_SOURCE)
-        const codeExecutorSandboxType = system.get(SystemProp.CODE_EXECUTOR_SANDBOX_TYPE)
+        const codeSandboxType = system.get(SystemProp.CODE_SANDBOX_TYPE)
 
         const command = [
             `cd ${this.getSandboxFolderPath()}`,
             '&&',
             'cross-env-shell',
-            `AP_CODE_EXECUTOR_SANDBOX_TYPE=${codeExecutorSandboxType}`,
+            `AP_CODE_SANDBOX_TYPE=${codeSandboxType}`,
             `AP_PIECES_SOURCE=${pieceSource}`,
             'NODE_OPTIONS=--enable-source-maps',
             `${process.platform === 'win32' ? '&&' : ''}`,
