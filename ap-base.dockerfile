@@ -18,8 +18,14 @@ RUN npm i -g \
   npm@9.3.1 \
   pnpm@7.28.0
 
+# setup pnpm home directory
+ENV PNPM_HOME=/root/.local/share/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+
+RUN pnpm add -g \
+  isolated-vm@4.6.0
+
 RUN pnpm store add \
   @tsconfig/node18@1.0.0 \
   @types/node@18.17.1 \
-  typescript@4.8.4 \
-  isolated-vm@4.6.0
+  typescript@4.8.4

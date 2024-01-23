@@ -1,5 +1,5 @@
 ### STAGE 1: Build ###
-FROM activepieces/ap-base:9 AS build
+FROM activepieces/ap-base:10 AS build
 
 # Set up backend
 WORKDIR /usr/src/app
@@ -18,7 +18,7 @@ RUN npx nx run-many --target=build --projects=backend,ui-core --configuration pr
 RUN cd dist/packages/backend && npm install --production --force
 
 ### STAGE 2: Run ###
-FROM activepieces/ap-base:9 AS run
+FROM activepieces/ap-base:10 AS run
 
 ARG AP_CACHE_PATH=/usr/src/cache
 ARG AP_PACKAGE_ARCHIVE_PATH=/usr/src/packages
