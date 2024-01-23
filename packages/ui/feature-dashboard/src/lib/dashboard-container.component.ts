@@ -9,6 +9,7 @@ import {
 import { Observable, combineLatest, map } from 'rxjs';
 import { ApFlagId, Project } from '@activepieces/shared';
 import { Store } from '@ngrx/store';
+import { Router } from '@angular/router';
 
 @Component({
   templateUrl: './dashboard-container.component.html',
@@ -17,7 +18,6 @@ import { Store } from '@ngrx/store';
 })
 export class DashboardContainerComponent {
   environment = environment;
-  showCommunity$: Observable<boolean>;
   isEmbedded$: Observable<boolean>;
   showSidnav$: Observable<boolean>;
   isInPlatformRoute$: Observable<boolean>;
@@ -27,7 +27,8 @@ export class DashboardContainerComponent {
     private flagService: FlagService,
     private embeddedService: EmbeddingService,
     private dashboardService: DashboardService,
-    private store: Store
+    private store: Store,
+    public router: Router
   ) {
     this.showPoweredByAp$ = combineLatest({
       showPoweredByAp: this.flagService.isFlagEnabled(
@@ -44,20 +45,17 @@ export class DashboardContainerComponent {
     this.showSidnav$ = this.embeddedService
       .getState$()
       .pipe(map((state) => !state.hideSideNav));
-
-    this.showCommunity$ = this.flagService.isFlagEnabled(
-      ApFlagId.SHOW_COMMUNITY
-    );
     this.isInPlatformRoute$ = this.dashboardService.getIsInPlatformRoute();
     this.currentProject$ = this.store.select(
       ProjectSelectors.selectCurrentProject
     );
   }
-  showWhatIsNew() {
-    window.open(
-      'https://community.activepieces.com/c/announcements',
-      '_blank',
-      'noopener'
-    );
+
+  navigateToPlatformDashboard() {
+    this.router.navigate(['/platform']);
+  }
+
+  navigateToUserDashboard() {
+    this.router.navigate(['/']);
   }
 }

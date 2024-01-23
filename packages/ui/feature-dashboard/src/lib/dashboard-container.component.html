@@ -11,9 +11,21 @@
                     {{(currentProject$ | async)?.displayName}}
                 </div>
                 <div class="ap-flex-grow"></div>
-                <ap-button btnColor="white" btnStyle="basic" btnSize="medium" (buttonClicked)="showWhatIsNew()"
-                    *ngIf="showCommunity$ | async" i18n>
-                    What's new
+                <ap-button *ngIf="!router.url.startsWith('/platform')" btnColor="white" btnStyle="basic"
+                    btnSize="medium" (buttonClicked)="navigateToPlatformDashboard()" i18n>
+                    <div class="ap-flex ap-gap-2 ap-items-center">
+                        <svg-icon src="assets/img/custom/arrow-right.svg" class="ap-w-[15px] ap-h-[15px] ap-fill-body"
+                            [applyClass]="true"></svg-icon> Platform Dashboard
+                    </div>
+
+                </ap-button>
+                <ap-button *ngIf="router.url.startsWith('/platform')" btnColor="white" btnStyle="basic" btnSize="medium"
+                    (buttonClicked)="navigateToUserDashboard()" i18n>
+                    <div class="ap-flex ap-gap-2 ap-items-center">
+                        <svg-icon src="assets/img/custom/arrow-right.svg" class="ap-w-[15px] ap-h-[15px] ap-fill-body"
+                            [applyClass]="true"></svg-icon> User Dashboard
+                    </div>
+
                 </ap-button>
                 <div class="ap-flex ap-mx-3">
                     <app-tasks-progress></app-tasks-progress>
