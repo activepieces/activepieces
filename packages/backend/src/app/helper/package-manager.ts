@@ -74,14 +74,19 @@ export const packageManager = {
         return runCommand(path, command)
     },
 
-    async link({ path, linkPath, packageName }: LinkParams): Promise<PackageManagerOutput> {
+    async link(params: LinkParams): Promise<PackageManagerOutput> {
+        const { global, path, packageName } = params
+
         const config = [
             '--config.lockfile=false',
             '--config.auto-install-peers=true',
         ]
 
+        const linkArgs = global
+            ? ['--global', packageName]
+            : [params.linkPath]
 
-        const result = await runCommand(path, 'link', linkPath, ...config)
+        const result = await runCommand(path, 'link', ...linkArgs, ...config)
 
         const nodeModules = fsPath.join(path, 'node_modules', packageName)
         await replaceRelativeSystemLinkWithAbsolute(nodeModules)
@@ -122,8 +127,18 @@ type ExecParams = {
     command: ExecCommand
 }
 
-type LinkParams = {
+type BaseLinkParams<T extends boolean> = {
+    global: T
     path: string
-    linkPath: string
     packageName: string
 }
+
+type LocalLinkParams = BaseLinkParams<false> & {
+    linkPath: string
+}
+
+type GlobalLinkParams = BaseLinkParams<true>
+
+type LinkParams =
+    | LocalLinkParams
+    | GlobalLinkParams
