@@ -60,3 +60,5 @@ packages/backend/.env
 # scratch pad
 scratch.md
 
+# environment variables
+.env
