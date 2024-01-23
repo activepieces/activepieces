@@ -1,9 +1,9 @@
 import {
-  DynamicPropsValue,
+  DynamicPropsValue, PiecePropValueSchema,
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
-import { APITableCommon } from '../common';
+import { APITableCommon, createNewFields } from '../common';
 import { APITableAuth } from '../../index';
 import {
   HttpRequest,
@@ -42,6 +42,9 @@ export const apiTableUpdateRecord = createAction({
       }
     }
 
+    const newFields: Record<string, unknown> =
+      await createNewFields(auth as PiecePropValueSchema<typeof APITableAuth>, datasheet, fields);
+
     const request: HttpRequest = {
       method: HttpMethod.PATCH,
       url: `${apiTableUrl.replace(
@@ -57,7 +60,7 @@ export const apiTableUpdateRecord = createAction({
           {
             recordId: recordId,
             fields: {
-              ...fields,
+              ...newFields,
             },
           },
         ],

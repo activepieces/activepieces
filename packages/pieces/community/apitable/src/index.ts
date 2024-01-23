@@ -42,7 +42,7 @@ export const apitable = createPiece({
   description: `Interactive spreadsheets with collaboration`,
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/apitable.png',
-  authors: ['abdallah-alwarawreh'],
+  authors: ['abdallah-alwarawreh', 'kishanprmr'],
   actions: [apiTableCreateRecord, apiTableUpdateRecord, apiTableFindRecord],
   triggers: [ApiTableNewRecord],
 });

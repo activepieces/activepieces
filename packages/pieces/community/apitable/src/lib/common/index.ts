@@ -1,9 +1,10 @@
-import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
+import { DynamicPropsValue, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 import {
   HttpRequest,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
+import { APITableAuth } from '../../';
 
 export const APITableCommon = {
   datasheet: Property.ShortText({
@@ -102,3 +103,65 @@ export const APITableCommon = {
     },
   }),
 };
+
+export async function createNewFields(
+  auth: PiecePropValueSchema<typeof APITableAuth>,
+  datasheet: string,
+  fields: Record<string, unknown>
+) {
+  if (!auth) return fields;
+  if (!datasheet) return fields;
+
+  const newFields: Record<string, unknown> = {};
+
+  const request: HttpRequest = {
+    method: HttpMethod.GET,
+    url: `${auth['apiTableUrl'].replace(
+      /\/$/,
+      ''
+    )}/fusion/v1/datasheets/${datasheet}/fields`,
+    headers: {
+      Authorization: 'Bearer ' + auth['token'],
+    },
+  };
+
+  const res = await httpClient.sendRequest<{
+    data: {
+      fields: {
+        id: string;
+        name: string;
+        type: string;
+        desc: string;
+        property?: {
+          defaultValue?: string;
+          options?: {
+            name: string;
+          }[];
+        };
+      }[];
+    };
+  }>(request);
+
+  res.body.data.fields.forEach((field) => {
+    if (![
+      'MagicLink',
+      'MagicLookUp',
+      'Formula',
+      'AutoNumber',
+      'CreatedTime',
+      'LastModifiedTime',
+      'CreatedBy',
+      'LastModifiedBy',
+      'Attachment',
+      'Member',
+    ].includes(field.type) && (field.name in fields)) {
+      const key = field.name;
+      if (field.type === 'Number') {
+        newFields[key] = Number(fields[key]);
+      } else {
+        newFields[key] = fields[key];
+      }
+    }
+  });
+  return newFields;
+}
