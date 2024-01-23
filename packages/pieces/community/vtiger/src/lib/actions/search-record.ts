@@ -3,7 +3,7 @@ import {
   createAction,
 } from '@activepieces/pieces-framework';
 import { vtigerAuth } from '../..';
-import { Operation, elementTypeProperty, instanceLogin, prepareHttpRequest } from '../common';
+import { Operation, instanceLogin, prepareHttpRequest } from '../common';
 import { httpClient } from '@activepieces/pieces-common';
 
 //Docs: https://code.vtiger.com/vtiger/vtigercrm-manual/-/wikis/Webservice-Docs
@@ -15,7 +15,6 @@ export const searchRecords = createAction({
   displayName: 'Search Records',
   description: 'Search for a record.',
   props: {
-    elementType: elementTypeProperty,
     query: Property.LongText({
       displayName: 'query',
       description: `Enter the query to search for record new record`,
