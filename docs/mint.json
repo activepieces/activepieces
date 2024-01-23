@@ -258,16 +258,16 @@
       ]
     },
     {
-      "group": "Platform",
+      "group": "Admin Console",
       "pages": [
-        "platform/overview",
-        "platform/appearance",
-        "platform/manage-projects",
-        "platform/custom-domain",
-        "platform/manage-templates",
-        "platform/manage-pieces",
-        "platform/manage-oauth2",
-        "platform/customize-emails"
+        "admin-console/overview",
+        "admin-console/appearance",
+        "admin-console/manage-projects",
+        "admin-console/custom-domain",
+        "admin-console/manage-templates",
+        "admin-console/manage-pieces",
+        "admin-console/manage-oauth2",
+        "admin-console/customize-emails"
       ]
     },
     {
