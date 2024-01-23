@@ -4,7 +4,7 @@ import formBody from '@fastify/formbody'
 import qs from 'qs'
 import fastifyMultipart from '@fastify/multipart'
 import fastifySocketIO from 'fastify-socket.io'
-import { Server as SocketIoServer } from 'socket.io'
+import { Server } from 'socket.io'
 import { openapiModule } from './helper/openapi/openapi.module'
 import { flowModule } from './flows/flow.module'
 import { fileModule } from './file/file.module'
@@ -296,7 +296,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
         await flowResponseWatcher.shutdown()
     })
 
-    const io: SocketIoServer = (app as any).io
+    const io: Server = (app as any).io
     io.on('connection', (socket) => {
         socket.on('join', async (room) => {
             await socket.join(room)
