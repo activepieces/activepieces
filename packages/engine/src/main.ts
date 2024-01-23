@@ -14,7 +14,7 @@ import {
     ExecutionOutput,
     ExecuteActionResponse,
     EngineResponse,
-    GenricStepOutput,
+    GenericStepOutput,
     ExecuteStepOperation,
     flowHelper,
     Action,
@@ -66,7 +66,7 @@ async function executeStep(input: ExecuteStepOperation): Promise<ExecuteActionRe
 function getFlowExecutionState(input: ExecuteFlowOperation): FlowExecutorContext {
     switch (input.executionType) {
         case ExecutionType.BEGIN:
-            return FlowExecutorContext.empty().upsertStep(input.flowVersion.trigger.name, GenricStepOutput.create({
+            return FlowExecutorContext.empty().upsertStep(input.flowVersion.trigger.name, GenericStepOutput.create({
                 type: input.flowVersion.trigger.type,
                 status: StepOutputStatus.SUCCEEDED,
                 input: {},

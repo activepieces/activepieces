@@ -2,6 +2,7 @@ import { copyFile } from 'node:fs/promises'
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { logger } from '../../helper/logger'
+import { packageManager } from '../../helper/package-manager'
 
 const engineExecutablePath = system.getOrThrow(SystemProp.ENGINE_EXECUTABLE_PATH)
 
@@ -14,7 +15,20 @@ export const engineInstaller = {
 
         await copyFile(engineExecutablePath, `${path}/main.js`)
         await copyFile(`${engineExecutablePath}.map`, `${path}/main.js.map`)
+        await installDependencies(path)
     },
+}
+
+const installDependencies = async (path: string): Promise<void> => {
+    await packageManager.add({
+        path,
+        dependencies: [
+            {
+                alias: 'isolated-vm',
+                spec: '4.6.0',
+            },
+        ],
+    })
 }
 
 type InstallParams = {

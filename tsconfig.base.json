@@ -28,270 +28,488 @@
       ],
       "@activepieces/engine": ["packages/engine/src/main.ts"],
       "@activepieces/piece-activepieces": [
-        "packages/pieces/activepieces/src/index.ts"
+        "packages/pieces/community/activepieces/src/index.ts"
       ],
-      "@activepieces/piece-airtable": ["packages/pieces/airtable/src/index.ts"],
+      "@activepieces/piece-airtable": [
+        "packages/pieces/community/airtable/src/index.ts"
+      ],
       "@activepieces/piece-amazon-s3": [
-        "packages/pieces/amazon-s3/src/index.ts"
+        "packages/pieces/community/amazon-s3/src/index.ts"
       ],
-      "@activepieces/piece-apitable": ["packages/pieces/apitable/src/index.ts"],
-      "@activepieces/piece-approval": ["packages/pieces/approval/src/index.ts"],
-      "@activepieces/piece-asana": ["packages/pieces/asana/src/index.ts"],
+      "@activepieces/piece-apitable": [
+        "packages/pieces/community/apitable/src/index.ts"
+      ],
+      "@activepieces/piece-approval": [
+        "packages/pieces/community/approval/src/index.ts"
+      ],
+      "@activepieces/piece-asana": [
+        "packages/pieces/community/asana/src/index.ts"
+      ],
       "@activepieces/piece-bannerbear": [
-        "packages/pieces/bannerbear/src/index.ts"
+        "packages/pieces/community/bannerbear/src/index.ts"
       ],
-      "@activepieces/piece-baserow": ["packages/pieces/baserow/src/index.ts"],
-      "@activepieces/piece-beamer": ["packages/pieces/beamer/src/index.ts"],
+      "@activepieces/piece-baserow": [
+        "packages/pieces/community/baserow/src/index.ts"
+      ],
+      "@activepieces/piece-beamer": [
+        "packages/pieces/community/beamer/src/index.ts"
+      ],
       "@activepieces/piece-bettermode": [
-        "packages/pieces/bettermode/src/index.ts"
+        "packages/pieces/community/bettermode/src/index.ts"
       ],
-      "@activepieces/piece-binance": ["packages/pieces/binance/src/index.ts"],
-      "@activepieces/piece-bonjoro": ["packages/pieces/bonjoro/src/index.ts"],
-      "@activepieces/piece-box": ["packages/pieces/box/src/index.ts"],
+      "@activepieces/piece-binance": [
+        "packages/pieces/community/binance/src/index.ts"
+      ],
+      "@activepieces/piece-bonjoro": [
+        "packages/pieces/community/bonjoro/src/index.ts"
+      ],
+      "@activepieces/piece-box": ["packages/pieces/community/box/src/index.ts"],
       "@activepieces/piece-brilliant-directories": [
-        "packages/pieces/brilliant-directories/src/index.ts"
+        "packages/pieces/community/brilliant-directories/src/index.ts"
       ],
-      "@activepieces/piece-bubble": ["packages/pieces/bubble/src/index.ts"],
-      "@activepieces/piece-cal-com": ["packages/pieces/cal-com/src/index.ts"],
-      "@activepieces/piece-calendly": ["packages/pieces/calendly/src/index.ts"],
-      "@activepieces/piece-cartloom": ["packages/pieces/cartloom/src/index.ts"],
-      "@activepieces/piece-certopus": ["packages/pieces/certopus/src/index.ts"],
-      "@activepieces/piece-clearout": ["packages/pieces/clearout/src/index.ts"],
-      "@activepieces/piece-clickup": ["packages/pieces/clickup/src/index.ts"],
-      "@activepieces/piece-clockodo": ["packages/pieces/clockodo/src/index.ts"],
+      "@activepieces/piece-bubble": [
+        "packages/pieces/community/bubble/src/index.ts"
+      ],
+      "@activepieces/piece-cal-com": [
+        "packages/pieces/community/cal-com/src/index.ts"
+      ],
+      "@activepieces/piece-calendly": [
+        "packages/pieces/community/calendly/src/index.ts"
+      ],
+      "@activepieces/piece-cartloom": [
+        "packages/pieces/community/cartloom/src/index.ts"
+      ],
+      "@activepieces/piece-certopus": [
+        "packages/pieces/community/certopus/src/index.ts"
+      ],
+      "@activepieces/piece-clarifai": [
+        "packages/pieces/community/clarifai/src/index.ts"
+      ],
+      "@activepieces/piece-clearout": [
+        "packages/pieces/community/clearout/src/index.ts"
+      ],
+      "@activepieces/piece-clickup": [
+        "packages/pieces/community/clickup/src/index.ts"
+      ],
+      "@activepieces/piece-clockodo": [
+        "packages/pieces/community/clockodo/src/index.ts"
+      ],
       "@activepieces/piece-connections": [
-        "packages/pieces/connections/src/index.ts"
+        "packages/pieces/community/connections/src/index.ts"
       ],
       "@activepieces/piece-constant-contact": [
-        "packages/pieces/constant-contact/src/index.ts"
+        "packages/pieces/community/constant-contact/src/index.ts"
       ],
       "@activepieces/piece-contentful": [
-        "packages/pieces/contentful/src/index.ts"
+        "packages/pieces/community/contentful/src/index.ts"
       ],
       "@activepieces/piece-contiguity": [
-        "packages/pieces/contiguity/src/index.ts"
+        "packages/pieces/community/contiguity/src/index.ts"
       ],
       "@activepieces/piece-convertkit": [
-        "packages/pieces/convertkit/src/index.ts"
+        "packages/pieces/community/convertkit/src/index.ts"
       ],
-      "@activepieces/piece-csv": ["packages/pieces/csv/src/index.ts"],
+      "@activepieces/piece-csv": ["packages/pieces/community/csv/src/index.ts"],
       "@activepieces/piece-data-mapper": [
-        "packages/pieces/data-mapper/src/index.ts"
+        "packages/pieces/community/data-mapper/src/index.ts"
       ],
-      "@activepieces/piece-deepl": ["packages/pieces/deepl/src/index.ts"],
-      "@activepieces/piece-delay": ["packages/pieces/delay/src/index.ts"],
-      "@activepieces/piece-discord": ["packages/pieces/discord/src/index.ts"],
+      "@activepieces/piece-date-helper": [
+        "packages/pieces/community/date-helper/src/index.ts"
+      ],
+      "@activepieces/piece-deepl": [
+        "packages/pieces/community/deepl/src/index.ts"
+      ],
+      "@activepieces/piece-delay": [
+        "packages/pieces/community/delay/src/index.ts"
+      ],
+      "@activepieces/piece-discord": [
+        "packages/pieces/community/discord/src/index.ts"
+      ],
       "@activepieces/piece-discourse": [
-        "packages/pieces/discourse/src/index.ts"
+        "packages/pieces/community/discourse/src/index.ts"
       ],
-      "@activepieces/piece-drip": ["packages/pieces/drip/src/index.ts"],
-      "@activepieces/piece-dropbox": ["packages/pieces/dropbox/src/index.ts"],
+      "@activepieces/piece-drip": [
+        "packages/pieces/community/drip/src/index.ts"
+      ],
+      "@activepieces/piece-dropbox": [
+        "packages/pieces/community/dropbox/src/index.ts"
+      ],
       "@activepieces/piece-facebook-leads": [
-        "packages/pieces/facebook-leads/src/index.ts"
+        "packages/pieces/community/facebook-leads/src/index.ts"
       ],
       "@activepieces/piece-facebook-pages": [
-        "packages/pieces/facebook-pages/src/index.ts"
+        "packages/pieces/community/facebook-pages/src/index.ts"
       ],
-      "@activepieces/piece-figma": ["packages/pieces/figma/src/index.ts"],
-      "@activepieces/piece-flowise": ["packages/pieces/flowise/src/index.ts"],
-      "@activepieces/piece-frame": ["packages/pieces/frame/src/index.ts"],
-      "@activepieces/piece-flowlu": ["packages/pieces/flowlu/src/index.ts"],
-      "@activepieces/piece-formbricks": ["packages/pieces/formbricks/src/index.ts"],
+      "@activepieces/piece-figma": [
+        "packages/pieces/community/figma/src/index.ts"
+      ],
+      "@activepieces/piece-file-helper": [
+        "packages/pieces/community/file-helper/src/index.ts"
+      ],
+      "@activepieces/piece-flowise": [
+        "packages/pieces/community/flowise/src/index.ts"
+      ],
+      "@activepieces/piece-flowlu": [
+        "packages/pieces/community/flowlu/src/index.ts"
+      ],
+      "@activepieces/piece-formbricks": [
+        "packages/pieces/community/formbricks/src/index.ts"
+      ],
+      "@activepieces/piece-frame": [
+        "packages/pieces/community/frame/src/index.ts"
+      ],
       "@activepieces/piece-freshdesk": [
-        "packages/pieces/freshdesk/src/index.ts"
+        "packages/pieces/community/freshdesk/src/index.ts"
       ],
       "@activepieces/piece-freshsales": [
-        "packages/pieces/freshsales/src/index.ts"
+        "packages/pieces/community/freshsales/src/index.ts"
+      ],
+      "@activepieces/piece-gcloud-pubsub": [
+        "packages/pieces/community/gcloud-pubsub/src/index.ts"
       ],
       "@activepieces/piece-generatebanners": [
-        "packages/pieces/generatebanners/src/index.ts"
+        "packages/pieces/community/generatebanners/src/index.ts"
       ],
-      "@activepieces/piece-ghostcms": ["packages/pieces/ghostcms/src/index.ts"],
-      "@activepieces/piece-github": ["packages/pieces/github/src/index.ts"],
-      "@activepieces/piece-gitlab": ["packages/pieces/gitlab/src/index.ts"],
-      "@activepieces/piece-gmail": ["packages/pieces/gmail/src/index.ts"],
+      "@activepieces/piece-ghostcms": [
+        "packages/pieces/community/ghostcms/src/index.ts"
+      ],
+      "@activepieces/piece-github": [
+        "packages/pieces/community/github/src/index.ts"
+      ],
+      "@activepieces/piece-gitlab": [
+        "packages/pieces/community/gitlab/src/index.ts"
+      ],
+      "@activepieces/piece-gmail": [
+        "packages/pieces/community/gmail/src/index.ts"
+      ],
       "@activepieces/piece-google-calendar": [
-        "packages/pieces/google-calendar/src/index.ts"
+        "packages/pieces/community/google-calendar/src/index.ts"
       ],
       "@activepieces/piece-google-contacts": [
-        "packages/pieces/google-contacts/src/index.ts"
+        "packages/pieces/community/google-contacts/src/index.ts"
       ],
       "@activepieces/piece-google-docs": [
-        "packages/pieces/google-docs/src/index.ts"
+        "packages/pieces/community/google-docs/src/index.ts"
       ],
       "@activepieces/piece-google-drive": [
-        "packages/pieces/google-drive/src/index.ts"
+        "packages/pieces/community/google-drive/src/index.ts"
       ],
       "@activepieces/piece-google-forms": [
-        "packages/pieces/google-forms/src/index.ts"
+        "packages/pieces/community/google-forms/src/index.ts"
       ],
       "@activepieces/piece-google-gemini": [
-        "packages/pieces/google-gemini/src/index.ts"
+        "packages/pieces/community/google-gemini/src/index.ts"
+      ],
+      "@activepieces/piece-google-my-business": [
+        "packages/pieces/community/google-my-business/src/index.ts"
       ],
       "@activepieces/piece-google-sheets": [
-        "packages/pieces/google-sheets/src/index.ts"
+        "packages/pieces/community/google-sheets/src/index.ts"
       ],
       "@activepieces/piece-google-tasks": [
-        "packages/pieces/google-tasks/src/index.ts"
+        "packages/pieces/community/google-tasks/src/index.ts"
       ],
-      "@activepieces/piece-gotify": ["packages/pieces/gotify/src/index.ts"],
+      "@activepieces/piece-gotify": [
+        "packages/pieces/community/gotify/src/index.ts"
+      ],
       "@activepieces/piece-gravityforms": [
-        "packages/pieces/gravityforms/src/index.ts"
+        "packages/pieces/community/gravityforms/src/index.ts"
       ],
       "@activepieces/piece-hackernews": [
-        "packages/pieces/hackernews/src/index.ts"
+        "packages/pieces/community/hackernews/src/index.ts"
       ],
-      "@activepieces/piece-http": ["packages/pieces/http/src/index.ts"],
-      "@activepieces/piece-hubspot": ["packages/pieces/hubspot/src/index.ts"],
-      "@activepieces/piece-imap": ["packages/pieces/imap/src/index.ts"],
+            "@activepieces/piece-http": [
+        "packages/pieces/community/http/src/index.ts"
+      ],
+      "@activepieces/piece-hubspot": [
+        "packages/pieces/community/hubspot/src/index.ts"
+      ],
+      "@activepieces/piece-image-helper": [
+        "packages/pieces/community/image-helper/src/index.ts"
+      ],
+      "@activepieces/piece-imap": [
+        "packages/pieces/community/imap/src/index.ts"
+      ],
       "@activepieces/piece-instagram-business": [
-        "packages/pieces/instagram-business/src/index.ts"
+        "packages/pieces/community/instagram-business/src/index.ts"
       ],
-      "@activepieces/piece-intercom": ["packages/pieces/intercom/src/index.ts"],
+      "@activepieces/piece-intercom": [
+        "packages/pieces/community/intercom/src/index.ts"
+      ],
       "@activepieces/piece-invoiceninja": [
-        "packages/pieces/invoiceninja/src/index.ts"
+        "packages/pieces/community/invoiceninja/src/index.ts"
       ],
       "@activepieces/piece-jira-cloud": [
-        "packages/pieces/jira-cloud/src/index.ts"
+        "packages/pieces/community/jira-cloud/src/index.ts"
       ],
-      "@activepieces/piece-jotform": ["packages/pieces/jotform/src/index.ts"],
-      "@activepieces/piece-kimai": ["packages/pieces/kimai/src/index.ts"],
+      "@activepieces/piece-jotform": [
+        "packages/pieces/community/jotform/src/index.ts"
+      ],
+      "@activepieces/piece-kimai": [
+        "packages/pieces/community/kimai/src/index.ts"
+      ],
       "@activepieces/piece-kizeo-forms": [
-        "packages/pieces/kizeo-forms/src/index.ts"
+        "packages/pieces/community/kizeo-forms/src/index.ts"
       ],
       "@activepieces/piece-lead-connector": [
-        "packages/pieces/lead-connector/src/index.ts"
+        "packages/pieces/community/lead-connector/src/index.ts"
       ],
-      "@activepieces/piece-line": ["packages/pieces/line/src/index.ts"],
-      "@activepieces/piece-linear": ["packages/pieces/linear/src/index.ts"],
-      "@activepieces/piece-linkedin": ["packages/pieces/linkedin/src/index.ts"],
+      "@activepieces/piece-line": [
+        "packages/pieces/community/line/src/index.ts"
+      ],
+      "@activepieces/piece-linear": [
+        "packages/pieces/community/linear/src/index.ts"
+      ],
+      "@activepieces/piece-linkedin": [
+        "packages/pieces/community/linkedin/src/index.ts"
+      ],
+      "@activepieces/piece-llmrails": [
+        "packages/pieces/community/llmrails/src/index.ts"
+      ],
+      "@activepieces/piece-localai": [
+        "packages/pieces/community/localai/src/index.ts"
+      ],
       "@activepieces/piece-mailchimp": [
-        "packages/pieces/mailchimp/src/index.ts"
+        "packages/pieces/community/mailchimp/src/index.ts"
       ],
       "@activepieces/piece-mailer-lite": [
-        "packages/pieces/mailer-lite/src/index.ts"
+        "packages/pieces/community/mailer-lite/src/index.ts"
       ],
-      "@activepieces/piece-mastodon": ["packages/pieces/mastodon/src/index.ts"],
-      "@activepieces/piece-matomo": ["packages/pieces/matomo/src/index.ts"],
-      "@activepieces/piece-matrix": ["packages/pieces/matrix/src/index.ts"],
+      "@activepieces/piece-mastodon": [
+        "packages/pieces/community/mastodon/src/index.ts"
+      ],
+      "@activepieces/piece-math-helper": [
+        "packages/pieces/community/math-helper/src/index.ts"
+      ],
+      "@activepieces/piece-matomo": [
+        "packages/pieces/community/matomo/src/index.ts"
+      ],
+      "@activepieces/piece-matrix": [
+        "packages/pieces/community/matrix/src/index.ts"
+      ],
       "@activepieces/piece-mattermost": [
-        "packages/pieces/mattermost/src/index.ts"
+        "packages/pieces/community/mattermost/src/index.ts"
       ],
-      "@activepieces/piece-mautic": ["packages/pieces/mautic/src/index.ts"],
+      "@activepieces/piece-mautic": [
+        "packages/pieces/community/mautic/src/index.ts"
+      ],
       "@activepieces/piece-microsoft-excel-365": [
-        "packages/pieces/microsoft-excel-365/src/index.ts"
+        "packages/pieces/community/microsoft-excel-365/src/index.ts"
       ],
       "@activepieces/piece-microsoft-onedrive": [
-        "packages/pieces/microsoft-onedrive/src/index.ts"
+        "packages/pieces/community/microsoft-onedrive/src/index.ts"
       ],
-      "@activepieces/piece-mindee": ["packages/pieces/mindee/src/index.ts"],
-      "@activepieces/piece-mixpanel": ["packages/pieces/mixpanel/src/index.ts"],
-      "@activepieces/piece-monday": ["packages/pieces/monday/src/index.ts"],
+      "@activepieces/piece-mindee": [
+        "packages/pieces/community/mindee/src/index.ts"
+      ],
+      "@activepieces/piece-mixpanel": [
+        "packages/pieces/community/mixpanel/src/index.ts"
+      ],
+      "@activepieces/piece-monday": [
+        "packages/pieces/community/monday/src/index.ts"
+      ],
       "@activepieces/piece-moxie-crm": [
-        "packages/pieces/moxie-crm/src/index.ts"
+        "packages/pieces/community/moxie-crm/src/index.ts"
       ],
-      "@activepieces/piece-mysql": ["packages/pieces/mysql/src/index.ts"],
-      "@activepieces/piece-nifty": ["packages/pieces/nifty/src/index.ts"],
-      "@activepieces/piece-notion": ["packages/pieces/notion/src/index.ts"],
-      "@activepieces/piece-ntfy": ["packages/pieces/ntfy/src/index.ts"],
-      "@activepieces/piece-onfleet": ["packages/pieces/onfleet/src/index.ts"],
+      "@activepieces/piece-mysql": [
+        "packages/pieces/community/mysql/src/index.ts"
+      ],
+      "@activepieces/piece-nifty": [
+        "packages/pieces/community/nifty/src/index.ts"
+      ],
+      "@activepieces/piece-notion": [
+        "packages/pieces/community/notion/src/index.ts"
+      ],
+      "@activepieces/piece-ntfy": [
+        "packages/pieces/community/ntfy/src/index.ts"
+      ],
+      "@activepieces/piece-onfleet": [
+        "packages/pieces/community/onfleet/src/index.ts"
+      ],
       "@activepieces/piece-open-router": [
-        "packages/pieces/open-router/src/index.ts"
+        "packages/pieces/community/open-router/src/index.ts"
       ],
-      "@activepieces/piece-openai": ["packages/pieces/openai/src/index.ts"],
-      "@activepieces/piece-pastebin": ["packages/pieces/pastebin/src/index.ts"],
-      "@activepieces/piece-pastefy": ["packages/pieces/pastefy/src/index.ts"],
+      "@activepieces/piece-openai": [
+        "packages/pieces/community/openai/src/index.ts"
+      ],
+      "@activepieces/piece-pastebin": [
+        "packages/pieces/community/pastebin/src/index.ts"
+      ],
+      "@activepieces/piece-pastefy": [
+        "packages/pieces/community/pastefy/src/index.ts"
+      ],
       "@activepieces/piece-pipedrive": [
-        "packages/pieces/pipedrive/src/index.ts"
+        "packages/pieces/community/pipedrive/src/index.ts"
       ],
-      "@activepieces/piece-postgres": ["packages/pieces/postgres/src/index.ts"],
-      "@activepieces/piece-posthog": ["packages/pieces/posthog/src/index.ts"],
-      "@activepieces/piece-pushover": ["packages/pieces/pushover/src/index.ts"],
-      "@activepieces/piece-qdrant": ["packages/pieces/qdrant/src/index.ts"],
+      "@activepieces/piece-postgres": [
+        "packages/pieces/community/postgres/src/index.ts"
+      ],
+      "@activepieces/piece-posthog": [
+        "packages/pieces/community/posthog/src/index.ts"
+      ],
+      "@activepieces/piece-pushover": [
+        "packages/pieces/community/pushover/src/index.ts"
+      ],
+      "@activepieces/piece-qdrant": [
+        "packages/pieces/community/qdrant/src/index.ts"
+      ],
       "@activepieces/piece-read-file": [
         "packages/pieces/read-file/src/index.ts"
       ],
-      "@activepieces/piece-retable": ["packages/pieces/retable/src/index.ts"],
-      "@activepieces/piece-retune": ["packages/pieces/retune/src/index.ts"],
-      "@activepieces/piece-robolly": ["packages/pieces/robolly/src/index.ts"],
-      "@activepieces/piece-rss": ["packages/pieces/rss/src/index.ts"],
+      "@activepieces/piece-resend": [
+        "packages/pieces/community/resend/src/index.ts"
+      ],
+      "@activepieces/piece-retable": [
+        "packages/pieces/community/retable/src/index.ts"
+      ],
+      "@activepieces/piece-retune": [
+        "packages/pieces/community/retune/src/index.ts"
+      ],
+      "@activepieces/piece-robolly": [
+        "packages/pieces/community/robolly/src/index.ts"
+      ],
+      "@activepieces/piece-rss": ["packages/pieces/community/rss/src/index.ts"],
+      "@activepieces/piece-saastic": [
+        "packages/pieces/community/saastic/src/index.ts"
+      ],
       "@activepieces/piece-salesforce": [
-        "packages/pieces/salesforce/src/index.ts"
+        "packages/pieces/community/salesforce/src/index.ts"
       ],
-      "@activepieces/piece-schedule": ["packages/pieces/schedule/src/index.ts"],
-      "@activepieces/piece-sendfox": ["packages/pieces/sendfox/src/index.ts"],
-      "@activepieces/piece-sendgrid": ["packages/pieces/sendgrid/src/index.ts"],
+      "@activepieces/piece-schedule": [
+        "packages/pieces/community/schedule/src/index.ts"
+      ],
+      "@activepieces/piece-sendfox": [
+        "packages/pieces/community/sendfox/src/index.ts"
+      ],
+      "@activepieces/piece-sendgrid": [
+        "packages/pieces/community/sendgrid/src/index.ts"
+      ],
       "@activepieces/piece-sendinblue": [
-        "packages/pieces/sendinblue/src/index.ts"
+        "packages/pieces/community/sendinblue/src/index.ts"
       ],
-      "@activepieces/piece-sendy": ["packages/pieces/sendy/src/index.ts"],
+      "@activepieces/piece-sendy": [
+        "packages/pieces/community/sendy/src/index.ts"
+      ],
       "@activepieces/piece-sessions-us": [
-        "packages/pieces/sessions-us/src/index.ts"
+        "packages/pieces/community/sessions-us/src/index.ts"
       ],
-      "@activepieces/piece-sftp": ["packages/pieces/sftp/src/index.ts"],
-      "@activepieces/piece-shopify": ["packages/pieces/shopify/src/index.ts"],
+      "@activepieces/piece-sftp": [
+        "packages/pieces/community/sftp/src/index.ts"
+      ],
+      "@activepieces/piece-shopify": [
+        "packages/pieces/community/shopify/src/index.ts"
+      ],
       "@activepieces/piece-simplepdf": [
-        "packages/pieces/simplepdf/src/index.ts"
+        "packages/pieces/community/simplepdf/src/index.ts"
       ],
-      "@activepieces/piece-slack": ["packages/pieces/slack/src/index.ts"],
-      "@activepieces/piece-smtp": ["packages/pieces/smtp/src/index.ts"],
-      "@activepieces/piece-soap": ["packages/pieces/soap/src/index.ts"],
-      "@activepieces/piece-spotify": ["packages/pieces/spotify/src/index.ts"],
-      "@activepieces/piece-square": ["packages/pieces/square/src/index.ts"],
+      "@activepieces/piece-slack": [
+        "packages/pieces/community/slack/src/index.ts"
+      ],
+      "@activepieces/piece-smtp": [
+        "packages/pieces/community/smtp/src/index.ts"
+      ],
+      "@activepieces/piece-soap": [
+        "packages/pieces/community/soap/src/index.ts"
+      ],
+      "@activepieces/piece-spotify": [
+        "packages/pieces/community/spotify/src/index.ts"
+      ],
+      "@activepieces/piece-square": [
+        "packages/pieces/community/square/src/index.ts"
+      ],
       "@activepieces/piece-stability-ai": [
-        "packages/pieces/stability-ai/src/index.ts"
+        "packages/pieces/community/stability-ai/src/index.ts"
       ],
-      "@activepieces/piece-store": ["packages/pieces/store/src/index.ts"],
-      "@activepieces/piece-stripe": ["packages/pieces/stripe/src/index.ts"],
-      "@activepieces/piece-supabase": ["packages/pieces/supabase/src/index.ts"],
+      "@activepieces/piece-store": [
+        "packages/pieces/community/store/src/index.ts"
+      ],
+      "@activepieces/piece-stripe": [
+        "packages/pieces/community/stripe/src/index.ts"
+      ],
+      "@activepieces/piece-supabase": [
+        "packages/pieces/community/supabase/src/index.ts"
+      ],
       "@activepieces/piece-surveymonkey": [
-        "packages/pieces/surveymonkey/src/index.ts"
+        "packages/pieces/community/surveymonkey/src/index.ts"
       ],
-      "@activepieces/piece-tags": ["packages/pieces/tags/src/index.ts"],
-      "@activepieces/piece-tally": ["packages/pieces/tally/src/index.ts"],
+      "@activepieces/piece-tags": [
+        "packages/pieces/community/tags/src/index.ts"
+      ],
+      "@activepieces/piece-talkable": [
+        "packages/pieces/community/talkable/src/index.ts"
+      ],
+      "@activepieces/piece-tally": [
+        "packages/pieces/community/tally/src/index.ts"
+      ],
       "@activepieces/piece-telegram-bot": [
-        "packages/pieces/telegram-bot/src/index.ts"
+        "packages/pieces/community/telegram-bot/src/index.ts"
       ],
-      "@activepieces/piece-tidycal": ["packages/pieces/tidycal/src/index.ts"],
-      "@activepieces/piece-todoist": ["packages/pieces/todoist/src/index.ts"],
-      "@activepieces/piece-totalcms": ["packages/pieces/totalcms/src/index.ts"],
-      "@activepieces/piece-trello": ["packages/pieces/trello/src/index.ts"],
-      "@activepieces/piece-twilio": ["packages/pieces/twilio/src/index.ts"],
-      "@activepieces/piece-twitter": ["packages/pieces/twitter/src/index.ts"],
-      "@activepieces/piece-typeform": ["packages/pieces/typeform/src/index.ts"],
-      "@activepieces/piece-vbout": ["packages/pieces/vbout/src/index.ts"],
-      "@activepieces/piece-vtex": ["packages/pieces/vtex/src/index.ts"],
-      "@activepieces/piece-vtiger": ["packages/pieces/vtiger/src/index.ts"],
+      "@activepieces/piece-text-helper": [
+        "packages/pieces/community/text-helper/src/index.ts"
+      ],
+      "@activepieces/piece-tidycal": [
+        "packages/pieces/community/tidycal/src/index.ts"
+      ],
+      "@activepieces/piece-todoist": [
+        "packages/pieces/community/todoist/src/index.ts"
+      ],
+      "@activepieces/piece-totalcms": [
+        "packages/pieces/community/totalcms/src/index.ts"
+      ],
+      "@activepieces/piece-trello": [
+        "packages/pieces/community/trello/src/index.ts"
+      ],
+      "@activepieces/piece-twilio": [
+        "packages/pieces/community/twilio/src/index.ts"
+      ],
+      "@activepieces/piece-twitter": [
+        "packages/pieces/community/twitter/src/index.ts"
+      ],
+      "@activepieces/piece-typeform": [
+        "packages/pieces/community/typeform/src/index.ts"
+      ],
+      "@activepieces/piece-vbout": [
+        "packages/pieces/community/vbout/src/index.ts"
+      ],
+      "@activepieces/piece-vtex": [
+        "packages/pieces/community/vtex/src/index.ts"
+      ],
+      "@activepieces/piece-vtiger": [
+        "packages/pieces/community/vtiger/src/index.ts"
+      ],
+      "@activepieces/piece-webflow": [
+        "packages/pieces/community/webflow/src/index.ts"
+      ],
       "@activepieces/piece-woocommerce": [
-        "packages/pieces/woocommerce/src/index.ts"
+        "packages/pieces/community/woocommerce/src/index.ts"
       ],
       "@activepieces/piece-wordpress": [
-        "packages/pieces/wordpress/src/index.ts"
+        "packages/pieces/community/wordpress/src/index.ts"
       ],
-      "@activepieces/piece-xero": ["packages/pieces/xero/src/index.ts"],
-      "@activepieces/piece-xml": ["packages/pieces/xml/src/index.ts"],
-      "@activepieces/piece-youtube": ["packages/pieces/youtube/src/index.ts"],
-      "@activepieces/piece-zendesk": ["packages/pieces/zendesk/src/index.ts"],
-      "@activepieces/piece-zoho-crm": ["packages/pieces/zoho-crm/src/index.ts"],
+      "@activepieces/piece-xero": [
+        "packages/pieces/community/xero/src/index.ts"
+      ],
+      "@activepieces/piece-xml": ["packages/pieces/community/xml/src/index.ts"],
+      "@activepieces/piece-youtube": [
+        "packages/pieces/community/youtube/src/index.ts"
+      ],
+      "@activepieces/piece-zendesk": [
+        "packages/pieces/community/zendesk/src/index.ts"
+      ],
+      "@activepieces/piece-zoho-crm": [
+        "packages/pieces/community/zoho-crm/src/index.ts"
+      ],
       "@activepieces/piece-zoho-invoice": [
-        "packages/pieces/zoho-invoice/src/index.ts"
+        "packages/pieces/community/zoho-invoice/src/index.ts"
       ],
-      "@activepieces/piece-zoom": ["packages/pieces/zoom/src/index.ts"],
-      "@activepieces/pieces-common": ["packages/pieces/common/src/index.ts"],
+      "@activepieces/piece-zoom": [
+        "packages/pieces/community/zoom/src/index.ts"
+      ],
+      "@activepieces/pieces-common": [
+        "packages/pieces/community/common/src/index.ts"
+      ],
       "@activepieces/pieces-framework": [
-        "packages/pieces/framework/src/index.ts"
-      ],
-      "@activepieces/pieces/date-helper": [
-        "packages/pieces/date-helper/src/index.ts"
-      ],
-      "@activepieces/pieces/google-my-business": [
-        "packages/pieces/google-my-business/src/index.ts"
-      ],
-      "@activepieces/pieces/math-helper": [
-        "packages/pieces/math-helper/src/index.ts"
-      ],
-      "@activepieces/pieces/text-helper": [
-        "packages/pieces/text-helper/src/index.ts"
+        "packages/pieces/community/framework/src/index.ts"
       ],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
       "@activepieces/ui-ee-platform": ["packages/ee/ui-platform/src/index.ts"],

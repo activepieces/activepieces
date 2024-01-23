@@ -27,7 +27,10 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
-import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/ui/common';
+import {
+  PieceMetadataModel,
+  PieceMetadataModelSummary,
+} from '@activepieces/ui/common';
 
 type TriggersMetadata = Record<string, TriggerBase>;
 
@@ -44,7 +47,7 @@ export const CORE_PIECES_ACTIONS_NAMES = [
   '@activepieces/piece-text-helper',
   '@activepieces/piece-date-helper',
   '@activepieces/piece-file-helper',
-  '@activepieces/piece-math-helper'
+  '@activepieces/piece-math-helper',
 ];
 export const corePieceIconUrl = (pieceName: string) =>
   `assets/img/custom/piece/${pieceName.replace(
@@ -101,7 +104,7 @@ export class PieceMetadataService {
     },
   ];
 
-  constructor(private http: HttpClient, private flagsService: FlagService) { }
+  constructor(private http: HttpClient, private flagsService: FlagService) {}
 
   private getCacheKey(pieceName: string, pieceVersion: string): string {
     return `${pieceName}-${pieceVersion}`;

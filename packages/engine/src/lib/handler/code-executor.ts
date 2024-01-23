@@ -1,12 +1,10 @@
-import { ActionType, CodeAction, GenricStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { ActionType, CodeAction, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
 import { EngineConstants } from './context/engine-constants'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
-
-type CodePieceModule = {
-    code(params: unknown): Promise<unknown>
-}
+import { codeSandbox } from '../core/code/code-sandbox'
+import { CodeModule } from '../core/code/code-sandbox-common'
 
 export const codeExecutor: BaseExecutor<CodeAction> = {
     async handle({
@@ -27,12 +25,12 @@ export const codeExecutor: BaseExecutor<CodeAction> = {
 }
 
 const executeAction: ActionHandler<CodeAction> = async ({ action, executionState, constants }) => {
-    const { censoredInput, resolvedInput } = await constants.variableService.resolve({
+    const { censoredInput, resolvedInput } = await constants.variableService.resolve<Record<string, unknown>>({
         unresolvedInput: action.settings.input,
         executionState,
     })
 
-    const stepOutput = GenricStepOutput.create({
+    const stepOutput = GenericStepOutput.create({
         input: censoredInput,
         type: ActionType.CODE,
         status: StepOutputStatus.SUCCEEDED,
@@ -40,8 +38,12 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
 
     try {
         const artifactPath = `${constants.baseCodeDirectory}/${action.name}/index.js`
-        const codePieceModule: CodePieceModule = await import(artifactPath)
-        const output = await codePieceModule.code(resolvedInput)
+        const codeModule: CodeModule = await import(artifactPath)
+
+        const output = await codeSandbox.runCodeModule({
+            codeModule,
+            inputs: resolvedInput,
+        })
 
         return executionState.upsertStep(action.name, stepOutput.setOutput(output)).increaseTask()
     }

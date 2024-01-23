@@ -12,6 +12,7 @@ export default {
       },
     ],
   },
-  moduleFileExtensions: ['ts', 'js', 'html'],
+  transformIgnorePatterns: ["node_modules/(?!string\-replace\-async)"],
+  moduleFileExtensions: ['ts', 'js', 'html', 'node'],
   coverageDirectory: '../../coverage/packages/engine',
 };

@@ -1,0 +1,29 @@
+{
+  "name": "pieces-xml",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/xml/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/xml",
+        "tsConfig": "packages/pieces/community/xml/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/xml/package.json",
+        "main": "packages/pieces/community/xml/src/index.ts",
+        "assets": ["packages/pieces/community/xml/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/community/xml/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}
