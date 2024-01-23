@@ -3,12 +3,11 @@ import { EmbeddingService } from '@activepieces/ui/common';
 import {
   DashboardService,
   FlagService,
-  ProjectSelectors,
   environment,
 } from '@activepieces/ui/common';
 import { Observable, combineLatest, map } from 'rxjs';
 import { ApFlagId, Project } from '@activepieces/shared';
-import { Store } from '@ngrx/store';
+
 import { Router } from '@angular/router';
 
 @Component({
@@ -27,7 +26,6 @@ export class DashboardContainerComponent {
     private flagService: FlagService,
     private embeddedService: EmbeddingService,
     private dashboardService: DashboardService,
-    private store: Store,
     public router: Router
   ) {
     this.showPoweredByAp$ = combineLatest({
@@ -46,9 +44,6 @@ export class DashboardContainerComponent {
       .getState$()
       .pipe(map((state) => !state.hideSideNav));
     this.isInPlatformRoute$ = this.dashboardService.getIsInPlatformRoute();
-    this.currentProject$ = this.store.select(
-      ProjectSelectors.selectCurrentProject
-    );
   }
 
   navigateToAdminConsole() {
