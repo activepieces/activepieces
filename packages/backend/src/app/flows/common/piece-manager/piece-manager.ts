@@ -2,7 +2,7 @@ import { resolve } from 'node:path'
 import { PackageType, PiecePackage, getPackageAliasForPiece, getPackageArchivePathForPiece, isEmpty } from '@activepieces/shared'
 import { system } from '../../../helper/system/system'
 import { SystemProp } from '../../../helper/system/system-prop'
-import { PackageInfo, packageManager } from '../../../helper/package-manager'
+import { PackageInfo } from '../../../helper/package-manager'
 import { enrichErrorContext } from '../../../helper/error-handler'
 
 export const PACKAGE_ARCHIVE_PATH = resolve(system.getOrThrow(SystemProp.PACKAGE_ARCHIVE_PATH))
@@ -14,10 +14,6 @@ export abstract class PieceManager {
             if (isEmpty(pieces)) {
                 return
             }
-
-            await packageManager.init({
-                path: projectPath,
-            })
 
             const uniquePieces = this.removeDuplicatedPieces(pieces)
 

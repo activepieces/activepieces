@@ -11,6 +11,7 @@ import dayjs from 'dayjs'
 import { PiecePackage, SourceCode } from '@activepieces/shared'
 import { codeBuilder } from '../../code-worker/code-builder'
 import { enrichErrorContext } from '../../../helper/error-handler'
+import { packageManager } from '../../../helper/package-manager'
 
 export class CachedSandbox {
     private static readonly CACHE_PATH = system.get(SystemProp.CACHE_PATH) ?? resolve('dist', 'cache')
@@ -49,6 +50,7 @@ export class CachedSandbox {
 
             await this.deletePathIfExists()
             await mkdir(this.path(), { recursive: true })
+
             this._state = CachedSandboxState.INITIALIZED
         })
     }
@@ -70,6 +72,8 @@ export class CachedSandbox {
                 if (alreadyPrepared) {
                     return
                 }
+
+                await packageManager.init({ path: this.path() })
 
                 await pieceManager.install({
                     projectPath: this.path(),

@@ -1,7 +1,7 @@
 import {
     ActivepiecesError,
     ApEnvironment,
-    CodeExecutorSandboxType,
+    CodeSandboxType,
     ErrorCode,
     isNil,
 } from '@activepieces/shared'
@@ -33,7 +33,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [SystemProp.ENGINE_EXECUTABLE_PATH]: 'dist/packages/engine/main.js',
     [SystemProp.ENVIRONMENT]: 'prod',
     [SystemProp.EXECUTION_MODE]: 'UNSANDBOXED',
-    [SystemProp.CODE_EXECUTOR_SANDBOX_TYPE]: CodeExecutorSandboxType.NO_OP,
+    [SystemProp.CODE_SANDBOX_TYPE]: CodeSandboxType.NO_OP,
     [SystemProp.FLOW_WORKER_CONCURRENCY]: '10',
     [SystemProp.LOG_LEVEL]: 'info',
     [SystemProp.LOG_PRETTY]: 'false',
@@ -106,7 +106,7 @@ const getEnvVar = (prop: SystemProp): string | undefined => {
 }
 
 export const validateEnvPropsOnStartup = async (): Promise<void> => {
-    const codeExecutorSandboxType = system.get<CodeExecutorSandboxType>(SystemProp.CODE_EXECUTOR_SANDBOX_TYPE)
+    const codeSandboxType = system.get<CodeSandboxType>(SystemProp.CODE_SANDBOX_TYPE)
     const executionMode = system.get<ExecutionMode>(SystemProp.EXECUTION_MODE)
     const signedUpEnabled =
         system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
@@ -116,7 +116,7 @@ export const validateEnvPropsOnStartup = async (): Promise<void> => {
 
     if (
         executionMode === ExecutionMode.UNSANDBOXED &&
-        codeExecutorSandboxType !== CodeExecutorSandboxType.ISOLATE &&
+        codeSandboxType !== CodeSandboxType.V8_ISOLATE &&
         signedUpEnabled &&
         environment === ApEnvironment.PRODUCTION
     ) {
