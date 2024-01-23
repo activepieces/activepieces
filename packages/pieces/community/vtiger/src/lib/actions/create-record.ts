@@ -38,13 +38,6 @@ export const createRecord = createAction({
         },
       });
 
-      console.debug({
-        operation: 'create',
-        sessionName: instance.sessionId ?? instance.sessionName,
-        elementType: elementType,
-        element: JSON.stringify(record),
-      });
-
       return response.body;
     }
 

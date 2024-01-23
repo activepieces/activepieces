@@ -34,8 +34,7 @@ export const calculateAuthKey = (
 export const instanceLogin = async (
   instance_url: string,
   username: string,
-  password: string,
-  debug = false
+  password: string
 ) => {
   const endpoint = `${instance_url}/webservice.php`;
   const challenge = await httpClient.sendRequest<{
@@ -63,20 +62,6 @@ export const instanceLogin = async (
     },
   });
 
-  if (debug) {
-    console.debug('>>>>>>>>>>>> LOGIN', response.body, {
-      method: HttpMethod.POST,
-      url: `${endpoint}`,
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-      body: {
-        operation: 'login',
-        username,
-        accessKey,
-      },
-    });
-  }
   if (response.body.success) {
     return response.body.result;
   }
@@ -126,7 +111,7 @@ export const prepareHttpRequest = (
   instanceUrl: string,
   sessionName: string,
   operation: Operation,
-  record: Record<string, string>
+  record: object
 ) => {
   const data: Record<string, string> = {
     operation,
@@ -444,6 +429,13 @@ export const recordProperty = (create = true) =>
             required: field.mandatory,
           };
 
+          if ([
+            'modifiedtime', 'createdtime', 
+            'modifiedby', 'created_user_id'
+          ].includes(field.name)) {
+            return
+          }
+
           if (
             ['string', 'text', 'mediumtext', 'phone', 'url', 'email'].includes(
               field.type.name
@@ -495,7 +487,7 @@ export const recordProperty = (create = true) =>
               ...params,
               defaultValue: defaultValue?.[field.name] as number,
             });
-          } else if (['boolean'].includes(field.type.name)) {
+          } else if ('boolean' === field.type.name) {
             fields[field.name] = Property.Checkbox({
               displayName: field.label,
               description: `The fields to fill in the object type ${elementType}`,

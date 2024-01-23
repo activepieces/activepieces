@@ -267,16 +267,6 @@ export const updateRecord = createAction({
         },
       });
 
-      console.debug({
-        operation: 'update',
-        sessionName: instance.sessionId ?? instance.sessionName,
-        elementType: elementType,
-        element: JSON.stringify({
-          id: id,
-          ...record,
-        }),
-      });
-
       return response.body;
     }
 
