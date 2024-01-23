@@ -55,7 +55,7 @@ export class DashboardContainerComponent {
     this.router.navigate(['/platform']);
   }
 
-  navigateToUserDashboard() {
+  navigateToProjectDashboard() {
     this.router.navigate(['/']);
   }
 }
