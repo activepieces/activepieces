@@ -2,27 +2,26 @@ import {
   ChangeDetectionStrategy,
   Component,
   EventEmitter,
-  Input,
   Output,
 } from '@angular/core';
 import { Platform } from '@activepieces/ee-shared';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, catchError, of, tap } from 'rxjs';
-import { AddAllowedEmailDomainDialogComponent } from '../dialogs/add-allowed-email-domain-dialog/add-allowed-email-domain-dialog.component';
+import { AddAllowedEmailDomainDialogComponent } from '../../dialogs/add-allowed-email-domain-dialog/add-allowed-email-domain-dialog.component';
 import {
   GenericSnackbarTemplateComponent,
   PlatformService,
   unexpectedErrorMessage,
 } from '@activepieces/ui/common';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { PlatformSettingsBaseComponent } from '../../platform-settings-base.component';
 
 @Component({
   selector: 'app-allowed-email-domains-list',
   templateUrl: './allowed-email-domains-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AllowedEmailDomainsListComponent {
-  @Input({ required: true }) platform!: Platform;
+export class AllowedEmailDomainsListComponent extends PlatformSettingsBaseComponent {
   @Output() platformUpdated = new EventEmitter<Platform>();
   domainsBeingRemoved: Record<string, boolean> = {};
   addDomain$?: Observable<string>;
@@ -31,7 +30,9 @@ export class AllowedEmailDomainsListComponent {
     private matDialog: MatDialog,
     private platformService: PlatformService,
     private matSnackbar: MatSnackBar
-  ) {}
+  ) {
+    super();
+  }
   addDomain() {
     this.addDomain$ = this.matDialog
       .open(AddAllowedEmailDomainDialogComponent, {

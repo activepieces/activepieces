@@ -158,6 +158,13 @@
       "@activepieces/piece-frame": [
         "packages/pieces/community/frame/src/index.ts"
       ],
+      "@activepieces/piece-figma": ["packages/pieces/figma/src/index.ts"],
+      "@activepieces/piece-flowise": ["packages/pieces/flowise/src/index.ts"],
+      "@activepieces/piece-flowlu": ["packages/pieces/flowlu/src/index.ts"],
+      "@activepieces/piece-formbricks": [
+        "packages/pieces/formbricks/src/index.ts"
+      ],
+      "@activepieces/piece-frame": ["packages/pieces/frame/src/index.ts"],
       "@activepieces/piece-freshdesk": [
         "packages/pieces/community/freshdesk/src/index.ts"
       ],

@@ -1,4 +1,4 @@
-import {  ApFlagId, isNil } from '@activepieces/shared'
+import { ApFlagId, isNil } from '@activepieces/shared'
 import { FlagsServiceHooks } from '../../flags/flags.hooks'
 import { apperanceHelper } from '../helper/apperance-helper'
 import { platformService } from '../platform/platform.service'
@@ -21,7 +21,8 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
         }
         modifiedFlags[ApFlagId.EMAIL_AUTH_ENABLED] = platform.emailAuthEnabled
         const isCustomerPlatform = !flagService.isCloudPlatform(platformId)
-        if (isCustomerPlatform ) {
+        if (isCustomerPlatform) {
+            modifiedFlags[ApFlagId.SHOW_PLATFORM_DEMO] = false
             modifiedFlags[ApFlagId.THEME] = await apperanceHelper.getTheme({ platformId })
             modifiedFlags[ApFlagId.SHOW_COMMUNITY] = false
             modifiedFlags[ApFlagId.SHOW_DOCS] = false

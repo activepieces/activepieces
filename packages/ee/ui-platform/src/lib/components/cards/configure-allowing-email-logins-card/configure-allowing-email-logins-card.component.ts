@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   EventEmitter,
-  Input,
   OnInit,
   Output,
 } from '@angular/core';
@@ -13,16 +12,19 @@ import { PlatformService } from '@activepieces/ui/common';
 import {
   AtLeastOneLoginMethodMsg,
   doesPlatformHaveAtLeastOneLoginMethodEnabled,
-} from '../util';
+} from '../../util';
 import { MatSlideToggleChange } from '@angular/material/slide-toggle';
+import { PlatformSettingsBaseComponent } from '../../platform-settings-base.component';
 
 @Component({
   selector: 'app-configure-allowing-email-logins-card',
   templateUrl: './configure-allowing-email-logins-card.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ConfigureAllowingEmailLoginsCardComponent implements OnInit {
-  @Input({ required: true }) platform!: Platform;
+export class ConfigureAllowingEmailLoginsCardComponent
+  extends PlatformSettingsBaseComponent
+  implements OnInit
+{
   @Output() platformUpdated = new EventEmitter<Platform>();
 
   toggleEmailAuthnEnabled$?: Observable<void>;
@@ -31,9 +33,11 @@ export class ConfigureAllowingEmailLoginsCardComponent implements OnInit {
   constructor(
     private matSnackbar: MatSnackBar,
     private platformService: PlatformService
-  ) {}
+  ) {
+    super();
+  }
   ngOnInit() {
-    this.toggleChecked = this.platform.emailAuthEnabled;
+    this.toggleChecked = !!this.platform?.emailAuthEnabled;
   }
 
   toggleClicked($event: MatSlideToggleChange) {
