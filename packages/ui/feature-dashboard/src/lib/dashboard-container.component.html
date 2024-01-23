@@ -11,19 +11,19 @@
                     {{(currentProject$ | async)?.displayName}}
                 </div>
                 <div class="ap-flex-grow"></div>
-                <ap-button *ngIf="!router.url.startsWith('/platform')" btnColor="white" btnStyle="basic"
-                    btnSize="medium" (buttonClicked)="navigateToPlatformDashboard()" i18n>
+                <ap-button *ngIf="!router.url.startsWith('/platform')" btnColor="white" btnStyle="stroked"
+                    btnSize="medium" (buttonClicked)="navigateToAdminConsole()" i18n>
                     <div class="ap-flex ap-gap-2 ap-items-center">
                         <svg-icon src="assets/img/custom/arrow-right.svg" class="ap-w-[15px] ap-h-[15px] ap-fill-body"
-                            [applyClass]="true"></svg-icon> Platform Dashboard
+                            [applyClass]="true"></svg-icon> <b>Admin Console</b>
                     </div>
 
                 </ap-button>
-                <ap-button *ngIf="router.url.startsWith('/platform')" btnColor="white" btnStyle="basic" btnSize="medium"
-                    (buttonClicked)="navigateToProjectDashboard()" i18n>
+                <ap-button *ngIf="router.url.startsWith('/platform')" btnColor="white" btnStyle="stroked"
+                    btnSize="medium" (buttonClicked)="navigateToProjectDashboard()" i18n>
                     <div class="ap-flex ap-gap-2 ap-items-center">
                         <svg-icon src="assets/img/custom/arrow-right.svg" class="ap-w-[15px] ap-h-[15px] ap-fill-body"
-                            [applyClass]="true"></svg-icon> Project Dashboard
+                            [applyClass]="true"></svg-icon> <b>Dashboard</b>
                     </div>
 
                 </ap-button>

@@ -51,7 +51,7 @@ export class DashboardContainerComponent {
     );
   }
 
-  navigateToPlatformDashboard() {
+  navigateToAdminConsole() {
     this.router.navigate(['/platform']);
   }
 
