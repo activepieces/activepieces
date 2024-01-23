@@ -3,7 +3,7 @@ import { GetPieceArchivePackageParams, PieceServiceHooks } from '../../../pieces
 import { fileService } from '../../../file/file.service'
 
 export const platformPieceServiceHooks: PieceServiceHooks = {
-    async getPieceArchivePackage(params) {
+    async savePieceArchivePackage(params) {
         const archiveId = await saveArchive(params)
         const { archive: _, ...piecePackage } = params
 

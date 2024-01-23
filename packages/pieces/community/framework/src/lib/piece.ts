@@ -6,7 +6,7 @@ import {
   PieceCategory,
 } from '@activepieces/shared';
 import { PieceBase, PieceMetadata } from './piece-metadata';
-import { PieceAuthProperty } from './property';
+import { PieceAuthProperty } from './property/authentication';
 
 export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
   implements Omit<PieceBase, 'version' | 'name'>

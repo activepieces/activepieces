@@ -47,3 +47,4 @@ export type PieceMetadataService = {
     stats(): Promise<AllPiecesStats>
     getExactPieceVersion(params: GetExactPieceVersionParams): Promise<string>
 }
+
