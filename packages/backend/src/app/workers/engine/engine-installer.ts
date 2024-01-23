@@ -20,14 +20,10 @@ export const engineInstaller = {
 }
 
 const installDependencies = async (path: string): Promise<void> => {
-    await packageManager.add({
+    await packageManager.link({
         path,
-        dependencies: [
-            {
-                alias: 'isolated-vm',
-                spec: '4.6.0',
-            },
-        ],
+        global: true,
+        packageName: 'isolated-vm',
     })
 }
 
