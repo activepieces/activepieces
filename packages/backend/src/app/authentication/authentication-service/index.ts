@@ -109,7 +109,7 @@ export const authenticationService = {
 const assertSignUpIsEnabled = async (): Promise<void> => {
     const userCreated = await flagService.getOne(ApFlagId.USER_CREATED)
 
-    if (userCreated && !SIGN_UP_ENABLED) {
+    if (userCreated?.value && !SIGN_UP_ENABLED) {
         throw new ActivepiecesError({
             code: ErrorCode.SIGN_UP_DISABLED,
             params: {},

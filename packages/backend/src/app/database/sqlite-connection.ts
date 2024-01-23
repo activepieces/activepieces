@@ -30,6 +30,7 @@ import { RemoveFlowInstanceSqlite1702412280963 } from './migration/sqlite/170241
 import { UpdateStatusInUserSqlite1703713027818 } from './migration/sqlite/1703713027818-UpdateStatusInUserSqlite'
 import { RenameAppNameToPieceNameSqlite1703713475755 } from './migration/sqlite/1703713475755-RenameAppNameToPieceNameSqlite'
 import { AddVerifiedAndChangeStatusSqlite1703768553820 } from './migration/sqlite/1703768553820-AddVerifiedAndChangeStatusSqlite'
+import { AddPlatformSqlite1705967169210 } from './migration/sqlite/1705967169210-AddPlatformSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(SystemProp.CONFIG_PATH)
@@ -76,6 +77,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         UpdateStatusInUserSqlite1703713027818,
         RenameAppNameToPieceNameSqlite1703713475755,
         AddVerifiedAndChangeStatusSqlite1703768553820,
+        AddPlatformSqlite1705967169210,
     ]
     const edition = getEdition()
     if (edition !== ApEdition.COMMUNITY) {
