@@ -40,6 +40,7 @@ export class CreateProjectDialogComponent {
     });
   }
   createProject() {
+    this.formGroup.markAllAsTouched();
     //Create project logic
     if (this.formGroup.valid && !this.loading) {
       this.createProject$ = this.platformProjectService
