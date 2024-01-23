@@ -1,0 +1,93 @@
+import { PiecePropertyMap } from "./property";
+import { TriggerStrategy, WebhookHandshakeConfiguration } from "./trigger/trigger";
+import { ErrorHandlingOptionsParam } from "./action/action";
+import { PieceAuthProperty } from "./property/authentication";
+import { Type } from "@sinclair/typebox";
+import { ProjectId } from "@activepieces/shared";
+
+export const PieceBase = Type.Object({
+  id: Type.Optional(Type.String()),
+  name: Type.String(),
+  displayName: Type.String(),
+  logoUrl: Type.String(),
+  description: Type.String(),
+  projectId: Type.Optional(Type.String()),
+  platformId: Type.Optional(Type.String()),
+  directoryPath: Type.Optional(Type.String()),
+  auth: Type.Optional(PieceAuthProperty),
+  version: Type.String(),
+  minimumSupportedRelease: Type.Optional(Type.String()),
+  maximumSupportedRelease: Type.Optional(Type.String()),
+})
+
+export type PieceBase = {
+  id?: string;
+  name: string;
+  displayName: string;
+  logoUrl: string;
+  description: string;
+  projectId?: ProjectId;
+  platformId?: string;
+  directoryPath?: string;
+  auth?: PieceAuthProperty;
+  version: string;
+  minimumSupportedRelease?: string;
+  maximumSupportedRelease?: string;
+}
+
+export const ActionBase = Type.Object({
+  name: Type.String(),
+  displayName: Type.String(),
+  description: Type.String(),
+  props: PiecePropertyMap,
+  requireAuth: Type.Boolean(),
+  errorHandlingOptions: Type.Optional(ErrorHandlingOptionsParam),
+})
+
+export type ActionBase = {
+  name: string,
+  displayName: string,
+  description: string,
+  props: PiecePropertyMap,
+  requireAuth: boolean;
+  errorHandlingOptions?: ErrorHandlingOptionsParam;
+}
+
+export const TriggerBase = Type.Composite([
+  Type.Omit(ActionBase, ["requireAuth"]),
+  Type.Object({
+    type: Type.Enum(TriggerStrategy),
+    sampleData: Type.Unknown(),
+    handshakeConfiguration: Type.Optional(WebhookHandshakeConfiguration),
+  })
+])
+export type TriggerBase = Omit<ActionBase, "requireAuth"> & {
+  type: TriggerStrategy;
+  sampleData: unknown,
+  handshakeConfiguration?: WebhookHandshakeConfiguration;
+};
+
+export const PieceMetadata = Type.Composite([
+  PieceBase,
+  Type.Object({
+    actions: Type.Record(Type.String(), ActionBase),
+    triggers: Type.Record(Type.String(), TriggerBase),
+  })
+])
+
+export type PieceMetadata = PieceBase & {
+  actions: Record<string, ActionBase>;
+  triggers: Record<string, TriggerBase>;
+};
+
+export const PieceMetadataSummary = Type.Composite([
+  Type.Omit(PieceMetadata, ["actions", "triggers"]),
+  Type.Object({
+    actions: Type.Number(),
+    triggers: Type.Number(),
+  })
+])
+export type PieceMetadataSummary = Omit<PieceMetadata, "actions" | "triggers"> & {
+  actions: number;
+  triggers: number;
+}

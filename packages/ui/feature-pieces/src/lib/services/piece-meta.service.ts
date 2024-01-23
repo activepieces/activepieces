@@ -5,6 +5,7 @@ import {
   AddPieceRequestBody,
   PieceOptionRequest,
   TriggerType,
+  PieceScope,
 } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
 import {
@@ -18,7 +19,7 @@ import {
   take,
 } from 'rxjs';
 import semver from 'semver';
-import { FlagService, environment } from '@activepieces/ui/common';
+import { AuthenticationService, FlagService, environment } from '@activepieces/ui/common';
 import { FlowItemDetails } from '@activepieces/ui/common';
 import {
   DropdownState,
@@ -27,7 +28,10 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
-import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/ui/common';
+import {
+  PieceMetadataModel,
+  PieceMetadataModelSummary,
+} from '@activepieces/ui/common';
 
 type TriggersMetadata = Record<string, TriggerBase>;
 
@@ -44,7 +48,7 @@ export const CORE_PIECES_ACTIONS_NAMES = [
   '@activepieces/piece-text-helper',
   '@activepieces/piece-date-helper',
   '@activepieces/piece-file-helper',
-  '@activepieces/piece-math-helper'
+  '@activepieces/piece-math-helper',
 ];
 export const corePieceIconUrl = (pieceName: string) =>
   `assets/img/custom/piece/${pieceName.replace(
@@ -101,7 +105,7 @@ export class PieceMetadataService {
     },
   ];
 
-  constructor(private http: HttpClient, private flagsService: FlagService) { }
+  constructor(private http: HttpClient, private flagsService: FlagService, private authenticationService: AuthenticationService) { }
 
   private getCacheKey(pieceName: string, pieceVersion: string): string {
     return `${pieceName}-${pieceVersion}`;
@@ -149,13 +153,14 @@ export class PieceMetadataService {
     formData.set('packageType', params.packageType);
     formData.set('pieceName', params.pieceName);
     formData.set('pieceVersion', params.pieceVersion);
-
+    formData.set('scope', params.scope)
+    if (params.scope === PieceScope.PROJECT) {
+      formData.set('projectId', this.authenticationService.getProjectId())
+    }
     if (params.pieceArchive) {
       formData.set('pieceArchive', params.pieceArchive);
     }
-    if (params.platformId) {
-      formData.set('platformId', params.platformId);
-    }
+
     return this.http.post<PieceMetadataModel>(
       `${environment.apiUrl}/pieces`,
       formData

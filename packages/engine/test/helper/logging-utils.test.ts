@@ -1,6 +1,6 @@
 import {
     ActionType,
-    GenricStepOutput,
+    GenericStepOutput,
     StepOutputStatus,
 } from '@activepieces/shared'
 import { loggingUtils } from '../../src/lib/helper/logging-utils'
@@ -8,7 +8,7 @@ import { loggingUtils } from '../../src/lib/helper/logging-utils'
 describe('Logging Utils', () => {
     it('Should not truncate whole step if its log size exceeds limit', async () => {
         const steps = {
-            mockStep: GenricStepOutput.create({
+            mockStep: GenericStepOutput.create({
                 type: ActionType.CODE,
                 status: StepOutputStatus.SUCCEEDED,
                 input: {

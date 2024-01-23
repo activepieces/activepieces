@@ -1,4 +1,4 @@
-import { AUTHENTICATION_PROPERTY_NAME, GenricStepOutput, ActionType, ExecutionOutputStatus, PieceAction, StepOutputStatus, assertNotNullOrUndefined } from '@activepieces/shared'
+import { AUTHENTICATION_PROPERTY_NAME, GenericStepOutput, ActionType, ExecutionOutputStatus, PieceAction, StepOutputStatus, assertNotNullOrUndefined } from '@activepieces/shared'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
 import { variableService } from '../services/variable-service'
@@ -43,7 +43,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         executionState,
     })
 
-    const stepOutput = GenricStepOutput.create({
+    const stepOutput = GenericStepOutput.create({
         input: censoredInput,
         type: ActionType.PIECE,
         status: StepOutputStatus.SUCCEEDED,
@@ -137,7 +137,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         return executionState
             .upsertStep(action.name, stepOutput.setStatus(StepOutputStatus.FAILED).setErrorMessage(errorMessage))
             .setVerdict(ExecutionVerdict.FAILED, undefined)
-    
+
     }
 }
 

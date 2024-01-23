@@ -55,6 +55,9 @@
     },
     "@nx/angular:component": {
       "style": "scss"
+    },
+    "@nx/workspace:move": {
+      "projectNameAndRootFormat": "as-provided"
     }
   },
   "nxCloudAccessToken": "Y2Y3YzhhNjYtZWI4OC00M2Y0LWIwY2ItMWJhNTBjYzA3ZDA0fHJlYWQtb25seQ=="

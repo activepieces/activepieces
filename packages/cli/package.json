@@ -1,0 +1,12 @@
+{
+    "name": "@activepieces/cli",
+    "version": "1.0.0",
+    "bin": {
+        "pieces-cli":"../../dist/cli/src/index.js"
+    },
+    "scripts": {
+        "start": "ts-node src/index.ts",
+        "build": "tsc"
+      }
+  }
+  

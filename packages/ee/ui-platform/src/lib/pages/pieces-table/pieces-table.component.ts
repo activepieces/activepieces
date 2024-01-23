@@ -35,6 +35,7 @@ import {
 } from '@activepieces/ui/feature-pieces';
 import { PLATFORM_RESOLVER_KEY } from '../../platform.resolver';
 import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
+import { PieceScope } from '@activepieces/shared';
 
 @Component({
   selector: 'app-pieces-table',
@@ -167,7 +168,7 @@ export class PiecesTableComponent implements OnInit {
     this.addPackageDialogClosed$ = this.matDialog
       .open(InstallCommunityPieceModalComponent, {
         data: {
-          platformId: this.platform$.value.id,
+          scope: PieceScope.PLATFORM,
         },
       })
       .afterClosed()

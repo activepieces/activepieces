@@ -20,7 +20,7 @@
           <mat-error *ngIf="secretControlForm.invalid" style="margin-top: 0.5rem; padding: 0;">
             {{errorMessage}}</mat-error>
         </mat-form-field>
-        <ng-container *ngIf="data.credential.appName === 'salesforce'">
+        <ng-container *ngIf="data.credential.appName === 'salesforce' || data.credential.appName === 'kindful'">
           <mat-checkbox [formControl]="propsForm">Is Development Environment?</mat-checkbox>
           <mat-error *ngIf="propsForm.invalid">
             Environment is required
