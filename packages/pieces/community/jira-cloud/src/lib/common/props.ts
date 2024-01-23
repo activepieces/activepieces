@@ -1,11 +1,7 @@
-import {
-  HttpMethod,
-  httpClient,
-  getAccessTokenOrThrow,
-} from '@activepieces/pieces-common';
-import { JiraAuth } from '../../auth';
+
 import { getIssueTypes, getProjects, getUsers } from '.';
 import { Property } from '@activepieces/pieces-framework';
+import { JiraAuth } from '../../auth';
 
 export function getProjectIdDropdown(data?: DropdownParams) {
   return Property.Dropdown({

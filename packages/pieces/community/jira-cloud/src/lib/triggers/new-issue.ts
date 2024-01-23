@@ -1,7 +1,6 @@
 import {
   PiecePropValueSchema,
   Property,
-  StaticPropsValue,
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';

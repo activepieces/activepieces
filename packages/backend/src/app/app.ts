@@ -79,6 +79,7 @@ import { gitRepoModule } from './ee/git-repos/git-repo.module'
 import { securityHandlerChain } from './core/security/security-handler-chain'
 import { communityFlowTemplateModule } from './flow-templates/community-flow-template.module'
 import { copilotModule } from './copilot/copilot.module'
+import { PieceMetadata } from '@activepieces/pieces-framework'
 import { flowRunService } from './flows/flow-run/flow-run-service'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
@@ -113,6 +114,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
                     'project': ProjectWithUsageAndPlanResponse,
                     'flow': Flow,
                     'app-connection': AppConnectionWithoutSensitiveData,
+                    'piece': PieceMetadata,
                 },
             },
             info: {

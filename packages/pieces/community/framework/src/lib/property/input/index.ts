@@ -1,63 +1,42 @@
-import {
-  ArrayProperty,
-  CheckboxProperty,
-  DateTimeProperty,
-  FileProperty,
-  JsonProperty,
+import { Type } from "@sinclair/typebox";
+import { LongTextProperty, ShortTextProperty } from "./text-property";
+import { NumberProperty } from "./number-property";
+import { ArrayProperty } from "./array-property";
+import { ObjectProperty } from "./object-property";
+import { JsonProperty } from "./json-property";
+import { DateTimeProperty } from "./date-time-property";
+import { FileProperty } from "./file-property";
+import { PropertyType } from "./property-type";
+import { MarkDownProperty } from "./markdown-property";
+import { CheckboxProperty } from "./checkbox-property";
+import { StaticDropdownProperty, StaticMultiSelectDropdownProperty } from "./dropdown/static-dropdown";
+import { Processors } from "../../processors/processors";
+import { Validators } from "../../validators/validators";
+import { DynamicProperties } from "./dynamic-prop";
+import { DropdownProperty, MultiSelectDropdownProperty } from "./dropdown/dropdown-prop";
+
+export const InputProperty = Type.Union([
+  ShortTextProperty,
   LongTextProperty,
   MarkDownProperty,
-  MarkDownPropertySchema,
-  NumberProperty,
-  ObjectProperty,
-  SecretTextProperty,
-  ShortTextProperty,
-} from './base-prop';
-import { BasicAuthProperty } from './basic-auth-prop';
-import { CustomAuthProperty, CustomAuthProps } from './custom-auth-prop';
-import {
-  DropdownProperty,
-  MultiSelectDropdownProperty,
+  CheckboxProperty,
   StaticDropdownProperty,
   StaticMultiSelectDropdownProperty,
-} from './dropdown-prop';
-import { DynamicProperties } from './dynamic-prop';
-import { OAuth2Property, OAuth2Props } from './oauth2-prop';
-import { Processors } from '../processors/processors';
-import { Validators } from '../validators/validators';
+  DropdownProperty,
+  MultiSelectDropdownProperty,
+  DynamicProperties,
+  NumberProperty,
+  ArrayProperty,
+  ObjectProperty,
+  JsonProperty,
+  DateTimeProperty,
+  FileProperty,
+])
 
-export enum PropertyType {
-  SHORT_TEXT = 'SHORT_TEXT',
-  LONG_TEXT = 'LONG_TEXT',
-  MARKDOWN = 'MARKDOWN',
-  DROPDOWN = 'DROPDOWN',
-  STATIC_DROPDOWN = 'STATIC_DROPDOWN',
-  NUMBER = 'NUMBER',
-  CHECKBOX = 'CHECKBOX',
-  OAUTH2 = 'OAUTH2',
-  SECRET_TEXT = 'SECRET_TEXT',
-  ARRAY = 'ARRAY',
-  OBJECT = 'OBJECT',
-  BASIC_AUTH = 'BASIC_AUTH',
-  JSON = 'JSON',
-  MULTI_SELECT_DROPDOWN = 'MULTI_SELECT_DROPDOWN',
-  STATIC_MULTI_SELECT_DROPDOWN = 'STATIC_MULTI_SELECT_DROPDOWN',
-  DYNAMIC = 'DYNAMIC',
-  CUSTOM_AUTH = 'CUSTOM_AUTH',
-  DATE_TIME = 'DATE_TIME',
-  FILE = 'FILE',
-}
-
-export type PieceAuthProperty =
-  | BasicAuthProperty<boolean>
-  | CustomAuthProperty<boolean, any>
-  | OAuth2Property<boolean, OAuth2Props>
-  | SecretTextProperty<boolean>;
-
-export type NonAuthPieceProperty =
-  | ShortTextProperty<boolean>
+export type InputProperty =
+  ShortTextProperty<boolean>
   | LongTextProperty<boolean>
   | MarkDownProperty
-  | OAuth2Property<boolean, OAuth2Props>
   | CheckboxProperty<boolean>
   | DropdownProperty<any, boolean>
   | StaticDropdownProperty<any, boolean>
@@ -71,26 +50,11 @@ export type NonAuthPieceProperty =
   | DateTimeProperty<boolean>
   | FileProperty<boolean>;
 
-export type PieceProperty = NonAuthPieceProperty | PieceAuthProperty;
+type Properties<T> = Omit<
+  T,
+  'valueSchema' | 'type' | 'defaultValidators' | 'defaultProcessors'
+>;
 
-export interface PiecePropertyMap {
-  [name: string]: PieceProperty;
-}
-
-export interface NonAuthPiecePropertyMap {
-  [name: string]: NonAuthPieceProperty;
-}
-
-export type PiecePropValueSchema<T extends PieceProperty | PieceAuthProperty> =
-  T extends undefined
-    ? undefined
-    : T extends { required: true }
-    ? T['valueSchema']
-    : T['valueSchema'] | undefined;
-
-export type StaticPropsValue<T extends PiecePropertyMap> = {
-  [P in keyof T]: PiecePropValueSchema<T[P]>;
-};
 
 export const Property = {
   ShortText<R extends boolean>(
@@ -126,10 +90,10 @@ export const Property = {
       ? LongTextProperty<true>
       : LongTextProperty<false>;
   },
-  MarkDown(request: MarkDownPropertySchema): MarkDownProperty {
+  MarkDown(request: { value: string }): MarkDownProperty {
     return {
       displayName: 'Markdown',
-      required: true,
+      required: false,
       description: request.value,
       type: PropertyType.MARKDOWN,
       valueSchema: undefined as never,
@@ -265,65 +229,3 @@ export const Property = {
     } as unknown as R extends true ? FileProperty<true> : FileProperty<false>;
   },
 };
-
-export const PieceAuth = {
-  SecretText<R extends boolean>(
-    request: Properties<SecretTextProperty<R>>
-  ): R extends true ? SecretTextProperty<true> : SecretTextProperty<false> {
-    return {
-      ...request,
-      valueSchema: undefined,
-      type: PropertyType.SECRET_TEXT,
-    } as unknown as R extends true
-      ? SecretTextProperty<true>
-      : SecretTextProperty<false>;
-  },
-  BasicAuth<R extends boolean>(
-    request: AuthProperties<BasicAuthProperty<R>>
-  ): R extends true ? BasicAuthProperty<true> : BasicAuthProperty<false> {
-    return {
-      ...request,
-      valueSchema: undefined,
-      type: PropertyType.BASIC_AUTH,
-      displayName: 'Connection',
-    } as unknown as R extends true
-      ? BasicAuthProperty<true>
-      : BasicAuthProperty<false>;
-  },
-  CustomAuth<R extends boolean, T extends CustomAuthProps>(
-    request: AuthProperties<CustomAuthProperty<R, T>>
-  ): R extends true
-    ? CustomAuthProperty<true, T>
-    : CustomAuthProperty<false, T> {
-    return {
-      ...request,
-      valueSchema: undefined,
-      type: PropertyType.CUSTOM_AUTH,
-      displayName: 'Connection',
-    } as unknown as R extends true
-      ? CustomAuthProperty<true, T>
-      : CustomAuthProperty<false, T>;
-  },
-  OAuth2<R extends boolean, T extends OAuth2Props>(
-    request: AuthProperties<OAuth2Property<R, T>>
-  ): R extends true ? OAuth2Property<true, T> : OAuth2Property<false, T> {
-    return {
-      ...request,
-      valueSchema: undefined,
-      type: PropertyType.OAUTH2,
-      displayName: 'Connection',
-    } as unknown as R extends true
-      ? OAuth2Property<true, T>
-      : OAuth2Property<false, T>;
-  },
-  None() {
-    return undefined;
-  },
-};
-
-type AuthProperties<T> = Omit<Properties<T>, 'displayName'>;
-
-type Properties<T> = Omit<
-  T,
-  'valueSchema' | 'type' | 'defaultValidators' | 'defaultProcessors'
->;
