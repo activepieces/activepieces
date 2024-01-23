@@ -7,6 +7,10 @@ import { PlatformSettingsComponent } from './pages/platform-settings/platform-se
 import { PiecesTableComponent } from './pages/pieces-table/pieces-table.component';
 import { TemplatesTableComponent } from './pages/templates-table/templates-table.component';
 import { UsersTableComponent } from './pages/users-table/users-table.component';
+import {
+  PLATFORM_DEMO_RESOLVER_KEY,
+  isPlatformDemoResolver,
+} from './is-platform-demo.resolver';
 
 export const uiEePlatformRoutes: Route[] = [
   {
@@ -26,6 +30,7 @@ export const uiEePlatformRoutes: Route[] = [
         },
         resolve: {
           [PLATFORM_RESOLVER_KEY]: platformResolver,
+          [PLATFORM_DEMO_RESOLVER_KEY]: isPlatformDemoResolver,
         },
       },
       {
@@ -36,6 +41,7 @@ export const uiEePlatformRoutes: Route[] = [
         },
         resolve: {
           [PLATFORM_RESOLVER_KEY]: platformResolver,
+          [PLATFORM_DEMO_RESOLVER_KEY]: isPlatformDemoResolver,
         },
       },
       {
@@ -46,6 +52,7 @@ export const uiEePlatformRoutes: Route[] = [
         },
         resolve: {
           [PLATFORM_RESOLVER_KEY]: platformResolver,
+          [PLATFORM_DEMO_RESOLVER_KEY]: isPlatformDemoResolver,
         },
       },
       {
@@ -56,6 +63,7 @@ export const uiEePlatformRoutes: Route[] = [
         },
         resolve: {
           [PLATFORM_RESOLVER_KEY]: platformResolver,
+          [PLATFORM_DEMO_RESOLVER_KEY]: isPlatformDemoResolver,
         },
       },
       {
@@ -76,6 +84,7 @@ export const uiEePlatformRoutes: Route[] = [
         },
         resolve: {
           [PLATFORM_RESOLVER_KEY]: platformResolver,
+          [PLATFORM_DEMO_RESOLVER_KEY]: isPlatformDemoResolver,
         },
       },
     ],

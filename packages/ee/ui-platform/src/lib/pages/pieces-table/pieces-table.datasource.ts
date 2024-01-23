@@ -73,7 +73,7 @@ export class PiecesTableDataSource extends DataSource<ManagedPieceMetadataModelS
         if (this.withoutOAuth2Cred) {
           return of(pieces);
         }
-        console.log('withoutOAuth2Cred');
+
         return this.oAuth2AppsService.listOAuth2AppsCredentials().pipe(
           map((apps) => {
             return pieces.map((p) => {

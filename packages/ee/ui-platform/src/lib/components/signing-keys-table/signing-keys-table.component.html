@@ -1,6 +1,6 @@
 <div class="ap-w-full ap-pt-2">
 
-    <ap-upgrade-note *ngIf="!platform.embeddingEnabled || platform.isDemo"
+    <ap-upgrade-note *ngIf="isDemo || !platform?.embeddingEnabled"
         docsLink="https://www.activepieces.com/docs/embedding/embed-builder/generate-jwt#step-1-obtain-signing-key">
     </ap-upgrade-note>
 
@@ -23,8 +23,8 @@
             <th mat-header-cell *matHeaderCellDef>
                 <div class="ap-flex ap-items-center ap-justify-end">
                     <ap-button btnColor="primary" btnSize="medium" (buttonClicked)="createKey()" i18n
-                        [disabled]="!platform.embeddingEnabled || !!platform.isDemo"
-                        [tooltipText]="!platform.embeddingEnabled || !!platform.isDemo? '': featureDisabledTooltip">
+                        [disabled]=" isDemo || !platform?.embeddingEnabled  "
+                        [tooltipText]="isDemo || !platform?.embeddingEnabled ? '': featureDisabledTooltip">
                         + New key
                     </ap-button>
                 </div>
@@ -34,8 +34,7 @@
                 <div class="ap-w-[5.6875rem] ap-float-right ap-text-center">
                     <ap-icon-button (click)="$event.stopPropagation();deleteKey(key)" i18n-tooltipText
                         tooltipText="Delete key" iconFilename="trash.svg" [width]="20" [height]="20" color="warn"
-                        [buttonDisabled]="!platform.embeddingEnabled || !!platform.isDemo"
-                        [height]="16"></ap-icon-button>
+                        [buttonDisabled]="isDemo || !platform?.embeddingEnabled " [height]="16"></ap-icon-button>
                 </div>
 
             </td>

@@ -34,6 +34,7 @@ import {
   PieceMetadataService,
 } from '@activepieces/ui/feature-pieces';
 import { PLATFORM_RESOLVER_KEY } from '../../platform.resolver';
+import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
 
 @Component({
   selector: 'app-pieces-table',
@@ -61,6 +62,7 @@ export class PiecesTableComponent implements OnInit {
   cloudAuthToggleFormControl = new FormControl(false, { nonNullable: true });
   toggelCloudOAuth2$: Observable<void>;
   featDisabledTooltipText = featureDisabledTooltip;
+  isDemo = false;
   constructor(
     private piecesService: PieceMetadataService,
     private route: ActivatedRoute,
@@ -73,19 +75,21 @@ export class PiecesTableComponent implements OnInit {
   }
   ngOnInit(): void {
     const platform: Platform = this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
+    this.isDemo = this.route.snapshot.data[PLATFORM_DEMO_RESOLVER_KEY];
     this.platform$ = new BehaviorSubject(platform);
     this.dataSource = new PiecesTableDataSource(
       this.piecesService,
       this.searchFormControl.valueChanges.pipe(startWith('')),
       this.oauth2AppsService,
       this.refresh$.asObservable().pipe(startWith(true as const)),
-      this.platform$.value.isDemo || false
+      this.isDemo
     );
-    this.cloudAuthToggleFormControl.setValue(
-      this.platform$.value.cloudAuthEnabled
-    );
-    if (this.platform$.value.isDemo) {
+    if (this.isDemo) {
       this.cloudAuthToggleFormControl.disable();
+    } else {
+      this.cloudAuthToggleFormControl.setValue(
+        this.platform$.value.cloudAuthEnabled
+      );
     }
   }
 

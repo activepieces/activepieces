@@ -1,6 +1,6 @@
 <div class="ap-h-full ap-pt-2 ap-flex ap-flex-col ap-justify-between ap-gap-10">
     <div>
-        <ap-upgrade-note *ngIf="platform.isDemo"></ap-upgrade-note>
+        <ap-upgrade-note *ngIf="isDemo"></ap-upgrade-note>
         <form [formGroup]="termsAndServicesForm" class="ap-flex  ap-max-w-[327px] ap-w-full ap-flex-col  ap-gap-4">
             <mat-form-field>
                 <mat-label>Privacy Policy URL</mat-label>
@@ -20,8 +20,8 @@
     <div>
         <div
             class="ap-px-4 ap-pt-4  ap-flex ap-justify-end ap-items-center ap-gap-4 ap-w-full ap-border-t ap-border-solid ap-border-outline">
-            <ap-button btnStyle="flat" btnColor="primary" i18n (buttonClicked)="save()" [disabled]="!!platform.isDemo"
-                [tooltipText]="platform.isDemo? featureDisabledTooltip:''"
+            <ap-button btnStyle="flat" btnColor="primary" i18n (buttonClicked)="save()" [disabled]="isDemo"
+                [tooltipText]="isDemo? featureDisabledTooltip:''"
                 [loading]="(loading$ | async) || false">Save</ap-button>
         </div>
     </div>

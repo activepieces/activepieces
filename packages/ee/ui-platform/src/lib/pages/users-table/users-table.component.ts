@@ -11,6 +11,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { Platform } from '@activepieces/ee-shared';
 import { ActivatedRoute } from '@angular/router';
 import { PLATFORM_RESOLVER_KEY } from '../../platform.resolver';
+import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
 
 @Component({
   selector: 'app-users-table',
@@ -36,6 +37,7 @@ export class UsersTableComponent {
     'status',
     'action',
   ];
+  isDemo = false;
   constructor(
     private platformService: PlatformService,
     private snackBar: MatSnackBar,
@@ -43,12 +45,13 @@ export class UsersTableComponent {
     private route: ActivatedRoute
   ) {
     this.platform = this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
+    this.isDemo = this.route.snapshot.data[PLATFORM_DEMO_RESOLVER_KEY];
     this.platformOwnerId = this.authenticationService.currentUser.id;
     this.dataSource = new UsersDataSource(
       this.refresh$.asObservable().pipe(startWith(true)),
       this.platformService,
       this.authenticationService,
-      !!this.platform.isDemo
+      this.isDemo
     );
   }
 

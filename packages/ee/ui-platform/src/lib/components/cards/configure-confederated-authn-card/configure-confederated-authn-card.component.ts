@@ -24,14 +24,17 @@ import {
   AtLeastOneLoginMethodMsg,
   doesPlatformHaveAtLeastOneLoginMethodEnabled,
 } from '../../util';
+import { PlatformSettingsBaseComponent } from '../../platform-settings-base.component';
 
 @Component({
   selector: 'app-configure-confederated-authn-card',
   templateUrl: './configure-confederated-authn-card.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ConfigureConfederatedAuthnCardComponent implements OnInit {
-  @Input({ required: true }) platform!: Platform;
+export class ConfigureConfederatedAuthnCardComponent
+  extends PlatformSettingsBaseComponent
+  implements OnInit
+{
   @Input({ required: true })
   federatedAuthnProvider!: FederatedAuthnProviderEnum;
   @Output() platformUpdated = new EventEmitter<Platform>();
@@ -43,12 +46,16 @@ export class ConfigureConfederatedAuthnCardComponent implements OnInit {
     private matDialog: MatDialog,
     private matSnackbar: MatSnackBar,
     private platformService: PlatformService
-  ) {}
+  ) {
+    super();
+  }
   ngOnInit() {
-    this.toggleChecked =
-      this.federatedAuthnProvider === 'Google'
-        ? this.platform.federatedAuthProviders.google !== undefined
-        : this.platform.federatedAuthProviders.github !== undefined;
+    if (this.platform) {
+      this.toggleChecked =
+        this.federatedAuthnProvider === 'Google'
+          ? this.platform.federatedAuthProviders.google !== undefined
+          : this.platform.federatedAuthProviders.github !== undefined;
+    }
   }
   disableAuthnProvider($event: MatSlideToggleChange) {
     const platform: Platform = JSON.parse(JSON.stringify(this.platform));
@@ -82,38 +89,42 @@ export class ConfigureConfederatedAuthnCardComponent implements OnInit {
     this.toggleChecked = false;
   }
   enableAuthnProvider() {
-    const data: EnableFederatedAuthnProviderDialogData = {
-      platform: this.platform,
-      provider: this.federatedAuthnProvider,
-    };
-    this.enableFederatedAuthn$ = this.matDialog
-      .open(EnableFederatedAuthnProviderDialogComponent, { data })
-      .afterClosed()
-      .pipe(
-        tap((platform) => {
-          if (platform) {
-            this.toggleChecked = true;
-            this.platformUpdated.emit(platform);
-            this.matSnackbar.openFromComponent(
-              GenericSnackbarTemplateComponent,
-              {
-                data: `<b>${this.federatedAuthnProvider}</b> SSO enabled`,
-              }
-            );
-          }
-        })
-      );
+    if (this.platform) {
+      const data: EnableFederatedAuthnProviderDialogData = {
+        platform: this.platform,
+        provider: this.federatedAuthnProvider,
+      };
+      this.enableFederatedAuthn$ = this.matDialog
+        .open(EnableFederatedAuthnProviderDialogComponent, { data })
+        .afterClosed()
+        .pipe(
+          tap((platform) => {
+            if (platform) {
+              this.toggleChecked = true;
+              this.platformUpdated.emit(platform);
+              this.matSnackbar.openFromComponent(
+                GenericSnackbarTemplateComponent,
+                {
+                  data: `<b>${this.federatedAuthnProvider}</b> SSO enabled`,
+                }
+              );
+            }
+          })
+        );
+    }
   }
   toggleClicked($event: MatSlideToggleChange) {
-    $event.source.checked = this.toggleChecked;
-    const federatedAuthnProviderValue =
-      this.federatedAuthnProvider === FederatedAuthnProviderEnum.Github
-        ? this.platform.federatedAuthProviders.github
-        : this.platform.federatedAuthProviders.google;
-    if (federatedAuthnProviderValue === undefined) {
-      this.enableAuthnProvider();
-    } else {
-      this.disableAuthnProvider($event);
+    if (this.platform) {
+      $event.source.checked = this.toggleChecked;
+      const federatedAuthnProviderValue =
+        this.federatedAuthnProvider === FederatedAuthnProviderEnum.Github
+          ? this.platform.federatedAuthProviders.github
+          : this.platform.federatedAuthProviders.google;
+      if (federatedAuthnProviderValue === undefined) {
+        this.enableAuthnProvider();
+      } else {
+        this.disableAuthnProvider($event);
+      }
     }
   }
 }

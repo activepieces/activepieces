@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  Input,
-  OnInit,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Observable, Subject, tap, startWith } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import {
@@ -13,30 +8,35 @@ import {
 } from '@activepieces/ui/common';
 import { ApiKeysService } from '../../service/api-keys.service';
 import { ApiKeysDataSource } from './api-keys-table.datasource';
-import { ApiKey, Platform } from '@activepieces/ee-shared';
+import { ApiKey } from '@activepieces/ee-shared';
 import { CreateApiKeyDialogComponent } from '../dialogs/create-api-key-dialog/create-api-key-dialog.component';
+import { PlatformSettingsBaseComponent } from '../platform-settings-base.component';
 
 @Component({
   selector: 'app-api-keys-table',
   templateUrl: './api-keys-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ApiKeysTableComponent implements OnInit {
+export class ApiKeysTableComponent
+  extends PlatformSettingsBaseComponent
+  implements OnInit
+{
   displayedColumns = ['displayName', 'truncatedValue', 'created', 'action'];
   dataSource!: ApiKeysDataSource;
   refresh$: Subject<boolean> = new Subject();
   dialogClosed$?: Observable<unknown>;
-  @Input({ required: true }) platform!: Platform;
   featureDisabledTooltip = featureDisabledTooltip;
   constructor(
     private matDialog: MatDialog,
     private apiKeysService: ApiKeysService
-  ) {}
+  ) {
+    super();
+  }
   ngOnInit(): void {
     this.dataSource = new ApiKeysDataSource(
       this.refresh$.asObservable().pipe(startWith(false)),
       this.apiKeysService,
-      !!this.platform.isDemo
+      this.isDemo
     );
   }
   createKey() {

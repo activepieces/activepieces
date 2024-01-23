@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  Input,
-  OnInit,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -14,9 +9,9 @@ import {
   PlatformService,
   featureDisabledTooltip,
 } from '@activepieces/ui/common';
-import { Platform } from '@activepieces/ee-shared';
 import { BehaviorSubject, Observable, catchError, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { PlatformSettingsBaseComponent } from '../platform-settings-base.component';
 
 interface SmtpForm {
   smtpHost: FormControl<string>;
@@ -31,18 +26,21 @@ interface SmtpForm {
   templateUrl: './smtp-settings.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SmtpSettingsComponent implements OnInit {
+export class SmtpSettingsComponent
+  extends PlatformSettingsBaseComponent
+  implements OnInit
+{
   smtpSettingsForm: FormGroup<SmtpForm>;
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   saving$?: Observable<void>;
   featureDisabledTooltip = featureDisabledTooltip;
-  @Input({ required: true }) platform!: Platform;
+
   constructor(
     private fb: FormBuilder,
     private platformService: PlatformService,
-
     private matSnackbar: MatSnackBar
   ) {
+    super();
     this.smtpSettingsForm = this.fb.group({
       smtpHost: this.fb.control('', {
         nonNullable: true,
@@ -71,14 +69,21 @@ export class SmtpSettingsComponent implements OnInit {
     });
   }
   ngOnInit(): void {
-    this.smtpSettingsForm.patchValue(this.platform);
-    if (this.platform.isDemo) {
+    if (this.platform) {
+      this.smtpSettingsForm.patchValue(this.platform);
+    }
+
+    if (this.isDemo) {
       this.smtpSettingsForm.disable();
     }
   }
   save(): void {
     this.smtpSettingsForm.markAllAsTouched();
-    if (this.smtpSettingsForm.valid && this.loading$.value === false) {
+    if (
+      this.smtpSettingsForm.valid &&
+      this.loading$.value === false &&
+      this.platform
+    ) {
       this.loading$.next(true);
       this.saving$ = this.platformService
         .updatePlatform(

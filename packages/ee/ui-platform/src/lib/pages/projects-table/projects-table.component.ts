@@ -15,6 +15,7 @@ import {
 import { ActivatedRoute } from '@angular/router';
 import { PLATFORM_RESOLVER_KEY } from '../../platform.resolver';
 import { Platform } from '@activepieces/ee-shared';
+import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
 
 @Component({
   selector: 'app-projects-table',
@@ -39,6 +40,7 @@ export class ProjectsTableComponent {
   title = $localize`Projects`;
   featureDisabledTooltip = featureDisabledTooltip;
   platform: Platform;
+  isDemo = false;
   constructor(
     private projectsService: PlatformProjectService,
     private matDialog: MatDialog,
@@ -47,10 +49,12 @@ export class ProjectsTableComponent {
     private route: ActivatedRoute
   ) {
     this.platform = this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
+    this.isDemo = this.route.snapshot.data[PLATFORM_DEMO_RESOLVER_KEY];
     this.dataSource = new ProjectsDataSource(
       this.projectsService,
       this.refreshTable$.asObservable().pipe(startWith(true)),
-      this.authenticationService.getPlatformId()!
+      this.authenticationService.getPlatformId()!,
+      this.isDemo
     );
   }
 

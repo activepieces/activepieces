@@ -1,17 +1,12 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  Input,
-  OnInit,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import {
   PlatformService,
   featureDisabledTooltip,
 } from '@activepieces/ui/common';
 import { BehaviorSubject, Observable, catchError, tap } from 'rxjs';
-import { Platform } from '@activepieces/ee-shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { PlatformSettingsBaseComponent } from '../platform-settings-base.component';
 
 interface TermsAndServicesForm {
   privacyPolicyUrl: FormControl<string>;
@@ -22,18 +17,21 @@ interface TermsAndServicesForm {
   templateUrl: './terms-and-services-settings.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TermsAndServicesSettingsComponent implements OnInit {
+export class TermsAndServicesSettingsComponent
+  extends PlatformSettingsBaseComponent
+  implements OnInit
+{
   termsAndServicesForm: FormGroup<TermsAndServicesForm>;
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   saving$?: Observable<void>;
-  @Input({ required: true }) platform!: Platform;
+
   featureDisabledTooltip = featureDisabledTooltip;
   constructor(
     private fb: FormBuilder,
     private platformService: PlatformService,
-
     private matSnackbar: MatSnackBar
   ) {
+    super();
     this.termsAndServicesForm = this.fb.group({
       privacyPolicyUrl: this.fb.control('', {
         nonNullable: true,
@@ -44,15 +42,22 @@ export class TermsAndServicesSettingsComponent implements OnInit {
     });
   }
   ngOnInit(): void {
-    this.termsAndServicesForm.patchValue(this.platform);
-    if (this.platform.isDemo) {
+    if (this.platform) {
+      this.termsAndServicesForm.patchValue(this.platform);
+    }
+
+    if (this.isDemo) {
       this.termsAndServicesForm.disable();
     }
   }
 
   save() {
     this.termsAndServicesForm.markAllAsTouched();
-    if (!this.loading$.value && !this.termsAndServicesForm.invalid) {
+    if (
+      !this.loading$.value &&
+      !this.termsAndServicesForm.invalid &&
+      this.platform
+    ) {
       this.loading$.next(true);
       this.saving$ = this.platformService
         .updatePlatform(

@@ -17,6 +17,7 @@ import { FlowTemplate } from '@activepieces/shared';
 import { ActivatedRoute } from '@angular/router';
 import { PLATFORM_RESOLVER_KEY } from '../../platform.resolver';
 import { Platform } from '@activepieces/ee-shared';
+import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
 
 @Component({
   selector: 'app-template-table',
@@ -31,16 +32,18 @@ export class TemplatesTableComponent {
   dialogClosed$?: Observable<unknown>;
   platform: Platform;
   featureDisabledTooltip = featureDisabledTooltip;
+  isDemo = false;
   constructor(
     private templateService: TemplatesService,
     private matDialog: MatDialog,
     private route: ActivatedRoute
   ) {
     this.platform = this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
+    this.isDemo = this.route.snapshot.data[PLATFORM_DEMO_RESOLVER_KEY];
     this.dataSource = new TemplatesDataSource(
       this.refresh$.asObservable().pipe(startWith(false)),
       this.templateService,
-      this.platform.isDemo || false
+      this.isDemo
     );
   }
   create() {
