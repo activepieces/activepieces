@@ -50,6 +50,7 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Platform } from '@activepieces/ee-shared';
+import { Socket } from 'ngx-socket-io';
 
 interface UpgradeNotificationMetaDataInLocalStorage {
   latestVersion: string;
@@ -93,7 +94,8 @@ export class AppComponent implements OnInit {
     private snackbar: MatSnackBar,
     private embeddedService: EmbeddingService,
     private localesService: LocalesService,
-    private platformService: PlatformService
+    private platformService: PlatformService,
+    private socket: Socket
   ) {
     this.registerMaterialIcons();
     this.listenToImportFlow();
@@ -186,6 +188,11 @@ export class AppComponent implements OnInit {
         this.telemetryService.init(user);
       })
     );
+
+    this.socket.connect();
+    this.socket.on('connect', () => {
+      console.log('socket connected');
+    });
   }
 
   getUpgradeNotificationMetadataInLocalStorage() {

@@ -32,6 +32,8 @@ import { logger } from '../../helper/logger'
 import { flowService } from '../flow/flow.service'
 import { MoreThanOrEqual } from 'typeorm'
 import { flowRunHooks } from './flow-run-hooks'
+import { Socket } from 'socket.io'
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
 
 export const flowRunRepo = databaseConnection.getRepository(FlowRunEntity)
 
@@ -158,6 +160,16 @@ export const flowRunService = {
             finishTime: new Date().toISOString(),
         })
         const flowRun = await this.getOneOrThrow({ id: flowRunId, projectId: undefined })
+        
+        logger.debug(`[FlowRunService#finish] Emiting event=flowRunFinished flowRun=${flowRunId}`)
+        await httpClient.sendRequest({
+            url: `http://localhost:3000/v1/flow-runs/${flowRunId}/emit`,
+            method: HttpMethod.POST,
+            body: {},
+        }).catch(err => {
+            logger.error({ err }, '[FlowRunService#finish] Error while sending request to emit')
+        })
+            
         await flowRunSideEffects.finish({ flowRun })
         return flowRun
     },
@@ -271,6 +283,17 @@ export const flowRunService = {
             .getRawOne()
 
         return Number(sumOfTasks.tasks)
+    },
+
+    registerEventListeners(socket: Socket): void {
+        socket.on('testFlowRun', async (data) => {
+            logger.debug({ data }, '[Socket#testFlowRun]')
+            const flowRun = await flowRunService.test({
+                projectId: data.projectId,
+                flowVersionId: data.flowVersionId,
+            })
+            socket.emit('flowRunStarted', flowRun)
+        })
     },
 }
 

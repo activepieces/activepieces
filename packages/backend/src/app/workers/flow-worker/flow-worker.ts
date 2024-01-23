@@ -228,7 +228,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
 
         logger.info(
             `[FlowWorker#executeFlow] flowRunId=${jobData.runId
-            } executionOutputStats=${executionOutput.status} sandboxId=${sandbox.boxId
+            } executionOutputStatus=${executionOutput.status} sandboxId=${sandbox.boxId
             } duration=${Date.now() - startTime} ms`,
         )
     }
