@@ -1,167 +1,203 @@
-import { FastifyRequest } from 'fastify'
 import {
+    ApId,
     CreateFlowRequest,
-    FlowId,
     FlowOperationRequest,
-    FlowTemplate,
-    FlowVersionId,
-    FlowViewMode,
-    GetFlowRequest,
+    FlowTemplateWithoutProjectInformation,
+    GetFlowQueryParamsRequest,
     ListFlowsRequest,
+    PopulatedFlow,
+    Principal,
+    PrincipalType,
+    SeekPage,
 } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowService } from './flow.service'
 import { CountFlowsRequest } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { isNil } from 'lodash'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { projectService } from '../../project/project-service'
 
-const DEFUALT_PAGE_SIZE = 10
+const DEFAULT_PAGE_SIZE = 10
 
-export const flowController: FastifyPluginAsyncTypebox = async (fastify) => {
-    fastify.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
-    fastify.post(
-        '/',
-        {
-            schema: {
-                body: CreateFlowRequest,
-            },
-        },
-        async (request) => {
-            return await flowService.create({ projectId: request.principal.projectId, request: request.body })
-        },
-    )
+export const flowController: FastifyPluginAsyncTypebox = async (app) => {
+    app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
 
-    fastify.post(
-        '/:flowId',
-        {
-            schema: {
-                body: FlowOperationRequest,
-            },
-        },
-        async (
-            request: FastifyRequest<{
-                Params: {
-                    flowId: FlowId
-                }
-                Body: FlowOperationRequest
-            }>,
-            reply,
-        ) => {
-            const flow = await flowService.getOne({ id: request.params.flowId, versionId: undefined, projectId: request.principal.projectId, viewMode: FlowViewMode.NO_ARTIFACTS })
-            if (flow === null) {
-                throw new ActivepiecesError({ code: ErrorCode.FLOW_NOT_FOUND, params: { id: request.params.flowId } })
-            }
-            // BEGIN EE
-            const currentTime = dayjs()
-            if (!isNil(flow.version.updatedBy) &&
-              flow.version.updatedBy !== request.principal.id &&
-              currentTime.diff(dayjs(flow.version.updated), 'minute') <= 1
-            ) {
-                await reply.status(StatusCodes.CONFLICT).send()
-                return
-            }
-            // END EE
-            return await flowService.update({ userId: request.principal.id, flowId: request.params.flowId, request: request.body, projectId: request.principal.projectId })
-        },
-    )
+    app.post('/', CreateFlowRequestOptions, async (request, reply) => {
+        const newFlow = await flowService.create({
+            projectId: request.principal.projectId,
+            request: request.body,
+        })
 
-    fastify.get(
-        '/',
-        {
-            schema: {
-                querystring: ListFlowsRequest,
-            },
-        },
-        async (request) => {
-            return flowService.list({
-                projectId: request.principal.projectId,
-                folderId: request.query.folderId,
-                cursorRequest: request.query.cursor ?? null,
-                limit: request.query.limit ?? DEFUALT_PAGE_SIZE,
-            })
-        },
-    )
+        return reply.status(StatusCodes.CREATED).send(newFlow)
+    })
 
-    fastify.get(
-        '/count',
-        async (
-            request: FastifyRequest<{
-                Querystring: CountFlowsRequest
-            }>,
-        ) => {
-            return flowService.count({ ...request.query, projectId: request.principal.projectId })
+    app.post('/:id', UpdateFlowRequestOptions, async (request, reply) => {
+        const flow = await flowService.getOnePopulatedOrThrow({
+            id: request.params.id,
+            projectId: request.principal.projectId,
+        })
+
+        // BEGIN EE
+        const currentTime = dayjs()
+        const userId = await extractUserIdFromPrincipal(request.principal)
+
+        if (!isNil(flow.version.updatedBy) &&
+            flow.version.updatedBy !== userId &&
+            currentTime.diff(dayjs(flow.version.updated), 'minute') <= 1
+        ) {
+            return reply.status(StatusCodes.CONFLICT).send()
+        }
+        // END EE
+
+        return flowService.update({
+            id: request.params.id,
+            userId,
+            projectId: request.principal.projectId,
+            operation: request.body,
+        })
+    })
+
+    app.get('/', ListFlowsRequestOptions, async (request) => {
+        return flowService.list({
+            projectId: request.principal.projectId,
+            folderId: request.query.folderId,
+            cursorRequest: request.query.cursor ?? null,
+            limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
+            status: request.query.status,
+        })
+    })
+
+    app.get('/count', CountFlowsRequestOptions, async (request) => {
+        return flowService.count({
+            folderId: request.query.folderId,
+            projectId: request.principal.projectId,
+        })
+    })
+
+    app.get('/:id/template', GetFlowTemplateRequestOptions, async (request) => {
+        return flowService.getTemplate({
+            flowId: request.params.id,
+            projectId: request.principal.projectId,
+            versionId: undefined,
+        })
+    })
+
+    app.get('/:id', GetFlowRequestOptions, async (request) => {
+        return flowService.getOnePopulatedOrThrow({
+            id: request.params.id,
+            projectId: request.principal.projectId,
+            versionId: request.query.versionId,
+        })
+    })
+
+    app.delete('/:id', DeleteFlowRequestOptions, async (request, reply) => {
+        await flowService.delete({
+            id: request.params.id,
+            projectId: request.principal.projectId,
+        })
+
+        return reply.status(StatusCodes.NO_CONTENT).send()
+    })
+}
+
+async function extractUserIdFromPrincipal(principal: Principal): Promise<string> {
+    if (principal.type === PrincipalType.USER) {
+        return principal.id
+    }
+    // TODO currently it's same as api service, but it's better to get it from api key service, in case we introduced more admin users
+    const project = await projectService.getOneOrThrow(principal.projectId)
+    return project.ownerId
+}
+
+const CreateFlowRequestOptions = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+    },
+    schema: {
+        tags: ['flows'],
+        description: 'Create a flow',
+        body: CreateFlowRequest,
+        response: {
+            [StatusCodes.CREATED]: PopulatedFlow,
         },
-    )
+    },
+}
+
+const UpdateFlowRequestOptions = {
+    schema: {
+        tags: ['flows'],
+        description: 'Apply an operation to a flow',
+        body: FlowOperationRequest,
+        params: Type.Object({
+            id: ApId,
+        }),
+    },
+}
 
 
-    fastify.get(
-        '/:flowId/template',
-        {
-            schema: {
-                params: {
-                    flowId: { type: 'string' },
-                },
-                response: {
-                    [StatusCodes.OK]: FlowTemplate,
-                },
-            },
-        },
-        async (
-            request: FastifyRequest<{
-                Params: {
-                    flowId: FlowId
-                }
-            }>,
-        ) => {
-            return flowService.getTemplate({
-                flowId: request.params.flowId,
-                projectId: request.principal.projectId,
-                versionId: undefined,
-            })
-        },
-    )
 
-    fastify.get(
-        '/:flowId',
-        {
-            schema: {
-                querystring: GetFlowRequest,
-            },
+const ListFlowsRequestOptions = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+    },
+    schema: {
+        tags: ['flows'],
+        description: 'List flows',
+        querystring: ListFlowsRequest,
+        response: {
+            [StatusCodes.OK]: SeekPage(PopulatedFlow),
         },
-        async (
-            request: FastifyRequest<{
-                Params: {
-                    flowId: FlowId
-                }
-                Querystring: GetFlowRequest
-            }>,
-        ) => {
-            const versionId: FlowVersionId | undefined = request.query.versionId
-            const viewMode = request.query.viewMode ?? FlowViewMode.NO_ARTIFACTS
-            const flow = await flowService.getOne({ id: request.params.flowId, versionId, projectId: request.principal.projectId, viewMode })
-            if (!flow) {
-                throw new ActivepiecesError({ code: ErrorCode.FLOW_NOT_FOUND, params: { id: request.params.flowId } })
-            }
-            return flow
-        },
-    )
+    },
+}
 
-    fastify.delete(
-        '/:flowId',
-        async (
-            request: FastifyRequest<{
-                Params: {
-                    flowId: FlowId
-                }
-            }>,
-            reply,
-        ) => {
-            await flowService.delete({ projectId: request.principal.projectId, flowId: request.params.flowId })
-            return reply.status(StatusCodes.OK).send()
-        },
-    )
+const CountFlowsRequestOptions = {
+    schema: {
+        querystring: CountFlowsRequest,
+    },
+}
 
+const GetFlowTemplateRequestOptions = {
+    schema: {
+        params: Type.Object({
+            id: ApId,
+        }),
+        response: {
+            [StatusCodes.OK]: FlowTemplateWithoutProjectInformation,
+        },
+    },
+}
+
+const GetFlowRequestOptions = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+    },
+    schema: {
+        tags: ['flows'],
+        description: 'Get a flow by id',
+        params: Type.Object({
+            id: ApId,
+        }),
+        querystring: GetFlowQueryParamsRequest,
+        response: {
+            [StatusCodes.OK]: PopulatedFlow,
+        },
+    },
+}
+
+const DeleteFlowRequestOptions = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+    },
+    schema: {
+        tags: ['flows'],
+        description: 'Delete a flow',
+        params: Type.Object({
+            id: ApId,
+        }),
+        response: {
+            [StatusCodes.NO_CONTENT]: Type.Undefined(),
+        },
+    },
 }

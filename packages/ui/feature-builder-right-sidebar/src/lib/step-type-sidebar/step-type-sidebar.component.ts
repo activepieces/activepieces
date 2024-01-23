@@ -31,6 +31,7 @@ import {
   flowHelper,
   PieceType,
   PackageType,
+  ApFlagId,
 } from '@activepieces/shared';
 import { FormControl } from '@angular/forms';
 import {
@@ -44,6 +45,7 @@ import {
   StepTypeSideBarProps,
 } from '@activepieces/ui/feature-builder-store';
 import {
+  FlagService,
   FlowItemDetails,
   getDefaultDisplayNameForPiece,
   getDisplayNameForTrigger,
@@ -64,17 +66,18 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
   //EE
   searchControlTelemetry$: Observable<void>;
   //EE end
+  showCommunity$: Observable<boolean>;
   @Input() set showTriggers(shouldShowTriggers: boolean) {
     this._showTriggers = shouldShowTriggers;
     if (this._showTriggers) {
-      this.sideBarDisplayName = 'Select Trigger';
+      this.sideBarDisplayName = $localize`Select Trigger`;
     } else {
-      this.sideBarDisplayName = 'Select Step';
+      this.sideBarDisplayName = $localize`Select Step`;
     }
     this.populateTabsAndTheirLists();
   }
 
-  sideBarDisplayName = 'Select Step';
+  sideBarDisplayName = $localize`Select Step`;
   tabsAndTheirLists: {
     displayName: string;
     list$: Observable<FlowItemDetails[]>;
@@ -87,6 +90,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
     private store: Store,
     private codeService: CodeService,
     private actions: Actions,
+    private flagsService: FlagService,
     private telemetryService: TelemetryService
   ) {
     this.focusSearchInput$ = this.actions.pipe(
@@ -95,6 +99,9 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
         this.searchInput.nativeElement.focus();
       }),
       map(() => void 0)
+    );
+    this.showCommunity$ = this.flagsService.isFlagEnabled(
+      ApFlagId.SHOW_COMMUNITY
     );
     //EE
     this.searchControlTelemetry$ = this.searchFormControl.valueChanges.pipe(
@@ -156,21 +163,23 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
       })
     );
     this.tabsAndTheirLists.push({
-      displayName: 'All',
+      displayName: $localize`All`,
       list$: this.applySearchToObservable(allItemDetails$),
-      emptyListText: "Oops! We didn't find any results.",
+      emptyListText: $localize`Oops! We didn't find any results.`,
     });
 
     this.tabsAndTheirLists.push({
-      displayName: 'Core',
+      displayName: $localize`Core`,
       list$: this.applySearchToObservable(coreItemsDetails$),
-      emptyListText: "Oops! We didn't find any results.",
+      emptyListText: $localize`Oops! We didn't find any results.`,
     });
 
     this.tabsAndTheirLists.push({
-      displayName: this._showTriggers ? 'App Events' : 'App Actions',
+      displayName: this._showTriggers
+        ? $localize`App Events`
+        : $localize`App Actions`,
       list$: this.applySearchToObservable(customPiecesItemDetails$),
-      emptyListText: "Oops! We didn't find any results.",
+      emptyListText: $localize`Oops! We didn't find any results.`,
     });
   }
 
@@ -304,9 +313,16 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
             ...baseProps,
             type: ActionType.CODE,
             settings: {
-              artifact: this.codeService.helloWorldBase64(),
-              artifactSourceId: '',
+              sourceCode: this.codeService.helloWorldArtifact(),
               input: {},
+              errorHandlingOptions: {
+                continueOnFailure: {
+                  value: false,
+                },
+                retryOnFailure: {
+                  value: false,
+                },
+              },
             },
           },
         };
@@ -320,6 +336,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
             type: ActionType.LOOP_ON_ITEMS,
             settings: {
               items: '',
+              inputUiInfo: {},
             },
             valid: false,
           },
@@ -344,6 +361,14 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
               input: {},
               inputUiInfo: {
                 customizedInputs: {},
+              },
+              errorHandlingOptions: {
+                continueOnFailure: {
+                  value: false,
+                },
+                retryOnFailure: {
+                  value: false,
+                },
               },
             },
           },

@@ -1,6 +1,5 @@
 import { FastifyInstance, FastifyRequest } from 'fastify'
 import { Static, Type } from '@sinclair/typebox'
-import { plansService } from '../billing/plans/plan.service'
 import { userService } from '../../user/user-service'
 import { projectService } from '../../project/project-service'
 import { StatusCodes } from 'http-status-codes'
@@ -9,7 +8,9 @@ import { appsumoService } from './appsumo.service'
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { PlanType, defaultPlanInformation } from '../billing/plans/pricing-plans'
+import { plansService } from '../billing/project-plan/project-plan.service'
+import { defaultPlanInformation } from '../billing/project-plan/pricing-plans'
+import { ALL_PRINICPAL_TYPES } from '@activepieces/shared'
 
 export const appSumoModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(appsumoController, { prefix: '/v1/appsumo' })
@@ -43,6 +44,9 @@ const appsumoController: FastifyPluginAsyncTypebox = async (fastify: FastifyInst
     fastify.post(
         '/token',
         {
+            config: {
+                allowedPrincipals: ALL_PRINICPAL_TYPES,
+            },
             schema: {
                 body: ExchangeTokenRequest,
             },
@@ -70,6 +74,9 @@ const appsumoController: FastifyPluginAsyncTypebox = async (fastify: FastifyInst
     fastify.post(
         '/action',
         {
+            config: {
+                allowedPrincipals: ALL_PRINICPAL_TYPES,
+            },
             schema: {
                 headers: AuthorizationHeaders,
                 body: ActionRequest,
@@ -86,43 +93,45 @@ const appsumoController: FastifyPluginAsyncTypebox = async (fastify: FastifyInst
                 return reply.status(StatusCodes.UNAUTHORIZED).send()
             }
             else {
-                const { plan_id, activation_email, action, uuid } = request.body
+                const { plan_id, action, uuid } = request.body
+                const appSumoLicense = await appsumoService.getById(uuid)
+                const activation_email = appSumoLicense?.activation_email ?? request.body.activation_email
                 const appSumoPlan = appsumoService.getPlanInformation(plan_id)
-                const user = await userService.getOneByEmail({
+                const user = await userService.getByPlatformAndEmail({
+                    platformId: system.getOrThrow(SystemProp.CLOUD_PLATFORM_ID),
                     email: activation_email,
                 })
                 if (!isNil(user)) {
-                    const project = (await projectService.getUserProject(user.id))
-                    const plan = await plansService.getOrCreateDefaultPlan({
-                        projectId: project.id,
-                    })
+                    const project = (await projectService.getUserProjectOrThrow(user.id))
                     if (action === 'refund') {
                         await plansService.update({
-                            projectPlanId: plan.id,
+                            projectId: project.id,
                             subscription: null,
-                            planLimits: defaultPlanInformation[PlanType.FLOWS],
+                            planLimits: defaultPlanInformation,
                         })
                     }
                     else {
                         await plansService.update({
-                            projectPlanId: plan.id,
+                            projectId: project.id,
                             subscription: null,
                             planLimits: appSumoPlan,
                         })
                     }
                 }
-                else {
-                    if (action === 'refund') {
-                        await appsumoService.delete(uuid)
-                    }
-                    else {
-                        await appsumoService.upsert({
-                            uuid,
-                            plan_id,
-                            activation_email,
-                        })
-                    }
+
+                if (action === 'refund') {
+                    await appsumoService.delete({
+                        email: activation_email,
+                    })
                 }
+                else {
+                    await appsumoService.upsert({
+                        uuid,
+                        plan_id,
+                        activation_email,
+                    })
+                }
+
                 switch (action) {
                     case 'activate':
                         return reply.status(StatusCodes.CREATED).send({

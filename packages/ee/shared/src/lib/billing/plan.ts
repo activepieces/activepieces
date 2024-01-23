@@ -1,45 +1,50 @@
-import { ProjectId , BaseModel} from "@activepieces/shared";
+import { BaseModelSchema, Nullable } from "@activepieces/shared";
+import { ProjectUsage } from "./usage";
+import { Static, Type } from "@sinclair/typebox";
 
 export type ProjectPlanId = string;
 
-export interface ProjectPlan extends BaseModel<ProjectPlanId> {
-    id: ProjectPlanId;
-    projectId: ProjectId;
-    stripeCustomerId: string;
-    stripeSubscriptionId: string | null;
-    subscriptionStartDatetime: string;
-    flowPlanName: string;
-    botPlanName: string;
-    minimumPollingInterval: number;
-    connections: number;
-    teamMembers: number;
-    datasources: number;
-    activeFlows: number;
-    tasks: number;
-    datasourcesSize: number,
-    bots: number;
-    tasksPerDay?: number | null;
+export const ProjectPlan = Type.Object({
+    ...BaseModelSchema,
+    projectId: Type.String(),
+    stripeCustomerId: Type.String(),
+    stripeSubscriptionId: Nullable(Type.String()),
+    subscriptionStartDatetime: Type.String(),
+    flowPlanName: Type.String(),
+    minimumPollingInterval: Type.Number(),
+    connections: Type.Number(),
+    teamMembers: Type.Number(),
+    tasks: Type.Number(),
+    tasksPerDay: Nullable(Type.Number())
+})
+
+export type ProjectPlan = Static<typeof ProjectPlan>
+
+export type BillingResponse = {
+    defaultPlan: { nickname: string; },
+    usage: ProjectUsage,
+    plan: ProjectPlan,
+    customerPortalUrl: string
 }
 
-export interface FlowPricingSubPlan {
-    pricePlanId: string;
-    amount: number;
-    price: string;
-}
-export interface FlowPricingPlan {
+export type FlowPricingPlan = {
     name: string;
     description: string;
-    connections: number,
-    minimumPollingInterval: number,
-    teamMembers: number,
-    tasks: FlowPricingSubPlan[];
+    includedTasks: number;
+    includedUsers: number;
+    pricePerUser: number;
+    tasks: {
+        pricePlanId: string;
+        planPrice: number;
+        unitAmount: number;
+    }[];
+    features: {
+        tooltip: string;
+        description: string;
+    }[],
+    custom: boolean;
+    basePlanId?: string;
+    contactUs: boolean;
+    trail: boolean;
 }
 
-export interface BotPricingPlan {
-    name: string,
-    description: string,
-    bots: number,
-    datasourcesSize: number
-    pricePlanId: string;
-    price: string
-}

@@ -18,8 +18,8 @@ jobs:
         npx nx-cloud start-ci-run --stop-agents-after="build" --agent-count=3
       parallel-commands-on-agents: |
         npx nx affected --target=lint --parallel=3
-        npx nx affected --target=build --parallel=3
-        npx nx run-many --target=test --projects=engine,shared --parallel=3
+        npx nx affected --target=build -c production --parallel=3
+        npx nx run-many --target=test --projects=engine,shared,backend --parallel=3
 
   agents:
     name: Nx Cloud - Agents

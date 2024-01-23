@@ -1,5 +1,4 @@
-import { FileId } from "../file"
-import { ProjectId } from "../project/project"
+import { Static, Type } from '@sinclair/typebox'
 
 export enum PackageType {
     ARCHIVE = 'ARCHIVE',
@@ -11,11 +10,27 @@ export enum PieceType {
     OFFICIAL = 'OFFICIAL',
 }
 
-export type PiecePackage = {
-    packageType: PackageType
-    pieceType: PieceType
-    pieceName: string
-    pieceVersion: string
-    projectId: ProjectId
-    archiveId?: FileId
+export const PrivatePiecePackage = Type.Object({
+    packageType: Type.Literal(PackageType.ARCHIVE),
+    pieceType: Type.Enum(PieceType),
+    pieceName: Type.String(),
+    pieceVersion: Type.String(),
+    archiveId: Type.String(),
+})
+
+export type PrivatePiecePackage = Static<typeof PrivatePiecePackage>
+
+export const PublicPiecePackage = Type.Object({
+    packageType: Type.Literal(PackageType.REGISTRY),
+    pieceType: Type.Enum(PieceType),
+    pieceName: Type.String(),
+    pieceVersion: Type.String(),
+})
+
+export type PublicPiecePackage = Static<typeof PublicPiecePackage>
+
+export type PiecePackage = PrivatePiecePackage | PublicPiecePackage
+
+export enum PieceCategory {
+    CORE = 'CORE',
 }

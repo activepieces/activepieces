@@ -11,13 +11,14 @@
     <div matTreeNodeToggle mat-menu-item (click)="mentionTreeNodeClicked(node)" class=" ap-min-w-[0] ap-relative"
       (keyup.enter)="mentionTreeNodeClicked(node)"
       [style.padding-left]="treeNode.level === 0? FIRST_LEVEL_PADDING_IN_MENTIONS_LIST + 'px': (treeNode.level * CHEVRON_SPACE_IN_MENTIONS_LIST + FIRST_LEVEL_PADDING_IN_MENTIONS_LIST)+'px'">
-      <div class=" ap-flex ap-gap-1  ap-min-h-[27px]">
-        {{node.key}}<span class="ap-text-primary ap-truncate ap-flex-grow ap-transition-all">:
+      <div class=" ap-flex ap-gap-1 ap-overflow-x-hidden  ap-min-h-[27px]">
+        {{node.key}}<span class="ap-text-primary ap-truncate  ap-flex-grow ap-transition-all">:
           <span class="ap-transition-all" [matTooltip]="node.value">{{node.value}}
           </span></span>
         <ap-button class="ap-absolute ap-right-[10px]" *ngIf="treeNodeHoverTracker.isHovered" btnColor="primary"
-          btnStyle="basic" type="button" [buttonIsInsideAutocomplete]="true" btnSize="small">Insert
+          btnStyle="basic" type="button" [buttonIsInsideAutocomplete]="true" btnSize="small" i18n>Insert
         </ap-button>
+
 
       </div>
     </div>
@@ -35,13 +36,12 @@
       mat-menu-item>
 
 
-      <div class="ap-truncate" [matTooltip]="node.key">
-        {{node.key}}
+      <div class="ap-truncate" [innerHTML]="node.key" [matTooltip]="node.key">
       </div>
       <div class=" ap-flex-grow "></div>
       <ap-button *ngIf="nestedTreeNodeHoverTracker.isHovered" class="ap-absolute ap-right-[50px]"
         [buttonIsInsideAutocomplete]="true" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
-        (click)="$event.stopPropagation(); mentionTreeNodeClicked(node)">Insert
+        (click)="$event.stopPropagation(); mentionTreeNodeClicked(node)" i18n>Insert
       </ap-button>
       <mat-icon class="ap-absolute ap-right-[10px]"
         [svgIcon]="treeControl.isExpanded(node) ? 'custom_expand_less' : 'custom_expand_more'">

@@ -1,7 +1,8 @@
-import { ActivepiecesError, ErrorCode, PrincipalType, isNil } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, PrincipalType, isObject } from '@activepieces/shared'
 import { onRequestHookHandler, preSerializationHookHandler } from 'fastify'
 import { logger } from '../helper/logger'
 
+// TODO REMOVE
 export const allowWorkersOnly: onRequestHookHandler = (request, _res, done) => {
     if (request.principal.type !== PrincipalType.WORKER) {
         throw new ActivepiecesError({
@@ -13,27 +14,46 @@ export const allowWorkersOnly: onRequestHookHandler = (request, _res, done) => {
     done()
 }
 
-export const entitiesMustBeOwnedByCurrentProject: preSerializationHookHandler<Payload> = (request, _response, payload, done) => {
+export function extractResourceName(url: string): string | undefined {
+    const resourceRegex = /\/v1\/(.+?)(\/|$)/
+    const resourceMatch = url.match(resourceRegex)
+    const resource = resourceMatch ? resourceMatch[1] : undefined
+    return resource
+}
+
+/**
+ * Throws an authz error if response entities contain a `projectId` property and
+ * the `projectId` property value does not match the principal's `projectId`.
+ * Otherwise, does nothing.
+ */
+export const entitiesMustBeOwnedByCurrentProject: preSerializationHookHandler<Payload | null> = (request, _response, payload, done) => {
     logger.trace({ payload, principal: request.principal, route: request.routeConfig }, 'entitiesMustBeOwnedByCurrentProject')
 
-    if (!isNil(payload)) {
-        const projectId = request.principal.projectId
+    if (isObject(payload)) {
+        const principalProjectId = request.principal.projectId
+        let verdict: AuthzVerdict = 'ALLOW'
 
-        let someEntityNotOwnedByCurrentProject = false
-        const payloadIsSingleEntity = !isNil(payload.projectId)
-
-        if (payloadIsSingleEntity) {
-            someEntityNotOwnedByCurrentProject = payload.projectId !== projectId
+        if ('projectId' in payload) {
+            if (payload.projectId !== principalProjectId) {
+                verdict = 'DENY'
+            }
         }
-        else if (Array.isArray(payload.data)) {
-            someEntityNotOwnedByCurrentProject = payload.data.some(entity => entity.projectId !== projectId)
+        else if ('data' in payload && Array.isArray(payload.data)) {
+            const someEntityNotOwnedByCurrentProject = payload.data.some(entity => {
+                return 'projectId' in entity && entity.projectId !== principalProjectId
+            })
+
+            if (someEntityNotOwnedByCurrentProject) {
+                verdict = 'DENY'
+            }
         }
 
-
-        if (someEntityNotOwnedByCurrentProject) {
+        if (verdict === 'DENY') {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
-                params: {},
+                params: {
+                    message: 'not owned by current project',
+                },
             })
         }
     }
@@ -41,10 +61,14 @@ export const entitiesMustBeOwnedByCurrentProject: preSerializationHookHandler<Pa
     done()
 }
 
-type WithProjectId = {
-    projectId: string
+type SingleEntity = {
+    projectId?: string
 }
 
-type Payload = WithProjectId & {
-    data: WithProjectId[] | undefined
+type MultipleEntities = {
+    data: SingleEntity[]
 }
+
+type Payload = SingleEntity | MultipleEntities
+
+type AuthzVerdict = 'ALLOW' | 'DENY'

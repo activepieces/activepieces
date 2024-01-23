@@ -1,4 +1,4 @@
-<div [matTooltip]="(buttonTooltipText$ | async)!" *ngIf="!(flowState$|async)?.isShowingPublishedVersion">
+<div [matTooltip]="(buttonTooltipText$ | async)!" *ngIf="(viewMode$ | async) === ViewModeEnum.BUILDING">
   <ap-button btnSize="medium" placement="bottom" [disabled]="disablePublishButton$ |async"
     [class.invalid-deploy]="disablePublishButton$| async" (buttonClicked)="publishButtonClicked()">
     <ng-container *ngIf="flowState$ | async as flowState">
@@ -11,9 +11,9 @@
     </ng-container>
   </ap-button>
 </div>
-<div [matTooltip]="(buttonTooltipText$ | async)!" *ngIf="(flowState$|async)?.isShowingPublishedVersion">
+<div [matTooltip]="(buttonTooltipText$ | async)!" *ngIf="(viewMode$ | async) !== ViewModeEnum.BUILDING">
   <ap-button btnSize="medium" btnStyle="stroked" btnColor="primary" placement="bottom"
-    (buttonClicked)="editFlowButtonClicked()">
+    (buttonClicked)="editFlowButtonClicked()" i18n>
     Edit Flow
   </ap-button>
 </div>

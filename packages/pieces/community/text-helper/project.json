@@ -1,0 +1,32 @@
+{
+  "name": "pieces-text-helper",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/text-helper/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/text-helper",
+        "tsConfig": "packages/pieces/community/text-helper/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/text-helper/package.json",
+        "main": "packages/pieces/community/text-helper/src/index.ts",
+        "assets": ["packages/pieces/community/text-helper/*.md"],
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-string-utils {args.ver} {args.tag}",
+      "dependsOn": ["build"]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/community/text-helper/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

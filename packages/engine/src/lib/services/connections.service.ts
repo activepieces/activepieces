@@ -1,49 +1,35 @@
-import { AppConnection, AppConnectionType, CloudOAuth2ConnectionValue, BasicAuthConnectionValue, OAuth2ConnectionValueWithApp, ExecutionState } from '@activepieces/shared';
-import { globals } from '../globals';
+import { EngineConstants } from '../handler/context/engine-constants'
+import { AppConnection, AppConnectionType, CloudOAuth2ConnectionValue, BasicAuthConnectionValue, OAuth2ConnectionValueWithApp } from '@activepieces/shared'
 
-export const createConnectionManager = (state: ExecutionState) => {
+export const createConnectionService = ({ projectId, workerToken }: { projectId: string, workerToken: string }) => {
     return {
-        get: async (key: string) => {
+        async obtain(connectionName: string): Promise<null | OAuth2ConnectionValueWithApp | CloudOAuth2ConnectionValue | BasicAuthConnectionValue | string | Record<string, unknown>> {
+            const url = `${EngineConstants.API_URL}v1/worker/app-connections/${encodeURIComponent(connectionName)}?projectId=${projectId}`
             try {
-                const connection = await connectionService.obtain(key);
-                state.addConnectionTags([key]);
-                if (!connection) {
-                    return null;
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        Authorization: 'Bearer ' + workerToken,
+                    },
+                })
+                if (!response.ok) {
+                    throw new Error('Connection information failed to load. URL: ' + url)
                 }
-                return connection;
-            } catch (e) {
-                return null;
-            }
-        }
-    };
-};
-
-export const connectionService = {
-    async obtain(connectionName: string): Promise<null | OAuth2ConnectionValueWithApp | CloudOAuth2ConnectionValue | BasicAuthConnectionValue | string | Record<string, unknown>> {
-        const url = globals.apiUrl + `v1/worker/app-connections/${encodeURIComponent(connectionName)}?projectId=${globals.projectId}`;
-        try {
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: {
-                    Authorization: 'Bearer ' + globals.workerToken
+                const result: AppConnection | null = await response.json()
+                if (result === null) {
+                    return null
                 }
-            });
-            if (!response.ok) {
-                throw new Error("Connection information failed to load. URL: " + url);
+                if (result.value.type === AppConnectionType.SECRET_TEXT) {
+                    return result.value.secret_text
+                }
+                if (result.value.type === AppConnectionType.CUSTOM_AUTH) {
+                    return result.value.props
+                }
+                return result.value
             }
-            const result: AppConnection = await response.json();
-            if (result === null) {
-                return null;
+            catch (e) {
+                throw new Error('Connection information failed to load. URL: ' + url + ' Error: ' + e)
             }
-            if (result.value.type === AppConnectionType.SECRET_TEXT) {
-                return result.value.secret_text;
-            }
-            if (result.value.type === AppConnectionType.CUSTOM_AUTH) {
-                return result.value.props;
-            }
-            return result.value;
-        } catch (e) {
-            throw new Error("Connection information failed to load. URL: " + url + " Error: " + e);
-        }
+        },
     }
 }

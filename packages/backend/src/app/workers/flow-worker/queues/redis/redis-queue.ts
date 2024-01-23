@@ -1,16 +1,24 @@
 import { DefaultJobOptions, Queue } from 'bullmq'
-import { ApId } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, ApId } from '@activepieces/shared'
 import { createRedisClient } from '../../../../database/redis-connection'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { logger } from '../../../../helper/logger'
 import { isNil } from '@activepieces/shared'
 import { OneTimeJobData, ScheduledJobData } from '../../job-data'
 import { AddParams, JobType, QueueManager, RemoveParams } from '../queue'
-import { flowInstanceRepo } from '../../../../flows/flow-instance/flow-instance.service'
 import { ExecutionType, RunEnvironment, ScheduleType } from '@activepieces/shared'
 import { LATEST_JOB_DATA_SCHEMA_VERSION } from '../../job-data'
 import { Job } from 'bullmq'
 import { acquireLock } from '../../../../helper/lock'
+import { createBullBoard } from '@bull-board/api'
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter'
+import { FastifyAdapter } from '@bull-board/fastify'
+import { FastifyInstance } from 'fastify'
+import basicAuth from '@fastify/basic-auth'
+import { system } from '../../../../helper/system/system'
+import { SystemProp } from '../../../../helper/system/system-prop'
+import { getEdition } from '../../../../helper/secret-helper'
+import { flowRepo } from '../../../../flows/flow/flow.repo'
 
 export const ONE_TIME_JOB_QUEUE = 'oneTimeJobs'
 export const SCHEDULED_JOB_QUEUE = 'repeatableJobs'
@@ -31,6 +39,75 @@ let scheduledJobQueue: Queue<ScheduledJobData, unknown>
 
 const repeatingJobKey = (id: ApId): string => `activepieces:repeatJobKey:${id}`
 
+const QUEUE_BASE_PATH = '/ui'
+
+function isQueueEnabled(): boolean {
+    const edition = getEdition()
+    if (edition === ApEdition.CLOUD) {
+        return false
+    }
+    return system.getBoolean(SystemProp.QUEUE_UI_ENABLED) ?? false
+}
+
+export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
+    if (!isQueueEnabled()) {
+        return
+    }
+    const queueUsername = system.getOrThrow(SystemProp.QUEUE_UI_USERNAME)
+    const queuePassword = system.getOrThrow(SystemProp.QUEUE_UI_PASSWORD)
+    logger.info('[setupBullMQBoard] Setting up bull board, visit /ui to see the queues')
+
+    await app.register(basicAuth, {
+        validate: (username, password, _req, reply, done) => {
+            if (username === queueUsername && password === queuePassword) {
+                done()
+            }
+            else {
+                done(new Error('Unauthorized'))
+            }
+        },
+        authenticate: true,
+    })
+
+
+    const serverAdapter = new FastifyAdapter()
+    createBullBoard({
+        queues: [new BullMQAdapter(oneTimeJobQueue), new BullMQAdapter(scheduledJobQueue)],
+        serverAdapter,
+    })
+    const environment = system.get(SystemProp.ENVIRONMENT) ?? ApEnvironment.DEVELOPMENT
+    switch (environment) {
+        case ApEnvironment.DEVELOPMENT:
+            serverAdapter.setBasePath(QUEUE_BASE_PATH)
+            break
+        case ApEnvironment.PRODUCTION:
+            serverAdapter.setBasePath(`/api${QUEUE_BASE_PATH}`)
+            break
+        case ApEnvironment.TESTING:
+            throw new Error('Not supported')
+    }
+
+
+    app.addHook('onRequest', (req, reply, next) => {
+        if (!req.routerPath.startsWith(QUEUE_BASE_PATH)) {
+            next()
+        }
+        else {
+            app.basicAuth(req, reply, function (error?: unknown) {
+                const castedError = error as { statusCode: number, name: string }
+                if (!isNil(castedError)) {
+                    void reply.code(castedError.statusCode || 500).send({ error: castedError.name })
+                }
+                else {
+                    next()
+                }
+            })
+        }
+    })
+
+    await app.register(serverAdapter.registerPlugin(), { prefix: QUEUE_BASE_PATH, basePath: QUEUE_BASE_PATH })
+}
+
 export const redisQueueManager: QueueManager = {
     async init() {
         logger.info('[redisQueueManager#init] Initializing redis queues')
@@ -47,7 +124,6 @@ export const redisQueueManager: QueueManager = {
     },
     async add(params: AddParams): Promise<void> {
         logger.debug(params, '[flowQueue#add] params')
-
         if (params.type === JobType.REPEATING) {
             const { id, data, scheduleOptions } = params
             const job = await scheduledJobQueue.add(id, data, {
@@ -82,6 +158,7 @@ export const redisQueueManager: QueueManager = {
 
             await oneTimeJobQueue.add(id, data, {
                 jobId: id,
+                priority: params.priority === 'high' ? 1 : 2,
             })
         }
     },
@@ -147,14 +224,14 @@ const migrateScheduledJobs = async (): Promise<void> => {
                     triggerType,
                 }
                 migratedJobs++
-                await job.update(modifiedJobData)
+                await job.updateData(modifiedJobData)
             }
             if (modifiedJobData.schemaVersion === 2) {
                 const updated = await updateCronExpressionOfRedisToPostgresTable(job)
                 if (updated) {
                     modifiedJobData.schemaVersion = 3
                     migratedJobs++
-                    await job.update(modifiedJobData)
+                    await job.updateData(modifiedJobData)
                 }
             }
         }
@@ -172,12 +249,11 @@ async function updateCronExpressionOfRedisToPostgresTable(job: Job): Promise<boo
         logger.error('Found unrepeatable job in repeatable queue')
         return false
     }
-    const flowInstance = await flowInstanceRepo.findOneBy({
-        flowVersionId: job.data.flowVersionId,
+    const flow = await flowRepo().findOneBy({
+        publishedVersionId: job.data.flowVersionId,
     })
-    if (!isNil(flowInstance)) {
-        await flowInstanceRepo.update(flowInstance.id, {
-            ...flowInstance,
+    if (flow) {
+        await flowRepo().update(flow.id, {
             schedule: {
                 type: ScheduleType.CRON_EXPRESSION,
                 timezone: tz,

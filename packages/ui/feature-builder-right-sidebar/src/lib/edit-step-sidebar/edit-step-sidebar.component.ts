@@ -11,7 +11,7 @@ import { Store } from '@ngrx/store';
 import { ActionType, FlowVersion } from '@activepieces/shared';
 import {
   BuilderSelectors,
-  FlowItem,
+  Step,
   NO_PROPS,
   RightSideBarType,
   canvasActions,
@@ -27,7 +27,7 @@ export class NewEditPieceSidebarComponent implements OnInit {
   constructor(private store: Store, private cd: ChangeDetectorRef) {}
   displayNameChanged$: BehaviorSubject<string> = new BehaviorSubject('Step');
   selectedStepAndFlowId$: Observable<{
-    step: FlowItem | null | undefined;
+    step: Step | null | undefined;
     version: FlowVersion;
   }>;
   selectedFlowItemDetails$: Observable<FlowItemDetails | undefined>;
@@ -35,7 +35,7 @@ export class NewEditPieceSidebarComponent implements OnInit {
     //in case you switch piece while the edit piece panel is opened
     this.selectedStepAndFlowId$ = combineLatest({
       step: this.store.select(BuilderSelectors.selectCurrentStep),
-      version: this.store.select(BuilderSelectors.selectShownFlowVersion),
+      version: this.store.select(BuilderSelectors.selectViewedVersion),
     }).pipe(
       distinctUntilChanged((prev, current) => {
         return (

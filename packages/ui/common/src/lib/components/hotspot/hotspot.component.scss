@@ -1,8 +1,8 @@
 @import "../../../../../core/src/assets/scss/derived-variables";
 
 .blob {
-  background: rgba($primary-default, 1);
-  box-shadow: 0 0 0 0 rgba($primary-default, 1);
+  background: rgba(var(--primary-default-rgb), 1);
+  box-shadow: 0 0 0 0 rgba(var(--primary-default-rgb), 1);
   animation: pulse 2s infinite;
   border-radius: 50%;
   min-height: 12px;
@@ -13,16 +13,16 @@
 @keyframes pulse {
   0% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba($primary-default, 0.7);
+    box-shadow: 0 0 0 0 rgba(var(--primary-default-rgb), 0.7);
   }
 
   70% {
     transform: scale(1);
-    box-shadow: 0 0 0 10px rgba($primary-default, 0);
+    box-shadow: 0 0 0 10px rgba(var(--primary-default-rgb), 0);
   }
 
   100% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba($primary-default, 0);
+    box-shadow: 0 0 0 0 rgba(var(--primary-default-rgb), 0);
   }
 }

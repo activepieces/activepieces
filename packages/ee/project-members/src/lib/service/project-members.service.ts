@@ -4,9 +4,10 @@ import { Observable } from 'rxjs';
 import { environment } from '@activepieces/ui/common';
 import {
   AcceptInvitationRequest,
-  ListProjectMembersRequest,
+  AcceptProjectResponse,
+  ListProjectMembersRequestQuery,
   ProjectMember,
-  SendInvitationRequest,
+  AddProjectMemberRequestBody,
 } from '@activepieces/ee-shared';
 import { SeekPage } from '@activepieces/shared';
 
@@ -16,16 +17,16 @@ import { SeekPage } from '@activepieces/shared';
 export class ProjectMemberService {
   constructor(private http: HttpClient) {}
 
-  accept(request: AcceptInvitationRequest): Observable<void> {
-    return this.http.post<void>(
+  accept(request: AcceptInvitationRequest): Observable<AcceptProjectResponse> {
+    return this.http.post<AcceptProjectResponse>(
       environment.apiUrl + '/project-members/accept',
       request
     );
   }
 
-  invite(request: SendInvitationRequest): Observable<void> {
+  invite(request: AddProjectMemberRequestBody): Observable<void> {
     return this.http.post<void>(
-      environment.apiUrl + '/project-members/invite',
+      environment.apiUrl + '/project-members',
       request
     );
   }
@@ -37,11 +38,12 @@ export class ProjectMemberService {
   }
 
   list(
-    request: ListProjectMembersRequest
+    request: ListProjectMembersRequestQuery
   ): Observable<SeekPage<ProjectMember>> {
     const queryParams: { [key: string]: string | number } = {
       limit: request.limit ?? 10,
       cursor: request.cursor || '',
+      projectId: request.projectId,
     };
     return this.http.get<SeekPage<ProjectMember>>(
       environment.apiUrl + '/project-members',

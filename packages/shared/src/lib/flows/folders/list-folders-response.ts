@@ -1,3 +1,3 @@
-import { Folder } from "./folder";
+import { Folder } from './folder'
 
-export type FolderDto = Folder & {numberOfFlows:number}
+export type FolderDto = Folder & { numberOfFlows: number }

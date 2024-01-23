@@ -8,15 +8,17 @@ import {
 import { ConnectionsTableComponent } from './pages/connections-table/connections-table.component';
 import { FoldersResolver } from './resolvers/folders.resolver';
 import { DashboardContainerComponent } from './dashboard-container.component';
-import { ConnectionsResolver, environment } from '@activepieces/ui/common';
 import {
-  ChatbotsTableComponent,
-  ChatbotSettingsComponent,
-  chatbotSettingsResolver,
-} from '@activepieces/ui/feature-chatbot';
+  isFeatureFlagEnabledResolver,
+  showBasedOnFlagGuard,
+  showPlatformSettingsGuard,
+} from '@activepieces/ui/common';
 import { PlansPageComponent } from '@activepieces/ee-billing-ui';
 import { ProjectMembersTableComponent } from '@activepieces/ee/project-members';
-import { CommunityPiecesTableComponent } from './pages/community-pieces-table/community-pieces-table.component';
+import { CommunityPiecesTableComponent } from '@activepieces/ui/feature-pieces';
+import { ApFlagId } from '@activepieces/shared';
+import { SyncProjectComponent } from './pages/sync-project/sync-project.component';
+import { RepoResolver } from './resolvers/repo.resolver';
 
 export const DashboardLayoutRouting: Routes = [
   {
@@ -26,90 +28,62 @@ export const DashboardLayoutRouting: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: '/flows' },
       {
-        title: `Runs - ${environment.websiteTitle}`,
+        data: {
+          title: $localize`Runs`,
+        },
         path: 'runs',
         pathMatch: 'full',
         component: RunsTableComponent,
       },
       {
-        title: `Plans - ${environment.websiteTitle}`,
+        data: {
+          title: $localize`Plans`,
+        },
+        canActivate: [showBasedOnFlagGuard(ApFlagId.SHOW_BILLING)],
         path: 'plans',
         component: PlansPageComponent,
       },
       {
-        title: `Team - ${environment.websiteTitle}`,
+        data: {
+          title: $localize`Team`,
+        },
         path: 'team',
         component: ProjectMembersTableComponent,
-      },
-      {
-        title: `Chatbots - ${environment.websiteTitle}`,
-        path: 'chatbots',
-        pathMatch: 'full',
-        component: ChatbotsTableComponent,
-      },
-      {
-        path: 'chatbots/:id/settings',
-        canActivate: [],
-        title: `Activepieces - Chatbot settings`,
-        pathMatch: 'full',
-        component: ChatbotSettingsComponent,
         resolve: {
-          connections: ConnectionsResolver,
-          chatbot: chatbotSettingsResolver,
+          [ApFlagId.PROJECT_MEMBERS_ENABLED]: isFeatureFlagEnabledResolver(
+            ApFlagId.PROJECT_MEMBERS_ENABLED
+          ),
         },
       },
       {
-        title: `Chatbots - ${environment.websiteTitle}`,
-        path: 'chatbots',
-        pathMatch: 'full',
-        component: ChatbotsTableComponent,
-      },
-      {
-        path: 'chatbots/:id/settings',
-        canActivate: [],
-        title: `Activepieces - Chatbot settings`,
-        pathMatch: 'full',
-        component: ChatbotSettingsComponent,
-        resolve: {
-          connections: ConnectionsResolver,
-          chatbot: chatbotSettingsResolver,
+        data: {
+          title: $localize`My Pieces`,
         },
-      },
-      {
-        title: `My Pieces - ${environment.websiteTitle}`,
         path: 'settings/my-pieces',
+        canActivate: [showBasedOnFlagGuard(ApFlagId.SHOW_COMMUNITY_PIECES)],
         component: CommunityPiecesTableComponent,
       },
       {
-        title: `Team - ${environment.websiteTitle}`,
-        path: 'team',
-        component: ProjectMembersTableComponent,
-      },
-      {
-        title: `Chatbots - ${environment.websiteTitle}`,
-        path: 'chatbots',
-        pathMatch: 'full',
-        component: ChatbotsTableComponent,
-      },
-      {
-        path: 'chatbots/:id/settings',
-        canActivate: [],
-        title: `Activepieces - Chatbot settings`,
-        pathMatch: 'full',
-        component: ChatbotSettingsComponent,
-        resolve: {
-          connections: ConnectionsResolver,
-          chatbot: chatbotSettingsResolver,
+        data: {
+          title: $localize`Connections`,
         },
-      },
-      {
-        title: `Connections - ${environment.websiteTitle}`,
         path: 'connections',
         pathMatch: 'full',
         component: ConnectionsTableComponent,
       },
       {
-        title: `Flows - ${environment.websiteTitle}`,
+        data: {
+          title: $localize`Settings`,
+        },
+        path: 'settings',
+        pathMatch: 'full',
+        component: SyncProjectComponent,
+        resolve: { repo: RepoResolver },
+      },
+      {
+        data: {
+          title: $localize`Flows`,
+        },
         path: 'flows',
         pathMatch: 'full',
         component: FlowsTableComponent,
@@ -117,6 +91,18 @@ export const DashboardLayoutRouting: Routes = [
           [ARE_THERE_FLOWS_FLAG]: AreThereFlowsResovler,
           folders: FoldersResolver,
         },
+      },
+      {
+        data: {
+          title: $localize`Platform`,
+        },
+        path: 'platform',
+        pathMatch: 'prefix',
+        loadChildren: () =>
+          import('@activepieces/ui-ee-platform').then(
+            (res) => res.UiEePlatformModule
+          ),
+        canActivate: [showPlatformSettingsGuard],
       },
     ],
   },

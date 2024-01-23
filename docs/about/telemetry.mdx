@@ -1,0 +1,32 @@
+---
+title: "Telemetry"
+description: ""
+icon: 'calculator'
+---
+
+# Why Does Activepieces need data?
+
+As a self-hosted product, gathering usage metrics and insights can be difficult for us. However, these analytics are essential in helping us understand key behaviors and delivering a higher quality experience that meets your needs.
+
+To ensure we can continue to improve our product, we have decided to track certain basic behaviors and metrics that are vital for understanding the usage of Activepieces.
+
+We have implemented a minimal tracking plan and provide a detailed list of the metrics collected in a separate section.
+
+
+# What Does Activepieces Collect?
+
+We value transparency in data collection and assure you that we do not collect any personal information. The following events are currently being collected:
+
+[Exact Code](https://github.com/activepieces/activepieces/blob/main/packages/shared/src/lib/common/telemetry.ts)
+
+1. `flow.published`: Event fired when a flow is published
+2. `signed.up`: Event fired when a user signs up
+3. `flow.test`: Event fired when a flow is tested
+4. `flow.created`: Event fired when a flow is created
+5. `start.building`: Event fired when a user starts building
+6. `demo.imported`: Event fired when a demo is imported
+7. `flow.imported`: Event fired when a flow template is imported
+
+# Opting out?
+
+To opt out, set the environment variable `AP_TELEMETRY_ENABLED=false`

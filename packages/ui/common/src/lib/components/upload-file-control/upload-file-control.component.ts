@@ -1,12 +1,14 @@
 import {
   Component,
   DoCheck,
+  ElementRef,
   HostBinding,
   HostListener,
   Input,
   OnDestroy,
   Optional,
   Self,
+  ViewChild,
 } from '@angular/core';
 import {
   ControlValueAccessor,
@@ -16,7 +18,7 @@ import {
 } from '@angular/forms';
 import { MatFormFieldControl } from '@angular/material/form-field';
 import { Subject } from 'rxjs';
-
+import { coerceBooleanProperty, BooleanInput } from '@angular/cdk/coercion';
 @Component({
   selector: 'ap-file-upload',
   templateUrl: './upload-file-control.component.html',
@@ -26,12 +28,9 @@ import { Subject } from 'rxjs';
   styleUrls: ['./upload-file-control.component.scss'],
 })
 export class UploadFileControlComponent
-  implements
-    MatFormFieldControl<File>,
-    OnDestroy,
-    ControlValueAccessor,
-    DoCheck
+  implements OnDestroy, ControlValueAccessor, DoCheck
 {
+  @ViewChild('fileInput') fileInput: ElementRef<HTMLInputElement>;
   public get ngControl(): NgControl {
     return this._ngControl;
   }
@@ -45,19 +44,30 @@ export class UploadFileControlComponent
   id = `file-input-${UploadFileControlComponent.nextId++}`;
   placeholder: string;
   focused = false;
-  empty: boolean;
-  shouldLabelFloat: true;
-  required: boolean;
+  get empty(): boolean {
+    return !this.value;
+  }
+  @HostBinding('class.floated')
+  get shouldLabelFloat(): boolean {
+    return this.focused || !this.empty;
+  }
+  @Input()
+  get required() {
+    return this._required;
+  }
+  set required(req: BooleanInput) {
+    this._required = coerceBooleanProperty(req);
+    this.stateChanges.next();
+  }
+  private _required = false;
   disabled: boolean;
   errorState = true;
   controlType?: string | undefined;
   autofilled?: boolean | undefined;
   userAriaDescribedBy?: string | undefined;
-  @Input() loadedImageUrl = '';
   @Input() extensions: string[] = ['.json'];
   @Input() fileMaxSize = 90000;
   @Input() placeHolder = 'Template.json';
-  @Input() label = 'File';
   touched = false;
   onTouched = () => {
     //ignore
@@ -81,6 +91,7 @@ export class UploadFileControlComponent
       this.ngControl.valueAccessor = this;
     }
   }
+
   setDescribedByIds(ids: string[]): void {
     // console.log(ids);
   }
@@ -115,8 +126,8 @@ export class UploadFileControlComponent
   }
   ngDoCheck() {
     if (this.ngControl) {
-      this.updateErrorState();
       this.touched = this.ngControl.touched || false;
+      this.updateErrorState();
     }
   }
   private updateErrorState() {
@@ -130,5 +141,6 @@ export class UploadFileControlComponent
       this.errorState = newState || false;
       this.stateChanges.next();
     }
+    console.log(this.ngControl?.invalid);
   }
 }

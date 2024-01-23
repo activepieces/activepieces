@@ -1,7 +1,5 @@
-<input #fileInput class="file-input" type="file" [accept]="extensions.join(',')" />
+<input #fileInput id="fileInput" class="file-input" type="file" [accept]="extensions.join(',')" />
 <div class="ap-relative " apFileDropped (fileDropped)="fileDropped($event)">
   <input class="ap-cursor-pointer" matInput readonly [value]="value?.name || ''" [placeholder]="placeHolder"
     (click)="fileInput.click();     this.touched = true;" />
-  <ap-icon-button [height]="25" [width]="25" iconFilename="attach.svg"
-    class="ap-absolute ap-right-[0.625rem] -ap-top-[0.7rem]" (buttonClicked)="fileInput.click()"></ap-icon-button>
 </div>

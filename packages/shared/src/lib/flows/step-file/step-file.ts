@@ -1,5 +1,5 @@
-import { Static, Type } from "@sinclair/typebox";
-import { BaseModelSchema } from "../../common";
+import { Static, Type } from '@sinclair/typebox'
+import { BaseModelSchema } from '../../common'
 
 export const StepFile = Type.Object({
     ...BaseModelSchema,
@@ -11,7 +11,7 @@ export const StepFile = Type.Object({
     data: Type.Unknown(),
 })
 
-export type StepFile = Static<typeof StepFile>;
+export type StepFile = Static<typeof StepFile>
 
 export const StepFileUpsert = Type.Object({
     name: Type.String(),
@@ -20,11 +20,17 @@ export const StepFileUpsert = Type.Object({
     file: Type.Unknown(),
 })
 
-export type StepFileUpsert = Static<typeof StepFileUpsert>;
+export type StepFileUpsert = Static<typeof StepFileUpsert>
 
 export const StepFileGet = Type.Object({
     id: Type.String(),
     projectId: Type.String(),
 })
 
-export type StepFileGet = Static<typeof StepFileGet>;
+export type StepFileGet = Static<typeof StepFileGet>
+
+export const StepFileWithUrl = Type.Composite([StepFile, Type.Object({
+    url: Type.String(),
+})])
+
+export type StepFileWithUrl = Static<typeof StepFileWithUrl>

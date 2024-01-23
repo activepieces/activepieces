@@ -14,19 +14,12 @@ To set up the development environment, you can choose one of the following metho
 
 ## Pieces Development
 
-To avoid making the dev environment slow, not all pieces are functional during development at first. By default, only
-theses pieces are functional at first:
-- delay
-- discord
-- github
-- hackernews
-- slack
-- store
+To avoid making the dev environment slow, not all pieces are functional during development at first. By default, only these pieces are functional at first, as specified in `AP_DEV_PIECES`.
 
-Any other piece become functional after any edit in its code.
+(https://github.com/activepieces/activepieces/blob/main/packages/backend/.env#L4
 
-To override the default list available at first, define a `AP_DEV_PIECES` env var with a comma-separated list of pieces
-to make available. For example, to make `google-sheets` and `cal-com` available you can use
+To override the default list available at first, define an `AP_DEV_PIECES` environment variable with a comma-separated list of pieces to make available. For example, to make `google-sheets` and `cal-com` available, you can use:
+
 ```sh
 AP_DEV_PIECES=google-sheets,cal-com npm start
 ```

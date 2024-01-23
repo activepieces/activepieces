@@ -11,23 +11,26 @@ import { map, Observable, of, shareReplay, switchMap, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { FormControl } from '@angular/forms';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
-import { ActionType, TriggerType } from '@activepieces/shared';
+import { ActionType, ApFlagId, TriggerType } from '@activepieces/shared';
 import {
   BuilderSelectors,
   CollectionBuilderService,
-  FlowItem,
+  Step,
   RightSideBarType,
   ViewModeEnum,
 } from '@activepieces/ui/feature-builder-store';
 import { forkJoin } from 'rxjs';
 import {
   TestStepService,
-  PieceMetadataService,
   isOverflown,
-  CORE_SCHEDULE,
+  FlagService,
 } from '@activepieces/ui/common';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/common';
+import {
+  CORE_SCHEDULE,
+  PieceMetadataService,
+} from '@activepieces/ui/feature-pieces';
 
 @Component({
   selector: 'app-flow-right-sidebar',
@@ -42,7 +45,7 @@ export class FlowRightSidebarComponent implements OnInit {
   testFormControl: FormControl<string> = new FormControl('', {
     nonNullable: true,
   });
-  currentStep$: Observable<FlowItem | null | undefined>;
+  currentStep$: Observable<Step | null | undefined>;
   editStepSectionRect: DOMRect;
   @ViewChild('editStepSection', { read: ElementRef })
   editStepSection: ElementRef;
@@ -55,6 +58,7 @@ export class FlowRightSidebarComponent implements OnInit {
   isCurrentStepPieceWebhookTrigger$: Observable<boolean>;
   viewMode$: Observable<ViewModeEnum>;
   ViewModeEnum = ViewModeEnum;
+  showDocs$: Observable<boolean>;
   currentStepPieceVersion$: Observable<
     | {
         version: string | undefined;
@@ -68,12 +72,14 @@ export class FlowRightSidebarComponent implements OnInit {
     private ngZone: NgZone,
     private testStepService: TestStepService,
     private renderer2: Renderer2,
+    private flagService: FlagService,
     private pieceMetadaService: PieceMetadataService,
     public builderService: CollectionBuilderService,
     private builderAutocompleteMentionsDropdownService: BuilderAutocompleteMentionsDropdownService
   ) {}
 
   ngOnInit(): void {
+    this.showDocs$ = this.flagService.isFlagEnabled(ApFlagId.SHOW_DOCS);
     this.checkCurrentStepPieceVersion();
     this.rightSidebarType$ = this.store.select(
       BuilderSelectors.selectCurrentRightSideBarType
@@ -91,11 +97,7 @@ export class FlowRightSidebarComponent implements OnInit {
   private checkIfCurrentStepIsPollingTrigger() {
     this.isCurrentStepPollingTrigger$ = this.currentStep$.pipe(
       switchMap((step) => {
-        if (
-          step &&
-          step.type === TriggerType.PIECE &&
-          step.settings.pieceName !== CORE_SCHEDULE
-        ) {
+        if (step && step.type === TriggerType.PIECE) {
           return this.pieceMetadaService
             .getPieceMetadata(
               step.settings.pieceName,
@@ -121,11 +123,7 @@ export class FlowRightSidebarComponent implements OnInit {
   private checkIfCurrentStepIsPieceWebhookTrigger() {
     this.isCurrentStepPieceWebhookTrigger$ = this.currentStep$.pipe(
       switchMap((step) => {
-        if (
-          step &&
-          step.type === TriggerType.PIECE &&
-          step.settings.pieceName !== CORE_SCHEDULE
-        ) {
+        if (step && step.type === TriggerType.PIECE) {
           return this.pieceMetadaService
             .getPieceMetadata(
               step.settings.pieceName,
@@ -150,6 +148,16 @@ export class FlowRightSidebarComponent implements OnInit {
     this.currentStep$ = this.store
       .select(BuilderSelectors.selectCurrentStep)
       .pipe(
+        switchMap((step) => {
+          if (
+            step &&
+            step.type === TriggerType.PIECE &&
+            step.settings.pieceName === CORE_SCHEDULE
+          ) {
+            return of(null);
+          }
+          return of(step);
+        }),
         tap(() => {
           setTimeout(() => {
             this.builderAutocompleteMentionsDropdownService.editStepSection =

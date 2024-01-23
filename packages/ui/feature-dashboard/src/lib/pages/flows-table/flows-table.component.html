@@ -1,8 +1,7 @@
-<div class="ap-h-full ap-mx-7.5" [class.ap-hidden]="(areThereFlows$|async)===false">
-
+<div class="ap-h-[calc(100% - 6.5625rem)] ap-mx-7.5" [class.ap-hidden]="(areThereFlows$|async)===false">
   <div class="ap-flex ap-h-full ">
     <div class=" ap-min-w-[274px] ap-max-w-[274px]" #foldersSection>
-      <div class="ap-typography-headline-5 !ap-font-semibold ap-my-7.5">My Flows</div>
+      <div class="ap-typography-headline-5 !ap-font-semibold ap-mb-7.5 ap-mt-20" i18n>My Flows</div>
       <app-folders-list></app-folders-list>
     </div>
     <div class="ap-h-full ap-w-[calc(100%-274px)] ap-pl-[30px] ap-pt-[80px]">
@@ -10,33 +9,33 @@
         <div
           class=" ap-rounded ap-border ap-border-solid ap-border-dividers ap-p-[30px] ap-pb-[80px] ap-flex ap-flex-col">
           <app-flows-table-title></app-flows-table-title>
-          <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Flows">
+          <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Flows" i18n-aria-label>
             <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef>Name</th>
+              <th mat-header-cell *matHeaderCellDef i18n>Name</th>
               <td mat-cell *matCellDef="let flow"><a class="!ap-typography-body-2 !ap-no-underline !ap-text-body"
                   (auxclick)="$event.stopPropagation()" [href]="'/flows/'+flow.id">
                   {{ flow.version.displayName }}
                 </a></td>
             </ng-container>
             <ng-container matColumnDef="steps">
-              <th mat-header-cell *matHeaderCellDef>Steps</th>
+              <th mat-header-cell *matHeaderCellDef i18n>Steps</th>
               <td mat-cell *matCellDef="let flow">
                 <ap-pieces-icons-from-flow [flowVersion]="flow.version"></ap-pieces-icons-from-flow>
               </td>
             </ng-container>
             <ng-container matColumnDef="created">
-              <th mat-header-cell *matHeaderCellDef>Created</th>
+              <th mat-header-cell *matHeaderCellDef i18n>Created</th>
               <td mat-cell *matCellDef="let flow">{{ flow.created | date: 'short' }}</td>
             </ng-container>
 
             <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <th mat-header-cell *matHeaderCellDef i18n>Status</th>
               <td mat-cell *matCellDef="let flow">
                 <div class="ap-px-1 ap-flex ap-gap-2 ap-items-center">
                   <mat-slide-toggle color="primary" [class.ap-cursor-not-allowed]="flow.instanceToggleControl.disabled"
                     (click)="$event.stopImmediatePropagation(); toggleFlowStatus(flow,flow.instanceToggleControl)"
-                    [formControl]="flow.instanceToggleControl" [matTooltip]="flow.instanceToggleControl.disabled? 'Please publish the flow':
-                    flow.instanceToggleControl.value? 'Flow is on' : 'Flow is off'"></mat-slide-toggle>
+                    [formControl]="flow.instanceToggleControl"
+                    [matTooltip]="getStatusFlowMatTooltip(flow)"></mat-slide-toggle>
                   <div class="ap-min-h-[30px] ap-min-w-[30px] ap-flex ap-items-center ap-justify-center">
                     <svg-icon [src]="getTriggerIcon(flow)"
                       *ngIf="flow.instanceToggleControl.value && !flowsUpdateStatusRequest$[flow.id]"
@@ -52,7 +51,7 @@
             </ng-container>
 
             <ng-container matColumnDef="folderName">
-              <th mat-header-cell *matHeaderCellDef>Folder</th>
+              <th mat-header-cell *matHeaderCellDef i18n>Folder</th>
               <td mat-cell *matCellDef="let flow">{{ flow.folderDisplayName }}</td>
             </ng-container>
             <ng-container matColumnDef="action">
@@ -68,21 +67,21 @@
                     <div class="ap-flex ap-gap-3 ap-items-center">
                       <svg-icon src="assets/img/custom/move.svg" class="ap-w-[20px] ap-h-[20px]"
                         [applyClass]="true"></svg-icon>
-                      <span>Move to...</span>
+                      <span i18n>Move to...</span>
                     </div>
                   </button>
                   <button mat-menu-item (click)="duplicate(flow)">
                     <div class="ap-flex ap-gap-3 ap-items-center">
                       <svg-icon src="assets/img/custom/duplicate.svg" class="ap-w-[20px] ap-h-[20px]"
                         [applyClass]="true"></svg-icon>
-                      <span>Duplicate</span>
+                      <span i18n>Duplicate</span>
                     </div>
                   </button>
                   <button (click)="deleteFlow(flow)" mat-menu-item>
                     <div class="ap-flex ap-gap-3 ap-items-center">
                       <svg-icon src="assets/img/custom/trash.svg" class="ap-fill-danger ap-w-[20px] ap-h-[20px]"
                         [applyClass]="true"></svg-icon>
-                      <span class="ap-text-danger">Delete</span>
+                      <span class="ap-text-danger" i18n>Delete</span>
                     </div>
                   </button>
                 </mat-menu>
@@ -99,10 +98,10 @@
           <ng-container *ngIf="dataSource.data.length===0 && (dataSource.isLoading$ | async) === false">
             <div class="ap-flex ap-items-center ap-justify-center ap-my-8  ap-flex-grow">
               <ng-container *ngIf="showAllFlows$ | async; else folderEmptyMessage">
-                You don't have any flows yet
+                <span i18n>You don't have any flows yet</span>
               </ng-container>
               <ng-template #folderEmptyMessage>
-                This folder doesn't have any flows yet
+                <span i18n>This folder doesn't have any flows yet</span>
               </ng-template>
             </div>
           </ng-container>

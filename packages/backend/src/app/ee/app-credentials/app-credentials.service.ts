@@ -28,19 +28,26 @@ export const appCredentialService = {
         return paginationHelper.createPage<AppCredential>(data, cursor)
     },
     async getOneOrThrow(id: AppCredentialId): Promise<AppCredential> {
-        return await appCredentialRepo.findOneByOrFail({ id })
+        return appCredentialRepo.findOneByOrFail({ id })
     },
     async upsert({ projectId, request }: { projectId: ProjectId, request: UpsertAppCredentialRequest }): Promise<AppCredential | null> {
+        const newId = request.id ?? apId()
         await appCredentialRepo.upsert({
-            id: apId(),
+            id: newId,
             projectId,
             ...request,
-        }, ['projectId', 'appName'])
+        }, ['id'])
         return appCredentialRepo.findOneBy({ projectId, appName: request.appName })
     },
-    async delete(id: AppCredentialId): Promise<void> {
+    async delete({ id, projectId }: DeleteParams): Promise<void> {
         await appCredentialRepo.delete({
             id,
+            projectId,
         })
     },
+}
+
+type DeleteParams = {
+    id: AppCredentialId
+    projectId: ProjectId
 }

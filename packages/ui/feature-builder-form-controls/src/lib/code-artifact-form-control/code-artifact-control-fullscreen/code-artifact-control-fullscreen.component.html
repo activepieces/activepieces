@@ -1,15 +1,16 @@
 <div class="code-editor ap-h-full ap-flex ap-flex-col">
-  <div class="modal-header  ap-p-3 ap-typography-headline-6 ap-flex ap-text-white  ap-items-center">
-    Code Editor
+  <div class="ap-gap-2 ap-bg-header ap-p-3 ap-typography-headline-6 ap-flex ap-text-body  ap-items-center">
+    <span i18n>Code Editor</span>
     <div class="ap-flex-grow"></div>
 
-    <ap-button *ngIf="!readOnly" btnStyle="flat" (buttonClicked)="openNpmPackageModal()" btnSize="small">
+    <ap-button *ngIf="!readOnly" btnStyle="basic" (buttonClicked)="openNpmPackageModal()" btnSize="small" i18n>
       Add npm package
     </ap-button>
-    <ap-button [loading]="testLoading" btnStyle="flat" class="ap-ml-1" btnSize="small"
-      (buttonClicked)="openTestCodeModal()">Test code
+    <ap-button [loading]="testLoading" btnStyle="flat" class="ap-ml-1" btnSize="small" (buttonClicked)="testCode()"
+      i18n>Test code
     </ap-button>
-    <ap-icon-button (click)="hide()" iconFilename="minimize.svg" matTooltip="Close"></ap-icon-button>
+    <ap-icon-button (click)="hide()" iconFilename="minimize.svg" i18n-matTooltip
+      matTooltip="Minimize Editor"></ap-icon-button>
   </div>
 
 
@@ -45,32 +46,56 @@
       <div class="ap-p-2 ap-flex-grow overflow-auto">
         <div class="ap-h-full">
           <!-- Use ngModel to update the editor outside the modal -->
-          <ngx-monaco-editor class="!ap-h-full" *ngIf="selectedFile === SelectedFileInFullscreenCodeEditor.CONTENT"
-            [options]="codeEditorOptions" [ngModel]="codeFilesForm.controls.content.value"
-            (ngModelChange)="codeFilesForm.controls.content.setValue($event)"></ngx-monaco-editor>
+          <ngx-monaco-editor (onInit)="focusEditor($event)" class="!ap-h-full"
+            *ngIf="selectedFile === SelectedFileInFullscreenCodeEditor.CONTENT" #codeEditor
+            [options]="codeEditorOptions" [ngModel]="codeFilesForm.controls.code.value"
+            (ngModelChange)="codeFilesForm.controls.code.setValue($event)">
 
-          <ngx-monaco-editor class="!ap-h-full" *ngIf="selectedFile ===  SelectedFileInFullscreenCodeEditor.PACKAGE"
-            [ngModel]="codeFilesForm.controls.package.value"
-            (ngModelChange)="codeFilesForm.controls.package.setValue($event)"
+          </ngx-monaco-editor>
+
+
+          <ngx-monaco-editor (onInit)="focusEditor($event)" class="!ap-h-full"
+            *ngIf="selectedFile ===  SelectedFileInFullscreenCodeEditor.PACKAGE"
+            [ngModel]="codeFilesForm.controls.packageJson.value"
+            (ngModelChange)="codeFilesForm.controls.packageJson.setValue($event)"
             [options]="packageDotJsonOptions"></ngx-monaco-editor>
         </div>
 
       </div>
-      <div class="ap-p-2 console-container">
-        <div class="console-size code-height-auto ap-h-full">
+      <div class="ap-p-2 console-container ap-min-w-[18.75rem]">
+        <div class="console-size code-height-auto ap-h-[98%]">
           <div class="ap-flex ap-flex-col ap-h-full">
-            <div class="ap-flex ap-gap-2">
-              <ap-button btnColor="primary"
-                [btnStyle]="selectedTab === SelectedTabInFullscreenCodeEditor.OUTPUT? 'flat':'stroked'" class="mr-2"
-                btnSize="small" (buttonClicked)="selectTab(SelectedTabInFullscreenCodeEditor.OUTPUT)"> Output
-              </ap-button>
-              <ap-button btnColor="primary" btnSize="small"
-                [btnStyle]="selectedTab === SelectedTabInFullscreenCodeEditor.CONSOLE? 'flat':'stroked'"
-                (buttonClicked)="selectTab(SelectedTabInFullscreenCodeEditor.CONSOLE)"> Console
-              </ap-button>
-            </div>
+
+            <mat-tab-group
+              (selectedIndexChange)="$event === 0? selectTab(SelectedTabInFullscreenCodeEditor.OUTPUT): selectTab(SelectedTabInFullscreenCodeEditor.CONSOLE);  "
+              dynamicHeight="true" animationDuration="0" class="!ap-typography-caption">
+              <mat-tab>
+                <ng-template mat-tab-label>
+                  <div i18n class="ap-typography-caption">
+                    Output
+                  </div>
+                </ng-template>
+              </mat-tab>
+              <mat-tab>
+                <ng-template mat-tab-label>
+                  <div i18n class="ap-typography-caption">
+                    Console
+                  </div>
+                </ng-template>
+              </mat-tab>
+            </mat-tab-group>
+
             <div class="ap-mt-2 ap-flex-grow ap-relative">
               <form [formGroup]="testResultForm" class="ap-h-full">
+                <div class="ap-absolute ap-top-2 ap-right-2 ap-z-40">
+                  <ap-icon-button iconFilename="copy.svg" tooltipText="Copy"
+                    *ngIf="testResultForm.get('outputResult')?.value" extraClasses="ap-fill-white"
+                    (click)="selectedTab === SelectedTabInFullscreenCodeEditor.OUTPUT ? copyToClipboard(testResultForm.get('outputResult')?.value) : copyToClipboard(testResultForm.get('consoleResult')?.value)">
+                  </ap-icon-button>
+                </div>
+
+
+
                 <ngx-codemirror *ngIf="selectedTab === SelectedTabInFullscreenCodeEditor.OUTPUT" class="ap-h-full"
                   formControlName="outputResult" [options]="outputResultEditorOptions"></ngx-codemirror>
                 <ngx-codemirror *ngIf="selectedTab === SelectedTabInFullscreenCodeEditor.CONSOLE"

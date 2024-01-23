@@ -9,13 +9,15 @@ import { ProjectActions } from './project.action';
 import { ProjectSelectors } from './project.selector';
 import { AuthenticationService } from '../../service/authentication.service';
 import { ProjectService } from '../../service/project.service';
+import { PlatformProjectService } from '../../service/platform-project.service';
+import { StatusCodes } from 'http-status-codes';
 
 @Injectable()
 export class ProjectEffects {
   loadInitial$ = createEffect(() => {
     return this.actions$.pipe(
-      ofType(CommonActions.loadInitial),
-      switchMap(({ user }) => {
+      ofType(CommonActions.loadProjects),
+      switchMap(({ user, currentProjectId }) => {
         if (user === undefined) {
           return EMPTY;
         }
@@ -26,13 +28,23 @@ export class ProjectEffects {
               this.authenticationService.logout();
             }
           }),
-          map((projects) => ProjectActions.setProjects({ projects })),
+          map((projects) => {
+            return ProjectActions.setProjects({
+              projects,
+              selectedIndex: projects.findIndex(
+                (p) => p.id === currentProjectId
+              ),
+            });
+          }),
           catchError((error) => {
-            this.snackBar.open(
-              `Error loading projects: ${error.message}`,
-              'Dismiss'
-            );
-            this.authenticationService.logout();
+            const status = error?.status;
+            if (status === StatusCodes.UNAUTHORIZED) {
+              this.snackBar.open(
+                `Error loading projects: ${error.message}`,
+                'Dismiss'
+              );
+              this.authenticationService.logout();
+            }
             return of({ type: 'Load Projects Error' });
           })
         );
@@ -45,12 +57,13 @@ export class ProjectEffects {
       return this.actions$.pipe(
         ofType(ProjectActions.updateProject),
         concatLatestFrom(() =>
-          this.store.select(ProjectSelectors.selectProject)
+          this.store.select(ProjectSelectors.selectCurrentProject)
         ),
         switchMap(([{ notifyStatus }, project]) => {
-          return this.projectService
+          return this.platformProjectService
             .update(project.id, {
               notifyStatus: notifyStatus,
+              displayName: project.displayName,
             })
             .pipe(
               catchError((error) => {
@@ -70,8 +83,9 @@ export class ProjectEffects {
   constructor(
     private actions$: Actions,
     private store: Store,
-    private authenticationService: AuthenticationService,
     private projectService: ProjectService,
+    private authenticationService: AuthenticationService,
+    private platformProjectService: PlatformProjectService,
     private snackBar: MatSnackBar
   ) {}
 }

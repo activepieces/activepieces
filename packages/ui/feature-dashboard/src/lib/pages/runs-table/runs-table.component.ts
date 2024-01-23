@@ -7,12 +7,25 @@ import {
 import {
   ApEdition,
   ExecutionOutputStatus,
+  FlowId,
+  FlowRetryStrategy,
   FlowRun,
   NotificationStatus,
+  ProjectId,
   SeekPage,
 } from '@activepieces/shared';
 import { ActivatedRoute, Router } from '@angular/router';
-import { distinctUntilChanged, map, Observable, switchMap, tap } from 'rxjs';
+import {
+  combineLatest,
+  distinctUntilChanged,
+  map,
+  Observable,
+  shareReplay,
+  startWith,
+  Subject,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { RunsTableDataSource } from './runs-table.datasource';
 import {
   InstanceRunService,
@@ -20,10 +33,17 @@ import {
   FlagService,
   ProjectSelectors,
   ProjectActions,
+  NavigationService,
+  AuthenticationService,
+  FlowService,
+  FLOW_QUERY_PARAM,
+  STATUS_QUERY_PARAM,
 } from '@activepieces/ui/common';
 import { FormControl } from '@angular/forms';
 import { Store } from '@ngrx/store';
-
+import { RunsService } from '../../services/runs.service';
+import { DropdownOption } from '@activepieces/pieces-framework';
+const allOptionValue = 'all';
 @Component({
   templateUrl: './runs-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -31,38 +51,109 @@ import { Store } from '@ngrx/store';
 export class RunsTableComponent implements OnInit {
   @ViewChild(ApPaginatorComponent, { static: true })
   paginator!: ApPaginatorComponent;
+  readonly allOptionValue = allOptionValue;
   runsPage$: Observable<SeekPage<FlowRun>>;
+  searchControl: FormControl<string> = new FormControl('', {
+    nonNullable: true,
+  });
   nonCommunityEdition$: Observable<boolean>;
   toggleNotificationFormControl: FormControl<boolean> = new FormControl();
   dataSource!: RunsTableDataSource;
-  displayedColumns = ['flowName', 'status', 'started', 'finished'];
+  displayedColumns = ['flowName', 'status', 'started', 'finished', 'action'];
   updateNotificationsValue$: Observable<boolean>;
-  selectedStatus: FormControl<ExecutionOutputStatus | undefined> =
-    new FormControl();
-  changeRunStatus$: Observable<void>;
+  refreshTableForReruns$: Subject<boolean> = new Subject();
+  statusFilterControl: FormControl<
+    ExecutionOutputStatus | typeof allOptionValue
+  > = new FormControl(allOptionValue, { nonNullable: true });
+  flowFilterControl = new FormControl<string>(allOptionValue, {
+    nonNullable: true,
+  });
+  selectedFlowName$: Observable<string | undefined>;
+  flows$: Observable<DropdownOption<FlowId>[]>;
+  currentProject: ProjectId;
+  filtersChanged$: Observable<void>;
   readonly ExecutionOutputStatus = ExecutionOutputStatus;
-
+  FlowRetryStrategy: typeof FlowRetryStrategy = FlowRetryStrategy;
+  retryFlow$?: Observable<void>;
+  setInitialFilters$?: Observable<void>;
   constructor(
     private router: Router,
     private activatedRoute: ActivatedRoute,
     private flagsService: FlagService,
     private store: Store,
-    private instanceRunService: InstanceRunService
-  ) {}
+    private instanceRunService: InstanceRunService,
+    private navigationService: NavigationService,
+    private runsService: RunsService,
+    private flowsService: FlowService,
+    private authenticationService: AuthenticationService
+  ) {
+    this.flowFilterControl.setValue(
+      this.activatedRoute.snapshot.queryParamMap.get(FLOW_QUERY_PARAM) ||
+        this.allOptionValue
+    );
+    this.statusFilterControl.setValue(
+      (this.activatedRoute.snapshot.queryParamMap.get(
+        STATUS_QUERY_PARAM
+      ) as ExecutionOutputStatus) || this.allOptionValue
+    );
+  }
 
   ngOnInit(): void {
-    this.changeRunStatus$ = this.selectedStatus.valueChanges.pipe(
+    this.currentProject = this.authenticationService.getProjectId();
+    this.flows$ = this.flowsService
+      .list({
+        projectId: this.currentProject,
+        cursor: undefined,
+        limit: 1000,
+      })
+      .pipe(
+        map((res) => {
+          return res.data.map((flow) => {
+            return {
+              label: flow.version.displayName,
+              value: flow.id,
+            };
+          });
+        }),
+        shareReplay(1)
+      );
+
+    this.selectedFlowName$ = this.flowFilterControl.valueChanges.pipe(
+      startWith(this.flowFilterControl.value),
+      switchMap((flowId) => {
+        return this.flows$.pipe(
+          map((flows) => {
+            return (
+              flows.find((flow) => flow.value === flowId)?.label ||
+              $localize`All`
+            );
+          })
+        );
+      })
+    );
+    this.filtersChanged$ = combineLatest({
+      flowId: this.flowFilterControl.valueChanges.pipe(
+        startWith(this.flowFilterControl.value)
+      ),
+      status: this.statusFilterControl.valueChanges.pipe(
+        startWith(this.statusFilterControl.value)
+      ),
+    }).pipe(
       distinctUntilChanged(),
-      tap((status) => {
+      tap((result) => {
         this.router.navigate(['runs'], {
           queryParams: {
+            flowId:
+              result.flowId === this.allOptionValue ? undefined : result.flowId,
             status:
-              status && status in ExecutionOutputStatus ? status : undefined,
+              result.status === this.allOptionValue ? undefined : result.status,
           },
+          queryParamsHandling: 'merge',
         });
       }),
       map(() => undefined)
     );
+
     this.nonCommunityEdition$ = this.flagsService
       .getEdition()
       .pipe(map((res) => res !== ApEdition.COMMUNITY));
@@ -87,19 +178,27 @@ export class RunsTableComponent implements OnInit {
           )
         )
       );
+
     this.dataSource = new RunsTableDataSource(
       this.activatedRoute.queryParams,
       this.paginator,
       this.store,
-      this.instanceRunService
+      this.instanceRunService,
+      this.refreshTableForReruns$.asObservable().pipe(startWith(true))
     );
   }
 
-  openInstanceRun(run: FlowRun) {
-    const url =
-      this.router.serializeUrl(this.router.createUrlTree(['/runs'])) +
-      '/' +
-      run.id;
-    window.open(url, '_blank', 'noopener');
+  openInstanceRun(run: FlowRun, event: MouseEvent) {
+    const route = '/runs/' + run.id;
+    const newWindow = event.ctrlKey || event.which == 2 || event.button == 4;
+    this.navigationService.navigate(route, newWindow);
+  }
+
+  retryFlow(run: FlowRun, strategy: FlowRetryStrategy) {
+    this.retryFlow$ = this.runsService.retry(run.id, strategy).pipe(
+      tap(() => {
+        this.refreshTableForReruns$.next(true);
+      })
+    );
   }
 }

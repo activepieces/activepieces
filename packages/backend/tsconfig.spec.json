@@ -8,11 +8,10 @@
   "include": [
     "types/**/*.d.ts",
     "jest.config.ts",
-    "src/**/*.test.ts",
-    "src/**/*.spec.ts",
-    "src/**/*.d.ts",
-    "test/**/*.test.ts",
-    "test/**/*.spec.ts",
-    "test/**/*.d.ts",
-  ]
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "test/**/*.ts",
+    "node_modules/fastify-raw-body/plugin.d.ts"
+  ],
+  "exclude": []
 }

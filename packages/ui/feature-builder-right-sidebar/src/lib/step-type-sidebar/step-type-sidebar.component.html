@@ -4,7 +4,7 @@
   <ng-container *ngIf="flowItemDetailsLoaded$ | async; else loading">
     <mat-form-field (click)="$event.stopPropagation();" class="ap-w-full ap-px-5">
       <mat-icon matPrefix color="placeholder-icon" svgIcon="search"></mat-icon>
-      <input #searchInput [formControl]="searchFormControl" matInput placeholder="Search" autocomplete="off">
+      <input #searchInput [formControl]="searchFormControl" matInput placeholder="Search" i18n-placeholder autocomplete="off">
     </mat-form-field>
     <mat-tab-group #tabGroup>
       <mat-tab *ngFor="let tab of tabsAndTheirLists; let i = index">
@@ -15,7 +15,8 @@
         </ng-template>
         <ng-template matTabContent>
           <ng-container *ngIf="tab.list$ | async as list; else loading">
-            <app-step-type-list [typesList]="list" (typeSelected)="onTypeSelected($event)"
+            <app-step-type-list [typesList]="list" (typeSelected)="onTypeSelected($event)" 
+              [showRequestPieceButton]="showCommunity$ | async"
               [emptyListText]="tab.emptyListText">
             </app-step-type-list>
           </ng-container>

@@ -18,6 +18,7 @@ import {
 import { TestStepService } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 import { StepRunResponse } from '@activepieces/shared';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 type PackageName = string;
 type PackageVersion = string;
@@ -34,6 +35,7 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
   readOnly: boolean;
   selectedFile = SelectedFileInFullscreenCodeEditor.CONTENT;
   executeCodeTest$: Observable<StepRunResponse>;
+
   codeEditorOptions = {
     minimap: { enabled: false },
     theme: 'apTheme',
@@ -75,7 +77,8 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
     private dialogService: MatDialog,
     private testStepService: TestStepService,
     private store: Store,
-    private cd: ChangeDetectorRef
+    private cd: ChangeDetectorRef,
+    private snackbar: MatSnackBar
   ) {
     this.testResultForm = this.formBuilder.group({
       outputResult: new FormControl(),
@@ -84,6 +87,14 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
     this.codeFilesForm = this.state.codeFilesForm;
     this.readOnly = this.state.readOnly;
   }
+
+  focusEditor(editor: { focus: () => void }) {
+    //needs to wait for the dialog to finish opening
+    setTimeout(() => {
+      editor.focus();
+    }, 200);
+  }
+
   ngOnInit(): void {
     if (this.readOnly) {
       this.codeEditorOptions.readOnly = this.readOnly;
@@ -118,12 +129,13 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
   addNewPackage(pkg: { [key: PackageName]: PackageVersion }) {
     const packageDotJson = this.getPackageDotJsonObject();
     packageDotJson.dependencies = { ...packageDotJson.dependencies, ...pkg };
-    this.codeFilesForm.controls.package.setValue(
+    this.selectedFile = SelectedFileInFullscreenCodeEditor.PACKAGE;
+    this.codeFilesForm.controls.packageJson.setValue(
       this.codeService.beautifyJson(packageDotJson)
     );
   }
   getPackageDotJsonObject(): { dependencies: PackagesMetada } {
-    const packageControlValue = this.codeFilesForm.controls.package.value;
+    const packageControlValue = this.codeFilesForm.controls.packageJson.value;
     try {
       const packageDotJson = JSON.parse(packageControlValue);
       if (!packageDotJson.dependencies) {
@@ -134,13 +146,13 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
       return { dependencies: {} };
     }
   }
-  openTestCodeModal() {
+  testCode() {
     this.testResultForm.setValue({ outputResult: '', consoleResult: '' });
     this.testLoading = true;
     const testCodeParams$ = forkJoin({
       step: this.store.select(BuilderSelectors.selectCurrentStep).pipe(take(1)),
       flowVersionId: this.store
-        .select(BuilderSelectors.selectCurrentFlowVersionId)
+        .select(BuilderSelectors.selectDraftVersionId)
         .pipe(take(1)),
     });
 
@@ -179,5 +191,10 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
   }
   hide() {
     this.dialogRef.close(true);
+  }
+
+  copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text);
+    this.snackbar.open($localize`Copied to clipboard`);
   }
 }

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { MentionListItem } from '../../utils';
-import { FlowItem } from '@activepieces/ui/feature-builder-store';
+import { Step } from '@activepieces/ui/feature-builder-store';
 
 @Component({
   selector: 'app-generic-step-mention-item',
@@ -9,6 +9,6 @@ import { FlowItem } from '@activepieces/ui/feature-builder-store';
 })
 export class GenericStepMentionItemComponent {
   @Input() indentation = false;
-  @Input() stepMention: MentionListItem & { step: FlowItem };
+  @Input() stepMention: MentionListItem & { step: Step };
   @Input() stepIndex: number;
 }

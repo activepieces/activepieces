@@ -9,7 +9,7 @@ export enum ProjectActionType {
 
 export const setProjects = createAction(
   ProjectActionType.SET_PROJECTS,
-  props<{ projects: Project[] }>()
+  props<{ projects: Project[]; selectedIndex: number }>()
 );
 
 export const updateProject = createAction(

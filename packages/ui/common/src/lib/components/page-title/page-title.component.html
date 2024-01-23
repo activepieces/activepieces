@@ -1,0 +1,12 @@
+<div class="ap-py-4 ap-mb-4 ap-flex ap-items-center ap-justify-between ">
+    <div>
+        <div class="ap-flex ap-items-center ap-gap-2  ap-font-semibold ap-typography-headline-6">
+            <div class="ap-font-semibold ">
+                {{ title }}
+            </div>
+            <div *ngIf="isBeta" class="ap-typography-caption ap-text-primary ap-mt-1" i18n>BETA</div>
+        </div>
+        <ng-content select="[underTitle]"></ng-content>
+    </div>
+    <ng-content select="[actionButton]"></ng-content>
+</div>

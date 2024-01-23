@@ -1,115 +1,108 @@
-import { RunEnvironment } from "../flow-run/flow-run";
-import { FlowId } from "../flows/flow"
-import { ProjectId } from "../project/project"
-import { UserId } from "../user/user"
+import { RunEnvironment } from '../flow-run/flow-run'
+import { FlowId } from '../flows/flow'
+import { ProjectId } from '../project/project'
+import { UserId } from '../user/user'
 
-interface ChatbotCreated {
-    chatbotId: string
-}
-
-interface FlowCreated {
+type FlowCreated = {
     flowId: FlowId
 }
-interface PiecesSearch {
-    target: 'steps' | 'triggers',
+type PiecesSearch = {
+    target: 'steps' | 'triggers'
     search: string
 }
-interface FlowImported {
-   id: string;
-   name:string,
-   location:string
-}
-interface TemplateSearch{
-    search:string,
-    tags:string[],
-    pieces:string[]
+
+type TemplateSearch = {
+    search: string
+    tags: string[]
+    pieces: string[]
 
 }
 
-interface RunCreated {
-    projectId: ProjectId;
+type RunCreated = {
+    projectId: ProjectId
     flowId: FlowId
-    environment: RunEnvironment;
+    environment: RunEnvironment
 }
 
-interface FlowPublished {
-    flowId: FlowId;
+type FlowPublished = {
+    flowId: FlowId
 }
 
-interface SignedUp {
-    userId: UserId;
-    email: string;
-    firstName: string;
-    lastName: string;
-    projectId: ProjectId;
+type SignedUp = {
+    userId: UserId
+    email: string
+    firstName: string
+    lastName: string
+    projectId: ProjectId
 }
 
-interface QuotaAlert {
-    percentageUsed: number;
+type QuotaAlert = {
+    percentageUsed: number
 }
-interface FlowImported {
-    id: string;
-    name: string;
-    location: string;
-    tab?:string;
-}
-
-interface UpgradeClicked {
-    limit?: 'team' | 'connections';
+type FlowImported = {
+    id: string
+    name: string
+    location: string
+    tab?: string
 }
 
-interface UpgradePopup {
-    limit?: 'team' | 'connections';
+type UpgradeClicked = {
+    limitType?: 'team' | 'connections'
+    limit: number
 }
 
-interface ReferralLinkCopied {
-    userId: UserId;
+type UpgradePopup = {
+    limitType?: 'team' | 'connections'
+    limit: number
+    
 }
 
-interface Referral {
-    referredUserId: UserId;
+type ReferralLinkCopied = {
+    userId: UserId
 }
 
-interface FlowShared {
-    flowId: FlowId;
-    projectId: ProjectId;
+type Referral = {
+    referredUserId: UserId
 }
 
+type FlowShared = {
+    flowId: FlowId
+    projectId: ProjectId
+}
+
+type OpenedFromDasahboard = {
+    location: 'sidenav' | 'tasks-progress'
+}
+type CopilotGeneratedCode = {
+    code: string
+    prompt: string
+}
 export enum TelemetryEventName {
-    SIGNED_UP = "signed.up",
-    QUOTA_ALERT = "quota.alert",
-    UPGRADE_CLICKED = "upgrade.clicked",
-    UPGRADE_POPUP = "upgrade.popup",
-    CHATBOT_CREATED = "chatbot.created",
-    FLOW_CREATED = "flow.created",
-    DEMO_IMPORTED = "demo.imported",
-    FLOW_RUN_CREATED = "run.created",
-    FLOW_PUBLISHED = "flow.published",
-    FLOW_IMPORTED= "flow.imported",
-    PIECES_SEARCH ="pieces.search",
-    REFERRAL = "referral",
-    REFERRAL_LINK_COPIED = "referral.link.copied",
-    FLOW_SHARED = "flow.shared",
-    FEATURED_TAB_VIEWED = "template.featured-tab-viewed",
-    TEMPLATE_SEARCH ="template.search",
-}
-interface TemplateSearch{
-    search:string,
-    tags:string[],
-    pieces:string[]
-
+    SIGNED_UP = 'signed.up',
+    QUOTA_ALERT = 'quota.alert',
+    UPGRADE_CLICKED = 'upgrade.clicked',
+    OPENED_PRICING_FROM_DASHBOARD = 'pricing.viewed',
+    UPGRADE_POPUP = 'upgrade.popup',
+    FLOW_CREATED = 'flow.created',
+    DEMO_IMPORTED = 'demo.imported',
+    FLOW_RUN_CREATED = 'run.created',
+    FLOW_PUBLISHED = 'flow.published',
+    FLOW_IMPORTED = 'flow.imported',
+    PIECES_SEARCH = 'pieces.search',
+    REFERRAL = 'referral',
+    REFERRAL_LINK_COPIED = 'referral.link.copied',
+    FLOW_SHARED = 'flow.shared',
+    TEMPLATE_SEARCH = 'template.search',
+    COPILOT_GENERATED_CODE = 'copilot.code.generated',
 }
 
-interface FeaturedTabViewed 
-{
-    buttonPressed:'banner button'|'tab button'
-}
-interface BaseTelemetryEvent<T, P> {
-    name: T,
+type BaseTelemetryEvent<T, P> = {
+    name: T
     payload: P
 }
 
-export type TelemetryEvent = BaseTelemetryEvent<TelemetryEventName.SIGNED_UP, SignedUp>
+export type TelemetryEvent =
+    | BaseTelemetryEvent<TelemetryEventName.SIGNED_UP, SignedUp>
     | BaseTelemetryEvent<TelemetryEventName.REFERRAL, Referral>
     | BaseTelemetryEvent<TelemetryEventName.UPGRADE_CLICKED, UpgradeClicked>
     | BaseTelemetryEvent<TelemetryEventName.UPGRADE_POPUP, UpgradePopup>
@@ -123,5 +116,5 @@ export type TelemetryEvent = BaseTelemetryEvent<TelemetryEventName.SIGNED_UP, Si
     | BaseTelemetryEvent<TelemetryEventName.REFERRAL_LINK_COPIED, ReferralLinkCopied>
     | BaseTelemetryEvent<TelemetryEventName.FLOW_SHARED, FlowShared>
     | BaseTelemetryEvent<TelemetryEventName.DEMO_IMPORTED, Record<string, never>>
-    | BaseTelemetryEvent<TelemetryEventName.CHATBOT_CREATED, ChatbotCreated>
-    | BaseTelemetryEvent<TelemetryEventName.FEATURED_TAB_VIEWED, FeaturedTabViewed>;
+    | BaseTelemetryEvent<TelemetryEventName.OPENED_PRICING_FROM_DASHBOARD, OpenedFromDasahboard>
+    | BaseTelemetryEvent<TelemetryEventName.COPILOT_GENERATED_CODE, CopilotGeneratedCode>

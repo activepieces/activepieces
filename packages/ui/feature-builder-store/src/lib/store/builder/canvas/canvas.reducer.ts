@@ -2,7 +2,7 @@ import { Action, createReducer, on } from '@ngrx/store';
 
 import {
   CanvasState,
-  FlowItem,
+  Step,
   LeftSideBarType,
   NO_PROPS,
   RightSideBarType,
@@ -15,7 +15,7 @@ import {
   flowHelper,
 } from '@activepieces/shared';
 import { canvasActions } from './canvas.action';
-import { FlowsActions } from '../../flow/flows.action';
+import { FlowsActions } from '../../flow/flow.action';
 
 const initialState: CanvasState = {
   selectedRun: undefined,
@@ -28,8 +28,7 @@ const initialState: CanvasState = {
   },
   focusedStep: undefined,
   selectedStepName: 'initialVal',
-  isGeneratingFlowComponentOpen: false,
-  displayedFlowVersion: {
+  viewedVersion: {
     flowId: '1',
     updatedBy: '',
     displayName: 'Flow version',
@@ -51,17 +50,41 @@ const initialState: CanvasState = {
 const __CanvasReducer = createReducer(
   initialState,
   on(canvasActions.setInitial, (state, action): CanvasState => {
+    const displayedFlowVersion = JSON.parse(
+      JSON.stringify(action.displayedFlowVersion)
+    );
+
     return {
       ...initialState,
-      displayedFlowVersion: action.displayedFlowVersion,
+      viewedVersion: displayedFlowVersion,
       selectedRun: action.run,
     };
+  }),
+  on(canvasActions.viewVersion, (state, action): CanvasState => {
+    const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
+    return {
+      ...clonedState,
+      viewedVersion: action.viewedFlowVersion,
+      focusedStep: undefined,
+      selectedStepName: '',
+      clickedAddBtnId: undefined,
+      rightSidebar: {
+        props: NO_PROPS,
+        type: RightSideBarType.NONE,
+      },
+    };
+  }),
+  on(canvasActions.updateViewedVersionId, (state, action): CanvasState => {
+    const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
+    clonedState.viewedVersion.id = action.versionId;
+    return clonedState;
   }),
   on(canvasActions.deselectStep, (state): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
     return {
       ...clonedState,
       focusedStep: undefined,
+      selectedStepName: '',
     };
   }),
   on(
@@ -77,9 +100,9 @@ const __CanvasReducer = createReducer(
   ),
   on(canvasActions.selectStepByName, (state, { stepName }) => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
-    if (clonedState.displayedFlowVersion) {
-      const step: FlowItem | undefined = flowHelper.getStep(
-        clonedState.displayedFlowVersion,
+    if (clonedState.viewedVersion) {
+      const step: Step | undefined = flowHelper.getStep(
+        clonedState.viewedVersion,
         stepName
       );
       return {
@@ -99,20 +122,6 @@ const __CanvasReducer = createReducer(
       },
     };
   }),
-  on(canvasActions.openGenerateFlowComponent, (state): CanvasState => {
-    return {
-      ...state,
-      leftSidebar: {
-        type: LeftSideBarType.NONE,
-      },
-      rightSidebar: {
-        type: RightSideBarType.NONE,
-        props: 'NO_PROPS',
-      },
-      isGeneratingFlowComponentOpen: true,
-      selectedRun: undefined,
-    };
-  }),
   on(canvasActions.setRun, (state, { run }): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
     clonedState.selectedRun = run;
@@ -125,29 +134,12 @@ const __CanvasReducer = createReducer(
       selectedRun: undefined,
     };
   }),
-  on(canvasActions.closeGenerateFlowComponent, (state): CanvasState => {
-    const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
-    return {
-      ...clonedState,
-      isGeneratingFlowComponentOpen: false,
-    };
-  }),
-  on(canvasActions.generateFlowSuccessful, (state, action): CanvasState => {
-    const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
-    return {
-      ...clonedState,
-      displayedFlowVersion: action.flow.version,
-    };
-  }),
   on(FlowsActions.updateAction, (state, { operation }): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
-    clonedState.displayedFlowVersion = flowHelper.apply(
-      clonedState.displayedFlowVersion,
-      {
-        type: FlowOperationType.UPDATE_ACTION,
-        request: operation,
-      }
-    );
+    clonedState.viewedVersion = flowHelper.apply(clonedState.viewedVersion, {
+      type: FlowOperationType.UPDATE_ACTION,
+      request: operation,
+    });
     if (operation.name === state.focusedStep?.name) {
       clonedState.focusedStep = operation;
     }
@@ -155,21 +147,24 @@ const __CanvasReducer = createReducer(
   }),
   on(FlowsActions.addAction, (state, { operation }): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
-    clonedState.displayedFlowVersion = flowHelper.apply(
-      clonedState.displayedFlowVersion,
-      {
-        type: FlowOperationType.ADD_ACTION,
-        request: operation,
-      }
-    );
+    clonedState.viewedVersion = flowHelper.apply(clonedState.viewedVersion, {
+      type: FlowOperationType.ADD_ACTION,
+      request: operation,
+    });
     return clonedState;
   }),
+
   on(FlowsActions.duplicateStep, (state, { operation }): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
     const clonedFlowVersionWithArtifacts: FlowVersion = JSON.parse(
       JSON.stringify(operation.flowVersionWithArtifacts)
     );
-    clonedState.displayedFlowVersion = flowHelper.apply(
+    const newStepName = flowHelper.findAvailableStepName(
+      state.viewedVersion,
+      'step'
+    );
+
+    clonedState.viewedVersion = flowHelper.apply(
       clonedFlowVersionWithArtifacts,
       {
         type: FlowOperationType.DUPLICATE_ACTION,
@@ -178,17 +173,21 @@ const __CanvasReducer = createReducer(
         },
       }
     );
-    return clonedState;
+    return {
+      ...clonedState,
+      focusedStep: flowHelper.getStep(clonedState.viewedVersion, newStepName),
+      rightSidebar: {
+        type: RightSideBarType.EDIT_STEP,
+        props: 'NO_PROPS',
+      },
+    };
   }),
   on(FlowsActions.updateTrigger, (state, { operation }): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
-    clonedState.displayedFlowVersion = flowHelper.apply(
-      clonedState.displayedFlowVersion,
-      {
-        type: FlowOperationType.UPDATE_TRIGGER,
-        request: operation,
-      }
-    );
+    clonedState.viewedVersion = flowHelper.apply(clonedState.viewedVersion, {
+      type: FlowOperationType.UPDATE_TRIGGER,
+      request: operation,
+    });
     if (operation.name === state.focusedStep?.name) {
       clonedState.focusedStep = operation;
     }
@@ -196,30 +195,24 @@ const __CanvasReducer = createReducer(
   }),
   on(FlowsActions.deleteAction, (state, { operation }): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
-    clonedState.displayedFlowVersion = flowHelper.apply(
-      clonedState.displayedFlowVersion,
-      {
-        type: FlowOperationType.DELETE_ACTION,
-        request: operation,
-      }
-    );
+    clonedState.viewedVersion = flowHelper.apply(clonedState.viewedVersion, {
+      type: FlowOperationType.DELETE_ACTION,
+      request: operation,
+    });
     clonedState.focusedStep = undefined;
     return clonedState;
   }),
   on(FlowsActions.moveAction, (state, { operation }): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
-    clonedState.displayedFlowVersion = flowHelper.apply(
-      clonedState.displayedFlowVersion,
-      {
-        type: FlowOperationType.MOVE_ACTION,
-        request: operation,
-      }
-    );
+    clonedState.viewedVersion = flowHelper.apply(clonedState.viewedVersion, {
+      type: FlowOperationType.MOVE_ACTION,
+      request: operation,
+    });
     return clonedState;
   }),
   on(FlowsActions.importFlow, (state, { flow }) => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
-    clonedState.displayedFlowVersion = flow.version;
+    clonedState.viewedVersion = flow.version;
     return clonedState;
   }),
   on(canvasActions.setAddButtonId, (state, { id }) => {

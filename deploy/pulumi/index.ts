@@ -9,8 +9,12 @@ import * as child_process from "child_process";
 const stack = pulumi.getStack();
 const config = new pulumi.Config();
 
-const apEncryptionKey = config.get("apEncryptionKey") || child_process.execSync("openssl rand -hex 16").toString().trim();
-const apJwtSecret = config.get("apJwtSecret") || child_process.execSync("openssl rand -hex 32").toString().trim();
+const apEncryptionKey = config.getSecret("apEncryptionKey")?.apply(secretValue => {
+    return secretValue || child_process.execSync("openssl rand -hex 16").toString().trim();
+});
+const apJwtSecret = config.getSecret("apJwtSecret")?.apply(secretValue => {
+    return secretValue || child_process.execSync("openssl rand -hex 32").toString().trim();
+});
 const containerCpu = config.requireNumber("containerCpu");
 const containerMemory = config.requireNumber("containerMemory");
 const containerInstances = config.requireNumber("containerInstances");
@@ -30,10 +34,10 @@ const dbInstanceClass = config.require("dbInstanceClass");
 registerAutoTags({
     "pulumi:Project": pulumi.getProject(),
     "pulumi:Stack": pulumi.getStack(),
-    "Created by": child_process.execSync("pulumi whoami").toString().trim().replace('\\', '/')
+    "Created by": config.get("author") || child_process.execSync("pulumi whoami").toString().trim().replace('\\', '/')
 });
 
-let imageName = pulumi.interpolate`activepieces/activepieces:latest`;
+let imageName;
 
 // Check if we're deploying a local build or direct from Docker Hub
 if (config.getBoolean("deployLocalBuild")) {
@@ -79,6 +83,8 @@ if (config.getBoolean("deployLocalBuild")) {
     imageName = image.imageName;
 
     pulumi.log.info(`Finished pushing image to ECR`, image);
+} else {
+    imageName = process.env.IMAGE_NAME || config.get("imageName") || "activepieces/activepieces:latest";
 }
 
 const containerEnvironmentVars: awsx.types.input.ecs.TaskDefinitionKeyValuePairArgs[] = [];
@@ -98,6 +104,29 @@ const vpc = new awsx.ec2.Vpc(`${stack}-vpc`, {
     enableDnsSupport: true
 });
 
+const albSecGroup = new aws.ec2.SecurityGroup(`${stack}-alb-sg`, {
+    name: `${stack}-alb-sg`,
+    vpcId: vpc.vpcId,
+    ingress: [{ // Allow only http & https traffic
+        protocol: "tcp",
+        fromPort: 443,
+        toPort: 443,
+        cidrBlocks: ["0.0.0.0/0"]
+    },
+    {
+        protocol: "tcp",
+        fromPort: 80,
+        toPort: 80,
+        cidrBlocks: ["0.0.0.0/0"]
+    }],
+    egress: [{
+        protocol: "-1",
+        fromPort: 0,
+        toPort: 0,
+        cidrBlocks: ["0.0.0.0/0"]
+    }]
+})
+
 const fargateSecGroup = new aws.ec2.SecurityGroup(`${stack}-fargate-sg`, {
     name: `${stack}-fargate-sg`,
     vpcId: vpc.vpcId,
@@ -106,13 +135,7 @@ const fargateSecGroup = new aws.ec2.SecurityGroup(`${stack}-fargate-sg`, {
             protocol: "tcp",
             fromPort: 80,
             toPort: 80,
-            cidrBlocks: ["0.0.0.0/0"]
-        },
-        {
-            protocol: "tcp",
-            fromPort: 443,
-            toPort: 443,
-            cidrBlocks: ["0.0.0.0/0"]
+            securityGroups: [albSecGroup.id]
         }
     ],
     egress: [ // allow all outbound traffic
@@ -126,18 +149,15 @@ const fargateSecGroup = new aws.ec2.SecurityGroup(`${stack}-fargate-sg`, {
 });
 
 if (usePostgres) {
-
     const rdsSecurityGroupArgs: aws.ec2.SecurityGroupArgs = {
         name: `${stack}-db-sg`,
         vpcId: vpc.vpcId,
-        ingress: [
-            {
-                protocol: "tcp",
-                fromPort: 5432,
-                toPort: 5432,
-                securityGroups: [fargateSecGroup.id],  // The id of the Fargate security group
-            }
-        ],
+        ingress: [{
+            protocol: "tcp",
+            fromPort: 5432,
+            toPort: 5432,
+            securityGroups: [fargateSecGroup.id]  // The id of the Fargate security group
+        }],
         egress: [ // allow all outbound traffic
             {
                 protocol: "-1",
@@ -148,7 +168,7 @@ if (usePostgres) {
         ]
     };
 
-    // Optionally add the current outgoing public IP address to the CIDR block 
+    // Optionally add the current outgoing public IP address to the CIDR block
     // so that they can connect directly to the Db during development
     if (addIpToPostgresSecurityGroup) {
 
@@ -277,7 +297,7 @@ if (useRedis) {
 }
 
 let alb: ApplicationLoadBalancer;
-// Export the URL so we can eas ily access it.
+// Export the URL so we can easily access it.
 let frontendUrl;
 
 if (subDomain && domain) {
@@ -306,34 +326,11 @@ if (subDomain && domain) {
 
     // Creates an ALB associated with our custom VPC.
     alb = new awsx.lb.ApplicationLoadBalancer(`${stack}-alb`, {
-        securityGroups: [
-            new aws.ec2.SecurityGroup(`${stack}-alb-sg`, {
-                name: `${stack}-alb-sg`,
-                vpcId: vpc.vpcId,
-                ingress: [{ // Allow only http & https traffic
-                    protocol: "tcp",
-                    fromPort: 443,
-                    toPort: 443,
-                    cidrBlocks: ["0.0.0.0/0"]
-                },
-                {
-                    protocol: "tcp",
-                    fromPort: 80,
-                    toPort: 80,
-                    cidrBlocks: ["0.0.0.0/0"]
-                }],
-                egress: [{
-                    protocol: "-1",
-                    fromPort: 0,
-                    toPort: 0,
-                    cidrBlocks: ["0.0.0.0/0"]
-                }]
-            }).id
-        ],
+        securityGroups: [albSecGroup.id],
         name: `${stack}-alb`,
         subnetIds: vpc.publicSubnetIds,
         listeners: [{
-            port: 80, // port on the docker container 
+            port: 80, // port on the docker container
             protocol: "HTTP",
             defaultActions: [{
                 type: "redirect",
@@ -370,29 +367,11 @@ if (subDomain && domain) {
 
     // Creates an ALB associated with our custom VPC.
     alb = new awsx.lb.ApplicationLoadBalancer(`${stack}-alb`, {
-        securityGroups: [
-            new aws.ec2.SecurityGroup(`${stack}-alb-sg`, {
-                name: `${stack}-alb-sg`,
-                vpcId: vpc.vpcId,
-                ingress: [
-                    {
-                        protocol: "tcp",
-                        fromPort: 80,
-                        toPort: 80,
-                        cidrBlocks: ["0.0.0.0/0"]
-                    }],
-                egress: [{
-                    protocol: "-1",
-                    fromPort: 0,
-                    toPort: 0,
-                    cidrBlocks: ["0.0.0.0/0"]
-                }]
-            }).id
-        ],
+        securityGroups: [albSecGroup.id],
         name: `${stack}-alb`,
         subnetIds: vpc.publicSubnetIds,
         listeners: [{
-            port: 80, // exposed port from the docker file 
+            port: 80, // exposed port from the docker file
             protocol: "HTTP"
         }],
         defaultTargetGroup: {
@@ -405,7 +384,7 @@ if (subDomain && domain) {
     frontendUrl = pulumi.interpolate`http://${alb.loadBalancer.dnsName}`;
 }
 
-const environment = [
+const environmentVariables = [
     ...containerEnvironmentVars,
     {
         name: "AP_ENGINE_EXECUTABLE_PATH",
@@ -452,10 +431,11 @@ const environment = [
         value: "https://cloud.activepieces.com/api/v1/flow-templates"
     }
 ];
+
 const fargateService = new awsx.ecs.FargateService(`${stack}-fg`, {
     name: `${stack}-fg`,
     cluster: (new aws.ecs.Cluster(`${stack}-cluster`, {
-        name: `${stack}-cluster`,
+        name: `${stack}-cluster`
     })).arn,
     networkConfiguration: {
         subnets: vpc.publicSubnetIds,
@@ -464,6 +444,7 @@ const fargateService = new awsx.ecs.FargateService(`${stack}-fg`, {
     },
     desiredCount: containerInstances,
     taskDefinitionArgs: {
+        family: `${stack}-fg-task-definition`,
         container: {
             name: "activepieces",
             image: imageName,
@@ -472,7 +453,7 @@ const fargateService = new awsx.ecs.FargateService(`${stack}-fg`, {
             portMappings: [{
                 targetGroup: alb.defaultTargetGroup,
             }],
-            environment: environment
+            environment: environmentVariables
         }
     }
 });
@@ -481,5 +462,5 @@ pulumi.log.info("Finished running Pulumi");
 
 export const _ = {
     activePiecesUrl: frontendUrl,
-    activepiecesEnv: environment
+    activepiecesEnv: environmentVariables
 };

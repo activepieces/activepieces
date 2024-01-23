@@ -4,7 +4,15 @@
   "overrides": [
     {
       "files": ["*.ts"],
+      "parserOptions": {
+        "project": ["packages/ee/components/tsconfig.*?.json"]
+      },
       "rules": {
+        "rxjs/no-async-subscribe": "error",
+        "rxjs/no-nested-subscribe": "error",
+        "rxjs-angular/prefer-async-pipe": "error",
+        "@typescript-eslint/adjacent-overload-signatures": "off",
+        "@typescript-eslint/no-non-null-assertion": "off",
         "@angular-eslint/directive-selector": [
           "error",
           {
@@ -23,13 +31,16 @@
         ]
       },
       "extends": [
-        "plugin:@nrwl/nx/angular",
-        "plugin:@angular-eslint/template/process-inline-templates"
-      ]
+        "plugin:@nx/angular",
+        "plugin:@angular-eslint/template/process-inline-templates",
+        "plugin:@ngrx/strict-requiring-type-checking",
+        "plugin:prettier/recommended"
+      ],
+      "plugins": ["rxjs-angular", "rxjs", "prettier"]
     },
     {
       "files": ["*.html"],
-      "extends": ["plugin:@nrwl/nx/angular-template"],
+      "extends": ["plugin:@nx/angular-template"],
       "rules": {}
     }
   ]

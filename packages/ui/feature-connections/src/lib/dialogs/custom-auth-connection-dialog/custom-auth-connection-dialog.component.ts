@@ -20,7 +20,10 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 import deepEqual from 'deep-equal';
-import { AppConnectionsService } from '@activepieces/ui/common';
+import {
+  AppConnectionsService,
+  AuthenticationService,
+} from '@activepieces/ui/common';
 import { ConnectionValidator } from '../../validators/connectionNameValidator';
 import {
   BuilderSelectors,
@@ -29,7 +32,7 @@ import {
 import { connectionNameRegex } from '../utils';
 
 export interface CustomAuthDialogData {
-  pieceAuthProperty: CustomAuthProperty<boolean, CustomAuthProps>;
+  pieceAuthProperty: CustomAuthProperty<CustomAuthProps>;
   pieceName: string;
   connectionToUpdate?: AppConnectionWithoutSensitiveData;
 }
@@ -49,6 +52,7 @@ export class CustomAuthConnectionDialogComponent {
     private fb: FormBuilder,
     @Inject(MAT_DIALOG_DATA)
     public dialogData: CustomAuthDialogData,
+    private authenticationService: AuthenticationService,
     private store: Store,
     private dialogRef: MatDialogRef<CustomAuthConnectionDialogComponent>,
     private appConnectionsService: AppConnectionsService
@@ -106,7 +110,8 @@ export class CustomAuthConnectionDialogComponent {
       const propsValues = this.settingsForm.getRawValue();
       delete propsValues.name;
       const upsertRequest: UpsertCustomAuthRequest = {
-        appName: this.dialogData.pieceName,
+        pieceName: this.dialogData.pieceName,
+        projectId: this.authenticationService.getProjectId(),
         name: this.settingsForm.getRawValue().name,
         type: AppConnectionType.CUSTOM_AUTH,
         value: {

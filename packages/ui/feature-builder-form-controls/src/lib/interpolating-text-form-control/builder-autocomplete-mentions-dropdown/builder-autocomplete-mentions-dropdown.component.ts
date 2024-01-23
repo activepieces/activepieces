@@ -34,7 +34,7 @@ export class BuilderAutocompleteMentionsDropdownComponent {
   @Input() focusSearch = false;
   @Input() mouseWithin = false;
   @Input() container: HTMLElement;
-  focusChecker: NodeJS.Timer | undefined;
+  focusChecker: ReturnType<typeof setInterval> | undefined;
   readonly mentionsListId = mentionsListId;
   constructor(
     public interpolatingTextFormControlService: BuilderAutocompleteMentionsDropdownService,

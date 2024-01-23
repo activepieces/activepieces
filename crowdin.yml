@@ -1,0 +1,32 @@
+#
+# Your Crowdin credentials
+#
+"project_id_env": "CROWDIN_PROJECT_ID"
+"api_token_env": "CROWDIN_PERSONAL_TOKEN"
+"base_path": "."
+"base_url": "https://api.crowdin.com"
+
+#
+# Choose file structure in Crowdin
+# e.g. true or false
+#
+"preserve_hierarchy": true
+
+#
+# Files configuration
+#
+files: [
+  {
+    #
+    # Source files filter
+    # e.g. "/resources/en/*.json"
+    #
+    "source": "packages/ui/core/src/locale/messages.xlf",
+
+    #
+    # Where translations will be placed
+    # e.g. "/resources/packages/ui/core/src/locale%two_letters_code%/%original_file_name%"
+    #
+    "translation": "packages/ui/core/src/locale/messages.%two_letters_code%.xlf",
+  }
+]

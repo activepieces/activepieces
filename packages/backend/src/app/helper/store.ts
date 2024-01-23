@@ -1,10 +1,14 @@
 import fs from 'fs'
 import path from 'path'
-import os from 'os'
+import { system } from './system/system'
+import { SystemProp } from './system/system-prop'
 
 export const localFileStore = {
     async save(key: string, value: string): Promise<void> {
-        const settingsFilePath = path.join(localFileStore.getStorePath(), 'settings.json')
+        const settingsFilePath = path.join(
+            system.getOrThrow(SystemProp.CONFIG_PATH),
+            'settings.json',
+        )
         const settings = getSettingsFilePath()
         settings[key] = value
         const parentDir = path.dirname(settingsFilePath)
@@ -18,13 +22,13 @@ export const localFileStore = {
         const settings = getSettingsFilePath()
         return settings[key] || null
     },
-    getStorePath(): string {
-        return path.join(os.homedir(), '.activepieces')
-    },
 }
 
 const getSettingsFilePath = () => {
-    const settingsFilePath = path.join(localFileStore.getStorePath(), 'settings.json')
+    const settingsFilePath = path.join(
+        system.getOrThrow(SystemProp.CONFIG_PATH),
+        'settings.json',
+    )
     try {
         return JSON.parse(fs.readFileSync(settingsFilePath, 'utf8'))
     }

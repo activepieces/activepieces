@@ -8,11 +8,10 @@ export * from './lib/store/flow/index';
 export * from './lib/model';
 export * from './lib/test-run-bar/test-run-bar.component';
 export * from './lib/utils/flowStructureUtil';
-export * from './lib/utils/flowRenderUtil';
-export * from './lib/utils/flowFactoryUtil';
-export * from './lib/store/builder/flow-instance/flow-instance.action';
 export * from './lib/store/builder/viewmode/view-mode.action';
 export * from './lib/store/builder/canvas/canvas.action';
 export * from './lib/utils/stepRunResult';
 export * from './lib/store/app-connections/app-connections.reducer';
 export * from './lib/store/app-connections/app-connections.action';
+
+import '@angular/localize/init';

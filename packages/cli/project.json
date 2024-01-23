@@ -2,57 +2,19 @@
   "name": "cli",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/cli/src",
-  "projectType": "application",
+  "projectType": "library",
   "targets": {
     "build": {
-      "executor": "@nx/esbuild:esbuild",
+      "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
-      "defaultConfiguration": "production",
       "options": {
-        "platform": "node",
         "outputPath": "dist/packages/cli",
-        "format": ["cjs"],
-        "bundle": false,
-        "main": "packages/cli/src/main.ts",
-        "tsConfig": "packages/cli/tsconfig.app.json",
-        "assets": ["packages/cli/src/assets"],
-        "generatePackageJson": true,
-        "esbuildOptions": {
-          "sourcemap": true,
-          "outExtension": {
-            ".js": ".js"
-          }
-        }
-      },
-      "configurations": {
-        "development": {},
-        "production": {
-          "esbuildOptions": {
-            "sourcemap": false,
-            "outExtension": {
-              ".js": ".js"
-            }
-          }
-        }
+        "main": "packages/cli/src/index.ts",
+        "tsConfig": "packages/cli/tsconfig.lib.json"
       }
-    },
-    "serve": {
-      "executor": "@nx/js:node",
-      "defaultConfiguration": "development",
-      "options": {
-        "buildTarget": "cli:build"
       },
-      "configurations": {
-        "development": {
-          "buildTarget": "cli:build:development"
-        },
-        "production": {
-          "buildTarget": "cli:build:production"
-        }
-      }
-    },
     "lint": {
-      "executor": "@nx/linter:eslint",
+      "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": ["packages/cli/**/*.ts"]

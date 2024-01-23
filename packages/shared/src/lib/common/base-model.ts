@@ -1,13 +1,18 @@
-import { Type } from "@sinclair/typebox";
+import { Type, Static, TSchema } from '@sinclair/typebox'
 
-export interface BaseModel<T> {
-  id: T;
-  created: string;
-  updated: string;
+export type BaseModel<T> = {
+    id: T
+    created: string
+    updated: string
 }
 
 export const BaseModelSchema = {
-  id: Type.String(),
-  created: Type.String(),
-  updated: Type.String(),
+    id: Type.String(),
+    created: Type.String(),
+    updated: Type.String(),
 }
+
+// Used to generate valid nullable in OpenAPI Schema
+export const Nullable = <T extends TSchema>(schema: T) => Type.Optional(Type.Unsafe<Static<T> | null>({ 
+    ...schema, nullable: true, 
+}))

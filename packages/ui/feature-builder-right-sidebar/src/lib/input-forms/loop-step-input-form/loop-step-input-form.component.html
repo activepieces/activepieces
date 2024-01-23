@@ -1,10 +1,10 @@
 <form [formGroup]="loopStepForm" class="ap-flex ap-flex-col ap-gap-2" (click)="$event.stopImmediatePropagation()">
   <div #inputContainer tabIndex="0">
     <mat-form-field class="ap-w-full" appearance="outline" (click)="handler.showMentionsDropdown()" #inputContainer>
-      <mat-label>Items</mat-label>
+      <mat-label i18n>Items</mat-label>
       <app-interpolating-text-form-control #ItemsTextControl formControlName="items"
         [onlyAllowOneMentionToBeAdded]="true"></app-interpolating-text-form-control>
-      <mat-error *ngIf="loopStepForm.controls.items.invalid">
+      <mat-error *ngIf="loopStepForm.controls.items.invalid" i18n>
         Items are required.
       </mat-error>
     </mat-form-field>

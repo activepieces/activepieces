@@ -6,7 +6,7 @@
 }
 ::selection {
   color: $white;
-  background: $selection-color;
+  background: var(--selection);
 }
 /* Remove default margin */
 body,
@@ -84,7 +84,7 @@ markdown{
 }
 ::selection {
   color: $white;
-  background: $selection-color;
+  background: var(--selection);
 }
 /* Remove default margin */
 body,
@@ -162,3 +162,10 @@ div[style="position: absolute; top: 0.5em; right: 0.5em; opacity: 0; transition:
 }
 
 }
+@layer base {
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+  }
+  }

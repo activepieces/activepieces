@@ -1,4 +1,4 @@
-FROM node:18.17.1-bullseye
+FROM node:18.18.2-bullseye
 
 COPY packages/backend/src/assets/default.cf /usr/local/etc/isolate
 
@@ -21,4 +21,5 @@ RUN npm i -g \
 RUN pnpm store add \
   @tsconfig/node18@1.0.0 \
   @types/node@18.17.1 \
-  typescript@4.8.4
+  typescript@4.8.4 \
+  isolated-vm@4.6.0

@@ -4,19 +4,21 @@ import {
   BranchCondition,
   PackageType,
   PieceType,
+  SourceCode,
+  LoopOnItemsActionSettings,
+  ActionErrorHandlingOptions,
 } from '@activepieces/shared';
 declare type ConfigsAndTheirValues = { [key: string]: any };
 interface InputFormsSchemaBase {
   type?: ActionType | TriggerType;
 }
-export interface LoopStepInputFormSchema extends InputFormsSchemaBase {
-  items: string;
-}
+export interface LoopStepInputFormSchema
+  extends InputFormsSchemaBase,
+    LoopOnItemsActionSettings {}
 export interface CodeStepInputFormSchema extends InputFormsSchemaBase {
-  artifact?: string;
-  artifactSourceId: string;
-  artifactPackagedId: string;
+  sourceCode: SourceCode;
   input: Record<string, unknown>;
+  errorHandlingOptions: ActionErrorHandlingOptions;
 }
 
 export interface BranchInputFormSchema extends InputFormsSchemaBase {
@@ -37,6 +39,7 @@ export interface PieceActionInputFormSchema extends InputFormsSchemaBase {
   inputUiInfo: {
     customizedInputs: Record<string, boolean>;
   };
+  errorHandlingOptions?: ActionErrorHandlingOptions;
 }
 
 export interface ComponentTriggerInputFormSchema extends InputFormsSchemaBase {
@@ -51,5 +54,4 @@ export interface ComponentTriggerInputFormSchema extends InputFormsSchemaBase {
 export type InputFormsSchema =
   | LoopStepInputFormSchema
   | CodeStepInputFormSchema
-  | ScheduledTriggerInputFormSchema
   | PieceActionInputFormSchema;

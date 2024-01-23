@@ -1,0 +1,116 @@
+<ap-page-title [title]="title">
+    <ap-button actionButton btnColor="primary" btnSize='medium' (click)="installPiece()" i18n>
+        + Add Piece
+    </ap-button>
+</ap-page-title>
+
+<div class="ap-mb-4  ap-flex ap-items-center ap-gap-2 ap-justify-between">
+
+    <mat-form-field (click)="$event.stopPropagation();" appearance="outline" subscriptSizing="dynamic">
+        <mat-icon class="ap-ml-2.5" matPrefix svgIcon="search"></mat-icon>
+        <input [formControl]="searchFormControl" id="searchInput" matInput placeholder="Search" autocomplete="off">
+    </mat-form-field>
+
+    <mat-slide-toggle color="primary" [formControl]="cloudAuthToggleFormControl" i18n i18n-matTooltip
+        labelPosition="before"
+        matTooltip="For pieces that use OAuth2 and don't have your own app credentials assigned to them, they will use Activepieces' apps">
+        Use Activepieces' OAuth2 apps for pieces that aren't configured
+    </mat-slide-toggle>
+</div>
+
+
+<div class="ap-w-full">
+    <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" i18n-aria-label aria-label="Pieces">
+        <ng-container matColumnDef="displayName">
+            <th mat-header-cell *matHeaderCellDef i18n>Piece</th>
+            <td mat-cell *matCellDef="let piece">
+                <div class="ap-flex ap-gap-2 ap-items-center">
+                    <div
+                        class="ap-flex ap-items-center ap-h-[36px] ap-w-[36px] ap-justify-center ap-p-2 ap-rounded-full ap-border ap-border-solid ap-border-outline">
+                        <img [src]="piece.logoUrl" class="ap-object-contain ap-w-[20px] ap-h-[20px]">
+                    </div>
+                    {{ piece.displayName }}
+                </div>
+
+            </td>
+        </ng-container>
+        <ng-container matColumnDef="packageName">
+            <th mat-header-cell *matHeaderCellDef i18n>Package Name</th>
+            <td mat-cell *matCellDef="let piece">
+                {{ piece.name }}
+            </td>
+        </ng-container>
+
+        <ng-container matColumnDef="version">
+            <th mat-header-cell *matHeaderCellDef i18n class="!ap-text-center">Version</th>
+            <td mat-cell class="!ap-text-center" *matCellDef="let piece">
+                {{ piece.version }}
+            </td>
+        </ng-container>
+
+        <ng-container matColumnDef="action">
+            <th mat-header-cell *matHeaderCellDef>
+
+            </th>
+            <td mat-cell *matCellDef="let piece">
+                <div class="ap-float-right ap-text-center ap-flex ap-items-center ap-justify-center"
+                    *ngIf="platform$ | async as plat">
+
+
+                    <ap-icon-button *ngIf="piece.oauth2AppCredentialsId  && piece.auth?.type === OAUTH2 "
+                        [matMenuTriggerFor]="menu" [tooltipText]="updatePieceCredentialsTooltip"
+                        iconFilename="piece_credentials.svg" [width]="20" [height]="20" extraClasses="ap-fill-primary">
+                    </ap-icon-button>
+
+                    <ap-icon-button *ngIf="piece.auth?.type === OAUTH2 && !piece.oauth2AppCredentialsId "
+                        [tooltipText]="addPieceCredentialsTooltip"
+                        (buttonClicked)="openPieceOAuth2CredentialsDialog(false,piece)"
+                        iconFilename="piece_credentials.svg" [width]="20" [height]="20">
+                    </ap-icon-button>
+
+                    <ap-icon-button *ngIf="plat.filteredPieceNames.includes(piece.name)"
+                        [tooltipText]="showPieceTooltip" iconFilename="eye-off.svg" [width]="20" [height]="20"
+                        class="ap-fill-description" (buttonClicked)="togglePiece(piece)"></ap-icon-button>
+
+                    <ap-icon-button *ngIf="!plat.filteredPieceNames.includes(piece.name)"
+                        [tooltipText]="hidePieceTooltip" iconFilename="eye.svg" [width]="20" [height]="20"
+                        extraClasses="ap-fill-primary" (buttonClicked)="togglePiece(piece)"></ap-icon-button>
+
+                    <mat-menu #menu="matMenu">
+                        <div mat-menu-item (click)="openPieceOAuth2CredentialsDialog(true,piece)"
+                            class="!ap-typography-caption">Edit OAuth2 settings
+                        </div>
+                        <div mat-menu-item class="!ap-text-danger !ap-typography-caption"
+                            (click)="deletePieceOAuth2Creds(piece)">Delete OAuth2 settings
+                        </div>
+                    </mat-menu>
+
+                </div>
+
+            </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row [class.ap-hidden]="dataSource.isLoading$ | async" *matRowDef="let row; columns: displayedColumns">
+        </tr>
+    </table>
+    <ng-container *ngIf="(dataSource.isLoading$ | async) === true">
+        <div class="ap-flex ap-items-center ap-justify-center ap-flex-grow ap-h-[500px]">
+            <ap-loading-icon height="50px" width="51px" [outlineLoader]="true" [whiteLoader]="false">
+            </ap-loading-icon>
+        </div>
+    </ng-container>
+    <ng-container *ngIf="
+            dataSource.data.length === 0 &&
+            (dataSource.isLoading$ | async) === false
+          ">
+        <div class="ap-flex ap-items-center ap-justify-center ap-h-full ap-h-[500px] ap-py-8" i18n>
+            No pieces added yet.
+        </div>
+    </ng-container>
+</div>
+
+<ng-container *ngIf="saving$ | async"></ng-container>
+<ng-container *ngIf="toggelCloudOAuth2$ | async"> </ng-container>
+<ng-container *ngIf="dialogClosed$ | async"></ng-container>
+<ng-container *ngIf="addPackageDialogClosed$ | async"></ng-container>

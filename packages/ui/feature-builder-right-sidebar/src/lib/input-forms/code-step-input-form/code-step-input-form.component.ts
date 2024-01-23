@@ -6,11 +6,17 @@ import {
   FormBuilder,
   FormControl,
 } from '@angular/forms';
-import { from, Observable, switchMap, tap } from 'rxjs';
-import { ActionType } from '@activepieces/shared';
+import { Observable, tap } from 'rxjs';
+import {
+  ActionErrorHandlingOptions,
+  ActionType,
+  ApFlagId,
+  SourceCode,
+} from '@activepieces/shared';
 import { CodeStepInputFormSchema } from '../input-forms-schema';
-import { Artifact } from '@activepieces/ui/common';
-import { CodeService } from '@activepieces/ui/feature-builder-store';
+import { MatDialog } from '@angular/material/dialog';
+import { CodeWriterDialogComponent } from './code-writer-dialog/code-writer-dialog.component';
+import { FlagService } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-code-step-input-form',
@@ -26,11 +32,15 @@ import { CodeService } from '@activepieces/ui/feature-builder-store';
 export class CodeStepInputFormComponent implements ControlValueAccessor {
   codeStepForm: FormGroup<{
     input: FormControl<Record<string, unknown>>;
-    artifact: FormControl<Artifact>;
+    sourceCode: FormControl<SourceCode>;
+    errorHandlingOptions: FormControl<ActionErrorHandlingOptions>;
   }>;
-  _stepArtifact$: Observable<Artifact>;
   formValueChanged$: Observable<unknown>;
-
+  dialogClosed$?: Observable<unknown>;
+  generateCodeEnabled$: Observable<boolean>;
+  showGenerateCode$: Observable<boolean>;
+  codeGeneratorTooltip = $localize`Write code with assistance from AI`;
+  disabledCodeGeneratorTooltip = $localize`Configure api key in the envrionment variables to generate code using AI`;
   markdown = `
   To use data from previous steps in your code, include them as pairs of keys and values below.
   <br>
@@ -52,30 +62,48 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
 
   constructor(
     private formBuilder: FormBuilder,
-    private codeService: CodeService
+    private dialogService: MatDialog,
+    private flagService: FlagService
   ) {
+    this.generateCodeEnabled$ = this.flagService.isFlagEnabled(
+      ApFlagId.COPILOT_ENABLED
+    );
+    this.showGenerateCode$ = this.flagService.isFlagEnabled(
+      ApFlagId.SHOW_COPILOT
+    );
+
     this.codeStepForm = this.formBuilder.group({
       input: new FormControl({}, { nonNullable: true }),
-      artifact: new FormControl(
-        { content: '', package: '' },
+      sourceCode: new FormControl(
+        { code: '', packageJson: '' },
+        { nonNullable: true }
+      ),
+      errorHandlingOptions: new FormControl<ActionErrorHandlingOptions>(
+        {
+          continueOnFailure: {
+            value: false,
+          },
+          retryOnFailure: {
+            value: false,
+          },
+        },
         { nonNullable: true }
       ),
     });
     this.formValueChanged$ = this.codeStepForm.valueChanges.pipe(
-      switchMap((formValue) => {
-        if (formValue.artifact) {
-          return CodeService.zipFile(formValue.artifact);
-        }
-        throw new Error(`Artifact is undefined`);
-      }),
-      tap((zippedArtifact) => {
-        const zippedArtifactEncodedB64 = btoa(zippedArtifact);
+      tap((formValue) => {
         this.onChange({
           input: this.codeStepForm.value.input || {},
-          artifactPackagedId: '',
-          artifactSourceId: '',
-          artifact: zippedArtifactEncodedB64,
+          sourceCode: formValue.sourceCode!,
           type: ActionType.CODE,
+          errorHandlingOptions: formValue.errorHandlingOptions ?? {
+            continueOnFailure: {
+              value: false,
+            },
+            retryOnFailure: {
+              value: false,
+            },
+          },
         });
       })
     );
@@ -83,33 +111,18 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
 
   writeValue(obj: CodeStepInputFormSchema): void {
     if (obj.type === ActionType.CODE) {
-      if (obj.artifactSourceId) {
-        this._stepArtifact$ = this.codeService
-          .downloadAndReadFile(
-            CodeService.constructFileUrl(obj.artifactSourceId)
-          )
-          .pipe(
-            tap((res) => {
-              this.codeStepForm.controls.artifact.setValue(res, {
-                emitEvent: false,
-              });
-            })
-          );
-      } else if (obj.artifact) {
-        this._stepArtifact$ = from(
-          this.codeService.readFile(atob(obj.artifact))
-        ).pipe(
-          tap((res) => {
-            this.codeStepForm.controls.artifact.setValue(res, {
-              emitEvent: false,
-            });
-          })
-        );
-      }
-
+      this.codeStepForm.controls.sourceCode.setValue(obj.sourceCode, {
+        emitEvent: false,
+      });
       this.codeStepForm.controls.input.setValue(obj.input, {
         emitEvent: false,
       });
+      this.codeStepForm.controls.errorHandlingOptions.setValue(
+        obj.errorHandlingOptions,
+        {
+          emitEvent: false,
+        }
+      );
       if (this.codeStepForm.disabled) {
         this.codeStepForm.disable();
       }
@@ -127,5 +140,36 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
     } else if (this.codeStepForm.disabled) {
       this.codeStepForm.enable();
     }
+  }
+
+  openCodeWriterDialog() {
+    const dialogRef = this.dialogService.open(CodeWriterDialogComponent, {
+      data: {
+        existingCode: this.codeStepForm.controls.sourceCode.value.code,
+      },
+    });
+
+    this.dialogClosed$ = dialogRef.afterClosed().pipe(
+      tap(
+        (result: {
+          code: string;
+          inputs: { key: string; value: unknown }[];
+        }) => {
+          if (result) {
+            this.codeStepForm.controls.sourceCode.setValue({
+              code: result.code as string,
+              packageJson: this.codeStepForm.value.sourceCode!.packageJson,
+            });
+            const inputs: Record<string, unknown> = {};
+            result.inputs.forEach((input) => {
+              inputs[input.key] =
+                this.codeStepForm.controls.input.value[input.key] ??
+                input.value;
+            });
+            this.codeStepForm.controls.input.setValue(inputs);
+          }
+        }
+      )
+    );
   }
 }

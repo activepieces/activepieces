@@ -4,7 +4,7 @@ import { allowWorkersOnly } from '../authentication/authorization'
 import { appConnectionService } from './app-connection-service/app-connection-service'
 
 export const appConnectionWorkerController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
-    app.addHook('onRequest', allowWorkersOnly)
+    app.addHook('preHandler', allowWorkersOnly)
 
     app.get('/:connectionName', GetAppConnectionRequest, async (request): Promise<AppConnection> => {
         const appConnection = await appConnectionService.getOne({

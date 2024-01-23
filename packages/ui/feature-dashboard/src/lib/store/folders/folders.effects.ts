@@ -19,7 +19,7 @@ export class FoldersEffects {
         tap(([actions, folders]) => {
           const folderName =
             actions.targetFolderId === 'NULL'
-              ? 'Uncategorized'
+              ? $localize`Uncategorized`
               : folders.find((f) => f.id === actions.targetFolderId)
                   ?.displayName || '';
           this.snackbar.openFromComponent(GenericSnackbarTemplateComponent, {

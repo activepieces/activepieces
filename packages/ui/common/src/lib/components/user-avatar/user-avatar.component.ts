@@ -1,62 +1,70 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../service/authentication.service';
-import { environment } from '../../environments/environment';
-import { ProjectService } from '../../service/project.service';
 import { ApFlagId, Project } from '@activepieces/shared';
-import { Observable, map, tap } from 'rxjs';
-import { JwtHelperService } from '@auth0/angular-jwt';
-import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { FlagService } from '../../service/flag.service';
+import { Store } from '@ngrx/store';
+import { ProjectSelectors } from '../../store/project/project.selector';
+import { LocalesService } from '../../service/locales.service';
+import { LocalesEnum } from '@activepieces/shared';
+import { localesMap } from '../../utils/locales';
+import { PlatformProjectService } from '../../service/platform-project.service';
+
 @Component({
   selector: 'ap-user-avatar',
   templateUrl: './user-avatar.component.html',
   styleUrls: ['./user-avatar.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class UserAvatarComponent {
+export class UserAvatarComponent implements OnInit {
   showAvatarOuterCircle = false;
-  // BEGIN EE
-  private jwtHelper = new JwtHelperService();
+  currentUserEmail = '';
   projects$: Observable<Project[]>;
   selectedProject$: Observable<Project | undefined>;
   switchProject$: Observable<void>;
   overflownProjectsNames: Record<string, string> = {};
   billingEnabled$: Observable<boolean>;
+  myPiecesEnabled$: Observable<boolean>;
   projectEnabled$: Observable<boolean>;
-
+  showPlatform = false;
   showCommunity$: Observable<boolean>;
+  locales = localesMap;
+  selectedLanguage = {
+    languageName: localesMap[LocalesEnum.ENGLISH],
+    locale: LocalesEnum.ENGLISH,
+  };
 
   constructor(
     public authenticationService: AuthenticationService,
     private router: Router,
     private flagService: FlagService,
-    // BEGIN EE
-    private projectService: ProjectService,
-    private http: HttpClient // END EE
+    private store: Store,
+    private projectService: PlatformProjectService,
+    private localesService: LocalesService
   ) {
     this.showCommunity$ = this.flagService.isFlagEnabled(
       ApFlagId.SHOW_COMMUNITY
     );
-    // BEGIN EE
     this.billingEnabled$ = this.flagService.isFlagEnabled(
-      ApFlagId.BILLING_ENABLED
+      ApFlagId.SHOW_BILLING
+    );
+    this.myPiecesEnabled$ = this.flagService.isFlagEnabled(
+      ApFlagId.SHOW_COMMUNITY_PIECES
     );
     this.projectEnabled$ = this.flagService.isFlagEnabled(
       ApFlagId.PROJECT_MEMBERS_ENABLED
     );
-    this.projects$ = this.projectService.list();
-    const currentProjectId = this.jwtHelper.decodeToken(
-      localStorage.getItem(environment.jwtTokenName) || ''
-    )?.projectId;
-    this.selectedProject$ = this.projects$.pipe(
-      map((projects) => {
-        return projects.find((f) => {
-          return f.id === currentProjectId;
-        });
-      })
+    this.projects$ = this.store.select(ProjectSelectors.selectAllProjects);
+    this.selectedProject$ = this.store.select(
+      ProjectSelectors.selectCurrentProject
     );
-    // END EE
+    this.selectedLanguage =
+      this.localesService.getCurrentLanguageFromLocalStorageOrDefault();
+  }
+  ngOnInit(): void {
+    this.currentUserEmail = this.authenticationService.currentUser.email;
+    this.showPlatform = this.authenticationService.isPlatformOwner();
   }
 
   getDropDownLeftOffset(
@@ -77,26 +85,17 @@ export class UserAvatarComponent {
     this.authenticationService.logout();
   }
 
-  // BEGIN EE
   viewPlans() {
     this.router.navigate(['plans']);
   }
+
   switchProject(projectId: string) {
-    this.switchProject$ = this.http
-      .post<{
-        token: string;
-      }>(`${environment.apiUrl}/projects/${projectId}/token`, {
-        projectId,
-      })
-      .pipe(
-        tap(({ token }) => {
-          localStorage.setItem(environment.jwtTokenName, token);
-          window.location.reload();
-        }),
-        map(() => void 0)
-      );
+    this.switchProject$ = this.projectService.switchProject(projectId);
   }
-  // END EE
+
+  viewPlatformSettings() {
+    this.router.navigate(['/platform']);
+  }
 
   get userFirstLetter() {
     if (
@@ -117,5 +116,9 @@ export class UserAvatarComponent {
       '_blank',
       'noopener'
     );
+  }
+  redirectToLocale(locale: LocalesEnum) {
+    this.localesService.setCurrentLocale(locale);
+    this.localesService.redirectToLocale(locale);
   }
 }

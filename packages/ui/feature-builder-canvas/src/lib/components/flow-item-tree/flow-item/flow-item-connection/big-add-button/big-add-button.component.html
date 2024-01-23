@@ -1,0 +1,35 @@
+<div class="big-add-button ap-flex ap-items-center ap-justify-center ap-absolute " tabindex="-1" *ngIf="!inReadOnlyMode"
+    [class.ap-cursor-pointer]="showCursorOnHover$ | async" (click)="setSelectedAddBtnId();add()"
+    [class.big-add-button-drop-indicator]="(isInDragginStepMode$ | async) || (selectedAddBtnId$ | async) === addButtonId"
+    [class.show-shadow]="showButtonShadow || (selectedAddBtnId$ | async) === addButtonId" [style.top]="top+'px'"
+    [style.left]="left+'px'">
+    <svg-icon
+        *ngIf="(selectedAddBtnId$ | async) !== addButtonId && !showButtonShadow && (isInDragginStepMode$ | async) === false"
+        src="./assets/img/custom/plus.svg" class="add-icon" [applyClass]="true"></svg-icon>
+</div>
+
+
+
+
+
+
+<div class="ap-absolute" [style.top]="top+'px'" [style.left]="left+'px'">
+    <svg class="ap-overflow-visible " shape-rendering="auto">
+        <g *ngIf="!inReadOnlyMode">
+            <path [attr.d]="fillerLinesCommand" class="ap-stroke-border" fill="transparent" stroke-width="2" />
+        </g>
+        <g *ngIf="inReadOnlyMode">
+            <path [attr.d]="replacementLineWhenViewingRun" class="ap-stroke-border" fill="transparent"
+                stroke-width="2" />
+        </g>
+    </svg>
+
+</div>
+
+
+
+
+
+<app-drop-zone [btnLeft]="left" [btnTop]="top" [btnHeight]="BIG_BUTTON_SIZE" [btnWidth]="BIG_BUTTON_SIZE"
+    (dropped)="drop($event)" (dragEnter)="toggleButtonShadow(true)" (dragLeave)="toggleButtonShadow(false)">
+</app-drop-zone>

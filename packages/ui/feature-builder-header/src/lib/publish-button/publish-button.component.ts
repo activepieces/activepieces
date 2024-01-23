@@ -3,9 +3,9 @@ import { Store } from '@ngrx/store';
 import { combineLatest, map, Observable, of } from 'rxjs';
 import {
   BuilderSelectors,
-  FlowInstanceActions,
   ViewModeEnum,
   ViewModeActions,
+  FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
 
 @Component({
@@ -28,7 +28,11 @@ export class PublishButtonComponent implements OnInit {
   publishBtnText$: Observable<string>;
   isCurrentFlowVersionPublished$: Observable<boolean>;
   dispatchAction$: Observable<void>;
-  constructor(private store: Store) {}
+  viewMode$: Observable<ViewModeEnum>;
+  ViewModeEnum = ViewModeEnum;
+  constructor(private store: Store) {
+    this.viewMode$ = this.store.select(BuilderSelectors.selectViewMode);
+  }
 
   ngOnInit(): void {
     this.setFlowStateListener();
@@ -76,32 +80,32 @@ export class PublishButtonComponent implements OnInit {
     }).pipe(
       map((res) => {
         if (res.isShowingPublishedVersion) {
-          return 'Edit';
+          return $localize`Edit`;
         }
         if (!res.flowHasSteps) {
-          return 'Add 1 more step to publish';
+          return $localize`Add 1 more step to publish`;
         } else if (res.isCurrentFlowVersionPublished) {
-          return 'Published';
+          return $localize`Published`;
         } else if (res.buttonIsDisabled) {
-          return 'Your flow has invalid steps';
+          return $localize`Your flow has invalid steps`;
         }
-        return 'Publish Flow';
+        return $localize`Publish Flow`;
       })
     );
     this.publishBtnText$ = this.flowState$.pipe(
       map((res) => {
         if (res.isSaving) {
-          return 'Saving';
+          return $localize`Saving`;
         } else if (res.isPublishing) {
-          return 'Publishing';
+          return $localize`Publishing`;
         }
-        return 'Publish';
+        return $localize`Publish`;
       })
     );
   }
 
   publishButtonClicked() {
-    this.store.dispatch(FlowInstanceActions.publish());
+    this.store.dispatch(FlowsActions.publish());
   }
   editFlowButtonClicked() {
     this.store.dispatch(

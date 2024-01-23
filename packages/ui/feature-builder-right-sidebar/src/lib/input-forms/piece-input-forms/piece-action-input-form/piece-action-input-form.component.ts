@@ -29,8 +29,10 @@ import {
 } from 'rxjs';
 import { Store } from '@ngrx/store';
 import {
+  ActionErrorHandlingOptions,
   ActionType,
   AUTHENTICATION_PROPERTY_NAME,
+  isNil,
   PackageType,
   PieceActionSettings,
   PieceType,
@@ -38,11 +40,7 @@ import {
 } from '@activepieces/shared';
 import { PiecePropertiesFormValue } from '@activepieces/ui/feature-builder-form-controls';
 import { PieceActionInputFormSchema } from '../../input-forms-schema';
-import {
-  fadeInUp400ms,
-  isOverflown,
-  PieceMetadataService,
-} from '@activepieces/ui/common';
+import { fadeInUp400ms, isOverflown } from '@activepieces/ui/common';
 import {
   BuilderSelectors,
   ConnectionDropdownItem,
@@ -50,14 +48,17 @@ import {
   FlowItemsDetailsState,
 } from '@activepieces/ui/feature-builder-store';
 import {
+  ErrorHandlingOptionsParam,
   PieceAuthProperty,
   PiecePropertyMap,
 } from '@activepieces/pieces-framework';
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 
 declare type ActionDropdownOptionValue = {
   actionName: string;
   auth?: PieceAuthProperty;
   properties: PiecePropertyMap;
+  errorHandlingOptions?: ErrorHandlingOptionsParam;
 };
 
 declare type ActionDropdownOption = {
@@ -66,18 +67,20 @@ declare type ActionDropdownOption = {
     description: string;
   };
   value: ActionDropdownOptionValue;
-  disabled?: boolean;
 };
 const ACTION_FORM_CONTROL_NAME = 'action';
 const PIECE_PROPERTIES_FORM_CONTROL_NAME = 'configs';
+const ERROR_HANDLING_FORM_CONTROL_NAME = 'errorHandlingOptions';
 declare type ConfigsFormControlValue = {
   input: Record<string, string | Array<any> | object>;
   customizedInputs: Record<string, boolean>;
+  propertiesValues?: Record<string, string | Array<any> | object>;
 };
 
-declare type ComponentFormValue = {
+declare type ActionFormValue = {
   [ACTION_FORM_CONTROL_NAME]: string;
   [PIECE_PROPERTIES_FORM_CONTROL_NAME]: ConfigsFormControlValue;
+  [ERROR_HANDLING_FORM_CONTROL_NAME]: ActionErrorHandlingOptions;
 };
 @Component({
   selector: 'app-piece-action-input-form',
@@ -101,6 +104,7 @@ declare type ComponentFormValue = {
 export class PieceActionInputFormComponent
   implements ControlValueAccessor, AfterViewInit
 {
+  readonly ERROR_HANDLING_FORM_CONTROL_NAME = ERROR_HANDLING_FORM_CONTROL_NAME;
   readonly ACTION_FORM_CONTROL_NAME = ACTION_FORM_CONTROL_NAME;
   readonly CONFIGS_FORM_CONTROL_NAME = PIECE_PROPERTIES_FORM_CONTROL_NAME;
   updateStepName$: Observable<void>;
@@ -118,6 +122,8 @@ export class PieceActionInputFormComponent
   actionDropdownValueChanged$: Observable<ActionDropdownOptionValue>;
   allAuthConfigs$: Observable<ConnectionDropdownItem[]>;
   flowItemDetails$: Observable<FlowItemsDetailsState>;
+  hideContinueOnFailure = false;
+  hideRetryOnFailure = false;
   isOverflown = isOverflown;
   onChange: (val: unknown) => void = (value) => {
     value;
@@ -159,13 +165,9 @@ export class PieceActionInputFormComponent
     this.valueChanges$ = this.pieceActionForm.valueChanges.pipe(
       startWith(null),
       pairwise(),
-      tap(
-        (
-          oldAndCurrentValues: [ComponentFormValue | null, ComponentFormValue]
-        ) => {
-          this.onChange(this.getFormattedFormData(oldAndCurrentValues));
-        }
-      ),
+      tap((oldAndCurrentValues: [ActionFormValue | null, ActionFormValue]) => {
+        this.onChange(this.getFormattedFormData(oldAndCurrentValues));
+      }),
       map(() => void 0)
     );
   }
@@ -188,6 +190,7 @@ export class PieceActionInputFormComponent
                 actionName: actionName,
                 auth: action.requireAuth ? pieceMetadata.auth : undefined,
                 properties: action.props,
+                errorHandlingOptions: action.errorHandlingOptions,
               },
             };
           }
@@ -262,6 +265,7 @@ export class PieceActionInputFormComponent
           this.initialComponentInputFormValue.inputUiInfo?.customizedInputs ||
           {},
       };
+
       this.pieceActionForm.addControl(
         PIECE_PROPERTIES_FORM_CONTROL_NAME,
         new UntypedFormControl({
@@ -271,6 +275,22 @@ export class PieceActionInputFormComponent
         {
           emitEvent: false,
         }
+      );
+      if (!isNil(selectedAction.value.errorHandlingOptions)) {
+        this.hideContinueOnFailure =
+          selectedAction.value.errorHandlingOptions.continueOnFailure.hide;
+        this.hideRetryOnFailure =
+          selectedAction.value.errorHandlingOptions.retryOnFailure.hide;
+      }
+      const errorHandlingOptionsValue =
+        this.initialComponentInputFormValue.errorHandlingOptions;
+      this.pieceActionForm.addControl(
+        ERROR_HANDLING_FORM_CONTROL_NAME,
+        new UntypedFormControl({
+          value: errorHandlingOptionsValue ?? {},
+          disabled: this.pieceActionForm.disabled,
+        }),
+        { emitEvent: false }
       );
     }
   }
@@ -286,6 +306,9 @@ export class PieceActionInputFormComponent
       .get(ACTION_FORM_CONTROL_NAME)
       ?.setValue(undefined, { emitEvent: false });
     this.pieceActionForm.removeControl(PIECE_PROPERTIES_FORM_CONTROL_NAME, {
+      emitEvent: false,
+    });
+    this.pieceActionForm.removeControl(ERROR_HANDLING_FORM_CONTROL_NAME, {
       emitEvent: false,
     });
 
@@ -308,10 +331,7 @@ export class PieceActionInputFormComponent
   }
 
   actionSelectValueChanged(
-    selectedActionValue: {
-      actionName: string;
-      properties: PiecePropertyMap;
-    } | null
+    selectedActionValue: ActionDropdownOptionValue | null
   ) {
     if (selectedActionValue) {
       this.actionSelected(selectedActionValue);
@@ -322,6 +342,15 @@ export class PieceActionInputFormComponent
   }
 
   private actionSelected(selectedActionValue: ActionDropdownOptionValue) {
+    this.createOrSetErrorHandlingFormControl(selectedActionValue);
+    this.createOrSetPropertiesFormControl(selectedActionValue);
+    this.cd.detectChanges();
+    this.pieceActionForm.updateValueAndValidity();
+    this.updateStepName(selectedActionValue.actionName);
+  }
+  private createOrSetPropertiesFormControl(
+    selectedActionValue: ActionDropdownOptionValue
+  ) {
     const piecePropertiesForm = this.pieceActionForm.get(
       PIECE_PROPERTIES_FORM_CONTROL_NAME
     );
@@ -347,13 +376,47 @@ export class PieceActionInputFormComponent
     } else {
       piecePropertiesForm.setValue(propertiesFormValue);
     }
-    this.cd.detectChanges();
-    this.pieceActionForm.updateValueAndValidity();
-    this.updateStepName(selectedActionValue.actionName);
+  }
+  private createOrSetErrorHandlingFormControl(
+    selectedActionValue: ActionDropdownOptionValue
+  ) {
+    const errorHandlingOptionsForm = this.pieceActionForm.get(
+      ERROR_HANDLING_FORM_CONTROL_NAME
+    );
+    if (!isNil(selectedActionValue.errorHandlingOptions)) {
+      this.hideContinueOnFailure =
+        selectedActionValue.errorHandlingOptions.continueOnFailure.hide;
+      this.hideRetryOnFailure =
+        selectedActionValue.errorHandlingOptions.retryOnFailure.hide;
+    }
+    const errorHandlingOptionsValue = {
+      continueOnFailure: {
+        value:
+          selectedActionValue.errorHandlingOptions?.continueOnFailure
+            .defaultValue ?? false,
+      },
+      retryOnFailure: {
+        value:
+          selectedActionValue.errorHandlingOptions?.retryOnFailure
+            .defaultValue ?? false,
+      },
+    };
+    if (!errorHandlingOptionsForm) {
+      this.pieceActionForm.addControl(
+        ERROR_HANDLING_FORM_CONTROL_NAME,
+        new UntypedFormControl({
+          value: errorHandlingOptionsValue,
+          disabled: this.pieceActionForm.disabled,
+        }),
+        { emitEvent: false }
+      );
+    } else {
+      errorHandlingOptionsForm.setValue(errorHandlingOptionsValue);
+    }
   }
 
   getFormattedFormData(
-    oldAndCurrentValues: [ComponentFormValue | null, ComponentFormValue]
+    oldAndCurrentValues: [ActionFormValue | null, ActionFormValue]
   ): PieceActionSettings {
     let customizedInputs: Record<string, boolean>;
     if (
@@ -372,16 +435,32 @@ export class PieceActionInputFormComponent
     )!.value;
     const configs: ConfigsFormControlValue =
       this.pieceActionForm.get(PIECE_PROPERTIES_FORM_CONTROL_NAME)?.value || {};
+    let input: Record<string, string | Array<any> | object> = {};
+    if (configs.input) {
+      input = {
+        ...configs.input,
+      };
+    } else {
+      input = {
+        ...(configs.propertiesValues as Record<
+          string,
+          string | Array<any> | object
+        >),
+      };
+    }
+    const errorHandlingOptions: ActionErrorHandlingOptions =
+      this.pieceActionForm.get(ERROR_HANDLING_FORM_CONTROL_NAME)?.value;
     const res = {
       actionName: action?.actionName,
-      input: {
-        ...configs.input,
-      },
+      input,
       packageType: this.packageType,
       pieceType: this.pieceType,
       pieceName: this.pieceName,
       pieceVersion: this.pieceVersion,
       inputUiInfo: { customizedInputs: customizedInputs },
+      errorHandlingOptions: {
+        ...errorHandlingOptions,
+      },
     };
 
     return res;

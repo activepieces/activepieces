@@ -1,42 +1,44 @@
-import { ActionType, ExecutionOutput, LoopOnItemsStepOutput, MAX_LOG_SIZE, StepOutput, applyFunctionToValues } from "@activepieces/shared";
-import sizeof from "object-sizeof";
-import { isMemoryFilePath } from "../services/files.service";
+import { ActionType, StepOutput, TriggerType, applyFunctionToValues } from '@activepieces/shared'
+import sizeof from 'object-sizeof'
+import { isMemoryFilePath } from '../services/files.service'
 
 const TRUNCATION_TEXT_PLACEHOLDER = '(truncated)'
+const MAX_SINGLE_SIZE_FOR_SINGLE_ENTRY = 512 * 1024
 
 export const loggingUtils = {
-    async trimExecution(executionOutput: ExecutionOutput) {
-        const steps = executionOutput.executionState.steps;
+    async trimExecution(steps: Record<string, StepOutput>): Promise<Record<string, StepOutput>> {
+        const clonedSteps = { ...steps }
         for (const stepName in steps) {
-            const stepOutput = steps[stepName];
-            steps[stepName] = await trimStepOutput(stepOutput);
+            const stepOutput = steps[stepName]
+            clonedSteps[stepName] = await trimStepOutput(stepOutput)
         }
-        return executionOutput;
-    }
+        return clonedSteps
+    },
 }
 
 async function trimStepOutput(stepOutput: StepOutput): Promise<StepOutput> {
-    const modified: StepOutput = JSON.parse(JSON.stringify(stepOutput));
-    modified.input = await applyFunctionToValues(modified.input, trim);
+    const modified: StepOutput = JSON.parse(JSON.stringify(stepOutput))
+    modified.input = await applyFunctionToValues(modified.input, trim)
     switch (modified.type) {
         case ActionType.BRANCH:
-            break;
+        case TriggerType.WEBHOOK:
+        case TriggerType.EMPTY:
+        case TriggerType.PIECE:
+            modified.output = await applyFunctionToValues(modified.output, trim)
+            break
+        case ActionType.LOOP_ON_ITEMS: {
+            const loopItem = modified.output
+            if (loopItem) {
+                loopItem.iterations = await applyFunctionToValues(loopItem.iterations, trim)
+                loopItem.item = await applyFunctionToValues(loopItem.item, trim)
+            }
+            break
+        }
         case ActionType.CODE:
         case ActionType.PIECE:
-            modified.output = await applyFunctionToValues(modified.output, trim);
-            break;
-        case ActionType.LOOP_ON_ITEMS: {
-            const loopItem = (modified as LoopOnItemsStepOutput).output;
-            if (loopItem) {
-                loopItem.iterations = await applyFunctionToValues(loopItem.iterations, trim);
-                loopItem.item = await applyFunctionToValues(loopItem.item, trim);
-            }
-            break;
-        }
     }
-    modified.standardOutput = await applyFunctionToValues(modified.standardOutput, trim);
-    modified.errorMessage = await applyFunctionToValues(modified.errorMessage, trim);
-    return modified;
+    modified.errorMessage = await applyFunctionToValues(modified.errorMessage, trim)
+    return modified
 }
 
 const trim = async (obj: unknown): Promise<unknown> => {
@@ -68,7 +70,7 @@ const objectEntriesExceedMaxSize = (objectEntries: [string, unknown][]): boolean
 }
 
 const objectExceedMaxSize = (obj: unknown): boolean => {
-    return sizeof(obj) > MAX_LOG_SIZE
+    return sizeof(obj) > MAX_SINGLE_SIZE_FOR_SINGLE_ENTRY
 }
 
 const isObject = (obj: unknown): obj is Record<string, unknown> => {

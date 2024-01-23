@@ -34,13 +34,13 @@
       <button apTrackHover #resultNodeHoverTracker="hoverTrackerDirective" class="!ap-pl-0" mat-menu-item
         (click)="mentionClicked.emit(_stepMention)">
         <span class=" ap-flex-grow ap-transition-all"
-          [style.padding-left]="FIRST_LEVEL_PADDING_IN_MENTIONS_LIST+ 'px'">result:
+          [style.padding-left]="FIRST_LEVEL_PADDING_IN_MENTIONS_LIST+ 'px'" i18n>result:
           <span class="ap-transition-all ap-text-primary" [matTooltip]="'' + result.value || ''">{{result.value}}
           </span></span>
         <ap-button *ngIf="resultNodeHoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button"
           btnSize="small" class="ap-absolute ap-right-[10px]" [buttonIsInsideAutocomplete]="true"
           [darkLoadingSpinner]="true" (click)="$event.stopPropagation();"
-          (buttonClicked)="mentionClicked.emit(_stepMention)">Insert
+          (buttonClicked)="mentionClicked.emit(_stepMention)" i18n>Insert
         </ap-button>
       </button>
     </ng-container>
@@ -53,12 +53,12 @@
         (isPollingTrigger$| async)? 'Load sample data first' : 'Test trigger first'
         }}
       </div>
-      <div class="ap-typography-body-2 ap-text-center ap-mb-3">
+      <div class="ap-typography-body-2 ap-text-center ap-mb-3" i18n>
         This trigger needs to have data loaded from your account, to use as sample data
       </div>
       <div class="ap-text-center">
         <ap-button btnColor="primary" btnStyle="flat" type="button" btnSize="default" [darkLoadingSpinner]="false"
-          (click)="$event.stopPropagation();selectStep() ">Go to trigger
+          (click)="$event.stopPropagation();selectStep() " i18n>Go to trigger
         </ap-button>
       </div>
     </div>

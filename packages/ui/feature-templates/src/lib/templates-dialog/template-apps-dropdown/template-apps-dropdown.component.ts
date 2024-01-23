@@ -1,11 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import {
-  PieceMetadataService,
-  CORE_PIECES_ACTIONS_NAMES,
-  CORE_PIECES_TRIGGERS,
-  TelemetryService,
-  corePieceIconUrl,
-} from '@activepieces/ui/common';
+import { TelemetryService } from '@activepieces/ui/common';
 import { PieceMetadataSummary } from '@activepieces/pieces-framework';
 import {
   Observable,
@@ -22,6 +16,12 @@ import {
   FormControl,
   NG_VALUE_ACCESSOR,
 } from '@angular/forms';
+import {
+  CORE_PIECES_ACTIONS_NAMES,
+  CORE_PIECES_TRIGGERS,
+  PieceMetadataService,
+  corePieceIconUrl,
+} from '@activepieces/ui/feature-pieces';
 
 @Component({
   selector: 'app-template-apps-dropdown',

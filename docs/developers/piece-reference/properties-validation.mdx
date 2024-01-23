@@ -105,6 +105,19 @@ quantity: Property.Number({
 })
 ```
 
+### Non Zero
+
+Validates whether the processed value is strictly NOT zero. Designed to be used with `Validators.number`
+
+```typescript
+numberToDivideBy: Property.Number({
+    displayName: 'Divide by',
+    required: true,
+    processor: [],
+    validators: [Validators.number, Validators.nonZero]
+})
+```
+
 ### Image
 
 Verifies whether the processed value is a valid image file based on its extension.

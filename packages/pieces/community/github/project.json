@@ -1,0 +1,29 @@
+{
+  "name": "pieces-github",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/github/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/github",
+        "tsConfig": "packages/pieces/community/github/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/github/package.json",
+        "main": "packages/pieces/community/github/src/index.ts",
+        "assets": ["packages/pieces/community/github/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/community/github/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

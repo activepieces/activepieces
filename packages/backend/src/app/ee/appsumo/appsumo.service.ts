@@ -1,5 +1,5 @@
 import { databaseConnection } from '../../database/database-connection'
-import { FlowPlanLimits, PlanType } from '../billing/plans/pricing-plans'
+import { FlowPlanLimits } from '../billing/project-plan/pricing-plans'
 import { AppSumoEntity, AppSumoPlan } from './appsumo.entity'
 
 
@@ -9,32 +9,37 @@ const appSumoPlans: Record<string, FlowPlanLimits> = {
     'activepieces_tier1': {
         nickname: 'appsumo_activepieces_tier1',
         tasks: 10000,
-        type: PlanType.FLOWS,
         minimumPollingInterval: 10,
         connections: 20,
-        tasksPerDay: null,
         teamMembers: 1,
-        activeFlows: 100,
     },
     'activepieces_tier2': {
         nickname: 'appsumo_activepieces_tier2',
         tasks: 50000,
-        type: PlanType.FLOWS,
         minimumPollingInterval: 5,
         connections: 100,
-        tasksPerDay: null,
         teamMembers: 1,
-        activeFlows: 100,
     },
     'activepieces_tier3': {
         nickname: 'appsumo_activepieces_tier3',
-        type: PlanType.FLOWS,
         tasks: 200000,
         minimumPollingInterval: 1,
         connections: 100,
-        tasksPerDay: null,
         teamMembers: 5,
-        activeFlows: 100,
+    },
+    'activepieces_tier4': {
+        nickname: 'appsumo_activepieces_tier4',
+        tasks: 500000,
+        minimumPollingInterval: 1,
+        connections: 100,
+        teamMembers: 5,
+    },
+    'activepieces_tier5': {
+        nickname: 'appsumo_activepieces_tier5',
+        tasks: 1000000,
+        minimumPollingInterval: 1,
+        connections: 100,
+        teamMembers: 5,
     },
 }
 
@@ -47,9 +52,14 @@ export const appsumoService = {
             activation_email: email,
         })
     },
-    delete(uuid: string) {
-        return appsumoRepo.delete({
+    getById(uuid: string) {
+        return appsumoRepo.findOneBy({
             uuid,
+        })
+    },
+    delete({ email }: { email: string }) {
+        return appsumoRepo.delete({
+            activation_email: email,
         })
     },
     upsert(plan: AppSumoPlan) {

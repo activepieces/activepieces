@@ -10,18 +10,17 @@ import { MatDialog } from '@angular/material/dialog';
 import { Observable, tap, map } from 'rxjs';
 import { CodeArtifactControlFullscreenComponent } from './code-artifact-control-fullscreen/code-artifact-control-fullscreen.component';
 import { MatTooltip } from '@angular/material/tooltip';
-import { Artifact } from '@activepieces/ui/common';
 import { CodemirrorComponent } from '@ctrl/ngx-codemirror';
+import { SourceCode } from '@activepieces/shared';
 
 export interface CodeArtifactForm {
-  content: FormControl<string>;
-  package: FormControl<string>;
+  code: FormControl<string>;
+  packageJson: FormControl<string>;
 }
 
 @Component({
   selector: 'app-code-artifact-form-control',
   templateUrl: './code-artifact-form-control.component.html',
-  styleUrls: ['./code-artifact-form-control.component.css'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -33,19 +32,14 @@ export interface CodeArtifactForm {
 export class CodeArtifactFormControlComponent
   implements ControlValueAccessor, OnInit, AfterViewInit
 {
-  updateComponentValue$: Observable<
-    Partial<{
-      content: string;
-      package: string;
-    }>
-  >;
+  updateComponentValue$: Observable<Partial<SourceCode>>;
   @ViewChild('codeMirror') codeMirror: CodemirrorComponent;
   @ViewChild('tooltip') tooltip: MatTooltip;
   hideDelayForFullscreenTooltip = 2000;
   codeArtifactForm: FormGroup<CodeArtifactForm>;
   codeEditorOptions = {
     minimap: { enabled: false },
-    theme: 'cobalt2',
+    theme: 'apTheme',
     language: 'typescript',
     readOnly: false,
     automaticLayout: true,
@@ -56,8 +50,8 @@ export class CodeArtifactFormControlComponent
     private dialogService: MatDialog
   ) {
     this.codeArtifactForm = this.formBuilder.group({
-      content: new FormControl('', { nonNullable: true }),
-      package: new FormControl('', { nonNullable: true }),
+      packageJson: new FormControl('', { nonNullable: true }),
+      code: new FormControl('', { nonNullable: true }),
     });
   }
   ngOnInit(): void {
@@ -83,8 +77,8 @@ export class CodeArtifactFormControlComponent
     //ignored
   };
 
-  writeValue(artifact: Artifact): void {
-    if (artifact && (artifact.content || artifact.package)) {
+  writeValue(artifact: SourceCode): void {
+    if (artifact && (artifact.code || artifact.packageJson)) {
       this.codeArtifactForm.patchValue(artifact, { emitEvent: false });
     }
   }

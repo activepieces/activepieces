@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALIDATORS,
@@ -10,10 +10,14 @@ import {
 } from '@angular/forms';
 
 import { Observable, tap } from 'rxjs';
-import { ActionType } from '@activepieces/shared';
-import { LoopStepInputFormSchema } from '../input-forms-schema';
+import {
+  ActionType,
+  LoopOnItemsAction,
+  LoopOnItemsActionSettings,
+} from '@activepieces/shared';
 import { fadeInUp400ms, InsertMentionOperation } from '@activepieces/ui/common';
 import { InterpolatingTextFormControlComponent } from '@activepieces/ui/feature-builder-form-controls';
+import { LoopStepInputFormSchema } from '../input-forms-schema';
 
 @Component({
   selector: 'app-loop-step-input-form',
@@ -33,11 +37,13 @@ import { InterpolatingTextFormControlComponent } from '@activepieces/ui/feature-
   animations: [fadeInUp400ms],
 })
 export class LoopStepInputFormComponent implements ControlValueAccessor {
+  @Input({ required: true }) step!: LoopOnItemsAction;
   loopStepForm: FormGroup<{ items: FormControl<string> }>;
   updateComponentValue$: Observable<any>;
-  onChange: (val: LoopStepInputFormSchema) => void = (
-    value: LoopStepInputFormSchema
+  onChange: (val: Omit<LoopOnItemsActionSettings, 'inputUiInfo'>) => void = (
+    value: Omit<LoopOnItemsActionSettings, 'inputUiInfo'>
   ) => {
+    //ignore
     value;
   };
   onTouch: () => void = () => {
@@ -55,7 +61,9 @@ export class LoopStepInputFormComponent implements ControlValueAccessor {
     this.loopStepForm.markAllAsTouched();
     this.updateComponentValue$ = this.loopStepForm.valueChanges.pipe(
       tap(() => {
-        this.onChange(this.loopStepForm.getRawValue());
+        this.onChange({
+          ...this.loopStepForm.getRawValue(),
+        });
       })
     );
   }

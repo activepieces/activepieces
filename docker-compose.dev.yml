@@ -8,12 +8,14 @@ version: '3.0'
 
 services:
   app:
-    image: activepieces/ap-base:7
+    image: activepieces/ap-base:9
     container_name: ap
     environment:
       AP_CACHE_PATH: /usr/src/cache
       AP_PACKAGE_ARCHIVE_PATH: /usr/src/packages
       AP_DB_TYPE: POSTGRES
+      AP_EDITION: cloud
+      AP_LICENSE_KEY: 1234567890
       AP_ENVIRONMENT: prod
       AP_ENCRYPTION_KEY: 7e19fad4c13eaea8f657afb12e8f9c40
       AP_EXECUTION_MODE: SANDBOXED
@@ -26,7 +28,7 @@ services:
       AP_QUEUE_MODE: REDIS
       AP_REDIS_HOST: redis
       AP_REDIS_PORT: 6379
-      AP_SIGN_UP_ENABLED: false
+      AP_SIGN_UP_ENABLED: true
     privileged: true
     ports:
      - "3000:3000"
@@ -39,7 +41,8 @@ services:
     working_dir: /usr/src/app
     entrypoint:
       - npm
-      - start
+      - run
+      - dev:backend
     depends_on:
      - postgres
      - redis

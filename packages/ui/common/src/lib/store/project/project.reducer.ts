@@ -16,15 +16,19 @@ const _projectReducer = createReducer(
       ...state.projects[state.selectedIndex],
       notifyStatus: notifyStatus,
     };
+
     return {
       loaded: true,
       projects: updatedProjects,
       selectedIndex: state.selectedIndex,
     };
   }),
-  on(ProjectActions.setProjects, (_state, { projects }): ProjectsState => {
-    return { projects: projects, loaded: true, selectedIndex: 0 };
-  }),
+  on(
+    ProjectActions.setProjects,
+    (_state, { projects, selectedIndex }): ProjectsState => {
+      return { projects: projects, loaded: true, selectedIndex: selectedIndex };
+    }
+  ),
   // eslint-disable-next-line no-empty-pattern, @typescript-eslint/no-unused-vars
   on(ProjectActions.clearProjects, (_state, {}): ProjectsState => {
     return { projects: [], loaded: false, selectedIndex: 0 };

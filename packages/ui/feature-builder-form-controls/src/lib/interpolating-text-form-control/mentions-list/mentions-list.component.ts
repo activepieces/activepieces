@@ -26,7 +26,7 @@ import { MentionListItem } from '../utils';
 import { MentionsTreeCacheService } from './mentions-tree-cache.service';
 import {
   BuilderSelectors,
-  FlowItem,
+  StepWithIndex,
 } from '@activepieces/ui/feature-builder-store';
 import {
   BuilderAutocompleteMentionsDropdownService,
@@ -42,7 +42,7 @@ export class MentionsListComponent implements OnInit, AfterViewInit {
   searchFormControl: FormControl<string> = new FormControl('', {
     nonNullable: true,
   });
-  stepsMentions$: Observable<(MentionListItem & { step: FlowItem })[]>;
+  stepsMentions$: Observable<(MentionListItem & { step: StepWithIndex })[]>;
   expandConfigs = false;
   expandConnections = false;
   readonly ActionType = ActionType;
@@ -105,10 +105,12 @@ export class MentionsListComponent implements OnInit, AfterViewInit {
   mentionClicked(mention: MentionListItem) {
     this.addMention.emit({
       insert: {
-        mention: {
+        apMention: {
           serverValue: mention.value,
           value: mention.label,
-          denotationChar: '',
+          data: {
+            logoUrl: mention.logoUrl,
+          },
         },
       },
     });

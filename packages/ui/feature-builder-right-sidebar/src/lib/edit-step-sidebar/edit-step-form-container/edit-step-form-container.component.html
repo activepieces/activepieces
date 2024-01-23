@@ -7,15 +7,18 @@
           <ng-container *ngIf="webhookUrl$ | async as url">
             <section class="ap-typography-body-2">
               <p class="ap-mt-1 ap-flex ap-items-center">URL: <ap-icon-button [width]="15" [height]="15"
-                  [iconFilename]="'copy.svg'" [tooltipText]="'copy'" (buttonClicked)="copyUrl(url)"></ap-icon-button>
+                  iconFilename="copy.svg" extraClasses="ap-fill-body" tooltipText="Copy"
+                  (buttonClicked)="copyUrl(url)"></ap-icon-button>
               </p>
               <mat-form-field class="ap-w-full">
                 <input matInput [value]="url" readonly #webhookUrl (click)="webhookUrl.select()">
               </mat-form-field>
 
-              <ap-markdown [fullWidth]="true"
-                data="If you are expecting a reply from this webhook, append <b>/sync</b> to the URL.<br> <br>
-                  In that case, you will also have to add an <b>HTTP step</b>  with return response to the end of your flow."></ap-markdown>
+              <ap-markdown [fullWidth]="true" data="If you are expecting a reply from this webhook, append <b>/sync</b> to the URL.<br> <br>
+                  In that case, you will also have to add an <b>HTTP step</b>  with return response to the end of your flow.<br> <br>
+                  **If the flow takes more than 30 seconds, it will give a 408 Request Timeout response.**<br>
+                  {{ (edition$ | async) === ApEdition.CLOUD ? '' : 'To change this, set the **AP_WEBHOOK_TIMEOUT_SECONDS** to desired number.' }}
+                  " i18n-data></ap-markdown>
             </section>
           </ng-container>
         </div>
@@ -30,9 +33,11 @@
 <ng-container *ngIf="readOnly$ | async"></ng-container>
 <ng-template #inputFormSelection>
   <div [formGroup]="stepForm">
+    <app-loop-step-input-form *ngIf="_selectedStep.type === ActionType.LOOP_ON_ITEMS" [step]="_selectedStep"
+      formControlName="settings">
+    </app-loop-step-input-form>
+
     <ng-container [ngSwitch]="_selectedStep.type">
-      <app-loop-step-input-form *ngSwitchCase="ActionType.LOOP_ON_ITEMS" formControlName="settings">
-      </app-loop-step-input-form>
       <app-code-step-input-form *ngSwitchCase="ActionType.CODE" formControlName="settings">
       </app-code-step-input-form>
       <app-piece-action-input-form *ngSwitchCase="ActionType.PIECE" formControlName="settings">

@@ -5,7 +5,7 @@
     "dark": "./resources/logo/dark.svg",
     "href": "https://www.activepieces.com"
   },
-  "favicon": "/favicon.png",
+  "favicon": "/favicon.svg",
   "colors": {
     "primary": "#5155D7",
     "dark": "#3033A6",
@@ -14,6 +14,9 @@
       "dark": "#121212"
     }
   },
+  "openapi": [
+    "/openapi.json"
+  ],
   "metadata": {
     "og:image": "https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/62c4ecbe6b2d76719d890ae7_Screenshot%202022-07-06%20at%2004.59.45-p-2600.png",
     "description": "Open source alternative to zapier"
@@ -33,24 +36,33 @@
       "url": "https://github.com/activepieces/activepieces"
     }
   ],
-  "primaryTab": {
-      "name": "Learn"
-  },
-  "tabs": [
-    {
-      "name": "Develop Pieces",
-      "icon": "code",
-      "url": "developers"
-    },
-    {
-      "name": "Pieces List",
-      "icon": "plug",
-      "url": "https://www.activepieces.com/pieces"
-    },
+  "anchors": [
     {
       "name": "Discord",
       "icon": "discord",
       "url": "https://discord.gg/2jUXBKDdP8"
+    },
+    {
+      "name": "Pieces",
+      "icon": "plug",
+      "url": "https://www.activepieces.com/pieces"
+    }
+  ],
+  "primaryTab": {
+    "name": "Learn"
+  },
+  "tabs": [
+    {
+      "name": "Develop Pieces",
+      "url": "developers"
+    },
+    {
+      "name": "Deploy",
+      "url": "install"
+    },
+    {
+      "name": "API",
+      "url": "endpoints"
     }
   ],
   "navigation": [
@@ -58,33 +70,93 @@
       "group": "Getting Started",
       "pages": [
         "getting-started/introduction",
-        "getting-started/building-flows",
-        "getting-started/passing-data",
-        "getting-started/publishing-flows",
-        "getting-started/debugging-runs"
+        "getting-started/principles"
       ]
     },
     {
-      "group": "Helper Pieces",
+      "group": "Get Started",
       "pages": [
-        "helper-pieces/code"
+        "endpoints/overview"
       ]
     },
     {
-      "group": "Self Host",
+      "group": "Endpoints",
       "pages": [
         {
-          "group": "Install Options",
-          "icon": "server",
+          "group": "Projects",
+          "icon": "building",
           "pages": [
-            "install/options/overview",
-            "install/options/docker",
-            "install/options/docker-compose",
-            "install/options/easypanel",            
-            "install/options/aws",
-            "install/options/gcp"
+            "endpoints/projects/schema",
+            "endpoints/projects/create",
+            "endpoints/projects/update",
+            "endpoints/projects/list"
           ]
         },
+        {
+          "group": "Project Members",
+          "icon": "user",
+          "pages": [
+            "endpoints/project-members/schema",
+            "endpoints/project-members/create",
+            "endpoints/project-members/list",
+            "endpoints/project-members/delete"
+          ]
+        },
+        {
+          "group": "Connections",
+          "icon": "link",
+          "pages": [
+            "endpoints/connections/schema",
+            "endpoints/connections/upsert",
+            "endpoints/connections/list",
+            "endpoints/connections/delete"
+          ]
+        },
+        {
+          "group": "Flows",
+          "icon": "bolt",
+          "pages": [
+            "endpoints/flows/schema",
+            "endpoints/flows/create",
+            "endpoints/flows/update",
+            "endpoints/flows/get",
+            "endpoints/flows/list",
+            "endpoints/flows/delete"
+          ]
+        },
+        {
+          "group": "Pieces",
+          "icon": "plug",
+          "pages": [
+            "endpoints/pieces/schema",
+            "endpoints/pieces/install"
+          ]
+        }
+      ]
+    },
+    {
+      "group": "Flows",
+      "pages": [
+        "flows/building-flows",
+        "flows/passing-data",
+        "flows/publishing-flows",
+        "flows/debugging-runs"
+      ]
+    },
+    {
+      "group": "Get Started",
+      "pages": [
+        "install/options/overview",
+        "install/options/docker",
+        "install/options/docker-compose",
+        "install/options/easypanel",
+        "install/options/aws",
+        "install/options/gcp"
+      ]
+    },
+    {
+      "group": "Reference",
+      "pages": [
         {
           "group": "Configurations",
           "icon": "gear",
@@ -93,8 +165,10 @@
             "install/configurations/error-notifications"
           ]
         },
-        "install/editions",
-        "install/breaking-changes"
+        "install/setup-ssl",
+        "install/architecture",
+        "install/enterprise",
+        "install/troubleshooting"
       ]
     },
     {
@@ -150,40 +224,81 @@
         "developers/piece-reference/files",
         "developers/piece-reference/external-libraries",
         "developers/piece-reference/piece-versioning",
-        "developers/piece-reference/examples"
+        "developers/piece-reference/examples",
+        "developers/piece-reference/custom-api-calls"
       ]
     },
     {
-      "group": "Worker Architecture",
+      "group": "Architecture",
       "pages": [
-        "developers/architecture/repo-structure",
-        "developers/architecture/flow-worker",
-        "developers/architecture/code-worker"
+        "developers/architecture/repo-structure"
       ]
     },
     {
-      "group": "Other",
+      "group": "Embedding",
       "pages": [
-        "telemetry",
-        "changelog",
-        "license"
-      ]
-    },
-    {
-      "group": "Enterprise Edition",
-      "pages": [
-        "enterprise/whitelabel",
+        {
+          "group": "Embed Builder",
+          "icon": "code",
+          "pages": [
+            "embedding/embed-builder/generate-jwt",
+            "embedding/embed-builder/embed-iframe"
+          ]
+        },
         {
           "group": "Connection Cards",
           "icon": "cards-blank",
           "pages": [
-            "enterprise/connection-cards/overview",
-            "enterprise/connection-cards/user-authentication",
-            "enterprise/connection-cards/frontend-sdk",
-            "enterprise/connection-cards/user-flows"
+            "embedding/connection-cards/overview",
+            "embedding/connection-cards/user-authentication",
+            "embedding/connection-cards/frontend-sdk",
+            "embedding/connection-cards/user-flows"
           ]
-        },
-        "enterprise/install"
+        }
+      ]
+    },
+    {
+      "group": "Platform",
+      "pages": [
+        "platform/overview",
+        "platform/appearance",
+        "platform/manage-projects",
+        "platform/custom-domain",
+        "platform/manage-templates",
+        "platform/manage-pieces",
+        "platform/manage-oauth2",
+        "platform/customize-emails"
+      ]
+    },
+    {
+      "group": "Team",
+      "pages": [
+        "team/overview"
+      ]
+    },
+    {
+      "group": "Operations",
+      "pages": [
+        "operations/git-sync",
+        "operations/audit-logs"
+      ]
+    },
+    {
+      "group": "Security",
+      "pages": [
+        "security/practices",
+        "security/permissions",
+        "security/sso"
+      ]
+    },
+    {
+      "group": "About",
+      "pages": [
+        "about/i18n",
+        "about/editions",
+        "about/changelog",
+        "about/telemetry",
+        "about/license"
       ]
     }
   ],

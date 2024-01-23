@@ -1,7 +1,6 @@
 <div class="p-3">
-  <ap-sidebar-header (closeClicked)="closeLeftSideBar()" [title]="'Run Details'"></ap-sidebar-header>
+  <ap-sidebar-header (closeClicked)="closeLeftSideBar()" title="Run Details" i18n-title></ap-sidebar-header>
 </div>
-
 <ng-container *ngIf="(selectedRun$ | async) as flowRun">
   <ng-container *ngIf="logs$ | async as logs; else loading">
     <ng-container *ngIf="logs.runResults.length> 0; else loading">
@@ -22,7 +21,6 @@
             </app-step-result>
           </ng-container>
         </div>
-
         <div class="bottom-resizer-section" #selectedStepResultContainer>
           <ng-container *ngIf="
                 currentStepResult$ | async as currentStepResult
@@ -46,7 +44,7 @@
 
   <ng-template #noDetails>
     <div class="no-details-message">
-      <p>No details available for this run.</p>
+      <p i18n>No details available for this run.</p>
     </div>
   </ng-template>
 </ng-container>

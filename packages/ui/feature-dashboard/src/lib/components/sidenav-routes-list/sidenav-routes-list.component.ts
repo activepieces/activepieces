@@ -7,15 +7,17 @@ import {
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { FolderActions } from '../../store/folders/folders.actions';
-import { Observable, map, tap } from 'rxjs';
+import { EmbeddingService, NavigationService } from '@activepieces/ui/common';
+import { Observable, map, of } from 'rxjs';
 import { ApFlagId, supportUrl } from '@activepieces/shared';
-import { FlagService } from '@activepieces/ui/common';
+import { DashboardService, FlagService } from '@activepieces/ui/common';
 
 type SideNavRoute = {
   icon: string;
   caption: string;
   route: string;
   effect?: () => void;
+  showInSideNav$: Observable<boolean>;
 };
 
 @Component({
@@ -25,86 +27,121 @@ type SideNavRoute = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SidenavRoutesListComponent implements OnInit {
-  removeChatbots$: Observable<void>;
   logoUrl$: Observable<string>;
   showSupport$: Observable<boolean>;
   showDocs$: Observable<boolean>;
   showBilling$: Observable<boolean>;
-
+  isInEmbedding$: Observable<boolean>;
+  sideNavRoutes$: Observable<SideNavRoute[]>;
+  mainDashboardRoutes: SideNavRoute[] = [];
+  platformDashboardRoutes: SideNavRoute[] = [
+    {
+      icon: 'assets/img/custom/dashboard/projects.svg',
+      caption: $localize`Projects`,
+      route: 'platform/projects',
+      showInSideNav$: of(true),
+    },
+    {
+      icon: 'assets/img/custom/dashboard/appearance.svg',
+      caption: $localize`Appearance`,
+      route: 'platform/appearance',
+      showInSideNav$: of(true),
+    },
+    {
+      icon: 'assets/img/custom/dashboard/pieces.svg',
+      caption: $localize`Pieces`,
+      route: 'platform/pieces',
+      showInSideNav$: of(true),
+    },
+    {
+      icon: 'assets/img/custom/dashboard/templates.svg',
+      caption: $localize`Templates`,
+      route: 'platform/templates',
+      showInSideNav$: of(true),
+    },
+    {
+      icon: 'assets/img/custom/dashboard/users.svg',
+      caption: $localize`Users`,
+      route: 'platform/users',
+      showInSideNav$: of(true),
+    },
+    {
+      icon: 'assets/img/custom/dashboard/settings.svg',
+      caption: $localize`Settings`,
+      route: 'platform/settings',
+      showInSideNav$: of(true),
+    },
+  ];
   constructor(
     public router: Router,
     private store: Store,
     private flagServices: FlagService,
-    private cd: ChangeDetectorRef
+    private cd: ChangeDetectorRef,
+    private embeddingService: EmbeddingService,
+    private dashboardService: DashboardService,
+    private navigationService: NavigationService
   ) {
+    this.isInEmbedding$ = this.embeddingService.getIsInEmbedding$();
     this.logoUrl$ = this.flagServices
       .getLogos()
       .pipe(map((logos) => logos.logoIconUrl));
+    this.mainDashboardRoutes = [
+      {
+        icon: 'assets/img/custom/dashboard/flows.svg',
+        caption: $localize`Flows`,
+        route: 'flows',
+        effect: () => {
+          this.store.dispatch(FolderActions.showAllFlows());
+        },
+        showInSideNav$: of(true),
+      },
+      {
+        icon: 'assets/img/custom/dashboard/runs.svg',
+        caption: $localize`Runs`,
+        route: 'runs',
+        showInSideNav$: of(true),
+      },
+      {
+        icon: 'assets/img/custom/dashboard/connections.svg',
+        caption: $localize`Connections`,
+        route: 'connections',
+        showInSideNav$: of(true),
+      },
+      {
+        icon: 'assets/img/custom/dashboard/members.svg',
+        caption: $localize`Team`,
+        route: 'team',
+        showInSideNav$: of(true),
+      },
+      {
+        icon: 'assets/img/custom/dashboard/settings.svg',
+        caption: $localize`Settings`,
+        route: 'settings',
+        showInSideNav$: this.isInEmbedding$.pipe(map((embedded) => !embedded)),
+      },
+    ];
   }
   ngOnInit(): void {
-    this.removeChatbots$ = this.flagServices.isChatbotEnabled().pipe(
-      tap((res) => {
-        if (!res) {
-          this.sideNavRoutes = this.sideNavRoutes.filter(
-            (route) => route.route !== 'chatbots'
-          );
-        }
-      }),
-      map(() => void 0)
-    );
     this.showDocs$ = this.flagServices.isFlagEnabled(ApFlagId.SHOW_DOCS);
     this.showSupport$ = this.flagServices.isFlagEnabled(
       ApFlagId.SHOW_COMMUNITY
     );
-    this.showBilling$ = this.flagServices.isFlagEnabled(
-      ApFlagId.BILLING_ENABLED
+    this.showBilling$ = this.flagServices.isFlagEnabled(ApFlagId.SHOW_BILLING);
+    this.sideNavRoutes$ = this.dashboardService.getIsInPlatformRoute().pipe(
+      map((isInPlatformDashboard) => {
+        if (!isInPlatformDashboard) {
+          return this.mainDashboardRoutes;
+        }
+        return this.platformDashboardRoutes;
+      })
     );
   }
-
-  sideNavRoutes: SideNavRoute[] = [
-    {
-      icon: '/assets/img/custom/dashboard/flows.svg',
-      caption: 'Flows',
-      route: 'flows',
-      effect: () => {
-        this.store.dispatch(FolderActions.showAllFlows());
-      },
-    },
-    {
-      icon: 'assets/img/custom/dashboard/chatbots.svg',
-      caption: 'Chatbots',
-      route: 'chatbots',
-    },
-    {
-      icon: 'assets/img/custom/dashboard/runs.svg',
-      caption: 'Runs',
-      route: 'runs',
-    },
-    {
-      icon: 'assets/img/custom/dashboard/connections.svg',
-      caption: 'Connections',
-      route: 'connections',
-    },
-    {
-      icon: 'assets/img/custom/dashboard/members.svg',
-      caption: 'Team',
-      route: 'team',
-    },
-  ];
 
   openDocs() {
     window.open('https://activepieces.com/docs', '_blank', 'noopener');
   }
   redirectHome(newWindow: boolean) {
-    if (newWindow) {
-      const url = this.router.serializeUrl(this.router.createUrlTree([``]));
-      window.open(url, '_blank', 'noopener');
-    } else {
-      const urlArrays = this.router.url.split('/');
-      urlArrays.splice(urlArrays.length - 1, 1);
-      const fixedUrl = urlArrays.join('/');
-      this.router.navigate([fixedUrl]);
-    }
+    this.navigationService.navigate('/flows', newWindow);
   }
 
   markChange() {

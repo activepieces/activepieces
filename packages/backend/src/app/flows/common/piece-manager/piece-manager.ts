@@ -1,24 +1,19 @@
 import { resolve } from 'node:path'
-import { PiecePackage, ProjectId, getPackageAliasForPiece, getPackageSpecForPiece, isEmpty } from '@activepieces/shared'
+import { PackageType, PiecePackage, getPackageAliasForPiece, getPackageArchivePathForPiece, isEmpty } from '@activepieces/shared'
 import { system } from '../../../helper/system/system'
 import { SystemProp } from '../../../helper/system/system-prop'
-import { PackageInfo, packageManager } from '../../../helper/package-manager'
+import { PackageInfo } from '../../../helper/package-manager'
 import { enrichErrorContext } from '../../../helper/error-handler'
 
-const PACKAGE_ARCHIVE_PATH = system.getOrThrow(SystemProp.PACKAGE_ARCHIVE_PATH)
+export const PACKAGE_ARCHIVE_PATH = resolve(system.getOrThrow(SystemProp.PACKAGE_ARCHIVE_PATH))
 
 export abstract class PieceManager {
-    private readonly baseArchivePath = resolve(PACKAGE_ARCHIVE_PATH)
 
     async install({ projectPath, pieces }: InstallParams): Promise<void> {
         try {
             if (isEmpty(pieces)) {
                 return
             }
-
-            await packageManager.init({
-                path: projectPath,
-            })
 
             const uniquePieces = this.removeDuplicatedPieces(pieces)
 
@@ -41,10 +36,6 @@ export abstract class PieceManager {
         }
     }
 
-    getProjectPackageArchivePath({ projectId }: GetProjectPackageArchivePathParams): string {
-        return `${this.baseArchivePath}/${projectId}`
-    }
-
     protected abstract installDependencies(params: InstallParams): Promise<void>
 
     protected pieceToDependency(piece: PiecePackage): PackageInfo {
@@ -53,17 +44,7 @@ export abstract class PieceManager {
             pieceVersion: piece.pieceVersion,
         })
 
-        const projectPackageArchivePath = this.getProjectPackageArchivePath({
-            projectId: piece.projectId,
-        })
-
-        const packageSpec = getPackageSpecForPiece({
-            packageType: piece.packageType,
-            pieceName: piece.pieceName,
-            pieceVersion: piece.pieceVersion,
-            packageArchivePath: projectPackageArchivePath,
-        })
-
+        const packageSpec = getPackageSpecForPiece(PACKAGE_ARCHIVE_PATH, piece)
         return {
             alias: packageAlias,
             spec: packageSpec,
@@ -82,6 +63,21 @@ type InstallParams = {
     pieces: PiecePackage[]
 }
 
-type GetProjectPackageArchivePathParams = {
-    projectId: ProjectId
+const getPackageSpecForPiece = (packageArchivePath: string, params: PiecePackage): string => {
+    const { packageType, pieceName, pieceVersion } = params
+
+    switch (packageType) {
+        case PackageType.REGISTRY: {
+            return `npm:${pieceName}@${pieceVersion}`
+        }
+
+        case PackageType.ARCHIVE: {
+            const archivePath = getPackageArchivePathForPiece({
+                archiveId: params.archiveId,
+                archivePath: packageArchivePath,
+            })
+
+            return `file:${archivePath}`
+        }
+    }
 }

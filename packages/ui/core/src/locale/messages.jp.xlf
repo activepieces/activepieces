@@ -1,0 +1,1606 @@
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+  <file source-language="en" target-language="jp" datatype="plaintext" original="ng2.template">
+    <body>
+      <trans-unit id="8503408630418561538" datatype="html">
+        <source> Team Invitation Accepted </source>
+        <target state="new"> Team Invitation Accepted </target>
+      </trans-unit>
+      <trans-unit id="4395110422147815828" datatype="html">
+        <source> Thank you for accepting the invitation. We are redirecting you right now... </source>
+        <target state="new"> Thank you for accepting the invitation. We are redirecting you right now... </target>
+      </trans-unit>
+      <trans-unit id="8331641771927553330" datatype="html">
+        <source> Invalid invitation token. Please try again. </source>
+        <target state="new"> Invalid invitation token. Please try again. </target>
+      </trans-unit>
+      <trans-unit id="4692033629362352985" datatype="html">
+        <source>Invite Project Member </source>
+        <target state="new">Invite Project Member </target>
+      </trans-unit>
+      <trans-unit id="1104679811553007900" datatype="html">
+        <source> Type the email address of the user you want to invite. </source>
+        <target state="new"> Type the email address of the user you want to invite. </target>
+      </trans-unit>
+      <trans-unit id="7389095488851921033" datatype="html">
+        <source>The invited email already has an account. Please contact support@activepieces.com for assistance.</source>
+        <target state="new">The invited email already has an account. Please contact support@activepieces.com for assistance.</target>
+      </trans-unit>
+      <trans-unit id="1257197684303803009" datatype="html">
+        <source>Email is Required</source>
+        <target state="new">Email is Required</target>
+      </trans-unit>
+      <trans-unit id="4145496584631696119" datatype="html">
+        <source>Role</source>
+        <target state="new">Role</target>
+      </trans-unit>
+      <trans-unit id="2330577642930707695" datatype="html">
+        <source> Cancel </source>
+        <target state="new"> Cancel </target>
+      </trans-unit>
+      <trans-unit id="7927354222438929134" datatype="html">
+        <source> Invite </source>
+        <target state="new"> Invite </target>
+      </trans-unit>
+      <trans-unit id="7949744301909849109" datatype="html">
+        <source>Internal error occurred please contact support@activepieces.com</source>
+        <target state="new">Internal error occurred please contact support@activepieces.com</target>
+      </trans-unit>
+      <trans-unit id="1483298785952962987" datatype="html">
+        <source>ADMIN</source>
+        <target state="new">ADMIN</target>
+      </trans-unit>
+      <trans-unit id="2086645557074934337" datatype="html">
+        <source>EDITOR</source>
+        <target state="new">EDITOR</target>
+      </trans-unit>
+      <trans-unit id="2739133472258186788" datatype="html">
+        <source>VIEWER</source>
+        <target state="new">VIEWER</target>
+      </trans-unit>
+      <trans-unit id="2304614617903385642" datatype="html">
+        <source>Project Members</source>
+        <target state="new">Project Members</target>
+      </trans-unit>
+      <trans-unit id="4768749765465246664" datatype="html">
+        <source>Email</source>
+        <target state="new">Email</target>
+      </trans-unit>
+      <trans-unit id="5611592591303869712" datatype="html">
+        <source>Status</source>
+        <target state="new">Status</target>
+      </trans-unit>
+      <trans-unit id="753844560726167738" datatype="html">
+        <source>Invited At</source>
+        <target state="new">Invited At</target>
+      </trans-unit>
+      <trans-unit id="4701552962997211350" datatype="html">
+        <source>Delete Invitation</source>
+        <target state="new">Delete Invitation</target>
+      </trans-unit>
+      <trans-unit id="8204176479746810612" datatype="html">
+        <source>Active</source>
+        <target state="new">Active</target>
+      </trans-unit>
+      <trans-unit id="4416413576346763682" datatype="html">
+        <source>Pending</source>
+        <target state="new">Pending</target>
+      </trans-unit>
+      <trans-unit id="3720371318294752429" datatype="html">
+        <source>Delete <x id="INTERPOLATION" equiv-text="{{data.entityName}}"/> </source>
+        <target state="new">Delete <x id="INTERPOLATION" equiv-text="{{data.entityName}}"/> </target>
+      </trans-unit>
+      <trans-unit id="6560405483623875453" datatype="html">
+        <source> Type <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>DELETE<x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="&lt;/b&gt;"/> and press confirm to continue. </source>
+        <target state="new"> Type <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>DELETE<x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="&lt;/b&gt;"/> and press confirm to continue. </target>
+      </trans-unit>
+      <trans-unit id="2394434532665685744" datatype="html">
+        <source> Please write the confirmation message correctly </source>
+        <target state="new"> Please write the confirmation message correctly </target>
+      </trans-unit>
+      <trans-unit id="6249484391846924804" datatype="html">
+        <source> Confirm </source>
+        <target state="new"> Confirm </target>
+      </trans-unit>
+      <trans-unit id="5547981558491672240" datatype="html">
+        <source> Close </source>
+        <target state="new"> Close </target>
+      </trans-unit>
+      <trans-unit id="20703455734868720" datatype="html">
+        <source>Page Size:</source>
+        <target state="new">Page Size:</target>
+      </trans-unit>
+      <trans-unit id="2807689216255894412" datatype="html">
+        <source>Succeeded</source>
+        <target state="new">Succeeded</target>
+      </trans-unit>
+      <trans-unit id="8758303120670152799" datatype="html">
+        <source>Internal Error</source>
+        <target state="new">Internal Error</target>
+      </trans-unit>
+      <trans-unit id="7606629882846319647" datatype="html">
+        <source>Timed Out</source>
+        <target state="new">Timed Out</target>
+      </trans-unit>
+      <trans-unit id="7256395947475975935" datatype="html">
+        <source>Failed</source>
+        <target state="new">Failed</target>
+      </trans-unit>
+      <trans-unit id="840264455199725883" datatype="html">
+        <source>Paused</source>
+        <target state="new">Paused</target>
+      </trans-unit>
+      <trans-unit id="2956098160626271284" datatype="html">
+        <source>Running</source>
+        <target state="new">Running</target>
+      </trans-unit>
+      <trans-unit id="1519954996184640001" datatype="html">
+        <source>Error</source>
+        <target state="new">Error</target>
+      </trans-unit>
+      <trans-unit id="638799406436586796" datatype="html">
+        <source> What&apos;s new </source>
+        <target state="new"> What&apos;s new </target>
+      </trans-unit>
+      <trans-unit id="3708656846739179305" datatype="html">
+        <source>My Pieces</source>
+        <target state="new">My Pieces</target>
+      </trans-unit>
+      <trans-unit id="3797778920049399855" datatype="html">
+        <source>Logout</source>
+        <target state="new">Logout</target>
+      </trans-unit>
+      <trans-unit id="2976564074018381687" datatype="html">
+        <source>Webhook Trigger</source>
+        <target state="new">Webhook Trigger</target>
+      </trans-unit>
+      <trans-unit id="2523469970175692723" datatype="html">
+        <source>Empty Trigger</source>
+        <target state="new">Empty Trigger</target>
+      </trans-unit>
+      <trans-unit id="7343642247493540451" datatype="html">
+        <source>Trigger</source>
+        <target state="new">Trigger</target>
+      </trans-unit>
+      <trans-unit id="8186013988289067040" datatype="html">
+        <source>Code</source>
+        <target state="new">Code</target>
+      </trans-unit>
+      <trans-unit id="1437638433150622409" datatype="html">
+        <source>Loop on Items</source>
+        <target state="new">Loop on Items</target>
+      </trans-unit>
+      <trans-unit id="8387651464002742246" datatype="html">
+        <source>Branch</source>
+        <target state="new">Branch</target>
+      </trans-unit>
+      <trans-unit id="4593401671892965174" datatype="html">
+        <source> Upgrade</source>
+        <target state="new"> Upgrade</target>
+      </trans-unit>
+      <trans-unit id="1234782976282586575" datatype="html">
+        <source> Ignore</source>
+        <target state="new"> Ignore</target>
+      </trans-unit>
+      <trans-unit id="9202148072595155250" datatype="html">
+        <source>Steps in this flow</source>
+        <target state="new">Steps in this flow</target>
+      </trans-unit>
+      <trans-unit id="3087857313586976299" datatype="html">
+        <source>Template Description</source>
+        <target state="new">Template Description</target>
+      </trans-unit>
+      <trans-unit id="1050001620607966490" datatype="html">
+        <source>Use Template</source>
+        <target state="new">Use Template</target>
+      </trans-unit>
+      <trans-unit id="4349518606715943395" datatype="html">
+        <source>Page not found 😢</source>
+        <target state="new">Page not found 😢</target>
+      </trans-unit>
+      <trans-unit id="8233664048165935539" datatype="html">
+        <source>Looks like you are lost.</source>
+        <target state="new">Looks like you are lost.</target>
+      </trans-unit>
+      <trans-unit id="6220061776295222544" datatype="html">
+        <source>Return Home</source>
+        <target state="new">Return Home</target>
+      </trans-unit>
+      <trans-unit id="6252811073109002958" datatype="html">
+        <source>redirect-url works!</source>
+        <target state="new">redirect-url works!</target>
+      </trans-unit>
+      <trans-unit id="2668864227584228682" datatype="html">
+        <source>Welcome Back</source>
+        <target state="new">Welcome Back</target>
+      </trans-unit>
+      <trans-unit id="8232890416577573080" datatype="html">
+        <source> Email is invalid </source>
+        <target state="new"> Email is invalid </target>
+      </trans-unit>
+      <trans-unit id="8552587679160911578" datatype="html">
+        <source>Email is required</source>
+        <target state="new">Email is required</target>
+      </trans-unit>
+      <trans-unit id="1431416938026210429" datatype="html">
+        <source>Password</source>
+        <target state="new">Password</target>
+      </trans-unit>
+      <trans-unit id="205044832662301680" datatype="html">
+        <source>Password is required</source>
+        <target state="new">Password is required</target>
+      </trans-unit>
+      <trans-unit id="4469513261081670706" datatype="html">
+        <source>Invalid email or password</source>
+        <target state="new">Invalid email or password</target>
+      </trans-unit>
+      <trans-unit id="6663783128602596673" datatype="html">
+        <source> Sign in </source>
+        <target state="new"> Sign in </target>
+      </trans-unit>
+      <trans-unit id="8164791295086777340" datatype="html">
+        <source>Don&apos;t have an account?</source>
+        <target state="new">Don&apos;t have an account?</target>
+      </trans-unit>
+      <trans-unit id="8390819766481399339" datatype="html">
+        <source>Get yours now</source>
+        <target state="new">Get yours now</target>
+      </trans-unit>
+      <trans-unit id="2919058663947697555" datatype="html">
+        <source> Let&apos;s Get Started! </source>
+        <target state="new"> Let&apos;s Get Started! </target>
+      </trans-unit>
+      <trans-unit id="6028371114637047813" datatype="html">
+        <source>First Name</source>
+        <target state="new">First Name</target>
+      </trans-unit>
+      <trans-unit id="3337540717284723401" datatype="html">
+        <source> First name is required </source>
+        <target state="new"> First name is required </target>
+      </trans-unit>
+      <trans-unit id="4407559560004943843" datatype="html">
+        <source>Last Name</source>
+        <target state="new">Last Name</target>
+      </trans-unit>
+      <trans-unit id="5202458308518213857" datatype="html">
+        <source> Last name is required </source>
+        <target state="new"> Last name is required </target>
+      </trans-unit>
+      <trans-unit id="3285380396703325390" datatype="html">
+        <source> Email is used </source>
+        <target state="new"> Email is used </target>
+      </trans-unit>
+      <trans-unit id="9132547751630599796" datatype="html">
+        <source> Password is required </source>
+        <target state="new"> Password is required </target>
+      </trans-unit>
+      <trans-unit id="5145449122692464963" datatype="html">
+        <source>Password is invalid</source>
+        <target state="new">Password is invalid</target>
+      </trans-unit>
+      <trans-unit id="1831185355933631853" datatype="html">
+        <source>Lowercase</source>
+        <target state="new">Lowercase</target>
+      </trans-unit>
+      <trans-unit id="6131686574068357886" datatype="html">
+        <source>Uppercase</source>
+        <target state="new">Uppercase</target>
+      </trans-unit>
+      <trans-unit id="5276080702883013396" datatype="html">
+        <source>Special Character</source>
+        <target state="new">Special Character</target>
+      </trans-unit>
+      <trans-unit id="6370642728789544052" datatype="html">
+        <source>Number</source>
+        <target state="new">Number</target>
+      </trans-unit>
+      <trans-unit id="179646624931045993" datatype="html">
+        <source>8-64 Characters</source>
+        <target state="new">8-64 Characters</target>
+      </trans-unit>
+      <trans-unit id="6315299944136778290" datatype="html">
+        <source>Receive updates and newsletters from activepieces</source>
+        <target state="new">Receive updates and newsletters from activepieces</target>
+      </trans-unit>
+      <trans-unit id="7203320122205058413" datatype="html">
+        <source> Sign up </source>
+        <target state="new"> Sign up </target>
+      </trans-unit>
+      <trans-unit id="1534774055079359200" datatype="html">
+        <source>By creating an account, you agree to our</source>
+        <target state="new">By creating an account, you agree to our</target>
+      </trans-unit>
+      <trans-unit id="2029980907058777630" datatype="html">
+        <source>Terms of Service</source>
+        <target state="new">Terms of Service</target>
+      </trans-unit>
+      <trans-unit id="3929281485914893910" datatype="html">
+        <source>and</source>
+        <target state="new">and</target>
+      </trans-unit>
+      <trans-unit id="4721007402656921350" datatype="html">
+        <source> Privacy Policy </source>
+        <target state="new"> Privacy Policy </target>
+      </trans-unit>
+      <trans-unit id="6207438724033771807" datatype="html">
+        <source>Already have an account? </source>
+        <target state="new">Already have an account? </target>
+      </trans-unit>
+      <trans-unit id="4860327484616227095" datatype="html">
+        <source>Signing up is disabled.</source>
+        <target state="new">Signing up is disabled.</target>
+      </trans-unit>
+      <trans-unit id="8502548447094943346" datatype="html">
+        <source> If you are the owner, please refer to the configuration section in the documentation to learn how to enable it. </source>
+        <target state="new"> If you are the owner, please refer to the configuration section in the documentation to learn how to enable it. </target>
+      </trans-unit>
+      <trans-unit id="7006228718285189938" datatype="html">
+        <source>Delete Step</source>
+        <target state="new">Delete Step</target>
+      </trans-unit>
+      <trans-unit id="7736075512379733726" datatype="html">
+        <source>Duplicate Step</source>
+        <target state="new">Duplicate Step</target>
+      </trans-unit>
+      <trans-unit id="1403002090052852025" datatype="html">
+        <source>Change Trigger</source>
+        <target state="new">Change Trigger</target>
+      </trans-unit>
+      <trans-unit id="852013103273628574" datatype="html">
+        <source>Incomplete settings</source>
+        <target state="new">Incomplete settings</target>
+      </trans-unit>
+      <trans-unit id="2784956659778044823" datatype="html">
+        <source>Loop</source>
+        <target state="new">Loop</target>
+      </trans-unit>
+      <trans-unit id="3281993254947750204" datatype="html">
+        <source>Choose a trigger</source>
+        <target state="new">Choose a trigger</target>
+      </trans-unit>
+      <trans-unit id="2498487601274189013" datatype="html">
+        <source>Webhook trigger</source>
+        <target state="new">Webhook trigger</target>
+      </trans-unit>
+      <trans-unit id="3805341172871384186" datatype="html">
+        <source> Complete <x id="INTERPOLATION" equiv-text="{{numOfInvalidSteps}}"/> step<x id="INTERPOLATION_1" equiv-text="{{numOfInvalidSteps &gt; 1 ? &apos;s&apos; : &apos;&apos;}}"/> </source>
+        <target state="new"> Complete <x id="INTERPOLATION" equiv-text="{{numOfInvalidSteps}}"/> step<x id="INTERPOLATION_1" equiv-text="{{numOfInvalidSteps &gt; 1 ? &apos;s&apos; : &apos;&apos;}}"/> </target>
+      </trans-unit>
+      <trans-unit id="7708270344948043036" datatype="html">
+        <source>
+          <x id="INTERPOLATION" equiv-text="{{(isSaving$ | async)? &apos;Saving...&apos;: &apos;Test flow&apos;}}"/>
+        </source>
+        <target state="new">
+          <x id="INTERPOLATION" equiv-text="{{(isSaving$ | async)? &apos;Saving...&apos;: &apos;Test flow&apos;}}"/>
+        </target>
+      </trans-unit>
+      <trans-unit id="6212705197426717225" datatype="html">
+        <source> View Only </source>
+        <target state="new"> View Only </target>
+      </trans-unit>
+      <trans-unit id="7336734700471735506" datatype="html">
+        <source> + Add Item </source>
+        <target state="new"> + Add Item </target>
+      </trans-unit>
+      <trans-unit id="4163163170493567215" datatype="html">
+        <source><x id="INTERPOLATION" equiv-text="showSecondValue)? &apos;First&apos;:&apos;&apos;}}"/> Value</source>
+        <target state="new"><x id="INTERPOLATION" equiv-text="showSecondValue)? &apos;First&apos;:&apos;&apos;}}"/> Value</target>
+      </trans-unit>
+      <trans-unit id="5736745948064769809" datatype="html">
+        <source> First value is required </source>
+        <target state="new"> First value is required </target>
+      </trans-unit>
+      <trans-unit id="8448328978191313077" datatype="html">
+        <source> Condition</source>
+        <target state="new"> Condition</target>
+      </trans-unit>
+      <trans-unit id="996299283992999375" datatype="html">
+        <source> Condition is required </source>
+        <target state="new"> Condition is required </target>
+      </trans-unit>
+      <trans-unit id="9118432878528508253" datatype="html">
+        <source>Second Value</source>
+        <target state="new">Second Value</target>
+      </trans-unit>
+      <trans-unit id="2581780998909888908" datatype="html">
+        <source> Second value is required </source>
+        <target state="new"> Second value is required </target>
+      </trans-unit>
+      <trans-unit id="1601518217526203092" datatype="html">
+        <source> Case sensitive </source>
+        <target state="new"> Case sensitive </target>
+      </trans-unit>
+      <trans-unit id="6681500251003895090" datatype="html">
+        <source> And </source>
+        <target state="new"> And </target>
+      </trans-unit>
+      <trans-unit id="5532053643727258773" datatype="html">
+        <source> + And </source>
+        <target state="new"> + And </target>
+      </trans-unit>
+      <trans-unit id="7896829997070648469" datatype="html">
+        <source> + Or </source>
+        <target state="new"> + Or </target>
+      </trans-unit>
+      <trans-unit id="2496825876408159474" datatype="html">
+        <source>Add NPM Package</source>
+        <target state="new">Add NPM Package</target>
+      </trans-unit>
+      <trans-unit id="8916992158425367122" datatype="html">
+        <source> Please type the name of an NPM package.<x id="LINE_BREAK" ctype="lb" equiv-text="&lt;br&gt;"/></source>
+        <target state="new"> Please type the name of an NPM package.<x id="LINE_BREAK" ctype="lb" equiv-text="&lt;br&gt;"/></target>
+      </trans-unit>
+      <trans-unit id="4429446519625428933" datatype="html">
+        <source> Package name is required </source>
+        <target state="new"> Package name is required </target>
+      </trans-unit>
+      <trans-unit id="7247626109904878386" datatype="html">
+        <source> Package not found </source>
+        <target state="new"> Package not found </target>
+      </trans-unit>
+      <trans-unit id="3989217883668206850" datatype="html">
+        <source> The latest version will be fetched and added to package.json </source>
+        <target state="new"> The latest version will be fetched and added to package.json </target>
+      </trans-unit>
+      <trans-unit id="577038887888857351" datatype="html">
+        <source> Add </source>
+        <target state="new"> Add </target>
+      </trans-unit>
+      <trans-unit id="5280318900735007886" datatype="html">
+        <source>Code Editor</source>
+        <target state="new">Code Editor</target>
+      </trans-unit>
+      <trans-unit id="3524658885997089516" datatype="html">
+        <source> Add npm package </source>
+        <target state="new"> Add npm package </target>
+      </trans-unit>
+      <trans-unit id="6555875325581285494" datatype="html">
+        <source>Test code </source>
+        <target state="new">Test code </target>
+      </trans-unit>
+      <trans-unit id="2272612543539034211" datatype="html">
+        <source> Test Code First </source>
+        <target state="new"> Test Code First </target>
+      </trans-unit>
+      <trans-unit id="6240237049554265257" datatype="html">
+        <source> This step needs to be tested in order to view its data. </source>
+        <target state="new"> This step needs to be tested in order to view its data. </target>
+      </trans-unit>
+      <trans-unit id="1247109697914602116" datatype="html">
+        <source> Go to step </source>
+        <target state="new"> Go to step </target>
+      </trans-unit>
+      <trans-unit id="4578163876314196724" datatype="html">
+        <source> Describe the path to the property using JSON format <x id="START_PARAGRAPH" ctype="x-p" equiv-text="&lt;p&gt;"/><x id="INTERPOLATION" equiv-text="{{data.placeHolder}}"/><x id="CLOSE_PARAGRAPH" ctype="x-p" equiv-text="&lt;/p&gt;"/></source>
+        <target state="new"> Describe the path to the property using JSON format <x id="START_PARAGRAPH" ctype="x-p" equiv-text="&lt;p&gt;"/><x id="INTERPOLATION" equiv-text="{{data.placeHolder}}"/><x id="CLOSE_PARAGRAPH" ctype="x-p" equiv-text="&lt;/p&gt;"/></target>
+      </trans-unit>
+      <trans-unit id="1303595947745715638" datatype="html">
+        <source> Path is invalid </source>
+        <target state="new"> Path is invalid </target>
+      </trans-unit>
+      <trans-unit id="4407837587845744851" datatype="html">
+        <source> Path must begin with <x id="INTERPOLATION" equiv-text="{{data.stepName}}"/> </source>
+        <target state="new"> Path must begin with <x id="INTERPOLATION" equiv-text="{{data.stepName}}"/> </target>
+      </trans-unit>
+      <trans-unit id="4745987606023884549" datatype="html">
+        <source>Select </source>
+        <target state="new">Select </target>
+      </trans-unit>
+      <trans-unit id="1483784557054514527" datatype="html">
+        <source>Insert </source>
+        <target state="new">Insert </target>
+      </trans-unit>
+      <trans-unit id="2382599479144636387" datatype="html">
+        <source>result: <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;ap-transition-all ap-text-primary&quot; [matTooltip]=&quot;&apos;&apos; + result.value || &apos;&apos;&quot;&gt;"/><x id="INTERPOLATION"/> <x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></source>
+        <target state="new">result: <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;ap-transition-all ap-text-primary&quot; [matTooltip]=&quot;&apos;&apos; + result.value || &apos;&apos;&quot;&gt;"/><x id="INTERPOLATION"/> <x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/></target>
+      </trans-unit>
+      <trans-unit id="995418901058119655" datatype="html">
+        <source> Test step </source>
+        <target state="new"> Test step </target>
+      </trans-unit>
+      <trans-unit id="31885550206889765" datatype="html">
+        <source> This step needs to be tested, to generate sample data. </source>
+        <target state="new"> This step needs to be tested, to generate sample data. </target>
+      </trans-unit>
+      <trans-unit id="3363972622671896869" datatype="html">
+        <source>Go to step </source>
+        <target state="new">Go to step </target>
+      </trans-unit>
+      <trans-unit id="8902753740956283901" datatype="html">
+        <source> This trigger needs to have data loaded from your account, to use as sample data </source>
+        <target state="new"> This trigger needs to have data loaded from your account, to use as sample data </target>
+      </trans-unit>
+      <trans-unit id="806466970018409276" datatype="html">
+        <source>Go to trigger </source>
+        <target state="new">Go to trigger </target>
+      </trans-unit>
+      <trans-unit id="1705277357265501985" datatype="html">
+        <source> Send sample data first </source>
+        <target state="new"> Send sample data first </target>
+      </trans-unit>
+      <trans-unit id="2776954849664294745" datatype="html">
+        <source> This trigger needs to have data sent to it, to use as sample data </source>
+        <target state="new"> This trigger needs to have data sent to it, to use as sample data </target>
+      </trans-unit>
+      <trans-unit id="465580375833195843" datatype="html">
+        <source> Switch Version </source>
+        <target state="new"> Switch Version </target>
+      </trans-unit>
+      <trans-unit id="3413929662864508239" datatype="html">
+        <source> Draft </source>
+        <target state="new"> Draft </target>
+      </trans-unit>
+      <trans-unit id="8481607203070134929" datatype="html">
+        <source> Published </source>
+        <target state="new"> Published </target>
+      </trans-unit>
+      <trans-unit id="4058575476871566236" datatype="html">
+        <source>Published</source>
+        <target state="new">Published</target>
+      </trans-unit>
+      <trans-unit id="4808589666930368915" datatype="html">
+        <source>Draft</source>
+        <target state="new">Draft</target>
+      </trans-unit>
+      <trans-unit id="2288513108450439427" datatype="html">
+        <source>Support</source>
+        <target state="new">Support</target>
+      </trans-unit>
+      <trans-unit id="2821179408673282599" datatype="html">
+        <source>Home</source>
+        <target state="new">Home</target>
+      </trans-unit>
+      <trans-unit id="6041115344061899387" datatype="html">
+        <source>Rename</source>
+        <target state="new">Rename</target>
+      </trans-unit>
+      <trans-unit id="6621329748219109148" datatype="html">
+        <source>Duplicate</source>
+        <target state="new">Duplicate</target>
+      </trans-unit>
+      <trans-unit id="1071721880474488785" datatype="html">
+        <source>Import</source>
+        <target state="new">Import</target>
+      </trans-unit>
+      <trans-unit id="7462301153729425254" datatype="html">
+        <source>Export</source>
+        <target state="new">Export</target>
+      </trans-unit>
+      <trans-unit id="7022070615528435141" datatype="html">
+        <source>Delete</source>
+        <target state="new">Delete</target>
+      </trans-unit>
+      <trans-unit id="3564199105925922112" datatype="html">
+        <source>This will permanently delete the flow, all its data and any background runs. You can&apos;t undo this action.</source>
+        <target state="new">This will permanently delete the flow, all its data and any background runs. You can&apos;t undo this action.</target>
+      </trans-unit>
+      <trans-unit id="3785740330706781283" datatype="html">
+        <source> Import Flow </source>
+        <target state="new"> Import Flow </target>
+      </trans-unit>
+      <trans-unit id="7723572148434820610" datatype="html">
+        <source><x id="START_BOLD_TEXT" ctype="x-b"/>Important:<x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="&lt;/b&gt;"/> Importing a flow will overwrite your current flow.</source>
+        <target state="new"><x id="START_BOLD_TEXT" ctype="x-b"/>Important:<x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="&lt;/b&gt;"/> Importing a flow will overwrite your current flow.</target>
+      </trans-unit>
+      <trans-unit id="8455204924704616723" datatype="html">
+        <source>File</source>
+        <target state="new">File</target>
+      </trans-unit>
+      <trans-unit id="727310260821422069" datatype="html">
+        <source> Import </source>
+        <target state="new"> Import </target>
+      </trans-unit>
+      <trans-unit id="7612725427647519192" datatype="html">
+        <source> Edit Flow </source>
+        <target state="new"> Edit Flow </target>
+      </trans-unit>
+      <trans-unit id="7585826646011739428" datatype="html">
+        <source>Edit</source>
+        <target state="new">Edit</target>
+      </trans-unit>
+      <trans-unit id="8161497630812704942" datatype="html">
+        <source>Add 1 more step to publish</source>
+        <target state="new">Add 1 more step to publish</target>
+      </trans-unit>
+      <trans-unit id="3433912835588025867" datatype="html">
+        <source>Your flow has invalid steps</source>
+        <target state="new">Your flow has invalid steps</target>
+      </trans-unit>
+      <trans-unit id="6493545318293497285" datatype="html">
+        <source>Publish Flow</source>
+        <target state="new">Publish Flow</target>
+      </trans-unit>
+      <trans-unit id="4636616640072565270" datatype="html">
+        <source>Saving</source>
+        <target state="new">Saving</target>
+      </trans-unit>
+      <trans-unit id="7132078449210987153" datatype="html">
+        <source>Publishing</source>
+        <target state="new">Publishing</target>
+      </trans-unit>
+      <trans-unit id="7430416142942514215" datatype="html">
+        <source>Publish</source>
+        <target state="new">Publish</target>
+      </trans-unit>
+      <trans-unit id="6310395472139498755" datatype="html">
+        <source>Run Details</source>
+        <target state="new">Run Details</target>
+      </trans-unit>
+      <trans-unit id="1859826026585680442" datatype="html">
+        <source>No details available for this run.</source>
+        <target state="new">No details available for this run.</target>
+      </trans-unit>
+      <trans-unit id="7238368002587743460" datatype="html">
+        <source>Step succeeded</source>
+        <target state="new">Step succeeded</target>
+      </trans-unit>
+      <trans-unit id="977525603391908118" datatype="html">
+        <source>Step paused</source>
+        <target state="new">Step paused</target>
+      </trans-unit>
+      <trans-unit id="4220765745195024064" datatype="html">
+        <source>Duration:</source>
+        <target state="new">Duration:</target>
+      </trans-unit>
+      <trans-unit id="8968030053137661433" datatype="html">
+        <source>Output</source>
+        <target state="new">Output</target>
+      </trans-unit>
+      <trans-unit id="1464435073936969366" datatype="html">
+        <source> Done </source>
+        <target state="new"> Done </target>
+      </trans-unit>
+      <trans-unit id="5112507844562615179" datatype="html">
+        <source> All Iterations </source>
+        <target state="new"> All Iterations </target>
+      </trans-unit>
+      <trans-unit id="1164244071316602737" datatype="html">
+        <source>Edit step name</source>
+        <target state="new">Edit step name</target>
+      </trans-unit>
+      <trans-unit id="6867381603185205680" datatype="html">
+        <source> Or </source>
+        <target state="new"> Or </target>
+      </trans-unit>
+      <trans-unit id="2537648413493478491" datatype="html">
+        <source>Inputs</source>
+        <target state="new">Inputs</target>
+      </trans-unit>
+      <trans-unit id="6162691442834560200" datatype="html">
+        <source>Items</source>
+        <target state="new">Items</target>
+      </trans-unit>
+      <trans-unit id="3349891418640044644" datatype="html">
+        <source> Items are required. </source>
+        <target state="new"> Items are required. </target>
+      </trans-unit>
+      <trans-unit id="97940262148604706" datatype="html">
+        <source> Action </source>
+        <target state="new"> Action </target>
+      </trans-unit>
+      <trans-unit id="8585958577229523205" datatype="html">
+        <source> No options available </source>
+        <target state="new"> No options available </target>
+      </trans-unit>
+      <trans-unit id="7863127620120051284" datatype="html">
+        <source> Action is required </source>
+        <target state="new"> Action is required </target>
+      </trans-unit>
+      <trans-unit id="8425620343514116260" datatype="html">
+        <source> Trigger </source>
+        <target state="new"> Trigger </target>
+      </trans-unit>
+      <trans-unit id="628476928604062458" datatype="html">
+        <source>Select a Trigger</source>
+        <target state="new">Select a Trigger</target>
+      </trans-unit>
+      <trans-unit id="5746253109350702685" datatype="html">
+        <source>Instantly triggered once change occurs</source>
+        <target state="new">Instantly triggered once change occurs</target>
+      </trans-unit>
+      <trans-unit id="4481618196785625765" datatype="html">
+        <source>Checks for changes periodically, based on your plan</source>
+        <target state="new">Checks for changes periodically, based on your plan</target>
+      </trans-unit>
+      <trans-unit id="586223894042857512" datatype="html">
+        <source> Trigger is required </source>
+        <target state="new"> Trigger is required </target>
+      </trans-unit>
+      <trans-unit id="6019850736144907892" datatype="html">
+        <source> Request Piece </source>
+        <target state="new"> Request Piece </target>
+      </trans-unit>
+      <trans-unit id="4580988005648117665" datatype="html">
+        <source>Search</source>
+        <target state="new">Search</target>
+      </trans-unit>
+      <trans-unit id="4130109056262417125" datatype="html">
+        <source>Select Trigger</source>
+        <target state="new">Select Trigger</target>
+      </trans-unit>
+      <trans-unit id="4973271808417683361" datatype="html">
+        <source>Select Step</source>
+        <target state="new">Select Step</target>
+      </trans-unit>
+      <trans-unit id="1616102757855967475" datatype="html">
+        <source>All</source>
+        <target state="new">All</target>
+      </trans-unit>
+      <trans-unit id="2995024767956767595" datatype="html">
+        <source>Oops! We didn&apos;t find any results.</source>
+        <target state="new">Oops! We didn&apos;t find any results.</target>
+      </trans-unit>
+      <trans-unit id="7027401708987643293" datatype="html">
+        <source>Core</source>
+        <target state="new">Core</target>
+      </trans-unit>
+      <trans-unit id="3392444403919167176" datatype="html">
+        <source>App Events</source>
+        <target state="new">App Events</target>
+      </trans-unit>
+      <trans-unit id="5431974576991822715" datatype="html">
+        <source>App Actions</source>
+        <target state="new">App Actions</target>
+      </trans-unit>
+      <trans-unit id="4890031060409002646" datatype="html">
+        <source>Uncategorized</source>
+        <target state="new">Uncategorized</target>
+      </trans-unit>
+      <trans-unit id="7453039164124655632" datatype="html">
+        <source>Run succeeded (<x id="INTERPOLATION" equiv-text="{{ selectedRun.id }}"/>)</source>
+        <target state="new">Run succeeded (<x id="INTERPOLATION" equiv-text="{{ selectedRun.id }}"/>)</target>
+      </trans-unit>
+      <trans-unit id="4934929429922486658" datatype="html">
+        <source>Run failed (<x id="INTERPOLATION" equiv-text="{{ selectedRun.id }}"/>)</source>
+        <target state="new">Run failed (<x id="INTERPOLATION" equiv-text="{{ selectedRun.id }}"/>)</target>
+      </trans-unit>
+      <trans-unit id="691056332862512203" datatype="html">
+        <source>Flow is running</source>
+        <target state="new">Flow is running</target>
+      </trans-unit>
+      <trans-unit id="4598207822643496236" datatype="html">
+        <source>Flow is paused ...</source>
+        <target state="new">Flow is paused ...</target>
+      </trans-unit>
+      <trans-unit id="7038602814235796780" datatype="html">
+        <source>Run exceeded <x id="INTERPOLATION" equiv-text="{{sandboxTimeoutSeconds$ | async}}"/> seconds, try to optimize your steps.</source>
+        <target state="new">Run exceeded <x id="INTERPOLATION" equiv-text="{{sandboxTimeoutSeconds$ | async}}"/> seconds, try to optimize your steps.</target>
+      </trans-unit>
+      <trans-unit id="601645365235785306" datatype="html">
+        <source>Run failed for an unknown reason, contact support.</source>
+        <target state="new">Run failed for an unknown reason, contact support.</target>
+      </trans-unit>
+      <trans-unit id="8315482926074085909" datatype="html">
+        <source> Exit Run </source>
+        <target state="new"> Exit Run </target>
+      </trans-unit>
+      <trans-unit id="500133922719782601" datatype="html">
+        <source> Generate Sample Data </source>
+        <target state="new"> Generate Sample Data </target>
+      </trans-unit>
+      <trans-unit id="7919787260081015275" datatype="html">
+        <source>Tested Successfully</source>
+        <target state="new">Tested Successfully</target>
+      </trans-unit>
+      <trans-unit id="3803178221894171065" datatype="html">
+        <source>Test Failed</source>
+        <target state="new">Test Failed</target>
+      </trans-unit>
+      <trans-unit id="3541311390491548382" datatype="html">
+        <source>Retest</source>
+        <target state="new">Retest</target>
+      </trans-unit>
+      <trans-unit id="8144434134010600908" datatype="html">
+        <source>Test step</source>
+        <target state="new">Test step</target>
+      </trans-unit>
+      <trans-unit id="2150150684765904117" datatype="html">
+        <source>Testing Failed</source>
+        <target state="new">Testing Failed</target>
+      </trans-unit>
+      <trans-unit id="4137681575855964026" datatype="html">
+        <source>Test this trigger to generate sample data that can be used in the next steps</source>
+        <target state="new">Test this trigger to generate sample data that can be used in the next steps</target>
+      </trans-unit>
+      <trans-unit id="7772874305312537929" datatype="html">
+        <source>Test Trigger </source>
+        <target state="new">Test Trigger </target>
+      </trans-unit>
+      <trans-unit id="7821978891866988357" datatype="html">
+        <source>Use Mock Data </source>
+        <target state="new">Use Mock Data </target>
+      </trans-unit>
+      <trans-unit id="326819936092149573" datatype="html">
+        <source> Data </source>
+        <target state="new"> Data </target>
+      </trans-unit>
+      <trans-unit id="1443544130994970867" datatype="html">
+        <source> (Result <x id="INTERPOLATION" equiv-text="{{currentResults.length-idx}}"/>)</source>
+        <target state="new"> (Result <x id="INTERPOLATION" equiv-text="{{currentResults.length-idx}}"/>)</target>
+      </trans-unit>
+      <trans-unit id="8101735558462006931" datatype="html">
+        <source>Testing trigger</source>
+        <target state="new">Testing trigger</target>
+      </trans-unit>
+      <trans-unit id="2159130950882492111" datatype="html">
+        <source>Cancel</source>
+        <target state="new">Cancel</target>
+      </trans-unit>
+      <trans-unit id="1098411996448900439" datatype="html">
+        <source>Action Required</source>
+        <target state="new">Action Required</target>
+      </trans-unit>
+      <trans-unit id="202666211146552310" datatype="html">
+        <source>Load sample data from your account to be used in the next steps</source>
+        <target state="new">Load sample data from your account to be used in the next steps</target>
+      </trans-unit>
+      <trans-unit id="8335477655941671361" datatype="html">
+        <source>Load data</source>
+        <target state="new">Load data</target>
+      </trans-unit>
+      <trans-unit id="4385583003359794696" datatype="html">
+        <source> This sample data can be used in the next steps </source>
+        <target state="new"> This sample data can be used in the next steps </target>
+      </trans-unit>
+      <trans-unit id="1645193489541371451" datatype="html">
+        <source>No results found</source>
+        <target state="new">No results found</target>
+      </trans-unit>
+      <trans-unit id="3854830088717420676" datatype="html">
+        <source>Please add some data then press &quot;Load Data&quot;</source>
+        <target state="new">Please add some data then press &quot;Load Data&quot;</target>
+      </trans-unit>
+      <trans-unit id="7790321446929337842" datatype="html">
+        <source>Testing data failed. Please ensure that the settings are correct or try again.</source>
+        <target state="new">Testing data failed. Please ensure that the settings are correct or try again.</target>
+      </trans-unit>
+      <trans-unit id="8201052275889392973" datatype="html">
+        <source>Send a request to generate sample data that can be used in the next steps</source>
+        <target state="new">Send a request to generate sample data that can be used in the next steps</target>
+      </trans-unit>
+      <trans-unit id="4633860620352207300" datatype="html">
+        <source> Send Data </source>
+        <target state="new"> Send Data </target>
+      </trans-unit>
+      <trans-unit id="5226293457079438761" datatype="html">
+        <source> Please send data to the webhook endpoint to test the step. </source>
+        <target state="new"> Please send data to the webhook endpoint to test the step. </target>
+      </trans-unit>
+      <trans-unit id="1862378442639081237" datatype="html">
+        <source>Ask me something</source>
+        <target state="new">Ask me something</target>
+      </trans-unit>
+      <trans-unit id="5545607360676773950" datatype="html">
+        <source>Send a message</source>
+        <target state="new">Send a message</target>
+      </trans-unit>
+      <trans-unit id="2180814210179500088" datatype="html">
+        <source>is thinking</source>
+        <target state="new">is thinking</target>
+      </trans-unit>
+      <trans-unit id="4839864077429230055" datatype="html">
+        <source>Copy Code</source>
+        <target state="new">Copy Code</target>
+      </trans-unit>
+      <trans-unit id="7484291313969220918" datatype="html">
+        <source>Chatbots</source>
+        <target state="new">Chatbots</target>
+      </trans-unit>
+      <trans-unit id="5741643806400852859" datatype="html">
+        <source>Build Your Chatbot</source>
+        <target state="new">Build Your Chatbot</target>
+      </trans-unit>
+      <trans-unit id="3407061818321766940" datatype="html">
+        <source>Saving...</source>
+        <target state="new">Saving...</target>
+      </trans-unit>
+      <trans-unit id="4527876130724554959" datatype="html">
+        <source>Chat with bot</source>
+        <target state="new">Chat with bot</target>
+      </trans-unit>
+      <trans-unit id="3333558286965622662" datatype="html">
+        <source> Brand your bot </source>
+        <target state="new"> Brand your bot </target>
+      </trans-unit>
+      <trans-unit id="8953033926734869941" datatype="html">
+        <source>Name</source>
+        <target state="new">Name</target>
+      </trans-unit>
+      <trans-unit id="4042902315677630519" datatype="html">
+        <source> Name is required </source>
+        <target state="new"> Name is required </target>
+      </trans-unit>
+      <trans-unit id="6646050140250868107" datatype="html">
+        <source> Public Access </source>
+        <target state="new"> Public Access </target>
+      </trans-unit>
+      <trans-unit id="20069700830458864" datatype="html">
+        <source> Train your bot </source>
+        <target state="new"> Train your bot </target>
+      </trans-unit>
+      <trans-unit id="6070859199120014907" datatype="html">
+        <source>Reconnect</source>
+        <target state="new">Reconnect</target>
+      </trans-unit>
+      <trans-unit id="8118288707779550236" datatype="html">
+        <source> OpenAI Connection </source>
+        <target state="new"> OpenAI Connection </target>
+      </trans-unit>
+      <trans-unit id="8096108831936282703" datatype="html">
+        <source>New Connection</source>
+        <target state="new">New Connection</target>
+      </trans-unit>
+      <trans-unit id="8451342921207487014" datatype="html">
+        <source>No connections</source>
+        <target state="new">No connections</target>
+      </trans-unit>
+      <trans-unit id="467321397227119929" datatype="html">
+        <source> + Add </source>
+        <target state="new"> + Add </target>
+      </trans-unit>
+      <trans-unit id="9003579679055018178" datatype="html">
+        <source> Connection is required </source>
+        <target state="new"> Connection is required </target>
+      </trans-unit>
+      <trans-unit id="7520676103251775009" datatype="html">
+        <source> + New Connection </source>
+        <target state="new"> + New Connection </target>
+      </trans-unit>
+      <trans-unit id="6528092440862696599" datatype="html">
+        <source>Bot Attitude</source>
+        <target state="new">Bot Attitude</target>
+      </trans-unit>
+      <trans-unit id="730525045088357363" datatype="html">
+        <source>i.e. Act like Ironman&apos;s assistant, Jarvis.</source>
+        <target state="new">i.e. Act like Ironman&apos;s assistant, Jarvis.</target>
+      </trans-unit>
+      <trans-unit id="5117293842173012454" datatype="html">
+        <source> Prompt is required </source>
+        <target state="new"> Prompt is required </target>
+      </trans-unit>
+      <trans-unit id="6571227198408989826" datatype="html">
+        <source> Training Data Sources </source>
+        <target state="new"> Training Data Sources </target>
+      </trans-unit>
+      <trans-unit id="2884916036139572652" datatype="html">
+        <source>Please choose a connection first</source>
+        <target state="new">Please choose a connection first</target>
+      </trans-unit>
+      <trans-unit id="4845271368813752731" datatype="html">
+        <source>Add data source</source>
+        <target state="new">Add data source</target>
+      </trans-unit>
+      <trans-unit id="7040053784562736722" datatype="html">
+        <source>PDF file</source>
+        <target state="new">PDF file</target>
+      </trans-unit>
+      <trans-unit id="544060981838694169" datatype="html">
+        <source>Invalid file extension</source>
+        <target state="new">Invalid file extension</target>
+      </trans-unit>
+      <trans-unit id="6901217071431261275" datatype="html">
+        <source>file size is above limit 4 mega bytes</source>
+        <target state="new">file size is above limit 4 mega bytes</target>
+      </trans-unit>
+      <trans-unit id="9060619059481211640" datatype="html">
+        <source>Please choose a file</source>
+        <target state="new">Please choose a file</target>
+      </trans-unit>
+      <trans-unit id="7952700156372001331" datatype="html">
+        <source>BETA</source>
+        <target state="new">BETA</target>
+      </trans-unit>
+      <trans-unit id="2662932491840639564" datatype="html">
+        <source>Delete Bot</source>
+        <target state="new">Delete Bot</target>
+      </trans-unit>
+      <trans-unit id="2262594260554345070" datatype="html">
+        <source> Humans are still in command, create your first bot to start the revolution </source>
+        <target state="new"> Humans are still in command, create your first bot to start the revolution </target>
+      </trans-unit>
+      <trans-unit id="8392398587604751887" datatype="html">
+        <source> Your bot is private, enable public access so you can share its link. </source>
+        <target state="new"> Your bot is private, enable public access so you can share its link. </target>
+      </trans-unit>
+      <trans-unit id="3738005382472959888" datatype="html">
+        <source> Enable Public Access </source>
+        <target state="new"> Enable Public Access </target>
+      </trans-unit>
+      <trans-unit id="2342074086152439041" datatype="html">
+        <source>You exceeded your quota for creating bots</source>
+        <target state="new">You exceeded your quota for creating bots</target>
+      </trans-unit>
+      <trans-unit id="1374900400795545794" datatype="html">
+        <source>Unexpected error occured, please contact support</source>
+        <target state="new">Unexpected error occured, please contact support</target>
+      </trans-unit>
+      <trans-unit id="662926185826907110" datatype="html">
+        <source>This will permanently delete this chatbot and all its data.</source>
+        <target state="new">This will permanently delete this chatbot and all its data.</target>
+      </trans-unit>
+      <trans-unit id="5353033149908811861" datatype="html">
+        <source>&lt;b&gt;<x id="PH" equiv-text="metadata.displayName"/>&lt;/b&gt; deleted</source>
+        <target state="new">&lt;b&gt;<x id="PH" equiv-text="metadata.displayName"/>&lt;/b&gt; deleted</target>
+      </trans-unit>
+      <trans-unit id="3945386671791333467" datatype="html">
+        <source>Share bot chat link</source>
+        <target state="new">Share bot chat link</target>
+      </trans-unit>
+      <trans-unit id="9113226481982013428" datatype="html">
+        <source>OpenAi connection is missing</source>
+        <target state="new">OpenAi connection is missing</target>
+      </trans-unit>
+      <trans-unit id="1298031562362137366" datatype="html">
+        <source> No sources added yet </source>
+        <target state="new"> No sources added yet </target>
+      </trans-unit>
+      <trans-unit id="1107754685050967654" datatype="html">
+        <source> + New Source </source>
+        <target state="new"> + New Source </target>
+      </trans-unit>
+      <trans-unit id="828831341307092377" datatype="html">
+        <source> Name can only contain letters, numbers and underscores </source>
+        <target state="new"> Name can only contain letters, numbers and underscores </target>
+      </trans-unit>
+      <trans-unit id="7467703008452363786" datatype="html">
+        <source> Name is already used </source>
+        <target state="new"> Name is already used </target>
+      </trans-unit>
+      <trans-unit id="6608576580294436927" datatype="html">
+        <source>is required</source>
+        <target state="new">is required</target>
+      </trans-unit>
+      <trans-unit id="3620188369327429839" datatype="html">
+        <source> Save </source>
+        <target state="new"> Save </target>
+      </trans-unit>
+      <trans-unit id="2504830835198730128" datatype="html">
+        <source> You have to connect an account to continue </source>
+        <target state="new"> You have to connect an account to continue </target>
+      </trans-unit>
+      <trans-unit id="3543628236093406924" datatype="html">
+        <source>I would like to use my own app credentials </source>
+        <target state="new">I would like to use my own app credentials </target>
+      </trans-unit>
+      <trans-unit id="7022562336989577788" datatype="html">
+        <source> Redirect URL is required</source>
+        <target state="new"> Redirect URL is required</target>
+      </trans-unit>
+      <trans-unit id="5273501066845923426" datatype="html">
+        <source>Client ID</source>
+        <target state="new">Client ID</target>
+      </trans-unit>
+      <trans-unit id="6157299238892357663" datatype="html">
+        <source> Client ID is required</source>
+        <target state="new"> Client ID is required</target>
+      </trans-unit>
+      <trans-unit id="3858350041926042177" datatype="html">
+        <source>Client Secret</source>
+        <target state="new">Client Secret</target>
+      </trans-unit>
+      <trans-unit id="1073544708188299870" datatype="html">
+        <source> Client Secret is required</source>
+        <target state="new"> Client Secret is required</target>
+      </trans-unit>
+      <trans-unit id="2342935516799349752" datatype="html">
+        <source>I would like to use activepieces app credentials </source>
+        <target state="new">I would like to use activepieces app credentials </target>
+      </trans-unit>
+      <trans-unit id="2903873185531053389" datatype="html">
+        <source> New Connection </source>
+        <target state="new"> New Connection </target>
+      </trans-unit>
+      <trans-unit id="4804768288792909623" datatype="html">
+        <source> Connect</source>
+        <target state="new"> Connect</target>
+      </trans-unit>
+      <trans-unit id="2907016025519254862" datatype="html">
+        <source>Disconnect</source>
+        <target state="new">Disconnect</target>
+      </trans-unit>
+      <trans-unit id="5175055549231295483" datatype="html">
+        <source> Please make sure this connections&apos;s credentials are correct. </source>
+        <target state="new"> Please make sure this connections&apos;s credentials are correct. </target>
+      </trans-unit>
+      <trans-unit id="5578202866683959807" datatype="html">
+        <source>Ask the Community</source>
+        <target state="new">Ask the Community</target>
+      </trans-unit>
+      <trans-unit id="4895326106573044490" datatype="html">
+        <source>Documentation</source>
+        <target state="new">Documentation</target>
+      </trans-unit>
+      <trans-unit id="4447668871712407032" datatype="html">
+        <source>Docs</source>
+        <target state="new">Docs</target>
+      </trans-unit>
+      <trans-unit id="3446912724041461894" datatype="html">
+        <source>Flows</source>
+        <target state="new">Flows</target>
+      </trans-unit>
+      <trans-unit id="5831959151852803859" datatype="html">
+        <source>Runs</source>
+        <target state="new">Runs</target>
+      </trans-unit>
+      <trans-unit id="2557623954339695776" datatype="html">
+        <source>Connections</source>
+        <target state="new">Connections</target>
+      </trans-unit>
+      <trans-unit id="3724068243287682962" datatype="html">
+        <source>Team</source>
+        <target state="new">Team</target>
+      </trans-unit>
+      <trans-unit id="2818570902941667477" datatype="html">
+        <source>App</source>
+        <target state="new">App</target>
+      </trans-unit>
+      <trans-unit id="2724055831234181057" datatype="html">
+        <source>Version</source>
+        <target state="new">Version</target>
+      </trans-unit>
+      <trans-unit id="9211272372634231639" datatype="html">
+        <source> Add Piece </source>
+        <target state="new"> Add Piece </target>
+      </trans-unit>
+      <trans-unit id="3336001235735417463" datatype="html">
+        <source> No pieces installed </source>
+        <target state="new"> No pieces installed </target>
+      </trans-unit>
+      <trans-unit id="2247331365648205687" datatype="html">
+        <source>Install Piece</source>
+        <target state="new">Install Piece</target>
+      </trans-unit>
+      <trans-unit id="1183032279513578972" datatype="html">
+        <source>Piece name</source>
+        <target state="new">Piece name</target>
+      </trans-unit>
+      <trans-unit id="5376544880787061544" datatype="html">
+        <source>NPM package name</source>
+        <target state="new">NPM package name</target>
+      </trans-unit>
+      <trans-unit id="7515584469189435123" datatype="html">
+        <source> This is required </source>
+        <target state="new"> This is required </target>
+      </trans-unit>
+      <trans-unit id="6993437395710220266" datatype="html">
+        <source> Install </source>
+        <target state="new"> Install </target>
+      </trans-unit>
+      <trans-unit id="2206632393383450361" datatype="html">
+        <source> Use this to install a &lt;a href=&quot;https://www.activepieces.com/docs/developers/building-pieces/create-action&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;custom piece&lt;/a&gt; that you (or someone else) created. Once the piece is installed, you can use it in the flow builder. &lt;br&gt;&lt;br&gt;**Warning:** Make sure you trust the author as the piece will have access to your flow data and it might not be compatible with the current version of Activepieces. </source>
+        <target state="new"> Use this to install a &lt;a href=&quot;https://www.activepieces.com/docs/developers/building-pieces/create-action&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;custom piece&lt;/a&gt; that you (or someone else) created. Once the piece is installed, you can use it in the flow builder. &lt;br&gt;&lt;br&gt;**Warning:** Make sure you trust the author as the piece will have access to your flow data and it might not be compatible with the current version of Activepieces. </target>
+      </trans-unit>
+      <trans-unit id="4207916966377787111" datatype="html">
+        <source>Created</source>
+        <target state="new">Created</target>
+      </trans-unit>
+      <trans-unit id="7239750919884229270" datatype="html">
+        <source>Updated</source>
+        <target state="new">Updated</target>
+      </trans-unit>
+      <trans-unit id="3928717218923468734" datatype="html">
+        <source>Delete Connection</source>
+        <target state="new">Delete Connection</target>
+      </trans-unit>
+      <trans-unit id="4018267042970589486" datatype="html">
+        <source> No connections created yet </source>
+        <target state="new"> No connections created yet </target>
+      </trans-unit>
+      <trans-unit id="4578383372914193173" datatype="html">
+        <source>Create Your First Flow</source>
+        <target state="new">Create Your First Flow</target>
+      </trans-unit>
+      <trans-unit id="3077777282169383075" datatype="html">
+        <source>Demo flow</source>
+        <target state="new">Demo flow</target>
+      </trans-unit>
+      <trans-unit id="8549223348777613655" datatype="html">
+        <source> Learn from our Gelato maker demo flow </source>
+        <target state="new"> Learn from our Gelato maker demo flow </target>
+      </trans-unit>
+      <trans-unit id="3292499463822135407" datatype="html">
+        <source>Build flow </source>
+        <target state="new">Build flow </target>
+      </trans-unit>
+      <trans-unit id="913302789306531927" datatype="html">
+        <source> Start building your first flow from scratch </source>
+        <target state="new"> Start building your first flow from scratch </target>
+      </trans-unit>
+      <trans-unit id="7869199587095613616" datatype="html">
+        <source>Untitled</source>
+        <target state="new">Untitled</target>
+      </trans-unit>
+      <trans-unit id="6010972448112025437" datatype="html">
+        <source>All flows</source>
+        <target state="new">All flows</target>
+      </trans-unit>
+      <trans-unit id="2428227617692008299" datatype="html">
+        <source>+ New Flow</source>
+        <target state="new">+ New Flow</target>
+      </trans-unit>
+      <trans-unit id="5417428761029126177" datatype="html">
+        <source>My Flows</source>
+        <target state="new">My Flows</target>
+      </trans-unit>
+      <trans-unit id="1534367694207535197" datatype="html">
+        <source>Steps</source>
+        <target state="new">Steps</target>
+      </trans-unit>
+      <trans-unit id="7046259383943324039" datatype="html">
+        <source>Folder</source>
+        <target state="new">Folder</target>
+      </trans-unit>
+      <trans-unit id="2792560466819244367" datatype="html">
+        <source>Move to...</source>
+        <target state="new">Move to...</target>
+      </trans-unit>
+      <trans-unit id="1068067937132498347" datatype="html">
+        <source>You don&apos;t have any flows yet</source>
+        <target state="new">You don&apos;t have any flows yet</target>
+      </trans-unit>
+      <trans-unit id="2994670610835703888" datatype="html">
+        <source>This folder doesn&apos;t have any flows yet</source>
+        <target state="new">This folder doesn&apos;t have any flows yet</target>
+      </trans-unit>
+      <trans-unit id="4156762084256299285" datatype="html">
+        <source>Real time flow</source>
+        <target state="new">Real time flow</target>
+      </trans-unit>
+      <trans-unit id="2999814213294266636" datatype="html">
+        <source>Runs <x id="PH" equiv-text="cronstrue .toString(cronExpression, { locale: this.locale }) .toLocaleLowerCase()"/></source>
+        <target state="new">Runs <x id="PH" equiv-text="cronstrue .toString(cronExpression, { locale: this.locale }) .toLocaleLowerCase()"/></target>
+      </trans-unit>
+      <trans-unit id="2715156558483046254" datatype="html">
+        <source>Please contact support as your published flow has a problem</source>
+        <target state="new">Please contact support as your published flow has a problem</target>
+      </trans-unit>
+      <trans-unit id="8669717871933589565" datatype="html">
+        <source>Please publish the flow</source>
+        <target state="new">Please publish the flow</target>
+      </trans-unit>
+      <trans-unit id="6655540167436629912" datatype="html">
+        <source>Flow is on</source>
+        <target state="new">Flow is on</target>
+      </trans-unit>
+      <trans-unit id="2532250142169750361" datatype="html">
+        <source>Flow is off</source>
+        <target state="new">Flow is off</target>
+      </trans-unit>
+      <trans-unit id="1205037876874222931" datatype="html">
+        <source>Folders</source>
+        <target state="new">Folders</target>
+      </trans-unit>
+      <trans-unit id="6272889378364553386" datatype="html">
+        <source>New Folder</source>
+        <target state="new">New Folder</target>
+      </trans-unit>
+      <trans-unit id="6093210751404423786" datatype="html">
+        <source>Ascending</source>
+        <target state="new">Ascending</target>
+      </trans-unit>
+      <trans-unit id="2382330284069784226" datatype="html">
+        <source>Descending</source>
+        <target state="new">Descending</target>
+      </trans-unit>
+      <trans-unit id="9077429056049361829" datatype="html">
+        <source>New Folder </source>
+        <target state="new">New Folder </target>
+      </trans-unit>
+      <trans-unit id="6845813511844074904" datatype="html">
+        <source> Name your new folder </source>
+        <target state="new"> Name your new folder </target>
+      </trans-unit>
+      <trans-unit id="7407917947213467151" datatype="html">
+        <source>Select Folder</source>
+        <target state="new">Select Folder</target>
+      </trans-unit>
+      <trans-unit id="1245322889153100633" datatype="html">
+        <source>No folders to move to</source>
+        <target state="new">No folders to move to</target>
+      </trans-unit>
+      <trans-unit id="2494941239288147237" datatype="html">
+        <source>Must select a folder</source>
+        <target state="new">Must select a folder</target>
+      </trans-unit>
+      <trans-unit id="8389636361036124153" datatype="html">
+        <source> Move </source>
+        <target state="new"> Move </target>
+      </trans-unit>
+      <trans-unit id="7697803500143402577" datatype="html">
+        <source>Name is already used</source>
+        <target state="new">Name is already used</target>
+      </trans-unit>
+      <trans-unit id="7941428823403788384" datatype="html">
+        <source> Create </source>
+        <target state="new"> Create </target>
+      </trans-unit>
+      <trans-unit id="7466074960429522816" datatype="html">
+        <source>Rename Folder (<x id="INTERPOLATION" equiv-text="{{data.folderDisplayName}}"/>) </source>
+        <target state="new">Rename Folder (<x id="INTERPOLATION" equiv-text="{{data.folderDisplayName}}"/>) </target>
+      </trans-unit>
+      <trans-unit id="4995711714357004792" datatype="html">
+        <source> Change the name of your folder </source>
+        <target state="new"> Change the name of your folder </target>
+      </trans-unit>
+      <trans-unit id="987902700013871247" datatype="html">
+        <source>Filter by status</source>
+        <target state="new">Filter by status</target>
+      </trans-unit>
+      <trans-unit id="8803075308102273847" datatype="html">
+        <source> Send email notifications about failed runs </source>
+        <target state="new"> Send email notifications about failed runs </target>
+      </trans-unit>
+      <trans-unit id="8888491308706722034" datatype="html">
+        <source>Flow</source>
+        <target state="new">Flow</target>
+      </trans-unit>
+      <trans-unit id="3326877877555410533" datatype="html">
+        <source>Started</source>
+        <target state="new">Started</target>
+      </trans-unit>
+      <trans-unit id="340430316261570792" datatype="html">
+        <source>Finished</source>
+        <target state="new">Finished</target>
+      </trans-unit>
+      <trans-unit id="2388673916006005004" datatype="html">
+        <source> No runs instantiated yet </source>
+        <target state="new"> No runs instantiated yet </target>
+      </trans-unit>
+      <trans-unit id="2930524874557603286" datatype="html">
+        <source>Activepieces Team</source>
+        <target state="new">Activepieces Team</target>
+      </trans-unit>
+      <trans-unit id="954840788512180203" datatype="html">
+        <source>See less</source>
+        <target state="new">See less</target>
+      </trans-unit>
+      <trans-unit id="4462165726005928867" datatype="html">
+        <source>See more</source>
+        <target state="new">See more</target>
+      </trans-unit>
+      <trans-unit id="29870732231596621" datatype="html">
+        <source>Use Template </source>
+        <target state="new">Use Template </target>
+      </trans-unit>
+      <trans-unit id="2047936376758344367" datatype="html">
+        <source>Verified icons created by lakonicon - Flaticon</source>
+        <target state="new">Verified icons created by lakonicon - Flaticon</target>
+      </trans-unit>
+      <trans-unit id="5949896491927456436" datatype="html">
+        <source> Learn about this flow </source>
+        <target state="new"> Learn about this flow </target>
+      </trans-unit>
+      <trans-unit id="3490041488928665412" datatype="html">
+        <source> You used a template for this flow and you can read our guide on how to set it up. </source>
+        <target state="new"> You used a template for this flow and you can read our guide on how to set it up. </target>
+      </trans-unit>
+      <trans-unit id="9024715782279733035" datatype="html">
+        <source>Go to guide</source>
+        <target state="new">Go to guide</target>
+      </trans-unit>
+      <trans-unit id="1892409467490527310" datatype="html">
+        <source> Ignore </source>
+        <target state="new"> Ignore </target>
+      </trans-unit>
+      <trans-unit id="2778126117828123438" datatype="html">
+        <source> Use Template </source>
+        <target state="new"> Use Template </target>
+      </trans-unit>
+      <trans-unit id="8116094792018370870" datatype="html">
+        <source> Apps </source>
+        <target state="new"> Apps </target>
+      </trans-unit>
+      <trans-unit id="3797570084942068182" datatype="html">
+        <source>Select</source>
+        <target state="new">Select</target>
+      </trans-unit>
+      <trans-unit id="6703947649972852818" datatype="html">
+        <source>Featured</source>
+        <target state="new">Featured</target>
+      </trans-unit>
+      <trans-unit id="5688462374174490321" datatype="html">
+        <source> Load more </source>
+        <target state="new"> Load more </target>
+      </trans-unit>
+      <trans-unit id="2264989214104883907" datatype="html">
+        <source>All ideas</source>
+        <target state="new">All ideas</target>
+      </trans-unit>
+      <trans-unit id="5784653381187077675" datatype="html">
+        <source>Browse Templates</source>
+        <target state="new">Browse Templates</target>
+      </trans-unit>
+      <trans-unit id="3632453124332504959" datatype="html">
+        <source> A new way to explore fresh ideas from our partners</source>
+        <target state="new"> A new way to explore fresh ideas from our partners</target>
+      </trans-unit>
+      <trans-unit id="3467902316108509147" datatype="html">
+        <source>View featured ideas </source>
+        <target state="new">View featured ideas </target>
+      </trans-unit>
+      <trans-unit id="2683765549895995966" datatype="html">
+        <source>Search templates</source>
+        <target state="new">Search templates</target>
+      </trans-unit>
+      <trans-unit id="2590054615761981950" datatype="html">
+        <source>Start from scratch</source>
+        <target state="new">Start from scratch</target>
+      </trans-unit>
+      <trans-unit id="3814533228057776001" datatype="html">
+        <source> Filters </source>
+        <target state="new"> Filters </target>
+      </trans-unit>
+      <trans-unit id="81394443656404829" datatype="html">
+        <source>Share template</source>
+        <target state="new">Share template</target>
+      </trans-unit>
+      <trans-unit id="4902817035128594900" datatype="html">
+        <source>Description</source>
+        <target state="new">Description</target>
+      </trans-unit>
+      <trans-unit id="8289400513068937763" datatype="html">
+        <source>Blog Url </source>
+        <target state="new">Blog Url </target>
+      </trans-unit>
+      <trans-unit id="1984826134993441246" datatype="html">
+        <source>Image url </source>
+        <target state="new">Image url </target>
+      </trans-unit>
+      <trans-unit id="2637278026035363299" datatype="html">
+        <source>Featured Description</source>
+        <target state="new">Featured Description</target>
+      </trans-unit>
+      <trans-unit id="4163272119298020373" datatype="html">
+        <source>Filters</source>
+        <target state="new">Filters</target>
+      </trans-unit>
+      <trans-unit id="3169427932576895164" datatype="html">
+        <source>UNKNOWN</source>
+        <target state="new">UNKNOWN</target>
+      </trans-unit>
+      <trans-unit id="7622269434262400347" datatype="html">
+        <source>+ Invite</source>
+        <target state="new">+ Invite</target>
+      </trans-unit>
+      <trans-unit id="2198590276913934346" datatype="html">
+        <source>Logo URL</source>
+        <target state="new">Logo URL</target>
+      </trans-unit>
+      <trans-unit id="6914082229088295352" datatype="html">
+        <source>Icon URL</source>
+        <target state="new">Icon URL</target>
+      </trans-unit>
+      <trans-unit id="3123343057184436732" datatype="html">
+        <source>Favicon URL</source>
+        <target state="new">Favicon URL</target>
+      </trans-unit>
+      <trans-unit id="7216867591624517466" datatype="html">
+        <source>Primary Color</source>
+        <target state="new">Primary Color</target>
+      </trans-unit>
+      <trans-unit id="3768927257183755959" datatype="html">
+        <source>Save</source>
+        <target state="new">Save</target>
+      </trans-unit>
+      <trans-unit id="8671234314555525900" datatype="html">
+        <source>Appearance</source>
+        <target state="new">Appearance</target>
+      </trans-unit>
+      <trans-unit id="5207181275711102359" datatype="html">
+        <source> Signing Keys: </source>
+        <target state="new"> Signing Keys: </target>
+      </trans-unit>
+      <trans-unit id="2713909847440200365" datatype="html">
+        <source>Custom domain</source>
+        <target state="new">Custom domain</target>
+      </trans-unit>
+      <trans-unit id="3249513483374643425" datatype="html">
+        <source>Add</source>
+        <target state="new">Add</target>
+      </trans-unit>
+      <trans-unit id="1812429098722823159" datatype="html">
+        <source> Verify </source>
+        <target state="new"> Verify </target>
+      </trans-unit>
+      <trans-unit id="6660925946511264619" datatype="html">
+        <source> Delete </source>
+        <target state="new"> Delete </target>
+      </trans-unit>
+      <trans-unit id="4930506384627295710" datatype="html">
+        <source>Settings</source>
+        <target state="new">Settings</target>
+      </trans-unit>
+      <trans-unit id="2903418726569442973" datatype="html">
+        <source>Please set the following TXT and CNAME records in your DNS provider, then click verify to confirm your control over the domain.</source>
+        <target state="new">Please set the following TXT and CNAME records in your DNS provider, then click verify to confirm your control over the domain.</target>
+      </trans-unit>
+      <trans-unit id="5401613726411464402" datatype="html">
+        <source>Name is required </source>
+        <target state="new">Name is required </target>
+      </trans-unit>
+      <trans-unit id="7336708777241657565" datatype="html">
+        <source>Name is used </source>
+        <target state="new">Name is used </target>
+      </trans-unit>
+      <trans-unit id="5737488158922048412" datatype="html">
+        <source>Your signing key <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>(keep it with you)<x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="&lt;/b&gt;"/>:</source>
+        <target state="new">Your signing key <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>(keep it with you)<x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="&lt;/b&gt;"/>:</target>
+      </trans-unit>
+      <trans-unit id="29856294496498746" datatype="html">
+        <source> Read our docs to see how you will use this key to sign requests sent from your app to Activepieces (You will no longer find the key on Activepeices). </source>
+        <target state="new"> Read our docs to see how you will use this key to sign requests sent from your app to Activepieces (You will no longer find the key on Activepeices). </target>
+      </trans-unit>
+      <trans-unit id="3898924154259681557" datatype="html">
+        <source>I understand I will no longer be able to access this key here. </source>
+        <target state="new">I understand I will no longer be able to access this key here. </target>
+      </trans-unit>
+      <trans-unit id="3243919419794524214" datatype="html">
+        <source>Create Key</source>
+        <target state="new">Create Key</target>
+      </trans-unit>
+      <trans-unit id="1953868661427257650" datatype="html">
+        <source>Key Created</source>
+        <target state="new">Key Created</target>
+      </trans-unit>
+      <trans-unit id="8040881171107393560" datatype="html">
+        <source>ID</source>
+        <target state="new">ID</target>
+      </trans-unit>
+      <trans-unit id="3327168216140956791" datatype="html">
+        <source> + New key </source>
+        <target state="new"> + New key </target>
+      </trans-unit>
+      <trans-unit id="73979960734847259" datatype="html">
+        <source>Delete key</source>
+        <target state="new">Delete key</target>
+      </trans-unit>
+      <trans-unit id="2013759272995458533" datatype="html">
+        <source> No keys created yet. </source>
+        <target state="new"> No keys created yet. </target>
+      </trans-unit>
+      <trans-unit id="3158994510872210518" datatype="html">
+        <source>This will permanently delete the key, all embedding that was using this key will break.</source>
+        <target state="new">This will permanently delete the key, all embedding that was using this key will break.</target>
+      </trans-unit>
+      <trans-unit id="213979411616421023" datatype="html">
+        <source> Platform Dashboard</source>
+        <target state="new"> Platform Dashboard</target>
+      </trans-unit>
+      <trans-unit id="7091571651222742304" datatype="html">
+        <source>Projects</source>
+        <target state="new">Projects</target>
+      </trans-unit>
+      <trans-unit id="491159195078241064" datatype="html">
+        <source>Import Flow</source>
+        <target state="new">Import Flow</target>
+      </trans-unit>
+      <trans-unit id="833959964659558357" datatype="html">
+        <source>Chatbot</source>
+        <target state="new">Chatbot</target>
+      </trans-unit>
+      <trans-unit id="4296705024052936390" datatype="html">
+        <source>If you are expecting a reply from this webhook, append &lt;b&gt;/sync&lt;/b&gt; to the URL.&lt;br&gt; &lt;br&gt; In that case, you will also have to add an &lt;b&gt;HTTP step&lt;/b&gt; with return response to the end of your flow.&lt;br&gt; &lt;br&gt; **If the flow takes more than 30 seconds, it will give a 204 no-content response.**&lt;br&gt; <x id="INTERPOLATION" equiv-text="{{ (edition$ | async) === ApEdition.CLOUD ? &apos;&apos; : &apos;To change this, set the **AP_WEBHOOK_TIMEOUT_SECONDS** to desired number.&apos; }}"/> </source>
+        <target state="new">If you are expecting a reply from this webhook, append &lt;b&gt;/sync&lt;/b&gt; to the URL.&lt;br&gt; &lt;br&gt; In that case, you will also have to add an &lt;b&gt;HTTP step&lt;/b&gt; with return response to the end of your flow.&lt;br&gt; &lt;br&gt; **If the flow takes more than 30 seconds, it will give a 204 no-content response.**&lt;br&gt; <x id="INTERPOLATION" equiv-text="{{ (edition$ | async) === ApEdition.CLOUD ? &apos;&apos; : &apos;To change this, set the **AP_WEBHOOK_TIMEOUT_SECONDS** to desired number.&apos; }}"/> </target>
+      </trans-unit>
+      <trans-unit id="4799446829614840651" datatype="html">
+        <source> + New Chatbot </source>
+        <target state="new"> + New Chatbot </target>
+      </trans-unit>
+      <trans-unit id="3950972977983792144" datatype="html">
+        <source>Plans</source>
+        <target state="new">Plans</target>
+      </trans-unit>
+      <trans-unit id="5903633013884641340" datatype="html">
+        <source>Chatbot settings</source>
+        <target state="new">Chatbot settings</target>
+      </trans-unit>
+      <trans-unit id="962765493084218985" datatype="html">
+        <source>Platform</source>
+        <target state="new">Platform</target>
+      </trans-unit>
+      <trans-unit id="694236538889679195" datatype="html">
+        <source> This is where you can install pieces made by yourself or contributors. </source>
+        <target state="new"> This is where you can install pieces made by yourself or contributors. </target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

@@ -36,7 +36,6 @@
           "cronstrue"
         ],
         "assets": [
-          "packages/ui/core/src/favicon.ico",
           "packages/ui/core/src/assets",
           {
             "glob": "**/*",
@@ -62,7 +61,9 @@
           "node_modules/prismjs/plugins/line-highlight/prism-line-highlight.js",
           "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.js",
           "node_modules/clipboard/dist/clipboard.min.js"
-        ]
+        ],
+        "i18nMissingTranslation": "ignore",
+        "localize": true
       },
       "configurations": {
         "production": {
@@ -92,7 +93,15 @@
           "vendorChunk": true,
           "extractLicenses": false,
           "sourceMap": true,
-          "namedChunks": true
+          "namedChunks": true,
+          "localize": [
+            "en"
+          ]
+        },
+        "fr": {
+          "localize": [
+            "fr"
+          ]
         }
       },
       "defaultConfiguration": "production"
@@ -105,6 +114,9 @@
         },
         "development": {
           "browserTarget": "ui-core:build:development"
+        },
+        "fr": {
+          "browserTarget": "ui-core:build:development,fr"
         }
       },
       "defaultConfiguration": "development",
@@ -116,11 +128,12 @@
     "extract-i18n": {
       "executor": "@angular-devkit/build-angular:extract-i18n",
       "options": {
-        "browserTarget": "ui-core:build"
+        "browserTarget": "ui-core:build",
+        "outputPath": "packages/ui/core/src/locale"
       }
     },
     "lint": {
-      "executor": "@nx/linter:eslint",
+      "executor": "@nx/eslint:lint",
       "outputs": [
         "{options.outputFile}"
       ],
@@ -146,5 +159,26 @@
       }
     }
   },
-  "tags": []
+  "tags": [],
+  "i18n": {
+    "sourceLocale": {
+      "code": "en",
+      "baseHref": "/"
+    },
+    "locales": {
+      "bg": "packages/ui/core/src/locale/messages.bg.xlf",
+      "uk": "packages/ui/core/src/locale/messages.uk.xlf",
+      "es": "packages/ui/core/src/locale/messages.es.xlf",
+      "fr": "packages/ui/core/src/locale/messages.fr.xlf",
+      "hu": "packages/ui/core/src/locale/messages.hu.xlf",
+      "id": "packages/ui/core/src/locale/messages.id.xlf",
+      "zh": "packages/ui/core/src/locale/messages.zh.xlf",
+      "pt": "packages/ui/core/src/locale/messages.pt.xlf",
+      "vi": "packages/ui/core/src/locale/messages.vi.xlf",
+      "ja": "packages/ui/core/src/locale/messages.ja.xlf",
+      "it": "packages/ui/core/src/locale/messages.it.xlf",
+      "de": "packages/ui/core/src/locale/messages.de.xlf",
+      "nl": "packages/ui/core/src/locale/messages.nl.xlf"
+    }
+  }
 }

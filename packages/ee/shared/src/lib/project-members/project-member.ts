@@ -1,5 +1,5 @@
 import { Static, Type } from "@sinclair/typebox";
-import { BaseModelSchema } from "@activepieces/shared";
+import { ApId, BaseModelSchema, Nullable } from "@activepieces/shared";
 import { ProjectMemberRole } from "./project-member-role";
 
 export type ProjectMemberId = string;
@@ -11,11 +11,13 @@ export enum ProjectMemberStatus {
 
 export const ProjectMember = Type.Object({
     ...BaseModelSchema,
-    userId: Type.String(),
     email: Type.String(),
+    platformId: Nullable(ApId),
     projectId: Type.String(),
     role: Type.Enum(ProjectMemberRole),
     status: Type.Enum(ProjectMemberStatus),
+}, { 
+    description: "Project member is which user is assigned to a project."
 });
 
 export type ProjectMember = Static<typeof ProjectMember>;

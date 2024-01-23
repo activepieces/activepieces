@@ -92,7 +92,10 @@
                 "@typescript-eslint/keyword-spacing": "error",
                 "@typescript-eslint/explicit-function-return-type": "warn",
                 "@typescript-eslint/no-floating-promises": "error",
-                "@typescript-eslint/no-misused-promises": "warn"
+                "@typescript-eslint/no-misused-promises": "warn",
+                "no-return-await": "off",
+                "@typescript-eslint/return-await": ["error", "in-try-catch"],
+                "default-case-last": "error"
             }
         }
     ]

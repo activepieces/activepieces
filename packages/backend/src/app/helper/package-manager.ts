@@ -2,6 +2,8 @@ import { enrichErrorContext } from './error-handler'
 import { exec } from './exec'
 import { logger } from './logger'
 import { isEmpty } from '@activepieces/shared'
+import fs from 'fs/promises'
+import fsPath from 'path'
 
 type PackageManagerOutput = {
     stdout: string
@@ -61,25 +63,49 @@ export const packageManager = {
         ]
 
         const dependencyArgs = dependencies.map(d => `${d.alias}@${d.spec}`)
-        return await runCommand(path, 'add', ...dependencyArgs, ...config)
+        return runCommand(path, 'add', ...dependencyArgs, ...config)
     },
 
     async init({ path }: InitParams): Promise<PackageManagerOutput> {
-        return await runCommand(path, 'init')
+        return runCommand(path, 'init')
     },
 
     async exec({ path, command }: ExecParams): Promise<PackageManagerOutput> {
-        return await runCommand(path, command)
+        return runCommand(path, command)
     },
 
-    async link({ path, linkPath }: LinkParams): Promise<PackageManagerOutput> {
+    async link({ path, linkPath, packageName }: LinkParams): Promise<PackageManagerOutput> {
         const config = [
             '--config.lockfile=false',
             '--config.auto-install-peers=true',
         ]
 
-        return await runCommand(path, 'link', linkPath, ...config)
+
+        const result = await runCommand(path, 'link', linkPath, ...config)
+
+        const nodeModules = fsPath.join(path, 'node_modules', packageName)
+        await replaceRelativeSystemLinkWithAbsolute(nodeModules)
+        return result
     },
+
+}
+
+const replaceRelativeSystemLinkWithAbsolute = async (filePath: string) => {
+    try {
+        // Inside the isolate sandbox, the relative path is not valid
+
+        const stats = await fs.stat(filePath)
+
+        if (stats.isDirectory()) {
+            const realPath = await fs.realpath(filePath)
+            logger.info({ realPath, filePath }, '[link]')
+            await fs.unlink(filePath)
+            await fs.symlink(realPath, filePath, 'dir')
+        }
+    }
+    catch (error) {
+        logger.error([error], '[link]')
+    }
 }
 
 type AddParams = {
@@ -99,4 +125,5 @@ type ExecParams = {
 type LinkParams = {
     path: string
     linkPath: string
+    packageName: string
 }

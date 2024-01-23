@@ -1,0 +1,30 @@
+<ap-dialog-title-template i18n>
+    <div class="ap-inline-block ap-h-[36px]  ">
+        <div class="ap-flex ap-gap-2
+        ap-items-center">
+            <svg-icon [svgStyle]="{ width: '20px', height: '20px' }" src="assets/img/custom/warn.svg"></svg-icon>Warning
+        </div>
+    </div>
+
+
+</ap-dialog-title-template>
+<mat-dialog-content>
+    <div class="md:ap-max-w-[31.25rem]">
+        <div class="ap-typography-body-1  ap-items-center ap-text-body ap-mb-2 ap-flex ap-gap-2 ap-mb-4">
+            <div cdkFocusInitial i18n>Your current draft version will be overwritten with <b>version
+                    #{{data.versionNumber}}</b>.</div>
+        </div>
+    </div>
+
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <div class="ap-flex ap-gap-2.5">
+        <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" i18n>
+            Cancel
+        </ap-button>
+        <ap-button btnSize="default" type="submit" (click)="confirm()" btnColor="primary" i18n>
+            Confirm
+        </ap-button>
+    </div>
+</mat-dialog-actions>

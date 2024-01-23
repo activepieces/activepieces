@@ -1,21 +1,21 @@
-<div class=" ap-flex-col ap-flex  ap-w-[318px]  ap-p-5 ap-rounded-lg ap-bg-white top-border-shadow">
+<div class=" ap-flex-col ap-flex  ap-w-[318px]  ap-p-5 ap-rounded-lg ap-bg-white top-border-shadow" *ngIf="showBlogGuide$ | async">
 
-    <div class="!ap-font-semibold ap-typogrpahy-headline-6 ap-mb-2.5 ">
+    <div class="!ap-font-semibold ap-typogrpahy-headline-6 ap-mb-2.5" i18n>
         Learn about this flow
     </div>
-    <div class="ap-typography-body-1 ap-mb-10">
+    <div class="ap-typography-body-1 ap-mb-10" i18n>
         You used a template for this flow and you can read our guide on how to set it up.
     </div>
     <ap-button (buttonClicked)="openBlog()" btnColor="primary" btnStyle="flat" btnSize="medium"
         [fullWidthOfContainer]="true" class="ap-mb-1.5">
         <div class=" ap-text-white ap-flex ap-gap-2 ap-items-center">
-            Go to guide <svg-icon src="assets/img/custom/external-link.svg"
-                class="ap-w-[15px] ap-h-[15px] ap-fill-white"></svg-icon>
+            <span i18n>Go to guide</span>
+            <svg-icon src="assets/img/custom/external-link.svg" class="ap-w-[15px] ap-h-[15px] ap-fill-white"></svg-icon>
         </div>
 
     </ap-button>
     <ap-button (buttonClicked)="close()" btnColor="primary" btnStyle="stroked" btnSize="medium"
-        [fullWidthOfContainer]="true">
+        [fullWidthOfContainer]="true" i18n>
         Ignore
     </ap-button>
 </div>

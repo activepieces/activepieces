@@ -3,17 +3,14 @@
 
 .add-button {
   position: absolute;
-  height: 17px;
-  width: 16px;
+  height: 18px;
+  width: 18px;
   z-index: 40;
   background: $add-piece;
   background-image: url("../img/custom/add-button.svg");
-  cursor: pointer;
   border-radius: 3px;
   transition: box-shadow 0.3s ease-in-out, background 0.3s ease-in-out, background-image 0.3s ease-in-out;
-  &:focus {
-    box-shadow: 0px 0px 0px 5px rgba(#fafafa, 0.6);
-  }
+
 }
 .scale-1 {
   transform: scale(1) !important;
@@ -44,10 +41,14 @@
 }
 
 .add-button-drop-indicator {
-  background: rgba($primary-default, 0.6);
-  box-shadow: 0px 0px 0px 6px rgba($primary-default, 0.2);
-  width: 16px;
-  height: 16px;
+  background: var(--primary-palette-300);
+  width: 18px;
+  height: 18px;
   border-radius: 3px;
   box-sizing: content-box;
+  opacity:90%; 
+  &:hover ,&.show-shadow {
+      box-shadow: 0px 0px 0px 6px var(--primary-palette-100);
+  }
 }
+

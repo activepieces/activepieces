@@ -3,12 +3,12 @@ import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { forkJoin, map, of, switchMap, take } from 'rxjs';
 import { ActionType, TriggerType } from '@activepieces/shared';
 import { FlowItemDetailsActions } from './flow-items-details.action';
+import { FlowItemDetails } from '@activepieces/ui/common';
 import {
   PieceMetadataService,
   CORE_PIECES_ACTIONS_NAMES,
   CORE_PIECES_TRIGGERS,
-  FlowItemDetails,
-} from '@activepieces/ui/common';
+} from '@activepieces/ui/feature-pieces';
 import { PieceMetadataModelSummary } from '@activepieces/ui/common';
 
 @Injectable()
@@ -41,18 +41,30 @@ export class FlowItemsDetailsEffects {
         });
       }),
       map((res) => {
-        res.coreFlowItemsDetails = this.moveCorePiecesToCoreFlowItemDetails(
+        let coreFlowItemsDetails = [...res.coreFlowItemsDetails];
+        let coreTriggerFlowItemsDetails = [...res.coreTriggerFlowItemsDetails];
+        const customPiecesActionsFlowItemDetails = [
+          ...res.customPiecesActionsFlowItemDetails,
+        ];
+        const customPiecesTriggersFlowItemDetails = [
+          ...res.customPiecesTriggersFlowItemDetails,
+        ];
+        coreFlowItemsDetails = this.moveCorePiecesToCoreFlowItemDetails(
           CORE_PIECES_ACTIONS_NAMES,
-          res.customPiecesActionsFlowItemDetails,
-          res.coreFlowItemsDetails
+          customPiecesActionsFlowItemDetails,
+          coreFlowItemsDetails
         );
-        res.coreTriggerFlowItemsDetails =
-          this.moveCorePiecesToCoreFlowItemDetails(
-            CORE_PIECES_TRIGGERS,
-            res.customPiecesTriggersFlowItemDetails,
-            res.coreTriggerFlowItemsDetails
-          );
-        return res;
+        coreTriggerFlowItemsDetails = this.moveCorePiecesToCoreFlowItemDetails(
+          CORE_PIECES_TRIGGERS,
+          customPiecesTriggersFlowItemDetails,
+          coreTriggerFlowItemsDetails
+        );
+        return {
+          coreFlowItemsDetails,
+          coreTriggerFlowItemsDetails,
+          customPiecesActionsFlowItemDetails,
+          customPiecesTriggersFlowItemDetails,
+        };
       }),
       switchMap((res) => {
         return of(

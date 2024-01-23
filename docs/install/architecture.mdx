@@ -1,0 +1,46 @@
+---
+title: "Architecture"
+icon: "bolt"
+---
+
+This page focuses on production architecture and tech specs, with three main parts:
+
+## Components
+
+![Architecture](/resources/architecture.png)
+
+### Redis
+
+Redis is used as a message queue to store jobs that need processing. It's also used for locking mechanisms.
+
+### PostgreSQL
+
+PostgreSQL is used as the main database to store all data.
+
+### Main Container
+
+Activepieces is a single stateless service that can be scaled horizontally. Workers and the API server are part of the same service but can be separated by environment variables to avoid processing jobs.
+
+### Tech Specs
+
+Activepieces is not CPU-intensive in general, and a small instance is usually sufficient. The requirements vary depending on use cases.
+
+| Component      | Memory (RAM) | CPU Cores | Notes                                         |
+|----------------|--------------|-----------|-----------------------------------------------|
+| PostgreSQL     | 1 GB         | 1         |                                               |
+| Redis          | 1 GB         | 1         |                                               |
+| Activepieces   | 4 GB         | 2         | For high availability, it's better to deploy multiple machines.
+
+## Scaling
+
+**Redis:** You don't need to increase the size of Redis because it only stores jobs while they're being processed. Activepieces use BullMQ, which can handle many jobs each second.
+
+**PostgreSQL:** You also don't have to increase the size of PostgreSQL. It's only used for storing data and doesn't require significant CPU power.
+
+**Activepieces:**
+
+To make Activepieces handle more work, you can add more instances. For the suggested setup, set the worker concurrency in the environment variable to 20 on each machine.
+
+With this setup, it can handle more than **20 million executions** monthly, including flow runs and background polling executions.
+
+The main thing to consider when deciding to scale is how often it checks for new items. For example, if you have a 5-minute check, it will be executed 8,640 times in a month.

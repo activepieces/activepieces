@@ -1,0 +1,36 @@
+{
+  "name": "pieces-convertkit",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/convertkit/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/convertkit",
+        "tsConfig": "packages/pieces/community/convertkit/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/convertkit/package.json",
+        "main": "packages/pieces/community/convertkit/src/index.ts",
+        "assets": ["packages/pieces/community/convertkit/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-convertkit {args.ver} {args.tag}",
+      "dependsOn": ["build"]
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/community/convertkit/**/*.ts",
+          "packages/pieces/community/convertkit/package.json"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

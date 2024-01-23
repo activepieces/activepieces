@@ -1,4 +1,3 @@
-import { SecurityContext } from '@angular/core';
 import {
   FormControl,
   FormGroupDirective,
@@ -6,11 +5,11 @@ import {
   NgForm,
 } from '@angular/forms';
 import { ErrorStateMatcher, mixinErrorState } from '@angular/material/core';
-import { DomSanitizer } from '@angular/platform-browser';
 import { Subject } from 'rxjs';
-import { FlowItem } from '@activepieces/ui/feature-builder-store';
+import { Step, StepWithIndex } from '@activepieces/ui/feature-builder-store';
 import { InsertMentionOperation } from '@activepieces/ui/common';
 
+export const customCodeMentionDisplayName = 'Custom Code';
 export const keysWithinPath = (path: string) => {
   const result: string[] = [];
   let insideBrackets = false;
@@ -84,8 +83,7 @@ export class CustomErrorMatcher implements ErrorStateMatcher {
 
 export function fromTextToOps(
   text: string,
-  allStepsMetaData: (MentionListItem & { step: FlowItem })[],
-  sanitizer: DomSanitizer
+  allStepsMetaData: (MentionListItem & { step: StepWithIndex })[]
 ): {
   ops: (TextInsertOperation | InsertMentionOperation)[];
 } {
@@ -107,33 +105,29 @@ export function fromTextToOps(
           );
           const keys = keysWithinPath(itemPathWithoutInterpolationDenotation);
           const stepName = keys[0];
-          let imageTag = '';
           const stepMetaData = allStepsMetaData.find(
             (s) => s.step.name === stepName
           );
-          if (stepMetaData) {
-            imageTag =
-              getImageTemplateForStepLogo(stepMetaData.logoUrl || '') +
-              `${stepMetaData?.step.indexInDfsTraversal || 0 + 1}. `;
-          }
+
           //Mention text is the whole path joined with spaces
           const mentionText = [
             replaceStepNameWithDisplayName(stepName, allStepsMetaData),
             ...keys.slice(1),
           ].join(' ');
-          return {
+          const indexInDfsTraversal = stepMetaData?.step.indexInDfsTraversal;
+          const prefix = indexInDfsTraversal ? `${indexInDfsTraversal}. ` : '';
+          const insertMention: InsertMentionOperation = {
             insert: {
-              mention: {
-                value:
-                  '  ' +
-                    imageTag +
-                    sanitizer.sanitize(SecurityContext.HTML, mentionText) +
-                    '  ' || '',
-                denotationChar: '',
+              apMention: {
+                value: prefix + mentionText,
                 serverValue: item,
+                data: {
+                  logoUrl: stepMetaData?.logoUrl,
+                },
               },
             },
           };
+          return insertMention;
         } else {
           return { insert: item };
         }
@@ -149,14 +143,14 @@ export function fromTextToOps(
 
 function replaceStepNameWithDisplayName(
   stepName: string,
-  allStepsMetaData: (MentionListItem & { step: FlowItem })[]
+  allStepsMetaData: (MentionListItem & { step: Step })[]
 ) {
   const stepDisplayName = allStepsMetaData.find((s) => s.step.name === stepName)
     ?.step.displayName;
   if (stepDisplayName) {
     return stepDisplayName;
   }
-  return 'unknown step';
+  return customCodeMentionDisplayName;
 }
 
 export interface TextInsertOperation {
@@ -173,7 +167,7 @@ export function fromOpsToText(operations: QuillEditorOperationsObject) {
       if (typeof singleInsertOperation.insert === 'string') {
         return singleInsertOperation.insert;
       } else {
-        return singleInsertOperation.insert.mention.serverValue;
+        return singleInsertOperation.insert.apMention.serverValue;
       }
     })
     .join('');
@@ -197,9 +191,17 @@ export function traverseStepOutputAndReturnMentionTree(
       propertyPath: path,
       key: lastKey,
       children: Object.keys(stepOutput).map((k) => {
+        const escpaedKey = k
+          .replaceAll(/\\/g, '\\')
+          .replaceAll(/"/g, '\\"')
+          .replaceAll(/'/g, "\\'")
+          .replaceAll(/\n/g, '\\n')
+          .replaceAll(/\r/g, '\\r')
+          .replaceAll(/\t/g, '\\t')
+          .replaceAll(/’/g, '\\’');
         const newPath = Array.isArray(stepOutput)
           ? `${path}[${k}]`
-          : `${path}['${k}']`;
+          : `${path}['${escpaedKey}']`;
         const newKey = Array.isArray(stepOutput) ? `${lastKey} ${k}` : k;
         return traverseStepOutputAndReturnMentionTree(
           (stepOutput as Record<string, unknown>)[k],
@@ -233,10 +235,6 @@ function formatStepOutput(stepOutput: unknown) {
   }
 
   return stepOutput;
-}
-
-export function getImageTemplateForStepLogo(logoUrl: string) {
-  return `<img style="object-fit:contain; width:16px; height:16px; margin-right:5px; margin-bottom:2px; display:inline;" src="${logoUrl}">`;
 }
 
 export const FIRST_LEVEL_PADDING_IN_MENTIONS_LIST = 53;

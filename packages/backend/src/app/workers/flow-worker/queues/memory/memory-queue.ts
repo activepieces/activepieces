@@ -10,11 +10,11 @@ import {
 } from '../queue'
 import cronParser from 'cron-parser'
 import { logger } from '../../../../helper/logger'
-import { flowInstanceRepo } from '../../../../flows/flow-instance/flow-instance.service'
-import { DelayPauseMetadata, ExecutionOutputStatus, ExecutionType, FlowInstanceStatus, PauseType, RunEnvironment, TriggerType } from '@activepieces/shared'
+import { DelayPauseMetadata, ExecutionOutputStatus, ExecutionType, PauseType, RunEnvironment, TriggerType } from '@activepieces/shared'
 import { flowRunRepo } from '../../../../flows/flow-run/flow-run-service'
+import { flowService } from '../../../../flows/flow/flow.service'
 
-function calculateNextFireForCron(cronExpression: string, timezone: string) {
+function calculateNextFireForCron(cronExpression: string, timezone: string): number | null {
     try {
         const options = {
             tz: timezone,
@@ -54,26 +54,27 @@ export const inMemoryQueueManager: InMemoryQueueManager = {
             REPEATING: [],
             DELAYED: [],
         }
-        const flowInstances = (await flowInstanceRepo.find({})).filter(
-            (flowInstance) => flowInstance.schedule && flowInstance.status === FlowInstanceStatus.ENABLED,
-        )
-        logger.info(`Adding ${flowInstances.length} flow instances to the queue manager.`)
-        flowInstances.forEach((flowInstance) => {
+        const enabledFlows = await flowService.getAllEnabled()
+        const enabledRepeatingFlows = enabledFlows.filter((flow) => flow.schedule)
+
+        logger.info(`Adding ${enabledRepeatingFlows.length} flows to the queue manager.`)
+
+        enabledRepeatingFlows.forEach((flow) => {
             this.add({
-                id: flowInstance.id,
+                id: flow.id,
                 type: JobType.REPEATING,
                 data: {
-                    projectId: flowInstance.projectId,
+                    projectId: flow.projectId,
                     environment: RunEnvironment.PRODUCTION,
                     schemaVersion: 1,
-                    flowVersionId: flowInstance.flowVersionId,
-                    flowId: flowInstance.flowId,
+                    flowVersionId: flow.publishedVersionId!,
+                    flowId: flow.id,
                     triggerType: TriggerType.PIECE,
                     executionType: ExecutionType.BEGIN,
                 },
                 scheduleOptions: {
-                    cronExpression: flowInstance.schedule!.cronExpression,
-                    timezone: flowInstance.schedule!.timezone,
+                    cronExpression: flow.schedule!.cronExpression,
+                    timezone: flow.schedule!.timezone,
                 },
             })
                 .catch((e) => logger.error(e, '[MemoryQueue#init] add'))

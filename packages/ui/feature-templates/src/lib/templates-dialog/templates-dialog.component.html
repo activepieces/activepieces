@@ -1,104 +1,37 @@
-<div class="ap-flex" *ngIf="(data?.isThereNewFeaturedTemplates$ | async)===true ;else noFeaturedTemplates">
-
-    <mat-tab-group mat-stretch-tabs="false" mat-align-tabs="start" #tabGroup [selectedIndex]="1">
-
-        <mat-tab (click)="showFeaturedTab(tabGroup,'tab button')">
-            <ng-template mat-tab-label>
-                <svg-icon class="ap-h-[18px] ap-w-[18px] ap-mr-2" [applyClass]="true"
-                    src="assets/img/custom/hot.svg"></svg-icon>
-                Featured
-            </ng-template>
-            <div class="ap-w-[1046px] ap-h-[705px] ap-overflow-y-auto ap-bg-[#F0F1F3] ap-pl-5  ap-py-5 thin-scrollbars black-scrollbars ap-flex ap-flex-col ap-gap-5"
-                apCheckOverflow (isOverflowed)="featuredListOverflowing=$event"
-                [class.ap-pr-5]="!featuredListOverflowing" [class.ap-pr-3]="featuredListOverflowing">
-                <ng-container *ngIf="featuredTemplates$ | async as templates; else loading">
-                    <ng-container *ngFor="let template of templates; let idx=index">
-                        <app-featured-template-card [template]="template"
-                            (useTemplateClicked)="useTemplate(template,'featured')"
-                            *ngIf="idx < 4 || showAllFeaturedTemplates"></app-featured-template-card>
-                    </ng-container>
-                    <div class="ap-w-full" *ngIf="!showAllFeaturedTemplates && templates.length>4">
-                        <ap-button (buttonClicked)="showAllFeaturedTemplates=true" btnSize="large" btnColor="white"
-                            btnStyle="flat" [fullWidthOfContainer]="true">
-                            <div class="ap-text-center ap-w-full ap-font-semibold">
-                                Load more
-                            </div>
-                        </ap-button>
-                    </div>
-                </ng-container>
-                <ng-template #loading>
-                    <div class="ap-flex ap-items-center ap-justify-center">
-                        <ap-loading-icon [outlineLoader]="false" [whiteLoader]="false" height="40px" width="40px">
-                        </ap-loading-icon>
-                    </div>
-                </ng-template>
-            </div>
-        </mat-tab>
-        <mat-tab>
-            <ng-template mat-tab-label>
-                <svg-icon class="ap-h-[18px] ap-w-[18px] ap-mr-2" [applyClass]="true"
-                    src="assets/img/custom/grid.svg"></svg-icon>
-                All ideas
-            </ng-template>
-
-            <mat-dialog-content class="!ap-flex ap-h-[705px] ap-w-[1046px] ap-gap-2 ap-p-0">
-
-                <ng-container *ngTemplateOutlet="filtersColumn"></ng-container>
-                <ng-container
-                    *ngTemplateOutlet="contentColumn; context:{showFeaturedBanner:true, tabGroup:tabGroup}"></ng-container>
-
-            </mat-dialog-content>
-        </mat-tab>
-
-
-
-    </mat-tab-group>
-    <ap-icon-button tooltipText="Close" iconFilename="close.svg"
-        class="ap-pr-6 ap-h-[2.8125rem] -ap-ml-[3.75rem] ap-z-50" mat-dialog-close></ap-icon-button>
+<div
+    class="ap-border-b ap-border-solid ap-border-outline ap-justify-between ap-items-center ap-flex ap-typography-headline-6  ap-px-6">
+    <span i18n>Browse Templates</span>
+    <ap-icon-button tooltipText="Close" iconFilename="close.svg" mat-dialog-close></ap-icon-button>
 </div>
-
-<ng-template #noFeaturedTemplates>
-    <div
-        class="ap-border-b ap-border-solid ap-border-outline ap-justify-between ap-items-center ap-flex ap-typography-headline-6  ap-px-6">
-        Browse Templates
-        <ap-icon-button tooltipText="Close" iconFilename="close.svg" mat-dialog-close></ap-icon-button>
-    </div>
+<div class="ap-flex">
     <mat-dialog-content class="!ap-flex ap-h-[705px] ap-w-[1046px] ap-gap-2 ap-p-0">
-
         <ng-container *ngTemplateOutlet="filtersColumn"></ng-container>
         <ng-container *ngTemplateOutlet="contentColumn; context:{showFeaturedBanner:false}"></ng-container>
 
     </mat-dialog-content>
-</ng-template>
+</div>
+
 
 <ng-container *ngIf="templates$ | async"></ng-container>
 
 <ng-template #filtersColumn>
     <div
         class="ap-w-[230px] ap-overflow-y-auto thin-scrollbars ap-flex ap-flex-col ap-gap-8  ap-px-5  ap-pt-5 ap-bg-white">
-        <app-templates-filters [formControl]="dialogForm.controls.tags" [filters]="filters"></app-templates-filters>
-        <app-template-apps-dropdown [formControl]="dialogForm.controls.pieces"></app-template-apps-dropdown>
+        <app-templates-filters *ngIf="filters$ | async as filters" [formControl]="dialogForm.controls.tags"
+            [filters]="filters"></app-templates-filters>
+        <app-template-apps-dropdown *ngIf="templates$ | async"
+            [formControl]="dialogForm.controls.pieces"></app-template-apps-dropdown>
     </div>
 </ng-template>
 
 
-<ng-template #contentColumn let-showFeaturedBanner="showFeaturedBanner" let-tabGroup="tabGroup">
+<ng-template #contentColumn let-tabGroup="tabGroup">
     <div class="ap-bg-[#F0F1F3] ap-grow ap-overflow-y-auto  thin-scrollbars black-scrollbars ">
-        <div *ngIf="showFeaturedBanner"
-            class=" ap-m-3 ap-bg-[url('assets/img/custom/featured-templates.png')] ap-bg-no-repeat ap-rounded-lg">
-            <div class="ap-p-10 ap-text-white ap-typography-headline-4 ap-max-w-[33.125rem] ">
-                <p class="ap-mb-8 ap-font-semibold"> A new way to explore fresh ideas from our partners</p>
-                <ap-button btnSize="medium" btnColor="white" btnStyle="flat"
-                    (buttonClicked)="showFeaturedTab(tabGroup,'banner button')">View featured
-                    ideas </ap-button>
-            </div>
-        </div>
-
         <div class="ap-p-3 ap-sticky ap-top-0 ap-z-50  ap-bg-[#F0F1F3]    ap-flex ap-items-center">
             <mat-form-field class="ap-grow" appearance="outline" subscriptSizing="dynamic">
                 <mat-icon matPrefix color="body-icon" svgIcon="search" class="!ap-w-[18px] !ap-h-[18px]"></mat-icon>
                 <input cdkFocusInitial #searchInput [formControl]="dialogForm.controls.search" matInput
-                    placeholder="Search templates" autocomplete="off">
+                    placeholder="Search templates" i18n-placeholder autocomplete="off">
             </mat-form-field>
 
         </div>
@@ -111,7 +44,7 @@
                     <ng-container>
                         <svg-icon src="assets/img/custom/add.svg" [applyClass]="true"
                             class="ap-fill-primary ap-w-[26px] ap-h-[26px]"></svg-icon>
-                        <div class="ap-typography-subtitle-1 ap-text-primary">Start from scratch</div>
+                        <div class="ap-typography-subtitle-1 ap-text-primary" i18n>Start from scratch</div>
                     </ng-container>
                 </div>
 

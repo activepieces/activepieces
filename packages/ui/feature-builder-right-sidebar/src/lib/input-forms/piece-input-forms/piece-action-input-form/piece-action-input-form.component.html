@@ -1,7 +1,7 @@
 <form [formGroup]="pieceActionForm" class="ap-flex ap-flex-col ap-gap-2">
   <ng-container *ngIf="actions$ | async else loading">
     <mat-form-field class="ap-w-full" appearance="outline">
-      <mat-label> Action </mat-label>
+      <mat-label i18n> Action </mat-label>
       <mat-select placeholder="Select an action" [formControlName]="ACTION_FORM_CONTROL_NAME"
         [compareWith]="actionDropdownCompareFn">
         <mat-select-trigger>
@@ -20,11 +20,12 @@
             {{opt.label.description}}</div>
         </mat-option>
         <mat-option [disabled]="true"
-          *ngIf=" ( actions$ | async) === undefined || ( actions$ | async) === null || (actions$ | async)?.length === 0">
+          *ngIf=" ( actions$ | async) === undefined || ( actions$ | async) === null || (actions$ | async)?.length === 0"
+          i18n>
           No options available
         </mat-option>
       </mat-select>
-      <mat-error *ngIf="pieceActionForm.get(ACTION_FORM_CONTROL_NAME)?.invalid">
+      <mat-error *ngIf="pieceActionForm.get(ACTION_FORM_CONTROL_NAME)?.invalid" i18n>
         Action is required
       </mat-error>
     </mat-form-field>
@@ -33,13 +34,17 @@
       <div>
         <app-piece-properties-form
           [actionOrTriggerName]="pieceActionForm.get(ACTION_FORM_CONTROL_NAME)!.value?.actionName"
-          [packageType]="packageType"
-          [pieceType]="pieceType"
-          [pieceName]="pieceName"
-          [pieceVersion]="pieceVersion"
+          [packageType]="packageType" [pieceType]="pieceType" [pieceName]="pieceName" [pieceVersion]="pieceVersion"
           [formControlName]="CONFIGS_FORM_CONTROL_NAME">
         </app-piece-properties-form>
-
+      </div>
+    </ng-container>
+    <ng-container
+      *ngIf="pieceActionForm.get(ACTION_FORM_CONTROL_NAME)!.value && pieceActionForm.get(ERROR_HANDLING_FORM_CONTROL_NAME)">
+      <div>
+        <app-action-error-handling-form-control [hideContinueOnFailure]="hideContinueOnFailure"
+          [hideRetryOnFailure]="hideRetryOnFailure"
+          formControlName="errorHandlingOptions"></app-action-error-handling-form-control>
       </div>
     </ng-container>
   </ng-container>

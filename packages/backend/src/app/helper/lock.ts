@@ -62,7 +62,7 @@ const acquireMemoryLock = async (key: string): Promise<ApLock> => {
 
 const acquireRedisLock = async (key: string, timeout: number): Promise<ApLock> => {
     try {
-        return redLock.acquire([key], timeout, {
+        return await redLock.acquire([key], timeout, {
             retryCount: Math.ceil(timeout / 2000) * 2,
             retryDelay: 2000,
         })

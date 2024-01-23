@@ -1,22 +1,14 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "npmScope": "activepieces",
-  "tasksRunnerOptions": {
-    "default": {
-      "runner": "nx-cloud",
-      "options": {
-        "cacheableOperations": ["build", "lint", "test", "e2e"],
-        "accessToken": "Y2Y3YzhhNjYtZWI4OC00M2Y0LWIwY2ItMWJhNTBjYzA3ZDA0fHJlYWQtb25seQ=="
-      }
-    }
-  },
   "targetDefaults": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["production", "^production"]
+      "inputs": ["production", "^production"],
+      "cache": true
     },
     "lint": {
-      "inputs": ["default", "{workspaceRoot}/.eslintrc.json"]
+      "inputs": ["default", "{workspaceRoot}/.eslintrc.json"],
+      "cache": true
     },
     "test": {
       "inputs": [
@@ -24,10 +16,12 @@
         "^production",
         "{workspaceRoot}/jest.preset.js",
         "{workspaceRoot}/karma.conf.js"
-      ]
+      ],
+      "cache": true
     },
     "e2e": {
-      "inputs": ["default", "^production"]
+      "inputs": ["default", "^production"],
+      "cache": true
     }
   },
   "namedInputs": {
@@ -61,6 +55,10 @@
     },
     "@nx/angular:component": {
       "style": "scss"
+    },
+    "@nx/workspace:move": {
+      "projectNameAndRootFormat": "as-provided"
     }
-  }
+  },
+  "nxCloudAccessToken": "Y2Y3YzhhNjYtZWI4OC00M2Y0LWIwY2ItMWJhNTBjYzA3ZDA0fHJlYWQtb25seQ=="
 }

@@ -6,14 +6,16 @@ import { EditableTextComponent } from './components/editable-text/editable-text.
 import {
   MatTooltipDefaultOptions,
   MatTooltipModule,
-  MAT_TOOLTIP_DEFAULT_OPTIONS,
 } from '@angular/material/tooltip';
 import { WarningBoxComponent } from './components/warning-box/warning-box.component';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { StateIconComponent } from './components/status-icon/state-icon.component';
 import { LoadingIconComponent } from './components/loading-icon/loading-icon.component';
 import { ApPaginatorComponent } from './components/pagination/ap-paginator.component';
-import { MatFormFieldModule } from '@angular/material/form-field';
+import {
+  MAT_FORM_FIELD_DEFAULT_OPTIONS,
+  MatFormFieldModule,
+} from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -48,14 +50,25 @@ import { GenericSnackbarTemplateComponent } from './components/generic-snackbar-
 import { MatIconModule } from '@angular/material/icon';
 import { UserAvatarComponent } from './components/user-avatar/user-avatar.component';
 import { TrackHoverDirective } from './directives/track-hover.directive';
-import { PiecesIconsFromFlowComponent } from './components/pieces-icons-from-flow/pieces-icons-from-flow.component';
-import { PieceIconContainerComponent } from './components/pieces-icons/piece-icon-container/piece-icon-container.component';
 import { UploadFileControlComponent } from './components/upload-file-control/upload-file-control.component';
 import { DragDropDirective } from './directives/drag-drop.directive';
 import { ElementDirective } from './directives/element-ref.directive';
 import { CheckOverflowDirective } from './directives/check-overflow.directive';
 import { MatTabsModule } from '@angular/material/tabs';
 import { FileDroppedDirective } from './directives/file-dropped.directive';
+import { NgxColorsModule } from 'ngx-colors';
+import { PageTitleComponent } from './components/page-title/page-title.component';
+import { PoweredByActivepiecesComponent } from './components/powered-by-activepieces/powered-by-activepieces.component';
+import { MatSliderModule } from '@angular/material/slider';
+import { CommaSeparatedPipe } from './pipe/comma-seperated.pipe';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { ImgFallbackDirective } from './directives/image-fallback.directive';
+import { MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
+import { ScrollingModule } from '@angular/cdk/scrolling';
+import { ArrayFormControlComponent } from './components/array-form-control/array-form-control.component';
+import { UpgradeNoteComponent } from '././components/upgrade-note/upgrade-note.component';
+import { CardDirective } from './directives/card.directive';
+import { DropdownPropertySearchPipe } from './pipe/dropdown-search.pipe';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -78,6 +91,10 @@ const exportedImports = [
   MatDividerModule,
   MatIconModule,
   MatTabsModule,
+  NgxColorsModule,
+  MatSliderModule,
+  MatSnackBarModule,
+  ScrollingModule,
 ];
 const exportedDeclarations = [
   UploadFileControlComponent,
@@ -94,6 +111,7 @@ const exportedDeclarations = [
   ApButtonComponent,
   DialogTitleTemplateComponent,
   OutputLogPipe,
+  CommaSeparatedPipe,
   DefaultFalsePipe,
   DefaultTruePipe,
   CenterMatMenuDirective,
@@ -106,11 +124,16 @@ const exportedDeclarations = [
   DeleteEntityDialogComponent,
   GenericSnackbarTemplateComponent,
   UserAvatarComponent,
-  PiecesIconsFromFlowComponent,
   TrackHoverDirective,
-  PieceIconContainerComponent,
   DragDropDirective,
   CheckOverflowDirective,
+  PageTitleComponent,
+  PoweredByActivepiecesComponent,
+  ImgFallbackDirective,
+  ArrayFormControlComponent,
+  UpgradeNoteComponent,
+  CardDirective,
+  DropdownPropertySearchPipe,
 ];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,
@@ -150,7 +173,11 @@ export function markedOptionsFactory(): MarkedOptions {
     }),
   ],
   providers: [
-    { provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: materialTooltipDefaults },
+    { provide: MAT_SNACK_BAR_DEFAULT_OPTIONS, useValue: { duration: 2500 } },
+    {
+      provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
+      useValue: { appearance: 'outline' },
+    },
   ],
   declarations: [...exportedDeclarations, FileDroppedDirective],
   exports: [...exportedImports, ...exportedDeclarations, MarkdownModule],

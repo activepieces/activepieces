@@ -1,0 +1,84 @@
+---
+title: "Troubleshooting"
+description: ""
+icon: "wrench"
+---
+
+### Runs with Internal Errors or Scheduling Issues
+
+The Bull Board is a tool that allows you to check runs for issues.
+It is accessible when you are using Redis as the queue system. In production mode, you can access it at `/api/ui`, and in development mode, it is located at `/ui`.
+
+To enable the Bull Board UI, follow these steps:
+
+1. Define the following environment variables:
+   - `AP_QUEUE_UI_ENABLED`: Set it to `true`.
+   - `AP_QUEUE_UI_USERNAME`: Set it to your desired username.
+   - `AP_QUEUE_UI_PASSWORD`: Set it to your desired password.
+
+Make sure to change the username and password to your preferred values.
+
+You will be able to access the Bull Board UI at `/api/ui` (production) or `/ui` (development) depending on your environment.
+
+![Bull board](/resources/screenshots/bullboard-ui.png)
+
+There are two queues that you can monitor:
+- oneTimeJobs: This queue is used for currently pending runs.
+- repeatableJobs: This queue is used for polling triggers.
+
+In case you have flows with internal errors, please go to the oneTimeJobs queue and click on the failed run. You can see the error message in the data section and retry the flow by clicking on the retry button.
+
+### Reset Password
+
+If you forgot your password on self hosted instance, you can reset it using the following steps:
+
+**Postgres**
+
+1. **Locate PostgreSQL Docker Container**:
+   - Use a command like `docker ps` to find the PostgreSQL container.
+
+2. **Access the Container**:
+   - Use SSH to access the PostgreSQL Docker container.
+   ```bash
+   docker exec -it CONTAINER_ID /bin/bash
+   ```
+
+3. **Open the PostgreSQL Console**:
+   - Inside the container, open the PostgreSQL console with the `psql` command.
+   ```bash
+   psql -U postgres
+   ```
+
+4. **Create a Secure Password**:
+   - Use a tool like [bcrypt.online](https://bcrypt.online/) to generate a new secure password, number of rounds is 10.
+
+5. **Update Your Password**:
+   - Run the following SQL query within the PostgreSQL console, replacing `HASH_PASSWORD` with your new password and `YOUR_EMAIL_ADDRESS` with your email.
+   ```sql
+   UPDATE public.user SET password='HASH_PASSWORD' WHERE email='YOUR_EMAIL_ADDRESS';
+   ```
+
+**SQLite3**
+
+1. **Open the SQLite3 Shell**:
+   - Access the SQLite3 database by opening the SQLite3 shell. Replace "database.db" with the actual name of your SQLite3 database file if it's different.
+   ```bash
+   sqlite3 ~/.activepieces/database.sqlite3
+   ```
+
+2. **Create a Secure Password**:
+   - Use a tool like [bcrypt.online](https://bcrypt.online/) to generate a new secure password, number of rounds is 10.
+
+
+3. **Reset Your Password**:
+   - Once inside the SQLite3 shell, you can update your password with an SQL query. Replace `HASH_PASSWORD` with your new password and `YOUR_USERNAME` with your username or email.
+   ```sql
+   UPDATE users SET password = 'HASH_PASSWORD' WHERE email = 'YOUR_EMAIL_ADDRESS';
+   ```
+
+4. **Exit the SQLite3 Shell**:
+   - After making the changes, exit the SQLite3 shell by typing:
+   ```bash
+   .exit
+   ```
+

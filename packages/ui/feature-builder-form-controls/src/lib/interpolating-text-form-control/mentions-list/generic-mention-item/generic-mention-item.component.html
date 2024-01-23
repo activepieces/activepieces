@@ -1,6 +1,6 @@
 <button (click)="mentionClicked.emit(mention)" class="ap-flex !ap-px-[9px]" mat-menu-item
   [style.padding-left]="leftPadding" #buttonHover="hoverTrackerDirective" apTrackHover>
   <app-mention-list-item-template class="ap-flex-grow" [itemLabel]="mention.label"></app-mention-list-item-template>
-  <ap-button *ngIf="buttonHover.isHovered" btnColor="primary" btnStyle="basic" type="button" btnSize="small">Select
+  <ap-button *ngIf="buttonHover.isHovered" btnColor="primary" btnStyle="basic" type="button" btnSize="small" i18n>Select
   </ap-button>
 </button>

@@ -1,19 +1,19 @@
-import { ApEnvironment } from '@activepieces/shared'
-import { system } from '../../../helper/system/system'
+import { PiecesSource, system } from '../../../helper/system/system'
 import { SystemProp } from '../../../helper/system/system-prop'
 import { PieceManager } from './piece-manager'
 import { LocalPieceManager } from './local-piece-manager'
 import { RegistryPieceManager } from './registry-piece-manager'
 
-const env = system.getOrThrow<ApEnvironment>(SystemProp.ENVIRONMENT)
+const source = system.getOrThrow<PiecesSource>(SystemProp.PIECES_SOURCE)
 
 const getPieceManager = (): PieceManager => {
-    const pieceManagerVariant: Record<ApEnvironment, new () => PieceManager> = {
-        [ApEnvironment.DEVELOPMENT]: LocalPieceManager,
-        [ApEnvironment.PRODUCTION]: RegistryPieceManager,
+    const pieceManagerVariant: Record<PiecesSource, new () => PieceManager> = {
+        [PiecesSource.FILE]: LocalPieceManager,
+        [PiecesSource.CLOUD_AND_DB]: RegistryPieceManager,
+        [PiecesSource.DB]: RegistryPieceManager,
     }
 
-    return new pieceManagerVariant[env]()
+    return new pieceManagerVariant[source]()
 }
 
 export const pieceManager = getPieceManager()

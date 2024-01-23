@@ -12,6 +12,7 @@ export const ListAppCredentialsRequest = Type.Object({
 export type ListAppCredentialsRequest = Static<typeof ListAppCredentialsRequest>;
 
 export const UpsertApiKeyCredentialRequest = Type.Object({
+    id: Type.Optional(Type.String()),
     appName: Type.String(),
     settings: Type.Object({
         type: Type.Literal(AppCredentialType.API_KEY),
@@ -20,6 +21,7 @@ export const UpsertApiKeyCredentialRequest = Type.Object({
 
 
 export const UpsertOAuth2CredentialRequest = Type.Object({
+    id: Type.Optional(Type.String()),
     appName: Type.String(),
     settings: Type.Object({
         type: Type.Literal(AppCredentialType.OAUTH2),
@@ -33,6 +35,4 @@ export const UpsertOAuth2CredentialRequest = Type.Object({
 
 export const UpsertAppCredentialRequest = Type.Union([UpsertOAuth2CredentialRequest, UpsertApiKeyCredentialRequest]);
 
-export type UpsertOAuth2AppRequest = Static<typeof UpsertOAuth2CredentialRequest>;
-export type UpsertApiKeyAppRequest = Static<typeof UpsertApiKeyCredentialRequest>;
 export type UpsertAppCredentialRequest = Static<typeof UpsertAppCredentialRequest>;

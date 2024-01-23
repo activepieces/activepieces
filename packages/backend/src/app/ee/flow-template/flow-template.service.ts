@@ -1,91 +1,59 @@
-import { ArrayContains, ArrayOverlap, Equal, ILike, IsNull } from 'typeorm'
+import { ArrayContains, ArrayOverlap, Equal, ILike } from 'typeorm'
 import { databaseConnection } from '../../database/database-connection'
-import { ActivepiecesError, ErrorCode, FlowTemplate, ProjectId, isNil } from '@activepieces/shared'
+import { ActivepiecesError, ListFlowTemplatesRequest, ErrorCode, FlowTemplate, SeekPage, isNil, apId, FlowVersionTemplate, flowHelper, TemplateType } from '@activepieces/shared'
 import { FlowTemplateEntity } from './flow-template.entity'
-import { ListFlowTemplatesRequest } from '@activepieces/shared'
-import { system } from '../../helper/system/system'
-import { SystemProp } from '../../helper/system/system-prop'
+import { CreateFlowTemplateRequest } from '@activepieces/ee-shared'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
 
-const templateRepo = databaseConnection.getRepository(FlowTemplateEntity)
-const templateProjectId = system.get(SystemProp.TEMPLATES_PROJECT_ID)
+const templateRepo = databaseConnection.getRepository<FlowTemplate>(FlowTemplateEntity)
 
 export const flowTemplateService = {
-    upsert: async ({ id, projectId, flowTemplate }: { id: string, projectId: ProjectId | undefined, flowTemplate: FlowTemplate }): Promise<FlowTemplate> => {
+    upsert: async (platformId: string | undefined, projectId: string | undefined, { description, type, template, blogUrl, tags, id }: CreateFlowTemplateRequest): Promise<FlowTemplate> => {
+        const flowTemplate: FlowVersionTemplate = template
+        const newTags = tags ?? []
+        const newId = id ?? apId()
         await templateRepo.upsert({
-            ...flowTemplate,
-            // TODO fix this
+            id: newId,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            template: flowTemplate.template as any,
-            id,
+            template: flowTemplate as any,
+            name: flowTemplate.displayName,
+            description: description ?? '',
+            pieces: flowHelper.getUsedPieces(flowTemplate.trigger),
+            blogUrl,
+            type,
+            tags: newTags,
             created: new Date().toISOString(),
             updated: new Date().toISOString(),
+            platformId,
             projectId,
         }, ['id'])
-        const template = await templateRepo.findOneByOrFail({
-            id,
-        })
-        return template
-    },
-    update: async (id: string, flowTemplate: FlowTemplate): Promise<FlowTemplate> => {
-        const temp = await templateRepo.findOneBy({
-            id,
-        })
-        if (!temp) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    message: `Template ${id} is not found`,
-                },
-            })
-        }
-        await templateRepo.update(id, {
-            ...flowTemplate,
-            id: temp.id,
-            // TODO fix this
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            template: flowTemplate.template as any,
-        })
         return templateRepo.findOneByOrFail({
-            id,
+            id: newId,
         })
     },
-    delete: async (id: string): Promise<void> => {
-        await templateRepo.delete(id)
-    },
-    list: async ({ pieces, tags, featuredOnly, search }: ListFlowTemplatesRequest): Promise<FlowTemplate[]> => {
-        const conditions: Record<string, unknown> = {
-            projectId: isNil(templateProjectId) ? IsNull() : Equal(templateProjectId),
-        }
-        if (featuredOnly !== undefined) {
-            if (featuredOnly) {
-                conditions.isFeatured = Equal(true)
-            }
-        }
-
+    list: async (platformId: string, { pieces, tags, search }: ListFlowTemplatesRequest): Promise<SeekPage<FlowTemplate>> => {
+        const commonFilters: Record<string, unknown> = {}
         if (pieces) {
-            conditions.pieces = ArrayOverlap(pieces)
+            commonFilters.pieces = ArrayOverlap(pieces)
         }
         if (tags) {
-            conditions.tags = ArrayContains(tags)
+            commonFilters.tags = ArrayContains(tags)
         }
-
         if (search) {
-            conditions.name = ILike(`%${search}%`)
-            conditions.description = ILike(`%${search}%`)
+            commonFilters.name = ILike(`%${search}%`)
+            commonFilters.description = ILike(`%${search}%`)
         }
+        commonFilters.platformId = Equal(platformId)
+        commonFilters.type = Equal(TemplateType.PLATFORM)
         const templates = await templateRepo.createQueryBuilder('flow_template')
-            .leftJoinAndSelect('flow_template.user', 'user')
-            .where(conditions)
-            .select(['user.firstName', 'user.lastName', 'user.email', 'user.title', 'user.imageUrl', 'flow_template'])
+            .where(commonFilters)
             .getMany()
-        return templates
+        return paginationHelper.createPage(templates, null)
     },
-    getOrthrow: async (id: string): Promise<FlowTemplate> => {
-        const template = await templateRepo.createQueryBuilder('flow_template')
-            .leftJoinAndSelect('flow_template.user', 'user')
-            .where('flow_template.id = :templateId', { templateId: id })
-            .select(['user.firstName', 'user.lastName', 'user.email', 'user.title', 'user.imageUrl', 'flow_template'])
-            .getOne()
+    getOrThrow: async (id: string): Promise<FlowTemplate> => {
+        const template = await templateRepo.findOneBy({
+            id,
+        })
         if (isNil(template)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -96,4 +64,10 @@ export const flowTemplateService = {
         }
         return template
     },
+    async delete({ id }: { id: string }): Promise<void> {
+        await templateRepo.delete({
+            id,
+        })
+    },
 }
+

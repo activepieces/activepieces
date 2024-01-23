@@ -1,9 +1,10 @@
 <div class="ap-flex ap-items-center ap-mb-[30px]">
-    <div class="ap-flex-grow">Folders </div>
+    <div class="ap-flex-grow" i18n>Folders</div>
     <ap-icon-button extraClasses="ap-fill-body" iconFilename="sort.svg" [width]="18"
-        [tooltipText]="(sortFolders$ | async) === 'asc' ? 'Ascending':'Descending'"
+        [tooltipText]="getSortFoldersTooltipText()"
         (buttonClicked)="toggleFolderSorting()" [height]="18"></ap-icon-button>
-    <ap-icon-button extraClasses="ap-fill-body" iconFilename="add.svg" [width]="14" tooltipText="New Folder"
+    <ap-icon-button extraClasses="ap-fill-body" iconFilename="add.svg" [width]="14"
+        tooltipText="New Folder" i18n-tooltipText
         (buttonClicked)="createFolder()" [height]="14"></ap-icon-button>
 </div>
 <div class=" ap-overflow-scroll folders-list">
@@ -11,9 +12,7 @@
         [class.selected-folder-item]="(showAllFlows$|async) === true" (click)="showAllFlows()">
         <svg-icon src="assets/img/custom/all-flows.svg"
             class="ap-h-[15px] ap-w-[15px] ap-fill-bleached-gray  folder-icon" [applyClass]="true"></svg-icon>
-        <div class="ap-body-1 ap-flex-grow">
-            All flows
-        </div>
+        <div class="ap-body-1 ap-flex-grow" i18n>All flows</div>
         <div class="ap-typography-body-1 ap-text-description">
             {{allFlowsNumber$ | async}}
         </div>
@@ -24,9 +23,7 @@
         <svg-icon src="assets/img/custom/uncategorized-folder.svg"
             class="ap-h-[15px] ap-w-[15px] ap-fill-bleached-gray hover:ap-fill-title  folder-icon"
             [applyClass]="true"></svg-icon>
-        <div class="ap-body-1 ap-flex-grow">
-            Uncategorized
-        </div>
+        <div class="ap-body-1 ap-flex-grow" i18n>Uncategorized</div>
         <div class="ap-typography-body-1 ap-text-description">
             {{uncategorizedFlowsNumber$ | async}}
         </div>
@@ -57,14 +54,14 @@
                     <svg-icon [applyClass]="true" src="assets/img/custom/pencil-underline.svg"
                         class="ap-fill-body ap-w-[20px] ap-h-[20px]">
                     </svg-icon>
-                    <span class="ap-text-body">Rename</span>
+                    <span class="ap-text-body" i18n>Rename</span>
                 </div>
             </button>
             <button mat-menu-item (click)="deleteFolder(folder)">
                 <div class="ap-flex ap-gap-3 ap-items-center">
                     <svg-icon src="assets/img/custom/trash.svg" class="ap-fill-danger ap-w-[20px] ap-h-[20px]"
                         [applyClass]="true"></svg-icon>
-                    <span class="ap-text-danger">Delete</span>
+                    <span class="ap-text-danger" i18n>Delete</span>
                 </div>
             </button>
         </mat-menu>

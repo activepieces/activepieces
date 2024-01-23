@@ -7,7 +7,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 export const storeEntryController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.post(
         '/',
-        {
+        {  
             schema: {
                 body: PutStoreEntryRequest,
             },
@@ -62,7 +62,7 @@ export const storeEntryController: FastifyPluginAsyncTypebox = async (fastify) =
                 return reply.status(StatusCodes.FORBIDDEN)
             }
             else {
-                return await storeEntryService.delete({
+                return storeEntryService.delete({
                     projectId: request.principal.projectId, key: request.query.key,
                 })
             }

@@ -1,0 +1,42 @@
+.add-btn {
+  margin-top: 0.5rem;
+}
+
+
+.value-control {
+  border-radius: 0px 0px 0px 0px;
+  position: relative;
+
+  &.first {
+    border-radius: 4px 4px 0px 0px;
+  }
+
+  &.last {
+    border-radius: 0px 0px 4px 4px;
+  }
+
+  &.only-one {
+    border-radius: 4px;
+  }
+  
+  margin-bottom: -1px;
+
+}
+
+.delete-btn-container {
+  position: relative;
+
+  .delete-btn {
+    position: absolute;
+    left: -30px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.opacity-0 {
+  opacity: 0;
+}
+
