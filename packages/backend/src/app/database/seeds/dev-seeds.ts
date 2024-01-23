@@ -1,15 +1,18 @@
-import { ApEnvironment } from '@activepieces/shared'
+import { ApEnvironment, assertNotNullOrUndefined } from '@activepieces/shared'
 import { authenticationService } from '../../authentication/authentication-service'
 import { logger } from '../../helper/logger'
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { userService } from '../../user/user-service'
+import { platformService } from '../../platform/platform.service'
 
 const seedDevUser = async (): Promise<void> => {
     const devEmail = 'dev@ap.com'
     const devPassword = '12345678'
+    const platform = await platformService.getOldestPlatform()
+    assertNotNullOrUndefined(platform, 'platform')
     const devUser = await userService.getByPlatformAndEmail({
-        platformId: null,
+        platformId: platform.id,
         email: devEmail,
     })
 

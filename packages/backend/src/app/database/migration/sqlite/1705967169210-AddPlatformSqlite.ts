@@ -1,6 +1,6 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
-import { logger } from "../../../helper/logger";
-import { apId } from "@activepieces/shared";
+import { MigrationInterface, QueryRunner } from 'typeorm'
+import { logger } from '../../../helper/logger'
+import { apId } from '@activepieces/shared'
 
 export class AddPlatformSqlite1705967169210 implements MigrationInterface {
     name = 'AddPlatformSqlite1705967169210'
@@ -9,13 +9,13 @@ export class AddPlatformSqlite1705967169210 implements MigrationInterface {
         logger.info('AddPlatformSqlite1705967169210 up')
         await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_user_partial_unique_email_platform_id_is_null"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_external_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_user" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -35,7 +35,7 @@ export class AddPlatformSqlite1705967169210 implements MigrationInterface {
                 "verified" boolean NOT NULL,
                 CONSTRAINT "UQ_e12875dfb3b1d92d7d7c5377e22" UNIQUE ("email")
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_user"(
                     "id",
@@ -70,24 +70,24 @@ export class AddPlatformSqlite1705967169210 implements MigrationInterface {
                 "platformId",
                 "verified"
             FROM "user"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "user"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_user"
                 RENAME TO "user"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "email")
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_partial_unique_email_platform_id_is_null" ON "user" ("email")
             WHERE "platformId" IS NULL
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_external_id" ON "user" ("platformId", "externalId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "platform" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -140,14 +140,14 @@ export class AddPlatformSqlite1705967169210 implements MigrationInterface {
                 "federatedAuthProviders" text NOT NULL,
                 CONSTRAINT "REL_94d6fd6494f0322c6f0e099141" UNIQUE ("ownerId")
             )
-        `);
+        `)
         await migrateProjects(queryRunner)
         await queryRunner.query(`
             DROP INDEX "idx_project_platform_id_external_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_project_owner_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_project" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -160,7 +160,7 @@ export class AddPlatformSqlite1705967169210 implements MigrationInterface {
                 "externalId" varchar,
                 CONSTRAINT "fk_project_owner_id" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_project"(
                     "id",
@@ -181,26 +181,26 @@ export class AddPlatformSqlite1705967169210 implements MigrationInterface {
                 "platformId",
                 "externalId"
             FROM "project"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "project"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_project"
                 RENAME TO "project"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_project_platform_id_external_id" ON "project" ("platformId", "externalId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_project_owner_id" ON "project" ("ownerId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_project_platform_id_external_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_project_owner_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_project" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -213,7 +213,7 @@ export class AddPlatformSqlite1705967169210 implements MigrationInterface {
                 "externalId" varchar,
                 CONSTRAINT "fk_project_owner_id" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_project"(
                     "id",
@@ -234,26 +234,26 @@ export class AddPlatformSqlite1705967169210 implements MigrationInterface {
                 "platformId",
                 "externalId"
             FROM "project"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "project"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_project"
                 RENAME TO "project"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_project_owner_id" ON "project" ("ownerId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_user_partial_unique_email_platform_id_is_null"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_external_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_user" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -273,7 +273,7 @@ export class AddPlatformSqlite1705967169210 implements MigrationInterface {
                 "verified" boolean NOT NULL,
                 CONSTRAINT "UQ_e12875dfb3b1d92d7d7c5377e22" UNIQUE ("email")
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_user"(
                     "id",
@@ -308,33 +308,33 @@ export class AddPlatformSqlite1705967169210 implements MigrationInterface {
                 "platformId",
                 "verified"
             FROM "user"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "user"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_user"
                 RENAME TO "user"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_partial_unique_email_platform_id_is_null" ON "user" ("email")
             WHERE "platformId" IS NULL
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_external_id" ON "user" ("platformId", "externalId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_project_platform_id_external_id" ON "project" ("platformId", "externalId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "email")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_project_owner_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_project_platform_id_external_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_project" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -348,7 +348,7 @@ export class AddPlatformSqlite1705967169210 implements MigrationInterface {
                 CONSTRAINT "fk_project_owner_id" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION,
                 CONSTRAINT "fk_project_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_project"(
                     "id",
@@ -369,20 +369,20 @@ export class AddPlatformSqlite1705967169210 implements MigrationInterface {
                 "platformId",
                 "externalId"
             FROM "project"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "project"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_project"
                 RENAME TO "project"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_project_owner_id" ON "project" ("ownerId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_project_platform_id_external_id" ON "project" ("platformId", "externalId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_platform" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -436,7 +436,7 @@ export class AddPlatformSqlite1705967169210 implements MigrationInterface {
                 CONSTRAINT "REL_94d6fd6494f0322c6f0e099141" UNIQUE ("ownerId"),
                 CONSTRAINT "fk_platform_user" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_platform"(
                     "id",
@@ -499,21 +499,21 @@ export class AddPlatformSqlite1705967169210 implements MigrationInterface {
                 "emailAuthEnabled",
                 "federatedAuthProviders"
             FROM "platform"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "platform"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_platform"
                 RENAME TO "platform"
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "platform"
                 RENAME TO "temporary_platform"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "platform" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -566,7 +566,7 @@ export class AddPlatformSqlite1705967169210 implements MigrationInterface {
                 "federatedAuthProviders" text NOT NULL,
                 CONSTRAINT "REL_94d6fd6494f0322c6f0e099141" UNIQUE ("ownerId")
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "platform"(
                     "id",
@@ -629,20 +629,20 @@ export class AddPlatformSqlite1705967169210 implements MigrationInterface {
                 "emailAuthEnabled",
                 "federatedAuthProviders"
             FROM "temporary_platform"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_platform"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_project_platform_id_external_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_project_owner_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "project"
                 RENAME TO "temporary_project"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "project" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -655,7 +655,7 @@ export class AddPlatformSqlite1705967169210 implements MigrationInterface {
                 "externalId" varchar,
                 CONSTRAINT "fk_project_owner_id" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "project"(
                     "id",
@@ -676,32 +676,32 @@ export class AddPlatformSqlite1705967169210 implements MigrationInterface {
                 "platformId",
                 "externalId"
             FROM "temporary_project"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_project"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_project_platform_id_external_id" ON "project" ("platformId", "externalId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_project_owner_id" ON "project" ("ownerId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_project_platform_id_external_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_external_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_user_partial_unique_email_platform_id_is_null"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "user"
                 RENAME TO "temporary_user"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "user" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -721,7 +721,7 @@ export class AddPlatformSqlite1705967169210 implements MigrationInterface {
                 "verified" boolean NOT NULL,
                 CONSTRAINT "UQ_e12875dfb3b1d92d7d7c5377e22" UNIQUE ("email")
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "user"(
                     "id",
@@ -756,27 +756,27 @@ export class AddPlatformSqlite1705967169210 implements MigrationInterface {
                 "platformId",
                 "verified"
             FROM "temporary_user"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_user"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_external_id" ON "user" ("platformId", "externalId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_partial_unique_email_platform_id_is_null" ON "user" ("email")
             WHERE "platformId" IS NULL
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "email")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_project_owner_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "project"
                 RENAME TO "temporary_project"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "project" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -789,7 +789,7 @@ export class AddPlatformSqlite1705967169210 implements MigrationInterface {
                 "externalId" varchar,
                 CONSTRAINT "fk_project_owner_id" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "project"(
                     "id",
@@ -810,26 +810,26 @@ export class AddPlatformSqlite1705967169210 implements MigrationInterface {
                 "platformId",
                 "externalId"
             FROM "temporary_project"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_project"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_project_owner_id" ON "project" ("ownerId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_project_platform_id_external_id" ON "project" ("platformId", "externalId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_project_owner_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_project_platform_id_external_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "project"
                 RENAME TO "temporary_project"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "project" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -843,7 +843,7 @@ export class AddPlatformSqlite1705967169210 implements MigrationInterface {
                 "externalId" varchar,
                 CONSTRAINT "fk_project_owner_id" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "project"(
                     "id",
@@ -864,32 +864,32 @@ export class AddPlatformSqlite1705967169210 implements MigrationInterface {
                 "platformId",
                 "externalId"
             FROM "temporary_project"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_project"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_project_owner_id" ON "project" ("ownerId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_project_platform_id_external_id" ON "project" ("platformId", "externalId")
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "platform"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_external_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_user_partial_unique_email_platform_id_is_null"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "user"
                 RENAME TO "temporary_user"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "user" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -909,7 +909,7 @@ export class AddPlatformSqlite1705967169210 implements MigrationInterface {
                 "verified" boolean NOT NULL,
                 CONSTRAINT "UQ_e12875dfb3b1d92d7d7c5377e22" UNIQUE ("email")
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "user"(
                     "id",
@@ -944,27 +944,27 @@ export class AddPlatformSqlite1705967169210 implements MigrationInterface {
                 "platformId",
                 "verified"
             FROM "temporary_user"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_user"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_external_id" ON "user" ("platformId", "externalId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_partial_unique_email_platform_id_is_null" ON "user" ("email")
             WHERE "platformId" IS NULL
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "email")
-        `);
+        `)
     }
 
 }
 
 async function migrateProjects(queryRunner: QueryRunner) {
     logger.info('CreateDefaultPlatform1705967115116 up')
-    const standaloneProjects = await queryRunner.query(`select * from project where "platformId" is null;`)
+    const standaloneProjects = await queryRunner.query('select * from project where "platformId" is null;')
     logger.info(`Found ${standaloneProjects.length} standalone projects`)
     for (const project of standaloneProjects) {
         const ownerId = project.ownerId

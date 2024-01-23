@@ -99,6 +99,8 @@ import { AddEnableEmailAuthToPlatform1704797979825 } from './migration/postgres/
 import { AddGitSyncEnabledToPlatform1704636362533 } from './migration/postgres/1704636362533-AddGitSyncEnabledToPlatform'
 import { AddGitRepoMigrationPostgres1704503804056 } from './migration/postgres/1704503804056-AddGitRepoMigrationPostgres'
 import { RemoveUniqueonAppNameAppCredentials1705586178452 } from './migration/postgres/1705586178452-RemoveUniqueonAppNameAppCredentials'
+import { MakePlatformNotNullable1705969874745 } from './migration/postgres/1705969874745-MakePlatformNotNullable'
+import { AddPlatformPostgres1705970370042 } from './migration/postgres/1705970370042-AddPlatformPostgres'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -213,6 +215,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddGitRepoMigrationPostgres1704503804056,
                 AddGitSyncEnabledToPlatform1704636362533,
                 RemoveUniqueonAppNameAppCredentials1705586178452,
+                MakePlatformNotNullable1705969874745,
             )
             break
         case ApEdition.ENTERPRISE:
@@ -252,9 +255,13 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddEnableEmailAuthToPlatform1704797979825,
                 AddGitRepoMigrationPostgres1704503804056,
                 AddGitSyncEnabledToPlatform1704636362533,
+                MakePlatformNotNullable1705969874745,
             )
             break
         case ApEdition.COMMUNITY:
+            commonMigration.push(
+                AddPlatformPostgres1705970370042,
+            )
             break
     }
 

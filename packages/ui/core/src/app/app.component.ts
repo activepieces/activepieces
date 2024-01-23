@@ -35,6 +35,7 @@ import {
   LocalesEnum,
   FlowOperationType,
   User,
+  isNil,
 } from '@activepieces/shared';
 import {
   TelemetryService,
@@ -95,17 +96,25 @@ export class AppComponent implements OnInit {
     private localesService: LocalesService,
     private platformService: PlatformService
   ) {
+    this.logoutUsersWithNoPlatform();
     this.registerMaterialIcons();
     this.listenToImportFlow();
     this.theme$ = this.apperanceService.setTheme().pipe(
       tap(() => this.loadingTheme$.next(false)),
       map(() => void 0)
     );
+
     this.embeddedRouteListener$ = this.createEmbeddingRoutesListener();
     this.routeLoader$ = this.createRouteListenerToToggleLoadingAndSetTitle();
     this.showUpgradeNotification$ =
       this.createListenerToToggleUpgradeNotification();
     this.rediectToCorrectLocale();
+  }
+
+  private logoutUsersWithNoPlatform() {
+    if (isNil(this.authenticationService.getPlatformId())) {
+      this.authenticationService.logout()
+    }
   }
 
   private listenToImportFlow() {
