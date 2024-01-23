@@ -21,7 +21,7 @@
                 Switch Project:
             </div>
 
-            <button *ngFor="let proj of projects" mat-menu-item>
+            <button *ngFor="let proj of projects" mat-menu-item (click)="switchProject(proj.id)">
                 <div class="ap-flex ap-items-center ap-justify-between"
                     [style.minWidth]="menuTrigger.clientWidth + 'px'">
                     {{proj.displayName}} <svg-icon *ngIf="proj.id === (currentProject$| async)?.id"
@@ -39,3 +39,5 @@
         {{(currentProject$ | async)?.displayName}}
     </div>
 </ng-template>
+
+<ng-container *ngIf="switchProject$ | async"></ng-container>

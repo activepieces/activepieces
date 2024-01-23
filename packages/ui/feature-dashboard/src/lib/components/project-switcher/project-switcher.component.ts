@@ -1,5 +1,9 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { FlagService, ProjectSelectors } from '@activepieces/ui/common';
+import {
+  FlagService,
+  PlatformProjectService,
+  ProjectSelectors,
+} from '@activepieces/ui/common';
 import { Observable, switchMap, map } from 'rxjs';
 import { ApFlagId, Project } from '@activepieces/shared';
 import { Store } from '@ngrx/store';
@@ -13,7 +17,12 @@ export class ProjectSwitcherComponent {
   currentProject$: Observable<Project>;
   areProjectsEnabled$: Observable<boolean>;
   projects$: Observable<Project[]>;
-  constructor(private store: Store, private flagService: FlagService) {
+  switchProject$?: Observable<void>;
+  constructor(
+    private store: Store,
+    private flagService: FlagService,
+    private projectService: PlatformProjectService
+  ) {
     this.currentProject$ = this.store.select(
       ProjectSelectors.selectCurrentProject
     );
@@ -29,5 +38,8 @@ export class ProjectSwitcherComponent {
           );
         })
       );
+  }
+  switchProject(projectId: string) {
+    this.switchProject$ = this.projectService.switchProject(projectId);
   }
 }
