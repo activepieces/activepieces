@@ -89,7 +89,6 @@ export class TestFlowWidgetComponent implements OnInit {
 
     this.executeTest$ = this.socket.fromEvent<FlowRun>('flowRunStarted').pipe(
       tap((flowRun) => {
-        this.socket.emit('join', flowRun.id);
         this.store.dispatch(
           canvasActions.setRun({
             run: flowRun ?? initializedRun,
@@ -113,7 +112,6 @@ export class TestFlowWidgetComponent implements OnInit {
       ),
       tap((instanceRun) => {
         this.store.dispatch(canvasActions.setRun({ run: instanceRun }));
-        this.socket.emit('leave', instanceRun.id);
       })
     );
   }

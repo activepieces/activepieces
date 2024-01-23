@@ -60,8 +60,12 @@ export function playerFactory() {
 }
 
 const socketConfig: SocketIoConfig = {
-  url: 'http://localhost:3000',
-  options: {},
+  url: environment.apiUrl.split('/v1')[0],
+  options: {
+    auth: {
+      token: tokenGetter(),
+    },
+  },
 };
 
 @NgModule({

@@ -81,6 +81,7 @@ import { communityFlowTemplateModule } from './flow-templates/community-flow-tem
 import { copilotModule } from './copilot/copilot.module'
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { flowRunService } from './flows/flow-run/flow-run-service'
+import { accessTokenManager } from './authentication/lib/access-token-manager'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -297,6 +298,13 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     })
 
     const io: Server = (app as any).io
+    io.use((socket, next) => {
+        accessTokenManager.extractPrincipal(socket.handshake.auth.token).then(() => {
+            next()
+        }).catch(() => {
+            next(new Error('Authentication error'))
+        })
+    })
     io.on('connection', (socket) => {
         socket.on('join', async (room) => {
             await socket.join(room)
