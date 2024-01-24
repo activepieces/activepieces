@@ -1,4 +1,4 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { insertRowAction } from './lib/actions/insert-row.action';
 import { readNewRows } from './lib/triggers/new-row-added';
 import { deleteRowAction } from './lib/actions/delete-row.action';
@@ -7,6 +7,8 @@ import { findRowsAction } from './lib/actions/find-rows';
 import { clearSheetAction } from './lib/actions/clear-sheet';
 import { findRowByNumAction } from './lib/actions/find-row-by-num';
 import { getRowsAction } from './lib/actions/get-rows';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { googleSheetsCommon } from './lib/common/common';
 
 export const googleSheetsAuth = PieceAuth.OAuth2({
   description: '',
@@ -38,6 +40,17 @@ export const googleSheets = createPiece({
     clearSheetAction,
     findRowByNumAction,
     getRowsAction,
+    createCustomApiCallAction({
+        auth: googleSheetsAuth,
+        baseUrl: () => {
+            return googleSheetsCommon.baseUrl
+        },
+        authMapping: (auth) => {
+            return {
+                'Authorization': `Bearer ${(auth as OAuth2PropertyValue).access_token}`
+            }
+        }
+    })
   ],
   displayName: 'Google Sheets',
   triggers: [readNewRows],

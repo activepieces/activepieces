@@ -14,8 +14,8 @@ export const getAccessTokenOrThrow = (auth: OAuth2PropertyValue | undefined): st
 
 export function createCustomApiCallAction({ auth, baseUrl, authMapping }: {
   auth?: PieceAuthProperty,
-  baseUrl: string,
-  authMapping?: (auth: PieceAuthProperty) => HttpHeaders
+  baseUrl: (auth?: unknown) => string,
+  authMapping?: (auth: unknown) => HttpHeaders
 }) {
   return createAction({
     name: 'custom_api_call',
@@ -25,7 +25,7 @@ export function createCustomApiCallAction({ auth, baseUrl, authMapping }: {
     props: {
       url: Property.ShortText({
         displayName: 'URL',
-        description: 'The endpoint to use. For example, `/models`',
+        description: 'The endpoint to use. For example, /models',
         required: true,
       }),
       method: Property.StaticDropdown({
@@ -80,7 +80,7 @@ export function createCustomApiCallAction({ auth, baseUrl, authMapping }: {
 
       const request: HttpRequest<Record<string, unknown>> = {
         method,
-        url: `${baseUrl}${url}`,
+        url: `${baseUrl(context.auth)}${url}`,
         headers: headersValue,
         queryParams: queryParams as QueryParams,
         timeout: timeout ? timeout * 1000 : 0,

@@ -7,12 +7,12 @@ import { newCancelledOrder } from './lib/triggers/new-cancelled-order';
 import { newCustomer } from './lib/triggers/new-customer';
 import { newOrder } from './lib/triggers/new-order';
 import { newPaidOrder } from './lib/triggers/new-paid-order';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createCustomerAction } from './lib/actions/create-customer';
 import { getCustomerAction } from './lib/actions/get-customer';
 import { updateCustomerAction } from './lib/actions/update-customer';
 import { getCustomerOrdersAction } from './lib/actions/get-customer-orders';
-import { sendShopifyRequest } from './lib/common';
+import { getBaseUrl, sendShopifyRequest } from './lib/common';
 import { createProductAction } from './lib/actions/create-product';
 import { getProductsAction } from './lib/actions/get-products';
 import { updatedProduct } from './lib/triggers/updated-product';
@@ -117,6 +117,18 @@ export const shopify = createPiece({
     updateOrderAction,
     updateProductAction,
     uploadProductImageAction,
+    createCustomApiCallAction({
+        baseUrl: (auth) => {
+            return getBaseUrl((auth as { shopName: string }).shopName)
+        },
+        auth: shopifyAuth,
+        authMapping: (auth) => {
+          const typedAuth = auth as { adminToken: string }
+          return {
+            'X-Shopify-Access-Token': typedAuth.adminToken,
+          }
+        }
+      })
   ],
   triggers: [
     newAbandonedCheckout,
