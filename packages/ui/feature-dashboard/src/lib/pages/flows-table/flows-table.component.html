@@ -77,6 +77,13 @@
                       <span i18n>{{flowActionsUiInfo.duplicate.text}}</span>
                     </div>
                   </button>
+                  <button mat-menu-item (click)="export(flow)">
+                    <div class="ap-flex ap-gap-3 ap-items-center">
+                      <svg-icon [src]="flowActionsUiInfo.export.icon" [class]="flowActionsUiInfo.iconSizeTailWind"
+                        [applyClass]="true"></svg-icon>
+                      <span i18n>{{flowActionsUiInfo.export.text}}</span>
+                    </div>
+                  </button>
                   <button (click)="deleteFlow(flow)" mat-menu-item>
                     <div class="ap-flex ap-gap-3 ap-items-center">
                       <svg-icon [src]="flowActionsUiInfo.delete.icon"
@@ -131,3 +138,4 @@
 
 <ng-container *ngIf="showAllFlows$ | async"></ng-container>
 <ng-container *ngIf="duplicateFlow$ | async"></ng-container>
+<ng-container *ngIf="downloadTemplate$ | async"></ng-container>

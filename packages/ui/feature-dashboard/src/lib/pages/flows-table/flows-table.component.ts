@@ -7,7 +7,6 @@ import {
   PopulatedFlow,
   FlowStatus,
   FolderId,
-  TriggerType,
   FlowOperationType,
 } from '@activepieces/shared';
 
@@ -16,6 +15,7 @@ import {
   AuthenticationService,
   FoldersService,
   NavigationService,
+  downloadFlow,
   flowActionsUiInfo,
 } from '@activepieces/ui/common';
 import { FlowService } from '@activepieces/ui/common';
@@ -58,6 +58,7 @@ export class FlowsTableComponent implements OnInit {
   flowsUpdateStatusRequest$: Record<string, Observable<void> | null> = {};
   showAllFlows$: Observable<boolean>;
   duplicateFlow$: Observable<void>;
+  downloadTemplate$: Observable<void>;
   constructor(
     private activatedRoute: ActivatedRoute,
     private dialogService: MatDialog,
@@ -169,7 +170,16 @@ export class FlowsTableComponent implements OnInit {
   duplicate(flow: PopulatedFlow) {
     this.duplicateFlow$ = this.flowService.duplicate(flow.id);
   }
-
+  export(flow: PopulatedFlow) {
+    this.downloadTemplate$ = this.flowService
+      .exportTemplate(flow.id, undefined)
+      .pipe(
+        tap(downloadFlow),
+        map(() => {
+          return void 0;
+        })
+      );
+  }
   moveFlow(flow: PopulatedFlow) {
     const dialogData: MoveFlowToFolderDialogData = {
       flowId: flow.id,
