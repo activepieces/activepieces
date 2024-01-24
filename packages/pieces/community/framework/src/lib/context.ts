@@ -100,6 +100,10 @@ export type PauseHook = (params: PauseHookParams) => void;
 
 export type PropertyContext = {
   server: ServerContext;
+  project: {
+    id: ProjectId;
+    externalId: () => Promise<string | undefined>;
+  };
 };
 
 export type ServerContext = {
