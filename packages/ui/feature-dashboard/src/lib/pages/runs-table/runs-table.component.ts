@@ -17,6 +17,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   combineLatest,
+  debounceTime,
   distinctUntilChanged,
   map,
   Observable,
@@ -146,7 +147,8 @@ export class RunsTableComponent implements OnInit {
         startWith(this.statusFilterControl.value)
       ),
       tags: this.tagsFilterControl.valueChanges.pipe(
-        startWith(this.tagsFilterControl.value)
+        startWith(this.tagsFilterControl.value),
+        debounceTime(600)
       ),
     }).pipe(
       distinctUntilChanged(),
