@@ -40,6 +40,10 @@
           </mat-option>
         </mat-select>
       </mat-form-field>
+      <mat-form-field class="!ap-min-w-[15.625rem]">
+        <mat-label i18n>Filter by tag</mat-label>
+        <input matInput [formControl]="tagsFilterControl">
+      </mat-form-field>
     </div>
 
     <mat-slide-toggle *ngIf="nonCommunityEdition$ | async" [formControl]="toggleNotificationFormControl"

@@ -21,6 +21,7 @@ import {
   CURSOR_QUERY_PARAM,
   STATUS_QUERY_PARAM,
   FLOW_QUERY_PARAM,
+  TAGS_QUERY_PARAM,
 } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 import { Params } from '@angular/router';
@@ -72,6 +73,7 @@ export class RunsTableDataSource extends DataSource<FlowRun> {
           limit: res.queryParams[LIMIT_QUERY_PARAM] || DEFAULT_PAGE_SIZE,
           cursor: res.queryParams[CURSOR_QUERY_PARAM],
           flowId: res.queryParams[FLOW_QUERY_PARAM],
+          tags: res.queryParams[TAGS_QUERY_PARAM],
         });
       }),
       catchError((err) => {

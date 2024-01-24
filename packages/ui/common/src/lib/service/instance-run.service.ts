@@ -13,6 +13,7 @@ import {
   FLOW_QUERY_PARAM,
   LIMIT_QUERY_PARAM,
   STATUS_QUERY_PARAM,
+  TAGS_QUERY_PARAM,
 } from '../utils/tables.utils';
 
 @Injectable({
@@ -54,6 +55,9 @@ export class InstanceRunService {
     }
     if (params.flowId) {
       queryParams[FLOW_QUERY_PARAM] = params.flowId;
+    }
+    if (params.tags) {
+      queryParams[TAGS_QUERY_PARAM] = params.tags.join(',');
     }
     return this.http.get<SeekPage<FlowRun>>(environment.apiUrl + `/flow-runs`, {
       params: queryParams,

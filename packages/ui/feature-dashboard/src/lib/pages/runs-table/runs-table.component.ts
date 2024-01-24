@@ -38,6 +38,7 @@ import {
   FlowService,
   FLOW_QUERY_PARAM,
   STATUS_QUERY_PARAM,
+  TAGS_QUERY_PARAM,
 } from '@activepieces/ui/common';
 import { FormControl } from '@angular/forms';
 import { Store } from '@ngrx/store';
@@ -68,6 +69,7 @@ export class RunsTableComponent implements OnInit {
   flowFilterControl = new FormControl<string>(allOptionValue, {
     nonNullable: true,
   });
+  tagsFilterControl = new FormControl<string>('');
   selectedFlowName$: Observable<string | undefined>;
   flows$: Observable<DropdownOption<FlowId>[]>;
   currentProject: ProjectId;
@@ -95,6 +97,11 @@ export class RunsTableComponent implements OnInit {
       (this.activatedRoute.snapshot.queryParamMap.get(
         STATUS_QUERY_PARAM
       ) as ExecutionOutputStatus) || this.allOptionValue
+    );
+    this.tagsFilterControl.setValue(
+      (this.activatedRoute.snapshot.queryParamMap.get(
+        TAGS_QUERY_PARAM
+      ) as ExecutionOutputStatus) || ''
     );
   }
 
@@ -138,6 +145,9 @@ export class RunsTableComponent implements OnInit {
       status: this.statusFilterControl.valueChanges.pipe(
         startWith(this.statusFilterControl.value)
       ),
+      tags: this.tagsFilterControl.valueChanges.pipe(
+        startWith(this.tagsFilterControl.value)
+      ),
     }).pipe(
       distinctUntilChanged(),
       tap((result) => {
@@ -147,6 +157,7 @@ export class RunsTableComponent implements OnInit {
               result.flowId === this.allOptionValue ? undefined : result.flowId,
             status:
               result.status === this.allOptionValue ? undefined : result.status,
+            tags: result.tags === '' ? undefined : result.tags?.split(','),
           },
           queryParamsHandling: 'merge',
         });
