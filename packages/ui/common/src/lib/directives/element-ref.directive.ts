@@ -5,5 +5,5 @@ import { Directive, ElementRef } from '@angular/core';
   exportAs: 'elementDirective',
 })
 export class ElementDirective {
-  constructor(public elementRef: ElementRef) {}
+  constructor(public elementRef: ElementRef<HTMLElement>) {}
 }

@@ -1,0 +1,43 @@
+<ng-container *ngIf="areProjectsEnabled$ | async; else currentProjectTemplate">
+
+    <ap-button btnStyle="basic" btnSize="medium" btnColor="basic" [matMenuTriggerFor]="menu">
+        <div #menuTrigger>
+            <div class="ap-flex ap-items-center ap-gap-2">
+                <ng-container *ngTemplateOutlet="currentProjectTemplate"></ng-container>
+                <svg-icon [svgStyle]="{ width: '18px', height: '18px' }" src="assets/img/custom/chevron.svg">
+                </svg-icon>
+
+            </div>
+        </div>
+
+
+    </ap-button>
+
+
+    <mat-menu #menu="matMenu">
+        <ng-container *ngIf="projects$ | async as projects">
+
+            <div class="ap-px-4 ap-h-[48px] ap-flex ap-items-center">
+                Switch Project:
+            </div>
+
+            <button *ngFor="let proj of projects" mat-menu-item (click)="switchProject(proj.id)">
+                <div class="ap-flex ap-items-center ap-justify-between"
+                    [style.minWidth]="menuTrigger.clientWidth + 'px'">
+                    {{proj.displayName}} <svg-icon *ngIf="proj.id === (currentProject$| async)?.id"
+                        src="assets/img/custom/check.svg" [applyClass]="true"
+                        class="ap-h-[20px] ap-w-[20px] ap-fill-primary"></svg-icon>
+                </div>
+            </button>
+        </ng-container>
+
+    </mat-menu>
+</ng-container>
+
+<ng-template #currentProjectTemplate>
+    <div class="ap-typography-headline-5 !ap-font-semibold">
+        {{(currentProject$ | async)?.displayName}}
+    </div>
+</ng-template>
+
+<ng-container *ngIf="switchProject$ | async"></ng-container>

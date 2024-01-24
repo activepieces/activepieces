@@ -1,4 +1,3 @@
-import { ApFile } from '../property';
 import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
@@ -6,6 +5,7 @@ import isBase64 from 'is-base64';
 import axios from 'axios';
 import { ProcessorFn } from './types';
 import { isNil, isString } from '@activepieces/shared';
+import { ApFile } from '../property/input/file-property';
 
 export class Processors {
   static json: ProcessorFn<string | undefined | null, unknown | undefined> = (

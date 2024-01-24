@@ -37,6 +37,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.SHOW_PLATFORM_DEMO,
+                value: true,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.OWN_AUTH2_ENABLED,
                 value: true,
                 created,

@@ -7,11 +7,10 @@ import {
 import {
   BasicAuthProperty,
   CustomAuthProperty,
-  OAuth2Property,
+  CustomAuthProps,
   OAuth2Props,
   PropertyType,
   SecretTextProperty,
-  CustomAuthProps,
 } from '@activepieces/pieces-framework';
 import {
   ChangeDetectionStrategy,
@@ -68,6 +67,7 @@ import {
   getConnectionNameFromInterpolatedString,
 } from './utils';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
+import { OAuth2Property } from '@activepieces/pieces-framework';
 
 @Component({
   selector: 'app-add-edit-connection-button',
@@ -82,10 +82,10 @@ export class AddEditConnectionButtonComponent {
     new BehaviorSubject(false);
   @Input()
   authProperty:
-    | OAuth2Property<boolean, OAuth2Props>
-    | CustomAuthProperty<boolean, CustomAuthProps>
+    | OAuth2Property<OAuth2Props>
+    | CustomAuthProperty<CustomAuthProps>
     | SecretTextProperty<boolean>
-    | BasicAuthProperty<boolean>;
+    | BasicAuthProperty;
   @Input()
   propertyKey: string;
   @Input()
@@ -189,10 +189,8 @@ export class AddEditConnectionButtonComponent {
   }
   private openNewCustomAuthConnection() {
     const dialogData: CustomAuthDialogData = {
-      pieceAuthProperty: this.authProperty as CustomAuthProperty<
-        boolean,
-        CustomAuthProps
-      >,
+      pieceAuthProperty: this
+        .authProperty as CustomAuthProperty<CustomAuthProps>,
       pieceName: this.pieceName,
     };
 
@@ -222,7 +220,7 @@ export class AddEditConnectionButtonComponent {
 
   private openNewBasicAuthConnection() {
     const dialogData: BasicAuthDialogData = {
-      pieceAuthProperty: this.authProperty as BasicAuthProperty<boolean>,
+      pieceAuthProperty: this.authProperty as BasicAuthProperty,
       pieceName: this.pieceName,
     };
     this.updateOrAddConnectionDialogClosed$ = this.dialogService
@@ -309,10 +307,7 @@ export class AddEditConnectionButtonComponent {
       .pipe(
         switchMap((frontEndUrl) => {
           const data: OAuth2ConnectionDialogData = {
-            pieceAuthProperty: this.authProperty as OAuth2Property<
-              boolean,
-              OAuth2Props
-            >,
+            pieceAuthProperty: this.authProperty as OAuth2Property<OAuth2Props>,
             pieceName: this.pieceName,
             redirectUrl: frontEndUrl + '/redirect',
           };
@@ -430,10 +425,8 @@ export class AddEditConnectionButtonComponent {
         const customAuthConnection = connection;
         const dialogData: CustomAuthDialogData = {
           pieceName: this.pieceName,
-          pieceAuthProperty: this.authProperty as CustomAuthProperty<
-            boolean,
-            CustomAuthProps
-          >,
+          pieceAuthProperty: this
+            .authProperty as CustomAuthProperty<CustomAuthProps>,
           connectionToUpdate: customAuthConnection,
         };
         return this.dialogService
@@ -479,7 +472,7 @@ export class AddEditConnectionButtonComponent {
       switchMap((connection) => {
         const dialogData: BasicAuthDialogData = {
           pieceName: this.pieceName,
-          pieceAuthProperty: this.authProperty as BasicAuthProperty<boolean>,
+          pieceAuthProperty: this.authProperty as BasicAuthProperty,
           connectionToUpdate: connection,
         };
 

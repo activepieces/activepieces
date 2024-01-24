@@ -38,6 +38,7 @@ import { SandBoxCacheType } from '../sandbox/provisioner/sandbox-cache-key'
 import { flowWorkerHooks } from './flow-worker-hooks'
 import { logSerializer } from '../../flows/common/log-serializer'
 import { flowResponseWatcher } from '../../flows/flow-run/flow-response-watcher'
+import { getPiecePackage } from '../../pieces/piece-metadata-service'
 
 type FinishExecutionParams = {
     flowRunId: FlowRunId
@@ -62,12 +63,12 @@ const extractFlowPieces = async ({ flowVersion }: ExtractFlowPiecesParams): Prom
     for (const step of steps) {
         if (step.type === TriggerType.PIECE || step.type === ActionType.PIECE) {
             const { packageType, pieceType, pieceName, pieceVersion } = step.settings
-            pieces.push({
+            pieces.push(await getPiecePackage({
                 packageType,
                 pieceType,
                 pieceName,
                 pieceVersion,
-            })
+            }))
         }
     }
 
@@ -306,7 +307,6 @@ const getSandbox = async ({ projectId, flowVersion, runEnvironment }: GetSandbox
     switch (runEnvironment) {
         case RunEnvironment.PRODUCTION:
             return sandboxProvisioner.provision({
-                projectId,
                 type: SandBoxCacheType.FLOW,
                 flowVersionId: flowVersion.id,
                 pieces,
@@ -315,7 +315,6 @@ const getSandbox = async ({ projectId, flowVersion, runEnvironment }: GetSandbox
         case RunEnvironment.TESTING:
             return sandboxProvisioner.provision({
                 type: SandBoxCacheType.NONE,
-                projectId,
                 pieces,
                 codeSteps,
             })

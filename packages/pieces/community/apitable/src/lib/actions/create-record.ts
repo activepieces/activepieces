@@ -1,30 +1,25 @@
 import {
   DynamicPropsValue,
-  Property,
+  PiecePropValueSchema,
   createAction,
 } from '@activepieces/pieces-framework';
-import { APITableCommon } from '../common';
+import { APITableCommon, createNewFields, makeClient } from '../common';
 import { APITableAuth } from '../../index';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
 
-export const apiTableCreateRecord = createAction({
+export const createRecordAction = createAction({
   auth: APITableAuth,
   name: 'apitable_create_record',
-  displayName: 'Create APITable Record',
-  description: 'Adds a record into an ApiTable datasheet.',
+  displayName: 'Create Record',
+  description: 'Creates a new record in datasheet.',
   props: {
-    datasheet: APITableCommon.datasheet,
+    space_id: APITableCommon.space_id,
+    datasheet_id: APITableCommon.datasheet_id,
     fields: APITableCommon.fields,
   },
   async run(context) {
     const auth = context.auth;
-    const datasheet = context.propsValue.datasheet;
+    const datasheetId = context.propsValue.datasheet_id;
     const dynamicFields: DynamicPropsValue = context.propsValue.fields;
-    const apiTableUrl = auth.apiTableUrl;
     const fields: {
       [n: string]: string;
     } = {};
@@ -36,29 +31,23 @@ export const apiTableCreateRecord = createAction({
       }
     }
 
-    const request: HttpRequest = {
-      method: HttpMethod.POST,
-      url: `${apiTableUrl.replace(
-        /\/$/,
-        ''
-      )}/fusion/v1/datasheets/${datasheet}/records`,
-      headers: {
-        Authorization: 'Bearer ' + auth.token,
-        'Content-Type': 'application/json',
-      },
-      body: {
-        records: [
-          {
-            fields: {
-              ...fields,
-            },
+    const newFields: Record<string, unknown> = await createNewFields(
+      auth as PiecePropValueSchema<typeof APITableAuth>,
+      datasheetId,
+      fields
+    );
+
+    const client = makeClient(
+      context.auth as PiecePropValueSchema<typeof APITableAuth>
+    );
+    return await client.createRecord(datasheetId as string, {
+      records: [
+        {
+          fields: {
+            ...newFields,
           },
-        ],
-      },
-    };
-
-    const res = await httpClient.sendRequest<any>(request);
-
-    return res.body;
+        },
+      ],
+    });
   },
 });
