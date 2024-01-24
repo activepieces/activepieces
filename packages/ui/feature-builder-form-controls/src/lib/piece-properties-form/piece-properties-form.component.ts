@@ -364,6 +364,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
       refreshers$['oneTimeRefresh'] = of(true);
     }
     return this.store.select(BuilderSelectors.selectCurrentFlow).pipe(
+      take(1),
       switchMap((flowVersion) =>
         combineLatest(refreshers$).pipe(
           switchMap((res) =>
