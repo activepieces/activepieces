@@ -102,7 +102,7 @@ export const AirtableFieldMapping = {
   currency: Property.ShortText,
   singleSelect: Property.StaticDropdown,
   multipleSelects: Property.StaticMultiSelectDropdown,
-  multipleRecordLinks: Property.ShortText,
+  multipleRecordLinks: Property.Array,
   date: Property.ShortText,
   dateTime: Property.ShortText,
   phoneNumber: Property.ShortText,
