@@ -9,8 +9,10 @@ import {
   FlagService,
   FlowService,
   NavigationService,
+  downloadFlow,
   environment,
   fadeIn400ms,
+  flowActionsUiInfo,
 } from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
 import {
@@ -31,6 +33,7 @@ import { ImportFlowDialogueComponent } from './import-flow-dialogue/import-flow-
   animations: [fadeIn400ms],
 })
 export class FlowBuilderHeaderComponent implements OnInit {
+  readonly flowActionsUiInfo = flowActionsUiInfo;
   isInDebugMode$: Observable<boolean>;
   isInReadOnlyMode$: Observable<boolean>;
   flowStatus$: Observable<FlowStatus>;
@@ -111,19 +114,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
 
   download(id: string) {
     this.downloadFile$ = this.flowService.exportTemplate(id, undefined).pipe(
-      tap((json) => {
-        const blob = new Blob([JSON.stringify(json, null, 2)], {
-          type: 'application/json',
-        });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'template.json';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      }),
+      tap(downloadFlow),
       map(() => {
         return void 0;
       })
@@ -138,8 +129,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
     const dialogData: DeleteEntityDialogData = {
       deleteEntity$: this.flowService.delete(flow.id),
       entityName: flow.version.displayName,
-      note: $localize`This will permanently delete the flow, all its data and any background runs.
-      You can't undo this action.`,
+      note: flowActionsUiInfo.delete.note,
     };
     const dialogRef = this.dialogService.open(DeleteEntityDialogComponent, {
       data: dialogData,
