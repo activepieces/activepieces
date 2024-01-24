@@ -363,29 +363,36 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     if (obj.property.refreshers.length === 0) {
       refreshers$['oneTimeRefresh'] = of(true);
     }
-    return combineLatest(refreshers$).pipe(
-      switchMap((res) => {
-        return this.actionMetaDataService
-          .getPieceActionConfigOptions<T>({
-            packageType: this.packageType,
-            pieceType: this.pieceType,
-            pieceVersion: this.pieceVersion,
-            pieceName: this.pieceName,
-            propertyName: obj.propertyKey,
-            stepName: this.actionOrTriggerName,
-            input: res,
-          })
-          .pipe(
-            catchError((err) => {
-              console.error(err);
-              return of(fallbackObject);
-            })
-          );
-      }),
-      tap(() => {
-        this.refreshableConfigsLoadingFlags$[obj.propertyKey].next(false);
-      }),
-      shareReplay(1)
+    return this.store.select(BuilderSelectors.selectCurrentFlow).pipe(
+      take(1),
+      switchMap((flowVersion) =>
+        combineLatest(refreshers$).pipe(
+          switchMap((res) =>
+            this.actionMetaDataService
+              .getPieceActionConfigOptions<T>({
+                packageType: this.packageType,
+                pieceType: this.pieceType,
+                pieceVersion: this.pieceVersion,
+                pieceName: this.pieceName,
+                propertyName: obj.propertyKey,
+                stepName: this.actionOrTriggerName,
+                flowId: flowVersion.id,
+                flowVersionId: flowVersion.version.id,
+                input: res,
+              })
+              .pipe(
+                catchError((err) => {
+                  console.error(err);
+                  return of(fallbackObject);
+                })
+              )
+          ),
+          tap(() => {
+            this.refreshableConfigsLoadingFlags$[obj.propertyKey].next(false);
+          }),
+          shareReplay(1)
+        )
+      )
     );
   }
 

@@ -44,6 +44,8 @@ export const PieceOptionRequest = Type.Object({
     pieceVersion: VersionType,
     stepName: Type.String({}),
     propertyName: Type.String({}),
+    flowId: Type.String(),
+    flowVersionId: Type.String(),
     input: Type.Any({}),
 })
 
