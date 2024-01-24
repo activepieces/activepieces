@@ -14,7 +14,6 @@ import { CdkDragMove } from '@angular/cdk/drag-drop';
 import { ActionType, ApFlagId, TriggerType } from '@activepieces/shared';
 import {
   BuilderSelectors,
-  CollectionBuilderService,
   Step,
   RightSideBarType,
   ViewModeEnum,
@@ -24,6 +23,7 @@ import {
   TestStepService,
   isOverflown,
   FlagService,
+  FlowBuilderService,
 } from '@activepieces/ui/common';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/common';
@@ -74,7 +74,7 @@ export class FlowRightSidebarComponent implements OnInit {
     private renderer2: Renderer2,
     private flagService: FlagService,
     private pieceMetadaService: PieceMetadataService,
-    public builderService: CollectionBuilderService,
+    public builderService: FlowBuilderService,
     private builderAutocompleteMentionsDropdownService: BuilderAutocompleteMentionsDropdownService
   ) {}
 

@@ -12,7 +12,6 @@ import { ActivatedRoute } from '@angular/router';
 import {
   BuilderActions,
   BuilderSelectors,
-  CollectionBuilderService,
   FlowItemDetailsActions,
   FlowRendererService,
   ViewModeEnum,
@@ -52,6 +51,7 @@ import {
   TelemetryService,
   TemplatesService,
   TestStepService,
+  FlowBuilderService,
 } from '@activepieces/ui/common';
 import { PannerService } from '@activepieces/ui/feature-builder-canvas';
 import { MatDialog } from '@angular/material/dialog';
@@ -115,7 +115,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     private pannerService: PannerService,
     private testStepService: TestStepService,
     private flowRendererService: FlowRendererService,
-    public builderService: CollectionBuilderService,
+    public builderService: FlowBuilderService,
     private matDialog: MatDialog,
     private flagService: FlagService,
     private telemetryService: TelemetryService,
@@ -142,7 +142,6 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
       tap((value) => {
         const routeData = value as BuilderRouteData | RunRouteData;
         const runInformation = routeData.runInformation;
-        
         if (runInformation) {
           this.store.dispatch(
             BuilderActions.loadInitial({

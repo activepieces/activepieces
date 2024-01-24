@@ -13,18 +13,18 @@ import {
   environment,
   fadeIn400ms,
   flowActionsUiInfo,
+  ImportFlowDialogComponent,
+  ImporFlowDialogData,
 } from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
 import {
   BuilderSelectors,
-  CollectionBuilderService,
   FlowsActions,
   LeftSideBarType,
   canvasActions,
 } from '@activepieces/ui/feature-builder-store';
 import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
-import { EmbeddingService } from '@activepieces/ui/common';
-import { ImportFlowDialogueComponent } from './import-flow-dialogue/import-flow-dialogue.component';
+import { EmbeddingService, FlowBuilderService } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-flow-builder-header',
@@ -57,7 +57,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
     private store: Store,
     private router: Router,
     private appearanceService: AppearanceService,
-    public collectionBuilderService: CollectionBuilderService,
+    public collectionBuilderService: FlowBuilderService,
     private flowService: FlowService,
     private matDialog: MatDialog,
     private flagService: FlagService,
@@ -121,8 +121,9 @@ export class FlowBuilderHeaderComponent implements OnInit {
     );
   }
 
-  import() {
-    this.matDialog.open(ImportFlowDialogueComponent);
+  import(flowToOverWrite: PopulatedFlow) {
+    const data: ImporFlowDialogData = { flowToOverWrite: flowToOverWrite };
+    this.matDialog.open(ImportFlowDialogComponent, { data });
   }
 
   deleteFlow(flow: PopulatedFlow) {

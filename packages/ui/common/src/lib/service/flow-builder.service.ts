@@ -4,7 +4,7 @@ import { Observable, ReplaySubject, Subject, of } from 'rxjs';
 import { FlowId, FlowTemplate } from '@activepieces/shared';
 
 @Injectable({ providedIn: 'root' })
-export class CollectionBuilderService {
+export class FlowBuilderService {
   lastSuccessfulSaveDate = '';
   importTemplate$: Subject<{ template: FlowTemplate; flowId: FlowId }> =
     new Subject();

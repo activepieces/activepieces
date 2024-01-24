@@ -42,12 +42,10 @@ import {
   AuthenticationService,
   fadeInUp400ms,
   LocalesService,
+  FlowBuilderService,
 } from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
-import {
-  CollectionBuilderService,
-  FlowsActions,
-} from '@activepieces/ui/feature-builder-store';
+import { FlowsActions } from '@activepieces/ui/feature-builder-store';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Platform } from '@activepieces/ee-shared';
 
@@ -88,7 +86,7 @@ export class AppComponent implements OnInit {
     private router: Router,
     private maticonRegistry: MatIconRegistry,
     private domSanitizer: DomSanitizer,
-    private builderService: CollectionBuilderService,
+    private builderService: FlowBuilderService,
     private flowService: FlowService,
     private snackbar: MatSnackBar,
     private embeddedService: EmbeddingService,
@@ -133,7 +131,7 @@ export class AppComponent implements OnInit {
                 this.loading$.next(false);
                 console.error(err);
                 this.snackbar.open(
-                  'Failed to import flow, check Console for erros',
+                  'Failed to import flow, check Console for errors',
                   'Close'
                 );
                 return of(void 0);

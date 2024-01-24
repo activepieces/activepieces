@@ -50,7 +50,7 @@
             <span>{{flowActionsUiInfo.duplicate.text}}</span>
           </div>
         </button>
-        <button mat-menu-item (click)="import()">
+        <button *ngIf="flow$ | async as flow" mat-menu-item (click)="import(flow)">
           <div class="ap-flex ap-gap-3 ap-items-center">
             <svg-icon [src]="flowActionsUiInfo.import.icon" [class]="flowActionsUiInfo.iconSizeTailWind"
               [applyClass]="true"></svg-icon>
