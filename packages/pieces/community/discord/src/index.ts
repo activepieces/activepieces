@@ -42,6 +42,11 @@ export const discord = createPiece({
         baseUrl: () => {
             return 'https://discord.com/api/v9'
         },
+        authMapping: (auth) => {
+          return {
+            'Authorization': `Bearer ${auth}`
+          }
+        }
     })
   ],
   authors: ['creed983', 'Abdallah-Alwarawreh', 'TaskMagicKyle'],
