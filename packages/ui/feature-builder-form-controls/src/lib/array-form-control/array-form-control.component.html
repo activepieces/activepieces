@@ -48,10 +48,10 @@
         let isFirst = first
       ">
       <mat-card class="ap-my-2">
-        <mat-card-header class="card-header ap-w-full !ap-block">
-          <mat-card-title class="card-title ">
+        <mat-card-header class="ap-w-full ap-bg-header !ap-p-3 ap-mb-4 !ap-block">
+          <mat-card-title>
             <div class="ap-flex ap-items-center ap-select-none ap-justify-between ap-w-full">
-              <div>
+              <div class=" ap-typography-body-1">
                 {{ property.displayName }} #{{ idx+1 }}
               </div>
               <ap-icon-button *ngIf="formArray.enabled && formArray.controls.length>1" [width]="9" [height]="9"
