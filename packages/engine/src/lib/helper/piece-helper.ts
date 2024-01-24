@@ -23,7 +23,7 @@ import { pieceLoader } from './piece-loader'
 import { variableService } from '../services/variable-service'
 
 export const pieceHelper = {
-    async executeProps({ params, piecesSource }: { params: ExecutePropsOptions, piecesSource: string }) {
+    async executeProps({ params, piecesSource, executionState }: { executionState: FlowExecutorContext, params: ExecutePropsOptions, piecesSource: string }) {
         const property = await pieceLoader.getPropOrThrow({
             params,
             piecesSource,
@@ -37,7 +37,7 @@ export const pieceHelper = {
             StaticPropsValue<PiecePropertyMap>
             >({
                 unresolvedInput: params.input,
-                executionState: FlowExecutorContext.empty(),
+                executionState,
             })
             const ctx = {
                 server: {

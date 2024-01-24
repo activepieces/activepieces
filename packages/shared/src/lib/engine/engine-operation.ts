@@ -53,6 +53,7 @@ export type ExecutePropsOptions = BaseEngineOperation & {
     piece: PiecePackage
     propertyName: string
     stepName: string
+    flowVersion: FlowVersion
     input: Record<string, unknown>
 }
 
