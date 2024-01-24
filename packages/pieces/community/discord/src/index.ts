@@ -8,6 +8,7 @@ import { discordRemoveMemberFromGuild } from './lib/actions/remove-member-from-g
 import { discordFindGuildMemberByUsername } from './lib/actions/find-guild-member';
 import { discordRenameChannel } from './lib/actions/rename-channel';
 import { discordFindChannel } from './lib/actions/find-channel';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const markdown = `
 To obtain a token, follow these steps:
@@ -37,6 +38,11 @@ export const discord = createPiece({
     discordFindGuildMemberByUsername,
     discordRenameChannel,
     discordFindChannel,
+    createCustomApiCallAction({
+        baseUrl: () => {
+            return 'https://discord.com/api/v9'
+        },
+    })
   ],
   authors: ['creed983', 'Abdallah-Alwarawreh', 'TaskMagicKyle'],
   triggers: [newMessage],

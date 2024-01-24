@@ -22,6 +22,7 @@ export function createCustomApiCallAction({ auth, baseUrl, authMapping }: {
     displayName: 'Custom API Call',
     description: 'Send a custom API call to a specific endpoint',
     auth: auth ? auth : undefined,
+    requireAuth: auth ? true : false,
     props: {
       url: Property.ShortText({
         displayName: 'URL',

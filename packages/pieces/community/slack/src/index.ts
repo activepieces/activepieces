@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { slackSendDirectMessageAction } from './lib/actions/send-direct-message-action';
 import { requestApprovalDirectMessageAction } from './lib/actions/request-approval-direct-message';
 import { slackSendMessageAction } from './lib/actions/send-message-action';
@@ -8,6 +8,7 @@ import { newReactionAdded } from './lib/triggers/new-reaction-added';
 import { requestSendApprovalMessageAction } from './lib/actions/request-approval-message';
 import { requestActionDirectMessageAction } from './lib/actions/request-action-direct-message';
 import { requestActionMessageAction } from './lib/actions/request-action-message';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const slackAuth = PieceAuth.OAuth2({
   description: '',
@@ -67,6 +68,17 @@ export const slack = createPiece({
     requestSendApprovalMessageAction,
     requestActionDirectMessageAction,
     requestActionMessageAction,
+    createCustomApiCallAction({
+        baseUrl: () => {
+            return 'https://slack.com/api'
+        },
+        auth: slackAuth,
+        authMapping: (auth) => {
+            return {
+                'Authorization': `Bearer ${(auth as OAuth2PropertyValue).access_token}`
+            }
+        }
+    })
   ],
   triggers: [newMessage, newReactionAdded],
 });
