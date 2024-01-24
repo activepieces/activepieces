@@ -144,7 +144,7 @@ describe('Piece Metadata API', () => {
             // arrange
             const mockPieceMetadataA = createMockPieceMetadata({ name: 'a', pieceType: PieceType.CUSTOM, projectId: mockProject.id })
             const mockPieceMetadataB = createMockPieceMetadata({ name: 'b', pieceType: PieceType.OFFICIAL })
-            const mockPieceMetadataC = createMockPieceMetadata({ name: 'c', pieceType: PieceType.CUSTOM, projectId: mockProject2.id })
+            const mockPieceMetadataC = createMockPieceMetadata({ name: 'c', pieceType: PieceType.CUSTOM, projectId: mockProject2.id, platformId: mockPlatform.id })
             const mockPieceMetadataD = createMockPieceMetadata({ name: 'd', pieceType: PieceType.CUSTOM, platformId: mockPlatform.id })
             await databaseConnection.getRepository('piece_metadata').save([mockPieceMetadataA, mockPieceMetadataB, mockPieceMetadataC, mockPieceMetadataD])
 

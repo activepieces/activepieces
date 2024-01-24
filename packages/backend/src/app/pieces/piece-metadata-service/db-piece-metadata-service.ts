@@ -8,7 +8,6 @@ import { AllPiecesStats, pieceStatsService } from './piece-stats-service'
 import * as semver from 'semver'
 import { pieceMetadataServiceHooks as hooks } from './hooks'
 import { projectService } from '../../project/project-service'
-import { isNull } from 'node:util'
 
 const repo = repoFactory(PieceMetadataEntity)
 
@@ -32,6 +31,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                         minimumSupportedRelease: LessThanOrEqual(release),
                         maximumSupportedRelease: MoreThanOrEqual(release),
                         platformId: Equal(platformId),
+                        projectId: IsNull(),
                         pieceType: Equal(PieceType.CUSTOM),
                     },
                     {
