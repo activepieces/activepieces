@@ -38,7 +38,7 @@
   <!-- For Array of Objects -->
   <ng-container *ngIf="property.properties">
     <div class="ap-mb-2 ap-flex ap-gap-2 ap-items-center">
-      <div class="ap-cursor-pointer" (click)="focusFirstInput()">
+      <div class="ap-select-none">
         {{ property.displayName }}
       </div>
     </div>
@@ -50,7 +50,7 @@
       <mat-card class="ap-my-2">
         <mat-card-header class="card-header ap-w-full !ap-block">
           <mat-card-title class="card-title ">
-            <div class="ap-flex ap-items-center ap-justify-between ap-w-full">
+            <div class="ap-flex ap-items-center ap-select-none ap-justify-between ap-w-full">
               <div>
                 {{ property.displayName }} #{{ idx+1 }}
               </div>
