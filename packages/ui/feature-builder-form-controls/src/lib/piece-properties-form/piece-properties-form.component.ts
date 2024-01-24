@@ -219,21 +219,18 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
   addNewConnectionButtonPress() {
     this.addConnectionBtn.buttonClicked();
   }
-  getPathWithPrefix(prefix: string, path: string) {
-    return prefix ? prefix + '.' + path : path;
-  }
-  createDropdownConfigsObservables(properties: PiecePropertyMap, prefix = '') {
+  createDropdownConfigsObservables(properties: PiecePropertyMap) {
     Object.keys(properties).forEach((pk) => {
       const property = properties[pk];
       if (
         property.type === PropertyType.DROPDOWN ||
         property.type === PropertyType.MULTI_SELECT_DROPDOWN
       ) {
-        this.dropdownOptionsObservables$[this.getPathWithPrefix(prefix, pk)] =
+        this.dropdownOptionsObservables$[pk] =
           this.createRefreshableConfigObservables<DropdownState<unknown>>(
             {
               property: property,
-              propertyKey: this.getPathWithPrefix(prefix, pk),
+              propertyKey: pk,
             },
             {
               options: [],
@@ -269,14 +266,11 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
         property.properties &&
         Object.keys(property.properties).length > 0
       ) {
-        this.createDropdownConfigsObservables(
-          property.properties,
-          this.getPathWithPrefix(prefix, pk)
-        );
+        this.createDropdownConfigsObservables(property.properties);
       }
     });
   }
-  createDynamicConfigsObservables(properties: PiecePropertyMap, prefix = '') {
+  createDynamicConfigsObservables(properties: PiecePropertyMap) {
     Object.keys(properties).forEach((pk) => {
       const parentProperty = properties[pk];
       if (parentProperty.type == PropertyType.DYNAMIC) {
@@ -284,7 +278,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
           this.createRefreshableConfigObservables<PiecePropertyMap>(
             {
               property: parentProperty,
-              propertyKey: this.getPathWithPrefix(prefix, pk),
+              propertyKey: pk,
             },
             {}
           ).pipe(
@@ -326,10 +320,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
         parentProperty.properties &&
         Object.keys(parentProperty.properties).length > 0
       ) {
-        this.createDynamicConfigsObservables(
-          parentProperty.properties,
-          this.getPathWithPrefix(prefix, pk)
-        );
+        this.createDynamicConfigsObservables(parentProperty.properties);
       }
     });
   }
