@@ -8,6 +8,7 @@ import { AllPiecesStats, pieceStatsService } from './piece-stats-service'
 import * as semver from 'semver'
 import { pieceMetadataServiceHooks as hooks } from './hooks'
 import { projectService } from '../../project/project-service'
+import { isNull } from 'node:util'
 
 const repo = repoFactory(PieceMetadataEntity)
 
@@ -191,6 +192,7 @@ const createProjectPieceFilter = (name: string, projectId: string): Record<strin
 const createPlatformPieceFilter = (name: string, platformId: string): Record<string, unknown> => ({
     name,
     platformId: Equal(platformId),
+    projectId: IsNull(),
     pieceType: Equal(PieceType.CUSTOM),
 })
 
