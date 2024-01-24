@@ -1,55 +1,87 @@
-import { DynamicPropsValue, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
+  DynamicPropsValue,
+  PiecePropValueSchema,
+  Property,
+} from '@activepieces/pieces-framework';
 import { APITableAuth } from '../../';
+import { AITableClient } from './client';
+
+export function makeClient(auth: PiecePropValueSchema<typeof APITableAuth>) {
+  const client = new AITableClient(auth.apiTableUrl, auth.token);
+  return client;
+}
 
 export const APITableCommon = {
-  datasheet: Property.ShortText({
-    displayName: 'Datasheet ID',
-    description:
-      'The datasheet to watch for new records, obtain it from the url',
+  space_id: Property.Dropdown({
+    displayName: 'Space',
     required: true,
+    refreshers: [],
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Connect your account first',
+        };
+      }
+      const client = makeClient(
+        auth as PiecePropValueSchema<typeof APITableAuth>
+      );
+      const res = await client.listSpaces();
+      return {
+        disabled: false,
+        options: res.data.spaces.map((space) => {
+          return {
+            label: space.name,
+            value: space.id,
+          };
+        }),
+      };
+    },
+  }),
+  datasheet_id: Property.Dropdown({
+    displayName: 'Datasheet',
+    required: true,
+    refreshers: ['space_id'],
+    options: async ({ auth, space_id }) => {
+      if (!auth || !space_id) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Connect your account first and select space.',
+        };
+      }
+      const client = makeClient(
+        auth as PiecePropValueSchema<typeof APITableAuth>
+      );
+      const res = await client.listDatasheets(space_id as string);
+      return {
+        disabled: false,
+        options: res.data.nodes.map((datasheet) => {
+          return {
+            label: datasheet.name,
+            value: datasheet.id,
+          };
+        }),
+      };
+    },
   }),
   fields: Property.DynamicProperties({
     displayName: 'Fields',
     description: 'The fields to add to the record.',
     required: true,
-    refreshers: ['auth', 'datasheet'],
-    props: async ({ auth, datasheet }) => {
-      const request: HttpRequest = {
-        method: HttpMethod.GET,
-        url: `${auth['apiTableUrl'].replace(
-          /\/$/,
-          ''
-        )}/fusion/v1/datasheets/${datasheet}/fields`,
-        headers: {
-          Authorization: 'Bearer ' + auth['token'],
-        },
-      };
-
-      const res = await httpClient.sendRequest<{
-        data: {
-          fields: {
-            id: string;
-            name: string;
-            type: string;
-            desc: string;
-            property?: {
-              defaultValue?: string;
-              options?: {
-                name: string;
-              }[];
-            };
-          }[];
-        };
-      }>(request);
+    refreshers: ['auth', 'datasheet_id'],
+    props: async ({ auth, datasheet_id }) => {
+      const client = makeClient(
+        auth as PiecePropValueSchema<typeof APITableAuth>
+      );
+      const res = await client.getDatasheetFields(
+        datasheet_id as unknown as string
+      );
 
       const props: DynamicPropsValue = {};
 
-      res.body.data.fields.forEach((field) => {
+      res.data.fields.forEach((field) => {
         if (field.type === 'SingleSelect') {
           props[field.name] = Property.StaticDropdown({
             displayName: field.name,
@@ -90,6 +122,7 @@ export const APITableCommon = {
             'LastModifiedBy',
             'Attachment',
             'Member',
+            'Cascader',
           ].includes(field.type)
         ) {
           props[field.name] = Property.ShortText({
@@ -106,55 +139,34 @@ export const APITableCommon = {
 
 export async function createNewFields(
   auth: PiecePropValueSchema<typeof APITableAuth>,
-  datasheet: string,
+  datasheet_id: string,
   fields: Record<string, unknown>
 ) {
   if (!auth) return fields;
-  if (!datasheet) return fields;
+  if (!datasheet_id) return fields;
 
   const newFields: Record<string, unknown> = {};
 
-  const request: HttpRequest = {
-    method: HttpMethod.GET,
-    url: `${auth['apiTableUrl'].replace(
-      /\/$/,
-      ''
-    )}/fusion/v1/datasheets/${datasheet}/fields`,
-    headers: {
-      Authorization: 'Bearer ' + auth['token'],
-    },
-  };
+  const client = makeClient(auth as PiecePropValueSchema<typeof APITableAuth>);
+  const res = await client.getDatasheetFields(datasheet_id as string);
 
-  const res = await httpClient.sendRequest<{
-    data: {
-      fields: {
-        id: string;
-        name: string;
-        type: string;
-        desc: string;
-        property?: {
-          defaultValue?: string;
-          options?: {
-            name: string;
-          }[];
-        };
-      }[];
-    };
-  }>(request);
-
-  res.body.data.fields.forEach((field) => {
-    if (![
-      'MagicLink',
-      'MagicLookUp',
-      'Formula',
-      'AutoNumber',
-      'CreatedTime',
-      'LastModifiedTime',
-      'CreatedBy',
-      'LastModifiedBy',
-      'Attachment',
-      'Member',
-    ].includes(field.type) && (field.name in fields)) {
+  res.data.fields.forEach((field) => {
+    if (
+      ![
+        'MagicLink',
+        'MagicLookUp',
+        'Formula',
+        'AutoNumber',
+        'CreatedTime',
+        'LastModifiedTime',
+        'CreatedBy',
+        'LastModifiedBy',
+        'Attachment',
+        'Member',
+        'Cascader',
+      ].includes(field.type) &&
+      field.name in fields
+    ) {
       const key = field.name;
       if (field.type === 'Number') {
         newFields[key] = Number(fields[key]);
