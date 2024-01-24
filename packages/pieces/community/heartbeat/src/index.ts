@@ -1,6 +1,7 @@
 
 import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
 import { heartBeatCreateUser } from "./lib/actions/create-user";
+import { createCustomApiCallAction } from "@activepieces/pieces-common";
 
 const markdownPropertyDescription = `
   1. Login to your Heartbeat account
@@ -22,7 +23,15 @@ export const Heartbeat = createPiece({
   auth: heartbeatAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: "https://canny.io/images/1c45977e303cc49b7230311e0eb3e87e.png", //TODO: replace logo
-  authors: [],
-  actions: [heartBeatCreateUser],
+  authors: ['kanarelo'],
+  actions: [heartBeatCreateUser, createCustomApiCallAction({
+    auth: heartbeatAuth,
+    baseUrl: () => 'https://api.heartbeat.chat/v0',
+    authMapping: (auth) => {
+      return {
+        'Authorization': `Bearer ${auth}`
+      }
+    }
+  })],
   triggers: [],
 });

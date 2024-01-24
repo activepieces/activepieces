@@ -1,6 +1,6 @@
 import { Property, Validators, createAction } from "@activepieces/pieces-framework";
-import { heartbeatAuth } from "../..";
 import { AuthenticationType, HttpMethod, httpClient } from "@activepieces/pieces-common";
+import { heartbeatAuth } from "../..";
 
 export const heartBeatCreateUser = createAction({
   auth: heartbeatAuth,
