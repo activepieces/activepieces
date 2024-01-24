@@ -33,13 +33,22 @@
           ></ap-icon-button>
         </div>
 
-    </ng-container>
-    <div class="ap-flex">
-        <ap-button btnColor="primary" btnStyle="basic" *ngIf="formArray.enabled" (buttonClicked)="addValue()"
-            type="button" class="add-btn" btnSize="medium" i18n> + Add Item
-        </ap-button>
-        <div class="ap-flex-grow" #spacer></div>
-    </div>
+        <div
+          class="form-control value-control"
+          [class.first]="isFirst && formArray.controls.length > 1"
+          [class.last]="isLast && formArray.controls.length > 1"
+          [class.only-one]="formArray.controls.length === 1"
+          apTrackHover
+          #valueInput="hoverTrackerDirective"
+          #interpolatingTextControlContainer
+        >
+          <app-interpolating-text-form-control
+            #textControl
+            [insideMatField]="false"
+            [formControl]="getFormControlAtIndex(idx)"
+            placeholder="Value"
+            (click)="formArray.enabled ? handler.showMentionsDropdown() : null"
+          ></app-interpolating-text-form-control>
 
           <app-builder-autocomplete-dropdown-handler
             #handler
@@ -130,4 +139,4 @@
   </div>
 </div>
 
-<ng-container *ngIf="valueChanges$|async"></ng-container>
+<ng-container *ngIf="updateValueOnChange$ | async"></ng-container>

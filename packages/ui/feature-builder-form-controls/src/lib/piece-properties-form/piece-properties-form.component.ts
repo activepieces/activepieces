@@ -707,21 +707,4 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
       })
     );
   }
-
-  getDrowDownOptionsObservable(configKey: string, prefix = '') {
-    return this.dropdownOptionsObservables$[
-      this.getPathWithPrefix(prefix, configKey)
-    ];
-  }
-
-  getDynamicPropsObservable(configKey: string, prefix = '') {
-    return this.dynamicPropsObservables$[
-      this.getPathWithPrefix(prefix, configKey)
-    ];
-  }
-  getRefreshableConfigsLoadingFlag(configKey: string, prefix = '') {
-    return this.refreshableConfigsLoadingFlags$[
-      this.getPathWithPrefix(prefix, configKey)
-    ];
-  }
 }
