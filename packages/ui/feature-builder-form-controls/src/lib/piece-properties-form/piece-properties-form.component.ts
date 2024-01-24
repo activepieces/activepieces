@@ -261,12 +261,6 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
             }),
             shareReplay(1)
           );
-      } else if (
-        property.type === PropertyType.ARRAY &&
-        property.properties &&
-        Object.keys(property.properties).length > 0
-      ) {
-        this.createDropdownConfigsObservables(property.properties);
       }
     });
   }
@@ -315,12 +309,6 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
             }),
             shareReplay(1)
           );
-      } else if (
-        parentProperty.type === PropertyType.ARRAY &&
-        parentProperty.properties &&
-        Object.keys(parentProperty.properties).length > 0
-      ) {
-        this.createDynamicConfigsObservables(parentProperty.properties);
       }
     });
   }
