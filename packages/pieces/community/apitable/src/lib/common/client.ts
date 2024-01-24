@@ -5,6 +5,7 @@ import {
   AuthenticationType,
   httpClient,
 } from '@activepieces/pieces-common';
+import { AITableFieldType } from './constants';
 
 function emptyValueFilter(
   accessor: (key: string) => any
@@ -80,9 +81,10 @@ export class AITableClient {
         fields: {
           id: string;
           name: string;
-          type: string;
+          type: AITableFieldType;
           desc: string;
           property?: {
+            format?: string;
             defaultValue?: string;
             options?: {
               name: string;

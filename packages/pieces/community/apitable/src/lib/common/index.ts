@@ -5,6 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { APITableAuth } from '../../';
 import { AITableClient } from './client';
+import { AITableFieldType } from './constants';
 
 export function makeClient(auth: PiecePropValueSchema<typeof APITableAuth>) {
   const client = new AITableClient(auth.apiTableUrl, auth.token);
@@ -81,56 +82,99 @@ export const APITableCommon = {
 
       const props: DynamicPropsValue = {};
 
-      res.data.fields.forEach((field) => {
-        if (field.type === 'SingleSelect') {
-          props[field.name] = Property.StaticDropdown({
-            displayName: field.name,
-            required: false,
-            options: {
-              options:
-                field.property?.options?.map((option) => {
-                  return {
-                    label: option.name,
-                    value: option.name,
-                  };
-                }) || [],
-            },
-          });
-        } else if (field.type === 'MultiSelect') {
-          props[field.name] = Property.StaticMultiSelectDropdown({
-            displayName: field.name,
-            required: false,
-            options: {
-              options:
-                field.property?.options?.map((option) => {
-                  return {
-                    label: option.name,
-                    value: option.name,
-                  };
-                }) || [],
-            },
-          });
-        } else if (
+      for (const field of res.data.fields) {
+        if (
           ![
-            'MagicLink',
-            'MagicLookUp',
-            'Formula',
-            'AutoNumber',
-            'CreatedTime',
-            'LastModifiedTime',
-            'CreatedBy',
-            'LastModifiedBy',
-            'Attachment',
-            'Member',
-            'Cascader',
+            AITableFieldType.ATTACHMENT,
+            AITableFieldType.AUTONUMBER,
+            AITableFieldType.CASCADER,
+            AITableFieldType.CREATED_BY,
+            AITableFieldType.CREATED_TIME,
+            AITableFieldType.FORMULA,
+            AITableFieldType.LAST_MODIEFIED_TIME,
+            AITableFieldType.LAST_MODIFIED_BY,
+            AITableFieldType.MAGIC_LOOKUP,
+            AITableFieldType.MEMBER,
+            AITableFieldType.ONE_WAY_LINK,
           ].includes(field.type)
         ) {
-          props[field.name] = Property.ShortText({
-            displayName: field.name,
-            required: false,
-          });
+          switch (field.type) {
+            case AITableFieldType.CHECKBOX:
+              props[field.name] = Property.Checkbox({
+                displayName: field.name,
+                required: false,
+              });
+              break;
+            case AITableFieldType.CURRENCY:
+            case AITableFieldType.NUMBER:
+            case AITableFieldType.PERCENT:
+            case AITableFieldType.RATING:
+              props[field.name] = Property.Number({
+                displayName: field.name,
+                required: false,
+              });
+              break;
+            case AITableFieldType.DATETIME:
+              props[field.name] = Property.DateTime({
+                displayName: field.name,
+                required: false,
+                description: `Enter date in ${field.property?.format} format.`,
+              });
+              break;
+            case AITableFieldType.EMAIL:
+            case AITableFieldType.PHONE:
+            case AITableFieldType.SINGLE_TEXT:
+            case AITableFieldType.URL:
+              props[field.name] = Property.ShortText({
+                displayName: field.name,
+                required: false,
+              });
+              break;
+            case AITableFieldType.TEXT:
+              props[field.name] = Property.LongText({
+                displayName: field.name,
+                required: false,
+              });
+              break;
+            case AITableFieldType.MULTI_SELECT:
+              props[field.name] = Property.StaticMultiSelectDropdown({
+                displayName: field.name,
+                required: false,
+                options: {
+                  options:
+                    field.property?.options?.map((option) => {
+                      return {
+                        label: option.name,
+                        value: option.name,
+                      };
+                    }) || [],
+                },
+              });
+              break;
+            case AITableFieldType.SINGLE_SELECT:
+              props[field.name] = Property.StaticDropdown({
+                displayName: field.name,
+                required: false,
+                options: {
+                  options:
+                    field.property?.options?.map((option) => {
+                      return {
+                        label: option.name,
+                        value: option.name,
+                      };
+                    }) || [],
+                },
+              });
+              break;
+            case AITableFieldType.TWO_WAY_LINK:
+              props[field.name] = Property.Array({
+                displayName: field.name,
+                required: false,
+              });
+              break;
+          }
         }
-      });
+      }
 
       return props;
     },
@@ -153,22 +197,30 @@ export async function createNewFields(
   res.data.fields.forEach((field) => {
     if (
       ![
-        'MagicLink',
-        'MagicLookUp',
-        'Formula',
-        'AutoNumber',
-        'CreatedTime',
-        'LastModifiedTime',
-        'CreatedBy',
-        'LastModifiedBy',
-        'Attachment',
-        'Member',
-        'Cascader',
+        AITableFieldType.ATTACHMENT,
+        AITableFieldType.AUTONUMBER,
+        AITableFieldType.CASCADER,
+        AITableFieldType.CREATED_BY,
+        AITableFieldType.CREATED_TIME,
+        AITableFieldType.FORMULA,
+        AITableFieldType.LAST_MODIEFIED_TIME,
+        AITableFieldType.LAST_MODIFIED_BY,
+        AITableFieldType.MAGIC_LOOKUP,
+        AITableFieldType.MEMBER,
+        AITableFieldType.ONE_WAY_LINK,
       ].includes(field.type) &&
       field.name in fields
     ) {
       const key = field.name;
-      if (field.type === 'Number') {
+      if (
+        [
+          AITableFieldType.NUMBER,
+          AITableFieldType.RATING,
+          AITableFieldType.CURRENCY,
+          AITableFieldType.PERCENT,
+          AITableFieldType.PERCENT,
+        ].includes(field.type)
+      ) {
         newFields[key] = Number(fields[key]);
       } else {
         newFields[key] = fields[key];
