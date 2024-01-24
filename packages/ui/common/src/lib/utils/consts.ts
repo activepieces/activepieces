@@ -28,6 +28,10 @@ export const flowActionsUiInfo = {
     text: $localize`Share`,
     icon: 'assets/img/custom/share.svg',
   },
+  move: {
+    text: $localize`Move to...`,
+    icon: 'assets/img/custom/move.svg',
+  },
   iconSizeTailWind: 'ap-w-[20px] ap-h-[20px]',
 };
 

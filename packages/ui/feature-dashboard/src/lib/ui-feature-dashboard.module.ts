@@ -27,7 +27,9 @@ import { ConfigureRepoDialogComponent } from './components/dialogs/configure-rep
 import { PushDialogComponent } from './components/dialogs/push-dialog/push-dialog.component';
 import { PullDialogComponent } from './components/dialogs/pull-dialog/pull-dialog.component';
 import { ProjectSwitcherComponent } from './components/project-switcher/project-switcher.component';
-
+import { TriggerTooltipPipe } from './pipes/trigger-tooltip.pipe';
+import { TriggerIconPipe } from './pipes/trigger-icon.pipe';
+import { FlowStatusPipe } from './pipes/flow-status-tooltip.pipe';
 @NgModule({
   imports: [
     CommonModule,
@@ -38,6 +40,9 @@ import { ProjectSwitcherComponent } from './components/project-switcher/project-
     EffectsModule.forFeature([FoldersEffects]),
     UiFeatureTemplatesModule,
     UiFeaturePiecesModule,
+    TriggerTooltipPipe,
+    TriggerIconPipe,
+    FlowStatusPipe,
   ],
   declarations: [
     DashboardContainerComponent,
