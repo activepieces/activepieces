@@ -1,5 +1,4 @@
 import {
-  BasicAuthPropertyValue,
   createTrigger,
   PiecePropValueSchema,
   TriggerStrategy,

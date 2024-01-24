@@ -1,6 +1,6 @@
 import { DataSource } from '@angular/cdk/collections';
 import { Observable, BehaviorSubject, tap, switchMap, map } from 'rxjs';
-import { combineLatest } from 'rxjs';
+import { combineLatest, of, delay } from 'rxjs';
 import { FlowTemplate } from '@activepieces/shared';
 import { TemplatesService } from '@activepieces/ui/common';
 
@@ -14,7 +14,8 @@ export class TemplatesDataSource extends DataSource<FlowTemplate> {
   isLoading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
   constructor(
     private refresh$: Observable<boolean>,
-    private templatesService: TemplatesService
+    private templatesService: TemplatesService,
+    private fakeData: boolean
   ) {
     super();
   }
@@ -26,6 +27,14 @@ export class TemplatesDataSource extends DataSource<FlowTemplate> {
    */
 
   connect(): Observable<FlowTemplate[]> {
+    if (this.fakeData) {
+      return of([]).pipe(
+        delay(100),
+        tap(() => {
+          this.isLoading$.next(false);
+        })
+      );
+    }
     return combineLatest([this.refresh$]).pipe(
       tap(() => {
         this.isLoading$.next(true);

@@ -1,7 +1,6 @@
 import {
   PieceAuth,
   Property,
-  SecretTextProperty,
   ShortTextProperty,
   StaticPropsValue,
   Validators,
@@ -54,8 +53,9 @@ You can generate your API token from:
   },
 });
 
-export type JiraAuth = StaticPropsValue<{
-  instanceUrl: ShortTextProperty<true>;
-  email: ShortTextProperty<true>;
-  apiToken: SecretTextProperty<true>;
-}>;
+export type JiraAuth = {
+  instanceUrl: string;
+  email: string;
+  apiToken: string;
+
+}

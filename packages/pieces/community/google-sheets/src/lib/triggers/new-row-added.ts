@@ -1,7 +1,6 @@
 import {
   OAuth2PropertyValue,
   Property,
-  Validators,
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';

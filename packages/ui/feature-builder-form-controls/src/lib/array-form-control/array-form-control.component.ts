@@ -1,14 +1,25 @@
-import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  Input,
+  TemplateRef,
+  ViewChild,
+} from '@angular/core';
 import {
   ControlValueAccessor,
   FormArray,
   FormBuilder,
   FormControl,
+  NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
+  UntypedFormGroup,
 } from '@angular/forms';
 import { map, Observable, tap } from 'rxjs';
 import { InterpolatingTextFormControlComponent } from '../interpolating-text-form-control/interpolating-text-form-control.component';
 import { InsertMentionOperation } from '@activepieces/ui/common';
+import { ArrayProperty } from '@activepieces/pieces-framework';
+import { createConfigsFormControls } from '../shared';
 
 @Component({
   selector: 'app-array-form-control',
@@ -21,12 +32,47 @@ import { InsertMentionOperation } from '@activepieces/ui/common';
       multi: true,
       useExisting: ArrayFormControlComponent,
     },
+    {
+      provide: NG_VALIDATORS,
+      multi: true,
+      useExisting: ArrayFormControlComponent,
+    },
   ],
 })
 export class ArrayFormControlComponent implements ControlValueAccessor {
-  valueChanges$: Observable<void>;
-  formArray: FormArray<FormControl<string>>;
+  formArray: FormArray<FormControl<string> | UntypedFormGroup>;
+  @Input({ required: true }) formFieldsTemplate: TemplateRef<unknown>;
+  @Input({ required: true }) property: ArrayProperty<true>;
+  @Input({ required: true }) prefix: string;
   @ViewChild('textControl') firstInput: InterpolatingTextFormControlComponent;
+  removeItemTooltip = $localize`Remove item`;
+  updateValueOnChange$: Observable<void> = new Observable<void>();
+
+  createForm(propertiesValues: Record<string, unknown> | string) {
+    const properties = this.property.properties;
+    if (
+      typeof propertiesValues !== 'string' &&
+      properties &&
+      Object.keys(properties).length > 0
+    ) {
+      const controls = createConfigsFormControls(
+        properties,
+        propertiesValues,
+        this.fb
+      );
+
+      this.formArray.push(
+        this.fb.group({
+          ...controls,
+        })
+      );
+    } else if (typeof propertiesValues === 'string') {
+      this.formArray.push(
+        new FormControl<string>(propertiesValues, { nonNullable: true })
+      );
+    }
+  }
+
   onChange: (val: unknown) => void = () => {
     //ignore
   };
@@ -34,42 +80,42 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
     //ignore
   };
 
-  constructor(private fb: FormBuilder) {
-    this.formArray = this.fb.array([
-      new FormControl<string>(''),
-    ] as FormControl<string>[]);
-    this.valueChanges$ = this.formArray.valueChanges.pipe(
-      tap((val) => {
-        this.onChange(val.filter((v) => v !== ''));
+  constructor(private fb: FormBuilder, private cd: ChangeDetectorRef) {
+    this.formArray = this.fb.array([]) as FormArray<
+      FormControl<string> | UntypedFormGroup
+    >;
+    this.updateValueOnChange$ = this.formArray.valueChanges.pipe(
+      tap((value) => {
+        this.onChange(value);
       }),
-      map(() => {
-        return void 0;
-      })
+      map(() => void 0)
     );
   }
-  writeValue(obj: string[]): void {
-    if (obj) {
+  /** type of value is string only when you swtich to customized inputs that happens because of change detection running before the form control is removed from template*/
+  writeValue(pvalue: Array<string | Record<string, unknown>>): void {
+    const values = pvalue;
+
+    if (typeof pvalue !== 'string') {
+      if (!values || values.length === 0) {
+        if (this.property.properties) {
+          values.push({});
+        } else {
+          values.push('');
+        }
+      }
+
       this.formArray.clear();
-      obj.forEach((val) => {
-        this.formArray.push(
-          new FormControl<string>(val, { nonNullable: true }),
-          { emitEvent: false }
-        );
+
+      // create form for each value
+      values.forEach((v) => {
+        this.createForm(v);
       });
-      if (obj.length === 0) {
-        this.formArray.push(
-          new FormControl<string>('', { nonNullable: true }),
-          { emitEvent: false }
-        );
-      }
-      if (
-        this.formArray.length > 0 &&
-        this.formArray.controls[this.formArray.length - 1].value
-      ) {
-        this.formArray.push(new FormControl<string>('', { nonNullable: true }));
-      }
+
+      this.formArray.markAllAsTouched();
+      this.cd.markForCheck();
     }
   }
+
   registerOnChange(fn: (val: unknown) => void): void {
     this.onChange = fn;
   }
@@ -84,10 +130,32 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
     }
   }
   addValue() {
-    this.formArray.push(new FormControl<string>('', { nonNullable: true }));
+    if (
+      this.property &&
+      Object.keys(this.property.properties || {}).length > 0
+    ) {
+      // If the property indicates that we're dealing with an array of objects
+
+      this.createForm({});
+      this.formArray.markAllAsTouched();
+      this.cd.markForCheck();
+    } else {
+      this.createForm('');
+    }
   }
+
   removeValue(index: number) {
-    if (this.formArray.controls.length > 1) {
+    if (
+      this.property &&
+      Object.keys(this.property.properties || {}).length > 0
+    ) {
+      if (
+        (this.property.required && this.formArray.controls.length > 1) ||
+        !this.property.required
+      ) {
+        this.formArray.removeAt(index);
+      }
+    } else if (this.formArray.controls.length > 1) {
       this.formArray.removeAt(index);
     }
   }
@@ -100,5 +168,19 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
   }
   focusFirstInput() {
     this.firstInput.focusEditor();
+  }
+
+  getFormControlAtIndex(index: number): FormControl {
+    const control = this.formArray.controls[index];
+    return control as any;
+  }
+  getFormControlGroupAtIndex(c: any): FormControl {
+    return c as any;
+  }
+  validate() {
+    if (this.formArray.invalid) {
+      return { invalid: true };
+    }
+    return null;
   }
 }

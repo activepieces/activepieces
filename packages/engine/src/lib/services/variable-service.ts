@@ -6,11 +6,11 @@ import {
     isString,
 } from '@activepieces/shared'
 import {
-    PropertyType,
     formatErrorMessage,
     ErrorMessages,
+    InputPropertyMap,
     PieceAuthProperty,
-    NonAuthPiecePropertyMap,
+    PropertyType,
 } from '@activepieces/pieces-framework'
 import { handleAPFile, isApFilePath } from './files.service'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -194,7 +194,7 @@ export class VariableService {
 
     async applyProcessorsAndValidators(
         resolvedInput: Record<string, any>,
-        props: NonAuthPiecePropertyMap,
+        props: InputPropertyMap,
         auth: PieceAuthProperty | undefined,
     ): Promise<{ processedInput: any, errors: any }> {
         const processedInput = { ...resolvedInput }

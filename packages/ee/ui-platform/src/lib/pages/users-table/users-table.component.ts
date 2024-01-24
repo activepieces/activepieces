@@ -8,6 +8,8 @@ import {
 import { Observable, Subject, startWith, tap } from 'rxjs';
 import { UserResponse, UserStatus } from '@activepieces/shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { ActivatedRoute } from '@angular/router';
+import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
 
 @Component({
   selector: 'app-users-table',
@@ -32,15 +34,20 @@ export class UsersTableComponent {
     'status',
     'action',
   ];
+  isDemo = false;
   constructor(
     private platformService: PlatformService,
     private snackBar: MatSnackBar,
-    private authenticationService: AuthenticationService
+    private authenticationService: AuthenticationService,
+    private route: ActivatedRoute
   ) {
+    this.isDemo = this.route.snapshot.data[PLATFORM_DEMO_RESOLVER_KEY];
     this.platformOwnerId = this.authenticationService.currentUser.id;
     this.dataSource = new UsersDataSource(
       this.refresh$.asObservable().pipe(startWith(true)),
-      this.platformService
+      this.platformService,
+      this.authenticationService,
+      this.isDemo
     );
   }
 
@@ -58,6 +65,7 @@ export class UsersTableComponent {
         })
       );
   }
+
   activateUser(user: UserResponse) {
     this.activate$ = this.platformService
       .updateUser(user.id, { status: UserStatus.ACTIVE })

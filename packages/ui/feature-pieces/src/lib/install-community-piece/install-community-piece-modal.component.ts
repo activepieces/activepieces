@@ -17,6 +17,7 @@ import {
   ApFlagId,
   EXACT_VERSION_PATTERN,
   PackageType,
+  PieceScope,
 } from '@activepieces/shared';
 import { PieceMetadataService } from '../services/piece-meta.service';
 
@@ -55,7 +56,7 @@ export class InstallCommunityPieceModalComponent {
 
   constructor(
     @Inject(MAT_DIALOG_DATA)
-    public data: { platformId?: string },
+    public data: { scope: PieceScope },
     private fb: FormBuilder,
     private pieceMetadataService: PieceMetadataService,
     private dialogRef: MatDialogRef<InstallCommunityPieceModalComponent>,
@@ -116,7 +117,7 @@ export class InstallCommunityPieceModalComponent {
       this.addPieceRequest$ = this.pieceMetadataService
         .installCommunityPiece({
           ...pieceInfo,
-          platformId: this.data.platformId
+          scope: this.data.scope,
         })
         .pipe(
           catchError((err) => {

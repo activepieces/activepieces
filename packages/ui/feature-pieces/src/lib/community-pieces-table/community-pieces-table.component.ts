@@ -18,6 +18,7 @@ import { CommunityPiecesDataSource } from './community-pieces-table.datasource';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { InstallCommunityPieceModalComponent } from '../install-community-piece/install-community-piece-modal.component';
 import { PieceMetadataService } from '../services/piece-meta.service';
+import { PieceScope } from '@activepieces/shared';
 
 @Component({
   templateUrl: './community-pieces-table.component.html',
@@ -45,7 +46,7 @@ export class CommunityPiecesTableComponent {
     this.addPackageDialogClosed$ = this.dialogService
       .open(InstallCommunityPieceModalComponent, {
         data: {
-          platformId: undefined,
+          scope: PieceScope.PROJECT,
         },
       })
       .afterClosed()

@@ -10,7 +10,10 @@ import {
   AuthenticationService,
   CommonActions,
   PlatformProjectService,
+  featureDisabledTooltip,
 } from '@activepieces/ui/common';
+import { ActivatedRoute } from '@angular/router';
+import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
 
 @Component({
   selector: 'app-projects-table',
@@ -33,16 +36,21 @@ export class ProjectsTableComponent {
   createProject$: Observable<void> | undefined;
   updateProject$: Observable<void> | undefined;
   title = $localize`Projects`;
+  featureDisabledTooltip = featureDisabledTooltip;
+  isDemo = false;
   constructor(
     private projectsService: PlatformProjectService,
     private matDialog: MatDialog,
     private authenticationService: AuthenticationService,
-    private store: Store
+    private store: Store,
+    private route: ActivatedRoute
   ) {
+    this.isDemo = this.route.snapshot.data[PLATFORM_DEMO_RESOLVER_KEY];
     this.dataSource = new ProjectsDataSource(
       this.projectsService,
       this.refreshTable$.asObservable().pipe(startWith(true)),
-      this.authenticationService.getPlatformId()!
+      this.authenticationService.getPlatformId()!,
+      this.isDemo
     );
   }
 

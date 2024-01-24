@@ -2,7 +2,6 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import {
   Dimension,
   googleSheetsCommon,
-  labelToColumn,
   objectToArray,
   stringifyArray,
   ValueInputOption,

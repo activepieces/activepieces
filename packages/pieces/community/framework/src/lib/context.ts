@@ -9,16 +9,15 @@ import {
 } from '@activepieces/shared';
 import { TriggerStrategy } from './trigger/trigger';
 import {
-  NonAuthPiecePropertyMap,
-  PieceAuthProperty,
+  InputPropertyMap,
   PiecePropValueSchema,
-  PiecePropertyMap,
   StaticPropsValue,
 } from './property';
+import { PieceAuthProperty } from './property/authentication';
 
 type BaseContext<
   PieceAuth extends PieceAuthProperty,
-  Props extends PiecePropertyMap
+  Props extends InputPropertyMap
 > = {
   auth: PiecePropValueSchema<PieceAuth>;
   propsValue: StaticPropsValue<Props>;
@@ -31,7 +30,7 @@ type BaseContext<
 
 type AppWebhookTriggerHookContext<
   PieceAuth extends PieceAuthProperty,
-  TriggerProps extends PiecePropertyMap
+  TriggerProps extends InputPropertyMap
 > = BaseContext<PieceAuth, TriggerProps> & {
   webhookUrl: string;
   payload: TriggerPayload;
@@ -48,14 +47,14 @@ type AppWebhookTriggerHookContext<
 
 type PollingTriggerHookContext<
   PieceAuth extends PieceAuthProperty,
-  TriggerProps extends PiecePropertyMap
+  TriggerProps extends InputPropertyMap
 > = BaseContext<PieceAuth, TriggerProps> & {
   setSchedule(schedule: { cronExpression: string; timezone?: string }): void;
 };
 
 type WebhookTriggerHookContext<
   PieceAuth extends PieceAuthProperty,
-  TriggerProps extends PiecePropertyMap
+  TriggerProps extends InputPropertyMap
 > = BaseContext<PieceAuth, TriggerProps> & {
   webhookUrl: string;
   payload: TriggerPayload;
@@ -63,7 +62,7 @@ type WebhookTriggerHookContext<
 
 export type TriggerHookContext<
   PieceAuth extends PieceAuthProperty,
-  TriggerProps extends PiecePropertyMap,
+  TriggerProps extends InputPropertyMap,
   S extends TriggerStrategy
 > = S extends TriggerStrategy.APP_WEBHOOK
   ? AppWebhookTriggerHookContext<PieceAuth, TriggerProps>
@@ -75,7 +74,7 @@ export type TriggerHookContext<
 
 export type TestOrRunHookContext<
   PieceAuth extends PieceAuthProperty,
-  TriggerProps extends PiecePropertyMap,
+  TriggerProps extends InputPropertyMap,
   S extends TriggerStrategy
 > = TriggerHookContext<PieceAuth, TriggerProps, S> & {
   files: FilesService;
@@ -101,6 +100,10 @@ export type PauseHook = (params: PauseHookParams) => void;
 
 export type PropertyContext = {
   server: ServerContext;
+  project: {
+    id: ProjectId;
+    externalId: () => Promise<string | undefined>;
+  };
 };
 
 export type ServerContext = {
@@ -111,7 +114,7 @@ export type ServerContext = {
 export type BaseActionContext<
   ET extends ExecutionType,
   PieceAuth extends PieceAuthProperty,
-  ActionProps extends NonAuthPiecePropertyMap
+  ActionProps extends InputPropertyMap
 > = BaseContext<PieceAuth, ActionProps> & {
   executionType: ET;
   connections: ConnectionsManager;
@@ -128,19 +131,19 @@ export type BaseActionContext<
 
 type BeginExecutionActionContext<
   PieceAuth extends PieceAuthProperty = PieceAuthProperty,
-  ActionProps extends NonAuthPiecePropertyMap = NonAuthPiecePropertyMap
+  ActionProps extends InputPropertyMap = InputPropertyMap
 > = BaseActionContext<ExecutionType.BEGIN, PieceAuth, ActionProps>;
 
 type ResumeExecutionActionContext<
   PieceAuth extends PieceAuthProperty = PieceAuthProperty,
-  ActionProps extends NonAuthPiecePropertyMap = NonAuthPiecePropertyMap
+  ActionProps extends InputPropertyMap = InputPropertyMap
 > = BaseActionContext<ExecutionType.RESUME, PieceAuth, ActionProps> & {
   resumePayload: unknown;
 };
 
 export type ActionContext<
   PieceAuth extends PieceAuthProperty = PieceAuthProperty,
-  ActionProps extends NonAuthPiecePropertyMap = NonAuthPiecePropertyMap
+  ActionProps extends InputPropertyMap = InputPropertyMap
 > =
   | BeginExecutionActionContext<PieceAuth, ActionProps>
   | ResumeExecutionActionContext<PieceAuth, ActionProps>;

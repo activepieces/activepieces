@@ -32,7 +32,7 @@ interface BasicAuthForm {
   password: FormControl<string>;
 }
 export interface BasicAuthDialogData {
-  pieceAuthProperty: BasicAuthProperty<boolean>;
+  pieceAuthProperty: BasicAuthProperty;
   pieceName: string;
   connectionToUpdate?: AppConnectionWithoutSensitiveData;
 }
