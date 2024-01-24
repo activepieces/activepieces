@@ -13,23 +13,14 @@ import {
   FormControl,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  UntypedFormControl,
   UntypedFormGroup,
 } from '@angular/forms';
 import { map, Observable, tap } from 'rxjs';
 import { InterpolatingTextFormControlComponent } from '../interpolating-text-form-control/interpolating-text-form-control.component';
 import { InsertMentionOperation } from '@activepieces/ui/common';
-import {
-  ArrayProperty,
-  PiecePropertyMap,
-} from '@activepieces/pieces-framework';
+import { ArrayProperty } from '@activepieces/pieces-framework';
+import { createConfigsFormControls } from '../shared';
 
-type CreateConfigsFormControls = (
-  properties: PiecePropertyMap,
-  propertiesValues: Record<string, unknown>
-) => {
-  [key: string]: UntypedFormControl | UntypedFormGroup;
-};
 @Component({
   selector: 'app-array-form-control',
   templateUrl: './array-form-control.component.html',
@@ -50,13 +41,11 @@ type CreateConfigsFormControls = (
 })
 export class ArrayFormControlComponent implements ControlValueAccessor {
   formArray: FormArray<FormControl<string> | UntypedFormGroup>;
-  @Input() formFieldsTemplate: TemplateRef<any>;
-  @Input() property: ArrayProperty<true>;
-  @Input() prefix: string;
-  @Input() createConfigsFormControls: CreateConfigsFormControls;
-
+  @Input({ required: true }) formFieldsTemplate: TemplateRef<unknown>;
+  @Input({ required: true }) property: ArrayProperty<true>;
+  @Input({ required: true }) prefix: string;
   @ViewChild('textControl') firstInput: InterpolatingTextFormControlComponent;
-
+  removeItemTooltip = $localize`Remove item`;
   updateValueOnChange$: Observable<void> = new Observable<void>();
 
   createForm(propertiesValues: Record<string, unknown> | string) {
@@ -66,9 +55,10 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
       properties &&
       Object.keys(properties).length > 0
     ) {
-      const controls = this.createConfigsFormControls(
+      const controls = createConfigsFormControls(
         properties,
-        propertiesValues
+        propertiesValues,
+        this.fb
       );
 
       this.formArray.push(
@@ -94,36 +84,36 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
     this.formArray = this.fb.array([]) as FormArray<
       FormControl<string> | UntypedFormGroup
     >;
-  }
-
-  writeValue(pvalue: Array<string | Record<string, unknown>>): void {
-    const values = pvalue;
-
-    // if the values i empty add one elment to array
-    if (!values || values.length === 0) {
-      if (this.property.properties) {
-        values.push({});
-      } else {
-        values.push('');
-      }
-    }
-
-    this.formArray.clear();
-
-    // create form for each value
-    values.forEach((v) => {
-      this.createForm(v);
-    });
-
     this.updateValueOnChange$ = this.formArray.valueChanges.pipe(
       tap((value) => {
         this.onChange(value);
       }),
       map(() => void 0)
     );
+  }
+  /** type of value is string only when you swtich to customized inputs that happens because of change detection running before the form control is removed from template*/
+  writeValue(pvalue: Array<string | Record<string, unknown>>): void {
+    const values = pvalue;
 
-    this.formArray.markAllAsTouched();
-    this.cd.markForCheck();
+    if (typeof pvalue !== 'string') {
+      if (!values || values.length === 0) {
+        if (this.property.properties) {
+          values.push({});
+        } else {
+          values.push('');
+        }
+      }
+
+      this.formArray.clear();
+
+      // create form for each value
+      values.forEach((v) => {
+        this.createForm(v);
+      });
+
+      this.formArray.markAllAsTouched();
+      this.cd.markForCheck();
+    }
   }
 
   registerOnChange(fn: (val: unknown) => void): void {
@@ -147,7 +137,6 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
       // If the property indicates that we're dealing with an array of objects
 
       this.createForm({});
-
       this.formArray.markAllAsTouched();
       this.cd.markForCheck();
     } else {

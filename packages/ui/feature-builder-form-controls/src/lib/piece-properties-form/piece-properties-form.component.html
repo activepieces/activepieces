@@ -10,7 +10,8 @@
   </div>
 </form>
 
-<ng-template let-property let-propertyIndex="propertyIndex" #formFieldsTemplate let-formGroup="formGroup" let-prefix="prefix">
+<ng-template let-property let-propertyIndex="propertyIndex" #formFieldsTemplate let-formGroup="formGroup"
+  let-prefix="prefix">
 
   <ng-container [ngSwitch]="property.value.type" [formGroup]="formGroup">
 
@@ -373,7 +374,8 @@
 
       <ng-template #arrayInputTemplate>
         <div [class.ap-mb-5]="form.disabled" #hoverContainer="hoverTrackerDirective" apTrackHover>
-          <app-array-form-control #array [formControlName]="property.key" [property]="property.value" [formFieldsTemplate]="formFieldsTemplate" [prefix]="property.key" [createConfigsFormControls]="createConfigsFormControls"></app-array-form-control>
+          <app-array-form-control #array [formControlName]="property.key" [property]="property.value"
+            [formFieldsTemplate]="formFieldsTemplate" [prefix]="property.key"></app-array-form-control>
         </div>
         <ng-container *ngTemplateOutlet="description; context:{$implicit:property}">
         </ng-container>
@@ -546,7 +548,8 @@
     <ng-container *ngSwitchCase="PropertyType.DYNAMIC">
       <ng-container *ngIf="(refreshableConfigsLoadingFlags$[property.key] | async) === false ||
       (refreshableConfigsLoadingFlags$[property.key] | async) === undefined ||
-      (refreshableConfigsLoadingFlags$[property.key] | async) === null; else loading">   <div class="ap-flex ap-flex-col ap-gap-2">
+      (refreshableConfigsLoadingFlags$[property.key] | async) === null; else loading">
+        <div class="ap-flex ap-flex-col ap-gap-2">
           <div *ngFor="let cp of (dynamicPropsObservables$[property.key] | async)| objectToArray; let i = index">
             <ng-container
               *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:cp, configIndex:i, formGroup:formGroup.get(property.key)}">
