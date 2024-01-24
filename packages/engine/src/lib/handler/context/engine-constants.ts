@@ -1,4 +1,4 @@
-import { ExecuteFlowOperation, ExecuteStepOperation, ExecuteTriggerOperation, ExecutionType, Project, ProjectId, TriggerHookType } from '@activepieces/shared'
+import { ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecutionType, Project, ProjectId, TriggerHookType } from '@activepieces/shared'
 import { VariableService } from '../../services/variable-service'
 
 type RetryConstants = {
@@ -47,7 +47,7 @@ export class EngineConstants {
         public readonly testSingleStepMode: boolean,
         public readonly filesServiceType: 'local' | 'db',
         public readonly resumePayload?: unknown,
-    ) {}
+    ) { }
 
     public static fromExecuteFlowInput(input: ExecuteFlowOperation): EngineConstants {
         return new EngineConstants(
@@ -72,6 +72,24 @@ export class EngineConstants {
         return new EngineConstants(
             input.flowVersion.flowId,
             'test-run',
+            input.serverUrl,
+            DEFAULT_RETRY_CONSTANTS,
+            ExecutionType.BEGIN,
+            input.workerToken,
+            input.projectId,
+            new VariableService({
+                projectId: input.projectId,
+                workerToken: input.workerToken,
+            }),
+            true,
+            'db',
+        )
+    }
+
+    public static fromExecutePropertyInput(input: ExecutePropsOptions): EngineConstants {
+        return new EngineConstants(
+            input.flowVersion.flowId,
+            'execute-property',
             input.serverUrl,
             DEFAULT_RETRY_CONSTANTS,
             ExecutionType.BEGIN,
