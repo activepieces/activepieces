@@ -92,7 +92,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             versionId: flowVersionId,
         })
         const { result } = await engineHelper.executeProp({
-            piece: await getPiecePackage({
+            piece: await getPiecePackage(projectId, {
                 packageType,
                 pieceType,
                 pieceName,

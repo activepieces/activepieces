@@ -14,8 +14,8 @@ type ListParams = {
 
 type GetOrThrowParams = {
     name: string
-    version?: string
-    projectId?: string
+    version: string | undefined
+    projectId: string | undefined
     entityManager?: EntityManager
 }
 

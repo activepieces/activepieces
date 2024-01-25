@@ -20,12 +20,13 @@ const initPieceMetadataService = (): PieceMetadataService => {
 
 export const pieceMetadataService = initPieceMetadataService()
 
-export const getPiecePackage = async (pkg: PublicPiecePackage | Omit<PrivatePiecePackage, 'archiveId'>): Promise<PiecePackage> => {
+export const getPiecePackage = async (projectId: string, pkg: PublicPiecePackage | Omit<PrivatePiecePackage, 'archiveId'>): Promise<PiecePackage> => {
     switch (pkg.packageType) {
         case PackageType.ARCHIVE: {
             const pieceMetadata = await pieceMetadataService.getOrThrow({
                 name: pkg.pieceName,
                 version: pkg.pieceVersion,
+                projectId,
             })
             return {
                 packageType: PackageType.ARCHIVE,

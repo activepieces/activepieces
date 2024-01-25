@@ -255,7 +255,7 @@ const engineValidateAuth = async (
 
 
     const engineResponse = await engineHelper.executeValidateAuth( {
-        piece: await getPiecePackage({
+        piece: await getPiecePackage(projectId, {
             pieceName,
             pieceVersion: pieceMetadata.version,
             pieceType: pieceMetadata.pieceType,
