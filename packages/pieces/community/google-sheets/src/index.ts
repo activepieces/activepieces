@@ -9,7 +9,7 @@ import { findRowByNumAction } from './lib/actions/find-row-by-num';
 import { getRowsAction } from './lib/actions/get-rows';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { googleSheetsCommon } from './lib/common/common';
-import { instantTrigger } from './lib/triggers/instant-trigger';
+import { newRowAddedTrigger } from './lib/triggers/new-row-added-at-bottom';
 
 export const googleSheetsAuth = PieceAuth.OAuth2({
   description: '',
@@ -32,6 +32,7 @@ export const googleSheets = createPiece({
     'Shay Punter',
     'Abdallah-Alwarawreh',
     'Salem-Alaa',
+    'kishanprmr'
   ],
   actions: [
     insertRowAction,
@@ -54,6 +55,6 @@ export const googleSheets = createPiece({
     })
   ],
   displayName: 'Google Sheets',
-  triggers: [readNewRows, instantTrigger],
+  triggers: [readNewRows, newRowAddedTrigger],
   auth: googleSheetsAuth,
 });
