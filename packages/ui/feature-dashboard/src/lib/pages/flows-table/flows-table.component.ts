@@ -30,8 +30,12 @@ import { FolderActions } from '../../store/folders/folders.actions';
 import {
   MoveFlowToFolderDialogComponent,
   MoveFlowToFolderDialogData,
-} from './move-flow-to-folder-dialog/move-flow-to-folder-dialog.component';
+} from '../../components/dialogs/move-flow-to-folder-dialog/move-flow-to-folder-dialog.component';
 import { FoldersSelectors } from '../../store/folders/folders.selector';
+import {
+  RenameFlowDialogComponent,
+  RenameFlowDialogData,
+} from '../../components/dialogs/rename-flow-dialog/rename-flow-dialog.component';
 
 @Component({
   templateUrl: './flows-table.component.html',
@@ -54,11 +58,12 @@ export class FlowsTableComponent implements OnInit {
     'action',
   ];
   refreshTableAtCurrentCursor$: Subject<boolean> = new Subject();
-  areThereFlows$: Observable<boolean>;
+  areThereFlows$?: Observable<boolean>;
   flowsUpdateStatusRequest$: Record<string, Observable<void> | null> = {};
   showAllFlows$: Observable<boolean>;
-  duplicateFlow$: Observable<void>;
-  downloadTemplate$: Observable<void>;
+  duplicateFlow$?: Observable<void>;
+  downloadTemplate$?: Observable<void>;
+  renameFlow$?: Observable<boolean>;
   constructor(
     private activatedRoute: ActivatedRoute,
     private dialogService: MatDialog,
@@ -69,19 +74,17 @@ export class FlowsTableComponent implements OnInit {
     private navigationService: NavigationService,
     @Inject(LOCALE_ID) public locale: string
   ) {
-    this.listenToShowAllFolders();
+    this.showAllFlows$ = this.listenToShowAllFolders();
     this.folderId$ = this.store.select(FoldersSelectors.selectCurrentFolderId);
   }
 
   private listenToShowAllFolders() {
-    this.showAllFlows$ = this.store
-      .select(FoldersSelectors.selectDisplayAllFlows)
-      .pipe(
-        tap((displayAllFlows) => {
-          this.hideOrShowFolderColumn(displayAllFlows);
-        }),
-        shareReplay(1)
-      );
+    return this.store.select(FoldersSelectors.selectDisplayAllFlows).pipe(
+      tap((displayAllFlows) => {
+        this.hideOrShowFolderColumn(displayAllFlows);
+      }),
+      shareReplay(1)
+    );
   }
 
   private hideOrShowFolderColumn(displayAllFlows: boolean) {
@@ -195,6 +198,19 @@ export class FlowsTableComponent implements OnInit {
           }
         }),
         map(() => void 0)
+      );
+  }
+  renameFlow(flow: PopulatedFlow) {
+    const data: RenameFlowDialogData = { flow };
+    this.renameFlow$ = this.dialogService
+      .open(RenameFlowDialogComponent, { data })
+      .afterClosed()
+      .pipe(
+        tap((res) => {
+          if (res) {
+            this.refreshTableAtCurrentCursor$.next(true);
+          }
+        })
       );
   }
 }

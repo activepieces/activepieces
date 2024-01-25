@@ -63,6 +63,13 @@
                   <mat-icon>more_vert</mat-icon>
                 </button>
                 <mat-menu #menu="matMenu" xPosition="before">
+                  <button mat-menu-item (click)="renameFlow(flow)">
+                    <div class="ap-flex ap-gap-3 ap-items-center">
+                      <svg-icon [src]="flowActionsUiInfo.rename.icon" [class]="flowActionsUiInfo.iconSizeTailWind"
+                        [applyClass]="true"></svg-icon>
+                      <span i18n>{{flowActionsUiInfo.rename.text}}</span>
+                    </div>
+                  </button>
                   <button mat-menu-item (click)="moveFlow(flow)">
                     <div class="ap-flex ap-gap-3 ap-items-center">
                       <svg-icon [src]="flowActionsUiInfo.move.icon" [class]="flowActionsUiInfo.iconSizeTailWind"
@@ -140,3 +147,4 @@
 <ng-container *ngIf="showAllFlows$ | async"></ng-container>
 <ng-container *ngIf="duplicateFlow$ | async"></ng-container>
 <ng-container *ngIf="downloadTemplate$ | async"></ng-container>
+<ng-container *ngIf="renameFlow$ | async"></ng-container>
