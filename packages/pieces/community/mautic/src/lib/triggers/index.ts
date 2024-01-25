@@ -340,7 +340,7 @@ export const triggers = [
     eventType: "mautic.lead_post_save_new",
   },
 ]
-.map((props) => registerTrigger(props));
+  .map((props) => registerTrigger(props));
 
 function registerTrigger({
   name,
@@ -396,12 +396,12 @@ function registerTrigger({
       }
 
       const response = await httpClient.sendRequest<WebhookInformation>(request);
-      await context.store.put<WebhookInformation>(`mautic_triggers`, response.body);
+      await context.store.put<WebhookInformation>(`mautic_${name}_trigger`, response.body);
     },
     async onDisable(context) {
       const { base_url, username, password } = context.auth
 
-      const webhook = await context.store.get<WebhookInformation>(`mautic_triggers`);
+      const webhook = await context.store.get<WebhookInformation>(`mautic_${name}_trigger`);
       if (webhook != null) {
         const request: HttpRequest = {
           method: HttpMethod.DELETE,
