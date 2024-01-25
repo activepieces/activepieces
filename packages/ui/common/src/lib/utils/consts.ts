@@ -51,4 +51,3 @@ export const downloadFlow = (flow: FlowTemplate) => {
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 };
-
