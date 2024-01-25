@@ -1,19 +1,36 @@
 import { CodeSandboxType } from '@activepieces/shared'
 import { CodeSandbox } from '../../core/code/code-sandbox-common'
-import { v8IsolateCodeSandbox } from './v8-isolate-code-sandbox'
-import { noOpCodeSandbox } from './no-op-code-sandbox'
 
 const CODE_SANDBOX_TYPE =
     (process.env.AP_CODE_SANDBOX_TYPE as CodeSandboxType | undefined)
     ?? CodeSandboxType.NO_OP
 
-const getCodeSandbox = (): CodeSandbox => {
-    const variants = new Map([
-        [CodeSandboxType.NO_OP, noOpCodeSandbox],
-        [CodeSandboxType.V8_ISOLATE, v8IsolateCodeSandbox],
-    ])
-
-    return variants.get(CODE_SANDBOX_TYPE) ?? noOpCodeSandbox
+const loadNoOpCodeSandbox = async (): Promise<CodeSandbox> => {
+    const noOpCodeSandboxModule = await import('./no-op-code-sandbox')
+    return noOpCodeSandboxModule.noOpCodeSandbox
 }
 
-export const codeSandbox = getCodeSandbox()
+const loadV8IsolateSandbox = async (): Promise<CodeSandbox> => {
+    const v8IsolateCodeSandboxModule = await import('./v8-isolate-code-sandbox')
+    return v8IsolateCodeSandboxModule.v8IsolateCodeSandbox
+}
+
+const loadCodeSandbox = async (): Promise<CodeSandbox> => {
+    const loaders = new Map([
+        [CodeSandboxType.NO_OP, loadNoOpCodeSandbox],
+        [CodeSandboxType.V8_ISOLATE, loadV8IsolateSandbox],
+    ])
+
+    const loader = loaders.get(CODE_SANDBOX_TYPE) ?? loadNoOpCodeSandbox
+    return loader()
+}
+
+let instance: CodeSandbox | null = null
+
+export const initCodeSandbox = async (): Promise<CodeSandbox> => {
+    if (instance === null) {
+        instance = await loadCodeSandbox()
+    }
+
+    return instance
+}

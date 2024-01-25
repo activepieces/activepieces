@@ -31,6 +31,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                         minimumSupportedRelease: LessThanOrEqual(release),
                         maximumSupportedRelease: MoreThanOrEqual(release),
                         platformId: Equal(platformId),
+                        projectId: IsNull(),
                         pieceType: Equal(PieceType.CUSTOM),
                     },
                     {
@@ -191,6 +192,7 @@ const createProjectPieceFilter = (name: string, projectId: string): Record<strin
 const createPlatformPieceFilter = (name: string, platformId: string): Record<string, unknown> => ({
     name,
     platformId: Equal(platformId),
+    projectId: IsNull(),
     pieceType: Equal(PieceType.CUSTOM),
 })
 
