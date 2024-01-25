@@ -3,25 +3,25 @@ import { googleSheetsCommon } from "../common/common";
 import { googleSheetsAuth } from '../..';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
-import { v4 as uuid } from 'uuid'
+import { v4 as uuid } from 'uuid';
 import { columnToLabel } from "../common/common";
 
-export const instantTrigger = createTrigger({
+export const newRowAddedTrigger = createTrigger({
     auth: googleSheetsAuth,
-    name: 'instant_trigger',
-    displayName: 'Instant trigger',
-    description: '',
+    name: 'googlesheets_new_row_added',
+    displayName: 'New Row Added (Instant)',
+    description: 'Triggers when a new row is added to bottom of a spreadsheet.',
     props: {
         spreadsheet_id: googleSheetsCommon.spreadsheet_id,
         sheet_id: googleSheetsCommon.sheet_id,
-
     },
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
         const { spreadsheet_id, sheet_id } = context.propsValue;
 
         // fetch current sheet values
-        const currentSheetValues = await getSheetValues(context.auth, spreadsheet_id);
+        const sheetName = await getWorkSheetName(context.auth, spreadsheet_id, sheet_id);
+        const currentSheetValues = await getWorkSheetValues(context.auth, spreadsheet_id, sheetName);
 
         // store current sheet row count 
         await context.store.put(`${sheet_id}`, currentSheetValues.length);
@@ -34,74 +34,56 @@ export const instantTrigger = createTrigger({
     async onDisable(context) {
         const webhook = await context.store.get<WebhookInformation>(`instant_trigger`);
         if (webhook != null && webhook.id != null && webhook.resourceId != null) {
-            const res = await deleteFileNotification(context.auth, webhook.id, webhook.resourceId)
-            console.log("DELETING WEBHOOK")
-            console.log(res)
+            await deleteFileNotification(context.auth, webhook.id, webhook.resourceId)
 
         }
     },
     async run(context) {
         // check if notification is a sync message
         if (isSyncMessage(context.payload.headers)) {
-            console.log("IT IS SYNC MESSAGE")
             return [];
         }
         if (!isChangeContentMessage(context.payload.headers)) {
             return [];
         }
         const { spreadsheet_id, sheet_id } = context.propsValue;
-        const authClient = new OAuth2Client();
-        authClient.setCredentials(context.auth)
-        const sheets = google.sheets({ version: 'v4', auth: authClient })
 
-        // fetch old row count for sheet 
+        // fetch old row count for worksheet 
         const oldRowCount = await context.store.get(`${context.propsValue.sheet_id}`) as number;
 
-        // fetch current row count for sheet
-        const currentRowValues = await getSheetValues(context.auth, spreadsheet_id)
-        const currentRowCount = currentRowValues.length
+        // fetch current row count for worksheet
+        const sheetName = await getWorkSheetName(context.auth, spreadsheet_id, sheet_id);
+        const currentRowValues = await getWorkSheetValues(context.auth, spreadsheet_id, sheetName);
+        const currentRowCount = currentRowValues.length;
 
         // if no new rows return
         if (oldRowCount === currentRowCount) {
             return [];
         }
 
-        // fetch new rows
-        const sheetName = await getSheetName(context.auth, spreadsheet_id, sheet_id);
-        if (!sheetName) {
-            throw Error(`Sheet with ID ${sheet_id} not found in spreadsheet ${spreadsheet_id}`);
-        }
-
         // create A1 notation range for new rows
         const range = `${sheetName}!${oldRowCount + 1}:${currentRowCount}`
 
-        const newRowValues = await sheets.spreadsheets.values.get({
-            spreadsheetId: spreadsheet_id,
-            range: range
-        })
-
-        if (newRowValues.data.values === undefined) {
-            return []
-        }
+        const newRowValues = await getWorkSheetValues(context.auth as PiecePropValueSchema<typeof googleSheetsAuth>, spreadsheet_id, range)
 
         // update row count value
         await context.store.put(`${sheet_id}`, currentRowCount)
 
         // transform row values
-        const result = [];
-        for (let i = 0; i < (newRowValues.data.values ?? []).length; i++) {
-            const values: any = {};
-            if (newRowValues.data.values && newRowValues.data.values[i]) {
-                for (let j = 0; j < newRowValues.data.values[i].length; j++) {
-                    values[columnToLabel(j)] = newRowValues.data.values[i][j]
-                }
+        const transformedRowValues = transformWorkSheetValues(newRowValues, oldRowCount);
+
+        if (checkChannelExpiration(context.payload.headers)) {
+            // get current channel ID & resource ID
+            const webhook = await context.store.get<WebhookInformation>(`instant_trigger`);
+            if (webhook != null && webhook.id != null && webhook.resourceId != null) {
+                // delete current channel
+                await deleteFileNotification(context.auth, webhook.id, webhook.resourceId);
+                const fileNotificationRes = await createFileNotification(context.auth, spreadsheet_id, context.webhookUrl);
+                // store channel response
+                await context.store.put<WebhookInformation>('instant_trigger', fileNotificationRes.data);
             }
-            result.push({
-                row: i + 1,
-                values,
-            });
         }
-        return result;
+        return transformedRowValues;
     },
     sampleData: {},
 })
@@ -110,7 +92,18 @@ function isSyncMessage(headers: Record<string, string>) {
     return headers['x-goog-resource-state'] === 'sync'
 }
 function isChangeContentMessage(headers: Record<string, string>) {
+    // https://developers.google.com/drive/api/guides/push#respond-to-notifications
     return headers['x-goog-resource-state'] === 'update' && ['content', 'properties', 'content,properties'].includes(headers['x-goog-changed'])
+}
+
+function checkChannelExpiration(headers: Record<string, string>) {
+    const channelExpiration = headers['x-goog-channel-expiration'] as string;
+    const channelExpirationDate = new Date(channelExpiration);
+    const currentDate = new Date();
+
+    // check if time differnce is less than or equal to 10 minutes
+    const timeDifference = (currentDate.getTime() - channelExpirationDate.getTime()) / (1000 * 60);
+    return timeDifference <= 10;
 }
 
 async function createFileNotification(auth: PiecePropValueSchema<typeof googleSheetsAuth>, fileId: string, url: string) {
@@ -121,7 +114,6 @@ async function createFileNotification(auth: PiecePropValueSchema<typeof googleSh
 
     // create unique UUID for channel
     const channelId = uuid();
-
     return await drive.files.watch({
         fileId: fileId,
         requestBody: {
@@ -137,6 +129,7 @@ async function deleteFileNotification(auth: PiecePropValueSchema<typeof googleSh
     authClient.setCredentials(auth);
 
     const drive = google.drive({ version: 'v3', auth: authClient });
+
     return await drive.channels.stop({
         requestBody: {
             id: channelId,
@@ -145,7 +138,7 @@ async function deleteFileNotification(auth: PiecePropValueSchema<typeof googleSh
     })
 }
 
-async function getSheetValues(auth: PiecePropValueSchema<typeof googleSheetsAuth>, spreadsheetId: string, range?: string) {
+async function getWorkSheetValues(auth: PiecePropValueSchema<typeof googleSheetsAuth>, spreadsheetId: string, range?: string) {
     const authClient = new OAuth2Client();
     authClient.setCredentials(auth);
 
@@ -157,19 +150,36 @@ async function getSheetValues(auth: PiecePropValueSchema<typeof googleSheetsAuth
     })
 
     return res.data.values ?? []
-
 }
-async function getSheetName(auth: PiecePropValueSchema<typeof googleSheetsAuth>, spreadSheetId: string, sheetId: number) {
+
+async function getWorkSheetName(auth: PiecePropValueSchema<typeof googleSheetsAuth>, spreadSheetId: string, sheetId: number) {
     const authClient = new OAuth2Client();
     authClient.setCredentials(auth);
 
     const sheets = google.sheets({ version: 'v4', auth: authClient });
+
     const res = await sheets.spreadsheets.get({ spreadsheetId: spreadSheetId });
     const sheetName = res.data.sheets?.find((f) => f.properties?.sheetId == sheetId)?.properties?.title;
 
+    if (!sheetName) {
+        throw Error(`Sheet with ID ${sheetId} not found in spreadsheet ${spreadSheetId}`);
+    }
     return sheetName;
 }
-
+function transformWorkSheetValues(rowValues: any[][], oldRowCount: number) {
+    const result = []
+    for (let i = 0; i < rowValues.length; i++) {
+        const values: any = {};
+        for (let j = 0; j < rowValues[i].length; j++) {
+            values[columnToLabel(j)] = rowValues[i][j]
+        }
+        result.push({
+            row: oldRowCount + 1,
+            values,
+        });
+    }
+    return result;
+}
 interface WebhookInformation {
     kind?: string | null,
     id?: string | null,
