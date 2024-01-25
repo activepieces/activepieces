@@ -1,7 +1,6 @@
-
-import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
-import { heartBeatCreateUser } from "./lib/actions/create-user";
-import { createCustomApiCallAction } from "@activepieces/pieces-common";
+import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { heartBeatCreateUser } from './lib/actions/create-user';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const markdownPropertyDescription = `
   1. Login to your Heartbeat account
@@ -19,19 +18,22 @@ export const heartbeatAuth = PieceAuth.SecretText({
 });
 
 export const Heartbeat = createPiece({
-  displayName: "Heartbeat",
+  displayName: 'Heartbeat',
   auth: heartbeatAuth,
   minimumSupportedRelease: '0.9.0',
-  logoUrl: "https://cdn.activepieces.com/pieces/heartbeat.png",
+  logoUrl: 'https://cdn.activepieces.com/pieces/heartbeat.png',
   authors: ['kanarelo'],
-  actions: [heartBeatCreateUser, createCustomApiCallAction({
-    auth: heartbeatAuth,
-    baseUrl: () => 'https://api.heartbeat.chat/v0',
-    authMapping: (auth) => {
-      return {
-        'Authorization': `Bearer ${auth}`
-      }
-    }
-  })],
+  actions: [
+    heartBeatCreateUser,
+    createCustomApiCallAction({
+      auth: heartbeatAuth,
+      baseUrl: () => 'https://api.heartbeat.chat/v0',
+      authMapping: (auth) => {
+        return {
+          Authorization: `Bearer ${auth}`,
+        };
+      },
+    }),
+  ],
   triggers: [],
 });

@@ -1,7 +1,7 @@
-# pieces-community-heartbeat
+# pieces-heartbeat
 
 This library was generated with [Nx](https://nx.dev).
 
 ## Building
 
-Run `nx build pieces-community-heartbeat` to build the library.
+Run `nx build pieces-heartbeat` to build the library.
