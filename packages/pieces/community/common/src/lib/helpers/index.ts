@@ -24,10 +24,20 @@ export function createCustomApiCallAction({ auth, baseUrl, authMapping }: {
     auth: auth ? auth : undefined,
     requireAuth: auth ? true : false,
     props: {
-      url: Property.ShortText({
-        displayName: 'URL',
-        description: 'The endpoint to use. For example, /models',
+      url: Property.DynamicProperties({
+        displayName: '',
         required: true,
+        refreshers: [],
+        props: async ({ auth }) => {
+          return {
+            url: Property.ShortText({
+              displayName: 'URL',
+              description: 'Add the endpoint to use. For example, /models',
+              required: true,
+              defaultValue: baseUrl(auth)
+            })
+          }
+        }
       }),
       method: Property.StaticDropdown({
         displayName: 'Method',
@@ -75,13 +85,13 @@ export function createCustomApiCallAction({ auth, baseUrl, authMapping }: {
       if (authMapping) {
         headersValue = {
           ...headersValue,
-          ...authMapping(context.auth as PieceAuthProperty)
+          ...authMapping(context.auth)
         }
       }
 
       const request: HttpRequest<Record<string, unknown>> = {
         method,
-        url: `${baseUrl(context.auth)}${url}`,
+        url: url['url'],
         headers: headersValue,
         queryParams: queryParams as QueryParams,
         timeout: timeout ? timeout * 1000 : 0,
