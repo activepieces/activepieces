@@ -44,21 +44,36 @@ export const PieceOptionRequest = Type.Object({
     pieceVersion: VersionType,
     stepName: Type.String({}),
     propertyName: Type.String({}),
+    flowId: Type.String(),
+    flowVersionId: Type.String(),
     input: Type.Any({}),
 })
 
 export type PieceOptionRequest = Static<typeof PieceOptionRequest>
 
-export const AddPieceRequestBody = Type.Object({
-    platformId: Type.Optional(Type.String()),
-    packageType: Type.Enum(PackageType),
-    pieceName: Type.String(),
-    pieceVersion: ExactVersionType,
+export enum PieceScope {
+    PROJECT = 'PROJECT',
+    PLATFORM = 'PLATFORM',
+}
 
-    /**
-     * buffer of the npm package tarball if any
-     */
-    pieceArchive: Type.Optional(Type.Unknown()),
-})
+export const AddPieceRequestBody = Type.Union([
+    Type.Object({
+        packageType: Type.Literal(PackageType.ARCHIVE),
+        scope: Type.Enum(PieceScope),
+        pieceName: Type.String(),
+        pieceVersion: ExactVersionType,
+        pieceArchive: Type.Unknown(),
+    }, {
+        title: 'Private Piece',
+    }),
+    Type.Object({
+        packageType: Type.Literal(PackageType.REGISTRY),
+        scope: Type.Enum(PieceScope),
+        pieceName: Type.String(),
+        pieceVersion: ExactVersionType,
+    }, {
+        title: 'NPM Piece',
+    }),
+])
 
 export type AddPieceRequestBody = Static<typeof AddPieceRequestBody>

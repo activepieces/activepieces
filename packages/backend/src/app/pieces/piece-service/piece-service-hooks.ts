@@ -2,7 +2,7 @@ import { PlatformId } from '@activepieces/ee-shared'
 import { PackageType, PiecePackage, ProjectId } from '@activepieces/shared'
 
 const defaultHooks: PieceServiceHooks = {
-    async getPieceArchivePackage() {
+    async savePieceArchivePackage() {
         throw new Error('operation not supported')
     },
 }
@@ -20,7 +20,7 @@ export const pieceServiceHooks = {
 }
 
 export type PieceServiceHooks = {
-    getPieceArchivePackage(p: GetPieceArchivePackageParams): Promise<PiecePackage>
+    savePieceArchivePackage(p: GetPieceArchivePackageParams): Promise<PiecePackage>
 }
 
 export type GetPieceArchivePackageParams = {
@@ -28,6 +28,6 @@ export type GetPieceArchivePackageParams = {
     packageType: PackageType.ARCHIVE
     pieceName: string
     pieceVersion: string
-    projectId: ProjectId
+    projectId?: ProjectId
     platformId?: PlatformId
 }

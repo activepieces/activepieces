@@ -4,26 +4,36 @@
     </mat-sidenav>
     <mat-sidenav-content class="thin-scrollbars ">
         <div *ngIf="(isEmbedded$ | async) === undefined || (isEmbedded$ | async) === false"
-            class="ap-absolute  ap-w-full ap-border-b " [class.!ap-border-none]="isInPlatformRoute$ | async">
+            class="ap-absolute  ap-w-full ap-border-b ">
             <div class="ap-flex ap-items-center  ap-my-5 ap-mx-[1.875rem]">
-                <div class="ap-font-semibold ap-border-solid  ap-typography-headline-5 !ap-font-semibold"
-                    *ngIf="(isInPlatformRoute$ | async) === undefined || (isInPlatformRoute$ | async) === false ">
-                    {{(currentProject$ | async)?.displayName}}
-                </div>
+                <app-project-switcher
+                    *ngIf="(isInPlatformRoute$ | async) === undefined || (isInPlatformRoute$ | async) === false "></app-project-switcher>
+                <div class="ap-typography-headline-5 !ap-font-semibold" *ngIf="(isInPlatformRoute$ | async) === true"
+                    i18n>Admin Console</div>
                 <div class="ap-flex-grow"></div>
-                <ap-button btnColor="white" btnStyle="basic" btnSize="medium" (buttonClicked)="showWhatIsNew()"
-                    *ngIf="showCommunity$ | async" i18n>
-                    What's new
+                <ap-button *ngIf="!router.url.startsWith('/platform')" btnColor="white" btnStyle="stroked"
+                    btnSize="medium" (buttonClicked)="navigateToAdminConsole()" i18n>
+                    <div class="ap-flex ap-gap-2 ap-items-center">
+                        <b>Admin Console</b>
+                    </div>
+
                 </ap-button>
-                <div class="ap-flex ap-mx-3">
+                <ap-button *ngIf="router.url.startsWith('/platform')" btnColor="white" btnStyle="stroked"
+                    btnSize="medium" (buttonClicked)="navigateToProjectDashboard()" i18n>
+                    <div class="ap-flex ap-gap-2 ap-items-center">
+                        <b>Go to Projects</b>
+                    </div>
+
+                </ap-button>
+                <div class="ap-flex ap-mx-3 ">
                     <app-tasks-progress></app-tasks-progress>
                 </div>
                 <ap-user-avatar class="ap-ml-[20px]"></ap-user-avatar>
             </div>
 
         </div>
-        <div class="ap-h-full" [class.ap-pt-7.5]="((isInPlatformRoute$ | async) === false || (isInPlatformRoute$ | async) === undefined) &&
-                                ((isEmbedded$ | async) === undefined || (isEmbedded$ | async) === false)">
+        <div class="ap-h-full"
+            [class.ap-pt-7.5]="((isEmbedded$ | async) === undefined || (isEmbedded$ | async) === false)">
             <router-outlet></router-outlet>
             <div *ngIf="showPoweredByAp$ | async" class="ap-h-[70px] ap-w-full" #paddingForStickyNote>
             </div>

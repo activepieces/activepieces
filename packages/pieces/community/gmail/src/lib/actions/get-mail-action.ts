@@ -18,7 +18,7 @@ export const gmailGetEmail = createAction({
       displayName: 'Format',
       description: 'Format of the mail',
       required: false,
-      defaultValue: 'full',
+      defaultValue: GmailMessageFormat.FULL,
       options: {
         disabled: false,
         options: [

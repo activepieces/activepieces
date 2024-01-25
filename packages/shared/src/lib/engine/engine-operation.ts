@@ -42,7 +42,7 @@ export type ExecuteValidateAuthOperation = BaseEngineOperation & {
     auth: AppConnectionValue
 }
 
-export type ExecuteExtractPieceMetadata = PiecePackage & { projectId: string }
+export type ExecuteExtractPieceMetadata = PiecePackage
 
 export type ExecuteStepOperation = BaseEngineOperation &  {
     stepName: string
@@ -53,6 +53,7 @@ export type ExecutePropsOptions = BaseEngineOperation & {
     piece: PiecePackage
     propertyName: string
     stepName: string
+    flowVersion: FlowVersion
     input: Record<string, unknown>
 }
 

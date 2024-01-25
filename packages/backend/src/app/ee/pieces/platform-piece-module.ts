@@ -1,10 +1,8 @@
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyPluginCallbackTypebox } from '@fastify/type-provider-typebox'
-import { ActivepiecesError, AddPieceRequestBody, ErrorCode, isNil } from '@activepieces/shared'
-import { PieceMetadataModel } from '../../pieces/piece-metadata-entity'
-import { platformService } from '../platform/platform.service'
+import { ActivepiecesError, AddPieceRequestBody, ErrorCode, PieceScope, PlatformRole, Principal, PrincipalType } from '@activepieces/shared'
 import { pieceService } from '../../pieces/piece-service'
-
+import { StatusCodes } from 'http-status-codes'
 
 export const platformPieceModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(platformPieceController, { prefix: '/v1/pieces' })
@@ -12,45 +10,49 @@ export const platformPieceModule: FastifyPluginAsyncTypebox = async (app) => {
 
 const platformPieceController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
     app.post('/', {
-        schema: {
-            body: AddPieceRequestBody,
+        config: {
+            allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
         },
-    }, async (req): Promise<PieceMetadataModel> => {
-        const { platformId } = req.body
-        const { packageType, pieceName, pieceVersion, pieceArchive } = req.body
-        const { projectId } = req.principal
-        await assertUserIsPlatformOwner({
-            platformId,
-            userId: req.principal.id,
-        })
-        return pieceService.installPiece({
-            packageType,
-            pieceName,
-            pieceVersion,
-            archive: pieceArchive as Buffer,
-            projectId,
-            platformId,
-        })
-
+        schema: {
+            tags: ['pieces'],
+            summary: 'Add a piece to a platform',
+            description: 'Add a piece to a platform',
+            body: AddPieceRequestBody,
+            response: {
+                [StatusCodes.CREATED]: Type.Object({}),
+            },
+        },
+    }, async (req, reply) => {
+        const platformId = req.principal.platform?.id
+        assertPrincipalIsPlatformOwner(req.body.scope, req.principal)
+        assertProjectScopeOnlyAllowedForUser(req.body.scope, req.principal)
+        await pieceService.installPiece(platformId, req.principal.projectId, req.body)
+        await reply.status(StatusCodes.CREATED).send({})
     })
 
     done()
 }
 
-async function assertUserIsPlatformOwner({
-    platformId,
-    userId,
-}: { platformId?: string, userId: string }): Promise<void> {
-    if (!isNil(platformId)) {
-        const userOwner = await platformService.checkUserIsOwner({
-            platformId,
-            userId,
-        })
-        if (!userOwner) {
+function assertPrincipalIsPlatformOwner(scope: PieceScope, principal: Principal): void {
+    if (scope == PieceScope.PLATFORM) {
+        if (principal.platform?.role !== PlatformRole.OWNER) {
             throw new ActivepiecesError({
-                code: ErrorCode.AUTHORIZATION,
-                params: {},
+                code: ErrorCode.ENGINE_OPERATION_FAILURE,
+                params: {
+                    message: 'Principal is not platform owner',
+                },
             })
         }
+    }
+}
+
+function assertProjectScopeOnlyAllowedForUser(scope: PieceScope, principal: Principal): void {
+    if (scope === PieceScope.PROJECT && principal.type !== PrincipalType.USER) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENGINE_OPERATION_FAILURE,
+            params: {
+                message: 'Project scope is only allowed for user token',
+            },
+        })
     }
 }

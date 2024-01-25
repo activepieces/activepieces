@@ -1,7 +1,8 @@
 import { Static, Type } from '@sinclair/typebox';
 import { TestOrRunHookContext, TriggerHookContext } from '../context';
 import { TriggerBase } from '../piece-metadata';
-import { NonAuthPiecePropertyMap, PieceAuthProperty } from '../property/property';
+import { InputPropertyMap } from '../property';
+import { PieceAuthProperty } from '../property/authentication';
 
 export enum TriggerStrategy {
   POLLING = 'POLLING',
@@ -31,7 +32,7 @@ export interface WebhookResponse {
 
 type CreateTriggerParams<
   PieceAuth extends PieceAuthProperty,
-  TriggerProps extends NonAuthPiecePropertyMap,
+  TriggerProps extends InputPropertyMap,
   TS extends TriggerStrategy,
 > = {
   /**
@@ -55,7 +56,7 @@ type CreateTriggerParams<
 export class ITrigger<
   TS extends TriggerStrategy,
   PieceAuth extends PieceAuthProperty,
-  TriggerProps extends NonAuthPiecePropertyMap,
+  TriggerProps extends InputPropertyMap,
 > implements TriggerBase {
   constructor(
     public readonly name: string,
@@ -75,14 +76,14 @@ export class ITrigger<
 
 export type Trigger<
   PieceAuth extends PieceAuthProperty = any,
-  TriggerProps extends NonAuthPiecePropertyMap = any,
+  TriggerProps extends InputPropertyMap = any,
   S extends TriggerStrategy = TriggerStrategy,
 > = ITrigger<S, PieceAuth, TriggerProps>
 
 export const createTrigger = <
   TS extends TriggerStrategy,
   PieceAuth extends PieceAuthProperty,
-  TriggerProps extends NonAuthPiecePropertyMap,
+  TriggerProps extends InputPropertyMap,
 >(params: CreateTriggerParams<PieceAuth, TriggerProps, TS>) => {
   return new ITrigger(
     params.name,

@@ -1,23 +1,20 @@
 import {
-  DynamicPropsValue,
+  PiecePropValueSchema,
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
-import { APITableCommon } from '../common';
+import { APITableCommon, makeClient } from '../common';
 import { APITableAuth } from '../../index';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { prepareQuery } from '../common/client';
 
-export const apiTableFindRecord = createAction({
+export const findRecordAction = createAction({
   auth: APITableAuth,
   name: 'apitable_find_record',
-  displayName: 'Find APITable Record',
+  displayName: 'Find Records',
   description: 'Finds records in datasheet.',
   props: {
-    datasheet: APITableCommon.datasheet,
+    space_id: APITableCommon.space_id,
+    datasheet_id: APITableCommon.datasheet_id,
     recordIds: Property.Array({
       displayName: 'Record IDs',
       description: 'The IDs of the records to find.',
@@ -52,36 +49,27 @@ export const apiTableFindRecord = createAction({
     }),
   },
   async run(context) {
-    const auth = context.auth;
-    const datasheet = context.propsValue.datasheet;
-    const recordIds = context.propsValue.recordIds;
-    const fieldNames = context.propsValue.fieldNames;
+    const datasheetId = context.propsValue.datasheet_id;
+    const recordIds = context.propsValue.recordIds as string[];
+    const fieldNames = context.propsValue.fieldNames as string[];
     const maxRecords = context.propsValue.maxRecords;
     const pageSize = context.propsValue.pageSize ?? 100;
     const pageNum = context.propsValue.pageNum ?? 1;
     const filter = context.propsValue.filter;
-    const apiTableUrl = auth.apiTableUrl;
 
-    let query = `?pageSize=${pageSize}&pageNum=${pageNum}`;
-    if (recordIds) query += `&recordIds=${recordIds.join(',')}`;
-    if (fieldNames) query += `&fieldNames=${fieldNames.join(',')}`;
-    if (maxRecords) query += `&maxRecords=${maxRecords}`;
-    if (filter) query += `&filterByFormula=${filter}`;
-
-    const request: HttpRequest = {
-      method: HttpMethod.GET,
-      url: `${apiTableUrl.replace(
-        /\/$/,
-        ''
-      )}/fusion/v1/datasheets/${datasheet}/records${query}`,
-      headers: {
-        Authorization: 'Bearer ' + auth.token,
-        'Content-Type': 'application/json',
-      },
-    };
-
-    const res = await httpClient.sendRequest<any>(request);
-
-    return res.body;
+    const client = makeClient(
+      context.auth as PiecePropValueSchema<typeof APITableAuth>
+    );
+    return await client.listRecords(
+      datasheetId as string,
+      prepareQuery({
+        pageSize: pageSize,
+        pageNum: pageNum,
+        recordIds: recordIds.join(','),
+        fieldNames: fieldNames.join(','),
+        maxRecords: maxRecords,
+        filterByFormula: filter,
+      })
+    );
   },
 });

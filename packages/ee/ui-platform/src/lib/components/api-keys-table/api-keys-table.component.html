@@ -1,5 +1,6 @@
 <div class="ap-w-full ap-pt-2">
 
+    <ap-upgrade-note *ngIf="isDemo"></ap-upgrade-note>
 
     <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" i18n-aria-label aria-label="API Keys">
 
@@ -19,16 +20,20 @@
         </ng-container>
 
         <ng-container matColumnDef="action">
-            <th mat-header-cell *matHeaderCellDef class="!ap-text-right">
-                <ap-button btnColor="primary" btnSize="medium" (buttonClicked)="createKey()" i18n>
-                    + New key
-                </ap-button>
+            <th mat-header-cell *matHeaderCellDef>
+                <div class="ap-flex ap-items-center ap-justify-end">
+                    <ap-button [disabled]="isDemo" [tooltipText]="isDemo? featureDisabledTooltip:''" btnColor="primary"
+                        btnSize="medium" (buttonClicked)="createKey()" i18n>
+                        + New key
+                    </ap-button>
+                </div>
+
             </th>
             <td mat-cell *matCellDef="let key">
                 <div class="ap-w-[5.6875rem] ap-float-right ap-text-center">
-                    <ap-icon-button (click)="$event.stopPropagation();deleteKey(key)" i18n-tooltipText
-                        tooltipText="Delete key" iconFilename="trash.svg" [width]="20" [height]="20" color="warn"
-                        [height]="16"></ap-icon-button>
+                    <ap-icon-button [buttonDisabled]="isDemo" (click)="$event.stopPropagation();deleteKey(key)"
+                        i18n-tooltipText tooltipText="Delete key" iconFilename="trash.svg" [width]="20" [height]="20"
+                        color="warn" [height]="16"></ap-icon-button>
 
                 </div>
 
