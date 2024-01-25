@@ -35,6 +35,7 @@ import {
   LocalesEnum,
   FlowOperationType,
   User,
+  TelemetryEventName,
 } from '@activepieces/shared';
 import {
   TelemetryService,
@@ -113,15 +114,27 @@ export class AppComponent implements OnInit {
         tap(() => {
           this.loading$.next(true);
         }),
-        switchMap((res) => {
+        switchMap((template) => {
           return this.flowService
-            .update(res.flowId, {
+            .update(template.flowId, {
               type: FlowOperationType.IMPORT_FLOW,
               request: {
-                displayName: res.template.name,
-                trigger: res.template.template.trigger,
+                displayName: template.template.name,
+                trigger: template.template.template.trigger,
               },
             })
+            .pipe(
+              tap(() => {
+                this.telemetryService.capture({
+                  name: TelemetryEventName.FLOW_IMPORTED,
+                  payload: {
+                    id: template.template.id,
+                    name: template.template.name,
+                    location: `from dialog in the builder`,
+                  },
+                });
+              })
+            )
             .pipe(
               tap((res) => {
                 this.loading$.next(false);

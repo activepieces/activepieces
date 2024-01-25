@@ -1,5 +1,5 @@
 <input #fileInput id="fileInput" class="file-input" type="file" [accept]="extensions.join(',')" />
 <div class="ap-relative " apFileDropped (fileDropped)="fileDropped($event)">
   <input class="ap-cursor-pointer" matInput readonly [value]="value?.name || ''" [placeholder]="placeHolder"
-    (click)="fileInput.click();     this.touched = true;" />
+    (click)="fileInput.click(); this.onTouched();     this.touched = true;" />
 </div>

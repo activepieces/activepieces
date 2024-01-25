@@ -122,7 +122,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
   }
 
   import(flowToOverWrite: PopulatedFlow) {
-    const data: ImporFlowDialogData = { flowToOverWrite: flowToOverWrite };
+    const data: ImporFlowDialogData = { flowToOverwriteId: flowToOverWrite.id };
     this.matDialog.open(ImportFlowDialogComponent, { data });
   }
 
