@@ -8,8 +8,8 @@ import {
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { catchError, map, Observable, of, tap } from 'rxjs';
-import { GenericSnackbarTemplateComponent } from '../generic-snackbar-template/generic-snackbar-template.component';
-import { matchesString } from '../../validators';
+import { GenericSnackbarTemplateComponent } from '../../generic-snackbar-template/generic-snackbar-template.component';
+import { matchesString } from '../../../validators';
 
 export interface DeleteEntityDialogData {
   entityName: string;

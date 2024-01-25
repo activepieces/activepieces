@@ -1,0 +1,28 @@
+<ap-dialog-title-template i18n> Rename {{data.flow.version.displayName}}
+</ap-dialog-title-template>
+<mat-dialog-content>
+
+    <form class="ap-flex ap-flex-col ap-gap-1 ap-w-[31.25rem]" [formGroup]="form" (submit)="submit()">
+        <mat-form-field class="ap-w-full">
+            <mat-label i18n>Name</mat-label>
+            <input cdkFocusInitial [formControl]="form.controls.displayName" matInput type="text" />
+            <mat-error *ngIf="form.controls.displayName.invalid" i18n>
+                Name is required
+            </mat-error>
+
+        </mat-form-field>
+    </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <div class="ap-flex ap-gap-2.5">
+        <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" [disabled]="!!rename$" i18n>
+            Cancel
+        </ap-button>
+        <ap-button btnSize="default" type="submit" (click)="submit();" [loading]="!!rename$" btnColor="primary" i18n>
+            Confirm
+        </ap-button>
+    </div>
+</mat-dialog-actions>
+
+<ng-container *ngIf="rename$ | async"></ng-container>

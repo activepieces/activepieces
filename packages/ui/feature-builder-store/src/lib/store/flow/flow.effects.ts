@@ -34,11 +34,11 @@ import {
 import { RightSideBarType } from '../../model/enums/right-side-bar-type.enum';
 import { LeftSideBarType } from '../../model/enums/left-side-bar-type.enum';
 import { NO_PROPS } from '../../model/canvas-state';
-import { CollectionBuilderService } from '../../service/collection-builder.service';
 import {
   BuilderAutocompleteMentionsDropdownService,
   FlowService,
   environment,
+  FlowBuilderService,
 } from '@activepieces/ui/common';
 import { canvasActions } from '../builder/canvas/canvas.action';
 import { ViewModeActions } from '../builder/viewmode/view-mode.action';
@@ -549,7 +549,7 @@ export class FlowsEffects {
   });
 
   constructor(
-    private pieceBuilderService: CollectionBuilderService,
+    private pieceBuilderService: FlowBuilderService,
     private flowService: FlowService,
     private store: Store,
     private actions$: Actions,
