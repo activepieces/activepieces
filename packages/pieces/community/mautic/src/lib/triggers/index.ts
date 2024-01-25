@@ -304,22 +304,22 @@ const contactTestData = {
 
 export const triggers = [
   {
-    name: "lead_company_change",
+    name: "lead_post_save_update",
     displayName: "Contact Updated",
     description: "Triggered when a contact is updated.",
-    sampleData: {
-      "mautic.lead_company_change": [contactTestData]
-    },
-    eventType: "mautic.lead_company_change",
-  },
-  {
-    name: "lead_post_save_update",
-    displayName: "Contact Company Subscription Change",
-    description: "Triggered when a commpany is added or removed to/from contact",
     sampleData: {
       "mautic.lead_post_save_update": [contactTestData]
     },
     eventType: "mautic.lead_post_save_update",
+  },
+  {
+    name: "lead_company_change",
+    displayName: "Contact Company Subscription Change",
+    description: "Triggered when a commpany is added or removed to/from contact",
+    sampleData: {
+      "mautic.lead_company_change": [contactTestData]
+    },
+    eventType: "mautic.lead_company_change",
   },
   {
     name: "lead_channel_subscription_changed",
