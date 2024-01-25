@@ -306,7 +306,7 @@ export const triggers = [
   {
     name: "lead_post_save_update",
     displayName: "Contact Updated",
-    description: "Triggered when a contact is updated.",
+    description: "Triggers when a contact is updated.",
     sampleData: {
       "mautic.lead_post_save_update": [contactTestData]
     },
@@ -315,7 +315,7 @@ export const triggers = [
   {
     name: "lead_company_change",
     displayName: "Contact Company Subscription Change",
-    description: "Triggered when a commpany is added or removed to/from contact",
+    description: "Triggers when a commpany is added or removed to/from contact.",
     sampleData: {
       "mautic.lead_company_change": [contactTestData]
     },
@@ -324,7 +324,7 @@ export const triggers = [
   {
     name: "lead_channel_subscription_changed",
     displayName: "Contact Channel Subscription Change",
-    description: "Triggered when a contact's channel subscription status changes.",
+    description: "Triggers when a contact's channel subscription status changes.",
     sampleData: {
       "mautic.lead_channel_subscription_changed": [contactTestData]
     },
@@ -333,7 +333,7 @@ export const triggers = [
   {
     name: "lead_post_save_new",
     displayName: "New Contact",
-    description: "Event fired on New Contact",
+    description: "Triggers when a new contact is created.",
     sampleData: {
       "mautic.lead_post_save_new": [contactTestData]
     },
