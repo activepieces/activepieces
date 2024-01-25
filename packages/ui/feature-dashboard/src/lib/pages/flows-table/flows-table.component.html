@@ -84,6 +84,7 @@
                       <span i18n>{{flowActionsUiInfo.export.text}}</span>
                     </div>
                   </button>
+                  <ap-share-flow-template-dialog [flow]="flow"></ap-share-flow-template-dialog>
                   <button (click)="deleteFlow(flow)" mat-menu-item>
                     <div class="ap-flex ap-gap-3 ap-items-center">
                       <svg-icon [src]="flowActionsUiInfo.delete.icon"

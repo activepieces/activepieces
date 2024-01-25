@@ -64,7 +64,7 @@
             <span i18n>{{flowActionsUiInfo.export.text}}</span>
           </div>
         </button>
-        <ap-share-flow-template-dialog></ap-share-flow-template-dialog>
+        <ap-share-flow-template-dialog *ngIf="flow$ | async as flow" [flow]="flow"></ap-share-flow-template-dialog>
         <ng-container *ngIf="(showNavigation$ | async )">
           <button mat-menu-item *ngIf="flow$ | async as flow" (click)="deleteFlow(flow)">
             <div class="ap-flex ap-gap-3 ap-items-center">
@@ -74,7 +74,6 @@
             </div>
           </button>
         </ng-container>
-
       </mat-menu>
     </div>
 

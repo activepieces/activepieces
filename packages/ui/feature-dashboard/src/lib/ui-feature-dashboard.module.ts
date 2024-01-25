@@ -30,6 +30,7 @@ import { ProjectSwitcherComponent } from './components/project-switcher/project-
 import { TriggerTooltipPipe } from './pipes/trigger-tooltip.pipe';
 import { TriggerIconPipe } from './pipes/trigger-icon.pipe';
 import { FlowStatusPipe } from './pipes/flow-status-tooltip.pipe';
+import { EeComponentsModule } from '@activepieces/ee-components';
 @NgModule({
   imports: [
     CommonModule,
@@ -43,6 +44,7 @@ import { FlowStatusPipe } from './pipes/flow-status-tooltip.pipe';
     TriggerTooltipPipe,
     TriggerIconPipe,
     FlowStatusPipe,
+    EeComponentsModule,
   ],
   declarations: [
     DashboardContainerComponent,

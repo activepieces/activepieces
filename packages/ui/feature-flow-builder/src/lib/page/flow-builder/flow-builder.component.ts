@@ -294,6 +294,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
   }
 
   openTemaplatesDialogForNewFlows() {
+ 
     if (localStorage.getItem(CURRENT_FLOW_IS_NEW_KEY_IN_LOCAL_STORAGE)) {
       const TemplateDialogData: TemplateDialogData = {
         insideBuilder: true
