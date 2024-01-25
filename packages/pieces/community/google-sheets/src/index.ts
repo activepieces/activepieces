@@ -9,6 +9,7 @@ import { findRowByNumAction } from './lib/actions/find-row-by-num';
 import { getRowsAction } from './lib/actions/get-rows';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { googleSheetsCommon } from './lib/common/common';
+import { instantTrigger } from './lib/triggers/instant-trigger';
 
 export const googleSheetsAuth = PieceAuth.OAuth2({
   description: '',
@@ -41,18 +42,18 @@ export const googleSheets = createPiece({
     findRowByNumAction,
     getRowsAction,
     createCustomApiCallAction({
-        auth: googleSheetsAuth,
-        baseUrl: () => {
-            return googleSheetsCommon.baseUrl
-        },
-        authMapping: (auth) => {
-            return {
-                'Authorization': `Bearer ${(auth as OAuth2PropertyValue).access_token}`
-            }
+      auth: googleSheetsAuth,
+      baseUrl: () => {
+        return googleSheetsCommon.baseUrl
+      },
+      authMapping: (auth) => {
+        return {
+          'Authorization': `Bearer ${(auth as OAuth2PropertyValue).access_token}`
         }
+      }
     })
   ],
   displayName: 'Google Sheets',
-  triggers: [readNewRows],
+  triggers: [readNewRows, instantTrigger],
   auth: googleSheetsAuth,
 });
