@@ -3,12 +3,12 @@ import Crypto from 'crypto';
 
 export const hashText = createAction({
   name: 'hash-text',
-  description: 'Converts text to hash',
+  description: 'Converts text to a hash value using various hashing algorithms',
   displayName: 'Text to Hash',
   props: {
     method: Property.StaticDropdown({
       displayName: 'Method',
-      description: 'The method of hashing',
+      description: 'The hashing algorithm to use',
       required: true,
       options: {
         options: [
@@ -20,18 +20,18 @@ export const hashText = createAction({
     }),
     text: Property.ShortText({
       displayName: 'Text',
-      description: 'The text to hash',
+      description: 'The text to be hashed',
       required: true,
     }),
   },
   async run(context) {
 
-    const md5Hash = Crypto.createHash(context.propsValue.method);
+    const hashAlgorithm = Crypto.createHash(context.propsValue.method);
 
     const text = context.propsValue.text;
-    md5Hash.update(text);
+    hashAlgorithm.update(text);
 
-    const hashedString = md5Hash.digest('hex');
+    const hashedString = hashAlgorithm.digest('hex');
 
     return hashedString;
   },
