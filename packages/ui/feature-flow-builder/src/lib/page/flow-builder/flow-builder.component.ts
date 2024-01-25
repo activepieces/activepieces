@@ -14,6 +14,7 @@ import {
   BuilderSelectors,
   FlowItemDetailsActions,
   FlowRendererService,
+  FlowsActions,
   ViewModeEnum,
 } from '@activepieces/ui/feature-builder-store';
 import { Store } from '@ngrx/store';
@@ -35,6 +36,7 @@ import { TestRunBarComponent } from '@activepieces/ui/feature-builder-store';
 import { RunDetailsService } from '@activepieces/ui/feature-builder-left-sidebar';
 import {
   ExecutionOutputStatus,
+  FlowOperationType,
   FlowTemplate,
   FlowVersion,
   TelemetryEventName,
@@ -52,6 +54,7 @@ import {
   TemplatesService,
   TestStepService,
   FlowBuilderService,
+  FlowService,
 } from '@activepieces/ui/common';
 import { PannerService } from '@activepieces/ui/feature-builder-canvas';
 import { MatDialog } from '@angular/material/dialog';
@@ -120,7 +123,8 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     private flagService: FlagService,
     private telemetryService: TelemetryService,
     public builderAutocompleteService: BuilderAutocompleteMentionsDropdownService,
-    private templatesService: TemplatesService
+    private templatesService: TemplatesService,
+    private flowService:FlowService
   ) {
     this.showPoweredByAp$ = this.flagService.getShowPoweredByAp();
     this.dataInsertionPopupHidden$ =
@@ -305,28 +309,37 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
         })
         .afterClosed()
         .pipe(
-          switchMap((result?: TemplateDialogClosingResult) => {
-            if (result) {
+          switchMap((dialogResult?: TemplateDialogClosingResult) => {
+            if (dialogResult) {
+              this.builderService.showLoading();
               return this.store
                 .select(BuilderSelectors.selectCurrentFlow)
                 .pipe(
                   take(1),
-                  tap((flow) => {
+                  switchMap((flow)=>{
+                    return this.flowService
+                    .update(flow.id, {
+                      type: FlowOperationType.IMPORT_FLOW,
+                      request: {
+                        displayName: dialogResult.template.name,
+                        trigger: dialogResult.template.template.trigger,
+                      },
+                    })
+                  }),
+                  tap((res)=>{
+                    this.builderService.hideLoading();
+                    this.store.dispatch(FlowsActions.importFlow({ flow: res }));
                     this.telemetryService.capture({
                       name: TelemetryEventName.FLOW_IMPORTED,
                       payload: {
-                        id: result.template.id,
-                        name: result.template.name,
+                        id: dialogResult.template.id,
+                        name: dialogResult.template.name,
                         location: `inside the builder`,
-                        tab: `${result.activeTab}`,
+                        tab: `${dialogResult.activeTab}`,
                       },
                     });
-                    this.builderService.importTemplate$.next({
-                      flowId: flow.id,
-                      template: result.template,
-                    });
-                    if (result.template.blogUrl) {
-                      this.showBlogNotification(result.template);
+                    if(dialogResult.template.blogUrl) {
+                      this.showBlogNotification(dialogResult.template);
                     }
                   })
                 );

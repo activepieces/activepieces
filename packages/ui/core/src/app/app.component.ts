@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import {
   BehaviorSubject,
-  catchError,
   map,
   Observable,
   of,
@@ -23,31 +22,21 @@ import { DomSanitizer } from '@angular/platform-browser';
 import {
   FlagService,
   CommonActions,
-  FlowService,
   AppearanceService,
   environment,
   PlatformService,
+  FlowBuilderService,
 } from '@activepieces/ui/common';
 import { compareVersions } from 'compare-versions';
-import {
-  ApEdition,
-  ApFlagId,
-  LocalesEnum,
-  FlowOperationType,
-  User,
-  TelemetryEventName,
-} from '@activepieces/shared';
+import { ApEdition, ApFlagId, LocalesEnum, User } from '@activepieces/shared';
 import {
   TelemetryService,
   EmbeddingService,
   AuthenticationService,
   fadeInUp400ms,
   LocalesService,
-  FlowBuilderService,
 } from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
-import { FlowsActions } from '@activepieces/ui/feature-builder-store';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { Platform } from '@activepieces/ee-shared';
 
 interface UpgradeNotificationMetaDataInLocalStorage {
@@ -77,6 +66,7 @@ export class AppComponent implements OnInit {
   isCommunityEdition$: Observable<boolean>;
   embeddedRouteListener$: Observable<boolean>;
   redirect$?: Observable<Platform | undefined>;
+  toggleLoading$: Observable<boolean>;
   constructor(
     public dialog: MatDialog,
     private store: Store,
@@ -87,15 +77,18 @@ export class AppComponent implements OnInit {
     private router: Router,
     private maticonRegistry: MatIconRegistry,
     private domSanitizer: DomSanitizer,
-    private builderService: FlowBuilderService,
-    private flowService: FlowService,
-    private snackbar: MatSnackBar,
     private embeddedService: EmbeddingService,
     private localesService: LocalesService,
-    private platformService: PlatformService
+    private platformService: PlatformService,
+    private builderService: FlowBuilderService
   ) {
+    this.toggleLoading$ = this.builderService.loading$.pipe(
+      tap((res) => {
+        console.log('loading triggered');
+        this.loading$.next(res);
+      })
+    );
     this.registerMaterialIcons();
-    this.listenToImportFlow();
     this.theme$ = this.apperanceService.setTheme().pipe(
       tap(() => this.loadingTheme$.next(false)),
       map(() => void 0)
@@ -105,54 +98,6 @@ export class AppComponent implements OnInit {
     this.showUpgradeNotification$ =
       this.createListenerToToggleUpgradeNotification();
     this.rediectToCorrectLocale();
-  }
-
-  private listenToImportFlow() {
-    this.importTemplate$ = this.builderService.importTemplate$
-      .asObservable()
-      .pipe(
-        tap(() => {
-          this.loading$.next(true);
-        }),
-        switchMap((template) => {
-          return this.flowService
-            .update(template.flowId, {
-              type: FlowOperationType.IMPORT_FLOW,
-              request: {
-                displayName: template.template.name,
-                trigger: template.template.template.trigger,
-              },
-            })
-            .pipe(
-              tap(() => {
-                this.telemetryService.capture({
-                  name: TelemetryEventName.FLOW_IMPORTED,
-                  payload: {
-                    id: template.template.id,
-                    name: template.template.name,
-                    location: `from dialog in the builder`,
-                  },
-                });
-              })
-            )
-            .pipe(
-              tap((res) => {
-                this.loading$.next(false);
-                this.store.dispatch(FlowsActions.importFlow({ flow: res }));
-              }),
-              catchError((err) => {
-                this.loading$.next(false);
-                console.error(err);
-                this.snackbar.open(
-                  'Failed to import flow, check Console for errors',
-                  'Close'
-                );
-                return of(void 0);
-              })
-            );
-        }),
-        map(() => void 0)
-      );
   }
 
   private registerMaterialIcons() {

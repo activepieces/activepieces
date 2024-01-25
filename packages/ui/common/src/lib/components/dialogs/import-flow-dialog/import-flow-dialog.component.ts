@@ -9,15 +9,10 @@ import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import {
   FlowOperationType,
   FlowTemplate,
-  PopulatedFlow,
   TelemetryEventName,
 } from '@activepieces/shared';
-import { Observable, map, switchMap, tap } from 'rxjs';
-import {
-  FlowBuilderService,
-  FlowService,
-  TelemetryService,
-} from '../../../service';
+import { Observable, catchError, map, of, switchMap, tap } from 'rxjs';
+import { FlowService, TelemetryService } from '../../../service';
 import { Router } from '@angular/router';
 
 type ImportTemplateWithoutExistingFlowData = { projectId: string };
@@ -39,7 +34,6 @@ export class ImportFlowDialogComponent {
   importFLow$?: Observable<void>;
   showOverWritingFlowNote = false;
   constructor(
-    private builderService: FlowBuilderService,
     private matDialog: MatDialog,
     private flowService: FlowService,
     private telemetryService: TelemetryService,
@@ -64,59 +58,71 @@ export class ImportFlowDialogComponent {
     reader.onload = () => {
       const template: FlowTemplate = JSON.parse(reader.result as string);
       if (this.isOverwritingFlow(this.data)) {
-        this.importFlowWithinTheBuilder(this.data.flowToOverwriteId, template);
+        this.importFLow$ = this.importFlow(
+          this.data.flowToOverwriteId,
+          template,
+          true
+        );
       } else {
-        this.importFLow$ = this.flowService
-          .create({
-            displayName: template.name,
-            projectId: this.data.projectId,
-          })
-          .pipe(
-            tap(() => {
-              this.captureEvent({
-                templateId: template.id,
-                templateName: template.name,
-              });
-            }),
-            switchMap((flow) => {
-              return this.flowService
-                .update(flow.id, {
-                  type: FlowOperationType.IMPORT_FLOW,
-                  request: template.template,
-                })
-                .pipe(
-                  tap((updatedFlow: PopulatedFlow) => {
-                    this.router.navigate(['flows', updatedFlow.id]);
-                    this.matDialog.closeAll();
-                  }),
-                  map(() => void 0)
-                );
-            })
-          );
+        this.importFLow$ = this.createFlow({
+          displayName: template.name,
+          projectId: this.data.projectId,
+        }).pipe(switchMap((flow) => this.importFlow(flow.id, template, false)));
       }
       this.cd.markForCheck();
     };
     reader.readAsText(this.fileControl.value);
   }
-  /**Trigger loading indicator that covers full screen */
-  importFlowWithinTheBuilder(
-    flowToOverwriteId: string,
-    template: FlowTemplate
-  ) {
-    this.builderService.importTemplate$.next({
-      flowId: flowToOverwriteId,
-      template,
+
+  createFlow({
+    displayName,
+    projectId,
+  }: {
+    displayName: string;
+    projectId: string;
+  }) {
+    return this.flowService.create({
+      displayName,
+      projectId,
     });
-    this.matDialog.closeAll();
   }
 
-  captureEvent(req: { templateName: string; templateId: string }) {
+  importFlow(
+    flowToOverwriteId: string,
+    template: FlowTemplate,
+    insideTheBuilder: boolean
+  ) {
+    return this.flowService
+      .update(flowToOverwriteId, {
+        type: FlowOperationType.IMPORT_FLOW,
+        request: {
+          displayName: template.name,
+          trigger: template.template.trigger,
+        },
+      })
+      .pipe(
+        tap((flow) => {
+          this.matDialog.closeAll();
+          this.captureEvent(insideTheBuilder);
+          this.router.navigate(['flows', flow.id], {
+            onSameUrlNavigation: 'reload',
+          });
+        })
+      )
+      .pipe(
+        map(() => void 0),
+        catchError((err) => {
+          console.error(err);
+          return of(void 0);
+        })
+      );
+  }
+
+  captureEvent(insideBuilder: boolean) {
     this.telemetryService.capture({
-      name: TelemetryEventName.FLOW_IMPORTED,
+      name: TelemetryEventName.FLOW_IMPORTED_USING_FILE,
       payload: {
-        id: req.templateId,
-        name: req.templateName,
-        location: `from dialog in the dashboard`,
+        location: insideBuilder ? 'inside the builder' : 'inside dashboard',
       },
     });
   }
