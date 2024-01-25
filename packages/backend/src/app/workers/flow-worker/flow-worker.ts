@@ -56,14 +56,14 @@ type LoadInputAndLogFileIdResponse = {
     logFileId?: FileId | undefined
 }
 
-const extractFlowPieces = async ({ flowVersion }: ExtractFlowPiecesParams): Promise<PiecePackage[]> => {
+const extractFlowPieces = async ({ projectId, flowVersion }: ExtractFlowPiecesParams): Promise<PiecePackage[]> => {
     const pieces: PiecePackage[] = []
     const steps = flowHelper.getAllSteps(flowVersion.trigger)
 
     for (const step of steps) {
         if (step.type === TriggerType.PIECE || step.type === ActionType.PIECE) {
             const { packageType, pieceType, pieceName, pieceVersion } = step.settings
-            pieces.push(await getPiecePackage({
+            pieces.push(await getPiecePackage(projectId, {
                 packageType,
                 pieceType,
                 pieceName,
