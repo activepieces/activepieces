@@ -6,10 +6,10 @@
       [disabled]="(generateCodeEnabled$ | async) === false"
       [tooltipText]="(generateCodeEnabled$ | async) ? codeGeneratorTooltip: disabledCodeGeneratorTooltip"
       i18n-tooltipText>
-      <div class="ap-flex ap-gap-3 ap-items-center">
+      <div class="ap-flex ap-gap-3 ap-items-center" i18n>
         <svg-icon src="assets/img/custom/AI.svg" class="ap-w-[20px] ap-h-[20px] ap-fill-primary"
           [applyClass]="true"></svg-icon>
-        Generate
+        Ask AI
       </div>
     </ap-button>
 
