@@ -4,7 +4,8 @@
         + Add Piece
     </ap-button>
 </ap-page-title>
-<ap-upgrade-note docsLink="https://www.activepieces.com/docs/admin-console/manage-pieces" *ngIf="isDemo"></ap-upgrade-note>
+<ap-upgrade-note docsLink="https://www.activepieces.com/docs/admin-console/manage-pieces"
+    *ngIf="isDemo"></ap-upgrade-note>
 <div class="ap-mb-4  ap-flex ap-items-center ap-gap-2 ap-justify-between">
 
     <mat-form-field (click)="$event.stopPropagation();" appearance="outline" subscriptSizing="dynamic">
@@ -54,42 +55,40 @@
 
             </th>
             <td mat-cell *matCellDef="let piece">
-                <div class="ap-float-right ap-text-center ap-flex ap-items-center ap-justify-center"
-                    *ngIf="platform$ | async as plat">
+                <ng-container *ngIf="!isDemo">
+                    <div class="ap-float-right ap-text-center ap-flex ap-items-center ap-justify-center"
+                        *ngIf="platform$ | async as plat">
 
-                    <ap-icon-button *ngIf="piece.oauth2AppCredentialsId  && piece.auth?.type === OAUTH2 "
-                        [matMenuTriggerFor]="menu" [tooltipText]="updatePieceCredentialsTooltip"
-                        iconFilename="piece_credentials.svg" [width]="20" [height]="20" extraClasses="ap-fill-primary">
-                    </ap-icon-button>
+                        <ap-icon-button *ngIf="piece.oauth2AppCredentialsId  && piece.auth?.type === OAUTH2 "
+                            [matMenuTriggerFor]="menu" [tooltipText]="updatePieceCredentialsTooltip"
+                            iconFilename="piece_credentials.svg" [width]="20" [height]="20"
+                            extraClasses="ap-fill-primary">
+                        </ap-icon-button>
 
-                    <ap-icon-button *ngIf="piece.auth?.type === OAUTH2 && !piece.oauth2AppCredentialsId "
-                        [tooltipText]="addPieceCredentialsTooltip"
-                        (buttonClicked)="openPieceOAuth2CredentialsDialog(false,piece)"
-                        iconFilename="piece_credentials.svg" [width]="20" [height]="20">
-                    </ap-icon-button>
+                        <ap-icon-button *ngIf="piece.auth?.type === OAUTH2 && !piece.oauth2AppCredentialsId "
+                            [tooltipText]="addPieceCredentialsTooltip"
+                            (buttonClicked)="openPieceOAuth2CredentialsDialog(false,piece)"
+                            iconFilename="piece_credentials.svg" [width]="20" [height]="20">
+                        </ap-icon-button>
 
-                    <ap-icon-button *ngIf="!plat.filteredPieceNames || plat.filteredPieceNames.includes(piece.name)"
-                        [tooltipText]="showPieceTooltip" iconFilename="eye-off.svg" [width]="20" [height]="20"
-                        class="ap-fill-description" (buttonClicked)="togglePiece(piece)"></ap-icon-button>
+                        <ap-icon-button *ngIf="plat.filteredPieceNames.includes(piece.name)"
+                            [tooltipText]="showPieceTooltip" iconFilename="eye-off.svg" [width]="20" [height]="20"
+                            class="ap-fill-description" (buttonClicked)="togglePiece(piece)"></ap-icon-button>
 
-                    <ap-icon-button *ngIf="plat.filteredPieceNames && !plat.filteredPieceNames.includes(piece.name)"
-                        [tooltipText]="hidePieceTooltip" iconFilename="eye.svg" [width]="20" [height]="20"
-                        extraClasses="ap-fill-primary" (buttonClicked)="togglePiece(piece)"></ap-icon-button>
+                        <ap-icon-button *ngIf="!plat.filteredPieceNames.includes(piece.name)"
+                            [tooltipText]="hidePieceTooltip" iconFilename="eye.svg" [width]="20" [height]="20"
+                            extraClasses="ap-fill-primary" (buttonClicked)="togglePiece(piece)"></ap-icon-button>
 
-                    <mat-menu #menu="matMenu">
-                        <div mat-menu-item (click)="openPieceOAuth2CredentialsDialog(true,piece)"
-                            class="!ap-typography-caption">Edit OAuth2 settings
-                        </div>
-                        <div mat-menu-item class="!ap-text-danger !ap-typography-caption"
-                            (click)="deletePieceOAuth2Creds(piece)">Delete OAuth2 settings
-                        </div>
-                    </mat-menu>
-
-
-
-
-
-                </div>
+                        <mat-menu #menu="matMenu">
+                            <div mat-menu-item (click)="openPieceOAuth2CredentialsDialog(true,piece)"
+                                class="!ap-typography-caption">Edit OAuth2 settings
+                            </div>
+                            <div mat-menu-item class="!ap-text-danger !ap-typography-caption"
+                                (click)="deletePieceOAuth2Creds(piece)">Delete OAuth2 settings
+                            </div>
+                        </mat-menu>
+                    </div>
+                </ng-container>
 
                 <div class="ap-float-right ap-text-center ap-flex ap-items-center ap-justify-center" *ngIf="isDemo">
 

@@ -18,8 +18,10 @@ RUN npm i -g \
   npm@9.3.1 \
   pnpm@7.28.0
 
+# install isolated-vm in a parent directory to avoid linking the package in every sandbox
+RUN cd /usr/src && npm i isolated-vm@4.6.0
+
 RUN pnpm store add \
   @tsconfig/node18@1.0.0 \
   @types/node@18.17.1 \
-  typescript@4.8.4 \
-  isolated-vm@4.6.0
+  typescript@4.8.4

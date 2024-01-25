@@ -192,7 +192,7 @@ export const engineHelper = {
             pieceName,
             pieceVersion: exactPieceVersion,
             pieces: [
-                await getPiecePackage({
+                await getPiecePackage(operation.projectId, {
                     packageType,
                     pieceType,
                     pieceName,
@@ -383,7 +383,7 @@ async function getSandboxForAction(projectId: string, flowId: string, action: Ac
                 type: SandBoxCacheType.PIECE,
                 pieceName: piece.pieceName,
                 pieceVersion: piece.pieceVersion,
-                pieces: [await getPiecePackage(piece)],
+                pieces: [await getPiecePackage(projectId, piece)],
             })
         }
         case ActionType.CODE: {

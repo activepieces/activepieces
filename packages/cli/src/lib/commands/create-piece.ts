@@ -54,6 +54,7 @@ const nxGenerateNodeLibrary = async (
   const nxGenerateCommand = [
     `npx nx generate @nx/node:library ${pieceName}`,
     `--directory=pieces/${pieceType}`,
+    `--name=pieces-${pieceName}`,
     `--importPath=${packageName}`,
     '--publishable',
     '--buildable',

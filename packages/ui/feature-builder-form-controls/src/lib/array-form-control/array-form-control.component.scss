@@ -1,9 +1,8 @@
-@import "../../../../core/src//assets/scss/variables.scss";
+@import '../../../../core/src//assets/scss/variables.scss';
 
 .add-btn {
   margin-top: 0.5rem;
 }
-
 
 .value-control {
   border-radius: 0px 0px 0px 0px;
@@ -20,9 +19,8 @@
   &.only-one {
     border-radius: 4px;
   }
-  
-  margin-bottom: -1px;
 
+  margin-bottom: -1px;
 }
 
 .delete-btn-container {
@@ -41,4 +39,5 @@
 .opacity-0 {
   opacity: 0;
 }
+
 

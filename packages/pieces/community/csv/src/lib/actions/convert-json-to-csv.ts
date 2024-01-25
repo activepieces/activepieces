@@ -1,15 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { parseCSVFile } from '../utils';
+import { UnparseConfig } from 'papaparse';
+import { unparseCSVObject } from '../utils';
 
-export const parseCSVTextAction = createAction({
-  name: 'convert_csv_to_json',
-  displayName: 'Convert CSV to JSON',
+export const unparseCSVTextAction = createAction({
+  name: 'convert_json_to_csv',
+  displayName: 'Convert JSON to CSV',
   description:
-    'This function reads a CSV string and converts it into JSON array format.',
+    'This function reads a JSON file and converts it into a CSV file format.',
   props: {
-    csv_text: Property.LongText({
-      displayName: 'CSV Text',
-      defaultValue: '',
+    csv_object: Property.Json({
+      displayName: 'CSV JSON',
+      defaultValue: {},
       required: true,
     }),
     has_headers: Property.Checkbox({
@@ -32,12 +33,16 @@ export const parseCSVTextAction = createAction({
     }),
   },
   async run(context) {
-    const { csv_text, has_headers, delimiter_type } = context.propsValue;
-    const config = {
+    const { csv_object, has_headers, delimiter_type } = context.propsValue;
+    const config: UnparseConfig = {
       header: has_headers,
       delimiter: delimiter_type === 'auto' ? '' : delimiter_type,
       skipEmptyLines: true,
     };
-    return parseCSVFile(csv_text, config);
+
+    const results = unparseCSVObject(csv_object, config);
+    console.debug('Unparse results', results);
+
+    return results;
   },
 });

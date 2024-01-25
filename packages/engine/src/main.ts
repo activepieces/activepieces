@@ -112,6 +112,12 @@ const execute = async (): Promise<void> => {
                 const output = await pieceHelper.executeProps({
                     params: input,
                     piecesSource: EngineConstants.PIECE_SOURCES,
+                    executionState: await testExecutionContext.stateFromFlowVersion({
+                        flowVersion: input.flowVersion,
+                        projectId: input.projectId,
+                        workerToken: input.workerToken,
+                    }),
+                    constants: EngineConstants.fromExecutePropertyInput(input),
                 })
                 await writeOutput({
                     status: EngineResponseStatus.OK,

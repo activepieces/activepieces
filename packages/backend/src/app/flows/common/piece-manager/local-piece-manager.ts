@@ -27,6 +27,7 @@ export class LocalPieceManager extends PieceManager {
         for (const piece of pieces) {
             const pieceMetadata = await pieceMetadataService.getOrThrow({
                 name: piece.pieceName,
+                projectId: undefined,
                 version: piece.pieceVersion,
             })
             await updatePackageJson(pieceMetadata.directoryPath!, frameworkPackages)
