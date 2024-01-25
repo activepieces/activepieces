@@ -22,7 +22,7 @@ export const Heartbeat = createPiece({
   displayName: "Heartbeat",
   auth: heartbeatAuth,
   minimumSupportedRelease: '0.9.0',
-  logoUrl: "https://canny.io/images/1c45977e303cc49b7230311e0eb3e87e.png", //TODO: replace logo
+  logoUrl: "https://cdn.activepieces.com/pieces/heartbeat.png",
   authors: ['kanarelo'],
   actions: [heartBeatCreateUser, createCustomApiCallAction({
     auth: heartbeatAuth,
