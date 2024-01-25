@@ -1,6 +1,18 @@
 <div class="code-editor ap-h-full ap-flex ap-flex-col">
   <div class="ap-gap-2 ap-bg-header ap-p-3 ap-typography-headline-6 ap-flex ap-text-body  ap-items-center">
     <span i18n>Code Editor</span>
+
+    <ap-button btnStyle="stroked" btnSize="small" (buttonClicked)="state.openCodeWriterDialog$.emit()"
+      [disabled]="(generateCodeEnabled$ | async) === false"
+      [tooltipText]="(generateCodeEnabled$ | async) ? codeGeneratorTooltip: disabledCodeGeneratorTooltip"
+      i18n-tooltipText>
+      <div class="ap-flex ap-gap-3 ap-items-center">
+        <svg-icon src="assets/img/custom/AI.svg" class="ap-w-[20px] ap-h-[20px] ap-fill-primary"
+          [applyClass]="true"></svg-icon>
+        Generate
+      </div>
+    </ap-button>
+
     <div class="ap-flex-grow"></div>
 
     <ap-button *ngIf="!readOnly" btnStyle="basic" (buttonClicked)="openNpmPackageModal()" btnSize="small" i18n>

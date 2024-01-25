@@ -8,8 +8,8 @@ import {
 } from '@angular/forms';
 import { BehaviorSubject, Observable, map, tap } from 'rxjs';
 import { CodeWriterService } from './code-writer.service';
-import { FlagService, TelemetryService } from '@activepieces/ui/common';
-import { ApEdition, TelemetryEventName } from '@activepieces/shared';
+import { FlagService } from '@activepieces/ui/common';
+import { ApEdition } from '@activepieces/shared';
 export interface CodeWriterDialogData {
   existingCode: string;
 }
@@ -38,7 +38,6 @@ export class CodeWriterDialogComponent {
     private dialogRef: MatDialogRef<CodeWriterDialogComponent>,
     private codeWriterService: CodeWriterService,
     private flagService: FlagService,
-    private telemetryService: TelemetryService,
     @Inject(MAT_DIALOG_DATA)
     public data: CodeWriterDialogData
   ) {
@@ -54,13 +53,6 @@ export class CodeWriterDialogComponent {
     this.isCloudEdition$ = this.flagService
       .getEdition()
       .pipe(map((edition) => edition === ApEdition.CLOUD));
-  }
-  capturePromptTelemetry(payload: { prompt: string; code: string }) {
-    this.telemetryService.capture({
-      name: TelemetryEventName.COPILOT_GENERATED_CODE,
-      payload,
-    });
-    this.telemetryService.saveCopilotResult(payload);
   }
   prompt(reprompt = false) {
     if (this.promptForm.valid && !this.loading$.value) {
@@ -95,10 +87,6 @@ export class CodeWriterDialogComponent {
               '\n'
             );
             this.receivedInputs = result.inputs;
-            this.capturePromptTelemetry({
-              prompt,
-              code: result.code,
-            });
           } catch (e) {
             console.error('Copilot response not valid JSON.');
             console.error((e as Error).message);

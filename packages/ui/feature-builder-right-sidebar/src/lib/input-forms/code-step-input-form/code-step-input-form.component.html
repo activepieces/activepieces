@@ -25,7 +25,8 @@
         </ng-container>
 
       </div>
-      <app-code-artifact-form-control [formControl]="codeStepForm.controls.sourceCode"></app-code-artifact-form-control>
+      <app-code-artifact-form-control (openCodeWriterDialog)="openCodeWriterDialog()"
+        [formControl]="codeStepForm.controls.sourceCode"></app-code-artifact-form-control>
       <app-action-error-handling-form-control
         [formControl]="codeStepForm.controls.errorHandlingOptions"></app-action-error-handling-form-control>
     </div>
