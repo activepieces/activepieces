@@ -12,21 +12,38 @@
     "importHelpers": true,
     "target": "es2015",
     "module": "esnext",
-    "lib": ["es2021", "dom"],
+    "lib": [
+      "es2021",
+      "dom"
+    ],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@activepieces/ee-auth": ["packages/ee/auth/src/index.ts"],
-      "@activepieces/ee-billing-ui": ["packages/ee/billing/ui/src/index.ts"],
-      "@activepieces/ee-components": ["packages/ee/components/src/index.ts"],
-      "@activepieces/ee-embed-sdk": ["packages/ee/embed-sdk/src/index.ts"],
-      "@activepieces/ee-shared": ["packages/ee/shared/src/index.ts"],
-      "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
+      "@activepieces/ee-auth": [
+        "packages/ee/auth/src/index.ts"
+      ],
+      "@activepieces/ee-billing-ui": [
+        "packages/ee/billing/ui/src/index.ts"
+      ],
+      "@activepieces/ee-components": [
+        "packages/ee/components/src/index.ts"
+      ],
+      "@activepieces/ee-embed-sdk": [
+        "packages/ee/embed-sdk/src/index.ts"
+      ],
+      "@activepieces/ee-shared": [
+        "packages/ee/shared/src/index.ts"
+      ],
+      "@activepieces/ee/billing/ui": [
+        "packages/ee/billing/ui/src/index.ts"
+      ],
       "@activepieces/ee/project-members": [
         "packages/ee/project-members/src/index.ts"
       ],
-      "@activepieces/engine": ["packages/engine/src/main.ts"],
+      "@activepieces/engine": [
+        "packages/engine/src/main.ts"
+      ],
       "@activepieces/piece-activepieces": [
         "packages/pieces/community/activepieces/src/index.ts"
       ],
@@ -63,7 +80,9 @@
       "@activepieces/piece-bonjoro": [
         "packages/pieces/community/bonjoro/src/index.ts"
       ],
-      "@activepieces/piece-box": ["packages/pieces/community/box/src/index.ts"],
+      "@activepieces/piece-box": [
+        "packages/pieces/community/box/src/index.ts"
+      ],
       "@activepieces/piece-brilliant-directories": [
         "packages/pieces/community/brilliant-directories/src/index.ts"
       ],
@@ -109,7 +128,12 @@
       "@activepieces/piece-convertkit": [
         "packages/pieces/community/convertkit/src/index.ts"
       ],
-      "@activepieces/piece-csv": ["packages/pieces/community/csv/src/index.ts"],
+      "@activepieces/piece-crypto": [
+        "packages/pieces/community/crypto/src/index.ts"
+      ],
+      "@activepieces/piece-csv": [
+        "packages/pieces/community/csv/src/index.ts"
+      ],
       "@activepieces/piece-data-mapper": [
         "packages/pieces/community/data-mapper/src/index.ts"
       ],
@@ -158,13 +182,6 @@
       "@activepieces/piece-frame": [
         "packages/pieces/community/frame/src/index.ts"
       ],
-      "@activepieces/piece-figma": ["packages/pieces/figma/src/index.ts"],
-      "@activepieces/piece-flowise": ["packages/pieces/flowise/src/index.ts"],
-      "@activepieces/piece-flowlu": ["packages/pieces/flowlu/src/index.ts"],
-      "@activepieces/piece-formbricks": [
-        "packages/pieces/formbricks/src/index.ts"
-      ],
-      "@activepieces/piece-frame": ["packages/pieces/frame/src/index.ts"],
       "@activepieces/piece-freshdesk": [
         "packages/pieces/community/freshdesk/src/index.ts"
       ],
@@ -378,7 +395,9 @@
       "@activepieces/piece-robolly": [
         "packages/pieces/community/robolly/src/index.ts"
       ],
-      "@activepieces/piece-rss": ["packages/pieces/community/rss/src/index.ts"],
+      "@activepieces/piece-rss": [
+        "packages/pieces/community/rss/src/index.ts"
+      ],
       "@activepieces/piece-saastic": [
         "packages/pieces/community/saastic/src/index.ts"
       ],
@@ -499,7 +518,9 @@
       "@activepieces/piece-xero": [
         "packages/pieces/community/xero/src/index.ts"
       ],
-      "@activepieces/piece-xml": ["packages/pieces/community/xml/src/index.ts"],
+      "@activepieces/piece-xml": [
+        "packages/pieces/community/xml/src/index.ts"
+      ],
       "@activepieces/piece-youtube": [
         "packages/pieces/community/youtube/src/index.ts"
       ],
@@ -521,12 +542,18 @@
       "@activepieces/pieces-framework": [
         "packages/pieces/community/framework/src/index.ts"
       ],
-      "@activepieces/shared": ["packages/shared/src/index.ts"],
-      "@activepieces/ui-ee-platform": ["packages/ee/ui-platform/src/index.ts"],
+      "@activepieces/shared": [
+        "packages/shared/src/index.ts"
+      ],
+      "@activepieces/ui-ee-platform": [
+        "packages/ee/ui-platform/src/index.ts"
+      ],
       "@activepieces/ui-feature-builder-header": [
         "packages/ui/feature-builder-header/src/index.ts"
       ],
-      "@activepieces/ui/common": ["packages/ui/common/src/index.ts"],
+      "@activepieces/ui/common": [
+        "packages/ui/common/src/index.ts"
+      ],
       "@activepieces/ui/feature-authentication": [
         "packages/ui/feature-authentication/src/index.ts"
       ],
@@ -560,12 +587,17 @@
       "@activepieces/ui/feature-templates": [
         "packages/ui/feature-templates/src/index.ts"
       ],
-      "@ee/*": ["packages/ee/*"],
+      "@ee/*": [
+        "packages/ee/*"
+      ],
       "ui-feature-flow-builder": [
         "packages/ui/feature-flow-builder/src/index.ts"
       ]
     },
     "resolveJsonModule": true
   },
-  "exclude": ["node_modules", "tmp"]
+  "exclude": [
+    "node_modules",
+    "tmp"
+  ]
 }

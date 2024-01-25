@@ -117,6 +117,7 @@ const execute = async (): Promise<void> => {
                         projectId: input.projectId,
                         workerToken: input.workerToken,
                     }),
+                    constants: EngineConstants.fromExecutePropertyInput(input),
                 })
                 await writeOutput({
                     status: EngineResponseStatus.OK,

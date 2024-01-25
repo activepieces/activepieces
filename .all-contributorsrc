@@ -800,6 +800,15 @@
         "doc",
         "code"
       ]
+    },
+    {
+      "login": "AbdullahBitar",
+      "name": "AbdullahBitar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/122645579?v=4",
+      "profile": "https://github.com/AbdullahBitar",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

@@ -1,12 +1,12 @@
-import { isEmpty, isInteger, isNil } from 'lodash';
+import dayjs, { OpUnitType } from 'dayjs';
+import { isEmpty, isInteger, isNil, isString } from 'lodash';
 import { ErrorMessages } from './errors';
 import {
-  ValidationErrors,
   TypedValidatorFn,
+  ValidationErrors,
   ValidationInputType,
 } from './types';
 import { formatErrorMessage } from './utils';
-import dayjs, { OpUnitType } from 'dayjs';
 
 class Validators {
   static pattern(
@@ -24,8 +24,8 @@ class Validators {
         return regex.test(String(processedValue))
           ? null
           : formatErrorMessage(ErrorMessages.REGEX, {
-              property: property?.displayName,
-            });
+            property: property?.displayName,
+          });
       },
     };
   }
@@ -45,8 +45,8 @@ class Validators {
         return patternError
           ? null
           : formatErrorMessage(ErrorMessages.PROHIBIT_REGEX, {
-              property: property.displayName,
-            });
+            property: property.displayName,
+          });
       },
     };
   }
@@ -154,7 +154,7 @@ class Validators {
         const isValid = includeBounds
           ? dateValue.isBefore(maxDate, unit)
           : dateValue.isSame(maxDate, unit) &&
-            dateValue.isBefore(maxDate, unit);
+          dateValue.isBefore(maxDate, unit);
 
         if (isValid) return null;
 
@@ -204,11 +204,11 @@ class Validators {
 
         const isValid = includeBounds
           ? (dateValue.isBefore(maxDate, unit) ||
-              dateValue.isSame(maxDate, unit)) &&
-            (dateValue.isAfter(minDate, unit) ||
-              dateValue.isSame(minDate, unit))
+            dateValue.isSame(maxDate, unit)) &&
+          (dateValue.isAfter(minDate, unit) ||
+            dateValue.isSame(minDate, unit))
           : dateValue.isBefore(maxDate, unit) &&
-            dateValue.isAfter(minDate, unit);
+          dateValue.isAfter(minDate, unit);
 
         if (isValid) return null;
 
@@ -231,6 +231,17 @@ class Validators {
       return null;
     },
   };
+
+  static string: TypedValidatorFn<ValidationInputType.STRING> = {
+    type: ValidationInputType.STRING,
+    fn: (property, processedValue, userInput) => {
+      if (!isString(processedValue)) {
+        return formatErrorMessage(ErrorMessages.STRING, { userInput })
+      }
+
+      return null;
+    }
+  }
 
   static nonZero: TypedValidatorFn<ValidationInputType.NUMBER> = {
     type: ValidationInputType.NUMBER,
@@ -288,11 +299,11 @@ class Validators {
     fn: (property, processedValue, userInput) => {
       const pattern = new RegExp(
         '^((https?|ftp|file)://)?' + // protocol
-          '((([a-zA-Z\\d]([a-zA-Z\\d-]*[a-zA-Z\\d])*)\\.)+[a-zA-Z]{2,}|' + // domain name
-          '((\\d{1,3}\\.){3}\\d{1,3}))' + // OR ip (v4) address
-          '(\\:\\d+)?(\\/[-a-zA-Z\\d%_.~+]*)*' + // port and path
-          '(\\?[;&a-zA-Z\\d%_.~+=-]*)?' + // query string
-          '(\\#[-a-zA-Z\\d_]*)?$' // fragment locator
+        '((([a-zA-Z\\d]([a-zA-Z\\d-]*[a-zA-Z\\d])*)\\.)+[a-zA-Z]{2,}|' + // domain name
+        '((\\d{1,3}\\.){3}\\d{1,3}))' + // OR ip (v4) address
+        '(\\:\\d+)?(\\/[-a-zA-Z\\d%_.~+]*)*' + // port and path
+        '(\\?[;&a-zA-Z\\d%_.~+=-]*)?' + // query string
+        '(\\#[-a-zA-Z\\d_]*)?$' // fragment locator
       );
       if (isEmpty(processedValue)) return null;
 
@@ -344,9 +355,9 @@ class Validators {
           return values.includes(processedValue)
             ? null
             : formatErrorMessage(ErrorMessages.ONE_OF, {
-                userInput,
-                choices: values,
-              });
+              userInput,
+              choices: values,
+            });
         }
 
         return null;
@@ -364,9 +375,9 @@ class Validators {
           const missingKeys = values.filter((key) => !processedValue[key]);
           return missingKeys.length
             ? formatErrorMessage(ErrorMessages.REQUIRE_KEYS, {
-                userInput,
-                keys: missingKeys.join(', '),
-              })
+              userInput,
+              keys: missingKeys.join(', '),
+            })
             : null;
         }
         return null;
@@ -375,4 +386,5 @@ class Validators {
   }
 }
 
-export { Validators, ErrorMessages, ValidationErrors, formatErrorMessage };
+export { ErrorMessages, ValidationErrors, Validators, formatErrorMessage };
+
