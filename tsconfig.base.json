@@ -109,6 +109,9 @@
       "@activepieces/piece-convertkit": [
         "packages/pieces/community/convertkit/src/index.ts"
       ],
+      "@activepieces/piece-crypto": [
+        "packages/pieces/community/crypto/src/index.ts"
+      ],
       "@activepieces/piece-csv": ["packages/pieces/community/csv/src/index.ts"],
       "@activepieces/piece-data-mapper": [
         "packages/pieces/community/data-mapper/src/index.ts"
@@ -140,25 +143,10 @@
       "@activepieces/piece-facebook-pages": [
         "packages/pieces/community/facebook-pages/src/index.ts"
       ],
-      "@activepieces/piece-figma": [
-        "packages/pieces/community/figma/src/index.ts"
-      ],
+      "@activepieces/piece-figma": ["packages/pieces/figma/src/index.ts"],
       "@activepieces/piece-file-helper": [
         "packages/pieces/community/file-helper/src/index.ts"
       ],
-      "@activepieces/piece-flowise": [
-        "packages/pieces/community/flowise/src/index.ts"
-      ],
-      "@activepieces/piece-flowlu": [
-        "packages/pieces/community/flowlu/src/index.ts"
-      ],
-      "@activepieces/piece-formbricks": [
-        "packages/pieces/community/formbricks/src/index.ts"
-      ],
-      "@activepieces/piece-frame": [
-        "packages/pieces/community/frame/src/index.ts"
-      ],
-      "@activepieces/piece-figma": ["packages/pieces/figma/src/index.ts"],
       "@activepieces/piece-flowise": ["packages/pieces/flowise/src/index.ts"],
       "@activepieces/piece-flowlu": ["packages/pieces/flowlu/src/index.ts"],
       "@activepieces/piece-formbricks": [
@@ -225,7 +213,7 @@
       "@activepieces/piece-hackernews": [
         "packages/pieces/community/hackernews/src/index.ts"
       ],
-            "@activepieces/piece-http": [
+      "@activepieces/piece-http": [
         "packages/pieces/community/http/src/index.ts"
       ],
       "@activepieces/piece-hubspot": [
