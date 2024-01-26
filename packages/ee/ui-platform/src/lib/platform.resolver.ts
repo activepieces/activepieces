@@ -11,7 +11,6 @@ export const platformResolver: ResolveFn<Platform | null> = () => {
   );
   const platformId = authenticationService.getPlatformId();
   if (!platformId) {
-    console.error('Token is invalid or not available');
     return null;
   }
   return platformService.getPlatform(platformId);

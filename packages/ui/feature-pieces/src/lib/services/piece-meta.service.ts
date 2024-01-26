@@ -5,6 +5,7 @@ import {
   AddPieceRequestBody,
   PieceOptionRequest,
   TriggerType,
+  PieceScope,
 } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
 import {
@@ -18,7 +19,7 @@ import {
   take,
 } from 'rxjs';
 import semver from 'semver';
-import { FlagService, environment } from '@activepieces/ui/common';
+import { AuthenticationService, FlagService, environment } from '@activepieces/ui/common';
 import { FlowItemDetails } from '@activepieces/ui/common';
 import {
   DropdownState,
@@ -104,7 +105,7 @@ export class PieceMetadataService {
     },
   ];
 
-  constructor(private http: HttpClient, private flagsService: FlagService) {}
+  constructor(private http: HttpClient, private flagsService: FlagService, private authenticationService: AuthenticationService) { }
 
   private getCacheKey(pieceName: string, pieceVersion: string): string {
     return `${pieceName}-${pieceVersion}`;
@@ -152,13 +153,14 @@ export class PieceMetadataService {
     formData.set('packageType', params.packageType);
     formData.set('pieceName', params.pieceName);
     formData.set('pieceVersion', params.pieceVersion);
-
+    formData.set('scope', params.scope)
+    if (params.scope === PieceScope.PROJECT) {
+      formData.set('projectId', this.authenticationService.getProjectId())
+    }
     if (params.pieceArchive) {
       formData.set('pieceArchive', params.pieceArchive);
     }
-    if (params.platformId) {
-      formData.set('platformId', params.platformId);
-    }
+
     return this.http.post<PieceMetadataModel>(
       `${environment.apiUrl}/pieces`,
       formData

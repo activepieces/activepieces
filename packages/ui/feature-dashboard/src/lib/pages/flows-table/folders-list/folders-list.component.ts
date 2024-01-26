@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { NewFolderDialogComponent } from '../new-folder-dialog/new-folder-dialog.component';
+
 import { Observable, tap, map, switchMap, take, BehaviorSubject } from 'rxjs';
 import { FolderDto } from '@activepieces/shared';
 import { Store } from '@ngrx/store';
@@ -12,10 +12,11 @@ import {
   DeleteEntityDialogData,
   FoldersService,
 } from '@activepieces/ui/common';
+import { NewFolderDialogComponent } from '../../../components/dialogs/new-folder-dialog/new-folder-dialog.component';
 import {
   RenameFolderDialogComponent,
   RenameFolderDialogData,
-} from '../rename-folder-dialog/rename-folder-dialog.component';
+} from '../../../components/dialogs/rename-folder-dialog/rename-folder-dialog.component';
 
 @Component({
   selector: 'app-folders-list',

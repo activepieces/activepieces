@@ -1,45 +1,44 @@
 import {
     ActivepiecesError,
+    ApEdition,
     EngineResponseStatus,
     ErrorCode,
     PackageType,
     PiecePackage,
+    PieceScope,
     PieceType,
-    ProjectId,
-    isNil,
+    AddPieceRequestBody,
 } from '@activepieces/shared'
 import { engineHelper } from '../../helper/engine-helper'
 import { pieceMetadataService } from '../piece-metadata-service'
 import { PieceMetadataModel } from '../piece-metadata-entity'
 import { logger } from '../../helper/logger'
 import { pieceServiceHooks } from './piece-service-hooks'
+import { ExecutionMode, system } from '../../helper/system/system'
+import { SystemProp } from '../../helper/system/system-prop'
+import { getEdition } from '../../helper/secret-helper'
+import { PieceMetadata } from '@activepieces/pieces-framework'
 
 export const pieceService = {
-    async installPiece(params: AddPieceParams): Promise<PieceMetadataModel> {
+    async installPiece(platformId: string | undefined, projectId: string, params: AddPieceRequestBody): Promise<PieceMetadataModel> {
+        assertInstallProjectEnabled(params.scope)
         try {
-            const piecePackage = await getPiecePackage(params)
-            const engineResponse = await engineHelper.extractPieceMetadata({
-                ...piecePackage,
-                projectId: params.projectId,
-            })
 
-            if (engineResponse.status !== EngineResponseStatus.OK) {
-                throw new Error(engineResponse.standardError)
-            }
-
+            const piecePackage = await getPiecePackage(platformId, projectId, params)
+            const pieceInformation = await extractPieceInformation(piecePackage)
             const savedPiece = await pieceMetadataService.create({
                 pieceMetadata: {
-                    ...engineResponse.result,
-                    minimumSupportedRelease: engineResponse.result.minimumSupportedRelease ?? '0.0.0',
-                    maximumSupportedRelease: engineResponse.result.maximumSupportedRelease ?? '999.999.999',
-                    name: params.pieceName,
-                    version: params.pieceVersion,
+                    ...pieceInformation,
+                    minimumSupportedRelease: pieceInformation.minimumSupportedRelease ?? '0.0.0',
+                    maximumSupportedRelease: pieceInformation.maximumSupportedRelease ?? '999.999.999',
+                    name: pieceInformation.name,
+                    version: pieceInformation.version,
                 },
-                projectId: isNil(params.platformId) ? params.projectId : undefined,
+                projectId: params.scope === PieceScope.PROJECT ? projectId : undefined,
                 packageType: params.packageType,
-                platformId: params.platformId,
+                platformId,
                 pieceType: PieceType.CUSTOM,
-                archiveId: piecePackage.archiveId,
+                archiveId: piecePackage.packageType === PackageType.ARCHIVE ? piecePackage.archiveId : undefined,
             })
 
             return savedPiece
@@ -48,20 +47,42 @@ export const pieceService = {
             logger.error(error, '[PieceService#add]')
 
             throw new ActivepiecesError({
-                code: ErrorCode.PIECE_NOT_FOUND,
+                code: ErrorCode.ENGINE_OPERATION_FAILURE,
                 params: {
-                    pieceName: params.pieceName,
-                    pieceVersion: params.pieceVersion,
+                    message: JSON.stringify(error),
                 },
             })
         }
     },
 }
 
-const getPiecePackage = async (params: AddPieceParams): Promise<PiecePackage> => {
+const assertInstallProjectEnabled = (scope: PieceScope): void => {
+    if (scope === PieceScope.PROJECT) {
+        const sandboxMode = system.getOrThrow(SystemProp.EXECUTION_MODE)
+        const edition = getEdition()
+        if (sandboxMode === ExecutionMode.UNSANDBOXED && [ApEdition.ENTERPRISE, ApEdition.CLOUD].includes(edition)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'Project pieces are not supported in this edition with unsandboxed execution mode',
+                },
+            })
+        }
+    }
+}
+
+
+const getPiecePackage = async (platformId: string | undefined, projectId: string | undefined, params: AddPieceRequestBody): Promise<PiecePackage> => {
     switch (params.packageType) {
         case PackageType.ARCHIVE: {
-            return pieceServiceHooks.get().getPieceArchivePackage(params)
+            return pieceServiceHooks.get().savePieceArchivePackage({
+                archive: params.pieceArchive as Buffer,
+                packageType: params.packageType,
+                pieceName: params.pieceName,
+                pieceVersion: params.pieceVersion,
+                projectId: params.scope === PieceScope.PROJECT ? projectId : undefined,
+                platformId,
+            })
         }
 
         case PackageType.REGISTRY: {
@@ -73,20 +94,13 @@ const getPiecePackage = async (params: AddPieceParams): Promise<PiecePackage> =>
     }
 }
 
-type BaseAddPieceParams<PT extends PackageType> = {
-    packageType: PT
-    pieceName: string
-    pieceVersion: string
-    projectId: ProjectId
-    platformId?: string
+
+
+const extractPieceInformation = async (piecePackage: PiecePackage): Promise<PieceMetadata> => {
+    const engineResponse = await engineHelper.extractPieceMetadata(piecePackage)
+
+    if (engineResponse.status !== EngineResponseStatus.OK) {
+        throw new Error(engineResponse.standardError)
+    }
+    return engineResponse.result
 }
-
-type AddRegistryPieceParams = BaseAddPieceParams<PackageType.REGISTRY>
-
-type AddArchivePieceParams = BaseAddPieceParams<PackageType.ARCHIVE> & {
-    archive: Buffer
-}
-
-type AddPieceParams =
-    | AddRegistryPieceParams
-    | AddArchivePieceParams

@@ -40,7 +40,7 @@ import { logger } from '../helper/logger'
 import chalk from 'chalk'
 import { getEdition, getWebhookSecret } from './secret-helper'
 import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'
-import { pieceMetadataService } from '../pieces/piece-metadata-service'
+import { getPiecePackage, pieceMetadataService } from '../pieces/piece-metadata-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { sandboxProvisioner } from '../workers/sandbox/provisioner/sandbox-provisioner'
 import { SandBoxCacheType } from '../workers/sandbox/provisioner/sandbox-cache-key'
@@ -66,10 +66,7 @@ export type EngineHelperActionResult = ExecuteActionResponse
 export type EngineHelperValidateAuthResult = ExecuteValidateAuthResponse
 
 export type EngineHelperCodeResult = ExecuteActionResponse
-export type EngineHelperExtractPieceInformation = Omit<
-PieceMetadata,
-'name' | 'version'
->
+export type EngineHelperExtractPieceInformation = PieceMetadata
 
 export type EngineHelperResult =
     | EngineHelperFlowResult
@@ -193,15 +190,14 @@ export const engineHelper = {
         const sandbox = await sandboxProvisioner.provision({
             type: SandBoxCacheType.PIECE,
             pieceName,
-            projectId: operation.projectId,
             pieceVersion: exactPieceVersion,
             pieces: [
-                {
+                await getPiecePackage(operation.projectId, {
                     packageType,
                     pieceType,
                     pieceName,
                     pieceVersion: exactPieceVersion,
-                },
+                }),
             ],
         })
 
@@ -245,7 +241,6 @@ export const engineHelper = {
         const sandbox = await sandboxProvisioner.provision({
             type: SandBoxCacheType.PIECE,
             pieceName: piece.pieceName,
-            projectId: operation.projectId,
             pieceVersion: piece.pieceVersion,
             pieces: [piece],
         })
@@ -274,7 +269,6 @@ export const engineHelper = {
             type: SandBoxCacheType.PIECE,
             pieceName,
             pieceVersion,
-            projectId: operation.projectId,
             pieces: [piece],
         })
 
@@ -323,7 +317,6 @@ export const engineHelper = {
             pieceName: piece.pieceName,
             pieceVersion: piece.pieceVersion,
             pieces: [piece],
-            projectId: operation.projectId,
         })
 
         const input = {
@@ -390,14 +383,12 @@ async function getSandboxForAction(projectId: string, flowId: string, action: Ac
                 type: SandBoxCacheType.PIECE,
                 pieceName: piece.pieceName,
                 pieceVersion: piece.pieceVersion,
-                pieces: [piece],
-                projectId,
+                pieces: [await getPiecePackage(projectId, piece)],
             })
         }
         case ActionType.CODE: {
             return sandboxProvisioner.provision({
                 type: SandBoxCacheType.CODE,
-                projectId,
                 flowId,
                 name: action.name,
                 sourceCodeHash: hashObject(action.settings.sourceCode),
@@ -413,7 +404,6 @@ async function getSandboxForAction(projectId: string, flowId: string, action: Ac
         case ActionType.LOOP_ON_ITEMS:
             return sandboxProvisioner.provision({
                 type: SandBoxCacheType.NONE,
-                projectId,
             })
     }
 }

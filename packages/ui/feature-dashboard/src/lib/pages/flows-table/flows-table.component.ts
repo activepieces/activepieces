@@ -7,7 +7,6 @@ import {
   PopulatedFlow,
   FlowStatus,
   FolderId,
-  TriggerType,
   FlowOperationType,
 } from '@activepieces/shared';
 
@@ -16,6 +15,8 @@ import {
   AuthenticationService,
   FoldersService,
   NavigationService,
+  downloadFlow,
+  flowActionsUiInfo,
 } from '@activepieces/ui/common';
 import { FlowService } from '@activepieces/ui/common';
 import { ARE_THERE_FLOWS_FLAG } from '../../resolvers/are-there-flows.resolver';
@@ -29,9 +30,12 @@ import { FolderActions } from '../../store/folders/folders.actions';
 import {
   MoveFlowToFolderDialogComponent,
   MoveFlowToFolderDialogData,
-} from './move-flow-to-folder-dialog/move-flow-to-folder-dialog.component';
+} from '../../components/dialogs/move-flow-to-folder-dialog/move-flow-to-folder-dialog.component';
 import { FoldersSelectors } from '../../store/folders/folders.selector';
-import cronstrue from 'cronstrue/i18n';
+import {
+  RenameFlowDialogComponent,
+  RenameFlowDialogData,
+} from '../../components/dialogs/rename-flow-dialog/rename-flow-dialog.component';
 
 @Component({
   templateUrl: './flows-table.component.html',
@@ -39,6 +43,7 @@ import cronstrue from 'cronstrue/i18n';
 export class FlowsTableComponent implements OnInit {
   @ViewChild(ApPaginatorComponent, { static: true })
   paginator!: ApPaginatorComponent;
+  readonly flowActionsUiInfo = flowActionsUiInfo;
   creatingFlow = false;
   deleteFlowDialogClosed$: Observable<void>;
   moveFlowDialogClosed$: Observable<void>;
@@ -53,10 +58,12 @@ export class FlowsTableComponent implements OnInit {
     'action',
   ];
   refreshTableAtCurrentCursor$: Subject<boolean> = new Subject();
-  areThereFlows$: Observable<boolean>;
+  areThereFlows$?: Observable<boolean>;
   flowsUpdateStatusRequest$: Record<string, Observable<void> | null> = {};
   showAllFlows$: Observable<boolean>;
-  duplicateFlow$: Observable<void>;
+  duplicateFlow$?: Observable<void>;
+  downloadTemplate$?: Observable<void>;
+  renameFlow$?: Observable<boolean>;
   constructor(
     private activatedRoute: ActivatedRoute,
     private dialogService: MatDialog,
@@ -65,21 +72,19 @@ export class FlowsTableComponent implements OnInit {
     private store: Store,
     private authenticationService: AuthenticationService,
     private navigationService: NavigationService,
-    @Inject(LOCALE_ID) private locale: string
+    @Inject(LOCALE_ID) public locale: string
   ) {
-    this.listenToShowAllFolders();
+    this.showAllFlows$ = this.listenToShowAllFolders();
     this.folderId$ = this.store.select(FoldersSelectors.selectCurrentFolderId);
   }
 
   private listenToShowAllFolders() {
-    this.showAllFlows$ = this.store
-      .select(FoldersSelectors.selectDisplayAllFlows)
-      .pipe(
-        tap((displayAllFlows) => {
-          this.hideOrShowFolderColumn(displayAllFlows);
-        }),
-        shareReplay(1)
-      );
+    return this.store.select(FoldersSelectors.selectDisplayAllFlows).pipe(
+      tap((displayAllFlows) => {
+        this.hideOrShowFolderColumn(displayAllFlows);
+      }),
+      shareReplay(1)
+    );
   }
 
   private hideOrShowFolderColumn(displayAllFlows: boolean) {
@@ -120,8 +125,7 @@ export class FlowsTableComponent implements OnInit {
     const dialogData: DeleteEntityDialogData = {
       deleteEntity$: this.flowService.delete(flow.id),
       entityName: flow.version.displayName,
-      note: $localize`This will permanently delete the flow, all its data and any background runs.
-      You can't undo this action.`,
+      note: flowActionsUiInfo.delete.note,
     };
     const dialogRef = this.dialogService.open(DeleteEntityDialogComponent, {
       data: dialogData,
@@ -169,53 +173,16 @@ export class FlowsTableComponent implements OnInit {
   duplicate(flow: PopulatedFlow) {
     this.duplicateFlow$ = this.flowService.duplicate(flow.id);
   }
-
-  getTriggerIcon(flow: PopulatedFlow) {
-    const trigger = flow.version.trigger;
-    switch (trigger.type) {
-      case TriggerType.WEBHOOK:
-        return 'assets/img/custom/triggers/instant-filled.svg';
-      case TriggerType.PIECE: {
-        const cronExpression = flow.schedule?.cronExpression;
-        if (cronExpression) {
-          return 'assets/img/custom/triggers/periodic-filled.svg';
-        } else {
-          return 'assets/img/custom/triggers/instant-filled.svg';
-        }
-      }
-      case TriggerType.EMPTY: {
-        console.error(
-          "Flow can't be published with empty trigger " +
-            flow.version.displayName
-        );
-        return 'assets/img/custom/warn.svg';
-      }
-    }
+  export(flow: PopulatedFlow) {
+    this.downloadTemplate$ = this.flowService
+      .exportTemplate(flow.id, undefined)
+      .pipe(
+        tap(downloadFlow),
+        map(() => {
+          return void 0;
+        })
+      );
   }
-
-  getTriggerToolTip(flow: PopulatedFlow) {
-    const trigger = flow.version.trigger;
-    switch (trigger.type) {
-      case TriggerType.WEBHOOK:
-        return $localize`Real time flow`;
-      case TriggerType.PIECE: {
-        const cronExpression = flow.schedule?.cronExpression;
-        return cronExpression
-          ? $localize`Runs ${cronstrue
-              .toString(cronExpression, { locale: this.locale })
-              .toLocaleLowerCase()}`
-          : $localize`Real time flow`;
-      }
-      case TriggerType.EMPTY: {
-        console.error(
-          "Flow can't be published with empty trigger " +
-            flow.version.displayName
-        );
-        return $localize`Please contact support as your published flow has a problem`;
-      }
-    }
-  }
-
   moveFlow(flow: PopulatedFlow) {
     const dialogData: MoveFlowToFolderDialogData = {
       flowId: flow.id,
@@ -233,16 +200,17 @@ export class FlowsTableComponent implements OnInit {
         map(() => void 0)
       );
   }
-
-  getStatusFlowMatTooltip(flow: {
-    instanceToggleControl: FormControl<boolean>;
-  }) {
-    if (flow.instanceToggleControl.disabled) {
-      return $localize`Please publish the flow`;
-    }
-
-    return flow.instanceToggleControl.value
-      ? $localize`Flow is on`
-      : $localize`Flow is off`;
+  renameFlow(flow: PopulatedFlow) {
+    const data: RenameFlowDialogData = { flow };
+    this.renameFlow$ = this.dialogService
+      .open(RenameFlowDialogComponent, { data })
+      .afterClosed()
+      .pipe(
+        tap((res) => {
+          if (res) {
+            this.refreshTableAtCurrentCursor$.next(true);
+          }
+        })
+      );
   }
 }

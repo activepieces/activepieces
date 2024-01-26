@@ -218,6 +218,37 @@ Property.Array({
 })
 ```
 
+### Array of Fields
+
+This property collects an array of objects from the user.
+
+**Example:**
+
+```typescript
+Property.Array({
+    displayName: 'Fields',
+    description: 'Enter fields',
+    properties: [
+        fieldName: Property.ShortText({
+          displayName: 'Field Name',
+          required: true,
+        }),
+        fieldType: Property.StaticDropdown({
+          displayName: 'Field Type',
+          required: true,
+          options: {
+            options: [
+              { label: 'TEXT', value: 'TEXT' },
+              { label: 'NUMBER', value: 'NUMBER' },
+            ],
+          },
+        }),
+    ],
+    required: false,
+    defaultValue:[]
+})
+```
+
 ## Dynamic Data Properties
 
 These properties provide more advanced options for collecting user input.

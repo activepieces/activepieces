@@ -1,6 +1,7 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
+  createCustomApiCallAction,
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
@@ -73,6 +74,17 @@ export const leadConnector = createPiece({
     updateOpportunityAction,
     createTaskAction,
     updateTaskAction,
+    createCustomApiCallAction({
+        baseUrl: () => {
+            return baseUrl
+        },
+        auth: leadConnectorAuth,
+        authMapping: (auth) => {
+            return {
+                'Authorization': `Bearer ${auth}`
+            }
+        }
+    })
   ],
   triggers: [newContact, contactUpdated, newFormSubmission, newOpportunity],
 });

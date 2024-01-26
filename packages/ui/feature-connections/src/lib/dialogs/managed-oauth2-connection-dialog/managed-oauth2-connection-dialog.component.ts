@@ -37,6 +37,7 @@ import {
   PropertyType,
   OAuth2Property,
   OAuth2Props,
+  StaticDropdownProperty,
 } from '@activepieces/pieces-framework';
 import { connectionNameRegex } from '../utils';
 
@@ -48,7 +49,7 @@ interface AuthConfigSettings {
 
 export const USE_MY_OWN_CREDENTIALS = 'USE_MY_OWN_CREDENTIALS';
 export type ManagedOAuth2ConnectionDialogData = {
-  pieceAuthProperty: OAuth2Property<boolean, OAuth2Props>;
+  pieceAuthProperty: OAuth2Property<OAuth2Props>;
   pieceName: string;
   connectionToUpdate?: AppConnectionWithoutSensitiveData;
   clientId: string;
@@ -298,4 +299,8 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
   dropdownCompareWithFunction = (opt: any, formControlValue: any) => {
     return formControlValue && deepEqual(opt, formControlValue);
   };
+
+  castToStaticDropdown(t: unknown) {
+    return t as StaticDropdownProperty<unknown, true>;
+  }
 }

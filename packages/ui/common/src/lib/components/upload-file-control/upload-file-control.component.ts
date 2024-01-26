@@ -135,7 +135,7 @@ export class UploadFileControlComponent
 
     const oldState = this.errorState;
     const newState =
-      this.ngControl?.invalid && (this.touched || parent.submitted);
+      this.ngControl?.invalid && (this.touched || parent?.submitted);
 
     if (oldState !== newState) {
       this.errorState = newState || false;

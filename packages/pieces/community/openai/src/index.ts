@@ -61,8 +61,10 @@ export const openai = createPiece({
     translateAction,
     createCustomApiCallAction({
       auth: openaiAuth,
-      baseUrl: 'https://api.openai.com/v1',
-      authMapping: (auth: PieceAuthProperty) => {
+      baseUrl: () => {
+        return 'https://api.openai.com/v1'
+      },
+      authMapping: (auth) => {
         return {
           'Authorization': `Bearer ${auth}`
         }

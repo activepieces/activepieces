@@ -6,16 +6,16 @@ import {
     isString,
 } from '@activepieces/shared'
 import {
-    PropertyType,
     formatErrorMessage,
     ErrorMessages,
+    InputPropertyMap,
     PieceAuthProperty,
-    NonAuthPiecePropertyMap,
+    PropertyType,
 } from '@activepieces/pieces-framework'
 import { handleAPFile, isApFilePath } from './files.service'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createConnectionService } from './connections.service'
-import { codeSandbox } from '../core/code/code-sandbox'
+import { initCodeSandbox } from '../core/code/code-sandbox'
 
 export class VariableService {
     private static readonly VARIABLE_PATTERN = RegExp('\\{\\{(.*?)\\}\\}', 'g')
@@ -113,6 +113,8 @@ export class VariableService {
 
     private async evalInScope(js: string, contextAsScope: Record<string, unknown>): Promise<unknown> {
         try {
+            const codeSandbox = await initCodeSandbox()
+
             const result = await codeSandbox.runScript({
                 script: js,
                 scriptContext: contextAsScope,
@@ -194,7 +196,7 @@ export class VariableService {
 
     async applyProcessorsAndValidators(
         resolvedInput: Record<string, any>,
-        props: NonAuthPiecePropertyMap,
+        props: InputPropertyMap,
         auth: PieceAuthProperty | undefined,
     ): Promise<{ processedInput: any, errors: any }> {
         const processedInput = { ...resolvedInput }

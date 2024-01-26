@@ -26,12 +26,14 @@ export class IconButtonComponent implements OnInit {
   @Input() useSvgDefault = false;
   @Output() buttonClicked: EventEmitter<boolean> = new EventEmitter();
   @Input() iconUrl?: string;
+  disabledClass = ' !ap-fill-disable';
   ngOnInit(): void {
     if (this.useSvgDefault) {
       this.width = undefined;
       this.height = undefined;
     }
   }
+
   emit() {
     this.buttonClicked.emit(true);
   }

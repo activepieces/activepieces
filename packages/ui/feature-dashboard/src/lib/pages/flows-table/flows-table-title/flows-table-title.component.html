@@ -22,9 +22,17 @@
             </div>
         </ng-template>
     </ng-template>
-    <ap-button btnColor="primary" btnSize="medium" [loading]="creatingFlow" (buttonClicked)="createFlow()">
-        <span i18n>+ New Flow</span>
-    </ap-button>
+    <div class="ap-flex ap-items-center ap-gap-2">
+        <ap-button btnColor="basic" btnSize="medium" *ngIf="currentProject$ | async as proj" [loading]="creatingFlow"
+            (buttonClicked)="importFlow(proj.id)">
+            <span class="ap-flex ap-gap-2" i18n><svg-icon [src]="flowActionsUiInfo.import.icon"
+                    [class]="flowActionsUiInfo.iconSizeTailWind" [applyClass]="true"> </svg-icon>Import Flow</span>
+        </ap-button>
+        <ap-button btnColor="primary" btnSize="medium" [loading]="creatingFlow" (buttonClicked)="createFlow()">
+            <span i18n>+ New Flow</span>
+        </ap-button>
+    </div>
+
 </div>
 
 <ng-container *ngIf="createFlow$ | async"></ng-container>

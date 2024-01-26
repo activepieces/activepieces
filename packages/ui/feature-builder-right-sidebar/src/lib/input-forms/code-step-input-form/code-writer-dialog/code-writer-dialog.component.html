@@ -25,6 +25,10 @@
             <ap-button btnColor="basic" mat-dialog-close btnSize="default" i18n>
                 Close
             </ap-button>
+            <ap-button cdkFocusInitial btnSize="default" btnColor="primary" (click)="prompt()"
+                [loading]="loading$ | async | defaultFalse" i18n>
+                Send Prompt
+            </ap-button>
 
         </div>
     </mat-dialog-actions>
@@ -64,6 +68,7 @@
             <textarea class="!ap-resize-none" cdkFocusInitial
                 (keydown.enter)="$event.preventDefault();$event.stopPropagation();" (keyup.enter)=" prompt(reprompt)"
                 [formControl]="promptForm.controls.prompt" matInput type="text" rows="4"></textarea>
+            <mat-error *ngIf="promptForm.controls.prompt.invalid" i18n>Prompt is required </mat-error>
             <div matSuffix>
                 <div *ngIf="(loading$ | async )" class="ap-px-4">
                     <div class="dark-spinner spinner-border  ap-w-[16px] ap-h-[16px]" role="status"></div>

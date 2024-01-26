@@ -1,5 +1,6 @@
 import { ActivepiecesError, ErrorCode, FlowId, FlowOperationRequest, FlowOperationType, FlowVersion, ProjectId } from '@activepieces/shared'
 import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
+import { captureException } from '../../helper/logger'
 
 type OnApplyOperationParams = {
     projectId: ProjectId
@@ -32,10 +33,15 @@ const deleteWebhookSimulation = async (params: DeleteWebhookSimulationParams): P
 export const flowVersionSideEffects = {
     async preApplyOperation({ projectId, flowVersion, operation }: OnApplyOperationParams): Promise<void> {
         if (operation.type === FlowOperationType.UPDATE_TRIGGER) {
-            await deleteWebhookSimulation({
-                projectId,
-                flowId: flowVersion.flowId,
-            })
+            try {
+                await deleteWebhookSimulation({
+                    projectId,
+                    flowId: flowVersion.flowId,
+                })
+            } catch (e) {
+                // Ignore error and continue the operation peacefully
+                captureException(e)
+            }
         }
-    },
+    }
 }

@@ -109,6 +109,9 @@
       "@activepieces/piece-convertkit": [
         "packages/pieces/community/convertkit/src/index.ts"
       ],
+      "@activepieces/piece-crypto": [
+        "packages/pieces/community/crypto/src/index.ts"
+      ],
       "@activepieces/piece-csv": ["packages/pieces/community/csv/src/index.ts"],
       "@activepieces/piece-data-mapper": [
         "packages/pieces/community/data-mapper/src/index.ts"
@@ -218,7 +221,10 @@
       "@activepieces/piece-hackernews": [
         "packages/pieces/community/hackernews/src/index.ts"
       ],
-            "@activepieces/piece-http": [
+      "@activepieces/piece-heartbeat": [
+        "packages/pieces/community/heartbeat/src/index.ts"
+      ],
+      "@activepieces/piece-http": [
         "packages/pieces/community/http/src/index.ts"
       ],
       "@activepieces/piece-hubspot": [

@@ -38,6 +38,7 @@ import { SandBoxCacheType } from '../sandbox/provisioner/sandbox-cache-key'
 import { flowWorkerHooks } from './flow-worker-hooks'
 import { logSerializer } from '../../flows/common/log-serializer'
 import { flowResponseWatcher } from '../../flows/flow-run/flow-response-watcher'
+import { getPiecePackage } from '../../pieces/piece-metadata-service'
 
 type FinishExecutionParams = {
     flowRunId: FlowRunId
@@ -55,19 +56,19 @@ type LoadInputAndLogFileIdResponse = {
     logFileId?: FileId | undefined
 }
 
-const extractFlowPieces = async ({ flowVersion }: ExtractFlowPiecesParams): Promise<PiecePackage[]> => {
+const extractFlowPieces = async ({ projectId, flowVersion }: ExtractFlowPiecesParams): Promise<PiecePackage[]> => {
     const pieces: PiecePackage[] = []
     const steps = flowHelper.getAllSteps(flowVersion.trigger)
 
     for (const step of steps) {
         if (step.type === TriggerType.PIECE || step.type === ActionType.PIECE) {
             const { packageType, pieceType, pieceName, pieceVersion } = step.settings
-            pieces.push({
+            pieces.push(await getPiecePackage(projectId, {
                 packageType,
                 pieceType,
                 pieceName,
                 pieceVersion,
-            })
+            }))
         }
     }
 
@@ -124,6 +125,7 @@ const loadInputAndLogFileId = async ({
         id: jobData.runId,
         projectId: jobData.projectId,
     })
+    
     switch (jobData.executionType) {
         case ExecutionType.RESUME: {
             if (isNil(flowRun.logsFileId)) {
@@ -158,6 +160,20 @@ const loadInputAndLogFileId = async ({
             }
         }
         case ExecutionType.BEGIN:
+            if (!isNil(flowRun.logsFileId)) {
+                const logFile = await fileService.getOneOrThrow({
+                    fileId: flowRun.logsFileId,
+                    projectId: jobData.projectId,
+                })
+
+                const serializedExecutionOutput = logFile.data.toString('utf-8')
+                const executionOutput: ExecutionOutput = JSON.parse(
+                    serializedExecutionOutput,
+                )
+
+                jobData.payload = executionOutput.executionState.steps.trigger.output
+            }
+            
             return {
                 input: {
                     triggerPayload: jobData.payload,
@@ -306,7 +322,6 @@ const getSandbox = async ({ projectId, flowVersion, runEnvironment }: GetSandbox
     switch (runEnvironment) {
         case RunEnvironment.PRODUCTION:
             return sandboxProvisioner.provision({
-                projectId,
                 type: SandBoxCacheType.FLOW,
                 flowVersionId: flowVersion.id,
                 pieces,
@@ -315,7 +330,6 @@ const getSandbox = async ({ projectId, flowVersion, runEnvironment }: GetSandbox
         case RunEnvironment.TESTING:
             return sandboxProvisioner.provision({
                 type: SandBoxCacheType.NONE,
-                projectId,
                 pieces,
                 codeSteps,
             })
