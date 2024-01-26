@@ -15,7 +15,7 @@ import { deleteClickupTask } from './lib/actions/tasks/delete-task';
 import { getClickupAccessibleCustomFields } from './lib/actions/custom-fields/get-accessible-custom-fields';
 import { setClickupCustomFieldValue } from './lib/actions/custom-fields/set-custom-fields-value';
 import { filterClickupWorkspaceTasks } from './lib/actions/tasks/get-tasks';
-import { createCustomApiCallAction } from '../../common/src/lib/helpers';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const clickupAuth = PieceAuth.OAuth2({
   description: '',
