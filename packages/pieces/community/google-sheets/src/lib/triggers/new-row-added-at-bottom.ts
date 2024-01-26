@@ -45,13 +45,13 @@ export const newRowAddedTrigger = createTrigger({
 
     // store channel response
     await context.store.put<WebhookInformation>(
-      'instant_trigger',
+      'googlesheets_new_row_added',
       fileNotificationRes.data
     );
   },
   async onDisable(context) {
     const webhook = await context.store.get<WebhookInformation>(
-      `instant_trigger`
+      `googlesheets_new_row_added`
     );
     if (webhook != null && webhook.id != null && webhook.resourceId != null) {
       await deleteFileNotification(
@@ -115,7 +115,7 @@ export const newRowAddedTrigger = createTrigger({
     if (checkChannelExpiration(context.payload.headers)) {
       // get current channel ID & resource ID
       const webhook = await context.store.get<WebhookInformation>(
-        `instant_trigger`
+        `googlesheets_new_row_added`
       );
       if (webhook != null && webhook.id != null && webhook.resourceId != null) {
         // delete current channel
@@ -131,7 +131,7 @@ export const newRowAddedTrigger = createTrigger({
         );
         // store channel response
         await context.store.put<WebhookInformation>(
-          'instant_trigger',
+          'googlesheets_new_row_added',
           fileNotificationRes.data
         );
       }
