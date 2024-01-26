@@ -7,7 +7,7 @@ import qs from 'qs';
 
 export const filterClickupWorkspaceTasks = createAction({
   auth: clickupAuth,
-  name: 'get_list_tasks',
+  name: 'filter_workspace_tasks',
   displayName: 'Filter Team Tasks',
   description: 'View the tasks that meet specific criteria from a Workspace. Responses are limited to 100 tasks per page.',
   props: {
