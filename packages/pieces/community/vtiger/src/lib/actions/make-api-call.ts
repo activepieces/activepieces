@@ -71,7 +71,8 @@ export const makeAPICall = createAction({
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         ...(propsValue.headers ?? {}),
-      }
+      },
+      timeout: propsValue.timeout ? propsValue.timeout * 1000 : 0,
     }
 
     switch (propsValue.method) {
