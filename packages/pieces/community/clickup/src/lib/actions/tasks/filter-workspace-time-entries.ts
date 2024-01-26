@@ -4,6 +4,8 @@ import { callClickUpApi, clickupCommon } from "../../common";
 import { clickupAuth } from "../../..";
 import { ClickupTask } from "../../common/models";
 import qs from 'qs';
+import dayjs from 'dayjs';
+
 
 export const filterClickupWorkspaceTimeEntries = createAction({
   auth: clickupAuth,
@@ -47,15 +49,21 @@ export const filterClickupWorkspaceTimeEntries = createAction({
       defaultValue: false
     })
   },
-  async run(configValue) {
-    const { task_id, list_id, folder_id, space_id, workspace_id, ...params } = configValue.propsValue;
-    const auth = getAccessTokenOrThrow(configValue.auth)
+  async run(context) {
+    const { task_id, list_id, folder_id, space_id, workspace_id, ...params } = context.propsValue;
+    const auth = getAccessTokenOrThrow(context.auth)
 
     const query: Record<string, unknown> = {
       assignee: params.assignee?.join(","),
       include_task_tags: params.include_task_tags,
-      include_location_names: params.include_location_names
+      include_location_names: params.include_location_names,
     }
+
+    if (params.start_date)
+      query['start_date'] = dayjs(params.start_date).valueOf()
+
+    if (params.end_date)
+      query['end_date'] = dayjs(params.end_date).valueOf()
 
     if (task_id) {
       query['task_id'] = task_id
