@@ -42,7 +42,7 @@ export const makeAPICall = createAction({
       required: true,
       defaultValue: {},
     }),
-    data: Property.Json({
+    body: Property.Json({
       displayName: 'Data',
       description: `Enter the data to pass. if its POST, it will be sent as body data, and if GET, as query string`,
       required: true,
@@ -71,18 +71,24 @@ export const makeAPICall = createAction({
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         ...(propsValue.headers ?? {}),
-      },
-      queryParams: (
-        propsValue.method === HttpMethod.GET ? {
-            sessionName: vtigerInstance.sessionId ?? vtigerInstance.sessionName,
-            ...propsValue.queryParams as QueryParams
-          }
-        : propsValue.queryParams
-      ) as QueryParams
+      }
     }
 
-    if (propsValue.data) {
-      request.body = propsValue.data;
+    switch (propsValue.method) {
+      case HttpMethod.POST:
+        request.body = {
+          sessionName: vtigerInstance.sessionId ?? vtigerInstance.sessionName,
+          ...propsValue.queryParams
+        }
+        break;
+      case HttpMethod.GET:
+        request.queryParams = {
+          sessionName: vtigerInstance.sessionId ?? vtigerInstance.sessionName,
+          ...propsValue.queryParams
+        } as QueryParams
+        break;
+      default:
+        break;
     }
 
     try {
