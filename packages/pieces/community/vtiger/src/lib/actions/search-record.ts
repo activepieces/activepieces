@@ -1,4 +1,5 @@
 import {
+  DynamicPropsValue,
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
@@ -15,11 +16,65 @@ export const searchRecords = createAction({
   displayName: 'Search Records',
   description: 'Search for a record.',
   props: {
-    query: Property.LongText({
-      displayName: 'query',
-      description: `Enter the query to search for record new record`,
+    search_by: Property.StaticDropdown({
+      displayName: 'Search By',
+      description: `Select the mode of search for your records`,
       required: true,
-    })
+      defaultValue: 'filter',
+      options: {
+        options: [
+          { label: 'Filter', value: 'filter' },
+          { label: 'Query', value: 'query' },
+        ],
+      },
+    }),
+    search: Property.DynamicProperties({
+      displayName: 'Search Fields',
+      description: 'Add new fields to be created in the new record',
+      required: true,
+      refreshers: ['search_by'],
+      props: async ({ auth, search_by }) => {
+        if (!auth || !search_by) {
+          return {};
+        }
+
+        const fields: DynamicPropsValue = {};
+
+        if ((search_by as unknown as string) === 'filter') {
+          fields['filter'] = Property.DynamicProperties({
+            displayName: 'filter',
+            description: `Enter your filter criteria`,
+            required: true,
+            refreshers: ['search_by'],
+            props: async ({ search_by }) => {
+              console.debug('search_by', search_by);
+
+              return {
+                simple: Property.LongText({
+                  displayName: 'query',
+                  description: `Enter the query to search for record new record`,
+                  required: true,
+                }),
+              } as DynamicPropsValue;
+            },
+          });
+        } else {
+          fields['query'] = Property.LongText({
+            displayName: 'query',
+            description: `Enter the query to search for record new record`,
+            required: true,
+          });
+        }
+
+        return fields;
+      },
+    }),
+    limit: Property.Number({
+      displayName: 'Limit',
+      description: 'Enter the maximum number of records to return.',
+      defaultValue: 100,
+      required: true,
+    }),
   },
   async run({ propsValue, auth }) {
     const vtigerInstance = await instanceLogin(
@@ -33,7 +88,7 @@ export const searchRecords = createAction({
       auth.instance_url,
       vtigerInstance.sessionId ?? vtigerInstance.sessionName,
       'query' as Operation,
-      propsValue
+      {}
     );
 
     const response = await httpClient.sendRequest<Record<string, unknown>[]>(

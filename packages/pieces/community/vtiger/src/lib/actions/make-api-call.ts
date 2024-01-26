@@ -2,9 +2,11 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { vtigerAuth } from '../..';
 import { instanceLogin } from '../common';
 import {
+  HttpError,
   HttpMessageBody,
   HttpMethod,
   HttpRequest,
+  QueryParams,
   httpClient,
 } from '@activepieces/pieces-common';
 
@@ -14,8 +16,8 @@ import {
 export const makeAPICall = createAction({
   name: 'make_api_call',
   auth: vtigerAuth,
-  displayName: 'Make API Call',
-  description: 'Performs an arbitrary authorized API call. ',
+  displayName: 'Custom API Call',
+  description: 'Performs an arbitrary authorized API call.',
   props: {
     method: Property.StaticDropdown<HttpMethod>({
       displayName: 'Http Method',
@@ -28,8 +30,14 @@ export const makeAPICall = createAction({
         ],
       },
     }),
-    headers: Property.Json({
+    headers: Property.Object({
       displayName: 'Headers',
+      description: `Enter the desired request headers. Skip the authorization headers`,
+      required: true,
+      defaultValue: {},
+    }),
+    queryParams: Property.Object({
+      displayName: 'Query Parameters',
       description: `Enter the desired request headers. Skip the authorization headers`,
       required: true,
       defaultValue: {},
@@ -40,6 +48,14 @@ export const makeAPICall = createAction({
       required: true,
       defaultValue: {},
     }),
+    failsafe: Property.Checkbox({
+      displayName: 'No Error on Failure',
+      required: false,
+    }),
+    timeout: Property.Number({
+      displayName: 'Timeout (in seconds)',
+      required: false,
+    })
   },
   async run({ propsValue, auth }) {
     const vtigerInstance = await instanceLogin(
@@ -49,32 +65,33 @@ export const makeAPICall = createAction({
     );
     if (vtigerInstance === null) return;
 
-    const data: Record<string, string> = {
-      sessionName: vtigerInstance.sessionId ?? vtigerInstance.sessionName,
-      ...(propsValue.data ?? {}),
-    };
-
-    const httpRequest: HttpRequest<HttpMessageBody> = {
+    const request: HttpRequest<HttpMessageBody> = {
       url: `${auth.instance_url}/webservice.php`,
       method: propsValue.method ?? HttpMethod.GET,
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         ...(propsValue.headers ?? {}),
       },
-    };
-    httpRequest[propsValue.method === HttpMethod.GET ? 'queryParams' : 'body'] =
-      data;
-
-    const response = await httpClient.sendRequest<Record<string, unknown>[]>(
-      httpRequest
-    );
-
-    if ([200, 201].includes(response.status)) {
-      return response.body;
+      queryParams: (
+        propsValue.method === HttpMethod.GET ? {
+            sessionName: vtigerInstance.sessionId ?? vtigerInstance.sessionName,
+            ...propsValue.queryParams as QueryParams
+          }
+        : propsValue.queryParams
+      ) as QueryParams
     }
 
-    return {
-      error: 'Unexpected outcome!',
-    };
+    if (propsValue.data) {
+      request.body = propsValue.data;
+    }
+
+    try {
+      return await httpClient.sendRequest(request);
+    } catch (error) {
+      if (propsValue.failsafe) {
+        return (error as HttpError).errorMessage()
+      }
+      throw error;
+    }
   },
 });
