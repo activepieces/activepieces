@@ -1,4 +1,11 @@
-import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  EventEmitter,
+  OnInit,
+  Output,
+  ViewChild,
+} from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALUE_ACCESSOR,
@@ -8,7 +15,10 @@ import {
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, tap, map } from 'rxjs';
-import { CodeArtifactControlFullscreenComponent } from './code-artifact-control-fullscreen/code-artifact-control-fullscreen.component';
+import {
+  CodeArtifactControlFullscreenComponent,
+  CodeArtifactControlFullscreenData,
+} from './code-artifact-control-fullscreen/code-artifact-control-fullscreen.component';
 import { MatTooltip } from '@angular/material/tooltip';
 import { CodemirrorComponent } from '@ctrl/ngx-codemirror';
 import { SourceCode } from '@activepieces/shared';
@@ -35,6 +45,7 @@ export class CodeArtifactFormControlComponent
   updateComponentValue$: Observable<Partial<SourceCode>>;
   @ViewChild('codeMirror') codeMirror: CodemirrorComponent;
   @ViewChild('tooltip') tooltip: MatTooltip;
+  @Output() openCodeWriterDialog = new EventEmitter<boolean>();
   hideDelayForFullscreenTooltip = 2000;
   codeArtifactForm: FormGroup<CodeArtifactForm>;
   codeEditorOptions = {
@@ -90,12 +101,14 @@ export class CodeArtifactFormControlComponent
     this.onTouched = touched;
   }
   showFullscreenEditor() {
+    const data: CodeArtifactControlFullscreenData = {
+      codeFilesForm: this.codeArtifactForm,
+      readOnly: this.codeEditorOptions.readOnly,
+      openCodeWriterDialog$: this.openCodeWriterDialog,
+    };
     this.fullScreenEditorClosed$ = this.dialogService
       .open(CodeArtifactControlFullscreenComponent, {
-        data: {
-          codeFilesForm: this.codeArtifactForm,
-          readOnly: this.codeEditorOptions.readOnly,
-        },
+        data,
         panelClass: 'fullscreen-dialog',
       })
       .beforeClosed()

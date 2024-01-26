@@ -10,11 +10,11 @@
             <input cdkFocusInitial formControlName="displayName" matInput type="text" />
             <mat-error
                 *ngIf="folderForm.controls.displayName.getError('required') || folderForm.controls.displayName.getError('emptyName')"
-                i18n
-            >
+                i18n>
                 Name is required
             </mat-error>
-            <mat-error *ngIf="folderForm.controls.displayName.getError('nameUsed')" i18n>Name is already used</mat-error>
+            <mat-error *ngIf="folderForm.controls.displayName.getError('nameUsed')" i18n>Name is already
+                used</mat-error>
         </mat-form-field>
     </form>
 </mat-dialog-content>
@@ -24,7 +24,8 @@
         <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" [disabled]="loading" i18n>
             Cancel
         </ap-button>
-        <ap-button btnSize="default" type="submit" (click)="createFolder();" [loading]="loading" btnColor="primary" i18n>
+        <ap-button btnSize="default" type="submit" (click)="createFolder();" [loading]="loading" btnColor="primary"
+            i18n>
             Create
         </ap-button>
     </div>

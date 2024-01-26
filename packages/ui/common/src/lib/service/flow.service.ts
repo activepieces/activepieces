@@ -12,6 +12,7 @@ import {
   FlowOperationRequest,
   FlowOperationType,
   FlowRun,
+  FlowTemplate,
   FlowVersion,
   FlowVersionId,
   ListFlowsRequest,
@@ -40,12 +41,12 @@ export class FlowService {
   exportTemplate(
     flowId: FlowId,
     flowVersionId: undefined | FlowVersionId
-  ): Observable<PopulatedFlow> {
+  ): Observable<FlowTemplate> {
     const params: Record<string, string> = {};
     if (flowVersionId) {
       params['versionId'] = flowVersionId;
     }
-    return this.http.get<PopulatedFlow>(
+    return this.http.get<FlowTemplate>(
       environment.apiUrl + '/flows/' + flowId + '/template',
       {
         params: params,

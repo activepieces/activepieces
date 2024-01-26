@@ -125,6 +125,7 @@ const loadInputAndLogFileId = async ({
         id: jobData.runId,
         projectId: jobData.projectId,
     })
+    
     switch (jobData.executionType) {
         case ExecutionType.RESUME: {
             if (isNil(flowRun.logsFileId)) {
@@ -159,6 +160,20 @@ const loadInputAndLogFileId = async ({
             }
         }
         case ExecutionType.BEGIN:
+            if (!isNil(flowRun.logsFileId)) {
+                const logFile = await fileService.getOneOrThrow({
+                    fileId: flowRun.logsFileId,
+                    projectId: jobData.projectId,
+                })
+
+                const serializedExecutionOutput = logFile.data.toString('utf-8')
+                const executionOutput: ExecutionOutput = JSON.parse(
+                    serializedExecutionOutput,
+                )
+
+                jobData.payload = executionOutput.executionState.steps.trigger.output
+            }
+            
             return {
                 input: {
                     triggerPayload: jobData.payload,

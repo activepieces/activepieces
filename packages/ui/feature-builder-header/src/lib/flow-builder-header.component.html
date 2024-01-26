@@ -37,43 +37,43 @@
       <mat-menu #menu="matMenu">
         <button mat-menu-item (click)="editingFlowName = true">
           <div class="ap-flex ap-gap-3 ap-items-center">
-            <svg-icon [applyClass]="true" src="assets/img/custom/pencil-underline.svg"
-              class="ap-fill-body ap-w-[20px] ap-h-[20px]">
+            <svg-icon [applyClass]="true" [src]="flowActionsUiInfo.rename.icon"
+              [class]=" flowActionsUiInfo.iconSizeTailWind">
             </svg-icon>
             <span class="ap-text-body" i18n>Rename</span>
           </div>
         </button>
-        <button mat-menu-item *ngIf="flow$ | async as flow" (click)="duplicate()">
+        <button mat-menu-item (click)="duplicate()">
           <div class="ap-flex ap-gap-3 ap-items-center">
-            <svg-icon src="assets/img/custom/duplicate.svg" class="ap-w-[20px] ap-h-[20px]"
+            <svg-icon [src]="flowActionsUiInfo.duplicate.icon" [class]="flowActionsUiInfo.iconSizeTailWind"
               [applyClass]="true"></svg-icon>
-            <span i18n>Duplicate</span>
+            <span>{{flowActionsUiInfo.duplicate.text}}</span>
           </div>
         </button>
-        <button mat-menu-item *ngIf="flow$ | async as flow" (click)="import()">
+        <button *ngIf="flow$ | async as flow" mat-menu-item (click)="import(flow)">
           <div class="ap-flex ap-gap-3 ap-items-center">
-            <svg-icon src="assets/img/custom/import.svg" class="ap-w-[20px] ap-h-[20px]" [applyClass]="true"></svg-icon>
-            <span i18n>Import</span>
+            <svg-icon [src]="flowActionsUiInfo.import.icon" [class]="flowActionsUiInfo.iconSizeTailWind"
+              [applyClass]="true"></svg-icon>
+            <span i18n>{{flowActionsUiInfo.import.text}}</span>
           </div>
         </button>
         <button mat-menu-item *ngIf="flow$ | async as flow" (click)="download(flow.id)">
           <div class="ap-flex ap-gap-3 ap-items-center">
-            <svg-icon src="assets/img/custom/download.svg" class="ap-w-[20px] ap-h-[20px]"
+            <svg-icon [class]="flowActionsUiInfo.iconSizeTailWind" [src]="flowActionsUiInfo.export.icon"
               [applyClass]="true"></svg-icon>
-            <span i18n>Export</span>
+            <span i18n>{{flowActionsUiInfo.export.text}}</span>
           </div>
         </button>
-        <ap-share-flow-template-dialog></ap-share-flow-template-dialog>
+        <ap-share-flow-template-dialog *ngIf="flow$ | async as flow" [flow]="flow"></ap-share-flow-template-dialog>
         <ng-container *ngIf="(showNavigation$ | async )">
           <button mat-menu-item *ngIf="flow$ | async as flow" (click)="deleteFlow(flow)">
             <div class="ap-flex ap-gap-3 ap-items-center">
-              <svg-icon src="assets/img/custom/trash.svg" class="ap-fill-danger ap-w-[20px] ap-h-[20px]"
-                [applyClass]="true"></svg-icon>
-              <span class="ap-text-danger" i18n>Delete</span>
+              <svg-icon [src]="flowActionsUiInfo.delete.icon"
+                [class]="'ap-fill-danger '+ flowActionsUiInfo.iconSizeTailWind" [applyClass]="true"></svg-icon>
+              <span class="ap-text-danger">{{flowActionsUiInfo.delete.text}}</span>
             </div>
           </button>
         </ng-container>
-
       </mat-menu>
     </div>
 
