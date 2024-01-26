@@ -252,7 +252,7 @@ function transformWorkSheetValues(rowValues: any[][], oldRowCount: number) {
       values[columnToLabel(j)] = rowValues[i][j];
     }
     result.push({
-      row: oldRowCount + 1,
+      row: oldRowCount + i + 1,
       values,
     });
   }
