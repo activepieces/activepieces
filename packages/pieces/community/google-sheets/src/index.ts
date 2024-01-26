@@ -1,14 +1,18 @@
-import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { insertRowAction } from './lib/actions/insert-row.action';
-import { readNewRows } from './lib/triggers/new-row-added';
-import { deleteRowAction } from './lib/actions/delete-row.action';
-import { updateRowAction } from './lib/actions/update-row';
-import { findRowsAction } from './lib/actions/find-rows';
-import { clearSheetAction } from './lib/actions/clear-sheet';
-import { findRowByNumAction } from './lib/actions/find-row-by-num';
-import { getRowsAction } from './lib/actions/get-rows';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import {
+  OAuth2PropertyValue,
+  PieceAuth,
+  createPiece,
+} from '@activepieces/pieces-framework';
+import { clearSheetAction } from './lib/actions/clear-sheet';
+import { deleteRowAction } from './lib/actions/delete-row.action';
+import { findRowByNumAction } from './lib/actions/find-row-by-num';
+import { findRowsAction } from './lib/actions/find-rows';
+import { getRowsAction } from './lib/actions/get-rows';
+import { insertRowAction } from './lib/actions/insert-row.action';
+import { updateRowAction } from './lib/actions/update-row';
 import { googleSheetsCommon } from './lib/common/common';
+import { readNewRows } from './lib/triggers/new-row-added';
 import { newRowAddedTrigger } from './lib/triggers/new-row-added-at-bottom';
 
 export const googleSheetsAuth = PieceAuth.OAuth2({
@@ -32,7 +36,7 @@ export const googleSheets = createPiece({
     'Shay Punter',
     'Abdallah-Alwarawreh',
     'Salem-Alaa',
-    'kishanprmr'
+    'kishanprmr',
   ],
   actions: [
     insertRowAction,
@@ -45,14 +49,14 @@ export const googleSheets = createPiece({
     createCustomApiCallAction({
       auth: googleSheetsAuth,
       baseUrl: () => {
-        return googleSheetsCommon.baseUrl
+        return googleSheetsCommon.baseUrl;
       },
       authMapping: (auth) => {
         return {
-          'Authorization': `Bearer ${(auth as OAuth2PropertyValue).access_token}`
-        }
-      }
-    })
+          Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        };
+      },
+    }),
   ],
   displayName: 'Google Sheets',
   triggers: [readNewRows, newRowAddedTrigger],
