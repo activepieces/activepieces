@@ -42,5 +42,6 @@ export const flowVersionSideEffects = {
                 // Ignore error and continue the operation peacefully
                 captureException(e)
             }
-        },
+        }
     }
+}
