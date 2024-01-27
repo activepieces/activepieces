@@ -7,20 +7,29 @@ import {
 import { MatomoAuthType } from './auth';
 
 const matomoAPI = async (
-  api: string,
-  auth: MatomoAuthType,
-  queryParams: QueryParams = {}
+  api         : string,
+  auth        : MatomoAuthType,
+  queryParams : QueryParams = {}
 ) => {
-  queryParams['module'] = 'API';
-  queryParams['format'] = 'JSON';
-  queryParams['method'] = api;
-  queryParams['token_auth'] = auth.tokenAuth;
-  queryParams['idSite'] = auth.siteId;
+	queryParams['module'] = 'API';
+	queryParams['format'] = 'JSON';
+	queryParams['method'] = api;
+	queryParams['idSite'] = auth.siteId;
+
+  const formData = new FormData();
+  formData.append('token_auth', auth.tokenAuth);
+
+  console.log('queryParams', queryParams);
+  console.log('formData', formData);
 
   const request: HttpRequest = {
-    method: HttpMethod.POST,
-    url: `${auth.domain}`,
-    queryParams: queryParams,
+	method      : HttpMethod.POST,
+	url         : `${auth.domain}`,
+	queryParams : queryParams,
+	body        : formData,
+	headers     : {
+		'Content-Type': 'multipart/form-data',
+	},
   };
   const response = await httpClient.sendRequest(request);
 
