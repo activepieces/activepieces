@@ -38,10 +38,11 @@ export const flowVersionSideEffects = {
                     projectId,
                     flowId: flowVersion.flowId,
                 })
-            } catch (e) {
+            }
+            catch (e) {
                 // Ignore error and continue the operation peacefully
                 captureException(e)
             }
         }
-    }
+    },
 }

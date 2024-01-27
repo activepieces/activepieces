@@ -1,0 +1,11 @@
+<ng-container *ngIf="show$ | async">
+    <button  mat-menu-item [disabled]="(gitRepo$ | async) === null"
+        [matTooltip]="(gitRepo$ | async) ? '' : 'Please configure a git repository first'" (click)="openDialog()">
+        <div class="ap-flex ap-gap-3 ap-items-center">
+            <svg-icon src="assets/img/custom/sync.svg" class="ap-w-[20px] ap-h-[20px]" [applyClass]="true"></svg-icon>
+            <span>Push to Git</span>
+        </div>
+    </button>
+
+</ng-container>
+<ng-container *ngIf="openDialog$| async"></ng-container>

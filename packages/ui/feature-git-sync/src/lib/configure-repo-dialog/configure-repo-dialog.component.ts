@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { GitRepo } from '@activepieces/ee-shared';
-import { SyncProjectService } from '../../../services/sync-project.service';
 import { ProjectSelectors } from '@activepieces/ui/common';
 import {
   FormBuilder,
@@ -11,6 +10,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { Observable, switchMap, tap } from 'rxjs';
+import { SyncProjectService } from '../services/sync-project.service';
 
 type ConfigureRepoDialogData = {
   repo?: GitRepo;

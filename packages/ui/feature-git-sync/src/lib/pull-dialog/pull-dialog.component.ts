@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
-import { SyncProjectService } from '../../../services/sync-project.service';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { BehaviorSubject, Observable, catchError, of, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { SyncProjectService } from '../services/sync-project.service';
 
 export type PullDialogData = {
   projectName: string;

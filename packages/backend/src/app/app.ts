@@ -67,7 +67,7 @@ import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local
 import { billingModule } from './ee/billing/billing/billing.module'
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
 import fastifyFavicon from 'fastify-favicon'
-import { ProjectMember, ProjectWithUsageAndPlanResponse } from '@activepieces/ee-shared'
+import { ProjectMember, ProjectWithUsageAndPlanResponse, GitRepoWithoutSenestiveData } from '@activepieces/ee-shared'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
 import { domainHelper } from './helper/domain-helper'
 import { platformDomainHelper } from './ee/helper/platform-domain-helper'
@@ -112,6 +112,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
                     'flow': Flow,
                     'app-connection': AppConnectionWithoutSensitiveData,
                     'piece': PieceMetadata,
+                    'git-repo': GitRepoWithoutSenestiveData,
                 },
             },
             info: {
