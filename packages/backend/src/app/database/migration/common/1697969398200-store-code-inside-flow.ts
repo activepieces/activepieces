@@ -49,19 +49,19 @@ export class StoreCodeInsideFlow1697969398200 implements MigrationInterface {
                 const updated = await traverseAndUpdateSubFlow(stepFunction, template.template.trigger, queryRunner, template.projectId, template.id)
 
                 if (updated) {
-                    await queryRunner.query('UPDATE flow_template SET template = ? WHERE id = ?', [template.template, template.id])
+                    await queryRunner.query('UPDATE flow_template SET template = $1 WHERE id = $2', [template.template, template.id])
                 }
             }
         }
     }
 
     private async findFlowVersionById(queryRunner: QueryRunner, id: string): Promise<FlowVersion | undefined> {
-        const flowVersion = await queryRunner.query('SELECT * FROM flow_version WHERE id = ? LIMIT 1', [id])
+        const flowVersion = await queryRunner.query('SELECT * FROM flow_version WHERE id = $1', [id])
         return flowVersion[0]
     }
 
     private async updateFlowVersion(queryRunner: QueryRunner, id: string, flowVersion: FlowVersion): Promise<void> {
-        await queryRunner.query('UPDATE flow_version SET "flowId" = ?, trigger = ? WHERE id = ?', [flowVersion.flowId, flowVersion.trigger, id])
+        await queryRunner.query('UPDATE flow_version SET "flowId" = $1, trigger = $2 WHERE id = $3', [flowVersion.flowId, flowVersion.trigger, id])
     }
 }
 
@@ -96,7 +96,7 @@ const flattenCodeStep = async (codeStep: CodeStep, queryRunner: QueryRunner, flo
     const sourceCodeId = codeStep.settings.artifactSourceId
     const sourceCode = codeStep.settings.sourceCode
     if (!isNil(sourceCodeId) && isNil(sourceCode)) {
-        const [file] = await queryRunner.query('SELECT * FROM file WHERE id = ? LIMIT 1', [sourceCodeId])
+        const [file] = await queryRunner.query('SELECT * FROM file WHERE id = $1', [sourceCodeId])
         if (isNil(file)) {
             logger.warn(`StoreCodeInsideFlow1697969398100: file not found for file id ${sourceCodeId} in flow ${flowId} of flow version ${flowVersionId}`)
             return
