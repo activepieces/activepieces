@@ -8,12 +8,12 @@ import {
     TriggerType,
 } from '@activepieces/shared'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
-import { triggerUtils } from '../../helper/trigger-utils'
 import { flowQueue } from './flow-queue'
 import { flowWorker } from './flow-worker'
 import {
     DelayedJobData,
     OneTimeJobData,
+    RepeatableJobType,
     RepeatingJobData,
     ScheduledJobData,
 } from './job-data'
@@ -28,6 +28,7 @@ import { QueueMode, system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { enrichErrorContext } from '../../helper/error-handler'
 import { flowService } from '../../flows/flow/flow.service'
+import { triggerHooks } from '../../flows/trigger'
 
 const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
 
@@ -81,12 +82,15 @@ async function consumeOnetimeJob(data: OneTimeJobData): Promise<void> {
 
 async function consumeScheduledJobs(data: ScheduledJobData): Promise<void> {
     try {
-        switch (data.executionType) {
-            case ExecutionType.BEGIN:
+        switch (data.jobType) {
+            case RepeatableJobType.EXECUTE_TRIGGER:
                 await consumeRepeatingJob(data)
                 break
-            case ExecutionType.RESUME:
+            case RepeatableJobType.DELAYED_FLOW:
                 await consumeDelayedJob(data)
+                break
+            case RepeatableJobType.RENEW_WEBHOOK:
+                // TODO FIX
                 break
         }
     }
@@ -133,7 +137,7 @@ const consumeRepeatingJob = async (data: RepeatingJobData): Promise<void> => {
                 })
             }
             else {
-                await triggerUtils.disable({
+                await triggerHooks.disable({
                     projectId: data.projectId,
                     flowVersion,
                     simulate: false,
@@ -172,7 +176,7 @@ const consumePieceTrigger = async (data: RepeatingJobData): Promise<void> => {
         data.flowVersionId,
     )
 
-    const payloads: unknown[] = await triggerUtils.executeTrigger({
+    const payloads: unknown[] = await triggerHooks.executeTrigger({
         projectId: data.projectId,
         flowVersion,
         payload: {} as TriggerPayload,

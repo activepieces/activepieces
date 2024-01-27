@@ -6,13 +6,18 @@ import {
     OneTimeJobAddParams,
     QueueManager,
     RemoveParams,
+    RenewWebhookJobAddParams,
     RepeatingJobAddParams,
 } from '../queue'
 import cronParser from 'cron-parser'
 import { logger } from '../../../../helper/logger'
-import { DelayPauseMetadata, ExecutionOutputStatus, ExecutionType, PauseType, RunEnvironment, TriggerType } from '@activepieces/shared'
+import { DelayPauseMetadata, ExecutionOutputStatus, Flow, PauseType, RunEnvironment, TriggerType } from '@activepieces/shared'
 import { flowRunRepo } from '../../../../flows/flow-run/flow-run-service'
 import { flowService } from '../../../../flows/flow/flow.service'
+import { RepeatableJobType } from '../../job-data'
+import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
+import { flowVersionService } from '../../../../flows/flow-version/flow-version.service'
+import { getPieceTrigger } from '../../../../flows/trigger/hooks/trigger-utils'
 
 function calculateNextFireForCron(cronExpression: string, timezone: string): number | null {
     try {
@@ -31,15 +36,25 @@ function calculateNextFireForCron(cronExpression: string, timezone: string): num
     }
 }
 
+type RepeatableJob = RepeatingJobAddParams<JobType.REPEATING> | RenewWebhookJobAddParams<JobType.REPEATING>
+
 type InMemoryQueueManager = {
     queues: {
-        [JobType.ONE_TIME]: OneTimeJobAddParams[]
-        [JobType.REPEATING]: (RepeatingJobAddParams & {
+        [JobType.ONE_TIME]: OneTimeJobAddParams<JobType.ONE_TIME>[]
+        [JobType.REPEATING]: (RepeatableJob & {
             nextFireEpochMsAt: number
         })[]
-        [JobType.DELAYED]: (DelayedJobAddParams & { nextFireEpochSeconds: number })[]
+        [JobType.DELAYED]: (DelayedJobAddParams<JobType.DELAYED> & { nextFireEpochSeconds: number })[]
     }
 } & QueueManager
+
+type FlowWithRenewWebhook = {
+    flow: Flow
+    scheduleOptions: {
+        cronExpression: string
+        timezone: string
+    }
+}
 
 export const inMemoryQueueManager: InMemoryQueueManager = {
     queues: {
@@ -56,9 +71,52 @@ export const inMemoryQueueManager: InMemoryQueueManager = {
         }
         const enabledFlows = await flowService.getAllEnabled()
         const enabledRepeatingFlows = enabledFlows.filter((flow) => flow.schedule)
-
+        const enabledRenewWebhookFlows = (await Promise.all(enabledFlows.map(async (flow) => {
+            const flowVersion = await flowVersionService.getOneOrThrow(flow.publishedVersionId!)
+            const trigger = flowVersion.trigger
+        
+            if (trigger.type !== TriggerType.PIECE) {
+                return null
+            }
+        
+            const piece = await getPieceTrigger({
+                trigger,
+                projectId: flow.projectId,
+            })
+        
+            const renewConfiguration = piece.renewConfiguration
+        
+            if (renewConfiguration?.strategy !== WebhookRenewStrategy.CRON) {
+                return null
+            }
+        
+            return {
+                scheduleOptions: {
+                    cronExpression: renewConfiguration.cronExpression,
+                    timezone: renewConfiguration.timezone,
+                },
+                flow,
+            }
+        }))).filter((flow): flow is FlowWithRenewWebhook => flow !== null)
+        
         logger.info(`Adding ${enabledRepeatingFlows.length} flows to the queue manager.`)
 
+        enabledRenewWebhookFlows.forEach(({ flow, scheduleOptions }) => {
+
+            this.add({
+                id: flow.id,
+                type: JobType.REPEATING,
+                data: {
+                    projectId: flow.projectId,
+                    schemaVersion: 1,
+                    flowVersionId: flow.publishedVersionId!,
+                    flowId: flow.id,
+                    jobType: RepeatableJobType.RENEW_WEBHOOK,
+                },
+                scheduleOptions,
+            }).catch((e) => logger.error(e, '[MemoryQueue#init] add'))
+            
+        })
         enabledRepeatingFlows.forEach((flow) => {
             this.add({
                 id: flow.id,
@@ -70,7 +128,7 @@ export const inMemoryQueueManager: InMemoryQueueManager = {
                     flowVersionId: flow.publishedVersionId!,
                     flowId: flow.id,
                     triggerType: TriggerType.PIECE,
-                    executionType: ExecutionType.BEGIN,
+                    jobType: RepeatableJobType.EXECUTE_TRIGGER,
                 },
                 scheduleOptions: {
                     cronExpression: flow.schedule!.cronExpression,
@@ -99,7 +157,7 @@ export const inMemoryQueueManager: InMemoryQueueManager = {
                         environment: RunEnvironment.PRODUCTION,
                         schemaVersion: 1,
                         flowVersionId: flowRun.flowVersionId,
-                        executionType: ExecutionType.RESUME,
+                        jobType: RepeatableJobType.DELAYED_FLOW,
                     },
                     delay,
                 })
@@ -108,7 +166,7 @@ export const inMemoryQueueManager: InMemoryQueueManager = {
         })
         // TODO add run with status RUNNING
     },
-    async add(params: AddParams): Promise<void> {
+    async add(params: AddParams<JobType>): Promise<void> {
         switch (params.type) {
             case JobType.ONE_TIME: {
                 this.queues[params.type].push(params)

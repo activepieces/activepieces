@@ -19,6 +19,7 @@ export enum TriggerHookType {
     ON_ENABLE = 'ON_ENABLE',
     ON_DISABLE = 'ON_DISABLE',
     HANDSHAKE = 'HANDSHAKE',
+    RENEW = 'RENEW',
     RUN = 'RUN',
     TEST = 'TEST',
 }
