@@ -1,15 +1,20 @@
-import { OAuth2PropertyValue, Property, createAction } from "@activepieces/pieces-framework";
-import { HttpMethod, getAccessTokenOrThrow } from "@activepieces/pieces-common";
-import { callClickUpApi, clickupCommon, listTags } from "../../common";
-import { clickupAuth } from "../../..";
-import { ClickupTask } from "../../common/models";
+import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
+import {
+  OAuth2PropertyValue,
+  Property,
+  createAction,
+} from '@activepieces/pieces-framework';
 import qs from 'qs';
+import { clickupAuth } from '../../..';
+import { callClickUpApi, clickupCommon, listTags } from '../../common';
+import { ClickupTask } from '../../common/models';
 
 export const filterClickupWorkspaceTasks = createAction({
   auth: clickupAuth,
-  name: 'filter_workspace_tasks',
-  displayName: 'Filter Team Tasks',
-  description: 'View the tasks that meet specific criteria from a Workspace. Responses are limited to 100 tasks per page.',
+  name: 'list_workspace_tasks',
+  displayName: 'List Team Tasks',
+  description:
+    'Retrieves the tasks that meet specific criteria from a Workspace.',
   props: {
     workspace_id: clickupCommon.workspace_id(true),
     space_id: clickupCommon.space_id(false, true),
@@ -50,40 +55,43 @@ export const filterClickupWorkspaceTasks = createAction({
     }),
 
     page: Property.Number({
-      displayName: "Page",
-      description: "Page to fetch (starts at 0).",
+      displayName: 'Page',
+      description: 'Page to fetch (starts at 0).',
       required: false,
-      defaultValue: 0
+      defaultValue: 0,
     }),
     reverse: Property.Checkbox({
-      displayName: "Reverse",
-      description: "Tasks are displayed in reverse order.",
+      displayName: 'Reverse',
+      description: 'Tasks are displayed in reverse order.',
       required: false,
-      defaultValue: false
+      defaultValue: false,
     }),
     include_closed: Property.Checkbox({
-      displayName: "Include Closed",
-      description: "Include or excluse closed tasks. By default, they are excluded.",
+      displayName: 'Include Closed',
+      description:
+        'Include or excluse closed tasks. By default, they are excluded.',
       required: false,
-      defaultValue: false
+      defaultValue: false,
     }),
     order_by: Property.StaticDropdown({
       displayName: 'Order By',
-      description: 'Order by a particular field. By default, tasks are ordered by created.',
+      description:
+        'Order by a particular field. By default, tasks are ordered by created.',
       required: false,
       options: {
         options: [
-          { value: 'id', label: "Id" },
-          { value: 'created', label: "Created at" },
-          { value: 'updated', label: "Last updated" },
-          { value: 'due_date', label: "Due date" },
-        ]
-      }
-    })
+          { value: 'id', label: 'Id' },
+          { value: 'created', label: 'Created at' },
+          { value: 'updated', label: 'Last updated' },
+          { value: 'due_date', label: 'Due date' },
+        ],
+      },
+    }),
   },
   async run(configValue) {
-    const { list_id, folder_id, space_id, workspace_id, ...params } = configValue.propsValue;
-    const auth = getAccessTokenOrThrow(configValue.auth)
+    const { list_id, folder_id, space_id, workspace_id, ...params } =
+      configValue.propsValue;
+    const auth = getAccessTokenOrThrow(configValue.auth);
 
     const query: Record<string, unknown> = {
       assignees: params.assignees,
@@ -91,22 +99,24 @@ export const filterClickupWorkspaceTasks = createAction({
       page: params.page,
       reverse: params.reverse,
       include_closed: params.include_closed,
-      order_by: params.order_by
-    }
+      order_by: params.order_by,
+    };
 
-    if (list_id) query['list_ids'] = list_id
-    if (folder_id) query['project_ids'] = folder_id
-    if (space_id) query['space_ids'] = space_id
+    if (list_id) query['list_ids'] = list_id;
+    if (folder_id) query['project_ids'] = folder_id;
+    if (space_id) query['space_ids'] = space_id;
 
-    return (await callClickUpApi<ClickupTask>(
-      HttpMethod.GET,
-      `team/${workspace_id}/task?${decodeURIComponent(qs.stringify(query))}`,
-      auth,
-      undefined,
-      undefined,
-      {
-        'Content-Type': 'application/json'
-      },
-    )).body
-  }
-})
+    return (
+      await callClickUpApi<ClickupTask>(
+        HttpMethod.GET,
+        `team/${workspace_id}/task?${decodeURIComponent(qs.stringify(query))}`,
+        auth,
+        undefined,
+        undefined,
+        {
+          'Content-Type': 'application/json',
+        }
+      )
+    ).body;
+  },
+});
