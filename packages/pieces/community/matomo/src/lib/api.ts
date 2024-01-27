@@ -19,9 +19,6 @@ const matomoAPI = async (
   const formData = new FormData();
   formData.append('token_auth', auth.tokenAuth);
 
-  console.log('queryParams', queryParams);
-  console.log('formData', formData);
-
   const request: HttpRequest = {
 	method      : HttpMethod.POST,
 	url         : `${auth.domain}`,
