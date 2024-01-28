@@ -13,8 +13,6 @@ export const rateLimitModule: FastifyPluginAsyncTypebox = FastifyPlugin(async (a
         timeWindow: '1 minute',
         redis: getRedisClient(),
     })
-
-    app.setNotFoundHandler(app.rateLimit())
 })
 
 const getRedisClient = (): Redis | undefined => {

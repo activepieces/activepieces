@@ -162,11 +162,11 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             url: request.url,
         })
         if (!route) {
-            return reply.code(404).send(`
-                Oops! It looks like we hit a dead end.
-                The endpoint you're searching for is nowhere to be found.
-                We suggest turning around and trying another path. Good luck!
-            `)
+            return reply.code(404).send({
+                statusCode: 404,
+                error: 'Not Found',
+                message: 'Route not found',
+            })
         }
     })
 
