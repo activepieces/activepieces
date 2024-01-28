@@ -91,6 +91,7 @@
     "drip-nodejs": "3.1.1",
     "fastify": "4.12.0",
     "fastify-favicon": "4.3.0",
+    "fastify-plugin": "4.5.1",
     "fastify-raw-body": "4.2.0",
     "feedparser": "2.2.10",
     "firebase-scrypt": "2.2.0",
