@@ -39,12 +39,12 @@ export class IframeListenerComponent {
       event.data.type === ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED
     ) {
       const targetRoute = event.data.data.vendorRoute;
-      const routeToNavigateTo = targetRoute.endsWith('/')
-        ? targetRoute
-        : `${targetRoute}/`;
-      const [path, queryString] = routeToNavigateTo.split('?');
+      const [path, queryString] = targetRoute.split('?');
       const urlSearchParams = new URLSearchParams(queryString);
       const queryParams: Record<string, unknown> = {};
+      const routeToNavigateTo = path.endsWith('/')
+        ? targetRoute
+        : `${targetRoute}/`;
       urlSearchParams.forEach((value, key) => {
         queryParams[key] = value;
       });
