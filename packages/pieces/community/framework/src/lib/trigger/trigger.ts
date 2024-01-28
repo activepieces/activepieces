@@ -33,7 +33,6 @@ export const WebhookRenewConfiguration = Type.Union([
   Type.Object({
     strategy: Type.Literal(WebhookRenewStrategy.CRON),
     cronExpression: Type.String(),
-    timezone: Type.String(),
   }),
   Type.Object({
     strategy: Type.Literal(WebhookRenewStrategy.NONE),
@@ -55,7 +54,7 @@ type CreateTriggerParams<
   handshakeConfiguration?: WebhookHandshakeConfiguration
   onHandshake?: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<WebhookResponse>,
   renewConfiguration?: WebhookRenewConfiguration
-  onRenew?(context: TriggerHookContext<PieceAuth, TriggerProps, TS>): Promise<WebhookResponse>,
+  onRenew?(context: TriggerHookContext<PieceAuth, TriggerProps, TS>): Promise<void>,
 } : BaseTriggerParams<PieceAuth, TriggerProps, TS>
 
 
@@ -91,7 +90,7 @@ export class ITrigger<
     public readonly handshakeConfiguration: WebhookHandshakeConfiguration,
     public readonly onHandshake: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<WebhookResponse>,
     public readonly renewConfiguration: WebhookRenewConfiguration,
-    public readonly onRenew: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<WebhookResponse>,
+    public readonly onRenew: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>,
     public readonly onEnable: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>,
     public readonly onDisable: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>,
     public readonly run: (ctx: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
@@ -123,7 +122,7 @@ export const createTrigger = <
         params.handshakeConfiguration ?? { strategy: WebhookHandshakeStrategy.NONE },
         params.onHandshake ?? (async () => ({ status: 200 })),
         params.renewConfiguration ?? { strategy: WebhookRenewStrategy.NONE },
-        params.onRenew ?? (async () => ({ status: 200 })),
+        params.onRenew ?? (async () => Promise.resolve()),
         params.onEnable,
         params.onDisable,
         params.run,
@@ -140,7 +139,7 @@ export const createTrigger = <
         { strategy: WebhookHandshakeStrategy.NONE },
         async () => ({ status: 200 }),
         { strategy: WebhookRenewStrategy.NONE },
-        async () => ({ status: 200 }),
+        (async () => Promise.resolve()),
         params.onEnable,
         params.onDisable,
         params.run,
@@ -157,7 +156,7 @@ export const createTrigger = <
         { strategy: WebhookHandshakeStrategy.NONE },
         async () => ({ status: 200 }),
         { strategy: WebhookRenewStrategy.NONE },
-        async () => ({ status: 200 }),
+        (async () => Promise.resolve()),
         params.onEnable,
         params.onDisable,
         params.run,

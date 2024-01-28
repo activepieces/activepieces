@@ -86,7 +86,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
                         },
                         scheduleOptions: {
                             cronExpression: renewConfiguration.cronExpression,
-                            timezone: renewConfiguration.timezone,
+                            timezone: 'UTC',
                         },
                     })
                     break

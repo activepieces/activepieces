@@ -13,6 +13,7 @@ import { flowWorker } from './flow-worker'
 import {
     DelayedJobData,
     OneTimeJobData,
+    RenewWebhookJobData,
     RepeatableJobType,
     RepeatingJobData,
     ScheduledJobData,
@@ -90,7 +91,7 @@ async function consumeScheduledJobs(data: ScheduledJobData): Promise<void> {
                 await consumeDelayedJob(data)
                 break
             case RepeatableJobType.RENEW_WEBHOOK:
-                // TODO FIX
+                await consumeRenewWebhookJob(data)
                 break
         }
     }
@@ -99,6 +100,16 @@ async function consumeScheduledJobs(data: ScheduledJobData): Promise<void> {
     }
 }
 
+const consumeRenewWebhookJob = async (data: RenewWebhookJobData): Promise<void> => {
+    logger.info(`[FlowQueueConsumer#consumeRenewWebhookJob] flowVersionId=${data.flowVersionId}`)
+    const flowVersion = await flowVersionService.getOneOrThrow(data.flowVersionId) 
+    await triggerHooks.renewWebhook({
+        flowVersion,
+        projectId: data.projectId,
+        simulate: false,
+    })
+
+}
 const consumeDelayedJob = async (data: DelayedJobData): Promise<void> => {
     logger.info(`[FlowQueueConsumer#consumeDelayedJob] flowRunId=${data.runId}`)
 

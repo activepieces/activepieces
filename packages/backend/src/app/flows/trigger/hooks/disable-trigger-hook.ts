@@ -2,7 +2,7 @@ import { FlowVersion, PieceTrigger, ProjectId, TriggerHookType, TriggerType } fr
 import { EngineHelperResponse, EngineHelperTriggerResult, engineHelper } from '../../../helper/engine-helper'
 import { getPieceTrigger } from './trigger-utils'
 import { webhookService } from '../../../webhooks/webhook-service'
-import { TriggerStrategy } from '@activepieces/pieces-framework'
+import { TriggerStrategy, WebhookRenewStrategy } from '@activepieces/pieces-framework'
 import { appEventRoutingService } from '../../../app-event-routing/app-event-routing.service'
 import { flowQueue } from '../../../workers/flow-worker/flow-queue'
 
@@ -36,8 +36,15 @@ EngineHelperTriggerResult<TriggerHookType.ON_DISABLE>
                 flowId: flowVersion.flowId,
             })
             break
-        case TriggerStrategy.WEBHOOK:
+        case TriggerStrategy.WEBHOOK:{
+            const renewConfiguration = pieceTrigger.renewConfiguration
+            if (renewConfiguration?.strategy === WebhookRenewStrategy.CRON) {
+                await flowQueue.removeRepeatingJob({
+                    id: flowVersion.id,
+                })
+            }
             break
+        }
         case TriggerStrategy.POLLING:
             await flowQueue.removeRepeatingJob({
                 id: flowVersion.id,

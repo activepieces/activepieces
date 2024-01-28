@@ -93,16 +93,16 @@ export const inMemoryQueueManager: InMemoryQueueManager = {
             return {
                 scheduleOptions: {
                     cronExpression: renewConfiguration.cronExpression,
-                    timezone: renewConfiguration.timezone,
+                    timezone: 'UTC',
                 },
                 flow,
             }
         }))).filter((flow): flow is FlowWithRenewWebhook => flow !== null)
         
-        logger.info(`Adding ${enabledRepeatingFlows.length} flows to the queue manager.`)
+        logger.info(`Adding ${enabledRepeatingFlows.length} repeated flows to the queue manager.`)
+        logger.info(`Adding ${enabledRenewWebhookFlows.length} renew flows to the queue manager.`)
 
         enabledRenewWebhookFlows.forEach(({ flow, scheduleOptions }) => {
-
             this.add({
                 id: flow.id,
                 type: JobType.REPEATING,
