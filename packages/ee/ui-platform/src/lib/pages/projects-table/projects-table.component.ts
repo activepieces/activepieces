@@ -73,6 +73,9 @@ export class ProjectsTableComponent {
   }
 
   updateProject(project: Project) {
+    if (this.isDemo) {
+      return;
+    }
     this.updateProject$ = this.matDialog
       .open(UpdateProjectDialogComponent, {
         data: {
