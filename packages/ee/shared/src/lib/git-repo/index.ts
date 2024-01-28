@@ -14,9 +14,22 @@ export type GitRepo = Static<typeof GitRepo>
 export const GitRepoWithoutSenestiveData = Type.Omit(GitRepo, ['sshPrivateKey'])
 export type GitRepoWithoutSenestiveData = Static<typeof GitRepoWithoutSenestiveData>
 
-export const PushGitRepoRequest = Type.Object({
-    commitMessage: Type.String(),
-})
+export enum PushSyncMode {
+    FLOW = 'FLOW',
+    PROJECT = 'PROJECT',
+}
+
+export const PushGitRepoRequest = Type.Union([
+    Type.Object({
+        commitMessage: Type.String(),
+        mode: Type.Literal(PushSyncMode.FLOW),
+        flowId: Type.String(),
+    }),
+    Type.Object({
+        commitMessage: Type.String(),
+        mode: Type.Literal(PushSyncMode.PROJECT),
+    }),
+])
 
 export type PushGitRepoRequest = Static<typeof PushGitRepoRequest>
 
