@@ -1,4 +1,5 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { RateLimitOptions } from '@fastify/rate-limit'
 import { authenticationService } from './authentication-service'
 import { resolvePlatformIdForRequest } from '../ee/platform/lib/platform-utils'
 import { getEdition } from '../helper/secret-helper'
@@ -27,9 +28,15 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (app) =
     })
 }
 
+const rateLimitOptions: RateLimitOptions = {
+    max: 2,
+    timeWindow: '1 minute',
+}
+
 const SignUpRequestOptions = {
     config: {
         allowedPrincipals: ALL_PRINICPAL_TYPES,
+        rateLimit: rateLimitOptions,
     },
     schema: {
         body: SignUpRequest,
@@ -39,6 +46,7 @@ const SignUpRequestOptions = {
 const SignInRequestOptions = {
     config: {
         allowedPrincipals: ALL_PRINICPAL_TYPES,
+        rateLimit: rateLimitOptions,
     },
     schema: {
         body: SignInRequest,
