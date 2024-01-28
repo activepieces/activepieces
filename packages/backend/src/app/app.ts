@@ -1,6 +1,7 @@
 import fastify, { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
 import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
+import RateLimitPlugin from '@fastify/rate-limit'
 import qs from 'qs'
 import fastifyMultipart from '@fastify/multipart'
 import { openapiModule } from './helper/openapi/openapi.module'
@@ -152,6 +153,11 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     })
 
     await app.register(formBody, { parser: str => qs.parse(str) })
+
+    await app.register(RateLimitPlugin, {
+        max: 2,
+        timeWindow: '1 minute',
+    })
 
     app.addHook('onRequest', async (request, reply) => {
         const route = app.hasRoute({
