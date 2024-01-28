@@ -2,14 +2,15 @@
   class="ap-flex-grow ap-flex ap-flex-col ap-justify-center ap-items-center empty-list-Text ap-h-[40vh] ">
   <svg-icon src="assets/img/custom/variables-list.svg" [style]="{width:'70px', height:'70px'}"></svg-icon>
   <p class="ap-text-description">{{emptyListText}}</p>
-  <ap-button class="ap-mt-2" (click)="requestPiece()" btnColor="primary" btnStyle="flat" btnSize="medium" i18n *ngIf="showRequestPieceButton">
+  <ap-button class="ap-mt-2" (click)="requestPiece()" btnColor="primary" btnStyle="flat" btnSize="medium" i18n
+    *ngIf="showRequestPieceButton">
     Request Piece
   </ap-button>
 </div>
 
 
-<cdk-virtual-scroll-viewport itemSize="80" class="full-height-of-sidebar ap-flex-grow  thin-scrollbars  ap-my-2"
-  *ngIf="typesList.length > 0">
+<cdk-virtual-scroll-viewport maxBufferPx="400" itemSize="80"
+  class="full-height-of-sidebar ap-flex-grow  thin-scrollbars  ap-my-2" *ngIf="typesList.length > 0">
   <div class="ap-my-2 ap-mx-5" *cdkVirtualFor="let flowItemDetails of typesList">
     <app-step-type-item [flowItemDetails]="flowItemDetails" (click)="typeSelected.emit(flowItemDetails)">
     </app-step-type-item>
