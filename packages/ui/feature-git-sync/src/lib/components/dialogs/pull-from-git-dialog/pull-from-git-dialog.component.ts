@@ -2,27 +2,27 @@ import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { BehaviorSubject, Observable, catchError, of, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { SyncProjectService } from '../services/sync-project.service';
+import { SyncProjectService } from '../../../services/sync-project.service';
 
-export type PullDialogData = {
+export type PullFromGitDialogData = {
   projectName: string;
   repoId: string;
 };
 
 @Component({
-  selector: 'app-pull-dialog',
-  templateUrl: './pull-dialog.component.html',
+  selector: 'app-pull-from-git-dialog',
+  templateUrl: './pull-from-git-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PullDialogComponent {
+export class PullFromGitDialogComponent {
   loading$ = new BehaviorSubject<boolean>(false);
   pull$?: Observable<void>;
   constructor(
     private syncProjectService: SyncProjectService,
     @Inject(MAT_DIALOG_DATA)
-    public data: PullDialogData,
+    public data: PullFromGitDialogData,
     private snackbar: MatSnackBar,
-    private matDialogRef: MatDialogRef<PullDialogComponent>
+    private matDialogRef: MatDialogRef<PullFromGitDialogComponent>
   ) {}
   submit() {
     if (!this.loading$.value) {

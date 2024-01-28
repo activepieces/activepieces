@@ -65,8 +65,8 @@
           </div>
         </button>
         <ap-share-flow-template-dialog *ngIf="flow$ | async as flow" [flow]="flow"></ap-share-flow-template-dialog>
-        <app-push-flow-button *ngIf="flow$ | async as flow" [flow]="flow"></app-push-flow-button>
-       
+        <app-push-flow-to-git-button *ngIf="flow$ | async as flow" [flow]="flow"></app-push-flow-to-git-button>
+
         <ng-container *ngIf="(showNavigation$ | async )">
           <button mat-menu-item *ngIf="flow$ | async as flow" (click)="deleteFlow(flow)">
             <div class="ap-flex ap-gap-3 ap-items-center">

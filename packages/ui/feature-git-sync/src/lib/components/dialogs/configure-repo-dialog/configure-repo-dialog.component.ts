@@ -10,7 +10,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { Observable, switchMap, tap } from 'rxjs';
-import { SyncProjectService } from '../services/sync-project.service';
+import { SyncProjectService } from '../../../services/sync-project.service';
 
 type ConfigureRepoDialogData = {
   repo?: GitRepo;

@@ -4,10 +4,10 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { BehaviorSubject, Observable, catchError, of, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { PushSyncMode } from '@activepieces/ee-shared';
-import { Flow } from '@activepieces/shared';
-import { SyncProjectService } from '../services/sync-project.service';
+import { PopulatedFlow } from '@activepieces/shared';
+import { SyncProjectService } from '../../../services/sync-project.service';
 
-export type PushDialogData =
+export type PushToGitDialogData =
   | {
       projectName: string;
       repoId: string;
@@ -17,28 +17,34 @@ export type PushDialogData =
       projectName: string;
       repoId: string;
       mode: PushSyncMode.FLOW;
-      flow: Flow;
+      flow: PopulatedFlow;
     };
 
 @Component({
   selector: 'app-push-dialog',
-  templateUrl: './push-dialog.component.html',
+  templateUrl: './push-to-git-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PushDialogComponent {
+export class PushToGitDialogComponent {
+  readonly PushSyncMode=PushSyncMode;
   commitMsgFormControl = new FormControl('', {
     nonNullable: true,
     validators: Validators.required,
   });
   loading$ = new BehaviorSubject<boolean>(false);
   push$?: Observable<void>;
+  flowDisplayName='';
   constructor(
     private syncProjectService: SyncProjectService,
     @Inject(MAT_DIALOG_DATA)
-    public data: PushDialogData,
+    public data: PushToGitDialogData,
     private snackbar: MatSnackBar,
-    private matDialogRef: MatDialogRef<PushDialogComponent>
-  ) {}
+    private matDialogRef: MatDialogRef<PushToGitDialogComponent>
+  ) {
+    if(this.data.mode===PushSyncMode.FLOW){
+      this.flowDisplayName=this.data.flow.version.displayName;
+    }
+  }
   submit() {
     this.commitMsgFormControl.markAllAsTouched();
     if (this.commitMsgFormControl.valid && !this.loading$.value) {

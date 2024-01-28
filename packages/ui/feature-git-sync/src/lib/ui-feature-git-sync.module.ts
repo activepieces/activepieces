@@ -1,24 +1,24 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ConfigureRepoDialogComponent } from './configure-repo-dialog/configure-repo-dialog.component';
-import { PushDialogComponent } from './push-dialog/push-dialog.component';
-import { PullDialogComponent } from './pull-dialog/pull-dialog.component';
-import { PushFlowButtonComponent } from './push-flow-button/push-flow-button.component';
+import { ConfigureRepoDialogComponent } from './components/dialogs/configure-repo-dialog/configure-repo-dialog.component';
+import { PushToGitDialogComponent } from './components/dialogs/push-to-git-dialog/push-to-git-dialog.component';
+import { PullFromGitDialogComponent } from './components/dialogs/pull-from-git-dialog/pull-from-git-dialog.component';
+import { PushFlowToGitButtonComponent } from './components/push-flow-to-git-button/push-flow-to-git-button.component';
 import { UiCommonModule } from '@activepieces/ui/common';
 
 @NgModule({
   imports: [CommonModule, UiCommonModule],
   declarations: [
     ConfigureRepoDialogComponent,
-    PushDialogComponent,
-    PullDialogComponent,
-    PushFlowButtonComponent,
+    PushToGitDialogComponent,
+    PullFromGitDialogComponent,
+    PushFlowToGitButtonComponent,
   ],
   exports: [
     ConfigureRepoDialogComponent,
-    PushDialogComponent,
-    PullDialogComponent,
-    PushFlowButtonComponent,
+    PushToGitDialogComponent,
+    PullFromGitDialogComponent,
+    PushFlowToGitButtonComponent,
   ],
 })
 export class UiFeatureGitSyncModule {}

@@ -13,10 +13,10 @@ import { Store } from '@ngrx/store';
 import { Project } from '@activepieces/shared';
 import {
   ConfigureRepoDialogComponent,
-  PullDialogComponent,
-  PullDialogData,
-  PushDialogComponent,
-  PushDialogData,
+  PullFromGitDialogComponent,
+  PullFromGitDialogData,
+  PushToGitDialogComponent,
+  PushToGitDialogData,
   SyncProjectService,
 } from '@activepieces/ui-feature-git-sync';
 
@@ -82,13 +82,13 @@ export class SyncProjectComponent {
   push(projectDisplayName: string) {
     const repoId = this.currentRepo$.value?.id;
     if (repoId) {
-      const data: PushDialogData = {
+      const data: PushToGitDialogData = {
         projectName: projectDisplayName,
         repoId: repoId,
         mode: PushSyncMode.PROJECT,
       };
       this.matDialog
-        .open(PushDialogComponent, {
+        .open(PushToGitDialogComponent, {
           data,
         })
         .afterClosed();
@@ -98,12 +98,12 @@ export class SyncProjectComponent {
   pull(projectDisplayName: string) {
     const repoId = this.currentRepo$.value?.id;
     if (repoId) {
-      const data: PullDialogData = {
+      const data: PullFromGitDialogData = {
         projectName: projectDisplayName,
         repoId: repoId,
       };
       this.matDialog
-        .open(PullDialogComponent, {
+        .open(PullFromGitDialogComponent, {
           data,
         })
         .afterClosed();
