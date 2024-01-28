@@ -9,5 +9,5 @@ export interface ProjectsState {
   loaded: boolean;
   selectedIndex: number;
   projects: Project[];
-  platform: Platform | undefined;
+  platform?: Platform;
 }
