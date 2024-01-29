@@ -155,6 +155,9 @@
       "@activepieces/piece-flowlu": [
         "packages/pieces/community/flowlu/src/index.ts"
       ],
+      "@activepieces/piece-formaloo": [
+        "packages/pieces/community/formaloo/src/index.ts"
+      ],
       "@activepieces/piece-formbricks": [
         "packages/pieces/community/formbricks/src/index.ts"
       ],
