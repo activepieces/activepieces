@@ -165,7 +165,7 @@ export const flowRunService = {
         return flowRun
     },
 
-    async start({ projectId, flowVersionId, flowRunId, payload, environment, executionType, synchronousHandlerId }: StartParams): Promise<FlowRun> {
+    async start({ projectId, flowVersionId, flowRunId, payload, environment, executionType, synchronousHandlerId, hookType }: StartParams): Promise<FlowRun> {
         logger.info(`[flowRunService#start] flowRunId=${flowRunId} executionType=${executionType}`)
 
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
@@ -204,6 +204,7 @@ export const flowRunService = {
             payload,
             synchronousHandlerId,
             executionType,
+            hookType,
         })
 
         return savedFlowRun
@@ -221,6 +222,7 @@ export const flowRunService = {
             environment: RunEnvironment.TESTING,
             executionType: ExecutionType.BEGIN,
             synchronousHandlerId: flowResponseWatcher.getHandlerId(),
+            hookType: HookType.AFTER_LOG,
         })
     },
 
@@ -292,6 +294,11 @@ export const flowRunService = {
     },
 }
 
+export enum HookType {
+    BEFORE_LOG = 'BEFORE_LOG',
+    AFTER_LOG = 'AFTER_LOG',
+}
+
 type GetOrCreateParams = {
     id?: FlowRunId
     projectId: ProjectId
@@ -322,6 +329,7 @@ type StartParams = {
     environment: RunEnvironment
     payload: unknown
     synchronousHandlerId?: string
+    hookType?: HookType
     executionType: ExecutionType
 }
 

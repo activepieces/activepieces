@@ -193,6 +193,9 @@ export class AppComponent implements OnInit {
     this.socket.on('connect', () => {
       console.log('socket connected');
     });
+    this.socket.on('disconnect', () => {
+      console.log('socket disconnected');
+    });
   }
 
   getUpgradeNotificationMetadataInLocalStorage() {
