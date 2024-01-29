@@ -1,14 +1,14 @@
 ---
-title: "Create Action"
-icon: "circle-3"
-description: ""
+title: 'Create Action'
+icon: 'circle-3'
+description: ''
 ---
 
 This tutorial will guide you through the process of creating a Hacker News piece with an action that fetches the top stories. It assumes that you are familiar with the following:
 
-* [Activepieces Repo Structure](../architecture/repo-structure)
-* [Activepieces Local development](../development-setup/local) Or [Github Codespaces](../development-setup/codespaces).
-* TypeScript syntax.
+- [Activepieces Repo Structure](../architecture/repo-structure)
+- [Activepieces Local development](../development-setup/local) Or [Github Codespaces](../development-setup/codespaces).
+- TypeScript syntax.
 
 HackerNews is a social news website that allows users to submit and vote on stories related to computer science and entrepreneurship.
 
@@ -24,7 +24,8 @@ The piece will be generated at `packages/pieces/hacker-news/`,
 the `src/index.ts` file should contain the following code
 
 <Tip>
-This piece doesn't require authentication, check the Authentication Reference for more information.
+  This piece doesn't require authentication, check the Authentication Reference
+  for more information.
 </Tip>
 
 ```ts
@@ -34,12 +35,9 @@ export const hackerNews = createPiece({
   displayName: 'hacker-news',
   logoUrl: 'https://cdn.activepieces.com/pieces/hacker-news.png',
   auth: PieceAuth.None(),
-  authors: [
-  ],
-  actions: [
-  ],
-  triggers: [
-  ],
+  authors: [],
+  actions: [],
+  triggers: [],
 });
 ```
 
@@ -60,52 +58,61 @@ touch fetch-top-stories.ts
 Inside this file, paste the following code:
 
 <Tip>
-You can ask ChatGPT3 to write the function to get top stories from hackernews.
+  You can ask ChatGPT3 to write the function to get top stories from hackernews.
 </Tip>
 
 ```typescript
-import { createAction, Property, PieceAuth } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod } from "@activepieces/pieces-common";
+import {
+  createAction,
+  Property,
+  PieceAuth,
+} from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const fetchTopStories = createAction({
-	name: 'fetch_top_stories', // Must be a unique across the piece, this shouldn't be changed.
+  name: 'fetch_top_stories', // Must be a unique across the piece, this shouldn't be changed.
   auth: PieceAuth.None(),
-  displayName:'Fetch Top Stories',
+  displayName: 'Fetch Top Stories',
   description: 'Fetch top stories from hackernews',
-	props: {
-        // Properties to ask from the user, in this ask we will take number of
-		number_of_stories: Property.Number({
-			displayName: 'Number of Stories',
-			description: undefined,
-			required: true,
-		})
-	},
-	async run(context) {
-        const HACKER_NEWS_API_URL = "https://hacker-news.firebaseio.com/v0/";
-        const topStoryIdsResponse = await httpClient.sendRequest<string[]>({
-			method: HttpMethod.GET,
-			url: `${HACKER_NEWS_API_URL}topstories.json`
-		});
-        const topStoryIds: string[] = topStoryIdsResponse.body;
-        const topStories = [];
-        for (let i = 0; i < Math.min(context.propsValue['number_of_stories'], topStoryIds.length); i++) {
-          const storyId = topStoryIds[i];
-          const storyResponse = await httpClient.sendRequest({
-            method: HttpMethod.GET,
-            url: `${HACKER_NEWS_API_URL}item/${storyId}.json`
-          });
-          topStories.push(storyResponse.body);
-        }
-		return topStories;
-	},
+  props: {
+    // Properties to ask from the user, in this ask we will take number of
+    number_of_stories: Property.Number({
+      displayName: 'Number of Stories',
+      description: undefined,
+      required: true,
+    }),
+  },
+  async run(context) {
+    const HACKER_NEWS_API_URL = 'https://hacker-news.firebaseio.com/v0/';
+    const topStoryIdsResponse = await httpClient.sendRequest<string[]>({
+      method: HttpMethod.GET,
+      url: `${HACKER_NEWS_API_URL}topstories.json`,
+    });
+    const topStoryIds: string[] = topStoryIdsResponse.body;
+    const topStories = [];
+    for (
+      let i = 0;
+      i < Math.min(context.propsValue['number_of_stories'], topStoryIds.length);
+      i++
+    ) {
+      const storyId = topStoryIds[i];
+      const storyResponse = await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: `${HACKER_NEWS_API_URL}item/${storyId}.json`,
+      });
+      topStories.push(storyResponse.body);
+    }
+    return topStories;
+  },
 });
-
 ```
 
 <Tip>
-Friendly Tip: You can use `context.auth` If your piece contains authentication for this example, It doesn't have.
+  Friendly Tip: You can use `context.auth` If your piece contains authentication
+  for this example, It doesn't have.
 </Tip>
-This code defines an `action` that fetches the top stories from Hacker News using API.
+This code defines an `action` that fetches the top stories from Hacker News using
+API.
 
 The createAction function takes an object with several properties, including the `name`, `displayName`, `description`, `props`, and `run` function of the action.
 
@@ -131,7 +138,7 @@ export const hackerNews = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/hackernews.png',
   authors: [],
   auth: PieceAuth.None(),
-   // Add the action here.
+  // Add the action here.
   actions: [fetchTopStories], // <--------
   triggers: [],
 });
@@ -140,7 +147,9 @@ export const hackerNews = createPiece({
 # Testing
 
 <Tip>
-By default dvelopment setup only builds modified pieces. If you want a new piece to be built automatically upon `npm start`, make sure you read about [Piece Development](../development-setup/getting-started) section.
+  By default dvelopment setup only builds modified pieces. If you want a new
+  piece to be built automatically upon `npm start`, make sure you read about
+  [Piece Development](../development-setup/getting-started) section.
 </Tip>
 
 Once you make an edit, the piece will be rebuilt. After this is finished, you'll need to **refresh** the frontend to see the changes.
@@ -148,4 +157,3 @@ Once you make an edit, the piece will be rebuilt. After this is finished, you'll
 To test the action, you can use the Flow Builder in Activepieces. It should work just like the screenshot demonstrates.
 
 <img src="/resources/screenshots/contributing-first-connector.png" />
-

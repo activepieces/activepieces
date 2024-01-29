@@ -3,3 +3,107 @@ title: 'Create Piece'
 icon: 'circle-3'
 description: ''
 ---
+
+Congratulations on setting up your development environment! Now, let's dive into creating a new Circle piece for Circle.so.
+
+Circle.so is a dynamic online community platform designed to foster meaningful discussions and collaboration among users with shared interests.
+
+### Piece Defination
+
+To get started, let’s generate a new piece for Circle.so
+
+```bash
+npm run cli pieces create
+```
+
+You will be asked three questions to define your new piece:
+
+1. Piece Name: Enter a name for piece.
+2. Package Name: Enter a name for npm package.You can leave it to use default name.
+3. Piece Type: Piece type either custom or community.
+
+**Example:**
+
+```bash
+npm run cli pieces circle
+
+? Enter the piece name: circle
+? Enter the package name: @activepieces/piece-circle
+? Select the piece type: community
+```
+
+This will create new `Circle` piece at `packages/pieces/community/circle/`,the `src/index.ts` file should contain following code.
+
+```typescript filename='index.ts'
+import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+
+export const circle = createPiece({
+  displayName: 'Circle',
+  auth: PieceAuth.None(),
+  minimumSupportedRelease: '0.9.0',
+  logoUrl: 'https://cdn.activepieces.com/pieces/circle.png',
+  authors: [],
+  actions: [],
+  triggers: [],
+});
+```
+
+### Piece Authentication
+
+After creating piece first step is to create Authentication for piece.Based on piece Authetication differe Basic,Oauth2 or API Key.Activepices supports all typeof authentication. You can read more about auth in [Piece Auth](https://www.activepieces.com/docs/developers/piece-reference/authentication) section.
+
+To identify which type of Auth piece provide for thier API, we need to read API documentation of particular piece.As we are creating `Circle` piece, you can refer Circle API docs [here](https://www.make.com/en/use-cases/build-custom-app-in-make)
+
+Many application provide postman collection for thier API.We can use postamn to test for better API testing.
+
+As Circle API use API Key for authentication, we will use [Secret Text](https://www.activepieces.com/docs/developers/piece-reference/authentication#secret-text) for piece auth.
+
+Let's create new variable for auth in `index.ts` file.
+
+````typescript
+export const circleAuth = PieceAuth.SecretText({
+    displayName:'API Key',
+    required : true,
+    description : `
+    To obtain API Key for these steps:
+
+    1. Log in to your Circle account.
+    2. Navigate to **settings->API**.
+    3. Copy API key to clipboard.
+    `
+})```
+````
+
+Every piece auth takes three required properties `displayName`,`required` and `description`.
+
+- displayName: Auth name in UI.
+- required : true if auth is mandatory.
+- description: steps to establish connection.
+
+now let's use this auth variable in piece defination in `index.ts` file.
+
+```typescript
+import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+
+export const circleAuth = PieceAuth.SecretText({
+  displayName: 'API Key',
+  required: true,
+  description: `
+    To obtain API Key for these steps:
+
+    1. Log in to your Circle account.
+    2. Navigate to **settings->API**.
+    3. Copy API key to clipboard.
+    `,
+});
+
+export const circle = createPiece({
+  displayName: 'Circle',
+  auth: circleAuth, // auth varible
+  minimumSupportedRelease: '0.9.0',
+  logoUrl: 'https://cdn.activepieces.com/pieces/circle.png',
+  authors: [],
+  actions: [],
+  triggers: [],
+});
+```
