@@ -1,21 +1,33 @@
+<div class="p-3">
+    <ap-sidebar-header (closeClicked)="closeLeftSideBar()" title="Runs" i18n-title></ap-sidebar-header>
+</div>
 <ng-container *ngIf="(runs$ | async) as runs;else loading">
-    <div class="ap-flex ap-flex-col ap-gap-4 ap-p-5">
-        <div *ngFor="let run of runs">
-            <div class="ap-text-body">{{run.created |date:'mediumDate'
-                }}, {{run.created |date:'shortTime' }} </div>
-            <div>
-                <ap-state-icon [status]="run.status" [showStatusText]="true"></ap-state-icon>
+
+    <div *ngIf="runs.length > 0">
+        <cdk-virtual-scroll-viewport class="ap-h-[calc(100vh-165px)]  ap-overflow-scroll thin-scrollbars" itemSize="52"
+            (scrolledIndexChange)="nextBatch()">
+
+            <div *cdkVirtualFor="let run of runs" class="ap-px-5 ap-my-5">
+                <div class="ap-text-body">{{run.created |date:'mediumDate'
+                    }}, {{run.created |date:'shortTime' }} </div>
+                <div class="ap-mt-3">
+                    <ap-state-icon [status]="run.status" [showStatusText]="true"></ap-state-icon>
+                </div>
             </div>
-        </div>
+        </cdk-virtual-scroll-viewport>
     </div>
-    <div class="full-height-of-sidebar ap-flex ap-flex-grow ap-justify-center ap-items-center" i18n>
+
+
+    <div *ngIf="runs.length === 0"
+        class="ap-h-[calc(100vh-140px)] ap-text-center ap-flex ap-flex-grow ap-justify-center ap-items-center  ap-p-5"
+        i18n>
         No runs yet, make sure you publish your flow and that it has been triggerd
     </div>
 </ng-container>
 
 
 <ng-template #loading>
-    <div class="full-height-of-sidebar ap-flex ap-flex-grow ap-justify-center ap-items-center ">
+    <div class="ap-h-[calc(100vh-125px)] ap-flex ap-flex-grow ap-justify-center ap-items-center ">
         <ap-loading-icon> </ap-loading-icon>
     </div>
 </ng-template>

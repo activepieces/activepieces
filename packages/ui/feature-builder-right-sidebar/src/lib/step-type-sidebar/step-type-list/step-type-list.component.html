@@ -9,8 +9,9 @@
 </div>
 
 
+<!-- 100vh - (height of tabs + height of sidebar title) - builder header height  -->
 <cdk-virtual-scroll-viewport maxBufferPx="400" itemSize="80"
-  class="full-height-of-sidebar ap-flex-grow  thin-scrollbars  ap-my-2" *ngIf="typesList.length > 0">
+  class="ap-h-[calc(100vh-204px-76px)] ap-flex-grow  thin-scrollbars  ap-my-2" *ngIf="typesList.length > 0">
   <div class="ap-my-2 ap-mx-5" *cdkVirtualFor="let flowItemDetails of typesList">
     <app-step-type-item [flowItemDetails]="flowItemDetails" (click)="typeSelected.emit(flowItemDetails)">
     </app-step-type-item>
