@@ -3,16 +3,18 @@ import dayjs from 'dayjs'
 import { ActivepiecesError, ErrorCode, ExecutionType, FlowRun, PauseType } from '@activepieces/shared'
 import { flowQueue } from '../../workers/flow-worker/flow-queue'
 import { logger } from '../../helper/logger'
-import { LATEST_JOB_DATA_SCHEMA_VERSION } from '../../workers/flow-worker/job-data'
+import { LATEST_JOB_DATA_SCHEMA_VERSION, RepeatableJobType } from '../../workers/flow-worker/job-data'
 import { JobType } from '../../workers/flow-worker/queues/queue'
 import { notifications } from '../../helper/notifications'
 import { flowRunHooks } from './flow-run-hooks'
+import { HookType } from './flow-run-service'
 
 type StartParams = {
     flowRun: FlowRun
     executionType: ExecutionType
     payload: unknown
     synchronousHandlerId?: string
+    hookType?: HookType
 }
 
 type PauseParams = {
@@ -41,7 +43,7 @@ export const flowRunSideEffects = {
             flowRun,
         })
     },
-    async start({ flowRun, executionType, payload, synchronousHandlerId }: StartParams): Promise<void> {
+    async start({ flowRun, executionType, payload, synchronousHandlerId, hookType }: StartParams): Promise<void> {
         logger.info(`[FlowRunSideEffects#start] flowRunId=${flowRun.id} executionType=${executionType}`)
 
         await flowQueue.add({
@@ -56,6 +58,7 @@ export const flowRunSideEffects = {
                 flowVersionId: flowRun.flowVersionId,
                 payload,
                 executionType,
+                hookType,
             },
         })
     },
@@ -84,7 +87,7 @@ export const flowRunSideEffects = {
                         runId: flowRun.id,
                         projectId: flowRun.projectId,
                         environment: flowRun.environment,
-                        executionType: ExecutionType.RESUME,
+                        jobType: RepeatableJobType.DELAYED_FLOW,
                         flowVersionId: flowRun.flowVersionId,
                     },
                     delay: calculateDelayForResumeJob(pauseMetadata.resumeDateTime),

@@ -1,4 +1,4 @@
-import { AUTHENTICATION_PROPERTY_NAME, ApEdition, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, PieceTrigger, ScheduleOptions, TriggerHookType } from '@activepieces/shared'
+import { AUTHENTICATION_PROPERTY_NAME, ApEdition, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, PieceTrigger, ScheduleOptions, TriggerHookType, assertEqual } from '@activepieces/shared'
 import { createContextStore } from '../services/storage.service'
 import { variableService } from '../services/variable-service'
 import { isValidCron } from 'cron-validator'
@@ -83,6 +83,12 @@ export const triggerHelper = {
                 return {
                     listeners: appListeners,
                     scheduleOptions: trigger.type === TriggerStrategy.POLLING ? scheduleOptions : undefined,
+                }
+            case TriggerHookType.RENEW:
+                assertEqual(trigger.type, TriggerStrategy.WEBHOOK, 'triggerType', 'WEBHOOK')
+                await trigger.onRenew(context)
+                return {
+                    success: true,
                 }
             case TriggerHookType.HANDSHAKE: {
                 try {

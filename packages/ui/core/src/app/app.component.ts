@@ -38,6 +38,7 @@ import {
 } from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
 import { Platform } from '@activepieces/ee-shared';
+import { Socket } from 'ngx-socket-io';
 
 interface UpgradeNotificationMetaDataInLocalStorage {
   latestVersion: string;
@@ -80,6 +81,7 @@ export class AppComponent implements OnInit {
     private embeddedService: EmbeddingService,
     private localesService: LocalesService,
     private platformService: PlatformService,
+    private socket: Socket,
     private builderService: FlowBuilderService
   ) {
     this.toggleLoading$ = this.builderService.loading$.pipe(
@@ -142,6 +144,8 @@ export class AppComponent implements OnInit {
         this.telemetryService.init(user);
       })
     );
+
+    this.socket.connect();
   }
 
   getUpgradeNotificationMetadataInLocalStorage() {
