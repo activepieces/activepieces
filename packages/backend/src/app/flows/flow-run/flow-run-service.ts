@@ -32,7 +32,6 @@ import { logger } from '../../helper/logger'
 import { flowService } from '../flow/flow.service'
 import { MoreThanOrEqual } from 'typeorm'
 import { flowRunHooks } from './flow-run-hooks'
-import { Socket } from 'socket.io'
 import { flowResponseWatcher } from './flow-response-watcher'
 
 export const flowRunRepo = databaseConnection.getRepository(FlowRunEntity)
@@ -277,20 +276,6 @@ export const flowRunService = {
             .getRawOne()
 
         return Number(sumOfTasks.tasks)
-    },
-
-    registerEventListeners(socket: Socket): void {
-        socket.on('testFlowRun', async (data) => {
-            logger.debug({ data }, '[Socket#testFlowRun]')
-            const flowRun = await flowRunService.test({
-                projectId: data.projectId,
-                flowVersionId: data.flowVersionId,
-            })
-            socket.emit('flowRunStarted', flowRun)
-
-            await flowResponseWatcher.listen(flowRun.id)
-            socket.emit('flowRunFinished', flowRun)
-        })
     },
 }
 
