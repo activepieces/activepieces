@@ -29,7 +29,7 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (app) =
 }
 
 const rateLimitOptions: RateLimitOptions = {
-    max: 2,
+    max: 50,
     timeWindow: '1 minute',
 }
 
