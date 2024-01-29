@@ -14,7 +14,7 @@ import { logger } from '../../../../helper/logger'
 import { DelayPauseMetadata, ExecutionOutputStatus, Flow, PauseType, RunEnvironment, TriggerType } from '@activepieces/shared'
 import { flowRunRepo } from '../../../../flows/flow-run/flow-run-service'
 import { flowService } from '../../../../flows/flow/flow.service'
-import { RepeatableJobType } from '../../job-data'
+import { LATEST_JOB_DATA_SCHEMA_VERSION, RepeatableJobType } from '../../job-data'
 import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
 import { flowVersionService } from '../../../../flows/flow-version/flow-version.service'
 import { getPieceTrigger } from '../../../../flows/trigger/hooks/trigger-utils'
@@ -108,7 +108,7 @@ export const inMemoryQueueManager: InMemoryQueueManager = {
                 type: JobType.REPEATING,
                 data: {
                     projectId: flow.projectId,
-                    schemaVersion: 1,
+                    schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                     flowVersionId: flow.publishedVersionId!,
                     flowId: flow.id,
                     jobType: RepeatableJobType.RENEW_WEBHOOK,
@@ -155,7 +155,7 @@ export const inMemoryQueueManager: InMemoryQueueManager = {
                         runId: flowRun.id,
                         projectId: flowRun.projectId,
                         environment: RunEnvironment.PRODUCTION,
-                        schemaVersion: 1,
+                        schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                         flowVersionId: flowRun.flowVersionId,
                         jobType: RepeatableJobType.DELAYED_FLOW,
                     },
