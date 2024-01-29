@@ -8,9 +8,7 @@ import { SystemProp } from '../../helper/system/system-prop'
 
 export const rateLimitModule: FastifyPluginAsyncTypebox = FastifyPlugin(async (app) => {
     await app.register(RateLimitPlugin, {
-        global: true,
-        max: 1000,
-        timeWindow: '1 minute',
+        global: false,
         redis: getRedisClient(),
     })
 })
