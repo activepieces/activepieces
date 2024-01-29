@@ -12,7 +12,6 @@ import {
 import { HookType, flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { triggerUtils } from '../helper/trigger-utils'
 import { getServerUrl } from '../helper/public-ip-utils'
 import { triggerEventService } from '../flows/trigger-events/trigger-event.service'
 import { isNil } from '@activepieces/shared'
@@ -20,6 +19,7 @@ import { logger } from '../helper/logger'
 import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
 import { WebhookResponse } from '@activepieces/pieces-framework'
 import { flowService } from '../flows/flow/flow.service'
+import { triggerHooks } from '../flows/trigger'
 
 export const webhookService = {
     async handshake({
@@ -40,11 +40,10 @@ export const webhookService = {
         }
 
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
-        const response = await triggerUtils.tryHandshake({
+        const response = await triggerHooks.tryHandshake({
             projectId,
             flowVersion,
             payload,
-            simulate,
         })
         if (response !== null) {
             logger.info(`[WebhookService#handshake] condition met, handshake executed, response:
@@ -65,7 +64,7 @@ export const webhookService = {
                 projectId,
                 id: flow.id,
             })).version
-            const payloads: unknown[] = await triggerUtils.executeTrigger({
+            const payloads: unknown[] = await triggerHooks.executeTrigger({
                 projectId,
                 flowVersion,
                 payload,
@@ -83,7 +82,7 @@ export const webhookService = {
             return []
         }
         const flowVersion = await flowVersionService.getOneOrThrow(flow.publishedVersionId)
-        const payloads: unknown[] = await triggerUtils.executeTrigger({
+        const payloads: unknown[] = await triggerHooks.executeTrigger({
             projectId,
             flowVersion,
             payload,
@@ -118,7 +117,7 @@ export const webhookService = {
         const { projectId } = flow
         const flowVersion = await getLatestFlowVersionOrThrow(flow.id, projectId)
 
-        const events = await triggerUtils.executeTrigger({
+        const events = await triggerHooks.executeTrigger({
             projectId,
             flowVersion,
             payload,
