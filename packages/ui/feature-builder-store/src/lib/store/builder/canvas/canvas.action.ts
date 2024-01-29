@@ -19,6 +19,7 @@ export enum CanvasActionType {
   CLEAR_ADD_BUTTON_ID = '[CANVAS] CLEAR_ADD_BUTTON_ID',
   VIEW_VERSION = '[CANVAS] VIEW_VERSION',
   UPDATE_VIEWED_VERSION_ID = `[CANVAS] UPDATE_VIEWED_VERSION_ID`,
+  VIEW_RUN = '[CANVAS] VIEW_RUN',
 }
 
 const setInitial = createAction(
@@ -64,8 +65,14 @@ const selectStepByName = createAction(
   props<{ stepName: string }>()
 );
 const deselectStep = createAction(CanvasActionType.DESELECT_STEP);
-const exitRun = createAction(CanvasActionType.EXIT_RUN);
-
+const exitRun = createAction(
+  CanvasActionType.EXIT_RUN,
+  props<{ flowVersion: FlowVersion }>()
+);
+const viewRun = createAction(
+  CanvasActionType.VIEW_RUN,
+  props<{ run: FlowRun; version: FlowVersion }>()
+);
 const setRun = createAction(
   CanvasActionType.SET_RUN,
   props<{ run: FlowRun }>()
@@ -84,4 +91,5 @@ export const canvasActions = {
   viewVersion,
   /**Used for when you edit a published flow and a draft is created */
   updateViewedVersionId,
+  viewRun,
 };

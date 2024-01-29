@@ -127,7 +127,6 @@ export class TestFlowWidgetComponent implements OnInit {
               panelClass: 'error',
             }
           );
-          this.store.dispatch(canvasActions.exitRun());
           return of(null);
         })
       );

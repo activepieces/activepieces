@@ -5,11 +5,12 @@ import {
   OnInit,
   ViewChild,
 } from '@angular/core';
-import { InstanceRunService } from '@activepieces/ui/common';
-import { FlowRun, Cursor } from '@activepieces/shared';
+import { FlowService, InstanceRunService } from '@activepieces/ui/common';
+import { FlowRun, Cursor, PopulatedFlow } from '@activepieces/shared';
 import {
   BehaviorSubject,
   Observable,
+  forkJoin,
   map,
   mergeMap,
   scan,
@@ -18,11 +19,16 @@ import {
   throttleTime,
 } from 'rxjs';
 import {
+  BuilderSelectors,
   LeftSideBarType,
+  TestRunBarComponent,
+  ViewModeActions,
+  ViewModeEnum,
   canvasActions,
 } from '@activepieces/ui/feature-builder-store';
 import { Store } from '@ngrx/store';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-runs-list',
@@ -43,10 +49,16 @@ export class RunsListComponent implements OnInit {
   runs$!: Observable<FlowRun[]>;
   cursor: Cursor = null;
   offset$ = new BehaviorSubject<Cursor>(null);
+  showRun$?: Observable<{ flow: PopulatedFlow; run: FlowRun }>;
+  currentRun$: Observable<FlowRun | undefined>;
   constructor(
     private instanceRunService: InstanceRunService,
-    private store: Store
-  ) {}
+    private store: Store,
+    private flowService: FlowService,
+    private snackbar: MatSnackBar
+  ) {
+    this.currentRun$ = this.store.select(BuilderSelectors.selectCurrentFlowRun);
+  }
   ngOnInit(): void {
     this.runs$ = this.offset$.pipe(
       startWith(null),
@@ -77,7 +89,6 @@ export class RunsListComponent implements OnInit {
     }
   }
   getBatch(cursor: Cursor, flowId: string, projectId: string) {
-    console.log('getBatch');
     return this.instanceRunService
       .list(projectId, {
         flowId: flowId,
@@ -90,5 +101,30 @@ export class RunsListComponent implements OnInit {
         }),
         map((res) => res.data)
       );
+  }
+  ShowRun(run: FlowRun) {
+    const run$ = this.instanceRunService.get(run.id);
+    const flow$ = this.flowService.get(this.flowId, run.flowVersionId);
+    this.showRun$ = forkJoin({
+      run: run$,
+      flow: flow$,
+    }).pipe(
+      tap((res) => {
+        this.store.dispatch(
+          canvasActions.viewRun({
+            run: res.run,
+            version: res.flow.version,
+          })
+        );
+        this.snackbar.openFromComponent(TestRunBarComponent, {
+          duration: undefined,
+        });
+      })
+    );
+  }
+  exitRun() {
+    this.store.dispatch(
+      ViewModeActions.setViewMode({ viewMode: ViewModeEnum.BUILDING })
+    );
   }
 }
