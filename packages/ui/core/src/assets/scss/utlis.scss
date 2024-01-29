@@ -204,7 +204,10 @@ app-templates-dialog
     }
   }
   
- 
-
 }
 
+
+.full-height-of-sidebar 
+{
+  height: calc(100vh - 204px - 76px) !important;
+}

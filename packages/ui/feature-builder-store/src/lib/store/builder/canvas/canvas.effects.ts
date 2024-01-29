@@ -80,6 +80,7 @@ export class CanvasEffects {
               })
             );
           case LeftSideBarType.VERSIONS_HISTORY:
+          case LeftSideBarType.RUNS_LIST:
           case LeftSideBarType.NONE:
             return EMPTY;
         }

@@ -1,5 +1,5 @@
 <div *ngIf="typesList.length === 0"
-  class="ap-flex-grow ap-flex ap-flex-col ap-justify-center ap-items-center empty-list-Text ap-h-[40vh] ">
+  class="ap-flex-grow ap-flex ap-flex-col ap-justify-center ap-items-center ap-min-h-[50vh] ">
   <svg-icon src="assets/img/custom/variables-list.svg" [style]="{width:'70px', height:'70px'}"></svg-icon>
   <p class="ap-text-description">{{emptyListText}}</p>
   <ap-button class="ap-mt-2" (click)="requestPiece()" btnColor="primary" btnStyle="flat" btnSize="medium" i18n
