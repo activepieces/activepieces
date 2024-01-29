@@ -7,7 +7,7 @@
 <mat-menu #menu="matMenu">
     <!-- BEGIN EE -->
     <div mat-menu-item (click)="viewPlatformSettings()" *ngIf="showPlatform$| async">
-        Platform dashboard
+        Admin Console
     </div>
     <ng-container *ngIf="projectEnabled$ | async">
         <ng-container *ngIf="projects$ | async as projects">

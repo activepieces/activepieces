@@ -18,7 +18,8 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (app, _options, d
     app.post('/:id/push', PushRepoRequestSchema, async (request) => {
         await gitRepoService.push({
             id: request.params.id,
-            commitMessage: request.body.commitMessage,
+            userId: request.principal.id,
+            request: request.body,
         })
     })
 
@@ -41,7 +42,7 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (app, _options, d
 
 const DeleteRepoRequestSchema = {
     config: {
-        allowedPrincipals: [PrincipalType.SERVICE, PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER],
     },
     schema: {
         description: 'Delete a git repository information for a project.',
@@ -63,6 +64,7 @@ const PullRepoRequestSchema = {
         params: Type.Object({
             id: Type.String(),
         }),
+        tags: ['git-repo'],
         response: {
             [StatusCodes.NO_CONTENT]: Type.Undefined(),
         },
@@ -71,7 +73,7 @@ const PullRepoRequestSchema = {
 
 const PushRepoRequestSchema = {
     config: {
-        allowedPrincipals: [PrincipalType.SERVICE, PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER],
     },
     schema: {
         description: 'Push all changes from the project and overwrite any conflicting changes in the git repository.',
@@ -87,7 +89,7 @@ const PushRepoRequestSchema = {
 
 const ConfigureRepoRequestSchema = {
     config: {
-        allowedPrincipals: [PrincipalType.SERVICE, PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER],
     },
     schema: {
         description: 'Upsert a git repository information for a project.',
@@ -100,7 +102,7 @@ const ConfigureRepoRequestSchema = {
 
 const ListRepoRequestSchema = {
     config: {
-        allowedPrincipals: [PrincipalType.SERVICE, PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER],
     },
     schema: {
         querystring: Type.Object({

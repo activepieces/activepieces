@@ -9,14 +9,14 @@ export class AddPieceTypeAndPackageTypeToFlowVersion1696245170061 implements Mig
         let updatedFlows = 0
         for (const { id } of flowVersionIds) {
             // Fetch FlowVersion record by ID
-            const flowVersion = await queryRunner.query('SELECT * FROM flow_version WHERE id = ?', [id])
+            const flowVersion = await queryRunner.query('SELECT * FROM flow_version WHERE id = $1', [id])
             if (flowVersion.length > 0) {
                 const updated = traverseAndUpdateSubFlow(
                     addPackageTypeAndPieceTypeToPieceStepSettings,
                     flowVersion[0].trigger,
                 )
                 if (updated) {
-                    await queryRunner.query('UPDATE flow_version SET trigger = ? WHERE id = ?', [flowVersion[0].trigger, flowVersion[0].id])
+                    await queryRunner.query('UPDATE flow_version SET trigger = $1 WHERE id = $2', [flowVersion[0].trigger, flowVersion[0].id])
                 }
             }
             updatedFlows++
@@ -33,7 +33,7 @@ export class AddPieceTypeAndPackageTypeToFlowVersion1696245170061 implements Mig
         const flowVersionIds = await queryRunner.query('SELECT id FROM flow_version')
         for (const { id } of flowVersionIds) {
             // Fetch FlowVersion record by ID
-            const flowVersion = await queryRunner.query('SELECT * FROM flow_version WHERE id = ?', [id])
+            const flowVersion = await queryRunner.query('SELECT * FROM flow_version WHERE id = $1', [id])
 
             if (flowVersion.length > 0) {
                 const updated = traverseAndUpdateSubFlow(
@@ -41,7 +41,7 @@ export class AddPieceTypeAndPackageTypeToFlowVersion1696245170061 implements Mig
                     flowVersion[0].trigger,
                 )
                 if (updated) {
-                    await queryRunner.query('UPDATE flow_version SET trigger = ? WHERE id = ?', [flowVersion[0].trigger, flowVersion[0].id])
+                    await queryRunner.query('UPDATE flow_version SET trigger = $1 WHERE id = $2', [flowVersion[0].trigger, flowVersion[0].id])
                 }
             }
         }
