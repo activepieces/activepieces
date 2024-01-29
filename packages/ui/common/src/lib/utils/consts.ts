@@ -35,6 +35,10 @@ export const flowActionsUiInfo = {
     text: $localize`Move to...`,
     icon: 'assets/img/custom/move.svg',
   },
+  pushToGit: {
+    text: $localize`Push to Git`,
+    icon: 'assets/img/custom/upload.svg',
+  },
   iconSizeTailWind: 'ap-w-[20px] ap-h-[20px]',
 };
 

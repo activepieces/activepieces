@@ -15,6 +15,13 @@ const selectAllProjects = createSelector(
   }
 );
 
+const selectPlatform = createSelector(
+  selectProjectState,
+  (state: ProjectsState) => {
+    return state.platform;
+  }
+);
+
 const selectCurrentProject = createSelector(
   selectProjectState,
   (state: ProjectsState) => {
@@ -39,6 +46,7 @@ const selectCurrentProjectOwnerId = createSelector(
 export const ProjectSelectors = {
   selectCurrentProjectOwnerId,
   selectIsNotificationsEnabled,
+  selectPlatform,
   selectAllProjects,
   selectCurrentProject,
 };

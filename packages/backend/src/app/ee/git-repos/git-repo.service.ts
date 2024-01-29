@@ -3,10 +3,12 @@ import fs from 'fs/promises'
 import path from 'path'
 import { databaseConnection } from '../../database/database-connection'
 import { GitRepoEntity } from './git-repo.entity'
-import { ConfigureRepoRequest, GitRepo } from '@activepieces/ee-shared'
+import { ConfigureRepoRequest, GitRepo, PushGitRepoRequest, PushSyncMode } from '@activepieces/ee-shared'
 import { ActivepiecesError, apId, ErrorCode, isNil, SeekPage } from '@activepieces/shared'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { FlowSyncOperation, gitSyncHelper } from './git-sync-helper'
+import { flowService } from '../../flows/flow/flow.service'
+import { userService } from '../../user/user-service'
 
 const repo = databaseConnection.getRepository(GitRepoEntity)
 
@@ -40,12 +42,28 @@ export const gitRepoService = {
         const repos = await repo.findBy({ projectId })
         return paginationHelper.createPage<GitRepo>(repos, null)
     },
-    async push({ id, commitMessage }: PushGitRepoRequest): Promise<void> {
+    async push({ id, userId, request }: { id: string, userId: string, request: PushGitRepoRequest }): Promise<void> {
         const gitRepo = await gitRepoService.getOrThrow({ id })
         const { flowFolderPath, git } = await createGitRepoAndReturnPaths(gitRepo)
-        const operations = await planPushOperations(gitRepo.projectId, flowFolderPath)
+        const { email, firstName, lastName } = await userService.getOneOrFail({ id: userId })
+        await git.addConfig('user.email', email)
+        await git.addConfig('user.name', `${firstName} ${lastName}`)
+        let operations: FlowSyncOperation[] = []
+        switch (request.mode) {
+            case PushSyncMode.FLOW: {
+                operations = [{
+                    type: 'upsert_flow_into_git',
+                    flow: await flowService.getOnePopulatedOrThrow({ id: request.flowId, projectId: gitRepo.projectId, versionId: undefined, removeSecrets: false }),
+                }]
+                break
+            }
+            case PushSyncMode.PROJECT: {
+                operations = await planPushOperations(gitRepo.projectId, flowFolderPath)
+                break
+            }
+        }
         await gitSyncHelper.applyFlowOperations({ projectId: gitRepo.projectId, flowFolderPath, operations })
-        await commitAndPush(git, gitRepo, commitMessage)
+        await commitAndPush(git, gitRepo, request.commitMessage)
 
     },
     async pull({ id }: PullGitRepoRequest): Promise<void> {
@@ -114,10 +132,9 @@ async function createGitRepoAndReturnPaths(gitRepo: GitRepo): Promise<{ flowFold
     catch (e) {
         // ignore
     }
-    const flowFolderPath = path.join(tmpFolder, 'flows')
+    const flowFolderPath = path.join(tmpFolder, 'projects', gitRepo.projectId, 'flows')
     await fs.mkdir(flowFolderPath, { recursive: true })
     const git = await initGitRepo(gitRepo, tmpFolder)
-
     return {
         git,
         flowFolderPath,
@@ -143,8 +160,6 @@ async function initGitRepo(gitRepo: GitRepo, baseDir: string): Promise<SimpleGit
     await git.addRemote('origin', gitRepo.remoteUrl)
     await git.branch(['-M', gitRepo.branch])
     await git.pull('origin', gitRepo.branch)
-    await git.addConfig('user.email', 'noreply@activepieces.com')
-    await git.addConfig('user.name', 'Activepieces')
     return git
 }
 
@@ -155,10 +170,6 @@ async function commitAndPush(git: SimpleGit, gitRepo: GitRepo, commitMessage: st
 }
 
 
-type PushGitRepoRequest = {
-    id: string
-    commitMessage: string
-}
 
 type PullGitRepoRequest = {
     id: string
