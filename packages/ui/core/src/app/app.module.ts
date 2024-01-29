@@ -59,14 +59,18 @@ export function playerFactory() {
   return player;
 }
 
-function resolveAbsoluteUrl(relativeUrl: string): string {
-  const absoluteUrl = new URL(relativeUrl, window.location.href).href;
-  return absoluteUrl;
+function resolveSocketUrl(relativeUrl: string): string {
+  const url = new URL(relativeUrl, window.location.href).href;
+  if (url.startsWith('/api')) {
+    return url.split('/api')[0];
+  }
+  return url.split('/v1')[0];
 }
 
 const socketConfig: SocketIoConfig = {
-  url: resolveAbsoluteUrl(environment.apiUrl.split('/v1')[0]),
+  url: resolveSocketUrl(environment.apiUrl),
   options: {
+    path: environment.production ? '/api/socket.io' : '/socket.io',
     auth: {
       token: tokenGetter(),
     },
