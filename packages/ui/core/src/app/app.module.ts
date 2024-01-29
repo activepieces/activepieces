@@ -59,8 +59,13 @@ export function playerFactory() {
   return player;
 }
 
+function resolveAbsoluteUrl(relativeUrl: string): string {
+  const absoluteUrl = new URL(relativeUrl, window.location.href).href;
+  return absoluteUrl;
+}
+
 const socketConfig: SocketIoConfig = {
-  url: environment.apiUrl.split('/v1')[0],
+  url: resolveAbsoluteUrl(environment.apiUrl.split('/v1')[0]),
   options: {
     auth: {
       token: tokenGetter(),
