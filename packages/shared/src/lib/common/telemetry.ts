@@ -42,8 +42,13 @@ type QuotaAlert = {
 type FlowImported = {
     id: string
     name: string
-    location: string
+    location: 'import flow view' | 'inside the builder' | 'import flow by uri encoded query param'
     tab?: string
+}
+type FlowImportedUsingFile = {
+ 
+    location: 'inside dashboard' | 'inside the builder'
+   
 }
 
 type UpgradeClicked = {
@@ -87,7 +92,10 @@ export enum TelemetryEventName {
     DEMO_IMPORTED = 'demo.imported',
     FLOW_RUN_CREATED = 'run.created',
     FLOW_PUBLISHED = 'flow.published',
+    /**used with templates dialog + import flow component + flows imported by uri query param*/
     FLOW_IMPORTED = 'flow.imported',
+    /**used only with import flow dialog*/
+    FLOW_IMPORTED_USING_FILE = 'flow.imported.using.file',
     PIECES_SEARCH = 'pieces.search',
     REFERRAL = 'referral',
     REFERRAL_LINK_COPIED = 'referral.link.copied',
@@ -113,6 +121,7 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.TEMPLATE_SEARCH, TemplateSearch>
     | BaseTelemetryEvent<TelemetryEventName.PIECES_SEARCH, PiecesSearch>
     | BaseTelemetryEvent<TelemetryEventName.FLOW_IMPORTED, FlowImported>
+    | BaseTelemetryEvent<TelemetryEventName.FLOW_IMPORTED_USING_FILE, FlowImportedUsingFile>
     | BaseTelemetryEvent<TelemetryEventName.REFERRAL_LINK_COPIED, ReferralLinkCopied>
     | BaseTelemetryEvent<TelemetryEventName.FLOW_SHARED, FlowShared>
     | BaseTelemetryEvent<TelemetryEventName.DEMO_IMPORTED, Record<string, never>>

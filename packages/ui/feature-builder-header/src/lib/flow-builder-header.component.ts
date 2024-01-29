@@ -9,20 +9,22 @@ import {
   FlagService,
   FlowService,
   NavigationService,
+  downloadFlow,
   environment,
   fadeIn400ms,
+  flowActionsUiInfo,
+  ImportFlowDialogComponent,
+  ImporFlowDialogData,
 } from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
 import {
   BuilderSelectors,
-  CollectionBuilderService,
   FlowsActions,
   LeftSideBarType,
   canvasActions,
 } from '@activepieces/ui/feature-builder-store';
 import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
-import { EmbeddingService } from '@activepieces/ui/common';
-import { ImportFlowDialogueComponent } from './import-flow-dialogue/import-flow-dialogue.component';
+import { EmbeddingService, FlowBuilderService } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-flow-builder-header',
@@ -31,6 +33,7 @@ import { ImportFlowDialogueComponent } from './import-flow-dialogue/import-flow-
   animations: [fadeIn400ms],
 })
 export class FlowBuilderHeaderComponent implements OnInit {
+  readonly flowActionsUiInfo = flowActionsUiInfo;
   isInDebugMode$: Observable<boolean>;
   isInReadOnlyMode$: Observable<boolean>;
   flowStatus$: Observable<FlowStatus>;
@@ -54,7 +57,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
     private store: Store,
     private router: Router,
     private appearanceService: AppearanceService,
-    public collectionBuilderService: CollectionBuilderService,
+    public collectionBuilderService: FlowBuilderService,
     private flowService: FlowService,
     private matDialog: MatDialog,
     private flagService: FlagService,
@@ -111,35 +114,23 @@ export class FlowBuilderHeaderComponent implements OnInit {
 
   download(id: string) {
     this.downloadFile$ = this.flowService.exportTemplate(id, undefined).pipe(
-      tap((json) => {
-        const blob = new Blob([JSON.stringify(json, null, 2)], {
-          type: 'application/json',
-        });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'template.json';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      }),
+      tap(downloadFlow),
       map(() => {
         return void 0;
       })
     );
   }
 
-  import() {
-    this.matDialog.open(ImportFlowDialogueComponent);
+  import(flowToOverWrite: PopulatedFlow) {
+    const data: ImporFlowDialogData = { flowToOverwriteId: flowToOverWrite.id };
+    this.matDialog.open(ImportFlowDialogComponent, { data });
   }
 
   deleteFlow(flow: PopulatedFlow) {
     const dialogData: DeleteEntityDialogData = {
       deleteEntity$: this.flowService.delete(flow.id),
       entityName: flow.version.displayName,
-      note: $localize`This will permanently delete the flow, all its data and any background runs.
-      You can't undo this action.`,
+      note: flowActionsUiInfo.delete.note,
     };
     const dialogRef = this.dialogService.open(DeleteEntityDialogComponent, {
       data: dialogData,

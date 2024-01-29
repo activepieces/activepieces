@@ -24,10 +24,14 @@
                             <mat-label i18n>Blog URL </mat-label>
                             <input [formControl]="form.controls.blogUrl" matInput type="text" />
                         </mat-form-field>
-                        <div class="ap-mb-2 ap-pointer-events-none" i18n>Filters</div>
-                        <div class="ap-mt-4">
-                            <app-array-form-control [formControl]="form.controls.tags"></app-array-form-control>
+                        <div>
+                            <div class="ap-mb-2 ap-pointer-events-none" i18n>Filters</div>
+                            <div class="ap-mt-4">
+                                <ap-array-form-control placeholder="Tag"
+                                    [formControl]="form.controls.tags"></ap-array-form-control>
+                            </div>
                         </div>
+
                     </ng-container>
                 </form>
             </ng-template>

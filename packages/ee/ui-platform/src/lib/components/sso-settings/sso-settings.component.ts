@@ -1,10 +1,9 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Platform } from '@activepieces/ee-shared';
 import { fadeInUp400ms } from '@activepieces/ui/common';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { FederatedAuthnProviderEnum } from './federated-authn-provider.enum';
-import { PLATFORM_RESOLVER_KEY } from '../../platform.resolver';
+import { PlatformSettingsBaseComponent } from '../platform-settings-base.component';
 
 @Component({
   selector: 'app-sso-settings',
@@ -12,16 +11,24 @@ import { PLATFORM_RESOLVER_KEY } from '../../platform.resolver';
   changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [fadeInUp400ms],
 })
-export class SsoSettingsComponent {
-  platform$: BehaviorSubject<Platform>;
+export class SsoSettingsComponent
+  extends PlatformSettingsBaseComponent
+  implements OnInit
+{
+  platform$?: BehaviorSubject<Platform>;
   addDomain$?: Observable<string>;
   removeDomain$?: Observable<void>;
   FederatedAuthnProviderEnum = FederatedAuthnProviderEnum;
-  constructor(private route: ActivatedRoute) {
-    const platform: Platform = this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
-    this.platform$ = new BehaviorSubject(platform);
+
+  ngOnInit(): void {
+    if (this.platform) {
+      this.platform$ = new BehaviorSubject(this.platform);
+    }
   }
+
   platformUpdated(platform: Platform) {
-    this.platform$.next(platform);
+    if (this.platform$) {
+      this.platform$.next(platform);
+    }
   }
 }

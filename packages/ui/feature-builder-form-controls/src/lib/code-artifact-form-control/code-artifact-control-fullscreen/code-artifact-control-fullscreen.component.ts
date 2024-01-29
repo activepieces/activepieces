@@ -1,4 +1,10 @@
-import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Inject,
+  OnInit,
+} from '@angular/core';
 import { FormControl, FormGroup, UntypedFormBuilder } from '@angular/forms';
 import {
   MatDialog,
@@ -10,14 +16,18 @@ import { CodeArtifactForm } from '../code-artifact-form-control.component';
 import { SelectedFileInFullscreenCodeEditor } from '../selected-file-in-fullscreeen-code-editor.enum';
 import { AddNpmPackageModalComponent } from './add-npm-package-modal/add-npm-package-modal.component';
 import { SelectedTabInFullscreenCodeEditor } from './selected-tab-in-fullscreen-code-editor.enum';
-
 import {
   BuilderSelectors,
   CodeService,
 } from '@activepieces/ui/feature-builder-store';
-import { TestStepService } from '@activepieces/ui/common';
+import {
+  FlagService,
+  TestStepService,
+  codeGeneratorTooltip,
+  disabledCodeGeneratorTooltip,
+} from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
-import { StepRunResponse } from '@activepieces/shared';
+import { ApFlagId, StepRunResponse } from '@activepieces/shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 type PackageName = string;
@@ -25,6 +35,12 @@ type PackageVersion = string;
 interface PackagesMetada {
   [key: PackageName]: PackageVersion;
 }
+
+export type CodeArtifactControlFullscreenData = {
+  codeFilesForm: FormGroup;
+  readOnly: boolean;
+  openCodeWriterDialog$: EventEmitter<boolean>;
+};
 
 @Component({
   templateUrl: './code-artifact-control-fullscreen.component.html',
@@ -35,7 +51,8 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
   readOnly: boolean;
   selectedFile = SelectedFileInFullscreenCodeEditor.CONTENT;
   executeCodeTest$: Observable<StepRunResponse>;
-
+  codeGeneratorTooltip = codeGeneratorTooltip;
+  disabledCodeGeneratorTooltip = disabledCodeGeneratorTooltip;
   codeEditorOptions = {
     minimap: { enabled: false },
     theme: 'apTheme',
@@ -68,17 +85,20 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
   addPackageDialogClosed$: Observable<
     { [key: PackageName]: PackageVersion } | undefined
   >;
+  generateCodeEnabled$: Observable<boolean>;
+  showGenerateCode$: Observable<boolean>;
   constructor(
     private formBuilder: UntypedFormBuilder,
     private codeService: CodeService,
     @Inject(MAT_DIALOG_DATA)
-    public state: { codeFilesForm: FormGroup; readOnly: boolean },
+    public state: CodeArtifactControlFullscreenData,
     private dialogRef: MatDialogRef<CodeArtifactControlFullscreenComponent>,
     private dialogService: MatDialog,
     private testStepService: TestStepService,
     private store: Store,
     private cd: ChangeDetectorRef,
-    private snackbar: MatSnackBar
+    private snackbar: MatSnackBar,
+    private flagService: FlagService
   ) {
     this.testResultForm = this.formBuilder.group({
       outputResult: new FormControl(),
@@ -86,6 +106,12 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
     });
     this.codeFilesForm = this.state.codeFilesForm;
     this.readOnly = this.state.readOnly;
+    this.generateCodeEnabled$ = this.flagService.isFlagEnabled(
+      ApFlagId.COPILOT_ENABLED
+    );
+    this.showGenerateCode$ = this.flagService.isFlagEnabled(
+      ApFlagId.SHOW_COPILOT
+    );
   }
 
   focusEditor(editor: { focus: () => void }) {

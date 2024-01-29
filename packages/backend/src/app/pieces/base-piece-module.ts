@@ -7,6 +7,7 @@ import { getPiecePackage, pieceMetadataService } from './piece-metadata-service'
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { flagService } from '../flags/flag.service'
 import { PieceMetadataModel, PieceMetadataModelSummary } from './piece-metadata-entity'
+import { flowService } from '../flows/flow/flow.service'
 
 export const pieceModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(basePiecesController, { prefix: '/v1/pieces' })
@@ -83,16 +84,21 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             body: PieceOptionRequest,
         },
     }, async (req) => {
-        const { packageType, pieceType, pieceName, pieceVersion, propertyName, stepName, input } = req.body
+        const { packageType, pieceType, pieceName, pieceVersion, propertyName, stepName, input, flowVersionId, flowId } = req.body
         const { projectId } = req.principal
-
+        const flow = await flowService.getOnePopulatedOrThrow({
+            projectId,
+            id: flowId,
+            versionId: flowVersionId,
+        })
         const { result } = await engineHelper.executeProp({
-            piece: await getPiecePackage({
+            piece: await getPiecePackage(projectId, {
                 packageType,
                 pieceType,
                 pieceName,
                 pieceVersion,
             }),
+            flowVersion: flow.version,
             propertyName,
             stepName,
             input,

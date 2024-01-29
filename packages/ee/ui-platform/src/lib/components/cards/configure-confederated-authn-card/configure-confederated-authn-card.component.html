@@ -1,0 +1,27 @@
+<div apCard class="ap-flex ap-items-center ap-justify-between ap-flex-col md:ap-flex-row ap-gap-4 ">
+    <div class="ap-flex  ap-gap-4 ap-items-center">
+        <svg-icon [svgStyle]="{ width: '24px', height: '24px' }"
+            [src]="federatedAuthnProvider === 'Google' ? 'assets/img/custom/auth/google-icon.svg': 'assets/img/custom/auth/github.svg'">
+        </svg-icon>
+        <div>
+            <div class="ap-typography-body-1  ap-mb-2" i18n><b>{{federatedAuthnProvider}}</b></div>
+            <div class="ap-typography-body-2 ap-text-description " i18n>
+                Allow logins through {{federatedAuthnProvider}}'s single sign-on functionality.
+            </div>
+
+        </div>
+    </div>
+    <div class="ap-flex ap-items-center ap-gap-2">
+        <div class="spinner-border dark-spinner ap-opacity-0 ap-w-[16px] ap-h-[16px]"
+            [class.!ap-opacity-100]="toggleDisabled" role="status">
+        </div>
+        <mat-slide-toggle [disabled]="toggleDisabled" (change)="toggleClicked($event)" [checked]="toggleChecked"
+            [disabled]="!platform?.ssoEnabled || isDemo" color="primary">
+        </mat-slide-toggle>
+    </div>
+
+
+
+</div>
+<ng-container *ngIf="enableFederatedAuthn$ | async"></ng-container>
+<ng-container *ngIf="disableFederatedAuthn$ | async"></ng-container>

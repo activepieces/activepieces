@@ -1,4 +1,4 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { getClickupTaskComments } from './lib/actions/comments/get-task-comments';
 import { createClickupFolderlessList } from './lib/actions/lists/create-folderless-list';
 import { createClickupTask } from './lib/actions/tasks/create-task';
@@ -14,7 +14,9 @@ import { getClickupTask } from './lib/actions/tasks/get-task';
 import { deleteClickupTask } from './lib/actions/tasks/delete-task';
 import { getClickupAccessibleCustomFields } from './lib/actions/custom-fields/get-accessible-custom-fields';
 import { setClickupCustomFieldValue } from './lib/actions/custom-fields/set-custom-fields-value';
-import { filterClickupWorkspaceTasks } from './lib/actions/tasks/get-tasks';
+import { filterClickupWorkspaceTasks } from './lib/actions/tasks/filter-workspace-tasks';
+import { filterClickupWorkspaceTimeEntries } from './lib/actions/tasks/filter-workspace-time-entries';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const clickupAuth = PieceAuth.OAuth2({
   description: '',
@@ -33,18 +35,30 @@ export const clickup = createPiece({
     createClickupTask,
     createClickupTaskFromTemplate,
     createClickupFolderlessList,
+    createClickupTaskComment,
+    createClickupSubtask,
     getClickupList,
     getClickupTask,
-    filterClickupWorkspaceTasks,
     getClickupSpace,
     getClickupSpaces,
     getClickupTaskComments,
-    createClickupTaskComment,
-    createClickupSubtask,
+    filterClickupWorkspaceTasks,
+    filterClickupWorkspaceTimeEntries,
     updateClickupTask,
     deleteClickupTask,
     getClickupAccessibleCustomFields,
-    setClickupCustomFieldValue
+    setClickupCustomFieldValue,
+    createCustomApiCallAction({
+      auth: clickupAuth,
+      baseUrl: () => {
+        return 'https://api.clickup.com/api/v2/'
+      },
+      authMapping: (auth) => {
+        return {
+          'Authorization': `Bearer ${(auth as OAuth2PropertyValue).access_token}`
+        }
+      }
+    })
   ],
   authors: ['abuaboud', 'ShayPunter', 'kanarelo'],
   triggers,

@@ -1,5 +1,13 @@
 import { DataSource } from '@angular/cdk/collections';
-import { Observable, BehaviorSubject, tap, switchMap, map } from 'rxjs';
+import {
+  Observable,
+  BehaviorSubject,
+  tap,
+  switchMap,
+  map,
+  of,
+  delay,
+} from 'rxjs';
 import { combineLatest } from 'rxjs';
 import { CustomDomain } from '@activepieces/ee-shared';
 import { CustomDomainService } from '../../service/custom-domain.service';
@@ -14,7 +22,8 @@ export class CustomDomainDataSource extends DataSource<CustomDomain> {
   isLoading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
   constructor(
     private refresh$: Observable<boolean>,
-    private customDomainService: CustomDomainService
+    private customDomainService: CustomDomainService,
+    private fakeData: boolean
   ) {
     super();
   }
@@ -26,6 +35,12 @@ export class CustomDomainDataSource extends DataSource<CustomDomain> {
    */
 
   connect(): Observable<CustomDomain[]> {
+    if (this.fakeData) {
+      return of(this.data).pipe(
+        delay(100),
+        tap(() => this.isLoading$.next(false))
+      );
+    }
     return combineLatest([this.refresh$]).pipe(
       tap(() => {
         this.isLoading$.next(true);

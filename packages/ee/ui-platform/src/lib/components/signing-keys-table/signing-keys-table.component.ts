@@ -1,43 +1,47 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { SigningKeysDataSource } from './signing-keys-table.datasource';
 import { Observable, Subject, tap } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { CreateSigningKeyDialogComponent } from '../dialogs/create-signing-key-dialog/create-signing-key-dialog.component';
 import { startWith } from 'rxjs';
-import { Platform, SigningKey } from '@activepieces/ee-shared';
+import { SigningKey } from '@activepieces/ee-shared';
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
   featureDisabledTooltip,
 } from '@activepieces/ui/common';
 import { SigningKeysService } from '../../service/signing-keys.service';
-import { ActivatedRoute } from '@angular/router';
-import { PLATFORM_RESOLVER_KEY } from '../../platform.resolver';
+import { PlatformSettingsBaseComponent } from '../platform-settings-base.component';
 
 @Component({
   selector: 'app-signing-keys-table',
   templateUrl: './signing-keys-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SigningKeysTableComponent {
+export class SigningKeysTableComponent
+  extends PlatformSettingsBaseComponent
+  implements OnInit
+{
   displayedColumns = ['id', 'displayName', 'created', 'action'];
-  dataSource: SigningKeysDataSource;
+  dataSource!: SigningKeysDataSource;
   refresh$: Subject<boolean> = new Subject();
   dialogClosed$?: Observable<unknown>;
-  platform: Platform;
   featureDisabledTooltip = featureDisabledTooltip;
+
   constructor(
     private matDialog: MatDialog,
-    private signingKeysService: SigningKeysService,
-    private route: ActivatedRoute
+    private signingKeysService: SigningKeysService
   ) {
-    this.platform = this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
+    super();
+  }
+  ngOnInit(): void {
     this.dataSource = new SigningKeysDataSource(
       this.refresh$.asObservable().pipe(startWith(false)),
       this.signingKeysService,
-      !this.platform.embeddingEnabled
+      this.isDemo || !this.platform?.embeddingEnabled
     );
   }
+
   createKey() {
     const dialog = this.matDialog.open(CreateSigningKeyDialogComponent, {
       disableClose: true,

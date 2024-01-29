@@ -1,10 +1,6 @@
-import { APITableAuth } from '../..';
+import { APITableAuth } from '../../index';
 import {
   PiecePropValueSchema,
-  Property,
-  StaticPropsValue,
-  Store,
-  StoreScope,
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
@@ -13,109 +9,81 @@ import {
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import { APITableCommon } from '../common';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { APITableCommon, makeClient } from '../common';
+import dayjs from 'dayjs';
 
 const polling: Polling<
   PiecePropValueSchema<typeof APITableAuth>,
-  { datasheet: string }
+  { datasheet_id: string }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ store, auth, propsValue: { datasheet } }) => {
-    const LastTime: number =
-      (await store.get('LastTime', StoreScope.FLOW)) || 0;
-    await store.put('LastTime', Date.now(), StoreScope.FLOW);
-
-    const request: HttpRequest = {
-      method: HttpMethod.GET,
-      url: `${auth.apiTableUrl.replace(
-        /\/$/,
-        ''
-      )}/fusion/v1/datasheets/${datasheet}/records`,
-      headers: {
-        Authorization: 'Bearer ' + auth.token,
-      },
-    };
-
-    const res = await httpClient.sendRequest<{
-      success: boolean;
-      code: number;
-      message: string;
-      data: {
-        pageNum: number;
-        records: {
-          recordId: string;
-          fields: any;
-          createdAt: number;
-          updatedAt: number;
-        }[];
-        pageSize: number;
-        total: number;
-      };
-    }>(request);
-
-    res.body.data.records = res.body.data.records.filter(
-      (record) => record.updatedAt >= LastTime
+  items: async ({ auth, propsValue: { datasheet_id }, lastFetchEpochMS }) => {
+    const client = makeClient(
+      auth as PiecePropValueSchema<typeof APITableAuth>
     );
+    const records = await client.listRecords(datasheet_id as string, {
+      filterByFormula: `CREATED_TIME() > ${
+        lastFetchEpochMS === 0
+          ? dayjs().subtract(1, 'day').valueOf()
+          : lastFetchEpochMS
+      }`,
+    });
 
-    return res.body.data.records.map((record) => {
+    return records.data.records.map((record) => {
       return {
-        epochMilliSeconds: record.updatedAt,
+        epochMilliSeconds: record.createdAt,
         data: record,
       };
     });
   },
 };
 
-export const ApiTableNewRecord = createTrigger({
+export const newRecordTrigger = createTrigger({
   auth: APITableAuth,
   name: 'new_record',
   displayName: 'New Record',
   description: 'Triggers when a new record is added to a datasheet.',
   props: {
-    datasheet: APITableCommon.datasheet,
+    space_id: APITableCommon.space_id,
+    datasheet_id: APITableCommon.datasheet_id,
   },
   sampleData: {
+    recordId: 'rec2T5ppW1Mal',
+    createdAt: 1689772153000,
+    updatedAt: 1689772153000,
     fields: {
       Title: 'mhm',
       AmazingField: 'You are really looking at this?',
       'Long text': 'veeeeeeeery long text',
     },
-    recordId: 'rec2T5ppW1Mal',
-    createdAt: 1689772153000,
-    updatedAt: 1689772153000,
   },
   type: TriggerStrategy.POLLING,
   async test(context) {
     return await pollingHelper.test(polling, {
       store: context.store,
       auth: context.auth,
-      propsValue: { datasheet: context.propsValue.datasheet },
+      propsValue: { datasheet_id: context.propsValue.datasheet_id },
     });
   },
   async onEnable(context) {
     await pollingHelper.onEnable(polling, {
       store: context.store,
       auth: context.auth,
-      propsValue: { datasheet: context.propsValue.datasheet },
+      propsValue: { datasheet_id: context.propsValue.datasheet_id },
     });
   },
   async onDisable(context) {
     await pollingHelper.onDisable(polling, {
       store: context.store,
       auth: context.auth,
-      propsValue: { datasheet: context.propsValue.datasheet },
+      propsValue: { datasheet_id: context.propsValue.datasheet_id },
     });
   },
   async run(context) {
     return await pollingHelper.poll(polling, {
       store: context.store,
       auth: context.auth,
-      propsValue: { datasheet: context.propsValue.datasheet },
+      propsValue: { datasheet_id: context.propsValue.datasheet_id },
     });
   },
 });
