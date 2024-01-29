@@ -71,6 +71,7 @@ import {
   TemplateDialogClosingResult,
 } from '@activepieces/ui/feature-templates';
 import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/common';
+import { Socket } from 'ngx-socket-io';
 
 @Component({
   selector: 'app-flow-builder',
@@ -124,7 +125,8 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     private telemetryService: TelemetryService,
     public builderAutocompleteService: BuilderAutocompleteMentionsDropdownService,
     private templatesService: TemplatesService,
-    private flowService:FlowService
+    private flowService:FlowService,
+    private socket: Socket
   ) {
     this.showPoweredByAp$ = this.flagService.getShowPoweredByAp();
     this.dataInsertionPopupHidden$ =
@@ -210,12 +212,14 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     this.flowRendererService.clientMouseY = e.clientY;
   }
   ngOnDestroy(): void {
+    this.socket.disconnect();
     this.snackbar.dismiss();
     this.runDetailsService.currentStepResult$.next(undefined);
     this.builderService.componentToShowInsidePortal$.next(undefined);
   }
 
   ngOnInit(): void {
+    this.socket.connect()
     this.store.dispatch(FlowItemDetailsActions.loadFlowItemsDetails());
   }
 
