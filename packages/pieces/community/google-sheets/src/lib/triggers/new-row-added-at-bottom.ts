@@ -111,32 +111,31 @@ export const newRowAddedTrigger = createTrigger({
       newRowValues,
       oldRowCount
     );
-
-    if (checkChannelExpiration(context.payload.headers)) {
-      // get current channel ID & resource ID
-      const webhook = await context.store.get<WebhookInformation>(
-        `googlesheets_new_row_added`
-      );
-      if (webhook != null && webhook.id != null && webhook.resourceId != null) {
-        // delete current channel
-        await deleteFileNotification(
-          context.auth,
-          webhook.id,
-          webhook.resourceId
-        );
-        const fileNotificationRes = await createFileNotification(
-          context.auth,
-          spreadsheet_id,
-          context.webhookUrl
-        );
-        // store channel response
-        await context.store.put<WebhookInformation>(
-          'googlesheets_new_row_added',
-          fileNotificationRes.data
-        );
-      }
-    }
     return transformedRowValues;
+  },
+  async onRenew(context) {
+    // get current channel ID & resource ID
+    const webhook = await context.store.get<WebhookInformation>(
+      `googlesheets_new_row_added`
+    );
+    if (webhook != null && webhook.id != null && webhook.resourceId != null) {
+      // delete current channel
+      await deleteFileNotification(
+        context.auth,
+        webhook.id,
+        webhook.resourceId
+      );
+      const fileNotificationRes = await createFileNotification(
+        context.auth,
+        context.propsValue.spreadsheet_id,
+        context.webhookUrl
+      );
+      // store channel response
+      await context.store.put<WebhookInformation>(
+        'googlesheets_new_row_added',
+        fileNotificationRes.data
+      );
+    }
   },
   sampleData: {},
 });
@@ -152,17 +151,6 @@ function isChangeContentMessage(headers: Record<string, string>) {
       headers['x-goog-changed']
     )
   );
-}
-
-function checkChannelExpiration(headers: Record<string, string>) {
-  const channelExpiration = headers['x-goog-channel-expiration'] as string;
-  const channelExpirationDate = new Date(channelExpiration);
-  const currentDate = new Date();
-
-  // check if time differnce is less than or equal to 10 minutes
-  const timeDifference =
-    (currentDate.getTime() - channelExpirationDate.getTime()) / (1000 * 60);
-  return timeDifference <= 10;
 }
 
 async function createFileNotification(
