@@ -5,8 +5,16 @@ import { Redis } from 'ioredis'
 import { createRedisClient } from '../../database/redis-connection'
 import { QueueMode, system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
+import { getEdition } from '../../helper/secret-helper'
+import { ApEdition } from '@activepieces/shared'
+
+const editionIsNotCloud = getEdition() !== ApEdition.CLOUD
 
 export const rateLimitModule: FastifyPluginAsyncTypebox = FastifyPlugin(async (app) => {
+    if (editionIsNotCloud) {
+        return
+    }
+
     await app.register(RateLimitPlugin, {
         global: false,
         redis: getRedisClient(),
