@@ -7,6 +7,7 @@ import { QueueMode, system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { getEdition } from '../../helper/secret-helper'
 import { ApEdition } from '@activepieces/shared'
+import { FastifyRequest } from 'fastify'
 
 const editionIsNotCloud = getEdition() !== ApEdition.CLOUD
 
@@ -17,9 +18,18 @@ export const rateLimitModule: FastifyPluginAsyncTypebox = FastifyPlugin(async (a
 
     await app.register(RateLimitPlugin, {
         global: false,
+        keyGenerator: getClientIpProvidedByCloudflare,
         redis: getRedisClient(),
     })
 })
+
+/**
+ * Extracts the client IP provided by Cloudflare.
+ * @see https://developers.cloudflare.com/fundamentals/reference/http-request-headers/#cf-connecting-ip
+ */
+const getClientIpProvidedByCloudflare = (request: FastifyRequest): string | number | Promise<string | number> => {
+    return request.headers['cf-connecting-ip'] as string
+}
 
 const getRedisClient = (): Redis | undefined => {
     const redisIsNotConfigured = system.get<QueueMode>(SystemProp.QUEUE_MODE) !== QueueMode.REDIS
