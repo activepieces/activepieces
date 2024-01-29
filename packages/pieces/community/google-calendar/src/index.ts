@@ -1,12 +1,16 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { createQuickCalendarEvent } from './lib/actions/create-quick-event';
-import { calendarEventChanged } from './lib/triggers/calendar-event';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import {
+  OAuth2PropertyValue,
+  PieceAuth,
+  createPiece,
+} from '@activepieces/pieces-framework';
 import { createEvent } from './lib/actions/create-event';
+import { createQuickCalendarEvent } from './lib/actions/create-quick-event';
+import { deleteEventAction } from './lib/actions/delete-event.action';
 import { getEvents } from './lib/actions/get-events';
 import { updateEventAction } from './lib/actions/update-event.ation';
-import { deleteEventAction } from './lib/actions/delete-event.action';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { googleCalendarCommon } from './lib/common';
+import { calendarEventChanged } from './lib/triggers/calendar-event';
 
 export const googleCalendarAuth = PieceAuth.OAuth2({
   description: '',
@@ -33,15 +37,16 @@ export const googleCalendar = createPiece({
     updateEventAction,
     deleteEventAction,
     createCustomApiCallAction({
+      auth: googleCalendarAuth,
       baseUrl() {
-          return googleCalendarCommon.baseUrl;
+        return googleCalendarCommon.baseUrl;
       },
       authMapping: (auth) => {
         return {
-          'Authorization': `Bearer ${auth}`
-        }
-      }
-    })
+          Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        };
+      },
+    }),
   ],
   triggers: [calendarEventChanged],
 });
