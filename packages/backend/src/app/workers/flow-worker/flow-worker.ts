@@ -27,7 +27,7 @@ import {
 import { Sandbox } from '../sandbox'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { fileService } from '../../file/file.service'
-import { flowRunService } from '../../flows/flow-run/flow-run-service'
+import { flowRunService, HookType } from '../../flows/flow-run/flow-run-service'
 import { OneTimeJobData } from './job-data'
 import { engineHelper } from '../../helper/engine-helper'
 import { captureException, logger } from '../../helper/logger'
@@ -226,7 +226,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             input,
         )
 
-        if (jobData.synchronousHandlerId) {
+        if (jobData.synchronousHandlerId && jobData.hookType === HookType.BEFORE_LOG) {
             await flowResponseWatcher.publish(jobData.runId, jobData.synchronousHandlerId, executionOutput)
         }
 
@@ -242,9 +242,13 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             executionOutput,
         })
 
+        if (jobData.synchronousHandlerId && jobData.hookType === HookType.AFTER_LOG) {
+            await flowResponseWatcher.publish(jobData.runId, jobData.synchronousHandlerId, executionOutput)
+        }
+
         logger.info(
             `[FlowWorker#executeFlow] flowRunId=${jobData.runId
-            } executionOutputStats=${executionOutput.status} sandboxId=${sandbox.boxId
+            } executionOutputStatus=${executionOutput.status} sandboxId=${sandbox.boxId
             } duration=${Date.now() - startTime} ms`,
         )
     }

@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
-import { TestFlowRunRequestBody, FlowRunId, ListFlowRunsRequestQuery, ApId, ALL_PRINICPAL_TYPES, ExecutionType } from '@activepieces/shared'
+import { FlowRunId, ListFlowRunsRequestQuery, ApId, ALL_PRINICPAL_TYPES, ExecutionType } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode, RetryFlowRequestBody } from '@activepieces/shared'
 import { flowRunService } from './flow-run-service'
 
@@ -8,12 +8,6 @@ const DEFAULT_PAGING_LIMIT = 10
 
 type GetOnePathParams = {
     id: FlowRunId
-}
-
-const TestFlowRunRequest = {
-    schema: {
-        body: TestFlowRunRequestBody,
-    },
 }
 
 const ResumeFlowRunRequest = {
@@ -40,17 +34,6 @@ const RetryFlowRequest = {
 }
 
 export const flowRunController: FastifyPluginCallbackTypebox = (app, _options, done): void => {
-    app.post('/test', TestFlowRunRequest, async (req) => {
-        const { projectId } = req.principal
-        const { flowVersionId } = req.body
-
-        return flowRunService.test({
-            projectId,
-            flowVersionId,
-        })
-    },
-    )
-
     // list
     app.get('/', ListRequest, async (request, reply) => {
         const flowRunPage = await flowRunService.list({

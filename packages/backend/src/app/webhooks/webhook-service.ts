@@ -9,7 +9,7 @@ import {
     ProjectId,
     RunEnvironment,
 } from '@activepieces/shared'
-import { flowRunService } from '../flows/flow-run/flow-run-service'
+import { HookType, flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { triggerUtils } from '../helper/trigger-utils'
@@ -105,6 +105,7 @@ export const webhookService = {
                 flowVersionId: flowVersion.id,
                 payload,
                 synchronousHandlerId,
+                hookType: HookType.BEFORE_LOG,
                 projectId,
                 executionType: ExecutionType.BEGIN,
             }),
