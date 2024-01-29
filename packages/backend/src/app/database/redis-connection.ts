@@ -36,7 +36,6 @@ export const createRedisClient = (params?: CreateRedisClientParams): Redis => {
 }
 
 type CreateRedisClientParams = {
-    connectionName?: string
     /**
      * connection timeout in milliseconds
      */
