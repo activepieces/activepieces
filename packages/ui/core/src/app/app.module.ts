@@ -63,7 +63,7 @@ function resolveSocketUrl(url: string): string {
   const isRelative = url.startsWith('/');
   if (isRelative) {
     const urlCon = new URL(url, window.location.href).href;
-    return urlCon.split('/v1')[0];
+    return urlCon.split('/api')[0];
   }
   return url.split('/v1')[0];
 }
