@@ -27,7 +27,7 @@ import {
 import { Sandbox } from '../sandbox'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { fileService } from '../../file/file.service'
-import { flowRunService } from '../../flows/flow-run/flow-run-service'
+import { flowRunService, HookType } from '../../flows/flow-run/flow-run-service'
 import { OneTimeJobData } from './job-data'
 import { engineHelper } from '../../helper/engine-helper'
 import { captureException, logger } from '../../helper/logger'
@@ -125,7 +125,7 @@ const loadInputAndLogFileId = async ({
         id: jobData.runId,
         projectId: jobData.projectId,
     })
-    
+
     switch (jobData.executionType) {
         case ExecutionType.RESUME: {
             if (isNil(flowRun.logsFileId)) {
@@ -137,16 +137,10 @@ const loadInputAndLogFileId = async ({
                 })
             }
 
-            const logFile = await fileService.getOneOrThrow({
-                fileId: flowRun.logsFileId,
+            const executionOutput = await loadPayload({
+                logsFileId: flowRun.logsFileId,
                 projectId: jobData.projectId,
             })
-
-            const serializedExecutionOutput = logFile.data.toString('utf-8')
-            const executionOutput: ExecutionOutput = JSON.parse(
-                serializedExecutionOutput,
-            )
-
 
             return {
                 input: {
@@ -156,24 +150,17 @@ const loadInputAndLogFileId = async ({
                     executionState: executionOutput.executionState,
                     resumePayload: jobData.payload,
                 },
-                logFileId: logFile.id,
+                logFileId: flowRun.logsFileId,
             }
         }
         case ExecutionType.BEGIN:
             if (!isNil(flowRun.logsFileId)) {
-                const logFile = await fileService.getOneOrThrow({
-                    fileId: flowRun.logsFileId,
+                jobData.payload = await loadPayload({
+                    logsFileId: flowRun.logsFileId,
                     projectId: jobData.projectId,
                 })
-
-                const serializedExecutionOutput = logFile.data.toString('utf-8')
-                const executionOutput: ExecutionOutput = JSON.parse(
-                    serializedExecutionOutput,
-                )
-
-                jobData.payload = executionOutput.executionState.steps.trigger.output
             }
-            
+
             return {
                 input: {
                     triggerPayload: jobData.payload,
@@ -182,6 +169,19 @@ const loadInputAndLogFileId = async ({
                 },
             }
     }
+}
+
+async function loadPayload({ logsFileId, projectId }: { logsFileId: string, projectId: string }): Promise<ExecutionOutput> {
+    const logFile = await fileService.getOneOrThrow({
+        fileId: logsFileId,
+        projectId,
+    })
+
+    const serializedExecutionOutput = logFile.data.toString('utf-8')
+    const executionOutput: ExecutionOutput = JSON.parse(
+        serializedExecutionOutput,
+    )
+    return executionOutput
 }
 
 async function executeFlow(jobData: OneTimeJobData): Promise<void> {
@@ -226,7 +226,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             input,
         )
 
-        if (jobData.synchronousHandlerId) {
+        if (jobData.synchronousHandlerId && jobData.hookType === HookType.BEFORE_LOG) {
             await flowResponseWatcher.publish(jobData.runId, jobData.synchronousHandlerId, executionOutput)
         }
 
@@ -242,9 +242,13 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             executionOutput,
         })
 
+        if (jobData.synchronousHandlerId && jobData.hookType === HookType.AFTER_LOG) {
+            await flowResponseWatcher.publish(jobData.runId, jobData.synchronousHandlerId, executionOutput)
+        }
+
         logger.info(
             `[FlowWorker#executeFlow] flowRunId=${jobData.runId
-            } executionOutputStats=${executionOutput.status} sandboxId=${sandbox.boxId
+            } executionOutputStatus=${executionOutput.status} sandboxId=${sandbox.boxId
             } duration=${Date.now() - startTime} ms`,
         )
     }

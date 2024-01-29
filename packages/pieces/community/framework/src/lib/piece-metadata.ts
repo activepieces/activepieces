@@ -1,5 +1,5 @@
 import { PiecePropertyMap } from "./property";
-import { TriggerStrategy, WebhookHandshakeConfiguration } from "./trigger/trigger";
+import { WebhookRenewConfiguration, TriggerStrategy, WebhookHandshakeConfiguration } from "./trigger/trigger";
 import { ErrorHandlingOptionsParam } from "./action/action";
 import { PieceAuthProperty } from "./property/authentication";
 import { Type } from "@sinclair/typebox";
@@ -59,12 +59,14 @@ export const TriggerBase = Type.Composite([
     type: Type.Enum(TriggerStrategy),
     sampleData: Type.Unknown(),
     handshakeConfiguration: Type.Optional(WebhookHandshakeConfiguration),
+    renewConfiguration: Type.Optional(WebhookRenewConfiguration),
   })
 ])
 export type TriggerBase = Omit<ActionBase, "requireAuth"> & {
   type: TriggerStrategy;
   sampleData: unknown,
   handshakeConfiguration?: WebhookHandshakeConfiguration;
+  renewConfiguration?: WebhookRenewConfiguration;
 };
 
 export const PieceMetadata = Type.Composite([

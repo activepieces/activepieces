@@ -5,7 +5,7 @@ import { exec } from 'node:child_process'
 import { ExecuteSandboxResult, AbstractSandbox, SandboxCtorParams } from './abstract-sandbox'
 import { EngineResponseStatus, assertNotNullOrUndefined } from '@activepieces/shared'
 import { logger } from '../../helper/logger'
-import { system } from '../../helper/system/system'
+import { PiecesSource, system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 
 const getIsolateExecutableName = (): string => {
@@ -36,25 +36,18 @@ export class IsolateSandbox extends AbstractSandbox {
 
     public override async runOperation(operation: string): Promise<ExecuteSandboxResult> {
         const metaFile = this.getSandboxFilePath('meta.txt')
-        const etcDir = path.resolve('./packages/backend/src/assets/etc/')
 
         let timeInSeconds
         let output
         let verdict
 
         try {
-            const basePath = path.resolve(__dirname.split('/dist')[0])
             const pieceSource = system.getOrThrow(SystemProp.PIECES_SOURCE)
             const codeSandboxType = system.get(SystemProp.CODE_SANDBOX_TYPE)
-            const cachePath = this._cachePath
-            assertNotNullOrUndefined(cachePath, 'cachePath')
+            const dirsToBindArgs = this.getDirsToBindArgs()
+
             const fullCommand = [
-                '--dir=/usr/bin/',
-                `--dir=/etc/=${etcDir}`,
-                `--dir=${path.join(basePath, '.pnpm')}=/${path.join(basePath, '.pnpm')}:maybe`,
-                `--dir=${path.join(basePath, 'dist')}=/${path.join(basePath, 'dist')}:maybe`,
-                `--dir=${path.join(basePath, 'node_modules')}=/${path.join(basePath, 'node_modules')}:maybe`,
-                `--dir=${IsolateSandbox.cacheBindPath}=${path.resolve(cachePath)}`,
+                ...dirsToBindArgs,
                 '--share-net',
                 `--box-id=${this.boxId}`,
                 '--processes',
@@ -127,5 +120,34 @@ export class IsolateSandbox extends AbstractSandbox {
                 resolve(stdout)
             })
         })
+    }
+
+    /**
+     * Creates the arguments for the isolate command to bind the required directories
+     */
+    private getDirsToBindArgs(): string[] {
+        const etcDir = path.resolve('./packages/backend/src/assets/etc/')
+        const cachePath = this._cachePath
+        assertNotNullOrUndefined(cachePath, 'cachePath')
+
+        const dirsToBind = [
+            '--dir=/usr/bin/',
+            `--dir=/etc/=${etcDir}`,
+            `--dir=${IsolateSandbox.cacheBindPath}=${path.resolve(cachePath)}`,
+        ]
+
+        const piecesSource = system.getOrThrow<PiecesSource>(SystemProp.PIECES_SOURCE)
+
+        if (piecesSource === PiecesSource.FILE) {
+            const basePath = path.resolve(__dirname.split('/dist')[0])
+
+            dirsToBind.push(
+                `--dir=${path.join(basePath, '.pnpm')}=/${path.join(basePath, '.pnpm')}:maybe`,
+                `--dir=${path.join(basePath, 'dist')}=/${path.join(basePath, 'dist')}:maybe`,
+                `--dir=${path.join(basePath, 'node_modules')}=/${path.join(basePath, 'node_modules')}:maybe`,
+            )
+        }
+
+        return dirsToBind
     }
 }

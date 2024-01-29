@@ -3,6 +3,7 @@ import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
 import qs from 'qs'
 import fastifyMultipart from '@fastify/multipart'
+import fastifySocketIO from 'fastify-socket.io'
 import { openapiModule } from './helper/openapi/openapi.module'
 import { flowModule } from './flows/flow.module'
 import { fileModule } from './file/file.module'
@@ -67,7 +68,7 @@ import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local
 import { billingModule } from './ee/billing/billing/billing.module'
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
 import fastifyFavicon from 'fastify-favicon'
-import { ProjectMember, ProjectWithUsageAndPlanResponse } from '@activepieces/ee-shared'
+import { ProjectMember, ProjectWithUsageAndPlanResponse, GitRepoWithoutSenestiveData } from '@activepieces/ee-shared'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
 import { domainHelper } from './helper/domain-helper'
 import { platformDomainHelper } from './ee/helper/platform-domain-helper'
@@ -78,6 +79,9 @@ import { securityHandlerChain } from './core/security/security-handler-chain'
 import { communityFlowTemplateModule } from './flow-templates/community-flow-template.module'
 import { copilotModule } from './copilot/copilot.module'
 import { PieceMetadata } from '@activepieces/pieces-framework'
+import { Socket } from 'socket.io'
+import { accessTokenManager } from './authentication/lib/access-token-manager'
+import { websocketService } from './websockets/websockets.service'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -112,6 +116,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
                     'flow': Flow,
                     'app-connection': AppConnectionWithoutSensitiveData,
                     'piece': PieceMetadata,
+                    'git-repo': GitRepoWithoutSenestiveData,
                 },
             },
             info: {
@@ -152,6 +157,25 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     })
 
     await app.register(formBody, { parser: str => qs.parse(str) })
+
+    await app.register(fastifySocketIO, {
+        cors: {
+            origin: '*',
+        },
+    })
+    
+    app.io.use((socket: Socket, next: (err?: Error) => void) => {
+        accessTokenManager.extractPrincipal(socket.handshake.auth.token).then(() => {
+            next()
+        }).catch(() => {
+            next(new Error('Authentication error'))
+        })
+    })
+
+    app.io.on('connection', (socket: Socket) => {
+        websocketService.init(socket)
+    })
+
 
     app.addHook('onRequest', async (request, reply) => {
         const route = app.hasRoute({

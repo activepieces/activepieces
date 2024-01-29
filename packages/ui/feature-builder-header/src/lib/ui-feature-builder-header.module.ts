@@ -11,6 +11,7 @@ import { EeComponentsModule } from '@activepieces/ee-components';
 import { EeBillingUiModule } from '@activepieces/ee-billing-ui';
 import { VersionHistroryButtonComponent } from './components/version-history-button/version-history-button.component';
 import { RunsButtonComponent } from './components/runs-button/runs-button.component';
+import { UiFeatureGitSyncModule } from '@activepieces/ui-feature-git-sync';
 
 const exportedDeclarations = [
   FlowBuilderHeaderComponent,
@@ -27,6 +28,7 @@ const exportedDeclarations = [
     UiFeatureBuilderStoreModule,
     UiFeatureBuilderFormControlsModule,
     EeBillingUiModule,
+    UiFeatureGitSyncModule,
   ],
   declarations: [...exportedDeclarations, RunsButtonComponent],
   exports: [...exportedDeclarations],

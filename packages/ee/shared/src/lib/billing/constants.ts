@@ -73,7 +73,7 @@ export const DEFAULT_PLATFORM_PLAN = {
   connections: 100,
   nickname: 'platform',
   minimumPollingInterval: 5,
-  teamMembers: 10,
+  teamMembers: 100,
 }
 
 export const pricingPlans: FlowPricingPlan[] = [
