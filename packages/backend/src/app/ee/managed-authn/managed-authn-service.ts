@@ -2,12 +2,13 @@ import { randomBytes as randomBytesCallback } from 'node:crypto'
 import { promisify } from 'node:util'
 import { AuthenticationResponse, PlatformRole, PrincipalType, Project, ProjectId, ProjectType, User } from '@activepieces/shared'
 import { userService } from '../../user/user-service'
-import { PlatformId, ProjectMemberRole, ProjectMemberStatus } from '@activepieces/ee-shared'
+import { DEFAULT_PLATFORM_PLAN, PlatformId, ProjectMemberRole, ProjectMemberStatus } from '@activepieces/ee-shared'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { projectMemberService } from '../project-members/project-member.service'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { externalTokenExtractor } from './lib/external-token-extractor'
+import { plansService } from '../billing/project-plan/project-plan.service'
 
 export const managedAuthnService = {
     async externalToken({ externalAccessToken }: AuthenticateParams): Promise<AuthenticationResponse> {
@@ -90,13 +91,20 @@ const getOrCreateProject = async ({ platformId, externalProjectId }: GetOrCreate
 
     const platform = await platformService.getOneOrThrow(platformId)
 
-    return projectService.create({
+    const project = await projectService.create({
         displayName: externalProjectId,
         ownerId: platform.ownerId,
         platformId,
         type: ProjectType.PLATFORM_MANAGED,
         externalId: externalProjectId,
     })
+    
+    await plansService.update({
+        projectId: project.id,
+        subscription: null,
+        planLimits: DEFAULT_PLATFORM_PLAN,
+    })
+    return project
 }
 
 const randomBytes = promisify(randomBytesCallback)

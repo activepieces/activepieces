@@ -7,12 +7,14 @@ import { LATEST_JOB_DATA_SCHEMA_VERSION, RepeatableJobType } from '../../workers
 import { JobType } from '../../workers/flow-worker/queues/queue'
 import { notifications } from '../../helper/notifications'
 import { flowRunHooks } from './flow-run-hooks'
+import { HookType } from './flow-run-service'
 
 type StartParams = {
     flowRun: FlowRun
     executionType: ExecutionType
     payload: unknown
     synchronousHandlerId?: string
+    hookType?: HookType
 }
 
 type PauseParams = {
@@ -41,7 +43,7 @@ export const flowRunSideEffects = {
             flowRun,
         })
     },
-    async start({ flowRun, executionType, payload, synchronousHandlerId }: StartParams): Promise<void> {
+    async start({ flowRun, executionType, payload, synchronousHandlerId, hookType }: StartParams): Promise<void> {
         logger.info(`[FlowRunSideEffects#start] flowRunId=${flowRun.id} executionType=${executionType}`)
 
         await flowQueue.add({
@@ -56,6 +58,7 @@ export const flowRunSideEffects = {
                 flowVersionId: flowRun.flowVersionId,
                 payload,
                 executionType,
+                hookType,
             },
         })
     },

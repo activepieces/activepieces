@@ -23,15 +23,14 @@ import { EeBillingUiModule } from '@activepieces/ee-billing-ui';
 import { UiFeatureTemplatesModule } from '@activepieces/ui/feature-templates';
 import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
 import { SyncProjectComponent } from './pages/sync-project/sync-project.component';
-import { ConfigureRepoDialogComponent } from './components/dialogs/configure-repo-dialog/configure-repo-dialog.component';
-import { PushDialogComponent } from './components/dialogs/push-dialog/push-dialog.component';
-import { PullDialogComponent } from './components/dialogs/pull-dialog/pull-dialog.component';
 import { ProjectSwitcherComponent } from './components/project-switcher/project-switcher.component';
 import { TriggerTooltipPipe } from './pipes/trigger-tooltip.pipe';
 import { TriggerIconPipe } from './pipes/trigger-icon.pipe';
 import { FlowStatusPipe } from './pipes/flow-status-tooltip.pipe';
 import { EeComponentsModule } from '@activepieces/ee-components';
 import { RenameFlowDialogComponent } from './components/dialogs/rename-flow-dialog/rename-flow-dialog.component';
+import { UiFeatureGitSyncModule } from '@activepieces/ui-feature-git-sync';
+
 @NgModule({
   imports: [
     CommonModule,
@@ -46,6 +45,7 @@ import { RenameFlowDialogComponent } from './components/dialogs/rename-flow-dial
     TriggerIconPipe,
     FlowStatusPipe,
     EeComponentsModule,
+    UiFeatureGitSyncModule,
   ],
   declarations: [
     DashboardContainerComponent,
@@ -60,9 +60,6 @@ import { RenameFlowDialogComponent } from './components/dialogs/rename-flow-dial
     MoveFlowToFolderDialogComponent,
     RenameFolderDialogComponent,
     SyncProjectComponent,
-    ConfigureRepoDialogComponent,
-    PushDialogComponent,
-    PullDialogComponent,
     ProjectSwitcherComponent,
     RenameFlowDialogComponent,
   ],

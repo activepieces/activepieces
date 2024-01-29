@@ -1,4 +1,5 @@
 import { ExecutionType, FlowId, FlowRetryPayload, FlowRunId, FlowVersionId, ProjectId, RunEnvironment, TriggerType } from '@activepieces/shared'
+import { HookType } from '../../flows/flow-run/flow-run-service'
 
 export const LATEST_JOB_DATA_SCHEMA_VERSION = 4
 
@@ -48,6 +49,7 @@ export type OneTimeJobData = BaseJobData & {
     payload: unknown
     executionType: ExecutionType
     retryPayload?: FlowRetryPayload
+    hookType?: HookType
 }
 
 export type JobData = ScheduledJobData | OneTimeJobData
