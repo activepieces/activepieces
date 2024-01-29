@@ -59,10 +59,11 @@ export function playerFactory() {
   return player;
 }
 
-function resolveSocketUrl(relativeUrl: string): string {
-  const url = new URL(relativeUrl, window.location.href).href;
-  if (url.startsWith('/api')) {
-    return url.split('/api')[0];
+function resolveSocketUrl(url: string): string {
+  const isRelative = url.startsWith('/');
+  if (isRelative) {
+    const urlCon = new URL(url, window.location.href).href;
+    return urlCon.split('/v1')[0];
   }
   return url.split('/v1')[0];
 }
@@ -70,7 +71,6 @@ function resolveSocketUrl(relativeUrl: string): string {
 const socketConfig: SocketIoConfig = {
   url: resolveSocketUrl(environment.apiUrl),
   options: {
-    path: environment.production ? '/api/socket.io' : '/socket.io',
     auth: {
       token: tokenGetter(),
     },
