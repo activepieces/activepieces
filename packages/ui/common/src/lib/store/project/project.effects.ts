@@ -11,6 +11,7 @@ import { AuthenticationService } from '../../service/authentication.service';
 import { ProjectService } from '../../service/project.service';
 import { PlatformProjectService } from '../../service/platform-project.service';
 import { StatusCodes } from 'http-status-codes';
+import { PlatformService } from '../../service';
 
 @Injectable()
 export class ProjectEffects {
@@ -28,13 +29,31 @@ export class ProjectEffects {
               this.authenticationService.logout();
             }
           }),
-          map((projects) => {
-            return ProjectActions.setProjects({
-              projects,
-              selectedIndex: projects.findIndex(
-                (p) => p.id === currentProjectId
-              ),
-            });
+          switchMap((projects) => {
+            const platformId =
+              projects.length > 0 ? projects[0].platformId : undefined;
+            if (platformId) {
+              return this.platformService.getPlatform(platformId).pipe(
+                map((platform) => {
+                  return ProjectActions.setProjects({
+                    projects,
+                    selectedIndex: projects.findIndex(
+                      (p) => p.id === currentProjectId
+                    ),
+                    platform,
+                  });
+                })
+              );
+            }
+            return of(
+              ProjectActions.setProjects({
+                projects,
+                selectedIndex: projects.findIndex(
+                  (p) => p.id === currentProjectId
+                ),
+                platform: undefined,
+              })
+            );
           }),
           catchError((error) => {
             const status = error?.status;
@@ -86,6 +105,7 @@ export class ProjectEffects {
     private projectService: ProjectService,
     private authenticationService: AuthenticationService,
     private platformProjectService: PlatformProjectService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private platformService: PlatformService
   ) {}
 }

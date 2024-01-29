@@ -34,12 +34,7 @@ export class SyncProjectService {
     return this.http.delete<void>(`${this.prefix}/${repoId}`);
   }
 
-  push(
-    repoId: string,
-    request: PushGitRepoRequest = {
-      commitMessage: new Date().toISOString(),
-    }
-  ) {
+  push(repoId: string, request: PushGitRepoRequest) {
     return this.http.post<void>(`${this.prefix}/${repoId}/push`, request);
   }
   pull(repoId: string) {

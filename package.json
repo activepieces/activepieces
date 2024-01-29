@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
   "version": "0.18.2",
-  "rcVersion": "0.19.0-rc.0",
+  "rcVersion": "0.19.0-rc.3",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve ui-core",
@@ -93,6 +93,7 @@
     "fastify-favicon": "4.3.0",
     "fastify-plugin": "4.5.1",
     "fastify-raw-body": "4.2.0",
+    "fastify-socket.io": "5.0.0",
     "feedparser": "2.2.10",
     "firebase-scrypt": "2.2.0",
     "font-awesome": "4.7.0",
@@ -131,6 +132,7 @@
     "ngx-monaco-editor-v2": "16.0.1",
     "ngx-quill": "20.0.1",
     "ngx-skeleton-loader": "6.0.0",
+    "ngx-socket-io": "4.6.1",
     "ngx-timeago": "3.0.0",
     "nodemailer": "6.9.4",
     "object-sizeof": "2.6.3",
@@ -155,6 +157,7 @@
     "showdown": "2.1.0",
     "simple-git": "3.21.0",
     "soap": "1.0.0",
+    "socket.io": "4.7.2",
     "sqlite3": "5.1.6",
     "ssh2-sftp-client": "9.1.0",
     "string-replace-async": "3.0.2",
