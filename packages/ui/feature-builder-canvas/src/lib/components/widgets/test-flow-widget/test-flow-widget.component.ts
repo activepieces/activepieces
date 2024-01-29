@@ -17,7 +17,7 @@ import {
   BuilderSelectors,
   TestRunBarComponent,
 } from '@activepieces/ui/feature-builder-store';
-import { switchMap } from 'rxjs/operators';
+import { switchMap, take } from 'rxjs/operators';
 import { canvasActions } from '@activepieces/ui/feature-builder-store';
 import { Socket } from 'ngx-socket-io';
 
@@ -88,6 +88,7 @@ export class TestFlowWidgetComponent implements OnInit {
     });
 
     this.executeTest$ = this.socket.fromEvent<FlowRun>('flowRunStarted').pipe(
+      take(1),
       tap((flowRun) => {
         this.store.dispatch(
           canvasActions.setRun({
