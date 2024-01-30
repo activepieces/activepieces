@@ -1,0 +1,43 @@
+{
+  "name": "pieces-puppeteer",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/puppeteer/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/puppeteer",
+        "tsConfig": "packages/pieces/community/puppeteer/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/puppeteer/package.json",
+        "main": "packages/pieces/community/puppeteer/src/index.ts",
+        "assets": [
+          "packages/pieces/community/puppeteer/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-puppeteer {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/community/puppeteer/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
