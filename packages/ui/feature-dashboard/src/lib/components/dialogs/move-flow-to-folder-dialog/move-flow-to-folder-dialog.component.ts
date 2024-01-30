@@ -8,14 +8,17 @@ import {
 import { Store } from '@ngrx/store';
 import { Observable, map, tap } from 'rxjs';
 import { FlowOperationType, FolderDto } from '@activepieces/shared';
-import { FoldersSelectors } from '../../../store/folders/folders.selector';
 import { FlowService } from '@activepieces/ui/common';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { FolderActions } from '../../../store/folders/folders.actions';
+import {
+  FolderActions,
+  FoldersSelectors,
+} from '@activepieces/ui/feature-folders-store';
 
 export interface MoveFlowToFolderDialogData {
   flowId: string;
   folderId?: string | null;
+  flowDisplayName: string;
 }
 
 @Component({

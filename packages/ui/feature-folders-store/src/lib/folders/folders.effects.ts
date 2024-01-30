@@ -4,7 +4,7 @@ import { Actions, concatLatestFrom, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 import { tap } from 'rxjs';
 import { FolderActions } from './folders.actions';
-import { FoldersSelectors } from './folders.selector';
+import { FoldersSelectors } from './folders.selectors';
 import { GenericSnackbarTemplateComponent } from '@activepieces/ui/common';
 
 @Injectable()

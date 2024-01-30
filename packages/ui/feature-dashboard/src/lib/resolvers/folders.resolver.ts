@@ -5,7 +5,7 @@ import { FolderDto } from '@activepieces/shared';
 import { FoldersService } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 
-import { FolderActions } from '../store/folders/folders.actions';
+import { FolderActions } from '@activepieces/ui/feature-folders-store';
 import { FlowService } from '@activepieces/ui/common';
 export const ARE_THERE_FLOWS_FLAG = 'areThererFlows';
 

@@ -1,0 +1,37 @@
+{
+  "name": "feature-folders-store",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/ui/feature-folders-store/src",
+  "prefix": "lib",
+  "tags": [],
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/angular:ng-packagr-lite",
+      "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+      "options": {
+        "project": "packages/ui/feature-folders-store/ng-package.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "packages/ui/feature-folders-store/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "packages/ui/feature-folders-store/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": [
+          "packages/ui/feature-folders-store/**/*.ts",
+          "packages/ui/feature-folders-store/**/*.html",
+          "packages/ui/feature-folders-store/package.json"
+        ]
+      }
+    }
+  }
+}
