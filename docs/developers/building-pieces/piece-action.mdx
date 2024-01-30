@@ -4,7 +4,7 @@ icon: 'circle-4'
 description: ''
 ---
 
-Now that the authentication for the "ClickUp" piece has been established, let's proceed to create the first action. This action will involve creating a new task tag for a specific space in ClickUp.
+Now that the authentication for the `ClickUp` piece has been established, let's proceed to create the first action. This action will involve creating a new task tag for a specific space in ClickUp.
 
 ### Action Defination
 
@@ -30,7 +30,7 @@ npm run cli actions create
 ? Enter the action description : creates a new tasks tag for a space.
 ```
 
-This will create new action file at `packages/pieces/community/clickup/src/lib/actions`,the `create-task-tag.ts` file should contain following code.
+This will create new typescript file at `packages/pieces/community/clickup/src/lib/actions`,the `create-task-tag.ts` file should contain following code.
 
 ```typescript
 import { createAction, Property } from '@activepieces/pieces-framework';
@@ -79,7 +79,7 @@ export const createTaskTag = createAction({
 
 ### Action Props
 
-To define the required properties for the createTaskTag action, we can consult the ClickUp API documentation, specifically focusing on the [endpoint](https://clickup.com/api/clickupreference/operation/CreateSpaceTag/) responsible for creating a task tag.
+To define the required properties for the `createTaskTag` action, we can consult the ClickUp API documentation, specifically focusing on the [endpoint](https://clickup.com/api/clickupreference/operation/CreateSpaceTag/) responsible for creating a task tag.
 
 As per the documentation, the endpoint for creating a task tag in ClickUp requires two mandatory properties:
 
@@ -140,9 +140,9 @@ export const createTaskTag = createAction({
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `https://api.clickup.com/api/v2/space/${space_id}/tag`,
-      headers:{
-        Authorization : context.auth as string,
-      }
+      headers: {
+        Authorization: context.auth as string,
+      },
       body: {
         tag: {
           name: tag_name,
@@ -155,7 +155,7 @@ export const createTaskTag = createAction({
     const res = await httpClient.sendRequest(request);
 
     // This data, obtained from the API response, will be displayed in the UI upon successful execution of the action.
-    return res.data;
+    return res.body;
   },
 });
 ```

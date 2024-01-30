@@ -1,12 +1,18 @@
 ---
 title: 'Fork Repository'
-icon: "circle-1"
+icon: 'circle-1'
 ---
 
-The first step to modify a repository is to fork it. Forking a repository creates a copy of the repository on your account.
+## Introduction
+
+Welcome to this tutorial where we will walk through the process of creating a ClickUp piece in Activepiece. By following this guide, you'll learn the fundamental steps to build a seamless integration with ClickUp using the Activepiece framework.
+
+Follow along as we guide you through each step, providing insights into creating a robust ClickUp piece. By the end, you'll not only have a functional integration but also a foundational understanding of Activepiece development. Let's dive in and empower your applications with ClickUp integration!
+
+Let's Get Started!!
 
 <Tip>
-**Friendly Tip #1:** For experimentation, fork or clone the public repository.
+  **Friendly Tip #1:** For experimentation, fork or clone the public repository.
 </Tip>
 
 ## Create a Public Fork (Public Pieces)
@@ -16,7 +22,9 @@ Click the `Fork` button in the top right corner of the repository page (https://
 ## Create a Private Fork (Private Pieces)
 
 <Tip>
-Private piece installation is available under the paid edition. You can still develop pieces, contribute them back, **OR** publish them to the public npm registry and use it in your own instance / project.
+  Private piece installation is available under the paid edition. You can still
+  develop pieces, contribute them back, **OR** publish them to the public npm
+  registry and use it in your own instance / project.
 </Tip>
 
 By following these steps, you can create a private fork on GitHub, GitLab or another platform and configure the "activepieces" repository as the upstream source, allowing you to incorporate changes from the "activepieces" repository.
@@ -27,12 +35,12 @@ Begin by creating a bare clone of the repository. Remember that this is a tempor
 
 ```bash
 git clone --bare git@github.com:activepieces/activepieces.git
- ```
+```
 
 2. **Create a Private Git Repository**
 
 Generate a new private repository on GitHub or your chosen platform. When initializing the new repository, do not include a README, license, or gitignore files. This precaution is essential to avoid merge conflicts when synchronizing your fork with the original repository.
-   
+
 3. **Mirror-Push to the Private Repository:**
 
 Mirror-push the bare clone you created earlier to your newly created "activepieces" repository. Make sure to replace `<your_username>` in the URL below with your actual GitHub username.
@@ -43,7 +51,7 @@ git push --mirror git@github.com:<your_username>/activepieces.git
 ```
 
 4. **Remove the Temporary Local Repository:**
-  
+
 ```bash
 cd ..
 rm -rf activepieces.git
