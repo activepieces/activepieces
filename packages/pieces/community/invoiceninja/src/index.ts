@@ -9,6 +9,7 @@ import { getClient } from './lib/actions/get-client';
 import { getInvoices } from './lib/actions/get-invoices';
 import { getReport } from './lib/actions/get-report';
 import { createInvoice } from './lib/actions/create-invoice';
+import { createClient } from './lib/actions/create-client';
 
 export const invoiceninjaAuth = PieceAuth.CustomAuth({
   props: {
@@ -34,6 +35,6 @@ export const invoiceninja = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/invoiceninja.png',
   authors: ['buttonsbond'],
   auth: invoiceninjaAuth,
-  actions: [createTask, existsTask, getClient, getInvoices, getReport, createInvoice],
+  actions: [createTask, existsTask, getClient, getInvoices, getReport, createInvoice, createClient],
   triggers: [],
 });
