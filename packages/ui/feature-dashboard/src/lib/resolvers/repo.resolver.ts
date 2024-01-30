@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { SyncProjectService } from '../services/sync-project.service';
 import { map, Observable, of, switchMap } from 'rxjs';
 import { GitRepo } from '@activepieces/ee-shared';
 import {
@@ -8,6 +7,7 @@ import {
   PlatformService,
 } from '@activepieces/ui/common';
 import { ApEdition } from '@activepieces/shared';
+import { SyncProjectService } from '@activepieces/ui-feature-git-sync';
 
 export type RepoResolverData = {
   repo?: GitRepo;

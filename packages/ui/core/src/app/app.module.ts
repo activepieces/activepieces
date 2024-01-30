@@ -31,6 +31,7 @@ import { apMonacoTheme } from './monaco-themes/ap-monaco-theme';
 import { cobalt2 } from './monaco-themes/cobalt-2-theme';
 import { EeComponentsModule } from '@activepieces/ee-components';
 import { UiFeatureAuthenticationModule } from '@activepieces/ui/feature-authentication';
+import { SocketIoConfig, SocketIoModule } from 'ngx-socket-io';
 
 const monacoConfig: NgxMonacoEditorConfig = {
   baseUrl: '/assets', // configure base path for monaco editor. Starting with version 8.0.0 it defaults to './assets'. Previous releases default to '/assets'
@@ -57,6 +58,24 @@ export function tokenGetter() {
 export function playerFactory() {
   return player;
 }
+
+function resolveSocketUrl(url: string): string {
+  const isRelative = url.startsWith('/');
+  if (isRelative) {
+    const urlCon = new URL(url, window.location.href).href;
+    return urlCon.split('/api')[0];
+  }
+  return url.split('/v1')[0];
+}
+
+const socketConfig: SocketIoConfig = {
+  url: resolveSocketUrl(environment.apiUrl),
+  options: {
+    auth: {
+      token: tokenGetter(),
+    },
+  },
+};
 
 @NgModule({
   declarations: [
@@ -96,6 +115,7 @@ export function playerFactory() {
     LottieCacheModule.forRoot(),
     EeComponentsModule,
     MonacoEditorModule.forRoot(monacoConfig),
+    SocketIoModule.forRoot(socketConfig),
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   exports: [],
