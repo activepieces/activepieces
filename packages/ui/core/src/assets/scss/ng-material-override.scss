@@ -709,3 +709,8 @@ app-platform-settings {
 .mat-horizontal-stepper-header-container{
   pointer-events: none;
 }
+
+
+.smaller-input { 
+  @include mat.all-component-densities(-2);
+}

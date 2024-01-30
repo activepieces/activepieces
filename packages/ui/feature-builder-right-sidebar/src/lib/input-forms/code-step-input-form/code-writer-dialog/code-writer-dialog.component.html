@@ -78,20 +78,26 @@
 <ng-template #promptFormTemplate let-reprompt="reprompt">
     <form class="ap-flex ap-flex-col ap-gap-2 " [formGroup]="promptForm" (submit)="prompt()">
         <div class="ap-flex ap-items-center ap-gap-2">
-            <mat-form-field class="ap-w-full" appearance="outline" subscriptSizing="dynamic">
-                <mat-label i18n> {{(receivedCode$ | async)?'Request Adjustment':'Prompt'}} </mat-label>
-                <textarea *ngIf="(receivedCode$ | async) === undefined || (receivedCode$ | async) === ''"
-                    class="!ap-resize-none" cdkFocusInitial
-                    (keydown.enter)="$event.preventDefault();$event.stopPropagation();"
-                    (keyup.enter)=" prompt(reprompt)" [formControl]="promptForm.controls.prompt" matInput type="text"
-                    rows="4"></textarea>
-                <input cdkFocusInitial (keydown.enter)="$event.preventDefault();$event.stopPropagation();"
-                    (keyup.enter)=" prompt(reprompt)" [formControl]="promptForm.controls.prompt" matInput type="text"
-                    *ngIf="receivedCode$ | async">
-                <mat-error *ngIf="promptForm.controls.prompt.invalid" i18n>Prompt is required </mat-error>
-            </mat-form-field>
-            <div *ngIf="receivedCode$ | async">
-                <ap-button btnColor="primary" btnStyle="stroked" btnSize="small"
+            <div class="smaller-input ap-flex-grow">
+                <mat-form-field class="ap-w-full" appearance="outline" subscriptSizing="dynamic">
+                    <mat-label i18n> {{(receivedCode$ | async)?'Request Adjustment':'Prompt'}} </mat-label>
+                    <textarea *ngIf="(receivedCode$ | async) === undefined || (receivedCode$ | async) === ''"
+                        class="!ap-resize-none" cdkFocusInitial
+                        (keydown.enter)="$event.preventDefault();$event.stopPropagation();"
+                        (keyup.enter)=" prompt(reprompt)" [formControl]="promptForm.controls.prompt" matInput
+                        type="text" rows="4"></textarea>
+
+                    <input *ngIf="receivedCode$ |async" cdkFocusInitial
+                        (keydown.enter)="$event.preventDefault();$event.stopPropagation();"
+                        (keyup.enter)=" prompt(reprompt)" [formControl]="promptForm.controls.prompt" matInput
+                        type="text">
+
+
+                    <mat-error *ngIf="promptForm.controls.prompt.invalid" i18n>Prompt is required </mat-error>
+                </mat-form-field>
+            </div>
+            <div *ngIf="receivedCode$ |async">
+                <ap-button btnColor="primary" btnStyle="stroked" btnSize="large"
                     [disabled]="!promptForm.controls.prompt.value" [loading]="loading$ | async | defaultFalse"
                     [darkLoadingSpinner]="true" i18n>Ask</ap-button>
             </div>
