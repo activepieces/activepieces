@@ -2,14 +2,15 @@ import { FolderDto } from '@activepieces/shared';
 import { createAction, props } from '@ngrx/store';
 
 export enum FoldersActionType {
-  INITIALISE = 'INITIALISE',
-  ADD_FOLDER = 'ADD_FOLDER',
-  DELETE_FOLDER = 'DELETE_FOLDER',
-  RENAME_FOLDER = 'RENAME_FOLDER',
-  SELECT_FOLDER = 'SELECT_FOLDER',
-  SHOW_ALL_FLOWS = 'SHOW_ALL_FLOWS',
-  DELETE_FLOW = 'DELETE_FLOW',
-  MOVE_FLOW = 'MOVE_FLOW',
+  INITIALISE = '[FOLDERS] INITIALISE',
+  ADD_FOLDER = '[FOLDERS] ADD_FOLDER',
+  DELETE_FOLDER = '[FOLDERS] DELETE_FOLDER',
+  RENAME_FOLDER = '[FOLDERS] RENAME_FOLDER',
+  SELECT_FOLDER = '[FOLDERS] SELECT_FOLDER',
+  SHOW_ALL_FLOWS = '[FOLDERS] SHOW_ALL_FLOWS',
+  DELETE_FLOW = '[FOLDERS] DELETE_FLOW',
+  MOVE_FLOW_IN_FLOWS_TABLE = '[FOLDERS] MOVE_FLOW_IN_FLOWS_TABLE',
+  MOVE_FLOW_IN_BUILDER = '`'
 }
 
 const setInitial = createAction(
@@ -18,7 +19,7 @@ const setInitial = createAction(
     folders: FolderDto[];
     allFlowsNumber: number;
     uncategorizedFlowsNumber: number;
-    selectedFolderId: string;
+    selectedFolderId?: string;
   }>()
 );
 
@@ -39,8 +40,12 @@ const selectFolder = createAction(
   FoldersActionType.SELECT_FOLDER,
   props<{ folderId?: string }>()
 );
-const moveFlow = createAction(
-  FoldersActionType.MOVE_FLOW,
+const moveFlowInFlowsTable = createAction(
+  FoldersActionType.MOVE_FLOW_IN_FLOWS_TABLE,
+  props<{ targetFolderId: string; flowFolderId?: string | null }>()
+);
+const moveFlowInBuilder= createAction(
+  FoldersActionType.MOVE_FLOW_IN_BUILDER,
   props<{ targetFolderId: string; flowFolderId?: string | null }>()
 );
 const renameFolder = createAction(
@@ -58,5 +63,6 @@ export const FolderActions = {
   selectFolder,
   showAllFlows,
   deleteFlow,
-  moveFlow,
+  moveFlowInFlowsTable,
+  moveFlowInBuilder
 };

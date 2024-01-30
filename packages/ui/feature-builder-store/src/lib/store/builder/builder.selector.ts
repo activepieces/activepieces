@@ -105,21 +105,6 @@ const selectIsCurrentVersionPublished = createSelector(
   }
 );
 
-export const selectCurrentFlowFolderName = createSelector(
-  selectFlowState,
-  (state) => {
-    if (!state.folder) {
-      return $localize`Uncategorized`;
-    }
-    return state.folder.displayName;
-  }
-);
-const selectCurrentFlowFolderId = createSelector(selectFlowState, (state) => {
-  if (!state.folder) {
-    return 'NULL';
-  }
-  return state.folder.id;
-});
 export const selectCurrentFlowValidity = createSelector(
   selectCurrentFlow,
   (flow: PopulatedFlow | undefined) => {
@@ -645,7 +630,6 @@ export const BuilderSelectors = {
   selectViewedVersion,
   selectIsSchduleTrigger,
   selectCurrentStepPieceVersionAndName,
-  selectCurrentFlowFolderName,
   /**If string is empty will return the string equivalent of a space */
   selectStepTestSampleData,
   selectLastTestDate,
@@ -658,7 +642,6 @@ export const BuilderSelectors = {
   selectStepResultsAccordion,
   selectStepDisplayNameAndDfsIndexForIterationOutput,
   selectLastClickedAddBtnId,
-  selectCurrentFlowFolderId,
   selectFlowTriggerIsTested,
   selectAppConnectionsDropdownOptionsForAppWithIds,
   selectAppConnectionsDropdownOptionsWithIds,

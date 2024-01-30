@@ -2,25 +2,25 @@ import { Injectable } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Actions, concatLatestFrom, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
-import { tap } from 'rxjs';
+import { of, switchMap, tap } from 'rxjs';
 import { FolderActions } from './folders.actions';
 import { FoldersSelectors } from './folders.selectors';
 import { GenericSnackbarTemplateComponent } from '@activepieces/ui/common';
 
 @Injectable()
 export class FoldersEffects {
-  flowMoved$ = createEffect(
+  showFlowMovedSnackbar$ = createEffect(
     () => {
       return this.actions$.pipe(
-        ofType(FolderActions.moveFlow),
+        ofType(FolderActions.moveFlowInFlowsTable,FolderActions.moveFlowInBuilder),
         concatLatestFrom(() => {
           return this.store.select(FoldersSelectors.selectFolders);
         }),
-        tap(([actions, folders]) => {
+        tap(([action, folders]) => {
           const folderName =
-            actions.targetFolderId === 'NULL'
+            action.targetFolderId === 'NULL'
               ? $localize`Uncategorized`
-              : folders.find((f) => f.id === actions.targetFolderId)
+              : folders.find((f) => f.id === action.targetFolderId)
                   ?.displayName || '';
           this.snackbar.openFromComponent(GenericSnackbarTemplateComponent, {
             data: `Moved to <b> ${folderName}</b>`,
@@ -29,6 +29,17 @@ export class FoldersEffects {
       );
     },
     { dispatch: false }
+  );
+  flowMovedInBuilder$ = createEffect(
+    () => {
+      return this.actions$.pipe(
+        ofType(FolderActions.moveFlowInBuilder),
+        switchMap((action) => {
+          return of(FolderActions.selectFolder({ folderId: action.targetFolderId }));
+        })
+      );
+    },
+ 
   );
   folderAdded$ = createEffect(
     () => {

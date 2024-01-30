@@ -154,8 +154,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
               flow: routeData.runInformation.flow,
               viewMode: ViewModeEnum.VIEW_INSTANCE_RUN,
               run: routeData.runInformation.run,
-              appConnections: routeData.connections,
-              folder: routeData.runInformation.folder,
+              appConnections: routeData.connections
             })
           );
           this.setTitle$ = this.appearanceService.setTitle(
@@ -173,7 +172,6 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
               flow: routeData.flowAndFolder.flow,
               viewMode: ViewModeEnum.BUILDING,
               appConnections: routeData.connections,
-              folder: routeData.flowAndFolder.folder,
               publishedVersion: routeData.flowAndFolder.publishedFlowVersion,
             })
           );

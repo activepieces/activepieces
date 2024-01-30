@@ -121,7 +121,7 @@ const _foldersReducer = createReducer(
       };
     }
   }),
-  on(FolderActions.moveFlow, (state, { targetFolderId, flowFolderId }) => {
+  on(FolderActions.moveFlowInFlowsTable, (state, { targetFolderId, flowFolderId }) => {
     const folders = [...state.folders];
     let uncategorizedFlowsNumber = state.uncategorizedFlowsNumber;
 
