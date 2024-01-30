@@ -12,7 +12,11 @@ import { postInputsAction } from './lib/actions/call-post-inputs';
 import { workflowPredictAction } from './lib/actions/call-workflow';
 import { clarifaiAskLLM } from './lib/actions/ask-llm';
 import { clarifaiGenerateIGM } from './lib/actions/generate-igm';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import {
+  HttpMethod,
+  createCustomApiCallAction,
+  httpClient,
+} from '@activepieces/pieces-common';
 
 const markdownDescription = `
 Follow these instructions to get your Clarifai (Personal Access Token) PAT Key:
@@ -60,6 +64,13 @@ export const clarifai = createPiece({
     audioToTextModelPredictAction,
     postInputsAction,
     workflowPredictAction,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.clarifai.com/v2', // Replace with the actual base URL
+      auth: clarifaiAuth,
+      authMapping: (auth) => ({
+        Authorization: `Key ${auth}`,
+      }),
+    }),
   ],
   triggers: [],
 });

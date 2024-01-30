@@ -1,8 +1,10 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { createQuickCalendarEvent } from './lib/actions/create-quick-event';
 import { calendarEventChanged } from './lib/triggers/calendar-event';
 import { createEvent } from './lib/actions/create-event';
 import { getEvents } from './lib/actions/get-events';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { googleCalendarCommon } from './lib/common';
 
 export const googleCalendarAuth = PieceAuth.OAuth2({
   description: '',
@@ -22,6 +24,13 @@ export const googleCalendar = createPiece({
   displayName: 'Google Calendar',
   authors: ['osamahaikal', 'bibhuty-did-this', 'MoShizzle'],
   auth: googleCalendarAuth,
-  actions: [createQuickCalendarEvent, createEvent, getEvents],
+  actions: [createQuickCalendarEvent, createEvent, getEvents,
+    createCustomApiCallAction({
+        baseUrl: () => googleCalendarCommon.baseUrl,
+        auth: googleCalendarAuth,
+        authMapping: (auth) => ({
+          'Authorization': `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        }),
+      }),],
   triggers: [calendarEventChanged],
 });

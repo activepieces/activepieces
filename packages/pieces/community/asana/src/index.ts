@@ -1,5 +1,6 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { asanaCreateTaskAction } from './lib/actions/create-task';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const asanaAuth = PieceAuth.OAuth2({
   description: '',
@@ -15,6 +16,14 @@ export const asana = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/asana.png',
   authors: ['abuaboud'],
   auth: asanaAuth,
-  actions: [asanaCreateTaskAction],
+  actions: [asanaCreateTaskAction,
+    createCustomApiCallAction({
+        baseUrl: () => `https://app.asana.com/api/1.0`,
+        auth: asanaAuth,
+        authMapping: (auth) => ({
+          'Authorization': `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        })
+      })
+],
   triggers: [],
 });
