@@ -27,6 +27,10 @@ export enum DatabaseType {
 }
 
 const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
+    [SystemProp.API_RATE_LIMIT_AUTHN_ENABLED]: 'true',
+    [SystemProp.API_RATE_LIMIT_AUTHN_MAX]: '50',
+    [SystemProp.API_RATE_LIMIT_AUTHN_WINDOW]: '1 minute',
+    [SystemProp.CLIENT_REAL_IP_HEADER]: 'x-real-ip',
     [SystemProp.CLOUD_AUTH_ENABLED]: 'true',
     [SystemProp.DB_TYPE]: DatabaseType.POSTGRES,
     [SystemProp.EDITION]: 'ce',

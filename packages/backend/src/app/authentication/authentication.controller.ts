@@ -4,6 +4,8 @@ import { authenticationService } from './authentication-service'
 import { resolvePlatformIdForRequest } from '../ee/platform/lib/platform-utils'
 import { getEdition } from '../helper/secret-helper'
 import { ApEdition, SignUpRequest, SignInRequest, ALL_PRINICPAL_TYPES } from '@activepieces/shared'
+import { system } from '../helper/system/system'
+import { SystemProp } from '../helper/system/system-prop'
 
 const edition = getEdition()
 
@@ -29,8 +31,8 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (app) =
 }
 
 const rateLimitOptions: RateLimitOptions = {
-    max: 50,
-    timeWindow: '1 minute',
+    max: Number.parseInt(system.getOrThrow(SystemProp.API_RATE_LIMIT_AUTHN_MAX), 10),
+    timeWindow: system.getOrThrow(SystemProp.API_RATE_LIMIT_AUTHN_WINDOW),
 }
 
 const SignUpRequestOptions = {
