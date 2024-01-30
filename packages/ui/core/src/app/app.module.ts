@@ -59,8 +59,17 @@ export function playerFactory() {
   return player;
 }
 
+function resolveSocketUrl(url: string): string {
+  const isRelative = url.startsWith('/');
+  if (isRelative) {
+    const urlCon = new URL(url, window.location.href).href;
+    return urlCon.split('/api')[0];
+  }
+  return url.split('/v1')[0];
+}
+
 const socketConfig: SocketIoConfig = {
-  url: environment.apiUrl.split('/v1')[0],
+  url: resolveSocketUrl(environment.apiUrl),
   options: {
     auth: {
       token: tokenGetter(),

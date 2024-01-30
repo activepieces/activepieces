@@ -5,6 +5,7 @@ import {
   AppConnectionWithoutSensitiveData,
   ExecutionOutputStatus,
   FlowRun,
+  FlowVersion,
   FlowVersionState,
   PopulatedFlow,
   flowHelper,
@@ -34,14 +35,14 @@ export const selectGlobalBuilderState =
 const selectFlowState = createSelector(selectGlobalBuilderState, (state) => {
   return state.flowState;
 });
-export const selectIsPublishing = createSelector(
+const selectIsPublishing = createSelector(
   selectFlowState,
   (state) =>
     (state.savingStatus & BuilderSavingStatusEnum.PUBLISHING) ===
     BuilderSavingStatusEnum.PUBLISHING
 );
 
-export const selectIsSaving = createSelector(
+const selectIsSaving = createSelector(
   selectFlowState,
   (state) =>
     (state.savingStatus & BuilderSavingStatusEnum.SAVING_FLOW) ===
@@ -49,31 +50,36 @@ export const selectIsSaving = createSelector(
     (state.savingStatus & BuilderSavingStatusEnum.WAITING_TO_SAVE) ===
       BuilderSavingStatusEnum.WAITING_TO_SAVE
 );
-export const selectCurrentFlow = createSelector(selectFlowState, (state) => {
+const selectCurrentFlow = createSelector(selectFlowState, (state) => {
   return state.flow;
 });
 
-export const selectFlowHasAnySteps = createSelector(
+const selectFlowHasAnySteps = createSelector(
   selectCurrentFlow,
   (flow) => !!flow.version.trigger?.nextAction
 );
 
-export const selectViewMode = createSelector(
+const selectViewMode = createSelector(
   selectGlobalBuilderState,
   (state: GlobalBuilderState) => state.viewMode
 );
 
-export const selectIsInDebugMode = createSelector(
+const selectIsInDebugMode = createSelector(
   selectGlobalBuilderState,
   (state: GlobalBuilderState) =>
     state.viewMode === ViewModeEnum.VIEW_INSTANCE_RUN
 );
-export const selectIsInPublishedVersionViewMode = createSelector(
+
+const selectIsInPublishedVersionViewMode = createSelector(
   selectGlobalBuilderState,
   (state: GlobalBuilderState) => state.viewMode === ViewModeEnum.SHOW_PUBLISHED
 );
+const selectShowIncompleteStepsWidget = createSelector(
+  selectGlobalBuilderState,
+  (state: GlobalBuilderState) => state.viewMode === ViewModeEnum.BUILDING
+);
 
-export const selectReadOnly = createSelector(
+const selectReadOnly = createSelector(
   selectGlobalBuilderState,
   (state: GlobalBuilderState) => state.viewMode !== ViewModeEnum.BUILDING
 );
@@ -191,11 +197,13 @@ export const selectCurrentStepDisplayName = createSelector(
     return step?.displayName || '';
   }
 );
-
+export const selectDraftVersion = createSelector(selectCurrentFlow, (flow) => {
+  return flow.version;
+});
 export const selectDraftVersionId = createSelector(
-  selectCurrentFlow,
-  (flow: PopulatedFlow) => {
-    return flow.version.id;
+  selectDraftVersion,
+  (draftVersion: FlowVersion) => {
+    return draftVersion.id;
   }
 );
 export const selectNumberOfInvalidSteps = createSelector(
@@ -648,4 +656,6 @@ export const BuilderSelectors = {
   selectStepIndex,
   selectFlowStatus,
   selectViewedVersionHistoricalStatus,
+  selectDraftVersion,
+  selectShowIncompleteStepsWidget,
 };

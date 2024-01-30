@@ -17,6 +17,7 @@ export const platformProjectController: FastifyPluginCallbackTypebox = (fastify,
             ownerId: platform.ownerId,
             displayName: request.body.displayName,
             platformId,
+            externalId: request.body.externalId,
             type: ProjectType.PLATFORM_MANAGED,
         })
         await plansService.update({
