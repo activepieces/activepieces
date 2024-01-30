@@ -4,6 +4,7 @@ import { GetInstanceRunResolver } from './resolvers/instance-run.resolver';
 import { GetFlowResolver } from './resolvers/flow.resolver';
 import { ConnectionsResolver, UserLoggedIn } from '@activepieces/ui/common';
 import { BuilderSavingGuard } from './guards/builder-saving.guard';
+import { FoldersResolver } from '@activepieces/ui/feature-folders-store';
 
 export const FlowLayoutRouting: Routes = [
   {
@@ -12,6 +13,7 @@ export const FlowLayoutRouting: Routes = [
     resolve: {
       flowAndFolder: GetFlowResolver,
       connections: ConnectionsResolver,
+      folders: FoldersResolver,
     },
     canActivate: [UserLoggedIn],
     canDeactivate: [BuilderSavingGuard],
@@ -23,6 +25,7 @@ export const FlowLayoutRouting: Routes = [
     resolve: {
       runInformation: GetInstanceRunResolver,
       connections: ConnectionsResolver,
+  
     },
     canActivate: [UserLoggedIn],
   },

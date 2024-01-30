@@ -6,7 +6,7 @@ import {
   AreThereFlowsResovler,
 } from './resolvers/are-there-flows.resolver';
 import { ConnectionsTableComponent } from './pages/connections-table/connections-table.component';
-import { FoldersResolver } from './resolvers/folders.resolver';
+import { FoldersResolver } from '@activepieces/ui/feature-folders-store';
 import { DashboardContainerComponent } from './dashboard-container.component';
 import {
   isFeatureFlagEnabledResolver,

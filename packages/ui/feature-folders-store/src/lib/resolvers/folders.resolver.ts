@@ -4,9 +4,8 @@ import { Observable, forkJoin, map, tap } from 'rxjs';
 import { FolderDto } from '@activepieces/shared';
 import { FoldersService } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
-
-import { FolderActions } from '@activepieces/ui/feature-folders-store';
 import { FlowService } from '@activepieces/ui/common';
+import { FolderActions } from '../folders/folders.actions';
 export const ARE_THERE_FLOWS_FLAG = 'areThererFlows';
 
 type FoldersResolverResult = {
