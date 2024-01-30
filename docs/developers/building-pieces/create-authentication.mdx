@@ -1,0 +1,68 @@
+---
+title: 'Create Authentication'
+icon: 'circle-4'
+description: ''
+---
+
+Congratulations on creating a new piece! Now, we will set up authentication for the piece, which will be used to authenticate the ClickUp API.
+
+### Piece Authentication
+
+Every API for a specific piece offers various authentication methods. To identify the appropriate authentication type, you can refer to the API documentation specific to that piece. The documentation provides comprehensive information on the available authentication mechanisms, guiding users on how to securely interact with the API.
+
+Depending on the type of authentication an API utilizes, we can tailor the ActivePieces Authentication accordingly. To gain insights into the specific authentication requirements, you can refer to the dedicated [Piece Auth](https://www.activepieces.com/docs/developers/piece-reference/authentication) section. This resource provides detailed information on how to configure and implement the appropriate authentication method for seamless integration with ActivePieces.
+
+To establish authentication for the `ClickUp` piece, we will refer to the ClickUp [API documentation](https://clickup.com/api/).
+
+As outlined in the [Authentication](https://clickup.com/api/developer-portal/authentication/) section of the ClickUp API documentation, there are two distinct methods to authorize API endpoints: Personal Tokens and OAuth2 flow. However, for the simplicity of this tutorial, we will focus on implementing personal token authentication for our piece.
+
+Let's create new variable for auth in `index.ts` file.
+
+```typescript
+//...
+export const clickupAuth = PieceAuth.SecretText({
+  displayName: 'Personal Token',
+  required: true,
+  description: `
+    To obtain Personal Token, follow these steps:
+
+    1. Log in to your Clickup account.
+    2. Click your avatar in the upper-right corner, select Settings , and scroll down to click click Apps in the sidebar.
+    3. Under API Token, click Generate. Copy personal token to the clipboard.
+    `,
+});
+```
+
+In the definition of every piece authentication, three essential properties must be included: displayName, required, and description.
+
+- `displayName`: This property represents the authentication name in the user interface (UI).
+- `required` :If set to true, it indicates that the authentication is mandatory.
+- `description`: This property provides steps or instructions on how to establish a connection using this authentication method.
+
+now let's use this auth variable in piece defination in `index.ts` file.
+
+```typescript
+import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+
+export const clickupAuth = PieceAuth.SecretText({
+  displayName: 'Personal Token',
+  required: true,
+  description: `
+    To obtain Personal Token, follow these steps:
+
+    1. Log in to your Clickup account.
+    2. Click your avatar in the upper-right corner, select Settings , and scroll down to click click Apps in the sidebar.
+    3. Under API Token, click Generate. Copy personal token to the clipboard.
+    `,
+});
+
+export const clickup = createPiece({
+  displayName: 'Clickup',
+  auth: clickupAuth, // auth varible
+  minimumSupportedRelease: '0.9.0',
+  logoUrl: 'https://cdn.activepieces.com/pieces/clickup.png',
+  authors: [],
+  actions: [],
+  triggers: [],
+});
+```
