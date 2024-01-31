@@ -26,12 +26,13 @@ import {
 } from '@activepieces/ui/common';
 import { FormControl } from '@angular/forms';
 import { Store } from '@ngrx/store';
-import { FolderActions } from '../../store/folders/folders.actions';
 import {
+  FolderActions,
+  FoldersSelectors,
   MoveFlowToFolderDialogComponent,
   MoveFlowToFolderDialogData,
-} from '../../components/dialogs/move-flow-to-folder-dialog/move-flow-to-folder-dialog.component';
-import { FoldersSelectors } from '../../store/folders/folders.selector';
+} from '@activepieces/ui/feature-folders-store';
+
 import {
   RenameFlowDialogComponent,
   RenameFlowDialogData,
@@ -184,12 +185,14 @@ export class FlowsTableComponent implements OnInit {
       );
   }
   moveFlow(flow: PopulatedFlow) {
-    const dialogData: MoveFlowToFolderDialogData = {
+    const data: MoveFlowToFolderDialogData = {
       flowId: flow.id,
       folderId: flow.folderId,
+      flowDisplayName: flow.version.displayName,
+      inBuilder: false,
     };
     this.moveFlowDialogClosed$ = this.dialogService
-      .open(MoveFlowToFolderDialogComponent, { data: dialogData })
+      .open(MoveFlowToFolderDialogComponent, { data })
       .afterClosed()
       .pipe(
         tap((val: boolean) => {

@@ -14,7 +14,8 @@ import { getClickupTask } from './lib/actions/tasks/get-task';
 import { deleteClickupTask } from './lib/actions/tasks/delete-task';
 import { getClickupAccessibleCustomFields } from './lib/actions/custom-fields/get-accessible-custom-fields';
 import { setClickupCustomFieldValue } from './lib/actions/custom-fields/set-custom-fields-value';
-import { filterClickupWorkspaceTasks } from './lib/actions/tasks/get-tasks';
+import { filterClickupWorkspaceTasks } from './lib/actions/tasks/filter-workspace-tasks';
+import { filterClickupWorkspaceTimeEntries } from './lib/actions/tasks/filter-workspace-time-entries';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const clickupAuth = PieceAuth.OAuth2({
@@ -34,25 +35,30 @@ export const clickup = createPiece({
     createClickupTask,
     createClickupTaskFromTemplate,
     createClickupFolderlessList,
+    createClickupTaskComment,
+    createClickupSubtask,
     getClickupList,
     getClickupTask,
-    filterClickupWorkspaceTasks,
     getClickupSpace,
     getClickupSpaces,
     getClickupTaskComments,
-    createClickupTaskComment,
-    createClickupSubtask,
+    filterClickupWorkspaceTasks,
+    filterClickupWorkspaceTimeEntries,
     updateClickupTask,
     deleteClickupTask,
     getClickupAccessibleCustomFields,
     setClickupCustomFieldValue,
     createCustomApiCallAction({
-      baseUrl: () => 'https://api.clickup.com/api/v2', // Replace with the actual base URL
       auth: clickupAuth,
-      authMapping: (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
-      }),
-    }),
+      baseUrl: () => {
+        return 'https://api.clickup.com/api/v2/'
+      },
+      authMapping: (auth) => {
+        return {
+          'Authorization': `Bearer ${(auth as OAuth2PropertyValue).access_token}`
+        }
+      }
+    })
   ],
   authors: ['abuaboud', 'ShayPunter', 'kanarelo'],
   triggers,

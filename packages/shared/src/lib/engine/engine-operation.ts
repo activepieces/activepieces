@@ -19,6 +19,7 @@ export enum TriggerHookType {
     ON_ENABLE = 'ON_ENABLE',
     ON_DISABLE = 'ON_DISABLE',
     HANDSHAKE = 'HANDSHAKE',
+    RENEW = 'RENEW',
     RUN = 'RUN',
     TEST = 'TEST',
 }
@@ -146,8 +147,9 @@ type ExecuteOnEnableTriggerResponse = {
 export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends TriggerHookType.RUN ? ExecuteTestOrRunTriggerResponse :
     H extends TriggerHookType.HANDSHAKE ? ExecuteHandshakeTriggerResponse :
         H extends TriggerHookType.TEST ? ExecuteTestOrRunTriggerResponse :
-            H extends TriggerHookType.ON_DISABLE ? Record<string, never> :
-                ExecuteOnEnableTriggerResponse
+            H extends TriggerHookType.RENEW ? Record<string, never> :
+                H extends TriggerHookType.ON_DISABLE ? Record<string, never> :
+                    ExecuteOnEnableTriggerResponse
 
 export type ExecuteActionResponse = {
     success: boolean

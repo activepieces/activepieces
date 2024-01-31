@@ -221,6 +221,9 @@
       "@activepieces/piece-hackernews": [
         "packages/pieces/community/hackernews/src/index.ts"
       ],
+      "@activepieces/piece-heartbeat": [
+        "packages/pieces/community/heartbeat/src/index.ts"
+      ],
       "@activepieces/piece-http": [
         "packages/pieces/community/http/src/index.ts"
       ],
@@ -519,6 +522,9 @@
       "@activepieces/ui-feature-builder-header": [
         "packages/ui/feature-builder-header/src/index.ts"
       ],
+      "@activepieces/ui-feature-git-sync": [
+        "packages/ui/feature-git-sync/src/index.ts"
+      ],
       "@activepieces/ui/common": ["packages/ui/common/src/index.ts"],
       "@activepieces/ui/feature-authentication": [
         "packages/ui/feature-authentication/src/index.ts"
@@ -546,6 +552,9 @@
       ],
       "@activepieces/ui/feature-dashboard": [
         "packages/ui/feature-dashboard/src/index.ts"
+      ],
+      "@activepieces/ui/feature-folders-store": [
+        "packages/ui/feature-folders-store/src/index.ts"
       ],
       "@activepieces/ui/feature-pieces": [
         "packages/ui/feature-pieces/src/index.ts"

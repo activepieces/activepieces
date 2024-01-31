@@ -68,9 +68,13 @@ const __CanvasReducer = createReducer(
       focusedStep: undefined,
       selectedStepName: '',
       clickedAddBtnId: undefined,
+      selectedRun: undefined,
       rightSidebar: {
         props: NO_PROPS,
         type: RightSideBarType.NONE,
+      },
+      leftSidebar: {
+        type: LeftSideBarType.NONE,
       },
     };
   }),
@@ -127,11 +131,22 @@ const __CanvasReducer = createReducer(
     clonedState.selectedRun = run;
     return clonedState;
   }),
-  on(canvasActions.exitRun, (state): CanvasState => {
+  on(canvasActions.exitRun, (state, { flowVersion }): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
     return {
       ...clonedState,
       selectedRun: undefined,
+      leftSidebar: {
+        type: LeftSideBarType.NONE,
+      },
+      focusedStep: undefined,
+      selectedStepName: '',
+      rightSidebar: {
+        props: NO_PROPS,
+        type: RightSideBarType.NONE,
+      },
+      clickedAddBtnId: undefined,
+      viewedVersion: flowVersion,
     };
   }),
   on(FlowsActions.updateAction, (state, { operation }): CanvasState => {
@@ -218,6 +233,22 @@ const __CanvasReducer = createReducer(
   on(canvasActions.setAddButtonId, (state, { id }) => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
     clonedState.clickedAddBtnId = id;
+    return clonedState;
+  }),
+  on(canvasActions.viewRun, (state, { run, version }) => {
+    const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
+    clonedState.selectedRun = run;
+    clonedState.viewedVersion = version;
+    clonedState.leftSidebar = {
+      type: LeftSideBarType.SHOW_RUN,
+    };
+    clonedState.focusedStep = undefined;
+    clonedState.selectedStepName = '';
+    clonedState.clickedAddBtnId = undefined;
+    clonedState.rightSidebar = {
+      props: NO_PROPS,
+      type: RightSideBarType.NONE,
+    };
     return clonedState;
   })
 );
