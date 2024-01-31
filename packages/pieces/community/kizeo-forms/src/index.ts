@@ -15,6 +15,8 @@ import { getListItem } from './lib/actions/get-list-item';
 import { getAllListItems } from './lib/actions/get-all-list-items';
 import { editListItem } from './lib/actions/edit-list-item';
 import { deleteListItem } from './lib/actions/delete-list-item';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { endpoint } from './lib/common';
 
 const markdownDescription = `
 To connect to Kizeo Forms, you need an API Token provided by their support team.
@@ -43,6 +45,16 @@ export const kizeoForms = createPiece({
     CreateListItem,
     editListItem,
     deleteListItem,
+    createCustomApiCallAction({
+        baseUrl: () => endpoint,
+        auth: kizeoFormsAuth,
+        authMapping: (auth) => {
+            return {
+                'Authorization': auth as string,
+            }
+        }
+    })
+    
   ],
   triggers: [
     eventOnData,

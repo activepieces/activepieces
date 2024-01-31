@@ -1,4 +1,8 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import {
+  createPiece,
+  OAuth2PropertyValue,
+  PieceAuth,
+} from '@activepieces/pieces-framework';
 import { appendRowAction } from './lib/actions/append-row';
 import { getWorksheetsAction } from './lib/actions/get-worksheets';
 import { getWorksheetRowsAction } from './lib/actions/get-worksheet-rows';
@@ -16,6 +20,8 @@ import { lookupTableColumnAction } from './lib/actions/lookup-table-column';
 import { appendTableRowsAction } from './lib/actions/append-table-rows';
 import { convertToRangeAction } from './lib/actions/convert-to-range';
 import { readNewRows } from './lib/trigger/new-row-added';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { excelCommon } from './lib/common/common';
 
 export const excelAuth = PieceAuth.OAuth2({
   description: 'Authentication for Microsoft Excel 365',
@@ -48,6 +54,13 @@ export const microsoftExcel = createPiece({
     lookupTableColumnAction,
     appendTableRowsAction,
     convertToRangeAction,
+    createCustomApiCallAction({
+      baseUrl: () => excelCommon.baseUrl,
+      auth: excelAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      }),
+    }),
   ],
   triggers: [readNewRows],
 });

@@ -1,5 +1,6 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { bannerbearCreateImageAction } from './lib/actions/create-image';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const bannerbearAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -13,6 +14,15 @@ export const bannerbear = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/bannerbear.png',
   authors: ['kanarelo'],
   auth: bannerbearAuth,
-  actions: [bannerbearCreateImageAction],
+  actions: [
+    bannerbearCreateImageAction,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://sync.api.bannerbear.com/v2',
+      auth: bannerbearAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
+  ],
   triggers: [],
 });

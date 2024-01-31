@@ -4,6 +4,7 @@ import { dripApplyTagToSubscriber } from './lib/actions/apply-tag-to-subscriber.
 import { dripUpsertSubscriberAction } from './lib/actions/upsert-subscriber.action';
 import { dripNewSubscriberEvent } from './lib/trigger/new-subscriber.trigger';
 import { dripTagAppliedEvent } from './lib/trigger/new-tag.trigger';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const dripAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -21,6 +22,15 @@ export const drip = createPiece({
     dripApplyTagToSubscriber,
     dripAddSubscriberToCampaign,
     dripUpsertSubscriberAction,
+    createCustomApiCallAction({
+      baseUrl: () => `https://api.getdrip.com/v2/`,
+      auth: dripAuth,
+      authMapping: (auth) => ({
+        Authorization: `Basic ${Buffer.from(auth as string).toString(
+          'base64'
+        )}`,
+      }),
+    }),
   ],
   triggers: [dripNewSubscriberEvent, dripTagAppliedEvent],
 });

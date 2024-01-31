@@ -7,6 +7,7 @@ import { moxieCRMTriggers } from './lib/triggers';
 import { moxieCreateProjectAction } from './lib/actions/create-project';
 import { moxieCreateClientAction } from './lib/actions/create-client';
 import { moxieCreateTaskAction } from './lib/actions/create-task';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 export const moxieCRMAuth = PieceAuth.CustomAuth({
   required: true,
   description: `
@@ -41,6 +42,13 @@ export const moxieCrm = createPiece({
     moxieCreateClientAction,
     moxieCreateTaskAction,
     moxieCreateProjectAction,
+    createCustomApiCallAction({
+      baseUrl: (auth) => (auth as { baseUrl: string }).baseUrl,
+      auth: moxieCRMAuth,
+      authMapping: (auth) => ({
+        'X-API-KEY': (auth as { apiKey: string }).apiKey,
+      }),
+    }),
   ],
   triggers: moxieCRMTriggers,
 });

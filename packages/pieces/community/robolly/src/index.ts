@@ -1,5 +1,6 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { generateImage } from './lib/actions/generate-image.action';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const markdownDescription = `
 Follow these instructions to get your API Key:
@@ -25,6 +26,15 @@ export const robolly = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/robolly.png',
   authors: ['PFernandez98'],
-  actions: [generateImage],
+  actions: [
+    generateImage,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.robolly.com',
+      auth: robollyAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
+  ],
   triggers: [],
 });

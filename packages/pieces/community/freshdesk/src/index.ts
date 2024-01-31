@@ -6,6 +6,7 @@ import {
 import { getTickets } from './lib/actions/get-tickets';
 import { getContactFromID } from './lib/actions/get-contact-from-id';
 import { getTicketStatus } from './lib/actions/get-ticket-status';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const freshdeskAuth = PieceAuth.CustomAuth({
   props: {
@@ -29,6 +30,17 @@ export const freshdesk = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/freshdesk.png',
   authors: ['buttonsbond'],
   auth: freshdeskAuth,
-  actions: [getTickets, getContactFromID, getTicketStatus],
+  actions: [
+    getTickets,
+    getContactFromID,
+    getTicketStatus,
+    createCustomApiCallAction({
+      baseUrl: (auth) => (auth as { base_url: string }).base_url,
+      auth: freshdeskAuth,
+      authMapping: (auth) => ({
+        Authorization: (auth as { access_token: string }).access_token,
+      }),
+    }),
+  ],
   triggers: [],
 });

@@ -1,6 +1,7 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { instantVerifyAction } from './lib/actions/instant-verify';
 import { clearoutAuth } from './lib/auth';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const clearout = createPiece({
   displayName: 'Clearout',
@@ -8,7 +9,16 @@ export const clearout = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/clearout.png',
   authors: ['joeworkman'],
-  actions: [instantVerifyAction],
+  actions: [
+    instantVerifyAction,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.clearout.io/v2', // Replace with the actual base URL
+      auth: clearoutAuth,
+      authMapping: (auth) => ({
+        Authorization: `${(auth as { apiKey: string }).apiKey}`,
+      }),
+    }),
+  ],
   triggers: [],
 });
 

@@ -1,4 +1,8 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import {
+  OAuth2PropertyValue,
+  PieceAuth,
+  createPiece,
+} from '@activepieces/pieces-framework';
 import { webflowNewSubmission } from './lib/triggers/new-form-submitted';
 import { webflowCreateCollectionItem } from './lib/actions/create-collection-item';
 import { webflowDeleteCollectionItem } from './lib/actions/delete-collection-item';
@@ -9,10 +13,10 @@ import { webflowFulfillOrder } from './lib/actions/fulfill-order';
 import { webflowUnfulfillOrder } from './lib/actions/unfulfill-order';
 import { webflowRefundOrder } from './lib/actions/refund-order';
 import { webflowFindOrder } from './lib/actions/find-order';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const webflowAuth = PieceAuth.OAuth2({
   description: '',
-
   authUrl: 'https://webflow.com/oauth/authorize',
   tokenUrl: 'https://api.webflow.com/oauth/access_token',
   required: true,
@@ -35,6 +39,13 @@ export const webflow = createPiece({
     webflowUnfulfillOrder,
     webflowRefundOrder,
     webflowFindOrder,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.webflow.com',
+      auth: webflowAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      }),
+    }),
   ],
   triggers: [webflowNewSubmission],
 });

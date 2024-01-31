@@ -1,5 +1,6 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { sendEmail } from './lib/actions/send-email';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const resendAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -12,6 +13,15 @@ export const resend = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/resend.png',
   authors: [],
   auth: resendAuth,
-  actions: [sendEmail],
+  actions: [
+    sendEmail,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.resend.com',
+      auth: resendAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
+  ],
   triggers: [],
 });

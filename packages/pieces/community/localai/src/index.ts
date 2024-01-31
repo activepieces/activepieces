@@ -4,6 +4,7 @@ import {
   createPiece,
 } from '@activepieces/pieces-framework';
 import { askLocalAI } from './lib/actions/send-prompt';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const localaiAuth = PieceAuth.CustomAuth({
   props: {
@@ -26,7 +27,18 @@ export const openai = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/localai.jpeg',
   auth: localaiAuth,
-  actions: [askLocalAI],
+  actions: [
+    askLocalAI,
+    createCustomApiCallAction({
+      baseUrl: (auth) => (auth as { base_url: string }).base_url,
+      auth: localaiAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${
+          (auth as { access_token: string }).access_token || ''
+        }`,
+      }),
+    }),
+  ],
   authors: ['hboujrida'],
   triggers: [],
 });
