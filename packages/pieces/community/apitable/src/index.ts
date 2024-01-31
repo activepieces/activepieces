@@ -43,7 +43,7 @@ export const apitable = createPiece({
   description: `Interactive spreadsheets with collaboration`,
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/apitable.png',
-  categories: [PieceCategory.CONTENT_AND_FILES],
+  categories: [PieceCategory.DATABASES],
   authors: ['abdallah-alwarawreh', 'kishanprmr'],
   actions: [createRecordAction, findRecordAction, updateRecordAction],
   triggers: [newRecordTrigger],
