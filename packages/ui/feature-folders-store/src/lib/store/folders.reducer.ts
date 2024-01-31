@@ -121,37 +121,43 @@ const _foldersReducer = createReducer(
       };
     }
   }),
-  on(FolderActions.moveFlow, (state, { targetFolderId, flowFolderId }) => {
-    const folders = [...state.folders];
-    let uncategorizedFlowsNumber = state.uncategorizedFlowsNumber;
+  on(
+    FolderActions.moveFlowInFlowsTable,
+    (state, { targetFolderId, flowFolderId }) => {
+      const folders = [...state.folders];
+      let uncategorizedFlowsNumber = state.uncategorizedFlowsNumber;
 
-    const targetFolderIndex = folders.findIndex((f) => f.id === targetFolderId);
-    const currentlySelectedFolderIndex = !state.displayAllFlows
-      ? folders.findIndex((f) => f.id === state.selectedFolder?.id)
-      : folders.findIndex((f) => f.id === flowFolderId);
+      const targetFolderIndex = folders.findIndex(
+        (f) => f.id === targetFolderId
+      );
+      const currentlySelectedFolderIndex = !state.displayAllFlows
+        ? folders.findIndex((f) => f.id === state.selectedFolder?.id)
+        : folders.findIndex((f) => f.id === flowFolderId);
 
-    if (targetFolderIndex < 0) {
-      uncategorizedFlowsNumber++;
-    } else {
-      folders[targetFolderIndex] = {
-        ...folders[targetFolderIndex],
-        numberOfFlows: folders[targetFolderIndex].numberOfFlows + 1,
+      if (targetFolderIndex < 0) {
+        uncategorizedFlowsNumber++;
+      } else {
+        folders[targetFolderIndex] = {
+          ...folders[targetFolderIndex],
+          numberOfFlows: folders[targetFolderIndex].numberOfFlows + 1,
+        };
+      }
+      if (currentlySelectedFolderIndex < 0) {
+        uncategorizedFlowsNumber--;
+      } else {
+        folders[currentlySelectedFolderIndex] = {
+          ...folders[currentlySelectedFolderIndex],
+          numberOfFlows:
+            folders[currentlySelectedFolderIndex].numberOfFlows - 1,
+        };
+      }
+      return {
+        ...state,
+        folders: folders,
+        uncategorizedFlowsNumber,
       };
     }
-    if (currentlySelectedFolderIndex < 0) {
-      uncategorizedFlowsNumber--;
-    } else {
-      folders[currentlySelectedFolderIndex] = {
-        ...folders[currentlySelectedFolderIndex],
-        numberOfFlows: folders[currentlySelectedFolderIndex].numberOfFlows - 1,
-      };
-    }
-    return {
-      ...state,
-      folders: folders,
-      uncategorizedFlowsNumber,
-    };
-  })
+  )
 );
 export function foldersReducer(
   state: FoldersState | undefined,

@@ -40,9 +40,19 @@
             <svg-icon [applyClass]="true" [src]="flowActionsUiInfo.rename.icon"
               [class]=" flowActionsUiInfo.iconSizeTailWind">
             </svg-icon>
-            <span class="ap-text-body" i18n>Rename</span>
+            <span class="ap-text-body" i18n>{{flowActionsUiInfo.rename.text}}</span>
           </div>
         </button>
+
+        <button *ngIf="flow$ | async as flow" mat-menu-item (click)="moveFlow(flow)">
+          <div class="ap-flex ap-gap-3 ap-items-center">
+            <svg-icon [applyClass]="true" [src]="flowActionsUiInfo.move.icon"
+              [class]=" flowActionsUiInfo.iconSizeTailWind">
+            </svg-icon>
+            <span class="ap-text-body" i18n>{{flowActionsUiInfo.move.text}}</span>
+          </div>
+        </button>
+
         <button mat-menu-item (click)="duplicate()">
           <div class="ap-flex ap-gap-3 ap-items-center">
             <svg-icon [src]="flowActionsUiInfo.duplicate.icon" [class]="flowActionsUiInfo.iconSizeTailWind"
@@ -82,7 +92,7 @@
     <div class="ap-flex-grow"></div>
     <div class="ap-flex ap-items-center ap-gap-2">
       <app-support class="ap-z-50 ap-flex ap-items-center"></app-support>
-      <app-runs-button *ngIf="(isInDebugMode$ | async) === false"></app-runs-button>
+      <app-runs-button></app-runs-button>
       <app-version-history-button *ngIf="(isInDebugMode$ | async) === false"></app-version-history-button>
       <ng-container *ngIf="(isInDebugMode$ | async) === false ">
         <div class="ap-flex ap-items-center ap-gap-1">
@@ -94,10 +104,12 @@
           </ng-container>
 
         </div>
-        <app-publish-button></app-publish-button>
-        <ap-user-avatar *ngIf="(isInEmbedded$ | async) === undefined || (isInEmbedded$ | async) === false "
-          class="ap-ml-[16px]"></ap-user-avatar>
+
+
       </ng-container>
+      <app-publish-or-edit-flow-button></app-publish-or-edit-flow-button>
+      <ap-user-avatar *ngIf="(isInEmbedded$ | async) === undefined || (isInEmbedded$ | async) === false "
+        class="ap-ml-[16px]"></ap-user-avatar>
     </div>
   </div>
 </nav>

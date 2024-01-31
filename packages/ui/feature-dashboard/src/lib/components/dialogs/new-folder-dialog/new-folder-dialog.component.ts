@@ -7,11 +7,14 @@ import {
 } from '@angular/forms';
 import { ErrorCode, FolderDto } from '@activepieces/shared';
 import { Observable, catchError, of, take, tap } from 'rxjs';
-import { FolderActions } from '../../../store/folders/folders.actions';
+import {
+  FolderActions,
+  FoldersSelectors,
+} from '@activepieces/ui/feature-folders-store';
 import { Store } from '@ngrx/store';
 import { MatDialogRef } from '@angular/material/dialog';
 import { FolderValidator } from '../../../validators/folderName.validator';
-import { FoldersSelectors } from '../../../store/folders/folders.selector';
+
 import { FoldersService } from '@activepieces/ui/common';
 
 @Component({

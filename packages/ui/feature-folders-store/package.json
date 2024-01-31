@@ -1,0 +1,18 @@
+{
+  "name": "@activepieces/ui/feature-folders-store",
+  "version": "0.0.1",
+  "peerDependencies": {
+    "@angular/common": "^16.2.0",
+    "@angular/core": "^16.2.0",
+    "@angular/forms": "16.2.6",
+    "@ngrx/store": "16.0.1",
+    "rxjs": "7.8.1",
+    "@activepieces/shared": "*",
+    "@activepieces/ui/common": "*",
+    "@angular/material": "16.2.6",
+    "@angular/router": "16.2.6",
+    "@ngrx/effects": "16.0.1"
+  },
+  "dependencies": {},
+  "sideEffects": false
+}
