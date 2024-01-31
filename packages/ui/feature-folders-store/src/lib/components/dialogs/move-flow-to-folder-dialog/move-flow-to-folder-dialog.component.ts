@@ -28,7 +28,7 @@ export interface MoveFlowToFolderDialogData {
 export class MoveFlowToFolderDialogComponent {
   folders$: Observable<FolderDto[]>;
   foldersForm: FormGroup<{ folder: FormControl<string> }>;
-  movingFlow$: Observable<void>;
+  movingFlow$?: Observable<void>;
   constructor(
     private fb: FormBuilder,
     private store: Store,
