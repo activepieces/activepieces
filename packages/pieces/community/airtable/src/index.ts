@@ -1,15 +1,16 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { airtableCreateRecordAction } from './lib/actions/create-record';
-import { airtableNewRecordTrigger } from './lib/trigger/new-record.trigger';
-import { airtableUpdatedRecordTrigger } from './lib/trigger/update-record.trigger';
-import { airtableFindRecordAction } from './lib/actions/find-record';
-import { airtableUpdateRecordAction } from './lib/actions/update-record';
-import { airtableDeleteRecordAction } from './lib/actions/delete-record';
 import {
   AuthenticationType,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
+import { airtableCreateRecordAction } from './lib/actions/create-record';
+import { airtableDeleteRecordAction } from './lib/actions/delete-record';
+import { airtableFindRecordAction } from './lib/actions/find-record';
+import { airtableUpdateRecordAction } from './lib/actions/update-record';
+import { airtableNewRecordTrigger } from './lib/trigger/new-record.trigger';
+import { airtableUpdatedRecordTrigger } from './lib/trigger/update-record.trigger';
 
 export const airtableAuth = PieceAuth.SecretText({
   displayName: 'Personal Access Token',
@@ -50,6 +51,7 @@ export const airtable = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/airtable.png',
   authors: ['AbdulTheActivePiecer', 'kanarelo', 'TaskMagicKyle'],
+  categories: [PieceCategory.CONTENT_AND_FILES],
   auth: airtableAuth,
   actions: [
     airtableCreateRecordAction,

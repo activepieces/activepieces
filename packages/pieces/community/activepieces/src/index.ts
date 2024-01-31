@@ -1,10 +1,11 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { createProject } from './lib/actions/create-project';
 import { createProjectMember } from './lib/actions/create-project-member';
-import { listProject } from './lib/actions/list-project';
-import { updateProject } from './lib/actions/update-project';
-import { listProjectMember } from './lib/actions/list-project-member';
 import { deleteProjectMember } from './lib/actions/delete-project-member';
+import { listProject } from './lib/actions/list-project';
+import { listProjectMember } from './lib/actions/list-project-member';
+import { updateProject } from './lib/actions/update-project';
 
 const markdown = `
 Activepieces Platform API is available under the Platform Edition.
@@ -33,6 +34,7 @@ export const activepieces = createPiece({
     listProjectMember,
     deleteProjectMember,
   ],
+  categories: [PieceCategory.CORE],
   triggers: [],
 });
 
