@@ -1,5 +1,10 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import {
+  createPiece,
+  OAuth2PropertyValue,
+  PieceAuth,
+} from '@activepieces/pieces-framework';
 import { createTask } from './lib/actions/create-task';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const mddescription = `
 # How to add a new connection
@@ -27,6 +32,15 @@ export const nifty = createPiece({
   minimumSupportedRelease: '0.7.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/nifty.png',
   authors: ['Salem-Alaa'],
-  actions: [createTask],
+  actions: [
+    createTask,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://openapi.niftypm.com/api/v1.0',
+      auth: niftyAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      }),
+    }),
+  ],
   triggers: [],
 });

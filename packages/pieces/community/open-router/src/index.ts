@@ -4,6 +4,7 @@ import {
   AuthenticationType,
   HttpMethod,
   HttpRequest,
+  createCustomApiCallAction,
   httpClient,
 } from '@activepieces/pieces-common';
 
@@ -50,6 +51,15 @@ export const openRouter = createPiece({
   minimumSupportedRelease: '0.8.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/open-router.png',
   authors: ['Salem-Alaa'],
-  actions: [askOpenRouterAction],
+  actions: [
+    askOpenRouterAction,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://openrouter.ai/api/v1',
+      auth: openRouterAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
+  ],
   triggers: [],
 });

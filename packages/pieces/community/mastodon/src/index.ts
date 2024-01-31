@@ -4,6 +4,7 @@ import {
   createPiece,
 } from '@activepieces/pieces-framework';
 import { postStatus } from './lib/actions/post-status';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const markdownDescription = `
 **Base Url**: The base url of your Mastodon instance (e.g \`https://mastodon.social\`)
@@ -42,6 +43,18 @@ export const mastodon = createPiece({
   minimumSupportedRelease: '0.5.0',
   authors: ['abuaboud'],
   auth: mastodonAuth,
-  actions: [postStatus],
+  actions: [
+    postStatus,
+    createCustomApiCallAction({
+      baseUrl: (auth) =>
+        (auth as { base_url: string }).base_url.replace(/\/$/, '') + '/api/v1',
+      auth: mastodonAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${
+          (auth as { access_token: string }).access_token
+        }`,
+      }),
+    }),
+  ],
   triggers: [],
 });

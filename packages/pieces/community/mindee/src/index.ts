@@ -1,5 +1,6 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { mindeePredictDocumentAction } from './lib/actions/predict-document';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const mindeeAuth = PieceAuth.SecretText({
   displayName: 'Api Key',
@@ -18,6 +19,15 @@ export const mindee = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/mindee.png',
   authors: ['kanarelo'],
   auth: mindeeAuth,
-  actions: [mindeePredictDocumentAction],
+  actions: [
+    mindeePredictDocumentAction,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.mindee.net/v1',
+      auth: mindeeAuth,
+      authMapping: (auth) => ({
+        Authorization: `Token ${auth}`,
+      }),
+    }),
+  ],
   triggers: [],
 });

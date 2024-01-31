@@ -12,9 +12,21 @@ import { ProjectService } from '../../service/project.service';
 import { PlatformProjectService } from '../../service/platform-project.service';
 import { StatusCodes } from 'http-status-codes';
 import { PlatformService } from '../../service';
+import { Router } from '@angular/router';
 
 @Injectable()
 export class ProjectEffects {
+  constructor(
+    private actions$: Actions,
+    private store: Store,
+    private projectService: ProjectService,
+    private authenticationService: AuthenticationService,
+    private platformProjectService: PlatformProjectService,
+    private snackBar: MatSnackBar,
+    private platformService: PlatformService,
+    private router: Router
+  ) {}
+
   loadInitial$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(CommonActions.loadProjects),
@@ -58,11 +70,9 @@ export class ProjectEffects {
           catchError((error) => {
             const status = error?.status;
             if (status === StatusCodes.UNAUTHORIZED) {
-              this.snackBar.open(
-                `Error loading projects: ${error.message}`,
-                'Dismiss'
-              );
+              this.snackBar.open($localize`Your session expired`);
               this.authenticationService.logout();
+              this.router.navigate(['/sign-in']);
             }
             return of({ type: 'Load Projects Error' });
           })
@@ -88,7 +98,10 @@ export class ProjectEffects {
               catchError((error) => {
                 this.snackBar.open(
                   `Error updating project: ${error.message}`,
-                  'Dismiss'
+                  '',
+                  {
+                    panelClass: 'error',
+                  }
                 );
                 return EMPTY;
               })
@@ -98,14 +111,4 @@ export class ProjectEffects {
     },
     { dispatch: false }
   );
-
-  constructor(
-    private actions$: Actions,
-    private store: Store,
-    private projectService: ProjectService,
-    private authenticationService: AuthenticationService,
-    private platformProjectService: PlatformProjectService,
-    private snackBar: MatSnackBar,
-    private platformService: PlatformService
-  ) {}
 }

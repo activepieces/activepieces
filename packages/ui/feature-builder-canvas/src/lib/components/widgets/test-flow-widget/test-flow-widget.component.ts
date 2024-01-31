@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { combineLatest, map, Observable, of, tap } from 'rxjs';
 import {
   InstanceRunService,
+  WebSocketService,
   fadeIn400msWithoutOut,
   initializedRun,
 } from '@activepieces/ui/common';
@@ -19,7 +20,6 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import { switchMap, take } from 'rxjs/operators';
 import { canvasActions } from '@activepieces/ui/feature-builder-store';
-import { Socket } from 'ngx-socket-io';
 
 @Component({
   selector: 'app-test-flow-widget',
@@ -46,7 +46,7 @@ export class TestFlowWidgetComponent implements OnInit {
     private store: Store,
     private instanceRunService: InstanceRunService,
     private snackbar: MatSnackBar,
-    private socket: Socket
+    private websockService: WebSocketService
   ) {}
 
   ngOnInit() {
@@ -82,38 +82,42 @@ export class TestFlowWidgetComponent implements OnInit {
   }
 
   executeTest(flow: PopulatedFlow) {
-    this.socket.emit('testFlowRun', {
+    this.websockService.socket.emit('testFlowRun', {
       flowVersionId: flow.version.id,
       projectId: flow.projectId,
     });
 
-    this.executeTest$ = this.socket.fromEvent<FlowRun>('flowRunStarted').pipe(
-      take(1),
-      tap((flowRun) => {
-        this.store.dispatch(
-          canvasActions.setRun({
-            run: flowRun ?? initializedRun,
-          })
-        );
-        this.testRunSnackbar = this.snackbar.openFromComponent(
-          TestRunBarComponent,
-          {
-            duration: undefined,
-            data: {
-              flowId: flow.id,
-            },
-          }
-        );
-      })
-    );
+    this.executeTest$ = this.websockService.socket
+      .fromEvent<FlowRun>('flowRunStarted')
+      .pipe(
+        take(1),
+        tap((flowRun) => {
+          this.store.dispatch(
+            canvasActions.setRun({
+              run: flowRun ?? initializedRun,
+            })
+          );
+          this.testRunSnackbar = this.snackbar.openFromComponent(
+            TestRunBarComponent,
+            {
+              duration: undefined,
+              data: {
+                flowId: flow.id,
+              },
+            }
+          );
+        })
+      );
 
-    this.testResult$ = this.socket.fromEvent<FlowRun>('flowRunFinished').pipe(
-      switchMap((flowRun) =>
-        this.instanceRunService.get((flowRun as FlowRun).id)
-      ),
-      tap((instanceRun) => {
-        this.store.dispatch(canvasActions.setRun({ run: instanceRun }));
-      })
-    );
+    this.testResult$ = this.websockService.socket
+      .fromEvent<FlowRun>('flowRunFinished')
+      .pipe(
+        switchMap((flowRun) =>
+          this.instanceRunService.get((flowRun as FlowRun).id)
+        ),
+        tap((instanceRun) => {
+          this.store.dispatch(canvasActions.setRun({ run: instanceRun }));
+        })
+      );
   }
 }

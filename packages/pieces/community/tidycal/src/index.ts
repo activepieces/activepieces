@@ -3,7 +3,10 @@ import { tidycalbookingcancelled } from './lib/trigger/cancelled-booking';
 import { tidycalnewbooking } from './lib/trigger/new-booking';
 import { tidycalnewcontact } from './lib/trigger/new-contacts';
 import { calltidycalapi } from './lib/common';
-import { HttpMethod } from '@activepieces/pieces-common';
+import {
+  createCustomApiCallAction,
+  HttpMethod,
+} from '@activepieces/pieces-common';
 
 const markdown = `
 # Personal Access Token
@@ -35,6 +38,14 @@ export const tidycal = createPiece({
   minimumSupportedRelease: '0.7.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/tidycal.png',
   authors: ['Salem-Alaa'],
-  actions: [],
+  actions: [
+    createCustomApiCallAction({
+      baseUrl: () => 'https://tidycal.com/api',
+      auth: tidyCalAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
+  ],
   triggers: [tidycalbookingcancelled, tidycalnewbooking, tidycalnewcontact],
 });

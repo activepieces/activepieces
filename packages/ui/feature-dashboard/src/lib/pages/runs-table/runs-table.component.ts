@@ -24,6 +24,7 @@ import {
   startWith,
   Subject,
   switchMap,
+  take,
   tap,
 } from 'rxjs';
 import { RunsTableDataSource } from './runs-table.datasource';
@@ -160,11 +161,12 @@ export class RunsTableComponent implements OnInit {
     this.updateNotificationsValue$ = this.store
       .select(ProjectSelectors.selectIsNotificationsEnabled)
       .pipe(
+        take(1),
         tap((enabled) => {
           this.toggleNotificationFormControl.setValue(enabled);
         }),
-        switchMap(() =>
-          this.toggleNotificationFormControl.valueChanges.pipe(
+        switchMap(() => {
+          return this.toggleNotificationFormControl.valueChanges.pipe(
             distinctUntilChanged(),
             tap((value) => {
               this.store.dispatch(
@@ -175,8 +177,8 @@ export class RunsTableComponent implements OnInit {
                 })
               );
             })
-          )
-        )
+          );
+        })
       );
 
     this.dataSource = new RunsTableDataSource(

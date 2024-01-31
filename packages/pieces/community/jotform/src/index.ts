@@ -4,6 +4,8 @@ import {
   createPiece,
 } from '@activepieces/pieces-framework';
 import { newSubmission } from './lib/triggers/new-submission';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { jotformCommon } from './lib/common';
 
 const markdownDescription = `
 To obtain api key, follow the steps below:
@@ -46,6 +48,14 @@ export const jotform = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/jotform.svg',
   authors: ['MoShizzle'],
   auth: jotformAuth,
-  actions: [],
+  actions: [
+    createCustomApiCallAction({
+      baseUrl: (auth) => jotformCommon.baseUrl((auth as { region: string }).region),
+      auth: jotformAuth,
+      authMapping: (auth) => ({
+        APIKEY: (auth as { apiKey: string }).apiKey,
+      }),
+    }),
+  ],
   triggers: [newSubmission],
 });
