@@ -13,8 +13,10 @@ const _viewModeReducer = createReducer(
   on(ViewModeActions.setViewMode, (state, { viewMode }): ViewModeEnum => {
     return viewMode;
   }),
-  on(canvasActions.viewRun, (): ViewModeEnum => {
-    return ViewModeEnum.SHOW_OLD_VERSION;
+  on(canvasActions.viewRun, (state): ViewModeEnum => {
+    return state === ViewModeEnum.VIEW_INSTANCE_RUN
+      ? ViewModeEnum.VIEW_INSTANCE_RUN
+      : ViewModeEnum.SHOW_OLD_VERSION;
   }),
   on(canvasActions.exitRun, (): ViewModeEnum => {
     return ViewModeEnum.BUILDING;

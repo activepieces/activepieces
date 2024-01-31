@@ -51,6 +51,7 @@ export class RunsListComponent implements OnInit {
   offset$ = new BehaviorSubject<Cursor>(null);
   showRun$?: Observable<{ flow: PopulatedFlow; run: FlowRun }>;
   currentRun$: Observable<FlowRun | undefined>;
+  isInDebugMode$: Observable<boolean>;
   constructor(
     private instanceRunService: InstanceRunService,
     private store: Store,
@@ -58,6 +59,9 @@ export class RunsListComponent implements OnInit {
     private snackbar: MatSnackBar
   ) {
     this.currentRun$ = this.store.select(BuilderSelectors.selectCurrentFlowRun);
+    this.isInDebugMode$ = this.store.select(
+      BuilderSelectors.selectIsInDebugMode
+    );
   }
   ngOnInit(): void {
     this.runs$ = this.offset$.pipe(

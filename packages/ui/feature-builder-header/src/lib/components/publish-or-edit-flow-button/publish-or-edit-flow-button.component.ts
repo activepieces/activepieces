@@ -7,11 +7,13 @@ import {
   ViewModeActions,
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
+import { Router } from '@angular/router';
+import { PopulatedFlow } from '@activepieces/shared';
 
 @Component({
-  selector: 'app-publish-button',
-  templateUrl: './publish-button.component.html',
-  styleUrls: ['./publish-button.component.scss'],
+  selector: 'app-publish-or-edit-flow-button',
+  templateUrl: './publish-or-edit-flow-button.component.html',
+  styleUrls: ['./publish-or-edit-flow-button.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PublishButtonComponent implements OnInit {
@@ -30,8 +32,10 @@ export class PublishButtonComponent implements OnInit {
   dispatchAction$: Observable<void>;
   viewMode$: Observable<ViewModeEnum>;
   ViewModeEnum = ViewModeEnum;
-  constructor(private store: Store) {
+  flow$: Observable<PopulatedFlow>;
+  constructor(private store: Store, private router: Router) {
     this.viewMode$ = this.store.select(BuilderSelectors.selectViewMode);
+    this.flow$ = this.store.select(BuilderSelectors.selectCurrentFlow);
   }
 
   ngOnInit(): void {
@@ -107,9 +111,13 @@ export class PublishButtonComponent implements OnInit {
   publishButtonClicked() {
     this.store.dispatch(FlowsActions.publish());
   }
-  editFlowButtonClicked() {
-    this.store.dispatch(
-      ViewModeActions.setViewMode({ viewMode: ViewModeEnum.BUILDING })
-    );
+  editFlowButtonClicked(flowId: string) {
+    if (this.router.url.includes('/runs')) {
+      this.router.navigate([`/flows/${flowId}`]);
+    } else {
+      this.store.dispatch(
+        ViewModeActions.setViewMode({ viewMode: ViewModeEnum.BUILDING })
+      );
+    }
   }
 }
