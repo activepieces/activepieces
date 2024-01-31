@@ -57,19 +57,18 @@ const authenticate = async (auth: PiecePropValueSchema<typeof formalooAuth>) => 
 
 const authenticateWait = (auth: PiecePropValueSchema<typeof formalooAuth>) => {
   let token: string | null = null;
-  const startTime = Date.now();
   const done = (result: string | null) => {
-      token = result;
+    token = result;
   };
 
   authenticate(auth as PiecePropValueSchema<typeof formalooAuth>)
     .then((result) => done(result))
     .catch(() => done(null));
 
-  while (!token || startTime - Date.now() < 3000) {
-    //wait for token
+  while (!token) {
+    new Promise(resolve => setTimeout(resolve, 500));
   }
-
+  
   return token
 }
 
