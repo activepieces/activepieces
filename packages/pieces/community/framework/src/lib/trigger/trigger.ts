@@ -22,6 +22,12 @@ export enum WebhookRenewStrategy {
   NONE = 'NONE',
 }
 
+export enum WebhookTestStrategy {
+  CACHED_RESPONSE = 'CACHED_RESPONSE',
+  SAMPLE_DATA = 'SAMPLE_DATA',
+  SIMULATION = 'SIMULATION',
+}
+
 export const WebhookHandshakeConfiguration = Type.Object({
   strategy: Type.Enum(WebhookHandshakeStrategy),
   paramName: Type.Optional(Type.String()),
@@ -46,18 +52,6 @@ export interface WebhookResponse {
   headers?: Record<string, string>
 }
 
-type CreateTriggerParams<
-  PieceAuth extends PieceAuthProperty,
-  TriggerProps extends InputPropertyMap,
-  TS extends TriggerStrategy,
-> = TS extends TriggerStrategy.WEBHOOK ? BaseTriggerParams<PieceAuth, TriggerProps, TS> & {
-  handshakeConfiguration?: WebhookHandshakeConfiguration
-  onHandshake?: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<WebhookResponse>,
-  renewConfiguration?: WebhookRenewConfiguration
-  onRenew?(context: TriggerHookContext<PieceAuth, TriggerProps, TS>): Promise<void>,
-} : BaseTriggerParams<PieceAuth, TriggerProps, TS>
-
-
 type BaseTriggerParams<
   PieceAuth extends PieceAuthProperty,
   TriggerProps extends InputPropertyMap,
@@ -75,6 +69,26 @@ type BaseTriggerParams<
   test?: (context: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>
   sampleData: unknown
 }
+
+type WebhookTriggerParams<
+PieceAuth extends PieceAuthProperty,
+TriggerProps extends InputPropertyMap,
+TS extends TriggerStrategy,
+> = BaseTriggerParams<PieceAuth, TriggerProps, TS> & {
+  handshakeConfiguration?: WebhookHandshakeConfiguration
+  onHandshake?: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<WebhookResponse>,
+  renewConfiguration?: WebhookRenewConfiguration
+  onRenew?(context: TriggerHookContext<PieceAuth, TriggerProps, TS>): Promise<void>,
+  testStrategy?: WebhookTestStrategy,
+}
+
+type CreateTriggerParams<
+  PieceAuth extends PieceAuthProperty,
+  TriggerProps extends InputPropertyMap,
+  TS extends TriggerStrategy,
+> = TS extends TriggerStrategy.WEBHOOK
+    ? WebhookTriggerParams<PieceAuth, TriggerProps, TS>
+    : BaseTriggerParams<PieceAuth, TriggerProps, TS>
 
 export class ITrigger<
   TS extends TriggerStrategy,
@@ -95,7 +109,8 @@ export class ITrigger<
     public readonly onDisable: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>,
     public readonly run: (ctx: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
     public readonly test: (ctx: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
-    public sampleData: unknown,
+    public readonly sampleData: unknown,
+    public readonly testStrategy?: WebhookTestStrategy,
   ) { }
 }
 
@@ -128,6 +143,7 @@ export const createTrigger = <
         params.run,
         params.test ?? (() => Promise.resolve([params.sampleData])),
         params.sampleData,
+        params.testStrategy ?? WebhookTestStrategy.SIMULATION,
       )
     case TriggerStrategy.POLLING:
       return new ITrigger(
