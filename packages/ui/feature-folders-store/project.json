@@ -1,5 +1,5 @@
 {
-  "name": "feature-folders-store",
+  "name": "ui-feature-folders-store",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/ui/feature-folders-store/src",
   "prefix": "lib",

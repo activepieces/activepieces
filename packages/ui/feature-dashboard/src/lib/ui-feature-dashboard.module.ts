@@ -12,7 +12,6 @@ import { DashboardLayoutRouting } from './dashboard.routing';
 import { FlowsTableTitleComponent } from './pages/flows-table/flows-table-title/flows-table-title.component';
 import { FoldersListComponent } from './pages/flows-table/folders-list/folders-list.component';
 import { NewFolderDialogComponent } from './components/dialogs/new-folder-dialog/new-folder-dialog.component';
-import { MoveFlowToFolderDialogComponent } from '@activepieces/ui/feature-folders-store';
 import { RenameFolderDialogComponent } from './components/dialogs/rename-folder-dialog/rename-folder-dialog.component';
 import { EeBillingUiModule } from '@activepieces/ee-billing-ui';
 import { UiFeatureTemplatesModule } from '@activepieces/ui/feature-templates';
@@ -52,7 +51,6 @@ import { UiFeatureFoldersStoreModule } from '@activepieces/ui/feature-folders-st
     FlowsTableTitleComponent,
     FoldersListComponent,
     NewFolderDialogComponent,
-    MoveFlowToFolderDialogComponent,
     RenameFolderDialogComponent,
     SyncProjectComponent,
     ProjectSwitcherComponent,

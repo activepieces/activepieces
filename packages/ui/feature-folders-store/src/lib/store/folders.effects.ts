@@ -12,7 +12,10 @@ export class FoldersEffects {
   showFlowMovedSnackbar$ = createEffect(
     () => {
       return this.actions$.pipe(
-        ofType(FolderActions.moveFlowInFlowsTable,FolderActions.moveFlowInBuilder),
+        ofType(
+          FolderActions.moveFlowInFlowsTable,
+          FolderActions.moveFlowInBuilder
+        ),
         concatLatestFrom(() => {
           return this.store.select(FoldersSelectors.selectFolders);
         }),
@@ -30,17 +33,16 @@ export class FoldersEffects {
     },
     { dispatch: false }
   );
-  flowMovedInBuilder$ = createEffect(
-    () => {
-      return this.actions$.pipe(
-        ofType(FolderActions.moveFlowInBuilder),
-        switchMap((action) => {
-          return of(FolderActions.selectFolder({ folderId: action.targetFolderId }));
-        })
-      );
-    },
- 
-  );
+  flowMovedInBuilder$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(FolderActions.moveFlowInBuilder),
+      switchMap((action) => {
+        return of(
+          FolderActions.selectFolder({ folderId: action.targetFolderId })
+        );
+      })
+    );
+  });
   folderAdded$ = createEffect(
     () => {
       return this.actions$.pipe(

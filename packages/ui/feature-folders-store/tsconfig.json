@@ -8,14 +8,14 @@
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "strictPropertyInitialization": false,
+    "strictPropertyInitialization": false
   },
   "files": [],
   "include": [],
   "references": [
     {
       "path": "./tsconfig.lib.json"
-    },
+    }
   ],
   "extends": "../../../tsconfig.base.json",
   "angularCompilerOptions": {

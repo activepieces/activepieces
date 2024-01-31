@@ -17,7 +17,7 @@ export interface MoveFlowToFolderDialogData {
   flowId: string;
   folderId?: string | null;
   flowDisplayName: string;
-  inBuilder:boolean
+  inBuilder: boolean;
 }
 
 @Component({
@@ -61,16 +61,14 @@ export class MoveFlowToFolderDialogComponent {
         })
         .pipe(
           tap(() => {
-            if(this.data.inBuilder)
-            {
+            if (this.data.inBuilder) {
               this.store.dispatch(
                 FolderActions.moveFlowInBuilder({
                   targetFolderId: this.foldersForm.controls.folder.value,
                   flowFolderId: this.data.folderId,
                 })
               );
-            }
-            else{
+            } else {
               this.store.dispatch(
                 FolderActions.moveFlowInFlowsTable({
                   targetFolderId: this.foldersForm.controls.folder.value,
@@ -78,7 +76,7 @@ export class MoveFlowToFolderDialogComponent {
                 })
               );
             }
-           
+
             this.dialogRef.close(true);
           }),
           map(() => void 0)

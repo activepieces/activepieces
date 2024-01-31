@@ -23,7 +23,7 @@ const selectCurrentFolderId = createSelector(
 const selectCurrentFolderName = createSelector(
   selectCurrentFolder,
   (selectedFolder) => {
-    return selectedFolder?.displayName || $localize `Uncategorized`;
+    return selectedFolder?.displayName || $localize`Uncategorized`;
   }
 );
 
@@ -64,5 +64,5 @@ export const FoldersSelectors = {
   selectUncategorizedFlowsNumber,
   selectCurrentFolderExceptCurrent,
   selectCurrentFolderId,
-  selectCurrentFolderName
+  selectCurrentFolderName,
 };

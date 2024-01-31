@@ -10,7 +10,7 @@ export enum FoldersActionType {
   SHOW_ALL_FLOWS = '[FOLDERS] SHOW_ALL_FLOWS',
   DELETE_FLOW = '[FOLDERS] DELETE_FLOW',
   MOVE_FLOW_IN_FLOWS_TABLE = '[FOLDERS] MOVE_FLOW_IN_FLOWS_TABLE',
-  MOVE_FLOW_IN_BUILDER = '`'
+  MOVE_FLOW_IN_BUILDER = '`',
 }
 
 const setInitial = createAction(
@@ -44,7 +44,7 @@ const moveFlowInFlowsTable = createAction(
   FoldersActionType.MOVE_FLOW_IN_FLOWS_TABLE,
   props<{ targetFolderId: string; flowFolderId?: string | null }>()
 );
-const moveFlowInBuilder= createAction(
+const moveFlowInBuilder = createAction(
   FoldersActionType.MOVE_FLOW_IN_BUILDER,
   props<{ targetFolderId: string; flowFolderId?: string | null }>()
 );
@@ -64,5 +64,5 @@ export const FolderActions = {
   showAllFlows,
   deleteFlow,
   moveFlowInFlowsTable,
-  moveFlowInBuilder
+  moveFlowInBuilder,
 };
