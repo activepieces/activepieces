@@ -30,7 +30,6 @@ import {
 import { isNil } from '@activepieces/shared';
 import {
   PieceMetadataModel,
-  PieceMetadataModelSummary,
 } from '@activepieces/ui/common';
 
 type TriggersMetadata = Record<string, TriggerBase>;
@@ -175,13 +174,13 @@ export class PieceMetadataService {
     this.clearCache$.next();
   }
 
-  getCommunityPieces(): Observable<PieceMetadataModelSummary[]> {
+  getCommunityPieces(): Observable<PieceMetadataModel[]> {
     return this.piecesManifest$.pipe(
       map((pieces) => pieces.filter((p) => !isNil(p.projectId)))
     );
   }
 
-  getPiecesManifest(): Observable<PieceMetadataModelSummary[]> {
+  getPiecesManifest(): Observable<PieceMetadataModel[]> {
     return this.piecesManifest$.pipe(take(1));
   }
 
@@ -282,7 +281,7 @@ export class PieceMetadataService {
       this.clearCache$.asObservable().pipe(startWith(void 0)),
     ]).pipe(
       switchMap(([edition, release]) => {
-        return this.http.get<PieceMetadataModelSummary[]>(
+        return this.http.get<PieceMetadataModel[]>(
           `${environment.apiUrl}/pieces`,
           {
             params: {

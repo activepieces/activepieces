@@ -1,8 +1,9 @@
-import { PieceMetadataModel, PieceMetadataModelSummary, PieceMetadataSchema } from '../piece-metadata-entity'
+import { PieceMetadataModel, PieceMetadataSchema } from '../piece-metadata-entity'
 import { PieceMetadataService } from './piece-metadata-service'
 import { AllPiecesStats, pieceStatsService } from './piece-stats-service'
 import { StatusCodes } from 'http-status-codes'
 import { ActivepiecesError, EXACT_VERSION_PATTERN, ErrorCode } from '@activepieces/shared'
+
 
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 
@@ -23,12 +24,12 @@ const handleHttpErrors = async (response: Response): Promise<void> => {
 
 export const CloudPieceMetadataService = (): PieceMetadataService => {
     return {
-        async list({ release, searchQuery }): Promise<PieceMetadataModelSummary[]> {
+        async list({ release, searchQuery }): Promise<PieceMetadataModel[]> {
             const response = await fetch(`${CLOUD_API_URL}?release=${release}` + (searchQuery ? `&searchQuery=${searchQuery}` : ''))
 
             await handleHttpErrors(response)
 
-            return (await response.json() as PieceMetadataModelSummary[])
+            return response.json() 
         },
 
         async getOrThrow({ name, version }): Promise<PieceMetadataModel> {

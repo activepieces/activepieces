@@ -6,7 +6,7 @@ import { SystemProp } from '../helper/system/system-prop'
 import { getPiecePackage, pieceMetadataService } from './piece-metadata-service'
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { flagService } from '../flags/flag.service'
-import { PieceMetadataModel, PieceMetadataModelSummary } from './piece-metadata-entity'
+import { PieceMetadataModel } from './piece-metadata-entity'
 import { flowService } from '../flows/flow/flow.service'
 
 export const pieceModule: FastifyPluginAsyncTypebox = async (app) => {
@@ -24,7 +24,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         schema: {
             querystring: ListPiecesRequestQuery,
         },
-    }, async (req): Promise<PieceMetadataModelSummary[]> => {
+    }, async (req): Promise<PieceMetadataModel[]> => {
         const latestRelease = await flagService.getCurrentRelease()
         const release = req.query.release ?? latestRelease
         const edition = req.query.edition ?? ApEdition.COMMUNITY

@@ -1,7 +1,9 @@
 import { Static, Type } from '@sinclair/typebox'
 
 export enum PackageType {
+    /**tgz archive */
     ARCHIVE = 'ARCHIVE',
+    /**npm registry */
     REGISTRY = 'REGISTRY',
 }
 

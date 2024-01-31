@@ -1,6 +1,7 @@
-import { PieceMetadataSchema } from '../piece-metadata-entity'
+
 import { PlatformId } from '@activepieces/ee-shared'
 import Fuse from 'fuse.js'
+import { PieceMetadataModel } from '../piece-metadata-entity'
 
 const defaultPieceHooks: PieceMetadataServiceHooks = {
     async filterPieces(params) {
@@ -24,17 +25,17 @@ export const pieceMetadataServiceHooks = {
 }
 
 export type PieceMetadataServiceHooks = {
-    filterPieces(p: FilterPiecesParams): Promise<PieceMetadataSchema[]>
+    filterPieces(p: FilterPiecesParams): Promise<PieceMetadataModel[]>
 }
 
 export type FilterPiecesParams = {
     includeHidden?: boolean
     platformId?: PlatformId
     searchQuery?: string
-    pieces: PieceMetadataSchema[]
+    pieces: PieceMetadataModel[]
 }
 
-export const filterPieceBasedOnSearchQuery = ({ searchQuery, pieces }: { searchQuery: string | undefined, pieces: PieceMetadataSchema[] }): PieceMetadataSchema[] => {
+export const filterPieceBasedOnSearchQuery = ({ searchQuery, pieces }: { searchQuery: string | undefined, pieces: PieceMetadataModel[] }): PieceMetadataModel[] => {
     if (!searchQuery) {
         return pieces
     }

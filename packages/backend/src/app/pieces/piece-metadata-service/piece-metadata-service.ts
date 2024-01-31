@@ -1,7 +1,7 @@
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { AllPiecesStats } from './piece-stats-service'
 import { ApEdition, PackageType, PieceType, ProjectId } from '@activepieces/shared'
-import { PieceMetadataModel, PieceMetadataModelSummary } from '../piece-metadata-entity'
+import { PieceMetadataModel } from '../piece-metadata-entity'
 import { EntityManager } from 'typeorm'
 
 type ListParams = {
@@ -41,7 +41,7 @@ type GetExactPieceVersionParams = {
 }
 
 export type PieceMetadataService = {
-    list(params: ListParams): Promise<PieceMetadataModelSummary[]>
+    list(params: ListParams): Promise<PieceMetadataModel[]>
     getOrThrow(params: GetOrThrowParams): Promise<PieceMetadataModel>
     create(params: CreateParams): Promise<PieceMetadataModel>
     delete(params: DeleteParams): Promise<void>

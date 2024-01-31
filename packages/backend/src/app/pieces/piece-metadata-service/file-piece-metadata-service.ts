@@ -7,13 +7,19 @@ import { captureException } from '../../helper/logger'
 import { PieceMetadataService } from './piece-metadata-service'
 import { AllPiecesStats } from './piece-stats-service'
 import importFresh from 'import-fresh'
-import { PieceMetadataModel, PieceMetadataModelSummary } from '../piece-metadata-entity'
-
-const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
+import { PieceMetadataModel } from '../piece-metadata-entity'
+import { pieceMetadataServiceHooks as hooks } from './hooks'
+const loadPiecesMetadata = async (): Promise<PieceMetadataModel[]> => {
     const pieces = await findAllPieces()
     return pieces.sort((a, b) =>
         a.displayName.toUpperCase().localeCompare(b.displayName.toUpperCase()),
-    )
+    ).map(p=>{
+        return {
+            ...p,
+            packageType: PackageType.ARCHIVE,
+            pieceType: PieceType.CUSTOM,
+        }
+    })
 }
 async function findAllPieces(): Promise<PieceMetadata[]> {
     const piecesPath = resolve(cwd(), 'dist', 'packages', 'pieces')
@@ -68,13 +74,16 @@ async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | 
 }
 export const FilePieceMetadataService = (): PieceMetadataService => {
     return {
-        async list({ projectId }): Promise<PieceMetadataModelSummary[]> {
+        async list({  searchQuery }): Promise<PieceMetadataModel[]> {
             const piecesMetadata = await loadPiecesMetadata()
 
-            return piecesMetadata.map(p => toPieceMetadataModelSummary({
-                pieceMetadata: p,
-                projectId,
-            }))
+            const pieces = await hooks.get().filterPieces({
+                includeHidden: false,
+                searchQuery,
+                pieces: piecesMetadata,
+                
+            })
+            return pieces
         },
 
         async getOrThrow({ name, version, projectId }): Promise<PieceMetadataModel> {
@@ -143,19 +152,6 @@ const toPieceMetadataModel = ({ pieceMetadata, projectId }: ToPieceMetadataModel
         projectId,
         packageType: PackageType.REGISTRY,
         pieceType: PieceType.OFFICIAL,
-    }
-}
-
-const toPieceMetadataModelSummary = ({ pieceMetadata, projectId }: ToPieceMetadataModelParams): PieceMetadataModelSummary => {
-    const pieceMetadataModel = toPieceMetadataModel({
-        pieceMetadata,
-        projectId,
-    })
-
-    return {
-        ...pieceMetadataModel,
-        actions: Object.keys(pieceMetadataModel.actions).length,
-        triggers: Object.keys(pieceMetadataModel.triggers).length,
     }
 }
 

@@ -1,6 +1,6 @@
 import { Equal, FindOperator, IsNull, LessThan, LessThanOrEqual, MoreThanOrEqual } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
-import { PieceMetadataEntity, PieceMetadataModel, PieceMetadataModelSummary, PieceMetadataSchema } from '../piece-metadata-entity'
+import { PieceMetadataEntity, PieceMetadataModel, PieceMetadataSchema } from '../piece-metadata-entity'
 import { PieceMetadataService } from './piece-metadata-service'
 import { EXACT_VERSION_PATTERN, PieceType, isNil } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode, apId } from '@activepieces/shared'
@@ -9,11 +9,12 @@ import * as semver from 'semver'
 import { pieceMetadataServiceHooks as hooks } from './hooks'
 import { projectService } from '../../project/project-service'
 
+
 const repo = repoFactory(PieceMetadataEntity)
 
 export const DbPieceMetadataService = (): PieceMetadataService => {
     return {
-        async list({ release, projectId, platformId, includeHidden, searchQuery }): Promise<PieceMetadataModelSummary[]> {
+        async list({ release, projectId, platformId, includeHidden, searchQuery }): Promise<PieceMetadataModel[]> {
             const order = {
                 name: 'ASC',
                 version: 'DESC',
@@ -52,7 +53,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                 pieces: pieceMetadataEntityList,
                 platformId,
             })
-            return toPieceMetadataModelSummary(pieces)
+            return pieces
         },
 
         async getOrThrow({ name, version, projectId, entityManager }): Promise<PieceMetadataModel> {
@@ -80,7 +81,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                 })
             }
 
-            return toPieceMetadataModel(pieceMetadataEntity)
+            return pieceMetadataEntity
         },
 
         async create({ pieceMetadata, projectId, platformId, packageType, pieceType, archiveId }): Promise<PieceMetadataSchema> {
@@ -201,24 +202,6 @@ const applyVersionFilter = (filters: Record<string, unknown>[], version: string)
         ...filter,
         version: findSearchOperation(version),
     }))
-}
-
-const toPieceMetadataModelSummary = (pieceMetadataEntityList: PieceMetadataSchema[]): PieceMetadataModelSummary[] => {
-    return pieceMetadataEntityList.map(pieceMetadataEntity => {
-        return {
-            ...pieceMetadataEntity,
-            actions: Object.keys(pieceMetadataEntity.actions).length,
-            triggers: Object.keys(pieceMetadataEntity.triggers).length,
-        }
-    })
-}
-
-const toPieceMetadataModel = (pieceMetadataEntity: PieceMetadataSchema): PieceMetadataModel => {
-    return {
-        ...pieceMetadataEntity,
-        actions: pieceMetadataEntity.actions,
-        triggers: pieceMetadataEntity.triggers,
-    }
 }
 
 const findSearchOperation = (version: string): FindOperator<string> => {

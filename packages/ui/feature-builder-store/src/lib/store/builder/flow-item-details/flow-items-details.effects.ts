@@ -3,14 +3,12 @@ import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { forkJoin, map, of, switchMap, take } from 'rxjs';
 import { ActionType, TriggerType } from '@activepieces/shared';
 import { FlowItemDetailsActions } from './flow-items-details.action';
-import { FlowItemDetails } from '@activepieces/ui/common';
+import { FlowItemDetails, PieceMetadataModel } from '@activepieces/ui/common';
 import {
   PieceMetadataService,
   CORE_PIECES_ACTIONS_NAMES,
   CORE_PIECES_TRIGGERS,
 } from '@activepieces/ui/feature-pieces';
-import { PieceMetadataModelSummary } from '@activepieces/ui/common';
-
 @Injectable()
 export class FlowItemsDetailsEffects {
   load$ = createEffect(() => {
@@ -107,10 +105,10 @@ export class FlowItemsDetailsEffects {
   }
 
   createFlowItemDetailsForComponents(forTriggers: boolean) {
-    return (piecesManifest: PieceMetadataModelSummary[]) => {
+    return (piecesManifest: PieceMetadataModel[]) => {
       return piecesManifest
         .map((piece) => {
-          if (piece.actions > 0 && !forTriggers) {
+          if (Object.keys(piece.actions).length > 0 && !forTriggers) {
             return new FlowItemDetails(
               ActionType.PIECE,
               piece.displayName,
@@ -123,7 +121,7 @@ export class FlowItemsDetailsEffects {
                 pieceVersion: piece.version,
               }
             );
-          } else if (piece.triggers > 0 && forTriggers) {
+          } else if (Object.keys(piece.triggers).length > 0 && forTriggers) {
             return new FlowItemDetails(
               TriggerType.PIECE,
               piece.displayName,

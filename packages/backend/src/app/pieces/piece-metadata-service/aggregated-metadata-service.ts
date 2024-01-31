@@ -3,14 +3,15 @@ import { AllPiecesStats } from './piece-stats-service'
 import { CloudPieceMetadataService } from './cloud-piece-metadata-service'
 import { DbPieceMetadataService } from './db-piece-metadata-service'
 import { ActivepiecesError, EXACT_VERSION_PATTERN, ErrorCode } from '@activepieces/shared'
-import { PieceMetadataModel, PieceMetadataModelSummary } from '../piece-metadata-entity'
+import { PieceMetadataModel } from '../piece-metadata-entity'
+
 
 const cloudPieceProvider = CloudPieceMetadataService()
 const dbPieceProvider = DbPieceMetadataService()
 
 export const AggregatedPieceMetadataService = (): PieceMetadataService => {
     return {
-        async list(params): Promise<PieceMetadataModelSummary[]> {
+        async list(params): Promise<PieceMetadataModel[]> {
             const cloudMetadata = await cloudPieceProvider.list(params)
 
             const dbMetadata = await dbPieceProvider.list(params)
