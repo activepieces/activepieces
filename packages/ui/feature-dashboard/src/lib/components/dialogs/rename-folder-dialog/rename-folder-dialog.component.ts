@@ -6,11 +6,13 @@ import {
   Validators,
 } from '@angular/forms';
 import { Observable, catchError, map, of, take, tap } from 'rxjs';
-import { FolderActions } from '../../../store/folders/folders.actions';
+import {
+  FolderActions,
+  FoldersSelectors,
+} from '@activepieces/ui/feature-folders-store';
 import { Store } from '@ngrx/store';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { FolderValidator } from '../../../validators/folderName.validator';
-import { FoldersSelectors } from '../../../store/folders/folders.selector';
 import { ErrorCode } from '@activepieces/shared';
 import { FoldersService } from '@activepieces/ui/common';
 

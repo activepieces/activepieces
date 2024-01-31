@@ -1,0 +1,60 @@
+<ap-dialog-title-template i18n
+  >Move {{ data.flowDisplayName }}
+</ap-dialog-title-template>
+<mat-dialog-content>
+  <form
+    class="ap-flex ap-flex-col ap-gap-1 md:ap-w-[500px]"
+    [formGroup]="foldersForm"
+    (submit)="moveFlow()"
+  >
+    <mat-form-field class="ap-w-full">
+      <mat-label i18n>Select Folder</mat-label>
+      <mat-select [formControl]="foldersForm.controls.folder">
+        <mat-option [value]="'NULL'" *ngIf="data.folderId" i18n
+          >Uncategorized</mat-option
+        >
+        <ng-container *ngFor="let folder of folders$ | async">
+          <mat-option *ngIf="folder.id !== data.folderId" [value]="folder.id">
+            {{ folder.displayName }}
+          </mat-option>
+        </ng-container>
+        <mat-option
+          [disabled]="true"
+          *ngIf="(folders$ | async)?.length === 0 && !data.folderId"
+          i18n
+          >No folders to move to</mat-option
+        >
+      </mat-select>
+      <mat-error *ngIf="foldersForm.invalid" i18n
+        >Must select a folder</mat-error
+      >
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <div class="ap-flex ap-gap-2.5">
+    <ap-button
+      btnColor="basic"
+      mat-dialog-close
+      btnSize="default"
+      btnColor="basic"
+      [disabled]="!!movingFlow$"
+      i18n
+    >
+      Cancel
+    </ap-button>
+    <ap-button
+      btnSize="default"
+      type="submit"
+      (click)="moveFlow()"
+      [loading]="!!movingFlow$"
+      btnColor="primary"
+      i18n
+    >
+      Confirm
+    </ap-button>
+  </div>
+</mat-dialog-actions>
+
+<ng-container *ngIf="movingFlow$ | async"></ng-container>

@@ -10,12 +10,10 @@ import {
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {
-  BuilderActions,
   BuilderSelectors,
   FlowItemDetailsActions,
   FlowRendererService,
   FlowsActions,
-  ViewModeEnum,
 } from '@activepieces/ui/feature-builder-store';
 import { Store } from '@ngrx/store';
 import {
@@ -32,7 +30,6 @@ import {
 import { MatDrawerContainer } from '@angular/material/sidenav';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { TestRunBarComponent } from '@activepieces/ui/feature-builder-store';
 import { RunDetailsService } from '@activepieces/ui/feature-builder-left-sidebar';
 import {
   ExecutionOutputStatus,
@@ -60,8 +57,7 @@ import {
 import { PannerService } from '@activepieces/ui/feature-builder-canvas';
 import { MatDialog } from '@angular/material/dialog';
 import {
-  BuilderRouteData,
-  RunRouteData,
+  flowDisplayNameInRouteData,
 } from '../../resolvers/builder-route-data';
 import { ComponentPortal } from '@angular/cdk/portal';
 import {
@@ -146,38 +142,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     this.openTemaplatesDialogForNewFlows();
     this.loadInitialData$ = this.actRoute.data.pipe(
       tap((value) => {
-        const routeData = value as BuilderRouteData | RunRouteData;
-        const runInformation = routeData.runInformation;
-        if (runInformation) {
-          this.store.dispatch(
-            BuilderActions.loadInitial({
-              flow: routeData.runInformation.flow,
-              viewMode: ViewModeEnum.VIEW_INSTANCE_RUN,
-              run: routeData.runInformation.run,
-              appConnections: routeData.connections,
-              folder: routeData.runInformation.folder,
-            })
-          );
-          this.setTitle$ = this.appearanceService.setTitle(
-            routeData.runInformation.flow.version.displayName
-          );
-          this.snackbar.openFromComponent(TestRunBarComponent, {
-            duration: undefined,
-          });
-        } else {
-          this.setTitle$ = this.appearanceService.setTitle(
-            routeData.flowAndFolder.flow.version.displayName
-          );
-          this.store.dispatch(
-            BuilderActions.loadInitial({
-              flow: routeData.flowAndFolder.flow,
-              viewMode: ViewModeEnum.BUILDING,
-              appConnections: routeData.connections,
-              folder: routeData.flowAndFolder.folder,
-              publishedVersion: routeData.flowAndFolder.publishedFlowVersion,
-            })
-          );
-        }
+          this.setTitle$ = this.appearanceService.setTitle(value[flowDisplayNameInRouteData])
       }),
       map(() => void 0)
     );
