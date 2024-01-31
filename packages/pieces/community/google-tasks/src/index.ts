@@ -1,6 +1,8 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { googleTasksAddNewTaskAction } from './lib/actions/new-task';
 import { newTaskTrigger } from './lib/triggers/new-task';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { googleTasksCommon } from './lib/common';
 
 export const googleTasksAuth = PieceAuth.OAuth2({
   description: '',
@@ -14,7 +16,16 @@ export const googleTasksAuth = PieceAuth.OAuth2({
 export const googleTasks = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-tasks.png',
-  actions: [googleTasksAddNewTaskAction],
+  actions: [
+    googleTasksAddNewTaskAction,
+    createCustomApiCallAction({
+      baseUrl: () => googleTasksCommon.baseUrl,
+      auth: googleTasksAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      }),
+    }),
+  ],
   displayName: 'Google Tasks',
   authors: ['abaza738', 'Salem-Alaa'],
   triggers: [newTaskTrigger],

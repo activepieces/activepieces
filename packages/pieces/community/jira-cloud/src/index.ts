@@ -18,16 +18,18 @@ export const jiraCloud = createPiece({
     searchIssues,
     createCustomApiCallAction({
       baseUrl: (auth) => {
-        return `${(auth as JiraAuth).instanceUrl}/rest/api/3`
+        return `${(auth as JiraAuth).instanceUrl}/rest/api/3`;
       },
       auth: jiraCloudAuth,
       authMapping: (auth) => {
-        const typedAuth = auth as JiraAuth
+        const typedAuth = auth as JiraAuth;
         return {
-          'Authorization': `Basic ${typedAuth.email}:${typedAuth.apiToken}`
-        }
-      }
-    })
+          Authorization: `Basic ${Buffer.from(
+            `${typedAuth.email}:${typedAuth.apiToken}`
+          ).toString('base64')}`,
+        };
+      },
+    }),
   ],
   triggers: [newIssue, updatedIssue],
 });

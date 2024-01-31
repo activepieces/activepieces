@@ -12,6 +12,7 @@ import {
   AuthenticationType,
   HttpMethod,
   HttpRequest,
+  createCustomApiCallAction,
   httpClient,
 } from '@activepieces/pieces-common';
 import { wordpressCommon } from './lib/common';
@@ -98,6 +99,22 @@ export const wordpress = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/wordpress.png',
   auth: wordpressAuth,
-  actions: [createWordpressPost, createWordpressPage, getWordpressPost],
+  actions: [
+    createWordpressPost,
+    createWordpressPage,
+    getWordpressPost,
+    createCustomApiCallAction({
+      baseUrl: (auth) =>
+        (auth as { website_url: string }).website_url.trim() + '/wp-json/wp/v2',
+      auth: wordpressAuth,
+      authMapping: (auth) => ({
+        Authorization: `Basic ${Buffer.from(
+          `${(auth as { username: string }).username}:${
+            (auth as { password: string }).password
+          }`
+        ).toString('base64')}`,
+      }),
+    }),
+  ],
   triggers: [wordpressNewPost],
 });

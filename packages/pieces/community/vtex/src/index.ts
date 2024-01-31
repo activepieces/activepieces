@@ -19,6 +19,7 @@ import { getClientList } from './lib/actions/Client/get-client-list';
 import { getClientById } from './lib/actions/Client/get-client-by-id';
 import { getOrderById } from './lib/actions/Order/get-order-by-id';
 import { getOrderList } from './lib/actions/Order/get-order-list';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const markdownDescription = `
 **Host Url**: The VTEX store host (e.g \`{{accountName}}.{{environment}}.com\`)
@@ -73,6 +74,14 @@ export const vtex = createPiece({
     getClientById,
     getOrderById,
     getOrderList,
+    createCustomApiCallAction({
+      baseUrl: (auth) => `https://${(auth as { hostUrl: string }).hostUrl}`,
+      auth: vtexAuth,
+      authMapping: (auth) => ({
+        'X-VTEX-API-AppKey': (auth as { appKey: string }).appKey,
+        'X-VTEX-API-AppToken': (auth as { appToken: string }).appToken,
+      }),
+    }),
   ],
   triggers: [],
 });

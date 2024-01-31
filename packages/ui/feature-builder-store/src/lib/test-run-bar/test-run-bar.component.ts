@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Inject, OnInit, Output } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { Observable, of, tap } from 'rxjs';
+import { Observable, map, of, switchMap, tap } from 'rxjs';
 import {
   MatSnackBarRef,
   MAT_SNACK_BAR_DATA,
@@ -42,13 +42,19 @@ export class TestRunBarComponent implements OnInit {
       );
     this.sandboxTimeoutSeconds$ = this.flagsService.getSandboxTimeout();
     this.exitRun$ = this.exitButtonClicked.pipe(
-      tap(() => {
+      switchMap(() => this.store.select(BuilderSelectors.selectDraftVersion)),
+      tap((draftVersion) => {
         this.snackbarRef.dismiss();
         //wait for animation to be done
         setTimeout(() => {
-          this.store.dispatch(canvasActions.exitRun());
+          this.store.dispatch(
+            canvasActions.exitRun({
+              flowVersion: draftVersion,
+            })
+          );
         }, 150);
-      })
+      }),
+      map(() => void 0)
     );
   }
 

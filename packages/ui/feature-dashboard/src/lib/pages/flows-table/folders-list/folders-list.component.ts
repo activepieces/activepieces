@@ -4,8 +4,10 @@ import { MatDialog } from '@angular/material/dialog';
 import { Observable, tap, map, switchMap, take, BehaviorSubject } from 'rxjs';
 import { FolderDto } from '@activepieces/shared';
 import { Store } from '@ngrx/store';
-import { FoldersSelectors } from '../../../store/folders/folders.selector';
-import { FolderActions } from '../../../store/folders/folders.actions';
+import {
+  FolderActions,
+  FoldersSelectors,
+} from '@activepieces/ui/feature-folders-store';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   DeleteEntityDialogComponent,

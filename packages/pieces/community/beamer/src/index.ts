@@ -4,6 +4,8 @@ import { createNewFeatureRequest } from './lib/actions/create-feature-request';
 import { createComment } from './lib/actions/create-comment';
 import { newPost } from './lib/trigger/new-post';
 import { createVote } from './lib/actions/create-vote';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { beamerCommon } from './lib/common';
 
 export const beamerAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -21,6 +23,13 @@ export const beamer = createPiece({
     createNewFeatureRequest,
     createComment,
     createVote,
+    createCustomApiCallAction({
+      baseUrl: () => beamerCommon.baseUrl,
+      auth: beamerAuth,
+      authMapping: (auth) => ({
+        'Beamer-Api-Key': `Bearer ${auth}`,
+      }),
+    }),
   ],
   triggers: [newPost],
 });

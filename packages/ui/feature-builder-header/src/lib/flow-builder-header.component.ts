@@ -25,6 +25,11 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
 import { EmbeddingService, FlowBuilderService } from '@activepieces/ui/common';
+import {
+  FoldersSelectors,
+  MoveFlowToFolderDialogComponent,
+  MoveFlowToFolderDialogData,
+} from '@activepieces/ui/feature-folders-store';
 
 @Component({
   selector: 'app-flow-builder-header',
@@ -43,8 +48,8 @@ export class FlowBuilderHeaderComponent implements OnInit {
   shareFlow$: Observable<void>;
   deleteFlowDialogClosed$: Observable<void>;
   folderDisplayName$: Observable<string>;
-  duplicateFlow$: Observable<void>;
-  openDashboardOnFolder$: Observable<string>;
+  duplicateFlow$?: Observable<void>;
+  openDashboardOnFolder$?: Observable<string | undefined>;
   environment = environment;
   fullLogo$: Observable<string>;
   setTitle$: Observable<void>;
@@ -53,13 +58,12 @@ export class FlowBuilderHeaderComponent implements OnInit {
   showNavigation$: Observable<boolean>;
   goToFolder = $localize`Go to folder`;
   constructor(
-    public dialogService: MatDialog,
+    public matDialog: MatDialog,
     private store: Store,
     private router: Router,
     private appearanceService: AppearanceService,
     public collectionBuilderService: FlowBuilderService,
     private flowService: FlowService,
-    private matDialog: MatDialog,
     private flagService: FlagService,
     private embeddingService: EmbeddingService,
     private navigationService: NavigationService
@@ -82,7 +86,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
     this.isInReadOnlyMode$ = this.store.select(BuilderSelectors.selectReadOnly);
     this.flow$ = this.store.select(BuilderSelectors.selectCurrentFlow);
     this.folderDisplayName$ = this.store.select(
-      BuilderSelectors.selectCurrentFlowFolderName
+      FoldersSelectors.selectCurrentFolderName
     );
   }
   changeEditValue(event: boolean) {
@@ -132,7 +136,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
       entityName: flow.version.displayName,
       note: flowActionsUiInfo.delete.note,
     };
-    const dialogRef = this.dialogService.open(DeleteEntityDialogComponent, {
+    const dialogRef = this.matDialog.open(DeleteEntityDialogComponent, {
       data: dialogData,
     });
     this.deleteFlowDialogClosed$ = dialogRef.beforeClosed().pipe(
@@ -156,16 +160,25 @@ export class FlowBuilderHeaderComponent implements OnInit {
   }
   openDashboardToFolder() {
     this.openDashboardOnFolder$ = this.store
-      .select(BuilderSelectors.selectCurrentFlowFolderId)
+      .select(FoldersSelectors.selectCurrentFolderId)
       .pipe(
-        take(1),
         tap((folderId) => {
           this.router.navigate(['/flows'], {
             queryParams: {
-              folderId,
+              folderId: folderId ? folderId : 'NULL',
             },
           });
         })
       );
+  }
+
+  moveFlow(flow: PopulatedFlow) {
+    const data: MoveFlowToFolderDialogData = {
+      flowId: flow.id,
+      flowDisplayName: flow.version.displayName,
+      folderId: flow.folderId,
+      inBuilder: true,
+    };
+    this.matDialog.open(MoveFlowToFolderDialogComponent, { data });
   }
 }
