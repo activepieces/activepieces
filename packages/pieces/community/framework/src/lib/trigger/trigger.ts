@@ -22,10 +22,9 @@ export enum WebhookRenewStrategy {
   NONE = 'NONE',
 }
 
-export enum WebhookTestStrategy {
-  CACHED_RESPONSE = 'CACHED_RESPONSE',
-  SAMPLE_DATA = 'SAMPLE_DATA',
+export enum TriggerTestStrategy {
   SIMULATION = 'SIMULATION',
+  TEST_FUNCTION = 'TEST_FUNCTION',
 }
 
 export const WebhookHandshakeConfiguration = Type.Object({
@@ -79,7 +78,7 @@ TS extends TriggerStrategy,
   onHandshake?: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<WebhookResponse>,
   renewConfiguration?: WebhookRenewConfiguration
   onRenew?(context: TriggerHookContext<PieceAuth, TriggerProps, TS>): Promise<void>,
-  testStrategy?: WebhookTestStrategy,
+  testStrategy?: TriggerTestStrategy,
 }
 
 type CreateTriggerParams<
@@ -110,7 +109,7 @@ export class ITrigger<
     public readonly run: (ctx: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
     public readonly test: (ctx: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
     public readonly sampleData: unknown,
-    public readonly testStrategy?: WebhookTestStrategy,
+    public readonly testStrategy?: TriggerTestStrategy,
   ) { }
 }
 
@@ -120,7 +119,7 @@ export type Trigger<
   S extends TriggerStrategy = TriggerStrategy,
 > = ITrigger<S, PieceAuth, TriggerProps>
 
-// TODO refactor and exctract common logic
+// TODO refactor and extract common logic
 export const createTrigger = <
   TS extends TriggerStrategy,
   PieceAuth extends PieceAuthProperty,
@@ -143,7 +142,7 @@ export const createTrigger = <
         params.run,
         params.test ?? (() => Promise.resolve([params.sampleData])),
         params.sampleData,
-        params.testStrategy ?? WebhookTestStrategy.SIMULATION,
+        params.testStrategy ?? TriggerTestStrategy.SIMULATION,
       )
     case TriggerStrategy.POLLING:
       return new ITrigger(
@@ -161,6 +160,7 @@ export const createTrigger = <
         params.run,
         params.test ?? (() => Promise.resolve([params.sampleData])),
         params.sampleData,
+        TriggerTestStrategy.TEST_FUNCTION,
       )
     case TriggerStrategy.APP_WEBHOOK:
       return new ITrigger(
@@ -178,6 +178,7 @@ export const createTrigger = <
         params.run,
         params.test ?? (() => Promise.resolve([params.sampleData])),
         params.sampleData,
+        TriggerTestStrategy.TEST_FUNCTION,
       )
   }
 }
