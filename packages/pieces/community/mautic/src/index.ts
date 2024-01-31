@@ -11,6 +11,7 @@ import {
   updateCompany,
   updateContact,
 } from './lib/actions';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const markdownDescription = `
 Follow these steps:
@@ -53,6 +54,17 @@ export const mautic = createPiece({
     createCompany,
     searchCompany,
     updateCompany,
+    createCustomApiCallAction({
+      baseUrl: (auth) => (auth as { base_url: string }).base_url,
+      auth: mauticAuth,
+      authMapping: (auth) => ({
+        Authorization: `Basic ${Buffer.from(
+          `${(auth as { username: string }).username}:${
+            (auth as { password: string }).password
+          }`
+        ).toString('base64')}`,
+      }),
+    }),
   ],
   triggers: [],
 });

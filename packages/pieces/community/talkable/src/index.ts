@@ -17,6 +17,7 @@ import {
   getLoyaltyRedeemActions,
   updateReferralStatus,
 } from './lib/actions';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const markdownDescription = `
 Follow these steps:
@@ -62,6 +63,13 @@ export const talkable = createPiece({
     refund,
     getLoyaltyRedeemActions,
     updateReferralStatus,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://www.talkable.com/api/v2',
+      auth: talkableAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as { api_key: string }).api_key}`,
+      }),
+    }),
   ],
   triggers: [],
 });

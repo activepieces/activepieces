@@ -51,6 +51,7 @@ import { autoDispatchCompleted } from './lib/triggers/auto-dispatch-completed';
 import { smsRecipientOptOut } from './lib/triggers/sms-recipient-opt-out';
 import { smsRecipientResponseMissed } from './lib/triggers/sms-recipient-response-missed';
 import { taskDeleted } from './lib/triggers/task-deleted';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const authDescription = `
 To get an API key, follow the steps below:
@@ -104,6 +105,13 @@ export const onfleet = createPiece({
     getTeams,
     updateTeam,
     getContainer,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://onfleet.com/api/v2',
+      auth: onfleetAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
   ],
   triggers: [
     taskArrival,

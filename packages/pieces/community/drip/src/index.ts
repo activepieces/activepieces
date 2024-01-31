@@ -23,13 +23,14 @@ export const drip = createPiece({
     dripAddSubscriberToCampaign,
     dripUpsertSubscriberAction,
     createCustomApiCallAction({
-        baseUrl: () => `https://api.getdrip.com/v2/`, // Replace with the actual base URL
-        auth: dripAuth,
-        authMapping: (auth) => ({
-            'Authorization': `Basic ${Buffer.from(auth as string).toString('base64')}`
-        })
-    })
-    
+      baseUrl: () => `https://api.getdrip.com/v2/`,
+      auth: dripAuth,
+      authMapping: (auth) => ({
+        Authorization: `Basic ${Buffer.from(auth as string).toString(
+          'base64'
+        )}`,
+      }),
+    }),
   ],
   triggers: [dripNewSubscriberEvent, dripTagAppliedEvent],
 });

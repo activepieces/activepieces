@@ -3,7 +3,11 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import {
+  HttpMethod,
+  createCustomApiCallAction,
+  httpClient,
+} from '@activepieces/pieces-common';
 import { askChatbot } from './lib/actions/ask-chatbot';
 
 const markdownDescription = `
@@ -64,6 +68,15 @@ export const retune = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/retune.png',
   authors: ['MoShizzle'],
-  actions: [askChatbot],
+  actions: [
+    askChatbot,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://retune.so/api',
+      auth: retuneAuth,
+      authMapping: (auth) => ({
+        'X-Workspace-API-Key': (auth as { apiKey: string }).apiKey,
+      }),
+    }),
+  ],
   triggers: [],
 });

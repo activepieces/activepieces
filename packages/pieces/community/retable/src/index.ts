@@ -5,6 +5,8 @@ import { retableGetAllProjectsAction } from './lib/actions/get-all-projects';
 import { retableGetAllRetablesAction } from './lib/actions/get-all-retables';
 import { retableCreateWorkspaceAction } from './lib/actions/create-workspace';
 import { retableCreateProjectAction } from './lib/actions/create-project';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { retableCommon } from './lib/common';
 const markdown = `
 To obtain your API key, follow these steps:
 
@@ -41,6 +43,13 @@ export const retable = createPiece({
     retableGetAllRetablesAction,
     retableCreateWorkspaceAction,
     retableCreateProjectAction,
+    createCustomApiCallAction({
+      baseUrl: () => retableCommon.baseUrl,
+      auth: retableAuth,
+      authMapping: (auth) => ({
+        ApiKey: auth as string,
+      }),
+    }),
   ],
   triggers: [],
 });
