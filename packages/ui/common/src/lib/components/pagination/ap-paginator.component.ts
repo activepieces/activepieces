@@ -21,10 +21,7 @@ export class ApPaginatorComponent implements OnInit {
   @Output() pageSizeChanged: EventEmitter<number> = new EventEmitter();
   pageSizeChanged$!: Observable<number>;
   pageSizeControl!: FormControl<number>;
-  constructor(private router: Router, private route: ActivatedRoute) {
-    this.next = this.route.snapshot.queryParamMap.get(NEXT_QUERY_PARAM);
-    this.previous = this.route.snapshot.queryParamMap.get(PREVIOUS_QUERY_PARAM);
-  }
+  constructor(private router: Router, private route: ActivatedRoute) {}
   previous: string | null = null;
   next: string | null = null;
   ngOnInit(): void {
@@ -64,17 +61,5 @@ export class ApPaginatorComponent implements OnInit {
   setNextAndPrevious(next: string | null, previous: string | null) {
     this.next = next;
     this.previous = previous;
-    const params: { [key: string]: string | number } = {};
-    if (next) {
-      params[NEXT_QUERY_PARAM] = next;
-    }
-    if (previous) {
-      params[PREVIOUS_QUERY_PARAM] = previous;
-    }
-    this.router.navigate(['.'], {
-      relativeTo: this.route,
-      queryParams: params,
-      queryParamsHandling: 'merge',
-    });
   }
 }

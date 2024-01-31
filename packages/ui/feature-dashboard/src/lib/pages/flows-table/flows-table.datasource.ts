@@ -63,10 +63,10 @@ export class FlowsTableDataSource extends DataSource<FlowListDtoWithInstanceStat
       refresh: this.refresh$,
     }).pipe(
       tap((res) => {
-        if (res.queryParams['folderId']) {
+        if (res.queryParams[FOLDER_QUERY_PARAM]) {
           this.store.dispatch(
             FolderActions.selectFolder({
-              folderId: res.queryParams['folderId'],
+              folderId: res.queryParams[FOLDER_QUERY_PARAM],
             })
           );
         } else {
