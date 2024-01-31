@@ -82,6 +82,7 @@ import { PieceMetadata } from '@activepieces/pieces-framework'
 import { Socket } from 'socket.io'
 import { accessTokenManager } from './authentication/lib/access-token-manager'
 import { websocketService } from './websockets/websockets.service'
+import { rateLimitModule } from './core/security/rate-limit'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -157,13 +158,14 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     })
 
     await app.register(formBody, { parser: str => qs.parse(str) })
+    await app.register(rateLimitModule)
 
     await app.register(fastifySocketIO, {
         cors: {
             origin: '*',
         },
     })
-    
+
     app.io.use((socket: Socket, next: (err?: Error) => void) => {
         accessTokenManager.extractPrincipal(socket.handshake.auth.token).then(() => {
             next()
@@ -183,11 +185,11 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             url: request.url,
         })
         if (!route) {
-            return reply.code(404).send(`
-                Oops! It looks like we hit a dead end.
-                The endpoint you're searching for is nowhere to be found.
-                We suggest turning around and trying another path. Good luck!
-            `)
+            return reply.code(404).send({
+                statusCode: 404,
+                error: 'Not Found',
+                message: 'Route not found',
+            })
         }
     })
 
