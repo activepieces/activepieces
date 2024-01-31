@@ -6,7 +6,7 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { FolderActions } from '../../store/folders/folders.actions';
+import { FolderActions } from '@activepieces/ui/feature-folders-store';
 import { EmbeddingService, NavigationService } from '@activepieces/ui/common';
 import { Observable, map, of } from 'rxjs';
 import { ApFlagId, supportUrl } from '@activepieces/shared';

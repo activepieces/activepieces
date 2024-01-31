@@ -40,9 +40,19 @@
             <svg-icon [applyClass]="true" [src]="flowActionsUiInfo.rename.icon"
               [class]=" flowActionsUiInfo.iconSizeTailWind">
             </svg-icon>
-            <span class="ap-text-body" i18n>Rename</span>
+            <span class="ap-text-body" i18n>{{flowActionsUiInfo.rename.text}}</span>
           </div>
         </button>
+
+        <button *ngIf="flow$ | async as flow" mat-menu-item (click)="moveFlow(flow)">
+          <div class="ap-flex ap-gap-3 ap-items-center">
+            <svg-icon [applyClass]="true" [src]="flowActionsUiInfo.move.icon"
+              [class]=" flowActionsUiInfo.iconSizeTailWind">
+            </svg-icon>
+            <span class="ap-text-body" i18n>{{flowActionsUiInfo.move.text}}</span>
+          </div>
+        </button>
+
         <button mat-menu-item (click)="duplicate()">
           <div class="ap-flex ap-gap-3 ap-items-center">
             <svg-icon [src]="flowActionsUiInfo.duplicate.icon" [class]="flowActionsUiInfo.iconSizeTailWind"
