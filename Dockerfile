@@ -1,11 +1,19 @@
 ### STAGE 1: Build ###
-FROM node:18.19-bullseye AS build
+FROM node:18.19-bullseye-slim AS build
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && \
+    apt-get install -y --no-install-recommends python3 g++ build-essential && \
+    yarn config set python /usr/bin/python3 && \
+    npm install -g node-gyp
+
+RUN npm i -g npm@9.3.1
 
 # Set up backend
 WORKDIR /usr/src/app
 COPY . .
 
-# Install backend dependencies and build the projects
 COPY .npmrc package.json package-lock.json ./
 RUN npm ci
 
@@ -16,7 +24,14 @@ RUN npx nx run-many --target=build --projects=backend,ui-core --configuration pr
 RUN cd dist/packages/backend && npm install --production --force
 
 ### STAGE 2: Run ###
-FROM node:18.19-bullseye AS run
+FROM node:18.19-bullseye-slim AS run
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && \
+    apt-get install -y --no-install-recommends python3 g++ build-essential && \
+    yarn config set python /usr/bin/python3 && \
+    npm install -g node-gyp
 
 COPY packages/backend/src/assets/default.cf /usr/local/etc/isolate
 
