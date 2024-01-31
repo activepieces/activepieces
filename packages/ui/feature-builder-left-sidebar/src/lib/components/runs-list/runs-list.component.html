@@ -11,11 +11,11 @@
                 <ap-state-icon [size]="19" [status]="run.status" [showStatusText]="false"></ap-state-icon>
                 <div class="ap-flex ap-flex-col ap-gap-1 ">
                     <div class=" ap-text-body  ">
-                        {{run.id}}
-                    </div>
-                    <div class="ap-text-description ap-typography-subtitle-2 ">{{run.created
+                        {{run.created
                         |date:'mediumDate'
-                        }}, {{run.created |date:'h:mm:ss a' }} </div>
+                        }}, {{run.created |date:'h:mm:ss a' }}
+                    </div>
+                    <div class="ap-text-description ap-typography-caption ">{{run.id}}</div>
 
                 </div>
                 <div class="ap-flex-grow"></div>
@@ -23,6 +23,13 @@
                 <ap-icon-button *ngIf="(currentRun$ | async)?.id !== run.id || (isInDebugMode$ | async)"
                     iconFilename="enter-run.svg" (buttonClicked)="ShowRun(run)" tooltipText="View run" i18n-tooltipText
                     [width]="20" [height]="20"></ap-icon-button>
+                <ng-container
+                    *ngIf="(currentRun$ | async)?.id === run.id && ((isInDebugMode$ | async) === false || (isInDebugMode$ | async) === undefined)">
+                    <div class="ap-flex ap-items-center ap-justify-center ap-w-[2.8125rem]">
+                        <svg-icon src="assets/img/custom/eye.svg" class="ap-w-[20px] ap-h-[20px] ap-fill-primary"
+                            i18n-matTooltip matTooltip="Viewing" [applyClass]="true"></svg-icon>
+                    </div>
+                </ng-container>
                 <ap-icon-button
                     *ngIf="(currentRun$ | async)?.id === run.id && ((isInDebugMode$ | async) === false || (isInDebugMode$ | async) === undefined)"
                     iconFilename="exit-run.svg" (buttonClicked)="exitRun()" tooltipText="Exit run" i18n-tooltipText
