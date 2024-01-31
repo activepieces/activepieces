@@ -17,7 +17,7 @@ import { FlowRightSidebarComponent } from './flow-right-sidebar.component';
 import { NewEditPieceSidebarComponent } from './edit-step-sidebar/edit-step-sidebar.component';
 import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-builder-form-controls';
 import { CodeWriterDialogComponent } from './input-forms/code-step-input-form/code-writer-dialog/code-writer-dialog.component';
-
+import { MatStepperModule } from '@angular/material/stepper';
 @NgModule({
   imports: [
     CommonModule,
@@ -25,6 +25,7 @@ import { CodeWriterDialogComponent } from './input-forms/code-step-input-form/co
     UiFeatureBuilderFormControlsModule,
     MatTabsModule,
     UiFeatureBuilderTestStepsModule,
+    MatStepperModule,
   ],
   declarations: [
     EditStepFormContainerComponent,
