@@ -29,6 +29,7 @@ export const errorHandler = async (
             [ErrorCode.DOMAIN_NOT_ALLOWED]: StatusCodes.FORBIDDEN,
             [ErrorCode.EMAIL_AUTH_DISABLED]: StatusCodes.FORBIDDEN,
             [ErrorCode.INVALID_OTP]: StatusCodes.GONE,
+            [ErrorCode.VALIDATION]: StatusCodes.CONFLICT,
             [ErrorCode.INVITATION_ONLY_SIGN_UP]: StatusCodes.FORBIDDEN,
             [ErrorCode.AUTHENTICATION]: StatusCodes.UNAUTHORIZED,
         }
