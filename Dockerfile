@@ -1,5 +1,4 @@
-### STAGE 1: Build ###
-FROM node:18.19-bullseye-slim AS build
+FROM node:18.19-bullseye-slim AS base
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
@@ -8,32 +7,16 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     yarn config set python /usr/bin/python3 && \
     npm install -g node-gyp
 
-RUN npm i -g npm@9.3.1
+RUN npm i -g \
+  npm@9.3.1 \
+  pnpm@7.28.0 \
+  cross-env@7.0.3
 
-# Set up backend
-WORKDIR /usr/src/app
-COPY . .
+# Set the locale
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
 
-COPY .npmrc package.json package-lock.json ./
-RUN npm ci
-
-COPY . .
-RUN npx nx run-many --target=build --projects=backend,ui-core --configuration production --skip-nx-cache
-
-# Install backend production dependencies
-RUN cd dist/packages/backend && npm install --production --force
-
-### STAGE 2: Run ###
-FROM node:18.19-bullseye-slim AS run
-
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && \
-    apt-get install -y --no-install-recommends python3 g++ build-essential && \
-    yarn config set python /usr/bin/python3 && \
-    npm install -g node-gyp
-
-COPY packages/backend/src/assets/default.cf /usr/local/etc/isolate
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
@@ -41,16 +24,6 @@ RUN apt-get update \
     locales-all \
     libcap-dev \
  && rm -rf /var/lib/apt/lists/*
-
-# Set the locale
-ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US:en
-ENV LC_ALL en_US.UTF-8
-
-RUN npm i -g \
-  npm@9.3.1 \
-  pnpm@7.28.0 \
-  cross-env@7.0.3
 
 # install isolated-vm in a parent directory to avoid linking the package in every sandbox
 RUN cd /usr/src && npm i isolated-vm@4.6.0
@@ -60,8 +33,28 @@ RUN pnpm store add \
   @types/node@18.17.1 \
   typescript@4.8.4
 
+### STAGE 1: Build ###
+FROM base AS build
+
 # Set up backend
 WORKDIR /usr/src/app
+COPY . .
+
+COPY .npmrc package.json package-lock.json ./
+RUN npm ci
+
+RUN npx nx run-many --target=build --projects=backend,ui-core --configuration production --skip-nx-cache
+
+# Install backend production dependencies
+RUN cd dist/packages/backend && npm install --production --force
+
+### STAGE 2: Run ###
+FROM base AS run
+
+# Set up backend
+WORKDIR /usr/src/app
+
+COPY packages/backend/src/assets/default.cf /usr/local/etc/isolate
 
 # Install Nginx and gettext for envsubst
 RUN apt-get update && apt-get install -y nginx gettext
