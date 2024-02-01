@@ -56,9 +56,9 @@ describe('piece with error handling', () => {
         expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(result.steps.send_http.status).toBe('FAILED')
         expect(result.steps.send_http.errorMessage).toEqual({
-            'response': {
-                'status': 404,
-                'body': '\n                Oops! It looks like we hit a dead end.\n                The endpoint you\'re searching for is nowhere to be found.\n                We suggest turning around and trying another path. Good luck!\n            ',
+            response: {
+                status: 404,
+                body: { statusCode: 404, error: 'Not Found', message: 'Route not found' },
             },
             'request': {},
         })
