@@ -714,3 +714,15 @@ app-platform-settings {
 .smaller-input { 
   @include mat.all-component-densities(-2);
 }
+
+.mat-mdc-standard-chip.mat-mdc-chip-selected.mat-primary-light, .mat-mdc-standard-chip.mat-mdc-chip-highlighted.mat-primary-light
+{
+  
+  --mdc-chip-disabled-label-text-color: var(--warn-palette-contrast-500);
+  --mdc-chip-elevated-container-color: #eee8fc;
+  --mdc-chip-elevated-disabled-container-color: #eee8fc;
+  --mdc-chip-focus-state-layer-color: rgba(0, 0, 0, 0.315);
+  --mdc-chip-focus-state-layer-opacity: 0.12;
+  --mdc-chip-label-text-color: var(--body);
+
+}

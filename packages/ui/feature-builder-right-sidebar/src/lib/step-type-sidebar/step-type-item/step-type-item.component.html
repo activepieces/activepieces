@@ -34,26 +34,21 @@
     <div>
       <div class="type-label">{{ itemDetails.name }}</div>
       <div *ngIf="!clickable" class="description">{{ itemDetails.description }}</div>
-      <!-- <div class="ap-flex ap-gap-0.5 ap-mt-2 ">
+
+      <mat-chip-listbox *ngIf="clickable">
         <ng-container
-          *ngFor="let actionOrTrigger of (itemDetails.extra?.actionsOrTriggers|slicer:0:3); let isLast=last">
-          <div class="ap-cursor-pointer ap-typography-caption ap-text-primary !ap-font-semi-bold">
-            {{actionOrTrigger.displayName}}
-          </div>
-          <div class="ap-leading-4" *ngIf="!isLast">, </div>
-
+          *ngFor="let actionOrTrigger of (itemDetails.extra?.actionsOrTriggers | slicer:0:3); let isLast=last">
+          <mat-chip-option (click)="actionOrTirggerClicked.emit(actionOrTrigger)" color="primary-light"
+            [highlighted]="true"> {{actionOrTrigger.displayName}}</mat-chip-option>
         </ng-container>
-      </div> -->
-
+      </mat-chip-listbox>
     </div>
-    <ng-container *ngIf="clickable">
+    <!-- <ng-container *ngIf="clickable && itemDetails.extra?.actionsOrTriggers.length > 3">
       <ng-container *ngTemplateOutlet="
       triggersOrActionsList;
       context: { $implicit: itemDetails }
     "></ng-container>
-    </ng-container>
-
-
+    </ng-container> -->
   </div>
 </ng-template>
 
