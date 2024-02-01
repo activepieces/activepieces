@@ -1,8 +1,13 @@
-import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { googleTasksAddNewTaskAction } from './lib/actions/new-task';
-import { newTaskTrigger } from './lib/triggers/new-task';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import {
+  OAuth2PropertyValue,
+  PieceAuth,
+  createPiece,
+} from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
+import { googleTasksAddNewTaskAction } from './lib/actions/new-task';
 import { googleTasksCommon } from './lib/common';
+import { newTaskTrigger } from './lib/triggers/new-task';
 
 export const googleTasksAuth = PieceAuth.OAuth2({
   description: '',
@@ -16,6 +21,7 @@ export const googleTasksAuth = PieceAuth.OAuth2({
 export const googleTasks = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-tasks.png',
+  categories: [PieceCategory.IT_OPERATIONS],
   actions: [
     googleTasksAddNewTaskAction,
     createCustomApiCallAction({

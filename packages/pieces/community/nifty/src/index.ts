@@ -1,10 +1,11 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   createPiece,
   OAuth2PropertyValue,
   PieceAuth,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { createTask } from './lib/actions/create-task';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const mddescription = `
 # How to add a new connection
@@ -31,6 +32,7 @@ export const nifty = createPiece({
   auth: niftyAuth,
   minimumSupportedRelease: '0.7.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/nifty.png',
+  categories: [PieceCategory.PROJECT_MANAGEMENT],
   authors: ['Salem-Alaa'],
   actions: [
     createTask,

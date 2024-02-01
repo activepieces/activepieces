@@ -1,10 +1,11 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   PieceAuth,
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { newTicketInView } from './lib/trigger/new-ticket-in-view';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const markdownProperty = `
 **Organization**: The organization name can be found in the URL (e.g https://ORGANIZATION_NAME.zendesk.com).
@@ -41,6 +42,7 @@ export const zendesk = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/zendesk.png',
   authors: ['abuaboud'],
+  categories: [PieceCategory.CUSTOMER_SERVICE],
   auth: zendeskAuth,
   actions: [
     createCustomApiCallAction({

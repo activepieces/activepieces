@@ -1,12 +1,13 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { tidycalbookingcancelled } from './lib/trigger/cancelled-booking';
-import { tidycalnewbooking } from './lib/trigger/new-booking';
-import { tidycalnewcontact } from './lib/trigger/new-contacts';
-import { calltidycalapi } from './lib/common';
 import {
   createCustomApiCallAction,
   HttpMethod,
 } from '@activepieces/pieces-common';
+import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
+import { calltidycalapi } from './lib/common';
+import { tidycalbookingcancelled } from './lib/trigger/cancelled-booking';
+import { tidycalnewbooking } from './lib/trigger/new-booking';
+import { tidycalnewcontact } from './lib/trigger/new-contacts';
 
 const markdown = `
 # Personal Access Token
@@ -37,6 +38,7 @@ export const tidycal = createPiece({
   auth: tidyCalAuth,
   minimumSupportedRelease: '0.7.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/tidycal.png',
+  categories: [PieceCategory.IT_OPERATIONS],
   authors: ['Salem-Alaa'],
   actions: [
     createCustomApiCallAction({

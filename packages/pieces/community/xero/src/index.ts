@@ -1,11 +1,12 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   OAuth2PropertyValue,
   PieceAuth,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { xeroCreateContact } from './lib/actions/create-contact';
 import { xeroCreateInvoice } from './lib/actions/create-invoice';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const xeroAuth = PieceAuth.OAuth2({
   description: `
@@ -27,6 +28,7 @@ export const xero = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/xero.png',
   authors: ['kanarelo'],
+  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   auth: xeroAuth,
   actions: [
     xeroCreateContact,

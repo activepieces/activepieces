@@ -1,17 +1,22 @@
-import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import {
+  OAuth2PropertyValue,
+  PieceAuth,
+  createPiece,
+} from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
+import { dropboxCopyFile } from './lib/actions/copy-file';
+import { dropboxCopyFolder } from './lib/actions/copy-folder';
 import { dropboxCreateNewFolder } from './lib/actions/create-new-folder';
 import { dropboxCreateNewTextFile } from './lib/actions/create-new-text-file';
-import { dropboxUploadFile } from './lib/actions/upload-file';
-import { dropboxGetFileLink } from './lib/actions/get-file-link';
 import { dropboxDeleteFile } from './lib/actions/delete-file';
-import { dropboxMoveFile } from './lib/actions/move-file';
-import { dropboxCopyFile } from './lib/actions/copy-file';
 import { dropboxDeleteFolder } from './lib/actions/delete-folder';
-import { dropboxMoveFolder } from './lib/actions/move-folder';
-import { dropboxCopyFolder } from './lib/actions/copy-folder';
+import { dropboxGetFileLink } from './lib/actions/get-file-link';
 import { dropboxListAFolder } from './lib/actions/list-a-folder';
+import { dropboxMoveFile } from './lib/actions/move-file';
+import { dropboxMoveFolder } from './lib/actions/move-folder';
 import { dropboxSearch } from './lib/actions/search';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { dropboxUploadFile } from './lib/actions/upload-file';
 
 export const dropboxAuth = PieceAuth.OAuth2({
   description: '',
@@ -43,16 +48,16 @@ export const dropbox = createPiece({
     dropboxCopyFolder,
     dropboxListAFolder,
     createCustomApiCallAction({
-        baseUrl: () => 'https://api.dropboxapi.com/2',
-        auth: dropboxAuth,
-        authMapping: (auth) => ({
-            'Authorization': `Bearer ${(auth as OAuth2PropertyValue).access_token}`
-        })
-    })
-    
+      baseUrl: () => 'https://api.dropboxapi.com/2',
+      auth: dropboxAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      }),
+    }),
   ],
   displayName: 'Dropbox',
   authors: ['kanarelo', 'BastienMe'],
+  categories: [PieceCategory.FILE_MANAGEMENT_AND_STORAGE],
   triggers: [],
   auth: dropboxAuth,
 });

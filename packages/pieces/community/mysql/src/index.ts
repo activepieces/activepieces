@@ -3,6 +3,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import actions from './lib/actions';
 
 export const mysqlAuth = PieceAuth.CustomAuth({
@@ -41,6 +42,7 @@ export const mysql = createPiece({
   displayName: 'MySQL',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/mysql.png',
+  categories: [PieceCategory.DATABASES],
   authors: ['JanHolger'],
   auth: mysqlAuth,
   actions,

@@ -1,10 +1,11 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   PieceAuth,
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { sendNotification } from './lib/actions/send-notification';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const ntfyAuth = PieceAuth.CustomAuth({
   description: `
@@ -35,6 +36,7 @@ export const ntfy = createPiece({
   displayName: 'ntfy',
   logoUrl: 'https://cdn.activepieces.com/pieces/ntfy.png',
   minimumSupportedRelease: '0.5.0',
+  categories: [PieceCategory.OTHER],
   auth: ntfyAuth,
   authors: ['MyWay'],
   actions: [

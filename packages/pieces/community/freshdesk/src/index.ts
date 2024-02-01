@@ -1,12 +1,13 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   PieceAuth,
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { getTickets } from './lib/actions/get-tickets';
+import { PieceCategory } from '@activepieces/shared';
 import { getContactFromID } from './lib/actions/get-contact-from-id';
 import { getTicketStatus } from './lib/actions/get-ticket-status';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { getTickets } from './lib/actions/get-tickets';
 
 export const freshdeskAuth = PieceAuth.CustomAuth({
   props: {
@@ -28,6 +29,7 @@ export const freshdeskAuth = PieceAuth.CustomAuth({
 export const freshdesk = createPiece({
   displayName: 'Freshdesk',
   logoUrl: 'https://cdn.activepieces.com/pieces/freshdesk.png',
+  categories: [PieceCategory.CUSTOMER_SERVICE],
   authors: ['buttonsbond'],
   auth: freshdeskAuth,
   actions: [

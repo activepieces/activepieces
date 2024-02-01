@@ -1,8 +1,9 @@
-import { PieceAuth, createPiece } from "@activepieces/pieces-framework";
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 
-import { createPost } from "./lib/actions/create-post";
-import { createPhotoPost } from "./lib/actions/create-photo-post";
-import { createVideoPost } from "./lib/actions/create-video-post";
+import { PieceCategory } from '@activepieces/shared';
+import { createPhotoPost } from './lib/actions/create-photo-post';
+import { createPost } from './lib/actions/create-post';
+import { createVideoPost } from './lib/actions/create-video-post';
 
 const markdown = `
 To Obtain a Client ID and Client Secret:
@@ -15,23 +16,28 @@ To Obtain a Client ID and Client Secret:
 7. Navigate to Facebook Login Settings
 8. Copy **Redirect Url Below** to "Valid OAuth Redirect URIs" and "Allowed Domains for the JavaScript SDK"
 8. Create a new App Secret, then put the App ID and App Secret into Client ID and Client Secret.
-`
+`;
 
 export const facebookPagesAuth = PieceAuth.OAuth2({
-    
-    description: markdown,
-    authUrl: "https://graph.facebook.com/oauth/authorize",
-    tokenUrl: "https://graph.facebook.com/oauth/access_token",
-    required: true,
-    scope: ['pages_show_list', 'pages_manage_posts', 'business_management', 'pages_read_engagement'],
-})
+  description: markdown,
+  authUrl: 'https://graph.facebook.com/oauth/authorize',
+  tokenUrl: 'https://graph.facebook.com/oauth/access_token',
+  required: true,
+  scope: [
+    'pages_show_list',
+    'pages_manage_posts',
+    'business_management',
+    'pages_read_engagement',
+  ],
+});
 
 export const facebookPages = createPiece({
-    displayName: "Facebook Pages",
-        minimumSupportedRelease: '0.5.0',
-    logoUrl: "https://cdn.activepieces.com/pieces/facebook.png",
-    authors: ['MoShizzle'],
-    auth: facebookPagesAuth,
-    actions: [createPost, createPhotoPost, createVideoPost],
-    triggers: [],
+  displayName: 'Facebook Pages',
+  minimumSupportedRelease: '0.5.0',
+  logoUrl: 'https://cdn.activepieces.com/pieces/facebook.png',
+  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
+  authors: ['MoShizzle'],
+  auth: facebookPagesAuth,
+  actions: [createPost, createPhotoPost, createVideoPost],
+  triggers: [],
 });

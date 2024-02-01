@@ -1,7 +1,8 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 
-import { createShareUpdate } from './lib/actions/create-share-update';
+import { PieceCategory } from '@activepieces/shared';
 import { createCompanyUpdate } from './lib/actions/create-company-update';
+import { createShareUpdate } from './lib/actions/create-share-update';
 
 export const linkedinAuth = PieceAuth.OAuth2({
   authUrl: 'https://www.linkedin.com/oauth/v2/authorization',
@@ -21,6 +22,7 @@ export const linkedin = createPiece({
   displayName: 'LinkedIn',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/linkedin.png',
+  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   authors: ['MoShizzle'],
   auth: linkedinAuth,
   actions: [createShareUpdate, createCompanyUpdate],

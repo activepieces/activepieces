@@ -1,10 +1,11 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { dripAddSubscriberToCampaign } from './lib/actions/add-subscriber-to-campaign.action';
 import { dripApplyTagToSubscriber } from './lib/actions/apply-tag-to-subscriber.action';
 import { dripUpsertSubscriberAction } from './lib/actions/upsert-subscriber.action';
 import { dripNewSubscriberEvent } from './lib/trigger/new-subscriber.trigger';
 import { dripTagAppliedEvent } from './lib/trigger/new-tag.trigger';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const dripAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -17,6 +18,7 @@ export const drip = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/drip.png',
   authors: ['AbdulTheActivePiecer'],
+  categories: [PieceCategory.MARKETING],
   auth: dripAuth,
   actions: [
     dripApplyTagToSubscriber,

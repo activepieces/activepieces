@@ -1,15 +1,16 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   createPiece,
   OAuth2PropertyValue,
   PieceAuth,
 } from '@activepieces/pieces-framework';
-import { uploadFile } from './lib/actions/upload-file';
+import { PieceCategory } from '@activepieces/shared';
+import { downloadFile } from './lib/actions/download-file';
 import { listFiles } from './lib/actions/list-files';
 import { listFolders } from './lib/actions/list-folders';
-import { downloadFile } from './lib/actions/download-file';
-import { newFile } from './lib/triggers/new-file';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { uploadFile } from './lib/actions/upload-file';
 import { oneDriveCommon } from './lib/common/common';
+import { newFile } from './lib/triggers/new-file';
 
 export const oneDriveAuth = PieceAuth.OAuth2({
   description: 'Authentication for Microsoft OneDrive',
@@ -24,6 +25,7 @@ export const microsoftOneDrive = createPiece({
   auth: oneDriveAuth,
   minimumSupportedRelease: '0.8.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/oneDrive.png',
+  categories: [PieceCategory.FILE_MANAGEMENT_AND_STORAGE],
   authors: ['BastienMe'],
   actions: [
     uploadFile,

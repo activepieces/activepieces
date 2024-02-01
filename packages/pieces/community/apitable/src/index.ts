@@ -1,13 +1,14 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   createPiece,
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { createRecordAction } from './lib/actions/create-record';
 import { findRecordAction } from './lib/actions/find-record';
 import { updateRecordAction } from './lib/actions/update-record';
 import { newRecordTrigger } from './lib/triggers/new-record';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const APITableAuth = PieceAuth.CustomAuth({
   required: true,
@@ -43,6 +44,7 @@ export const apitable = createPiece({
   description: `Interactive spreadsheets with collaboration`,
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/apitable.png',
+  categories: [PieceCategory.DATABASES],
   authors: ['abdallah-alwarawreh', 'kishanprmr'],
   actions: [
     createRecordAction,

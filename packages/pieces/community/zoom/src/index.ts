@@ -1,11 +1,12 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   OAuth2PropertyValue,
   PieceAuth,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { zoomCreateMeeting } from './lib/actions/create-meeting';
 import { zoomCreateMeetingRegistrant } from './lib/actions/create-meeting-registrant';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const zoomAuth = PieceAuth.OAuth2({
   description: '',
@@ -19,6 +20,7 @@ export const zoom = createPiece({
   displayName: 'Zoom',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/zoom.png',
+  categories: [PieceCategory.COMMUNICATION],
   actions: [
     zoomCreateMeeting,
     zoomCreateMeetingRegistrant,

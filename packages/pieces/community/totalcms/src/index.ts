@@ -1,28 +1,30 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { cmsAuth } from './lib/auth';
 
-import { getContentAction } from './lib/actions/get-content';
 import { getBlogPostAction } from './lib/actions/get-blog-post';
-import { saveTextAction } from './lib/actions/save-text';
+import { getContentAction } from './lib/actions/get-content';
+import { saveBlogGalleryAction } from './lib/actions/save-blog-gallery';
+import { saveBlogImageAction } from './lib/actions/save-blog-image';
+import { saveBlogPostAction } from './lib/actions/save-blog-post';
 import { saveDateAction } from './lib/actions/save-date';
+import { saveDepotAction } from './lib/actions/save-depot';
+import { saveFileAction } from './lib/actions/save-file';
+import { saveGalleryAction } from './lib/actions/save-gallery';
+import { saveImageAction } from './lib/actions/save-image';
+import { saveTextAction } from './lib/actions/save-text';
 import { saveToggleAction } from './lib/actions/save-toggle';
 import { saveVideoAction } from './lib/actions/save-video';
-import { saveBlogPostAction } from './lib/actions/save-blog-post';
-import { saveImageAction } from './lib/actions/save-image';
-import { saveBlogImageAction } from './lib/actions/save-blog-image';
-import { saveGalleryAction } from './lib/actions/save-gallery';
-import { saveBlogGalleryAction } from './lib/actions/save-blog-gallery';
-import { saveFileAction } from './lib/actions/save-file';
-import { saveDepotAction } from './lib/actions/save-depot';
 
-import { newBlogPost } from './lib/triggers/new-blog-post';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { PieceCategory } from '@activepieces/shared';
+import { newBlogPost } from './lib/triggers/new-blog-post';
 
 export const totalcms = createPiece({
   displayName: 'Total CMS',
   auth: cmsAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/totalcms.png',
+  categories: [PieceCategory.WEBSITE_BUILDERS],
   authors: ['joeworkman'],
   actions: [
     getContentAction,

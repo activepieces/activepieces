@@ -3,6 +3,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { runQuery } from './lib/actions/run-query';
 
 export const postgresAuth = PieceAuth.CustomAuth({
@@ -65,6 +66,7 @@ export const postgresAuth = PieceAuth.CustomAuth({
 export const postgres = createPiece({
   displayName: 'Postgres',
   minimumSupportedRelease: '0.5.0',
+  categories: [PieceCategory.DATABASES],
   logoUrl: 'https://cdn.activepieces.com/pieces/postgres.png',
   authors: ['Willianwg'],
   auth: postgresAuth,
