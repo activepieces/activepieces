@@ -10,6 +10,7 @@ type ListParams = {
     platformId?: string
     includeHidden: boolean
     edition: ApEdition
+    searchQuery?: string
 }
 
 type GetOrThrowParams = {
