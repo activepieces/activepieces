@@ -17,17 +17,17 @@ import {
         description: 'The contact first name for this client (optional)',
         required: false,
       }),
-      client_last_name: Property.LongText({
+      client_last_name: Property.ShortText({
         displayName: 'Client Last Name (alphanumeric)',
         description: 'The contact last name for this client (optional)',
         required: false,
       }),
-      client_phone: Property.LongText({
+      client_phone: Property.ShortText({
         displayName: 'Client Contact No (alphanumeric)',
         description: 'The contact number for this client (optional)',
         required: false,
       }),
-      client_email: Property.LongText({
+      client_email: Property.ShortText({
         displayName: 'Client e-mail (alphanumeric)',
         description: 'The contact email for this client (compulsory)',
         required: true,
@@ -38,17 +38,17 @@ import {
         defaultValue: false,
         required: true,
       }),
-      client_business_name: Property.LongText({
+      client_business_name: Property.ShortText({
         displayName: 'Business Name (alphanumeric)',
         description: 'Name of this business or natural person (compulsory)',
         required: true,
       }),
-      client_tax_no: Property.LongText({
+      client_tax_no: Property.ShortText({
         displayName: 'Client Tax Number (alphanumeric)',
         description: 'Leave blank if not a business (optional)',
         required: false,
       }),
-      client_private_notes: Property.LongText({
+      client_private_notes: Property.ShortText({
         displayName: 'Private notes for client',
         description: 'Text not visible for clients (optional)',
         required: false,
@@ -63,17 +63,17 @@ import {
         description: 'Additional address details (optional)',
         required: false,
       }),
-      client_city: Property.LongText({
+      client_city: Property.ShortText({
         displayName: 'Client City/Town (alphanumeric)',
         description: 'City or Town name (compulsory)',
         required: true,
       }),
-      client_state: Property.LongText({
+      client_state: Property.ShortText({
         displayName: 'Client State (alphanumeric)',
         description: 'State or county or similar (optional)',
         required: false,
       }),
-      client_postcode: Property.LongText({
+      client_postcode: Property.ShortText({
         displayName: 'Client Postcode (alphanumeric)',
         description: 'Postal code (optional)',
         required: false,
