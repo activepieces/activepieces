@@ -48,6 +48,7 @@ export const CORE_PIECES_ACTIONS_NAMES = [
   '@activepieces/piece-date-helper',
   '@activepieces/piece-file-helper',
   '@activepieces/piece-math-helper',
+  '@activepieces/piece-image-helper'
 ];
 export const corePieceIconUrl = (pieceName: string) =>
   `assets/img/custom/piece/${pieceName.replace(
@@ -63,7 +64,7 @@ export class PieceMetadataService {
   private release$ = this.flagsService.getRelease().pipe(shareReplay(1));
   private clearCache$ = new Subject<void>();
   private edition$ = this.flagsService.getEdition();
-  private piecesManifest$ = this.getPiecesMetadataIncludeHidden({
+  private piecesManifest$ = this.getPiecesMetadata({
     includeHidden: false,
   });
   private piecesCache = new Map<string, Observable<PieceMetadataModel>>();
@@ -270,25 +271,33 @@ export class PieceMetadataService {
     throw new Error("Step type isn't accounted for");
   }
 
-  getPiecesMetadataIncludeHidden({
+  getPiecesMetadata({
     includeHidden,
+    searchQuery
   }: {
     includeHidden: boolean;
+    searchQuery?:string
   }) {
+
     return combineLatest([
       this.edition$,
       this.release$,
       this.clearCache$.asObservable().pipe(startWith(void 0)),
     ]).pipe(
       switchMap(([edition, release]) => {
+        let params:Record<string,boolean|string>= {
+          includeHidden,
+          release,
+          edition
+        };
+        if(searchQuery)
+        {
+          params={...params,searchQuery}
+        }
         return this.http.get<PieceMetadataModel[]>(
           `${environment.apiUrl}/pieces`,
           {
-            params: {
-              includeHidden,
-              release,
-              edition,
-            },
+            params,
           }
         );
       }),

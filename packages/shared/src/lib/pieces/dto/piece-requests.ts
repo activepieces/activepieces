@@ -26,6 +26,7 @@ export const ListPiecesRequestQuery = Type.Object({
     release: Type.Optional(ExactVersionType),
     includeHidden: Type.Optional(Type.Boolean()),
     edition: Type.Optional(Type.Enum(ApEdition)),
+    searchQuery: Type.Optional(Type.String()),
 })
 
 export type ListPiecesRequestQuery = Static<typeof ListPiecesRequestQuery>

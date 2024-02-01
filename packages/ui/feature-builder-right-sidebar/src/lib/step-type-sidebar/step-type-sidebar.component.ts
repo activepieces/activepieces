@@ -2,11 +2,13 @@ import { Store } from '@ngrx/store';
 import {
   combineLatest,
   debounceTime,
+  delay,
   filter,
   forkJoin,
   map,
   Observable,
   startWith,
+  Subject,
   switchMap,
   take,
   tap,
@@ -52,6 +54,7 @@ import {
   TelemetryService,
 } from '@activepieces/ui/common';
 import { Actions, ofType } from '@ngrx/effects';
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 
 @Component({
   selector: 'app-step-type-sidebar',
@@ -66,7 +69,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
   //EE
   searchControlTelemetry$: Observable<void>;
   //EE end
-  showCommunity$: Observable<boolean>;
+  showRequestPiece$: Observable<boolean>;
   @Input() set showTriggers(shouldShowTriggers: boolean) {
     this._showTriggers = shouldShowTriggers;
     if (this._showTriggers) {
@@ -76,7 +79,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
     }
     this.populateTabsAndTheirLists();
   }
-
+  loading$ = new Subject<boolean>();
   sideBarDisplayName = $localize`Select Step`;
   tabsAndTheirLists: {
     displayName: string;
@@ -91,7 +94,8 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
     private codeService: CodeService,
     private actions: Actions,
     private flagsService: FlagService,
-    private telemetryService: TelemetryService
+    private telemetryService: TelemetryService,
+    private pieceMetadataService: PieceMetadataService
   ) {
     this.focusSearchInput$ = this.actions.pipe(
       ofType(CanvasActionType.SET_RIGHT_SIDEBAR),
@@ -100,7 +104,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
       }),
       map(() => void 0)
     );
-    this.showCommunity$ = this.flagsService.isFlagEnabled(
+    this.showRequestPiece$ = this.flagsService.isFlagEnabled(
       ApFlagId.SHOW_COMMUNITY
     );
     //EE
@@ -139,7 +143,9 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
   }
 
   populateTabsAndTheirLists() {
-    this.searchFormControl.setValue('', { emitEvent: false });
+    this.searchFormControl.setValue(this.searchFormControl.value, {
+      emitEvent: false,
+    });
     this.tabsAndTheirLists = [];
     const coreItemsDetails$ = this._showTriggers
       ? this.store.select(BuilderSelectors.selectFlowItemDetailsForCoreTriggers)
@@ -162,6 +168,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
         );
       })
     );
+
     this.tabsAndTheirLists.push({
       displayName: $localize`All`,
       list$: this.applySearchToObservable(allItemDetails$),
@@ -401,23 +408,52 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
   }
 
   applySearchToObservable(
-    obs$: Observable<FlowItemDetails[]>
+    tabItems$: Observable<FlowItemDetails[]>
   ): Observable<FlowItemDetails[]> {
+    this.loading$.next(true);
     return combineLatest({
-      items: obs$,
+      allTabItems: tabItems$,
       search: this.searchFormControl.valueChanges.pipe(
-        startWith(''),
-        map((search) => (search ? search : ''))
+        startWith(this.searchFormControl.value),
+        tap(() => {
+          this.loading$.next(true);
+        }),
+        debounceTime(300),
+        map((search) => (search ? search : '')),
+        switchMap((searchQuery) => {
+          const serverRequestToSearchForPiece$ =
+            this.pieceMetadataService.getPiecesMetadata({
+              includeHidden: false,
+              searchQuery,
+            });
+          return serverRequestToSearchForPiece$.pipe(
+            map((res) => {
+              return {
+                searchQuery,
+                serverResponse: res,
+              };
+            })
+          );
+        })
       ),
     }).pipe(
       map((res) => {
-        return res.items.filter(
+        return res.allTabItems.filter(
           (item) =>
             item.description
               .toLowerCase()
-              .includes(res.search.trim().toLowerCase()) ||
-            item.name.toLowerCase().includes(res.search.trim().toLowerCase())
+              .includes(res.search.searchQuery.trim().toLowerCase()) ||
+            item.name
+              .toLowerCase()
+              .includes(res.search.searchQuery.trim().toLowerCase()) ||
+            res.search.serverResponse.findIndex(
+              (p) => p.displayName === item.name
+            ) > -1
         );
+      }),
+      delay(50),
+      tap(() => {
+        this.loading$.next(false);
       })
     );
   }
