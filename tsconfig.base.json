@@ -27,6 +27,9 @@
         "packages/ee/project-members/src/index.ts"
       ],
       "@activepieces/engine": ["packages/engine/src/main.ts"],
+      "@activepieces/piece-Odoo": [
+        "packages/pieces/community/Odoo/src/index.ts"
+      ],
       "@activepieces/piece-activepieces": [
         "packages/pieces/community/activepieces/src/index.ts"
       ],
@@ -328,6 +331,9 @@
       ],
       "@activepieces/piece-ntfy": [
         "packages/pieces/community/ntfy/src/index.ts"
+      ],
+      "@activepieces/piece-odoo": [
+        "packages/pieces/community/odoo/src/index.ts"
       ],
       "@activepieces/piece-onfleet": [
         "packages/pieces/community/onfleet/src/index.ts"
