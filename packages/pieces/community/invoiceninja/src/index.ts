@@ -10,6 +10,8 @@ import { getClient } from './lib/actions/get-client';
 import { getInvoices } from './lib/actions/get-invoices';
 import { getReport } from './lib/actions/get-report';
 import { existsTask } from './lib/actions/task-exists';
+import { createInvoice } from './lib/actions/create-invoice';
+import { createClient } from './lib/actions/create-client';
 
 export const invoiceninjaAuth = PieceAuth.CustomAuth({
   props: {
@@ -42,6 +44,8 @@ export const invoiceninja = createPiece({
     getClient,
     getInvoices,
     getReport,
+    createInvoice,
+    createClient,
     createCustomApiCallAction({
       baseUrl: (auth) =>
         `${(auth as { base_url: string }).base_url.replace(/\/$/, '')}/api/v1`,

@@ -116,7 +116,7 @@ export class SidenavRoutesListComponent implements OnInit {
         icon: 'assets/img/custom/dashboard/settings.svg',
         caption: $localize`Settings`,
         route: 'settings',
-        showInSideNav$: this.showGitSync.pipe(map((embedded) => !embedded)),
+        showInSideNav$: this.showGitSync,
       },
     ];
   }
