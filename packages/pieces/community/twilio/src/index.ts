@@ -1,4 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { twilioSendSms } from './lib/action/send-sms';
 import { twilioNewIncomingSms } from './lib/trigger/new-incoming-sms';
 
@@ -21,6 +22,7 @@ export const twilio = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/twilio.png',
   auth: twilioAuth,
+  categories: [PieceCategory.IT_OPERATIONS],
   actions: [twilioSendSms],
   authors: ['abuaboud'],
   triggers: [twilioNewIncomingSms],

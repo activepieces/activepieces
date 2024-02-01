@@ -1,9 +1,10 @@
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import {
   createPiece,
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { PieceCategory } from '@activepieces/shared';
 import { askChatbot } from './lib/actions/ask-chatbot';
 
 const markdownDescription = `
@@ -64,6 +65,7 @@ export const retune = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/retune.png',
   authors: ['MoShizzle'],
+  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   actions: [askChatbot],
   triggers: [],
 });

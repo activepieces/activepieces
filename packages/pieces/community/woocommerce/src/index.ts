@@ -4,6 +4,7 @@ import {
   createPiece,
 } from '@activepieces/pieces-framework';
 
+import { PieceCategory } from '@activepieces/shared';
 import { wooCreateCoupon } from './lib/actions/create-coupon';
 import { wooCreateCustomer } from './lib/actions/create-customer';
 import { wooCreateProduct } from './lib/actions/create-product';
@@ -61,6 +62,7 @@ export const woocommerce = createPiece({
   auth: wooAuth,
   minimumSupportedRelease: '0.7.1',
   authors: ['MoShizzle', 'TaskMagicKyle', 'kishanprmr'],
+  categories: [PieceCategory.COMMERCE],
   actions: [
     wooCreateCustomer,
     wooCreateCoupon,

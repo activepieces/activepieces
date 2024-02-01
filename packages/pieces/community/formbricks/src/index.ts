@@ -1,4 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { triggers } from './lib/triggers';
 
 const markdownPropertyDescription = `
@@ -22,6 +23,7 @@ export const formbricks = createPiece({
   displayName: 'Formbricks',
   auth: formBricksAuth,
   minimumSupportedRelease: '0.9.0',
+  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   logoUrl: 'https://cdn.activepieces.com/pieces/formbricks.png',
   authors: ['kanarelo'],
   actions: [],

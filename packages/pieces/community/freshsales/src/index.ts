@@ -3,6 +3,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { freshSalesCreateContact } from './lib/actions/create-contact';
 
 const markdownDescription = `
@@ -36,6 +37,7 @@ export const freshsales = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/freshsales.png',
   authors: ['kanarelo'],
+  categories: [PieceCategory.SALES_AND_CRM],
   auth: freshsalesAuth,
   actions: [freshSalesCreateContact],
   triggers: [],

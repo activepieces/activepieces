@@ -1,4 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { posthogCreateEvent } from './lib/actions/create-event';
 import { posthogCreateProject } from './lib/actions/create-project';
 
@@ -18,6 +19,7 @@ export const posthog = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/posthog.png',
   auth: posthogAuth,
   actions: [posthogCreateEvent, posthogCreateProject],
+  categories: [PieceCategory.OTHER],
   authors: ['kanarelo'],
   triggers: [],
 });

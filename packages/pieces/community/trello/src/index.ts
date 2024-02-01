@@ -1,13 +1,14 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { createCard } from './lib/actions/create-card';
-import { getCard } from './lib/actions/get-card';
-import { cardMovedTrigger } from './lib/triggers/cardMoved';
-import { newCardTrigger } from './lib/triggers/newCard';
 import {
   HttpMethod,
   HttpRequest,
   httpClient,
 } from '@activepieces/pieces-common';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
+import { createCard } from './lib/actions/create-card';
+import { getCard } from './lib/actions/get-card';
+import { cardMovedTrigger } from './lib/triggers/cardMoved';
+import { newCardTrigger } from './lib/triggers/newCard';
 
 const markdownProperty = `
 To obtain your API key and token, follow these steps:
@@ -68,6 +69,7 @@ export const trello = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/trello.png',
   authors: ['ShayPunter', 'Salem-Alaa', 'MoShizzle'],
+  categories: [PieceCategory.PROJECT_MANAGEMENT],
   auth: trelloAuth,
   actions: [createCard, getCard],
   triggers: [cardMovedTrigger, newCardTrigger],

@@ -3,6 +3,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { sendMessage } from './lib/actions/send-message';
 
 export const matrixAuth = PieceAuth.CustomAuth({
@@ -34,6 +35,7 @@ export const matrix = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/matrix.png',
   minimumSupportedRelease: '0.5.0',
   authors: ['abuaboud'],
+  categories: [PieceCategory.COMMUNICATION],
   auth: matrixAuth,
   actions: [sendMessage],
   triggers: [],

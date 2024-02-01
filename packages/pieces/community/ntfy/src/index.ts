@@ -3,6 +3,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { sendNotification } from './lib/actions/send-notification';
 
 export const ntfyAuth = PieceAuth.CustomAuth({
@@ -35,6 +36,7 @@ export const ntfy = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/ntfy.png',
   minimumSupportedRelease: '0.5.0',
   auth: ntfyAuth,
+  categories: [PieceCategory.OTHER],
   authors: ['MyWay'],
   actions: [sendNotification],
   triggers: [],

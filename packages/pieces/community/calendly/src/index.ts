@@ -1,7 +1,8 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
+import { calendlyCommon } from './lib/common';
 import { calendlyInviteeCanceled } from './lib/trigger/invitee-canceled.trigger';
 import { calendlyInviteeCreated } from './lib/trigger/invitee-created.trigger';
-import { calendlyCommon } from './lib/common';
 
 const markdown = `
 ## Obtain your Calendly Personal Token
@@ -33,6 +34,7 @@ export const calendly = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/calendly.png',
   authors: ['AbdulTheActivePiecer'],
+  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   auth: calendlyAuth,
   actions: [],
   triggers: [calendlyInviteeCreated, calendlyInviteeCanceled],

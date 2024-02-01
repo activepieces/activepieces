@@ -1,4 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { datastoreSearch } from './lib/actions/datastore-search';
 
 const markdownDescription = `
@@ -31,6 +32,7 @@ export const llmrails = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/llmrails.png',
   authors: ['w95'],
+  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   auth: llmrailsAuth,
   actions: [datastoreSearch],
   triggers: [],

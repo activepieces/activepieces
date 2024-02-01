@@ -1,4 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { generateImage } from './lib/actions/generate-image.action';
 
 const markdownDescription = `
@@ -25,6 +26,7 @@ export const robolly = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/robolly.png',
   authors: ['PFernandez98'],
+  categories: [PieceCategory.IT_OPERATIONS],
   actions: [generateImage],
   triggers: [],
 });

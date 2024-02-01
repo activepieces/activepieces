@@ -3,6 +3,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { newContact } from './lib/triggers/new-contact';
 
 export const zohoCrmAuth = PieceAuth.OAuth2({
@@ -47,6 +48,7 @@ export const zohoCrm = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/zoho-crm.png',
   minimumSupportedRelease: '0.5.0',
   authors: ['abuaboud'],
+  categories: [PieceCategory.SALES_AND_CRM],
   auth: zohoCrmAuth,
   actions: [],
   triggers: [newContact],

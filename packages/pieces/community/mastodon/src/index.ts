@@ -3,6 +3,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { postStatus } from './lib/actions/post-status';
 
 const markdownDescription = `
@@ -41,6 +42,7 @@ export const mastodon = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/mastodon.png',
   minimumSupportedRelease: '0.5.0',
   authors: ['abuaboud'],
+  categories: [PieceCategory.COMMUNICATION],
   auth: mastodonAuth,
   actions: [postStatus],
   triggers: [],

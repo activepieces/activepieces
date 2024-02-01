@@ -1,5 +1,6 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 
+import { PieceCategory } from '@activepieces/shared';
 import { createDocument } from './lib/actions/create-document';
 import { createDocumentBasedOnTemplate } from './lib/actions/create-document-based-on-template.action';
 import { readDocument } from './lib/actions/read-document.action';
@@ -15,6 +16,7 @@ export const googleDocs = createPiece({
   displayName: 'Google Docs',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-docs.png',
+  categories: [PieceCategory.CONTENT_AND_FILES],
   authors: ['MoShizzle', 'PFernandez98'],
   auth: googleDocsAuth,
   actions: [createDocument, createDocumentBasedOnTemplate, readDocument],

@@ -1,4 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { createCredential } from './lib/actions/create-credential';
 
 export const certopusAuth = PieceAuth.SecretText({
@@ -12,6 +13,7 @@ export const certopus = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/certopus.png',
   authors: ['VrajGohil'],
+  categories: [PieceCategory.OTHER],
   auth: certopusAuth,
   actions: [createCredential],
   triggers: [],

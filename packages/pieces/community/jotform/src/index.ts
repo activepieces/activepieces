@@ -3,6 +3,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { newSubmission } from './lib/triggers/new-submission';
 
 const markdownDescription = `
@@ -44,6 +45,7 @@ export const jotform = createPiece({
   displayName: 'Jotform',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/jotform.svg',
+  categories: [PieceCategory.FORMS_AND_SURVEYS],
   authors: ['MoShizzle'],
   auth: jotformAuth,
   actions: [],

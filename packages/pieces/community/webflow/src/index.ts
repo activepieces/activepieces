@@ -1,14 +1,15 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { webflowNewSubmission } from './lib/triggers/new-form-submitted';
+import { PieceCategory } from '@activepieces/shared';
 import { webflowCreateCollectionItem } from './lib/actions/create-collection-item';
 import { webflowDeleteCollectionItem } from './lib/actions/delete-collection-item';
-import { webflowUpdateCollectionItem } from './lib/actions/update-collection-item';
 import { webflowFindCollectionItem } from './lib/actions/find-collection-item';
-import { webflowGetCollectionItem } from './lib/actions/get-collection-item';
-import { webflowFulfillOrder } from './lib/actions/fulfill-order';
-import { webflowUnfulfillOrder } from './lib/actions/unfulfill-order';
-import { webflowRefundOrder } from './lib/actions/refund-order';
 import { webflowFindOrder } from './lib/actions/find-order';
+import { webflowFulfillOrder } from './lib/actions/fulfill-order';
+import { webflowGetCollectionItem } from './lib/actions/get-collection-item';
+import { webflowRefundOrder } from './lib/actions/refund-order';
+import { webflowUnfulfillOrder } from './lib/actions/unfulfill-order';
+import { webflowUpdateCollectionItem } from './lib/actions/update-collection-item';
+import { webflowNewSubmission } from './lib/triggers/new-form-submitted';
 
 export const webflowAuth = PieceAuth.OAuth2({
   description: '',
@@ -25,6 +26,7 @@ export const webflow = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/webflow.png',
   authors: ['Ahmad-AbuOsbeh', 'TaskMagicKyle'],
   auth: webflowAuth,
+  categories: [PieceCategory.WEBSITE_BUILDERS],
   actions: [
     webflowCreateCollectionItem,
     webflowDeleteCollectionItem,

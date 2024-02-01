@@ -1,18 +1,19 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import {
-  visualClassifierModelPredictAction,
-  imageToTextModelPredictAction,
-} from './lib/actions/call-image-model';
-import {
-  textToTextModelPredictAction,
-  textClassifierModelPredictAction,
-} from './lib/actions/call-text-model';
-import { audioToTextModelPredictAction } from './lib/actions/call-audio-model';
-import { postInputsAction } from './lib/actions/call-post-inputs';
-import { workflowPredictAction } from './lib/actions/call-workflow';
-import { clarifaiAskLLM } from './lib/actions/ask-llm';
-import { clarifaiGenerateIGM } from './lib/actions/generate-igm';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
+import { clarifaiAskLLM } from './lib/actions/ask-llm';
+import { audioToTextModelPredictAction } from './lib/actions/call-audio-model';
+import {
+  imageToTextModelPredictAction,
+  visualClassifierModelPredictAction,
+} from './lib/actions/call-image-model';
+import { postInputsAction } from './lib/actions/call-post-inputs';
+import {
+  textClassifierModelPredictAction,
+  textToTextModelPredictAction,
+} from './lib/actions/call-text-model';
+import { workflowPredictAction } from './lib/actions/call-workflow';
+import { clarifaiGenerateIGM } from './lib/actions/generate-igm';
 
 const markdownDescription = `
 Follow these instructions to get your Clarifai (Personal Access Token) PAT Key:
@@ -49,6 +50,7 @@ export const clarifai = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/clarifai.png',
   authors: ['akatechis', 'Salem-Alaa'],
+  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   auth: clarifaiAuth,
   actions: [
     clarifaiAskLLM,

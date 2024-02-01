@@ -3,8 +3,9 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { createTweet } from './lib/actions/create-tweet';
+import { PieceCategory } from '@activepieces/shared';
 import { TwitterApi } from 'twitter-api-v2';
+import { createTweet } from './lib/actions/create-tweet';
 
 const markdownDescription = `
 If you don't have the crednetials down below, please follow these steps to obtain the required credentials:
@@ -84,6 +85,7 @@ export const twitter = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/twitter.png',
   authors: ['abuaboud', 'Abdallah-Alwarawreh'],
+  categories: [PieceCategory.COMMUNICATION],
   auth: twitterAuth,
   actions: [createTweet],
   triggers: [],

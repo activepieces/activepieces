@@ -3,6 +3,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import actions from './lib/actions';
 import triggers from './lib/triggers';
 
@@ -31,6 +32,7 @@ export const pastefy = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/pastefy.png',
   authors: ['JanHolger'],
+  categories: [PieceCategory.DEVELOPER_TOOLS],
   auth: pastefyAuth,
   actions,
   triggers: triggers,

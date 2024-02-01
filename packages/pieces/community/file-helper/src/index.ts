@@ -1,4 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { readFileAction } from './lib/actions/read-file';
 
 export const filesHelper = createPiece({
@@ -8,5 +9,6 @@ export const filesHelper = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/file-piece.svg',
   authors: ['Salem-Alaa'],
   actions: [readFileAction],
+  categories: [PieceCategory.CORE],
   triggers: [],
 });

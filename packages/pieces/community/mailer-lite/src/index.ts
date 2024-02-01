@@ -1,4 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { createOrUpdateSubscriber } from './lib/actions/create-or-update-subscription';
 
 const markdownDescription = `
@@ -21,6 +22,7 @@ export const mailerLite = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/mailer-lite.png',
   authors: ['Willianwg'],
+  categories: [PieceCategory.MARKETING],
   auth: mailerListAuth,
   actions: [createOrUpdateSubscriber],
   triggers: [],

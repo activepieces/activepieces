@@ -1,4 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { addGreetAction } from './lib/actions/add-greet';
 import { bonjoroAuth } from './lib/auth';
 
@@ -7,6 +8,7 @@ export const bonjoro = createPiece({
   auth: bonjoroAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/bonjoro.png',
+  categories: [PieceCategory.CUSTOMER_SERVICE],
   authors: ['joeworkman'],
   actions: [addGreetAction],
   triggers: [],

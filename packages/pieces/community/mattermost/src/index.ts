@@ -3,6 +3,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { sendMessage } from './lib/actions/send-message';
 
 const markdownDescription = `
@@ -35,6 +36,7 @@ export const mattermost = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/mattermost.png',
   minimumSupportedRelease: '0.5.0',
   authors: ['abuaboud'],
+  categories: [PieceCategory.COMMUNICATION],
   auth: mattermostAuth,
   actions: [sendMessage],
   triggers: [],

@@ -1,4 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { sendNotification } from './lib/actions/send-notification';
 
 export const pushoverAuth = PieceAuth.CustomAuth({
@@ -35,6 +36,7 @@ export const pushover = createPiece({
 
   logoUrl: 'https://cdn.activepieces.com/pieces/pushover.png',
   minimumSupportedRelease: '0.5.0',
+  categories: [PieceCategory.OTHER],
   authors: ['MyWay'],
   auth: pushoverAuth,
   actions: [sendNotification],

@@ -1,9 +1,10 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
+import { telegramCreateInviteLinkAction } from './lib/action/create-invite-link';
+import { telegramGetChatMemberAction } from './lib/action/get-chat-member';
+import { telegramSendMediaAction } from './lib/action/send-media.action';
 import { telegramSendMessageAction } from './lib/action/send-text-message.action';
 import { telegramNewMessage } from './lib/trigger/new-message';
-import { telegramSendMediaAction } from './lib/action/send-media.action';
-import { telegramGetChatMemberAction } from './lib/action/get-chat-member';
-import { telegramCreateInviteLinkAction } from './lib/action/create-invite-link';
 
 const markdownDescription = `
 **Authentication**:
@@ -27,6 +28,7 @@ export const telegramBot = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/telegram_bot.png',
   auth: telegramBotAuth,
+  categories: [PieceCategory.COMMUNICATION],
   actions: [
     telegramSendMessageAction,
     telegramSendMediaAction,

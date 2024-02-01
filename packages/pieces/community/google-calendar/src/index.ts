@@ -4,6 +4,7 @@ import {
   PieceAuth,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { createEvent } from './lib/actions/create-event';
 import { createQuickCalendarEvent } from './lib/actions/create-quick-event';
 import { deleteEventAction } from './lib/actions/delete-event.action';
@@ -29,6 +30,7 @@ export const googleCalendar = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/google-calendar.png',
   displayName: 'Google Calendar',
   authors: ['osamahaikal', 'bibhuty-did-this', 'MoShizzle', 'PFernandez98'],
+  categories: [PieceCategory.IT_OPERATIONS],
   auth: googleCalendarAuth,
   actions: [
     createQuickCalendarEvent,

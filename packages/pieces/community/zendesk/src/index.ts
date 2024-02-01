@@ -3,6 +3,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { newTicketInView } from './lib/trigger/new-ticket-in-view';
 
 const markdownProperty = `
@@ -40,6 +41,7 @@ export const zendesk = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/zendesk.png',
   authors: ['abuaboud'],
+  categories: [PieceCategory.CUSTOMER_SERVICE],
   auth: zendeskAuth,
   actions: [],
   triggers: [newTicketInView],

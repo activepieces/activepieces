@@ -1,4 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { googleTasksAddNewTaskAction } from './lib/actions/new-task';
 import { newTaskTrigger } from './lib/triggers/new-task';
 
@@ -15,6 +16,7 @@ export const googleTasks = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-tasks.png',
   actions: [googleTasksAddNewTaskAction],
+  categories: [PieceCategory.IT_OPERATIONS],
   displayName: 'Google Tasks',
   authors: ['abaza738', 'Salem-Alaa'],
   triggers: [newTaskTrigger],

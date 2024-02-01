@@ -1,4 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { isNil } from '@activepieces/shared';
+import { googleSheetsAuth } from '../..';
 import {
   Dimension,
   googleSheetsCommon,
@@ -6,8 +8,6 @@ import {
   stringifyArray,
   ValueInputOption,
 } from '../common/common';
-import { googleSheetsAuth } from '../..';
-import { isNil } from '@activepieces/shared';
 
 export const insertRowAction = createAction({
   auth: googleSheetsAuth,
@@ -48,6 +48,8 @@ export const insertRowAction = createAction({
     } else {
       formattedValues = values['values'];
     }
+    console.log('FETCHED VAL');
+    console.log(values);
     const res = await googleSheetsCommon.appendGoogleSheetValues({
       accessToken: auth['access_token'],
       majorDimension: Dimension.COLUMNS,

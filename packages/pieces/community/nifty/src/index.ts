@@ -1,4 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { createTask } from './lib/actions/create-task';
 
 const mddescription = `
@@ -27,6 +28,7 @@ export const nifty = createPiece({
   minimumSupportedRelease: '0.7.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/nifty.png',
   authors: ['Salem-Alaa'],
+  categories: [PieceCategory.PROJECT_MANAGEMENT],
   actions: [createTask],
   triggers: [],
 });

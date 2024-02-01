@@ -1,4 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { gmailSendEmailAction } from './lib/actions/send-email-action';
 
 export const gmailAuth = PieceAuth.OAuth2({
@@ -15,8 +16,15 @@ export const gmail = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/gmail.png',
   actions: [gmailSendEmailAction],
+  categories: [PieceCategory.COMMUNICATION],
   displayName: 'Gmail',
-  authors: ['AbdulTheActivePiecer', 'kanarelo', 'BastienMe', 'PFernandez98', 'kishanprmr'],
+  authors: [
+    'AbdulTheActivePiecer',
+    'kanarelo',
+    'BastienMe',
+    'PFernandez98',
+    'kishanprmr',
+  ],
   triggers: [],
   auth: gmailAuth,
 });

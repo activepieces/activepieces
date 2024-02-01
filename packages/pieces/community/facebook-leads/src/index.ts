@@ -1,4 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { newLead } from './lib/triggers/new-lead';
 
 export const facebookLeadsAuth = PieceAuth.OAuth2({
@@ -21,6 +22,7 @@ export const facebookLeads = createPiece({
   authors: ['MoShizzle'],
   auth: facebookLeadsAuth,
   actions: [],
+  categories: [PieceCategory.MARKETING],
   triggers: [newLead],
   events: {
     parseAndReply: (context) => {

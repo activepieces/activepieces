@@ -1,4 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { zoomCreateMeeting } from './lib/actions/create-meeting';
 import { zoomCreateMeetingRegistrant } from './lib/actions/create-meeting-registrant';
 
@@ -15,6 +16,7 @@ export const zoom = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/zoom.png',
   actions: [zoomCreateMeeting, zoomCreateMeetingRegistrant],
+  categories: [PieceCategory.COMMUNICATION],
   auth: zoomAuth,
   authors: ['kanarelo'],
   triggers: [],

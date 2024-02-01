@@ -3,11 +3,12 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { addPointsToCollection } from './lib/actions/add-points';
-import { collectionList } from './lib/actions/get-collection-list';
-import { collectionInfos } from './lib/actions/get-collection-infos';
 import { deleteCollection } from './lib/actions/delete-collection';
 import { deletePoints } from './lib/actions/delete-points';
+import { collectionInfos } from './lib/actions/get-collection-infos';
+import { collectionList } from './lib/actions/get-collection-list';
 import { getPoints } from './lib/actions/get-points';
 import { searchPoints } from './lib/actions/search-points';
 
@@ -48,6 +49,7 @@ export const qdrant = createPiece({
   minimumSupportedRelease: '0.8.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/qdrant.png',
   authors: ['ArmanGiau'],
+  categories: [PieceCategory.DATABASES],
   actions: [
     addPointsToCollection,
     collectionList,

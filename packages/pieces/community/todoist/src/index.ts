@@ -1,4 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { todoistCreateTaskAction } from './lib/actions/create-task-action';
 import { todoistTaskCompletedTrigger } from './lib/triggers/task-completed-trigger';
 
@@ -14,6 +15,7 @@ export const todoist = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/todoist.png',
   authors: ['khaledmashaly'],
+  categories: [PieceCategory.PROJECT_MANAGEMENT],
   auth: todoistAuth,
   actions: [todoistCreateTaskAction],
   triggers: [todoistTaskCompletedTrigger],

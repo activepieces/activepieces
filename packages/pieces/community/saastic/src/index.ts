@@ -1,11 +1,12 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
-  HttpMethod,
   httpClient,
+  HttpMethod,
 } from '@activepieces/pieces-common';
-import { createCustomer } from './lib/actions/create-customer';
+import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { createCharge } from './lib/actions/create-charge';
+import { createCustomer } from './lib/actions/create-customer';
 
 export const saasticAuth = PieceAuth.SecretText({
   description:
@@ -42,6 +43,7 @@ export const saastic = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/saastic.png',
   authors: ['joselupianez'],
+  categories: [PieceCategory.MARKETING],
   actions: [createCustomer, createCharge],
   triggers: [],
 });

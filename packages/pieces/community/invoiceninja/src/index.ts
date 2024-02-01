@@ -3,11 +3,12 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { createTask } from './lib/actions/create-task';
-import { existsTask } from './lib/actions/task-exists';
 import { getClient } from './lib/actions/get-client';
 import { getInvoices } from './lib/actions/get-invoices';
 import { getReport } from './lib/actions/get-report';
+import { existsTask } from './lib/actions/task-exists';
 
 export const invoiceninjaAuth = PieceAuth.CustomAuth({
   props: {
@@ -32,6 +33,7 @@ export const invoiceninja = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/invoiceninja.png',
   authors: ['buttonsbond'],
+  categories: [PieceCategory.CUSTOMER_SERVICE],
   auth: invoiceninjaAuth,
   actions: [createTask, existsTask, getClient, getInvoices, getReport],
   triggers: [],

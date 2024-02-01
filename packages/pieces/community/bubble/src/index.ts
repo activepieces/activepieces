@@ -1,11 +1,15 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { Property } from '@activepieces/pieces-framework';
+import {
+  createPiece,
+  PieceAuth,
+  Property,
+} from '@activepieces/pieces-framework';
 
+import { PieceCategory } from '@activepieces/shared';
 import { bubbleCreateThingAction } from './lib/actions/create-thing';
 import { bubbleDeleteThingAction } from './lib/actions/delete-thing';
-import { bubbleUpdateThingAction } from './lib/actions/update-thing';
-import { bubbleListThingsAction } from './lib/actions/list-things';
 import { bubbleGetThingAction } from './lib/actions/get-thing';
+import { bubbleListThingsAction } from './lib/actions/list-things';
+import { bubbleUpdateThingAction } from './lib/actions/update-thing';
 
 export const bubbleAuth = PieceAuth.CustomAuth({
   description: `Enter Bubble Connection Details
@@ -45,6 +49,7 @@ export const bubble = createPiece({
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/bubble.png',
+  categories: [PieceCategory.OTHER],
   authors: ['TaskMagicKyle'],
   actions: [
     bubbleCreateThingAction,

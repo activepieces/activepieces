@@ -3,6 +3,7 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { newInvoice } from './lib/triggers/new-invoice';
 
 export const zohoAuth = PieceAuth.OAuth2({
@@ -49,6 +50,7 @@ export const zohoInvoice = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/zoho-invoice.png',
   authors: ['MoShizzle'],
+  categories: [PieceCategory.IT_OPERATIONS, PieceCategory.OTHER],
   actions: [],
   triggers: [newInvoice],
 });

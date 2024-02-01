@@ -1,12 +1,13 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { stripeNewPayment } from './lib/trigger/new-payment';
-import { stripeNewCustomer } from './lib/trigger/new-customer';
-import { stripePaymentFailed } from './lib/trigger/payment-failed';
-import { stripeNewSubscription } from './lib/trigger/new-subscription';
+import { PieceCategory } from '@activepieces/shared';
 import { stripeCreateCustomer } from './lib/actions/create-customer';
 import { stripeCreateInvoice } from './lib/actions/create-invoice';
-import { stripeSearchCustomer } from './lib/actions/search-customer';
 import { stripeRetrieveCustomer } from './lib/actions/retrieve-customer';
+import { stripeSearchCustomer } from './lib/actions/search-customer';
+import { stripeNewCustomer } from './lib/trigger/new-customer';
+import { stripeNewPayment } from './lib/trigger/new-payment';
+import { stripeNewSubscription } from './lib/trigger/new-subscription';
+import { stripePaymentFailed } from './lib/trigger/payment-failed';
 
 export const stripeAuth = PieceAuth.SecretText({
   displayName: 'Secret API Key',
@@ -19,6 +20,7 @@ export const stripe = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/stripe.png',
   authors: ['ashrafsamhouri', 'lldiegon', 'doskyft'],
+  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   auth: stripeAuth,
   actions: [
     stripeCreateCustomer,

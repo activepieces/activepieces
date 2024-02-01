@@ -1,4 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { xeroCreateContact } from './lib/actions/create-contact';
 import { xeroCreateInvoice } from './lib/actions/create-invoice';
 
@@ -22,6 +23,7 @@ export const xero = createPiece({
   displayName: 'Xero',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/xero.png',
+  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   authors: ['kanarelo'],
   auth: xeroAuth,
   actions: [xeroCreateContact, xeroCreateInvoice],

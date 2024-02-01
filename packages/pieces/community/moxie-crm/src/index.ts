@@ -3,10 +3,11 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { moxieCRMTriggers } from './lib/triggers';
-import { moxieCreateProjectAction } from './lib/actions/create-project';
+import { PieceCategory } from '@activepieces/shared';
 import { moxieCreateClientAction } from './lib/actions/create-client';
+import { moxieCreateProjectAction } from './lib/actions/create-project';
 import { moxieCreateTaskAction } from './lib/actions/create-task';
+import { moxieCRMTriggers } from './lib/triggers';
 export const moxieCRMAuth = PieceAuth.CustomAuth({
   required: true,
   description: `
@@ -37,6 +38,7 @@ export const moxieCrm = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/moxie-crm.png',
   authors: ['kishanprmr'],
+  categories: [PieceCategory.SALES_AND_CRM],
   actions: [
     moxieCreateClientAction,
     moxieCreateTaskAction,

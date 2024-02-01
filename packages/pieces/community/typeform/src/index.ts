@@ -1,4 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { typeformNewSubmission } from './lib/trigger/new-submission';
 
 export const typeformAuth = PieceAuth.OAuth2({
@@ -12,6 +13,7 @@ export const typeform = createPiece({
   displayName: 'Typeform',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/typeform.png',
+  categories: [PieceCategory.FORMS_AND_SURVEYS],
   actions: [],
   auth: typeformAuth,
   authors: ['ShahedAlMashni'],

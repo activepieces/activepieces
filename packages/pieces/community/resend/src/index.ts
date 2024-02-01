@@ -1,4 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { sendEmail } from './lib/actions/send-email';
 
 export const resendAuth = PieceAuth.SecretText({
@@ -13,5 +14,6 @@ export const resend = createPiece({
   authors: [],
   auth: resendAuth,
   actions: [sendEmail],
+  categories: [PieceCategory.BUSINESS_INTELLIGENCE, PieceCategory.MARKETING],
   triggers: [],
 });

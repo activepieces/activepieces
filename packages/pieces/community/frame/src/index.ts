@@ -1,4 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { triggers } from './lib/triggers';
 
 const markdownPropertyDescription = `
@@ -22,6 +23,7 @@ export const frame = createPiece({
   displayName: 'Frame',
   auth: frameAuth,
   minimumSupportedRelease: '0.9.0',
+  categories: [PieceCategory.COMMUNICATION],
   logoUrl: 'https://cdn.activepieces.com/pieces/frameio.png',
   authors: ['kanarelo'],
   actions: [],

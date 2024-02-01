@@ -51,7 +51,7 @@ export const airtable = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/airtable.png',
   authors: ['AbdulTheActivePiecer', 'kanarelo', 'TaskMagicKyle'],
-  categories: [PieceCategory.CONTENT_AND_FILES],
+  categories: [PieceCategory.DATABASES],
   auth: airtableAuth,
   actions: [
     airtableCreateRecordAction,

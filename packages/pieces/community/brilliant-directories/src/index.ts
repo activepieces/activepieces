@@ -3,6 +3,7 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { createNewUser } from './lib/actions/create-new-user';
 
 export const brilliantDirectoriesAuth = PieceAuth.CustomAuth({
@@ -34,6 +35,7 @@ export const brilliantDirectories = createPiece({
   auth: brilliantDirectoriesAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/brilliant-directories.png',
+  categories: [PieceCategory.OTHER],
   authors: ['Shay Punter @ PunterDigital', 'Tim M'],
   actions: [createNewUser],
   triggers: [],

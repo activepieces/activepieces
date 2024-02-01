@@ -1,4 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { sendSMS } from './lib/actions/send-sms';
 
 export const contigAuth = PieceAuth.SecretText({
@@ -13,6 +14,7 @@ export const contiguity = createPiece({
   auth: contigAuth,
   minimumSupportedRelease: '0.7.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/contiguity.png',
+  categories: [PieceCategory.MARKETING],
   authors: ['Owlcept'],
   actions: [sendSMS],
   triggers: [],

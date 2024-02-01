@@ -1,4 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { trackEvent } from './lib/actions/track-event';
 
 export const mixpanelAuth = PieceAuth.SecretText({
@@ -14,6 +15,7 @@ export const mixpanel = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/mixpanel.png',
   authors: ['yann120'],
+  categories: [PieceCategory.IT_OPERATIONS],
   auth: mixpanelAuth,
   actions: [trackEvent],
   triggers: [],

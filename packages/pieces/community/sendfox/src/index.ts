@@ -1,7 +1,8 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
+import { createContact } from './lib/actions/create-contact';
 import { createList } from './lib/actions/create-list';
 import { unsubscribe } from './lib/actions/unsubscribe-contact';
-import { createContact } from './lib/actions/create-contact';
 export const sendfoxAuth = PieceAuth.SecretText({
   displayName: 'API Key',
   description:
@@ -15,6 +16,7 @@ export const sendfox = createPiece({
   minimumSupportedRelease: '0.7.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/sendfox.png',
   authors: ['Salem-Alaa'],
+  categories: [PieceCategory.MARKETING],
   actions: [createList, unsubscribe, createContact],
   triggers: [],
 });

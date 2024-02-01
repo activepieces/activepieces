@@ -3,9 +3,10 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import imap from 'imap';
-import { newEmail } from './lib/triggers/new-email';
 import { imapCommon } from './lib/common';
+import { newEmail } from './lib/triggers/new-email';
 
 const description = `
 **Gmail Users:**
@@ -73,6 +74,7 @@ export const imapPiece = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/imap.png',
   authors: ['MoShizzle'],
+  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   auth: imapAuth,
   actions: [],
   triggers: [newEmail],

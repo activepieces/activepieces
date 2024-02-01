@@ -1,4 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { dripAddSubscriberToCampaign } from './lib/actions/add-subscriber-to-campaign.action';
 import { dripApplyTagToSubscriber } from './lib/actions/apply-tag-to-subscriber.action';
 import { dripUpsertSubscriberAction } from './lib/actions/upsert-subscriber.action';
@@ -17,6 +18,7 @@ export const drip = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/drip.png',
   authors: ['AbdulTheActivePiecer'],
   auth: dripAuth,
+  categories: [PieceCategory.MARKETING],
   actions: [
     dripApplyTagToSubscriber,
     dripAddSubscriberToCampaign,

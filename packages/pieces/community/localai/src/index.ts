@@ -3,6 +3,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { askLocalAI } from './lib/actions/send-prompt';
 
 export const localaiAuth = PieceAuth.CustomAuth({
@@ -25,6 +26,7 @@ export const openai = createPiece({
   description: 'Use LocalAi to generate text',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/localai.jpeg',
+  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   auth: localaiAuth,
   actions: [askLocalAI],
   authors: ['hboujrida'],

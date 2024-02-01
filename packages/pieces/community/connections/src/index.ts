@@ -1,4 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { readConnection } from './lib/actions/read-connection';
 
 export const connections = createPiece({
@@ -6,6 +7,7 @@ export const connections = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/connections.png',
   auth: PieceAuth.None(),
+  categories: [PieceCategory.CORE],
   authors: ['abuaboud'],
   actions: [readConnection],
   triggers: [],

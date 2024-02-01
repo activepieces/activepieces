@@ -1,4 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { createColumnAction } from './lib/actions/create-column';
 import { createGroupAction } from './lib/actions/create-group';
 import { createItemAction } from './lib/actions/create-item';
@@ -28,6 +29,7 @@ export const monday = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/monday.png',
   authors: ['kanarelo', 'kishanprmr'],
+  categories: [PieceCategory.PROJECT_MANAGEMENT],
   auth: mondayAuth,
   actions: [
     createColumnAction,

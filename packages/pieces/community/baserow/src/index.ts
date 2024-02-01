@@ -3,6 +3,7 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { createRowAction } from './lib/actions/create-row';
 import { deleteRowAction } from './lib/actions/delete-row';
 import { getRowAction } from './lib/actions/get-row';
@@ -35,6 +36,7 @@ export const baserow = createPiece({
   auth: baserowAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/baserow.png',
+  categories: [PieceCategory.DATABASES],
   authors: ['kishanprmr'],
   actions: [
     createRowAction,

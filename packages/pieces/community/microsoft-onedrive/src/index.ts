@@ -1,8 +1,9 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { uploadFile } from './lib/actions/upload-file';
+import { PieceCategory } from '@activepieces/shared';
+import { downloadFile } from './lib/actions/download-file';
 import { listFiles } from './lib/actions/list-files';
 import { listFolders } from './lib/actions/list-folders';
-import { downloadFile } from './lib/actions/download-file';
+import { uploadFile } from './lib/actions/upload-file';
 import { newFile } from './lib/triggers/new-file';
 
 export const oneDriveAuth = PieceAuth.OAuth2({
@@ -19,6 +20,7 @@ export const microsoftOneDrive = createPiece({
   minimumSupportedRelease: '0.8.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/oneDrive.png',
   authors: ['BastienMe'],
+  categories: [PieceCategory.FILE_MANAGEMENT_AND_STORAGE],
   actions: [uploadFile, downloadFile, listFiles, listFolders],
   triggers: [newFile],
 });

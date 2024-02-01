@@ -3,10 +3,11 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
+import { addUsersToGroup } from './lib/actions/add-users-to-group.action';
+import { changeUserTrustLevel } from './lib/actions/change-trust-level.action';
 import { createPost } from './lib/actions/create-post.action';
 import { createTopic } from './lib/actions/create-topic.action';
-import { changeUserTrustLevel } from './lib/actions/change-trust-level.action';
-import { addUsersToGroup } from './lib/actions/add-users-to-group.action';
 import { sendPrivateMessage } from './lib/actions/send-private-message.action';
 
 const markdownPropertyDescription = `
@@ -40,6 +41,7 @@ export const discourse = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/discourse.png',
   authors: ['pfernandez98'],
+  categories: [PieceCategory.COMMUNICATION],
   actions: [
     createPost,
     createTopic,

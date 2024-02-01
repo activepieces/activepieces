@@ -1,5 +1,6 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 
+import { PieceCategory } from '@activepieces/shared';
 import { newResponse } from './lib/triggers/new-response';
 
 export const smAuth = PieceAuth.OAuth2({
@@ -21,6 +22,7 @@ export const surveymonkey = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/surveymonkey.png',
   authors: ['MoShizzle'],
+  categories: [PieceCategory.FORMS_AND_SURVEYS],
   actions: [],
   triggers: [newResponse],
 });

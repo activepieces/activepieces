@@ -1,6 +1,7 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { githubTriggers } from './lib/trigger';
+import { PieceCategory } from '@activepieces/shared';
 import { githubCreateIssueAction } from './lib/actions/create-issue';
+import { githubTriggers } from './lib/trigger';
 
 export const githubAuth = PieceAuth.OAuth2({
   required: true,
@@ -14,6 +15,7 @@ export const github = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/github.png',
   auth: githubAuth,
+  categories: [PieceCategory.DEVELOPER_TOOLS],
   actions: [githubCreateIssueAction],
   authors: ['kanarelo'],
   triggers: githubTriggers,

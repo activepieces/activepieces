@@ -1,4 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { delayForAction } from './lib/actions/delay-for-action';
 import { delayUntilAction } from './lib/actions/delay-untill-action';
 
@@ -8,6 +9,7 @@ export const delay = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/delay.png',
   authors: ['abuaboud', 'nileshtrivedi'],
   auth: PieceAuth.None(),
+  categories: [PieceCategory.CORE],
   actions: [
     delayForAction, // Delay for a fixed duration
     delayUntilAction, // Takes a timestamp parameter instead of duration

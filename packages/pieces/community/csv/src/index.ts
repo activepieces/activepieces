@@ -1,6 +1,7 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { unparseCSVTextAction } from './lib/actions/convert-json-to-csv';
+import { PieceCategory } from '@activepieces/shared';
 import { parseCSVTextAction } from './lib/actions/convert-csv-to-json';
+import { unparseCSVTextAction } from './lib/actions/convert-json-to-csv';
 
 export const csv = createPiece({
   displayName: 'CSV',
@@ -9,5 +10,6 @@ export const csv = createPiece({
   auth: PieceAuth.None(),
   actions: [parseCSVTextAction, unparseCSVTextAction],
   authors: ['kanarelo'],
+  categories: [PieceCategory.CONTENT_AND_FILES],
   triggers: [],
 });

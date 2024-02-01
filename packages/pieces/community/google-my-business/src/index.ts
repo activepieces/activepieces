@@ -1,6 +1,7 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { newReview } from './lib/triggers/new-review';
+import { PieceCategory } from '@activepieces/shared';
 import { createReply } from './lib/actions/create-reply';
+import { newReview } from './lib/triggers/new-review';
 
 export const googleAuth = PieceAuth.OAuth2({
   authUrl: 'https://accounts.google.com/o/oauth2/auth',
@@ -14,6 +15,7 @@ export const googleBusiness = createPiece({
   displayName: 'Google My Business',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-business.png',
   authors: ['abuaboud'],
+  categories: [PieceCategory.WEBSITE_BUILDERS],
   actions: [createReply],
   triggers: [newReview],
 });

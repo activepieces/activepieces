@@ -1,4 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import crypto from 'crypto';
 import { triggers } from './lib/triggers';
 
@@ -27,6 +28,7 @@ export const square = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/square.png',
   authors: ['abuaboud'],
+  categories: [PieceCategory.COMMERCE],
   auth: squareAuth,
   events: {
     verify: ({ webhookSecret, payload, appWebhookUrl }) => {

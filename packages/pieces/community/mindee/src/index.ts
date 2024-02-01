@@ -1,4 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { mindeePredictDocumentAction } from './lib/actions/predict-document';
 
 export const mindeeAuth = PieceAuth.SecretText({
@@ -18,6 +19,7 @@ export const mindee = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/mindee.png',
   authors: ['kanarelo'],
   auth: mindeeAuth,
+  categories: [PieceCategory.COMMUNICATION],
   actions: [mindeePredictDocumentAction],
   triggers: [],
 });

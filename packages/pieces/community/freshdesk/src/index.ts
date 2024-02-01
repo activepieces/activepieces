@@ -3,9 +3,10 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { getTickets } from './lib/actions/get-tickets';
+import { PieceCategory } from '@activepieces/shared';
 import { getContactFromID } from './lib/actions/get-contact-from-id';
 import { getTicketStatus } from './lib/actions/get-ticket-status';
+import { getTickets } from './lib/actions/get-tickets';
 
 export const freshdeskAuth = PieceAuth.CustomAuth({
   props: {
@@ -28,6 +29,7 @@ export const freshdesk = createPiece({
   displayName: 'Freshdesk',
   logoUrl: 'https://cdn.activepieces.com/pieces/freshdesk.png',
   authors: ['buttonsbond'],
+  categories: [PieceCategory.CUSTOMER_SERVICE],
   auth: freshdeskAuth,
   actions: [getTickets, getContactFromID, getTicketStatus],
   triggers: [],

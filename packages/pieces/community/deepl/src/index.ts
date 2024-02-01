@@ -3,6 +3,7 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { translateText } from './lib/actions/translate-text';
 
 const markdownDescription = `
@@ -46,6 +47,7 @@ export const deepl = createPiece({
   auth: deeplAuth,
   minimumSupportedRelease: '0.6.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/deepl.png',
+  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   authors: ['BBND'],
   actions: [translateText],
   triggers: [],

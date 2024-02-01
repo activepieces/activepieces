@@ -1,12 +1,13 @@
+import { HttpError } from '@activepieces/pieces-common';
 import {
   createPiece,
   PieceAuth,
   Property,
   Validators,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { kimaiCreateTimesheetAction } from './lib/actions/create-timesheet';
 import { makeClient } from './lib/common';
-import { HttpError } from '@activepieces/pieces-common';
 
 export const kimaiAuth = PieceAuth.CustomAuth({
   description: `
@@ -80,6 +81,7 @@ export const kimai = createPiece({
   auth: kimaiAuth,
   minimumSupportedRelease: '0.6.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/kimai.png',
+  categories: [PieceCategory.IT_OPERATIONS],
   authors: ['facferreira'],
   actions: [kimaiCreateTimesheetAction],
   triggers: [],

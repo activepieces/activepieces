@@ -1,4 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { pushMessage } from './lib/actions/push-message';
 import { newMessage } from './lib/trigger/new-message';
 
@@ -13,6 +14,7 @@ export const line = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/line.png',
   authors: ['abuaboud'],
+  categories: [PieceCategory.COMMUNICATION],
   actions: [pushMessage],
   triggers: [newMessage],
 });
