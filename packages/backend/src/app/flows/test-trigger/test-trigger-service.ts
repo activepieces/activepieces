@@ -1,4 +1,4 @@
-import { TriggerTestStrategy } from '@activepieces/pieces-framework'
+import { TriggerTestStrategy } from '@activepieces/shared'
 import { triggerEventService } from '../trigger-events/trigger-event.service'
 import { FlowId, FlowVersionId, ProjectId, SeekPage, WebhookSimulation } from '@activepieces/shared'
 import { flowService } from '../flow/flow.service'
@@ -6,7 +6,7 @@ import { webhookSimulationService } from '../../webhooks/webhook-simulation/webh
 
 export const testTriggerService = {
     async test(params: TestParams): Promise<unknown> {
-        const { testStrategy } = params
+        const { testStrategy, ...executeParams } = params
 
         const testExecutors: Record<TriggerTestStrategy, (p: ExecuteTestParams) => Promise<unknown>> = {
             [TriggerTestStrategy.SIMULATION]: executeSimulation,
@@ -14,7 +14,7 @@ export const testTriggerService = {
         }
 
         const executor = testExecutors[testStrategy]
-        return executor(params)
+        return executor(executeParams)
     },
 }
 

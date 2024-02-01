@@ -3,6 +3,7 @@ import { TestOrRunHookContext, TriggerHookContext } from '../context';
 import { TriggerBase } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
 import { PieceAuthProperty } from '../property/authentication';
+import { TriggerTestStrategy } from '@activepieces/shared';
 
 export enum TriggerStrategy {
   POLLING = 'POLLING',
@@ -20,11 +21,6 @@ export enum WebhookHandshakeStrategy {
 export enum WebhookRenewStrategy {
   CRON = 'CRON',
   NONE = 'NONE',
-}
-
-export enum TriggerTestStrategy {
-  SIMULATION = 'SIMULATION',
-  TEST_FUNCTION = 'TEST_FUNCTION',
 }
 
 export const WebhookHandshakeConfiguration = Type.Object({
