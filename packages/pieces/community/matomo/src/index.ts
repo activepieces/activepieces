@@ -1,3 +1,4 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { addAnnotationAction } from './lib/actions/add-annotation';
@@ -10,7 +11,16 @@ export const matomo = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/matomo.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   authors: ['joeworkman'],
-  actions: [addAnnotationAction],
+  actions: [
+    addAnnotationAction,
+    createCustomApiCallAction({
+      baseUrl: (auth) => (auth as { domain: string }).domain,
+      auth: matomoAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as { tokenAuth: string }).tokenAuth}`,
+      }),
+    }),
+  ],
   triggers: [],
 });
 

@@ -1,4 +1,9 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import {
+  createPiece,
+  OAuth2PropertyValue,
+  PieceAuth,
+} from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { createIssueAction } from './lib/actions/create-issue-action';
 import { issuesEventTrigger } from './lib/trigger/issue-event';
@@ -17,6 +22,15 @@ export const gitlab = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/gitlab.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   authors: ['kishanprmr'],
-  actions: [createIssueAction],
+  actions: [
+    createIssueAction,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://gitlab.com/api/v4',
+      auth: gitlabAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      }),
+    }),
+  ],
   triggers: [issuesEventTrigger],
 });

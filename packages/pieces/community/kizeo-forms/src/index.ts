@@ -1,3 +1,4 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { CreateListItem } from './lib/actions/create-list-item';
@@ -10,6 +11,7 @@ import { getDataDefinition } from './lib/actions/get-data-definition';
 import { getListDefinition } from './lib/actions/get-list-definition';
 import { getListItem } from './lib/actions/get-list-item';
 import { pushData } from './lib/actions/push-data';
+import { endpoint } from './lib/common';
 import { eventOnDataDeleted } from './lib/trigger/event-on-data-deleted';
 import { eventOnDataFinished } from './lib/trigger/event-on-data-finished';
 import { eventOnDataPushed } from './lib/trigger/event-on-data-pushed';
@@ -45,6 +47,15 @@ export const kizeoForms = createPiece({
     CreateListItem,
     editListItem,
     deleteListItem,
+    createCustomApiCallAction({
+      baseUrl: () => endpoint,
+      auth: kizeoFormsAuth,
+      authMapping: (auth) => {
+        return {
+          Authorization: auth as string,
+        };
+      },
+    }),
   ],
   triggers: [
     eventOnData,

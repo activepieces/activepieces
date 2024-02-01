@@ -1,3 +1,4 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   PieceAuth,
   Property,
@@ -35,6 +36,20 @@ export const invoiceninja = createPiece({
   authors: ['buttonsbond'],
   categories: [PieceCategory.CUSTOMER_SERVICE],
   auth: invoiceninjaAuth,
-  actions: [createTask, existsTask, getClient, getInvoices, getReport],
+  actions: [
+    createTask,
+    existsTask,
+    getClient,
+    getInvoices,
+    getReport,
+    createCustomApiCallAction({
+      baseUrl: (auth) =>
+        `${(auth as { base_url: string }).base_url.replace(/\/$/, '')}/api/v1`,
+      auth: invoiceninjaAuth,
+      authMapping: (auth) => ({
+        'X-Api-Token': (auth as { access_token: string }).access_token,
+      }),
+    }),
+  ],
   triggers: [],
 });

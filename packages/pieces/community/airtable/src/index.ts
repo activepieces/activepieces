@@ -1,6 +1,7 @@
 import {
   AuthenticationType,
   HttpMethod,
+  createCustomApiCallAction,
   httpClient,
 } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
@@ -58,6 +59,16 @@ export const airtable = createPiece({
     airtableFindRecordAction,
     airtableUpdateRecordAction,
     airtableDeleteRecordAction,
+    createCustomApiCallAction({
+        baseUrl: () => {
+          return 'https://api.airtable.com/v0';
+        },
+        auth: airtableAuth,
+        authMapping: (auth) => ({
+          'Authorization': `Bearer ${auth}`,
+        })
+      })
+      
   ],
   triggers: [airtableNewRecordTrigger, airtableUpdatedRecordTrigger],
 });

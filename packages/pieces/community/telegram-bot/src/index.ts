@@ -1,9 +1,11 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { telegramCreateInviteLinkAction } from './lib/action/create-invite-link';
 import { telegramGetChatMemberAction } from './lib/action/get-chat-member';
 import { telegramSendMediaAction } from './lib/action/send-media.action';
 import { telegramSendMessageAction } from './lib/action/send-text-message.action';
+import { telegramCommons } from './lib/common';
 import { telegramNewMessage } from './lib/trigger/new-message';
 
 const markdownDescription = `
@@ -34,6 +36,10 @@ export const telegramBot = createPiece({
     telegramSendMediaAction,
     telegramGetChatMemberAction,
     telegramCreateInviteLinkAction,
+    createCustomApiCallAction({
+      baseUrl: (auth) => telegramCommons.getApiUrl(auth as string, ''),
+      auth: telegramBotAuth,
+    }),
   ],
   authors: ['abuaboud', 'Abdallah-Alwarawreh'],
   triggers: [telegramNewMessage],

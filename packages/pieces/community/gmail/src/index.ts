@@ -1,4 +1,9 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import {
+  OAuth2PropertyValue,
+  PieceAuth,
+  createPiece,
+} from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { gmailSendEmailAction } from './lib/actions/send-email-action';
 
@@ -15,15 +20,29 @@ export const gmailAuth = PieceAuth.OAuth2({
 export const gmail = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/gmail.png',
-  actions: [gmailSendEmailAction],
+  actions: [
+    gmailSendEmailAction,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://gmail.googleapis.com/gmail/v1',
+      auth: gmailAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      }),
+    }),
+  ],
   categories: [PieceCategory.COMMUNICATION],
   displayName: 'Gmail',
   authors: [
     'AbdulTheActivePiecer',
+
     'kanarelo',
+
     'BastienMe',
+
     'PFernandez98',
+
     'kishanprmr',
+    ,
   ],
   triggers: [],
   auth: gmailAuth,

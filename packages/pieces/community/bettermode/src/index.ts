@@ -1,3 +1,4 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { assignBadgeAction } from './lib/actions/assign-badge';
@@ -18,6 +19,13 @@ export const bettermode = createPiece({
     createQuestionAction,
     assignBadgeAction,
     revokeBadgeAction,
+    createCustomApiCallAction({
+      baseUrl: (auth) => (auth as { region: string }).region, // replace with the actual base URL
+      auth: bettermodeAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
   ],
   triggers: [],
 });

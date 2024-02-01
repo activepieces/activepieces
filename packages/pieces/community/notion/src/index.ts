@@ -1,5 +1,6 @@
 import {
   OAuth2AuthorizationMethod,
+  OAuth2PropertyValue,
   PieceAuth,
   createPiece,
 } from '@activepieces/pieces-framework';
@@ -10,6 +11,7 @@ import { createPage } from './lib/action/create-page';
 import { updateDatabaseItem } from './lib/action/update-database-item';
 import { newDatabaseItem } from './lib/triggers/new-database-item';
 import { updatedDatabaseItem } from './lib/triggers/updated-database-item';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const notionAuth = PieceAuth.OAuth2({
   authUrl: 'https://api.notion.com/v1/oauth/authorize',
@@ -29,6 +31,18 @@ export const notion = createPiece({
   authors: ['ShayPunter', 'abuaboud', 'kishanprmr', 'MoShizzle'],
   categories: [PieceCategory.PROJECT_MANAGEMENT],
   auth: notionAuth,
-  actions: [createDatabaseItem, updateDatabaseItem, createPage, appendToPage],
+  actions: [
+    createDatabaseItem,
+    updateDatabaseItem,
+    createPage,
+    appendToPage,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.notion.com/v1',
+      auth: notionAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      }),
+    }),
+  ],
   triggers: [newDatabaseItem, updatedDatabaseItem],
 });

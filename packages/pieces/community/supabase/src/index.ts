@@ -1,3 +1,4 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   createPiece,
   PieceAuth,
@@ -26,6 +27,15 @@ export const supabase = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/supabase.png',
   authors: ['abuaboud'],
   categories: [PieceCategory.DATABASES],
-  actions: [uploadFile],
+  actions: [
+    uploadFile,
+    createCustomApiCallAction({
+      baseUrl: (auth) => (auth as { url: string }).url,
+      auth: supabaseAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as { apiKey: string }).apiKey}`,
+      }),
+    }),
+  ],
   triggers: [],
 });

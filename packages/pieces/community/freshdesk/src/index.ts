@@ -1,3 +1,4 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   PieceAuth,
   Property,
@@ -31,6 +32,17 @@ export const freshdesk = createPiece({
   authors: ['buttonsbond'],
   categories: [PieceCategory.CUSTOMER_SERVICE],
   auth: freshdeskAuth,
-  actions: [getTickets, getContactFromID, getTicketStatus],
+  actions: [
+    getTickets,
+    getContactFromID,
+    getTicketStatus,
+    createCustomApiCallAction({
+      baseUrl: (auth) => (auth as { base_url: string }).base_url,
+      auth: freshdeskAuth,
+      authMapping: (auth) => ({
+        Authorization: (auth as { access_token: string }).access_token,
+      }),
+    }),
+  ],
   triggers: [],
 });

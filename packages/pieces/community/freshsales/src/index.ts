@@ -5,6 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { freshSalesCreateContact } from './lib/actions/create-contact';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const markdownDescription = `
 To obtain your API key and bundle alias, follow these steps:
@@ -39,6 +40,18 @@ export const freshsales = createPiece({
   authors: ['kanarelo'],
   categories: [PieceCategory.SALES_AND_CRM],
   auth: freshsalesAuth,
-  actions: [freshSalesCreateContact],
+  actions: [
+    freshSalesCreateContact,
+    createCustomApiCallAction({
+      baseUrl: (auth) =>
+        `https://${
+          (auth as { username: string }).username
+        }.myfreshworks.com/crm/sales/api`,
+      auth: freshsalesAuth,
+      authMapping: (auth) => ({
+        Authorization: `Token token=${(auth as { password: string }).password}`,
+      }),
+    }),
+  ],
   triggers: [],
 });

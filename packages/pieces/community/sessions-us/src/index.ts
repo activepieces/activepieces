@@ -1,4 +1,8 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import {
+  createCustomApiCallAction,
+  httpClient,
+  HttpMethod,
+} from '@activepieces/pieces-common';
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 
 import { PieceCategory } from '@activepieces/shared';
@@ -51,7 +55,18 @@ export const sessionsUs = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/sessions-us.png',
   authors: ['Owlcept', 'MoShizzle'],
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
-  actions: [createSession, createEvent, publishEvent],
+  actions: [
+    createSession,
+    createEvent,
+    publishEvent,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.app.sessions.us/api',
+      auth: sessionAuth,
+      authMapping: (auth) => ({
+        'x-api-key': `${auth}`,
+      }),
+    }),
+  ],
   triggers: [
     bookingCreated,
     bookingStarted,

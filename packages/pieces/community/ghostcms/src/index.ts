@@ -4,12 +4,14 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/shared';
 import { createMember } from './lib/actions/create-member';
 import { createPost } from './lib/actions/create-post';
 import { findMember } from './lib/actions/find-member';
 import { findUser } from './lib/actions/find-user';
 import { updateMember } from './lib/actions/update-member';
+import { common } from './lib/common';
 import { memberAdded } from './lib/triggers/member-added';
 import { memberDeleted } from './lib/triggers/member-deleted';
 import { memberEdited } from './lib/triggers/member-edited';
@@ -50,7 +52,23 @@ export const ghostcms = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/ghostcms.png',
   authors: ['MoShizzle'],
   categories: [PieceCategory.WEBSITE_BUILDERS],
-  actions: [createMember, updateMember, createPost, findMember, findUser],
+  actions: [
+    createMember,
+    updateMember,
+    createPost,
+    findMember,
+    findUser,
+    createCustomApiCallAction({
+      baseUrl: (auth) =>
+        `${(auth as { baseUrl: string }).baseUrl}/ghost/api/admin`,
+      auth: ghostAuth,
+      authMapping: (auth) => ({
+        Authorization: `Ghost ${common.jwtFromApiKey(
+          (auth as { apiKey: string }).apiKey
+        )}`,
+      }),
+    }),
+  ],
   triggers: [
     memberAdded,
     memberEdited,

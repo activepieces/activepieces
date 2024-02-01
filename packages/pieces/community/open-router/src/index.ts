@@ -1,10 +1,11 @@
 import {
   AuthenticationType,
-  httpClient,
   HttpMethod,
   HttpRequest,
+  createCustomApiCallAction,
+  httpClient,
 } from '@activepieces/pieces-common';
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { askOpenRouterAction } from './lib/actions/ask-open-router';
 
@@ -51,7 +52,16 @@ export const openRouter = createPiece({
   minimumSupportedRelease: '0.8.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/open-router.png',
   authors: ['Salem-Alaa'],
-  actions: [askOpenRouterAction],
+  actions: [
+    askOpenRouterAction,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://openrouter.ai/api/v1',
+      auth: openRouterAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
+  ],
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   triggers: [],
 });

@@ -1,4 +1,7 @@
-import { HttpMethod } from '@activepieces/pieces-common';
+import {
+  createCustomApiCallAction,
+  HttpMethod,
+} from '@activepieces/pieces-common';
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { calltidycalapi } from './lib/common';
@@ -37,6 +40,14 @@ export const tidycal = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/tidycal.png',
   authors: ['Salem-Alaa'],
   categories: [PieceCategory.IT_OPERATIONS],
-  actions: [],
+  actions: [
+    createCustomApiCallAction({
+      baseUrl: () => 'https://tidycal.com/api',
+      auth: tidyCalAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
+  ],
   triggers: [tidycalbookingcancelled, tidycalnewbooking, tidycalnewcontact],
 });

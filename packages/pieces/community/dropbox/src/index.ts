@@ -1,4 +1,9 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import {
+  OAuth2PropertyValue,
+  PieceAuth,
+  createPiece,
+} from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { dropboxCopyFile } from './lib/actions/copy-file';
 import { dropboxCopyFolder } from './lib/actions/copy-folder';
@@ -42,6 +47,13 @@ export const dropbox = createPiece({
     dropboxMoveFolder,
     dropboxCopyFolder,
     dropboxListAFolder,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.dropboxapi.com/2',
+      auth: dropboxAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      }),
+    }),
   ],
   displayName: 'Dropbox',
   authors: ['kanarelo', 'BastienMe'],

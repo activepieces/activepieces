@@ -1,4 +1,9 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import {
+  createPiece,
+  OAuth2PropertyValue,
+  PieceAuth,
+} from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { createTask } from './lib/actions/create-task';
 
@@ -29,6 +34,15 @@ export const nifty = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/nifty.png',
   authors: ['Salem-Alaa'],
   categories: [PieceCategory.PROJECT_MANAGEMENT],
-  actions: [createTask],
+  actions: [
+    createTask,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://openapi.niftypm.com/api/v1.0',
+      auth: niftyAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      }),
+    }),
+  ],
   triggers: [],
 });

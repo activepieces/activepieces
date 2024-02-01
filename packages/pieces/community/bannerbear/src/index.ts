@@ -1,6 +1,7 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { bannerbearCreateImageAction } from './lib/actions/create-image';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const bannerbearAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -15,6 +16,15 @@ export const bannerbear = createPiece({
   authors: ['kanarelo'],
   categories: [PieceCategory.CONTENT_AND_FILES],
   auth: bannerbearAuth,
-  actions: [bannerbearCreateImageAction],
+  actions: [
+    bannerbearCreateImageAction,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://sync.api.bannerbear.com/v2',
+      auth: bannerbearAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
+  ],
   triggers: [],
 });

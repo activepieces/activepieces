@@ -1,9 +1,10 @@
 import {
   AuthenticationType,
-  httpClient,
   HttpMethod,
+  createCustomApiCallAction,
+  httpClient,
 } from '@activepieces/pieces-common';
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { createCharge } from './lib/actions/create-charge';
 import { createCustomer } from './lib/actions/create-customer';
@@ -44,6 +45,16 @@ export const saastic = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/saastic.png',
   authors: ['joselupianez'],
   categories: [PieceCategory.MARKETING],
-  actions: [createCustomer, createCharge],
+  actions: [
+    createCustomer,
+    createCharge,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.saastic.com',
+      auth: saasticAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
+  ],
   triggers: [],
 });

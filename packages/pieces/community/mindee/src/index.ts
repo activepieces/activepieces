@@ -1,3 +1,4 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { mindeePredictDocumentAction } from './lib/actions/predict-document';
@@ -20,6 +21,15 @@ export const mindee = createPiece({
   authors: ['kanarelo'],
   auth: mindeeAuth,
   categories: [PieceCategory.COMMUNICATION],
-  actions: [mindeePredictDocumentAction],
+  actions: [
+    mindeePredictDocumentAction,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.mindee.net/v1',
+      auth: mindeeAuth,
+      authMapping: (auth) => ({
+        Authorization: `Token ${auth}`,
+      }),
+    }),
+  ],
   triggers: [],
 });

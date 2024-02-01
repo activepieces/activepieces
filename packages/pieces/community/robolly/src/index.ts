@@ -1,3 +1,4 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { generateImage } from './lib/actions/generate-image.action';
@@ -27,6 +28,15 @@ export const robolly = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/robolly.png',
   authors: ['PFernandez98'],
   categories: [PieceCategory.IT_OPERATIONS],
-  actions: [generateImage],
+  actions: [
+    generateImage,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.robolly.com',
+      auth: robollyAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
+  ],
   triggers: [],
 });

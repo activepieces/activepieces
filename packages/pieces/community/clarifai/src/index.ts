@@ -1,4 +1,8 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import {
+  HttpMethod,
+  createCustomApiCallAction,
+  httpClient,
+} from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { clarifaiAskLLM } from './lib/actions/ask-llm';
@@ -62,6 +66,13 @@ export const clarifai = createPiece({
     audioToTextModelPredictAction,
     postInputsAction,
     workflowPredictAction,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.clarifai.com/v2', // Replace with the actual base URL
+      auth: clarifaiAuth,
+      authMapping: (auth) => ({
+        Authorization: `Key ${auth}`,
+      }),
+    }),
   ],
   triggers: [],
 });

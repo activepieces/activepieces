@@ -1,3 +1,4 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { sendEmail } from './lib/actions/send-email';
@@ -13,7 +14,16 @@ export const resend = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/resend.png',
   authors: [],
   auth: resendAuth,
-  actions: [sendEmail],
+  actions: [
+    sendEmail,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.resend.com',
+      auth: resendAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
+  ],
   categories: [PieceCategory.BUSINESS_INTELLIGENCE, PieceCategory.MARKETING],
   triggers: [],
 });

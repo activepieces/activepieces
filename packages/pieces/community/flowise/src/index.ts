@@ -1,3 +1,4 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   createAction,
   createPiece,
@@ -82,6 +83,17 @@ export const flowise = createPiece({
   minimumSupportedRelease: '0.9.0',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: [],
-  actions: [flowisePredict],
+  actions: [
+    flowisePredict,
+    createCustomApiCallAction({
+      baseUrl: (auth) => (auth as { base_url: string }).base_url,
+      auth: flowiseAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${
+          (auth as { access_token: string }).access_token
+        }`,
+      }),
+    }),
+  ],
   triggers: [],
 });

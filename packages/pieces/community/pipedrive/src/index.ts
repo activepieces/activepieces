@@ -1,4 +1,9 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import {
+  OAuth2PropertyValue,
+  PieceAuth,
+  createPiece,
+} from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { addPerson } from './lib/actions/add-person.action/add-person.action';
 import { newActivity } from './lib/trigger/new-activity';
@@ -9,7 +14,6 @@ import { updatedPerson } from './lib/trigger/updated-person';
 
 export const pipedriveAuth = PieceAuth.OAuth2({
   description: '',
-
   authUrl: 'https://oauth.pipedrive.com/oauth/authorize',
   tokenUrl: 'https://oauth.pipedrive.com/oauth/token',
   required: true,
@@ -22,7 +26,16 @@ export const pipedrive = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/pipedrive.png',
   categories: [PieceCategory.SALES_AND_CRM],
   auth: pipedriveAuth,
-  actions: [addPerson],
+  actions: [
+    addPerson,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.pipedrive.com/v1',
+      auth: pipedriveAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      }),
+    }),
+  ],
   authors: ['ashrafsamhouri'],
   triggers: [newPerson, newDeal, newActivity, updatedPerson, updatedDeal],
 });

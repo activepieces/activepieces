@@ -1,4 +1,9 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import {
+  OAuth2PropertyValue,
+  PieceAuth,
+  createPiece,
+} from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { getCommentsAction } from './lib/actions/get-comments-action';
 import { getFileAction } from './lib/actions/get-file-action';
@@ -7,7 +12,6 @@ import { newCommentTrigger } from './lib/trigger/new-comment';
 
 export const figmaAuth = PieceAuth.OAuth2({
   description: '',
-
   authUrl: 'https://www.figma.com/oauth',
   tokenUrl: 'https://www.figma.com/api/oauth/token',
   required: true,
@@ -20,6 +24,17 @@ export const figma = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/figma.png',
   auth: figmaAuth,
   categories: [PieceCategory.OTHER],
-  actions: [getFileAction, getCommentsAction, postCommentAction],
+  actions: [
+    getFileAction,
+    getCommentsAction,
+    postCommentAction,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.figma.com',
+      auth: figmaAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      }),
+    }),
+  ],
   triggers: [newCommentTrigger],
 });

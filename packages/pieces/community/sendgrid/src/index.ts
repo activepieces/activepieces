@@ -1,7 +1,9 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { sendDynamicTemplate } from './lib/actions/send-dynamic-template';
 import { sendEmail } from './lib/actions/send-email';
+import { sendgridCommon } from './lib/common';
 
 export const sendgridAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -16,6 +18,16 @@ export const sendgrid = createPiece({
   authors: ['ashrafsamhouri', 'abuaboud'],
   categories: [PieceCategory.BUSINESS_INTELLIGENCE, PieceCategory.MARKETING],
   auth: sendgridAuth,
-  actions: [sendEmail, sendDynamicTemplate],
+  actions: [
+    sendEmail,
+    sendDynamicTemplate,
+    createCustomApiCallAction({
+      baseUrl: () => sendgridCommon.baseUrl,
+      auth: sendgridAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
+  ],
   triggers: [],
 });

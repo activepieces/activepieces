@@ -1,6 +1,8 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { createCredential } from './lib/actions/create-credential';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { certopusCommon } from './lib/common';
 
 export const certopusAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -15,6 +17,13 @@ export const certopus = createPiece({
   authors: ['VrajGohil'],
   categories: [PieceCategory.OTHER],
   auth: certopusAuth,
-  actions: [createCredential],
+  actions: [createCredential,
+    createCustomApiCallAction({
+        baseUrl: () => certopusCommon.baseUrl, // Replace with the actual base URL
+        auth: certopusAuth,
+        authMapping: (auth) => ({
+            'x-api-key': `${auth}`
+        })
+    })],
   triggers: [],
 });

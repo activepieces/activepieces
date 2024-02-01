@@ -33,6 +33,7 @@ import { updateTask } from './lib/actions/update-task';
 import { updateTeam } from './lib/actions/update-team';
 import { updateWorker } from './lib/actions/update-worker';
 
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/shared';
 import { autoDispatchCompleted } from './lib/triggers/auto-dispatch-completed';
 import { smsRecipientOptOut } from './lib/triggers/sms-recipient-opt-out';
@@ -106,6 +107,13 @@ export const onfleet = createPiece({
     getTeams,
     updateTeam,
     getContainer,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://onfleet.com/api/v2',
+      auth: onfleetAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
   ],
   triggers: [
     taskArrival,

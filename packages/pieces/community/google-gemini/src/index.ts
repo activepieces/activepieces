@@ -1,4 +1,4 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { createCustomApiCallAction, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { chatGemini } from './lib/actions/chat-gemini.action';
@@ -49,6 +49,21 @@ export const googleGemini = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/google-gemini.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ['pfernandez98'],
-  actions: [generateContentAction, generateContentFromImageAction, chatGemini],
+  actions: [
+    generateContentAction,
+    generateContentFromImageAction,
+    chatGemini,
+    createCustomApiCallAction({
+      baseUrl: () => {
+        return 'https://generativelanguage.googleapis.com/v1beta';
+      },
+      auth: googleGeminiAuth,
+      authMapping: (auth) => {
+        return {
+          Authorization: `Bearer ${auth}`,
+        };
+      },
+    }),
+  ],
   triggers: [],
 });

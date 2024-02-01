@@ -5,6 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { sendMessage } from './lib/actions/send-message';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const markdownDescription = `
 **Workspace URL**: The url of mattermost instance (e.g \`https://activepieces.mattermost.com\`)
@@ -32,12 +33,21 @@ export const mattermostAuth = PieceAuth.CustomAuth({
 
 export const mattermost = createPiece({
   displayName: 'Mattermost',
-
   logoUrl: 'https://cdn.activepieces.com/pieces/mattermost.png',
   minimumSupportedRelease: '0.5.0',
   authors: ['abuaboud'],
   categories: [PieceCategory.COMMUNICATION],
   auth: mattermostAuth,
-  actions: [sendMessage],
+  actions: [
+    sendMessage,
+    createCustomApiCallAction({
+      baseUrl: (auth) =>
+        (auth as { workspace_url: string }).workspace_url + '/api/v4',
+      auth: mattermostAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as { token: string }).token}`,
+      }),
+    }),
+  ],
   triggers: [],
 });

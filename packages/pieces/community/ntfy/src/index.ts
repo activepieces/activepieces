@@ -5,6 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { sendNotification } from './lib/actions/send-notification';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const ntfyAuth = PieceAuth.CustomAuth({
   description: `
@@ -38,6 +39,17 @@ export const ntfy = createPiece({
   auth: ntfyAuth,
   categories: [PieceCategory.OTHER],
   authors: ['MyWay'],
-  actions: [sendNotification],
+  actions: [
+    sendNotification,
+    createCustomApiCallAction({
+      baseUrl: (auth) => (auth as { base_url: string }).base_url,
+      auth: ntfyAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${
+          (auth as { access_token: string }).access_token
+        }`,
+      }),
+    }),
+  ],
   triggers: [],
 });

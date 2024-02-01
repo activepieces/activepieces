@@ -1,6 +1,7 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { triggers } from './lib/triggers';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const markdownPropertyDescription = `
 **Enable Basic Authentication:**
@@ -26,6 +27,14 @@ export const frame = createPiece({
   categories: [PieceCategory.COMMUNICATION],
   logoUrl: 'https://cdn.activepieces.com/pieces/frameio.png',
   authors: ['kanarelo'],
-  actions: [],
+  actions: [
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.frame.io/v2',
+      auth: frameAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
+  ],
   triggers,
 });

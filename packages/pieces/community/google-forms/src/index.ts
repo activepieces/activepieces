@@ -1,4 +1,9 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import {
+  OAuth2PropertyValue,
+  PieceAuth,
+  createPiece,
+} from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { newResponse } from './lib/triggers/new-form-response';
 
@@ -19,6 +24,14 @@ export const googleForms = createPiece({
   authors: ['abuaboud'],
   categories: [PieceCategory.FORMS_AND_SURVEYS],
   auth: googleFormsAuth,
-  actions: [],
+  actions: [
+    createCustomApiCallAction({
+      baseUrl: () => 'https://forms.googleapis.com/v1',
+      auth: googleFormsAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      }),
+    }),
+  ],
   triggers: [newResponse],
 });

@@ -1,4 +1,9 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import {
+  OAuth2PropertyValue,
+  PieceAuth,
+  createPiece,
+} from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { githubCreateIssueAction } from './lib/actions/create-issue';
 import { githubTriggers } from './lib/trigger';
@@ -16,7 +21,16 @@ export const github = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/github.png',
   auth: githubAuth,
   categories: [PieceCategory.DEVELOPER_TOOLS],
-  actions: [githubCreateIssueAction],
+  actions: [
+    githubCreateIssueAction,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.github.com',
+      auth: githubAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      }),
+    }),
+  ],
   authors: ['kanarelo'],
   triggers: githubTriggers,
 });

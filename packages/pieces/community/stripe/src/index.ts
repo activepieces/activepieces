@@ -1,3 +1,4 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { stripeCreateCustomer } from './lib/actions/create-customer';
@@ -27,6 +28,13 @@ export const stripe = createPiece({
     stripeCreateInvoice,
     stripeSearchCustomer,
     stripeRetrieveCustomer,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.stripe.com/v1',
+      auth: stripeAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
   ],
   triggers: [
     stripeNewPayment,

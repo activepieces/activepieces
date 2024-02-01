@@ -1,3 +1,4 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { retableCreateProjectAction } from './lib/actions/create-project';
@@ -6,6 +7,7 @@ import { retableGetAllProjectsAction } from './lib/actions/get-all-projects';
 import { retableGetAllRetablesAction } from './lib/actions/get-all-retables';
 import { retableGetAllWorkspacesAction } from './lib/actions/get-all-workspaces';
 import { retableCreateRecordAction } from './lib/actions/insert-record';
+import { retableCommon } from './lib/common';
 const markdown = `
 To obtain your API key, follow these steps:
 
@@ -43,6 +45,13 @@ export const retable = createPiece({
     retableGetAllRetablesAction,
     retableCreateWorkspaceAction,
     retableCreateProjectAction,
+    createCustomApiCallAction({
+      baseUrl: () => retableCommon.baseUrl,
+      auth: retableAuth,
+      authMapping: (auth) => ({
+        ApiKey: auth as string,
+      }),
+    }),
   ],
   triggers: [],
 });

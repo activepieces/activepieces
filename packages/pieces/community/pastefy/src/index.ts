@@ -6,6 +6,7 @@ import {
 import { PieceCategory } from '@activepieces/shared';
 import actions from './lib/actions';
 import triggers from './lib/triggers';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const markdown = `
 Create an account and obtain the API Key from Pastefy.
@@ -34,6 +35,23 @@ export const pastefy = createPiece({
   authors: ['JanHolger'],
   categories: [PieceCategory.DEVELOPER_TOOLS],
   auth: pastefyAuth,
-  actions,
+  actions: [
+    ...actions,
+    createCustomApiCallAction({
+      baseUrl: (auth) => {
+        const typedAuth = auth as { instance_url: string };
+        return typedAuth.instance_url + '/api/v2';
+      },
+      auth: pastefyAuth,
+      authMapping: (auth) => {
+        const typedAuth = auth as { token?: string };
+        return {
+          Authorization: typedAuth.token
+            ? `Bearer ${typedAuth.token}`
+            : undefined,
+        };
+      },
+    }),
+  ],
   triggers: triggers,
 });

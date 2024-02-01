@@ -1,3 +1,4 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { calendlyCommon } from './lib/common';
@@ -36,6 +37,14 @@ export const calendly = createPiece({
   authors: ['AbdulTheActivePiecer'],
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   auth: calendlyAuth,
-  actions: [],
+  actions: [
+    createCustomApiCallAction({
+      baseUrl: () => calendlyCommon.baseUrl, // Replace with the actual base URL
+      auth: calendlyAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
+  ],
   triggers: [calendlyInviteeCreated, calendlyInviteeCanceled],
 });

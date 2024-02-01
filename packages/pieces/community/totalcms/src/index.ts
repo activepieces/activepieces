@@ -17,6 +17,7 @@ import { saveVideoAction } from './lib/actions/save-video';
 
 import { PieceCategory } from '@activepieces/shared';
 import { newBlogPost } from './lib/triggers/new-blog-post';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const totalcms = createPiece({
   displayName: 'Total CMS',
@@ -39,6 +40,13 @@ export const totalcms = createPiece({
     saveTextAction,
     saveToggleAction,
     saveVideoAction,
+    createCustomApiCallAction({
+      baseUrl: (auth) => (auth as { domain: string }).domain,
+      auth: cmsAuth,
+      authMapping: (auth) => ({
+        'total-key': (auth as { license: string }).license,
+      }),
+    }),
   ],
   triggers: [newBlogPost],
 });

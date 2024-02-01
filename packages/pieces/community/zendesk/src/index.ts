@@ -5,6 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { newTicketInView } from './lib/trigger/new-ticket-in-view';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const markdownProperty = `
 **Organization**: The organization name can be found in the URL (e.g https://ORGANIZATION_NAME.zendesk.com).
@@ -43,6 +44,21 @@ export const zendesk = createPiece({
   authors: ['abuaboud'],
   categories: [PieceCategory.CUSTOMER_SERVICE],
   auth: zendeskAuth,
-  actions: [],
+  actions: [
+    createCustomApiCallAction({
+      baseUrl: (auth) =>
+        `https://${
+          (auth as { subdomain: string }).subdomain
+        }.zendesk.com/api/v2`,
+      auth: zendeskAuth,
+      authMapping: (auth) => ({
+        Authorization: `Basic ${Buffer.from(
+          `${(auth as { email: string }).email}/token:${
+            (auth as { token: string }).token
+          }`
+        ).toString('base64')}`,
+      }),
+    }),
+  ],
   triggers: [newTicketInView],
 });

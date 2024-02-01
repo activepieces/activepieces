@@ -1,4 +1,9 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import {
+  OAuth2PropertyValue,
+  PieceAuth,
+  createPiece,
+} from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { createContact } from './lib/actions/create-contact.action';
 import { getOrCreateContact } from './lib/actions/create-or-get-contact.action';
@@ -18,5 +23,16 @@ export const intercom = createPiece({
   categories: [PieceCategory.CUSTOMER_SERVICE],
   auth: intercomAuth,
   triggers: [],
-  actions: [getOrCreateContact, createContact, sendMessage],
+  actions: [
+    getOrCreateContact,
+    createContact,
+    sendMessage,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.intercom.io',
+      auth: intercomAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      }),
+    }),
+  ],
 });

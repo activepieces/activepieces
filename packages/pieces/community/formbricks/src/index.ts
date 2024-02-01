@@ -1,6 +1,7 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { triggers } from './lib/triggers';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const markdownPropertyDescription = `
   **Enable Basic Authentication:**
@@ -26,6 +27,16 @@ export const formbricks = createPiece({
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   logoUrl: 'https://cdn.activepieces.com/pieces/formbricks.png',
   authors: ['kanarelo'],
-  actions: [],
+  actions: [
+    createCustomApiCallAction({
+        auth: formBricksAuth,
+        authMapping(auth) {
+            return {
+                'x-Api-Key': auth as string,
+            }
+        },
+        baseUrl: () => 'https://api.formbricks.com/v1',
+    })
+  ],
   triggers,
 });

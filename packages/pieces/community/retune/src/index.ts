@@ -1,4 +1,8 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import {
+  createCustomApiCallAction,
+  httpClient,
+  HttpMethod,
+} from '@activepieces/pieces-common';
 import {
   createPiece,
   PieceAuth,
@@ -66,6 +70,15 @@ export const retune = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/retune.png',
   authors: ['MoShizzle'],
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
-  actions: [askChatbot],
+  actions: [
+    askChatbot,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://retune.so/api',
+      auth: retuneAuth,
+      authMapping: (auth) => ({
+        'X-Workspace-API-Key': (auth as { apiKey: string }).apiKey,
+      }),
+    }),
+  ],
   triggers: [],
 });

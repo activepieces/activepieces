@@ -1,4 +1,9 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import {
+  OAuth2PropertyValue,
+  PieceAuth,
+  createPiece,
+} from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { hubSpotListsAddContactAction } from './lib/actions/add-contact-to-list-action';
 import { createHubspotContact } from './lib/actions/create-contact.action';
@@ -40,6 +45,13 @@ export const hubspot = createPiece({
     hubSpotContactsCreateOrUpdateAction,
     hubSpotListsAddContactAction,
     hubSpotGetOwnerByEmailAction,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.hubapi.com',
+      auth: hubspotAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      }),
+    }),
   ],
   triggers: [
     newTaskAdded,

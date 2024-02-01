@@ -1,3 +1,4 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   PieceAuth,
   Property,
@@ -75,6 +76,14 @@ export const vtex = createPiece({
     getClientById,
     getOrderById,
     getOrderList,
+    createCustomApiCallAction({
+      baseUrl: (auth) => `https://${(auth as { hostUrl: string }).hostUrl}`,
+      auth: vtexAuth,
+      authMapping: (auth) => ({
+        'X-VTEX-API-AppKey': (auth as { appKey: string }).appKey,
+        'X-VTEX-API-AppToken': (auth as { appToken: string }).appToken,
+      }),
+    }),
   ],
   triggers: [],
 });

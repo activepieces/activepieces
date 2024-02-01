@@ -1,4 +1,7 @@
-import { HttpError } from '@activepieces/pieces-common';
+import {
+  createCustomApiCallAction,
+  HttpError,
+} from '@activepieces/pieces-common';
 import {
   createPiece,
   PieceAuth,
@@ -83,6 +86,16 @@ export const kimai = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/kimai.png',
   categories: [PieceCategory.IT_OPERATIONS],
   authors: ['facferreira'],
-  actions: [kimaiCreateTimesheetAction],
+  actions: [
+    kimaiCreateTimesheetAction,
+    createCustomApiCallAction({
+      baseUrl: (auth) => (auth as { base_url: string }).base_url,
+      auth: kimaiAuth,
+      authMapping: (auth) => ({
+        'X-AUTH-USER': (auth as { user: string }).user,
+        'X-AUTH-TOKEN': (auth as { api_password: string }).api_password,
+      }),
+    }),
+  ],
   triggers: [],
 });

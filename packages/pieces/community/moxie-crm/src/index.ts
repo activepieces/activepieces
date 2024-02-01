@@ -1,3 +1,4 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   createPiece,
   PieceAuth,
@@ -43,6 +44,13 @@ export const moxieCrm = createPiece({
     moxieCreateClientAction,
     moxieCreateTaskAction,
     moxieCreateProjectAction,
+    createCustomApiCallAction({
+      baseUrl: (auth) => (auth as { baseUrl: string }).baseUrl,
+      auth: moxieCRMAuth,
+      authMapping: (auth) => ({
+        'X-API-KEY': (auth as { apiKey: string }).apiKey,
+      }),
+    }),
   ],
   triggers: moxieCRMTriggers,
 });

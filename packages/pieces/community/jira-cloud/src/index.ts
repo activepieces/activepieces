@@ -26,7 +26,9 @@ export const jiraCloud = createPiece({
       authMapping: (auth) => {
         const typedAuth = auth as JiraAuth;
         return {
-          Authorization: `Basic ${typedAuth.email}:${typedAuth.apiToken}`,
+          Authorization: `Basic ${Buffer.from(
+            `${typedAuth.email}:${typedAuth.apiToken}`
+          ).toString('base64')}`,
         };
       },
     }),

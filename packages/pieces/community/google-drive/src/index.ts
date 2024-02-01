@@ -1,6 +1,10 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import {
+  OAuth2PropertyValue,
+  PieceAuth,
+  createPiece,
+} from '@activepieces/pieces-framework';
 
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { addPermission } from './lib/action/add-permission.action';
 import { googleDriveCreateNewFolder } from './lib/action/create-new-folder';
 import { googleDriveCreateNewTextFile } from './lib/action/create-new-text-file';
@@ -35,7 +39,6 @@ export const googleDrive = createPiece({
     'vitalini',
     'PFernandez98',
   ],
-  categories: [PieceCategory.CONTENT_AND_FILES],
   triggers: [newFile, newFolder],
   actions: [
     googleDriveCreateNewFolder,
@@ -49,6 +52,14 @@ export const googleDrive = createPiece({
     saveFileAsPdf,
     addPermission,
     deletePermission,
+    ,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://www.googleapis.com/drive/v3',
+      auth: googleDriveAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      }),
+    }),
   ],
   auth: googleDriveAuth,
 });

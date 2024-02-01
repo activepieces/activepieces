@@ -1,10 +1,12 @@
 import {
+    OAuth2PropertyValue,
   PieceAuth,
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { newContact } from './lib/triggers/new-contact';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const zohoCrmAuth = PieceAuth.OAuth2({
   props: {
@@ -34,7 +36,6 @@ export const zohoCrmAuth = PieceAuth.OAuth2({
       },
     }),
   },
-
   description: 'Authentication for Zoho CRM',
   scope: ['ZohoCRM.modules.READ'],
   authUrl: 'https://accounts.{location}/oauth/v2/auth',
@@ -44,12 +45,19 @@ export const zohoCrmAuth = PieceAuth.OAuth2({
 
 export const zohoCrm = createPiece({
   displayName: 'Zoho CRM',
-
   logoUrl: 'https://cdn.activepieces.com/pieces/zoho-crm.png',
   minimumSupportedRelease: '0.5.0',
   authors: ['abuaboud'],
   categories: [PieceCategory.SALES_AND_CRM],
   auth: zohoCrmAuth,
-  actions: [],
+  actions: [
+    createCustomApiCallAction({
+      baseUrl: (auth) => `https://${(auth as OAuth2PropertyValue).data.location}/crm/v4`,
+      auth: zohoCrmAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      }),
+    }),
+  ],
   triggers: [newContact],
 });
