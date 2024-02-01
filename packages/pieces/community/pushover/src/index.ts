@@ -35,7 +35,7 @@ export const pushover = createPiece({
   displayName: 'Pushover',
 
   logoUrl: 'https://cdn.activepieces.com/pieces/pushover.png',
-  categories: [PieceCategory.OTHER],
+  categories: [PieceCategory.COMMUNICATION],
   minimumSupportedRelease: '0.5.0',
   authors: ['MyWay'],
   auth: pushoverAuth,

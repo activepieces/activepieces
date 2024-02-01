@@ -24,7 +24,7 @@ export const totalcms = createPiece({
   auth: cmsAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/totalcms.png',
-  categories: [PieceCategory.WEBSITE_BUILDERS],
+  categories: [PieceCategory.MARKETING],
   authors: ['joeworkman'],
   actions: [
     getContentAction,

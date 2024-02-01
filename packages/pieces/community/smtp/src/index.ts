@@ -66,7 +66,7 @@ export const smtp = createPiece({
   displayName: 'SMTP',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/smtp.png',
-  categories: [PieceCategory.OTHER],
+  categories: [PieceCategory.CORE],
   authors: ['abaza738'],
   auth: smtpAuth,
   actions: [sendEmail],

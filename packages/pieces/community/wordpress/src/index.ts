@@ -98,7 +98,7 @@ export const wordpress = createPiece({
   displayName: 'Wordpress',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/wordpress.png',
-  categories: [PieceCategory.WEBSITE_BUILDERS],
+  categories: [PieceCategory.MARKETING],
   auth: wordpressAuth,
   actions: [
     createWordpressPost,

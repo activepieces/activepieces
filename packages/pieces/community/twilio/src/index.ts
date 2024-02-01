@@ -23,7 +23,7 @@ export const twilio = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/twilio.png',
   auth: twilioAuth,
-  categories: [PieceCategory.IT_OPERATIONS],
+  categories: [PieceCategory.COMMUNICATION],
   actions: [
     twilioSendSms,
     createCustomApiCallAction({

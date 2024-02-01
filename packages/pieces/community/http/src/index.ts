@@ -7,7 +7,7 @@ export const http = createPiece({
   displayName: 'HTTP',
   description: 'Sends HTTP requests and return responses',
   logoUrl: 'https://cdn.activepieces.com/pieces/http.png',
-  categories: [PieceCategory.OTHER],
+  categories: [PieceCategory.CORE],
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.5.0',
   actions: [httpSendRequestAction, httpReturnResponse],

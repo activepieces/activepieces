@@ -21,7 +21,7 @@ export const googleTasksAuth = PieceAuth.OAuth2({
 export const googleTasks = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-tasks.png',
-  categories: [PieceCategory.IT_OPERATIONS],
+  categories: [PieceCategory.PRODUCTIVITY],
   actions: [
     googleTasksAddNewTaskAction,
     createCustomApiCallAction({

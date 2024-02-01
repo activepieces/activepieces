@@ -23,7 +23,7 @@ export const box = createPiece({
   auth: boxAuth,
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/box.png',
-  categories: [PieceCategory.FILE_MANAGEMENT_AND_STORAGE],
+  categories: [PieceCategory.CONTENT_AND_FILES],
   authors: ['kanarelo', 'MoShizzle'],
   actions: [
     createCustomApiCallAction({

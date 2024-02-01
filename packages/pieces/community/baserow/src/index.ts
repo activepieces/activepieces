@@ -37,7 +37,7 @@ export const baserow = createPiece({
   auth: baserowAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/baserow.png',
-  categories: [PieceCategory.DATABASES],
+  categories: [PieceCategory.PRODUCTIVITY],
   authors: ['kishanprmr'],
   actions: [
     createRowAction,

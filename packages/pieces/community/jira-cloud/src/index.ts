@@ -13,7 +13,7 @@ export const jiraCloud = createPiece({
   auth: jiraCloudAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/jira.png',
-  categories: [PieceCategory.PROJECT_MANAGEMENT],
+  categories: [PieceCategory.PRODUCTIVITY],
   authors: ['MoShizzle'],
   actions: [
     createIssue,

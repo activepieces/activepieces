@@ -42,7 +42,7 @@ export const mysql = createPiece({
   displayName: 'MySQL',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/mysql.png',
-  categories: [PieceCategory.DATABASES],
+  categories: [PieceCategory.DEVELOPER_TOOLS],
   authors: ['JanHolger'],
   auth: mysqlAuth,
   actions,

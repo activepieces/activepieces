@@ -8,7 +8,7 @@ export const csv = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/csv.png',
   auth: PieceAuth.None(),
-  categories: [PieceCategory.CONTENT_AND_FILES],
+  categories: [PieceCategory.CORE],
   actions: [parseCSVTextAction, unparseCSVTextAction],
   authors: ['kanarelo'],
   triggers: [],

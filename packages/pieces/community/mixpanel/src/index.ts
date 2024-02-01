@@ -17,7 +17,7 @@ export const mixpanel = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/mixpanel.png',
   authors: ['yann120'],
   auth: mixpanelAuth,
-  categories: [PieceCategory.IT_OPERATIONS],
+  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   actions: [
     trackEvent,
     createCustomApiCallAction({

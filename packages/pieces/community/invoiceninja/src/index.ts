@@ -33,7 +33,7 @@ export const invoiceninja = createPiece({
   displayName: 'Invoice Ninja',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/invoiceninja.png',
-  categories: [PieceCategory.CUSTOMER_SERVICE],
+  categories: [PieceCategory.ACCOUNTING],
   authors: ['buttonsbond'],
   auth: invoiceninjaAuth,
   actions: [

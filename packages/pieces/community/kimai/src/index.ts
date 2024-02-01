@@ -84,7 +84,7 @@ export const kimai = createPiece({
   auth: kimaiAuth,
   minimumSupportedRelease: '0.6.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/kimai.png',
-  categories: [PieceCategory.IT_OPERATIONS],
+  categories: [PieceCategory.PRODUCTIVITY],
   authors: ['facferreira'],
   actions: [
     kimaiCreateTimesheetAction,

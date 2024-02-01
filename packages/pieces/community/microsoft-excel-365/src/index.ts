@@ -37,7 +37,7 @@ export const microsoftExcel = createPiece({
   auth: excelAuth,
   minimumSupportedRelease: '0.8.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-excel-365.png',
-  categories: [PieceCategory.CONTENT_AND_FILES],
+  categories: [PieceCategory.PRODUCTIVITY],
   authors: ['BastienMe'],
   actions: [
     appendRowAction,

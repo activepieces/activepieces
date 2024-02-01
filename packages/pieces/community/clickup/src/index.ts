@@ -35,7 +35,7 @@ export const clickup = createPiece({
   displayName: 'ClickUp',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/clickup.png',
-  categories: [PieceCategory.PROJECT_MANAGEMENT],
+  categories: [PieceCategory.PRODUCTIVITY],
   auth: clickupAuth,
   actions: [
     createClickupTask,

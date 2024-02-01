@@ -20,7 +20,7 @@ export const facebookLeads = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/facebook.png',
   authors: ['MoShizzle'],
-  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
+  categories: [PieceCategory.MARKETING],
   auth: facebookLeadsAuth,
   actions: [],
   triggers: [newLead],

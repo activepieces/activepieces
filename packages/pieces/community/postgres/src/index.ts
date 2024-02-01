@@ -66,7 +66,7 @@ export const postgresAuth = PieceAuth.CustomAuth({
 export const postgres = createPiece({
   displayName: 'Postgres',
   minimumSupportedRelease: '0.5.0',
-  categories: [PieceCategory.DATABASES],
+  categories: [PieceCategory.DEVELOPER_TOOLS],
   logoUrl: 'https://cdn.activepieces.com/pieces/postgres.png',
   authors: ['Willianwg'],
   auth: postgresAuth,

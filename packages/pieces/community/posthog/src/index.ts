@@ -18,7 +18,7 @@ export const posthog = createPiece({
   displayName: 'PostHog',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/posthog.png',
-  categories: [PieceCategory.OTHER],
+  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   auth: posthogAuth,
   actions: [
     posthogCreateEvent,

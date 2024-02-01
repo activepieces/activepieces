@@ -28,7 +28,7 @@ export const googleCalendarAuth = PieceAuth.OAuth2({
 export const googleCalendar = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-calendar.png',
-  categories: [PieceCategory.IT_OPERATIONS],
+  categories: [PieceCategory.PRODUCTIVITY],
   displayName: 'Google Calendar',
   authors: ['osamahaikal', 'bibhuty-did-this', 'MoShizzle', 'PFernandez98'],
   auth: googleCalendarAuth,

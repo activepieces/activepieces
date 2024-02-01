@@ -68,7 +68,7 @@ export const retune = createPiece({
   auth: retuneAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/retune.png',
-  categories: [PieceCategory.DATABASES],
+  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ['MoShizzle'],
   actions: [
     askChatbot,

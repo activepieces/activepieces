@@ -20,7 +20,7 @@ export const intercom = createPiece({
   displayName: 'Intercom',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/intercom.png',
-  categories: [PieceCategory.CUSTOMER_SERVICE],
+  categories: [PieceCategory.CUSTOMER_SUPPORT],
   auth: intercomAuth,
   triggers: [],
   actions: [

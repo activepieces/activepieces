@@ -25,7 +25,7 @@ export const frame = createPiece({
   auth: frameAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/frameio.png',
-  categories: [PieceCategory.COMMUNICATION],
+  categories: [PieceCategory.MARKETING],
   authors: ['kanarelo'],
   actions: [
     createCustomApiCallAction({

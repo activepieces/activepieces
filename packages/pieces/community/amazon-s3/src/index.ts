@@ -191,7 +191,7 @@ export const amazonS3 = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/amazon-s3.png',
   minimumSupportedRelease: '0.5.0',
   authors: ['Willianwg', 'MoShizzle'],
-  categories: [PieceCategory.FILE_MANAGEMENT_AND_STORAGE],
+  categories: [PieceCategory.DEVELOPER_TOOLS],
   auth: amazonS3Auth,
   actions: [amazons3UploadFile, readFile],
   triggers: [newFile],

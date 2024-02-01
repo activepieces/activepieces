@@ -29,7 +29,7 @@ export const freshdeskAuth = PieceAuth.CustomAuth({
 export const freshdesk = createPiece({
   displayName: 'Freshdesk',
   logoUrl: 'https://cdn.activepieces.com/pieces/freshdesk.png',
-  categories: [PieceCategory.CUSTOMER_SERVICE],
+  categories: [PieceCategory.CUSTOMER_SUPPORT],
   authors: ['buttonsbond'],
   auth: freshdeskAuth,
   actions: [

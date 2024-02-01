@@ -9,7 +9,7 @@ export const clearout = createPiece({
   auth: clearoutAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/clearout.png',
-  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
+  categories: [PieceCategory.SALES_AND_CRM],
   authors: ['joeworkman'],
   actions: [
     instantVerifyAction,

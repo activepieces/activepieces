@@ -3,7 +3,6 @@ import {
   OAuth2PropertyValue,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
 import actions from './lib/actions';
 import { spotifyCommon } from './lib/common';
 import triggers from './lib/triggers';
@@ -13,7 +12,7 @@ export const spotify = createPiece({
   auth: spotifyCommon.authentication,
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/spotify.png',
-  categories: [PieceCategory.OTHER],
+  categories: [],
   authors: ['JanHolger'],
   actions: [
     ...actions,

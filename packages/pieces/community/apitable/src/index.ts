@@ -44,7 +44,7 @@ export const apitable = createPiece({
   description: `Interactive spreadsheets with collaboration`,
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/apitable.png',
-  categories: [PieceCategory.DATABASES],
+  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE, PieceCategory.PRODUCTIVITY],
   authors: ['abdallah-alwarawreh', 'kishanprmr'],
   actions: [
     createRecordAction,

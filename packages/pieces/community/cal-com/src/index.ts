@@ -12,7 +12,7 @@ export const calcom = createPiece({
   displayName: 'Cal.com',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/cal.com.png',
-  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
+  categories: [PieceCategory.PRODUCTIVITY],
   authors: ['kanarelo'],
   auth: calcomAuth,
   actions: [],

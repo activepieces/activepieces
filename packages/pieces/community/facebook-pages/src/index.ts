@@ -35,7 +35,7 @@ export const facebookPages = createPiece({
   displayName: 'Facebook Pages',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/facebook.png',
-  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
+  categories: [PieceCategory.MARKETING],
   authors: ['MoShizzle'],
   auth: facebookPagesAuth,
   actions: [createPost, createPhotoPost, createVideoPost],

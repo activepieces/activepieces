@@ -52,7 +52,7 @@ export const zohoInvoice = createPiece({
   auth: zohoAuth,
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/zoho-invoice.png',
-  categories: [PieceCategory.IT_OPERATIONS],
+  categories: [PieceCategory.ACCOUNTING],
   authors: ['MoShizzle'],
   actions: [
     createCustomApiCallAction({

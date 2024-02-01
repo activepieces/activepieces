@@ -28,7 +28,7 @@ export const webflow = createPiece({
   displayName: 'Webflow',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/webflow.png',
-  categories: [PieceCategory.WEBSITE_BUILDERS],
+  categories: [PieceCategory.MARKETING],
   authors: ['Ahmad-AbuOsbeh', 'TaskMagicKyle'],
   auth: webflowAuth,
   actions: [

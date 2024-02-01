@@ -48,7 +48,7 @@ export const deepl = createPiece({
   auth: deeplAuth,
   minimumSupportedRelease: '0.6.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/deepl.png',
-  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
+  categories: [],
   authors: ['BBND'],
   actions: [
     translateText,

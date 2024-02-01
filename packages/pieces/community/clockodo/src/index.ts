@@ -38,7 +38,7 @@ export const clockodo = createPiece({
   displayName: 'Clockodo',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/clockodo.png',
-  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
+  categories: [PieceCategory.PRODUCTIVITY],
   authors: ['JanHolger'],
   auth: clockodoAuth,
   actions,

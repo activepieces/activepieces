@@ -38,7 +38,7 @@ export const tidycal = createPiece({
   auth: tidyCalAuth,
   minimumSupportedRelease: '0.7.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/tidycal.png',
-  categories: [PieceCategory.IT_OPERATIONS],
+  categories: [PieceCategory.PRODUCTIVITY],
   authors: ['Salem-Alaa'],
   actions: [
     createCustomApiCallAction({

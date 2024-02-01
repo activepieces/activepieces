@@ -69,7 +69,7 @@ export const trello = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/trello.png',
   authors: ['ShayPunter', 'Salem-Alaa', 'MoShizzle'],
-  categories: [PieceCategory.PROJECT_MANAGEMENT],
+  categories: [PieceCategory.PRODUCTIVITY],
   auth: trelloAuth,
   actions: [createCard, getCard],
   triggers: [cardMovedTrigger, newCardTrigger],

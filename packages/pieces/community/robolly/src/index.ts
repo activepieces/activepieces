@@ -26,7 +26,7 @@ export const robolly = createPiece({
   auth: robollyAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/robolly.png',
-  categories: [PieceCategory.IT_OPERATIONS],
+  categories: [PieceCategory.MARKETING],
   authors: ['PFernandez98'],
   actions: [
     generateImage,

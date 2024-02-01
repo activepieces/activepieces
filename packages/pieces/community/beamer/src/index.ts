@@ -17,7 +17,7 @@ export const beamerAuth = PieceAuth.SecretText({
 export const beamer = createPiece({
   displayName: 'beamer',
   logoUrl: 'https://cdn.activepieces.com/pieces/beamer.png',
-  categories: [PieceCategory.PROJECT_MANAGEMENT],
+  categories: [PieceCategory.PRODUCTIVITY],
   auth: beamerAuth,
   authors: ['i-nithin'],
   actions: [

@@ -16,7 +16,7 @@ export const todoist = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/todoist.png',
   authors: ['khaledmashaly'],
-  categories: [PieceCategory.PROJECT_MANAGEMENT],
+  categories: [PieceCategory.PRODUCTIVITY],
   auth: todoistAuth,
   actions: [
     todoistCreateTaskAction,

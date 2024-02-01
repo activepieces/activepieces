@@ -9,7 +9,7 @@ export const bonjoro = createPiece({
   auth: bonjoroAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/bonjoro.png',
-  categories: [PieceCategory.CUSTOMER_SERVICE],
+  categories: [PieceCategory.CUSTOMER_SUPPORT],
   authors: ['joeworkman'],
   actions: [
     addGreetAction,

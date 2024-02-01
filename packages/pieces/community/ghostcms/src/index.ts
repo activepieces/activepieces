@@ -50,7 +50,7 @@ export const ghostcms = createPiece({
   auth: ghostAuth,
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/ghostcms.png',
-  categories: [PieceCategory.WEBSITE_BUILDERS],
+  categories: [PieceCategory.MARKETING],
   authors: ['MoShizzle'],
   actions: [
     createMember,

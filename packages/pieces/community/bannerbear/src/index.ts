@@ -13,7 +13,7 @@ export const bannerbear = createPiece({
   displayName: 'Bannerbear',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/bannerbear.png',
-  categories: [PieceCategory.CONTENT_AND_FILES],
+  categories: [PieceCategory.MARKETING],
   authors: ['kanarelo'],
   auth: bannerbearAuth,
   actions: [

@@ -36,8 +36,8 @@ export const brilliantDirectories = createPiece({
   auth: brilliantDirectoriesAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/brilliant-directories.png',
-  categories: [PieceCategory.OTHER],
-  authors: ['Shay Punter @ PunterDigital', 'Tim M'],
+  categories: [],
+  authors: ['Shay Punter', 'Tim M'],
   actions: [
     createNewUser,
     createCustomApiCallAction({

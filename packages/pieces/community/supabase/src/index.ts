@@ -25,7 +25,7 @@ export const supabase = createPiece({
   auth: supabaseAuth,
   minimumSupportedRelease: '0.6.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/supabase.png',
-  categories: [PieceCategory.DATABASES],
+  categories: [PieceCategory.DEVELOPER_TOOLS],
   authors: ['abuaboud'],
   actions: [
     uploadFile,

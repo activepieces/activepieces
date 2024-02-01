@@ -72,7 +72,7 @@ export const onfleet = createPiece({
   auth: onfleetAuth,
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/onfleet.png',
-  categories: [PieceCategory.PROJECT_MANAGEMENT],
+  categories: [],
   authors: ['MoShizzle'],
   actions: [
     createRecipient,

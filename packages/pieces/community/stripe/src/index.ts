@@ -22,8 +22,8 @@ export const stripe = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/stripe.png',
   authors: ['ashrafsamhouri', 'lldiegon', 'doskyft'],
   categories: [
-    PieceCategory.BUSINESS_INTELLIGENCE,
-    PieceCategory.IT_OPERATIONS,
+    PieceCategory.COMMERCE,
+    PieceCategory.PAYMENT_PROCESSING,
   ],
   auth: stripeAuth,
   actions: [

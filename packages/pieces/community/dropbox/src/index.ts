@@ -57,7 +57,7 @@ export const dropbox = createPiece({
   ],
   displayName: 'Dropbox',
   authors: ['kanarelo', 'BastienMe'],
-  categories: [PieceCategory.FILE_MANAGEMENT_AND_STORAGE],
+  categories: [PieceCategory.CONTENT_AND_FILES],
   triggers: [],
   auth: dropboxAuth,
 });

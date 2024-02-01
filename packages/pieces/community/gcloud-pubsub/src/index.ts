@@ -53,7 +53,7 @@ export const gcloudPubsub = createPiece({
   displayName: 'GCloud Pub/Sub',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/gcloud-pubsub.png',
-  categories: [PieceCategory.IT_OPERATIONS],
+  categories: [PieceCategory.DEVELOPER_TOOLS],
   auth: googlePubsubAuth,
   authors: ['kidskey'],
   actions: [publishToTopic],

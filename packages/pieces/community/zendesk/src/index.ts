@@ -42,7 +42,7 @@ export const zendesk = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/zendesk.png',
   authors: ['abuaboud'],
-  categories: [PieceCategory.CUSTOMER_SERVICE],
+  categories: [PieceCategory.CUSTOMER_SUPPORT],
   auth: zendeskAuth,
   actions: [
     createCustomApiCallAction({

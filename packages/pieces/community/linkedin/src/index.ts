@@ -22,7 +22,7 @@ export const linkedin = createPiece({
   displayName: 'LinkedIn',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/linkedin.png',
-  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
+  categories: [PieceCategory.MARKETING],
   authors: ['MoShizzle'],
   auth: linkedinAuth,
   actions: [createShareUpdate, createCompanyUpdate],

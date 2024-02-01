@@ -8,7 +8,7 @@ export const imageHelper = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/image-helper.png',
   authors: ['PFernandez98'],
-  categories: [PieceCategory.OTHER],
+  categories: [PieceCategory.CORE],
   actions: [imageToBase64],
   triggers: [],
 });
