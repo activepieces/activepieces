@@ -8,6 +8,17 @@ export const VERSION_PATTERN = /^([~^])?[0-9]+\.[0-9]+\.[0-9]+$/
 export const ExactVersionType = Type.RegEx(EXACT_VERSION_PATTERN)
 export const VersionType = Type.RegEx(VERSION_PATTERN)
 
+
+export enum PieceSortBy {
+    NAME = 'NAME',
+    DATE = 'DATE',
+}
+
+export enum PieceOrderBy {
+    ASC = 'ASC',
+    DESC = 'DESC',
+}
+
 export const GetPieceRequestWithScopeParams = Type.Object({
     name: Type.String(),
     scope: Type.String(),
@@ -26,6 +37,9 @@ export const ListPiecesRequestQuery = Type.Object({
     release: Type.Optional(ExactVersionType),
     includeHidden: Type.Optional(Type.Boolean()),
     edition: Type.Optional(Type.Enum(ApEdition)),
+    searchQuery: Type.Optional(Type.String()),
+    sortBy: Type.Optional(Type.Enum(PieceSortBy)),
+    orderBy: Type.Optional(Type.Enum(PieceOrderBy)),
 })
 
 export type ListPiecesRequestQuery = Static<typeof ListPiecesRequestQuery>
