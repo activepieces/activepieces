@@ -55,6 +55,7 @@ import {
 } from '@activepieces/ui/common';
 import { Actions, ofType } from '@ngrx/effects';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
+import { ActionOrTriggerName } from './const';
 
 @Component({
   selector: 'app-step-type-sidebar',
@@ -200,7 +201,10 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
     );
   }
 
-  onTypeSelected(flowItemDetails: FlowItemDetails) {
+  onTypeSelected(
+    flowItemDetails: FlowItemDetails,
+    actionOrTriggerName?: ActionOrTriggerName
+  ) {
     this.flowTypeSelected$ = forkJoin({
       currentFlow: this.store
         .select(BuilderSelectors.selectCurrentFlow)
@@ -218,7 +222,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
           return;
         }
         if (this._showTriggers) {
-          this.replaceTrigger(flowItemDetails);
+          this.replaceTrigger(flowItemDetails, actionOrTriggerName);
         } else {
           const operation = this.constructAddOperation(
             (results.rightSideBar.props as StepTypeSideBarProps).stepName,
@@ -226,7 +230,8 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
             flowItemDetails.type as ActionType,
             flowItemDetails,
             (results.rightSideBar.props as StepTypeSideBarProps)
-              .stepLocationRelativeToParent
+              .stepLocationRelativeToParent,
+            actionOrTriggerName
           );
           this.store.dispatch(
             FlowsActions.addAction({
@@ -241,7 +246,10 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
     );
   }
 
-  private replaceTrigger(triggerDetails: FlowItemDetails) {
+  private replaceTrigger(
+    triggerDetails: FlowItemDetails,
+    triggerName?: ActionOrTriggerName
+  ) {
     const base = {
       name: 'trigger',
       nextAction: undefined,
@@ -279,7 +287,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
             pieceName: triggerDetails.extra?.pieceName ?? 'NO_APP_NAME',
             pieceVersion:
               triggerDetails.extra?.pieceVersion ?? 'NO_APP_VERSION',
-            triggerName: '',
+            triggerName: triggerName?.name || '',
             input: {},
             inputUiInfo: {
               currentSelectedData: '',
@@ -300,14 +308,17 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
     flowVersion: FlowVersion,
     actionType: ActionType,
     flowItemDetails: FlowItemDetails,
-    stepLocationRelativeToParent: StepLocationRelativeToParent
+    stepLocationRelativeToParent: StepLocationRelativeToParent,
+    actionName?: ActionOrTriggerName
   ): AddActionRequest {
     const baseProps = {
       name: flowHelper.findAvailableStepName(flowVersion, 'step'),
-      displayName: getDefaultDisplayNameForPiece(
-        flowItemDetails.type as ActionType,
-        flowItemDetails.name
-      ),
+      displayName:
+        actionName?.displayName ??
+        getDefaultDisplayNameForPiece(
+          flowItemDetails.type as ActionType,
+          flowItemDetails.name
+        ),
       nextAction: undefined,
       valid: true,
     };
@@ -364,7 +375,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
               pieceName: flowItemDetails.extra?.pieceName ?? 'NO_APP_NAME',
               pieceVersion:
                 flowItemDetails.extra?.pieceVersion ?? 'NO_APP_VERSION',
-              actionName: undefined,
+              actionName: actionName?.name,
               input: {},
               inputUiInfo: {
                 customizedInputs: {},

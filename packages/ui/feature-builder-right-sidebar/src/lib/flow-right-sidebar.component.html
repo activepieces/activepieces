@@ -6,7 +6,7 @@
 
 
   <ng-container *ngIf="rightSidebarType === sidebarType.EDIT_STEP">
-    <div class="ap-relative ap-h-full" #editStepSection [class.top-resizer-section]="
+    <div class="ap-relative ap-h-full thin-scrollbars" #editStepSection [class.top-resizer-section]="
       (viewMode$ | async) === ViewModeEnum.BUILDING" [class.ap-transition-all]="animateSectionsHeightChange">
       <app-edit-step-sidebar>
       </app-edit-step-sidebar>

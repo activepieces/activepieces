@@ -16,6 +16,10 @@ export class FlowItemDetails {
       pieceType: PieceType;
       pieceName: string;
       pieceVersion: string;
+      actionsOrTriggers?: {
+        displayName: string;
+        name: string;
+      }[];
     }
   ) {}
 }

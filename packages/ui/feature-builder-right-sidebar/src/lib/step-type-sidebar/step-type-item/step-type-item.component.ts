@@ -2,11 +2,14 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  EventEmitter,
   Input,
+  Output,
 } from '@angular/core';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { Observable, tap } from 'rxjs';
 import { FlowItemDetails, fadeIn400ms } from '@activepieces/ui/common';
+import { ActionOrTriggerName } from '../const';
 
 @Component({
   selector: 'app-step-type-item',
@@ -19,6 +22,7 @@ export class StepTypeItemComponent {
   _flowItemDetails: FlowItemDetails;
   _flowItemDetails$: Observable<FlowItemDetails | undefined>;
   @Input() clickable = true;
+  @Output() actionOrTirggerClicked = new EventEmitter<ActionOrTriggerName>();
   @Input() set flowItemDetails(value: FlowItemDetails) {
     this._flowItemDetails = value;
     this.loadStepIcon(this._flowItemDetails.logoUrl || '');

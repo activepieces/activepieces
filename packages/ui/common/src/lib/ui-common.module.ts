@@ -70,6 +70,7 @@ import { UpgradeNoteComponent } from '././components/upgrade-note/upgrade-note.c
 import { CardDirective } from './directives/card.directive';
 import { DropdownPropertySearchPipe } from './pipe/dropdown-search.pipe';
 import { ImportFlowDialogComponent } from './components/dialogs/import-flow-dialog/import-flow-dialog.component';
+import { SlicerPipe } from './pipe';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -136,6 +137,7 @@ const exportedDeclarations = [
   CardDirective,
   ImportFlowDialogComponent,
   DropdownPropertySearchPipe,
+  SlicerPipe,
 ];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,

@@ -6,23 +6,15 @@ $minHeightOfSections: 55px;
   min-height: $minHeightOfSections;
   height: calc(50% - 29px);
   max-height: calc(100% - $minHeightOfSections);
-  overflow-y: scroll;
-  scrollbar-width: thin;
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
+  overflow-y: auto;
+
 }
 
 .bottom-resizer-section {
   margin-top: 10px;
   min-height: $minHeightOfSections;
   max-height: calc(50% + 11px);
-  overflow-y: scroll;
-  scrollbar-width: thin;
 
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
 }
 
 .resizer-area {

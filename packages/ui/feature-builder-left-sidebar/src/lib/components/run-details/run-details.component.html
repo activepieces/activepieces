@@ -14,14 +14,14 @@
             (resizerDragStarted)="resizerDragStarted(stepsResultsAccordion)">
           </ap-horizontal-sidebar-separator>
         </div>
-        <div class="top-resizer-section" #stepsResultsAccordion>
+        <div class="top-resizer-section thin-scrollbars" #stepsResultsAccordion>
           <ng-container *ngFor="let stepResult of logs.runResults; let stepIndex = index">
             <app-step-result [isTrigger]="stepIndex === 0" [stepResult]="stepResult"
               [selectedStepName]="selectedStepName$ | async">
             </app-step-result>
           </ng-container>
         </div>
-        <div class="bottom-resizer-section" #selectedStepResultContainer>
+        <div class="bottom-resizer-section thin-scrollbars" #selectedStepResultContainer>
           <ng-container *ngIf="
                 currentStepResult$ | async as currentStepResult
               ">

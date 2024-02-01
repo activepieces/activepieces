@@ -30,12 +30,30 @@
 
     <img *ngIf="stepIconUrl" @fadeIn class="type-logo" [src]="stepIconUrl" />
   </div>
-  <div class="type-text-container ap-flex-grow ap-flex ap-items-center ap-gap-0.5">
+  <div class="type-text-container   ap-flex-grow ap-flex ap-items-center ap-gap-0.5 ap-justify-between">
     <div>
       <div class="type-label">{{ itemDetails.name }}</div>
-      <div class="description">{{ itemDetails.description }}</div>
+      <div *ngIf="!clickable" class="description">{{ itemDetails.description }}</div>
+      <!-- <div class="ap-flex ap-gap-0.5 ap-mt-2 ">
+        <ng-container
+          *ngFor="let actionOrTrigger of (itemDetails.extra?.actionsOrTriggers|slicer:0:3); let isLast=last">
+          <div class="ap-cursor-pointer ap-typography-caption ap-text-primary !ap-font-semi-bold">
+            {{actionOrTrigger.displayName}}
+          </div>
+          <div class="ap-leading-4" *ngIf="!isLast">, </div>
+
+        </ng-container>
+      </div> -->
+
     </div>
-    <div class="ap-flex-grow"></div>
+    <ng-container *ngIf="clickable">
+      <ng-container *ngTemplateOutlet="
+      triggersOrActionsList;
+      context: { $implicit: itemDetails }
+    "></ng-container>
+    </ng-container>
+
+
   </div>
 </ng-template>
 
@@ -43,4 +61,19 @@
   <div class="ap-flex ap-items-center ap-justify-center ap-flex-grow loading-container">
     <ap-loading-icon></ap-loading-icon>
   </div>
+</ng-template>
+<ng-template #triggersOrActionsList let-itemDetails>
+  <ap-icon-button iconFilename="dropdown.svg" [width]="22" [height]="22" (click)="$event.stopImmediatePropagation()"
+    [matMenuTriggerFor]="menu">
+  </ap-icon-button>
+
+
+  <mat-menu #menu="matMenu" xPosition="before">
+    <button mat-menu-item *ngFor="let actionOrTrigger of itemDetails.extra?.actionsOrTriggers"
+      (click)="actionOrTirggerClicked.emit(actionOrTrigger)">
+      {{
+      actionOrTrigger.displayName
+      }}
+    </button>
+  </mat-menu>
 </ng-template>
