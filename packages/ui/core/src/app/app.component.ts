@@ -102,10 +102,9 @@ export class AppComponent implements OnInit {
     // TODO remove in next release
     this.logoutOldTokens$ = this.flagService.getEdition().pipe(
       tap((edition) => {
-        // Check if expirey is more than 7 days logout
         if (
           edition === ApEdition.CLOUD &&
-          isNil(this.authenticationService.getToken()?.['platform'])
+          isNil(this.authenticationService.getDecodedToken()?.platform)
         ) {
           this.authenticationService.logout();
         }
