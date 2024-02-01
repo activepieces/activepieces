@@ -99,6 +99,9 @@ const __CanvasReducer = createReducer(
         type: sidebarType,
         props: props,
       };
+      if (sidebarType === RightSideBarType.TRIGGER_TYPE) {
+        clonedState.clickedAddBtnId = undefined;
+      }
       return clonedState;
     }
   ),

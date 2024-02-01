@@ -17,7 +17,11 @@ import { Step, StepWithIndex } from '../../model/step';
 import { MentionListItem } from '../../model/mention-list-item';
 import { FlowStructureUtil } from '../../utils/flowStructureUtil';
 import { ConnectionDropdownItem } from '../../model/connections-dropdown-item';
-import { BuilderSavingStatusEnum, CanvasState } from '../../model';
+import {
+  BuilderSavingStatusEnum,
+  CanvasState,
+  RightSideBarType,
+} from '../../model';
 import { FlowItemDetails } from '@activepieces/ui/common';
 import { StepRunResult } from '../../utils/stepRunResult';
 import {
@@ -285,41 +289,48 @@ const selectStepResultsAccordion = createSelector(
     return results;
   }
 );
-export const selectCurrentLeftSidebarType = createSelector(
+const selectCurrentLeftSidebarType = createSelector(
   selectCanvasState,
   (state: CanvasState) => {
     return state.leftSidebar.type;
   }
 );
 
-export const selectCurrentRightSideBar = createSelector(
+const selectCurrentRightSideBar = createSelector(
   selectCanvasState,
   (state: CanvasState) => {
     return state.rightSidebar;
   }
 );
 
-export const selectCurrentRightSideBarType = createSelector(
+const selectCurrentRightSideBarType = createSelector(
   selectCanvasState,
   (state: CanvasState) => {
     return state.rightSidebar.type;
   }
 );
 
-export const selectAllFlowItemsDetails = createSelector(
+const selectReplaceTriggerIsActive = createSelector(
+  selectCurrentRightSideBarType,
+  (state: RightSideBarType) => {
+    return state === RightSideBarType.TRIGGER_TYPE;
+  }
+);
+
+const selectAllFlowItemsDetails = createSelector(
   selectGlobalBuilderState,
   (state: GlobalBuilderState) => {
     return state?.flowItemsDetailsState;
   }
 );
-export const selectAllFlowItemsDetailsLoadedState = createSelector(
+const selectAllFlowItemsDetailsLoadedState = createSelector(
   selectAllFlowItemsDetails,
   (state: FlowItemsDetailsState) => {
     return state.loaded;
   }
 );
 
-export const selectCoreFlowItemsDetails = createSelector(
+const selectCoreFlowItemsDetails = createSelector(
   selectAllFlowItemsDetails,
   (state: FlowItemsDetailsState) => {
     return state.coreFlowItemsDetails;
@@ -658,4 +669,5 @@ export const BuilderSelectors = {
   selectViewedVersionHistoricalStatus,
   selectDraftVersion,
   selectShowIncompleteStepsWidget,
+  selectReplaceTriggerIsActive,
 };

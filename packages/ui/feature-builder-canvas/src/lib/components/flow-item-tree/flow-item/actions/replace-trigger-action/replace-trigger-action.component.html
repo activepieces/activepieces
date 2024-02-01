@@ -1,2 +1,6 @@
-<ap-icon-button iconFilename="replace.svg" tooltipText="Change Trigger" i18n-tooltipText [width]="17" [height]="17"
-    [tabIndex]="-1" (buttonClicked)="replaceTrigger()"></ap-icon-button>
+<ap-icon-button *ngIf="!replaceTriggerIsActive " iconFilename="replace.svg" tooltipText="Change Trigger"
+    i18n-tooltipText [width]="17" [height]="17" [tabIndex]="-1" (buttonClicked)="replaceTrigger()"></ap-icon-button>
+
+<ap-icon-button *ngIf="replaceTriggerIsActive" iconFilename="replace.svg" extraClasses="ap-fill-primary"
+    tooltipText="Change Trigger" i18n-tooltipText [width]="17" [height]="17" [tabIndex]="-1"
+    (buttonClicked)="replaceTrigger()"></ap-icon-button>

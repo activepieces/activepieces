@@ -18,10 +18,14 @@ export class ActionsContainerComponent {
   @Input() stepHovered: boolean;
   isDragging$: Observable<boolean>;
   readonly$: Observable<boolean>;
+  replaceTriggerIsActive$: Observable<boolean>;
   constructor(
     private store: Store,
     private flowRendererService: FlowRendererService
   ) {
+    this.replaceTriggerIsActive$ = this.store.select(
+      BuilderSelectors.selectReplaceTriggerIsActive
+    );
     this.isDragging$ = this.flowRendererService.isDragginStep$;
     this.readonly$ = this.store.select(BuilderSelectors.selectReadOnly);
   }

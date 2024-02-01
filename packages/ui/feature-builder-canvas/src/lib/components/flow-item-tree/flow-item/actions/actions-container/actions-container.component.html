@@ -6,10 +6,12 @@
                 ap-bg-white ap-border-solid ap-border-[1px]
                 ap-border-line ap-min-w-[50px] ap-min-h-[50px]" apTrackHover
         #replaceTriggerContainer="hoverTrackerDirective" *ngIf="trigger"
-        [class.ap-opacity-100]="(stepHovered || replaceTriggerContainer.isHovered)"
-        [class.ap-opacity-0]="(!stepHovered && !replaceTriggerContainer.isHovered)"
+        [class.ap-opacity-100]="(stepHovered || replaceTriggerContainer.isHovered || (replaceTriggerIsActive$ | async))"
+        [class.ap-opacity-0]="(!stepHovered && !replaceTriggerContainer.isHovered) &&
+        ((replaceTriggerIsActive$ | async)=== undefined || (replaceTriggerIsActive$ | async) === null || (replaceTriggerIsActive$ | async) === false)"
         [class.ap-hidden]="isDragging$ | async">
-        <app-replace-trigger-action></app-replace-trigger-action>
+        <app-replace-trigger-action
+            [replaceTriggerIsActive]="(replaceTriggerIsActive$ | async) || false"></app-replace-trigger-action>
     </div>
     <div class="ap-flex ap-flex-col ap-gap-2 ap-h-full" *ngIf="!trigger">
 

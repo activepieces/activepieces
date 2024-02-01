@@ -7,7 +7,8 @@
       <input #searchInput [formControl]="searchFormControl" matInput placeholder="Search" i18n-placeholder
         autocomplete="off">
     </mat-form-field>
-    <mat-tab-group #tabGroup (selectedTabChange)="searchFormControl.setValue(searchFormControl.value)">
+    <mat-tab-group #tabGroup (selectedTabChange)="searchFormControl.setValue(searchFormControl.value)"
+      animationDuration="0ms">
       <mat-tab *ngFor="let tab of tabsAndTheirLists; let i = index">
         <ng-template mat-tab-label>
           <div class="category-label" [class.category-label-active]="tabGroup.selectedIndex === i">
