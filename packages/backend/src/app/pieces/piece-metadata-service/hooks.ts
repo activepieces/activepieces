@@ -39,6 +39,15 @@ export const filterPieceBasedOnSearchQuery = ({ searchQuery, pieces }: { searchQ
     if (!searchQuery) {
         return pieces
     }
+    if (searchQuery.length <= 2) {
+        const fuse = new Fuse(pieces, {
+            keys: ['name', 'description'],
+            threshold: 0.2,
+        })
+
+        return fuse.search(searchQuery).map(({ item }) => item)
+    }
+  
     const convertPieces = pieces.map(p => ({
         ...p,
         actionOrTrigger: [...Object.values(p.actions).map(a => {
@@ -56,7 +65,9 @@ export const filterPieceBasedOnSearchQuery = ({ searchQuery, pieces }: { searchQ
     const fuse = new Fuse(convertPieces, {
         keys: ['name', 'description', 'actionOrTrigger.name', 'actionOrTrigger.description'],
         threshold: 0.2,
+        shouldSort: true,
     })
-
-    return fuse.search(searchQuery).map(({ item }) => pieces.find(p => p.name === item.name)!)
+      
+    return fuse.search(searchQuery).map(({ item })=> item)
+     
 }

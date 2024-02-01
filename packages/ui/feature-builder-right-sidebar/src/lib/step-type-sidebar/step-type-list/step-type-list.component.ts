@@ -31,10 +31,7 @@ export class StepTypeListComponent {
   }
   actionOrTirggerClicked(
     flowItemDetails: FlowItemDetails,
-    actionOrTriggerName: {
-      displayName: string;
-      name: string;
-    }
+    actionOrTriggerName: ActionOrTriggerName
   ) {
     this.actionOrTriggerSelected.emit({
       actionOrTriggerName,

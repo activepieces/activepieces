@@ -10,16 +10,16 @@ export class FlowItemDetails {
     public type: ActionType | TriggerType,
     public name: string,
     public description: string,
-    public logoUrl?: string,
+    public logoUrl: string,
     public extra?: {
       packageType: PackageType;
       pieceType: PieceType;
       pieceName: string;
       pieceVersion: string;
-      actionsOrTriggers?: {
-        displayName: string;
-        name: string;
-      }[];
-    }
+    },
+    public actionsOrTriggers?: {
+      displayName: string;
+      name: string;
+    }[]
   ) {}
 }

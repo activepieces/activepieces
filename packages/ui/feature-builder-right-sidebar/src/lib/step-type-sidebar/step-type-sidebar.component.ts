@@ -2,7 +2,6 @@ import { Store } from '@ngrx/store';
 import {
   combineLatest,
   debounceTime,
-  delay,
   filter,
   forkJoin,
   map,
@@ -253,7 +252,9 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
     const base = {
       name: 'trigger',
       nextAction: undefined,
-      displayName: getDisplayNameForTrigger(triggerDetails.type as TriggerType),
+      displayName: triggerName
+        ? triggerName.displayName
+        : getDisplayNameForTrigger(triggerDetails.type as TriggerType),
     };
     let trigger: Trigger;
     switch (triggerDetails.type as TriggerType) {
@@ -449,20 +450,59 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
       ),
     }).pipe(
       map((res) => {
-        return res.allTabItems.filter(
-          (item) =>
-            item.description
-              .toLowerCase()
-              .includes(res.search.searchQuery.trim().toLowerCase()) ||
-            item.name
-              .toLowerCase()
-              .includes(res.search.searchQuery.trim().toLowerCase()) ||
-            res.search.serverResponse.findIndex(
-              (p) => p.displayName === item.name
-            ) > -1
-        );
+        return res.allTabItems
+          .filter(
+            (item) =>
+              item.description
+                .toLowerCase()
+                .includes(res.search.searchQuery.trim().toLowerCase()) ||
+              item.name
+                .toLowerCase()
+                .includes(res.search.searchQuery.trim().toLowerCase()) ||
+              res.search.serverResponse.findIndex(
+                (p) => p.displayName === item.name
+              ) > -1
+          )
+          .map((item) => {
+            const serverResult = res.search.serverResponse.find((it) => {
+              return it.displayName === item.name;
+            });
+
+            if (
+              !serverResult ||
+              !serverResult.actions ||
+              !serverResult.triggers ||
+              res.search.searchQuery.length < 3
+            ) {
+              return {
+                ...item,
+                actionsOrTriggers: [] as ActionOrTriggerName[],
+              };
+            }
+
+            const actions: ActionOrTriggerName[] = Object.keys(
+              serverResult.actions || {}
+            )
+              .map((name) => ({
+                name,
+                displayName: serverResult.actions[name].displayName,
+              }))
+              .slice(0, 3);
+            const triggers: ActionOrTriggerName[] = Object.keys(
+              serverResult.triggers || {}
+            )
+              .map((name) => ({
+                name,
+                displayName: serverResult.triggers[name].displayName,
+              }))
+              .slice(0, 3);
+            return {
+              ...item,
+              actionsOrTriggers: this._showTriggers ? triggers : actions,
+            };
+          });
       }),
-      delay(50),
+
       tap(() => {
         this.loading$.next(false);
       })

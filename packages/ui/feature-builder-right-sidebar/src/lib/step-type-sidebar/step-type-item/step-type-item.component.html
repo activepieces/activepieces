@@ -36,8 +36,7 @@
       <div *ngIf="!clickable" class="description">{{ itemDetails.description }}</div>
 
       <mat-chip-listbox *ngIf="clickable">
-        <ng-container
-          *ngFor="let actionOrTrigger of (itemDetails.extra?.actionsOrTriggers | slicer:0:3); let isLast=last">
+        <ng-container *ngFor="let actionOrTrigger of (itemDetails?.actionsOrTriggers | slicer:0:3); let isLast=last">
           <mat-chip-option (click)="actionOrTirggerClicked.emit(actionOrTrigger)" color="primary-light"
             [highlighted]="true"> {{actionOrTrigger.displayName}}</mat-chip-option>
         </ng-container>

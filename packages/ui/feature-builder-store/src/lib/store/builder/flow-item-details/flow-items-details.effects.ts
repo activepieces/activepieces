@@ -119,13 +119,13 @@ export class FlowItemsDetailsEffects {
                 pieceType: piece.pieceType,
                 pieceName: piece.name,
                 pieceVersion: piece.version,
-                actionsOrTriggers: Object.keys(piece.actions).map((name) => {
-                  return {
-                    name,
-                    displayName: piece.actions[name].displayName,
-                  };
-                }),
-              }
+              },
+              Object.keys(piece.actions).map((name) => {
+                return {
+                  name,
+                  displayName: piece.actions[name].displayName,
+                };
+              })
             );
           } else if (Object.keys(piece.triggers).length > 0 && forTriggers) {
             return new FlowItemDetails(
@@ -138,13 +138,13 @@ export class FlowItemsDetailsEffects {
                 pieceType: piece.pieceType,
                 pieceName: piece.name,
                 pieceVersion: piece.version,
-                actionsOrTriggers: Object.keys(piece.triggers).map((name) => {
-                  return {
-                    name,
-                    displayName: piece.triggers[name].displayName,
-                  };
-                }),
-              }
+              },
+              Object.keys(piece.triggers).map((name) => {
+                return {
+                  name,
+                  displayName: piece.triggers[name].displayName,
+                };
+              })
             );
           } else {
             return null;
