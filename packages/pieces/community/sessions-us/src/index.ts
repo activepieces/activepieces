@@ -1,5 +1,9 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import {
+  createCustomApiCallAction,
+  httpClient,
+  HttpMethod,
+} from '@activepieces/pieces-common';
 
 import { createSession } from './lib/actions/create-session';
 import { createEvent } from './lib/actions/create-event';
@@ -49,7 +53,18 @@ export const sessionsUs = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/sessions-us.png',
   authors: ['Owlcept', 'MoShizzle'],
-  actions: [createSession, createEvent, publishEvent],
+  actions: [
+    createSession,
+    createEvent,
+    publishEvent,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.app.sessions.us/api',
+      auth: sessionAuth,
+      authMapping: (auth) => ({
+        'x-api-key': `${auth}`,
+      }),
+    }),
+  ],
   triggers: [
     bookingCreated,
     bookingStarted,

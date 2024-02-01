@@ -1,4 +1,4 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
 
 import { googleDriveCreateNewFolder } from './lib/action/create-new-folder';
 import { googleDriveCreateNewTextFile } from './lib/action/create-new-text-file';
@@ -13,6 +13,7 @@ import { addPermission } from './lib/action/add-permission.action';
 import { deletePermission } from './lib/action/delete-permission.action';
 import { googleDriveGetResourceById } from './lib/action/get-file-by-id';
 import { googleDriveSearchFolder } from './lib/action/search-folder-or-file.action';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const googleDriveAuth = PieceAuth.OAuth2({
   description: '',
@@ -25,8 +26,15 @@ export const googleDriveAuth = PieceAuth.OAuth2({
 export const googleDrive = createPiece({
   minimumSupportedRelease: '0.5.6',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-drive.png',
-  displayName: "Google Drive",
-  authors: ['kanarelo', 'BastienMe', 'MoShizzle', 'Armangiau', 'vitalini', 'PFernandez98'],
+  displayName: 'Google Drive',
+  authors: [
+    'kanarelo',
+    'BastienMe',
+    'MoShizzle',
+    'Armangiau',
+    'vitalini',
+    'PFernandez98',
+  ],
   triggers: [newFile, newFolder],
   actions: [
     googleDriveCreateNewFolder,
@@ -39,7 +47,14 @@ export const googleDrive = createPiece({
     duplicateFileAction,
     saveFileAsPdf,
     addPermission,
-    deletePermission
+    deletePermission,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://www.googleapis.com/drive/v3',
+      auth: googleDriveAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      }),
+    }),
   ],
-  auth: googleDriveAuth
+  auth: googleDriveAuth,
 });

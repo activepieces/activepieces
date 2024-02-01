@@ -1,4 +1,4 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { dropboxCreateNewFolder } from './lib/actions/create-new-folder';
 import { dropboxCreateNewTextFile } from './lib/actions/create-new-text-file';
 import { dropboxUploadFile } from './lib/actions/upload-file';
@@ -11,6 +11,7 @@ import { dropboxMoveFolder } from './lib/actions/move-folder';
 import { dropboxCopyFolder } from './lib/actions/copy-folder';
 import { dropboxListAFolder } from './lib/actions/list-a-folder';
 import { dropboxSearch } from './lib/actions/search';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const dropboxAuth = PieceAuth.OAuth2({
   description: '',
@@ -41,6 +42,14 @@ export const dropbox = createPiece({
     dropboxMoveFolder,
     dropboxCopyFolder,
     dropboxListAFolder,
+    createCustomApiCallAction({
+        baseUrl: () => 'https://api.dropboxapi.com/2',
+        auth: dropboxAuth,
+        authMapping: (auth) => ({
+            'Authorization': `Bearer ${(auth as OAuth2PropertyValue).access_token}`
+        })
+    })
+    
   ],
   displayName: 'Dropbox',
   authors: ['kanarelo', 'BastienMe'],

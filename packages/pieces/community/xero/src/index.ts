@@ -1,6 +1,11 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import {
+  OAuth2PropertyValue,
+  PieceAuth,
+  createPiece,
+} from '@activepieces/pieces-framework';
 import { xeroCreateContact } from './lib/actions/create-contact';
 import { xeroCreateInvoice } from './lib/actions/create-invoice';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const xeroAuth = PieceAuth.OAuth2({
   description: `
@@ -11,7 +16,6 @@ export const xeroAuth = PieceAuth.OAuth2({
   5. Enter your \`redirect url\`
   6. Copy the \`Client Id\` and \`Client Secret\`
   `,
-
   authUrl: 'https://login.xero.com/identity/connect/authorize',
   tokenUrl: 'https://identity.xero.com/connect/token',
   required: true,
@@ -24,6 +28,16 @@ export const xero = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/xero.png',
   authors: ['kanarelo'],
   auth: xeroAuth,
-  actions: [xeroCreateContact, xeroCreateInvoice],
+  actions: [
+    xeroCreateContact,
+    xeroCreateInvoice,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.xero.com/api.xro/2.0',
+      auth: xeroAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      }),
+    }),
+  ],
   triggers: [],
 });

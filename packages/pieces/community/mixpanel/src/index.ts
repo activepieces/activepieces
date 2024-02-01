@@ -1,5 +1,6 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { trackEvent } from './lib/actions/track-event';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const mixpanelAuth = PieceAuth.SecretText({
   displayName: 'Mixpanel token',
@@ -15,6 +16,15 @@ export const mixpanel = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/mixpanel.png',
   authors: ['yann120'],
   auth: mixpanelAuth,
-  actions: [trackEvent],
+  actions: [trackEvent,
+    createCustomApiCallAction({
+        baseUrl: () => 'https://api.mixpanel.com',
+        auth: mixpanelAuth,
+        authMapping: (auth) => ({
+            'Authorization': `Basic ${Buffer.from(auth as string).toString('base64')}`,
+        })
+    })
+    
+],
   triggers: [],
 });

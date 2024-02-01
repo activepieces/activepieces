@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-brilliant-directories",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "dependencies": {
     "@activepieces/pieces-framework": "latest",
     "@activepieces/pieces-common": "latest",

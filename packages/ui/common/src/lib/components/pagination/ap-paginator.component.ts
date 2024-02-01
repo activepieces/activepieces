@@ -1,32 +1,30 @@
-import {
-  AfterViewInit,
-  Component,
-  EventEmitter,
-  Input,
-  OnInit,
-  Output,
-} from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import {
+  CURSOR_QUERY_PARAM,
   DEFAULT_PAGE_SIZE,
   LIMIT_QUERY_PARAM,
+  NEXT_QUERY_PARAM,
   PAGE_SIZES,
+  PREVIOUS_QUERY_PARAM,
 } from '../../utils/tables.utils';
 
 @Component({
   selector: 'ap-paginator',
   templateUrl: './ap-paginator.component.html',
 })
-export class ApPaginatorComponent implements OnInit, AfterViewInit {
+export class ApPaginatorComponent implements OnInit {
   @Input() pageSizes: number[] = PAGE_SIZES;
   @Output() pageChanged: EventEmitter<string> = new EventEmitter();
   @Output() pageSizeChanged: EventEmitter<number> = new EventEmitter();
   pageSizeChanged$!: Observable<number>;
   pageSizeControl!: FormControl<number>;
-  constructor(private router: Router, private route: ActivatedRoute) {}
-
+  constructor(private router: Router, private route: ActivatedRoute) {
+    this.next = this.route.snapshot.queryParamMap.get(NEXT_QUERY_PARAM);
+    this.previous = this.route.snapshot.queryParamMap.get(PREVIOUS_QUERY_PARAM);
+  }
   previous: string | null = null;
   next: string | null = null;
   ngOnInit(): void {
@@ -38,25 +36,41 @@ export class ApPaginatorComponent implements OnInit, AfterViewInit {
         this.pageSizeChanged.emit(val);
         this.router.navigate(['.'], {
           relativeTo: this.route,
-          queryParams: { limit: val, cursor: undefined },
+          queryParams: {
+            [LIMIT_QUERY_PARAM]: val,
+            [CURSOR_QUERY_PARAM]: undefined,
+            [NEXT_QUERY_PARAM]: undefined,
+            [PREVIOUS_QUERY_PARAM]: undefined,
+          },
           queryParamsHandling: 'merge',
         });
       })
     );
   }
-  ngAfterViewInit(): void {
-    const pageSize = Number.parseInt(
-      this.route.snapshot.queryParamMap.get(LIMIT_QUERY_PARAM) || '0'
-    );
 
-    this.pageSizeControl.setValue(pageSize || DEFAULT_PAGE_SIZE);
-  }
-  setQueryParams(cursor: string) {
+  setCursor(cursor: string) {
     const params: { [key: string]: string | number } = {
-      limit: this.pageSizeControl.value,
-      cursor: cursor,
+      [LIMIT_QUERY_PARAM]: this.pageSizeControl.value,
+      [CURSOR_QUERY_PARAM]: cursor,
     };
 
+    this.router.navigate(['.'], {
+      relativeTo: this.route,
+      queryParams: params,
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  setNextAndPrevious(next: string | null, previous: string | null) {
+    this.next = next;
+    this.previous = previous;
+    const params: { [key: string]: string | number } = {};
+    if (next) {
+      params[NEXT_QUERY_PARAM] = next;
+    }
+    if (previous) {
+      params[PREVIOUS_QUERY_PARAM] = previous;
+    }
     this.router.navigate(['.'], {
       relativeTo: this.route,
       queryParams: params,

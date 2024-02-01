@@ -131,6 +131,14 @@
             "endpoints/pieces/schema",
             "endpoints/pieces/install"
           ]
+        },
+        {
+          "group": "Git Sync",
+          "icon": "git",
+          "pages": [
+            "endpoints/git-repos/schema",
+            "endpoints/git-repos/pull"
+          ]
         }
       ]
     },

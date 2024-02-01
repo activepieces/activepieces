@@ -40,6 +40,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             modifiedFlags[ApFlagId.PRIVACY_POLICY_URL] = platform.privacyPolicyUrl
             modifiedFlags[ApFlagId.TERMS_OF_SERVICE_URL] = platform.termsOfServiceUrl
             modifiedFlags[ApFlagId.OWN_AUTH2_ENABLED] = false
+            modifiedFlags[ApFlagId.SHOW_PLATFORM_DEMO] = false
         }
         return modifiedFlags
     },

@@ -92,6 +92,8 @@
                     </div>
                   </button>
                   <ap-share-flow-template-dialog [flow]="flow"></ap-share-flow-template-dialog>
+                  <app-push-flow-to-git-button [flow]="flow"></app-push-flow-to-git-button>
+
                   <button (click)="deleteFlow(flow)" mat-menu-item>
                     <div class="ap-flex ap-gap-3 ap-items-center">
                       <svg-icon [src]="flowActionsUiInfo.delete.icon"
@@ -143,7 +145,6 @@
 <ng-container *ngFor="let obs$ of flowsUpdateStatusRequest$ | keyvalue">
   <ng-container *ngIf="obs$.value | async"></ng-container>
 </ng-container>
-
 <ng-container *ngIf="showAllFlows$ | async"></ng-container>
 <ng-container *ngIf="duplicateFlow$ | async"></ng-container>
 <ng-container *ngIf="downloadTemplate$ | async"></ng-container>

@@ -1,0 +1,20 @@
+<ng-container *ngIf="show$ | async">
+    <button mat-menu-item *ngIf="(gitRepo$ | async) === null" (click)="openConfigureRepoDialog()">
+        <div class="ap-flex ap-gap-3 ap-items-center">
+            <svg-icon [src]="flowActionsUiInfo.pushToGit.icon" [class]="flowActionsUiInfo.iconSizeTailWind"
+                [applyClass]="true"></svg-icon>
+            <span i18n>{{flowActionsUiInfo.pushToGit.text}}</span>
+        </div>
+    </button>
+
+    <button mat-menu-item *ngIf="(gitRepo$ | async)" (click)="openPushDialog()">
+        <div class="ap-flex ap-gap-3 ap-items-center">
+            <svg-icon [src]="flowActionsUiInfo.pushToGit.icon" [class]="flowActionsUiInfo.iconSizeTailWind"
+                [applyClass]="true"></svg-icon>
+            <span i18n>{{flowActionsUiInfo.pushToGit.text}}</span>
+        </div>
+    </button>
+
+</ng-container>
+<ng-container *ngIf="openPushDialog$| async"></ng-container>
+<ng-container *ngIf="openConfigureRepoDialog$| async"></ng-container>

@@ -15,13 +15,13 @@ import { Observable } from 'rxjs';
 })
 export class IncompleteStepsWidgetComponent {
   numberOfInvalidSteps$: Observable<number>;
-  isShowingPublishedVersion$: Observable<boolean>;
+  show$: Observable<boolean>;
   constructor(private store: Store) {
     this.numberOfInvalidSteps$ = this.store.select(
       BuilderSelectors.selectNumberOfInvalidSteps
     );
-    this.isShowingPublishedVersion$ = this.store.select(
-      BuilderSelectors.selectIsInPublishedVersionViewMode
+    this.show$ = this.store.select(
+      BuilderSelectors.selectShowIncompleteStepsWidget
     );
   }
   selectFirstInvalidStep() {

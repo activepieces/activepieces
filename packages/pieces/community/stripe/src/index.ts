@@ -7,6 +7,7 @@ import { stripeCreateCustomer } from './lib/actions/create-customer';
 import { stripeCreateInvoice } from './lib/actions/create-invoice';
 import { stripeSearchCustomer } from './lib/actions/search-customer';
 import { stripeRetrieveCustomer } from './lib/actions/retrieve-customer';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const stripeAuth = PieceAuth.SecretText({
   displayName: 'Secret API Key',
@@ -25,6 +26,13 @@ export const stripe = createPiece({
     stripeCreateInvoice,
     stripeSearchCustomer,
     stripeRetrieveCustomer,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.stripe.com/v1',
+      auth: stripeAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
   ],
   triggers: [
     stripeNewPayment,
