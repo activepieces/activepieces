@@ -1,11 +1,12 @@
 import { FilteredPieceBehavior } from '@activepieces/ee-shared'
 import { isNil } from '@activepieces/shared'
 import { PieceMetadataSchema } from '../../pieces/piece-metadata-entity'
-import { PieceMetadataServiceHooks, filterPieceBasedOnSearchQuery } from '../../pieces/piece-metadata-service/hooks'
+import { PieceMetadataServiceHooks, defaultPieceHooks } from '../../pieces/piece-metadata-service/hooks'
 import { platformService } from '../platform/platform.service'
 
 export const enterprisePieceMetadataServiceHooks: PieceMetadataServiceHooks = {
-    async filterPieces({ pieces, platformId, searchQuery, includeHidden }) {
+    async filterPieces(params) {
+        const { platformId, includeHidden, pieces } = params
         if (isNil(platformId) || includeHidden) {
             return pieces
         }
@@ -21,6 +22,6 @@ export const enterprisePieceMetadataServiceHooks: PieceMetadataServiceHooks = {
         const resultPieces = pieces
             .slice()
             .filter(predicate)
-        return filterPieceBasedOnSearchQuery({ pieces: resultPieces, searchQuery })
+        return defaultPieceHooks.filterPieces({ ...params, pieces: resultPieces })
     },
 }
