@@ -28,7 +28,13 @@ import {
   FlowBuilderService,
 } from '@activepieces/ui/common';
 import { compareVersions } from 'compare-versions';
-import { ApEdition, ApFlagId, LocalesEnum, User } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  LocalesEnum,
+  User,
+  isNil,
+} from '@activepieces/shared';
 import {
   TelemetryService,
   EmbeddingService,
@@ -57,7 +63,7 @@ export class AppComponent implements OnInit {
   loggedInUser$: Observable<User | undefined>;
   showUpgradeNotification$: Observable<boolean>;
   hideUpgradeNotification = false;
-  openCommandBar$: Observable<void>;
+  logoutOldTokens$: Observable<void>;
   loading$: Subject<boolean> = new Subject();
   importTemplate$: Observable<void>;
   loadingTheme$: BehaviorSubject<boolean> = new BehaviorSubject(true);
@@ -91,6 +97,19 @@ export class AppComponent implements OnInit {
     this.registerMaterialIcons();
     this.theme$ = this.apperanceService.setTheme().pipe(
       tap(() => this.loadingTheme$.next(false)),
+      map(() => void 0)
+    );
+    // TODO remove in next release
+    this.logoutOldTokens$ = this.flagService.getEdition().pipe(
+      tap((edition) => {
+        // Check if expirey is more than 7 days logout
+        if (
+          edition === ApEdition.CLOUD &&
+          isNil(this.authenticationService.getToken()?.['platform'])
+        ) {
+          this.authenticationService.logout();
+        }
+      }),
       map(() => void 0)
     );
     this.embeddedRouteListener$ = this.createEmbeddingRoutesListener();
