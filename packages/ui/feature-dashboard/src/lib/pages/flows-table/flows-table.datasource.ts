@@ -24,7 +24,7 @@ import { FormControl } from '@angular/forms';
 import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
 import { Params } from '@angular/router';
 import { FoldersService } from '@activepieces/ui/common';
-import { FolderActions } from '../../store/folders/folders.actions';
+import { FolderActions } from '@activepieces/ui/feature-folders-store';
 import { Store } from '@ngrx/store';
 
 type FlowListDtoWithInstanceStatusToggleControl = PopulatedFlow & {

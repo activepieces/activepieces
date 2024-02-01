@@ -10,12 +10,10 @@ import {
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {
-  BuilderActions,
   BuilderSelectors,
   FlowItemDetailsActions,
   FlowRendererService,
   FlowsActions,
-  ViewModeEnum,
 } from '@activepieces/ui/feature-builder-store';
 import { Store } from '@ngrx/store';
 import {
@@ -32,7 +30,6 @@ import {
 import { MatDrawerContainer } from '@angular/material/sidenav';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { TestRunBarComponent } from '@activepieces/ui/feature-builder-store';
 import { RunDetailsService } from '@activepieces/ui/feature-builder-left-sidebar';
 import {
   ExecutionOutputStatus,
@@ -55,12 +52,12 @@ import {
   TestStepService,
   FlowBuilderService,
   FlowService,
+  WebSocketService,
 } from '@activepieces/ui/common';
 import { PannerService } from '@activepieces/ui/feature-builder-canvas';
 import { MatDialog } from '@angular/material/dialog';
 import {
-  BuilderRouteData,
-  RunRouteData,
+  flowDisplayNameInRouteData,
 } from '../../resolvers/builder-route-data';
 import { ComponentPortal } from '@angular/cdk/portal';
 import {
@@ -71,7 +68,6 @@ import {
   TemplateDialogClosingResult,
 } from '@activepieces/ui/feature-templates';
 import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/common';
-import { Socket } from 'ngx-socket-io';
 
 @Component({
   selector: 'app-flow-builder',
@@ -125,8 +121,8 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     private telemetryService: TelemetryService,
     public builderAutocompleteService: BuilderAutocompleteMentionsDropdownService,
     private templatesService: TemplatesService,
-    private flowService:FlowService,
-    private socket: Socket
+    private flowService: FlowService,
+    private websocketService: WebSocketService,
   ) {
     this.showPoweredByAp$ = this.flagService.getShowPoweredByAp();
     this.dataInsertionPopupHidden$ =
@@ -146,38 +142,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     this.openTemaplatesDialogForNewFlows();
     this.loadInitialData$ = this.actRoute.data.pipe(
       tap((value) => {
-        const routeData = value as BuilderRouteData | RunRouteData;
-        const runInformation = routeData.runInformation;
-        if (runInformation) {
-          this.store.dispatch(
-            BuilderActions.loadInitial({
-              flow: routeData.runInformation.flow,
-              viewMode: ViewModeEnum.VIEW_INSTANCE_RUN,
-              run: routeData.runInformation.run,
-              appConnections: routeData.connections,
-              folder: routeData.runInformation.folder,
-            })
-          );
-          this.setTitle$ = this.appearanceService.setTitle(
-            routeData.runInformation.flow.version.displayName
-          );
-          this.snackbar.openFromComponent(TestRunBarComponent, {
-            duration: undefined,
-          });
-        } else {
-          this.setTitle$ = this.appearanceService.setTitle(
-            routeData.flowAndFolder.flow.version.displayName
-          );
-          this.store.dispatch(
-            BuilderActions.loadInitial({
-              flow: routeData.flowAndFolder.flow,
-              viewMode: ViewModeEnum.BUILDING,
-              appConnections: routeData.connections,
-              folder: routeData.flowAndFolder.folder,
-              publishedVersion: routeData.flowAndFolder.publishedFlowVersion,
-            })
-          );
-        }
+          this.setTitle$ = this.appearanceService.setTitle(value[flowDisplayNameInRouteData])
       }),
       map(() => void 0)
     );
@@ -212,14 +177,14 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     this.flowRendererService.clientMouseY = e.clientY;
   }
   ngOnDestroy(): void {
-    this.socket.disconnect();
+    this.websocketService.disconnect();
     this.snackbar.dismiss();
     this.runDetailsService.currentStepResult$.next(undefined);
     this.builderService.componentToShowInsidePortal$.next(undefined);
   }
 
   ngOnInit(): void {
-    this.socket.connect()
+    this.websocketService.connect()
     this.store.dispatch(FlowItemDetailsActions.loadFlowItemsDetails());
   }
 
@@ -298,62 +263,62 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
   }
 
   openTemaplatesDialogForNewFlows() {
- 
+
     if (localStorage.getItem(CURRENT_FLOW_IS_NEW_KEY_IN_LOCAL_STORAGE)) {
       const TemplateDialogData: TemplateDialogData = {
         insideBuilder: true
       };
       const templates$ = this.templatesService.list({});
-      this.importTemplate$ =   templates$.pipe(switchMap((templates)=>{
-        if(templates.length === 0) {
+      this.importTemplate$ = templates$.pipe(switchMap((templates) => {
+        if (templates.length === 0) {
           return of(void 0);
         }
         return this.matDialog
-        .open(TemplatesDialogComponent, {
-          data: TemplateDialogData,
-        })
-        .afterClosed()
-        .pipe(
-          switchMap((dialogResult?: TemplateDialogClosingResult) => {
-            if (dialogResult) {
-              this.builderService.showLoading();
-              return this.store
-                .select(BuilderSelectors.selectCurrentFlow)
-                .pipe(
-                  take(1),
-                  switchMap((flow)=>{
-                    return this.flowService
-                    .update(flow.id, {
-                      type: FlowOperationType.IMPORT_FLOW,
-                      request: {
-                        displayName: dialogResult.template.name,
-                        trigger: dialogResult.template.template.trigger,
-                      },
+          .open(TemplatesDialogComponent, {
+            data: TemplateDialogData,
+          })
+          .afterClosed()
+          .pipe(
+            switchMap((dialogResult?: TemplateDialogClosingResult) => {
+              if (dialogResult) {
+                this.builderService.showLoading();
+                return this.store
+                  .select(BuilderSelectors.selectCurrentFlow)
+                  .pipe(
+                    take(1),
+                    switchMap((flow) => {
+                      return this.flowService
+                        .update(flow.id, {
+                          type: FlowOperationType.IMPORT_FLOW,
+                          request: {
+                            displayName: dialogResult.template.name,
+                            trigger: dialogResult.template.template.trigger,
+                          },
+                        })
+                    }),
+                    tap((res) => {
+                      this.builderService.hideLoading();
+                      this.store.dispatch(FlowsActions.importFlow({ flow: res }));
+                      this.telemetryService.capture({
+                        name: TelemetryEventName.FLOW_IMPORTED,
+                        payload: {
+                          id: dialogResult.template.id,
+                          name: dialogResult.template.name,
+                          location: `inside the builder`,
+                          tab: `${dialogResult.activeTab}`,
+                        },
+                      });
+                      if (dialogResult.template.blogUrl) {
+                        this.showBlogNotification(dialogResult.template);
+                      }
                     })
-                  }),
-                  tap((res)=>{
-                    this.builderService.hideLoading();
-                    this.store.dispatch(FlowsActions.importFlow({ flow: res }));
-                    this.telemetryService.capture({
-                      name: TelemetryEventName.FLOW_IMPORTED,
-                      payload: {
-                        id: dialogResult.template.id,
-                        name: dialogResult.template.name,
-                        location: `inside the builder`,
-                        tab: `${dialogResult.activeTab}`,
-                      },
-                    });
-                    if(dialogResult.template.blogUrl) {
-                      this.showBlogNotification(dialogResult.template);
-                    }
-                  })
-                );
-            }
-            return EMPTY;
-          }),
-          map(() => void 0)
-        )
-        })) ;
+                  );
+              }
+              return EMPTY;
+            }),
+            map(() => void 0)
+          )
+      }));
       localStorage.removeItem(CURRENT_FLOW_IS_NEW_KEY_IN_LOCAL_STORAGE);
     }
   }

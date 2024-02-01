@@ -8,6 +8,9 @@ import { existsTask } from './lib/actions/task-exists';
 import { getClient } from './lib/actions/get-client';
 import { getInvoices } from './lib/actions/get-invoices';
 import { getReport } from './lib/actions/get-report';
+import { createInvoice } from './lib/actions/create-invoice';
+import { createClient } from './lib/actions/create-client';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const invoiceninjaAuth = PieceAuth.CustomAuth({
   props: {
@@ -33,6 +36,14 @@ export const invoiceninja = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/invoiceninja.png',
   authors: ['buttonsbond'],
   auth: invoiceninjaAuth,
-  actions: [createTask, existsTask, getClient, getInvoices, getReport],
+  actions: [createTask, existsTask, getClient, getInvoices, getReport, createInvoice, createClient,
+    createCustomApiCallAction({
+      baseUrl: (auth) => `${(auth as { base_url: string }).base_url.replace(/\/$/, '')}/api/v1`,
+      auth: invoiceninjaAuth,
+      authMapping: (auth) => ({
+        'X-Api-Token': (auth as { access_token: string }).access_token,
+      })
+    })
+  ],
   triggers: [],
 });

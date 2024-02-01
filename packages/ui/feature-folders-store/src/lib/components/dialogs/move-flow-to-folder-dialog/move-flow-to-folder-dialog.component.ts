@@ -8,14 +8,16 @@ import {
 import { Store } from '@ngrx/store';
 import { Observable, map, tap } from 'rxjs';
 import { FlowOperationType, FolderDto } from '@activepieces/shared';
-import { FoldersSelectors } from '../../../store/folders/folders.selector';
 import { FlowService } from '@activepieces/ui/common';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { FolderActions } from '../../../store/folders/folders.actions';
+import { FolderActions } from '../../../store/folders.actions';
+import { FoldersSelectors } from '../../../store/folders.selectors';
 
 export interface MoveFlowToFolderDialogData {
   flowId: string;
   folderId?: string | null;
+  flowDisplayName: string;
+  inBuilder: boolean;
 }
 
 @Component({
@@ -59,12 +61,22 @@ export class MoveFlowToFolderDialogComponent {
         })
         .pipe(
           tap(() => {
-            this.store.dispatch(
-              FolderActions.moveFlow({
-                targetFolderId: this.foldersForm.controls.folder.value,
-                flowFolderId: this.data.folderId,
-              })
-            );
+            if (this.data.inBuilder) {
+              this.store.dispatch(
+                FolderActions.moveFlowInBuilder({
+                  targetFolderId: this.foldersForm.controls.folder.value,
+                  flowFolderId: this.data.folderId,
+                })
+              );
+            } else {
+              this.store.dispatch(
+                FolderActions.moveFlowInFlowsTable({
+                  targetFolderId: this.foldersForm.controls.folder.value,
+                  flowFolderId: this.data.folderId,
+                })
+              );
+            }
+
             this.dialogRef.close(true);
           }),
           map(() => void 0)

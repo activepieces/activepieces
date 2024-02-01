@@ -5,7 +5,7 @@ import { UiFeatureBuilderStoreModule } from '@activepieces/ui/feature-builder-st
 import { SupportComponent } from './components/feedback/support.component';
 import { FlowBuilderHeaderComponent } from './flow-builder-header.component';
 import { ToggleInstanceStateComponent } from './components/toggle-instance-state/toggle-instance-state.component';
-import { PublishButtonComponent } from './components/publish-button/publish-button.component';
+import { PublishButtonComponent } from './components/publish-or-edit-flow-button/publish-or-edit-flow-button.component';
 import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-builder-form-controls';
 import { EeComponentsModule } from '@activepieces/ee-components';
 import { EeBillingUiModule } from '@activepieces/ee-billing-ui';

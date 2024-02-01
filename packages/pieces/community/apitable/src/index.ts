@@ -7,6 +7,7 @@ import { createRecordAction } from './lib/actions/create-record';
 import { findRecordAction } from './lib/actions/find-record';
 import { updateRecordAction } from './lib/actions/update-record';
 import { newRecordTrigger } from './lib/triggers/new-record';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const APITableAuth = PieceAuth.CustomAuth({
   required: true,
@@ -43,6 +44,19 @@ export const apitable = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/apitable.png',
   authors: ['abdallah-alwarawreh', 'kishanprmr'],
-  actions: [createRecordAction, findRecordAction, updateRecordAction],
+  actions: [
+    createRecordAction,
+    updateRecordAction,
+    findRecordAction,
+    createCustomApiCallAction({
+      baseUrl: (auth) => {
+        return (auth as { apiTableUrl: string }).apiTableUrl;
+      },
+      auth: APITableAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as { token: string }).token}`,
+      }),
+    }),
+  ],
   triggers: [newRecordTrigger],
 });

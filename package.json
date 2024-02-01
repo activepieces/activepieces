@@ -15,6 +15,7 @@
     "cli": "npx ts-node packages/cli/src/index.ts",
     "create-piece": "npx ts-node packages/cli/src/index.ts pieces create",
     "create-action": "npx ts-node packages/cli/src/index.ts actions create",
+    "sync-pieces": "npx ts-node packages/cli/src/index.ts pieces sync",
     "publish-piece": "npx ts-node tools/scripts/utils/publish-piece.ts"
   },
   "private": true,
@@ -41,6 +42,7 @@
     "@fastify/cors": "8.3.0",
     "@fastify/formbody": "7.4.0",
     "@fastify/multipart": "7.7.3",
+    "@fastify/rate-limit": "9.1.0",
     "@fastify/swagger": "8.9.0",
     "@fastify/type-provider-typebox": "3.5.0",
     "@fortawesome/angular-fontawesome": "0.12.1",
@@ -90,6 +92,7 @@
     "drip-nodejs": "3.1.1",
     "fastify": "4.12.0",
     "fastify-favicon": "4.3.0",
+    "fastify-plugin": "4.5.1",
     "fastify-raw-body": "4.2.0",
     "fastify-socket.io": "5.0.0",
     "feedparser": "2.2.10",

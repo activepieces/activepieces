@@ -4,6 +4,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { createNewUser } from './lib/actions/create-new-user';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const brilliantDirectoriesAuth = PieceAuth.CustomAuth({
   required: true,
@@ -35,6 +36,15 @@ export const brilliantDirectories = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/brilliant-directories.png',
   authors: ['Shay Punter @ PunterDigital', 'Tim M'],
-  actions: [createNewUser],
+  actions: [
+    createNewUser,
+    createCustomApiCallAction({
+      baseUrl: (auth) => (auth as { site_url: string }).site_url,
+      auth: brilliantDirectoriesAuth,
+      authMapping: (auth) => ({
+        'X-Api-Key': `${(auth as { api_key: string }).api_key}`,
+      }),
+    }),
+  ],
   triggers: [],
 });

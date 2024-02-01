@@ -12,8 +12,8 @@
   </ap-button>
 </div>
 <div [matTooltip]="(buttonTooltipText$ | async)!" *ngIf="(viewMode$ | async) !== ViewModeEnum.BUILDING">
-  <ap-button btnSize="medium" btnStyle="stroked" btnColor="primary" placement="bottom"
-    (buttonClicked)="editFlowButtonClicked()" i18n>
+  <ap-button *ngIf="flow$ | async as flow" btnSize="medium" btnStyle="stroked" btnColor="primary" placement="bottom"
+    (buttonClicked)="editFlowButtonClicked(flow.id)" i18n>
     Edit Flow
   </ap-button>
 </div>

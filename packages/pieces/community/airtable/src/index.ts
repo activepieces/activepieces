@@ -8,6 +8,7 @@ import { airtableDeleteRecordAction } from './lib/actions/delete-record';
 import {
   AuthenticationType,
   HttpMethod,
+  createCustomApiCallAction,
   httpClient,
 } from '@activepieces/pieces-common';
 
@@ -56,6 +57,16 @@ export const airtable = createPiece({
     airtableFindRecordAction,
     airtableUpdateRecordAction,
     airtableDeleteRecordAction,
+    createCustomApiCallAction({
+        baseUrl: () => {
+          return 'https://api.airtable.com/v0';
+        },
+        auth: airtableAuth,
+        authMapping: (auth) => ({
+          'Authorization': `Bearer ${auth}`,
+        })
+      })
+      
   ],
   triggers: [airtableNewRecordTrigger, airtableUpdatedRecordTrigger],
 });

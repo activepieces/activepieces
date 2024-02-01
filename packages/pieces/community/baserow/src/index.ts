@@ -8,6 +8,7 @@ import { deleteRowAction } from './lib/actions/delete-row';
 import { getRowAction } from './lib/actions/get-row';
 import { listRowsAction } from './lib/actions/list-rows';
 import { updateRowAction } from './lib/actions/update-row';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const baserowAuth = PieceAuth.CustomAuth({
   required: true,
@@ -42,6 +43,15 @@ export const baserow = createPiece({
     getRowAction,
     listRowsAction,
     updateRowAction,
+    createCustomApiCallAction({
+      baseUrl: (auth) => {
+        return (auth as { apiUrl: string }).apiUrl;
+      },
+      auth: baserowAuth,
+      authMapping: (auth) => ({
+        Authorization: `Token ${(auth as { token: string }).token}`,
+      }),
+    }),
   ],
   triggers: [],
 });

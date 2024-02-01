@@ -1,6 +1,6 @@
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyPluginCallbackTypebox } from '@fastify/type-provider-typebox'
-import { ActivepiecesError, AddPieceRequestBody, ErrorCode, PieceScope, PlatformRole, Principal, PrincipalType } from '@activepieces/shared'
+import { ActivepiecesError, AddPieceRequestBody, EndpointScope, ErrorCode, PieceScope, PlatformRole, Principal, PrincipalType } from '@activepieces/shared'
 import { pieceService } from '../../pieces/piece-service'
 import { StatusCodes } from 'http-status-codes'
 
@@ -12,6 +12,7 @@ const platformPieceController: FastifyPluginCallbackTypebox = (app, _opts, done)
     app.post('/', {
         config: {
             allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+            scope: EndpointScope.PLATFORM,
         },
         schema: {
             tags: ['pieces'],

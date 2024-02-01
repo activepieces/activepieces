@@ -73,7 +73,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
 
         const decodedName = decodeURIComponent(name)
         return pieceMetadataService.getOrThrow({
-            projectId: req.principal.projectId,
+            projectId: req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.projectId,
             name: decodedName,
             version,
         })

@@ -4,6 +4,8 @@ import { telegramNewMessage } from './lib/trigger/new-message';
 import { telegramSendMediaAction } from './lib/action/send-media.action';
 import { telegramGetChatMemberAction } from './lib/action/get-chat-member';
 import { telegramCreateInviteLinkAction } from './lib/action/create-invite-link';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { telegramCommons } from './lib/common';
 
 const markdownDescription = `
 **Authentication**:
@@ -32,6 +34,10 @@ export const telegramBot = createPiece({
     telegramSendMediaAction,
     telegramGetChatMemberAction,
     telegramCreateInviteLinkAction,
+    createCustomApiCallAction({
+      baseUrl: (auth) => telegramCommons.getApiUrl(auth as string, ''),
+      auth: telegramBotAuth,
+    }),
   ],
   authors: ['abuaboud', 'Abdallah-Alwarawreh'],
   triggers: [telegramNewMessage],

@@ -10,6 +10,7 @@ import { wooCreateProduct } from './lib/actions/create-product';
 import { wooFindCustomer } from './lib/actions/find-customer';
 import { wooFindProduct } from './lib/actions/find-product';
 import { triggers } from './lib/triggers';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const authDescription = `
 To generate your API credentials, follow the steps below:
@@ -67,6 +68,17 @@ export const woocommerce = createPiece({
     wooCreateProduct,
     wooFindCustomer,
     wooFindProduct,
+    createCustomApiCallAction({
+      baseUrl: (auth) => (auth as { baseUrl: string }).baseUrl,
+      auth: wooAuth,
+      authMapping: (auth) => ({
+        Authorization: `Basic ${Buffer.from(
+          `${(auth as { consumerKey: string }).consumerKey}:${
+            (auth as { consumerSecret: string }).consumerSecret
+          }`
+        ).toString('base64')}`,
+      }),
+    }),
   ],
   triggers: triggers,
 });

@@ -1,6 +1,7 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { posthogCreateEvent } from './lib/actions/create-event';
 import { posthogCreateProject } from './lib/actions/create-project';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const authenticationMarkdown = `
 [Click here](https://posthog.com/docs/api/overview#personal-api-keys-recommended) to learn how to obtain your Personal API key.
@@ -17,7 +18,17 @@ export const posthog = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/posthog.png',
   auth: posthogAuth,
-  actions: [posthogCreateEvent, posthogCreateProject],
+  actions: [
+    posthogCreateEvent,
+    posthogCreateProject,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://app.posthog.com',
+      auth: posthogAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
+  ],
   authors: ['kanarelo'],
   triggers: [],
 });

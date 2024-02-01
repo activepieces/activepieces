@@ -553,6 +553,9 @@
       "@activepieces/ui/feature-dashboard": [
         "packages/ui/feature-dashboard/src/index.ts"
       ],
+      "@activepieces/ui/feature-folders-store": [
+        "packages/ui/feature-folders-store/src/index.ts"
+      ],
       "@activepieces/ui/feature-pieces": [
         "packages/ui/feature-pieces/src/index.ts"
       ],

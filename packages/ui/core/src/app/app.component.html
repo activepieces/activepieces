@@ -22,7 +22,7 @@
 </div>
 <ng-container *ngIf="loggedInUser$ | async"></ng-container>
 <ng-container *ngIf="routeLoader$ | async"></ng-container>
-<ng-container *ngIf="openCommandBar$ | async"></ng-container>
+<ng-container *ngIf="logoutOldTokens$ | async"></ng-container>
 <ng-container *ngIf="importTemplate$ | async"></ng-container>
 <ng-container *ngIf="theme$ | async"> </ng-container>
 <ng-container *ngIf="setTitle$ | async"></ng-container>
