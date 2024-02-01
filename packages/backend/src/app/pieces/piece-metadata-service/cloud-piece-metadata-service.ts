@@ -24,11 +24,17 @@ const handleHttpErrors = async (response: Response): Promise<void> => {
 export const CloudPieceMetadataService = (): PieceMetadataService => {
     return {
         async list({ release, searchQuery }): Promise<PieceMetadataModelSummary[]> {
-            const response = await fetch(`${CLOUD_API_URL}?release=${release}` + (searchQuery ? `&searchQuery=${searchQuery}` : ''))
+            const queryParams = new URLSearchParams()
+            queryParams.append('release', release)
+            if (searchQuery) {
+                queryParams.append('searchQuery', searchQuery)
+            }
+            const url = `${CLOUD_API_URL}?${queryParams.toString()}`
+            const response = await fetch(url)
 
             await handleHttpErrors(response)
 
-            return (await response.json() as PieceMetadataModelSummary[])
+            return await response.json() as PieceMetadataModelSummary[]
         },
 
         async getOrThrow({ name, version }): Promise<PieceMetadataModel> {
