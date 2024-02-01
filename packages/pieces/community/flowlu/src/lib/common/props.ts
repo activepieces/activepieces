@@ -31,12 +31,12 @@ export const flowluProps = {
     plan_start_date: Property.DateTime({
       displayName: 'Start Date',
       required: false,
-      description: 'Please use YYYY-MM-DD HH:mm:ss format.'
+      description: 'Please use YYYY-MM-DD HH:mm:ss format.',
     }),
     deadline: Property.DateTime({
       displayName: 'End Date',
       required: false,
-      description: 'Please use YYYY-MM-DD HH:mm:ss format.'
+      description: 'Please use YYYY-MM-DD HH:mm:ss format.',
     }),
     deadline_allowchange: Property.Checkbox({
       displayName: 'The assignee can change the end date for this task?',
@@ -201,12 +201,12 @@ export const flowluProps = {
     start_date: Property.DateTime({
       displayName: 'Start Date',
       required: false,
-      description: 'Please use YYYY-MM-DD HH:mm:ss format.'
+      description: 'Please use YYYY-MM-DD HH:mm:ss format.',
     }),
     deadline: Property.DateTime({
       displayName: 'End Date',
       required: false,
-      description: 'Please use YYYY-MM-DD HH:mm:ss format.'
+      description: 'Please use YYYY-MM-DD HH:mm:ss format.',
     }),
     assignee_id: flowluCommon.user_id(false, 'Assignee ID'),
     customer_id: flowluCommon.account_id(
@@ -219,5 +219,7 @@ export const flowluProps = {
       'Contact ID',
       `Id of the company-related contact (account_id).`
     ),
+    pipeline_id: flowluCommon.pipeline_id(false),
+    pipeline_stage_id: flowluCommon.pipeline_stage_id(false),
   },
 };
