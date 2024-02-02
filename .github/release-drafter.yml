@@ -10,9 +10,6 @@ categories:
   - title: "🧩 Pieces"
     labels:
       - "🔌 pieces"
-  - title: "👩‍💻 Developer Experience"
-    labels:
-      - "💻 dx"
   - title: "🛠️ Piece Framework"
     labels:
       - "🛠️ piece-framework"
@@ -25,9 +22,10 @@ categories:
   - title: "📚 Documentation"
     labels:
       - "📚 documentation"
-  - title: "🧹 Maintenance"
+  - title: "🧹 Maintenance & Dev Experience"
     labels:
       - "🧹 clean up"
+      - "💻 dx"
   - title: "Other Changes"
     labels:
       - "*"
