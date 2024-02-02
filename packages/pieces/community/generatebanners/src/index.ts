@@ -1,4 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { renderTemplate } from './lib/actions/renderTemplate.action';
 
 const markdownDescription = `
@@ -25,6 +26,7 @@ export const generatebanners = createPiece({
   displayName: 'GenerateBanners',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/generatebanners.png',
+  categories: [PieceCategory.CONTENT_AND_FILES],
   authors: [],
   auth: generatebannersAuth,
   actions: [renderTemplate],

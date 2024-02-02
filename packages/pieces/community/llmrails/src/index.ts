@@ -1,6 +1,7 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { datastoreSearch } from './lib/actions/datastore-search';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
+import { datastoreSearch } from './lib/actions/datastore-search';
 
 const markdownDescription = `
 Follow these instructions to get your LLMRails API Key:
@@ -31,6 +32,7 @@ export const llmrails = createPiece({
   displayName: 'LLMRails',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/llmrails.png',
+  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ['w95'],
   auth: llmrailsAuth,
   actions: [

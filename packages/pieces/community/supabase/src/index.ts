@@ -1,10 +1,11 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   createPiece,
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { uploadFile } from './lib/actions/upload-file';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const supabaseAuth = PieceAuth.CustomAuth({
   required: true,
@@ -24,6 +25,7 @@ export const supabase = createPiece({
   auth: supabaseAuth,
   minimumSupportedRelease: '0.6.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/supabase.png',
+  categories: [PieceCategory.DEVELOPER_TOOLS],
   authors: ['abuaboud'],
   actions: [
     uploadFile,

@@ -1,7 +1,8 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { posthogCreateEvent } from './lib/actions/create-event';
 import { posthogCreateProject } from './lib/actions/create-project';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const authenticationMarkdown = `
 [Click here](https://posthog.com/docs/api/overview#personal-api-keys-recommended) to learn how to obtain your Personal API key.
@@ -17,6 +18,7 @@ export const posthog = createPiece({
   displayName: 'PostHog',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/posthog.png',
+  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   auth: posthogAuth,
   actions: [
     posthogCreateEvent,

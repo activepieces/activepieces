@@ -1,9 +1,10 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
+import { linearCreateComment } from './lib/actions/comments/create-comment';
 import { linearCreateIssue } from './lib/actions/issues/create-issue';
 import { linearUpdateIssue } from './lib/actions/issues/update-issue';
 import { linearCreateProject } from './lib/actions/projects/create-project';
 import { linearUpdateProject } from './lib/actions/projects/update-project';
-import { linearCreateComment } from './lib/actions/comments/create-comment';
 import { linearNewIssue } from './lib/triggers/new-issue';
 
 const markdown = `
@@ -35,6 +36,7 @@ export const linear = createPiece({
   minimumSupportedRelease: '0.7.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/linear.png',
   authors: ['kishanprmr', 'lldiegon'],
+  categories: [PieceCategory.PRODUCTIVITY],
   actions: [
     linearCreateIssue,
     linearUpdateIssue,

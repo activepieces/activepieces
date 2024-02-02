@@ -1,10 +1,11 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   PieceAuth,
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { postStatus } from './lib/actions/post-status';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const markdownDescription = `
 **Base Url**: The base url of your Mastodon instance (e.g \`https://mastodon.social\`)
@@ -40,6 +41,7 @@ export const mastodon = createPiece({
   displayName: 'Mastodon',
 
   logoUrl: 'https://cdn.activepieces.com/pieces/mastodon.png',
+  categories: [PieceCategory.COMMUNICATION],
   minimumSupportedRelease: '0.5.0',
   authors: ['abuaboud'],
   auth: mastodonAuth,

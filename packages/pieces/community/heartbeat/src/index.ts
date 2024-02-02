@@ -1,6 +1,7 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { heartBeatCreateUser } from './lib/actions/create-user';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
+import { heartBeatCreateUser } from './lib/actions/create-user';
 
 const markdownPropertyDescription = `
   1. Login to your Heartbeat account
@@ -22,6 +23,7 @@ export const Heartbeat = createPiece({
   auth: heartbeatAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/heartbeat.png',
+  categories: [PieceCategory.COMMUNICATION],
   authors: ['kanarelo'],
   actions: [
     heartBeatCreateUser,

@@ -1,4 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { addContactAction } from './lib/actions/add-contact';
 import { addTagToContactAction } from './lib/actions/add-tag-to-contact';
 import { createEmailMarketingCampaignAction } from './lib/actions/create-campaign';
@@ -45,6 +46,7 @@ export const vbout = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/vbout.png',
   authors: ['kishanprmr'],
+  categories: [PieceCategory.MARKETING],
   actions: [
     addContactAction,
     addTagToContactAction,

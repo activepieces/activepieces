@@ -1,12 +1,13 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   createPiece,
   OAuth2PropertyValue,
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { newInvoice } from './lib/triggers/new-invoice';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { PieceCategory } from '@activepieces/shared';
 import { common } from './lib/common';
+import { newInvoice } from './lib/triggers/new-invoice';
 
 export const zohoAuth = PieceAuth.OAuth2({
   required: true,
@@ -51,6 +52,7 @@ export const zohoInvoice = createPiece({
   auth: zohoAuth,
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/zoho-invoice.png',
+  categories: [PieceCategory.ACCOUNTING],
   authors: ['MoShizzle'],
   actions: [
     createCustomApiCallAction({

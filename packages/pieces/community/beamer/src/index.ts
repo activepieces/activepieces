@@ -1,11 +1,12 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { createBeamerPost } from './lib/actions/create-posts';
-import { createNewFeatureRequest } from './lib/actions/create-feature-request';
-import { createComment } from './lib/actions/create-comment';
-import { newPost } from './lib/trigger/new-post';
-import { createVote } from './lib/actions/create-vote';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
+import { createComment } from './lib/actions/create-comment';
+import { createNewFeatureRequest } from './lib/actions/create-feature-request';
+import { createBeamerPost } from './lib/actions/create-posts';
+import { createVote } from './lib/actions/create-vote';
 import { beamerCommon } from './lib/common';
+import { newPost } from './lib/trigger/new-post';
 
 export const beamerAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -16,6 +17,7 @@ export const beamerAuth = PieceAuth.SecretText({
 export const beamer = createPiece({
   displayName: 'beamer',
   logoUrl: 'https://cdn.activepieces.com/pieces/beamer.png',
+  categories: [PieceCategory.PRODUCTIVITY],
   auth: beamerAuth,
   authors: ['i-nithin'],
   actions: [

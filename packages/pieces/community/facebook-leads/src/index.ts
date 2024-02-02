@@ -1,4 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { newLead } from './lib/triggers/new-lead';
 
 export const facebookLeadsAuth = PieceAuth.OAuth2({
@@ -19,6 +20,7 @@ export const facebookLeads = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/facebook.png',
   authors: ['MoShizzle'],
+  categories: [PieceCategory.MARKETING],
   auth: facebookLeadsAuth,
   actions: [],
   triggers: [newLead],
