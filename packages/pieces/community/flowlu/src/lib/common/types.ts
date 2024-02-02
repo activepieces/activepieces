@@ -147,6 +147,22 @@ export interface Opportunity {
   id: number;
   name: string;
 }
+export interface Pipeline {
+  id: number;
+  name: string;
+  ordering: number;
+  description: string;
+  deleted_at: string;
+}
+export interface PipelineStage {
+  id: number;
+  name: string;
+  ordering: number;
+  active: number;
+  pipeline_id: number;
+  color: string;
+  deleted_at: string;
+}
 export interface CreateTaskAPIRequest {
   name?: string;
   description?: string;
@@ -208,4 +224,6 @@ export interface CreateOpportunityAPIRequest {
   assignee_id?: string;
   customer_id?: number;
   contact_id?: number;
+  pipeline_id?: number;
+  pipeline_stage_id?: number;
 }

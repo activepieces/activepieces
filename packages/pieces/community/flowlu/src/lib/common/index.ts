@@ -331,4 +331,63 @@ export const flowluCommon = {
         };
       },
     }),
+  pipeline_id: (required = false) =>
+    Property.Dropdown({
+      displayName: 'Sales Pipeline ID',
+      required,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Connect your account first',
+            options: [],
+          };
+        }
+        const client = makeClient(
+          auth as PiecePropValueSchema<typeof flowluAuth>
+        );
+        const { response } = await client.listSalesPipelines();
+        return {
+          disabled: false,
+          options: response.items.map((item) => {
+            return {
+              label: item.name,
+              value: item.id,
+            };
+          }),
+        };
+      },
+    }),
+  pipeline_stage_id: (required = false) =>
+    Property.Dropdown({
+      displayName: 'Sales Pipeline Stage ID',
+      required,
+      refreshers: ['pipeline_id'],
+      options: async ({ auth, pipeline_id }) => {
+        if (!auth || !pipeline_id) {
+          return {
+            disabled: true,
+            placeholder:
+              'Connect your account first and select sales pipeline.',
+            options: [],
+          };
+        }
+        const client = makeClient(
+          auth as PiecePropValueSchema<typeof flowluAuth>
+        );
+        const { response } = await client.listSalesPipelineStages(
+          pipeline_id as number
+        );
+        return {
+          disabled: false,
+          options: response.items.map((item) => {
+            return {
+              label: item.name,
+              value: item.id,
+            };
+          }),
+        };
+      },
+    }),
 };

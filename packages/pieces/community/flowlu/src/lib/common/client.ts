@@ -16,6 +16,8 @@ import {
   ListAPIResponse,
   Opportunity,
   OpportunitySource,
+  Pipeline,
+  PipelineStage,
   Task,
   TaskWorkflow,
   TaskWorkflowStage,
@@ -182,6 +184,19 @@ export class FlowluClient {
     return await this.makeRequest<ListAPIResponse<OpportunitySource[]>>(
       HttpMethod.GET,
       '/crm/source/list'
+    );
+  }
+  async listSalesPipelines() {
+    return await this.makeRequest<ListAPIResponse<Pipeline[]>>(
+      HttpMethod.GET,
+      '/crm/pipeline/list'
+    );
+  }
+  async listSalesPipelineStages(pipeline_id: number) {
+    return await this.makeRequest<ListAPIResponse<PipelineStage[]>>(
+      HttpMethod.GET,
+      '/crm/pipeline_stage/list',
+      { 'filter[pipeline_id]': pipeline_id.toString() }
     );
   }
 
