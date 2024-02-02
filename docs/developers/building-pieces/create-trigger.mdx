@@ -4,7 +4,7 @@ icon: 'circle-4'
 description: ''
 ---
 
-This tutorial will guide you through the process of creating trigger for a Gelato piece with an action that fetches new icecream flavor.
+This tutorial will guide you through the process of creating trigger for a Gelato piece that fetches new icecream flavor.
 
 ## Trigger Definition
 
@@ -30,12 +30,12 @@ npm run cli triggers create
 ? Select the trigger technique: polling
 ```
 
-This will create new typescript file at `packages/pieces/community/gelato/src/lib/triggers` named `new-flavor-created.ts`.
+This will create a new TypeScript file at `packages/pieces/community/gelato/src/lib/triggers` named `new-flavor-created.ts`.
 
 Inside this file, paste the following code:
 
 ```ts
-import { gelatoAuth } from '@activepieces/piece-gelato';
+import { gelatoAuth } from '../../';
 import {
   DedupeStrategy,
   HttpMethod,
@@ -59,7 +59,7 @@ const polling: Polling<
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     const request: HttpRequest = {
       method: HttpMethod.GET,
-      url: 'https://cloud.activepieces.com/api/v1/webhooks/lH51pkBqJxXSaT9sWPdNg/sync',
+      url: 'https://cloud.activepieces.com/api/v1/webhooks/OlwZPg9Ts0X54SnmD5u74/sync',
       headers: {
         authorization: auth,
       },
@@ -138,4 +138,4 @@ Once you make an edit, the piece will be rebuilt. After this is finished, you'll
 
 To test the trigger, you can use the Flow Builder in Activepieces. It should work just like the screenshot demonstrates.
 
-<img src="/resources/screenshots/contributing-first-connector.png" />
+<img src="/resources/screenshots/gelato-trigger.png" />

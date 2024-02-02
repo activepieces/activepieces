@@ -4,7 +4,7 @@ icon: 'circle-3'
 description: ''
 ---
 
-This tutorial will guide you through the process of creating a Gelato piece with an action that fetches random icecream flavor. It assumes that you are familiar with the following:
+This tutorial will guide you through the process of creating a Gelato piece with an action that fetches random icecream flavor and trigger that fetches new icecream flavor created. It assumes that you are familiar with the following:
 
 - [Activepieces Repo Structure](../architecture/repo-structure)
 - [Activepieces Local development](../development-setup/local) Or [Github Codespaces](../development-setup/codespaces).
@@ -52,7 +52,7 @@ export const gelato = createPiece({
 
 ### Piece Authentication
 
-Now let's create authentication for this piece,which requires API Key in headers.
+Now, let's establish authentication for this piece, which necessitates the inclusion of an API Key in the headers.
 
 Modify `src/index.ts` file to add authentication,
 
@@ -75,6 +75,11 @@ export const gelato = createPiece({
 });
 ```
 
+<Note>
+  Use the value **test-key** as the API key when testing actions or triggers for
+  Gelato.
+</Note>
+
 ## Action Definition
 
 Now let's create first action which fetch random ice-cream flavor.
@@ -86,8 +91,8 @@ npm run cli actions create
 You will be asked three questions to define your new piece:
 
 1. `Piece Folder Name`: This is the name associated with the folder where the action resides. It helps organize and categorize actions within the piece.
-2. `Action Display Name`: Referring to the name displayed in the user interface (UI), the Action Display Name is what users will see when interacting with the specific action. It should be clear and indicative of the action's purpose.
-3. `Action Description`: The Action Description is a concise yet informative text that appears in the UI, providing users with details about the functionality and purpose of the action. It serves as a helpful guide for users navigating through the available actions within the piece.
+2. `Action Display Name`: The name users see in the interface, conveying the action's purpose clearly.
+3. `Action Description`: A brief, informative text in the UI, guiding users about the action's function and purpose.
    Next, Let's create the action file:
 
 **Example:**
@@ -100,13 +105,9 @@ npm run cli actions create
 ? Enter the action description : fetches random icecream flavor.
 ```
 
-This will create new typescript file at `packages/pieces/community/gelato/src/lib/actions`,the `get-icecream-flavor.ts` file should contain following code.
+This will create a new TypeScript file named `get-icecream-flavor.ts` in the `packages/pieces/community/gelato/src/lib/actions` directory.
 
 Inside this file, paste the following code:
-
-<Tip>
-  You can ask ChatGPT3 to write the function to get top stories from hackernews.
-</Tip>
 
 ```typescript
 import {
@@ -118,7 +119,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { gelatoAuth } from '../../..';
 
 export const getIcecreamFlavor = createAction({
-  name: 'fetch_random_icecream_flavor', // Must be a unique across the piece, this shouldn't be changed.
+  name: 'get_icecream_flavor', // Must be a unique across the piece, this shouldn't be changed.
   auth: gelatoAuth,
   displayName: 'Get Icecream Flavor',
   description: 'Fetches random icecream flavor',
@@ -156,7 +157,7 @@ import { createPiece } from '@activepieces/pieces-framework';
 import { getIcecreamFlavor } from './lib/actions/get-icecream-flavor';
 
 export const gelato = createPiece({
-  displayName: 'Gelato Tutorial',
+  displayName: 'Gelato',
   logoUrl: 'https://cdn.activepieces.com/pieces/gelato.png',
   authors: [],
   auth: gelatoAuth,
@@ -178,4 +179,4 @@ Once you make an edit, the piece will be rebuilt. After this is finished, you'll
 
 To test the action, you can use the Flow Builder in Activepieces. It should work just like the screenshot demonstrates.
 
-<img src="/resources/screenshots/contributing-first-connector.png" />
+<img src="/resources/screenshots/gelato-action.png" />
