@@ -56,12 +56,19 @@ describe('piece with error handling', () => {
         expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(result.steps.send_http.status).toBe('FAILED')
         expect(result.steps.send_http.errorMessage).toEqual({
-            response: {
-                status: 404,
-                body: { statusCode: 404, error: 'Not Found', message: 'Route not found' },
+            request: {
+                
             },
-            'request': {},
+            response: {
+                'body': {
+                    'error': 'Not Found',
+                    'message': 'Route not found',
+                    'statusCode': 404,
+                },
+                status: 404,
+            },
         })
+          
     })
 
 })

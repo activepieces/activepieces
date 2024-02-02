@@ -5,6 +5,7 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 
 const flowiseAuth = PieceAuth.CustomAuth({
   description: 'Enter your Flowise URL and API Key',
@@ -80,6 +81,7 @@ export const flowise = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/flowise.png',
   auth: flowiseAuth,
   minimumSupportedRelease: '0.9.0',
+  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: [],
   actions: [
     flowisePredict,

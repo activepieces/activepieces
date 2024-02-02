@@ -4,19 +4,20 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { PieceCategory } from '@activepieces/shared';
+import { createMember } from './lib/actions/create-member';
+import { createPost } from './lib/actions/create-post';
+import { findMember } from './lib/actions/find-member';
+import { findUser } from './lib/actions/find-user';
+import { updateMember } from './lib/actions/update-member';
+import { common } from './lib/common';
 import { memberAdded } from './lib/triggers/member-added';
-import { memberEdited } from './lib/triggers/member-edited';
 import { memberDeleted } from './lib/triggers/member-deleted';
+import { memberEdited } from './lib/triggers/member-edited';
+import { pagePublished } from './lib/triggers/page-published';
 import { postPublished } from './lib/triggers/post-published';
 import { postScheduled } from './lib/triggers/post-scheduled';
-import { pagePublished } from './lib/triggers/page-published';
-import { createMember } from './lib/actions/create-member';
-import { updateMember } from './lib/actions/update-member';
-import { findMember } from './lib/actions/find-member';
-import { createPost } from './lib/actions/create-post';
-import { findUser } from './lib/actions/find-user';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { common } from './lib/common';
 
 const authMarkdown = `
 To generate an API key, follow the steps below in GhostCMS:
@@ -49,6 +50,7 @@ export const ghostcms = createPiece({
   auth: ghostAuth,
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/ghostcms.png',
+  categories: [PieceCategory.MARKETING],
   authors: ['MoShizzle'],
   actions: [
     createMember,

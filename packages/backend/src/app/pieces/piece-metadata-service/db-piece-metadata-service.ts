@@ -13,7 +13,7 @@ const repo = repoFactory(PieceMetadataEntity)
 
 export const DbPieceMetadataService = (): PieceMetadataService => {
     return {
-        async list({ release, projectId, platformId, includeHidden, searchQuery }): Promise<PieceMetadataModelSummary[]> {
+        async list({ release, projectId, platformId, includeHidden, searchQuery, categories }): Promise<PieceMetadataModelSummary[]> {
             const order = {
                 name: 'ASC',
                 version: 'DESC',
@@ -49,6 +49,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
             const pieces = await hooks.get().filterPieces({
                 includeHidden,
                 searchQuery,
+                categories,
                 pieces: pieceMetadataEntityList,
                 platformId,
             })

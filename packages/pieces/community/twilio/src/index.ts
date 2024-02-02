@@ -1,7 +1,8 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { twilioSendSms } from './lib/action/send-sms';
 import { twilioNewIncomingSms } from './lib/trigger/new-incoming-sms';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const twilioAuth = PieceAuth.BasicAuth({
   description: 'The authentication to use to connect to Twilio',
@@ -22,6 +23,7 @@ export const twilio = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/twilio.png',
   auth: twilioAuth,
+  categories: [PieceCategory.COMMUNICATION],
   actions: [
     twilioSendSms,
     createCustomApiCallAction({

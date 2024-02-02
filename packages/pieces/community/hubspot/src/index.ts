@@ -1,4 +1,10 @@
-import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import {
+  OAuth2PropertyValue,
+  PieceAuth,
+  createPiece,
+} from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { hubSpotListsAddContactAction } from './lib/actions/add-contact-to-list-action';
 import { createHubspotContact } from './lib/actions/create-contact.action';
 import { hubSpotContactsCreateOrUpdateAction } from './lib/actions/create-or-update-contact-action';
@@ -8,7 +14,6 @@ import { newContactAdded } from './lib/triggers/new-contact-added';
 import { newDealAdded } from './lib/triggers/new-deal-added';
 import { newTaskAdded } from './lib/triggers/new-task-added';
 import { newTicketAdded } from './lib/triggers/new-ticket-added';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const hubspotAuth = PieceAuth.OAuth2({
   authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -33,6 +38,7 @@ export const hubspot = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/hubspot.png',
   authors: ['khaledmashaly', 'MoShizzle', 'Salem-Alaa', 'kishanprmr'],
+  categories: [PieceCategory.SALES_AND_CRM],
   auth: hubspotAuth,
   actions: [
     createHubspotContact,

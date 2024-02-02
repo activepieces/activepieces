@@ -1,8 +1,13 @@
-import { createCustomApiCallAction, httpClient, HttpMethod } from '@activepieces/pieces-common';
+import {
+  createCustomApiCallAction,
+  httpClient,
+  HttpMethod,
+} from '@activepieces/pieces-common';
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { generateContentAction } from './lib/actions/generate-content.action';
-import { generateContentFromImageAction } from './lib/actions/generate-content-from-image.action';
+import { PieceCategory } from '@activepieces/shared';
 import { chatGemini } from './lib/actions/chat-gemini.action';
+import { generateContentFromImageAction } from './lib/actions/generate-content-from-image.action';
+import { generateContentAction } from './lib/actions/generate-content.action';
 
 const markdownDescription = `
 Follow these instructions to get your API Key:
@@ -46,6 +51,7 @@ export const googleGemini = createPiece({
   description: 'Use the new Gemini models from Google',
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-gemini.png',
+  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ['pfernandez98'],
   actions: [
     generateContentAction,

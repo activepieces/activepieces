@@ -1,6 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { ApEdition } from '../../flag/flag'
-import { PackageType, PieceType } from '../piece'
+import { PackageType, PieceCategory, PieceType } from '../piece'
 
 export const EXACT_VERSION_PATTERN = /^[0-9]+\.[0-9]+\.[0-9]+$/
 export const VERSION_PATTERN = /^([~^])?[0-9]+\.[0-9]+\.[0-9]+$/
@@ -40,6 +40,7 @@ export const ListPiecesRequestQuery = Type.Object({
     searchQuery: Type.Optional(Type.String()),
     sortBy: Type.Optional(Type.Enum(PieceSortBy)),
     orderBy: Type.Optional(Type.Enum(PieceOrderBy)),
+    categories: Type.Optional(Type.Array(Type.Enum(PieceCategory))),
 })
 
 export type ListPiecesRequestQuery = Static<typeof ListPiecesRequestQuery>

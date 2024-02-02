@@ -1,11 +1,12 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   createPiece,
   OAuth2PropertyValue,
   PieceAuth,
 } from '@activepieces/pieces-framework';
-import { issuesEventTrigger } from './lib/trigger/issue-event';
+import { PieceCategory } from '@activepieces/shared';
 import { createIssueAction } from './lib/actions/create-issue-action';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { issuesEventTrigger } from './lib/trigger/issue-event';
 
 export const gitlabAuth = PieceAuth.OAuth2({
   required: true,
@@ -19,6 +20,7 @@ export const gitlab = createPiece({
   auth: gitlabAuth,
   minimumSupportedRelease: '0.7.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/gitlab.png',
+  categories: [PieceCategory.DEVELOPER_TOOLS],
   authors: ['kishanprmr'],
   actions: [
     createIssueAction,

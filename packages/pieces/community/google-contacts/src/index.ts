@@ -1,12 +1,13 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   OAuth2PropertyValue,
   PieceAuth,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { googleContactsAddContactAction } from './lib/action/create-contact';
-import { googleContactNewOrUpdatedContact } from './lib/trigger/new-contact';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { googleContactsCommon } from './lib/common';
+import { googleContactNewOrUpdatedContact } from './lib/trigger/new-contact';
 
 export const googleContactsAuth = PieceAuth.OAuth2({
   description: '',
@@ -20,6 +21,7 @@ export const googleContactsAuth = PieceAuth.OAuth2({
 export const googleContacts = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-contacts.png',
+  categories: [PieceCategory.SALES_AND_CRM],
   actions: [
     googleContactsAddContactAction,
     createCustomApiCallAction({

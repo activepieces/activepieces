@@ -1,8 +1,9 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
+import { calendlyCommon } from './lib/common';
 import { calendlyInviteeCanceled } from './lib/trigger/invitee-canceled.trigger';
 import { calendlyInviteeCreated } from './lib/trigger/invitee-created.trigger';
-import { calendlyCommon } from './lib/common';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const markdown = `
 ## Obtain your Calendly Personal Token
@@ -33,16 +34,17 @@ export const calendly = createPiece({
   displayName: 'Calendly',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/calendly.png',
+  categories: [PieceCategory.PRODUCTIVITY],
   authors: ['AbdulTheActivePiecer'],
   auth: calendlyAuth,
   actions: [
     createCustomApiCallAction({
-        baseUrl: () => calendlyCommon.baseUrl, // Replace with the actual base URL
-        auth: calendlyAuth,
-        authMapping: (auth) => ({
-            'Authorization': `Bearer ${auth}`
-        })
-    })
+      baseUrl: () => calendlyCommon.baseUrl, // Replace with the actual base URL
+      auth: calendlyAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
   ],
   triggers: [calendlyInviteeCreated, calendlyInviteeCanceled],
 });

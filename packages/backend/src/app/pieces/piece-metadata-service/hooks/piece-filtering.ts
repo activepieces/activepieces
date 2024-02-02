@@ -1,8 +1,12 @@
+import { PieceCategory } from '@activepieces/shared'
 import { PieceMetadataSchema } from '../../piece-metadata-entity'
 import Fuse from 'fuse.js'
 
-export const filterPiecesBasedUser = ({ searchQuery, pieces }: { searchQuery: string | undefined, pieces: PieceMetadataSchema[] }): PieceMetadataSchema[] => {
-    return filterBasedOnSearchQuery({ searchQuery, pieces })
+export const filterPiecesBasedUser = ({ searchQuery, pieces, categories }: { categories: PieceCategory[] | undefined, searchQuery: string | undefined, pieces: PieceMetadataSchema[] }): PieceMetadataSchema[] => {
+    return filterBasedOnCategories({
+        categories,
+        pieces: filterBasedOnSearchQuery({ searchQuery, pieces }),
+    })
 }
 
 const filterBasedOnSearchQuery = ({ searchQuery, pieces }: { searchQuery: string | undefined, pieces: PieceMetadataSchema[] }): PieceMetadataSchema[] => {
@@ -27,3 +31,14 @@ const filterBasedOnSearchQuery = ({ searchQuery, pieces }: { searchQuery: string
 
     return fuse.search(searchQuery).map(({ item }) => pieces.find(p => p.name === item.name)!)
 }
+
+const filterBasedOnCategories = ({ categories, pieces }: { categories: PieceCategory[] | undefined, pieces: PieceMetadataSchema[] }): PieceMetadataSchema[] => {
+    if (!categories) {
+        return pieces
+    }
+
+    return pieces.filter(p => {
+        return categories.some(item => (p.categories ?? []).includes(item))
+    })
+}
+
