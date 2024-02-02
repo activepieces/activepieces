@@ -1,10 +1,11 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   PieceAuth,
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { sendMessage } from './lib/actions/send-message';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const markdownDescription = `
 **Workspace URL**: The url of mattermost instance (e.g \`https://activepieces.mattermost.com\`)
@@ -34,6 +35,7 @@ export const mattermost = createPiece({
   displayName: 'Mattermost',
   logoUrl: 'https://cdn.activepieces.com/pieces/mattermost.png',
   minimumSupportedRelease: '0.5.0',
+  categories: [PieceCategory.COMMUNICATION],
   authors: ['abuaboud'],
   auth: mattermostAuth,
   actions: [

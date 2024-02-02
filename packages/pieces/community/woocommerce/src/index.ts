@@ -4,13 +4,14 @@ import {
   createPiece,
 } from '@activepieces/pieces-framework';
 
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { PieceCategory } from '@activepieces/shared';
 import { wooCreateCoupon } from './lib/actions/create-coupon';
 import { wooCreateCustomer } from './lib/actions/create-customer';
 import { wooCreateProduct } from './lib/actions/create-product';
 import { wooFindCustomer } from './lib/actions/find-customer';
 import { wooFindProduct } from './lib/actions/find-product';
 import { triggers } from './lib/triggers';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const authDescription = `
 To generate your API credentials, follow the steps below:
@@ -59,6 +60,7 @@ export const wooAuth = PieceAuth.CustomAuth({
 export const woocommerce = createPiece({
   displayName: 'WooCommerce',
   logoUrl: 'https://cdn.activepieces.com/pieces/woocommerce.png',
+  categories: [PieceCategory.COMMERCE],
   auth: wooAuth,
   minimumSupportedRelease: '0.7.1',
   authors: ['MoShizzle', 'TaskMagicKyle', 'kishanprmr'],

@@ -1,13 +1,15 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { addGreetAction } from './lib/actions/add-greet';
 import { bonjoroAuth } from './lib/auth';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const bonjoro = createPiece({
   displayName: 'Bonjoro',
   auth: bonjoroAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/bonjoro.png',
+  categories: [PieceCategory.CUSTOMER_SUPPORT],
   authors: ['joeworkman'],
   actions: [
     addGreetAction,

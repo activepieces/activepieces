@@ -1,16 +1,17 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   OAuth2AuthorizationMethod,
   OAuth2PropertyValue,
   PieceAuth,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { newDatabaseItem } from './lib/triggers/new-database-item';
-import { createDatabaseItem } from './lib/action/create-database-item';
-import { updateDatabaseItem } from './lib/action/update-database-item';
+import { PieceCategory } from '@activepieces/shared';
 import { appendToPage } from './lib/action/append-to-page';
+import { createDatabaseItem } from './lib/action/create-database-item';
 import { createPage } from './lib/action/create-page';
+import { updateDatabaseItem } from './lib/action/update-database-item';
+import { newDatabaseItem } from './lib/triggers/new-database-item';
 import { updatedDatabaseItem } from './lib/triggers/updated-database-item';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const notionAuth = PieceAuth.OAuth2({
   authUrl: 'https://api.notion.com/v1/oauth/authorize',
@@ -26,6 +27,7 @@ export const notionAuth = PieceAuth.OAuth2({
 export const notion = createPiece({
   displayName: 'Notion',
   logoUrl: 'https://cdn.activepieces.com/pieces/notion.png',
+  categories: [PieceCategory.PRODUCTIVITY],
   minimumSupportedRelease: '0.5.0',
   authors: ['ShayPunter', 'abuaboud', 'kishanprmr', 'MoShizzle'],
   auth: notionAuth,

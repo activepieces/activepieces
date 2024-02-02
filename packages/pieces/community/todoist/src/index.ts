@@ -1,7 +1,8 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { todoistCreateTaskAction } from './lib/actions/create-task-action';
 import { todoistTaskCompletedTrigger } from './lib/triggers/task-completed-trigger';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const todoistAuth = PieceAuth.OAuth2({
   required: true,
@@ -15,6 +16,7 @@ export const todoist = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/todoist.png',
   authors: ['khaledmashaly'],
+  categories: [PieceCategory.PRODUCTIVITY],
   auth: todoistAuth,
   actions: [
     todoistCreateTaskAction,

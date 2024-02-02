@@ -1,17 +1,19 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { ContentfulAuth } from './lib/common';
+import { PieceCategory } from '@activepieces/shared';
 import {
   ContentfulCreateRecordAction,
   ContentfulGetRecordAction,
   ContentfulSearchRecordsAction,
 } from './lib/actions/records';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { ContentfulAuth } from './lib/common';
 
 export const contentful = createPiece({
   displayName: 'Contentful',
   auth: ContentfulAuth,
   minimumSupportedRelease: '0.6.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/contentful.png',
+  categories: [PieceCategory.MARKETING],
   authors: ['cyrilselasi'],
   actions: [
     ContentfulSearchRecordsAction,
