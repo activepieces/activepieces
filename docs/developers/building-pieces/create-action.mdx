@@ -116,7 +116,7 @@ import {
   PieceAuth,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { gelatoAuth } from '../../..';
+import { gelatoAuth } from '../..';
 
 export const getIcecreamFlavor = createAction({
   name: 'get_icecream_flavor', // Must be a unique across the piece, this shouldn't be changed.
@@ -127,7 +127,7 @@ export const getIcecreamFlavor = createAction({
   async run(context) {
     const res = await httpClient.sendRequest<string[]>({
       method: HttpMethod.GET,
-      url: 'https://cloud.activepieces.com/api/v1/webhooks/lH51pkBqJxXSaT9sWPdNg/sync',
+      url: 'https://cloud.activepieces.com/api/v1/webhooks/RGjv57ex3RAHOgs0YK6Ja/sync',
       headers: {
         Authorization: context.auth, // Pass API key in headers
       },
@@ -169,14 +169,12 @@ export const gelato = createPiece({
 
 # Testing
 
-<Tip>
-  By default dvelopment setup only builds modified pieces. If you want a new
-  piece to be built automatically upon `npm start`, make sure you read about
-  [Piece Development](../development-setup/getting-started) section.
-</Tip>
+By default, the development setup only builds specific components. Open the file `packages/backend/.env` and include "gelato" in the `AP_DEV_PIECES`.
 
-Once you make an edit, the piece will be rebuilt. After this is finished, you'll need to **refresh** the frontend to see the changes.
+For more details, check out the [Piece Development](../development-setup/getting-started) section.
 
-To test the action, you can use the Flow Builder in Activepieces. It should work just like the screenshot demonstrates.
+Once you edit the environment variable, restart the backend. The piece will be rebuilt. After this process, you'll need to **refresh** the frontend to see the changes.
 
-<img src="/resources/screenshots/gelato-action.png" />
+To test the action, use the flow builder in Activepieces. It should function as shown in the screenshot.
+
+![Gelato Action](/resources/screenshots/gelato-action.png)

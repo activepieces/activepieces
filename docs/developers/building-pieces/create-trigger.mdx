@@ -59,7 +59,7 @@ const polling: Polling<
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     const request: HttpRequest = {
       method: HttpMethod.GET,
-      url: 'https://cloud.activepieces.com/api/v1/webhooks/OlwZPg9Ts0X54SnmD5u74/sync',
+      url: 'https://cloud.activepieces.com/api/v1/webhooks/aHlEaNLc6vcF1nY2XJ2ed/sync',
       headers: {
         authorization: auth,
       },
@@ -128,14 +128,12 @@ export const gelato = createPiece({
 
 # Testing
 
-<Tip>
-  By default dvelopment setup only builds modified pieces. If you want a new
-  piece to be built automatically upon `npm start`, make sure you read about
-  [Piece Development](../development-setup/getting-started) section.
-</Tip>
+By default, the development setup only builds specific components. Open the file `packages/backend/.env` and include "gelato" in the `AP_DEV_PIECES`.
 
-Once you make an edit, the piece will be rebuilt. After this is finished, you'll need to **refresh** the frontend to see the changes.
+For more details, check out the [Piece Development](../development-setup/getting-started) section.
 
-To test the trigger, you can use the Flow Builder in Activepieces. It should work just like the screenshot demonstrates.
+Once you edit the environment variable, restart the backend. The piece will be rebuilt. After this process, you'll need to **refresh** the frontend to see the changes.
 
-<img src="/resources/screenshots/gelato-trigger.png" />
+To test the trigger, use the load sample data from flow builder in Activepieces. It should function as shown in the screenshot.
+
+![Gelato Action](/resources/screenshots/gelato-trigger.png)
