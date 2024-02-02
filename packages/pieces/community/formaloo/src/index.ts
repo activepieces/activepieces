@@ -1,5 +1,6 @@
 import { HttpMethod, createCustomApiCallAction, httpClient } from "@activepieces/pieces-common";
 import { createPiece, PieceAuth, PiecePropValueSchema, Property } from "@activepieces/pieces-framework";
+import { PieceCategory } from "@activepieces/shared";
 import FormData from 'form-data';
 
 const formalooAuth = PieceAuth.CustomAuth({
@@ -16,8 +17,8 @@ const formalooAuth = PieceAuth.CustomAuth({
       required: true,
     }),
     api_secret: PieceAuth.SecretText({
-      displayName: 'Access Token',
-      description: 'Enter the access token',
+      displayName: 'API Secret',
+      description: 'Enter the api secret',
       required: true
     })
   },
@@ -68,7 +69,7 @@ const authenticateWait = (auth: PiecePropValueSchema<typeof formalooAuth>) => {
   while (!token) {
     new Promise(resolve => setTimeout(resolve, 500));
   }
-  
+
   return token
 }
 
@@ -76,7 +77,8 @@ export const formaloo = createPiece({
   displayName: "Formaloo",
   auth: formalooAuth,
   minimumSupportedRelease: '0.9.0',
-  logoUrl: "https://pbs.twimg.com/profile_images/1542832912340586504/VX1muYYD_400x400.jpg",//TODO: change logo
+  categories: [PieceCategory.FORMS_AND_SURVEYS],
+  logoUrl: "https://cdn.activepieces.com/pieces/formaloo.png",
   authors: [],
   actions: [
     createCustomApiCallAction({
@@ -86,7 +88,7 @@ export const formaloo = createPiece({
       },
       authMapping: (auth) => {
         const token = authenticateWait(auth as PiecePropValueSchema<typeof formalooAuth>)
-        
+
         if (token) {
           return {
             'Authorization': `JWT ${token}`,
