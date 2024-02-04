@@ -1,5 +1,6 @@
 import { TriggerType } from '../../flows/triggers/trigger'
 import { ActionType } from '../../flows/actions/action'
+import { isNil } from '../../common'
 
 export enum StepOutputStatus {
     FAILED = 'FAILED',
@@ -120,12 +121,27 @@ export class LoopStepOutput extends GenericStepOutput<ActionType.LOOP_ON_ITEMS, 
         })
     }
 
-    addIteration({ item, index }: { item: unknown, index: number }): LoopStepOutput {
+    hasIteration(iteration: number): boolean {
+        return !isNil(this.output?.iterations[iteration])
+    }
+    
+    setItemAndIndex({ item, index }: { item: unknown, index: number }): LoopStepOutput {
         return new LoopStepOutput({
             ...this,
             output: {
                 item,
                 index,
+                iterations: this.output?.iterations ?? [],
+            },
+        })
+    }
+
+    addIteration(): LoopStepOutput {
+        return new LoopStepOutput({
+            ...this,
+            output: {
+                item: this.output?.item,
+                index: this.output?.index,
                 iterations: [...(this.output?.iterations ?? []), {}],
             },
         })

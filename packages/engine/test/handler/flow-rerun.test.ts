@@ -1,7 +1,6 @@
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { buildPieceAction, generateMockEngineConstants } from './test-helper'
-import { ExecutionType } from '@activepieces/shared'
 
 const failedHttpAction = buildPieceAction({
     name: 'send_http',
@@ -48,9 +47,7 @@ describe('flow retry', () => {
         })
 
         const retryFromFailed = await flowExecutor.execute({
-            action: successHttpAction, executionState: context, constants: generateMockEngineConstants({
-                executionType: ExecutionType.RESUME,
-            }),
+            action: successHttpAction, executionState: context, constants: generateMockEngineConstants({}),
         })
         expect(failedResult.verdict).toBe(ExecutionVerdict.FAILED)
         expect(retryFromFailed.verdict).toBe(ExecutionVerdict.RUNNING)
