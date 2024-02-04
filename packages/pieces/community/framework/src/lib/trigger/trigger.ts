@@ -74,7 +74,6 @@ TS extends TriggerStrategy,
   onHandshake?: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<WebhookResponse>,
   renewConfiguration?: WebhookRenewConfiguration
   onRenew?(context: TriggerHookContext<PieceAuth, TriggerProps, TS>): Promise<void>,
-  testStrategy?: TriggerTestStrategy,
 }
 
 type CreateTriggerParams<
@@ -138,7 +137,7 @@ export const createTrigger = <
         params.run,
         params.test ?? (() => Promise.resolve([params.sampleData])),
         params.sampleData,
-        params.testStrategy ?? TriggerTestStrategy.SIMULATION,
+        params.test ? TriggerTestStrategy.TEST_FUNCTION : TriggerTestStrategy.SIMULATION,
       )
     case TriggerStrategy.POLLING:
       return new ITrigger(
