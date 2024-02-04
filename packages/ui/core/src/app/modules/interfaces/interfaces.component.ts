@@ -7,6 +7,18 @@ import { ActivatedRoute } from '@angular/router';
 import { Observable, map, switchMap, tap } from 'rxjs';
 import { InterfacesService } from './interfaces.service';
 
+type Input = {
+  displayName: string;
+  required: boolean;
+  description: string;
+  placeholder: string;
+};
+
+type InterfaceProps = {
+  textInputs: Input[];
+  waitForResponse: boolean;
+};
+
 @Component({
   selector: 'app-interfaces',
   templateUrl: './interfaces.component.html',
@@ -17,11 +29,11 @@ export class InterfacesComponent {
   flow$: Observable<PopulatedFlow>;
   submitInterface$: Observable<any>;
   interfaceForm: FormGroup;
-  props: any | null = null;
-  textInputs: any[] = [];
+  props: InterfaceProps | null = null;
+  textInputs: Input[] = [];
   loading = false;
   error: string | null = null;
-  webhookUrl: any | null = null;
+  webhookUrl: string | null = null;
   constructor(
     private flowService: FlowService,
     private router: ActivatedRoute,
@@ -43,10 +55,10 @@ export class InterfacesComponent {
           this.webhookUrl = environment.apiUrl + '/webhooks/' + flow.id;
           this.interfaceForm = new FormGroup({});
           this.props = flow.version.trigger.settings.input;
-          if (this.props.waitForResponse) {
+          if (this.props?.waitForResponse) {
             this.webhookUrl += '/sync';
           }
-          if (this.props.textInputs) {
+          if (this.props?.textInputs) {
             this.buildTextInputs(this.props.textInputs);
           }
         } else {
@@ -63,7 +75,7 @@ export class InterfacesComponent {
       console.log(this.interfaceForm.value);
       console.log(this.webhookUrl);
       this.submitInterface$ = this.interfacesService
-        .submitInterface(this.webhookUrl, this.interfaceForm.value)
+        .submitInterface(this.webhookUrl as string, this.interfaceForm.value)
         .pipe(
           tap((result) => {
             console.log(result);
@@ -84,9 +96,9 @@ export class InterfacesComponent {
       });
   }
 
-  buildTextInputs(inputs: any) {
+  buildTextInputs(inputs: Input[]) {
     inputs.forEach((prop) => {
-      this.textInputs.push(Property.ShortText(prop));
+      this.textInputs.push(Property.ShortText(prop) as unknown as Input);
       this.interfaceForm.addControl(
         this.getInputKey(prop.displayName),
         new FormControl('', {
