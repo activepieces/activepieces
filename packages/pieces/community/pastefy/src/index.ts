@@ -1,3 +1,4 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   PieceAuth,
   Property,
@@ -30,8 +31,26 @@ export const pastefy = createPiece({
   displayName: 'Pastefy',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/pastefy.png',
+  categories: [],
   authors: ['JanHolger'],
   auth: pastefyAuth,
-  actions,
+  actions: [
+    ...actions,
+    createCustomApiCallAction({
+      baseUrl: (auth) => {
+        const typedAuth = auth as { instance_url: string };
+        return typedAuth.instance_url + '/api/v2';
+      },
+      auth: pastefyAuth,
+      authMapping: (auth) => {
+        const typedAuth = auth as { token?: string };
+        return {
+          Authorization: typedAuth.token
+            ? `Bearer ${typedAuth.token}`
+            : undefined,
+        };
+      },
+    }),
+  ],
   triggers: triggers,
 });

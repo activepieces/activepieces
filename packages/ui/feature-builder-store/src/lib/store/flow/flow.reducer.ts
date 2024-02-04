@@ -41,17 +41,15 @@ const initialState: FlowState = {
     publishedFlowVersion: undefined,
   },
 
-  folder: undefined,
   savingStatus: BuilderSavingStatusEnum.NONE,
   lastSaveId: '161f8c09-dea1-470e-8a90-5666a8f17bd4',
 };
 
 const _flowsReducer = createReducer(
   initialState,
-  on(FlowsActions.setInitial, (state, { type, flow, folder }): FlowState => {
+  on(FlowsActions.setInitial, (state, { type, flow }): FlowState => {
     const newState: FlowState = {
       flow: flow,
-      folder: folder,
       savingStatus: BuilderSavingStatusEnum.NONE,
       lastSaveId: '161f8c09-dea1-470e-8a90-5666a8f17bd4',
     };

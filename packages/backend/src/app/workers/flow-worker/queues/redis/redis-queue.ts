@@ -4,7 +4,7 @@ import { createRedisClient } from '../../../../database/redis-connection'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { logger } from '../../../../helper/logger'
 import { isNil } from '@activepieces/shared'
-import { OneTimeJobData, ScheduledJobData } from '../../job-data'
+import { OneTimeJobData, RepeatableJobType, ScheduledJobData } from '../../job-data'
 import { AddParams, JobType, QueueManager, RemoveParams } from '../queue'
 import { ExecutionType, RunEnvironment, ScheduleType } from '@activepieces/shared'
 import { LATEST_JOB_DATA_SCHEMA_VERSION } from '../../job-data'
@@ -122,7 +122,7 @@ export const redisQueueManager: QueueManager = {
         await migrateScheduledJobs()
 
     },
-    async add(params: AddParams): Promise<void> {
+    async add(params: AddParams<JobType>): Promise<void> {
         logger.debug(params, '[flowQueue#add] params')
         if (params.type === JobType.REPEATING) {
             const { id, data, scheduleOptions } = params
@@ -233,6 +233,19 @@ const migrateScheduledJobs = async (): Promise<void> => {
                     migratedJobs++
                     await job.updateData(modifiedJobData)
                 }
+            }
+            if (modifiedJobData.schemaVersion === 3) {
+                modifiedJobData.schemaVersion = 4
+                migratedJobs++
+                if (modifiedJobData.executionType === ExecutionType.BEGIN) {
+                    modifiedJobData.jobType = RepeatableJobType.EXECUTE_TRIGGER
+                }
+                if (modifiedJobData.executionType === ExecutionType.RESUME) {
+                    modifiedJobData.jobType = RepeatableJobType.DELAYED_FLOW
+                }
+                modifiedJobData.executionType = undefined
+
+                await job.updateData(modifiedJobData)
             }
         }
         logger.info(`[migrateScheduledJobs] Migrated ${migratedJobs} jobs`)

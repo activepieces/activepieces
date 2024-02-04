@@ -1,26 +1,27 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
   createCustomApiCallAction,
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
+import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { baseUrl } from './lib/common';
 
-import { createContact } from './lib/actions/create-contact';
-import { newContact } from './lib/triggers/new-contact';
-import { updateContactAction } from './lib/actions/update-contact';
-import { newFormSubmission } from './lib/triggers/new-form-submission';
+import { PieceCategory } from '@activepieces/shared';
 import { addContactToCampaignAction } from './lib/actions/add-contact-to-campaign';
 import { addContactToWorkflowAction } from './lib/actions/add-contact-to-workflow';
-import { searchContactsAction } from './lib/actions/search-contacts';
+import { addNoteToContactAction } from './lib/actions/add-note-to-contact';
+import { createContact } from './lib/actions/create-contact';
 import { createOpportunityAction } from './lib/actions/create-opportunity';
 import { createTaskAction } from './lib/actions/create-task';
-import { updateTaskAction } from './lib/actions/update-task';
+import { searchContactsAction } from './lib/actions/search-contacts';
+import { updateContactAction } from './lib/actions/update-contact';
 import { updateOpportunityAction } from './lib/actions/update-opportunity';
-import { newOpportunity } from './lib/triggers/new-opportunity';
+import { updateTaskAction } from './lib/actions/update-task';
 import { contactUpdated } from './lib/triggers/contact-updated';
-import { addNoteToContactAction } from './lib/actions/add-note-to-contact';
+import { newContact } from './lib/triggers/new-contact';
+import { newFormSubmission } from './lib/triggers/new-form-submission';
+import { newOpportunity } from './lib/triggers/new-opportunity';
 
 const markdownDescription = `
 To obtain your API key, follow the steps below:
@@ -62,6 +63,7 @@ export const leadConnector = createPiece({
   auth: leadConnectorAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/lead-connector.png',
+  categories: [PieceCategory.SALES_AND_CRM],
   authors: ['MoShizzle'],
   actions: [
     createContact,
@@ -75,16 +77,16 @@ export const leadConnector = createPiece({
     createTaskAction,
     updateTaskAction,
     createCustomApiCallAction({
-        baseUrl: () => {
-            return baseUrl
-        },
-        auth: leadConnectorAuth,
-        authMapping: (auth) => {
-            return {
-                'Authorization': `Bearer ${auth}`
-            }
-        }
-    })
+      baseUrl: () => {
+        return baseUrl;
+      },
+      auth: leadConnectorAuth,
+      authMapping: (auth) => {
+        return {
+          Authorization: `Bearer ${auth}`,
+        };
+      },
+    }),
   ],
   triggers: [newContact, contactUpdated, newFormSubmission, newOpportunity],
 });

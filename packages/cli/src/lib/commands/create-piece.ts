@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { rm, writeFile } from 'fs/promises';
+import { readdir, unlink, writeFile } from 'fs/promises';
 import inquirer from 'inquirer';
 import assert from 'node:assert';
 import { exec } from '../utils/exec';
@@ -52,13 +52,13 @@ const nxGenerateNodeLibrary = async (
   pieceType: string
 ) => {
   const nxGenerateCommand = [
-    `npx nx generate @nx/node:library ${pieceName}`,
-    `--directory=pieces/${pieceType}`,
+    `npx nx generate @nx/node:library`,
+    `--directory=packages/pieces/${pieceType}/${pieceName}`,
     `--name=pieces-${pieceName}`,
     `--importPath=${packageName}`,
     '--publishable',
     '--buildable',
-    '--standaloneConfig',
+    '--projectNameAndRootFormat=as-provided',
     '--strict',
     '--unitTestRunner=none'
   ].join(' ')
@@ -69,9 +69,11 @@ const nxGenerateNodeLibrary = async (
 };
 
 const removeUnusedFiles = async (pieceName: string, pieceType: string) => {
-  await rm(
-    `packages/pieces/${pieceType}/${pieceName}/src/lib/pieces-${pieceType}-${pieceName}.ts`
-  );
+  const path = `packages/pieces/${pieceType}/${pieceName}/src/lib/`;
+  const files = await readdir(path);
+  for (const file of files) {
+    await unlink(path + file);
+  }
 };
 function capitalizeFirstLetter(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();

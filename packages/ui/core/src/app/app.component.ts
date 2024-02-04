@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import {
   BehaviorSubject,
-  catchError,
   map,
   Observable,
   of,
@@ -23,18 +22,18 @@ import { DomSanitizer } from '@angular/platform-browser';
 import {
   FlagService,
   CommonActions,
-  FlowService,
   AppearanceService,
   environment,
   PlatformService,
+  FlowBuilderService,
 } from '@activepieces/ui/common';
 import { compareVersions } from 'compare-versions';
 import {
   ApEdition,
   ApFlagId,
   LocalesEnum,
-  FlowOperationType,
   User,
+  isNil,
 } from '@activepieces/shared';
 import {
   TelemetryService,
@@ -44,11 +43,6 @@ import {
   LocalesService,
 } from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
-import {
-  CollectionBuilderService,
-  FlowsActions,
-} from '@activepieces/ui/feature-builder-store';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { Platform } from '@activepieces/ee-shared';
 
 interface UpgradeNotificationMetaDataInLocalStorage {
@@ -69,7 +63,7 @@ export class AppComponent implements OnInit {
   loggedInUser$: Observable<User | undefined>;
   showUpgradeNotification$: Observable<boolean>;
   hideUpgradeNotification = false;
-  openCommandBar$: Observable<void>;
+  logoutOldTokens$: Observable<void>;
   loading$: Subject<boolean> = new Subject();
   importTemplate$: Observable<void>;
   loadingTheme$: BehaviorSubject<boolean> = new BehaviorSubject(true);
@@ -78,6 +72,7 @@ export class AppComponent implements OnInit {
   isCommunityEdition$: Observable<boolean>;
   embeddedRouteListener$: Observable<boolean>;
   redirect$?: Observable<Platform | undefined>;
+  toggleLoading$: Observable<boolean>;
   constructor(
     public dialog: MatDialog,
     private store: Store,
@@ -88,17 +83,32 @@ export class AppComponent implements OnInit {
     private router: Router,
     private maticonRegistry: MatIconRegistry,
     private domSanitizer: DomSanitizer,
-    private builderService: CollectionBuilderService,
-    private flowService: FlowService,
-    private snackbar: MatSnackBar,
     private embeddedService: EmbeddingService,
     private localesService: LocalesService,
-    private platformService: PlatformService
+    private platformService: PlatformService,
+    private builderService: FlowBuilderService
   ) {
+    this.toggleLoading$ = this.builderService.loading$.pipe(
+      tap((res) => {
+        console.log('loading triggered');
+        this.loading$.next(res);
+      })
+    );
     this.registerMaterialIcons();
-    this.listenToImportFlow();
     this.theme$ = this.apperanceService.setTheme().pipe(
       tap(() => this.loadingTheme$.next(false)),
+      map(() => void 0)
+    );
+    // TODO remove in next release
+    this.logoutOldTokens$ = this.flagService.getEdition().pipe(
+      tap((edition) => {
+        if (
+          edition === ApEdition.CLOUD &&
+          isNil(this.authenticationService.getDecodedToken()?.platform)
+        ) {
+          this.authenticationService.logout();
+        }
+      }),
       map(() => void 0)
     );
     this.embeddedRouteListener$ = this.createEmbeddingRoutesListener();
@@ -106,42 +116,6 @@ export class AppComponent implements OnInit {
     this.showUpgradeNotification$ =
       this.createListenerToToggleUpgradeNotification();
     this.rediectToCorrectLocale();
-  }
-
-  private listenToImportFlow() {
-    this.importTemplate$ = this.builderService.importTemplate$
-      .asObservable()
-      .pipe(
-        tap(() => {
-          this.loading$.next(true);
-        }),
-        switchMap((res) => {
-          return this.flowService
-            .update(res.flowId, {
-              type: FlowOperationType.IMPORT_FLOW,
-              request: {
-                displayName: res.template.name,
-                trigger: res.template.template.trigger,
-              },
-            })
-            .pipe(
-              tap((res) => {
-                this.loading$.next(false);
-                this.store.dispatch(FlowsActions.importFlow({ flow: res }));
-              }),
-              catchError((err) => {
-                this.loading$.next(false);
-                console.error(err);
-                this.snackbar.open(
-                  'Failed to import flow, check Console for erros',
-                  'Close'
-                );
-                return of(void 0);
-              })
-            );
-        }),
-        map(() => void 0)
-      );
   }
 
   private registerMaterialIcons() {

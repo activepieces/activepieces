@@ -1,5 +1,11 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import {
+  createPiece,
+  OAuth2PropertyValue,
+  PieceAuth,
+} from '@activepieces/pieces-framework';
 
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { PieceCategory } from '@activepieces/shared';
 import { newResponse } from './lib/triggers/new-response';
 
 export const smAuth = PieceAuth.OAuth2({
@@ -20,7 +26,16 @@ export const surveymonkey = createPiece({
   auth: smAuth,
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/surveymonkey.png',
+  categories: [PieceCategory.FORMS_AND_SURVEYS],
   authors: ['MoShizzle'],
-  actions: [],
+  actions: [
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.surveymonkey.com/v3',
+      auth: smAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      }),
+    }),
+  ],
   triggers: [newResponse],
 });

@@ -1,8 +1,11 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   PieceAuth,
+  PiecePropValueSchema,
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import {
   createCompany,
   createContact,
@@ -11,6 +14,7 @@ import {
   updateCompany,
   updateContact,
 } from './lib/actions';
+import { triggers } from './lib/triggers';
 
 const markdownDescription = `
 Follow these steps:
@@ -44,7 +48,8 @@ export const mautic = createPiece({
   displayName: 'Mautic',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/mautic.png',
-  authors: ['bibhuty-did-this'],
+  authors: ['bibhuty-did-this', 'kanarelo'],
+  categories: [PieceCategory.MARKETING],
   auth: mauticAuth,
   actions: [
     createContact,
@@ -53,6 +58,24 @@ export const mautic = createPiece({
     createCompany,
     searchCompany,
     updateCompany,
+    createCustomApiCallAction({
+      auth: mauticAuth,
+      baseUrl: (auth) => {
+        const { base_url } = auth as PiecePropValueSchema<typeof mauticAuth>;
+        return `${base_url.endsWith('/') ? base_url : base_url + '/'}api/`;
+      },
+      authMapping: (auth) => {
+        const { username, password } = auth as PiecePropValueSchema<
+          typeof mauticAuth
+        >;
+        return {
+          Authorization:
+            'Basic ' +
+            Buffer.from(`${username}:${password}`).toString('base64'),
+          'Content-Type': 'application/json',
+        };
+      },
+    }),
   ],
-  triggers: [],
+  triggers,
 });

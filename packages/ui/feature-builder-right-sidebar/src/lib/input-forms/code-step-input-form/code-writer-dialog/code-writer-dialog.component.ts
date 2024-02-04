@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Inject,
+  ViewChild,
+} from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import {
   FormGroup,
@@ -8,8 +13,9 @@ import {
 } from '@angular/forms';
 import { BehaviorSubject, Observable, map, tap } from 'rxjs';
 import { CodeWriterService } from './code-writer.service';
-import { FlagService, TelemetryService } from '@activepieces/ui/common';
-import { ApEdition, TelemetryEventName } from '@activepieces/shared';
+import { FlagService, HighlightService } from '@activepieces/ui/common';
+import { ApEdition } from '@activepieces/shared';
+import { MatStepper } from '@angular/material/stepper';
 export interface CodeWriterDialogData {
   existingCode: string;
 }
@@ -19,12 +25,13 @@ export interface CodeWriterDialogData {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CodeWriterDialogComponent {
+  @ViewChild(MatStepper) stepper: MatStepper;
   promptForm: FormGroup<{
     prompt: FormControl<string>;
     passExistingCode: FormControl<boolean>;
   }>;
   promptOperation$?: Observable<void>;
-  receivedCode = '';
+  receivedCode$: BehaviorSubject<string> = new BehaviorSubject<string>('');
   receivedInputs: {
     key: string;
     value: unknown;
@@ -32,13 +39,14 @@ export class CodeWriterDialogComponent {
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   betaNote = $localize`<b> Note: </b> This feature uses OpenAi's API to generate code, it will be available for free during the beta period.`;
   isCloudEdition$: Observable<boolean>;
-
+  /**Prism refuses to render new text within it so you have to destroy the element and build it again, this flag will do that */
+  prisimFix = false;
   constructor(
     private formBuilder: FormBuilder,
     private dialogRef: MatDialogRef<CodeWriterDialogComponent>,
     private codeWriterService: CodeWriterService,
     private flagService: FlagService,
-    private telemetryService: TelemetryService,
+    private highlightService: HighlightService,
     @Inject(MAT_DIALOG_DATA)
     public data: CodeWriterDialogData
   ) {
@@ -55,13 +63,7 @@ export class CodeWriterDialogComponent {
       .getEdition()
       .pipe(map((edition) => edition === ApEdition.CLOUD));
   }
-  capturePromptTelemetry(payload: { prompt: string; code: string }) {
-    this.telemetryService.capture({
-      name: TelemetryEventName.COPILOT_GENERATED_CODE,
-      payload,
-    });
-    this.telemetryService.saveCopilotResult(payload);
-  }
+
   prompt(reprompt = false) {
     if (this.promptForm.valid && !this.loading$.value) {
       this.loading$.next(true);
@@ -73,32 +75,26 @@ export class CodeWriterDialogComponent {
       this.promptOperation$ = this.codeWriterService.prompt(prompt).pipe(
         tap((response) => {
           this.promptForm.enable();
-          let result:
-            | string
-            | {
-                code: string;
-                inputs: {
-                  key: string;
-                  value: unknown;
-                }[];
-              } = response.result;
+          this.promptForm.controls.prompt.removeValidators(Validators.required);
+          this.promptForm.controls.prompt.setValue('');
           try {
-            result = JSON.parse(response.result) as {
+            const result: {
               code: string;
               inputs: {
                 key: string;
                 value: unknown;
               }[];
-            };
-            this.receivedCode = result.code.replace(
-              /\*\*\*NEW_LINE\*\*\*/g,
-              '\n'
+            } = JSON.parse(response.result);
+            this.receivedCode$.next(
+              result.code.replace(/\*\*\*NEW_LINE\*\*\*/g, '\n')
             );
             this.receivedInputs = result.inputs;
-            this.capturePromptTelemetry({
-              prompt,
-              code: result.code,
-            });
+            if (this.stepper.selected) {
+              this.stepper.selected.completed = true;
+              this.stepper.next();
+            }
+            this.prisimFix = !this.prisimFix;
+            this.highlightPrism();
           } catch (e) {
             console.error('Copilot response not valid JSON.');
             console.error((e as Error).message);
@@ -111,16 +107,21 @@ export class CodeWriterDialogComponent {
   }
 
   reset() {
-    this.receivedCode = '';
+    this.receivedCode$.next('');
     this.receivedInputs = [];
     this.promptForm.reset();
   }
 
   useCode() {
     this.dialogRef.close({
-      code: this.receivedCode,
+      code: this.receivedCode$.value,
       inputs: this.receivedInputs,
     });
     this.reset();
+  }
+  private highlightPrism() {
+    setTimeout(() => {
+      this.highlightService.highlightAll();
+    }, 10);
   }
 }

@@ -4,6 +4,8 @@ import {
   createPiece,
 } from '@activepieces/pieces-framework';
 
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { PieceCategory } from '@activepieces/shared';
 import { wooCreateCoupon } from './lib/actions/create-coupon';
 import { wooCreateCustomer } from './lib/actions/create-customer';
 import { wooCreateProduct } from './lib/actions/create-product';
@@ -58,6 +60,7 @@ export const wooAuth = PieceAuth.CustomAuth({
 export const woocommerce = createPiece({
   displayName: 'WooCommerce',
   logoUrl: 'https://cdn.activepieces.com/pieces/woocommerce.png',
+  categories: [PieceCategory.COMMERCE],
   auth: wooAuth,
   minimumSupportedRelease: '0.7.1',
   authors: ['MoShizzle', 'TaskMagicKyle', 'kishanprmr'],
@@ -67,6 +70,17 @@ export const woocommerce = createPiece({
     wooCreateProduct,
     wooFindCustomer,
     wooFindProduct,
+    createCustomApiCallAction({
+      baseUrl: (auth) => (auth as { baseUrl: string }).baseUrl,
+      auth: wooAuth,
+      authMapping: (auth) => ({
+        Authorization: `Basic ${Buffer.from(
+          `${(auth as { consumerKey: string }).consumerKey}:${
+            (auth as { consumerSecret: string }).consumerSecret
+          }`
+        ).toString('base64')}`,
+      }),
+    }),
   ],
   triggers: triggers,
 });

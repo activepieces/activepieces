@@ -131,6 +131,14 @@
             "endpoints/pieces/schema",
             "endpoints/pieces/install"
           ]
+        },
+        {
+          "group": "Git Sync",
+          "icon": "git",
+          "pages": [
+            "endpoints/git-repos/schema",
+            "endpoints/git-repos/pull"
+          ]
         }
       ]
     },
@@ -192,15 +200,7 @@
           ]
         },
         "developers/building-pieces/create-action",
-        {
-          "group": "Create Triggers",
-          "icon": "circle-4",
-          "pages": [
-            "developers/building-pieces/triggers/overview",
-            "developers/building-pieces/triggers/create-polling-trigger",
-            "developers/building-pieces/triggers/create-webhook-trigger"
-          ]
-        },
+        "developers/building-pieces/create-trigger",
         {
           "group": "Sharing Pieces",
           "icon": "circle-5",
@@ -217,6 +217,15 @@
       "group": "Piece Reference",
       "pages": [
         "developers/piece-reference/authentication",
+        {
+          "group": "Triggers",
+          "icon": "bolt",
+          "pages": [
+            "developers/piece-reference/triggers/overview",
+            "developers/piece-reference/triggers/polling-trigger",
+            "developers/piece-reference/triggers/webhook-trigger"
+          ]
+        },
         "developers/piece-reference/properties",
         "developers/piece-reference/properties-validation",
         "developers/piece-reference/flow-control",

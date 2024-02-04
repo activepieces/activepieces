@@ -1,0 +1,32 @@
+<ap-dialog-title-template i18n>
+    Import Flow
+</ap-dialog-title-template>
+
+<mat-dialog-content>
+    <div class="ap-w-[550px] ap-max-w-[550px]">
+        <div *ngIf="showOverWritingFlowNote"
+            class="ap-typography-body-1  ap-items-center ap-text-description ap-mb-2 ap-flex ap-gap-2 ap-mb-4">
+            <svg-icon [svgStyle]="{ width: '20px', height: '20px' }" src="assets/img/custom/warn.svg"></svg-icon>
+            <div i18n><b>Important:</b> Importing a flow will overwrite your current one.</div>
+        </div>
+        <mat-form-field class="ap-w-full">
+            <mat-label i18n>File</mat-label>
+            <ap-file-upload [required]="true" #flowInput [formControl]="fileControl"></ap-file-upload>
+            <ap-icon-button [height]="25" [width]="25" iconFilename="attach.svg" matSuffix
+                (buttonClicked)="flowInput.fileInput.nativeElement.click()"></ap-icon-button>
+            <mat-error *ngIf="fileControl.invalid" i18n>Flow template is required</mat-error>
+        </mat-form-field>
+
+    </div>
+    <ng-container *ngIf="importFLow$ | async"></ng-container>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+    <div class="ap-flex ap-gap-2.5">
+        <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" i18n>
+            Cancel
+        </ap-button>
+        <ap-button [loading]="loading" (buttonClicked)="submit()" btnColor="success" btnSize="default" i18n>
+            Import
+        </ap-button>
+    </div>
+</mat-dialog-actions>

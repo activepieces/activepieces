@@ -108,13 +108,13 @@ export class AuthenticationService {
     this.router.navigate(['sign-in']);
   }
 
+  getToken(): string | null {
+    return localStorage.getItem(environment.jwtTokenName);
+  }
+
   getDecodedToken(): Principal | null {
     const token = localStorage.getItem(environment.jwtTokenName);
     const decodedToken = this.jwtHelper.decodeToken(token || '');
-    // TODO REMOVE in next release
-    if (decodedToken && decodedToken['platformId']) {
-      this.logout();
-    }
     return decodedToken;
   }
 

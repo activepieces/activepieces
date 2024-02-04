@@ -6,7 +6,7 @@
   <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="npmForm" (submit)="lookForNpmPackage()">
     <mat-form-field class="ap-w-full" appearance="outline">
       <mat-label>Package Name</mat-label>
-      <input cdkFocusInitial formControlName="packageName" matInput type="text" placeholder="loadash" />
+      <input cdkFocusInitial formControlName="packageName" matInput type="text" placeholder="lodash" />
       <mat-error *ngIf="npmForm.controls.packageName.invalid"><ng-container
           *ngIf="npmForm.controls.packageName.hasError('required');else invalidName" i18n>
           Package name is required

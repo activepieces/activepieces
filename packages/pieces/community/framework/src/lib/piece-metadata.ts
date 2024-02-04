@@ -1,9 +1,9 @@
 import { PiecePropertyMap } from "./property";
-import { TriggerStrategy, WebhookHandshakeConfiguration } from "./trigger/trigger";
+import { WebhookRenewConfiguration, TriggerStrategy, WebhookHandshakeConfiguration } from "./trigger/trigger";
 import { ErrorHandlingOptionsParam } from "./action/action";
 import { PieceAuthProperty } from "./property/authentication";
 import { Type } from "@sinclair/typebox";
-import { ProjectId } from "@activepieces/shared";
+import { PieceCategory, ProjectId } from "@activepieces/shared";
 
 export const PieceBase = Type.Object({
   id: Type.Optional(Type.String()),
@@ -16,6 +16,7 @@ export const PieceBase = Type.Object({
   directoryPath: Type.Optional(Type.String()),
   auth: Type.Optional(PieceAuthProperty),
   version: Type.String(),
+  categories: Type.Optional(Type.Array(Type.Enum(PieceCategory))),
   minimumSupportedRelease: Type.Optional(Type.String()),
   maximumSupportedRelease: Type.Optional(Type.String()),
 })
@@ -31,6 +32,7 @@ export type PieceBase = {
   directoryPath?: string;
   auth?: PieceAuthProperty;
   version: string;
+  categories?: PieceCategory[];
   minimumSupportedRelease?: string;
   maximumSupportedRelease?: string;
 }
@@ -59,12 +61,14 @@ export const TriggerBase = Type.Composite([
     type: Type.Enum(TriggerStrategy),
     sampleData: Type.Unknown(),
     handshakeConfiguration: Type.Optional(WebhookHandshakeConfiguration),
+    renewConfiguration: Type.Optional(WebhookRenewConfiguration),
   })
 ])
 export type TriggerBase = Omit<ActionBase, "requireAuth"> & {
   type: TriggerStrategy;
   sampleData: unknown,
   handshakeConfiguration?: WebhookHandshakeConfiguration;
+  renewConfiguration?: WebhookRenewConfiguration;
 };
 
 export const PieceMetadata = Type.Composite([

@@ -2,11 +2,13 @@ import { Command } from 'commander';
 import { createActionCommand } from './lib/commands/create-action';
 import { createPieceCommand } from './lib/commands/create-piece';
 import { createTriggerCommand } from './lib/commands/create-trigger';
+import { syncPieceCommand } from './lib/commands/sync-pieces';
 
 const pieceCommand = new Command('pieces')
   .description('Manage pieces');
 
 pieceCommand.addCommand(createPieceCommand);
+pieceCommand.addCommand(syncPieceCommand)
 
 const actionCommand = new Command('actions')
   .description('Manage actions');

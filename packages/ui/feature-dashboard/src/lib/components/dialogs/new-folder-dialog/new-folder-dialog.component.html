@@ -1,0 +1,31 @@
+<ap-dialog-title-template i18n>New Folder
+</ap-dialog-title-template>
+<mat-dialog-content>
+    <form class="ap-flex ap-flex-col ap-gap-1  md:ap-w-[500px]" [formGroup]="folderForm" (submit)="createFolder()">
+        <mat-form-field class="ap-w-full" appearance="outline">
+            <mat-label i18n>Name</mat-label>
+            <input cdkFocusInitial formControlName="displayName" matInput type="text" />
+            <mat-error
+                *ngIf="folderForm.controls.displayName.getError('required') || folderForm.controls.displayName.getError('emptyName')"
+                i18n>
+                Name is required
+            </mat-error>
+            <mat-error *ngIf="folderForm.controls.displayName.getError('nameUsed')" i18n>Name is already
+                used</mat-error>
+        </mat-form-field>
+    </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <div class="ap-flex ap-gap-2.5">
+        <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" [disabled]="loading" i18n>
+            Cancel
+        </ap-button>
+        <ap-button btnSize="default" type="submit" (click)="createFolder();" [loading]="loading" btnColor="primary"
+            i18n>
+            Create
+        </ap-button>
+    </div>
+</mat-dialog-actions>
+
+<ng-container *ngIf="creatingFolder$ | async"></ng-container>

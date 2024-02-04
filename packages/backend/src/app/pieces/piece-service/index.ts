@@ -46,6 +46,9 @@ export const pieceService = {
         catch (error) {
             logger.error(error, '[PieceService#add]')
 
+            if ((error as ActivepiecesError).error.code === ErrorCode.VALIDATION) {
+                throw error
+            }
             throw new ActivepiecesError({
                 code: ErrorCode.ENGINE_OPERATION_FAILURE,
                 params: {

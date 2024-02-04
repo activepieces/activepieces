@@ -1,10 +1,8 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { ConfigureRepoDialogComponent } from '../../components/dialogs/configure-repo-dialog/configure-repo-dialog.component';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { GitRepo } from '@activepieces/ee-shared';
-import { SyncProjectService } from '../../services/sync-project.service';
+import { GitRepo, PushSyncMode } from '@activepieces/ee-shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   GenericSnackbarTemplateComponent,
@@ -14,13 +12,14 @@ import { RepoResolverData } from '../../resolvers/repo.resolver';
 import { Store } from '@ngrx/store';
 import { Project } from '@activepieces/shared';
 import {
-  PushDialogComponent,
-  PushDialogData,
-} from '../../components/dialogs/push-dialog/push-dialog.component';
-import {
-  PullDialogComponent,
-  PullDialogData,
-} from '../../components/dialogs/pull-dialog/pull-dialog.component';
+  ConfigureRepoDialogComponent,
+  PullFromGitDialogComponent,
+  PullFromGitDialogData,
+  PushToGitDialogComponent,
+  PushToGitDialogData,
+  SyncProjectService,
+} from '@activepieces/ui-feature-git-sync';
+
 @Component({
   selector: 'app-sync-project',
   templateUrl: './sync-project.component.html',
@@ -83,12 +82,13 @@ export class SyncProjectComponent {
   push(projectDisplayName: string) {
     const repoId = this.currentRepo$.value?.id;
     if (repoId) {
-      const data: PushDialogData = {
+      const data: PushToGitDialogData = {
         projectName: projectDisplayName,
         repoId: repoId,
+        mode: PushSyncMode.PROJECT,
       };
       this.matDialog
-        .open(PushDialogComponent, {
+        .open(PushToGitDialogComponent, {
           data,
         })
         .afterClosed();
@@ -98,12 +98,12 @@ export class SyncProjectComponent {
   pull(projectDisplayName: string) {
     const repoId = this.currentRepo$.value?.id;
     if (repoId) {
-      const data: PullDialogData = {
+      const data: PullFromGitDialogData = {
         projectName: projectDisplayName,
         repoId: repoId,
       };
       this.matDialog
-        .open(PullDialogComponent, {
+        .open(PullFromGitDialogComponent, {
           data,
         })
         .afterClosed();

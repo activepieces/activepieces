@@ -1,8 +1,10 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   PieceAuth,
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { freshSalesCreateContact } from './lib/actions/create-contact';
 
 const markdownDescription = `
@@ -35,8 +37,21 @@ export const freshsales = createPiece({
   displayName: 'Freshsales',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/freshsales.png',
+  categories: [PieceCategory.SALES_AND_CRM],
   authors: ['kanarelo'],
   auth: freshsalesAuth,
-  actions: [freshSalesCreateContact],
+  actions: [
+    freshSalesCreateContact,
+    createCustomApiCallAction({
+      baseUrl: (auth) =>
+        `https://${
+          (auth as { username: string }).username
+        }.myfreshworks.com/crm/sales/api`,
+      auth: freshsalesAuth,
+      authMapping: (auth) => ({
+        Authorization: `Token token=${(auth as { password: string }).password}`,
+      }),
+    }),
+  ],
   triggers: [],
 });

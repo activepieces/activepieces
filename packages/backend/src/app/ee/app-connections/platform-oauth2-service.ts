@@ -51,6 +51,7 @@ async function claim(
 
     const { auth } = await pieceMetadataService.getOrThrow({
         name: pieceName,
+        version: undefined,
         projectId,
     })
     if (isNil(auth) || auth.type !== PropertyType.OAUTH2) {

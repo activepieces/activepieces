@@ -1,6 +1,12 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { newReview } from './lib/triggers/new-review';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import {
+  OAuth2PropertyValue,
+  PieceAuth,
+  createPiece,
+} from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { createReply } from './lib/actions/create-reply';
+import { newReview } from './lib/triggers/new-review';
 
 export const googleAuth = PieceAuth.OAuth2({
   authUrl: 'https://accounts.google.com/o/oauth2/auth',
@@ -14,6 +20,18 @@ export const googleBusiness = createPiece({
   displayName: 'Google My Business',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-business.png',
   authors: ['abuaboud'],
-  actions: [createReply],
+  categories: [PieceCategory.MARKETING],
+  actions: [
+    createReply,
+    createCustomApiCallAction({
+      baseUrl: () => {
+        return 'https://www.googleapis.com/business/v4';
+      },
+      auth: googleAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      }),
+    }),
+  ],
   triggers: [newReview],
 });

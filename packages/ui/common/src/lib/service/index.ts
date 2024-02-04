@@ -17,3 +17,6 @@ export * from './authentication.service';
 export * from './oauth-2-apps.service';
 export * from './locales.service';
 export * from './redirect.service';
+export * from './flow-builder.service';
+export * from './websocket.service';
+export * from './highlight.service';
