@@ -11,6 +11,6 @@ export const imageHelper = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/image-helper.png',
   authors: ['PFernandez98'],
   categories: [PieceCategory.CORE],
-  actions: [imageToBase64],
+  actions: [imageToBase64, getMetaData],
   triggers: [],
 });

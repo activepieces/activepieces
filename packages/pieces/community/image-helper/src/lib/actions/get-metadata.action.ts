@@ -1,4 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
+import * as ExifReader from 'exifreader';
 
 export const getMetaData = createAction({
   name: 'get_meta_data',
@@ -12,10 +13,7 @@ export const getMetaData = createAction({
     }),
   },
   async run(context) {
-    const image = context.propsValue.image;
-    const ExifParser = require('exif-parser');
-    const parser = ExifParser.create(image.data);
-    const result = parser.parse();
-    return result;
+    const tags = await ExifReader.load(context.propsValue.image.data);
+    return tags;
   },
 });
