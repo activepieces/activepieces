@@ -35,8 +35,10 @@ export const askOpenAI = createAction({
           };
         }
         try {
+          const { apiKey, baseUrl } = auth as { apiKey: string, baseUrl: string }
           const openai = new OpenAI({
-            apiKey: auth as string,
+            apiKey,
+            baseURL: baseUrl,
           });
           const response = await openai.models.list();
           // We need to get only LLM models
@@ -118,7 +120,8 @@ export const askOpenAI = createAction({
   },
   async run({ auth, propsValue, store }) {
     const openai = new OpenAI({
-      apiKey: auth,
+      apiKey: auth.apiKey,
+      baseURL: auth.baseUrl,
     });
     const {
       model,

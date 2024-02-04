@@ -4,7 +4,11 @@ import {
   createCustomApiCallAction,
   httpClient,
 } from '@activepieces/pieces-common';
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import {
+  PieceAuth,
+  Property,
+  createPiece,
+} from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { askAssistant } from './lib/actions/ask-assistant';
 import { generateImage } from './lib/actions/generate-image';
@@ -23,10 +27,21 @@ Follow these instructions to get your OpenAI API Key:
 It is strongly recommended that you add your credit card information to your OpenAI account and upgrade to the paid plan **before** generating the API Key. This will help you prevent 429 errors.
 `;
 
-export const openaiAuth = PieceAuth.SecretText({
-  description: markdownDescription,
-  displayName: 'API Key',
+export const openaiAuth = PieceAuth.CustomAuth({
   required: true,
+  props: {
+    apiKey: PieceAuth.SecretText({
+      displayName: 'API Key',
+      description: markdownDescription,
+      required: true,
+    }),
+    baseUrl: Property.ShortText({
+      displayName: 'Base URL',
+      description: 'The base URL for the OpenAI instance.',
+      defaultValue: 'https://api.openai.com/v1',
+      required: true,
+    }),
+  },
   validate: async (auth) => {
     try {
       await httpClient.sendRequest<{
@@ -36,7 +51,7 @@ export const openaiAuth = PieceAuth.SecretText({
         method: HttpMethod.GET,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth.auth as string,
+          token: auth.auth.apiKey as string,
         },
       });
       return {
@@ -50,6 +65,34 @@ export const openaiAuth = PieceAuth.SecretText({
     }
   },
 });
+
+// export const openaiAuth = PieceAuth.SecretText({
+//   description: markdownDescription,
+//   displayName: 'API Key',
+//   required: true,
+//   validate: async (auth) => {
+//     try {
+//       await httpClient.sendRequest<{
+//         data: { id: string }[];
+//       }>({
+//         url: 'https://api.openai.com/v1/models',
+//         method: HttpMethod.GET,
+//         authentication: {
+//           type: AuthenticationType.BEARER_TOKEN,
+//           token: auth.auth as string,
+//         },
+//       });
+//       return {
+//         valid: true,
+//       };
+//     } catch (e) {
+//       return {
+//         valid: false,
+//         error: 'Invalid API key',
+//       };
+//     }
+//   },
+// });
 
 export const openai = createPiece({
   displayName: 'OpenAI',

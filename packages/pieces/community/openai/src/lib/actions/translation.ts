@@ -32,11 +32,11 @@ export const translateAction = createAction({
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `https://api.openai.com/v1/audio/translations`,
+      url: `${context.auth.baseUrl}/audio/translations`,
       body: form,
       headers: {
         ...form.getHeaders(),
-        Authorization: `Bearer ${context.auth}`,
+        Authorization: `Bearer ${context.auth.apiKey}`,
       },
     };
     try {

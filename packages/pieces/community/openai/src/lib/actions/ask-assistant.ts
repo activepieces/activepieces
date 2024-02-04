@@ -27,8 +27,13 @@ export const askAssistant = createAction({
           };
         }
         try {
+          const { apiKey, baseUrl } = auth as {
+            apiKey: string;
+            baseUrl: string;
+          };
           const openai = new OpenAI({
-            apiKey: auth as string,
+            apiKey,
+            baseURL: baseUrl,
           });
           const assistants = await openai.beta.assistants.list();
 
@@ -63,7 +68,8 @@ export const askAssistant = createAction({
   },
   async run({ auth, propsValue, store }) {
     const openai = new OpenAI({
-      apiKey: auth,
+      apiKey: auth.apiKey,
+      baseURL: auth.baseUrl,
     });
     const { assistant, prompt, memoryKey } = propsValue;
     const runCheckDelay = 1000;

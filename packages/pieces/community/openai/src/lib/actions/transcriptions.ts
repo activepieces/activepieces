@@ -49,11 +49,11 @@ export const transcribeAction = createAction({
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `https://api.openai.com/v1/audio/transcriptions`,
+      url: `${context.auth.baseUrl}/audio/transcriptions`,
       body: form,
       headers: {
         ...form.getHeaders(),
-        Authorization: `Bearer ${context.auth}`,
+        Authorization: `Bearer ${context.auth.apiKey}`,
       },
     };
     try {
