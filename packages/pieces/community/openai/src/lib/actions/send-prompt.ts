@@ -35,10 +35,24 @@ export const askOpenAI = createAction({
           };
         }
         try {
-          const { apiKey, baseUrl } = auth as { apiKey: string, baseUrl: string }
+          const { apiKey, baseUrl, apiVersion } = auth as {
+            apiKey: string;
+            baseUrl: string;
+            apiVersion: string;
+          };
           const openai = new OpenAI({
             apiKey,
             baseURL: baseUrl,
+            defaultHeaders: apiVersion
+              ? {
+                  'api-key': apiKey,
+                }
+              : undefined,
+            defaultQuery: apiVersion
+              ? {
+                  'api-version': apiVersion,
+                }
+              : undefined,
           });
           const response = await openai.models.list();
           // We need to get only LLM models
@@ -122,6 +136,16 @@ export const askOpenAI = createAction({
     const openai = new OpenAI({
       apiKey: auth.apiKey,
       baseURL: auth.baseUrl,
+      defaultHeaders: auth.apiVersion
+        ? {
+            'api-key': auth.apiKey,
+          }
+        : undefined,
+      defaultQuery: auth.apiVersion
+        ? {
+            'api-version': auth.apiVersion,
+          }
+        : undefined,
     });
     const {
       model,

@@ -47,14 +47,31 @@ export const transcribeAction = createAction({
     form.append('model', 'whisper-1');
     form.append('language', language);
 
+    let headers;
+    let queryParams;
+    if (context.auth.apiVersion) {
+        headers = {
+            'api-key': context.auth.apiKey
+        }
+        queryParams = {
+            'api-version': context.auth.apiVersion
+        }
+    }
+    else {
+        headers = {
+            Authorization: `Bearer ${context.auth.apiKey}`
+        }
+    }
+
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `${context.auth.baseUrl}/audio/transcriptions`,
       body: form,
       headers: {
         ...form.getHeaders(),
-        Authorization: `Bearer ${context.auth.apiKey}`,
+        ...headers
       },
+      queryParams,
     };
     try {
       const response = await httpClient.sendRequest(request);

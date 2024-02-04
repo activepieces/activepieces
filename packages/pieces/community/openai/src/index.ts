@@ -41,18 +41,30 @@ export const openaiAuth = PieceAuth.CustomAuth({
       defaultValue: 'https://api.openai.com/v1',
       required: true,
     }),
+    apiVersion: Property.ShortText({
+      displayName: 'API Version',
+      description: 'The API version if you are using an Azure OpenAI resource',
+      required: false,
+    }),
   },
   validate: async (auth) => {
     try {
+      let headers;
+      if (auth.auth.apiVersion) {
+        headers = {
+          'api-key': auth.auth.apiKey,
+        };
+      } else {
+        headers = {
+          Authentication: `Bearer ${auth.auth.apiKey}`,
+        };
+      }
       await httpClient.sendRequest<{
         data: { id: string }[];
       }>({
-        url: 'https://api.openai.com/v1/models',
+        url: `${auth.auth.baseUrl}/models`,
         method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: auth.auth.apiKey as string,
-        },
+        headers,
       });
       return {
         valid: true,
@@ -65,34 +77,6 @@ export const openaiAuth = PieceAuth.CustomAuth({
     }
   },
 });
-
-// export const openaiAuth = PieceAuth.SecretText({
-//   description: markdownDescription,
-//   displayName: 'API Key',
-//   required: true,
-//   validate: async (auth) => {
-//     try {
-//       await httpClient.sendRequest<{
-//         data: { id: string }[];
-//       }>({
-//         url: 'https://api.openai.com/v1/models',
-//         method: HttpMethod.GET,
-//         authentication: {
-//           type: AuthenticationType.BEARER_TOKEN,
-//           token: auth.auth as string,
-//         },
-//       });
-//       return {
-//         valid: true,
-//       };
-//     } catch (e) {
-//       return {
-//         valid: false,
-//         error: 'Invalid API key',
-//       };
-//     }
-//   },
-// });
 
 export const openai = createPiece({
   displayName: 'OpenAI',
@@ -111,13 +95,29 @@ export const openai = createPiece({
     translateAction,
     createCustomApiCallAction({
       auth: openaiAuth,
-      baseUrl: () => {
-        return 'https://api.openai.com/v1';
+      baseUrl: (auth) => {
+        const typedAuth = auth as { baseUrl: string; apiVersion: string };
+        if (typedAuth.apiVersion) {
+          return typedAuth.baseUrl + `?api-version=${typedAuth.apiVersion}`;
+        } else {
+          return typedAuth.baseUrl;
+        }
       },
       authMapping: (auth) => {
-        return {
-          Authorization: `Bearer ${auth}`,
+        const typedAuth = auth as {
+          baseUrl: string;
+          apiKey: string;
+          apiVersion: string;
         };
+        if (typedAuth.apiVersion) {
+          return {
+            'api-key': typedAuth.apiKey,
+          };
+        } else {
+          return {
+            Authorization: `Bearer ${auth}`,
+          };
+        }
       },
     }),
   ],
