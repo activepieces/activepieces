@@ -37,11 +37,11 @@ export const discordCreateChannel = createAction({
     const res = await httpClient.sendRequest(request);
 
     return {
-      success: res.status === 200,
+      success: res.status === 201,
       channel: {
         id: res.body.id,
         name: res.body.name,
-      }
+      },
     };
   },
 });
