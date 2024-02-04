@@ -181,11 +181,6 @@ export interface MentionTreeNode {
   children?: MentionTreeNode[];
   /**value for json key */
   value?: string | unknown;
-  arrayInfo?: {
-    /**If the node is a slice of an array, this is the starting index of the slice */
-    startingIndex: number;
-    endingIndex: number;
-  };
 }
 /**Traverses an object to find its child properties and their paths, stepOutput has to be an object on first invocation */
 export function traverseStepOutputAndReturnMentionTree(
@@ -194,28 +189,6 @@ export function traverseStepOutputAndReturnMentionTree(
   lastKey: string
 ): MentionTreeNode {
   if (stepOutput && typeof stepOutput === 'object') {
-    // if (Array.isArray(stepOutput) && stepOutput.length > 100) {
-    //   const numberOfSlices = Math.ceil(stepOutput.length / 100);
-    //   const children: MentionTreeNode[] = [];
-    //   for (let i = 0; i < numberOfSlices; i++) {
-    //     const startingIndex = i * 100;
-    //     const endingIndex = Math.min((i + 1) * 100, stepOutput.length);
-    //     const newPath = `${path}[i]`;
-    //     const newKey = `${lastKey} ${startingIndex}-${endingIndex}`;
-    //     children.push(
-    //       traverseStepOutputAndReturnMentionTree(
-    //         stepOutput.slice(startingIndex, endingIndex),
-    //         newPath,
-    //         newKey
-    //       )
-    //     );
-    //   }
-    //   return {
-    //     propertyPath: path,
-    //     key: lastKey,
-    //     children,
-    //   };
-    // }
     return {
       propertyPath: path,
       key: lastKey,

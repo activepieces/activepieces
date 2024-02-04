@@ -105,7 +105,6 @@ export class StepMentionsTreeComponent implements OnInit {
   };
   ngOnInit() {
     this.dataSource.data = this.stepOutputObjectChildNodes;
-    console.log(this.dataSource);
   }
   mentionTreeNodeClicked(node: MentionTreeNode) {
     const label = [
