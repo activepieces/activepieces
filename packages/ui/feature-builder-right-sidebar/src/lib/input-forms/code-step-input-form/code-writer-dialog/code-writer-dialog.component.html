@@ -70,6 +70,7 @@
 </ng-template>
 
 <ng-container *ngIf="promptOperation$ | async"></ng-container>
+<ng-container *ngIf="npmPackage$ | async"></ng-container>
 
 <ng-template #promptFormTemplate let-reprompt="reprompt">
     <form class="ap-flex ap-flex-col ap-gap-2 " [formGroup]="promptForm" (submit)="prompt()">

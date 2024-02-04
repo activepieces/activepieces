@@ -16,6 +16,7 @@ import { CodeWriterService } from './code-writer.service';
 import { FlagService, HighlightService } from '@activepieces/ui/common';
 import { ApEdition } from '@activepieces/shared';
 import { MatStepper } from '@angular/material/stepper';
+import { CodeService } from '@activepieces/ui/feature-builder-store';
 export interface CodeWriterDialogData {
   existingCode: string;
 }
@@ -36,11 +37,14 @@ export class CodeWriterDialogComponent {
     key: string;
     value: unknown;
   }[] = [];
+  receivedPackages: string[] = [];
+  packageVersions: { [key: string]: string }[] = [];
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   betaNote = $localize`<b> Note: </b> This feature uses OpenAi's API to generate code, it will be available for free during the beta period.`;
   isCloudEdition$: Observable<boolean>;
   /**Prism refuses to render new text within it so you have to destroy the element and build it again, this flag will do that */
   prisimFix = false;
+  npmPackage$: Observable<{ [key: string]: string } | null>;
   constructor(
     private formBuilder: FormBuilder,
     private dialogRef: MatDialogRef<CodeWriterDialogComponent>,
@@ -48,7 +52,8 @@ export class CodeWriterDialogComponent {
     private flagService: FlagService,
     private highlightService: HighlightService,
     @Inject(MAT_DIALOG_DATA)
-    public data: CodeWriterDialogData
+    public data: CodeWriterDialogData,
+    private codeService: CodeService
   ) {
     this.promptForm = this.formBuilder.group({
       prompt: new FormControl('', {
@@ -84,11 +89,16 @@ export class CodeWriterDialogComponent {
                 key: string;
                 value: unknown;
               }[];
+              packages: string[];
             } = JSON.parse(response.result);
             this.receivedCode$.next(
               result.code.replace(/\*\*\*NEW_LINE\*\*\*/g, '\n')
             );
             this.receivedInputs = result.inputs;
+            this.receivedPackages = result.packages;
+            this.receivedPackages.forEach((pkg) => {
+              this.lookForNpmPackage(pkg);
+            });
             if (this.stepper.selected) {
               this.stepper.selected.completed = true;
               this.stepper.next();
@@ -112,10 +122,23 @@ export class CodeWriterDialogComponent {
     this.promptForm.reset();
   }
 
+  lookForNpmPackage(packageName: string) {
+    this.npmPackage$ = this.codeService
+      .getLatestVersionOfNpmPackage(packageName)
+      .pipe(
+        tap((pkg) => {
+          if (pkg) {
+            this.packageVersions.push(pkg);
+          }
+        })
+      );
+  }
+
   useCode() {
     this.dialogRef.close({
       code: this.receivedCode$.value,
       inputs: this.receivedInputs,
+      packages: this.packageVersions,
     });
     this.reset();
   }
