@@ -29,10 +29,10 @@ It is strongly recommended that you add your credit card information to your Ope
 
 export const openaiAuth = PieceAuth.CustomAuth({
   required: true,
+  description: markdownDescription,
   props: {
     apiKey: PieceAuth.SecretText({
       displayName: 'API Key',
-      description: markdownDescription,
       required: true,
     }),
     baseUrl: Property.ShortText({
@@ -49,6 +49,7 @@ export const openaiAuth = PieceAuth.CustomAuth({
   },
   validate: async (auth) => {
     try {
+      
       let headers;
       if (auth.auth.apiVersion) {
         headers = {
@@ -59,10 +60,11 @@ export const openaiAuth = PieceAuth.CustomAuth({
           Authentication: `Bearer ${auth.auth.apiKey}`,
         };
       }
+      const baseUrl = auth.auth.baseUrl.replace(/\/$/, '') ?? 'https://api.openai.com/v1';
       await httpClient.sendRequest<{
         data: { id: string }[];
       }>({
-        url: `${auth.auth.baseUrl}/models`,
+        url: `${baseUrl}/models`,
         method: HttpMethod.GET,
         headers,
       });
@@ -97,10 +99,11 @@ export const openai = createPiece({
       auth: openaiAuth,
       baseUrl: (auth) => {
         const typedAuth = auth as { baseUrl: string; apiVersion: string };
+        const baseUrl = typedAuth.baseUrl.replace(/\/$/, '') ?? 'https://api.openai.com/v1';
         if (typedAuth.apiVersion) {
-          return typedAuth.baseUrl + `?api-version=${typedAuth.apiVersion}`;
+          return baseUrl + `?api-version=${typedAuth.apiVersion}`;
         } else {
-          return typedAuth.baseUrl;
+          return baseUrl;
         }
       },
       authMapping: (auth) => {

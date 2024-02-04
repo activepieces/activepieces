@@ -63,9 +63,10 @@ export const transcribeAction = createAction({
         }
     }
 
+    const baseUrl = context.auth.baseUrl.replace(/\/$/, '') ?? 'https://api.openai.com/v1';
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${context.auth.baseUrl}/audio/transcriptions`,
+      url: `${baseUrl}/audio/transcriptions`,
       body: form,
       headers: {
         ...form.getHeaders(),
