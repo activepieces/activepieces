@@ -1,6 +1,15 @@
 import { createAction, Property, PieceAuth } from "@activepieces/pieces-framework";
-import { wootricAuth, wootricAccessToken } from "../../";
+import { wootricAuth, wootricAccessToken, WOOTRIC_API_URL } from "../../";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
+
+export const sendSurvey = async (surveyRequestPayload: object) => {
+    const EMAIL_SURVEY = `${WOOTRIC_API_URL}/v1/email_survey`;
+    return await httpClient.sendRequest({
+        method: HttpMethod.POST,
+        url: EMAIL_SURVEY,
+        body: surveyRequestPayload,
+    });
+};
 
 export const createWootricSurvey = createAction({
     name: 'trigger_wootric_survey',
@@ -8,45 +17,38 @@ export const createWootricSurvey = createAction({
     displayName: 'Trigger Wootric Survey',
     description: 'Trigger a survey from Wootric',
     props: {
-        emails: Property.ShortText({
-            displayName: 'Email',
-            description: 'End user email',
+        emails: Property.Array({
+            displayName: 'Emails',
+            description: 'End user emails, where you want the survey to be recieved',
             required: true,
+            defaultValue: []
         }),
-        survey_immediately: Property.ShortText({
+        surveyImmediately: Property.Checkbox({
             displayName: 'Survey Immediately',
-            description: 'Enter "true" to survey immediately, otherwise "false"',
-            required: true,
+            description: 'Enter "true" to survey immediately to bypass checks, otherwise "false"',
+            required: true
         })
     },
-    async run({ propsValue, auth }) {
-        const WOOTRIC_API_URL = "https://api.staging.wootric.com/v1/email_survey";
+    async run(context) {
+        const { username, password } = context.auth;
+        const { surveyImmediately, emails } = context.propsValue;
+        let surveyResponse;
 
-        const emailsString = propsValue['emails'];
-        const surveyImmediately = propsValue['survey_immediately'] === 'true';
-        const formData = new URLSearchParams();
-
-        formData.append('emails[]', emailsString);
-        formData.append('survey_immediately', surveyImmediately.toString());
+        let surveyRequestPayload = {
+            emails: emails,
+            survey_immediately: surveyImmediately,
+            access_token: await wootricAccessToken(username, password, context.store)
+        };
 
         try {
-            const { username, password } = auth;
-            const data = await wootricAccessToken(username, password);
-            formData.append('access_token', data['access_token']);
-            const surveyResponse = await httpClient.sendRequest({
-                method: HttpMethod.POST,
-                url: WOOTRIC_API_URL,
-                body: formData,
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded"
-                }
-            });
-
-            console.log('Survey response:', surveyResponse);
-            return surveyResponse.body;
-        } catch (error) {
-            console.error('Error triggering Wootric survey:', error);
-            throw error;
+            surveyResponse = await sendSurvey(surveyRequestPayload);
         }
+        catch (e) {
+            // try one more time with a new token
+            context.store.delete('wootricAccessToken');
+            surveyRequestPayload.access_token = await wootricAccessToken(username, password, context.store);
+            surveyResponse = await sendSurvey(surveyRequestPayload);
+        }
+        return surveyResponse.body;
     },
 });

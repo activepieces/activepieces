@@ -3,10 +3,20 @@ import { createPiece, Property, PieceAuth } from "@activepieces/pieces-framework
 import { createWootricSurvey } from "./lib/actions/create-survey";
 import { httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
 
-export const wootricAccessToken = async (username: string, password: string) => {
+export const WOOTRIC_API_URL = 'https://api.wootric.com/';
+export const WOOTRIC_IMAGE_URL = 'https://assets-production.wootric.com/assets/wootric-is-now-inmoment-250x108-85cb4900c62ff4d33200abafee7d63372d410abc5bf0cab90e80a07d4f4e5a31.png';
+
+export const wootricAccessToken = async (username: string, password: string, store: any) => {
+    if (store) {
+        const storageAccessToken = await store.get('wootricAccessToken');
+
+        if (storageAccessToken) {
+            return storageAccessToken;
+        }
+    }
     const request: HttpRequest = {
         method: HttpMethod.POST,
-        url: 'https://api.staging.wootric.com/oauth/token',
+        url: `${WOOTRIC_API_URL}/oauth/token`,
         body: new URLSearchParams({
             grant_type: 'client_credentials',
             client_id: username,
@@ -18,7 +28,11 @@ export const wootricAccessToken = async (username: string, password: string) => 
     };
 
     const response = await httpClient.sendRequest(request);
-    return response.body;
+    const accessToken = response.body['access_token'];
+    if (store) {
+        store.put('wootricAccessToken', accessToken);
+    }
+    return accessToken;
 };
 
 export const wootricAuth = PieceAuth.BasicAuth({
@@ -32,8 +46,8 @@ export const wootricAuth = PieceAuth.BasicAuth({
         displayName: 'Client Secret',
         description: 'Wootric Client Secret',
     },
-    validate: async ({ auth }) => {
-        const { username, password } = auth;
+    validate: async (context) => {
+        const { username, password } = context.auth;
         if (!username || !password) {
             return {
                 valid: false,
@@ -42,7 +56,7 @@ export const wootricAuth = PieceAuth.BasicAuth({
         }
 
         try {
-            const data = await wootricAccessToken(username, password);
+            const data = await wootricAccessToken(username, password, {});
             if (data && data['access_token']) {
                 return {
                     valid: true,
@@ -66,7 +80,7 @@ export const wootric = createPiece({
     displayName: "Wootric",
     auth: wootricAuth,
     minimumSupportedRelease: '0.9.0',
-    logoUrl: "https://assets-production.wootric.com/assets/wootric-is-now-inmoment-250x108-85cb4900c62ff4d33200abafee7d63372d410abc5bf0cab90e80a07d4f4e5a31.png",
+    logoUrl: WOOTRIC_IMAGE_URL,
     authors: [],
     actions: [createWootricSurvey],
     triggers: [],
