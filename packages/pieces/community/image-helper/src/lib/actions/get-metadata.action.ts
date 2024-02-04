@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import * as ExifReader from 'exifreader';
+import sharp from 'sharp';
 
 export const getMetaData = createAction({
   name: 'get_meta_data',
@@ -8,12 +8,11 @@ export const getMetaData = createAction({
   props: {
     image: Property.File({
       displayName: 'Image',
-      description: 'The image to get metadata from',
       required: true,
     }),
   },
   async run(context) {
-    const tags = await ExifReader.load(context.propsValue.image.data);
-    return tags;
+    const metadata = await sharp(context.propsValue.image.data).metadata();
+    return metadata;
   },
 });
