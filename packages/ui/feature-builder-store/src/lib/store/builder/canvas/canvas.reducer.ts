@@ -218,7 +218,6 @@ const __CanvasReducer = createReducer(
   on(canvasActions.setAddButtonId, (state, { id }) => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
     clonedState.clickedAddBtnId = id;
-    // clonedState.selectedStepName = '';
     return clonedState;
   }),
   on(canvasActions.viewRun, (state, { run, version }) => {
