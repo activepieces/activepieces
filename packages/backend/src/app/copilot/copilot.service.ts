@@ -12,6 +12,7 @@ type GenerateCodeParams = {
 function getOpenAI(): OpenAI {
     return new OpenAI({
         apiKey: system.getOrThrow(SystemProp.OPENAI_API_KEY),
+        baseURL: system.get(SystemProp.OPENAI_API_BASE_URL),
     })
 }
 
