@@ -3,7 +3,7 @@ import { PrincipalType, TestTriggerRequestBody } from '@activepieces/shared'
 import { testTriggerService } from './test-trigger-service'
 
 export const testTriggerController: FastifyPluginAsyncTypebox = async (app) => {
-    app.post('/:id', TestTriggerRequest, async (req) => {
+    app.post('/', TestTriggerRequest, async (req) => {
         const { projectId } = req.principal
         const { flowId, flowVersionId, testStrategy } = req.body
 

@@ -3,6 +3,7 @@ import { triggerEventService } from '../trigger-events/trigger-event.service'
 import { FlowId, FlowVersionId, ProjectId, SeekPage, WebhookSimulation } from '@activepieces/shared'
 import { flowService } from '../flow/flow.service'
 import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
+import { logger } from '../../helper/logger'
 
 export const testTriggerService = {
     async test(params: TestParams): Promise<unknown> {
@@ -19,6 +20,8 @@ export const testTriggerService = {
 }
 
 const executeSimulation = async ({ flowId, flowVersionId, projectId }: ExecuteTestParams): Promise<WebhookSimulation> => {
+    logger.debug({ name: 'testTriggerService.executeSimulation', flowId, flowVersionId, projectId })
+
     return webhookSimulationService.create({
         flowId,
         flowVersionId,
@@ -27,6 +30,8 @@ const executeSimulation = async ({ flowId, flowVersionId, projectId }: ExecuteTe
 }
 
 const executeTestFunction = async ({ flowId, flowVersionId, projectId }: ExecuteTestParams): Promise<SeekPage<unknown>> => {
+    logger.debug({ name: 'testTriggerService.executeTestFunction', flowId, flowVersionId, projectId })
+
     const flow = await flowService.getOnePopulatedOrThrow({
         id: flowId,
         projectId,
