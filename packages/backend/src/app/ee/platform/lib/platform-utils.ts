@@ -3,12 +3,14 @@ import { FastifyRequest } from 'fastify'
 import { customDomainService } from '../../custom-domains/custom-domain.service'
 import { getEdition } from '../../../helper/secret-helper'
 import { platformService } from '../platform.service'
+import { system } from '../../../helper/system/system'
+import { SystemProp } from '../../../helper/system/system-prop'
 
 const edition = getEdition()
 
 export const resolvePlatformIdForRequest = async (request: FastifyRequest): Promise<string | null> => {
     if (edition === ApEdition.COMMUNITY) {
-        return getDefaultPlatformId()
+        return null
     }
 
     return await extractPlatformIdFromAuthenticatedPrincipal(request.principal)
@@ -29,5 +31,5 @@ async function getDefaultPlatformId(): Promise<null | string> {
         const platform = await platformService.getOldestPlatform()
         return platform?.id ?? null
     }
-    return null
+    return system.getOrThrow(SystemProp.CLOUD_PLATFORM_ID)
 }
