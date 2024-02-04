@@ -92,11 +92,11 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
     );
   }
   /** type of value is string only when you swtich to customized inputs that happens because of change detection running before the form control is removed from template*/
-  writeValue(pvalue: Array<string | Record<string, unknown>>): void {
-    const values = pvalue;
+  writeValue(pvalue: Array<string | Record<string, unknown>> | null): void {
+    const values = pvalue ?? [];
 
     if (typeof pvalue !== 'string') {
-      if (!values || values.length === 0) {
+      if (values.length === 0) {
         if (this.property.properties) {
           values.push({});
         } else {

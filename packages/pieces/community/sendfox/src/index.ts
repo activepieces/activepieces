@@ -1,7 +1,9 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
+import { createContact } from './lib/actions/create-contact';
 import { createList } from './lib/actions/create-list';
 import { unsubscribe } from './lib/actions/unsubscribe-contact';
-import { createContact } from './lib/actions/create-contact';
 export const sendfoxAuth = PieceAuth.SecretText({
   displayName: 'API Key',
   description:
@@ -14,7 +16,19 @@ export const sendfox = createPiece({
   auth: sendfoxAuth,
   minimumSupportedRelease: '0.7.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/sendfox.png',
+  categories: [PieceCategory.MARKETING],
   authors: ['Salem-Alaa'],
-  actions: [createList, unsubscribe, createContact],
+  actions: [
+    createList,
+    unsubscribe,
+    createContact,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.sendfox.com',
+      auth: sendfoxAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
+  ],
   triggers: [],
 });

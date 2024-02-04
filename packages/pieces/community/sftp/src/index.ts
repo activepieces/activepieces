@@ -3,10 +3,11 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { createFile } from './lib/actions/create-file';
-import { newOrModifiedFile } from './lib/triggers/new-modified-file';
+import { PieceCategory } from '@activepieces/shared';
 import Client from 'ssh2-sftp-client';
+import { createFile } from './lib/actions/create-file';
 import { readFileContent } from './lib/actions/read-file';
+import { newOrModifiedFile } from './lib/triggers/new-modified-file';
 export const sftpAuth = PieceAuth.CustomAuth({
   description: 'Enter the authentication details',
   props: {
@@ -64,6 +65,7 @@ export const sftp = createPiece({
   displayName: 'SFTP',
   minimumSupportedRelease: '0.7.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/sftp.svg',
+  categories: [PieceCategory.CORE, PieceCategory.DEVELOPER_TOOLS],
   authors: ['Abdallah-Alwarawreh', 'abuaboud'],
   auth: sftpAuth,
   actions: [createFile, readFileContent],

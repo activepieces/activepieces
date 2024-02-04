@@ -1,11 +1,13 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { askOpenRouterAction } from './lib/actions/ask-open-router';
 import {
   AuthenticationType,
+  createCustomApiCallAction,
+  httpClient,
   HttpMethod,
   HttpRequest,
-  httpClient,
 } from '@activepieces/pieces-common';
+import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
+import { askOpenRouterAction } from './lib/actions/ask-open-router';
 
 const markdownDescription = `
 Follow these instructions to get your OpenAI API Key:
@@ -49,7 +51,17 @@ export const openRouter = createPiece({
   auth: openRouterAuth,
   minimumSupportedRelease: '0.8.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/open-router.png',
+  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ['Salem-Alaa'],
-  actions: [askOpenRouterAction],
+  actions: [
+    askOpenRouterAction,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://openrouter.ai/api/v1',
+      auth: openRouterAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
+  ],
   triggers: [],
 });

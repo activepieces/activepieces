@@ -1,12 +1,18 @@
-import { PieceAuth, PieceAuthProperty, createPiece } from '@activepieces/pieces-framework';
+import {
+  AuthenticationType,
+  HttpMethod,
+  createCustomApiCallAction,
+  httpClient,
+} from '@activepieces/pieces-common';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
+import { askAssistant } from './lib/actions/ask-assistant';
+import { generateImage } from './lib/actions/generate-image';
 import { askOpenAI } from './lib/actions/send-prompt';
+import { textToSpeech } from './lib/actions/text-to-speech';
 import { transcribeAction } from './lib/actions/transcriptions';
 import { translateAction } from './lib/actions/translation';
-import { AuthenticationType, HttpMethod, createCustomApiCallAction, httpClient } from '@activepieces/pieces-common';
-import { generateImage } from './lib/actions/generate-image';
 import { visionPrompt } from './lib/actions/vision-prompt';
-import { textToSpeech } from './lib/actions/text-to-speech';
-import { askAssistant } from './lib/actions/ask-assistant';
 
 const markdownDescription = `
 Follow these instructions to get your OpenAI API Key:
@@ -50,6 +56,7 @@ export const openai = createPiece({
   description: 'Use the many tools ChatGPT has to offer.',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
+  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   auth: openaiAuth,
   actions: [
     askOpenAI,
@@ -62,14 +69,14 @@ export const openai = createPiece({
     createCustomApiCallAction({
       auth: openaiAuth,
       baseUrl: () => {
-        return 'https://api.openai.com/v1'
+        return 'https://api.openai.com/v1';
       },
       authMapping: (auth) => {
         return {
-          'Authorization': `Bearer ${auth}`
-        }
-      }
-    })
+          Authorization: `Bearer ${auth}`,
+        };
+      },
+    }),
   ],
   authors: [
     'aboudzein',

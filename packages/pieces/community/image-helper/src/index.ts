@@ -1,4 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { imageToBase64 } from './lib/actions/image-to-base64.action';
 
 export const imageHelper = createPiece({
@@ -7,6 +8,7 @@ export const imageHelper = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/image-helper.png',
   authors: ['PFernandez98'],
+  categories: [PieceCategory.CORE],
   actions: [imageToBase64],
   triggers: [],
 });

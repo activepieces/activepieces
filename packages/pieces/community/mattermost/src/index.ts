@@ -1,8 +1,10 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   PieceAuth,
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { sendMessage } from './lib/actions/send-message';
 
 const markdownDescription = `
@@ -31,11 +33,21 @@ export const mattermostAuth = PieceAuth.CustomAuth({
 
 export const mattermost = createPiece({
   displayName: 'Mattermost',
-
   logoUrl: 'https://cdn.activepieces.com/pieces/mattermost.png',
   minimumSupportedRelease: '0.5.0',
+  categories: [PieceCategory.COMMUNICATION],
   authors: ['abuaboud'],
   auth: mattermostAuth,
-  actions: [sendMessage],
+  actions: [
+    sendMessage,
+    createCustomApiCallAction({
+      baseUrl: (auth) =>
+        (auth as { workspace_url: string }).workspace_url + '/api/v4',
+      auth: mattermostAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as { token: string }).token}`,
+      }),
+    }),
+  ],
   triggers: [],
 });

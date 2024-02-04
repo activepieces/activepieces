@@ -1,6 +1,7 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { waitForApprovalLink } from './lib/actions/wait-for-approval';
+import { PieceCategory } from '@activepieces/shared';
 import { createApprovalLink } from './lib/actions/create-approval-link';
+import { waitForApprovalLink } from './lib/actions/wait-for-approval';
 
 export const approval = createPiece({
   displayName: 'Approval',
@@ -8,6 +9,7 @@ export const approval = createPiece({
   minimumSupportedRelease: '0.5.4',
   logoUrl: 'https://cdn.activepieces.com/pieces/approval.svg',
   authors: ['khaledmashaly'],
+  categories: [PieceCategory.CORE],
   actions: [waitForApprovalLink, createApprovalLink],
   triggers: [],
 });
