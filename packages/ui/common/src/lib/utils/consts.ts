@@ -55,3 +55,11 @@ export const downloadFlow = (flow: FlowTemplate) => {
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 };
+
+export const jsonEditorOptionsMonaco = {
+  minimap: { enabled: false },
+  theme: 'apTheme',
+  language: 'json',
+  readOnly: true,
+  automaticLayout: true,
+};
