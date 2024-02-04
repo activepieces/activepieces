@@ -49,6 +49,7 @@ export class FlowItemComponent implements OnInit {
           if (this._flowItemData == undefined) {
             return false;
           }
+          console.log(stepName);
           return this._flowItemData.content?.name == stepName;
         })
       );

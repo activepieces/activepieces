@@ -3,7 +3,6 @@ import { TestStepService } from '@activepieces/ui/common';
 import {
   Observable,
   catchError,
-  distinctUntilChanged,
   forkJoin,
   map,
   of,
@@ -25,7 +24,6 @@ import {
   PieceAction,
 } from '@activepieces/shared';
 import { TestStepCoreComponent } from '../test-steps-core.component';
-import deepEqual from 'deep-equal';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
@@ -59,20 +57,11 @@ export class TestActionComponent extends TestStepCoreComponent {
     this.currentStepValidity$ = this.store.select(
       BuilderSelectors.selectStepValidity
     );
-    this.lastTestResult$ = this.store
-      .select(BuilderSelectors.selectStepTestSampleDataStringified)
-      .pipe(
-        distinctUntilChanged((prev, current) => {
-          return deepEqual(prev, current);
-        })
-      );
-    this.lastTestDate$ = this.store
-      .select(BuilderSelectors.selectLastTestDate)
-      .pipe(
-        distinctUntilChanged((prev, current) => {
-          return prev === current;
-        })
-      );
+    this.lastTestResult$ = this.store.select(
+      BuilderSelectors.selectStepTestSampleDataStringified
+    );
+
+    this.lastTestDate$ = this.store.select(BuilderSelectors.selectLastTestDate);
   }
   testStep() {
     if (!this.loading) {

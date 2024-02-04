@@ -119,8 +119,15 @@ export const selectCurrentFlowValidity = createSelector(
   }
 );
 
+export const selectCurrentStepName = createSelector(
+  selectCanvasState,
+  (canvasState) => {
+    return canvasState.selectedStepName;
+  }
+);
+
 export const selectCurrentStep = createSelector(selectCanvasState, (state) => {
-  return state.focusedStep;
+  return flowHelper.getStep(state.viewedVersion, state.selectedStepName);
 });
 
 const selectCurrentStepSettings = createSelector(
@@ -182,15 +189,7 @@ const selectLastTestDate = createSelector(selectCurrentStep, (step) => {
   }
   return undefined;
 });
-export const selectCurrentStepName = createSelector(
-  selectCurrentStep,
-  (selectedStep) => {
-    if (selectedStep) {
-      return selectedStep.name;
-    }
-    return '';
-  }
-);
+
 export const selectCurrentStepDisplayName = createSelector(
   selectCurrentStep,
   (step) => {
