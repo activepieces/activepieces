@@ -74,7 +74,7 @@ function getFlowExecutionState(input: ExecuteFlowOperation): FlowExecutorContext
         case ExecutionType.RESUME: {
             let flowContext = FlowExecutorContext.empty().increaseTask(input.tasks)
             for (const [step, output] of Object.entries(input.executionState.steps)) {
-                if (output.status === StepOutputStatus.SUCCEEDED) {
+                if ([StepOutputStatus.SUCCEEDED, StepOutputStatus.PAUSED].includes(output.status)) {
                     flowContext = flowContext.upsertStep(step, output)
                 }
             }
