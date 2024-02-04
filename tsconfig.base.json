@@ -60,6 +60,9 @@
       "@activepieces/piece-binance": [
         "packages/pieces/community/binance/src/index.ts"
       ],
+      "@activepieces/piece-bitly": [
+        "packages/pieces/community/bitly/src/index.ts"
+      ],
       "@activepieces/piece-bonjoro": [
         "packages/pieces/community/bonjoro/src/index.ts"
       ],
