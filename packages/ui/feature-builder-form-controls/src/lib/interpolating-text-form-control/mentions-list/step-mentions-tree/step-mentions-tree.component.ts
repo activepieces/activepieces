@@ -114,9 +114,8 @@ export class StepMentionsTreeComponent implements OnInit {
     ].join(' ');
     const mentionListItem = {
       value: `{{${node.propertyPath}}}`,
-      label: label,
+      label,
     };
-
     this.mentionClicked.emit(mentionListItem);
   }
 }

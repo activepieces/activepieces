@@ -88,7 +88,7 @@ export class BuilderAutocompleteMentionsDropdownComponent {
         if (this.focusChecker) {
           clearInterval(this.focusChecker);
         }
-        // this.close();
+        this.close();
       }
     }, 200);
   }
