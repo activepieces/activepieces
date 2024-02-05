@@ -3,7 +3,7 @@ FROM node:18.19-bullseye-slim AS base
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && \
-    apt-get install -y --no-install-recommends python3 g++ build-essential && \
+    apt-get install -y --no-install-recommends python3 g++ build-essential git && \
     yarn config set python /usr/bin/python3 && \
     npm install -g node-gyp
 

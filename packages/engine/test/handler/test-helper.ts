@@ -1,4 +1,4 @@
-import { Action, ActionErrorHandlingOptions, ActionType, BranchAction, BranchCondition, CodeAction, ExecutionType, LoopOnItemsAction, PackageType, PieceAction, PieceType } from '@activepieces/shared'
+import { Action, ActionErrorHandlingOptions, ActionType, BranchAction, BranchCondition, CodeAction, LoopOnItemsAction, PackageType, PieceAction, PieceType } from '@activepieces/shared'
 import { VariableService } from '../../src/lib/services/variable-service'
 import { EngineConstants } from '../../src/lib/handler/context/engine-constants'
 
@@ -12,7 +12,6 @@ export const generateMockEngineConstants = (params?: Partial<EngineConstants>): 
             retryExponential: 1,
             retryInterval: 1,
         },
-        params?.executionType ?? ExecutionType.BEGIN,
         params?.workerToken ?? 'workerToken',
         params?.projectId ?? 'projectId',
         params?.variableService ?? new VariableService({

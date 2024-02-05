@@ -1,4 +1,4 @@
-import { ActionType, ExecutionOutput, ExecutionOutputStatus, PauseMetadata, StepOutput, StepOutputStatus, StopResponse, isNil } from '@activepieces/shared'
+import { ActionType, ExecutionOutput, ExecutionOutputStatus, LoopStepOutput, PauseMetadata, StepOutput, StepOutputStatus, StopResponse, assertEqual, isNil } from '@activepieces/shared'
 import { StepExecutionPath } from './step-execution-path'
 import { loggingUtils } from '../../helper/logging-utils'
 
@@ -43,6 +43,16 @@ export class FlowExecutorContext {
         return new FlowExecutorContext()
     }
 
+    public getLoopStepOutput({ stepName }: { stepName: string }): LoopStepOutput | undefined {
+        const stateAtPath = getStateAtPath({ currentPath: this.currentPath, steps: this.steps })
+        const stepOutput = stateAtPath[stepName]
+        if (isNil(stepOutput)) {
+            return undefined
+        }
+        assertEqual(stepOutput.type, ActionType.LOOP_ON_ITEMS, 'stepout', 'LoopStepOutput')
+        return stepOutput as LoopStepOutput
+    }
+    
     public isCompleted({ stepName }: { stepName: string }): boolean {
         const stateAtPath = getStateAtPath({ currentPath: this.currentPath, steps: this.steps })
         const stepOutput = stateAtPath[stepName]
@@ -50,6 +60,15 @@ export class FlowExecutorContext {
             return false
         }
         return stepOutput.status !== StepOutputStatus.PAUSED
+    }
+
+    public isPaused({ stepName }: { stepName: string }): boolean {
+        const stateAtPath = getStateAtPath({ currentPath: this.currentPath, steps: this.steps })
+        const stepOutput = stateAtPath[stepName]
+        if (isNil(stepOutput)) {
+            return false
+        }
+        return stepOutput.status === StepOutputStatus.PAUSED
     }
 
     public setDuration(duration: number): FlowExecutorContext {
