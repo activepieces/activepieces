@@ -3,8 +3,8 @@ import { readdir, stat } from 'node:fs/promises'
 import { resolve, join } from 'node:path'
 import { cwd } from 'node:process'
 
-export async function findAllPieces(): Promise<string[]> {
-    const piecesPath = resolve(cwd(), 'packages', 'pieces')
+export async function findAllPieces(path?: string): Promise<string[]> {
+    const piecesPath = path ?? resolve(cwd(), 'packages', 'pieces')
     const paths = await traverseFolder(piecesPath)
     return paths
 }

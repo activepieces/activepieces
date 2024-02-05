@@ -1,9 +1,12 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { telegramSendMessageAction } from './lib/action/send-text-message.action';
-import { telegramNewMessage } from './lib/trigger/new-message';
-import { telegramSendMediaAction } from './lib/action/send-media.action';
-import { telegramGetChatMemberAction } from './lib/action/get-chat-member';
+import { PieceCategory } from '@activepieces/shared';
 import { telegramCreateInviteLinkAction } from './lib/action/create-invite-link';
+import { telegramGetChatMemberAction } from './lib/action/get-chat-member';
+import { telegramSendMediaAction } from './lib/action/send-media.action';
+import { telegramSendMessageAction } from './lib/action/send-text-message.action';
+import { telegramCommons } from './lib/common';
+import { telegramNewMessage } from './lib/trigger/new-message';
 
 const markdownDescription = `
 **Authentication**:
@@ -26,12 +29,17 @@ export const telegramBot = createPiece({
   displayName: 'Telegram Bot',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/telegram_bot.png',
+  categories: [PieceCategory.COMMUNICATION],
   auth: telegramBotAuth,
   actions: [
     telegramSendMessageAction,
     telegramSendMediaAction,
     telegramGetChatMemberAction,
     telegramCreateInviteLinkAction,
+    createCustomApiCallAction({
+      baseUrl: (auth) => telegramCommons.getApiUrl(auth as string, ''),
+      auth: telegramBotAuth,
+    }),
   ],
   authors: ['abuaboud', 'Abdallah-Alwarawreh'],
   triggers: [telegramNewMessage],

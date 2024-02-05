@@ -6,7 +6,7 @@
 
 
   <ng-container *ngIf="rightSidebarType === sidebarType.EDIT_STEP">
-    <div class="ap-relative ap-h-full" #editStepSection [class.top-resizer-section]="
+    <div class="ap-relative ap-h-full ap-overflow-y-auto thin-scrollbars" #editStepSection [class.top-resizer-section]="
       (viewMode$ | async) === ViewModeEnum.BUILDING" [class.ap-transition-all]="animateSectionsHeightChange">
       <app-edit-step-sidebar>
       </app-edit-step-sidebar>
@@ -38,7 +38,7 @@
             (resizerDragStarted)="resizerDragStarted()" (resizerDragStopped)="isResizerGrabbed=false">
           </ap-horizontal-sidebar-separator>
         </div>
-        <div class="bottom-resizer-section" #selectedStepResultContainer>
+        <div class="bottom-resizer-section ap-overflow-y-auto thin-scrollbars" #selectedStepResultContainer>
           <app-test-action
             *ngIf="currentStep.type === ActionType.PIECE || currentStep.type === ActionType.BRANCH || currentStep.type === ActionType.LOOP_ON_ITEMS  || currentStep.type === ActionType.CODE"
             [step]="currentStep"></app-test-action>

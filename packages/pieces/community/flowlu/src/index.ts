@@ -3,6 +3,7 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { createContactAction } from './lib/actions/accounts/create-contact';
 import { createOrganizationAction } from './lib/actions/accounts/create-organization';
 import { deleteContactAction } from './lib/actions/accounts/delete-contact';
@@ -41,6 +42,7 @@ export const flowlu = createPiece({
   auth: flowluAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/flowlu.png',
+  categories: [PieceCategory.SALES_AND_CRM],
   authors: ['kishanprmr'],
   actions: [
     createContactAction,

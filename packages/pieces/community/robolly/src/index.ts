@@ -1,4 +1,6 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { generateImage } from './lib/actions/generate-image.action';
 
 const markdownDescription = `
@@ -24,7 +26,17 @@ export const robolly = createPiece({
   auth: robollyAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/robolly.png',
+  categories: [PieceCategory.MARKETING],
   authors: ['PFernandez98'],
-  actions: [generateImage],
+  actions: [
+    generateImage,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.robolly.com',
+      auth: robollyAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
+  ],
   triggers: [],
 });

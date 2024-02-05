@@ -1,9 +1,11 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   createAction,
   createPiece,
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 
 const flowiseAuth = PieceAuth.CustomAuth({
   description: 'Enter your Flowise URL and API Key',
@@ -79,7 +81,19 @@ export const flowise = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/flowise.png',
   auth: flowiseAuth,
   minimumSupportedRelease: '0.9.0',
+  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: [],
-  actions: [flowisePredict],
+  actions: [
+    flowisePredict,
+    createCustomApiCallAction({
+      baseUrl: (auth) => (auth as { base_url: string }).base_url,
+      auth: flowiseAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${
+          (auth as { access_token: string }).access_token
+        }`,
+      }),
+    }),
+  ],
   triggers: [],
 });

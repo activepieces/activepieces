@@ -1,4 +1,6 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { pushMessage } from './lib/actions/push-message';
 import { newMessage } from './lib/trigger/new-message';
 
@@ -12,7 +14,17 @@ export const line = createPiece({
   auth: lineAuth2,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/line.png',
+  categories: [PieceCategory.COMMUNICATION],
   authors: ['abuaboud'],
-  actions: [pushMessage],
+  actions: [
+    pushMessage,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.line.me/v2',
+      auth: lineAuth2,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
+  ],
   triggers: [newMessage],
 });

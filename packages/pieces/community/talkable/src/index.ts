@@ -1,20 +1,22 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   createPiece,
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import {
-  findPerson,
-  findCoupon,
-  updatePerson,
   anonymizePerson,
-  unsubscribePerson,
-  createPurchase,
-  createPurchasesBatch,
   createEvent,
   createEventsBatch,
-  refund,
+  createPurchase,
+  createPurchasesBatch,
+  findCoupon,
+  findPerson,
   getLoyaltyRedeemActions,
+  refund,
+  unsubscribePerson,
+  updatePerson,
   updateReferralStatus,
 } from './lib/actions';
 
@@ -49,6 +51,7 @@ export const talkable = createPiece({
   logoUrl:
     'https://www.talkable.com/wp-content/uploads/2021/12/talkable-favicon.svg',
   authors: ['vitalini'],
+  categories: [PieceCategory.MARKETING],
   actions: [
     findPerson,
     findCoupon,
@@ -62,6 +65,13 @@ export const talkable = createPiece({
     refund,
     getLoyaltyRedeemActions,
     updateReferralStatus,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://www.talkable.com/api/v2',
+      auth: talkableAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as { api_key: string }).api_key}`,
+      }),
+    }),
   ],
   triggers: [],
 });

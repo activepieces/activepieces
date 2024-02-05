@@ -3,6 +3,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import actions from './lib/actions';
 
 const markdownDescription = `
@@ -38,6 +39,7 @@ export const pastebin = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/pastebin.png',
   authors: ['JanHolger'],
+  categories: [],
   auth: pastebinAuth,
   actions,
   triggers: [],

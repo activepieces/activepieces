@@ -40,7 +40,6 @@ export class EngineConstants {
         public readonly flowRunId: string,
         public readonly serverUrl: string,
         public readonly retryConstants: RetryConstants,
-        public readonly executionType: ExecutionType,
         public readonly workerToken: string,
         public readonly projectId: ProjectId,
         public readonly variableService: VariableService,
@@ -55,7 +54,6 @@ export class EngineConstants {
             input.flowRunId,
             input.serverUrl,
             DEFAULT_RETRY_CONSTANTS,
-            input.executionType,
             input.workerToken,
             input.projectId,
             new VariableService({
@@ -74,7 +72,6 @@ export class EngineConstants {
             'test-run',
             input.serverUrl,
             DEFAULT_RETRY_CONSTANTS,
-            ExecutionType.BEGIN,
             input.workerToken,
             input.projectId,
             new VariableService({
@@ -92,7 +89,6 @@ export class EngineConstants {
             'execute-property',
             input.serverUrl,
             DEFAULT_RETRY_CONSTANTS,
-            ExecutionType.BEGIN,
             input.workerToken,
             input.projectId,
             new VariableService({
@@ -110,7 +106,6 @@ export class EngineConstants {
             'execute-trigger',
             input.serverUrl,
             DEFAULT_RETRY_CONSTANTS,
-            ExecutionType.BEGIN,
             input.workerToken,
             input.projectId,
             new VariableService({

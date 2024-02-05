@@ -1,22 +1,27 @@
-import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import {
+  OAuth2PropertyValue,
+  PieceAuth,
+  createPiece,
+} from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
+import { createClickupTaskComment } from './lib/actions/comments/create-task-comment';
 import { getClickupTaskComments } from './lib/actions/comments/get-task-comments';
+import { getClickupAccessibleCustomFields } from './lib/actions/custom-fields/get-accessible-custom-fields';
+import { setClickupCustomFieldValue } from './lib/actions/custom-fields/set-custom-fields-value';
 import { createClickupFolderlessList } from './lib/actions/lists/create-folderless-list';
-import { createClickupTask } from './lib/actions/tasks/create-task';
 import { getClickupList } from './lib/actions/lists/get-list';
 import { getClickupSpace } from './lib/actions/spaces/get-space';
 import { getClickupSpaces } from './lib/actions/spaces/get-spaces';
-import { createClickupTaskComment } from './lib/actions/comments/create-task-comment';
 import { createClickupSubtask } from './lib/actions/tasks/create-subtask';
-import { clickupTriggers as triggers } from './lib/triggers';
+import { createClickupTask } from './lib/actions/tasks/create-task';
 import { createClickupTaskFromTemplate } from './lib/actions/tasks/create-task-from-template';
-import { updateClickupTask } from './lib/actions/tasks/update-task';
-import { getClickupTask } from './lib/actions/tasks/get-task';
 import { deleteClickupTask } from './lib/actions/tasks/delete-task';
-import { getClickupAccessibleCustomFields } from './lib/actions/custom-fields/get-accessible-custom-fields';
-import { setClickupCustomFieldValue } from './lib/actions/custom-fields/set-custom-fields-value';
 import { filterClickupWorkspaceTasks } from './lib/actions/tasks/filter-workspace-tasks';
 import { filterClickupWorkspaceTimeEntries } from './lib/actions/tasks/filter-workspace-time-entries';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { getClickupTask } from './lib/actions/tasks/get-task';
+import { updateClickupTask } from './lib/actions/tasks/update-task';
+import { clickupTriggers as triggers } from './lib/triggers';
 
 export const clickupAuth = PieceAuth.OAuth2({
   description: '',
@@ -30,6 +35,7 @@ export const clickup = createPiece({
   displayName: 'ClickUp',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/clickup.png',
+  categories: [PieceCategory.PRODUCTIVITY],
   auth: clickupAuth,
   actions: [
     createClickupTask,
@@ -51,14 +57,14 @@ export const clickup = createPiece({
     createCustomApiCallAction({
       auth: clickupAuth,
       baseUrl: () => {
-        return 'https://api.clickup.com/api/v2/'
+        return 'https://api.clickup.com/api/v2/';
       },
       authMapping: (auth) => {
         return {
-          'Authorization': `Bearer ${(auth as OAuth2PropertyValue).access_token}`
-        }
-      }
-    })
+          Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        };
+      },
+    }),
   ],
   authors: ['abuaboud', 'ShayPunter', 'kanarelo'],
   triggers,

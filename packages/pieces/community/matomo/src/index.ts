@@ -1,14 +1,26 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { matomoAuth } from './lib/auth';
+import { PieceCategory } from '@activepieces/shared';
 import { addAnnotationAction } from './lib/actions/add-annotation';
+import { matomoAuth } from './lib/auth';
 
 export const matomo = createPiece({
   displayName: 'Matomo',
   auth: matomoAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/matomo.png',
+  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   authors: ['joeworkman'],
-  actions: [addAnnotationAction],
+  actions: [
+    addAnnotationAction,
+    createCustomApiCallAction({
+      baseUrl: (auth) => (auth as { domain: string }).domain,
+      auth: matomoAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as { tokenAuth: string }).tokenAuth}`,
+      }),
+    }),
+  ],
   triggers: [],
 });
 

@@ -57,7 +57,7 @@ export class AppComponent implements OnInit {
   loggedInUser$: Observable<User | undefined>;
   showUpgradeNotification$: Observable<boolean>;
   hideUpgradeNotification = false;
-  openCommandBar$: Observable<void>;
+  logoutOldTokens$: Observable<void>;
   loading$: Subject<boolean> = new Subject();
   importTemplate$: Observable<void>;
   loadingTheme$: BehaviorSubject<boolean> = new BehaviorSubject(true);

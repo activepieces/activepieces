@@ -3,7 +3,7 @@ import { WebhookRenewConfiguration, TriggerStrategy, WebhookHandshakeConfigurati
 import { ErrorHandlingOptionsParam } from "./action/action";
 import { PieceAuthProperty } from "./property/authentication";
 import { Type } from "@sinclair/typebox";
-import { ProjectId, TriggerTestStrategy } from "@activepieces/shared";
+import { PieceCategory, ProjectId, TriggerTestStrategy } from "@activepieces/shared";
 
 export const PieceBase = Type.Object({
   id: Type.Optional(Type.String()),
@@ -16,6 +16,7 @@ export const PieceBase = Type.Object({
   directoryPath: Type.Optional(Type.String()),
   auth: Type.Optional(PieceAuthProperty),
   version: Type.String(),
+  categories: Type.Optional(Type.Array(Type.Enum(PieceCategory))),
   minimumSupportedRelease: Type.Optional(Type.String()),
   maximumSupportedRelease: Type.Optional(Type.String()),
 })
@@ -31,6 +32,7 @@ export type PieceBase = {
   directoryPath?: string;
   auth?: PieceAuthProperty;
   version: string;
+  categories?: PieceCategory[];
   minimumSupportedRelease?: string;
   maximumSupportedRelease?: string;
 }

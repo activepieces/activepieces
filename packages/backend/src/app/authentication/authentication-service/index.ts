@@ -211,7 +211,7 @@ const sendTelemetry = async ({ user, project }: SendTelemetryParams): Promise<vo
 }
 
 async function saveNewsLetterSubscriber(user: User): Promise<void> {
-    const isPlatformUserOrNotSubscribed = !isNil(user.platformId) || !user.newsLetter
+    const isPlatformUserOrNotSubscribed = (!isNil(user.platformId) && !flagService.isCloudPlatform(user.platformId)) || !user.newsLetter
     const environment = system.get(SystemProp.ENVIRONMENT)
     if (isPlatformUserOrNotSubscribed || environment !== ApEnvironment.PRODUCTION) {
         return

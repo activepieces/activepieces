@@ -3,6 +3,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { sendNotification } from './lib/actions/send-notification';
 
 export const gotifyAuth = PieceAuth.CustomAuth({
@@ -34,6 +35,7 @@ export const gotify = createPiece({
 
   logoUrl: 'https://cdn.activepieces.com/pieces/gotify.png',
   minimumSupportedRelease: '0.5.0',
+  categories: [PieceCategory.DEVELOPER_TOOLS],
   authors: ['MyWay'],
   auth: gotifyAuth,
   actions: [sendNotification],

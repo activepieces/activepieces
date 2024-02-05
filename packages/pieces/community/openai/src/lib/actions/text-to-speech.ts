@@ -111,7 +111,18 @@ export const textToSpeech = createAction({
   },
   async run({ auth, propsValue, files }) {
     const openai = new OpenAI({
-      apiKey: auth,
+      apiKey: auth.apiKey,
+      baseURL: auth.baseUrl,
+      defaultHeaders: auth.apiVersion
+        ? {
+            'api-key': auth.apiKey,
+          }
+        : undefined,
+      defaultQuery: auth.apiVersion
+        ? {
+            'api-version': auth.apiVersion,
+          }
+        : undefined,
     });
     const { voice, format, model, text, speed } = propsValue;
 
