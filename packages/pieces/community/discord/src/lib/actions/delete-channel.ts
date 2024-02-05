@@ -1,9 +1,9 @@
-import { createAction } from '@activepieces/pieces-framework';
 import {
-  HttpRequest,
   HttpMethod,
+  HttpRequest,
   httpClient,
 } from '@activepieces/pieces-common';
+import { createAction } from '@activepieces/pieces-framework';
 import { discordAuth } from '../../index';
 import { discordCommon } from '../common';
 
@@ -28,8 +28,6 @@ export const discordDeleteChannel = createAction({
 
     const res = await httpClient.sendRequest<never>(request);
 
-    return {
-      success: res.status === 200,
-    };
+    return res.body;
   },
 });
