@@ -10,16 +10,23 @@ export const rotateImage = createAction({
       displayName: 'Image',
       required: true,
     }),
-    degree: Property.Number({
+    degree: Property.StaticDropdown({
       displayName: 'Degree',
       description: 'Specifies the degree of rotation for the image. For clockwise rotation make the degree positive, otherwise make it negative.',
       required: true,
+      options: {
+        options: [
+          { value: 90, label: '90°' },
+          { value: 180, label: '180°' },
+          { value: 270, label: '270°' },
+        ]
+      }
     }),
   },
   async run(context) {
     const rotatedImageBuffer = await sharp(context.propsValue.image.data)
-    .rotate(context.propsValue.degree)
-    .toBuffer();
+      .rotate(context.propsValue.degree)
+      .toBuffer();
 
     const format = (await sharp(context.propsValue.image.data).metadata()).format;
 
@@ -27,7 +34,7 @@ export const rotateImage = createAction({
       fileName: 'image.' + format,
       data: rotatedImageBuffer
     });
-  
+
     return imageReference;
   },
 });
