@@ -7,7 +7,7 @@ import { captureException } from '../../helper/logger'
 import { PieceMetadataService } from './piece-metadata-service'
 import { AllPiecesStats } from './piece-stats-service'
 import importFresh from 'import-fresh'
-import { PieceMetadataModel } from '../piece-metadata-entity'
+import { PieceMetadataModel, PieceMetadataModelSummary } from '../piece-metadata-entity'
 import { pieceMetadataServiceHooks as hooks } from './hooks'
 const loadPiecesMetadata = async (): Promise<PieceMetadataModel[]> => {
     const pieces = await findAllPieces()
@@ -74,13 +74,14 @@ async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | 
 }
 export const FilePieceMetadataService = (): PieceMetadataService => {
     return {
-        async list({  searchQuery }): Promise<PieceMetadataModel[]> {
+        async list({  searchQuery, onlyPieces }): Promise<PieceMetadataModelSummary[]> {
             const piecesMetadata = await loadPiecesMetadata()
 
             const pieces = await hooks.get().filterPieces({
                 includeHidden: false,
                 searchQuery,
                 pieces: piecesMetadata,
+                onlyPieces,
                 
             })
             return pieces

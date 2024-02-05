@@ -17,7 +17,11 @@ export class FlowItemDetails {
       pieceName: string;
       pieceVersion: string;
     },
-    public actionsOrTriggers?: {
+    public actions?: {
+      displayName: string;
+      name: string;
+    }[],
+    public triggers?: {
       displayName: string;
       name: string;
     }[]

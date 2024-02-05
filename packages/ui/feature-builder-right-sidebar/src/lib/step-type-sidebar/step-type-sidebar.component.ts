@@ -50,6 +50,7 @@ import {
   FlowItemDetails,
   getDefaultDisplayNameForPiece,
   getDisplayNameForTrigger,
+  PieceMetadataModelSummary,
   TelemetryService,
 } from '@activepieces/ui/common';
 import { Actions, ofType } from '@ngrx/effects';
@@ -433,79 +434,102 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
         debounceTime(300),
         map((search) => (search ? search : '')),
         switchMap((searchQuery) => {
-          const serverRequestToSearchForPiece$ =
-            this.pieceMetadataService.getPiecesMetadata({
-              includeHidden: false,
-              searchQuery,
-            });
-          return serverRequestToSearchForPiece$.pipe(
-            map((res) => {
-              return {
-                searchQuery,
-                serverResponse: res,
-              };
-            })
-          );
+          return this.createSearchRequest(searchQuery);
         })
       ),
     }).pipe(
       map((res) => {
-        return res.allTabItems
-          .filter(
-            (item) =>
-              item.description
-                .toLowerCase()
-                .includes(res.search.searchQuery.trim().toLowerCase()) ||
-              item.name
-                .toLowerCase()
-                .includes(res.search.searchQuery.trim().toLowerCase()) ||
-              res.search.serverResponse.findIndex(
-                (p) => p.displayName === item.name
-              ) > -1
-          )
-          .map((item) => {
-            const serverResult = res.search.serverResponse.find((it) => {
-              return it.displayName === item.name;
-            });
-
-            if (
-              !serverResult ||
-              !serverResult.actions ||
-              !serverResult.triggers ||
-              res.search.searchQuery.length < 3
-            ) {
-              return {
-                ...item,
-                actionsOrTriggers: [] as ActionOrTriggerName[],
-              };
-            }
-
-            const actions: ActionOrTriggerName[] = Object.keys(
-              serverResult.actions || {}
-            )
-              .map((name) => ({
-                name,
-                displayName: serverResult.actions[name].displayName,
-              }))
-              .slice(0, 3);
-            const triggers: ActionOrTriggerName[] = Object.keys(
-              serverResult.triggers || {}
-            )
-              .map((name) => ({
-                name,
-                displayName: serverResult.triggers[name].displayName,
-              }))
-              .slice(0, 3);
-            return {
-              ...item,
-              actionsOrTriggers: this._showTriggers ? triggers : actions,
-            };
-          });
+        const matches = this.searchForMatchingFlowItemDetails(
+          res.search.searchQuery,
+          res.allTabItems,
+          res.search.serverResponse
+        );
+        const matchesWithTriggersOrActions = this.showActionsOrTriggers(
+          matches,
+          res.search.serverResponse,
+          res.search.searchQuery
+        );
+        //sort by the order of the server response
+        return matchesWithTriggersOrActions.sort((a, b) => {
+          const aIndex = res.search.serverResponse.findIndex(
+            (p) => p.displayName === a.name
+          );
+          const bIndex = res.search.serverResponse.findIndex(
+            (p) => p.displayName === b.name
+          );
+          if (aIndex === -1) {
+            return 1;
+          }
+          if (bIndex === -1) {
+            return 1;
+          }
+          return aIndex - bIndex;
+        });
       }),
 
       tap(() => {
         this.loading$.next(false);
       })
     );
+  }
+
+  private createSearchRequest(searchQuery: string) {
+    const serverRequestToSearchForPiece$ =
+      this.pieceMetadataService.getPiecesMetadata({
+        includeHidden: false,
+        searchQuery,
+      });
+    return serverRequestToSearchForPiece$.pipe(
+      map((res) => {
+        return {
+          searchQuery,
+          serverResponse: res,
+        };
+      })
+    );
+  }
+  /**Need to search for core steps like webhook,loop,branch and code */
+  private searchForMatchingFlowItemDetails(
+    searchQuery: string,
+    allTabItems: FlowItemDetails[],
+    serverResponse: PieceMetadataModelSummary[]
+  ) {
+    return allTabItems.filter(
+      (item) =>
+        item.description
+          .toLowerCase()
+          .includes(searchQuery.trim().toLowerCase()) ||
+        item.name.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
+        serverResponse.findIndex((p) => p.displayName === item.name) > -1
+    );
+  }
+  private showActionsOrTriggers(
+    searchResult: FlowItemDetails[],
+    serverResponse: PieceMetadataModelSummary[],
+    searchQuery: string
+  ) {
+    return searchResult.map((item) => {
+      const serverResult = serverResponse.find((it) => {
+        return it.displayName === item.name;
+      });
+      if (
+        !serverResult ||
+        !serverResult.actions ||
+        !serverResult.triggers ||
+        searchQuery.length < 3
+      ) {
+        return {
+          ...item,
+          actionsOrTriggers: [] as ActionOrTriggerName[],
+        };
+      }
+
+      const actions: ActionOrTriggerName[] = serverResult.actions;
+      const triggers: ActionOrTriggerName[] = serverResult.triggers;
+      return {
+        ...item,
+        actionsOrTriggers: this._showTriggers ? triggers : actions,
+      };
+    });
   }
 }

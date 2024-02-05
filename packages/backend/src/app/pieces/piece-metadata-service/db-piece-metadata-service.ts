@@ -1,6 +1,6 @@
 import { Equal, FindOperator, IsNull, LessThan, LessThanOrEqual, MoreThanOrEqual } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
-import { PieceMetadataEntity, PieceMetadataModel, PieceMetadataSchema } from '../piece-metadata-entity'
+import { PieceMetadataEntity, PieceMetadataModel, PieceMetadataModelSummary, PieceMetadataSchema } from '../piece-metadata-entity'
 import { PieceMetadataService } from './piece-metadata-service'
 import { EXACT_VERSION_PATTERN, PieceType, isNil } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode, apId } from '@activepieces/shared'
@@ -14,7 +14,7 @@ const repo = repoFactory(PieceMetadataEntity)
 
 export const DbPieceMetadataService = (): PieceMetadataService => {
     return {
-        async list({ release, projectId, platformId, includeHidden, searchQuery }): Promise<PieceMetadataModel[]> {
+        async list({ release, projectId, platformId, includeHidden, searchQuery, onlyPieces }): Promise<PieceMetadataModelSummary[]> {
             const order = {
                 name: 'ASC',
                 version: 'DESC',
@@ -52,6 +52,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                 searchQuery,
                 pieces: pieceMetadataEntityList,
                 platformId,
+                onlyPieces,
             })
             return pieces
         },

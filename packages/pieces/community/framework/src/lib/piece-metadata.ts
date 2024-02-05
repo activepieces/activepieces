@@ -2,7 +2,7 @@ import { PiecePropertyMap } from "./property";
 import { WebhookRenewConfiguration, TriggerStrategy, WebhookHandshakeConfiguration } from "./trigger/trigger";
 import { ErrorHandlingOptionsParam } from "./action/action";
 import { PieceAuthProperty } from "./property/authentication";
-import { Type } from "@sinclair/typebox";
+import { Static, Type } from "@sinclair/typebox";
 import { ProjectId } from "@activepieces/shared";
 
 export const PieceBase = Type.Object({
@@ -85,11 +85,14 @@ export type PieceMetadata = PieceBase & {
 export const PieceMetadataSummary = Type.Composite([
   Type.Omit(PieceMetadata, ["actions", "triggers"]),
   Type.Object({
-    actions: Type.Number(),
-    triggers: Type.Number(),
+    actions: Type.Array(Type.Object({
+      name: Type.String(),
+      displayName: Type.String(),
+  })),
+  triggers: Type.Array(Type.Object({
+    name: Type.String(),
+    displayName: Type.String(),
+  })),
   })
 ])
-export type PieceMetadataSummary = Omit<PieceMetadata, "actions" | "triggers"> & {
-  actions: number;
-  triggers: number;
-}
+export type PieceMetadataSummary = Static<typeof PieceMetadataSummary>;

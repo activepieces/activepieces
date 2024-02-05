@@ -3,7 +3,10 @@ import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { forkJoin, map, of, switchMap, take } from 'rxjs';
 import { ActionType, TriggerType } from '@activepieces/shared';
 import { FlowItemDetailsActions } from './flow-items-details.action';
-import { FlowItemDetails, PieceMetadataModel } from '@activepieces/ui/common';
+import {
+  FlowItemDetails,
+  PieceMetadataModelSummary,
+} from '@activepieces/ui/common';
 import {
   PieceMetadataService,
   CORE_PIECES_ACTIONS_NAMES,
@@ -105,7 +108,7 @@ export class FlowItemsDetailsEffects {
   }
 
   createFlowItemDetailsForComponents(forTriggers: boolean) {
-    return (piecesManifest: PieceMetadataModel[]) => {
+    return (piecesManifest: PieceMetadataModelSummary[]) => {
       return piecesManifest
         .map((piece) => {
           if (Object.keys(piece.actions).length > 0 && !forTriggers) {

@@ -9,7 +9,10 @@ import {
   combineLatest,
   of,
 } from 'rxjs';
-import { OAuth2AppsService, PieceMetadataModel } from '@activepieces/ui/common';
+import {
+  OAuth2AppsService,
+  PieceMetadataModelSummary,
+} from '@activepieces/ui/common';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 
 /**
@@ -17,13 +20,13 @@ import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
  * encapsulate all logic for fetching and manipulating the displayed data
  * (including sorting, pagination, and filtering).
  */
-export type ManagedPieceMetadataModelSummary = PieceMetadataModel & {
+export type ManagedPieceMetadataModelSummary = PieceMetadataModelSummary & {
   oauth2AppCredentialsId?: string;
 };
-export class PiecesTableDataSource extends DataSource<PieceMetadataModel> {
+export class PiecesTableDataSource extends DataSource<PieceMetadataModelSummary> {
   data: ManagedPieceMetadataModelSummary[] = [];
   isLoading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
-  pieces$: Observable<PieceMetadataModel[]>;
+  pieces$: Observable<PieceMetadataModelSummary[]>;
   constructor(
     private piecesService: PieceMetadataService,
     private searchControlValueChanged$: Observable<string>,

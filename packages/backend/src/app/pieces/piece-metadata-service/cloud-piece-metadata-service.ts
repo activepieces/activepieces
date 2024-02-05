@@ -1,4 +1,4 @@
-import { PieceMetadataModel, PieceMetadataSchema } from '../piece-metadata-entity'
+import { PieceMetadataModel, PieceMetadataModelSummary, PieceMetadataSchema } from '../piece-metadata-entity'
 import { PieceMetadataService } from './piece-metadata-service'
 import { AllPiecesStats, pieceStatsService } from './piece-stats-service'
 import { StatusCodes } from 'http-status-codes'
@@ -24,8 +24,8 @@ const handleHttpErrors = async (response: Response): Promise<void> => {
 
 export const CloudPieceMetadataService = (): PieceMetadataService => {
     return {
-        async list({ release, searchQuery }): Promise<PieceMetadataModel[]> {
-            const response = await fetch(`${CLOUD_API_URL}?release=${release}` + (searchQuery ? `&searchQuery=${searchQuery}` : ''))
+        async list({ release, searchQuery, onlyPieces }): Promise<PieceMetadataModelSummary[]> {
+            const response = await fetch(`${CLOUD_API_URL}?release=${release}` + (searchQuery ? `&searchQuery=${searchQuery}` : '') + (onlyPieces ? `&onlyPieces=${onlyPieces}` : ''))
 
             await handleHttpErrors(response)
 
