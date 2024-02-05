@@ -2,12 +2,14 @@ import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { GlobalBuilderState } from '../../model/global-builder-state.model';
 
 import {
+  Action,
   AppConnectionWithoutSensitiveData,
   ExecutionOutputStatus,
   FlowRun,
   FlowVersion,
   FlowVersionState,
   PopulatedFlow,
+  Trigger,
   flowHelper,
 } from '@activepieces/shared';
 import { ViewModeEnum } from '../../model/enums/view-mode.enum';
@@ -127,7 +129,11 @@ export const selectCurrentStepName = createSelector(
 );
 
 export const selectCurrentStep = createSelector(selectCanvasState, (state) => {
-  return flowHelper.getStep(state.viewedVersion, state.selectedStepName);
+  const step: Step | undefined = flowHelper.getStep(
+    state.viewedVersion,
+    state.selectedStepName
+  );
+  return step;
 });
 
 const selectCurrentStepSettings = createSelector(
@@ -192,7 +198,7 @@ const selectLastTestDate = createSelector(selectCurrentStep, (step) => {
 
 export const selectCurrentStepDisplayName = createSelector(
   selectCurrentStep,
-  (step) => {
+  (step: { displayName: string } | undefined) => {
     return step?.displayName || '';
   }
 );
