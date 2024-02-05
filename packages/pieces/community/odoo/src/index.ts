@@ -59,7 +59,7 @@ export const odoo = createPiece({
   displayName: "Odoo",
   auth: odooAuth,
   minimumSupportedRelease: '0.9.0',
-  logoUrl: "https://peliqan.io/wp-content/uploads/2023/01/odoo_icon.png",
+  logoUrl: "https://cdn.activepieces.com/pieces/odoo.png",
   authors: ['MarioMeyer'],
   actions,
   triggers: [],
