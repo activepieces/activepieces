@@ -2,14 +2,12 @@ import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { GlobalBuilderState } from '../../model/global-builder-state.model';
 
 import {
-  Action,
   AppConnectionWithoutSensitiveData,
   ExecutionOutputStatus,
   FlowRun,
   FlowVersion,
   FlowVersionState,
   PopulatedFlow,
-  Trigger,
   flowHelper,
 } from '@activepieces/shared';
 import { ViewModeEnum } from '../../model/enums/view-mode.enum';
