@@ -176,9 +176,12 @@ export function fromOpsToText(operations: QuillEditorOperationsObject) {
 
 export interface MentionTreeNode {
   propertyPath: string;
+  /**Key for json value */
   key: string;
   children?: MentionTreeNode[];
+  /**value for json key */
   value?: string | unknown;
+  isSlice?: boolean;
 }
 /**Traverses an object to find its child properties and their paths, stepOutput has to be an object on first invocation */
 export function traverseStepOutputAndReturnMentionTree(
@@ -187,6 +190,9 @@ export function traverseStepOutputAndReturnMentionTree(
   lastKey: string
 ): MentionTreeNode {
   if (stepOutput && typeof stepOutput === 'object') {
+    if (Array.isArray(stepOutput)) {
+      return handlingArrayStepOutput(stepOutput, path, lastKey);
+    }
     return {
       propertyPath: path,
       key: lastKey,
@@ -199,10 +205,8 @@ export function traverseStepOutputAndReturnMentionTree(
           .replaceAll(/\r/g, '\\r')
           .replaceAll(/\t/g, '\\t')
           .replaceAll(/’/g, '\\’');
-        const newPath = Array.isArray(stepOutput)
-          ? `${path}[${k}]`
-          : `${path}['${escpaedKey}']`;
-        const newKey = Array.isArray(stepOutput) ? `${lastKey} ${k}` : k;
+        const newPath = `${path}['${escpaedKey}']`;
+        const newKey = k;
         return traverseStepOutputAndReturnMentionTree(
           (stepOutput as Record<string, unknown>)[k],
           newPath,
@@ -216,6 +220,50 @@ export function traverseStepOutputAndReturnMentionTree(
     return { propertyPath: path, key: lastKey, value: value };
   }
 }
+
+const handlingArrayStepOutput = (
+  stepOutput: unknown[],
+  path: string,
+  lastKey: string,
+  startingIndex = 0
+): MentionTreeNode => {
+  if (stepOutput.length <= MAX_ARRAY_LENGTH_BEFORE_SLICING) {
+    return {
+      propertyPath: path,
+      key: lastKey,
+      children: stepOutput.map((v, idx) => {
+        const newPath = `${path}[${idx + startingIndex}]`;
+        const newKey = `${lastKey} ${idx + startingIndex}`;
+        return traverseStepOutputAndReturnMentionTree(v, newPath, newKey);
+      }),
+      value: stepOutput.length === 0 ? 'Empty List' : undefined,
+    };
+  }
+
+  const numberOfSlices = new Array(Math.ceil(stepOutput.length / 100)).fill(0);
+  const children: MentionTreeNode[] = [];
+  numberOfSlices.forEach((_, i) => {
+    const startingIndex = i * 100;
+    const endingIndex = Math.min((i + 1) * 100, stepOutput.length) - 1;
+    const newPath = `${path}`;
+    const newKey = `${lastKey} ${startingIndex}-${endingIndex}`;
+    children.push({
+      ...handlingArrayStepOutput(
+        stepOutput.slice(startingIndex, endingIndex),
+        newPath,
+        lastKey,
+        startingIndex
+      ),
+      key: newKey,
+      isSlice: true,
+    });
+  });
+  return {
+    propertyPath: path,
+    key: lastKey,
+    children: children,
+  };
+};
 
 export interface MentionListItem {
   label: string;
@@ -239,6 +287,8 @@ function formatStepOutput(stepOutput: unknown) {
 
 export const FIRST_LEVEL_PADDING_IN_MENTIONS_LIST = 53;
 export const CHEVRON_SPACE_IN_MENTIONS_LIST = 25;
+export const MAX_ARRAY_LENGTH_BEFORE_SLICING = 100;
+
 export function fixSelection(node: Node) {
   const range = document.createRange();
   range.setStartAfter(node);
