@@ -7,6 +7,8 @@ import { discordFindGuildMemberByUsername } from './lib/actions/find-guild-membe
 import { discordRemoveMemberFromGuild } from './lib/actions/remove-member-from-guild';
 import { discordRemoveRoleFromMember } from './lib/actions/remove-role-from-member';
 import { discordRenameChannel } from './lib/actions/rename-channel';
+import { discordCreateChannel } from './lib/actions/create-channel';
+import { discordDeleteChannel } from './lib/actions/delete-channel';
 import { discordSendApprovalMessage } from './lib/actions/send-approval-message';
 import { discordSendMessageWebhook } from './lib/actions/send-message-webhook';
 import { newMessage } from './lib/trigger/new-message';
@@ -39,6 +41,8 @@ export const discord = createPiece({
     discordRemoveMemberFromGuild,
     discordFindGuildMemberByUsername,
     discordRenameChannel,
+    discordCreateChannel,
+    discordDeleteChannel,
     discordFindChannel,
     createCustomApiCallAction({
       baseUrl: () => {
