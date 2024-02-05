@@ -28,13 +28,7 @@ import {
   FlowBuilderService,
 } from '@activepieces/ui/common';
 import { compareVersions } from 'compare-versions';
-import {
-  ApEdition,
-  ApFlagId,
-  LocalesEnum,
-  User,
-  isNil,
-} from '@activepieces/shared';
+import { ApEdition, ApFlagId, LocalesEnum, User } from '@activepieces/shared';
 import {
   TelemetryService,
   EmbeddingService,
@@ -97,18 +91,6 @@ export class AppComponent implements OnInit {
     this.registerMaterialIcons();
     this.theme$ = this.apperanceService.setTheme().pipe(
       tap(() => this.loadingTheme$.next(false)),
-      map(() => void 0)
-    );
-    // TODO remove in next release
-    this.logoutOldTokens$ = this.flagService.getEdition().pipe(
-      tap((edition) => {
-        if (
-          edition === ApEdition.CLOUD &&
-          isNil(this.authenticationService.getDecodedToken()?.platform)
-        ) {
-          this.authenticationService.logout();
-        }
-      }),
       map(() => void 0)
     );
     this.embeddedRouteListener$ = this.createEmbeddingRoutesListener();

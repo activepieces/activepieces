@@ -42,16 +42,28 @@ export const flowActionsUiInfo = {
   iconSizeTailWind: 'ap-w-[20px] ap-h-[20px]',
 };
 
-export const downloadFlow = (flow: FlowTemplate) => {
-  const blob = new Blob([JSON.stringify(flow, null, 2)], {
+export const downloadJson = (obj: any, fileName: string) => {
+  const blob = new Blob([JSON.stringify(obj, null, 2)], {
     type: 'application/json',
   });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `${flow.name}.json`;
+  link.download = `${fileName}.json`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+};
+
+export const downloadFlow = (flow: FlowTemplate) => {
+  downloadJson(flow, flow.name);
+};
+
+export const jsonEditorOptionsMonaco = {
+  minimap: { enabled: false },
+  theme: 'apTheme',
+  language: 'json',
+  readOnly: true,
+  automaticLayout: true,
 };
