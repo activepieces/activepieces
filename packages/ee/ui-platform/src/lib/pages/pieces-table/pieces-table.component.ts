@@ -71,9 +71,7 @@ export class PiecesTableComponent implements OnInit {
     private matSnackbar: MatSnackBar,
     private matDialog: MatDialog,
     private oauth2AppsService: OAuth2AppsService
-  ) {
-    this.toggelCloudOAuth2$ = this.getCloudOAuth2ToggleListener();
-  }
+  ) {}
   ngOnInit(): void {
     const platform: Platform | undefined =
       this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
@@ -81,6 +79,7 @@ export class PiecesTableComponent implements OnInit {
     if (platform) {
       this.platform$ = new BehaviorSubject(platform);
     }
+    this.toggelCloudOAuth2$ = this.getCloudOAuth2ToggleListener();
 
     this.dataSource = new PiecesTableDataSource(
       this.piecesService,
@@ -99,8 +98,9 @@ export class PiecesTableComponent implements OnInit {
   }
 
   getCloudOAuth2ToggleListener() {
-    if (this.platform$ === undefined) return;
-
+    if (!this.platform$) {
+      return undefined;
+    }
     return this.cloudAuthToggleFormControl.valueChanges.pipe(
       tap((cloudAuthEnabled) => {
         this.platform$!.next({ ...this.platform$!.value, cloudAuthEnabled });
