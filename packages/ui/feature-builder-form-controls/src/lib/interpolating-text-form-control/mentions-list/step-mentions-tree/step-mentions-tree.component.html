@@ -39,7 +39,7 @@
       </div>
 
       <div class="ap-flex-grow "></div>
-      <ap-button *ngIf="nestedTreeNodeHoverTracker.isHovered" class="ap-absolute ap-right-[50px]"
+      <ap-button *ngIf="nestedTreeNodeHoverTracker.isHovered && !node.isSlice" class="ap-absolute ap-right-[50px]"
         [buttonIsInsideAutocomplete]="true" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
         (click)="$event.stopPropagation(); mentionTreeNodeClicked(node)" i18n>Insert
       </ap-button>

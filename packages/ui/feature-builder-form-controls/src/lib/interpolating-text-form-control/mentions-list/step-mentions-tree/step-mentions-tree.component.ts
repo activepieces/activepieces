@@ -16,6 +16,7 @@ import {
   CHEVRON_SPACE_IN_MENTIONS_LIST,
   FIRST_LEVEL_PADDING_IN_MENTIONS_LIST,
   keysWithinPath,
+  MAX_ARRAY_LENGTH_BEFORE_SLICING,
   MentionListItem,
   MentionTreeNode,
 } from '../../utils';
@@ -72,7 +73,13 @@ export class StepMentionsTreeComponent implements OnInit {
       tap((res) => {
         if (res) {
           this.dataSource.data = this.stepOutputObjectChildNodes;
-          this.treeControl.expandAll();
+          const childrenCount = this.calculateChildren(
+            this.stepOutputObjectChildNodes
+          );
+          console.log(this.stepOutputObjectChildNodes);
+          if (childrenCount <= MAX_ARRAY_LENGTH_BEFORE_SLICING) {
+            this.treeControl.expandAll();
+          }
         } else {
           this.treeControl.collapseAll();
         }
@@ -105,7 +112,6 @@ export class StepMentionsTreeComponent implements OnInit {
   };
   ngOnInit() {
     this.dataSource.data = this.stepOutputObjectChildNodes;
-    console.log(this.dataSource);
   }
   mentionTreeNodeClicked(node: MentionTreeNode) {
     const label = [
@@ -117,5 +123,13 @@ export class StepMentionsTreeComponent implements OnInit {
       label,
     };
     this.mentionClicked.emit(mentionListItem);
+  }
+
+  calculateChildren(children: MentionTreeNode[]): number {
+    return children.reduce((acc, child) => {
+      return (
+        acc + (child.children ? this.calculateChildren(child.children) : 0)
+      );
+    }, children.length);
   }
 }
