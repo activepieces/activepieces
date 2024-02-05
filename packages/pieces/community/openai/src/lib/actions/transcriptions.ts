@@ -47,14 +47,32 @@ export const transcribeAction = createAction({
     form.append('model', 'whisper-1');
     form.append('language', language);
 
+    let headers;
+    let queryParams;
+    if (context.auth.apiVersion) {
+        headers = {
+            'api-key': context.auth.apiKey
+        }
+        queryParams = {
+            'api-version': context.auth.apiVersion
+        }
+    }
+    else {
+        headers = {
+            Authorization: `Bearer ${context.auth.apiKey}`
+        }
+    }
+
+    const baseUrl = context.auth.baseUrl.replace(/\/$/, '') ?? 'https://api.openai.com/v1';
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `https://api.openai.com/v1/audio/transcriptions`,
+      url: `${baseUrl}/audio/transcriptions`,
       body: form,
       headers: {
         ...form.getHeaders(),
-        Authorization: `Bearer ${context.auth}`,
+        ...headers
       },
+      queryParams,
     };
     try {
       const response = await httpClient.sendRequest(request);
