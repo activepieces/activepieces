@@ -5731,6 +5731,12 @@
                                                         "enum": [
                                                           "NUMBER_IS_LESS_THAN"
                                                         ]
+                                                      },
+                                                      {
+                                                        "type": "string",
+                                                        "enum": [
+                                                          "NUMBER_IS_EQUAL_TO"
+                                                        ]
                                                       }
                                                     ]
                                                   }
