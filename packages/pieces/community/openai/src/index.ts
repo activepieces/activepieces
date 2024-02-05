@@ -1,8 +1,7 @@
 import {
-  AuthenticationType,
   HttpMethod,
   createCustomApiCallAction,
-  httpClient,
+  httpClient
 } from '@activepieces/pieces-common';
 import {
   PieceAuth,
@@ -57,7 +56,7 @@ export const openaiAuth = PieceAuth.CustomAuth({
         };
       } else {
         headers = {
-          Authentication: `Bearer ${auth.auth.apiKey}`,
+          Authorization: `Bearer ${auth.auth.apiKey}`,
         };
       }
       const baseUrl = auth.auth.baseUrl.replace(/\/$/, '') ?? 'https://api.openai.com/v1';
