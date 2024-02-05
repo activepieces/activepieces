@@ -3,7 +3,7 @@ import { WebhookRenewConfiguration, TriggerStrategy, WebhookHandshakeConfigurati
 import { ErrorHandlingOptionsParam } from "./action/action";
 import { PieceAuthProperty } from "./property/authentication";
 import { Type } from "@sinclair/typebox";
-import { ProjectId } from "@activepieces/shared";
+import { ProjectId, TriggerTestStrategy } from "@activepieces/shared";
 
 export const PieceBase = Type.Object({
   id: Type.Optional(Type.String()),
@@ -60,6 +60,7 @@ export const TriggerBase = Type.Composite([
     sampleData: Type.Unknown(),
     handshakeConfiguration: Type.Optional(WebhookHandshakeConfiguration),
     renewConfiguration: Type.Optional(WebhookRenewConfiguration),
+    testStrategy: Type.Enum(TriggerTestStrategy),
   })
 ])
 export type TriggerBase = Omit<ActionBase, "requireAuth"> & {
@@ -67,6 +68,7 @@ export type TriggerBase = Omit<ActionBase, "requireAuth"> & {
   sampleData: unknown,
   handshakeConfiguration?: WebhookHandshakeConfiguration;
   renewConfiguration?: WebhookRenewConfiguration;
+  testStrategy: TriggerTestStrategy;
 };
 
 export const PieceMetadata = Type.Composite([

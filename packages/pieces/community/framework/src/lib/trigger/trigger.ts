@@ -104,7 +104,7 @@ export class ITrigger<
     public readonly run: (ctx: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
     public readonly test: (ctx: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
     public readonly sampleData: unknown,
-    public readonly testStrategy?: TriggerTestStrategy,
+    public readonly testStrategy: TriggerTestStrategy,
   ) { }
 }
 
