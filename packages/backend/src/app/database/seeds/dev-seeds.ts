@@ -4,6 +4,7 @@ import { logger } from '../../helper/logger'
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { userService } from '../../user/user-service'
+import { Provider } from '../../authentication/authentication-service/hooks/authentication-service-hooks'
 
 const seedDevUser = async (): Promise<void> => {
     const devEmail = 'dev@ap.com'
@@ -23,6 +24,7 @@ const seedDevUser = async (): Promise<void> => {
             newsLetter: false,
             verified: true,
             platformId: null,
+            provider: Provider.EMAIL,
         })
     }
 

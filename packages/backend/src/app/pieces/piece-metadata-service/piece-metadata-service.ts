@@ -1,6 +1,6 @@
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { AllPiecesStats } from './piece-stats-service'
-import { ApEdition, PackageType, PieceType, ProjectId } from '@activepieces/shared'
+import { ApEdition, PackageType, PieceCategory, PieceOrderBy, PieceSortBy, PieceType, ProjectId } from '@activepieces/shared'
 import { PieceMetadataModel, PieceMetadataModelSummary } from '../piece-metadata-entity'
 import { EntityManager } from 'typeorm'
 
@@ -10,6 +10,10 @@ type ListParams = {
     platformId?: string
     includeHidden: boolean
     edition: ApEdition
+    categories?: PieceCategory[]
+    sortBy?: PieceSortBy
+    orderBy?: PieceOrderBy
+    searchQuery?: string
 }
 
 type GetOrThrowParams = {

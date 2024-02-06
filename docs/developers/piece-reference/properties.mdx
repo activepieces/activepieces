@@ -228,7 +228,7 @@ This property collects an array of objects from the user.
 Property.Array({
     displayName: 'Fields',
     description: 'Enter fields',
-    properties: [
+    properties: {
         fieldName: Property.ShortText({
           displayName: 'Field Name',
           required: true,
@@ -243,7 +243,7 @@ Property.Array({
             ],
           },
         }),
-    ],
+    },
     required: false,
     defaultValue:[]
 })

@@ -1,12 +1,21 @@
-import { PieceAuth, PieceAuthProperty, createPiece } from '@activepieces/pieces-framework';
+import {
+  HttpMethod,
+  createCustomApiCallAction,
+  httpClient
+} from '@activepieces/pieces-common';
+import {
+  PieceAuth,
+  Property,
+  createPiece,
+} from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
+import { askAssistant } from './lib/actions/ask-assistant';
+import { generateImage } from './lib/actions/generate-image';
 import { askOpenAI } from './lib/actions/send-prompt';
+import { textToSpeech } from './lib/actions/text-to-speech';
 import { transcribeAction } from './lib/actions/transcriptions';
 import { translateAction } from './lib/actions/translation';
-import { AuthenticationType, HttpMethod, createCustomApiCallAction, httpClient } from '@activepieces/pieces-common';
-import { generateImage } from './lib/actions/generate-image';
 import { visionPrompt } from './lib/actions/vision-prompt';
-import { textToSpeech } from './lib/actions/text-to-speech';
-import { askAssistant } from './lib/actions/ask-assistant';
 
 const markdownDescription = `
 Follow these instructions to get your OpenAI API Key:
@@ -17,21 +26,46 @@ Follow these instructions to get your OpenAI API Key:
 It is strongly recommended that you add your credit card information to your OpenAI account and upgrade to the paid plan **before** generating the API Key. This will help you prevent 429 errors.
 `;
 
-export const openaiAuth = PieceAuth.SecretText({
-  description: markdownDescription,
-  displayName: 'API Key',
+export const openaiAuth = PieceAuth.CustomAuth({
   required: true,
+  description: markdownDescription,
+  props: {
+    apiKey: PieceAuth.SecretText({
+      displayName: 'API Key',
+      required: true,
+    }),
+    baseUrl: Property.ShortText({
+      displayName: 'Base URL',
+      description: 'The base URL for the OpenAI instance.',
+      defaultValue: 'https://api.openai.com/v1',
+      required: true,
+    }),
+    apiVersion: Property.ShortText({
+      displayName: 'API Version',
+      description: 'The API version if you are using an Azure OpenAI resource',
+      required: false,
+    }),
+  },
   validate: async (auth) => {
     try {
+      
+      let headers;
+      if (auth.auth.apiVersion) {
+        headers = {
+          'api-key': auth.auth.apiKey,
+        };
+      } else {
+        headers = {
+          Authorization: `Bearer ${auth.auth.apiKey}`,
+        };
+      }
+      const baseUrl = auth.auth.baseUrl.replace(/\/$/, '') ?? 'https://api.openai.com/v1';
       await httpClient.sendRequest<{
         data: { id: string }[];
       }>({
-        url: 'https://api.openai.com/v1/models',
+        url: `${baseUrl}/models`,
         method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: auth.auth as string,
-        },
+        headers,
       });
       return {
         valid: true,
@@ -50,6 +84,7 @@ export const openai = createPiece({
   description: 'Use the many tools ChatGPT has to offer.',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
+  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   auth: openaiAuth,
   actions: [
     askOpenAI,
@@ -61,15 +96,32 @@ export const openai = createPiece({
     translateAction,
     createCustomApiCallAction({
       auth: openaiAuth,
-      baseUrl: () => {
-        return 'https://api.openai.com/v1'
+      baseUrl: (auth) => {
+        const typedAuth = auth as { baseUrl: string; apiVersion: string };
+        const baseUrl = typedAuth.baseUrl.replace(/\/$/, '') ?? 'https://api.openai.com/v1';
+        if (typedAuth.apiVersion) {
+          return baseUrl + `?api-version=${typedAuth.apiVersion}`;
+        } else {
+          return baseUrl;
+        }
       },
       authMapping: (auth) => {
-        return {
-          'Authorization': `Bearer ${auth}`
+        const typedAuth = auth as {
+          baseUrl: string;
+          apiKey: string;
+          apiVersion: string;
+        };
+        if (typedAuth.apiVersion) {
+          return {
+            'api-key': typedAuth.apiKey,
+          };
+        } else {
+          return {
+            Authorization: `Bearer ${auth}`,
+          };
         }
-      }
-    })
+      },
+    }),
   ],
   authors: [
     'aboudzein',

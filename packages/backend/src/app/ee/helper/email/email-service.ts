@@ -142,8 +142,10 @@ async function sendEmail({ platformId, email, template }: { template: EmailTempl
         'reset-password': 'Reset your password',
     }
 
+    const senderName = platform?.name ?? system.get(SystemProp.SMTP_SENDER_NAME)
+    const senderEmail = platform?.smtpSenderEmail ?? system.get(SystemProp.SMTP_SENDER_EMAIL)
     await transporter.sendMail({
-        from: `${platform?.name ?? 'Activepieces'} <${platform?.smtpSenderEmail ?? 'notifications@activepieces.com'}>`,
+        from: `${senderName} <${senderEmail}>`,
         to: email,
         subject: templateToSubject[template.templateName],
         html: await renderTemplate({ platform, request: template }),

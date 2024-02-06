@@ -11,12 +11,12 @@ import { ProjectType, isNil } from '@activepieces/shared'
 import { flagService } from '../../../../../app/flags/flag.service'
 
 export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
-    async preSignIn({ email, platformId }) {
-        await authenticationHelper.assertEmailAuthIsEnabled({ platformId })
+    async preSignIn({ email, platformId, provider }) {
+        await authenticationHelper.assertEmailAuthIsEnabled({ platformId, provider })
         await authenticationHelper.assertDomainIsAllowed({ email, platformId })
     },
-    async preSignUp({ email, platformId }) {
-        await authenticationHelper.assertEmailAuthIsEnabled({ platformId })
+    async preSignUp({ email, platformId, provider }) {
+        await authenticationHelper.assertEmailAuthIsEnabled({ platformId, provider })
         await authenticationHelper.assertUserIsInvitedAndDomainIsAllowed({ email, platformId })
     },
     async postSignUp({ user, referringUserId }) {

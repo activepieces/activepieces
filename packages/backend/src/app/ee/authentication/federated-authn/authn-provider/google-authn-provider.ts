@@ -24,26 +24,26 @@ function getClientIdAndSecret(platform: Platform): { clientId: string, clientSec
 }
 
 export const googleAuthnProvider: AuthnProvider = {
-    async getLoginUrl(platform: Platform): Promise<string> {
+    async getLoginUrl(hostname: string, platform: Platform): Promise<string> {
         const { clientId } = getClientIdAndSecret(platform)
         const loginUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
         loginUrl.searchParams.set('client_id', clientId)
-        loginUrl.searchParams.set('redirect_uri', flagService.getThirdPartyRedirectUrl())
+        loginUrl.searchParams.set('redirect_uri', flagService.getThirdPartyRedirectUrl(platform.id, hostname))
         loginUrl.searchParams.set('scope', 'email profile')
         loginUrl.searchParams.set('response_type', 'code')
 
         return loginUrl.href
     },
 
-    async authenticate(platform, authorizationCode): Promise<AuthenticationResponse> {
+    async authenticate(hostname, platform, authorizationCode): Promise<AuthenticationResponse> {
         const { clientId, clientSecret } = getClientIdAndSecret(platform)
-        const idToken = await exchangeCodeForIdToken(clientId, clientSecret, authorizationCode)
+        const idToken = await exchangeCodeForIdToken(platform.id, hostname, clientId, clientSecret, authorizationCode)
         const idTokenPayload = await verifyIdToken(clientId, idToken)
         return generateAuthenticationResponse(platform.id, idTokenPayload)
     },
 }
 
-const exchangeCodeForIdToken = async (clientId: string, clientSecret: string, code: string): Promise<string> => {
+const exchangeCodeForIdToken = async (platformId: string, hostName: string, clientId: string, clientSecret: string, code: string): Promise<string> => {
     const response = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
         headers: {
@@ -53,7 +53,7 @@ const exchangeCodeForIdToken = async (clientId: string, clientSecret: string, co
             code,
             client_id: clientId,
             client_secret: clientSecret,
-            redirect_uri: flagService.getThirdPartyRedirectUrl(),
+            redirect_uri: flagService.getThirdPartyRedirectUrl(platformId, hostName),
             grant_type: 'authorization_code',
         }),
     })

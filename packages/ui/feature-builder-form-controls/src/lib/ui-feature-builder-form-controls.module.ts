@@ -20,7 +20,6 @@ import { MentionListItemTemplateComponent } from './interpolating-text-form-cont
 import { PieceTriggerMentionItemComponent } from './interpolating-text-form-control/mentions-list/piece-trigger-mention-item/piece-trigger-mention-item.component';
 import { StepMentionsTreeComponent } from './interpolating-text-form-control/mentions-list/step-mentions-tree/step-mentions-tree.component';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
-import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { AuthConfigsPipe } from './pipes/auth-configs.pipe';
 import { PiecePropertiesFormComponent } from './piece-properties-form/piece-properties-form.component';
@@ -54,7 +53,7 @@ const exportedDeclarations = [
     CommonModule,
     UiCommonModule,
     CodemirrorModule,
-    MonacoEditorModule,
+
     ReactiveFormsModule,
     FormsModule,
     UiFeatureConnectionsModule,

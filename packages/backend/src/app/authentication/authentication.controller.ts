@@ -6,6 +6,7 @@ import { getEdition } from '../helper/secret-helper'
 import { ApEdition, SignUpRequest, SignInRequest, ALL_PRINICPAL_TYPES } from '@activepieces/shared'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
+import { Provider } from './authentication-service/hooks/authentication-service-hooks'
 
 const edition = getEdition()
 
@@ -17,6 +18,7 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (app) =
             ...request.body,
             verified: edition === ApEdition.COMMUNITY,
             platformId,
+            provider: Provider.EMAIL,
         })
     })
 
@@ -26,6 +28,7 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (app) =
         return authenticationService.signIn({
             ...request.body,
             platformId,
+            provider: Provider.EMAIL,
         })
     })
 }

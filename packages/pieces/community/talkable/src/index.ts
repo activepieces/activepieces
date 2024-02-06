@@ -1,23 +1,24 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   createPiece,
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import {
-  findPerson,
-  findCoupon,
-  updatePerson,
   anonymizePerson,
-  unsubscribePerson,
-  createPurchase,
-  createPurchasesBatch,
   createEvent,
   createEventsBatch,
-  refund,
+  createPurchase,
+  createPurchasesBatch,
+  findCoupon,
+  findPerson,
   getLoyaltyRedeemActions,
+  refund,
+  unsubscribePerson,
+  updatePerson,
   updateReferralStatus,
 } from './lib/actions';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const markdownDescription = `
 Follow these steps:
@@ -50,6 +51,7 @@ export const talkable = createPiece({
   logoUrl:
     'https://www.talkable.com/wp-content/uploads/2021/12/talkable-favicon.svg',
   authors: ['vitalini'],
+  categories: [PieceCategory.MARKETING],
   actions: [
     findPerson,
     findCoupon,

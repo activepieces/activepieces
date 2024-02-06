@@ -1,10 +1,11 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   OAuth2PropertyValue,
   PieceAuth,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { typeformNewSubmission } from './lib/trigger/new-submission';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const typeformAuth = PieceAuth.OAuth2({
   required: true,
@@ -17,6 +18,7 @@ export const typeform = createPiece({
   displayName: 'Typeform',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/typeform.png',
+  categories: [PieceCategory.FORMS_AND_SURVEYS],
   actions: [
     createCustomApiCallAction({
       baseUrl: () => 'https://api.typeform.com',

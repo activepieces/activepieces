@@ -21,11 +21,11 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
     public readonly events: PieceEventProcessors | undefined,
     actions: Action<PieceAuth>[],
     triggers: Trigger<PieceAuth>[],
+    public readonly categories: PieceCategory[],
     public readonly auth?: PieceAuth,
     public readonly minimumSupportedRelease?: string,
     public readonly maximumSupportedRelease?: string,
     public readonly description: string = '',
-    public readonly categories?: PieceCategory[]
   ) {
     actions.forEach((action) => (this._actions[action.name] = action));
     triggers.forEach((trigger) => (this._triggers[trigger.name] = trigger));
@@ -37,6 +37,7 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
       logoUrl: this.logoUrl,
       actions: this._actions,
       triggers: this._triggers,
+      categories: this.categories,
       description: this.description,
       auth: this.auth,
       minimumSupportedRelease: this.minimumSupportedRelease,
@@ -71,11 +72,11 @@ export const createPiece = <PieceAuth extends PieceAuthProperty>(
     params.events,
     params.actions,
     params.triggers,
+    params.categories ?? [],
     params.auth ?? undefined,
     params.minimumSupportedRelease,
     params.maximumSupportedRelease,
     params.description,
-    params.categories
   );
 };
 
