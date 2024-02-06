@@ -5,31 +5,33 @@ import { platformService } from '../../platform/platform.service'
 
 
 export const federatedAuthnService = {
-    async login({ providerName, platformId }: LoginParams): Promise<FederatedAuthnLoginResponse> {
+    async login({ providerName, platformId, hostname }: LoginParams): Promise<FederatedAuthnLoginResponse> {
         const provider = providers[providerName]
         const platform = await platformService.getOneOrThrow(platformId)
-        const loginUrl = await provider.getLoginUrl(platform)
+        const loginUrl = await provider.getLoginUrl(hostname, platform)
 
         return {
             loginUrl,
         }
     },
 
-    async claim({ platformId, providerName, code }: ClaimParams): Promise<AuthenticationResponse> {
+    async claim({ hostname, platformId, providerName, code }: ClaimParams): Promise<AuthenticationResponse> {
         const provider = providers[providerName]
         const platform = await platformService.getOneOrThrow(platformId)
-        return provider.authenticate(platform, code)
+        return provider.authenticate(hostname, platform, code)
     },
 }
 
 type LoginParams = {
     platformId: string
+    hostname: string
     providerName: ThirdPartyAuthnProviderEnum
 }
 
 
 type ClaimParams = {
     platformId: string
+    hostname: string
     providerName: ThirdPartyAuthnProviderEnum
     code: string
 }

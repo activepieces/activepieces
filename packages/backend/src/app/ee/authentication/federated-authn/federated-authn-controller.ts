@@ -11,6 +11,7 @@ export const federatedAuthnController: FastifyPluginAsyncTypebox = async (app) =
         return federatedAuthnService.login({
             providerName: req.query.providerName,
             platformId,
+            hostname: req.hostname,
         })
     })
 
@@ -19,6 +20,7 @@ export const federatedAuthnController: FastifyPluginAsyncTypebox = async (app) =
         assertNotNullOrUndefined(platformId, 'Platform id is not defined')
         return federatedAuthnService.claim({
             platformId,
+            hostname: req.hostname,
             providerName: req.body.providerName,
             code: req.body.code,
         })
