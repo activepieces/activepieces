@@ -23,7 +23,7 @@ export const activeCampaignAuth = PieceAuth.CustomAuth({
       required: true,
     }),
     api_key: PieceAuth.SecretText({
-      displayName: 'Username',
+      displayName: 'API Key',
       required: true,
     }),
   },

@@ -6,7 +6,6 @@ export const activeCampaignTriggers = [
   {
     event: 'subscribe',
     displayName: 'Contact added',
-    active: true,
     sampleData: {
       url: '',
       type: '',
@@ -28,9 +27,7 @@ export const activeCampaignTriggers = [
       }
     },
   }
-]
-  .filter((trigger) => trigger.active)
-  .map(register);
+].map(register);
 
 function register({
   event,
@@ -59,10 +56,7 @@ function register({
         body: {
           webhook: {
             name: `Webhook: ${event}`,
-            url: webhookUrl.replace(
-              'http://localhost:3000',
-              'https://6aa8-212-49-88-96.eu.ngrok.io'
-            ),
+            url: webhookUrl,
             events: [event],
             sources: ['api', 'public', 'admin', 'system'],
           },
