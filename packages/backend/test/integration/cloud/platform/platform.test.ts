@@ -5,7 +5,7 @@ import { createMockUser, createMockPlatform } from '../../../helpers/mocks'
 import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
 import { LocalesEnum, PlatformRole, PrincipalType, apId } from '@activepieces/shared'
-import { FilteredPieceBehavior, UpdatePlatformRequestBody } from '@activepieces/ee-shared'
+import { FilteredPieceBehavior, UpdatePlatformRequestBody } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 

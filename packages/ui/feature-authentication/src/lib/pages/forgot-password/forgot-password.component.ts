@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
 import { catchError, map, Observable, of, tap } from 'rxjs';
 import { AuthenticationService } from '@activepieces/ui/common';
-import { OtpType } from '@activepieces/ee-shared';
+import { OtpType } from '@activepieces/shared';
 import { Router } from '@angular/router';
 
 @Component({

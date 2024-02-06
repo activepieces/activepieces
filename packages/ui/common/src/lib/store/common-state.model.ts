@@ -1,4 +1,4 @@
-import { Platform } from '@activepieces/ee-shared';
+import { Platform } from '@activepieces/shared';
 import { Project } from '@activepieces/shared';
 
 export interface CommonStateModel {

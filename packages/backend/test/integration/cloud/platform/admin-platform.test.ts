@@ -5,7 +5,7 @@ import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
 import { faker } from '@faker-js/faker'
 import { LocalesEnum, Project } from '@activepieces/shared'
-import { Platform } from '@activepieces/ee-shared'
+import { Platform } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 

@@ -3,7 +3,7 @@ import { StatusCodes } from 'http-status-codes'
 import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { createMockOtp, createMockUser } from '../../../helpers/mocks'
-import { OtpState, OtpType } from '@activepieces/ee-shared'
+import { OtpState, OtpType } from '@activepieces/shared'
 import { UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 

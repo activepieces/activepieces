@@ -6,7 +6,7 @@ import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
 import { NotificationStatus, PlatformRole, PrincipalType, Project, ProjectType, User } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
-import { ApiKeyResponseWithValue, Platform, UpdateProjectPlatformRequest } from '@activepieces/ee-shared'
+import { ApiKeyResponseWithValue, Platform, UpdateProjectPlatformRequest } from '@activepieces/shared'
 import { stripeHelper } from '../../../../src/app/ee/billing/billing/stripe-helper'
 
 let app: FastifyInstance | null = null

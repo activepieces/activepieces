@@ -2,7 +2,7 @@ import { apId, SignUpRequest, User, UserId, UserMeta, UserStatus, isNil, Activep
 import { passwordHasher } from '../authentication/lib/password-hasher'
 import { databaseConnection } from '../database/database-connection'
 import { UserEntity } from './user-entity'
-import { PlatformId } from '@activepieces/ee-shared'
+import { PlatformId } from '@activepieces/shared'
 import { IsNull } from 'typeorm'
 import dayjs from 'dayjs'
 

@@ -11,7 +11,7 @@ import {
   containsNumber,
   AuthenticationService,
 } from '@activepieces/ui/common';
-import { OtpType } from '@activepieces/ee-shared';
+import { OtpType } from '@activepieces/shared';
 
 @Component({
   styleUrls: ['./reset-password.component.scss'],

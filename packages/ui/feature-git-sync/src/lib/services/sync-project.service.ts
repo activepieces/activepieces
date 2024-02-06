@@ -1,11 +1,11 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '@activepieces/ui/common';
-import { ConfigureRepoRequest, GitRepo } from '@activepieces/ee-shared';
+import { ConfigureRepoRequest, GitRepo } from '@activepieces/shared';
 import { SeekPage } from '@activepieces/shared';
 import { map } from 'rxjs';
 import { AuthenticationService } from '@activepieces/ui/common';
-import { PushGitRepoRequest } from '@activepieces/ee-shared';
+import { PushGitRepoRequest } from '@activepieces/shared';
 @Injectable({
   providedIn: 'root',
 })

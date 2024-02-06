@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { map, Observable, shareReplay } from 'rxjs';
 import { environment } from '../environments/environment';
-import { ThirdPartyAuthnProvidersToShowMap } from '@activepieces/ee-shared';
+import { ThirdPartyAuthnProvidersToShowMap } from '@activepieces/shared';
 
 type FlagsMap = Record<string, boolean | string | object | undefined>;
 

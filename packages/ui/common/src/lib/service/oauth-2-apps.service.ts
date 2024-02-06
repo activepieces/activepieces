@@ -4,7 +4,7 @@ import {
   OAuthApp,
   UpsertOAuth2AppRequest,
   ListOAuth2AppRequest,
-} from '@activepieces/ee-shared';
+} from '@activepieces/shared';
 import { environment } from '../environments/environment';
 import { SeekPage } from '@activepieces/shared';
 

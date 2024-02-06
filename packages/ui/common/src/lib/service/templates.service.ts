@@ -8,7 +8,7 @@ import {
 } from '@activepieces/shared';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../environments/environment';
-import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
+import { CreateFlowTemplateRequest } from '@activepieces/shared';
 import { FlagService } from './flag.service';
 
 @Injectable({

@@ -4,7 +4,7 @@ import { generateMockToken } from '../../../helpers/auth'
 import { createMockPieceMetadata, createMockPlatform, createMockProject, createMockUser } from '../../../helpers/mocks'
 import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
-import { FilteredPieceBehavior } from '@activepieces/ee-shared'
+import { FilteredPieceBehavior } from '@activepieces/shared'
 import { PieceType, PlatformRole, PrincipalType, ProjectType, apId } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null

@@ -8,7 +8,7 @@ import {
   AuthenticationService,
   unexpectedErrorMessage,
 } from '@activepieces/ui/common';
-import { OtpType } from '@activepieces/ee-shared';
+import { OtpType } from '@activepieces/shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 

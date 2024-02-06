@@ -6,7 +6,7 @@ import {
   CreatePlatformProjectRequest,
   ProjectWithUsageAndPlanResponse,
   UpdateProjectPlatformRequest,
-} from '@activepieces/ee-shared';
+} from '@activepieces/shared';
 import { Router } from '@angular/router';
 import { environment } from '../environments/environment';
 

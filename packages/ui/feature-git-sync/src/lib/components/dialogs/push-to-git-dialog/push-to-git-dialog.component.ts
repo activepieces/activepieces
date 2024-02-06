@@ -3,7 +3,7 @@ import { FormControl, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { BehaviorSubject, Observable, catchError, of, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { PushSyncMode } from '@activepieces/ee-shared';
+import { PushSyncMode } from '@activepieces/shared';
 import { PopulatedFlow } from '@activepieces/shared';
 import { SyncProjectService } from '../../../services/sync-project.service';
 

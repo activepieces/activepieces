@@ -5,7 +5,7 @@ import { createMockUser, createMockPlatform, createMockCustomDomain } from '../.
 import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
 import { faker } from '@faker-js/faker'
-import { AddDomainRequest, CustomDomainStatus } from '@activepieces/ee-shared'
+import { AddDomainRequest, CustomDomainStatus } from '@activepieces/shared'
 import { PlatformRole, PrincipalType, apId } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null

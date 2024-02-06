@@ -6,7 +6,7 @@
     "@angular/core": "^16.2.0",
     "@angular/material": "16.2.6",
     "@ngrx/store": "16.0.1",
-    "@activepieces/ee-shared": "*",
+    "@activepieces/shared": "*",
     "@activepieces/ui/common": "*",
     "@angular/forms": "16.2.6",
     "rxjs": "7.8.1",

@@ -1,4 +1,4 @@
-import { PlatformId } from '@activepieces/ee-shared'
+import { PlatformId } from '@activepieces/shared'
 import { PackageType, PiecePackage, ProjectId } from '@activepieces/shared'
 
 const defaultHooks: PieceServiceHooks = {

@@ -8,7 +8,7 @@ import { ApFlagId, ProjectType, User, UserStatus, apId } from '@activepieces/sha
 import { faker } from '@faker-js/faker'
 import { emailService } from '../../../../src/app/ee/helper/email/email-service'
 import { stripeHelper } from '../../../../src/app/ee/billing/billing/stripe-helper'
-import { CustomDomain, OtpType, Platform, ProjectMemberRole, ProjectMemberStatus } from '@activepieces/ee-shared'
+import { CustomDomain, OtpType, Platform, ProjectMemberRole, ProjectMemberStatus } from '@activepieces/shared'
 import { decodeToken } from '../../../helpers/auth'
 
 let app: FastifyInstance | null = null

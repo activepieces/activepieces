@@ -18,7 +18,7 @@ import {
   ResetPasswordRequestBody,
   ThirdPartyAuthnProviderEnum,
   VerifyEmailRequestBody,
-} from '@activepieces/ee-shared';
+} from '@activepieces/shared';
 import { FlagService } from './flag.service';
 
 @Injectable({

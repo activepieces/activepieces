@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { GitRepo, PushSyncMode } from '@activepieces/ee-shared';
+import { GitRepo, PushSyncMode } from '@activepieces/shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   GenericSnackbarTemplateComponent,

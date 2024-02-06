@@ -6,7 +6,7 @@ import {
   PushToGitDialogData,
 } from '../dialogs/push-to-git-dialog/push-to-git-dialog.component';
 import { Observable, map, of, shareReplay, switchMap, take, tap } from 'rxjs';
-import { GitRepo, PushSyncMode } from '@activepieces/ee-shared';
+import { GitRepo, PushSyncMode } from '@activepieces/shared';
 import { Store } from '@ngrx/store';
 import { FlagService, ProjectSelectors, flowActionsUiInfo } from '@activepieces/ui/common';
 import { SyncProjectService } from '../../services/sync-project.service';

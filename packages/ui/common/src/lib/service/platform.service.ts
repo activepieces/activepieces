@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Platform, UpdatePlatformRequestBody } from '@activepieces/ee-shared';
+import { Platform, UpdatePlatformRequestBody } from '@activepieces/shared';
 import { environment } from '../environments/environment';
 import { SeekPage, UserResponse, UserStatus } from '@activepieces/shared';
 

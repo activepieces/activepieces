@@ -16,7 +16,7 @@ import {
 import { catchError, map, Observable, of, tap } from 'rxjs';
 import { StatusCodes } from 'http-status-codes';
 import { ApEdition, ApFlagId, ErrorCode } from '@activepieces/shared';
-import { OtpType } from '@activepieces/ee-shared';
+import { OtpType } from '@activepieces/shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
 interface SignInForm {
   email: FormControl<string>;

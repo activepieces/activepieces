@@ -1,5 +1,5 @@
 import { PieceMetadataSchema } from '../../piece-metadata-entity'
-import { PlatformId } from '@activepieces/ee-shared'
+import { PlatformId } from '@activepieces/shared'
 import { PieceSortBy, PieceOrderBy, PieceCategory } from '@activepieces/shared'
 import { filterPiecesBasedUser } from './piece-filtering'
 import { sortAndOrderPieces } from './piece-sorting'

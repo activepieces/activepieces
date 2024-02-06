@@ -24,7 +24,7 @@ import {
   ErrorCode,
   SignUpRequest,
 } from '@activepieces/shared';
-import { OtpType } from '@activepieces/ee-shared';
+import { OtpType } from '@activepieces/shared';
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { StatusCodes } from 'http-status-codes';
 

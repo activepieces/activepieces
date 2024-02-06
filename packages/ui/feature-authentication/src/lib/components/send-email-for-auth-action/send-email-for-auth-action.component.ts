@@ -5,7 +5,7 @@ import {
   AuthenticationService,
   unexpectedErrorMessage,
 } from '@activepieces/ui/common';
-import { OtpType } from '@activepieces/ee-shared';
+import { OtpType } from '@activepieces/shared';
 @Component({
   templateUrl: './send-email-for-auth-action.component.html',
   styleUrls: [],

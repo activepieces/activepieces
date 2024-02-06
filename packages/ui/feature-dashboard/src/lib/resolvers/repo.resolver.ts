@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { map, Observable, of, switchMap } from 'rxjs';
-import { GitRepo } from '@activepieces/ee-shared';
+import { GitRepo } from '@activepieces/shared';
 import {
   AuthenticationService,
   FlagService,

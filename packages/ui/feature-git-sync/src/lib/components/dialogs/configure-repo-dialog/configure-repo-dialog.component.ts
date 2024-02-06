@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
-import { GitRepo } from '@activepieces/ee-shared';
+import { GitRepo } from '@activepieces/shared';
 import { ProjectSelectors } from '@activepieces/ui/common';
 import {
   FormBuilder,

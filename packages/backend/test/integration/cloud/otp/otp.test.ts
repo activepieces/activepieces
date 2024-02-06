@@ -3,7 +3,7 @@ import { StatusCodes } from 'http-status-codes'
 import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { createMockUser } from '../../../helpers/mocks'
-import { OtpType } from '@activepieces/ee-shared'
+import { OtpType } from '@activepieces/shared'
 import { emailService } from '../../../../src/app/ee/helper/email/email-service'
 
 let app: FastifyInstance | null = null

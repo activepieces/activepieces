@@ -5,7 +5,7 @@ import { createMockUser, createMockPlatform, createMockOAuthApp } from '../../..
 import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
 import { faker } from '@faker-js/faker'
-import { UpsertOAuth2AppRequest } from '@activepieces/ee-shared'
+import { UpsertOAuth2AppRequest } from '@activepieces/shared'
 import { PlatformRole, PrincipalType, apId } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null

@@ -1,4 +1,4 @@
-import { SigningKeyId } from '@activepieces/ee-shared'
+import { SigningKeyId } from '@activepieces/shared'
 import { Principal, PrincipalType, apId } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import jwt, { Algorithm, JwtPayload, SignOptions } from 'jsonwebtoken'
