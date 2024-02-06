@@ -40,14 +40,14 @@ const subscriberSample = {
 export const triggers = [
   {
     name: 'subscriber.created',
-    displayName: 'New Subscription',
-    description: 'Fires when a new subscriber is added to an account',
+    displayName: 'Subscriber Created',
+    description: 'Triggers when a subscriber was created on your mailing list.',
     sampleData: subscriberSample,
   },
   {
     name: 'subscriber.unsubscribed',
-    displayName: 'New Unsubscription',
-    description: 'Fires when a subscriber becomes unsubscribed',
+    displayName: 'Subscriber Unsubscribed',
+    description: 'Triggers when a subscriber has unsubscribed from your mailing list.',
     sampleData: {
       "id": "112374478518880188",
       "email": "example@gmail.com",
@@ -70,8 +70,8 @@ export const triggers = [
   },
   {
     name: 'subscriber.added_to_group',
-    displayName: 'Added to Group',
-    description: 'Fires when a subscriber is added to a group',
+    displayName: 'Subscriber Added to Group',
+    description: 'Triggers when a subscriber is added to a group.',
     sampleData: {
       type: 'subscriber.added_to_group',
       subscriber: subscriberSample,
@@ -84,10 +84,12 @@ export function register({
   name,
   displayName,
   description,
+  sampleData
 }: {
   name: string;
   displayName: string;
   description: string;
+  sampleData: unknown;
 }) {
   return createTrigger({
     auth: mailerLiteAuth,
@@ -100,7 +102,7 @@ export function register({
         required: true,
       }),
     },
-    sampleData: {},
+    sampleData: sampleData,
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
       const mailerLite = new MailerLite({ api_key: context.auth });
@@ -112,7 +114,6 @@ export function register({
         })
         .then(async (response) => {
           await context.store.put<Webhook>(name, response.data);
-          console.log(response.data);
         })
         .catch((error) => {
           if (error.response) console.log(error.response.data);
