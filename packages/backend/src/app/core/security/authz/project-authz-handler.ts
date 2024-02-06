@@ -5,10 +5,14 @@ import { requestUtils } from '../../request/request-utils'
 
 export class ProjectAuthzHandler extends BaseSecurityHandler {
     private static readonly IGNORED_ROUTES = [
-        '/v1/users/projects/:projectId/token',
-        '/v1/admin/platforms',
         '/v1/admin/pieces',
+        '/v1/admin/platforms',
         '/v1/app-credentials',
+        '/v1/users/projects/:projectId/token',
+        '/v1/webhooks',
+        '/v1/webhooks/:flowId',
+        '/v1/webhooks/:flowId/simulate',
+        '/v1/webhooks/:flowId/sync',
     ]
 
     protected canHandle(request: FastifyRequest): Promise<boolean> {
