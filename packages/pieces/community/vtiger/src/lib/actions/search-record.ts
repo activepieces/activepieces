@@ -37,10 +37,10 @@ export const searchRecords = createAction({
           (auth as PiecePropValueSchema<typeof vtigerAuth>).instance_url,
           (auth as PiecePropValueSchema<typeof vtigerAuth>).username,
           (auth as PiecePropValueSchema<typeof vtigerAuth>).password
-        )
+        );
 
         if (instance === null) {
-          return {}
+          return {};
         }
 
         return generateElementFields(
@@ -48,55 +48,47 @@ export const searchRecords = createAction({
           elementType as unknown as string,
           {},
           true
-        )
+        );
       },
     }),
     limit: Property.Number({
       displayName: 'Limit',
       description: 'Enter the maximum number of records to return.',
       required: false,
-    })
+    }),
   },
   async run({ propsValue, auth }) {
     const vtigerInstance = await instanceLogin(
       auth.instance_url,
       auth.username,
       auth.password
-    )
+    );
     if (vtigerInstance === null) return;
 
-    
-    const count = await countRecords(auth, propsValue.elementType as string);    
+    const count = await countRecords(auth, propsValue.elementType as string);
     if (count > 0) {
-      const records: Record<string, unknown>[] = await queryRecords(auth, propsValue.elementType as string, 0, count)
+      const records: Record<string, unknown>[] = await queryRecords(
+        auth,
+        propsValue.elementType as string,
+        0,
+        count
+      );
 
-      if (propsValue.limit) {
-        return records.filter(record => {
-          return Object
-            .entries(propsValue['fields'])
-            .every(([key, value]) => {
-              if (typeof value === "string") {
-                return (record[key] as unknown as string).toLowerCase().includes(value.toLowerCase())
-              } else {
-                return record[key] === value.toLowerCase()
-              }
-            })
-        }).slice(0, propsValue.limit)
-      }
+      const filtered = records.filter((record) => {
+        return Object.entries(propsValue['fields']).every(([key, value]) => {
+          if (typeof value === 'string') {
+            return (record[key] as unknown as string)
+              .toLowerCase()
+              .includes(value.toLowerCase());
+          } else {
+            return record[key] === value.toLowerCase();
+          }
+        });
+      });
 
-      return records.filter(record => {
-        return Object
-          .entries(propsValue['fields'])
-          .every(([key, value]) => {
-            if (typeof value === "string") {
-              return (record[key] as unknown as string).toLowerCase().includes(value.toLowerCase())
-            } else {
-              return record[key] === value.toLowerCase()
-            }
-          })
-      })
+      return propsValue.limit ? filtered.slice(0, propsValue.limit) : filtered;
     } else {
-      return []
+      return [];
     }
-  }
-})
+  },
+});

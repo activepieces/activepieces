@@ -422,22 +422,30 @@ export const recordProperty = (create = true) =>
       }
 
       return generateElementFields(
-        auth as VTigerAuthValue, 
-        elementType as unknown as string, 
+        auth as VTigerAuthValue,
+        elementType as unknown as string,
         defaultValue
-      )
+      );
     },
   });
 
-export const queryRecords = async (auth: VTigerAuthValue, elementType: string, page = 0, limit = 100) => {
+export const queryRecords = async (
+  auth: VTigerAuthValue,
+  elementType: string,
+  page = 0,
+  limit = 100
+) => {
   const instance = await instanceLogin(
     auth['instance_url'],
     auth['username'],
     auth['password']
-  )
+  );
   if (!instance) return [];
 
-  const response = await httpClient.sendRequest<{ success: boolean; result: Record<string, unknown>[] }>({
+  const response = await httpClient.sendRequest<{
+    success: boolean;
+    result: Record<string, unknown>[];
+  }>({
     method: HttpMethod.GET,
     url: `${(auth as VTigerAuthValue)['instance_url']}/webservice.php`,
     queryParams: {
@@ -449,13 +457,16 @@ export const queryRecords = async (auth: VTigerAuthValue, elementType: string, p
   });
 
   if (response.body.success) {
-    return response.body.result
+    return response.body.result;
   }
 
-  return []
-}
+  return [];
+};
 
-export const countRecords = async (auth: VTigerAuthValue, elementType: string) => {
+export const countRecords = async (
+  auth: VTigerAuthValue,
+  elementType: string
+) => {
   const instance = await instanceLogin(
     auth['instance_url'],
     auth['username'],
@@ -464,7 +475,8 @@ export const countRecords = async (auth: VTigerAuthValue, elementType: string) =
   if (!instance) return 0;
 
   const response = await httpClient.sendRequest<{
-    success: boolean; result: { count: string }[]
+    success: boolean;
+    result: { count: string }[];
   }>({
     method: HttpMethod.GET,
     url: `${(auth as VTigerAuthValue)['instance_url']}/webservice.php`,
@@ -477,14 +489,14 @@ export const countRecords = async (auth: VTigerAuthValue, elementType: string) =
   });
 
   if (response.body.success) {
-    return Number.parseInt(response.body.result[0].count)
+    return Number.parseInt(response.body.result[0].count);
   }
 
-  return 0
-}
+  return 0;
+};
 
 export const generateElementFields = async (
-  auth: VTigerAuthValue, 
+  auth: VTigerAuthValue,
   elementType: string,
   defaultValue: Record<string, unknown>,
   skipMandatory = false
@@ -519,13 +531,6 @@ export const generateElementFields = async (
         required: !skipMandatory ? field.mandatory : false,
       };
 
-      if ([
-        'modifiedtime', 'createdtime', 
-        'modifiedby', 'created_user_id'
-      ].includes(field.name)) {
-        return
-      }
-
       if (
         ['string', 'text', 'mediumtext', 'phone', 'url', 'email'].includes(
           field.type.name
@@ -542,9 +547,7 @@ export const generateElementFields = async (
             defaultValue: defaultValue?.[field.name] as string,
           });
         }
-      } else if (
-        ['picklist', 'reference', 'owner'].includes(field.type.name)
-      ) {
+      } else if (['picklist', 'reference', 'owner'].includes(field.type.name)) {
         let options: DropdownState<string>;
         if (field.type.name === 'picklist') {
           options = {
@@ -570,9 +573,7 @@ export const generateElementFields = async (
           defaultValue: defaultValue?.[field.name] as string,
           options,
         });
-      } else if (
-        ['double', 'integer', 'currency'].includes(field.type.name)
-      ) {
+      } else if (['double', 'integer', 'currency'].includes(field.type.name)) {
         fields[field.name] = Property.Number({
           ...params,
           defaultValue: defaultValue?.[field.name] as number,
@@ -582,7 +583,7 @@ export const generateElementFields = async (
           displayName: field.label,
           description: `The fields to fill in the object type ${elementType}`,
           required: !skipMandatory ? field.mandatory : false,
-          defaultValue: defaultValue?.[field.name] as boolean
+          defaultValue: defaultValue?.[field.name] as boolean,
         });
       } else if (['date', 'datetime', 'time'].includes(field.type.name)) {
         fields[field.name] = Property.DateTime({
@@ -595,11 +596,21 @@ export const generateElementFields = async (
     };
 
     for (const field of describe_response.body.result.fields) {
-      if (field.name === 'id') continue;
+      if (
+        [
+          'id',
+          'modifiedtime',
+          'createdtime',
+          'modifiedby',
+          'created_user_id',
+        ].includes(field.name)
+      ) {
+        continue;
+      }
 
       await generateField(field);
     }
   }
 
   return fields;
-}
+};

@@ -1,7 +1,4 @@
-import {
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework';
 import { vtigerAuth } from '../..';
 import {
   Operation,
@@ -22,33 +19,39 @@ export const queryRecords = createAction({
   props: {
     query: Property.LongText({
       displayName: 'Query',
-      description: 'Enter the query statement, e.g. SELECT count(*) FROM Contacts;',
+      description:
+        'Enter the query statement, e.g. SELECT count(*) FROM Contacts;',
       required: true,
-    })
+    }),
   },
   async run({ propsValue, auth }) {
     const vtigerInstance = await instanceLogin(
       auth.instance_url,
       auth.username,
       auth.password
-    )
-    if (vtigerInstance === null) return
+    );
+    if (vtigerInstance === null) return;
 
-    const response = await httpClient.sendRequest<{ success: boolean; result: Record<string, unknown>[]}>(prepareHttpRequest(
-      auth.instance_url,
-      vtigerInstance.sessionId ?? vtigerInstance.sessionName,
-      'query' as Operation,
-      { query: propsValue.query }
-    ))
+    const response = await httpClient.sendRequest<{
+      success: boolean;
+      result: Record<string, unknown>[];
+    }>(
+      prepareHttpRequest(
+        auth.instance_url,
+        vtigerInstance.sessionId ?? vtigerInstance.sessionName,
+        'query' as Operation,
+        { query: propsValue.query }
+      )
+    );
 
     if (response.body.success) {
-      return response.body.result
+      return response.body.result;
     } else {
-      console.debug(response)
-      
+      console.debug(response);
+
       return {
-        error: 'Unexpected outcome!'
-      }
+        error: 'Unexpected outcome!',
+      };
     }
-  }
+  },
 });
