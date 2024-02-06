@@ -1,13 +1,14 @@
 import {
   PiecePropValueSchema,
+  Property,
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
-import { v4 as uuid } from 'uuid';
 import { googleSheetsAuth } from '../..';
 import { columnToLabel, googleSheetsCommon } from '../common/common';
+import { nanoid } from 'nanoid';
 
 export const newRowAddedTrigger = createTrigger({
   auth: googleSheetsAuth,
@@ -15,6 +16,9 @@ export const newRowAddedTrigger = createTrigger({
   displayName: 'New Row Added (Instant)',
   description: 'Triggers when a new row is added to bottom of a spreadsheet.',
   props: {
+    info: Property.MarkDown({
+      value: 'This trigger is in beta mode, Please report any issues.'
+    }),
     spreadsheet_id: googleSheetsCommon.spreadsheet_id,
     sheet_id: googleSheetsCommon.sheet_id,
   },
@@ -182,7 +186,7 @@ async function createFileNotification(
   const drive = google.drive({ version: 'v3', auth: authClient });
 
   // create unique UUID for channel
-  const channelId = uuid();
+  const channelId = nanoid();
   return await drive.files.watch({
     fileId: fileId,
     requestBody: {
