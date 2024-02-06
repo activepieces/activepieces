@@ -1,4 +1,4 @@
-import { ApFlagId, PlatformRole, isNil } from '@activepieces/shared'
+import { ApFlagId, isNil } from '@activepieces/shared'
 import { FlagsServiceHooks } from '../../flags/flags.hooks'
 import { apperanceHelper } from '../helper/apperance-helper'
 import { platformService } from '../platform/platform.service'
@@ -22,6 +22,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
         modifiedFlags[ApFlagId.EMAIL_AUTH_ENABLED] = platform.emailAuthEnabled
         const isCustomerPlatform = !flagService.isCloudPlatform(platformId)
         if (isCustomerPlatform) {
+            modifiedFlags[ApFlagId.SHOW_PLATFORM_DEMO] = false
             modifiedFlags[ApFlagId.THEME] = await apperanceHelper.getTheme({ platformId })
             modifiedFlags[ApFlagId.SHOW_COMMUNITY] = false
             modifiedFlags[ApFlagId.SHOW_DOCS] = false
@@ -39,7 +40,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             modifiedFlags[ApFlagId.PRIVACY_POLICY_URL] = platform.privacyPolicyUrl
             modifiedFlags[ApFlagId.TERMS_OF_SERVICE_URL] = platform.termsOfServiceUrl
             modifiedFlags[ApFlagId.OWN_AUTH2_ENABLED] = false
-            modifiedFlags[ApFlagId.SHOW_PLATFORM] = request.principal.platform?.role === PlatformRole.OWNER
+            modifiedFlags[ApFlagId.SHOW_PLATFORM_DEMO] = false
         }
         return modifiedFlags
     },

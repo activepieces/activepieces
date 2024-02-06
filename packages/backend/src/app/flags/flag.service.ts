@@ -37,7 +37,7 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.SHOW_PLATFORM,
+                id: ApFlagId.SHOW_PLATFORM_DEMO,
                 value: true,
                 created,
                 updated,
