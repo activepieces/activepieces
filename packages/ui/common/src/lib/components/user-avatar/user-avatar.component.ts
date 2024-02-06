@@ -62,7 +62,7 @@ export class UserAvatarComponent implements OnInit {
     this.selectedLanguage =
       this.localesService.getCurrentLanguageFromLocalStorageOrDefault();
     this.showPlatform$ = this.flagService
-      .isFlagEnabled(ApFlagId.SHOW_PLATFORM_DEMO)
+      .isFlagEnabled(ApFlagId.SHOW_PLATFORM)
       .pipe(
         map((isDemo) => {
           return isDemo || this.authenticationService.isPlatformOwner();

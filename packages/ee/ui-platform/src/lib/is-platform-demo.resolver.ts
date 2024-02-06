@@ -6,5 +6,5 @@ import { Observable } from 'rxjs';
 export const PLATFORM_DEMO_RESOLVER_KEY = 'platformDemo';
 export const isPlatformDemoResolver: ResolveFn<Observable<boolean>> = () => {
   const flagService: FlagService = inject(FlagService);
-  return flagService.isFlagEnabled(ApFlagId.SHOW_PLATFORM_DEMO);
+  return flagService.isFlagEnabled(ApFlagId.SHOW_PLATFORM);
 };

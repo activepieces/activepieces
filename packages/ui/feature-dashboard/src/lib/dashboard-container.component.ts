@@ -20,6 +20,7 @@ export class DashboardContainerComponent {
   isEmbedded$: Observable<boolean>;
   showSidnav$: Observable<boolean>;
   isInPlatformRoute$: Observable<boolean>;
+  showPlatform$: Observable<boolean>;
   currentProject$: Observable<Project>;
   showPoweredByAp$: Observable<boolean>;
   constructor(
@@ -28,6 +29,7 @@ export class DashboardContainerComponent {
     private dashboardService: DashboardService,
     public router: Router
   ) {
+    this.showPlatform$ = this.flagService.isFlagEnabled(ApFlagId.SHOW_PLATFORM);
     this.showPoweredByAp$ = combineLatest({
       showPoweredByAp: this.flagService.isFlagEnabled(
         ApFlagId.SHOW_POWERED_BY_AP
