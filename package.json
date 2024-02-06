@@ -106,7 +106,7 @@
     "google-auth-library": "8.9.0",
     "googleapis": "129.0.0",
     "http-status-codes": "2.2.0",
-    "imap": "0.8.19",
+    "imap": "0.8.17",
     "import-fresh": "3.3.0",
     "ioredis": "5.3.2",
     "is-base64": "1.1.0",
@@ -180,7 +180,7 @@
     "zone.js": "0.13.1"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "16.2.4",
+    "@angular-devkit/build-angular": "16.2.12",
     "@angular-devkit/core": "16.2.4",
     "@angular-devkit/schematics": "16.2.4",
     "@angular-eslint/builder": "15.2.1",
@@ -275,8 +275,8 @@
     "ts-node": "10.9.1",
     "turbowatch": "2.29.4",
     "typescript": "5.1.6",
-    "verdaccio": "5.26.1",
-    "wait-on": "7.0.1",
+    "verdaccio": "5.29.0",
+    "wait-on": "7.2.0",
     "webpack-ignore-dynamic-require": "1.0.0"
   },
   "nx": {
