@@ -14,6 +14,7 @@ import { insertRowAction } from './lib/actions/insert-row.action';
 import { updateRowAction } from './lib/actions/update-row';
 import { googleSheetsCommon } from './lib/common/common';
 import { readNewRows } from './lib/triggers/new-row-added';
+import { newRowAddedTrigger } from './lib/triggers/new-row-added-webhook';
 
 export const googleSheetsAuth = PieceAuth.OAuth2({
   description: '',
@@ -37,6 +38,7 @@ export const googleSheets = createPiece({
     'Shay Punter',
     'Abdallah-Alwarawreh',
     'Salem-Alaa',
+    'kishanprmr',
   ],
   actions: [
     insertRowAction,
@@ -59,6 +61,6 @@ export const googleSheets = createPiece({
     }),
   ],
   displayName: 'Google Sheets',
-  triggers: [readNewRows],
+  triggers: [readNewRows, newRowAddedTrigger],
   auth: googleSheetsAuth,
 });
