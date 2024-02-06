@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import sharp from 'sharp';
+import jimp from 'jimp';
 
 export const cropImage = createAction({
   name: 'crop_image',
@@ -32,22 +32,16 @@ export const cropImage = createAction({
     }),
   },
   async run(context) {
-    const croppedImageBuffer = await sharp(context.propsValue.image.data)
-    .extract({
-      left: context.propsValue.left,
-      top: context.propsValue.top,
-      width: context.propsValue.width,
-      height: context.propsValue.height
-    })
-    .toBuffer();
-
-    const format = (await sharp(context.propsValue.image.data).metadata()).format;
+    const image = await jimp.read(context.propsValue.image.data);
+    await image.crop(context.propsValue.left, context.propsValue.top, context.propsValue.width, context.propsValue.height);
+    
+    const imageBuffer = await image.getBufferAsync(image.getMIME());
 
     const imageReference = await context.files.write({
-      fileName: 'image.' + format,
-      data: croppedImageBuffer
+      fileName: 'image.' + image.getExtension(),
+      data: imageBuffer
     });
-  
+
     return imageReference;
   },
 });
