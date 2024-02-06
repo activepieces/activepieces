@@ -8,7 +8,7 @@ import { HttpClient } from '@angular/common/http';
 export class InterfacesService {
   constructor(private http: HttpClient) {}
 
-  submitInterface(webhookUrl: string, request: any): Observable<any> {
+  submitInterface(webhookUrl: string, request: FormData): Observable<any> {
     return this.http.post(webhookUrl, request);
   }
 }

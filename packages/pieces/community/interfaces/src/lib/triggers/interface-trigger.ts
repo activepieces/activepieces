@@ -35,6 +35,27 @@ export const interfaceTrigger = createTrigger({
         }),
       },
     }),
+    fileInputs: Property.Array({
+      displayName: 'File Inputs',
+      required: true,
+      properties: {
+        displayName: Property.ShortText({
+          displayName: 'Name',
+          description: 'The name will be used as the field label.',
+          required: true,
+        }),
+        description: Property.ShortText({
+          displayName: 'Description',
+          description: 'Description text that appears under the input field.',
+          required: false,
+        }),
+        required: Property.Checkbox({
+          displayName: 'Required',
+          description: 'If checked, the input field will be required.',
+          required: true,
+        }),
+      },
+    }),
     waitForResponse: Property.Checkbox({
       displayName: 'Wait for Response',
       description:
