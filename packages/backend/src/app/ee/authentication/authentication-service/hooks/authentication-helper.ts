@@ -7,6 +7,7 @@ import { projectService } from '../../../../project/project-service'
 import { getEdition } from '../../../../helper/secret-helper'
 import { userService } from '../../../../user/user-service'
 import { flagService } from '../../../../flags/flag.service'
+import { Provider } from '../../../../authentication/authentication-service/hooks/authentication-service-hooks'
 
 async function getProjectForUserOrThrow(user: User): Promise<Project> {
     const invitedProject = await getProjectMemberOrThrow(user)
@@ -108,12 +109,15 @@ async function assertUserIsInvitedToAnyProject({ email, platformId }: { email: s
     }
 }
 
-async function assertEmailAuthIsEnabled({ platformId }: { platformId: string | null }): Promise<void> {
+async function assertEmailAuthIsEnabled({ platformId, provider }: { platformId: string | null, provider: Provider }): Promise<void> {
     if (isNil(platformId)) {
         return
     }
     const platform = await platformService.getOneOrThrow(platformId)
     if (!platform.ssoEnabled) {
+        return
+    }
+    if (provider !== Provider.EMAIL) {
         return
     }
     if (!platform.emailAuthEnabled) {
