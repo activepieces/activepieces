@@ -1,5 +1,8 @@
 import { Component } from '@angular/core';
-import { EmbeddingService } from '@activepieces/ui/common';
+import {
+  AuthenticationService,
+  EmbeddingService,
+} from '@activepieces/ui/common';
 import {
   DashboardService,
   FlagService,
@@ -20,16 +23,23 @@ export class DashboardContainerComponent {
   isEmbedded$: Observable<boolean>;
   showSidnav$: Observable<boolean>;
   isInPlatformRoute$: Observable<boolean>;
-  showPlatform$: Observable<boolean>;
   currentProject$: Observable<Project>;
   showPoweredByAp$: Observable<boolean>;
+  showPlatform$: Observable<boolean>;
   constructor(
     private flagService: FlagService,
     private embeddedService: EmbeddingService,
     private dashboardService: DashboardService,
+    private authenticationService: AuthenticationService,
     public router: Router
   ) {
-    this.showPlatform$ = this.flagService.isFlagEnabled(ApFlagId.SHOW_PLATFORM);
+    this.showPlatform$ = this.flagService
+      .isFlagEnabled(ApFlagId.SHOW_PLATFORM_DEMO)
+      .pipe(
+        map((isDemo) => {
+          return isDemo || this.authenticationService.isPlatformOwner();
+        })
+      );
     this.showPoweredByAp$ = combineLatest({
       showPoweredByAp: this.flagService.isFlagEnabled(
         ApFlagId.SHOW_POWERED_BY_AP
