@@ -48,11 +48,7 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
   removeItemTooltip = $localize`Remove item`;
   updateValueOnChange$: Observable<void> = new Observable<void>();
 
-  createForm(
-    propertiesValues: Record<string, unknown> | string,
-    source: string
-  ) {
-    console.log('source:', source);
+  createForm(propertiesValues: Record<string, unknown> | string) {
     const properties = this.property.properties;
     if (
       typeof propertiesValues !== 'string' &&
@@ -65,15 +61,11 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
         this.fb
       );
 
-      console.log('controls:', controls);
-
       this.formArray.push(
         this.fb.group({
           ...controls,
         })
       );
-
-      console.log('this.formArray.value:', this.formArray.value);
     } else if (typeof propertiesValues === 'string') {
       this.formArray.push(
         new FormControl<string>(propertiesValues, { nonNullable: true })
@@ -113,7 +105,7 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
       }
 
       this.formArray.clear();
-      values.forEach((v) => this.createForm(v, 'writeValue'));
+      values.forEach(this.createForm);
       this.formArray.markAllAsTouched();
       this.cd.markForCheck();
     }
@@ -134,11 +126,11 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
   }
   addValue() {
     if (this.isAnArrayOfObjects()) {
-      this.createForm({}, 'addValue');
+      this.createForm({});
       this.formArray.markAllAsTouched();
       this.cd.markForCheck();
     } else {
-      this.createForm('', 'addValue');
+      this.createForm('');
     }
   }
 
