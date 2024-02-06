@@ -137,6 +137,24 @@ export const newRowAddedTrigger = createTrigger({
       );
     }
   },
+  async test(context) {
+    const { spreadsheet_id, sheet_id } = context.propsValue;
+    const sheetName = await getWorkSheetName(
+      context.auth,
+      spreadsheet_id,
+      sheet_id
+    );
+    const currentSheetValues = await getWorkSheetValues(
+      context.auth,
+      spreadsheet_id,
+      sheetName
+    );
+
+    // transform row values
+    const transformedRowValues = transformWorkSheetValues(currentSheetValues, 0).slice(-5).reverse();
+
+    return transformedRowValues;
+  },
   sampleData: {},
 });
 

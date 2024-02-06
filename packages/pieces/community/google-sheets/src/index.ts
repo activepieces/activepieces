@@ -14,7 +14,6 @@ import { insertRowAction } from './lib/actions/insert-row.action';
 import { updateRowAction } from './lib/actions/update-row';
 import { googleSheetsCommon } from './lib/common/common';
 import { readNewRows } from './lib/triggers/new-row-added';
-import { readNewRows } from './lib/triggers/new-row-added';
 import { newRowAddedTrigger } from './lib/triggers/new-row-added-at-bottom';
 
 export const googleSheetsAuth = PieceAuth.OAuth2({
