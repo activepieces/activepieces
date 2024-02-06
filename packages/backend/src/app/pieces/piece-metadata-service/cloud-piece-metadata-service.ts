@@ -3,7 +3,6 @@ import { PieceMetadataService } from './piece-metadata-service'
 import { AllPiecesStats, pieceStatsService } from './piece-stats-service'
 import { StatusCodes } from 'http-status-codes'
 import { ActivepiecesError, EXACT_VERSION_PATTERN, ErrorCode } from '@activepieces/shared'
-import { pieceMetadataServiceHooks } from './hooks'
 
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 
@@ -24,16 +23,24 @@ const handleHttpErrors = async (response: Response): Promise<void> => {
 
 export const CloudPieceMetadataService = (): PieceMetadataService => {
     return {
-        async list({ release, platformId, includeHidden }): Promise<PieceMetadataModelSummary[]> {
-            const response = await fetch(`${CLOUD_API_URL}?release=${release}`)
+        async list({ release, searchQuery, categories }): Promise<PieceMetadataModelSummary[]> {
+            const queryParams = new URLSearchParams()
+            queryParams.append('release', release)
+            if (searchQuery) {
+                queryParams.append('searchQuery', searchQuery)
+            }
+            if (categories) {
+                for (const category of categories) {
+                    queryParams.append('categories', category)
+                }
+            }
+
+            const url = `${CLOUD_API_URL}?${queryParams.toString()}`
+            const response = await fetch(url)
 
             await handleHttpErrors(response)
 
-            return pieceMetadataServiceHooks.get().filterPieces({
-                includeHidden,
-                pieces: (await response.json() as PieceMetadataModelSummary[]),
-                platformId,
-            })
+            return await response.json() as PieceMetadataModelSummary[]
         },
 
         async getOrThrow({ name, version }): Promise<PieceMetadataModel> {

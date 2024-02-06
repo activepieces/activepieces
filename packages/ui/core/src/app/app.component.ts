@@ -38,7 +38,6 @@ import {
 } from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
 import { Platform } from '@activepieces/ee-shared';
-import { Socket } from 'ngx-socket-io';
 
 interface UpgradeNotificationMetaDataInLocalStorage {
   latestVersion: string;
@@ -58,7 +57,7 @@ export class AppComponent implements OnInit {
   loggedInUser$: Observable<User | undefined>;
   showUpgradeNotification$: Observable<boolean>;
   hideUpgradeNotification = false;
-  openCommandBar$: Observable<void>;
+  logoutOldTokens$: Observable<void>;
   loading$: Subject<boolean> = new Subject();
   importTemplate$: Observable<void>;
   loadingTheme$: BehaviorSubject<boolean> = new BehaviorSubject(true);
@@ -81,7 +80,6 @@ export class AppComponent implements OnInit {
     private embeddedService: EmbeddingService,
     private localesService: LocalesService,
     private platformService: PlatformService,
-    private socket: Socket,
     private builderService: FlowBuilderService
   ) {
     this.toggleLoading$ = this.builderService.loading$.pipe(
@@ -144,8 +142,6 @@ export class AppComponent implements OnInit {
         this.telemetryService.init(user);
       })
     );
-
-    this.socket.connect();
   }
 
   getUpgradeNotificationMetadataInLocalStorage() {

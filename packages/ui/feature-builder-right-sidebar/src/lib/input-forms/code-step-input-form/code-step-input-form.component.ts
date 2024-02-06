@@ -158,11 +158,30 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
         (result: {
           code: string;
           inputs: { key: string; value: unknown }[];
+          packages: { [key: string]: string }[];
         }) => {
           if (result) {
+            let packageJson = this.codeStepForm.value.sourceCode!.packageJson;
+            if (result.packages.length > 0) {
+              try {
+                const packageJsonObj = JSON.parse(packageJson);
+                if (!packageJsonObj.dependencies) {
+                  packageJsonObj.dependencies = {};
+                }
+                result.packages.forEach((pkg) => {
+                  packageJsonObj.dependencies = {
+                    ...packageJsonObj.dependencies,
+                    ...pkg,
+                  };
+                });
+                packageJson = JSON.stringify(packageJsonObj, null, 2);
+              } catch (e) {
+                console.error('Invalid package.json');
+              }
+            }
             this.codeStepForm.controls.sourceCode.setValue({
               code: result.code as string,
-              packageJson: this.codeStepForm.value.sourceCode!.packageJson,
+              packageJson,
             });
             const inputs: Record<string, unknown> = {};
             result.inputs.forEach((input) => {

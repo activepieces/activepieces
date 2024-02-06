@@ -145,7 +145,6 @@
 <ng-container *ngFor="let obs$ of flowsUpdateStatusRequest$ | keyvalue">
   <ng-container *ngIf="obs$.value | async"></ng-container>
 </ng-container>
-
 <ng-container *ngIf="showAllFlows$ | async"></ng-container>
 <ng-container *ngIf="duplicateFlow$ | async"></ng-container>
 <ng-container *ngIf="downloadTemplate$ | async"></ng-container>

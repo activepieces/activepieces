@@ -1,4 +1,6 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { sendSMS } from './lib/actions/send-sms';
 
 export const contigAuth = PieceAuth.SecretText({
@@ -14,6 +16,16 @@ export const contiguity = createPiece({
   minimumSupportedRelease: '0.7.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/contiguity.png',
   authors: ['Owlcept'],
-  actions: [sendSMS],
+  categories: [PieceCategory.MARKETING],
+  actions: [
+    sendSMS,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.contiguity.com/v1', // Replace with the actual base URL
+      auth: contigAuth,
+      authMapping: (auth) => ({
+        authorization: `Token ${auth}`,
+      }),
+    }),
+  ],
   triggers: [],
 });

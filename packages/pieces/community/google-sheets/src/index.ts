@@ -4,6 +4,7 @@ import {
   PieceAuth,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { clearSheetAction } from './lib/actions/clear-sheet';
 import { deleteRowAction } from './lib/actions/delete-row.action';
 import { findRowByNumAction } from './lib/actions/find-row-by-num';
@@ -12,6 +13,7 @@ import { getRowsAction } from './lib/actions/get-rows';
 import { insertRowAction } from './lib/actions/insert-row.action';
 import { updateRowAction } from './lib/actions/update-row';
 import { googleSheetsCommon } from './lib/common/common';
+import { readNewRows } from './lib/triggers/new-row-added';
 import { readNewRows } from './lib/triggers/new-row-added';
 import { newRowAddedTrigger } from './lib/triggers/new-row-added-at-bottom';
 
@@ -30,6 +32,7 @@ export const googleSheetsAuth = PieceAuth.OAuth2({
 export const googleSheets = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-sheets.png',
+  categories: [PieceCategory.PRODUCTIVITY],
   authors: [
     'abuaboud',
     'AbdulTheActivepiecer',

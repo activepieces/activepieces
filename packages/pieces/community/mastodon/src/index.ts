@@ -1,8 +1,10 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   PieceAuth,
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { postStatus } from './lib/actions/post-status';
 
 const markdownDescription = `
@@ -39,9 +41,22 @@ export const mastodon = createPiece({
   displayName: 'Mastodon',
 
   logoUrl: 'https://cdn.activepieces.com/pieces/mastodon.png',
+  categories: [PieceCategory.COMMUNICATION],
   minimumSupportedRelease: '0.5.0',
   authors: ['abuaboud'],
   auth: mastodonAuth,
-  actions: [postStatus],
+  actions: [
+    postStatus,
+    createCustomApiCallAction({
+      baseUrl: (auth) =>
+        (auth as { base_url: string }).base_url.replace(/\/$/, '') + '/api/v1',
+      auth: mastodonAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${
+          (auth as { access_token: string }).access_token
+        }`,
+      }),
+    }),
+  ],
   triggers: [],
 });

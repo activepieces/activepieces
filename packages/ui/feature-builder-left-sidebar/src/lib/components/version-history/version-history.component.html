@@ -1,0 +1,76 @@
+<ap-sidebar-header (closeClicked)="closeSidebar()" [title]="sideBarDisplayName"></ap-sidebar-header>
+<ng-container *ngIf="flowVersions$ | async as flowVersions; else loading">
+    <ng-container *ngIf="!rewritingDraft; else loading">
+        <div class="ap-flex ap-flex-col ap-gap-4 ap-p-5">
+            <ng-container *ngFor="let version of flowVersions.data;let idx=index">
+                <div class="ap-flex  ap-items-center  ">
+
+                    <div>
+                        <div class="ap-text-body">{{version.created |date:'mediumDate'
+                            }}, {{version.created |date:'shortTime' }} </div>
+                        <div class=" ap-text-description ap-typography-subtitle-2 ">Version
+                            #{{flowVersions.data.length - idx}}</div>
+                    </div>
+
+                    <div class="ap-flex-grow"></div>
+                    <ng-container *ngIf="version.id === (viewedVersion$| async)?.id">
+                        <div class="ap-flex ap-items-center ap-justify-center ap-w-[2.8125rem]">
+                            <svg-icon src="assets/img/custom/eye.svg" class="ap-w-[20px] ap-h-[20px] ap-fill-primary"
+                                i18n-matTooltip matTooltip="Viewing" [applyClass]="true"></svg-icon>
+                        </div>
+                    </ng-container>
+
+                    <ng-container
+                        *ngIf="(draftVersionId$| async) === version.id && (publishedVersion$| async)?.id !== version.id">
+                        <div class="ap-flex ap-items-center ap-justify-center ap-w-[2.8125rem]">
+                            <svg-icon src="assets/img/custom/draft.svg" class="ap-w-[20px] ap-h-[20px] ap-fill-warn"
+                                [applyClass]="true" i18n-matTooltip matTooltip="Draft"></svg-icon>
+                        </div>
+                    </ng-container>
+
+                    <ng-container *ngIf="(publishedVersion$| async)?.id === version.id">
+                        <div class="ap-flex ap-items-center ap-justify-center ap-w-[2.8125rem]">
+                            <svg-icon src="assets/img/custom/published.svg"
+                                class="ap-w-[20px] ap-h-[20px] ap-fill-success-light" i18n-matTooltip
+                                matTooltip="Published"></svg-icon>
+                        </div>
+
+                    </ng-container>
+
+
+                    <button mat-icon-button (click)="$event.stopImmediatePropagation()" [matMenuTriggerFor]="menu">
+                        <mat-icon>more_vert</mat-icon>
+                    </button>
+                    <mat-menu #menu="matMenu" xPosition="before">
+
+                        <button mat-menu-item (click)="displayVersion(version)">
+                            <div class="ap-flex ap-gap-2 ap-items-center" i18n>
+                                <svg-icon src="assets/img/custom/eye.svg" class="ap-w-[20px] ap-h-[20px]"
+                                    [applyClass]="true"></svg-icon> View
+                            </div>
+                        </button>
+                        <button *ngIf="(draftVersionId$| async) !== version.id" mat-menu-item
+                            (click)="useAsDraft(version,flowVersions.data.length - idx)">
+                            <div class="ap-flex ap-gap-2 ap-items-center" i18n>
+                                <svg-icon src="assets/img/custom/pencil-underline.svg" class="ap-w-[20px] ap-h-[20px]"
+                                    [applyClass]="true"></svg-icon> Use as draft
+                            </div>
+                        </button>
+
+                    </mat-menu>
+
+                </div>
+
+            </ng-container>
+        </div>
+    </ng-container>
+
+</ng-container>
+<ng-template #loading>
+    <div class="ap-flex ap-items-center ap-justify-center ap-h-[calc(100vh-204px)]">
+        <ap-loading-icon></ap-loading-icon>
+    </div>
+</ng-template>
+
+<ng-container *ngIf="useAsDraft$ | async"></ng-container>
+<ng-container *ngIf="displayVersion$ | async"></ng-container>

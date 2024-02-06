@@ -1,4 +1,10 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import {
+  OAuth2PropertyValue,
+  PieceAuth,
+  createPiece,
+} from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { typeformNewSubmission } from './lib/trigger/new-submission';
 
 export const typeformAuth = PieceAuth.OAuth2({
@@ -12,7 +18,16 @@ export const typeform = createPiece({
   displayName: 'Typeform',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/typeform.png',
-  actions: [],
+  categories: [PieceCategory.FORMS_AND_SURVEYS],
+  actions: [
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.typeform.com',
+      auth: typeformAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      }),
+    }),
+  ],
   auth: typeformAuth,
   authors: ['ShahedAlMashni'],
   triggers: [typeformNewSubmission],

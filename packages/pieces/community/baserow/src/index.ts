@@ -1,8 +1,10 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   createPiece,
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { createRowAction } from './lib/actions/create-row';
 import { deleteRowAction } from './lib/actions/delete-row';
 import { getRowAction } from './lib/actions/get-row';
@@ -35,6 +37,7 @@ export const baserow = createPiece({
   auth: baserowAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/baserow.png',
+  categories: [PieceCategory.PRODUCTIVITY],
   authors: ['kishanprmr'],
   actions: [
     createRowAction,
@@ -42,6 +45,15 @@ export const baserow = createPiece({
     getRowAction,
     listRowsAction,
     updateRowAction,
+    createCustomApiCallAction({
+      baseUrl: (auth) => {
+        return (auth as { apiUrl: string }).apiUrl;
+      },
+      auth: baserowAuth,
+      authMapping: (auth) => ({
+        Authorization: `Token ${(auth as { token: string }).token}`,
+      }),
+    }),
   ],
   triggers: [],
 });

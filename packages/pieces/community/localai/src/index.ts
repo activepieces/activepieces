@@ -1,8 +1,10 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   PieceAuth,
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { askLocalAI } from './lib/actions/send-prompt';
 
 export const localaiAuth = PieceAuth.CustomAuth({
@@ -25,8 +27,20 @@ export const openai = createPiece({
   description: 'Use LocalAi to generate text',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/localai.jpeg',
+  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   auth: localaiAuth,
-  actions: [askLocalAI],
+  actions: [
+    askLocalAI,
+    createCustomApiCallAction({
+      baseUrl: (auth) => (auth as { base_url: string }).base_url,
+      auth: localaiAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${
+          (auth as { access_token: string }).access_token || ''
+        }`,
+      }),
+    }),
+  ],
   authors: ['hboujrida'],
   triggers: [],
 });

@@ -1,4 +1,6 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { dripAddSubscriberToCampaign } from './lib/actions/add-subscriber-to-campaign.action';
 import { dripApplyTagToSubscriber } from './lib/actions/apply-tag-to-subscriber.action';
 import { dripUpsertSubscriberAction } from './lib/actions/upsert-subscriber.action';
@@ -16,11 +18,21 @@ export const drip = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/drip.png',
   authors: ['AbdulTheActivePiecer'],
+  categories: [PieceCategory.MARKETING],
   auth: dripAuth,
   actions: [
     dripApplyTagToSubscriber,
     dripAddSubscriberToCampaign,
     dripUpsertSubscriberAction,
+    createCustomApiCallAction({
+      baseUrl: () => `https://api.getdrip.com/v2/`,
+      auth: dripAuth,
+      authMapping: (auth) => ({
+        Authorization: `Basic ${Buffer.from(auth as string).toString(
+          'base64'
+        )}`,
+      }),
+    }),
   ],
   triggers: [dripNewSubscriberEvent, dripTagAppliedEvent],
 });

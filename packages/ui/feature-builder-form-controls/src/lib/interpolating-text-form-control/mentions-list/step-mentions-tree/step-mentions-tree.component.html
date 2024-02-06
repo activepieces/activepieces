@@ -6,13 +6,13 @@
 
   <mat-tree-node apTrackHover #treeNodeHoverTracker="hoverTrackerDirective"
     [style.display]="markedNodesToShow?.get(node.propertyPath) || (searchContainsStepDisplayName$|async) ? '':'none'"
-    #treeNode="matTreeNode" *matTreeNodeDef="let node; ">
+    #treeNode="matTreeNode" *matTreeNodeDef="let node;">
 
     <div matTreeNodeToggle mat-menu-item (click)="mentionTreeNodeClicked(node)" class=" ap-min-w-[0] ap-relative"
       (keyup.enter)="mentionTreeNodeClicked(node)"
       [style.padding-left]="treeNode.level === 0? FIRST_LEVEL_PADDING_IN_MENTIONS_LIST + 'px': (treeNode.level * CHEVRON_SPACE_IN_MENTIONS_LIST + FIRST_LEVEL_PADDING_IN_MENTIONS_LIST)+'px'">
       <div class=" ap-flex ap-gap-1 ap-overflow-x-hidden  ap-min-h-[27px]">
-        {{node.key}}<span class="ap-text-primary ap-truncate  ap-flex-grow ap-transition-all">:
+        {{node.key}} <span class="ap-text-primary ap-truncate  ap-flex-grow ap-transition-all">:
           <span class="ap-transition-all" [matTooltip]="node.value">{{node.value}}
           </span></span>
         <ap-button class="ap-absolute ap-right-[10px]" *ngIf="treeNodeHoverTracker.isHovered" btnColor="primary"
@@ -27,7 +27,7 @@
 
 
   <!-- This is the tree node template for expandable nodes -->
-  <mat-nested-tree-node *matTreeNodeDef="let node; when: hasChild" #nestedTreeNode="matNestedTreeNode"
+  <mat-tree-node *matTreeNodeDef="let node; when: hasChild" #nestedTreeNode="matTreeNode"
     [style.display]="markedNodesToShow?.get(node.propertyPath) || (searchContainsStepDisplayName$|async) ? '':'none'">
     <div matTreeNodeToggle apTrackHover #nestedTreeNodeHoverTracker="hoverTrackerDirective"
       (keyup.enter)="treeControl.isExpanded(node)? treeControl.collapse(node): treeControl.expand(node)"
@@ -35,11 +35,11 @@
       [style.padding-left]="nestedTreeNode.level === 0? FIRST_LEVEL_PADDING_IN_MENTIONS_LIST + 'px': (nestedTreeNode.level * CHEVRON_SPACE_IN_MENTIONS_LIST + FIRST_LEVEL_PADDING_IN_MENTIONS_LIST)+'px'"
       mat-menu-item>
 
-
       <div class="ap-truncate" [innerHTML]="node.key" [matTooltip]="node.key">
       </div>
-      <div class=" ap-flex-grow "></div>
-      <ap-button *ngIf="nestedTreeNodeHoverTracker.isHovered" class="ap-absolute ap-right-[50px]"
+
+      <div class="ap-flex-grow "></div>
+      <ap-button *ngIf="nestedTreeNodeHoverTracker.isHovered && !node.isSlice" class="ap-absolute ap-right-[50px]"
         [buttonIsInsideAutocomplete]="true" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
         (click)="$event.stopPropagation(); mentionTreeNodeClicked(node)" i18n>Insert
       </ap-button>
@@ -54,7 +54,7 @@
     <div [class.step-result-tree-invisible]="!treeControl.isExpanded(node)" role="group">
       <ng-container matTreeNodeOutlet></ng-container>
     </div>
-  </mat-nested-tree-node>
+  </mat-tree-node>
 </mat-tree>
 
 <ng-container *ngIf="search$ | async"></ng-container>

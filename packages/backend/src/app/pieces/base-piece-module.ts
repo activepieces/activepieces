@@ -34,6 +34,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             projectId: req.principal.projectId,
             platformId: req.principal.platform?.id,
             edition,
+            categories: req.query.categories,
         })
         return pieceMetadataSummary
     })
@@ -73,7 +74,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
 
         const decodedName = decodeURIComponent(name)
         return pieceMetadataService.getOrThrow({
-            projectId: req.principal.projectId,
+            projectId: req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.projectId,
             name: decodedName,
             version,
         })

@@ -152,6 +152,7 @@ const consumeRepeatingJob = async (data: RepeatingJobData): Promise<void> => {
                     projectId: data.projectId,
                     flowVersion,
                     simulate: false,
+                    ignoreError: true,
                 })
             }
 
