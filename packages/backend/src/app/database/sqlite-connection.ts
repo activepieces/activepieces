@@ -31,6 +31,7 @@ import { UpdateStatusInUserSqlite1703713027818 } from './migration/sqlite/170371
 import { RenameAppNameToPieceNameSqlite1703713475755 } from './migration/sqlite/1703713475755-RenameAppNameToPieceNameSqlite'
 import { AddVerifiedAndChangeStatusSqlite1703768553820 } from './migration/sqlite/1703768553820-AddVerifiedAndChangeStatusSqlite'
 import { AddTriggerTestStrategy1707087022764 } from './migration/common/1707087022764-add-trigger-test-strategy'
+import { AddCategoriesToPieceMetadata1707229986819 } from './migration/sqlite/1707229986819-AddCategoriesToPieceMetadata'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(SystemProp.CONFIG_PATH)
@@ -78,6 +79,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RenameAppNameToPieceNameSqlite1703713475755,
         AddVerifiedAndChangeStatusSqlite1703768553820,
         AddTriggerTestStrategy1707087022764,
+        AddCategoriesToPieceMetadata1707229986819,
     ]
     const edition = getEdition()
     if (edition !== ApEdition.COMMUNITY) {

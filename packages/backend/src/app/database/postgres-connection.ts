@@ -100,6 +100,7 @@ import { AddGitSyncEnabledToPlatform1704636362533 } from './migration/postgres/1
 import { AddGitRepoMigrationPostgres1704503804056 } from './migration/postgres/1704503804056-AddGitRepoMigrationPostgres'
 import { RemoveUniqueonAppNameAppCredentials1705586178452 } from './migration/postgres/1705586178452-RemoveUniqueonAppNameAppCredentials'
 import { AddTriggerTestStrategy1707087022764 } from './migration/common/1707087022764-add-trigger-test-strategy'
+import { AddCategoriesToPieceMetadataPostgres1707231704973 } from './migration/postgres/1707231704973-AddCategoriesToPieceMetadataPostgres'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -170,6 +171,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RenameAppNameToPieceName1703711596105,
         AddVerifiedAndChangeStatus1703769034497,
         AddTriggerTestStrategy1707087022764,
+        AddCategoriesToPieceMetadataPostgres1707231704973,
     ]
 
     const edition = getEdition()

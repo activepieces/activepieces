@@ -1,7 +1,7 @@
 import { EntitySchema } from 'typeorm'
 import { PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
 import { ApId, BaseModel, FileId, PackageType, PieceType, Project, ProjectId } from '@activepieces/shared'
-import { ApIdSchema, BaseColumnSchemaPart, COLLATION, JSON_COLUMN_TYPE } from '../database/database-common'
+import { ARRAY_COLUMN_TYPE, ApIdSchema, BaseColumnSchemaPart, COLLATION, JSON_COLUMN_TYPE, isPostgres } from '../database/database-common'
 
 type PiecePackageMetadata = {
     projectId?: ProjectId
@@ -76,6 +76,11 @@ export const PieceMetadataEntity = new EntitySchema<PieceMetadataSchema>({
         pieceType: {
             type: String,
             nullable: false,
+        },
+        categories: {
+            type: ARRAY_COLUMN_TYPE,
+            nullable: true,
+            array: isPostgres(),
         },
         packageType: {
             type: String,
