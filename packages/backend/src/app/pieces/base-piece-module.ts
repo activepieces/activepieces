@@ -35,6 +35,8 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             platformId: req.principal.platform?.id,
             edition,
             categories: req.query.categories,
+            sortBy: req.query.sortBy,
+            orderBy: req.query.orderBy,
         })
         return pieceMetadataSummary
     })
