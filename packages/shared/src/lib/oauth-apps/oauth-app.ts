@@ -1,5 +1,5 @@
-import { BaseModelSchema } from "@activepieces/shared";
 import { Static, Type } from "@sinclair/typebox";
+import { BaseModelSchema } from "../common";
 
 export const OAuthApp = Type.Object({
   ...BaseModelSchema,

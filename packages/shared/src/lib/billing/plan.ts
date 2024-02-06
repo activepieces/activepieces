@@ -1,6 +1,6 @@
-import { BaseModelSchema, Nullable } from "@activepieces/shared";
 import { ProjectUsage } from "./usage";
 import { Static, Type } from "@sinclair/typebox";
+import { BaseModelSchema, Nullable } from "../common";
 
 export type ProjectPlanId = string;
 

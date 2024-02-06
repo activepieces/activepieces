@@ -1,5 +1,6 @@
-import { ApId, BaseModelSchema } from "@activepieces/shared";
 import { Static, Type } from "@sinclair/typebox";
+import { BaseModelSchema } from "../common";
+import { ApId } from "../common/id-generator";
 
 export enum KeyAlgorithm {
     RSA = 'RSA',

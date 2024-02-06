@@ -1,5 +1,5 @@
-import { BaseModelSchema, Cursor } from "@activepieces/shared";
 import { Static, Type } from "@sinclair/typebox";
+import { BaseModelSchema } from "../common";
 
 export type ProjectUsageId = string;
 

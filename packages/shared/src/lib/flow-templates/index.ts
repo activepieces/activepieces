@@ -1,5 +1,5 @@
-import { FlowVersionTemplate, TemplateType } from "@activepieces/shared"
 import { Static, Type } from "@sinclair/typebox"
+import { FlowVersionTemplate, TemplateType } from "../flows/dto/flow-template-request"
 
 export const CreateFlowTemplateRequest = Type.Object({
    description:  Type.Optional(Type.String()),

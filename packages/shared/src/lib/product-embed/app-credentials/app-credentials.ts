@@ -1,4 +1,6 @@
-import { BaseModel, OAuth2GrantType, ProjectId } from "@activepieces/shared";
+import { OAuth2GrantType } from "../../app-connection/dto/upsert-app-connection-request"
+import { BaseModel } from "../../common"
+import { ProjectId } from "../../project/project"
 
 export type AppCredentialId = string;
 

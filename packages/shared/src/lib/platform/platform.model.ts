@@ -1,6 +1,7 @@
-import { ApId, BaseModelSchema, LocalesEnum } from "@activepieces/shared";
 import { Static, Type } from "@sinclair/typebox";
 import { FederatedAuthnProviderConfig, FederatedAuthnProviderConfigWithoutSensitiveData } from "../authn";
+import { BaseModelSchema, LocalesEnum } from "../common";
+import { ApId } from "../common/id-generator";
 
 export type PlatformId = ApId;
 

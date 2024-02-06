@@ -1,5 +1,6 @@
-import { ApId, BaseModelSchema } from "@activepieces/shared";
+import { BaseModelSchema } from "../common"
 import { Static, Type } from "@sinclair/typebox";
+import { ApId } from "../common/id-generator";
 
 export const ApiKey = Type.Object({
     ...BaseModelSchema,

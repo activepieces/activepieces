@@ -1,5 +1,5 @@
 import { Static, Type } from "@sinclair/typebox";
-import { NotificationStatus } from "@activepieces/shared";
+import { NotificationStatus } from "./project";
 
 export const UpdateProjectPlatformRequest = Type.Object({
     notifyStatus: Type.Enum(NotificationStatus),

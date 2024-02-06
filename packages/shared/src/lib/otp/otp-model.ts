@@ -1,6 +1,7 @@
 import { Static, Type } from '@sinclair/typebox';
-import { ApId, BaseModelSchema } from '@activepieces/shared';
+import { BaseModelSchema } from "../common"
 import { OtpType } from './otp-type';
+import { ApId } from "../common/id-generator";
 
 export type OtpId = ApId;
 

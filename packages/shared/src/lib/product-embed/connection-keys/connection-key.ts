@@ -1,4 +1,5 @@
-import { BaseModel, ProjectId } from "@activepieces/shared";
+import {ProjectId} from "../../project/project";
+import {BaseModel} from "../../common";
 
 export type ConnectionKeyId = string;
 

@@ -1,5 +1,5 @@
 import { Static, Type } from "@sinclair/typebox";
-import { BaseModelSchema } from "@activepieces/shared";
+import { BaseModelSchema } from "../common"
 
 export const GitRepo = Type.Object({
     ...BaseModelSchema,

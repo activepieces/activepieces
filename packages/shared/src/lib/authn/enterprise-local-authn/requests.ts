@@ -1,5 +1,8 @@
-import { ApId, SignUpRequest, UserStatus } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
+import { ApId } from '../../common/id-generator'
+import { SignUpRequest } from "../../authentication/dto/sign-up-request";
+import { UserStatus } from "../../user";
+
 
 export const VerifyEmailRequestBody = Type.Object({
     userId: ApId,
