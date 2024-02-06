@@ -1,7 +1,7 @@
 import {
     AuthenticationServiceHooks,
 } from '../../../../authentication/authentication-service/hooks/authentication-service-hooks'
-import { OtpType } from '@activepieces/ee-shared'
+import { OtpType } from '@activepieces/shared'
 import { otpService } from '../../../otp/otp-service'
 import { referralService } from '../../../referrals/referral.service'
 import { authenticationHelper } from './authentication-helper'

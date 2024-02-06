@@ -8,7 +8,7 @@ import {
   ListProjectMembersRequestQuery,
   ProjectMember,
   AddProjectMemberRequestBody,
-} from '@activepieces/ee-shared';
+} from '@activepieces/shared';
 import { SeekPage } from '@activepieces/shared';
 
 @Injectable({

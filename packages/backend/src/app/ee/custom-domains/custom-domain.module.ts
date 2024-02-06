@@ -1,4 +1,4 @@
-import { AddDomainRequest, ListCustomDomainsRequest } from '@activepieces/ee-shared'
+import { AddDomainRequest, ListCustomDomainsRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Static, Type } from '@fastify/type-provider-typebox'
 import { customDomainService } from './custom-domain.service'
 import { HttpStatusCode } from 'axios'

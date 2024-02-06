@@ -1,6 +1,6 @@
 import { EntitySchema } from 'typeorm'
 import { Project } from '@activepieces/shared'
-import { ProjectUsage } from '@activepieces/ee-shared'
+import { ProjectUsage } from '@activepieces/shared'
 import { ApIdSchema, BaseColumnSchemaPart, TIMESTAMP_COLUMN_TYPE } from '../../../database/database-common'
 
 export type ProjectUsageDatabaseEntity = Omit<ProjectUsage, 'consumedTasksToday' | 'activeFlows' | 'connections' | 'teamMembers'>

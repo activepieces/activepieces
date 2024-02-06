@@ -1,4 +1,4 @@
-import { SigningKey, SigningKeyId, PlatformId, AddSigningKeyResponse } from '@activepieces/ee-shared'
+import { SigningKey, SigningKeyId, PlatformId, AddSigningKeyResponse } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode, SeekPage, UserId, apId, isNil } from '@activepieces/shared'
 import { signingKeyGenerator } from './signing-key-generator'
 import { databaseConnection } from '../../database/database-connection'

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { AppOAuth2Settings } from '@activepieces/ee-shared';
+import { AppOAuth2Settings } from '@activepieces/shared';
 import { getRedrectUrl } from '../helper/helper';
 import { apId } from '@activepieces/shared';
 

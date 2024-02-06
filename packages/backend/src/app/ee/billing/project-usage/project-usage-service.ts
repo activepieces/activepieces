@@ -2,7 +2,7 @@ import {
     ProjectId,
     apId,
 } from '@activepieces/shared'
-import {  ProjectUsage } from '@activepieces/ee-shared'
+import {  ProjectUsage } from '@activepieces/shared'
 import { isNil } from 'lodash'
 import { logger } from '../../../helper/logger'
 import { ProjectUsageEntity, ProjectUsageSchema } from './project-usage.entity'

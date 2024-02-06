@@ -1,6 +1,6 @@
 import { FastifyPluginAsyncTypebox, Static, Type } from '@fastify/type-provider-typebox'
 import { oauthAppService } from './oauth-app.service'
-import { ListOAuth2AppRequest, OAuthApp, UpsertOAuth2AppRequest } from '@activepieces/ee-shared'
+import { ListOAuth2AppRequest, OAuthApp, UpsertOAuth2AppRequest } from '@activepieces/shared'
 import { SeekPage, assertNotNullOrUndefined } from '@activepieces/shared'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import { StatusCodes } from 'http-status-codes'

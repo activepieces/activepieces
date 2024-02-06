@@ -3,7 +3,7 @@ import { Observable, BehaviorSubject, tap, switchMap } from 'rxjs';
 import { combineLatest, of } from 'rxjs';
 import { Project } from '@activepieces/shared';
 import { PlatformProjectService } from '@activepieces/ui/common';
-import { ProjectWithUsageAndPlanResponse } from '@activepieces/ee-shared';
+import { ProjectWithUsageAndPlanResponse } from '@activepieces/shared';
 
 /**
  * Data source for the LogsTable view. This class should

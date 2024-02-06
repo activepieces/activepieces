@@ -2,7 +2,7 @@ import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { ApId, EndpointScope, PrincipalType, SeekPage, UserResponse, assertNotNullOrUndefined } from '@activepieces/shared'
 import { enterpriseUserService } from './enterprise-user-service'
 import { StatusCodes } from 'http-status-codes'
-import { UpdateUserRequestBody } from '@activepieces/ee-shared'
+import { UpdateUserRequestBody } from '@activepieces/shared'
 
 export const enterpriseUserController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListUsersRequest, async (req) => {

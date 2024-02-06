@@ -9,7 +9,7 @@ import {
   delay,
 } from 'rxjs';
 import { combineLatest } from 'rxjs';
-import { SigningKey } from '@activepieces/ee-shared';
+import { SigningKey } from '@activepieces/shared';
 import { SigningKeysService } from '../../service/signing-keys.service';
 
 /**

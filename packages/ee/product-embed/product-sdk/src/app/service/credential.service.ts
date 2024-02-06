@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { map, Observable, shareReplay } from 'rxjs';
 import { ProjectId, SeekPage } from '@activepieces/shared';
 import { getHost } from '../helper/helper';
-import { AppCredential } from '@activepieces/ee-shared';
+import { AppCredential } from '@activepieces/shared';
 
 @Injectable({
   providedIn: 'root',

@@ -9,7 +9,7 @@ import {
   delay,
 } from 'rxjs';
 import { combineLatest } from 'rxjs';
-import { ApiKeyResponseWithoutValue } from '@activepieces/ee-shared';
+import { ApiKeyResponseWithoutValue } from '@activepieces/shared';
 import { ApiKeysService } from '../../service/api-keys.service';
 
 /**

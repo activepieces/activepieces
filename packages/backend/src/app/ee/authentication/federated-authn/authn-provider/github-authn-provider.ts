@@ -2,7 +2,7 @@ import { ActivepiecesError, AuthenticationResponse, ErrorCode, assertNotNullOrUn
 import { AuthnProvider } from './authn-provider'
 import { authenticationService } from '../../../../authentication/authentication-service'
 import { flagService } from '../../../../flags/flag.service'
-import { Platform } from '@activepieces/ee-shared'
+import { Platform } from '@activepieces/shared'
 
 
 

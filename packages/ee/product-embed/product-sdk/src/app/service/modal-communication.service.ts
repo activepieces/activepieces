@@ -1,5 +1,5 @@
 import { AppConnection } from '@activepieces/shared';
-import { AppCredential } from '@activepieces/ee-shared';
+import { AppCredential } from '@activepieces/shared';
 import { DisableIntegrationModalComponent } from '../disable-integration-modal/disable-integration-modal.component';
 import { EnableIntegrationModalComponent } from '../enable-integration-modal/enable-integration-modal.component';
 import { Injectable } from '@angular/core';

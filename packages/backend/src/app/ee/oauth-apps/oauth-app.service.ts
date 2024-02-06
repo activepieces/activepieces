@@ -1,4 +1,4 @@
-import { ListOAuth2AppRequest, OAuthApp, UpsertOAuth2AppRequest } from '@activepieces/ee-shared'
+import { ListOAuth2AppRequest, OAuthApp, UpsertOAuth2AppRequest } from '@activepieces/shared'
 import { OAuthAppEntity, OAuthAppWithSecret } from './oauth-app.entity'
 import { databaseConnection } from '../../database/database-connection'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'

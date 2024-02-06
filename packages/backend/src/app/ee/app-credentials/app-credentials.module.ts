@@ -2,7 +2,7 @@ import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { ALL_PRINICPAL_TYPES, SeekPage } from '@activepieces/shared'
 import { appCredentialService } from './app-credentials.service'
-import { ListAppCredentialsRequest, UpsertAppCredentialRequest,  AppCredential, AppCredentialId, AppCredentialType } from '@activepieces/ee-shared'
+import { ListAppCredentialsRequest, UpsertAppCredentialRequest,  AppCredential, AppCredentialId, AppCredentialType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 
 export const appCredentialModule: FastifyPluginAsyncTypebox = async (app) => {

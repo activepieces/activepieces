@@ -2,7 +2,7 @@ import { ArrayContains, ArrayOverlap, Equal, ILike } from 'typeorm'
 import { databaseConnection } from '../../database/database-connection'
 import { ActivepiecesError, ListFlowTemplatesRequest, ErrorCode, FlowTemplate, SeekPage, isNil, apId, FlowVersionTemplate, flowHelper, TemplateType } from '@activepieces/shared'
 import { FlowTemplateEntity } from './flow-template.entity'
-import { CreateFlowTemplateRequest } from '@activepieces/ee-shared'
+import { CreateFlowTemplateRequest } from '@activepieces/shared'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 
 const templateRepo = databaseConnection.getRepository<FlowTemplate>(FlowTemplateEntity)

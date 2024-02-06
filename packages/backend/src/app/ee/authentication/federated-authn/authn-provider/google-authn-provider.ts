@@ -4,7 +4,7 @@ import { AuthnProvider } from './authn-provider'
 import { authenticationService } from '../../../../authentication/authentication-service'
 import { jwtUtils, JwtSignAlgorithm } from '../../../../helper/jwt-utils'
 import { flagService } from '../../../../flags/flag.service'
-import { Platform } from '@activepieces/ee-shared'
+import { Platform } from '@activepieces/shared'
 
 const JWKS_URI = 'https://www.googleapis.com/oauth2/v3/certs'
 

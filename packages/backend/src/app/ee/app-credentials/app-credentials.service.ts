@@ -1,6 +1,6 @@
 import { apId, Cursor, ProjectId, SeekPage } from '@activepieces/shared'
 import { AppCredentialEntity } from './app-credentials.entity'
-import { AppCredential, AppCredentialId, UpsertAppCredentialRequest } from '@activepieces/ee-shared'
+import { AppCredential, AppCredentialId, UpsertAppCredentialRequest } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { buildPaginator } from '../../helper/pagination/build-paginator'

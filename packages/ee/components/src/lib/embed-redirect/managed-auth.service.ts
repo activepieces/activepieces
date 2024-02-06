@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { environment } from '@activepieces/ui/common';
-import { ManagedAuthnRequestBody } from '@activepieces/ee-shared';
+import { ManagedAuthnRequestBody } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
 import { AuthenticationResponse } from '@activepieces/shared';
 

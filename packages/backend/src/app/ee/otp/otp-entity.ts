@@ -1,5 +1,5 @@
 import { EntitySchema } from 'typeorm'
-import { OtpModel, OtpState, OtpType } from '@activepieces/ee-shared'
+import { OtpModel, OtpState, OtpType } from '@activepieces/shared'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 import { User } from '@activepieces/shared'
 

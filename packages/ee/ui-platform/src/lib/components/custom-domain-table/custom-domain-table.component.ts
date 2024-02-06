@@ -3,7 +3,7 @@ import { CustomDomainDataSource } from './custom-domain-table.datasource';
 import { Observable, Subject, tap } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { startWith } from 'rxjs';
-import { CustomDomain } from '@activepieces/ee-shared';
+import { CustomDomain } from '@activepieces/shared';
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,

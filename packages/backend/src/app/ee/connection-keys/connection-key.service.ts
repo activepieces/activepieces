@@ -17,7 +17,7 @@ import {
     AppCredentialType,
     UpsertApiKeyConnectionFromToken,
     UpsertOAuth2ConnectionFromToken,
-} from '@activepieces/ee-shared'
+} from '@activepieces/shared'
 import { appCredentialService } from '../app-credentials/app-credentials.service'
 import { ProjectId, Cursor, apId } from '@activepieces/shared'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'

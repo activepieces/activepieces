@@ -1,4 +1,4 @@
-import { CreateOtpRequestBody } from '@activepieces/ee-shared'
+import { CreateOtpRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { otpService } from './otp-service'
 import { resolvePlatformIdForRequest } from '../platform/lib/platform-utils'

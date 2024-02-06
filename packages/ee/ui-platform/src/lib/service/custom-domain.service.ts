@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '@activepieces/ui/common';
-import { AddDomainRequest, CustomDomain } from '@activepieces/ee-shared';
+import { AddDomainRequest, CustomDomain } from '@activepieces/shared';
 import { SeekPage } from '@activepieces/shared';
 
 @Injectable({

@@ -1,4 +1,4 @@
-import { FilteredPieceBehavior } from '@activepieces/ee-shared'
+import { FilteredPieceBehavior } from '@activepieces/shared'
 import { isNil } from '@activepieces/shared'
 import { PieceMetadataSchema } from '../../pieces/piece-metadata-entity'
 import { PieceMetadataServiceHooks, defaultPieceHooks } from '../../pieces/piece-metadata-service/hooks'

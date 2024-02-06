@@ -8,7 +8,7 @@ import {
 } from '@activepieces/ui/common';
 import { ApiKeysService } from '../../service/api-keys.service';
 import { ApiKeysDataSource } from './api-keys-table.datasource';
-import { ApiKey } from '@activepieces/ee-shared';
+import { ApiKey } from '@activepieces/shared';
 import { CreateApiKeyDialogComponent } from '../dialogs/create-api-key-dialog/create-api-key-dialog.component';
 import { PlatformSettingsBaseComponent } from '../platform-settings-base.component';
 

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BillingResponse, UpgradeRequest } from '@activepieces/ee-shared';
+import { BillingResponse, UpgradeRequest } from '@activepieces/shared';
 import { FlagService, environment } from '@activepieces/ui/common';
 import { map, of, switchMap } from 'rxjs';
 import { ApEdition } from '@activepieces/shared';

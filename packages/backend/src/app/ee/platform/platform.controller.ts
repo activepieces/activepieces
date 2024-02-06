@@ -1,5 +1,5 @@
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { Platform, PlatformWithoutSensitiveData, UpdatePlatformRequestBody } from '@activepieces/ee-shared'
+import { Platform, PlatformWithoutSensitiveData, UpdatePlatformRequestBody } from '@activepieces/shared'
 import { ApId, Principal, assertEqual } from '@activepieces/shared'
 import { platformService } from './platform.service'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'

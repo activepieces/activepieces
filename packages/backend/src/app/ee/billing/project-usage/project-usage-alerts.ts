@@ -1,6 +1,6 @@
 import {
     ProjectUsage,
-} from '@activepieces/ee-shared'
+} from '@activepieces/shared'
 import { isNil } from 'lodash'
 import { telemetry } from '../../../helper/telemetry.utils'
 import { TelemetryEventName, UserMeta } from '@activepieces/shared'

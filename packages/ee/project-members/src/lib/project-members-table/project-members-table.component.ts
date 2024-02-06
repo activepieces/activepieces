@@ -17,7 +17,7 @@ import { InviteProjectMemberDialogComponent } from '../dialogs/invite-project-me
 import {
   ProjectMemberRole,
   ProjectMemberStatus,
-} from '@activepieces/ee-shared';
+} from '@activepieces/shared';
 import { BillingService, UpgradeDialogData } from '@activepieces/ee-billing-ui';
 import { UpgradeDialogComponent } from '@activepieces/ee-billing-ui';
 import { Store } from '@ngrx/store';

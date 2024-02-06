@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '@activepieces/ui/common';
 import { SeekPage } from '@activepieces/shared';
-import { ListReferralsRequest, Referral } from '@activepieces/ee-shared';
+import { ListReferralsRequest, Referral } from '@activepieces/shared';
 
 @Injectable({
   providedIn: 'root',

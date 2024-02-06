@@ -7,7 +7,7 @@ import {
 } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Observable, catchError, tap } from 'rxjs';
-import { ProjectWithUsageAndPlanResponse } from '@activepieces/ee-shared';
+import { ProjectWithUsageAndPlanResponse } from '@activepieces/shared';
 import { PlatformProjectService } from '@activepieces/ui/common';
 
 interface UpdateProjectForm {

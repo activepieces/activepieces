@@ -10,7 +10,7 @@ import { MatDialogRef } from '@angular/material/dialog';
 import { BehaviorSubject, Observable, catchError, tap } from 'rxjs';
 import { copyText } from '@activepieces/ui/common';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { AddSigningKeyResponse } from '@activepieces/ee-shared';
+import { AddSigningKeyResponse } from '@activepieces/shared';
 import { SigningKeysService } from '../../../service/signing-keys.service';
 
 interface CreateSigningKeyForm {

@@ -1,5 +1,5 @@
 import { EntitySchema } from 'typeorm'
-import { ProjectMember } from '@activepieces/ee-shared'
+import { ProjectMember } from '@activepieces/shared'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 import { Project, User } from '@activepieces/shared'
 

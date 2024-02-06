@@ -34,7 +34,7 @@ import {
   TelemetryEventName,
   TemplateType,
 } from '@activepieces/shared';
-import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
+import { CreateFlowTemplateRequest } from '@activepieces/shared';
 
 @Component({
   selector: 'ap-share-flow-template-dialog',

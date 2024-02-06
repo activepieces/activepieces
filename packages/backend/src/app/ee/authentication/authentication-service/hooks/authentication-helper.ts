@@ -1,4 +1,4 @@
-import { Platform, PlatformId, ProjectMemberStatus } from '@activepieces/ee-shared'
+import { Platform, PlatformId, ProjectMemberStatus } from '@activepieces/shared'
 import { PrincipalType, Project, isNil, User, ActivepiecesError, ErrorCode, ApEdition, PlatformRole } from '@activepieces/shared'
 import { platformService } from '../../../platform/platform.service'
 import { accessTokenManager } from '../../../../authentication/lib/access-token-manager'

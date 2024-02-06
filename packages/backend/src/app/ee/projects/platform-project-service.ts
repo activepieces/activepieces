@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, Project, ProjectId, ProjectType, UserId, isNil, SeekPage, assertNotNullOrUndefined, spreadIfDefined } from '@activepieces/shared'
 import { Equal, In, IsNull } from 'typeorm'
-import { PlatformId, ProjectMemberStatus, ProjectWithUsageAndPlanResponse, UpdateProjectPlatformRequest } from '@activepieces/ee-shared'
+import { PlatformId, ProjectMemberStatus, ProjectWithUsageAndPlanResponse, UpdateProjectPlatformRequest } from '@activepieces/shared'
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
 import { ProjectEntity } from '../../project/project-entity'
 import { databaseConnection } from '../../database/database-connection'

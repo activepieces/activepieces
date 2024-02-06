@@ -1,4 +1,4 @@
-import { PlatformId, ApiKeyResponseWithValue, ApiKey } from '@activepieces/ee-shared'
+import { PlatformId, ApiKeyResponseWithValue, ApiKey } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode, SeekPage, apId, assertNotNullOrUndefined, isNil, secureApId } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { ApiKeyEntity } from './api-key-entity'

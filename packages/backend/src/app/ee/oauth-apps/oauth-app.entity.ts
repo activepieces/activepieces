@@ -1,5 +1,5 @@
 import { EntitySchema } from 'typeorm'
-import { OAuthApp, Platform } from '@activepieces/ee-shared'
+import { OAuthApp, Platform } from '@activepieces/shared'
 import { ApIdSchema, BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../../database/database-common'
 import { EncryptedObject } from '../../helper/encryption'
 

@@ -1,7 +1,7 @@
 import { EntitySchema } from 'typeorm'
 import {  BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../../database/database-common'
 import { FlowTemplate, Project, User } from '@activepieces/shared'
-import { Platform } from '@activepieces/ee-shared'
+import { Platform } from '@activepieces/shared'
 
 type FlowTemplateSchema = FlowTemplate & {
     project: Project

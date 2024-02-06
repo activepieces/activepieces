@@ -1,7 +1,7 @@
 import { ActivepiecesError, ErrorCode, LocalesEnum, ProjectId, UserId, apId, isNil, spreadIfDefined } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { PlatformEntity } from './platform.entity'
-import { FilteredPieceBehavior, Platform, PlatformId, UpdatePlatformRequestBody } from '@activepieces/ee-shared'
+import { FilteredPieceBehavior, Platform, PlatformId, UpdatePlatformRequestBody } from '@activepieces/shared'
 import { defaultTheme } from '../../flags/theme'
 import { userService } from '../../user/user-service'
 import { projectService } from '../../project/project-service'

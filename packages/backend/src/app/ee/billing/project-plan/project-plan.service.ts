@@ -1,5 +1,5 @@
 import { ApEdition, ProjectId, apId, isNil, spreadIfDefined } from '@activepieces/shared'
-import { DEFAULT_PLATFORM_PLAN, ProjectPlan } from '@activepieces/ee-shared'
+import { DEFAULT_PLATFORM_PLAN, ProjectPlan } from '@activepieces/shared'
 import { databaseConnection } from '../../../database/database-connection'
 import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'

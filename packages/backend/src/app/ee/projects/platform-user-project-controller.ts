@@ -4,7 +4,7 @@ import { platformProjectService } from './platform-project-service'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { platformService } from '../platform/platform.service'
 import { StatusCodes } from 'http-status-codes'
-import { ProjectWithUsageAndPlanResponse } from '@activepieces/ee-shared'
+import { ProjectWithUsageAndPlanResponse } from '@activepieces/shared'
 
 export const usersProjectController: FastifyPluginCallbackTypebox = (fastify, _opts, done) => {
 

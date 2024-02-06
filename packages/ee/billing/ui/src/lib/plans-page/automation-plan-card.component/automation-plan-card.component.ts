@@ -3,7 +3,7 @@ import {
   FlowPricingPlan,
   PlanName,
   UpgradeRequest,
-} from '@activepieces/ee-shared';
+} from '@activepieces/shared';
 import {
   BehaviorSubject,
   Observable,

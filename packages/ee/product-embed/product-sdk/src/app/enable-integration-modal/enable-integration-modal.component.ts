@@ -4,7 +4,7 @@ import {
   AppCredential,
   AppCredentialType,
   AppOAuth2Settings,
-} from '@activepieces/ee-shared';
+} from '@activepieces/shared';
 import { DialogRef } from '@angular/cdk/dialog';
 import { ConnectionService } from '../service/connection.service';
 import { getLocal, getRedrectUrl, StorageName } from '../helper/helper';

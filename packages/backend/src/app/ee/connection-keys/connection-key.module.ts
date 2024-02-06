@@ -1,5 +1,5 @@
 import { FastifyRequest } from 'fastify'
-import { ConnectionKeyId, GetOrDeleteConnectionFromTokenRequest, ListConnectionKeysRequest, UpsertConnectionFromToken, UpsertSigningKeyConnection } from '@activepieces/ee-shared'
+import { ConnectionKeyId, GetOrDeleteConnectionFromTokenRequest, ListConnectionKeysRequest, UpsertConnectionFromToken, UpsertSigningKeyConnection } from '@activepieces/shared'
 import { connectionKeyService } from './connection-key.service'
 import { StatusCodes } from 'http-status-codes'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'

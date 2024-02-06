@@ -1,7 +1,7 @@
 import { Cursor, SeekPage, TelemetryEventName, UserId, apId } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { ReferralEntity } from './referral.entity'
-import { Referral } from '@activepieces/ee-shared'
+import { Referral } from '@activepieces/shared'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { telemetry } from '../../helper/telemetry.utils'

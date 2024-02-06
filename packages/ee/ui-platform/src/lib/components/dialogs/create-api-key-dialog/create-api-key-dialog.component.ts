@@ -10,7 +10,7 @@ import { MatDialogRef } from '@angular/material/dialog';
 import { BehaviorSubject, Observable, catchError, tap } from 'rxjs';
 import { copyText } from '@activepieces/ui/common';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { ApiKeyResponseWithValue } from '@activepieces/ee-shared';
+import { ApiKeyResponseWithValue } from '@activepieces/shared';
 import { ApiKeysService } from '../../../service/api-keys.service';
 
 interface CreateApiKeyForm {

@@ -1,7 +1,7 @@
 import { FastifyRequest } from 'fastify'
 import { ActivepiecesError, ApEdition, ErrorCode, PrincipalType, isNil } from '@activepieces/shared'
 import { projectMemberService } from '../../ee/project-members/project-member.service'
-import { ProjectMemberPermission, ProjectMemberRole, ProjectMemberRoleToPermissions } from '@activepieces/ee-shared'
+import { ProjectMemberPermission, ProjectMemberRole, ProjectMemberRoleToPermissions } from '@activepieces/shared'
 import { getEdition } from '../../helper/secret-helper'
 import { extractResourceName } from '../../authentication/authorization'
 

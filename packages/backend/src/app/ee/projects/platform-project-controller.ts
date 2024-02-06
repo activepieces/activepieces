@@ -2,7 +2,7 @@ import { EndpointScope, PrincipalType, ProjectType, SeekPage, assertNotNullOrUnd
 import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
 import { platformProjectService } from './platform-project-service'
 import { projectService } from '../../project/project-service'
-import { CreatePlatformProjectRequest, DEFAULT_PLATFORM_PLAN, ProjectWithUsageAndPlanResponse, UpdateProjectPlatformRequest } from '@activepieces/ee-shared'
+import { CreatePlatformProjectRequest, DEFAULT_PLATFORM_PLAN, ProjectWithUsageAndPlanResponse, UpdateProjectPlatformRequest } from '@activepieces/shared'
 import { plansService } from '../billing/project-plan/project-plan.service'
 import { StatusCodes } from 'http-status-codes'
 import { platformService } from '../platform/platform.service'

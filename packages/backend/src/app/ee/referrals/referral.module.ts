@@ -1,5 +1,5 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { ListReferralsRequest } from '@activepieces/ee-shared'
+import { ListReferralsRequest } from '@activepieces/shared'
 import { referralService } from './referral.service'
 
 export const referralModule: FastifyPluginAsyncTypebox = async (app) => {

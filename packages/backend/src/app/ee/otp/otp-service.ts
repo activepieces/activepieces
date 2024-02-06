@@ -1,4 +1,4 @@
-import { OtpModel, OtpState, OtpType, PlatformId } from '@activepieces/ee-shared'
+import { OtpModel, OtpState, OtpType, PlatformId } from '@activepieces/shared'
 import {  User, UserId, apId  } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { OtpEntity } from './otp-entity'

@@ -1,6 +1,6 @@
 import Stripe from 'stripe'
 import { isNil } from '@activepieces/shared'
-import { UpgradeRequest } from '@activepieces/ee-shared'
+import { UpgradeRequest } from '@activepieces/shared'
 import { plansService } from '../project-plan/project-plan.service'
 import { FlowPlanLimits, defaultPlanInformation } from '../project-plan/pricing-plans'
 import { stripeHelper } from './stripe-helper'

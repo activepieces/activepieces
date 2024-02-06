@@ -8,7 +8,7 @@ import {
 import { MatDialogRef } from '@angular/material/dialog';
 import { BehaviorSubject, Observable, catchError, tap } from 'rxjs';
 import { CustomDomainService } from '../../../service/custom-domain.service';
-import { CustomDomain } from '@activepieces/ee-shared';
+import { CustomDomain } from '@activepieces/shared';
 import { FlagService } from '@activepieces/ui/common';
 import { ApEdition } from '@activepieces/shared';
 

@@ -4,7 +4,7 @@ import {
   BillingResponse,
   Referral,
   pricingPlans,
-} from '@activepieces/ee-shared';
+} from '@activepieces/shared';
 import { BillingService } from '../service/billing.service';
 import { ReferralService } from '../service/referral.service';
 import {

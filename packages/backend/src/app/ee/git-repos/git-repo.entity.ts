@@ -1,5 +1,5 @@
 import { EntitySchema } from 'typeorm'
-import { GitRepo } from '@activepieces/ee-shared'
+import { GitRepo } from '@activepieces/shared'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 import { Project } from '@activepieces/shared'
 

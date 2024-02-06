@@ -1,7 +1,7 @@
 import { ALL_PRINICPAL_TYPES, AuthenticationResponse } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { managedAuthnService } from './managed-authn-service'
-import { ManagedAuthnRequestBody } from '@activepieces/ee-shared'
+import { ManagedAuthnRequestBody } from '@activepieces/shared'
 
 export const managedAuthnController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/external-token', ManagedAuthnRequest, async (req): Promise<AuthenticationResponse> => {

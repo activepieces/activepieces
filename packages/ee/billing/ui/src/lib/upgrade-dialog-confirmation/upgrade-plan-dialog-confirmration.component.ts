@@ -3,7 +3,7 @@ import { Observable, map, tap } from 'rxjs';
 import { isNil } from '@activepieces/shared';
 import { BillingService } from '../service/billing.service';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { UpgradeRequest } from '@activepieces/ee-shared';
+import { UpgradeRequest } from '@activepieces/shared';
 
 @Component({
   templateUrl: './upgrade-plan-dialog-confirmation.component.html',

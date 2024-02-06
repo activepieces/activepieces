@@ -1,6 +1,6 @@
 import { ActivepiecesError, ApEdition, ErrorCode, ProjectId, isNil } from '@activepieces/shared'
 
-import { ProjectPlan, ProjectUsage } from '@activepieces/ee-shared'
+import { ProjectPlan, ProjectUsage } from '@activepieces/shared'
 import { apDayjs } from '../../../helper/dayjs-helper'
 import { flowRunService } from '../../../flows/flow-run/flow-run-service'
 import { getEdition } from '../../../helper/secret-helper'

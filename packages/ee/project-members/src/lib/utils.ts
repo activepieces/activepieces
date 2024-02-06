@@ -1,4 +1,4 @@
-import { ProjectMemberRole } from '@activepieces/ee-shared';
+import { ProjectMemberRole } from '@activepieces/shared';
 
 export const RolesDisplayNames: { [k: string]: string } = {
   [ProjectMemberRole.ADMIN]: $localize`Admin`,

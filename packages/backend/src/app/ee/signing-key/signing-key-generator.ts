@@ -1,6 +1,6 @@
 import { promisify } from 'node:util'
 import { RSAKeyPairOptions, generateKeyPair as generateKeyPairCallback } from 'node:crypto'
-import { KeyAlgorithm } from '@activepieces/ee-shared'
+import { KeyAlgorithm } from '@activepieces/shared'
 
 const generateKeyPair = promisify(generateKeyPairCallback)
 

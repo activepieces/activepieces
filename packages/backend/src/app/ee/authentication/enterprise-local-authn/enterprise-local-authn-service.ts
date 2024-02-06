@@ -1,5 +1,5 @@
 import { UserId, ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { OtpType, ResetPasswordRequestBody, VerifyEmailRequestBody } from '@activepieces/ee-shared'
+import { OtpType, ResetPasswordRequestBody, VerifyEmailRequestBody } from '@activepieces/shared'
 import { userService } from '../../../user/user-service'
 import { otpService } from '../../otp/otp-service'
 

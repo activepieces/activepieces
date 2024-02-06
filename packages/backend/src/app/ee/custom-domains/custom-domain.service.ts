@@ -1,4 +1,4 @@
-import { CustomDomain, CustomDomainStatus, ListCustomDomainsRequest } from '@activepieces/ee-shared'
+import { CustomDomain, CustomDomainStatus, ListCustomDomainsRequest } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { CustomDomainEntity } from './custom-domain.entity'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'

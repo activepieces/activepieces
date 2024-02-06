@@ -1,4 +1,4 @@
-import { ProjectPlan, ProjectUsage } from '@activepieces/ee-shared';
+import { ProjectPlan, ProjectUsage } from '@activepieces/shared';
 import { Observable } from 'rxjs';
 
 export function formatPrice(price: number): string {

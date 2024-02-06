@@ -5,7 +5,7 @@ import {
   ApiKeyResponseWithValue,
   ApiKeyResponseWithoutValue,
   CreateApiKeyRequest,
-} from '@activepieces/ee-shared';
+} from '@activepieces/shared';
 import { SeekPage } from '@activepieces/shared';
 
 @Injectable({

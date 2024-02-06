@@ -1,5 +1,5 @@
 import { ActivepiecesError, ErrorCode, SeekPage, User, UserId, UserStatus } from '@activepieces/shared'
-import { PlatformId } from '@activepieces/ee-shared'
+import { PlatformId } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { UserEntity } from '../../user/user-entity'
 

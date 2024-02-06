@@ -14,7 +14,7 @@ import {
   ProjectMember,
   ProjectMemberRole,
   ProjectMemberStatus,
-} from '@activepieces/ee-shared';
+} from '@activepieces/shared';
 import { ProjectMemberService } from '../service/project-members.service';
 import { AuthenticationService } from '@activepieces/ui/common';
 

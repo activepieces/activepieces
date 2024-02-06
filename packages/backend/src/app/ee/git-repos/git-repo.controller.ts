@@ -1,7 +1,7 @@
 import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
 import { gitRepoService } from './git-repo.service'
 import { PrincipalType, SeekPage } from '@activepieces/shared'
-import { ConfigureRepoRequest, GitRepoWithoutSenestiveData, PushGitRepoRequest } from '@activepieces/ee-shared'
+import { ConfigureRepoRequest, GitRepoWithoutSenestiveData, PushGitRepoRequest } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 
 

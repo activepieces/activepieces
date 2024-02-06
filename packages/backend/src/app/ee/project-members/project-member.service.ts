@@ -20,7 +20,7 @@ import {
     ProjectMemberRole,
     ProjectMemberStatus,
     AddProjectMemberRequestBody,
-} from '@activepieces/ee-shared'
+} from '@activepieces/shared'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { projectService } from '../../project/project-service'
 import { emailService } from '../helper/email/email-service'

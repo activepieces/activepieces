@@ -20,7 +20,7 @@ import { setStylesForSdkElement } from './helper/colors';
 import { AppConnection, ProjectId } from '@activepieces/shared';
 import {
   AppCredential,
-} from '@activepieces/ee-shared';
+} from '@activepieces/shared';
 import { ModalCommunicationService } from './service/modal-communication.service';
 import { CredentialService } from './service/credential.service';
 import { ConnectionService } from './service/connection.service';

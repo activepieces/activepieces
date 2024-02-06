@@ -1,5 +1,5 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { AdminAddPlatformRequestBody } from '@activepieces/ee-shared'
+import { AdminAddPlatformRequestBody } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 import { adminPlatformService } from './admin-platform.service'
 import { PrincipalType } from '@activepieces/shared'

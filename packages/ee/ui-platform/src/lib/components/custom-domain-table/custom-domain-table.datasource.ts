@@ -9,7 +9,7 @@ import {
   delay,
 } from 'rxjs';
 import { combineLatest } from 'rxjs';
-import { CustomDomain } from '@activepieces/ee-shared';
+import { CustomDomain } from '@activepieces/shared';
 import { CustomDomainService } from '../../service/custom-domain.service';
 
 /**
