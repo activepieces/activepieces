@@ -1,42 +1,7 @@
 <div class="ap-flex ap-flex-col">
-  <ng-container *ngIf="!property.properties">
-    <div class="ap-mb-2 ap-flex ap-gap-2 ap-items-center">
-      <div class="ap-cursor-pointer" (click)="focusFirstInput()">
-        {{ property.displayName }}
-      </div>
-    </div>
-    <ng-container *ngFor="
-        let val of formArray.controls;
-        let idx = index;
-        let isLast = last;
-        let isFirst = first
-      ">
-      <div class="ap-flex" *ngIf="!(isLast && formArray.disabled && idx > 0)">
-        <div class="delete-btn-container">
-          <ap-icon-button *ngIf="formArray.enabled" [width]="9" [height]="9" iconFilename="delete.svg" [tooltipText]="
-              !deleteButton.isHovered && !valueInput.isHovered
-                ? ''
-                : 'Remove Item'
-            " class="delete-btn ap-z-40" [class.opacity-0]="!deleteButton.isHovered && !valueInput.isHovered"
-            apTrackHover #deleteButton="hoverTrackerDirective" (buttonClicked)="removeValue(idx)"></ap-icon-button>
-        </div>
+  <ng-container *ngIf="isAnArrayOfObjects(); then arrayOfObjects else arrayOfStrings"></ng-container>
 
-        <div class="form-control value-control" [class.first]="isFirst && formArray.controls.length > 1"
-          [class.last]="isLast && formArray.controls.length > 1" [class.only-one]="formArray.controls.length === 1"
-          apTrackHover #valueInput="hoverTrackerDirective" #interpolatingTextControlContainer>
-          <app-interpolating-text-form-control #textControl [insideMatField]="false"
-            [formControl]="getFormControlAtIndex(idx)" placeholder="Value"
-            (click)="formArray.enabled ? handler.showMentionsDropdown() : null"></app-interpolating-text-form-control>
-
-          <app-builder-autocomplete-dropdown-handler #handler [container]="interpolatingTextControlContainer"
-            (mentionEmitted)="addMention(textControl, $event)">
-          </app-builder-autocomplete-dropdown-handler>
-        </div>
-      </div>
-    </ng-container>
-  </ng-container>
-  <!-- For Array of Objects -->
-  <ng-container *ngIf="property.properties">
+  <ng-template #arrayOfObjects>
     <div class="ap-mb-2 ap-flex ap-gap-2 ap-items-center">
       <div class="ap-select-none">
         {{ property.displayName }}
@@ -54,7 +19,7 @@
               <div class=" ap-mx-3 ap-typography-body-1">
                 #{{ idx+1 }}
               </div>
-              <ap-icon-button *ngIf="formArray.enabled && formArray.controls.length>1" [width]="9" [height]="9"
+              <ap-icon-button *ngIf="itemsCanBeDeleted()" [width]="9" [height]="9"
                 iconFilename="delete.svg" [tooltipText]="!deleteButton.isHovered ? '' : removeItemTooltip"
                 (buttonClicked)="removeValue(idx)" apTrackHover #deleteButton="hoverTrackerDirective"></ap-icon-button>
             </div>
@@ -86,7 +51,49 @@
         {{ property.displayName }} is empty
       </div>
     </ng-container>
-  </ng-container>
+  </ng-template>
+
+  <ng-template #arrayOfStrings>
+    <div class="ap-mb-2 ap-flex ap-gap-2 ap-items-center">
+      <div class="ap-cursor-pointer" (click)="focusFirstInput()">
+        {{ property.displayName }}
+      </div>
+    </div>
+    <ng-container *ngFor="
+        let val of formArray.controls;
+        let idx = index;
+        let isLast = last;
+        let isFirst = first
+      ">
+      <div class="ap-flex" *ngIf="!(isLast && formArray.disabled && idx > 0)">
+        <div class="delete-btn-container">
+          <ap-icon-button *ngIf="itemsCanBeDeleted()" [width]="9" [height]="9" iconFilename="delete.svg" [tooltipText]="
+              !deleteButton.isHovered && !valueInput.isHovered
+                ? ''
+                : 'Remove Item'
+            " class="delete-btn ap-z-40" [class.opacity-0]="!deleteButton.isHovered && !valueInput.isHovered"
+            apTrackHover #deleteButton="hoverTrackerDirective" (buttonClicked)="removeValue(idx)"></ap-icon-button>
+        </div>
+
+        <div class="form-control value-control" [class.first]="isFirst && formArray.controls.length > 1"
+          [class.last]="isLast && formArray.controls.length > 1" [class.only-one]="formArray.controls.length === 1"
+          apTrackHover #valueInput="hoverTrackerDirective" #interpolatingTextControlContainer>
+          <app-interpolating-text-form-control #textControl [insideMatField]="false"
+            [formControl]="getFormControlAtIndex(idx)" placeholder="Value"
+            (click)="formArray.enabled ? handler.showMentionsDropdown() : null"></app-interpolating-text-form-control>
+
+          <app-builder-autocomplete-dropdown-handler #handler [container]="interpolatingTextControlContainer"
+            (mentionEmitted)="addMention(textControl, $event)">
+          </app-builder-autocomplete-dropdown-handler>
+        </div>
+      </div>
+    </ng-container>
+    <ng-container *ngIf="formArray.controls.length === 0">
+      <div class="ap-border-dashed ap-border-2 ap-border-gray-500 ap-rounded ap-p-3 ap-my-2 ap-text-center">
+        {{ property.displayName }} is empty
+      </div>
+    </ng-container>
+  </ng-template>
 
   <ap-button btnColor="primary" btnStyle="basic" *ngIf="formArray.enabled" (buttonClicked)="addValue()" type="button"
     class="add-btn" btnSize="medium">
