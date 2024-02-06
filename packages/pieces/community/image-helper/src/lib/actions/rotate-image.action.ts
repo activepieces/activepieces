@@ -12,7 +12,7 @@ export const rotateImage = createAction({
     }),
     degree: Property.StaticDropdown({
       displayName: 'Degree',
-      description: 'Specifies the degree of rotation for the image. For clockwise rotation make the degree positive, otherwise make it negative.',
+      description: 'Specifies the degree of clockwise rotation applied to the image.',
       required: true,
       options: {
         options: [
