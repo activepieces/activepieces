@@ -3,11 +3,11 @@ import { createPiece, Property, PieceAuth } from "@activepieces/pieces-framework
 import { createWootricSurvey } from "./lib/actions/create-survey";
 import { httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
 
-export const WOOTRIC_API_URL = 'https://api.wootric.com/';
+export const WOOTRIC_API_URL = 'https://api.wootric.com';
 export const WOOTRIC_IMAGE_URL = 'https://assets-production.wootric.com/assets/wootric-is-now-inmoment-250x108-85cb4900c62ff4d33200abafee7d63372d410abc5bf0cab90e80a07d4f4e5a31.png';
 
 export const wootricAccessToken = async (username: string, password: string, store: any) => {
-    if (store) {
+    if (Object.keys(store).length != 0) {
         const storageAccessToken = await store.get('wootricAccessToken');
 
         if (storageAccessToken) {
@@ -29,7 +29,7 @@ export const wootricAccessToken = async (username: string, password: string, sto
 
     const response = await httpClient.sendRequest(request);
     const accessToken = response.body['access_token'];
-    if (store) {
+    if (Object.keys(store).length != 0) {
         store.put('wootricAccessToken', accessToken);
     }
     return accessToken;
@@ -57,7 +57,7 @@ export const wootricAuth = PieceAuth.BasicAuth({
 
         try {
             const data = await wootricAccessToken(username, password, {});
-            if (data && data['access_token']) {
+            if (data) {
                 return {
                     valid: true,
                 };
