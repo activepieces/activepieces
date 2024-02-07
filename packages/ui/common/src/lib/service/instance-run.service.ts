@@ -10,6 +10,8 @@ import {
 } from '@activepieces/shared';
 import {
   CURSOR_QUERY_PARAM,
+  DATE_RANGE_END_QUERY_PARAM,
+  DATE_RANGE_START_QUERY_PARAM,
   FLOW_QUERY_PARAM,
   LIMIT_QUERY_PARAM,
   STATUS_QUERY_PARAM,
@@ -54,6 +56,10 @@ export class InstanceRunService {
     }
     if (params.flowId) {
       queryParams[FLOW_QUERY_PARAM] = params.flowId;
+    }
+    if (params.createdStart && params.createdEnd) {
+      queryParams[DATE_RANGE_START_QUERY_PARAM] = params.createdStart;
+      queryParams[DATE_RANGE_END_QUERY_PARAM] = params.createdEnd;
     }
     return this.http.get<SeekPage<FlowRun>>(environment.apiUrl + `/flow-runs`, {
       params: queryParams,
