@@ -66,7 +66,7 @@ async function updateFlowRunToLatestFlowVersionId(flowRunId: FlowRunId): Promise
 }
 
 export const flowRunService = {
-    async list({ projectId, flowId, status, cursor, limit, tags }: ListParams): Promise<SeekPage<FlowRun>> {
+    async list({ projectId, flowId, status, cursor, limit, tags, createdAfter, createdBefore }: ListParams): Promise<SeekPage<FlowRun>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor)
         const paginator = buildPaginator({
             entity: FlowRunEntity,
@@ -84,6 +84,12 @@ export const flowRunService = {
             ...spreadIfDefined('status', status),
             environment: RunEnvironment.PRODUCTION,
         })
+        if (createdAfter) {
+            query = query.andWhere('flow_run.created >= :createdAfter', { createdAfter })
+        }
+        if (createdBefore) {
+            query = query.andWhere('flow_run.created <= :createdBefore', { createdBefore })
+        }
         if (tags) {
             query = APArrayContains('tags', tags, query)
         }
@@ -159,7 +165,7 @@ export const flowRunService = {
             finishTime: new Date().toISOString(),
         })
         const flowRun = await this.getOneOrThrow({ id: flowRunId, projectId: undefined })
-            
+
         await flowRunSideEffects.finish({ flowRun })
         return flowRun
     },
@@ -300,6 +306,8 @@ type ListParams = {
     cursor: Cursor | null
     tags?: string[]
     limit: number
+    createdAfter?: string
+    createdBefore?: string
 }
 
 type GetOneParams = {
