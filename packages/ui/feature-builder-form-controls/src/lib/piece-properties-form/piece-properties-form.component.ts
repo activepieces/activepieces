@@ -186,7 +186,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     this.requiredProperties = {};
     this.optionalProperties = {};
     Object.entries(this.properties).forEach(([pk]) => {
-      this.properties[pk].required
+      this.properties[pk].required || this.properties[pk].type === PropertyType.MARKDOWN
         ? (this.requiredProperties[pk] = this.properties[pk])
         : (this.optionalProperties[pk] = this.properties[pk]);
     });

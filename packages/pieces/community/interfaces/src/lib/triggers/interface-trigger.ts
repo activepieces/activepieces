@@ -12,7 +12,7 @@ Go to this URL to see the interface: \n
 export const onFormSubmission = createTrigger({
   name: 'form_submission',
   displayName: 'On Form Submission',
-  description: 'Trigger the flow through submitting a form.',
+  description: 'Trigger the flow by submitting a form.',
   props: {
     about: Property.MarkDown({
       value: markdown,
@@ -22,12 +22,11 @@ export const onFormSubmission = createTrigger({
       required: true,
       properties: {
         displayName: Property.ShortText({
-          displayName: 'Name',
-          description: 'The name will be used as the field label.',
+          displayName: 'Field Name',
           required: true,
         }),
         type: Property.StaticDropdown({
-          displayName: 'Type',
+          displayName: 'Field Type',
           required: true,
           options: {
             options: [
@@ -37,13 +36,11 @@ export const onFormSubmission = createTrigger({
           },
         }),
         description: Property.ShortText({
-          displayName: 'Description',
-          description: 'Description text that appears under the input field.',
+          displayName: 'Field Description',
           required: false,
         }),
         required: Property.Checkbox({
           displayName: 'Required',
-          description: 'If checked, the input field will be required.',
           required: true,
         }),
       },
