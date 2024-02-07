@@ -248,6 +248,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/AbdullahBitar"><img src="https://avatars.githubusercontent.com/u/122645579?v=4?s=100" width="100px;" alt="AbdullahBitar"/><br /><sub><b>AbdullahBitar</b></sub></a><br /><a href="#plugin-AbdullahBitar" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/mariomeyer"><img src="https://avatars.githubusercontent.com/u/867650?v=4?s=100" width="100px;" alt="Mario Meyer"/><br /><sub><b>Mario Meyer</b></sub></a><br /><a href="#plugin-mariomeyer" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/karimkhaleel"><img src="https://avatars.githubusercontent.com/u/94621779?v=4?s=100" width="100px;" alt="Karim Khaleel"/><br /><sub><b>Karim Khaleel</b></sub></a><br /><a href="#plugin-karimkhaleel" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/CPonchet"><img src="https://avatars.githubusercontent.com/u/40756925?v=4?s=100" width="100px;" alt="CPonchet"/><br /><sub><b>CPonchet</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3ACPonchet" title="Bug reports">🐛</a></td>
     </tr>
   </tbody>
 </table>
