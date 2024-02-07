@@ -41,7 +41,7 @@
         </mat-select>
       </mat-form-field>
       <mat-form-field>
-        <mat-label>Filter by date</mat-label>
+        <mat-label i18n>Filter by date</mat-label>
         <mat-date-range-input [formGroup]="dateFormGroup" [rangePicker]="runsPicker" [comparisonStart]="dateFormGroup.controls.start.value" 
           [comparisonEnd]="dateFormGroup.controls.end.value">>
           <input matStartDate placeholder="Start date" [formControl]="dateFormGroup.controls.start" i18n>
