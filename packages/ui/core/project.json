@@ -121,6 +121,7 @@
       },
       "defaultConfiguration": "development",
       "options": {
+        "proxyConfig": "packages/ui/core/proxy.conf.json",
         "port": 4200,
         "host": "0.0.0.0"
       }
