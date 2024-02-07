@@ -44,8 +44,8 @@
         <mat-label>Filter by date</mat-label>
         <mat-date-range-input [formGroup]="dateFormGroup" [rangePicker]="runsPicker" [comparisonStart]="dateFormGroup.controls.start.value" 
           [comparisonEnd]="dateFormGroup.controls.end.value">>
-          <input matStartDate placeholder="Start date" formControlName="start">
-          <input matEndDate placeholder="End date" formControlName="end">
+          <input matStartDate placeholder="Start date" [formControl]="dateFormGroup.controls.start" i18n>
+          <input matEndDate placeholder="End date" [formControl]="dateFormGroup.controls.end" i18n>
         </mat-date-range-input>
         <mat-datepicker-toggle matIconSuffix [for]="runsPicker"></mat-datepicker-toggle>
         <mat-date-range-picker #runsPicker></mat-date-range-picker>
