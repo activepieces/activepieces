@@ -58,6 +58,7 @@ export const packageManager = {
 
         const config = [
             '--prefer-offline',
+            '--ignore-scripts',
             '--config.lockfile=false',
             '--config.auto-install-peers=true',
         ]

@@ -9,12 +9,12 @@ Go to this URL to see the interface: \n
 \`{{interfaceUrl}}\`
 `;
 
-export const interfaceTrigger = createTrigger({
-  name: 'interface_trigger',
-  displayName: 'Interface',
-  description: 'Trigger the flow through an interface.',
+export const onFormSubmission = createTrigger({
+  name: 'form_submission',
+  displayName: 'On Form Submission',
+  description: 'Trigger the flow through submitting a form.',
   props: {
-    md: Property.MarkDown({
+    about: Property.MarkDown({
       value: markdown,
     }),
     inputs: Property.Array({

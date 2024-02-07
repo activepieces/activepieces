@@ -1,16 +1,26 @@
 import { Property } from '@activepieces/pieces-framework';
-import { PopulatedFlow } from '@activepieces/shared';
+import { FileResponseInterface, PopulatedFlow } from '@activepieces/shared';
 import { FlagService, FlowService, environment } from '@activepieces/ui/common';
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { Observable, Observer, forkJoin, map, of, switchMap, tap } from 'rxjs';
+import {
+  Observable,
+  Observer,
+  Subject,
+  catchError,
+  forkJoin,
+  map,
+  of,
+  switchMap,
+  tap,
+} from 'rxjs';
 import {
   InterfaceResult,
   InterfaceResultTypes,
   InterfacesService,
 } from './interfaces.service';
-import mime from 'mime';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 type Input = {
   displayName: string;
@@ -36,7 +46,7 @@ type InterfaceProps = {
 export class InterfacesComponent implements OnInit {
   fullLogoUrl$: Observable<string>;
   flow$: Observable<PopulatedFlow>;
-  submitInterface$: Observable<InterfaceResult>;
+  submitInterface$: Observable<InterfaceResult | undefined>;
   interfaceForm: FormGroup;
   props: InterfaceProps | null = null;
   textInputs: Input[] = [];
@@ -45,10 +55,11 @@ export class InterfacesComponent implements OnInit {
   error: string | null = null;
   webhookUrl: string | null = null;
   title: string | null = null;
-  markdownResponse: string | null = null;
+  markdownResponse: Subject<string | null> = new Subject<string | null>();
   constructor(
     private flowService: FlowService,
     private router: ActivatedRoute,
+    private snackBar: MatSnackBar,
     private flagService: FlagService,
     private interfacesService: InterfacesService
   ) {
@@ -63,7 +74,8 @@ export class InterfacesComponent implements OnInit {
         this.flowService.get(params.get('flowId') as string)
       ),
       tap((flow) => {
-        if (flow.version.trigger.settings.triggerName === 'interface_trigger') {
+        const { pieceName, triggerName } = flow.version.trigger.settings;
+        if (pieceName === '@activepieces/piece-interfaces' && triggerName === 'form_submission') {
           this.webhookUrl = environment.apiUrl + '/webhooks/' + flow.id;
           this.title = flow.version.displayName;
           this.interfaceForm = new FormGroup({});
@@ -99,6 +111,7 @@ export class InterfacesComponent implements OnInit {
 
   async submit() {
     if (this.interfaceForm.valid && !this.loading) {
+      this.markdownResponse.next(null)
       this.loading = true;
 
       const observables: Observable<string>[] = [];
@@ -129,42 +142,35 @@ export class InterfacesComponent implements OnInit {
         ),
         tap((result: InterfaceResult) => {
           if (result.type === InterfaceResultTypes.MARKDOWN) {
-            this.markdownResponse = result.value as string;
+            this.markdownResponse.next(result.value as string);
           } else if (result.type === InterfaceResultTypes.FILE) {
-            const fileType = this.checkStringType(result.value as string);
             const link = document.createElement('a');
-            let url: string;
-            if (fileType === 'url') {
-              url = new URL(result.value as string).href;
-            } else {
-              // Your base64 string
-              const base64String = result.value as string;
-              // Splitting the base64 string to extract MIME type
-              const mimeType = base64String.match(
-                /data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+).*,.*/
-              );
-              let extension: string | null = '';
-              if (mimeType) {
-                extension = mime.getExtension(mimeType[1]);
-              }
-              const base64Data = base64String.split(',')[1];
-              const byteCharacters = atob(base64Data);
-              const byteNumbers = new Array(byteCharacters.length);
-              for (let i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i);
-              }
-              const byteArray = new Uint8Array(byteNumbers);
-              const blob = new Blob([byteArray]);
-              url = URL.createObjectURL(blob);
-              link.download = `${this.title}.${extension}`; // Set your desired file name here
-            }
-            link.href = url;
+            // Your base64 string
+            const fileBase = result.value as FileResponseInterface
+            link.download = fileBase.fileName;
+            link.href = fileBase.base64Url
             link.target = '_blank';
             link.click();
             // Clean up by revoking the object URL
-            URL.revokeObjectURL(url);
+            URL.revokeObjectURL(fileBase.base64Url);
           }
           this.loading = false;
+        }),
+        catchError((error) => {
+          if (error.status === 404) {
+            this.snackBar.open(`Flow not found. Please publish the flow.`, '', {
+              panelClass: 'error',
+              duration: 5000,
+            });
+          } else {
+            this.snackBar.open(`Flow failed to execute`, '', {
+              panelClass: 'error',
+              duration: 5000,
+            });
+          }
+          this.error = error;
+          this.loading = false;
+          return of(void 0);
         })
       );
     }
@@ -221,16 +227,5 @@ export class InterfacesComponent implements OnInit {
         observer.error(error);
       };
     });
-  }
-
-  checkStringType(str: string): 'url' | 'base64' {
-    // Regular expression for base64
-    const base64Regex = /^data:(.*);base64,/;
-
-    if (base64Regex.test(str)) {
-      return 'base64';
-    } else {
-      return 'url';
-    }
   }
 }

@@ -1,6 +1,7 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { interfaceTrigger } from './lib/triggers/interface-trigger';
-import { returnResponse } from './lib/actions/return-response';
+import { returnFile } from './lib/actions/return-file';
+import { returnMarkdown } from './lib/actions/return-markdown';
+import { onFormSubmission } from './lib/triggers/interface-trigger';
 
 export const interfaces = createPiece({
   displayName: 'Interfaces',
@@ -8,6 +9,6 @@ export const interfaces = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/interfaces.png',
   authors: ['MoShizzle'],
-  actions: [returnResponse],
-  triggers: [interfaceTrigger],
+  actions: [returnFile, returnMarkdown],
+  triggers: [onFormSubmission],
 });

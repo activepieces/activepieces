@@ -22,14 +22,15 @@
                     </mat-form-field>
                 </ng-container>
 
-                <div class="text-center ap-mt-2 ap-flex ap-flex-col ap-gap-2 ap-items-end">
+                <div class="text-center ap-mt-2 ap-flex ap-flex-col ap-gap-2 ap-items-center">
                     <ap-button [loading]="loading" btnColor="primary" btnSize="large" i18n>
                         Submit
                     </ap-button>
                 </div>
 
-                <div class="ap-text-description ap-flex ap-flex-col ap-items-end ap-mt-4" *ngIf="markdownResponse">{{
-                    markdownResponse }}</div>
+                <ng-container *ngIf="markdownResponse | async as mkResponse">
+                    <ap-markdown [fullWidth]="true" [data]="mkResponse"  class="ap-mt-4 ap-mb-4"></ap-markdown>
+                </ng-container>
             </mat-card>
         </form>
     </ng-container>
