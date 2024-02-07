@@ -168,7 +168,6 @@ export class InterfacesComponent implements OnInit {
               duration: 5000,
             });
           }
-          this.error = error;
           this.loading = false;
           return of(void 0);
         })
