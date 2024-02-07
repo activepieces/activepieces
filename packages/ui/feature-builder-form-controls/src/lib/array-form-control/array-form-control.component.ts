@@ -105,7 +105,9 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
       }
 
       this.formArray.clear();
-      values.forEach(this.createForm);
+      values.forEach((v) => {
+        this.createForm(v);
+      });
       this.formArray.markAllAsTouched();
       this.cd.markForCheck();
     }
