@@ -74,8 +74,8 @@ export class RunsTableDataSource extends DataSource<FlowRun> {
           limit: res.queryParams[LIMIT_QUERY_PARAM] || DEFAULT_PAGE_SIZE,
           cursor: res.queryParams[CURSOR_QUERY_PARAM],
           flowId: res.queryParams[FLOW_QUERY_PARAM],
-          createdStart: res.queryParams[DATE_RANGE_START_QUERY_PARAM],
-          createdEnd: res.queryParams[DATE_RANGE_END_QUERY_PARAM],
+          createdAfter: res.queryParams[DATE_RANGE_START_QUERY_PARAM],
+          createdBefore: res.queryParams[DATE_RANGE_END_QUERY_PARAM],
         });
       }),
       catchError((err) => {

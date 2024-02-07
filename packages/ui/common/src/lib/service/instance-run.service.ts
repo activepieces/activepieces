@@ -57,9 +57,11 @@ export class InstanceRunService {
     if (params.flowId) {
       queryParams[FLOW_QUERY_PARAM] = params.flowId;
     }
-    if (params.createdStart && params.createdEnd) {
-      queryParams[DATE_RANGE_START_QUERY_PARAM] = params.createdStart;
-      queryParams[DATE_RANGE_END_QUERY_PARAM] = params.createdEnd;
+    if (params.createdBefore) {
+      queryParams[DATE_RANGE_END_QUERY_PARAM] = params.createdBefore;
+    }
+    if (params.createdAfter) {
+      queryParams[DATE_RANGE_START_QUERY_PARAM] = params.createdAfter;
     }
     return this.http.get<SeekPage<FlowRun>>(environment.apiUrl + `/flow-runs`, {
       params: queryParams,

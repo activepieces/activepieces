@@ -43,8 +43,8 @@ export const flowRunController: FastifyPluginCallbackTypebox = (app, _options, d
             status: request.query.status,
             cursor: request.query.cursor ?? null,
             limit: Number(request.query.limit ?? DEFAULT_PAGING_LIMIT),
-            createdStart: request.query.createdStart,
-            createdEnd: request.query.createdEnd,
+            createdAfter: request.query.createdAfter,
+            createdBefore: request.query.createdBefore,
         })
 
         await reply.send(flowRunPage)

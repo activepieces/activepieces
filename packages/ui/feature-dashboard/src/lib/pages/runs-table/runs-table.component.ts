@@ -161,19 +161,21 @@ export class RunsTableComponent implements OnInit {
     }).pipe(
       distinctUntilChanged(),
       tap((result) => {
-        const createdStart = new Date(result.date.start);
-        const createdEnd = new Date(result.date.end);
-        createdEnd.setHours(23, 59, 59, 999);
+        const createdAfter = new Date(result.date.start);
+        const createdBefore = new Date(result.date.end);
+        createdBefore.setHours(23, 59, 59, 999);
         this.router.navigate(['runs'], {
           queryParams: {
             flowId:
               result.flowId === this.allOptionValue ? undefined : result.flowId,
             status:
               result.status === this.allOptionValue ? undefined : result.status,
-            createdStart: result.date.start
-              ? createdStart.toISOString()
+            createdAfter: result.date.start
+              ? createdAfter.toISOString()
               : undefined,
-            createdEnd: result.date.end ? createdEnd.toISOString() : undefined,
+            createdBefore: result.date.end
+              ? createdBefore.toISOString()
+              : undefined,
           },
           queryParamsHandling: 'merge',
         });
