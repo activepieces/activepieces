@@ -815,7 +815,7 @@
       "name": "Mario Meyer",
       "avatar_url": "https://avatars.githubusercontent.com/u/867650?v=4",
       "profile": "https://github.com/mariomeyer",
-       "contributions": [
+      "contributions": [
         "plugin"
       ]
     },
@@ -826,6 +826,15 @@
       "profile": "https://github.com/karimkhaleel",
       "contributions": [
         "plugin"
+      ]
+    },
+    {
+      "login": "CPonchet",
+      "name": "CPonchet",
+      "avatar_url": "https://avatars.githubusercontent.com/u/40756925?v=4",
+      "profile": "https://github.com/CPonchet",
+      "contributions": [
+        "bug"
       ]
     }
   ],

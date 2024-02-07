@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import sharp from 'sharp';
+import jimp from 'jimp';
 
 export const rotateImage = createAction({
   name: 'rotate_image',
@@ -24,15 +24,14 @@ export const rotateImage = createAction({
     }),
   },
   async run(context) {
-    const rotatedImageBuffer = await sharp(context.propsValue.image.data)
-      .rotate(context.propsValue.degree)
-      .toBuffer();
+    const image = await jimp.read(context.propsValue.image.data);
+    await image.rotate(-context.propsValue.degree);
 
-    const format = (await sharp(context.propsValue.image.data).metadata()).format;
+    const imageBuffer = await image.getBufferAsync(image.getMIME());
 
     const imageReference = await context.files.write({
-      fileName: 'image.' + format,
-      data: rotatedImageBuffer
+      fileName: 'image.' + image.getExtension(),
+      data: imageBuffer
     });
 
     return imageReference;

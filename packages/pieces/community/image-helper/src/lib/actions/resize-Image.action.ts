@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import sharp from 'sharp';
+import jimp from 'jimp';
 
 export const resizeImage = createAction({
   name: 'resize_image',
@@ -21,21 +21,20 @@ export const resizeImage = createAction({
       required: true,
     }),
     aspectRatio: Property.Checkbox({
-      displayName: 'Maintain aspect ratio',
+      displayName: 'Maintain aspect ratio for height',
       required: false,
       defaultValue: false,
     })
   },
   async run(context) {
-    const resizedImageBuffer = await sharp(context.propsValue.image.data)
-    .resize({width: context.propsValue.width, height: context.propsValue.height, fit: context.propsValue.aspectRatio ? 'inside' : 'fill'})
-    .toBuffer();
-
-    const format = (await sharp(context.propsValue.image.data).metadata()).format;
+    const image = await jimp.read(context.propsValue.image.data);
+    await image.resize(context.propsValue.width, (context.propsValue.aspectRatio ? jimp.AUTO : context.propsValue.height));
+    
+    const imageBuffer = await image.getBufferAsync(image.getMIME());
 
     const imageReference = await context.files.write({
-      fileName: 'image.' + format,
-      data: resizedImageBuffer
+      fileName: 'image.' + image.getExtension(),
+      data: imageBuffer
     });
   
     return imageReference;

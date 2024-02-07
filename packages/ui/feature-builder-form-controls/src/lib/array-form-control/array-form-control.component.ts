@@ -96,7 +96,7 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
     const values = pvalue ?? [];
 
     if (typeof pvalue !== 'string') {
-      if (values.length === 0) {
+      if (this.property.required && values.length === 0) {
         if (this.property.properties) {
           values.push({});
         } else {
@@ -105,12 +105,9 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
       }
 
       this.formArray.clear();
-
-      // create form for each value
       values.forEach((v) => {
         this.createForm(v);
       });
-
       this.formArray.markAllAsTouched();
       this.cd.markForCheck();
     }
@@ -130,12 +127,7 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
     }
   }
   addValue() {
-    if (
-      this.property &&
-      Object.keys(this.property.properties || {}).length > 0
-    ) {
-      // If the property indicates that we're dealing with an array of objects
-
+    if (this.isAnArrayOfObjects()) {
       this.createForm({});
       this.formArray.markAllAsTouched();
       this.cd.markForCheck();
@@ -145,17 +137,7 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
   }
 
   removeValue(index: number) {
-    if (
-      this.property &&
-      Object.keys(this.property.properties || {}).length > 0
-    ) {
-      if (
-        (this.property.required && this.formArray.controls.length > 1) ||
-        !this.property.required
-      ) {
-        this.formArray.removeAt(index);
-      }
-    } else if (this.formArray.controls.length > 1) {
+    if (this.itemsCanBeDeleted()) {
       this.formArray.removeAt(index);
     }
   }
@@ -182,5 +164,19 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
       return { invalid: true };
     }
     return null;
+  }
+
+  isAnArrayOfObjects(): boolean {
+    return (
+      this.property && Object.keys(this.property.properties || {}).length > 0
+    );
+  }
+
+  itemsCanBeDeleted(): boolean {
+    const isEnabled = this.formArray.enabled;
+    const isRequiredAndHasMoreThanOneItem =
+      this.property.required && this.formArray.controls.length > 1;
+    const isNotRequired = !this.property.required;
+    return isEnabled && (isRequiredAndHasMoreThanOneItem || isNotRequired);
   }
 }

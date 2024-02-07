@@ -8,7 +8,7 @@ export const enterprisePieceMetadataServiceHooks: PieceMetadataServiceHooks = {
     async filterPieces(params) {
         const { platformId, includeHidden, pieces } = params
         if (isNil(platformId) || includeHidden) {
-            return pieces
+            return defaultPieceHooks.filterPieces({ ...params, pieces })        
         }
 
         const platform = await platformService.getOneOrThrow(platformId)
