@@ -12,3 +12,13 @@ export class InterfacesService {
     return this.http.post(webhookUrl, request);
   }
 }
+
+export type InterfaceResult = {
+  type: InterfaceResultTypes;
+  value: unknown;
+};
+
+export enum InterfaceResultTypes {
+  MARKDOWN = 'markdown',
+  FILE = 'file',
+}

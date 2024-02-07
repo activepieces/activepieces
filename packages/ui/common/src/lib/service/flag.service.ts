@@ -83,6 +83,14 @@ export class FlagService {
     );
   }
 
+  getInterfaceUrlPrefix(): Observable<string> {
+    return this.getAllFlags().pipe(
+      map((flags) => {
+        return (flags[ApFlagId.FRONTEND_URL] as string) + '/interfaces';
+      })
+    );
+  }
+
   isFlagEnabled(flag: ApFlagId): Observable<boolean> {
     return this.getAllFlags().pipe(
       map((value) => {

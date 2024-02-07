@@ -5,30 +5,38 @@ import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, Observer, forkJoin, map, of, switchMap, tap } from 'rxjs';
-import { InterfacesService } from './interfaces.service';
+import {
+  InterfaceResult,
+  InterfaceResultTypes,
+  InterfacesService,
+} from './interfaces.service';
+import mime from 'mime';
 
 type Input = {
   displayName: string;
   required: boolean;
   description: string;
-  placeholder: string;
+  type: InputTypes;
 };
 
+enum InputTypes {
+  TEXT = 'text',
+  FILE = 'file',
+}
+
 type InterfaceProps = {
-  textInputs: Input[];
-  fileInputs: Input[];
+  inputs: Input[];
   waitForResponse: boolean;
 };
 
 @Component({
   selector: 'app-interfaces',
   templateUrl: './interfaces.component.html',
-  styleUrls: ['./interfaces.component.scss'],
 })
 export class InterfacesComponent implements OnInit {
   fullLogoUrl$: Observable<string>;
   flow$: Observable<PopulatedFlow>;
-  submitInterface$: Observable<any>;
+  submitInterface$: Observable<InterfaceResult>;
   interfaceForm: FormGroup;
   props: InterfaceProps | null = null;
   textInputs: Input[] = [];
@@ -63,11 +71,23 @@ export class InterfacesComponent implements OnInit {
           if (this.props?.waitForResponse) {
             this.webhookUrl += '/sync';
           }
-          if (this.props?.textInputs) {
-            this.buildTextInputs(this.props.textInputs);
+          const textInputs: Input[] = [];
+          const fileInputs: Input[] = [];
+          this.props?.inputs.forEach((input) => {
+            switch (input.type) {
+              case InputTypes.TEXT:
+                textInputs.push(input);
+                break;
+              case InputTypes.FILE:
+                fileInputs.push(input);
+                break;
+            }
+          });
+          if (textInputs.length > 0) {
+            this.buildTextInputs(textInputs);
           }
-          if (this.props?.fileInputs) {
-            this.buildFileInputs(this.props.fileInputs);
+          if (fileInputs.length > 0) {
+            this.buildFileInputs(fileInputs);
           }
         } else {
           this.props = null;
@@ -107,32 +127,39 @@ export class InterfacesComponent implements OnInit {
         switchMap((formData) =>
           this.interfacesService.submitInterface(this.webhookUrl!, formData)
         ),
-        tap((result: { type: 'markdown' | 'file'; value: unknown }) => {
-          if (result.type === 'markdown') {
+        tap((result: InterfaceResult) => {
+          if (result.type === InterfaceResultTypes.MARKDOWN) {
             this.markdownResponse = result.value as string;
-          } else if (result.type === 'file') {
-            // Your base64 string
-            const base64String = result.value as string;
-            // Splitting the base64 string to extract MIME type
-            const mimeType = base64String.match(
-              /data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+).*,.*/
-            );
-            let extension = '';
-            if (mimeType) {
-              extension = this.mimeToExtension(mimeType[1]);
-            }
-            const base64Data = base64String.split(',')[1];
-            const byteCharacters = atob(base64Data);
-            const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-              byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            const blob = new Blob([byteArray]);
-            const url = URL.createObjectURL(blob);
+          } else if (result.type === InterfaceResultTypes.FILE) {
+            const fileType = this.checkStringType(result.value as string);
             const link = document.createElement('a');
+            let url: string;
+            if (fileType === 'url') {
+              url = new URL(result.value as string).href;
+            } else {
+              // Your base64 string
+              const base64String = result.value as string;
+              // Splitting the base64 string to extract MIME type
+              const mimeType = base64String.match(
+                /data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+).*,.*/
+              );
+              let extension: string | null = '';
+              if (mimeType) {
+                extension = mime.getExtension(mimeType[1]);
+              }
+              const base64Data = base64String.split(',')[1];
+              const byteCharacters = atob(base64Data);
+              const byteNumbers = new Array(byteCharacters.length);
+              for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+              }
+              const byteArray = new Uint8Array(byteNumbers);
+              const blob = new Blob([byteArray]);
+              url = URL.createObjectURL(blob);
+              link.download = `${this.title}.${extension}`; // Set your desired file name here
+            }
             link.href = url;
-            link.download = `${this.title}.${extension}`; // Set your desired file name here
+            link.target = '_blank';
             link.click();
             // Clean up by revoking the object URL
             URL.revokeObjectURL(url);
@@ -196,55 +223,14 @@ export class InterfacesComponent implements OnInit {
     });
   }
 
-  mimeToExtension(mimeType) {
-    const mapping = {
-      // Images
-      'image/jpeg': 'jpg',
-      'image/png': 'png',
-      'image/gif': 'gif',
-      'image/webp': 'webp',
-      'image/tiff': 'tiff',
-      'image/svg+xml': 'svg',
-      // Audio
-      'audio/mpeg': 'mp3',
-      'audio/ogg': 'ogg',
-      'audio/wav': 'wav',
-      'audio/webm': 'webm',
-      'audio/aac': 'aac',
-      'audio/flac': 'flac',
-      // Video
-      'video/mp4': 'mp4',
-      'video/ogg': 'ogv',
-      'video/webm': 'webm',
-      'video/avi': 'avi',
-      'video/mpeg': 'mpeg',
-      'video/quicktime': 'mov',
-      // Documents
-      'application/pdf': 'pdf',
-      'application/msword': 'doc',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-        'docx',
-      'application/vnd.ms-excel': 'xls',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
-        'xlsx',
-      'application/vnd.ms-powerpoint': 'ppt',
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation':
-        'pptx',
-      'text/plain': 'txt',
-      'text/html': 'html',
-      'text/css': 'css',
-      'text/javascript': 'js',
-      'application/json': 'json',
-      'application/xml': 'xml',
-      // Archives
-      'application/zip': 'zip',
-      'application/x-rar-compressed': 'rar',
-      'application/x-7z-compressed': '7z',
-      'application/x-tar': 'tar',
-      // Others
-      'application/octet-stream': 'bin', // Generic binary type
-      // Add other specific MIME types and mappings as needed
-    };
-    return mapping[mimeType] || '';
+  checkStringType(str: string): 'url' | 'base64' | 'unknown' {
+    // Regular expression for base64
+    const base64Regex = /^data:(.*);base64,/;
+
+    if (base64Regex.test(str)) {
+      return 'base64';
+    } else {
+      return 'url';
+    }
   }
 }

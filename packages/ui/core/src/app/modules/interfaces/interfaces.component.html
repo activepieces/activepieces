@@ -7,8 +7,7 @@
                 <ng-container *ngFor="let input of textInputs">
                     <mat-form-field class="ap-w-full ap-mb-4" appearance="outline">
                         <mat-label>{{ input.displayName }}</mat-label>
-                        <input matInput type="text" [placeholder]="input.placeholder"
-                            [formControlName]="getInputKey(input.displayName)">
+                        <input matInput type="text" [formControlName]="getInputKey(input.displayName)">
                         <mat-hint>{{ input.description }}</mat-hint>
                     </mat-form-field>
                 </ng-container>
