@@ -478,7 +478,7 @@ function buildSchema(props: PiecePropertyMap): TSchema {
                 break
             case PropertyType.ARRAY:
                 // Only accepts connections variable.
-                propsSchema[name] = Type.Union([Type.Array(Type.String({})), Type.String()])
+                propsSchema[name] = Type.Union([Type.Array(Type.Unknown({})), Type.String()])
                 break
             case PropertyType.OBJECT:
                 propsSchema[name] = Type.Union([Type.Record(Type.String(), Type.Any()), Type.String()])
