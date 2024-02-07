@@ -186,7 +186,8 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     this.requiredProperties = {};
     this.optionalProperties = {};
     Object.entries(this.properties).forEach(([pk]) => {
-      this.properties[pk].required
+      this.properties[pk].required ||
+      this.properties[pk].type === PropertyType.MARKDOWN
         ? (this.requiredProperties[pk] = this.properties[pk])
         : (this.optionalProperties[pk] = this.properties[pk]);
     });
@@ -542,12 +543,12 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     return forkJoin({
       flow: this.store.select(BuilderSelectors.selectCurrentFlow).pipe(take(1)),
       webhookPrefix: this.flagService.getWebhookUrlPrefix(),
+      interfacePrefix: this.flagService.getInterfaceUrlPrefix(),
     }).pipe(
       map((res) => {
-        return markdown.replace(
-          '{{webhookUrl}}',
-          `${res.webhookPrefix}/${res.flow.id}`
-        );
+        return markdown
+          .replace('{{webhookUrl}}', `${res.webhookPrefix}/${res.flow.id}`)
+          .replace('{{interfaceUrl}}', `${res.interfacePrefix}/${res.flow.id}`);
       })
     );
   }
