@@ -9,6 +9,8 @@ export const ListFlowRunsRequestQuery = Type.Object({
     status: Type.Optional(Type.Enum(ExecutionOutputStatus)),
     limit: Type.Optional(Type.Number({})),
     cursor: Type.Optional(Type.String({})),
+    createdAfter: Type.Optional(Type.String({})),
+    createdBefore: Type.Optional(Type.String({})),
 })
 
 export type ListFlowRunsRequestQuery = Static<typeof ListFlowRunsRequestQuery> & { cursor: Cursor }

@@ -25,6 +25,8 @@ import { EeComponentsModule } from '@activepieces/ee-components';
 import { RenameFlowDialogComponent } from './components/dialogs/rename-flow-dialog/rename-flow-dialog.component';
 import { UiFeatureGitSyncModule } from '@activepieces/ui-feature-git-sync';
 import { UiFeatureFoldersStoreModule } from '@activepieces/ui/feature-folders-store';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 
 @NgModule({
   imports: [
@@ -40,6 +42,8 @@ import { UiFeatureFoldersStoreModule } from '@activepieces/ui/feature-folders-st
     FlowStatusPipe,
     EeComponentsModule,
     UiFeatureGitSyncModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
   ],
   declarations: [
     DashboardContainerComponent,
