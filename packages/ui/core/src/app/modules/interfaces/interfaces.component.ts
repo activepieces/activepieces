@@ -223,7 +223,7 @@ export class InterfacesComponent implements OnInit {
     });
   }
 
-  checkStringType(str: string): 'url' | 'base64' | 'unknown' {
+  checkStringType(str: string): 'url' | 'base64' {
     // Regular expression for base64
     const base64Regex = /^data:(.*);base64,/;
 
