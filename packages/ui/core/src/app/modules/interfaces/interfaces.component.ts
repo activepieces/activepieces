@@ -75,7 +75,10 @@ export class InterfacesComponent implements OnInit {
       ),
       tap((flow) => {
         const { pieceName, triggerName } = flow.version.trigger.settings;
-        if (pieceName === '@activepieces/piece-interfaces' && triggerName === 'form_submission') {
+        if (
+          pieceName === '@activepieces/piece-interfaces' &&
+          triggerName === 'form_submission'
+        ) {
           this.webhookUrl = environment.apiUrl + '/webhooks/' + flow.id;
           this.title = flow.version.displayName;
           this.interfaceForm = new FormGroup({});
@@ -111,7 +114,7 @@ export class InterfacesComponent implements OnInit {
 
   async submit() {
     if (this.interfaceForm.valid && !this.loading) {
-      this.markdownResponse.next(null)
+      this.markdownResponse.next(null);
       this.loading = true;
 
       const observables: Observable<string>[] = [];
@@ -146,14 +149,17 @@ export class InterfacesComponent implements OnInit {
           } else if (result.type === InterfaceResultTypes.FILE) {
             const link = document.createElement('a');
             // Your base64 string
-            const fileBase = result.value as FileResponseInterface
+            const fileBase = result.value as FileResponseInterface;
             link.download = fileBase.fileName;
-            link.href = fileBase.base64Url
+            link.href = fileBase.base64Url;
             link.target = '_blank';
             link.click();
             // Clean up by revoking the object URL
             URL.revokeObjectURL(fileBase.base64Url);
           }
+          this.snackBar.open(`Your submission was successfully received.`, '', {
+            duration: 5000,
+          });
           this.loading = false;
         }),
         catchError((error) => {
