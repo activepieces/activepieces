@@ -1,0 +1,43 @@
+<div
+    class="ap-h-screen ap-w-full ap-flex ap-items-center ap-justify-center ap-bg-center ap-bg-cover ap-bg-authBg ap-flex-col">
+    <ng-container *ngIf="!error && props">
+        <form [formGroup]="interfaceForm" (ngSubmit)="submit()" class="ap-flex ap-flex-col ap-gap-2">
+            <mat-card class="md:ap-min-w-[480px] md:ap-max-w-initial ap-min-w-[350px] ap-max-w-[350px] auth-card">
+                <div class="ap-typography-headline-5 ap-text-center ap-mb-6">{{ title }}</div>
+                <ng-container *ngFor="let input of textInputs">
+                    <mat-form-field class="ap-w-full ap-mb-4" appearance="outline">
+                        <mat-label>{{ input.displayName }}</mat-label>
+                        <input matInput type="text" [formControlName]="getInputKey(input.displayName)">
+                        <mat-hint>{{ input.description }}</mat-hint>
+                    </mat-form-field>
+                </ng-container>
+                <ng-container *ngFor="let input of fileInputs">
+                    <mat-form-field class="ap-w-full">
+                        <mat-label i18n>{{ input.displayName }}</mat-label>
+                        <ap-file-upload [required]="input.required" #flowInput
+                            [formControlName]="getInputKey(input.displayName)" [extensions]="['.*']"></ap-file-upload>
+                        <ap-icon-button [height]="25" [width]="25" iconFilename="attach.svg" matSuffix
+                            (buttonClicked)="flowInput.fileInput.nativeElement.click()"></ap-icon-button>
+                        <mat-hint>{{ input.description }}</mat-hint>
+                    </mat-form-field>
+                </ng-container>
+
+                <div class="text-center ap-mt-2 ap-flex ap-flex-col ap-gap-2 ap-items-center">
+                    <ap-button [loading]="loading" btnColor="primary" btnSize="large" i18n>
+                        Submit
+                    </ap-button>
+                </div>
+
+                <ng-container *ngIf="markdownResponse | async as mkResponse">
+                    <ap-markdown [fullWidth]="true" [data]="mkResponse"  class="ap-mt-4 ap-mb-4"></ap-markdown>
+                </ng-container>
+            </mat-card>
+        </form>
+    </ng-container>
+    <ng-container *ngIf="error">
+        {{ error }}
+    </ng-container>
+    <ap-powered-by-activepieces class="ap-mt-4"></ap-powered-by-activepieces>
+</div>
+<ng-container *ngIf="flow$ | async as flow"></ng-container>
+<ng-container *ngIf="submitInterface$ | async"></ng-container>

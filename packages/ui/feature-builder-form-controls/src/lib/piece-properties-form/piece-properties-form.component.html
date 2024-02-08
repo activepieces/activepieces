@@ -17,7 +17,9 @@
 
     <ng-container *ngSwitchCase="PropertyType.MARKDOWN">
       <ng-container *ngIf="convertMarkdown(property.value.description) | async as markdown">
-        <ap-markdown [fullWidth]="true" [data]="markdown"> </ap-markdown>
+        <div class="ap-mb-8">
+          <ap-markdown [fullWidth]="true" [data]="markdown"> </ap-markdown>
+        </div>
       </ng-container>
     </ng-container>
 
