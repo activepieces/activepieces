@@ -11,7 +11,7 @@
     "@angular/cdk": "16.2.6",
     "@angular/forms": "16.2.6",
     "@activepieces/shared": "*",
-    "semver": "7.5.4"
+    "semver": "7.6.0"
   },
   "dependencies": {},
   "sideEffects": false
