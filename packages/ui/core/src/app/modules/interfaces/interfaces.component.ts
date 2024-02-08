@@ -156,6 +156,14 @@ export class InterfacesComponent implements OnInit {
             link.click();
             // Clean up by revoking the object URL
             URL.revokeObjectURL(fileBase.base64Url);
+          } else {
+            this.snackBar.open(
+              `Your submission was successfully received.`,
+              '',
+              {
+                duration: 5000,
+              }
+            );
           }
           this.loading = false;
         }),
