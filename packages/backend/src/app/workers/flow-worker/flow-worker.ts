@@ -2,6 +2,7 @@ import {
     Action,
     ActionType,
     ActivepiecesError,
+    assertNotNullOrUndefined,
     BeginExecuteFlowOperation,
     CodeAction,
     ErrorCode,
@@ -155,12 +156,14 @@ const loadInputAndLogFileId = async ({
         }
         case ExecutionType.BEGIN:
             if (!isNil(flowRun.logsFileId)) {
-                jobData.payload = await loadPayload({
+                const executionOutput = await loadPayload({
                     logsFileId: flowRun.logsFileId,
                     projectId: jobData.projectId,
                 })
+                const trigger = Object.values(executionOutput.executionState.steps).find((step) => flowHelper.isTrigger(step.type))
+                assertNotNullOrUndefined(trigger, 'Trigger not found in execution state')
+                jobData.payload = trigger.output
             }
-
             return {
                 input: {
                     triggerPayload: jobData.payload,
