@@ -38,7 +38,7 @@ export const salesforceAuth = PieceAuth.OAuth2({
   description: 'Authenticate with Salesforce Production',
   authUrl: 'https://{environment}.salesforce.com/services/oauth2/authorize',
   tokenUrl: 'https://{environment}.salesforce.com/services/oauth2/token',
-  scope: ['refresh_token+full'],
+  scope: ['refresh_token', 'full'],
 });
 
 export const salesforce = createPiece({

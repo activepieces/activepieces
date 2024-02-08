@@ -25,6 +25,7 @@ function formatOAuth2Response(response: Omit<BaseOAuth2ConnectionValue, 'claimed
     const secondsSinceEpoch = Math.round(Date.now() / 1000)
     const formattedResponse: BaseOAuth2ConnectionValue = {
         ...response,
+        data: response,
         claimed_at: secondsSinceEpoch,
     }
 
