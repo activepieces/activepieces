@@ -36,11 +36,18 @@ export const storeEntryController: FastifyPluginAsyncTypebox = async (fastify) =
             request: FastifyRequest<{
                 Querystring: GetStoreEntryRequest
             }>,
-            _reply,
+            reply,
         ) => {
-            return storeEntryService.getOne({
-                projectId: request.principal.projectId, key: request.query.key,
+            const value = await storeEntryService.getOne({
+                projectId: request.principal.projectId,
+                key: request.query.key,
             })
+
+            if (!value) {
+                return reply.code(404).send('Value not found!')
+            }
+
+            return value
         },
     )
 
