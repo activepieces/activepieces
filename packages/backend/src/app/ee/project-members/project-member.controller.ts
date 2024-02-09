@@ -29,7 +29,6 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (app) =>
         const { projectMember } = await projectMemberService.upsertAndSend({
             ...request.body,
             projectId: request.principal.projectId,
-            platformId: request.principal.platform?.id ?? null,
         })
 
         await reply.status(StatusCodes.CREATED).send(projectMember)

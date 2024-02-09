@@ -10,15 +10,13 @@ import { ProjectPlanEntity } from './project-plan.entity'
 import Stripe from 'stripe'
 import { appsumoService } from '../../appsumo/appsumo.service'
 import { getEdition } from '../../../helper/secret-helper'
+import { flagService } from '../../../flags/flag.service'
 
 const projectPlanRepo = databaseConnection.getRepository<ProjectPlan>(ProjectPlanEntity)
 
 export const plansService = {
     async getByCustomerId({ stripeCustomerId }: { stripeCustomerId: string }): Promise<ProjectPlan> {
         return projectPlanRepo.findOneByOrFail({ stripeCustomerId })
-    },
-    async getByProjectId({ projectId }: { projectId: ProjectId }): Promise<ProjectPlan> {
-        return projectPlanRepo.findOneByOrFail({ projectId })
     },
     async removeDailyTasksAndUpdateTasks({ projectId, tasks }: { projectId: ProjectId, tasks: number }): Promise<void> {
         await projectPlanRepo.update({ projectId }, {
@@ -49,6 +47,7 @@ export const plansService = {
             ...spreadIfDefined('flowPlanName', nickname),
             ...spreadIfDefined('connections', connections),
             ...spreadIfDefined('tasks', tasks),
+            tasksPerDay: null,
             ...spreadIfDefined('minimumPollingInterval', minimumPollingInterval),
             ...spreadIfDefined('teamMembers', teamMembers),
             stripeSubscriptionId,
@@ -67,7 +66,7 @@ async function createInitialPlan({ projectId }: { projectId: ProjectId }): Promi
         const project = await projectService.getOneOrThrow(projectId)
         const user = (await userService.getMetaInfo({ id: project.ownerId }))!
         const stripeCustomerId = await stripeHelper.getOrCreateCustomer(user, project.id)
-        const defaultPlanFlow = await getDefaultFlowPlan({ email: user.email })
+        const defaultPlanFlow = await getDefaultFlowPlan({ platformId: project.platformId ?? null, email: user.email })
         await projectPlanRepo.upsert({
             id: apId(),
             projectId,
@@ -87,7 +86,7 @@ async function createInitialPlan({ projectId }: { projectId: ProjectId }): Promi
     }
 }
 
-async function getDefaultFlowPlan({ email }: { email: string }): Promise<FlowPlanLimits> {
+async function getDefaultFlowPlan({ platformId, email }: { platformId: string | null, email: string }): Promise<FlowPlanLimits> {
     const edition = getEdition()
     if (edition === ApEdition.CLOUD) {
         const appsumoPlan = await appsumoService.getByEmail(email)
@@ -95,8 +94,7 @@ async function getDefaultFlowPlan({ email }: { email: string }): Promise<FlowPla
             return appsumoService.getPlanInformation(appsumoPlan.plan_id)
         }
     }
-    if (edition === ApEdition.ENTERPRISE) {
-        // TODO refactor, first project in ee doesn't have plan created.
+    if (!flagService.isCloudPlatform(platformId)) {
         return DEFAULT_PLATFORM_PLAN
     }
     return defaultPlanInformation

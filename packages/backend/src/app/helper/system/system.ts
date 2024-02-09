@@ -1,6 +1,7 @@
 import {
     ActivepiecesError,
     ApEnvironment,
+    CodeSandboxType,
     ErrorCode,
     isNil,
 } from '@activepieces/shared'
@@ -26,7 +27,13 @@ export enum DatabaseType {
 }
 
 const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
+    [SystemProp.API_RATE_LIMIT_AUTHN_ENABLED]: 'true',
+    [SystemProp.API_RATE_LIMIT_AUTHN_MAX]: '50',
+    [SystemProp.API_RATE_LIMIT_AUTHN_WINDOW]: '1 minute',
+    [SystemProp.CLIENT_REAL_IP_HEADER]: 'x-real-ip',
     [SystemProp.CLOUD_AUTH_ENABLED]: 'true',
+    [SystemProp.CODE_SANDBOX_TYPE]: CodeSandboxType.NO_OP,
+    [SystemProp.CONFIG_PATH]: path.join(os.homedir(), '.activepieces'),
     [SystemProp.DB_TYPE]: DatabaseType.POSTGRES,
     [SystemProp.EDITION]: 'ce',
     [SystemProp.ENGINE_EXECUTABLE_PATH]: 'dist/packages/engine/main.js',
@@ -35,20 +42,16 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [SystemProp.FLOW_WORKER_CONCURRENCY]: '10',
     [SystemProp.LOG_LEVEL]: 'info',
     [SystemProp.LOG_PRETTY]: 'false',
+    [SystemProp.PACKAGE_ARCHIVE_PATH]: 'dist/archives',
+    [SystemProp.PIECES_SOURCE]: PiecesSource.CLOUD_AND_DB,
     [SystemProp.QUEUE_MODE]: QueueMode.REDIS,
     [SystemProp.SANDBOX_MEMORY_LIMIT]: '131072',
-    [SystemProp.CONFIG_PATH]: path.join(os.homedir(), '.activepieces'),
     [SystemProp.SANDBOX_RUN_TIME_SECONDS]: '600',
     [SystemProp.SIGN_UP_ENABLED]: 'false',
     [SystemProp.STATS_ENABLED]: 'false',
-    [SystemProp.PACKAGE_ARCHIVE_PATH]: 'dist/archives',
-    [SystemProp.CHATBOT_ENABLED]: 'true',
     [SystemProp.TELEMETRY_ENABLED]: 'true',
-    [SystemProp.PIECES_SOURCE]: PiecesSource.CLOUD_AND_DB,
-    [SystemProp.TEMPLATES_SOURCE_URL]:
-        'https://cloud.activepieces.com/api/v1/flow-templates',
+    [SystemProp.TEMPLATES_SOURCE_URL]: 'https://cloud.activepieces.com/api/v1/flow-templates',
     [SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: '5',
-    [SystemProp.QUEUE_UI_ENABLED]: 'false',
 }
 
 export const system = {
@@ -105,7 +108,8 @@ const getEnvVar = (prop: SystemProp): string | undefined => {
 }
 
 export const validateEnvPropsOnStartup = async (): Promise<void> => {
-    const executionMode = system.get(SystemProp.EXECUTION_MODE)
+    const codeSandboxType = system.get<CodeSandboxType>(SystemProp.CODE_SANDBOX_TYPE)
+    const executionMode = system.get<ExecutionMode>(SystemProp.EXECUTION_MODE)
     const signedUpEnabled =
         system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
     const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
@@ -114,6 +118,7 @@ export const validateEnvPropsOnStartup = async (): Promise<void> => {
 
     if (
         executionMode === ExecutionMode.UNSANDBOXED &&
+        codeSandboxType !== CodeSandboxType.V8_ISOLATE &&
         signedUpEnabled &&
         environment === ApEnvironment.PRODUCTION
     ) {

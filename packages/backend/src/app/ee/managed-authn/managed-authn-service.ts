@@ -1,13 +1,14 @@
 import { randomBytes as randomBytesCallback } from 'node:crypto'
 import { promisify } from 'node:util'
-import { AuthenticationResponse, PlatformRole, PrincipalType, Project, ProjectId, ProjectType, User, UserStatus } from '@activepieces/shared'
+import { AuthenticationResponse, PlatformRole, PrincipalType, Project, ProjectId, ProjectType, User } from '@activepieces/shared'
 import { userService } from '../../user/user-service'
-import { PlatformId, ProjectMemberRole, ProjectMemberStatus } from '@activepieces/ee-shared'
+import { DEFAULT_PLATFORM_PLAN, PlatformId, ProjectMemberRole, ProjectMemberStatus } from '@activepieces/ee-shared'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { projectMemberService } from '../project-members/project-member.service'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { externalTokenExtractor } from './lib/external-token-extractor'
+import { plansService } from '../billing/project-plan/project-plan.service'
 
 export const managedAuthnService = {
     async externalToken({ externalAccessToken }: AuthenticateParams): Promise<AuthenticationResponse> {
@@ -44,6 +45,13 @@ const getOrCreateUser = async (params: GetOrCreateUserParams): Promise<GetOrCrea
         externalProjectId,
     })
 
+    await projectMemberService.upsert({
+        projectId: project.id,
+        email: params.externalEmail,
+        role: ProjectMemberRole.EDITOR,
+        status: ProjectMemberStatus.ACTIVE,
+    })
+
     if (existingUser) {
         const { password: _, ...user } = existingUser
 
@@ -60,17 +68,9 @@ const getOrCreateUser = async (params: GetOrCreateUserParams): Promise<GetOrCrea
         lastName: externalLastName,
         trackEvents: true,
         newsLetter: true,
-        status: UserStatus.VERIFIED,
+        verified: true,
         externalId: externalUserId,
         platformId,
-    })
-
-    await projectMemberService.upsert({
-        projectId: project.id,
-        email: newUser.email,
-        platformId,
-        role: ProjectMemberRole.EDITOR,
-        status: ProjectMemberStatus.ACTIVE,
     })
 
     return {
@@ -91,13 +91,20 @@ const getOrCreateProject = async ({ platformId, externalProjectId }: GetOrCreate
 
     const platform = await platformService.getOneOrThrow(platformId)
 
-    return projectService.create({
+    const project = await projectService.create({
         displayName: externalProjectId,
         ownerId: platform.ownerId,
         platformId,
         type: ProjectType.PLATFORM_MANAGED,
         externalId: externalProjectId,
     })
+    
+    await plansService.update({
+        projectId: project.id,
+        subscription: null,
+        planLimits: DEFAULT_PLATFORM_PLAN,
+    })
+    return project
 }
 
 const randomBytes = promisify(randomBytesCallback)

@@ -60,29 +60,7 @@ ap-markdown {
   }
 }
 
-app-builder-autocomplete-mentions-dropdown {
-  * {
-    scrollbar-width: thin;
 
-    &::-webkit-scrollbar {
-      width: 16px;
-    }
-    &::-webkit-scrollbar-thumb {
-      background: $border;
-      background-clip: content-box;
-      border: 6px solid transparent;
-      border-radius: 40px;
-      scrollbar-width: thin;
-    }
-    &::-webkit-scrollbar-thumb:hover {
-      background: rgba(179, 179, 179, 0.7);
-      background-clip: content-box;
-      border: 6px solid transparent;
-      border-radius: 40px;
-      scrollbar-width: thin;
-    }
-  }
-}
 .mat-mdc-tab-body-content {
   scrollbar-width: thin;
 
@@ -204,7 +182,5 @@ app-templates-dialog
     }
   }
   
- 
-
 }
 

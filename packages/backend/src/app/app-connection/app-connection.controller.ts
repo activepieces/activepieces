@@ -3,6 +3,7 @@ import {
     AppConnection,
     AppConnectionWithoutSensitiveData,
     ListAppConnectionsRequestQuery,
+    PrincipalType,
     SeekPage,
     UpsertAppConnectionRequestBody,
 } from '@activepieces/shared'
@@ -22,11 +23,11 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
 
 
     app.get('/', ListAppConnectionsRequest, async (request): Promise<SeekPage<AppConnectionWithoutSensitiveData>> => {
-        const { appName, cursor, limit } = request.query
+        const { pieceName, cursor, limit } = request.query
 
         const appConnections = await appConnectionService.list({
             projectId: request.principal.projectId,
-            appName,
+            pieceName,
             cursorRequest: cursor ?? null,
             limit: limit ?? DEFAULT_PAGE_SIZE,
         })
@@ -39,9 +40,9 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
         return appConnectionsWithoutSensitiveData
     })
 
-    app.delete('/:connectionId', DeleteAppConnectionRequest, async (request, reply): Promise<void> => {
+    app.delete('/:id', DeleteAppConnectionRequest, async (request, reply): Promise<void> => {
         await appConnectionService.delete({
-            id: request.params.connectionId,
+            id: request.params.id,
             projectId: request.principal.projectId,
         })
         await reply.status(StatusCodes.NO_CONTENT).send()
@@ -58,7 +59,11 @@ const removeSensitiveData = (appConnection: AppConnection): AppConnectionWithout
 }
 
 const UpsertAppConnectionRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+    },
     schema: {
+        tags: ['app-connections'],
         description: 'Upsert an app connection based on the app name',
         body: UpsertAppConnectionRequestBody,
         Response: {
@@ -68,7 +73,11 @@ const UpsertAppConnectionRequest = {
 }
 
 const ListAppConnectionsRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+    },
     schema: {
+        tags: ['app-connections'],
         querystring: ListAppConnectionsRequestQuery,
         description: 'List app connections',
         response: {
@@ -78,10 +87,14 @@ const ListAppConnectionsRequest = {
 }
 
 const DeleteAppConnectionRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+    },
     schema: {
+        tags: ['app-connections'],
         description: 'Delete an app connection',
         params: Type.Object({
-            connectionId: ApId,
+            id: ApId,
         }),
         response: {
             [StatusCodes.NO_CONTENT]: Type.Undefined(),

@@ -1,0 +1,29 @@
+{
+  "name": "pieces-postgres",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/postgres/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/postgres",
+        "tsConfig": "packages/pieces/community/postgres/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/postgres/package.json",
+        "main": "packages/pieces/community/postgres/src/index.ts",
+        "assets": ["packages/pieces/community/postgres/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/community/postgres/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

@@ -1,9 +1,0 @@
-{
-  "name": "@activepieces/piece-saastic",
-  "version": "0.0.2",
-  "dependencies": {
-    "@activepieces/pieces-framework": "latest",
-    "@activepieces/pieces-common": "latest",
-    "tslib": "^2.6.2"
-  }
-}

@@ -1,53 +1,41 @@
 import { AppConnectionValue } from '../app-connection/app-connection'
-import { ResumeStepMetadata } from '../flow-run/execution/execution-output'
-import { ExecutionState } from '../flow-run/execution/execution-state'
-import { ExecutionType } from '../flow-run/execution/execution-type'
 import { FlowRunId } from '../flow-run/flow-run'
-import { CodeAction } from '../flows/actions/action'
 import { FlowVersion } from '../flows/flow-version'
 import { ProjectId } from '../project/project'
 import { PiecePackage } from '../pieces'
+import { ExecutionState, ExecutionType } from '../flow-run/execution/execution-output'
 
 export enum EngineOperationType {
     EXTRACT_PIECE_METADATA = 'EXTRACT_PIECE_METADATA',
-    EXECUTE_ACTION = 'EXECUTE_ACTION',
-    EXECUTE_CODE = 'EXECUTE_CODE',
+    EXECUTE_STEP = 'EXECUTE_STEP',
+    EXECUTE_TEST_FLOW = 'EXECUTE_TEST_FLOW',
     EXECUTE_FLOW = 'EXECUTE_FLOW',
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
     EXECUTE_VALIDATE_AUTH = 'EXECUTE_VALIDATE_AUTH',
-    EXECUTE_TEST = 'EXECUTE_TEST',
 }
 
 export enum TriggerHookType {
     ON_ENABLE = 'ON_ENABLE',
     ON_DISABLE = 'ON_DISABLE',
     HANDSHAKE = 'HANDSHAKE',
+    RENEW = 'RENEW',
     RUN = 'RUN',
     TEST = 'TEST',
 }
 
 export type EngineOperation =
-    | ExecuteActionOperation
-    | ExecuteCodeOperation
+    | ExecuteStepOperation
     | ExecuteFlowOperation
     | ExecutePropsOptions
     | ExecuteTriggerOperation<TriggerHookType>
     | ExecuteExtractPieceMetadata
     | ExecuteValidateAuthOperation
 
-type BaseEngineOperation = {
+export type BaseEngineOperation = {
     projectId: ProjectId
-    workerToken?: string
+    workerToken: string
     serverUrl: string
-}
-
-export type ExecuteActionOperation = BaseEngineOperation & {
-    piece: PiecePackage
-    actionName: string
-    flowVersion: FlowVersion
-    serverUrl: string
-    input: Record<string, unknown>
 }
 
 export type ExecuteValidateAuthOperation = BaseEngineOperation & {
@@ -55,38 +43,34 @@ export type ExecuteValidateAuthOperation = BaseEngineOperation & {
     auth: AppConnectionValue
 }
 
-export type ExecuteExtractPieceMetadata = PiecePackage & { projectId: string }
+export type ExecuteExtractPieceMetadata = PiecePackage
 
-export type ExecuteCodeOperation = {
-    step: CodeAction
-    serverUrl: string
+export type ExecuteStepOperation = BaseEngineOperation &  {
+    stepName: string
     flowVersion: FlowVersion
-    input: Record<string, unknown>
-    projectId: ProjectId
 }
 
 export type ExecutePropsOptions = BaseEngineOperation & {
     piece: PiecePackage
     propertyName: string
     stepName: string
+    flowVersion: FlowVersion
     input: Record<string, unknown>
 }
 
 type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
     flowVersion: FlowVersion
     flowRunId: FlowRunId
-    triggerPayload: unknown
-    serverUrl: string
     executionType: T
 }
 
 export type BeginExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.BEGIN> & {
-    executionState?: ExecutionState
+    triggerPayload: unknown
 }
 
 export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.RESUME> & {
     executionState: ExecutionState
-    resumeStepMetadata: ResumeStepMetadata
+    tasks: number
     resumePayload: unknown
 }
 
@@ -163,8 +147,9 @@ type ExecuteOnEnableTriggerResponse = {
 export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends TriggerHookType.RUN ? ExecuteTestOrRunTriggerResponse :
     H extends TriggerHookType.HANDSHAKE ? ExecuteHandshakeTriggerResponse :
         H extends TriggerHookType.TEST ? ExecuteTestOrRunTriggerResponse :
-            H extends TriggerHookType.ON_DISABLE ? Record<string, never> :
-                ExecuteOnEnableTriggerResponse
+            H extends TriggerHookType.RENEW ? Record<string, never> :
+                H extends TriggerHookType.ON_DISABLE ? Record<string, never> :
+                    ExecuteOnEnableTriggerResponse
 
 export type ExecuteActionResponse = {
     success: boolean

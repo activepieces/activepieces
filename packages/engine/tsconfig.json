@@ -9,6 +9,7 @@
     "noFallthroughCasesInSwitch": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
+    "allowJs": true,
   },
   "files": [],
   "include": [],

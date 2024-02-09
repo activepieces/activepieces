@@ -18,6 +18,8 @@ export const platformProjectService = {
         const projectPlans = await projectRepo.createQueryBuilder('project')
             .leftJoinAndMapOne('project.plan', 'project_plan', 'project_plan', 'project.id = "project_plan"."projectId"')
             .where(filters)
+            // TODO add pagination
+            .limit(50)
             .getMany()
         const projects: ProjectWithUsageAndPlanResponse[] = await Promise.all(projectPlans.map(enrichWithUsageAndPlan))
         return paginationHelper.createPage<ProjectWithUsageAndPlanResponse>(projects, null)

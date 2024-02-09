@@ -14,10 +14,6 @@ code-height-auto .CodeMirror {
   font-size: 14px !important;
 }
 
-.console-size .CodeMirror {
-  min-width: 400px !important;
-  min-height: 100% !important;
-}
 
 .code-size-200 .CodeMirror {
   min-height: 100px !important;
@@ -49,7 +45,6 @@ code-height-auto .CodeMirror {
 }
 
 .console-size .CodeMirror {
-  min-width: 400px !important;
   min-height: 100% !important;
 }
 
@@ -112,3 +107,7 @@ ngx-monaco-editor {
 }
 
 
+
+.white-nums-column .monaco-editor .margin {
+  background-color: var(--white);
+}

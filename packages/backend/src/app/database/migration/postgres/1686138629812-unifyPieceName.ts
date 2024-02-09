@@ -57,7 +57,6 @@ export class UnifyPieceName1686138629812 implements MigrationInterface {
 }
 
 async function updateFlowVersions(queryRunner: QueryRunner, revert: boolean): Promise<number> {
-    const flowVersionRepo = queryRunner.connection.getRepository(FLOW_VERSION_TABLE)
     const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
     let count = 0
 
@@ -67,7 +66,7 @@ async function updateFlowVersions(queryRunner: QueryRunner, revert: boolean): Pr
 
         if (update) {
             count++
-            await flowVersionRepo.update(flowVersion.id, flowVersion)
+            await queryRunner.query(`UPDATE ${FLOW_VERSION_TABLE} SET trigger = $1 WHERE id = $2`, [flowVersion.trigger, flowVersion.id])
         }
     }
 
@@ -75,8 +74,7 @@ async function updateFlowVersions(queryRunner: QueryRunner, revert: boolean): Pr
 }
 
 async function updateTriggerEvent(queryRunner: QueryRunner, revert: boolean): Promise<number> {
-    const triggerEventRepo = queryRunner.connection.getRepository(TRIGGER_EVENT)
-    const triggerEvents = await triggerEventRepo.find()
+    const triggerEvents = await queryRunner.query(`SELECT * FROM ${TRIGGER_EVENT}`)
     let count = 0
     for (const triggerEvent of triggerEvents) {
         if (triggerEvent.source) {
@@ -87,7 +85,7 @@ async function updateTriggerEvent(queryRunner: QueryRunner, revert: boolean): Pr
                 triggerEvent.source = triggerEvent.source.replace('@activepieces/piece-', '')
             }
             count++
-            await triggerEventRepo.update(triggerEvent.id, triggerEvent)
+            await queryRunner.query(`UPDATE ${TRIGGER_EVENT} SET source = $1 WHERE id = $2`, [triggerEvent.source, triggerEvent.id])
         }
     }
     return count
@@ -100,34 +98,33 @@ async function updateAppConnections(queryRunner: QueryRunner, revert: boolean): 
     for (const appConnection of appConnections) {
         appConnection.appName = getPackageNameForPiece(appConnection.appName, revert)
         count++
-        await queryRunner.query(`UPDATE ${APP_CONNECTION_TABLE} SET "appName" = '${appConnection.appName}' WHERE id = ${appConnection.id}`)
+        await queryRunner.query(`UPDATE ${APP_CONNECTION_TABLE} SET "appName" = $1 WHERE id = $2`, [appConnection.appName, appConnection.id])
     }
 
     return count
 }
 
 async function updateAppEventRoutes(queryRunner: QueryRunner, revert: boolean): Promise<number> {
-    const appEventsRouteRepo = queryRunner.connection.getRepository(APP_EVENT_ROUTING_TABLE)
-    const appEventsRoutes = await appEventsRouteRepo.find()
+    const appEventsRoutes = await queryRunner.query(`SELECT * FROM ${APP_EVENT_ROUTING_TABLE}`)
     let count = 0
 
     for (const appEventsRoute of appEventsRoutes) {
         appEventsRoute.appName = getPackageNameForPiece(appEventsRoute.appName, revert)
         count++
-        await appEventsRouteRepo.update(appEventsRoute.id, appEventsRoute)
+        await queryRunner.query(`UPDATE ${APP_EVENT_ROUTING_TABLE} SET "appName" = $1 WHERE id = $2`, [appEventsRoute.appName, appEventsRoute.id])
     }
 
     return count
 }
 
 async function updatePieceMetadata(queryRunner: QueryRunner, revert: boolean): Promise<number> {
-    const pieceMetadatas = await queryRunner.connection.query('SELECT * FROM piece_metadata;')
+    const pieceMetadatas = await queryRunner.query('SELECT * FROM piece_metadata;')
     let count = 0
 
     for (const pieceMetadata of pieceMetadatas) {
         const updatedName = getPackageNameForPiece(pieceMetadata.name, revert)
-        const updateQuery = `UPDATE piece_metadata SET name = '${updatedName}' WHERE id = '${pieceMetadata.id}';`
-        await queryRunner.connection.query(updateQuery)
+        const updateQuery = 'UPDATE piece_metadata SET name = $1 WHERE id = $2;'
+        await queryRunner.query(updateQuery, [updatedName, pieceMetadata.id])
         count++
     }
 

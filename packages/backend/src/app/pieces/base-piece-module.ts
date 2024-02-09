@@ -1,13 +1,13 @@
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { ALL_PRINICPAL_TYPES, ActivepiecesError, ApEdition, ErrorCode, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, ListPiecesRequestQuery, PieceOptionRequest, PrincipalType } from '@activepieces/shared'
+import { ALL_PRINICPAL_TYPES, ActivepiecesError, ApEdition, ErrorCode, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, ListPiecesRequestQuery, PieceCategory, PieceOptionRequest, PrincipalType } from '@activepieces/shared'
 import { engineHelper } from '../helper/engine-helper'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
-import { pieceMetadataService } from './piece-metadata-service'
+import { getPiecePackage, pieceMetadataService } from './piece-metadata-service'
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { flagService } from '../flags/flag.service'
 import { PieceMetadataModel, PieceMetadataModelSummary } from './piece-metadata-entity'
-import { getServerUrl } from '../helper/public-ip-utils'
+import { flowService } from '../flows/flow/flow.service'
 
 export const pieceModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(basePiecesController, { prefix: '/v1/pieces' })
@@ -16,7 +16,18 @@ export const pieceModule: FastifyPluginAsyncTypebox = async (app) => {
 const statsEnabled = system.getBoolean(SystemProp.STATS_ENABLED)
 
 const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
-
+ 
+    app.get('/categories', {
+        config: {
+            allowedPrincipals: ALL_PRINICPAL_TYPES,
+        },
+        schema: {
+            querystring: ListPiecesRequestQuery,
+        },
+    }, async (): Promise<PieceCategory[]> => {
+        return Object.values(PieceCategory)
+    })
+        
     app.get('/', {
         config: {
             allowedPrincipals: ALL_PRINICPAL_TYPES,
@@ -34,6 +45,9 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             projectId: req.principal.projectId,
             platformId: req.principal.platform?.id,
             edition,
+            categories: req.query.categories,
+            sortBy: req.query.sortBy,
+            orderBy: req.query.orderBy,
         })
         return pieceMetadataSummary
     })
@@ -73,7 +87,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
 
         const decodedName = decodeURIComponent(name)
         return pieceMetadataService.getOrThrow({
-            projectId: req.principal.projectId,
+            projectId: req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.projectId,
             name: decodedName,
             version,
         })
@@ -84,17 +98,21 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             body: PieceOptionRequest,
         },
     }, async (req) => {
-        const { packageType, pieceType, pieceName, pieceVersion, propertyName, stepName, input } = req.body
+        const { packageType, pieceType, pieceName, pieceVersion, propertyName, stepName, input, flowVersionId, flowId } = req.body
         const { projectId } = req.principal
-
+        const flow = await flowService.getOnePopulatedOrThrow({
+            projectId,
+            id: flowId,
+            versionId: flowVersionId,
+        })
         const { result } = await engineHelper.executeProp({
-            serverUrl: await getServerUrl(),
-            piece: {
+            piece: await getPiecePackage(projectId, {
                 packageType,
                 pieceType,
                 pieceName,
                 pieceVersion,
-            },
+            }),
+            flowVersion: flow.version,
             propertyName,
             stepName,
             input,

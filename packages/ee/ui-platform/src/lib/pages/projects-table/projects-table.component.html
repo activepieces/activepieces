@@ -1,9 +1,17 @@
 <div class="ap-w-full ap-h-full">
     <div class="ap-h-full">
+        <div class="ap-flex ap-items-center ap-justify-between">
+            <ap-page-title [title]="title"></ap-page-title>
+            <ap-button btnColor="primary" btnSize="medium" (buttonClicked)="createProject()"
+                [disabled]="isDemo || false" [tooltipText]="isDemo? featureDisabledTooltip:''">
+                + New project
+            </ap-button>
+        </div>
+        <ap-upgrade-note docsLink="https://www.activepieces.com/docs/admin-console/manage-projects"
+            *ngIf="isDemo"></ap-upgrade-note>
 
-        <ap-page-title [title]="title"></ap-page-title>
         <div class="ap-min-h-[70%]">
-            <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Chatbots">
+            <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Projects table">
 
                 <ng-container matColumnDef="displayName">
                     <th mat-header-cell *matHeaderCellDef>Name</th>
@@ -20,28 +28,24 @@
                 </ng-container>
                 <ng-container matColumnDef="tasks">
                     <th mat-header-cell *matHeaderCellDef class="!ap-text-left"> Tasks</th>
-                    <td mat-cell *matCellDef="let project" class="!ap-text-left"> {{project.usage.consumedTasks | commaSeparated}} / {{project.plan.tasks | commaSeparated}}</td>
+                    <td mat-cell *matCellDef="let project" class="!ap-text-left"> {{project.usage.consumedTasks |
+                        commaSeparated}} / {{project.plan.tasks | commaSeparated}}</td>
                 </ng-container>
                 <ng-container matColumnDef="users">
                     <th mat-header-cell *matHeaderCellDef class="!ap-text-left">Users</th>
-                    <td mat-cell *matCellDef="let project" class="!ap-text-left"> {{project.usage.teamMembers}} / {{project.plan.teamMembers}} </td>
+                    <td mat-cell *matCellDef="let project" class="!ap-text-left"> {{project.usage.teamMembers}} /
+                        {{project.plan.teamMembers}} </td>
                 </ng-container>
                 <ng-container matColumnDef="action">
-                    <th mat-header-cell *matHeaderCellDef class="!ap-text-right">
-
-                        <ap-button btnColor="primary" btnSize="medium" (buttonClicked)="createProject()">
-                            + New project
-                        </ap-button>
-
+                    <th mat-header-cell *matHeaderCellDef>
                     </th>
                     <td mat-cell *matCellDef="let project">
                         <div class="ap-float-right ap-w-[7.3125rem] ap-text-center">
                             <ap-icon-button (click)="$event.stopPropagation();updateProject(project)"
                                 tooltipText="Edit project" iconFilename="pencil-underline.svg" [width]="20"
+                                [buttonDisabled]="isDemo"
                                 [height]="20" [height]="16"></ap-icon-button>
                         </div>
-
-
                     </td>
                 </ng-container>
 
@@ -50,7 +54,7 @@
                     [class.ap-hidden]="dataSource.isLoading$ | async" *matRowDef="let row; columns: displayedColumns">
                 </tr>
             </table>
-            <ng-container *ngIf="(dataSource.isLoading$ | async) === true">
+            <ng-container *ngIf="(dataSource.isLoading$ | async) === true && !isDemo">
                 <div class="ap-flex ap-items-center ap-justify-center ap-flex-grow ap-h-[500px]">
                     <ap-loading-icon height="50px" width="51px" [outlineLoader]="true" [whiteLoader]="false">
                     </ap-loading-icon>
@@ -60,8 +64,14 @@
             dataSource.data.length === 0 &&
             (dataSource.isLoading$ | async) === false
           ">
-                <div class="ap-flex ap-items-center ap-justify-center ap-h-full ap-h-[500px] ap-py-8">
+                <div class="ap-flex ap-items-center ap-justify-center ap-h-full ap-h-[500px] ap-py-8" i18n>
                     No projects created yet.
+                </div>
+            </ng-container>
+
+            <ng-container *ngIf="isDemo">
+                <div class="ap-flex ap-items-center ap-justify-center ap-h-full ap-h-[500px] ap-py-8" i18n>
+                    Projects and their usage are only availables for platform admins
                 </div>
             </ng-container>
         </div>

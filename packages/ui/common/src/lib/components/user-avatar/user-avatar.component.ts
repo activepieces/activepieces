@@ -2,12 +2,12 @@ import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../service/authentication.service';
 import { ApFlagId, Project } from '@activepieces/shared';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { FlagService } from '../../service/flag.service';
 import { Store } from '@ngrx/store';
 import { ProjectSelectors } from '../../store/project/project.selector';
 import { LocalesService } from '../../service/locales.service';
-import { LocalesEnum } from '@activepieces/ee-shared';
+import { LocalesEnum } from '@activepieces/shared';
 import { localesMap } from '../../utils/locales';
 import { PlatformProjectService } from '../../service/platform-project.service';
 
@@ -27,7 +27,7 @@ export class UserAvatarComponent implements OnInit {
   billingEnabled$: Observable<boolean>;
   myPiecesEnabled$: Observable<boolean>;
   projectEnabled$: Observable<boolean>;
-  showPlatform = false;
+  showPlatform$: Observable<boolean>;
   showCommunity$: Observable<boolean>;
   locales = localesMap;
   selectedLanguage = {
@@ -61,10 +61,16 @@ export class UserAvatarComponent implements OnInit {
     );
     this.selectedLanguage =
       this.localesService.getCurrentLanguageFromLocalStorageOrDefault();
+    this.showPlatform$ = this.flagService
+      .isFlagEnabled(ApFlagId.SHOW_PLATFORM_DEMO)
+      .pipe(
+        map((isDemo) => {
+          return isDemo || this.authenticationService.isPlatformOwner();
+        })
+      );
   }
   ngOnInit(): void {
     this.currentUserEmail = this.authenticationService.currentUser.email;
-    this.showPlatform = this.authenticationService.isPlatformOwner();
   }
 
   getDropDownLeftOffset(

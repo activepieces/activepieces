@@ -1,4 +1,5 @@
 import { readFile, writeFile } from 'node:fs/promises'
+import { access, constants } from 'node:fs/promises'
 
 export type PackageJson = {
   name: string
@@ -14,9 +15,15 @@ export type ProjectJson = {
         buildableProjectDepsInPackageJsonType?: 'peerDependencies' | 'dependencies'
         updateBuildableProjectDepsInPackageJson: boolean
       }
+    },
+    lint: {
+        options: {
+            lintFilePatterns: string[]
+        }
     }
   }
 }
+
 
 const readJsonFile = async <T> (path: string): Promise<T> => {
   const jsonFile = await readFile(path, { encoding: 'utf-8' })

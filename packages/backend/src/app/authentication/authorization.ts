@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, PrincipalType } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, PrincipalType, isObject } from '@activepieces/shared'
 import { onRequestHookHandler, preSerializationHookHandler } from 'fastify'
 import { logger } from '../helper/logger'
 
@@ -60,11 +60,6 @@ export const entitiesMustBeOwnedByCurrentProject: preSerializationHookHandler<Pa
 
     done()
 }
-
-function isObject<T>(obj: T): obj is Exclude<T, null | undefined> {
-    return typeof obj === 'object' && obj !== null && !Array.isArray(obj)
-}
-
 
 type SingleEntity = {
     projectId?: string

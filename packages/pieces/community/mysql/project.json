@@ -1,0 +1,29 @@
+{
+  "name": "pieces-mysql",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/mysql/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/mysql",
+        "tsConfig": "packages/pieces/community/mysql/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/mysql/package.json",
+        "main": "packages/pieces/community/mysql/src/index.ts",
+        "assets": ["packages/pieces/community/mysql/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/community/mysql/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

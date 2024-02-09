@@ -4,8 +4,8 @@ import { createMockProject, createMockUser } from '../../../helpers/mocks'
 import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
 import { faker } from '@faker-js/faker'
-import { Project } from '@activepieces/shared'
-import { LocalesEnum, Platform } from '@activepieces/ee-shared'
+import { LocalesEnum, Project } from '@activepieces/shared'
+import { Platform } from '@activepieces/ee-shared'
 
 let app: FastifyInstance | null = null
 
@@ -47,8 +47,15 @@ describe('admin add platform endpoint', () => {
         // assert
         const responseBody = response?.json()
         expect(response?.statusCode).toBe(StatusCodes.CREATED)
-        expect(Object.keys(responseBody)).toHaveLength(23)
+        expect(Object.keys(responseBody)).toHaveLength(29)
+        expect(responseBody.allowedAuthDomains).toEqual([])
+        expect(responseBody.emailAuthEnabled).toBe(true)
+        expect(responseBody.enforceAllowedAuthDomains).toBe(false)
+        expect(responseBody.ssoEnabled).toBe(false)
         expect(responseBody.id).toHaveLength(21)
+        expect(responseBody.federatedAuthProviders).toStrictEqual({})
+        expect(responseBody.id).toHaveLength(21)
+        expect(responseBody.gitSyncEnabled).toBe(false)
         expect(responseBody.created).toBeDefined()
         expect(responseBody.updated).toBeDefined()
         expect(responseBody.ownerId).toBe(mockUser.id)
@@ -68,7 +75,7 @@ describe('admin add platform endpoint', () => {
         expect(responseBody.privacyPolicyUrl).toBeNull()
         expect(responseBody.termsOfServiceUrl).toBeNull()
         expect(responseBody.cloudAuthEnabled).toBe(true)
-        expect(responseBody.embeddingEnabled).toBe(true)
+        expect(responseBody.embeddingEnabled).toBe(false)
         expect(responseBody.showPoweredBy).toBe(false)
         expect(responseBody.privacyPolicyUrl).toBeNull()
         expect(responseBody.termsOfServiceUrl).toBeNull()

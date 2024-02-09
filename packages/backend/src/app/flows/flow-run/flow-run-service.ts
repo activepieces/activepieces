@@ -18,6 +18,7 @@ import {
     ExecutionType,
     isNil,
     RunTerminationReason,
+    FlowRetryStrategy,
 } from '@activepieces/shared'
 import { APArrayContains, databaseConnection } from '../../database/database-connection'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
@@ -31,6 +32,7 @@ import { logger } from '../../helper/logger'
 import { flowService } from '../flow/flow.service'
 import { MoreThanOrEqual } from 'typeorm'
 import { flowRunHooks } from './flow-run-hooks'
+import { flowResponseWatcher } from './flow-response-watcher'
 
 export const flowRunRepo = databaseConnection.getRepository(FlowRunEntity)
 
@@ -55,8 +57,16 @@ const getFlowRunOrCreate = async (params: GetOrCreateParams): Promise<Partial<Fl
     }
 }
 
+async function updateFlowRunToLatestFlowVersionId(flowRunId: FlowRunId): Promise<void> {
+    const flowRun = await flowRunRepo.findOneByOrFail({ id: flowRunId })
+    const flowVersion = await flowVersionService.getLatestLockedVersionOrThrow(flowRun.flowId)
+    await flowRunRepo.update(flowRunId, {
+        flowVersionId: flowVersion.id,
+    })
+}
+
 export const flowRunService = {
-    async list({ projectId, flowId, status, cursor, limit, tags }: ListParams): Promise<SeekPage<FlowRun>> {
+    async list({ projectId, flowId, status, cursor, limit, tags, createdAfter, createdBefore }: ListParams): Promise<SeekPage<FlowRun>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor)
         const paginator = buildPaginator({
             entity: FlowRunEntity,
@@ -74,15 +84,43 @@ export const flowRunService = {
             ...spreadIfDefined('status', status),
             environment: RunEnvironment.PRODUCTION,
         })
+        if (createdAfter) {
+            query = query.andWhere('flow_run.created >= :createdAfter', { createdAfter })
+        }
+        if (createdBefore) {
+            query = query.andWhere('flow_run.created <= :createdBefore', { createdBefore })
+        }
         if (tags) {
             query = APArrayContains('tags', tags, query)
         }
         const { data, cursor: newCursor } = await paginator.paginate(query)
         return paginationHelper.createPage<FlowRun>(data, newCursor)
     },
-    async resume({ flowRunId, action }: {
+    async retry({ flowRunId, strategy }: RetryParams): Promise<void> {
+        switch (strategy) {
+            case FlowRetryStrategy.FROM_FAILED_STEP:
+                await flowRunService.addToQueue({
+                    flowRunId,
+                    payload: {},
+                    executionType: ExecutionType.RESUME,
+                })
+                break
+            case FlowRetryStrategy.ON_LATEST_VERSION: {
+                await updateFlowRunToLatestFlowVersionId(flowRunId)
+                await flowRunService.addToQueue({
+                    flowRunId,
+                    payload: {},
+                    executionType: ExecutionType.BEGIN,
+
+                })
+                break
+            }
+        }
+    },
+    async addToQueue({ flowRunId, payload, executionType }: {
         flowRunId: FlowRunId
-        action: string
+        payload: Record<string, unknown>
+        executionType: ExecutionType
     }): Promise<void> {
         logger.info(`[FlowRunService#resume] flowRunId=${flowRunId}`)
 
@@ -100,13 +138,11 @@ export const flowRunService = {
         }
 
         await flowRunService.start({
-            payload: {
-                action,
-            },
+            payload,
             flowRunId: flowRunToResume.id,
             projectId: flowRunToResume.projectId,
             flowVersionId: flowRunToResume.flowVersionId,
-            executionType: ExecutionType.RESUME,
+            executionType,
             environment: RunEnvironment.PRODUCTION,
         })
     },
@@ -128,12 +164,13 @@ export const flowRunService = {
             tags,
             finishTime: new Date().toISOString(),
         })
-        const flowRun = (await this.getOne({ id: flowRunId, projectId: undefined }))!
+        const flowRun = await this.getOneOrThrow({ id: flowRunId, projectId: undefined })
+
         await flowRunSideEffects.finish({ flowRun })
         return flowRun
     },
 
-    async start({ projectId, flowVersionId, flowRunId, payload, environment, executionType }: StartParams): Promise<FlowRun> {
+    async start({ projectId, flowVersionId, flowRunId, payload, environment, executionType, synchronousHandlerId, hookType }: StartParams): Promise<FlowRun> {
         logger.info(`[flowRunService#start] flowRunId=${flowRunId} executionType=${executionType}`)
 
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
@@ -170,7 +207,9 @@ export const flowRunService = {
         await flowRunSideEffects.start({
             flowRun: savedFlowRun,
             payload,
+            synchronousHandlerId,
             executionType,
+            hookType,
         })
 
         return savedFlowRun
@@ -187,6 +226,8 @@ export const flowRunService = {
             payload,
             environment: RunEnvironment.TESTING,
             executionType: ExecutionType.BEGIN,
+            synchronousHandlerId: flowResponseWatcher.getHandlerId(),
+            hookType: HookType.AFTER_LOG,
         })
     },
 
@@ -230,7 +271,7 @@ export const flowRunService = {
 
     async getAllProdRuns(params: GetAllProdRuns): Promise<number> {
         const { projectId, created } = params
-    
+
         const sumOfTasks = await flowRunRepo.createQueryBuilder('flow_run')
             .select('COALESCE(SUM(flow_run.tasks), 0)', 'tasks')
             .where({
@@ -239,10 +280,14 @@ export const flowRunService = {
                 created: MoreThanOrEqual(created),
             })
             .getRawOne()
-    
+
         return Number(sumOfTasks.tasks)
     },
-    
+}
+
+export enum HookType {
+    BEFORE_LOG = 'BEFORE_LOG',
+    AFTER_LOG = 'AFTER_LOG',
 }
 
 type GetOrCreateParams = {
@@ -261,6 +306,8 @@ type ListParams = {
     cursor: Cursor | null
     tags?: string[]
     limit: number
+    createdAfter?: string
+    createdBefore?: string
 }
 
 type GetOneParams = {
@@ -274,6 +321,8 @@ type StartParams = {
     flowRunId?: FlowRunId
     environment: RunEnvironment
     payload: unknown
+    synchronousHandlerId?: string
+    hookType?: HookType
     executionType: ExecutionType
 }
 
@@ -286,6 +335,11 @@ type PauseParams = {
     flowRunId: FlowRunId
     logFileId: FileId
     pauseMetadata: PauseMetadata
+}
+
+type RetryParams = {
+    flowRunId: FlowRunId
+    strategy: FlowRetryStrategy
 }
 
 type GetAllProdRuns = {

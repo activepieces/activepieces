@@ -6,9 +6,6 @@
 </div>
 <mat-menu #menu="matMenu">
     <!-- BEGIN EE -->
-    <div mat-menu-item (click)="viewPlatformSettings()" *ngIf="showPlatform">
-        Platform dashboard
-    </div>
     <ng-container *ngIf="projectEnabled$ | async">
         <ng-container *ngIf="projects$ | async as projects">
             <ng-container *ngIf="selectedProject$ | async  as currentProject">
@@ -47,8 +44,9 @@
         </ng-container>
     </ng-container>
     <div class="ap-border-b ap-border-solid  ap-border-outline ap-mx-2"
-        *ngIf="(projectEnabled$ | async) || (showPlatform) "></div>
+        *ngIf="(projectEnabled$ | async) || (showPlatform$ | async) "></div>
     <!-- END EE -->
+
     <div mat-menu-item [matMenuTriggerFor]="languagesList" class="ap-flex ap-items-center">
 
         <div class="ap-flex ap-items-center ap-gap-2">
@@ -61,14 +59,23 @@
     <div mat-menu-item (click)="goToDeveloperPage()" *ngIf="myPiecesEnabled$ | async">
         <div i18n>My Pieces</div>
     </div>
-    <div mat-menu-item (click)="viewPlans()" *ngIf="billingEnabled$ | async">
+    <div mat-menu-item (click)="viewPlans()" *ngIf="billingEnabled$ | async" i18n>
         Subscription
     </div>
-    <div mat-menu-item (click)="goToCommunity()" *ngIf="showCommunity$ | async">
+
+    <div mat-menu-item (click)="showWhatIsNew()" *ngIf="showCommunity$ | async" i18n>
+        <div class="ap-flex ap-items-center ap-min-w-[214px]">What's new <div class="ap-flex-grow"></div><svg-icon
+                [applyClass]="true" src="assets/img/custom/external-link.svg"
+                class="ap-h-[16px] ap-w-[16px] ap-fill-[#989898]"></svg-icon>
+        </div>
+
+    </div>
+    <div mat-menu-item (click)="goToCommunity()" *ngIf="showCommunity$ | async" i18n>
         <div class="ap-flex ap-items-center ap-min-w-[214px]">Community <div class="ap-flex-grow"></div><svg-icon
                 [applyClass]="true" src="assets/img/custom/external-link.svg"
                 class="ap-h-[16px] ap-w-[16px] ap-fill-[#989898]"></svg-icon>
         </div>
+
     </div>
     <div mat-menu-item (click)="logout()">
         <div class="ap-text-danger" i18n>Logout</div>

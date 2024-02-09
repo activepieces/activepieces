@@ -1,6 +1,12 @@
 import { FastifyPluginCallbackTypebox } from '@fastify/type-provider-typebox'
-import { CreateStepRunRequest } from './step-run-dto'
 import { stepRunService } from './step-run-service'
+import { CreateStepRunRequestBody } from '@activepieces/shared'
+
+const CreateStepRunRequest = {
+    schema: {
+        body: CreateStepRunRequestBody,
+    },
+}
 
 export const stepRunController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
     app.post('/', CreateStepRunRequest, async (req) => {

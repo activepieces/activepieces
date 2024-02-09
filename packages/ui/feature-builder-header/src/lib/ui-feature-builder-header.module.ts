@@ -2,23 +2,23 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { UiCommonModule } from '@activepieces/ui/common';
 import { UiFeatureBuilderStoreModule } from '@activepieces/ui/feature-builder-store';
-import { SupportComponent } from './feedback/support.component';
+import { SupportComponent } from './components/feedback/support.component';
 import { FlowBuilderHeaderComponent } from './flow-builder-header.component';
-import { ToggleInstanceStateComponent } from './toggle-instance-state/toggle-instance-state.component';
-import { PublishButtonComponent } from './publish-button/publish-button.component';
-import { DraftStatusComponent } from './draft-status/draft-status.component';
-import { ImportFlowDialogueComponent } from './import-flow-dialogue/import-flow-dialogue.component';
+import { ToggleInstanceStateComponent } from './components/toggle-instance-state/toggle-instance-state.component';
+import { PublishButtonComponent } from './components/publish-or-edit-flow-button/publish-or-edit-flow-button.component';
 import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-builder-form-controls';
 import { EeComponentsModule } from '@activepieces/ee-components';
 import { EeBillingUiModule } from '@activepieces/ee-billing-ui';
+import { VersionHistroryButtonComponent } from './components/version-history-button/version-history-button.component';
+import { RunsButtonComponent } from './components/runs-button/runs-button.component';
+import { UiFeatureGitSyncModule } from '@activepieces/ui-feature-git-sync';
 
 const exportedDeclarations = [
   FlowBuilderHeaderComponent,
   SupportComponent,
   ToggleInstanceStateComponent,
   PublishButtonComponent,
-  DraftStatusComponent,
-  ImportFlowDialogueComponent,
+  VersionHistroryButtonComponent,
 ];
 @NgModule({
   imports: [
@@ -28,8 +28,9 @@ const exportedDeclarations = [
     UiFeatureBuilderStoreModule,
     UiFeatureBuilderFormControlsModule,
     EeBillingUiModule,
+    UiFeatureGitSyncModule,
   ],
-  declarations: [...exportedDeclarations],
+  declarations: [...exportedDeclarations, RunsButtonComponent],
   exports: [...exportedDeclarations],
 })
 export class UiFeatureBuilderHeaderModule {}

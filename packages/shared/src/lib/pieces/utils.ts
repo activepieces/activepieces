@@ -1,13 +1,16 @@
+import semverMajor from 'semver/functions/major'
+import semverMinor from 'semver/functions/minor'
+import semverMinVersion from 'semver/ranges/min-version'
 import { ActivepiecesError, ErrorCode } from '../common/activepieces-error'
-import { PackageType } from './piece'
+import { PackageType, PiecePackage } from './piece'
 
 export const getPackageAliasForPiece = (params: GetPackageAliasForPieceParams): string => {
     const { pieceName, pieceVersion } = params
     return `${pieceName}-${pieceVersion}`
 }
 
-export const getPackageSpecForPiece = (params: GetPackageSpecForPieceParams): string => {
-    const { packageType, pieceName, pieceVersion, packageArchivePath } = params
+export const getPackageSpecForPiece = (packageArchivePath: string, params: PiecePackage): string => {
+    const { packageType, pieceName, pieceVersion } = params
 
     switch (packageType) {
         case PackageType.REGISTRY: {
@@ -16,9 +19,8 @@ export const getPackageSpecForPiece = (params: GetPackageSpecForPieceParams): st
 
         case PackageType.ARCHIVE: {
             const archivePath = getPackageArchivePathForPiece({
-                pieceName,
-                pieceVersion,
-                packageArchivePath,
+                archiveId: params.archiveId,
+                archivePath: packageArchivePath,
             })
 
             return `file:${archivePath}`
@@ -27,8 +29,7 @@ export const getPackageSpecForPiece = (params: GetPackageSpecForPieceParams): st
 }
 
 export const getPackageArchivePathForPiece = (params: GetPackageArchivePathForPieceParams): string => {
-    const { pieceName, pieceVersion, packageArchivePath } = params
-    return `${packageArchivePath}/${pieceName}/${pieceVersion}.tgz`
+    return `${params.archivePath}/${params.archiveId}.tgz`
 }
 
 export const extractPieceFromModule = <T>(params: ExtractPieceFromModuleParams): T => {
@@ -50,22 +51,22 @@ export const extractPieceFromModule = <T>(params: ExtractPieceFromModuleParams):
     })
 }
 
+export const getPieceMajorAndMinorVersion = (pieceVersion: string): string => {
+    const minimumSemver = semverMinVersion(pieceVersion)
+    return minimumSemver
+        ? `${semverMajor(minimumSemver)}.${semverMinor(minimumSemver)}`
+        : `${semverMajor(pieceVersion)}.${semverMinor(pieceVersion)}`
+}
+
 type GetPackageAliasForPieceParams = {
     pieceName: string
     pieceVersion: string
 }
 
-type GetPackageSpecForPieceParams = {
-    packageType: PackageType
-    pieceName: string
-    pieceVersion: string
-    packageArchivePath: string
-}
 
 type GetPackageArchivePathForPieceParams = {
-    pieceName: string
-    pieceVersion: string
-    packageArchivePath: string
+    archiveId: string
+    archivePath: string
 }
 
 type ExtractPieceFromModuleParams = {

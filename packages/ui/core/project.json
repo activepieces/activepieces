@@ -11,7 +11,7 @@
         "{options.outputPath}"
       ],
       "options": {
-        "statsJson": true,
+        "statsJson": false,
         "outputPath": "dist/packages/ui/core",
         "index": "packages/ui/core/src/index.html",
         "main": "packages/ui/core/src/main.ts",
@@ -166,8 +166,15 @@
       "baseHref": "/"
     },
     "locales": {
+      "bg": "packages/ui/core/src/locale/messages.bg.xlf",
+      "uk": "packages/ui/core/src/locale/messages.uk.xlf",
       "es": "packages/ui/core/src/locale/messages.es.xlf",
       "fr": "packages/ui/core/src/locale/messages.fr.xlf",
+      "hu": "packages/ui/core/src/locale/messages.hu.xlf",
+      "id": "packages/ui/core/src/locale/messages.id.xlf",
+      "zh": "packages/ui/core/src/locale/messages.zh.xlf",
+      "pt": "packages/ui/core/src/locale/messages.pt.xlf",
+      "vi": "packages/ui/core/src/locale/messages.vi.xlf",
       "ja": "packages/ui/core/src/locale/messages.ja.xlf",
       "it": "packages/ui/core/src/locale/messages.it.xlf",
       "de": "packages/ui/core/src/locale/messages.de.xlf",

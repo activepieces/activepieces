@@ -103,7 +103,7 @@ describe('Piece Metadata API', () => {
             expect(responseBody.archiveId).toBe(mockPieceMetadata.archiveId)
             expect(responseBody.auth).toEqual(mockPieceMetadata.auth)
             expect(responseBody.description).toBe(mockPieceMetadata.description)
-            expect(responseBody.directoryName).toBe(mockPieceMetadata.directoryName)
+            expect(responseBody.directoryPath).toBe(mockPieceMetadata.directoryPath)
             expect(responseBody.displayName).toBe(mockPieceMetadata.displayName)
             expect(responseBody.id).toBe(mockPieceMetadata.id)
             expect(responseBody.logoUrl).toBe(mockPieceMetadata.logoUrl)
@@ -144,7 +144,7 @@ describe('Piece Metadata API', () => {
             // arrange
             const mockPieceMetadataA = createMockPieceMetadata({ name: 'a', pieceType: PieceType.CUSTOM, projectId: mockProject.id })
             const mockPieceMetadataB = createMockPieceMetadata({ name: 'b', pieceType: PieceType.OFFICIAL })
-            const mockPieceMetadataC = createMockPieceMetadata({ name: 'c', pieceType: PieceType.CUSTOM, projectId: mockProject2.id })
+            const mockPieceMetadataC = createMockPieceMetadata({ name: 'c', pieceType: PieceType.CUSTOM, projectId: mockProject2.id, platformId: mockPlatform.id })
             const mockPieceMetadataD = createMockPieceMetadata({ name: 'd', pieceType: PieceType.CUSTOM, platformId: mockPlatform.id })
             await databaseConnection.getRepository('piece_metadata').save([mockPieceMetadataA, mockPieceMetadataB, mockPieceMetadataC, mockPieceMetadataD])
 

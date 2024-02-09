@@ -21,12 +21,12 @@ import {
 import {
   ApEdition,
   ApFlagId,
+  ErrorCode,
   SignUpRequest,
-  UnhandledSwitchCaseError,
-  UserStatus,
 } from '@activepieces/shared';
 import { OtpType } from '@activepieces/ee-shared';
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
+import { StatusCodes } from 'http-status-codes';
 
 export interface UserInfo {
   firstName: FormControl<string>;
@@ -55,7 +55,9 @@ export class SignUpComponent implements OnInit {
   termsOfServiceUrl$: Observable<string>;
   signUpDone = false;
   invitationOnlySignup = false;
+  domainIsNotAllowed = false;
   showNewsLetterCheckbox$: Observable<boolean>;
+  emailLoginsEnabled$: Observable<boolean>;
   readonly OtpType = OtpType;
   constructor(
     private formBuilder: FormBuilder,
@@ -65,6 +67,9 @@ export class SignUpComponent implements OnInit {
     private router: Router,
     private activeRoute: ActivatedRoute
   ) {
+    this.emailLoginsEnabled$ = this.flagService.isFlagEnabled(
+      ApFlagId.EMAIL_AUTH_ENABLED
+    );
     this.privacyPolicyUrl$ = this.flagService.getStringFlag(
       ApFlagId.PRIVACY_POLICY_URL
     );
@@ -92,20 +97,22 @@ export class SignUpComponent implements OnInit {
         ...this.registrationForm.getRawValue(),
         referringUserId,
       };
+      this.invitationOnlySignup = false;
+      this.domainIsNotAllowed = false;
       this.signUp$ = this.authenticationService.signUp(request).pipe(
         tap((response) => {
           if (
             response &&
             response.body &&
             response.body.token &&
-            response.body.status === UserStatus.VERIFIED
+            response.body.verified
           ) {
             this.authenticationService.saveToken(response.body.token);
             this.authenticationService.saveUser(response);
           }
         }),
         tap((response) => {
-          if (response && response.body?.status === UserStatus.VERIFIED) {
+          if (response && response.body?.verified) {
             this.redirect();
           } else {
             this.signUpDone = true;
@@ -120,6 +127,12 @@ export class SignUpComponent implements OnInit {
             });
           }
           this.invitationOnlySignup = err.status === HttpStatusCode.Forbidden;
+          if (err.status === StatusCodes.FORBIDDEN) {
+            this.invitationOnlySignup =
+              err.error.code === ErrorCode.INVITATION_ONLY_SIGN_UP;
+            this.domainIsNotAllowed =
+              err.error.code === ErrorCode.DOMAIN_NOT_ALLOWED;
+          }
           this.emailChanged = false;
           this.loading = false;
           return of(err);
@@ -163,8 +176,6 @@ export class SignUpComponent implements OnInit {
               }
               case ApEdition.ENTERPRISE:
                 return false;
-              default:
-                throw new UnhandledSwitchCaseError(ed);
             }
           })
         );

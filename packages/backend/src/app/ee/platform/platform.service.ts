@@ -1,7 +1,7 @@
-import { ActivepiecesError, ErrorCode, ProjectId, UserId, apId, isNil, spreadIfDefined } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, LocalesEnum, ProjectId, UserId, apId, isNil, spreadIfDefined } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { PlatformEntity } from './platform.entity'
-import { FilteredPieceBehavior, LocalesEnum, Platform, PlatformId, UpdatePlatformRequestBody } from '@activepieces/ee-shared'
+import { FilteredPieceBehavior, Platform, PlatformId, UpdatePlatformRequestBody } from '@activepieces/ee-shared'
 import { defaultTheme } from '../../flags/theme'
 import { userService } from '../../user/user-service'
 import { projectService } from '../../project/project-service'
@@ -20,12 +20,18 @@ export const platformService = {
             logoIconUrl: logoIconUrl ?? defaultTheme.logos.logoIconUrl,
             fullLogoUrl: fullLogoUrl ?? defaultTheme.logos.fullLogoUrl,
             favIconUrl: favIconUrl ?? defaultTheme.logos.favIconUrl,
-            embeddingEnabled: true,
+            embeddingEnabled: false,
             defaultLocale: LocalesEnum.ENGLISH,
+            emailAuthEnabled: true,
             filteredPieceNames: [],
+            enforceAllowedAuthDomains: false,
+            allowedAuthDomains: [],
             filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
             showPoweredBy: false,
+            ssoEnabled: false,
+            federatedAuthProviders: {},
             cloudAuthEnabled: true,
+            gitSyncEnabled: false,
         }
 
         const savedPlatform = await repo.save(newPlatform)
@@ -66,6 +72,7 @@ export const platformService = {
             ...spreadIfDefined('filteredPieceBehavior', params.filteredPieceBehavior),
             ...spreadIfDefined('smtpHost', params.smtpHost),
             ...spreadIfDefined('smtpPort', params.smtpPort),
+            ...spreadIfDefined('federatedAuthProviders', params.federatedAuthProviders),
             ...spreadIfDefined('smtpUser', params.smtpUser),
             ...spreadIfDefined('smtpPassword', params.smtpPassword),
             ...spreadIfDefined('smtpSenderEmail', params.smtpSenderEmail),
@@ -74,6 +81,13 @@ export const platformService = {
             ...spreadIfDefined('termsOfServiceUrl', params.termsOfServiceUrl),
             ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
             ...spreadIfDefined('defaultLocale', params.defaultLocale),
+            ...spreadIfDefined('showPoweredBy', params.showPoweredBy),
+            ...spreadIfDefined('gitSyncEnabled', params.gitSyncEnabled),
+            ...spreadIfDefined('embeddingEnabled', params.embeddingEnabled),
+            ...spreadIfDefined('ssoEnabled', params.ssoEnabled),
+            ...spreadIfDefined('emailAuthEnabled', params.emailAuthEnabled),
+            ...spreadIfDefined('enforceAllowedAuthDomains', params.enforceAllowedAuthDomains),
+            ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
         }
 
         return repo.save(updatedPlatform)
@@ -155,6 +169,10 @@ type NewPlatform = Omit<Platform, 'created' | 'updated'>
 type UpdateParams = UpdatePlatformRequestBody & {
     id: PlatformId
     userId: UserId
+    showPoweredBy?: boolean
+    ssoEnabled?: boolean
+    gitSyncEnabled?: boolean
+    embeddingEnabled?: boolean
 }
 
 type GetOneByOwnerParams = {

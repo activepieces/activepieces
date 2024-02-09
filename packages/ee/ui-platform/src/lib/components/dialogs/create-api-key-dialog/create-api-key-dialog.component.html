@@ -19,13 +19,14 @@
         </ng-container>
         <ng-container *ngIf="keyCreated" class="ap-flex ap-flex-col ap-gap-4">
             <div class="ap-typography-body-2 ap-mb-4" i18n>
-                Please save this secret key somewhere safe and accessible. For security reasons, <span class="ap-font-bold">you won't be able to view it again</span>. 
+                Please save this secret key somewhere safe and accessible. For security reasons, <span
+                    class="ap-font-bold">you won't be able to view it again</span>.
                 If you lose this secret key, you'll need to generate a new one.
             </div>
             <mat-form-field class="ap-w-full">
                 <input readonly class="ap-w-full" [formControl]="keyFormControl" matInput>
                 <ap-icon-button [width]="15" [height]="15" matSuffix iconFilename="copy.svg" tooltipText="Copy"
-                    class="ap-mr-[3.125rem]" (buttonClicked)="copyKey()"></ap-icon-button>
+                    extraClasses="ap-fill-body" class="ap-mr-[3.125rem]" (buttonClicked)="copyKey()"></ap-icon-button>
             </mat-form-field>
         </ng-container>
     </div>

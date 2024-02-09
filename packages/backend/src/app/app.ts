@@ -3,6 +3,7 @@ import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
 import qs from 'qs'
 import fastifyMultipart from '@fastify/multipart'
+import fastifySocketIO from 'fastify-socket.io'
 import { openapiModule } from './helper/openapi/openapi.module'
 import { flowModule } from './flows/flow.module'
 import { fileModule } from './file/file.module'
@@ -18,34 +19,26 @@ import swagger from '@fastify/swagger'
 import { logger } from './helper/logger'
 import { appEventRoutingModule } from './app-event-routing/app-event-routing.module'
 import { triggerEventModule } from './flows/trigger-events/trigger-event.module'
-import { flowInstanceModule } from './flows/flow-instance/flow-instance.module'
 import { fastifyRawBody } from 'fastify-raw-body'
 import { stepFileModule } from './flows/step-file/step-file.module'
-import { chatbotModule } from './chatbot/chatbot.module'
 import { rbacAuthMiddleware } from './ee/authentication/rbac-auth-middleware'
 import { userModule } from './user/user.module'
 import { ApEdition, AppConnectionWithoutSensitiveData, Flow } from '@activepieces/shared'
 import { appConnectionsHooks } from './app-connection/app-connection-service/app-connection-hooks'
 import { authenticationModule } from './authentication/authentication.module'
-import { chatbotHooks } from './chatbot/chatbot.hooks'
-import { datasourceHooks } from './chatbot/datasources/datasource.hooks'
-import { embeddings } from './chatbot/embedings'
 import { cloudAppConnectionsHooks } from './ee/app-connections/cloud-app-connection-service'
 import { appCredentialModule } from './ee/app-credentials/app-credentials.module'
 import { appSumoModule } from './ee/appsumo/appsumo.module'
-import { cloudChatbotHooks } from './ee/chatbot/cloud/cloud-chatbot.hook'
-import { cloudDatasourceHooks } from './ee/chatbot/cloud/cloud-datasources.hook'
-import { qdrantEmbeddings } from './ee/chatbot/cloud/qdrant-embeddings'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
 import { platformRunHooks } from './ee/flow-run/cloud-flow-run-hooks'
-import { flowTemplateModule } from './ee/flow-template/flow-template.module'
+import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-template.module'
 import { platformWorkerHooks } from './ee/flow-worker/cloud-flow-worker-hooks'
 import { initilizeSentry } from './ee/helper/exception-handler'
 import { adminPieceModule } from './ee/pieces/admin-piece-module'
-import { cloudPieceServiceHooks } from './ee/pieces/piece-service/cloud-piece-service-hooks'
+import { platformPieceServiceHooks } from './ee/pieces/piece-service/platform-piece-service-hooks'
 import { platformModule } from './ee/platform/platform.module'
 import { projectMemberModule } from './ee/project-members/project-member.module'
-import { platformProjectModule } from './ee/projects/platform-project-controller'
+import { platformProjectModule } from './ee/projects/platform-project-module'
 import { referralModule } from './ee/referrals/referral.module'
 import { flowRunHooks } from './flows/flow-run/flow-run-hooks'
 import { getEdition } from './helper/secret-helper'
@@ -75,11 +68,21 @@ import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local
 import { billingModule } from './ee/billing/billing/billing.module'
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
 import fastifyFavicon from 'fastify-favicon'
-import { ProjectMember, ProjectWithUsageAndPlanResponse } from '@activepieces/ee-shared'
-import { authorizationMiddleware } from './authentication/authorization-middleware'
+import { ProjectMember, ProjectWithUsageAndPlanResponse, GitRepoWithoutSenestiveData } from '@activepieces/ee-shared'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
 import { domainHelper } from './helper/domain-helper'
 import { platformDomainHelper } from './ee/helper/platform-domain-helper'
+import { enterpriseUserModule } from './ee/user/enterprise-user-module'
+import { flowResponseWatcher } from './flows/flow-run/flow-response-watcher'
+import { gitRepoModule } from './ee/git-repos/git-repo.module'
+import { securityHandlerChain } from './core/security/security-handler-chain'
+import { communityFlowTemplateModule } from './flow-templates/community-flow-template.module'
+import { copilotModule } from './copilot/copilot.module'
+import { PieceMetadata } from '@activepieces/pieces-framework'
+import { Socket } from 'socket.io'
+import { accessTokenManager } from './authentication/lib/access-token-manager'
+import { websocketService } from './websockets/websockets.service'
+import { rateLimitModule } from './core/security/rate-limit'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -113,6 +116,8 @@ export const setupApp = async (): Promise<FastifyInstance> => {
                     'project': ProjectWithUsageAndPlanResponse,
                     'flow': Flow,
                     'app-connection': AppConnectionWithoutSensitiveData,
+                    'piece': PieceMetadata,
+                    'git-repo': GitRepoWithoutSenestiveData,
                 },
             },
             info: {
@@ -153,6 +158,26 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     })
 
     await app.register(formBody, { parser: str => qs.parse(str) })
+    await app.register(rateLimitModule)
+
+    await app.register(fastifySocketIO, {
+        cors: {
+            origin: '*',
+        },
+    })
+
+    app.io.use((socket: Socket, next: (err?: Error) => void) => {
+        accessTokenManager.extractPrincipal(socket.handshake.auth.token).then(() => {
+            next()
+        }).catch(() => {
+            next(new Error('Authentication error'))
+        })
+    })
+
+    app.io.on('connection', (socket: Socket) => {
+        websocketService.init(socket)
+    })
+
 
     app.addHook('onRequest', async (request, reply) => {
         const route = app.hasRoute({
@@ -160,15 +185,15 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             url: request.url,
         })
         if (!route) {
-            return reply.code(404).send(`
-                Oops! It looks like we hit a dead end.
-                The endpoint you're searching for is nowhere to be found.
-                We suggest turning around and trying another path. Good luck!
-            `)
+            return reply.code(404).send({
+                statusCode: 404,
+                error: 'Not Found',
+                message: 'Route not found',
+            })
         }
     })
 
-    app.addHook('preHandler', authorizationMiddleware)
+    app.addHook('preHandler', securityHandlerChain)
     app.addHook('preHandler', rbacAuthMiddleware)
     app.setErrorHandler(errorHandler)
     await app.register(fileModule)
@@ -177,7 +202,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(flowModule)
     await app.register(flowWorkerModule)
     await app.register(pieceModule)
-    await app.register(flowInstanceModule)
     await app.register(flowRunModule)
     await app.register(webhookModule)
     await app.register(appConnectionModule)
@@ -185,9 +209,9 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(triggerEventModule)
     await app.register(appEventRoutingModule)
     await app.register(stepFileModule)
-    await app.register(chatbotModule)
     await app.register(userModule)
     await app.register(authenticationModule)
+    await app.register(copilotModule)
 
     await setupBullMQBoard(app)
 
@@ -219,7 +243,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(billingModule)
             await app.register(appCredentialModule)
             await app.register(connectionKeyModule)
-            await app.register(flowTemplateModule)
             await app.register(platformProjectModule)
             await app.register(projectMemberModule)
             await app.register(appSumoModule)
@@ -235,16 +258,16 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(enterpriseLocalAuthnModule)
             await app.register(federatedAuthModule)
             await app.register(apiKeyModule)
+            await app.register(enterpriseUserModule)
+            await app.register(platformFlowTemplateModule)
+            await app.register(gitRepoModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
-            chatbotHooks.setHooks(cloudChatbotHooks)
-            datasourceHooks.setHooks(cloudDatasourceHooks)
-            embeddings.set(qdrantEmbeddings)
             appConnectionsHooks.setHooks(cloudAppConnectionsHooks)
             flowWorkerHooks.setHooks(platformWorkerHooks)
             flowRunHooks.setHooks(platformRunHooks)
-            pieceServiceHooks.set(cloudPieceServiceHooks)
+            pieceServiceHooks.set(platformPieceServiceHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             flagHooks.set(enterpriseFlagsHooks)
             authenticationServiceHooks.set(cloudAuthenticationServiceHooks)
@@ -264,10 +287,13 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(enterpriseLocalAuthnModule)
             await app.register(federatedAuthModule)
             await app.register(apiKeyModule)
+            await app.register(enterpriseUserModule)
+            await app.register(platformFlowTemplateModule)
+            await app.register(gitRepoModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
-            pieceServiceHooks.set(cloudPieceServiceHooks)
+            pieceServiceHooks.set(platformPieceServiceHooks)
             flowRunHooks.setHooks(platformRunHooks)
             flowWorkerHooks.setHooks(platformWorkerHooks)
             authenticationServiceHooks.set(enterpriseAuthenticationServiceHooks)
@@ -278,11 +304,13 @@ export const setupApp = async (): Promise<FastifyInstance> => {
         case ApEdition.COMMUNITY:
             await app.register(projectModule)
             await app.register(communityPiecesModule)
+            await app.register(communityFlowTemplateModule)
             break
     }
 
     app.addHook('onClose', async () => {
         await flowQueueConsumer.close()
+        await flowResponseWatcher.shutdown()
     })
 
     return app

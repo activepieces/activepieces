@@ -10,7 +10,7 @@ const appSumoPlans: Record<string, FlowPlanLimits> = {
         nickname: 'appsumo_activepieces_tier1',
         tasks: 10000,
         minimumPollingInterval: 10,
-        connections: 20,
+        connections: 100,
         teamMembers: 1,
     },
     'activepieces_tier2': {
@@ -50,6 +50,11 @@ export const appsumoService = {
     getByEmail(email: string) {
         return appsumoRepo.findOneBy({
             activation_email: email,
+        })
+    },
+    getById(uuid: string) {
+        return appsumoRepo.findOneBy({
+            uuid,
         })
     },
     delete({ email }: { email: string }) {

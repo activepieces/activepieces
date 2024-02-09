@@ -3,10 +3,6 @@ import { FlowId } from '../flows/flow'
 import { ProjectId } from '../project/project'
 import { UserId } from '../user/user'
 
-type ChatbotCreated = {
-    chatbotId: string
-}
-
 type FlowCreated = {
     flowId: FlowId
 }
@@ -46,8 +42,13 @@ type QuotaAlert = {
 type FlowImported = {
     id: string
     name: string
-    location: string
+    location: 'import flow view' | 'inside the builder' | 'import flow by uri encoded query param'
     tab?: string
+}
+type FlowImportedUsingFile = {
+ 
+    location: 'inside dashboard' | 'inside the builder'
+   
 }
 
 type UpgradeClicked = {
@@ -77,29 +78,32 @@ type FlowShared = {
 type OpenedFromDasahboard = {
     location: 'sidenav' | 'tasks-progress'
 }
+type CopilotGeneratedCode = {
+    code: string
+    prompt: string
+}
 export enum TelemetryEventName {
     SIGNED_UP = 'signed.up',
     QUOTA_ALERT = 'quota.alert',
     UPGRADE_CLICKED = 'upgrade.clicked',
     OPENED_PRICING_FROM_DASHBOARD = 'pricing.viewed',
     UPGRADE_POPUP = 'upgrade.popup',
-    CHATBOT_CREATED = 'chatbot.created',
     FLOW_CREATED = 'flow.created',
     DEMO_IMPORTED = 'demo.imported',
     FLOW_RUN_CREATED = 'run.created',
     FLOW_PUBLISHED = 'flow.published',
+    /**used with templates dialog + import flow component + flows imported by uri query param*/
     FLOW_IMPORTED = 'flow.imported',
+    /**used only with import flow dialog*/
+    FLOW_IMPORTED_USING_FILE = 'flow.imported.using.file',
     PIECES_SEARCH = 'pieces.search',
     REFERRAL = 'referral',
     REFERRAL_LINK_COPIED = 'referral.link.copied',
     FLOW_SHARED = 'flow.shared',
-    FEATURED_TAB_VIEWED = 'template.featured-tab-viewed',
     TEMPLATE_SEARCH = 'template.search',
+    COPILOT_GENERATED_CODE = 'copilot.code.generated',
 }
 
-type FeaturedTabViewed = {
-    buttonPressed: 'banner button' | 'tab button'
-}
 type BaseTelemetryEvent<T, P> = {
     name: T
     payload: P
@@ -117,9 +121,9 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.TEMPLATE_SEARCH, TemplateSearch>
     | BaseTelemetryEvent<TelemetryEventName.PIECES_SEARCH, PiecesSearch>
     | BaseTelemetryEvent<TelemetryEventName.FLOW_IMPORTED, FlowImported>
+    | BaseTelemetryEvent<TelemetryEventName.FLOW_IMPORTED_USING_FILE, FlowImportedUsingFile>
     | BaseTelemetryEvent<TelemetryEventName.REFERRAL_LINK_COPIED, ReferralLinkCopied>
     | BaseTelemetryEvent<TelemetryEventName.FLOW_SHARED, FlowShared>
     | BaseTelemetryEvent<TelemetryEventName.DEMO_IMPORTED, Record<string, never>>
-    | BaseTelemetryEvent<TelemetryEventName.CHATBOT_CREATED, ChatbotCreated>
-    | BaseTelemetryEvent<TelemetryEventName.FEATURED_TAB_VIEWED, FeaturedTabViewed>
     | BaseTelemetryEvent<TelemetryEventName.OPENED_PRICING_FROM_DASHBOARD, OpenedFromDasahboard>
+    | BaseTelemetryEvent<TelemetryEventName.COPILOT_GENERATED_CODE, CopilotGeneratedCode>

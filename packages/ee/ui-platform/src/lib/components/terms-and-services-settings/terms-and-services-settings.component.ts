@@ -1,10 +1,12 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
-import { PlatformService } from '@activepieces/ui/common';
-import { ActivatedRoute } from '@angular/router';
+import {
+  PlatformService,
+  featureDisabledTooltip,
+} from '@activepieces/ui/common';
 import { BehaviorSubject, Observable, catchError, tap } from 'rxjs';
-import { Platform } from '@activepieces/ee-shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { PlatformSettingsBaseComponent } from '../platform-settings-base.component';
 
 interface TermsAndServicesForm {
   privacyPolicyUrl: FormControl<string>;
@@ -15,16 +17,21 @@ interface TermsAndServicesForm {
   templateUrl: './terms-and-services-settings.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TermsAndServicesSettingsComponent implements OnInit {
+export class TermsAndServicesSettingsComponent
+  extends PlatformSettingsBaseComponent
+  implements OnInit
+{
   termsAndServicesForm: FormGroup<TermsAndServicesForm>;
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   saving$?: Observable<void>;
+
+  featureDisabledTooltip = featureDisabledTooltip;
   constructor(
     private fb: FormBuilder,
     private platformService: PlatformService,
-    private route: ActivatedRoute,
     private matSnackbar: MatSnackBar
   ) {
+    super();
     this.termsAndServicesForm = this.fb.group({
       privacyPolicyUrl: this.fb.control('', {
         nonNullable: true,
@@ -35,21 +42,29 @@ export class TermsAndServicesSettingsComponent implements OnInit {
     });
   }
   ngOnInit(): void {
-    const platform: Platform = this.route.snapshot.data['platform'];
-    this.termsAndServicesForm.patchValue(platform);
+    if (this.platform) {
+      this.termsAndServicesForm.patchValue(this.platform);
+    }
+
+    if (this.isDemo) {
+      this.termsAndServicesForm.disable();
+    }
   }
 
   save() {
-    const platform: Platform = this.route.snapshot.data['platform'];
     this.termsAndServicesForm.markAllAsTouched();
-    if (!this.loading$.value && !this.termsAndServicesForm.invalid) {
+    if (
+      !this.loading$.value &&
+      !this.termsAndServicesForm.invalid &&
+      this.platform
+    ) {
       this.loading$.next(true);
       this.saving$ = this.platformService
         .updatePlatform(
           {
             ...this.termsAndServicesForm.value,
           },
-          platform.id
+          this.platform.id
         )
         .pipe(
           tap(() => {

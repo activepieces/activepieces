@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { SigningKeysDataSource } from './signing-keys-table.datasource';
 import { Observable, Subject, tap } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
@@ -8,28 +8,40 @@ import { SigningKey } from '@activepieces/ee-shared';
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
+  featureDisabledTooltip,
 } from '@activepieces/ui/common';
 import { SigningKeysService } from '../../service/signing-keys.service';
+import { PlatformSettingsBaseComponent } from '../platform-settings-base.component';
 
 @Component({
   selector: 'app-signing-keys-table',
   templateUrl: './signing-keys-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SigningKeysTableComponent {
+export class SigningKeysTableComponent
+  extends PlatformSettingsBaseComponent
+  implements OnInit
+{
   displayedColumns = ['id', 'displayName', 'created', 'action'];
-  dataSource: SigningKeysDataSource;
+  dataSource!: SigningKeysDataSource;
   refresh$: Subject<boolean> = new Subject();
   dialogClosed$?: Observable<unknown>;
+  featureDisabledTooltip = featureDisabledTooltip;
+
   constructor(
     private matDialog: MatDialog,
     private signingKeysService: SigningKeysService
   ) {
+    super();
+  }
+  ngOnInit(): void {
     this.dataSource = new SigningKeysDataSource(
       this.refresh$.asObservable().pipe(startWith(false)),
-      this.signingKeysService
+      this.signingKeysService,
+      this.isDemo || !this.platform?.embeddingEnabled
     );
   }
+
   createKey() {
     const dialog = this.matDialog.open(CreateSigningKeyDialogComponent, {
       disableClose: true,

@@ -1,9 +1,0 @@
-{
-  "name": "@activepieces/piece-convertkit",
-  "version": "0.1.0",
-  "dependencies": {
-    "@activepieces/pieces-framework": "latest",
-    "@activepieces/pieces-common": "latest",
-    "tslib": "^2.6.2"
-  }
-}

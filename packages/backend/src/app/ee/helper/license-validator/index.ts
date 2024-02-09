@@ -1,9 +1,12 @@
 import { ApEnvironment } from '@activepieces/shared'
-import { LicenseValidator } from './license-validator'
+import { LiceneseStatus, LicenseValidator } from './license-validator'
 import { noOpLicenseValidator } from './no-op-license-validator'
 import { networkLicenseValidator } from './network-license-validator'
+import { ApEdition } from '@activepieces/shared'
 import { system } from '../../../helper/system/system'
 import { SystemProp } from '../../../helper/system/system-prop'
+import { platformService } from '../../platform/platform.service'
+import { logger } from '../../../helper/logger'
 
 const variant: Record<ApEnvironment, LicenseValidator> = {
     [ApEnvironment.PRODUCTION]: networkLicenseValidator,
@@ -13,4 +16,39 @@ const variant: Record<ApEnvironment, LicenseValidator> = {
 
 const env = system.getOrThrow<ApEnvironment>(SystemProp.ENVIRONMENT)
 
-export const licenseValidator = variant[env]
+const licenseValidator = variant[env]
+
+export async function enforceLimits(): Promise<void> {
+    const edition = system.getOrThrow<ApEdition>(SystemProp.EDITION)
+    if (edition !== ApEdition.ENTERPRISE) {
+        return
+    }
+    const license = await licenseValidator.validate()
+    switch (license.status) {
+        case LiceneseStatus.VALID:{
+            const oldestPlatform = await platformService.getOldestPlatform()
+            if (!oldestPlatform) {
+                break
+            }
+            await platformService.update({
+                id: oldestPlatform.id,
+                userId: oldestPlatform.ownerId,
+                showPoweredBy: license.showPoweredBy,
+                embeddingEnabled: license.embeddingEnabled,
+                ssoEnabled: license.ssoEnabled,
+                gitSyncEnabled: license.gitSyncEnabled,
+            })
+            break
+        }
+        case LiceneseStatus.INVALID: {
+            logger.error('[ERROR]: License key is not valid. Please contact sales@activepieces.com')
+            process.exit(1)
+            break
+        }
+        case LiceneseStatus.UNKNOWN:{
+            // We don't want to block the application from starting if the license is unknown
+            // TODO find a better way to handle this
+            break
+        }
+    }
+}

@@ -7,10 +7,19 @@ import { platformService } from '../../../platform/platform.service'
 import { userService } from '../../../../user/user-service'
 import { authenticationHelper } from './authentication-helper'
 import { projectService } from '../../../../project/project-service'
+import { enforceLimits } from '../../../helper/license-validator'
 
 const DEFAULT_PLATFORM_NAME = 'platform'
 
 export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = {
+    async preSignIn({ email, platformId, provider }) {
+        await authenticationHelper.assertEmailAuthIsEnabled({ platformId, provider })
+        await authenticationHelper.assertDomainIsAllowed({ email, platformId })
+    },
+    async preSignUp({ email, platformId, provider }) {
+        await authenticationHelper.assertEmailAuthIsEnabled({ platformId, provider })
+        await authenticationHelper.assertUserIsInvitedAndDomainIsAllowed({ email, platformId })
+    },
     async postSignUp({ user }) {
         const platformCreated = await flagService.getOne(ApFlagId.PLATFORM_CREATED)
         if (platformCreated?.value) {
@@ -37,6 +46,8 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
 
         await userService.updatePlatformId({ id: user.id, platformId: platform.id })
 
+        await enforceLimits()
+
         await flagService.save({
             id: ApFlagId.PLATFORM_CREATED,
             value: true,
@@ -61,4 +72,3 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
         }
     },
 }
-

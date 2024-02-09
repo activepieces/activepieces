@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  Input,
-  OnInit,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -11,19 +6,18 @@ import {
   Validators,
 } from '@angular/forms';
 import { validColorValidator } from 'ngx-colors';
-import {
-  LocalesEnum,
-  Platform,
-  UpdatePlatformRequestBody,
-} from '@activepieces/ee-shared';
+import { Platform, UpdatePlatformRequestBody } from '@activepieces/ee-shared';
 import { Observable, map, tap } from 'rxjs';
 import {
   AuthenticationService,
   PlatformService,
+  featureDisabledTooltip,
 } from '@activepieces/ui/common';
 import { ActivatedRoute } from '@angular/router';
 import { localesMap } from '@activepieces/ui/common';
-import { spreadIfDefined } from '@activepieces/shared';
+import { spreadIfDefined, LocalesEnum } from '@activepieces/shared';
+import { PLATFORM_RESOLVER_KEY } from '../../platform.resolver';
+import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
 
 interface AppearanceForm {
   name: FormControl<string>;
@@ -46,13 +40,17 @@ export class PlatformAppearanceComponent implements OnInit {
   updatePlatform$?: Observable<void>;
   locales = localesMap;
   title = $localize`Appearance`;
-  @Input({ required: true }) platform!: Platform;
+  featureDisabledTooltip = featureDisabledTooltip;
+  platform?: Platform;
+  isDemo = false;
   constructor(
     private fb: FormBuilder,
     private platformService: PlatformService,
     private authenticationService: AuthenticationService,
     private route: ActivatedRoute
   ) {
+    this.platform = this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
+    this.isDemo = this.route.snapshot.data[PLATFORM_DEMO_RESOLVER_KEY];
     this.formGroup = this.fb.group({
       name: this.fb.control(
         {
@@ -111,16 +109,19 @@ export class PlatformAppearanceComponent implements OnInit {
     });
   }
   ngOnInit(): void {
-    this.platform = this.route.snapshot.data['platform'];
-    this.formGroup.patchValue({
-      name: this.platform.name,
-      favIconUrl: this.platform.favIconUrl,
-      logoIconUrl: this.platform.logoIconUrl,
-      fullLogoUrl: this.platform.fullLogoUrl,
-      primaryColor: this.platform.primaryColor,
-      pickerCtrl: this.platform.primaryColor,
-      ...spreadIfDefined('defaultLocale', this.platform.defaultLocale),
-    });
+    if (this.isDemo) {
+      this.formGroup.disable();
+    } else if (this.platform) {
+      this.formGroup.patchValue({
+        name: this.platform.name,
+        favIconUrl: this.platform.favIconUrl,
+        logoIconUrl: this.platform.logoIconUrl,
+        fullLogoUrl: this.platform.fullLogoUrl,
+        primaryColor: this.platform.primaryColor,
+        pickerCtrl: this.platform.primaryColor,
+        ...spreadIfDefined('defaultLocale', this.platform.defaultLocale),
+      });
+    }
   }
   save() {
     this.formGroup.markAllAsTouched();

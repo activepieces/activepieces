@@ -10,12 +10,10 @@ import {
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {
-  BuilderActions,
   BuilderSelectors,
-  CollectionBuilderService,
   FlowItemDetailsActions,
   FlowRendererService,
-  ViewModeEnum,
+  FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
 import { Store } from '@ngrx/store';
 import {
@@ -32,10 +30,10 @@ import {
 import { MatDrawerContainer } from '@angular/material/sidenav';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { TestRunBarComponent } from '@activepieces/ui/feature-builder-store';
 import { RunDetailsService } from '@activepieces/ui/feature-builder-left-sidebar';
 import {
   ExecutionOutputStatus,
+  FlowOperationType,
   FlowTemplate,
   FlowVersion,
   TelemetryEventName,
@@ -47,16 +45,19 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import {
   AppearanceService,
+  CURRENT_FLOW_IS_NEW_KEY_IN_LOCAL_STORAGE,
   FlagService,
   TelemetryService,
+  TemplatesService,
   TestStepService,
-  isThereAnyNewFeaturedTemplatesResolverKey,
+  FlowBuilderService,
+  FlowService,
+  WebSocketService,
 } from '@activepieces/ui/common';
 import { PannerService } from '@activepieces/ui/feature-builder-canvas';
 import { MatDialog } from '@angular/material/dialog';
 import {
-  BuilderRouteData,
-  RunRouteData,
+  flowDisplayNameInRouteData,
 } from '../../resolvers/builder-route-data';
 import { ComponentPortal } from '@angular/cdk/portal';
 import {
@@ -97,7 +98,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
   dataInsertionPopupHidden$: Observable<boolean>;
   codeEditorOptions = {
     minimap: { enabled: false },
-    theme: 'cobalt2',
+    theme: 'apTheme',
     language: 'typescript',
     readOnly: false,
     automaticLayout: true,
@@ -114,11 +115,14 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     private pannerService: PannerService,
     private testStepService: TestStepService,
     private flowRendererService: FlowRendererService,
-    public builderService: CollectionBuilderService,
+    public builderService: FlowBuilderService,
     private matDialog: MatDialog,
     private flagService: FlagService,
     private telemetryService: TelemetryService,
-    public builderAutocompleteService: BuilderAutocompleteMentionsDropdownService
+    public builderAutocompleteService: BuilderAutocompleteMentionsDropdownService,
+    private templatesService: TemplatesService,
+    private flowService: FlowService,
+    private websocketService: WebSocketService,
   ) {
     this.showPoweredByAp$ = this.flagService.getShowPoweredByAp();
     this.dataInsertionPopupHidden$ =
@@ -135,94 +139,10 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
       this.testStepService.testingStepSectionIsRendered$.asObservable();
     this.isPanning$ = this.pannerService.isPanning$.asObservable();
     this.isDragging$ = this.flowRendererService.isDragginStep$;
-    if (localStorage.getItem('newFlow')) {
-      const TemplateDialogData: TemplateDialogData = {
-        insideBuilder: true,
-        isThereNewFeaturedTemplates$: this.actRoute.data.pipe(
-          map((val) => val[isThereAnyNewFeaturedTemplatesResolverKey])
-        ),
-      };
-      this.importTemplate$ = this.flagService.getTemplatesSourceUrl().pipe(
-        map((url) => !!url),
-        switchMap((showDialog) => {
-          if (showDialog) {
-            return this.matDialog
-              .open(TemplatesDialogComponent, {
-                data: TemplateDialogData,
-              })
-              .afterClosed()
-              .pipe(
-                switchMap((result?: TemplateDialogClosingResult) => {
-                  if (result) {
-                    return this.store
-                      .select(BuilderSelectors.selectCurrentFlow)
-                      .pipe(
-                        take(1),
-                        tap((flow) => {
-                          this.telemetryService.capture({
-                            name: TelemetryEventName.FLOW_IMPORTED,
-                            payload: {
-                              id: result.template.id,
-                              name: result.template.name,
-                              location: `inside the builder`,
-                              tab: `${result.activeTab}`,
-                            },
-                          });
-                          this.builderService.importTemplate$.next({
-                            flowId: flow.id,
-                            template: result.template,
-                          });
-                          if (result.template.blogUrl) {
-                            this.showBlogNotification(result.template);
-                          }
-                        })
-                      );
-                  }
-                  return EMPTY;
-                })
-              );
-          }
-          return EMPTY;
-        }),
-        map(() => void 0)
-      );
-      localStorage.removeItem('newFlow');
-    }
+    this.openTemaplatesDialogForNewFlows();
     this.loadInitialData$ = this.actRoute.data.pipe(
       tap((value) => {
-        const routeData = value as BuilderRouteData | RunRouteData;
-        const runInformation = routeData.runInformation;
-        if (runInformation) {
-          this.store.dispatch(
-            BuilderActions.loadInitial({
-              flow: routeData.runInformation.flow,
-              viewMode: ViewModeEnum.VIEW_INSTANCE_RUN,
-              run: routeData.runInformation.run,
-              appConnections: routeData.connections,
-              folder: routeData.runInformation.folder,
-            })
-          );
-          this.setTitle$ = this.appearanceService.setTitle(
-            routeData.runInformation.flow.version.displayName
-          );
-          this.snackbar.openFromComponent(TestRunBarComponent, {
-            duration: undefined,
-          });
-        } else {
-          this.setTitle$ = this.appearanceService.setTitle(
-            routeData.flowAndFolder.flow.version.displayName
-          );
-          this.store.dispatch(
-            BuilderActions.loadInitial({
-              flow: routeData.flowAndFolder.flow,
-              instance: routeData.instanceData?.instance,
-              viewMode: ViewModeEnum.BUILDING,
-              appConnections: routeData.connections,
-              folder: routeData.flowAndFolder.folder,
-              publishedVersion: routeData.instanceData?.publishedFlowVersion,
-            })
-          );
-        }
+          this.setTitle$ = this.appearanceService.setTitle(value[flowDisplayNameInRouteData])
       }),
       map(() => void 0)
     );
@@ -257,12 +177,14 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     this.flowRendererService.clientMouseY = e.clientY;
   }
   ngOnDestroy(): void {
+    this.websocketService.disconnect();
     this.snackbar.dismiss();
     this.runDetailsService.currentStepResult$.next(undefined);
     this.builderService.componentToShowInsidePortal$.next(undefined);
   }
 
   ngOnInit(): void {
+    this.websocketService.connect()
     this.store.dispatch(FlowItemDetailsActions.loadFlowItemsDetails());
   }
 
@@ -337,6 +259,67 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     if (isSaving) {
       event.preventDefault();
       event.returnValue = false;
+    }
+  }
+
+  openTemaplatesDialogForNewFlows() {
+
+    if (localStorage.getItem(CURRENT_FLOW_IS_NEW_KEY_IN_LOCAL_STORAGE)) {
+      const TemplateDialogData: TemplateDialogData = {
+        insideBuilder: true
+      };
+      const templates$ = this.templatesService.list({});
+      this.importTemplate$ = templates$.pipe(switchMap((templates) => {
+        if (templates.length === 0) {
+          return of(void 0);
+        }
+        return this.matDialog
+          .open(TemplatesDialogComponent, {
+            data: TemplateDialogData,
+          })
+          .afterClosed()
+          .pipe(
+            switchMap((dialogResult?: TemplateDialogClosingResult) => {
+              if (dialogResult) {
+                this.builderService.showLoading();
+                return this.store
+                  .select(BuilderSelectors.selectCurrentFlow)
+                  .pipe(
+                    take(1),
+                    switchMap((flow) => {
+                      return this.flowService
+                        .update(flow.id, {
+                          type: FlowOperationType.IMPORT_FLOW,
+                          request: {
+                            displayName: dialogResult.template.name,
+                            trigger: dialogResult.template.template.trigger,
+                          },
+                        })
+                    }),
+                    tap((res) => {
+                      this.builderService.hideLoading();
+                      this.store.dispatch(FlowsActions.importFlow({ flow: res }));
+                      this.telemetryService.capture({
+                        name: TelemetryEventName.FLOW_IMPORTED,
+                        payload: {
+                          id: dialogResult.template.id,
+                          name: dialogResult.template.name,
+                          location: `inside the builder`,
+                          tab: `${dialogResult.activeTab}`,
+                        },
+                      });
+                      if (dialogResult.template.blogUrl) {
+                        this.showBlogNotification(dialogResult.template);
+                      }
+                    })
+                  );
+              }
+              return EMPTY;
+            }),
+            map(() => void 0)
+          )
+      }));
+      localStorage.removeItem(CURRENT_FLOW_IS_NEW_KEY_IN_LOCAL_STORAGE);
     }
   }
 }

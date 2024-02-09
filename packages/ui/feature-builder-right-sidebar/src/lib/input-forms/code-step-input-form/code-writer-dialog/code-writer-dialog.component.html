@@ -1,0 +1,107 @@
+<ap-dialog-title-template i18n>Write Code with AI
+    <span class="ap-typography-caption ap-text-primary ap-mt-1">BETA</span>
+</ap-dialog-title-template>
+<mat-dialog-content>
+    <div class="ap-max-w-[40.625rem] ">
+        <mat-stepper linear #stepper>
+            <mat-step [editable]="false"
+                [completed]="(receivedCode$ | async) !== undefined  && (receivedCode$ | async) !== ''">
+                <ng-template matStepLabel>Generate Code</ng-template>
+                <ng-container *ngTemplateOutlet="promptTemplate"></ng-container>
+            </mat-step>
+            <mat-step>
+                <ng-template matStepLabel>Code Iteration</ng-template>
+                <ng-container *ngTemplateOutlet="editTemplate"></ng-container>
+            </mat-step>
+
+        </mat-stepper>
+
+    </div>
+
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+    <div class="ap-flex ap-gap-2.5">
+        <ap-button btnColor="basic" mat-dialog-close btnSize="default" i18n>
+            Close
+        </ap-button>
+        <ap-button *ngIf="(receivedCode$ | async) === undefined  ||  (receivedCode$ | async) === ''" cdkFocusInitial
+            btnSize="default" btnColor="primary" (click)="prompt()" [loading]="loading$ | async | defaultFalse" i18n>
+            Next
+        </ap-button>
+        <ap-button *ngIf="(receivedCode$ | async) !== undefined  && (receivedCode$ | async) !== ''" cdkFocusInitial
+            btnSize="default" btnColor="primary" (click)="useCode()" [disabled]="loading$ | async | defaultFalse" i18n>
+            Use Code
+        </ap-button>
+    </div>
+</mat-dialog-actions>
+
+<ng-template #promptTemplate>
+
+    <div *ngIf="isCloudEdition$ | async" class="ap-mb-2">
+        <ap-markdown [data]="betaNote"></ap-markdown>
+    </div>
+
+    <div class="ap-typography-body-1 ap-text-description ap-mb-4" i18n>
+        Let AI help you write code for this step. Write your prompt below to get started.
+    </div>
+    <ng-container [ngTemplateOutlet]="promptFormTemplate" [ngTemplateOutletContext]="{
+            reprompt:false
+        }"></ng-container>
+
+
+</ng-template>
+
+<ng-template #editTemplate>
+
+    <div class="ap-typography-body-1 ap-text-description ap-mb-4" i18n>
+        Here is the code our AI wrote for you. Ask for changes or use the code in your action.
+    </div>
+    <ng-template #codeResult>{{ receivedCode$ | async }}</ng-template>
+    <div class="ap-mb-4">
+        <pre *ngIf="prisimFix === false"
+            class="thin-scrollbars ap-text-sm ap-px-4 ap-py-2 !ap-bg-gray-card "><code class="language-js"><ng-container *ngTemplateOutlet="codeResult"> </ng-container></code></pre>
+        <pre *ngIf="prisimFix === true"
+            class="thin-scrollbars ap-text-sm ap-px-4 ap-py-2 !ap-bg-gray-card "><code class="language-js"><ng-container *ngTemplateOutlet="codeResult"> </ng-container></code></pre>
+    </div>
+
+    <ng-container [ngTemplateOutlet]="promptFormTemplate" [ngTemplateOutletContext]="{
+            reprompt:true
+        }"></ng-container>
+</ng-template>
+
+<ng-container *ngIf="promptOperation$ | async"></ng-container>
+<ng-container *ngIf="npmPackage$ | async"></ng-container>
+
+<ng-template #promptFormTemplate let-reprompt="reprompt">
+    <form class="ap-flex ap-flex-col ap-gap-2 " [formGroup]="promptForm" (submit)="prompt()">
+        <div class="ap-flex ap-items-center ap-gap-2">
+            <div class="smaller-input ap-flex-grow">
+                <mat-form-field class="ap-w-full" appearance="outline" subscriptSizing="dynamic">
+                    <mat-label i18n> {{(receivedCode$ | async)?'Request Adjustment':'Prompt'}} </mat-label>
+                    <textarea *ngIf="(receivedCode$ | async) === undefined || (receivedCode$ | async) === ''"
+                        class="!ap-resize-none" cdkFocusInitial
+                        (keydown.enter)="$event.preventDefault();$event.stopPropagation();"
+                        (keyup.enter)=" prompt(reprompt)" [formControl]="promptForm.controls.prompt" matInput
+                        type="text" rows="4"></textarea>
+
+                    <input *ngIf="receivedCode$ |async" cdkFocusInitial
+                        (keydown.enter)="$event.preventDefault();$event.stopPropagation();"
+                        (keyup.enter)=" prompt(reprompt)" [formControl]="promptForm.controls.prompt" matInput
+                        type="text">
+
+
+                    <mat-error *ngIf="promptForm.controls.prompt.invalid" i18n>Prompt is required </mat-error>
+                </mat-form-field>
+            </div>
+            <div *ngIf="receivedCode$ |async">
+                <ap-button btnColor="primary" btnStyle="stroked" btnSize="large"
+                    [disabled]="!promptForm.controls.prompt.value" [loading]="loading$ | async | defaultFalse"
+                    [darkLoadingSpinner]="true" i18n>Ask</ap-button>
+            </div>
+        </div>
+
+        <mat-checkbox *ngIf="(receivedCode$ | async) === undefined  || (receivedCode$ | async) === ''"
+            [formControl]="promptForm.controls.passExistingCode" color="primary" i18n>Pass existing code to AI
+        </mat-checkbox>
+    </form>
+</ng-template>

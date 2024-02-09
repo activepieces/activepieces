@@ -8,9 +8,16 @@ import { EMPTY, of } from 'rxjs';
 import { BuilderSelectors } from '../builder.selector';
 import { LeftSideBarType, RightSideBarType } from '../../../model';
 import { RunDetailsService } from '../../../service/run-details.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Injectable()
 export class CanvasEffects {
+  constructor(
+    private actions$: Actions,
+    private store: Store,
+    private runDetailsService: RunDetailsService,
+    private snackbar: MatSnackBar
+  ) {}
   loadInitial$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(BuilderActions.loadInitial),
@@ -19,6 +26,21 @@ export class CanvasEffects {
           displayedFlowVersion: action.flow.version,
           run: action.run,
         });
+      })
+    );
+  });
+  openRunDetails$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(BuilderActions.loadInitial),
+      switchMap((action) => {
+        if (action.run) {
+          return of(
+            canvasActions.setLeftSidebar({
+              sidebarType: LeftSideBarType.SHOW_RUN,
+            })
+          );
+        }
+        return EMPTY;
       })
     );
   });
@@ -39,6 +61,7 @@ export class CanvasEffects {
       })
     );
   });
+
   removeStepSelection$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(canvasActions.setRightSidebar),
@@ -50,26 +73,17 @@ export class CanvasEffects {
       })
     );
   });
-  exitRun$ = createEffect(() => {
-    return this.actions$.pipe(
-      ofType(canvasActions.exitRun),
-      concatLatestFrom(() =>
-        this.store.select(BuilderSelectors.selectCurrentLeftSidebarType)
-      ),
-      switchMap(([action, leftSideBar]) => {
-        switch (leftSideBar) {
-          case LeftSideBarType.SHOW_RUN:
-            return of(
-              canvasActions.setLeftSidebar({
-                sidebarType: LeftSideBarType.NONE,
-              })
-            );
-          case LeftSideBarType.NONE:
-            return EMPTY;
-        }
-      })
-    );
-  });
+  exitRun$ = createEffect(
+    () => {
+      return this.actions$.pipe(
+        ofType(canvasActions.exitRun),
+        tap(() => {
+          this.snackbar.dismiss();
+        })
+      );
+    },
+    { dispatch: false }
+  );
   setRun$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(canvasActions.setRun),
@@ -90,10 +104,4 @@ export class CanvasEffects {
       })
     );
   });
-
-  constructor(
-    private actions$: Actions,
-    private store: Store,
-    private runDetailsService: RunDetailsService
-  ) {}
 }

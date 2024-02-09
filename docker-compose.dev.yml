@@ -8,7 +8,7 @@ version: '3.0'
 
 services:
   app:
-    image: activepieces/ap-base:7
+    image: activepieces/ap-base:11
     container_name: ap
     environment:
       AP_CACHE_PATH: /usr/src/cache

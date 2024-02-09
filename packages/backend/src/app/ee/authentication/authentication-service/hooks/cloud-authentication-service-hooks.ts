@@ -7,20 +7,29 @@ import { referralService } from '../../../referrals/referral.service'
 import { authenticationHelper } from './authentication-helper'
 import { projectService } from '../../../../project/project-service'
 import { userService } from '../../../../user/user-service'
-import { ProjectType, UserStatus, isNil } from '@activepieces/shared'
+import { ProjectType, isNil } from '@activepieces/shared'
+import { flagService } from '../../../../../app/flags/flag.service'
 
 export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
+    async preSignIn({ email, platformId, provider }) {
+        await authenticationHelper.assertEmailAuthIsEnabled({ platformId, provider })
+        await authenticationHelper.assertDomainIsAllowed({ email, platformId })
+    },
+    async preSignUp({ email, platformId, provider }) {
+        await authenticationHelper.assertEmailAuthIsEnabled({ platformId, provider })
+        await authenticationHelper.assertUserIsInvitedAndDomainIsAllowed({ email, platformId })
+    },
     async postSignUp({ user, referringUserId }) {
 
-
-        if (isNil(user.platformId)) {
+        if (!isNil(user.platformId) && flagService.isCloudPlatform(user.platformId)) {
             await projectService.create({
                 displayName: `${user.firstName}'s Project`,
                 ownerId: user.id,
-                platformId: undefined,
-                type: ProjectType.STANDALONE,
+                platformId: user.platformId,
+                type: ProjectType.PLATFORM_MANAGED,
             })
         }
+
         if (referringUserId) {
             await referralService.upsert({
                 referringUserId,
@@ -32,7 +41,7 @@ export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
         const updatedUser = await userService.getOneOrFail({ id: user.id })
         const { project, token } = await authenticationHelper.getProjectAndTokenOrThrow(user)
 
-        if (updatedUser.status !== UserStatus.VERIFIED) {
+        if (!updatedUser.verified) {
             await otpService.createAndSend({
                 platformId: updatedUser.platformId,
                 email: updatedUser.email,

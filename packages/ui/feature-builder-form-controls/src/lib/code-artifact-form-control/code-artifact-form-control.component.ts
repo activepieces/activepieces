@@ -1,4 +1,11 @@
-import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  EventEmitter,
+  OnInit,
+  Output,
+  ViewChild,
+} from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALUE_ACCESSOR,
@@ -8,7 +15,10 @@ import {
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, tap, map } from 'rxjs';
-import { CodeArtifactControlFullscreenComponent } from './code-artifact-control-fullscreen/code-artifact-control-fullscreen.component';
+import {
+  CodeArtifactControlFullscreenComponent,
+  CodeArtifactControlFullscreenData,
+} from './code-artifact-control-fullscreen/code-artifact-control-fullscreen.component';
 import { MatTooltip } from '@angular/material/tooltip';
 import { CodemirrorComponent } from '@ctrl/ngx-codemirror';
 import { SourceCode } from '@activepieces/shared';
@@ -21,7 +31,6 @@ export interface CodeArtifactForm {
 @Component({
   selector: 'app-code-artifact-form-control',
   templateUrl: './code-artifact-form-control.component.html',
-  styleUrls: ['./code-artifact-form-control.component.css'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -36,11 +45,12 @@ export class CodeArtifactFormControlComponent
   updateComponentValue$: Observable<Partial<SourceCode>>;
   @ViewChild('codeMirror') codeMirror: CodemirrorComponent;
   @ViewChild('tooltip') tooltip: MatTooltip;
+  @Output() openCodeWriterDialog = new EventEmitter<boolean>();
   hideDelayForFullscreenTooltip = 2000;
   codeArtifactForm: FormGroup<CodeArtifactForm>;
   codeEditorOptions = {
     minimap: { enabled: false },
-    theme: 'cobalt2',
+    theme: 'apTheme',
     language: 'typescript',
     readOnly: false,
     automaticLayout: true,
@@ -91,12 +101,14 @@ export class CodeArtifactFormControlComponent
     this.onTouched = touched;
   }
   showFullscreenEditor() {
+    const data: CodeArtifactControlFullscreenData = {
+      codeFilesForm: this.codeArtifactForm,
+      readOnly: this.codeEditorOptions.readOnly,
+      openCodeWriterDialog$: this.openCodeWriterDialog,
+    };
     this.fullScreenEditorClosed$ = this.dialogService
       .open(CodeArtifactControlFullscreenComponent, {
-        data: {
-          codeFilesForm: this.codeArtifactForm,
-          readOnly: this.codeEditorOptions.readOnly,
-        },
+        data,
         panelClass: 'fullscreen-dialog',
       })
       .beforeClosed()

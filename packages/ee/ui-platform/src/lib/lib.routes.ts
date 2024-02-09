@@ -1,10 +1,16 @@
 import { Route } from '@angular/router';
 import { PlatformDashboardContainerComponent } from './pages/platform-dashboard-container/platform-dashboard-container.component';
-import { platformResolver } from './platform.resolver';
+import { PLATFORM_RESOLVER_KEY, platformResolver } from './platform.resolver';
 import { ProjectsTableComponent } from './pages/projects-table/projects-table.component';
 import { PlatformAppearanceComponent } from './pages/platform-appearance/platform-appearance.component';
 import { PlatformSettingsComponent } from './pages/platform-settings/platform-settings.component';
 import { PiecesTableComponent } from './pages/pieces-table/pieces-table.component';
+import { TemplatesTableComponent } from './pages/templates-table/templates-table.component';
+import { UsersTableComponent } from './pages/users-table/users-table.component';
+import {
+  PLATFORM_DEMO_RESOLVER_KEY,
+  isPlatformDemoResolver,
+} from './is-platform-demo.resolver';
 
 export const uiEePlatformRoutes: Route[] = [
   {
@@ -22,6 +28,9 @@ export const uiEePlatformRoutes: Route[] = [
         data: {
           title: $localize`Projects`,
         },
+        resolve: {
+          [PLATFORM_DEMO_RESOLVER_KEY]: isPlatformDemoResolver,
+        },
       },
       {
         path: 'appearance',
@@ -30,7 +39,8 @@ export const uiEePlatformRoutes: Route[] = [
           title: $localize`Appearance`,
         },
         resolve: {
-          platform: platformResolver,
+          [PLATFORM_RESOLVER_KEY]: platformResolver,
+          [PLATFORM_DEMO_RESOLVER_KEY]: isPlatformDemoResolver,
         },
       },
       {
@@ -40,7 +50,18 @@ export const uiEePlatformRoutes: Route[] = [
           title: $localize`Pieces`,
         },
         resolve: {
-          platform: platformResolver,
+          [PLATFORM_RESOLVER_KEY]: platformResolver,
+          [PLATFORM_DEMO_RESOLVER_KEY]: isPlatformDemoResolver,
+        },
+      },
+      {
+        path: 'templates',
+        component: TemplatesTableComponent,
+        data: {
+          title: $localize`Templates`,
+        },
+        resolve: {
+          [PLATFORM_DEMO_RESOLVER_KEY]: isPlatformDemoResolver,
         },
       },
       {
@@ -50,7 +71,18 @@ export const uiEePlatformRoutes: Route[] = [
           title: $localize`Settings`,
         },
         resolve: {
-          platform: platformResolver,
+          [PLATFORM_RESOLVER_KEY]: platformResolver,
+          [PLATFORM_DEMO_RESOLVER_KEY]: isPlatformDemoResolver,
+        },
+      },
+      {
+        path: 'users',
+        component: UsersTableComponent,
+        data: {
+          title: $localize`Users`,
+        },
+        resolve: {
+          [PLATFORM_DEMO_RESOLVER_KEY]: isPlatformDemoResolver,
         },
       },
     ],

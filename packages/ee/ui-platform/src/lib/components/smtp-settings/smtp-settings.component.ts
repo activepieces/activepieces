@@ -5,11 +5,13 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { PlatformService } from '@activepieces/ui/common';
-import { ActivatedRoute } from '@angular/router';
-import { Platform } from '@activepieces/ee-shared';
+import {
+  PlatformService,
+  featureDisabledTooltip,
+} from '@activepieces/ui/common';
 import { BehaviorSubject, Observable, catchError, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { PlatformSettingsBaseComponent } from '../platform-settings-base.component';
 
 interface SmtpForm {
   smtpHost: FormControl<string>;
@@ -24,16 +26,21 @@ interface SmtpForm {
   templateUrl: './smtp-settings.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SmtpSettingsComponent implements OnInit {
+export class SmtpSettingsComponent
+  extends PlatformSettingsBaseComponent
+  implements OnInit
+{
   smtpSettingsForm: FormGroup<SmtpForm>;
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   saving$?: Observable<void>;
+  featureDisabledTooltip = featureDisabledTooltip;
+
   constructor(
     private fb: FormBuilder,
     private platformService: PlatformService,
-    private route: ActivatedRoute,
     private matSnackbar: MatSnackBar
   ) {
+    super();
     this.smtpSettingsForm = this.fb.group({
       smtpHost: this.fb.control('', {
         nonNullable: true,
@@ -62,25 +69,33 @@ export class SmtpSettingsComponent implements OnInit {
     });
   }
   ngOnInit(): void {
-    const platform: Platform = this.route.snapshot.data['platform'];
-    this.smtpSettingsForm.patchValue(platform);
+    if (this.platform) {
+      this.smtpSettingsForm.patchValue(this.platform);
+    }
+
+    if (this.isDemo) {
+      this.smtpSettingsForm.disable();
+    }
   }
   save(): void {
     this.smtpSettingsForm.markAllAsTouched();
-    if (this.smtpSettingsForm.valid && this.loading$.value === false) {
-      const platform: Platform = this.route.snapshot.data['platform'];
+    if (
+      this.smtpSettingsForm.valid &&
+      this.loading$.value === false &&
+      this.platform
+    ) {
       this.loading$.next(true);
       this.saving$ = this.platformService
         .updatePlatform(
           {
             ...this.smtpSettingsForm.value,
           },
-          platform.id
+          this.platform.id
         )
         .pipe(
           tap(() => {
             this.loading$.next(false);
-            this.matSnackbar.open('Saved successfully');
+            this.matSnackbar.open($localize`Saved successfully`);
           }),
           catchError((err) => {
             this.loading$.next(false);

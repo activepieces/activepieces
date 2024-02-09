@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, map } from 'rxjs';
-
 export type EmbeddingState = {
   isEmbedded: boolean;
   hideSideNav: boolean;
@@ -32,7 +31,7 @@ export class EmbeddingService {
   getIsInEmbedding$() {
     return this.getState$().pipe(map((res) => res.isEmbedded));
   }
-  getShowFolderNameAndBackButton$() {
+  getShowNavigationInBuilder$() {
     return this.getState$().pipe(map((res) => !res.disableNavigationInBuilder));
   }
 

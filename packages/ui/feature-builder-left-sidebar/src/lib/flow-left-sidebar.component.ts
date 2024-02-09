@@ -5,16 +5,21 @@ import {
   BuilderSelectors,
   LeftSideBarType,
 } from '@activepieces/ui/feature-builder-store';
+import { PopulatedFlow, Project } from '@activepieces/shared';
+import { ProjectSelectors } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-flow-left-sidebar',
   templateUrl: './flow-left-sidebar.component.html',
-  styleUrls: ['./flow-left-sidebar.component.css'],
 })
 export class FlowLeftSidebarComponent implements OnInit {
   leftSideBar$: Observable<LeftSideBarType>;
-
-  constructor(private store: Store) {}
+  flow$: Observable<PopulatedFlow>;
+  project$: Observable<Project>;
+  constructor(private store: Store) {
+    this.flow$ = this.store.select(BuilderSelectors.selectCurrentFlow);
+    this.project$ = this.store.select(ProjectSelectors.selectCurrentProject);
+  }
 
   ngOnInit(): void {
     this.leftSideBar$ = this.store.select(

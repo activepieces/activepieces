@@ -8,7 +8,7 @@ import {
   PieceMetadataService,
   CORE_PIECES_ACTIONS_NAMES,
   CORE_PIECES_TRIGGERS,
-} from 'ui-feature-pieces';
+} from '@activepieces/ui/feature-pieces';
 import { PieceMetadataModelSummary } from '@activepieces/ui/common';
 
 @Injectable()

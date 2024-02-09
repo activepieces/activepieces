@@ -20,6 +20,7 @@ import {
 import deepEqual from 'deep-equal';
 import {
   AppConnectionsService,
+  AuthenticationService,
   FlagService,
   fadeInUp400ms,
 } from '@activepieces/ui/common';
@@ -36,6 +37,7 @@ import {
   PropertyType,
   OAuth2Property,
   OAuth2Props,
+  StaticDropdownProperty,
 } from '@activepieces/pieces-framework';
 import { connectionNameRegex } from '../utils';
 
@@ -47,7 +49,7 @@ interface AuthConfigSettings {
 
 export const USE_MY_OWN_CREDENTIALS = 'USE_MY_OWN_CREDENTIALS';
 export type ManagedOAuth2ConnectionDialogData = {
-  pieceAuthProperty: OAuth2Property<boolean, OAuth2Props>;
+  pieceAuthProperty: OAuth2Property<OAuth2Props>;
   pieceName: string;
   connectionToUpdate?: AppConnectionWithoutSensitiveData;
   clientId: string;
@@ -80,6 +82,7 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
     public dialogRef: MatDialogRef<ManagedOAuth2ConnectionDialogComponent>,
     private appConnectionsService: AppConnectionsService,
     private flagService: FlagService,
+    private authenticationService: AuthenticationService,
     private snackbar: MatSnackBar,
     @Inject(MAT_DIALOG_DATA)
     public dialogData: ManagedOAuth2ConnectionDialogData
@@ -161,7 +164,8 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
     const { tokenUrl } = this.getTokenAndUrl();
     if (this.dialogData.connectionType === AppConnectionType.CLOUD_OAUTH2) {
       const newConnection: UpsertCloudOAuth2Request = {
-        appName: this.dialogData.pieceName,
+        projectId: this.authenticationService.getProjectId(),
+        pieceName: this.dialogData.pieceName,
         type: AppConnectionType.CLOUD_OAUTH2,
         value: {
           token_url: tokenUrl,
@@ -181,7 +185,8 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
       return newConnection;
     } else {
       const newConnection: UpsertPlatformOAuth2Request = {
-        appName: this.dialogData.pieceName,
+        projectId: this.authenticationService.getProjectId(),
+        pieceName: this.dialogData.pieceName,
         type: AppConnectionType.PLATFORM_OAUTH2,
         value: {
           token_url: tokenUrl,
@@ -294,4 +299,8 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
   dropdownCompareWithFunction = (opt: any, formControlValue: any) => {
     return formControlValue && deepEqual(opt, formControlValue);
   };
+
+  castToStaticDropdown(t: unknown) {
+    return t as StaticDropdownProperty<unknown, true>;
+  }
 }

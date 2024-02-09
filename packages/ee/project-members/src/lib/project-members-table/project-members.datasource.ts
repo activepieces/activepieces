@@ -10,7 +10,11 @@ import {
   catchError,
   of,
 } from 'rxjs';
-import { ProjectMember } from '@activepieces/ee-shared';
+import {
+  ProjectMember,
+  ProjectMemberRole,
+  ProjectMemberStatus,
+} from '@activepieces/ee-shared';
 import { ProjectMemberService } from '../service/project-members.service';
 import { AuthenticationService } from '@activepieces/ui/common';
 
@@ -25,7 +29,8 @@ export class ProjectMembersTableDataSource extends DataSource<ProjectMember> {
   constructor(
     private authenticationService: AuthenticationService,
     private projectMemberService: ProjectMemberService,
-    private refresh$: Observable<boolean>
+    private refresh$: Observable<boolean>,
+    private fakeData: boolean = false
   ) {
     super();
   }
@@ -40,20 +45,36 @@ export class ProjectMembersTableDataSource extends DataSource<ProjectMember> {
       refresh: this.refresh$,
     }).pipe(
       switchMap(() => {
-        return this.projectMemberService
-          .list({
-            projectId: this.authenticationService.getProjectId(),
-          })
-          .pipe(
-            catchError((e: any) => {
-              console.error(e);
-              return of({
-                next: undefined,
-                previous: undefined,
-                data: [],
-              });
+        if (!this.fakeData) {
+          return this.projectMemberService
+            .list({
+              projectId: this.authenticationService.getProjectId(),
             })
-          );
+            .pipe(
+              catchError((e: any) => {
+                console.error(e);
+                return of({
+                  next: undefined,
+                  previous: undefined,
+                  data: [],
+                });
+              })
+            );
+        }
+        const member: ProjectMember = {
+          id: this.authenticationService.currentUser.id,
+          created: this.authenticationService.currentUser.created,
+          email: this.authenticationService.currentUser.email,
+          role: ProjectMemberRole.ADMIN,
+          status: ProjectMemberStatus.ACTIVE,
+          projectId: this.authenticationService.getProjectId(),
+          updated: this.authenticationService.currentUser.updated,
+        };
+        return of({
+          next: undefined,
+          previous: undefined,
+          data: [member],
+        });
       }),
       tap((members) => {
         this.data = members.data;

@@ -5,10 +5,10 @@ import { ApId } from '../common/id-generator'
 export type UserId = ApId
 
 export enum UserStatus {
-    /* user registered but didn't verify their email */
-    CREATED = 'CREATED',
-    /* user registered and verified their email or accepted an invitation */
-    VERIFIED = 'VERIFIED',
+    /* user is active */
+    ACTIVE = 'ACTIVE',
+    /* user account deactivated */
+    INACTIVE = 'INACTIVE',
 }
 
 export const EmailType = Type.String({
@@ -28,6 +28,7 @@ export const User = Type.Object({
     trackEvents: Type.Boolean(),
     newsLetter: Type.Boolean(),
     password: Type.String(),
+    verified: Type.Boolean(),
     status: Type.Enum(UserStatus),
     imageUrl: Type.Optional(Type.String()),
     title: Type.Optional(Type.String()),

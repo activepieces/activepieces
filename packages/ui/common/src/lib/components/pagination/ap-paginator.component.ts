@@ -3,9 +3,12 @@ import { FormControl } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import {
+  CURSOR_QUERY_PARAM,
   DEFAULT_PAGE_SIZE,
   LIMIT_QUERY_PARAM,
+  NEXT_QUERY_PARAM,
   PAGE_SIZES,
+  PREVIOUS_QUERY_PARAM,
 } from '../../utils/tables.utils';
 
 @Component({
@@ -30,21 +33,22 @@ export class ApPaginatorComponent implements OnInit {
         this.pageSizeChanged.emit(val);
         this.router.navigate(['.'], {
           relativeTo: this.route,
-          queryParams: { limit: val, cursor: undefined },
+          queryParams: {
+            [LIMIT_QUERY_PARAM]: val,
+            [CURSOR_QUERY_PARAM]: undefined,
+            [NEXT_QUERY_PARAM]: undefined,
+            [PREVIOUS_QUERY_PARAM]: undefined,
+          },
           queryParamsHandling: 'merge',
         });
       })
     );
-
-    const pageSize = Number.parseInt(
-      this.route.snapshot.queryParamMap.get(LIMIT_QUERY_PARAM) || '0'
-    );
-    this.pageSizeControl.setValue(pageSize || DEFAULT_PAGE_SIZE);
   }
-  setQueryParams(cursor: string) {
+
+  setCursor(cursor: string) {
     const params: { [key: string]: string | number } = {
-      limit: this.pageSizeControl.value,
-      cursor: cursor,
+      [LIMIT_QUERY_PARAM]: this.pageSizeControl.value,
+      [CURSOR_QUERY_PARAM]: cursor,
     };
 
     this.router.navigate(['.'], {
@@ -52,5 +56,10 @@ export class ApPaginatorComponent implements OnInit {
       queryParams: params,
       queryParamsHandling: 'merge',
     });
+  }
+
+  setNextAndPrevious(next: string | null, previous: string | null) {
+    this.next = next;
+    this.previous = previous;
   }
 }

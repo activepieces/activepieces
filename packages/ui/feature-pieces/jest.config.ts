@@ -1,6 +1,6 @@
 /* eslint-disable */
 export default {
-  displayName: 'ui-feature-pieces',
+  displayName: '@activepieces/ui/feature-pieces',
   preset: '../../../jest.preset.js',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
   coverageDirectory: '../../../coverage/packages/ui/feature-pieces',

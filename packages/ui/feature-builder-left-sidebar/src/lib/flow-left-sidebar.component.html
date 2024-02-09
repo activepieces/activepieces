@@ -1,3 +1,9 @@
 <ng-container [ngSwitch]="leftSideBar$ | async">
+  <ng-container *ngIf="flow$ | async as flow">
+    <ng-container *ngIf="project$| async as proj">
+      <app-runs-list *ngSwitchCase="leftSideBarType.RUNS_LIST" [projectId]="proj.id" [flowId]="flow.id"></app-runs-list>
+    </ng-container>
+  </ng-container>
   <app-run-details *ngSwitchCase="leftSideBarType.SHOW_RUN"></app-run-details>
+  <app-version-history *ngSwitchCase="leftSideBarType.VERSIONS_HISTORY"></app-version-history>
 </ng-container>

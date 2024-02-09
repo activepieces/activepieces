@@ -1,9 +1,0 @@
-{
-  "name": "@activepieces/piece-brilliant-directories",
-  "version": "0.0.1",
-  "dependencies": {
-    "@activepieces/pieces-framework": "latest",
-    "@activepieces/pieces-common": "latest",
-    "tslib": "^2.6.2"
-  }
-}

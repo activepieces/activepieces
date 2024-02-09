@@ -77,7 +77,7 @@ export type AppConnectionValue<T extends AppConnectionType = AppConnectionType> 
 export type AppConnection<Type extends AppConnectionType = AppConnectionType> = BaseModel<AppConnectionId> & {
     name: string
     type: Type
-    appName: string
+    pieceName: string
     projectId: string
     status: AppConnectionStatus
     value: AppConnectionValue<Type>
@@ -94,9 +94,11 @@ export const AppConnectionWithoutSensitiveData = Type.Object({
     ...BaseModelSchema,
     name: Type.String(),
     type: Type.Enum(AppConnectionType),
-    appName: Type.String(),
+    pieceName: Type.String(),
     projectId: ApId,
     status: Type.Enum(AppConnectionStatus),
+}, {
+    description: 'App connection is a connection to an external app.',
 })
 
 export type AppConnectionWithoutSensitiveData = Static<typeof AppConnectionWithoutSensitiveData> & { __brand: 'AppConnectionWithoutSensitiveData' }

@@ -4,7 +4,9 @@
       Let's Get Started!
     </div>
     <ap-third-party-auth [isForSignup]="true"></ap-third-party-auth>
-    <form [formGroup]="registrationForm" (ngSubmit)="signUp()" class="ap-flex ap-flex-col ap-gap-2">
+    <app-authentication-methods-separator></app-authentication-methods-separator>
+    <form *ngIf="emailLoginsEnabled$ | async" [formGroup]="registrationForm" (ngSubmit)="signUp()"
+      class="ap-flex ap-flex-col ap-gap-2">
       <div class="ap-flex ap-gap-1 md:ap-gap-4 ap-items-center ap-flex-col md:ap-flex-row">
         <mat-form-field class="ap-w-full md:ap-w-initial" appearance="outline">
           <mat-label i18n>First Name</mat-label>
@@ -56,7 +58,10 @@
         <div #menuTrigger="matMenuTrigger" [matMenuTriggerFor]="menu" class="hidden-trigger"></div>
       </mat-form-field>
       <mat-error class="ap-text-center" *ngIf="invitationOnlySignup && !emailChanged" i18n>
-        Contact your admin to send you an invite
+        You are not invited to any project, please contact your administrator.
+      </mat-error>
+      <mat-error class="ap-text-center" *ngIf="domainIsNotAllowed && !emailChanged" i18n>
+        Your email domain is not allowed to sign up, please contact your administrator.
       </mat-error>
       <mat-menu #menu="matMenu" [hasBackdrop]="true">
         <div class="ap-mx-2">

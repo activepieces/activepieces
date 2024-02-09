@@ -1,14 +1,17 @@
 import { Component } from '@angular/core';
-import { EmbeddingService } from '@activepieces/ui/common';
+import {
+  AuthenticationService,
+  EmbeddingService,
+} from '@activepieces/ui/common';
 import {
   DashboardService,
   FlagService,
-  ProjectSelectors,
   environment,
 } from '@activepieces/ui/common';
 import { Observable, combineLatest, map } from 'rxjs';
 import { ApFlagId, Project } from '@activepieces/shared';
-import { Store } from '@ngrx/store';
+
+import { Router } from '@angular/router';
 
 @Component({
   templateUrl: './dashboard-container.component.html',
@@ -17,18 +20,26 @@ import { Store } from '@ngrx/store';
 })
 export class DashboardContainerComponent {
   environment = environment;
-  showCommunity$: Observable<boolean>;
   isEmbedded$: Observable<boolean>;
   showSidnav$: Observable<boolean>;
   isInPlatformRoute$: Observable<boolean>;
   currentProject$: Observable<Project>;
   showPoweredByAp$: Observable<boolean>;
+  showPlatform$: Observable<boolean>;
   constructor(
     private flagService: FlagService,
     private embeddedService: EmbeddingService,
     private dashboardService: DashboardService,
-    private store: Store
+    private authenticationService: AuthenticationService,
+    public router: Router
   ) {
+    this.showPlatform$ = this.flagService
+      .isFlagEnabled(ApFlagId.SHOW_PLATFORM_DEMO)
+      .pipe(
+        map((isDemo) => {
+          return isDemo || this.authenticationService.isPlatformOwner();
+        })
+      );
     this.showPoweredByAp$ = combineLatest({
       showPoweredByAp: this.flagService.isFlagEnabled(
         ApFlagId.SHOW_POWERED_BY_AP
@@ -44,20 +55,14 @@ export class DashboardContainerComponent {
     this.showSidnav$ = this.embeddedService
       .getState$()
       .pipe(map((state) => !state.hideSideNav));
-
-    this.showCommunity$ = this.flagService.isFlagEnabled(
-      ApFlagId.SHOW_COMMUNITY
-    );
     this.isInPlatformRoute$ = this.dashboardService.getIsInPlatformRoute();
-    this.currentProject$ = this.store.select(
-      ProjectSelectors.selectCurrentProject
-    );
   }
-  showWhatIsNew() {
-    window.open(
-      'https://community.activepieces.com/c/announcements',
-      '_blank',
-      'noopener'
-    );
+
+  navigateToAdminConsole() {
+    this.router.navigate(['/platform']);
+  }
+
+  navigateToProjectDashboard() {
+    this.router.navigate(['/']);
   }
 }

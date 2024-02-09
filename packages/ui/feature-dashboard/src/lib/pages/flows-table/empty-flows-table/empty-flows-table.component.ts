@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { Observable, switchMap, tap } from 'rxjs';
 import {
   Flow,
+  PopulatedFlow,
   FlowOperationType,
   TelemetryEventName,
 } from '@activepieces/shared';
@@ -10,6 +11,7 @@ import {
   FlagService,
   FlowService,
   TelemetryService,
+  AuthenticationService,
 } from '@activepieces/ui/common';
 import { demoTemplate } from './demo-flow-template';
 
@@ -21,13 +23,15 @@ import { demoTemplate } from './demo-flow-template';
 })
 export class EmptyFlowsTableComponent {
   creatingFlow = false;
-  createFlow$: Observable<Flow>;
+  createFlow$: Observable<PopulatedFlow>;
+  openToDemo$: Observable<Flow>;
   showPoweredByAp$: Observable<boolean>;
   constructor(
     private router: Router,
     private flowService: FlowService,
     private telemetryService: TelemetryService,
-    private flagService: FlagService
+    private flagService: FlagService,
+    private authenticationService: AuthenticationService
   ) {
     this.showPoweredByAp$ = this.flagService.getShowPoweredByAp();
   }
@@ -39,6 +43,7 @@ export class EmptyFlowsTableComponent {
       this.createFlow$ = this.flowService
         .create({
           displayName: $localize`Untitled`,
+          projectId: this.authenticationService.getProjectId(),
         })
         .pipe(
           tap((flow) => {
@@ -52,8 +57,9 @@ export class EmptyFlowsTableComponent {
   openToDemo() {
     if (!this.creatingFlow) {
       this.creatingFlow = true;
-      this.createFlow$ = this.flowService
+      this.openToDemo$ = this.flowService
         .create({
+          projectId: this.authenticationService.getProjectId(),
           displayName: demoTemplate.displayName,
         })
         .pipe(

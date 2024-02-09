@@ -3,9 +3,10 @@ import {
     apId,
     Cursor,
     ErrorCode,
-    Flow,
     FlowId,
+    getPieceMajorAndMinorVersion,
     PieceTrigger,
+    PopulatedFlow,
     ProjectId,
     SeekPage,
     Trigger,
@@ -22,14 +23,18 @@ import { webhookService } from '../../webhooks/webhook-service'
 import { flowService } from '../flow/flow.service'
 import { TriggerEventEntity } from './trigger-event.entity'
 import { stepFileService } from '../step-file/step-file.service'
-import { getServerUrl } from '../../helper/public-ip-utils'
 
 const triggerEventRepo = databaseConnection.getRepository(TriggerEventEntity)
 
 export const triggerEventService = {
     async saveEvent({ projectId, flowId, payload }: { projectId: ProjectId, flowId: FlowId, payload: unknown }): Promise<TriggerEvent> {
-        const flow = await flowService.getOneOrThrow({ projectId, id: flowId })
+        const flow = await flowService.getOnePopulatedOrThrow({
+            id: flowId,
+            projectId,
+        })
+
         const sourceName = getSourceName(flow.version.trigger)
+
         return triggerEventRepo.save({
             id: apId(),
             projectId,
@@ -39,7 +44,7 @@ export const triggerEventService = {
         })
     },
 
-    async test({ projectId, flow }: { projectId: ProjectId, flow: Flow }): Promise<SeekPage<unknown>> {
+    async test({ projectId, flow }: { projectId: ProjectId, flow: PopulatedFlow }): Promise<SeekPage<unknown>> {
         const trigger = flow.version.trigger
         const emptyPage = paginationHelper.createPage<TriggerEvent>([], null)
         switch (trigger.type) {
@@ -54,7 +59,6 @@ export const triggerEventService = {
                 const { result: testResult } = await engineHelper.executeTrigger({
                     hookType: TriggerHookType.TEST,
                     flowVersion: flow.version,
-                    serverUrl: await getServerUrl(),
                     webhookUrl: await webhookService.getWebhookUrl({
                         flowId: flow.id,
                         simulate: true,
@@ -81,6 +85,7 @@ export const triggerEventService = {
                         payload: output,
                     })
                 }
+
                 return triggerEventService.list({
                     projectId,
                     flow,
@@ -125,20 +130,23 @@ async function deleteOldFilesForTestData({ projectId, flowId, stepName }: { proj
 }
 function getSourceName(trigger: Trigger): string {
     switch (trigger.type) {
-        case TriggerType.WEBHOOK:
-            return TriggerType.WEBHOOK
         case TriggerType.PIECE: {
             const pieceTrigger = trigger as PieceTrigger
-            return pieceTrigger.settings.pieceName + '@' + pieceTrigger.settings.pieceVersion + ':' + pieceTrigger.settings.triggerName
+            const pieceName = pieceTrigger.settings.pieceName
+            const pieceVersion = getPieceMajorAndMinorVersion(pieceTrigger.settings.pieceVersion)
+            const triggerName = pieceTrigger.settings.triggerName
+            return `${pieceName}@${pieceVersion}:${triggerName}`
         }
+
+        case TriggerType.WEBHOOK:
         case TriggerType.EMPTY:
-            return TriggerType.EMPTY
+            return trigger.type
     }
 }
 
 type ListParams = {
     projectId: ProjectId
-    flow: Flow
+    flow: PopulatedFlow
     cursor: Cursor | null
     limit: number
 }

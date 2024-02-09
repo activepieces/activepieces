@@ -23,7 +23,8 @@ describe('Enterprise Local Authn API', () => {
     describe('Verify Email Endpoint', () => {
         it('Verifies user', async () => {
             const mockUser = createMockUser({
-                status: UserStatus.CREATED,
+                verified: false,
+                status: UserStatus.ACTIVE,
             })
             await databaseConnection.getRepository('user').save(mockUser)
 
@@ -51,15 +52,16 @@ describe('Enterprise Local Authn API', () => {
             expect(response?.body).toBe('')
 
             const user = await databaseConnection.getRepository('user').findOneBy({ id: mockUser.id })
-            expect(user?.status).toBe(UserStatus.VERIFIED)
-
+            expect(user?.status).toBe(UserStatus.ACTIVE)
+            expect(user?.verified).toBe(true)
             const otp = await databaseConnection.getRepository('otp').findOneBy({ id: mockOtp.id })
             expect(otp?.state).toBe(OtpState.CONFIRMED)
         })
 
         it('Fails if OTP is wrong', async () => {
             const mockUser = createMockUser({
-                status: UserStatus.CREATED,
+                verified: false,
+                status: UserStatus.ACTIVE,
             })
             await databaseConnection.getRepository('user').save(mockUser)
 
@@ -91,12 +93,15 @@ describe('Enterprise Local Authn API', () => {
             expect(responseBody?.code).toBe('INVALID_OTP')
 
             const user = await databaseConnection.getRepository('user').findOneBy({ id: mockUser.id })
-            expect(user?.status).toBe(UserStatus.CREATED)
+            expect(user?.status).toBe(UserStatus.ACTIVE)
+            expect(user?.verified).toBe(false)
+            
         })
 
         it('Fails if OTP has expired', async () => {
             const mockUser = createMockUser({
-                status: UserStatus.CREATED,
+                verified: false,
+                status: UserStatus.ACTIVE,
             })
             await databaseConnection.getRepository('user').save(mockUser)
 
@@ -126,12 +131,15 @@ describe('Enterprise Local Authn API', () => {
             expect(responseBody?.code).toBe('INVALID_OTP')
 
             const user = await databaseConnection.getRepository('user').findOneBy({ id: mockUser.id })
-            expect(user?.status).toBe(UserStatus.CREATED)
+            expect(user?.status).toBe(UserStatus.ACTIVE)
+            expect(user?.verified).toBe(false)
+            
         })
 
         it('Fails if OTP was confirmed before', async () => {
             const mockUser = createMockUser({
-                status: UserStatus.CREATED,
+                verified: false,
+                status: UserStatus.ACTIVE,
             })
             await databaseConnection.getRepository('user').save(mockUser)
 
@@ -160,7 +168,7 @@ describe('Enterprise Local Authn API', () => {
             expect(responseBody?.code).toBe('INVALID_OTP')
 
             const user = await databaseConnection.getRepository('user').findOneBy({ id: mockUser.id })
-            expect(user?.status).toBe(UserStatus.CREATED)
+            expect(user?.verified).toBe(false)
         })
     })
 

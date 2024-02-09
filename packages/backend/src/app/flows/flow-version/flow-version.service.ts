@@ -5,6 +5,7 @@ import {
     ActionType,
     apId,
     BranchActionSettingsWithValidation,
+    Cursor,
     flowHelper,
     FlowId,
     FlowOperationRequest,
@@ -18,11 +19,12 @@ import {
     PieceTriggerSettings,
     ProjectId,
     TriggerType,
+    SeekPage,
     UserId,
 } from '@activepieces/shared'
-import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity'
+import { EntityManager } from 'typeorm'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { databaseConnection } from '../../database/database-connection'
+import { repoFactory } from '../../core/db/repo-factory'
 import { FlowVersionEntity } from './flow-version-entity'
 import { flowVersionSideEffects } from './flow-version-side-effects'
 import { DEFAULT_SAMPLE_DATA_SETTINGS } from '@activepieces/shared'
@@ -31,105 +33,180 @@ import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import dayjs from 'dayjs'
 import { logger } from '../../helper/logger'
 import { stepFileService } from '../step-file/step-file.service'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
 
 const branchSettingsValidator = TypeCompiler.Compile(BranchActionSettingsWithValidation)
 const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettingsWithValidation)
-const flowVersionRepo = databaseConnection.getRepository<FlowVersion>(FlowVersionEntity)
+const flowVersionRepo = repoFactory(FlowVersionEntity)
 
 export const flowVersionService = {
-    async lockPieceVersions(projectId: ProjectId, mutatedFlowVersion: FlowVersion): Promise<FlowVersion> {
-        return flowHelper.transferFlowAsync(mutatedFlowVersion, async (step) => {
+    async lockPieceVersions({ projectId, flowVersion, entityManager }: LockPieceVersionsParams): Promise<FlowVersion> {
+        if (flowVersion.state === FlowVersionState.LOCKED) {
+            return flowVersion
+        }
+
+        return flowHelper.transferFlowAsync(flowVersion, async (step) => {
             const clonedStep = JSON.parse(JSON.stringify(step))
-            switch (step.type) {
-                case ActionType.PIECE:
-                case TriggerType.PIECE: {
-                    const newVersion = await pieceMetadataService.getOrThrow({
-                        projectId,
-                        name: step.settings.pieceName,
-                        version: step.settings.pieceVersion,
-                    })
-                    clonedStep.settings.pieceVersion = newVersion.version
-                    break
-                }
-                default:
-                    break
+            const stepTypeIsPiece = [ActionType.PIECE, TriggerType.PIECE].includes(step.type)
+
+            if (stepTypeIsPiece) {
+                const pieceMetadata = await pieceMetadataService.getOrThrow({
+                    projectId,
+                    name: step.settings.pieceName,
+                    version: step.settings.pieceVersion,
+                    entityManager,
+                })
+
+                clonedStep.settings.pieceVersion = pieceMetadata.version
             }
+
             return clonedStep
         })
     },
-    async applyOperation(userId: UserId, projectId: ProjectId, flowVersion: FlowVersion, userOperation: FlowOperationRequest): Promise<FlowVersion> {
+
+    async applyOperation({ flowVersion, projectId, userId, userOperation, entityManager }: ApplyOperationParams): Promise<FlowVersion> {
         let operations: FlowOperationRequest[] = []
-        let mutatedFlowVersion = flowVersion
+        let mutatedFlowVersion: FlowVersion = flowVersion
+
         switch (userOperation.type) {
-            case FlowOperationType.IMPORT_FLOW:
+            case FlowOperationType.USE_AS_DRAFT: {
+                const previousVersion = await flowVersionService.getFlowVersionOrThrow({
+                    flowId: flowVersion.flowId,
+                    versionId: userOperation.request.versionId,
+                    removeSecrets: false,
+                })
+
+                operations = handleImportFlowOperation(flowVersion, previousVersion)
+                break
+            }
+
+            case FlowOperationType.IMPORT_FLOW: {
                 operations = handleImportFlowOperation(flowVersion, userOperation.request)
                 break
-            case FlowOperationType.LOCK_FLOW:
-                mutatedFlowVersion = await this.lockPieceVersions(projectId, mutatedFlowVersion)
+            }
+
+            case FlowOperationType.LOCK_FLOW: {
+                mutatedFlowVersion = await this.lockPieceVersions({
+                    projectId,
+                    flowVersion: mutatedFlowVersion,
+                    entityManager,
+                })
+
                 operations = [userOperation]
                 break
-            default:
-                operations = [userOperation]
-                break
-            case FlowOperationType.DUPLICATE_ACTION:
-                mutatedFlowVersion = await this.getFlowVersion({
+            }
+
+            case FlowOperationType.DUPLICATE_ACTION: {
+                mutatedFlowVersion = await this.getFlowVersionOrThrow({
                     flowId: flowVersion.flowId,
-                    removeSecrets: false,
                     versionId: flowVersion.id,
                 })
+
                 operations = [userOperation]
                 break
+            }
+
+            default: {
+                operations = [userOperation]
+                break
+            }
         }
+
         for (const operation of operations) {
             mutatedFlowVersion = await applySingleOperation(projectId, mutatedFlowVersion, operation)
         }
+
         mutatedFlowVersion.updated = dayjs().toISOString()
         mutatedFlowVersion.updatedBy = userId
-        await flowVersionRepo.update(flowVersion.id, mutatedFlowVersion as QueryDeepPartialEntity<FlowVersion>)
-        return flowVersionRepo.findOneByOrFail({
-            id: flowVersion.id,
-        })
+
+        return flowVersionRepo(entityManager).save(mutatedFlowVersion)
     },
+
     async getOne(id: FlowVersionId): Promise<FlowVersion | null> {
         if (isNil(id)) {
             return null
         }
-        return flowVersionRepo.findOneBy({
+        return flowVersionRepo().findOneBy({
             id,
+        })
+    },
+
+    async getLatestLockedVersionOrThrow(flowId: FlowId): Promise<FlowVersion> {
+        return flowVersionRepo().findOneOrFail({
+            where: {
+                flowId,
+                state: FlowVersionState.LOCKED,
+            },
+            order: {
+                created: 'DESC',
+            },
         })
     },
     async getOneOrThrow(id: FlowVersionId): Promise<FlowVersion> {
         const flowVersion = await flowVersionService.getOne(id)
+
         if (isNil(flowVersion)) {
             throw new ActivepiecesError({
-                code: ErrorCode.FLOW_VERSION_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    id,
+                    entityId: id,
+                    entityType: 'FlowVersion',
                 },
             })
         }
 
         return flowVersion
     },
-    async getFlowVersion({ flowId, versionId, removeSecrets }: { flowId: FlowId, versionId: FlowVersionId | undefined, removeSecrets: boolean }): Promise<FlowVersion> {
-        let flowVersion = await flowVersionRepo.findOneOrFail({
+    async list({ cursorRequest, limit, flowId }: { cursorRequest: Cursor | null, limit: number, flowId: string }): Promise<SeekPage<FlowVersion>> {
+        const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
+        const paginator = buildPaginator({
+            entity: FlowVersionEntity,
+            query: {
+                limit,
+                order: 'DESC',
+                afterCursor: decodedCursor.nextCursor,
+                beforeCursor: decodedCursor.previousCursor,
+            },
+        })
+        const paginationResult = await paginator.paginate(flowVersionRepo().createQueryBuilder('flow_version').where({
+            flowId,
+        }))
+        return paginationHelper.createPage<FlowVersion>(paginationResult.data, paginationResult.cursor)
+    },
+    async getFlowVersionOrThrow({ flowId, versionId, removeSecrets = false }: GetFlowVersionOrThrowParams): Promise<FlowVersion> {
+        let flowVersion: FlowVersion | null = await flowVersionRepo().findOne({
             where: {
                 flowId,
                 id: versionId,
             },
+            //This is needed to return draft by default because it is always the latest one
             order: {
                 created: 'DESC',
             },
         })
+
+        if (isNil(flowVersion)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityId: versionId,
+                    entityType: 'FlowVersion',
+                    message: `flowId=${flowId}`,
+                },
+            })
+        }
+
         if (removeSecrets) {
             flowVersion = await removeSecretsFromFlow(flowVersion)
         }
+
         return flowVersion
     },
     async createEmptyVersion(flowId: FlowId, request: {
         displayName: string
     }): Promise<FlowVersion> {
-        const flowVersion: Partial<FlowVersion> = {
+        const flowVersion: NewFlowVersion = {
             id: apId(),
             displayName: request.displayName,
             flowId,
@@ -143,7 +220,7 @@ export const flowVersionService = {
             valid: false,
             state: FlowVersionState.DRAFT,
         }
-        return flowVersionRepo.save(flowVersion)
+        return flowVersionRepo().save(flowVersion)
     },
 }
 
@@ -319,7 +396,11 @@ async function validateAction({ projectId, settings }: { projectId: ProjectId, s
     if (isNil(action)) {
         return false
     }
-    return validateProps(action.props, settings.input)
+    const props = action.props
+    if (!isNil(piece.auth) && action.requireAuth) {
+        props.auth = piece.auth
+    }
+    return validateProps(props, settings.input)
 }
 
 async function validateTrigger({ settings, projectId }: { settings: PieceTriggerSettings, projectId: ProjectId }): Promise<boolean> {
@@ -345,7 +426,11 @@ async function validateTrigger({ settings, projectId }: { settings: PieceTrigger
     if (isNil(trigger)) {
         return false
     }
-    return validateProps(trigger.props, settings.input)
+    const props = trigger.props
+    if (!isNil(piece.auth)) {
+        props.auth = piece.auth
+    }
+    return validateProps(props, settings.input)
 }
 
 function validateProps(props: PiecePropertyMap, input: Record<string, unknown>): boolean {
@@ -393,7 +478,7 @@ function buildSchema(props: PiecePropertyMap): TSchema {
                 break
             case PropertyType.ARRAY:
                 // Only accepts connections variable.
-                propsSchema[name] = Type.Union([Type.Array(Type.String({})), Type.String()])
+                propsSchema[name] = Type.Union([Type.Array(Type.Unknown({})), Type.String()])
                 break
             case PropertyType.OBJECT:
                 propsSchema[name] = Type.Union([Type.Record(Type.String(), Type.Any()), Type.String()])
@@ -420,3 +505,24 @@ function buildSchema(props: PiecePropertyMap): TSchema {
     return Type.Object(propsSchema)
 }
 
+type GetFlowVersionOrThrowParams = {
+    flowId: FlowId
+    versionId: FlowVersionId | undefined
+    removeSecrets?: boolean
+}
+
+type NewFlowVersion = Omit<FlowVersion, 'created' | 'updated'>
+
+type ApplyOperationParams = {
+    userId: UserId
+    projectId: ProjectId
+    flowVersion: FlowVersion
+    userOperation: FlowOperationRequest
+    entityManager?: EntityManager
+}
+
+type LockPieceVersionsParams = {
+    projectId: ProjectId
+    flowVersion: FlowVersion
+    entityManager?: EntityManager
+}

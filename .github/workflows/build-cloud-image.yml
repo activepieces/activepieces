@@ -5,8 +5,6 @@ on:
 
 jobs:
   Release:
-    env:
-      MY_VERSION: beta6
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
@@ -33,4 +31,4 @@ jobs:
             linux/amd64
           push: true
           tags: |
-            ghcr.io/activepieces/activepieces-cloud:${{ env.RELEASE }}.${{ env.MY_VERSION }}
+            ghcr.io/activepieces/activepieces-cloud:${{ env.RELEASE }}.${{ github.sha }}

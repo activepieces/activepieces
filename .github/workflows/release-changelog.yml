@@ -17,16 +17,16 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Set RELEASE env var from package.json
-        run: echo RELEASE=$(node --print "require('./package.json').rcVersion") >> $GITHUB_ENV
+        run: echo RELEASE=$(node --print "require('./package.json').version") >> $GITHUB_ENV
 
       - name: Create release notes 
         uses: release-drafter/release-drafter@v5
         with:
           commitish: main
-          prerelease: true
+          prerelease: false
           tag: ${{ env.RELEASE }}
           name: ${{ env.RELEASE }}
           version: ${{ env.RELEASE }}
-          latest: false
+          latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

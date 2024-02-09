@@ -35,7 +35,7 @@ export class NewEditPieceSidebarComponent implements OnInit {
     //in case you switch piece while the edit piece panel is opened
     this.selectedStepAndFlowId$ = combineLatest({
       step: this.store.select(BuilderSelectors.selectCurrentStep),
-      version: this.store.select(BuilderSelectors.selectShownFlowVersion),
+      version: this.store.select(BuilderSelectors.selectViewedVersion),
     }).pipe(
       distinctUntilChanged((prev, current) => {
         return (

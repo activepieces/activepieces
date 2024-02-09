@@ -10,13 +10,16 @@
   </div>
 </form>
 
-<ng-template let-property let-propertyIndex="propertyIndex" #formFieldsTemplate let-formGroup="formGroup">
+<ng-template let-property let-propertyIndex="propertyIndex" #formFieldsTemplate let-formGroup="formGroup"
+  let-prefix="prefix">
 
   <ng-container [ngSwitch]="property.value.type" [formGroup]="formGroup">
 
     <ng-container *ngSwitchCase="PropertyType.MARKDOWN">
       <ng-container *ngIf="convertMarkdown(property.value.description) | async as markdown">
-        <ap-markdown [fullWidth]="true" [data]="markdown"> </ap-markdown>
+        <div class="ap-mb-8">
+          <ap-markdown [fullWidth]="true" [data]="markdown"> </ap-markdown>
+        </div>
       </ng-container>
     </ng-container>
 
@@ -207,7 +210,7 @@
             <ng-container
               *ngIf="!!(dropdownOptionsObservables$[property.key] | async) &&  (dropdownOptionsObservables$[property.key] | async)?.disabled === true">
               <mat-select [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
-                <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
+                <ng-container *ngIf="dropdownOptionsObservables$[property.key] | async as state">
                   <mat-option [disabled]="true"
                     *ngIf="state.disabled && ((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key])">
                     <div> {{state.placeholder}} </div>
@@ -363,7 +366,7 @@
 
 
     <ng-container *ngSwitchCase="PropertyType.ARRAY">
-      <span class="ap-flex ap-justify-end ap-mr-1 ap-text-primary">
+      <span class="ap-flex ap-justify-end -ap-mb-[1.75rem] ap-z-50 ap-relative ap-text-primary">
         <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
         </ng-container>
       </span>
@@ -373,11 +376,8 @@
 
       <ng-template #arrayInputTemplate>
         <div [class.ap-mb-5]="form.disabled" #hoverContainer="hoverTrackerDirective" apTrackHover>
-          <div class="ap-mb-2 ap-flex ap-gap-2 ap-items-center">
-            <div class="ap-cursor-pointer" (click)="array.focusFirstInput()">{{property.value.displayName}}
-            </div>
-          </div>
-          <app-array-form-control #array [formControlName]="property.key"></app-array-form-control>
+          <app-array-form-control #array [formControlName]="property.key" [property]="property.value"
+            [formFieldsTemplate]="formFieldsTemplate" [prefix]="property.key"></app-array-form-control>
         </div>
         <ng-container *ngTemplateOutlet="description; context:{$implicit:property}">
         </ng-container>
@@ -549,8 +549,8 @@
 
     <ng-container *ngSwitchCase="PropertyType.DYNAMIC">
       <ng-container *ngIf="(refreshableConfigsLoadingFlags$[property.key] | async) === false ||
-        (refreshableConfigsLoadingFlags$[property.key] | async) === undefined ||
-        (refreshableConfigsLoadingFlags$[property.key] | async) === null; else loading">
+      (refreshableConfigsLoadingFlags$[property.key] | async) === undefined ||
+      (refreshableConfigsLoadingFlags$[property.key] | async) === null; else loading">
         <div class="ap-flex ap-flex-col ap-gap-2">
           <div *ngFor="let cp of (dynamicPropsObservables$[property.key] | async)| objectToArray; let i = index">
             <ng-container
@@ -636,7 +636,7 @@
 
 <ng-template #searchInputForDropdowns>
   <mat-form-field subscriptSizing="dynamic" subscriptSizing="dynamic" appearance="fill"
-    (click)="$event.stopPropagation();" #searchField="elementDirective" class="ap-w-full ap-mb-2" apElementDirective>
+    (click)="$event.stopPropagation();" class="ap-w-full ">
     <mat-icon matPrefix color="placeholder-icon" svgIcon="search"></mat-icon>
     <input #searchInput [formControl]="searchControl" matInput placeholder="Search" autocomplete="off"
       (keydown.Space)="$event.stopPropagation()">

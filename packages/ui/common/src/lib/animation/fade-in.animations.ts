@@ -32,3 +32,4 @@ export function fadeInAnimation(duration: number, fadeOut = true) {
   return trigger(`fadeIn`, transitions);
 }
 export const fadeIn400ms = fadeInAnimation(400);
+export const fadeIn400msWithoutOut = fadeInAnimation(400, false);

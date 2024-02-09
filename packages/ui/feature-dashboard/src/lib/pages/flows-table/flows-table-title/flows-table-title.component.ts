@@ -1,10 +1,19 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Observable, switchMap, take, tap } from 'rxjs';
-import { Flow, FolderDto } from '@activepieces/shared';
-import { FoldersSelectors } from '../../../store/folders/folders.selector';
+import { PopulatedFlow, FolderDto, Project } from '@activepieces/shared';
+import { FoldersSelectors } from '@activepieces/ui/feature-folders-store';
 import { Store } from '@ngrx/store';
-import { FlowService } from '@activepieces/ui/common';
+import {
+  CURRENT_FLOW_IS_NEW_KEY_IN_LOCAL_STORAGE,
+  FlowService,
+  AuthenticationService,
+  flowActionsUiInfo,
+  ImportFlowDialogComponent,
+  ImporFlowDialogData,
+  ProjectSelectors,
+} from '@activepieces/ui/common';
 import { Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-flows-table-title',
@@ -14,13 +23,20 @@ import { Router } from '@angular/router';
 export class FlowsTableTitleComponent {
   creatingFlow = false;
   currentFolder$: Observable<FolderDto | undefined>;
-  createFlow$: Observable<Flow>;
+  createFlow$?: Observable<PopulatedFlow>;
   showAllFlows$: Observable<boolean>;
+  currentProject$: Observable<Project>;
+  readonly flowActionsUiInfo = flowActionsUiInfo;
   constructor(
     private store: Store,
     private flowService: FlowService,
-    private router: Router
+    private router: Router,
+    private authenticationService: AuthenticationService,
+    private matDialog: MatDialog
   ) {
+    this.currentProject$ = this.store.select(
+      ProjectSelectors.selectCurrentProject
+    );
     this.showAllFlows$ = this.store.select(
       FoldersSelectors.selectDisplayAllFlows
     );
@@ -35,17 +51,25 @@ export class FlowsTableTitleComponent {
         switchMap((res) => {
           return this.flowService
             .create({
+              projectId: this.authenticationService.getProjectId(),
               displayName: $localize`Untitled`,
               folderId: res?.id,
             })
             .pipe(
               tap((flow) => {
-                localStorage.setItem('newFlow', 'true');
+                localStorage.setItem(
+                  CURRENT_FLOW_IS_NEW_KEY_IN_LOCAL_STORAGE,
+                  'true'
+                );
                 this.router.navigate(['/flows/', flow.id]);
               })
             );
         })
       );
     }
+  }
+  importFlow(projectId: string) {
+    const data: ImporFlowDialogData = { projectId: projectId };
+    this.matDialog.open(ImportFlowDialogComponent, { data });
   }
 }

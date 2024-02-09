@@ -22,10 +22,10 @@
 </div>
 <ng-container *ngIf="loggedInUser$ | async"></ng-container>
 <ng-container *ngIf="routeLoader$ | async"></ng-container>
-<ng-container *ngIf="openCommandBar$ | async"></ng-container>
 <ng-container *ngIf="importTemplate$ | async"></ng-container>
 <ng-container *ngIf="theme$ | async"> </ng-container>
 <ng-container *ngIf="setTitle$ | async"></ng-container>
 <ng-container *ngIf="embeddedRouteListener$ | async"></ng-container>
 <ng-container *ngIf="redirect$ | async"> </ng-container>
+<ng-container *ngIf="toggleLoading$ | async"></ng-container>
 <ap-iframe-listener></ap-iframe-listener>

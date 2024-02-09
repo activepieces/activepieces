@@ -1,50 +1,50 @@
-import { ActivepiecesError, AuthenticationResponse, ErrorCode, UserStatus, isNil } from '@activepieces/shared'
+import { ActivepiecesError, AuthenticationResponse, ErrorCode, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { AuthnProvider } from './authn-provider'
 import { authenticationService } from '../../../../authentication/authentication-service'
-import { system } from '../../../../helper/system/system'
-import { SystemProp } from '../../../../helper/system/system-prop'
 import { flagService } from '../../../../flags/flag.service'
+import { Platform } from '@activepieces/ee-shared'
 
-function getClientId(): string {
-    return system.getOrThrow(SystemProp.FEDERATED_AUTHN_GITHUB_CLIENT_ID)
-}
-  
-function getClientSecret(): string {
-    return system.getOrThrow(SystemProp.FEDERATED_AUTHN_GITHUB_CLIENT_SECRET)
-}
 
+
+function getClientIdAndSecret(platform: Platform): { clientId: string, clientSecret: string } {
+    const clientInformation = platform.federatedAuthProviders.github
+    assertNotNullOrUndefined(clientInformation, 'Github information is not configured for this platform')
+    return {
+        clientId: clientInformation.clientId,
+        clientSecret: clientInformation.clientSecret,
+    }
+}
 
 export const gitHubAuthnProvider: AuthnProvider = {
-    async getLoginUrl(): Promise<string> {
+    async getLoginUrl(hostname: string, platform: Platform): Promise<string> {
+        const { clientId } = getClientIdAndSecret(platform)
         const loginUrl = new URL('https://github.com/login/oauth/authorize')
-        loginUrl.searchParams.set('client_id', getClientId())
-        loginUrl.searchParams.set('redirect_uri', flagService.getThirdPartyRedirectUrl())
+        loginUrl.searchParams.set('client_id', clientId)
+        loginUrl.searchParams.set('redirect_uri', flagService.getThirdPartyRedirectUrl(platform.id, hostname))
         loginUrl.searchParams.set('scope', 'user:email')
-        
+
         return loginUrl.href
     },
 
-    async authenticate(authorizationCode): Promise<AuthenticationResponse> {
-        const githubAccessToken = await getGitHubAccessToken(authorizationCode)
+    async authenticate(hostname, platform, authorizationCode): Promise<AuthenticationResponse> {
+        const { clientId, clientSecret } = getClientIdAndSecret(platform)
+        const githubAccessToken = await getGitHubAccessToken(platform, hostname, clientId, clientSecret, authorizationCode)
         const gitHubUserInfo = await getGitHubUserInfo(githubAccessToken)
-        return authenticateUser(gitHubUserInfo)
-    },
-    isConfiguredByUser(): boolean {
-        return !!system.get(SystemProp.FEDERATED_AUTHN_GITHUB_CLIENT_SECRET) && !!system.get(SystemProp.FEDERATED_AUTHN_GITHUB_CLIENT_ID)
+        return authenticateUser(platform.id, gitHubUserInfo)
     },
 }
 
-const getGitHubAccessToken = async (authorizationCode: string): Promise<string> => {
+const getGitHubAccessToken = async (platform: Platform, hostname: string, clientId: string, clientSecret: string, authorizationCode: string): Promise<string> => {
     const response = await fetch('https://github.com/login/oauth/access_token', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
-            client_id: getClientId(),
-            client_secret: getClientSecret(),
+            client_id: clientId,
+            client_secret: clientSecret,
             code: authorizationCode,
-            redirect_uri: flagService.getThirdPartyRedirectUrl(),
+            redirect_uri: flagService.getThirdPartyRedirectUrl(platform.id, hostname),
         }),
     })
 
@@ -113,13 +113,13 @@ const getGitHubUserEmail = async (gitHubAccessToken: string): Promise<string> =>
     }
     return email
 }
-const authenticateUser = async (gitHubUserInfo: GitHubUserInfo): Promise<AuthenticationResponse> => {
+const authenticateUser = async (platformId: string | null, gitHubUserInfo: GitHubUserInfo): Promise<AuthenticationResponse> => {
     return authenticationService.federatedAuthn({
         email: gitHubUserInfo.email,
-        userStatus: UserStatus.VERIFIED,
+        verified: true,
         firstName: gitHubUserInfo.name,
         lastName: '',
-        platformId: null,
+        platformId,
     })
 }
 

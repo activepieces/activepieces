@@ -13,19 +13,28 @@ export enum CanvasActionType {
   SELECT_STEP_BY_NAME = '[CANVAS] SELECT_STEP_BY_NAME',
   SET_DISPLAYED_FLOW_VERSION = '[CANVAS] SET_DISPLAYED_FLOW_VERSION',
   SET_INITIAL = '[CANVAS] SET_INITIAL',
-  OPEN_GENERATE_FLOW_COMPONENT = '[CANVAS] OPEN_GENERATE_FLOW_COMPONENT',
-  GENERATE_FLOW_SUCCESSFUL = '[CANVAS] GENERATE_FLOW_SUCCESSFUL',
-  GENERATE_FLOW = '[CANVAS] GENERATE_FLOW',
-  CLOSE_GENERATE_FLOW_COMPONENT = '[CANVAS] CLOSE_GENERATE_FLOW_COMPONENT',
   SET_RUN = '[CANVAS] SET_RUN',
   EXIT_RUN = '[CANVAS] EXIT_RUN',
   SET_ADD_BUTTON_ID = '[CANVAS] SET_ADD_BUTTON_ID',
   CLEAR_ADD_BUTTON_ID = '[CANVAS] CLEAR_ADD_BUTTON_ID',
+  VIEW_VERSION = '[CANVAS] VIEW_VERSION',
+  UPDATE_VIEWED_VERSION_ID = `[CANVAS] UPDATE_VIEWED_VERSION_ID`,
+  VIEW_RUN = '[CANVAS] VIEW_RUN',
 }
 
 const setInitial = createAction(
   CanvasActionType.SET_INITIAL,
   props<{ displayedFlowVersion: FlowVersion; run?: FlowRun }>()
+);
+/**Used for when you edit a published flow and a draft is created */
+const updateViewedVersionId = createAction(
+  CanvasActionType.UPDATE_VIEWED_VERSION_ID,
+  props<{ versionId: string }>()
+);
+
+const viewVersion = createAction(
+  CanvasActionType.VIEW_VERSION,
+  props<{ viewedFlowVersion: FlowVersion }>()
 );
 const setLeftSidebar = createAction(
   CanvasActionType.SET_LEFT_SIDEBAR,
@@ -56,8 +65,14 @@ const selectStepByName = createAction(
   props<{ stepName: string }>()
 );
 const deselectStep = createAction(CanvasActionType.DESELECT_STEP);
-const exitRun = createAction(CanvasActionType.EXIT_RUN);
-
+const exitRun = createAction(
+  CanvasActionType.EXIT_RUN,
+  props<{ flowVersion: FlowVersion }>()
+);
+const viewRun = createAction(
+  CanvasActionType.VIEW_RUN,
+  props<{ run: FlowRun; version: FlowVersion }>()
+);
 const setRun = createAction(
   CanvasActionType.SET_RUN,
   props<{ run: FlowRun }>()
@@ -73,4 +88,8 @@ export const canvasActions = {
   exitRun,
   setAddButtonId,
   clearAddButtonId,
+  viewVersion,
+  /**Used for when you edit a published flow and a draft is created */
+  updateViewedVersionId,
+  viewRun,
 };

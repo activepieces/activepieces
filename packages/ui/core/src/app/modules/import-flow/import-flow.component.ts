@@ -1,5 +1,5 @@
 import {
-  Flow,
+  PopulatedFlow,
   FlowOperationType,
   FlowTemplate,
   TelemetryEventName,
@@ -9,6 +9,7 @@ import {
   FlowService,
   RedirectService,
   TelemetryService,
+  AuthenticationService,
   TemplatesService,
 } from '@activepieces/ui/common';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -45,6 +46,7 @@ export class ImportFlowComponent implements OnInit {
     private router: Router,
     private metaService: Meta,
     private telemetryService: TelemetryService,
+    private authenticationService: AuthenticationService,
     private flagService: FlagService,
     private redirectService: RedirectService
   ) {
@@ -59,9 +61,6 @@ export class ImportFlowComponent implements OnInit {
         const templateId = encodeURIComponent(params['templateId']);
         return this.templatesService.getTemplate(templateId).pipe(
           catchError((err: HttpErrorResponse) => {
-            if (err.status === StatusCodes.NOT_FOUND) {
-              return this.templatesService.getTemplateDeprecated(templateId);
-            }
             throw err;
           })
         );
@@ -91,6 +90,7 @@ export class ImportFlowComponent implements OnInit {
             switchMap(() => {
               return this.flowService
                 .create({
+                  projectId: this.authenticationService.getProjectId(),
                   displayName: templateJson.template.displayName,
                 })
                 .pipe(
@@ -111,7 +111,7 @@ export class ImportFlowComponent implements OnInit {
                         request: templateJson.template,
                       })
                       .pipe(
-                        tap((updatedFlow: Flow) => {
+                        tap((updatedFlow: PopulatedFlow) => {
                           this.router.navigate(['flows', updatedFlow.id]);
                         })
                       );

@@ -4,6 +4,7 @@ import {
   BehaviorSubject,
   Observable,
   debounceTime,
+  map,
   shareReplay,
   startWith,
   switchMap,
@@ -17,12 +18,10 @@ import {
 
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TelemetryService, TemplatesService } from '@activepieces/ui/common';
-import { MatTabGroup } from '@angular/material/tabs';
 
 export interface TemplateDialogData {
   insideBuilder: boolean;
   folderId$?: Observable<FolderId | undefined>;
-  isThereNewFeaturedTemplates$: Observable<boolean>;
 }
 type tabsNames = 'all ideas' | 'featured';
 
@@ -49,18 +48,7 @@ export class TemplatesDialogComponent {
   loading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
   templates$: Observable<FlowTemplate[]>;
   searchFormControl = new FormControl<string>('');
-  featuredListOverflowing = false;
-  featuredTemplates$: Observable<FlowTemplate[]>;
-  showAllFeaturedTemplates = false;
-  filters = [
-    'ChatGPT',
-    'Content Creation',
-    'Social Media',
-    'Customer Service',
-    'Marketing Automation',
-    'Analysis',
-  ];
-  isThereNewFeaturedTemplates$: Observable<boolean>;
+  filters$: Observable<string[]>;
   constructor(
     private templatesService: TemplatesService,
     private dialogRef: MatDialogRef<TemplatesDialogComponent>,
@@ -85,18 +73,22 @@ export class TemplatesDialogComponent {
           name: TelemetryEventName.TEMPLATE_SEARCH,
           payload: this.dialogForm.getRawValue(),
         });
-        return this.templatesService.getTemplates(
-          this.dialogForm.getRawValue()
-        );
+        return this.templatesService.list(this.dialogForm.getRawValue());
       }),
       tap(() => {
         this.loading$.next(false);
       }),
       shareReplay(1)
     );
-
-    this.featuredTemplates$ = this.templatesService
-      .getTemplates({ featuredOnly: true })
+    this.filters$ = this.templates$
+      .pipe(
+        map((templates) => {
+          const tags = templates.flatMap((template) => template.tags);
+          const uniqueTags = Array.from(new Set(tags));
+          const sortedTags = uniqueTags.sort();
+          return sortedTags.filter((tag) => tag !== '');
+        })
+      )
       .pipe(shareReplay(1));
   }
   useTemplate(template: FlowTemplate, tab: tabsNames) {
@@ -107,18 +99,6 @@ export class TemplatesDialogComponent {
     this.dialogRef.close(result);
   }
 
-  showFeaturedTab(
-    tabGroup: MatTabGroup,
-    buttonPressed: 'banner button' | 'tab button'
-  ) {
-    this.telemetryService.capture({
-      name: TelemetryEventName.FEATURED_TAB_VIEWED,
-      payload: {
-        buttonPressed,
-      },
-    });
-    tabGroup.selectedIndex = 0;
-  }
   closeDialog() {
     this.dialogRef.close();
   }

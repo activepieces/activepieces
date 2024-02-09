@@ -20,9 +20,14 @@ import {
   OAuth2Property,
   OAuth2Props,
   PropertyType,
+  StaticMultiSelectDropdownProperty,
 } from '@activepieces/pieces-framework';
 import deepEqual from 'deep-equal';
-import { environment, fadeInUp400ms } from '@activepieces/ui/common';
+import {
+  AuthenticationService,
+  environment,
+  fadeInUp400ms,
+} from '@activepieces/ui/common';
 import {
   OAuth2PopupParams,
   OAuth2PopupResponse,
@@ -46,7 +51,7 @@ interface OAuth2PropertySettings {
 }
 export const USE_CLOUD_CREDENTIALS = 'USE_CLOUD_CREDENTIALS';
 export interface OAuth2ConnectionDialogData {
-  pieceAuthProperty: OAuth2Property<boolean, OAuth2Props>;
+  pieceAuthProperty: OAuth2Property<OAuth2Props>;
   pieceName: string;
   connectionToUpdate?: AppConnectionWithoutSensitiveData;
   redirectUrl: string;
@@ -83,6 +88,7 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
     public dialogRef: MatDialogRef<OAuth2ConnectionDialogComponent>,
     private cloudAuthConfigsService: CloudAuthConfigsService,
     private appConnectionsService: AppConnectionsService,
+    private authenticatiionService: AuthenticationService,
     private snackbar: MatSnackBar,
     @Inject(MAT_DIALOG_DATA)
     public dialogData: OAuth2ConnectionDialogData
@@ -165,8 +171,9 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
       : this.settingsForm.controls.name.value;
     const { tokenUrl } = this.getTokenAndUrl();
     const newConnection: UpsertOAuth2Request = {
+      projectId: this.authenticatiionService.getProjectId(),
       name: connectionName,
-      appName: this.dialogData.pieceName,
+      pieceName: this.dialogData.pieceName,
       type: AppConnectionType.OAUTH2,
       value: {
         code: this.settingsForm.controls.value.value.code,
@@ -284,5 +291,9 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
       authUrl: authUrl,
       tokenUrl: tokenUrl,
     };
+  }
+
+  castToStaticDropdown(t: unknown) {
+    return t as StaticMultiSelectDropdownProperty<unknown, true>;
   }
 }

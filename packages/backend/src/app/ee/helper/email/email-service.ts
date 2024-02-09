@@ -1,5 +1,5 @@
 import { getEdition } from '../../../helper/secret-helper'
-import { ApEdition, User, UserStatus, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { ApEdition, User, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import fs from 'node:fs/promises'
 import Mustache from 'mustache'
 import nodemailer from 'nodemailer'
@@ -25,8 +25,7 @@ export const emailService = {
             return
         }
 
-        const project = await projectService.getOne(projectId)
-        assertNotNullOrUndefined(project, 'project')
+        const project = await projectService.getOneOrThrow(projectId)
         const memberToken: ProjectMemberToken = {
             id: invitationId,
         }
@@ -82,7 +81,7 @@ export const emailService = {
         if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
             return
         }
-        if (user.status === UserStatus.VERIFIED && type === OtpType.EMAIL_VERIFICATION) {
+        if (user.verified && type === OtpType.EMAIL_VERIFICATION) {
             return
         }
         logger.info('Sending OTP email', { email: user.email, otp, userId: user.id, firstName: user.email, type })
@@ -143,8 +142,10 @@ async function sendEmail({ platformId, email, template }: { template: EmailTempl
         'reset-password': 'Reset your password',
     }
 
+    const senderName = platform?.name ?? system.get(SystemProp.SMTP_SENDER_NAME)
+    const senderEmail = platform?.smtpSenderEmail ?? system.get(SystemProp.SMTP_SENDER_EMAIL)
     await transporter.sendMail({
-        from: `${platform?.name ?? 'Activepieces'} <${platform?.smtpSenderEmail ?? 'notifications@activepieces.com'}>`,
+        from: `${senderName} <${senderEmail}>`,
         to: email,
         subject: templateToSubject[template.templateName],
         html: await renderTemplate({ platform, request: template }),

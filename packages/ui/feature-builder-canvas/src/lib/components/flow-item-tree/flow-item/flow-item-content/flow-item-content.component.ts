@@ -37,7 +37,7 @@ import {
   CORE_PIECES_ACTIONS_NAMES,
   CORE_PIECES_TRIGGERS,
   corePieceIconUrl,
-} from 'ui-feature-pieces';
+} from '@activepieces/ui/feature-pieces';
 import {
   FlowItemDetails,
   fadeIn400ms,

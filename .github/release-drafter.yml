@@ -1,6 +1,8 @@
-include-pre-releases: true
+include-pre-releases: false
 exclude-labels:
   - 'skip-changelog'
+  - 'release'
+  - 'pre-release'
 categories:
   - title: "✨ Exciting New Features"
     labels:
@@ -20,13 +22,16 @@ categories:
   - title: "📚 Documentation"
     labels:
       - "📚 documentation"
-  - title: "🧹 Maintenance"
+  - title: "🧹 Maintenance & Dev Experience"
     labels:
       - "🧹 clean up"
-      - "💻 tech debt"
+      - "💻 dx"
   - title: "Other Changes"
     labels:
       - "*"
+  - title: "🖥️ API Changes"
+    labels:
+      - "🖥️ api"
 
 template: |
 

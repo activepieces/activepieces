@@ -1,1 +1,1 @@
-export * from './flows.action';
+export * from './flow.action';

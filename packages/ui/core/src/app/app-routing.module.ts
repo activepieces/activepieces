@@ -4,14 +4,11 @@ import { UserLoggedIn, showBasedOnEditionGuard } from '@activepieces/ui/common';
 import { ImportFlowUriEncodedResolver } from './modules/import-flow-uri-encoded/import-flow-uri-encoded.resolver';
 import { ImportFlowUriEncodedComponent } from './modules/import-flow-uri-encoded/import-flow-uri-encoded.component';
 import { ImportFlowComponent } from './modules/import-flow/import-flow.component';
-import {
-  ChatComponent,
-  chatbotMetadataResolver,
-} from '@activepieces/ui/feature-chatbot';
 import { RedirectUrlComponent } from './modules/redirect-url/redirect-url.component';
 import { NotFoundComponent } from './modules/not-found/not-found.component';
 import { EmbedRedirectComponent } from '@activepieces/ee-components';
 import { ApEdition } from '@activepieces/shared';
+import { InterfacesComponent } from './modules/interfaces/interfaces.component';
 
 export const routes: Routes = [
   {
@@ -29,18 +26,6 @@ export const routes: Routes = [
       title: $localize`Import Flow`,
     },
     canActivate: [showBasedOnEditionGuard([ApEdition.CLOUD])],
-  },
-  {
-    path: 'chatbots/:id',
-    canActivate: [],
-    data: {
-      title: $localize`Chatbot`,
-    },
-    pathMatch: 'full',
-    component: ChatComponent,
-    resolve: {
-      chatbot: chatbotMetadataResolver,
-    },
   },
   {
     path: 'redirect',
@@ -78,6 +63,11 @@ export const routes: Routes = [
     canActivate: [
       showBasedOnEditionGuard([ApEdition.ENTERPRISE, ApEdition.CLOUD]),
     ],
+  },
+
+  {
+    path: 'interfaces/:flowId',
+    component: InterfacesComponent,
   },
   {
     path: '**',

@@ -19,12 +19,22 @@ import { CustomDomainTableComponent } from './components/custom-domain-table/cus
 import { CreateCustomDomainDialogComponent } from './components/dialogs/create-custom-domain-dialog/create-custom-domain-dialog.component';
 import { ApiKeysTableComponent } from './components/api-keys-table/api-keys-table.component';
 import { CreateApiKeyDialogComponent } from './components/dialogs/create-api-key-dialog/create-api-key-dialog.component';
-
+import { TemplatesTableComponent } from './pages/templates-table/templates-table.component';
+import { CreateOrUpdateTemplateDialogueComponent } from './components/dialogs/create-or-update-template-dialogue/create-or-update-template-dialogue.component';
+import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
+import { UsersTableComponent } from './pages/users-table/users-table.component';
+import { SsoSettingsComponent } from './components/sso-settings/sso-settings.component';
+import { AddAllowedEmailDomainDialogComponent } from './components/dialogs/add-allowed-email-domain-dialog/add-allowed-email-domain-dialog.component';
+import { AllowedEmailDomainsListComponent } from './components/cards/allowed-email-domains-list/allowed-email-domains-list.component';
+import { ConfigureConfederatedAuthnCardComponent } from './components/cards/configure-confederated-authn-card/configure-confederated-authn-card.component';
+import { EnableFederatedAuthnProviderDialogComponent } from './components/dialogs/enable-federated-authn-provider-dialog/enable-federated-authn-provider-dialog.component';
+import { ConfigureAllowingEmailLoginsCardComponent } from './components/cards/configure-allowing-email-logins-card/configure-allowing-email-logins-card.component';
 @NgModule({
   imports: [
     UiCommonModule,
     CommonModule,
     RouterModule.forChild(uiEePlatformRoutes),
+    UiFeaturePiecesModule,
   ],
   declarations: [
     PlatformDashboardContainerComponent,
@@ -39,10 +49,19 @@ import { CreateApiKeyDialogComponent } from './components/dialogs/create-api-key
     CreateSigningKeyDialogComponent,
     CreateCustomDomainDialogComponent,
     PiecesTableComponent,
+    CreateOrUpdateTemplateDialogueComponent,
     EditAddPieceOAuth2CredentialsDialogComponent,
     SmtpSettingsComponent,
     TermsAndServicesSettingsComponent,
+    TemplatesTableComponent,
     CustomDomainTableComponent,
+    UsersTableComponent,
+    SsoSettingsComponent,
+    AddAllowedEmailDomainDialogComponent,
+    AllowedEmailDomainsListComponent,
+    ConfigureConfederatedAuthnCardComponent,
+    EnableFederatedAuthnProviderDialogComponent,
+    ConfigureAllowingEmailLoginsCardComponent,
   ],
 })
 export class UiEePlatformModule {}

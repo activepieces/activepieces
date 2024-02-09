@@ -1,4 +1,4 @@
 export interface ConnectionDropdownItem {
-  label: { appName: string | null; name: string };
+  label: { pieceName: string | null; name: string };
   value: string;
 }

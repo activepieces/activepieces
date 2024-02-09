@@ -1,11 +1,9 @@
 import { createAction, props } from '@ngrx/store';
 import {
   AppConnectionWithoutSensitiveData,
-  Flow,
-  FlowInstance,
   FlowRun,
   FlowVersion,
-  Folder,
+  PopulatedFlow,
 } from '@activepieces/shared';
 import { ViewModeEnum } from '../../model/enums/view-mode.enum';
 
@@ -16,12 +14,10 @@ export enum BuilderActionType {
 export const loadInitial = createAction(
   BuilderActionType.LOAD_INITIAL,
   props<{
-    flow: Flow;
-    instance?: FlowInstance;
+    flow: PopulatedFlow;
     viewMode: ViewModeEnum;
     run?: FlowRun;
     appConnections: AppConnectionWithoutSensitiveData[];
-    folder?: Folder;
     publishedVersion?: FlowVersion;
   }>()
 );

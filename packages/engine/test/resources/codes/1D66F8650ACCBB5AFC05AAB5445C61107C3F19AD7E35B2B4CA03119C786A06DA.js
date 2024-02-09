@@ -1,1 +1,0 @@
-(()=>{var e={code:async e=>{const o=new Array(100);o.fill(0);const r=[];return o.forEach(((e,o)=>{r.push(`hello ${o+1}`)})),r}};module.exports=e})();

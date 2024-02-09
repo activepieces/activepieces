@@ -15,7 +15,7 @@ import {
 } from '@activepieces/ui/common';
 import { catchError, map, Observable, of, tap } from 'rxjs';
 import { StatusCodes } from 'http-status-codes';
-import { ApEdition } from '@activepieces/shared';
+import { ApEdition, ApFlagId, ErrorCode } from '@activepieces/shared';
 import { OtpType } from '@activepieces/ee-shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
 interface SignInForm {
@@ -36,7 +36,13 @@ export class SignInComponent {
   isCommunityEdition$: Observable<boolean>;
   showResendVerification = false;
   sendingVerificationEmail = false;
+  showDisabledUser = false;
+  domainIsNotAllowed = false;
+  invitationOnlySignIn = false;
+  loginsWithEmailEnabled$: Observable<boolean>;
+  showSignUpLink$: Observable<boolean>;
   sendVerificationEmail$?: Observable<void>;
+
   constructor(
     private formBuilder: FormBuilder,
     private authenticationService: AuthenticationService,
@@ -44,6 +50,13 @@ export class SignInComponent {
     private redirectService: RedirectService,
     private snackbar: MatSnackBar
   ) {
+    this.loginsWithEmailEnabled$ = this.flagsService.isFlagEnabled(
+      ApFlagId.EMAIL_AUTH_ENABLED
+    );
+
+    this.showSignUpLink$ = this.flagsService.isFlagEnabled(
+      ApFlagId.SHOW_SIGN_UP_LINK
+    );
     this.isCommunityEdition$ = this.flagsService
       .getEdition()
       .pipe(map((ed) => ed === ApEdition.COMMUNITY));
@@ -64,13 +77,25 @@ export class SignInComponent {
       this.loading = true;
       this.showInvalidEmailOrPasswordMessage = false;
       this.showResendVerification = false;
+      this.invitationOnlySignIn = false;
+      this.showDisabledUser = false;
+      this.domainIsNotAllowed = false;
       const request = this.loginForm.getRawValue();
       this.authenticate$ = this.authenticationService.signIn(request).pipe(
         catchError((error: HttpErrorResponse) => {
           this.showInvalidEmailOrPasswordMessage =
             error.status === StatusCodes.UNAUTHORIZED ||
             error.status === StatusCodes.BAD_REQUEST;
-          this.showResendVerification = error.status === StatusCodes.FORBIDDEN;
+          if (error.status === StatusCodes.FORBIDDEN) {
+            this.showResendVerification =
+              error.error.code === ErrorCode.EMAIL_IS_NOT_VERIFIED;
+            this.showDisabledUser =
+              error.error.code === ErrorCode.USER_IS_INACTIVE;
+            this.domainIsNotAllowed =
+              error.error.code === ErrorCode.DOMAIN_NOT_ALLOWED;
+            this.invitationOnlySignIn =
+              error.error.code === ErrorCode.INVITATION_ONLY_SIGN_UP;
+          }
 
           this.loading = false;
           return of(null);

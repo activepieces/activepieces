@@ -3,52 +3,47 @@ import {
     ExecutionType,
     Flow,
     FlowId,
-    FlowInstanceStatus,
+    FlowStatus,
     FlowRun,
     FlowVersion,
     ProjectId,
     RunEnvironment,
 } from '@activepieces/shared'
-import { flowRunService } from '../flows/flow-run/flow-run-service'
+import { HookType, flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { triggerUtils } from '../helper/trigger-utils'
 import { getServerUrl } from '../helper/public-ip-utils'
 import { triggerEventService } from '../flows/trigger-events/trigger-event.service'
 import { isNil } from '@activepieces/shared'
 import { logger } from '../helper/logger'
 import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
-import { flowInstanceService } from '../flows/flow-instance/flow-instance.service'
 import { WebhookResponse } from '@activepieces/pieces-framework'
 import { flowService } from '../flows/flow/flow.service'
+import { triggerHooks } from '../flows/trigger'
 
 export const webhookService = {
     async handshake({
         flow,
         payload,
-    }: CallbackParams): Promise<WebhookResponse | null> {
+        simulate,
+    }: HandshakeParams): Promise<WebhookResponse | null> {
         logger.info(`[WebhookService#handshake] flowId=${flow.id}`)
 
         const { projectId } = flow
-        const flowInstance = await flowInstanceService.get({
-            flowId: flow.id,
-            projectId: flow.projectId,
-        })
-        if (isNil(flowInstance)) {
+        const flowVersionId = simulate ? (await flowVersionService.getFlowVersionOrThrow({ flowId: flow.id, versionId: undefined, removeSecrets: false })).id : flow.publishedVersionId
+        if (isNil(flowVersionId)) {
             logger.info(
                 `[WebhookService#handshake] flowInstance not found, flowId=${flow.id}`,
             )
             saveSampleDataForWebhookTesting(flow, payload)
             return null
         }
-        const flowVersion = await flowVersionService.getOneOrThrow(
-            flowInstance.flowVersionId,
-        )
-        const response = await triggerUtils.tryHandshake({
+
+        const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
+        const response = await triggerHooks.tryHandshake({
             projectId,
             flowVersion,
             payload,
-            simulate: false,
         })
         if (response !== null) {
             logger.info(`[WebhookService#handshake] condition met, handshake executed, response:
@@ -56,23 +51,20 @@ export const webhookService = {
         }
         return response
     },
-    async callback({ flow, payload }: CallbackParams): Promise<FlowRun[]> {
+    async callback({ flow, payload, synchronousHandlerId }: SyncParams): Promise<FlowRun[]> {
         logger.info(`[WebhookService#callback] flowId=${flow.id}`)
 
         const { projectId } = flow
-        const flowInstance = await flowInstanceService.get({
-            flowId: flow.id,
-            projectId: flow.projectId,
-        })
-        if (isNil(flowInstance)) {
+
+        if (isNil(flow.publishedVersionId)) {
             logger.info(
                 `[WebhookService#callback] flowInstance not found, flowId=${flow.id}`,
             )
-            const flowVersion = (await flowService.getOneOrThrow({
+            const flowVersion = (await flowService.getOnePopulatedOrThrow({
                 projectId,
                 id: flow.id,
             })).version
-            const payloads: unknown[] = await triggerUtils.executeTrigger({
+            const payloads: unknown[] = await triggerHooks.executeTrigger({
                 projectId,
                 flowVersion,
                 payload,
@@ -83,16 +75,14 @@ export const webhookService = {
             })
             return []
         }
-        if (flowInstance.status !== FlowInstanceStatus.ENABLED) {
+        if (flow.status !== FlowStatus.ENABLED) {
             logger.info(
                 `[WebhookService#callback] flowInstance not found or not enabled ignoring the webhook, flowId=${flow.id}`,
             )
             return []
         }
-        const flowVersion = await flowVersionService.getOneOrThrow(
-            flowInstance.flowVersionId,
-        )
-        const payloads: unknown[] = await triggerUtils.executeTrigger({
+        const flowVersion = await flowVersionService.getOneOrThrow(flow.publishedVersionId)
+        const payloads: unknown[] = await triggerHooks.executeTrigger({
             projectId,
             flowVersion,
             payload,
@@ -113,6 +103,8 @@ export const webhookService = {
                 environment: RunEnvironment.PRODUCTION,
                 flowVersionId: flowVersion.id,
                 payload,
+                synchronousHandlerId,
+                hookType: HookType.BEFORE_LOG,
                 projectId,
                 executionType: ExecutionType.BEGIN,
             }),
@@ -125,7 +117,7 @@ export const webhookService = {
         const { projectId } = flow
         const flowVersion = await getLatestFlowVersionOrThrow(flow.id, projectId)
 
-        const events = await triggerUtils.executeTrigger({
+        const events = await triggerHooks.executeTrigger({
             projectId,
             flowVersion,
             payload,
@@ -172,10 +164,9 @@ const getLatestFlowVersionOrThrow = async (
     flowId: FlowId,
     projectId: ProjectId,
 ): Promise<FlowVersion> => {
-    const flowVersion = await flowVersionService.getFlowVersion({
+    const flowVersion = await flowVersionService.getFlowVersionOrThrow({
         flowId,
         versionId: undefined,
-        removeSecrets: false,
     })
 
     if (isNil(flowVersion)) {
@@ -216,4 +207,17 @@ type GetWebhookUrlParams = {
 type CallbackParams = {
     flow: Flow
     payload: EventPayload
+}
+
+type HandshakeParams = {
+    flow: Flow
+    payload: EventPayload
+    simulate: boolean
+}
+
+
+type SyncParams = {
+    flow: Flow
+    payload: EventPayload
+    synchronousHandlerId?: string
 }

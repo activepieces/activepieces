@@ -1,42 +1,31 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { combineLatest, map, Observable, of, tap } from 'rxjs';
 import {
-  catchError,
-  combineLatest,
-  interval,
-  map,
-  Observable,
-  of,
-  takeUntil,
-  takeWhile,
-  tap,
-} from 'rxjs';
-import {
-  FlowService,
   InstanceRunService,
-  fadeIn400ms,
-  fadeInUp400ms,
+  WebSocketService,
+  fadeIn400msWithoutOut,
   initializedRun,
 } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
 import {
   ExecutionOutputStatus,
-  Flow,
   FlowRun,
+  PopulatedFlow,
   TriggerType,
 } from '@activepieces/shared';
 import {
   BuilderSelectors,
   TestRunBarComponent,
 } from '@activepieces/ui/feature-builder-store';
-import { concatMap } from 'rxjs/operators';
+import { switchMap, take } from 'rxjs/operators';
 import { canvasActions } from '@activepieces/ui/feature-builder-store';
 
 @Component({
   selector: 'app-test-flow-widget',
   templateUrl: './test-flow-widget.component.html',
   styleUrls: ['./test-flow-widget.component.scss'],
-  animations: [fadeInUp400ms, fadeIn400ms],
+  animations: [fadeIn400msWithoutOut],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TestFlowWidgetComponent implements OnInit {
@@ -44,19 +33,20 @@ export class TestFlowWidgetComponent implements OnInit {
   statusEnum = ExecutionOutputStatus;
   instanceRunStatus$: Observable<undefined | ExecutionOutputStatus>;
   isSaving$: Observable<boolean> = of(false);
-  selectedFlow$: Observable<Flow | undefined>;
+  selectedFlow$: Observable<PopulatedFlow | undefined>;
   instanceRunStatusChecker$: Observable<FlowRun>;
   executeTest$: Observable<FlowRun | null>;
+  testResult$: Observable<FlowRun>;
   shouldHideTestWidget$: Observable<boolean>;
   testRunSnackbar: MatSnackBarRef<TestRunBarComponent>;
   isTriggerTested$: Observable<boolean>;
   readonly testFlowText = $localize`Test flow`;
   readonly savingText = $localize`Saving...`;
   constructor(
-    private flowService: FlowService,
     private store: Store,
     private instanceRunService: InstanceRunService,
-    private snackbar: MatSnackBar
+    private snackbar: MatSnackBar,
+    private websockService: WebSocketService
   ) {}
 
   ngOnInit() {
@@ -87,84 +77,47 @@ export class TestFlowWidgetComponent implements OnInit {
     );
   }
 
-  testFlowButtonClicked(flow: Flow) {
-    this.executeTest$ = this.executeTest(flow);
+  testFlowButtonClicked(flow: PopulatedFlow) {
+    this.executeTest(flow);
   }
 
-  executeTest(flow: Flow) {
-    return this.flowService
-      .execute({
-        flowVersionId: flow.version!.id,
-      })
+  executeTest(flow: PopulatedFlow) {
+    this.websockService.socket.emit('testFlowRun', {
+      flowVersionId: flow.version.id,
+      projectId: flow.projectId,
+    });
+
+    this.executeTest$ = this.websockService.socket
+      .fromEvent<FlowRun>('flowRunStarted')
       .pipe(
-        tap({
-          next: (instanceRun: FlowRun) => {
-            this.store.dispatch(
-              canvasActions.setRun({
-                run: instanceRun ?? initializedRun,
-              })
-            );
-            this.testRunSnackbar = this.snackbar.openFromComponent(
-              TestRunBarComponent,
-              {
-                duration: undefined,
-                data: {
-                  flowId: flow.id,
-                },
-              }
-            );
-            this.setStatusChecker(instanceRun.id);
-          },
-          error: (err) => {
-            console.error(err);
-          },
-        }),
-        catchError((err) => {
-          console.error(err);
-          this.snackbar.open(
-            'Instance run failed, please check your console.',
-            '',
-            {
-              panelClass: 'error',
-            }
-          );
-          this.store.dispatch(canvasActions.exitRun());
-          return of(null);
-        })
-      );
-  }
-  setStatusChecker(runId: string) {
-    this.instanceRunStatusChecker$ = interval(1500).pipe(
-      takeUntil(this.testRunSnackbar.instance.exitButtonClicked),
-      concatMap(() => this.instanceRunService.get(runId)),
-      concatMap((instanceRun) => {
-        if (
-          instanceRun.status !== ExecutionOutputStatus.RUNNING &&
-          instanceRun.logsFileId !== null
-        ) {
-          return this.flowService.loadStateLogs(instanceRun.logsFileId).pipe(
-            map((state) => {
-              return { ...instanceRun, state: state };
-            })
-          );
-        }
-        return of(instanceRun);
-      }),
-      tap((instanceRun) => {
-        if (instanceRun.status !== ExecutionOutputStatus.RUNNING) {
+        take(1),
+        tap((flowRun) => {
           this.store.dispatch(
             canvasActions.setRun({
-              run: instanceRun,
+              run: flowRun ?? initializedRun,
             })
           );
-        }
-      }),
-      takeWhile((instanceRun) => {
-        return (
-          instanceRun.status === ExecutionOutputStatus.RUNNING ||
-          instanceRun.status === ExecutionOutputStatus.PAUSED
-        );
-      })
-    );
+          this.testRunSnackbar = this.snackbar.openFromComponent(
+            TestRunBarComponent,
+            {
+              duration: undefined,
+              data: {
+                flowId: flow.id,
+              },
+            }
+          );
+        })
+      );
+
+    this.testResult$ = this.websockService.socket
+      .fromEvent<FlowRun>('flowRunFinished')
+      .pipe(
+        switchMap((flowRun) =>
+          this.instanceRunService.get((flowRun as FlowRun).id)
+        ),
+        tap((instanceRun) => {
+          this.store.dispatch(canvasActions.setRun({ run: instanceRun }));
+        })
+      );
   }
 }

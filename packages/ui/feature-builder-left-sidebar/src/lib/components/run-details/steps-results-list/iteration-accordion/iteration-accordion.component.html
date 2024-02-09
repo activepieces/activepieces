@@ -1,0 +1,3 @@
+<app-step-result *ngFor="let iteration of (iterationResult$ | async)" (childStepSelected)="childStepSelectedHandler()"
+  [isTrigger]="false" [stepResult]="iteration" [selectedStepName]="selectedStepName"
+  [nestingLevel]="nestingLevel"></app-step-result>

@@ -6,6 +6,8 @@ import { projectMemberService } from '../../../project-members/project-member.se
 import { projectService } from '../../../../project/project-service'
 import { getEdition } from '../../../../helper/secret-helper'
 import { userService } from '../../../../user/user-service'
+import { flagService } from '../../../../flags/flag.service'
+import { Provider } from '../../../../authentication/authentication-service/hooks/authentication-service-hooks'
 
 async function getProjectForUserOrThrow(user: User): Promise<Project> {
     const invitedProject = await getProjectMemberOrThrow(user)
@@ -24,6 +26,7 @@ async function getProjectForUserOrThrow(user: User): Promise<Project> {
     }
     return invitedProject
 }
+
 
 const getProjectMemberOrThrow = async (user: User): Promise<Project | null> => {
     const platformProjects = await projectMemberService.listByUser(user)
@@ -88,7 +91,78 @@ async function getProjectAndTokenOrThrow(user: User): Promise<{ project: Project
     }
 }
 
+async function isInvitedToProject({ email, platformId }: { email: string, platformId: string }): Promise<boolean> {
+    const platformProjects = await projectMemberService.listByUser({
+        email,
+        platformId,
+    })
+    return platformProjects.length > 0
+}
+
+async function assertUserIsInvitedToAnyProject({ email, platformId }: { email: string, platformId: string }): Promise<void> {
+    const isInvited = await isInvitedToProject({ email, platformId })
+    if (!isInvited) {
+        throw new ActivepiecesError({
+            code: ErrorCode.INVITATION_ONLY_SIGN_UP,
+            params: {},
+        })
+    }
+}
+
+async function assertEmailAuthIsEnabled({ platformId, provider }: { platformId: string | null, provider: Provider }): Promise<void> {
+    if (isNil(platformId)) {
+        return
+    }
+    const platform = await platformService.getOneOrThrow(platformId)
+    if (!platform.ssoEnabled) {
+        return
+    }
+    if (provider !== Provider.EMAIL) {
+        return
+    }
+    if (!platform.emailAuthEnabled) {
+        throw new ActivepiecesError({
+            code: ErrorCode.EMAIL_AUTH_DISABLED,
+            params: {},
+        })
+    }
+}
+
+async function assertDomainIsAllowed({ email, platformId }: { email: string, platformId: string | null }): Promise<void> {
+    if (isNil(platformId)) {
+        return
+    }
+    const platform = await platformService.getOneOrThrow(platformId)
+    if (!platform.ssoEnabled) {
+        return
+    }
+    const emailDomain = email.split('@')[1]
+    const isAllowedDomaiin = !platform.enforceAllowedAuthDomains || platform.allowedAuthDomains.includes(emailDomain)
+
+    if (!isAllowedDomaiin) {
+        throw new ActivepiecesError({
+            code: ErrorCode.DOMAIN_NOT_ALLOWED,
+            params: {
+                domain: emailDomain,
+            },
+        })
+    }
+}
+
+async function assertUserIsInvitedAndDomainIsAllowed({ email, platformId }: { email: string, platformId: string | null }): Promise<void> {
+    await assertDomainIsAllowed({ email, platformId })
+    const customerPlatformEnabled = !isNil(platformId) && !flagService.isCloudPlatform(platformId)
+    if (customerPlatformEnabled) {
+        await assertUserIsInvitedToAnyProject({ email, platformId })
+    }
+}
+
 export const authenticationHelper = {
     getProjectAndTokenOrThrow,
     autoVerifyUserIfEligible,
+    assertUserIsInvitedAndDomainIsAllowed,
+    assertDomainIsAllowed,
+    assertEmailAuthIsEnabled,
 }
+
+

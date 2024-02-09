@@ -48,7 +48,7 @@ async function claim({ request, pieceName }: ClaimOAuth2Request): Promise<CloudO
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_CLOUD_CLAIM,
             params: {
-                appName: pieceName,
+                pieceName,
             },
         })
     }

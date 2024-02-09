@@ -2,24 +2,18 @@ import { Routes } from '@angular/router';
 import { FlowBuilderComponent } from './page/flow-builder/flow-builder.component';
 import { GetInstanceRunResolver } from './resolvers/instance-run.resolver';
 import { GetFlowResolver } from './resolvers/flow.resolver';
-import { InstanceResolver as GetInstanceResolver } from './resolvers/instance.resolver';
-import { ConnectionsResolver, UserLoggedIn } from '@activepieces/ui/common';
-import {
-  isThereAnyNewFeaturedTemplatesResolver,
-  isThereAnyNewFeaturedTemplatesResolverKey,
-} from '@activepieces/ui/common';
+import { UserLoggedIn } from '@activepieces/ui/common';
 import { BuilderSavingGuard } from './guards/builder-saving.guard';
+import { FoldersResolver } from '@activepieces/ui/feature-folders-store';
+import { flowDisplayNameInRouteData } from './resolvers/builder-route-data';
 
 export const FlowLayoutRouting: Routes = [
   {
     path: 'flows/:id',
     component: FlowBuilderComponent,
     resolve: {
-      flowAndFolder: GetFlowResolver,
-      instanceData: GetInstanceResolver,
-      connections: ConnectionsResolver,
-      [isThereAnyNewFeaturedTemplatesResolverKey]:
-        isThereAnyNewFeaturedTemplatesResolver,
+      [flowDisplayNameInRouteData]: GetFlowResolver,
+      folders: FoldersResolver,
     },
     canActivate: [UserLoggedIn],
     canDeactivate: [BuilderSavingGuard],
@@ -29,8 +23,7 @@ export const FlowLayoutRouting: Routes = [
     path: 'runs/:runId',
     component: FlowBuilderComponent,
     resolve: {
-      runInformation: GetInstanceRunResolver,
-      connections: ConnectionsResolver,
+      [flowDisplayNameInRouteData]: GetInstanceRunResolver, 
     },
     canActivate: [UserLoggedIn],
   },

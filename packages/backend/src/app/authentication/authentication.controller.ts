@@ -1,8 +1,12 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { RateLimitOptions } from '@fastify/rate-limit'
 import { authenticationService } from './authentication-service'
 import { resolvePlatformIdForRequest } from '../ee/platform/lib/platform-utils'
 import { getEdition } from '../helper/secret-helper'
-import { ApEdition, UserStatus, SignUpRequest, SignInRequest, ALL_PRINICPAL_TYPES } from '@activepieces/shared'
+import { ApEdition, SignUpRequest, SignInRequest, ALL_PRINICPAL_TYPES } from '@activepieces/shared'
+import { system } from '../helper/system/system'
+import { SystemProp } from '../helper/system/system-prop'
+import { Provider } from './authentication-service/hooks/authentication-service-hooks'
 
 const edition = getEdition()
 
@@ -12,8 +16,9 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (app) =
 
         return authenticationService.signUp({
             ...request.body,
-            status: edition === ApEdition.COMMUNITY ? UserStatus.VERIFIED : UserStatus.CREATED,
+            verified: edition === ApEdition.COMMUNITY,
             platformId,
+            provider: Provider.EMAIL,
         })
     })
 
@@ -23,13 +28,20 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (app) =
         return authenticationService.signIn({
             ...request.body,
             platformId,
+            provider: Provider.EMAIL,
         })
     })
+}
+
+const rateLimitOptions: RateLimitOptions = {
+    max: Number.parseInt(system.getOrThrow(SystemProp.API_RATE_LIMIT_AUTHN_MAX), 10),
+    timeWindow: system.getOrThrow(SystemProp.API_RATE_LIMIT_AUTHN_WINDOW),
 }
 
 const SignUpRequestOptions = {
     config: {
         allowedPrincipals: ALL_PRINICPAL_TYPES,
+        rateLimit: rateLimitOptions,
     },
     schema: {
         body: SignUpRequest,
@@ -39,6 +51,7 @@ const SignUpRequestOptions = {
 const SignInRequestOptions = {
     config: {
         allowedPrincipals: ALL_PRINICPAL_TYPES,
+        rateLimit: rateLimitOptions,
     },
     schema: {
         body: SignInRequest,

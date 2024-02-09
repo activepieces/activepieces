@@ -1,0 +1,55 @@
+---
+title: "Enable Custom API Calls"
+description: "Learn how to enable custom API calls for your pieces"
+icon: 'webhook'
+---
+
+Custom API Calls allow the user to send a request to a specific endpoint if no action has been implemented for it. 
+
+This will show in the actions list of the piece as `Custom API Call`, to enable this action for a piece, you need to call the `createCustomApiCallAction` in your actions array.
+
+## Basic Example
+
+The example below implements the action for the OpenAI piece. The OpenAI piece uses a `Bearer token` authorization header to identify the user sending the request.
+
+```typescript
+actions: [
+  ...yourActions,
+  createCustomApiCallAction({
+    // The auth object defined in the piece
+    auth: openaiAuth,
+    // The base URL for the API
+    baseUrl: () => {
+      'https://api.openai.com/v1'
+    },
+    // Mapping the auth object to the needed authorization headers
+    authMapping: (auth) => {
+      return {
+        'Authorization': `Bearer ${auth}`
+      }
+    }
+  })
+]
+```
+
+## Dynamic Base URL and Basic Auth Example
+
+The example below implements the action for the Jira Cloud piece. The Jira Cloud piece uses a dynamic base URL for it's actions, where the base URL changes based on the values the user authenticated with. We will also implement a Basic authentication header.
+
+```typescript
+actions: [
+  ...yourActions,
+  createCustomApiCallAction({
+    baseUrl: (auth) => {
+      return `${(auth as JiraAuth).instanceUrl}/rest/api/3`
+    },
+    auth: jiraCloudAuth,
+    authMapping: (auth) => {
+      const typedAuth = auth  as JiraAuth
+      return {
+        'Authorization': `Basic ${typedAuth.email}:${typedAuth.apiToken}`
+      }
+    }
+  })
+]
+```

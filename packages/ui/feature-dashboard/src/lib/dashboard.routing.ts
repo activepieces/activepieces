@@ -6,22 +6,19 @@ import {
   AreThereFlowsResovler,
 } from './resolvers/are-there-flows.resolver';
 import { ConnectionsTableComponent } from './pages/connections-table/connections-table.component';
-import { FoldersResolver } from './resolvers/folders.resolver';
+import { FoldersResolver } from '@activepieces/ui/feature-folders-store';
 import { DashboardContainerComponent } from './dashboard-container.component';
 import {
-  ConnectionsResolver,
+  isFeatureFlagEnabledResolver,
   showBasedOnFlagGuard,
   showPlatformSettingsGuard,
 } from '@activepieces/ui/common';
-import {
-  ChatbotsTableComponent,
-  ChatbotSettingsComponent,
-  chatbotSettingsResolver,
-} from '@activepieces/ui/feature-chatbot';
 import { PlansPageComponent } from '@activepieces/ee-billing-ui';
 import { ProjectMembersTableComponent } from '@activepieces/ee/project-members';
-import { CommunityPiecesTableComponent } from 'ui-feature-pieces';
+import { CommunityPiecesTableComponent } from '@activepieces/ui/feature-pieces';
 import { ApFlagId } from '@activepieces/shared';
+import { SyncProjectComponent } from './pages/sync-project/sync-project.component';
+import { RepoResolver } from './resolvers/repo.resolver';
 
 export const DashboardLayoutRouting: Routes = [
   {
@@ -50,52 +47,12 @@ export const DashboardLayoutRouting: Routes = [
         data: {
           title: $localize`Team`,
         },
-        canActivate: [showBasedOnFlagGuard(ApFlagId.PROJECT_MEMBERS_ENABLED)],
         path: 'team',
         component: ProjectMembersTableComponent,
-      },
-      {
-        data: {
-          title: $localize`Chatbots`,
-        },
-        canActivate: [showBasedOnFlagGuard(ApFlagId.CHATBOT_ENABLED)],
-        path: 'chatbots',
-        pathMatch: 'full',
-        component: ChatbotsTableComponent,
-      },
-      {
-        path: 'chatbots/:id/settings',
-        canActivate: [showBasedOnFlagGuard(ApFlagId.CHATBOT_ENABLED)],
-        data: {
-          title: $localize`Chatbot settings`,
-        },
-        pathMatch: 'full',
-        component: ChatbotSettingsComponent,
         resolve: {
-          connections: ConnectionsResolver,
-          chatbot: chatbotSettingsResolver,
-        },
-      },
-      {
-        data: {
-          title: $localize`Chatbots`,
-        },
-        canActivate: [showBasedOnFlagGuard(ApFlagId.CHATBOT_ENABLED)],
-        path: 'chatbots',
-        pathMatch: 'full',
-        component: ChatbotsTableComponent,
-      },
-      {
-        path: 'chatbots/:id/settings',
-        canActivate: [showBasedOnFlagGuard(ApFlagId.CHATBOT_ENABLED)],
-        data: {
-          title: $localize`Chatbot settings`,
-        },
-        pathMatch: 'full',
-        component: ChatbotSettingsComponent,
-        resolve: {
-          connections: ConnectionsResolver,
-          chatbot: chatbotSettingsResolver,
+          [ApFlagId.PROJECT_MEMBERS_ENABLED]: isFeatureFlagEnabledResolver(
+            ApFlagId.PROJECT_MEMBERS_ENABLED
+          ),
         },
       },
       {
@@ -113,6 +70,15 @@ export const DashboardLayoutRouting: Routes = [
         path: 'connections',
         pathMatch: 'full',
         component: ConnectionsTableComponent,
+      },
+      {
+        data: {
+          title: $localize`Settings`,
+        },
+        path: 'settings',
+        pathMatch: 'full',
+        component: SyncProjectComponent,
+        resolve: { repo: RepoResolver },
       },
       {
         data: {

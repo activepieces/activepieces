@@ -1,12 +1,23 @@
 import { Static, Type } from '@sinclair/typebox'
 import { ApEdition } from '../../flag/flag'
-import { PackageType, PieceType } from '../piece'
+import { PackageType, PieceCategory, PieceType } from '../piece'
 
 export const EXACT_VERSION_PATTERN = /^[0-9]+\.[0-9]+\.[0-9]+$/
 export const VERSION_PATTERN = /^([~^])?[0-9]+\.[0-9]+\.[0-9]+$/
 
 export const ExactVersionType = Type.RegEx(EXACT_VERSION_PATTERN)
 export const VersionType = Type.RegEx(VERSION_PATTERN)
+
+
+export enum PieceSortBy {
+    NAME = 'NAME',
+    DATE = 'DATE',
+}
+
+export enum PieceOrderBy {
+    ASC = 'ASC',
+    DESC = 'DESC',
+}
 
 export const GetPieceRequestWithScopeParams = Type.Object({
     name: Type.String(),
@@ -26,6 +37,10 @@ export const ListPiecesRequestQuery = Type.Object({
     release: Type.Optional(ExactVersionType),
     includeHidden: Type.Optional(Type.Boolean()),
     edition: Type.Optional(Type.Enum(ApEdition)),
+    searchQuery: Type.Optional(Type.String()),
+    sortBy: Type.Optional(Type.Enum(PieceSortBy)),
+    orderBy: Type.Optional(Type.Enum(PieceOrderBy)),
+    categories: Type.Optional(Type.Array(Type.Enum(PieceCategory))),
 })
 
 export type ListPiecesRequestQuery = Static<typeof ListPiecesRequestQuery>
@@ -44,21 +59,36 @@ export const PieceOptionRequest = Type.Object({
     pieceVersion: VersionType,
     stepName: Type.String({}),
     propertyName: Type.String({}),
+    flowId: Type.String(),
+    flowVersionId: Type.String(),
     input: Type.Any({}),
 })
 
 export type PieceOptionRequest = Static<typeof PieceOptionRequest>
 
-export const AddPieceRequestBody = Type.Object({
-    platformId: Type.Optional(Type.String()),
-    packageType: Type.Enum(PackageType),
-    pieceName: Type.String(),
-    pieceVersion: ExactVersionType,
+export enum PieceScope {
+    PROJECT = 'PROJECT',
+    PLATFORM = 'PLATFORM',
+}
 
-    /**
-     * buffer of the npm package tarball if any
-     */
-    pieceArchive: Type.Optional(Type.Unknown()),
-})
+export const AddPieceRequestBody = Type.Union([
+    Type.Object({
+        packageType: Type.Literal(PackageType.ARCHIVE),
+        scope: Type.Enum(PieceScope),
+        pieceName: Type.String(),
+        pieceVersion: ExactVersionType,
+        pieceArchive: Type.Unknown(),
+    }, {
+        title: 'Private Piece',
+    }),
+    Type.Object({
+        packageType: Type.Literal(PackageType.REGISTRY),
+        scope: Type.Enum(PieceScope),
+        pieceName: Type.String(),
+        pieceVersion: ExactVersionType,
+    }, {
+        title: 'NPM Piece',
+    }),
+])
 
 export type AddPieceRequestBody = Static<typeof AddPieceRequestBody>

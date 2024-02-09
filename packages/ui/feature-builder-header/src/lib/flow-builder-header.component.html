@@ -1,5 +1,5 @@
 <nav class="navbar-container ap-bg-header ap-py-4 ap-pr-3 navbar-expand ap-relative"
-  [class.ap-pl-3]="(showBackButtonAndFolderName$ | async )=== false">
+  [class.ap-pl-3]="(showNavigation$ | async )=== false">
   <div class="ap-absolute ap-w-full ap-flex ap-items-center ap-justify-center ap-p-3 ap-pointer-events-none">
     <div class="ap-h-[30px]">
       <img [src]=" (fullLogo$| async) ||'assets/img/custom/logo/full-logo.svg'" class="ap-max-w-full ap-h-full">
@@ -10,89 +10,106 @@
 
   <div class="ap-flex ap-items-center">
     <div class="ap-flex ap-items-center ap-gap-2">
-      <ap-icon-button *ngIf="showBackButtonAndFolderName$ | async" [width]="7" [height]="14" iconFilename="back.svg"
-        tooltipText="Home" i18n-tooltipText (buttonClicked)="redirectHome(false)"
-        (auxclick)="redirectHome(true)"></ap-icon-button>
+      <ap-icon-button *ngIf="showNavigation$ | async" [width]="20" [height]="20"
+        iconUrl="assets/img/custom/dashboard/home.svg" tooltipText="Home" i18n-tooltipText
+        (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)"></ap-icon-button>
       <div class="ap-flex-grow ap-flex ap-items-center ap-gap-2" #spacer>
-        <ng-container *ngIf="showBackButtonAndFolderName$ | async">
+        <ng-container *ngIf="showNavigation$ | async">
           <div class="ap-typography-body-1 ap-truncate ap-max-w-[150px] ap-cursor-pointer hover:ap-text-[#000000]"
-            #folderName (click)="openDashboardToFolder()" [matTooltip]="
-            folderName.scrollWidth > folderName.clientWidth
-              ? (folderDisplayName$ | async) || ''
-              : ''
-          ">
+            #folderName (click)="openDashboardToFolder()"
+            [matTooltip]=" goToFolder +' ('+ ((folderDisplayName$ | async) || '' ) +')'">
             {{ folderDisplayName$ | async }}
           </div>
           <div class="ap-typography-body-1 ap-text-placeholder">/</div>
         </ng-container>
         <ap-editable-text [editing]="editingFlowName" (editingChanges)="changeEditValue($event)"
-          [value]="(flow$ | async)?.version?.displayName || ''" (valueChanges)="saveFlowName($event)" [disableEditing]="
-            (isInDebugMode$ | async | defaultTrue) ||
+          [value]="(flow$ | async)?.version?.displayName" (valueChanges)="saveFlowName($event)" [disableEditing]="
+           
             (isInReadOnlyMode$ | async | defaultTrue)
           " [allowClick]="true" [cssClasses]="'ap-typography-body-1 !ap-font-semibold'"
           class="ap-text-title"></ap-editable-text>
       </div>
-      <div class="ap-p-1 ap-cursor-pointer" [matMenuTriggerFor]="menu" xPosition="after">
+      <div *ngIf="(isInReadOnlyMode$ | async) === false" class="ap-p-1 ap-cursor-pointer" [matMenuTriggerFor]="menu"
+        xPosition="after">
         <svg-icon [svgStyle]="{ width: '18px', height: '18px' }" src="assets/img/custom/chevron.svg">
         </svg-icon>
       </div>
       <mat-menu #menu="matMenu">
         <button mat-menu-item (click)="editingFlowName = true">
           <div class="ap-flex ap-gap-3 ap-items-center">
-            <svg-icon [applyClass]="true" src="assets/img/custom/pencil-underline.svg"
-              class="ap-fill-body ap-w-[20px] ap-h-[20px]">
+            <svg-icon [applyClass]="true" [src]="flowActionsUiInfo.rename.icon"
+              [class]=" flowActionsUiInfo.iconSizeTailWind">
             </svg-icon>
-            <span class="ap-text-body" i18n>Rename</span>
+            <span class="ap-text-body" i18n>{{flowActionsUiInfo.rename.text}}</span>
           </div>
         </button>
-        <button mat-menu-item *ngIf="flow$ | async as flow" (click)="duplicate()">
+
+        <button *ngIf="flow$ | async as flow" mat-menu-item (click)="moveFlow(flow)">
           <div class="ap-flex ap-gap-3 ap-items-center">
-            <svg-icon src="assets/img/custom/duplicate.svg" class="ap-w-[20px] ap-h-[20px]"
+            <svg-icon [applyClass]="true" [src]="flowActionsUiInfo.move.icon"
+              [class]=" flowActionsUiInfo.iconSizeTailWind">
+            </svg-icon>
+            <span class="ap-text-body" i18n>{{flowActionsUiInfo.move.text}}</span>
+          </div>
+        </button>
+
+        <button mat-menu-item (click)="duplicate()">
+          <div class="ap-flex ap-gap-3 ap-items-center">
+            <svg-icon [src]="flowActionsUiInfo.duplicate.icon" [class]="flowActionsUiInfo.iconSizeTailWind"
               [applyClass]="true"></svg-icon>
-            <span i18n>Duplicate</span>
+            <span>{{flowActionsUiInfo.duplicate.text}}</span>
           </div>
         </button>
-        <button mat-menu-item *ngIf="flow$ | async as flow" (click)="import()">
+        <button *ngIf="flow$ | async as flow" mat-menu-item (click)="import(flow)">
           <div class="ap-flex ap-gap-3 ap-items-center">
-            <svg-icon src="assets/img/custom/import.svg" class="ap-w-[20px] ap-h-[20px]" [applyClass]="true"></svg-icon>
-            <span i18n>Import</span>
+            <svg-icon [src]="flowActionsUiInfo.import.icon" [class]="flowActionsUiInfo.iconSizeTailWind"
+              [applyClass]="true"></svg-icon>
+            <span i18n>{{flowActionsUiInfo.import.text}}</span>
           </div>
         </button>
         <button mat-menu-item *ngIf="flow$ | async as flow" (click)="download(flow.id)">
           <div class="ap-flex ap-gap-3 ap-items-center">
-            <svg-icon src="assets/img/custom/download.svg" class="ap-w-[20px] ap-h-[20px]"
+            <svg-icon [class]="flowActionsUiInfo.iconSizeTailWind" [src]="flowActionsUiInfo.export.icon"
               [applyClass]="true"></svg-icon>
-            <span i18n>Export</span>
+            <span i18n>{{flowActionsUiInfo.export.text}}</span>
           </div>
         </button>
-        <ap-share-flow-template-dialog></ap-share-flow-template-dialog>
-        <ng-container *ngIf="(showBackButtonAndFolderName$ | async ) === false">
+        <ap-share-flow-template-dialog *ngIf="flow$ | async as flow" [flow]="flow"></ap-share-flow-template-dialog>
+        <app-push-flow-to-git-button *ngIf="flow$ | async as flow" [flow]="flow"></app-push-flow-to-git-button>
+
+        <ng-container *ngIf="(showNavigation$ | async )">
           <button mat-menu-item *ngIf="flow$ | async as flow" (click)="deleteFlow(flow)">
             <div class="ap-flex ap-gap-3 ap-items-center">
-              <svg-icon src="assets/img/custom/trash.svg" class="ap-fill-danger ap-w-[20px] ap-h-[20px]"
-                [applyClass]="true"></svg-icon>
-              <span class="ap-text-danger" i18n>Delete</span>
+              <svg-icon [src]="flowActionsUiInfo.delete.icon"
+                [class]="'ap-fill-danger '+ flowActionsUiInfo.iconSizeTailWind" [applyClass]="true"></svg-icon>
+              <span class="ap-text-danger">{{flowActionsUiInfo.delete.text}}</span>
             </div>
           </button>
         </ng-container>
-
       </mat-menu>
     </div>
 
     <div class="ap-flex-grow"></div>
     <div class="ap-flex ap-items-center ap-gap-2">
       <app-support class="ap-z-50 ap-flex ap-items-center"></app-support>
-      <ng-container *ngIf="(isInDebugMode$ | async) === false">
+      <app-runs-button></app-runs-button>
+      <app-version-history-button *ngIf="(isInDebugMode$ | async) === false"></app-version-history-button>
+      <ng-container *ngIf="(isInDebugMode$ | async) === false ">
         <div class="ap-flex ap-items-center ap-gap-1">
-          <app-draft-status></app-draft-status>
-          <ng-container *ngIf="instance$ | async as instance">
-            <app-toggle-instance-state [instance]="instance"></app-toggle-instance-state>
+          <ng-container *ngIf="hasFlowBeenPublished$ | async">
+            <ng-container *ngIf="flowStatus$ | async as status">
+              <app-toggle-instance-state *ngIf="(isInReadOnlyMode$ | async)=== false"
+                [flowStatus]="status"></app-toggle-instance-state>
+            </ng-container>
           </ng-container>
+
         </div>
-        <app-publish-button></app-publish-button>
-        <ap-user-avatar *ngIf="(isInEmbedded$ | async) === undefined || (isInEmbedded$ | async) === false "
-          class="ap-ml-[16px]"></ap-user-avatar>
+
+
       </ng-container>
+      <app-publish-or-edit-flow-button></app-publish-or-edit-flow-button>
+      <ap-user-avatar *ngIf="(isInEmbedded$ | async) === undefined || (isInEmbedded$ | async) === false "
+        class="ap-ml-[16px]"></ap-user-avatar>
     </div>
   </div>
 </nav>

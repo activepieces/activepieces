@@ -1,49 +1,71 @@
-import { readdir } from 'node:fs/promises'
+import { readdir, stat } from 'node:fs/promises'
 import { resolve, join } from 'node:path'
 import { cwd } from 'node:process'
 import { Piece, PieceMetadata } from '@activepieces/pieces-framework'
-import { ActivepiecesError, EXACT_VERSION_PATTERN, ErrorCode, PackageType, PieceType, ProjectId, extractPieceFromModule } from '@activepieces/shared'
+import { ActivepiecesError, EXACT_VERSION_PATTERN, ErrorCode, PackageType, PieceType, ProjectId, extractPieceFromModule, isNil } from '@activepieces/shared'
 import { captureException } from '../../helper/logger'
 import { PieceMetadataService } from './piece-metadata-service'
-import { isNil } from '@activepieces/shared'
 import { AllPiecesStats } from './piece-stats-service'
 import importFresh from 'import-fresh'
 import { PieceMetadataModel, PieceMetadataModelSummary } from '../piece-metadata-entity'
 
 const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
-    const ignoredPackages = ['framework', 'apps', 'dist', 'common']
+    const pieces = await findAllPieces()
+    return pieces.sort((a, b) =>
+        a.displayName.toUpperCase().localeCompare(b.displayName.toUpperCase()),
+    )
+}
+async function findAllPieces(): Promise<PieceMetadata[]> {
     const piecesPath = resolve(cwd(), 'dist', 'packages', 'pieces')
-    const piecePackages = await readdir(piecesPath)
-    const filteredPiecePackages = piecePackages.filter(d => !ignoredPackages.includes(d))
-
-    const piecesMetadata: PieceMetadata[] = []
-
-    for (const piecePackage of filteredPiecePackages) {
-        try {
-            const packageJson = importFresh<Record<string, string>>(join(piecesPath, piecePackage, 'package.json'))
-            const module = importFresh<Record<string, unknown>>(join(piecesPath, piecePackage, 'src', 'index'))
-
-            const { name: pieceName, version: pieceVersion } = packageJson
-            const piece = extractPieceFromModule<Piece>({
-                module,
-                pieceName,
-                pieceVersion,
-            })
-            piecesMetadata.push({
-                directoryName: piecePackage,
-                ...piece.metadata(),
-                name: pieceName,
-                version: pieceVersion,
-            })
-        }
-        catch (ex) {
-            captureException(ex)
-        }
-    }
-
-    return piecesMetadata.sort((a, b) => a.displayName.toUpperCase().localeCompare(b.displayName.toUpperCase()))
+    const paths = await traverseFolder(piecesPath)
+    const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
+    return pieces.filter((p): p is PieceMetadata => p !== null)
 }
 
+async function traverseFolder(folderPath: string): Promise<string[]> {
+    const paths = []
+    const files = await readdir(folderPath)
+
+    for (const file of files) {
+        const filePath = join(folderPath, file)
+        const fileStats = await stat(filePath)
+        if (fileStats.isDirectory() && file !== 'node_modules' && file !== 'dist' && file !== 'framework' && file !== 'common') {
+            paths.push(...await traverseFolder(filePath))
+        }
+        else if (file === 'package.json') {
+            paths.push(folderPath)
+        }
+    }
+    return paths
+}
+
+async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | null> {
+    try {
+        const packageJson = importFresh<Record<string, string>>(
+            join(folderPath, 'package.json'),
+        )
+        const module = importFresh<Record<string, unknown>>(
+            join(folderPath, 'src', 'index'),
+        )
+
+        const { name: pieceName, version: pieceVersion } = packageJson
+        const piece = extractPieceFromModule<Piece>({
+            module,
+            pieceName,
+            pieceVersion,
+        })
+        return {
+            directoryPath: folderPath,
+            ...piece.metadata(),
+            name: pieceName,
+            version: pieceVersion,
+        }
+    }
+    catch (ex) {
+        captureException(ex)
+    }
+    return null
+}
 export const FilePieceMetadataService = (): PieceMetadataService => {
     return {
         async list({ projectId }): Promise<PieceMetadataModelSummary[]> {
@@ -57,7 +79,7 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
 
         async getOrThrow({ name, version, projectId }): Promise<PieceMetadataModel> {
             const piecesMetadata = await loadPiecesMetadata()
-            const pieceMetadata = piecesMetadata.find(p => p.name === name)
+            const pieceMetadata = piecesMetadata.find((p) => p.name === name)
 
             if (isNil(pieceMetadata)) {
                 throw new ActivepiecesError({
@@ -116,8 +138,9 @@ const toPieceMetadataModel = ({ pieceMetadata, projectId }: ToPieceMetadataModel
         minimumSupportedRelease: pieceMetadata.minimumSupportedRelease,
         maximumSupportedRelease: pieceMetadata.maximumSupportedRelease,
         actions: pieceMetadata.actions,
+        categories: pieceMetadata.categories,
         triggers: pieceMetadata.triggers,
-        directoryName: pieceMetadata.directoryName,
+        directoryPath: pieceMetadata.directoryPath,
         projectId,
         packageType: PackageType.REGISTRY,
         pieceType: PieceType.OFFICIAL,

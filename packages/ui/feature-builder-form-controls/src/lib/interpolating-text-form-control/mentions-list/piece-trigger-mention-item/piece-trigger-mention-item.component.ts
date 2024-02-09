@@ -23,7 +23,10 @@ import {
   canvasActions,
 } from '@activepieces/ui/feature-builder-store';
 import { FlowItemDetails } from '@activepieces/ui/common';
-import { PieceMetadataService, CORE_SCHEDULE } from 'ui-feature-pieces';
+import {
+  PieceMetadataService,
+  CORE_SCHEDULE,
+} from '@activepieces/ui/feature-pieces';
 @Component({
   selector: 'app-piece-trigger-mention-item',
   templateUrl: './piece-trigger-mention-item.component.html',

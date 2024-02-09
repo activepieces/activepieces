@@ -38,8 +38,8 @@ export const extractProvisionCacheKey = (params: ProvisionCacheInfo): string => 
 
 
 
-const extractCodeCacheKey = ({ sourceCodeHash }: CodeProvisionCacheInfo): string => {
-    return `CODE-sourceCodeHash-${sourceCodeHash}`
+const extractCodeCacheKey = ({ sourceCodeHash, name, flowId }: CodeProvisionCacheInfo): string => {
+    return `CODE-sourceCodeHash-${sourceCodeHash}-name-${name}-flowId-${flowId}`
 }
 
 const extractFlowCacheKey = ({ flowVersionId }: FlowProvisionCacheInfo): string => {
@@ -61,6 +61,8 @@ type BaseProvisionCacheInfo<T extends SandBoxCacheType> = {
 
 type CodeProvisionCacheInfo = BaseProvisionCacheInfo<SandBoxCacheType.CODE> & {
     sourceCodeHash: string
+    name: string
+    flowId: string
 }
 
 type FlowProvisionCacheInfo = BaseProvisionCacheInfo<SandBoxCacheType.FLOW> & {

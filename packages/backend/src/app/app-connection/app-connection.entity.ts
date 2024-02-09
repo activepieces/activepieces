@@ -19,7 +19,7 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
             type: String,
             default: AppConnectionStatus.ACTIVE,
         },
-        appName: {
+        pieceName: {
             type: String,
         },
         projectId: ApIdSchema,

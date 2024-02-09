@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  Input,
   TemplateRef,
 } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
@@ -25,13 +26,15 @@ import {
 } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
-import { ShareFlowRequest } from '@activepieces/ee-shared';
 import {
   ApEdition,
   ApFlagId,
   FlowTemplate,
+  PopulatedFlow,
   TelemetryEventName,
+  TemplateType,
 } from '@activepieces/shared';
+import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
 
 @Component({
   selector: 'ap-share-flow-template-dialog',
@@ -41,12 +44,10 @@ import {
 export class ShareFlowTemplateDialogComponent {
   form: FormGroup<{
     description: FormControl<string>;
-    featuredDescription: FormControl<string>;
-    isFeatured: FormControl<boolean>;
     tags: FormControl<string[]>;
-    imageUrl: FormControl<string>;
     blogUrl: FormControl<string>;
   }>;
+  @Input({ required: true }) flow!: PopulatedFlow;
   shareTemplateMarkdown = `
   Generate or update a template link for the current flow to easily share it with others. 
   <br>
@@ -88,56 +89,44 @@ export class ShareFlowTemplateDialogComponent {
     this.form = this.fb.group({
       blogUrl: new FormControl('', { nonNullable: true }),
       description: new FormControl('', { nonNullable: true }),
-      imageUrl: new FormControl<string>('', { nonNullable: true }),
       tags: new FormControl<string[]>([''], { nonNullable: true }),
-      isFeatured: new FormControl(false, { nonNullable: true }),
-      featuredDescription: new FormControl('', { nonNullable: true }),
     });
   }
   submit() {
     if (!this.loading) {
       this.loading = true;
-      this.shareFlow$ = this.store
-        .select(BuilderSelectors.selectCurrentFlow)
-        .pipe(
-          take(1),
-          switchMap((flow) => {
-            const request: ShareFlowRequest = {
-              description: this.form.value.description,
-              flowId: flow.id,
-              flowVersionId: flow.version.id,
-              blogUrl: this.form.value.blogUrl,
-              imageUrl: this.form.value.imageUrl,
-              tags: this.form.value.tags,
-              featuredDescription: this.form.value.featuredDescription,
-              isFeatured: this.form.value.isFeatured,
-            };
-            this.telemetryService.capture({
-              name: TelemetryEventName.FLOW_SHARED,
-              payload: {
-                flowId: flow.id,
-                projectId: flow.projectId,
-              },
-            });
-            return this.templatesService.shareTemplate(request).pipe(
-              switchMap((flowTemplate) => {
-                return this.flagsService
-                  .getFrontendUrl()
-                  .pipe(map((url) => `${url}/templates/${flowTemplate.id}`));
-              }),
-              tap((url) => {
-                this.dialogService.closeAll();
-                navigator.clipboard.writeText(url);
-                this.snackbar.open('Template URL copied to clipboard');
-                window.open(url, '_blank');
-                this.loading = false;
-              }),
-              map(() => {
-                return void 0;
-              })
-            );
-          })
-        );
+      const request: CreateFlowTemplateRequest = {
+        description: this.form.value.description,
+        template: this.flow.version,
+        type: TemplateType.PROJECT,
+        blogUrl: this.form.value.blogUrl,
+        tags: this.form.value.tags,
+      };
+      this.telemetryService.capture({
+        name: TelemetryEventName.FLOW_SHARED,
+        payload: {
+          flowId: this.flow.id,
+          projectId: this.flow.projectId,
+        },
+      });
+      this.shareFlow$ = this.templatesService.create(request).pipe(
+        switchMap((flowTemplate) => {
+          return this.flagsService
+            .getFrontendUrl()
+            .pipe(map((url) => `${url}/templates/${flowTemplate.id}`));
+        }),
+        tap((url) => {
+          this.dialogService.closeAll();
+          navigator.clipboard.writeText(url);
+          this.snackbar.open('Template URL copied to clipboard');
+          window.open(url, '_blank');
+          this.loading = false;
+        }),
+        map(() => {
+          return void 0;
+        })
+      );
+
       this.cd.markForCheck();
     }
   }
@@ -158,10 +147,7 @@ export class ShareFlowTemplateDialogComponent {
             this.form.patchValue({
               description: template.description,
               blogUrl: template.blogUrl,
-              imageUrl: template.imageUrl || '',
               tags: template.tags,
-              featuredDescription: template.featuredDescription,
-              isFeatured: template.isFeatured,
             });
           }
         })

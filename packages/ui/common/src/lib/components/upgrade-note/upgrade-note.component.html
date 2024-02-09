@@ -1,0 +1,19 @@
+<div apCard class="ap-typography-body-1 ap-max-w-[56.25rem]  ap-flex ap-items-center ap-justify-between ap-mb-8">
+    <div i18n class="ap-flex ap-gap-4 ap-items-center">
+        <svg-icon src="/assets/img/custom/lock.svg" class="ap-w-[20px] ap-h-[20px] ap-fill-body" [applyClass]="true">
+        </svg-icon>Please upgrade your plan to unlock this feature.
+    </div>
+    <div class="ap-flex ap-gap-2 ap-items-center ap-min-h-[3rem]">
+        <ap-icon-button *ngIf="docsLink" [height]="24" [width]="24" iconFilename="info.svg" i18n-tooltipText
+            tooltipText="Learn more" (buttonClicked)="openDocs()">
+        </ap-icon-button>
+        <ap-button i18n btnSize="medium" *ngIf="pricingUrl" (buttonClicked)="openPricing()" i18n>
+            <div class="ap-flex ap-gap-2">
+                <svg-icon src="/assets/img/custom/upgrade.svg" class="ap-w-[20px] ap-h-[20px] ap-fill-white"
+                    [applyClass]="true">
+                </svg-icon>
+                Upgrade
+            </div>
+        </ap-button>
+    </div>
+</div>

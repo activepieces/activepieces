@@ -44,8 +44,13 @@ export class UploadFileControlComponent
   id = `file-input-${UploadFileControlComponent.nextId++}`;
   placeholder: string;
   focused = false;
-  empty: boolean;
-  shouldLabelFloat: true;
+  get empty(): boolean {
+    return !this.value;
+  }
+  @HostBinding('class.floated')
+  get shouldLabelFloat(): boolean {
+    return this.focused || !this.empty;
+  }
   @Input()
   get required() {
     return this._required;
@@ -130,11 +135,12 @@ export class UploadFileControlComponent
 
     const oldState = this.errorState;
     const newState =
-      this.ngControl?.invalid && (this.touched || parent.submitted);
+      this.ngControl?.invalid && (this.touched || parent?.submitted);
 
     if (oldState !== newState) {
       this.errorState = newState || false;
       this.stateChanges.next();
     }
+    console.log(this.ngControl?.invalid);
   }
 }

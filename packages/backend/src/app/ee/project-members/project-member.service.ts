@@ -9,14 +9,12 @@ import {
     Principal,
     ProjectId,
     SeekPage,
-    User,
     UserId,
     apId,
     isNil,
 } from '@activepieces/shared'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import {
-    PlatformId,
     ProjectMember,
     ProjectMemberId,
     ProjectMemberRole,
@@ -36,11 +34,13 @@ import { jwtUtils } from '../../helper/jwt-utils'
 const projectMemberRepo = databaseConnection.getRepository(ProjectMemberEntity)
 
 export const projectMemberService = {
-    async upsert({ platformId, email, projectId, role, status }: UpsertParams): Promise<ProjectMember> {
+    async upsert({ email, projectId, role, status }: UpsertParams): Promise<ProjectMember> {
         await projectMembersLimit.limit({
             projectId,
         })
 
+        const project = await projectService.getOneOrThrow(projectId)
+        const platformId = project.platformId ?? null
         const existingProjectMember = await projectMemberRepo.findOneBy({
             projectId,
             email,
@@ -66,10 +66,8 @@ export const projectMemberService = {
         }
     },
 
-    async upsertAndSend({ platformId, projectId, email, role, status }: UpsertAndSendParams): Promise<UpsertAndSendResponse> {
-
+    async upsertAndSend({ projectId, email, role, status }: UpsertAndSendParams): Promise<UpsertAndSendResponse> {
         const projectMember = await this.upsert({
-            platformId,
             email,
             projectId,
             role,
@@ -161,11 +159,11 @@ export const projectMemberService = {
         })
         return member?.role ?? null
     },
-    async listByUser(user: User): Promise<ProjectMemberSchema[]> {
+    async listByUser({ email, platformId }: { email: string, platformId: null | string }): Promise<ProjectMemberSchema[]> {
         return projectMemberRepo.findBy({
-            email: user.email,
+            email,
             status: ProjectMemberStatus.ACTIVE,
-            platformId: isNil(user.platformId) ? IsNull() : user.platformId,
+            platformId: isNil(platformId) ? IsNull() : platformId,
         })
     },
     async delete(
@@ -220,7 +218,6 @@ const getOrThrow = async (id: string): Promise<ProjectMember> => {
 
 type UpsertParams = {
     email: string
-    platformId: PlatformId | null
     projectId: ProjectId
     role: ProjectMemberRole
     status?: ProjectMemberStatus
@@ -230,7 +227,6 @@ type NewProjectMember = Omit<ProjectMember, 'created'>
 
 type UpsertAndSendParams = AddProjectMemberRequestBody & {
     projectId: ProjectId
-    platformId: PlatformId | null
 }
 
 type AcceptParams = {

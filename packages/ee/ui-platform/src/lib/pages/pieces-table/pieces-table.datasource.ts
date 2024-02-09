@@ -7,12 +7,13 @@ import {
   switchMap,
   map,
   combineLatest,
+  of,
 } from 'rxjs';
 import {
   OAuth2AppsService,
   PieceMetadataModelSummary,
 } from '@activepieces/ui/common';
-import { PieceMetadataService } from 'ui-feature-pieces';
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 
 /**
  * Data source for the LogsTable view. This class should
@@ -30,7 +31,8 @@ export class PiecesTableDataSource extends DataSource<ManagedPieceMetadataModelS
     private piecesService: PieceMetadataService,
     private searchControlValueChanged$: Observable<string>,
     private oAuth2AppsService: OAuth2AppsService,
-    private refresh$: Observable<true>
+    private refresh$: Observable<true>,
+    private withoutOAuth2Cred: boolean
   ) {
     super();
     this.pieces$ = this.piecesService
@@ -68,6 +70,10 @@ export class PiecesTableDataSource extends DataSource<ManagedPieceMetadataModelS
         );
       }),
       switchMap((pieces) => {
+        if (this.withoutOAuth2Cred) {
+          return of(pieces);
+        }
+
         return this.oAuth2AppsService.listOAuth2AppsCredentials().pipe(
           map((apps) => {
             return pieces.map((p) => {

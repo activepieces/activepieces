@@ -1,35 +1,45 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import replaceAsync from 'string-replace-async'
 import {
     AUTHENTICATION_PROPERTY_NAME,
-    ExecutionState,
     isNil,
     isString,
 } from '@activepieces/shared'
-import { connectionService } from './connections.service'
 import {
-    PropertyType,
     formatErrorMessage,
     ErrorMessages,
+    InputPropertyMap,
     PieceAuthProperty,
-    NonAuthPiecePropertyMap,
+    PropertyType,
 } from '@activepieces/pieces-framework'
 import { handleAPFile, isApFilePath } from './files.service'
+import { FlowExecutorContext } from '../handler/context/flow-execution-context'
+import { createConnectionService } from './connections.service'
+import { initCodeSandbox } from '../core/code/code-sandbox'
 
 export class VariableService {
-    private VARIABLE_TOKEN = RegExp('\\{\\{(.*?)\\}\\}', 'g')
-    private static CONNECTIONS = 'connections'
+    private static readonly VARIABLE_PATTERN = RegExp('\\{\\{(.*?)\\}\\}', 'g')
+    private static readonly CONNECTIONS = 'connections'
+
+    private workerToken: string
+    private projectId: string
+
+    constructor(data: { workerToken: string, projectId: string }) {
+        this.workerToken = data.workerToken
+        this.projectId = data.projectId
+    }
 
     private async resolveInput(
         input: string,
         valuesMap: Record<string, unknown>,
         logs: boolean,
-    ): Promise<any> {
-    // If input contains only a variable token, return the value of the variable while maintaining the variable type.
-        const matchedTokens = input.match(this.VARIABLE_TOKEN)
+    ): Promise<unknown> {
+        // If input contains only a variable token, return the value of the variable while maintaining the variable type.
+        const matchedTokens = input.match(VariableService.VARIABLE_PATTERN)
         if (
             matchedTokens !== null &&
-      matchedTokens.length === 1 &&
-      matchedTokens[0] === input
+            matchedTokens.length === 1 &&
+            matchedTokens[0] === input
         ) {
             const variableName = input.substring(2, input.length - 2)
             if (variableName.startsWith(VariableService.CONNECTIONS)) {
@@ -37,11 +47,14 @@ export class VariableService {
             }
             return this.evalInScope(variableName, valuesMap)
         }
-        return input.replace(this.VARIABLE_TOKEN, (_match, variable) => {
-            const result = this.evalInScope(variable, valuesMap)
+
+        return replaceAsync(input, VariableService.VARIABLE_PATTERN, async (_fullMatch, variableName) => {
+            const result = await this.evalInScope(variableName, valuesMap)
+
             if (!isString(result)) {
                 return JSON.stringify(result)
             }
+
             return result
         })
     }
@@ -49,8 +62,8 @@ export class VariableService {
     private async handleTypeAndResolving(
         path: string,
         censorConnections: boolean,
-    ): Promise<any> {
-    // Need to be resolved dynamically
+    ): Promise<unknown> {
+        // Need to be resolved dynamically
         const connectionName = this.findConnectionName(path)
         if (isNil(connectionName)) {
             return ''
@@ -61,7 +74,8 @@ export class VariableService {
         // Need to be resolved dynamically
         // Replace connection name with something that doesn't contain - or _, otherwise evalInScope would break
         const newPath = this.cleanPath(path, connectionName)
-        const connection = await connectionService.obtain(connectionName)
+
+        const connection = await createConnectionService({ workerToken: this.workerToken, projectId: this.projectId }).obtain(connectionName)
         if (newPath.length === 0) {
             return connection
         }
@@ -97,13 +111,15 @@ export class VariableService {
         return paths[1]
     }
 
-    private evalInScope(js: string, contextAsScope: Record<string, unknown>): any {
+    private async evalInScope(js: string, contextAsScope: Record<string, unknown>): Promise<unknown> {
         try {
-            const keys = Object.keys(contextAsScope)
-            const values = Object.values(contextAsScope)
-            const functionBody = `return (${js})`
-            const evaluatedFn = new Function(...keys, functionBody)
-            const result = evaluatedFn(...values)
+            const codeSandbox = await initCodeSandbox()
+
+            const result = await codeSandbox.runScript({
+                script: js,
+                scriptContext: contextAsScope,
+            })
+
             return result ?? ''
         }
         catch (exception) {
@@ -146,37 +162,41 @@ export class VariableService {
 
         return unresolvedInput
     }
-
-    private getExecutionStateObject(
-        executionState: ExecutionState | null,
-    ): Record<string, unknown> {
-        if (isNil(executionState)) {
-            return {}
-        }
-        const valuesMap: Record<string, unknown> = {}
-        Object.entries(executionState.lastStepState).forEach(([key, value]) => {
-            valuesMap[key] = value
-        })
-        return valuesMap
-    }
-
-    resolve<T = unknown>(params: ResolveParams): Promise<T> {
-        const { unresolvedInput, executionState, logs } = params
+    async resolve<T = unknown>(params: {
+        unresolvedInput: unknown
+        executionState: FlowExecutorContext
+    }): Promise<{
+            resolvedInput: T
+            censoredInput: unknown
+        }> {
+        const { unresolvedInput, executionState } = params
 
         if (isNil(unresolvedInput)) {
-            return Promise.resolve(unresolvedInput) as Promise<T>
+            return {
+                resolvedInput: unresolvedInput as unknown as T,
+                censoredInput: unresolvedInput as unknown,
+            }
         }
 
-        return this.resolveInternally(
+        const resolvedInput = await this.resolveInternally(
             JSON.parse(JSON.stringify(unresolvedInput)),
-            this.getExecutionStateObject(executionState),
-            logs,
-        ) as Promise<T>
+            executionState.currentState,
+            false,
+        )
+        const censoredInput = await this.resolveInternally(
+            JSON.parse(JSON.stringify(unresolvedInput)),
+            executionState.currentState,
+            true,
+        )
+        return {
+            resolvedInput,
+            censoredInput,
+        }
     }
 
     async applyProcessorsAndValidators(
         resolvedInput: Record<string, any>,
-        props: NonAuthPiecePropertyMap,
+        props: InputPropertyMap,
         auth: PieceAuthProperty | undefined,
     ): Promise<{ processedInput: any, errors: any }> {
         const processedInput = { ...resolvedInput }
@@ -184,11 +204,11 @@ export class VariableService {
 
         if (auth && auth.type === PropertyType.CUSTOM_AUTH) {
             const { processedInput: authProcessedInput, errors: authErrors } =
-        await this.applyProcessorsAndValidators(
-            resolvedInput[AUTHENTICATION_PROPERTY_NAME],
-            auth.props,
-            undefined,
-        )
+                await this.applyProcessorsAndValidators(
+                    resolvedInput[AUTHENTICATION_PROPERTY_NAME],
+                    auth.props,
+                    undefined,
+                )
             processedInput.auth = authProcessedInput
             if (Object.keys(authErrors).length > 0) {
                 errors.auth = authErrors
@@ -212,7 +232,10 @@ export class VariableService {
             ]
             // TODO remove the hard coding part
             if (property.type === PropertyType.FILE && isApFilePath(value)) {
-                processedInput[key] = await handleAPFile(value.trim())
+                processedInput[key] = await handleAPFile({
+                    path: value.trim(),
+                    workerToken: this.workerToken,
+                })
             }
             else {
                 for (const processor of processors) {
@@ -241,43 +264,6 @@ export class VariableService {
         return { processedInput, errors }
     }
 
-    extractConnectionNames(input: any): string[] {
-        const connectionNames: string[] = []
-
-        const extractFromValue = (value: any): void => {
-            if (typeof value === 'string') {
-                const matchedTokens = value.match(this.VARIABLE_TOKEN)
-                if (
-                    matchedTokens !== null &&
-          matchedTokens.length === 1 &&
-          matchedTokens[0] === value
-                ) {
-                    const variableName = value.substring(2, value.length - 2)
-                    if (variableName.startsWith(VariableService.CONNECTIONS)) {
-                        const connectionName = this.findConnectionName(variableName)
-                        if (connectionName) {
-                            connectionNames.push(connectionName)
-                        }
-                    }
-                }
-            }
-            else if (Array.isArray(value)) {
-                value.forEach(extractFromValue)
-            }
-            else if (typeof value === 'object' && value !== null) {
-                for (const key in value) {
-                    extractFromValue(value[key])
-                }
-            }
-        }
-
-        extractFromValue(input)
-        return connectionNames
-    }
 }
 
-type ResolveParams = {
-    unresolvedInput: unknown
-    executionState: ExecutionState | null
-    logs: boolean
-}
+export const variableService = ({ projectId, workerToken }: { projectId: string, workerToken: string }) => new VariableService({ projectId, workerToken })

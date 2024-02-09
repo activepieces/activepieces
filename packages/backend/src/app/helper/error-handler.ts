@@ -5,6 +5,7 @@ import { captureException, logger } from './logger'
 import { system } from './system/system'
 import { SystemProp } from './system/system-prop'
 
+
 const ENRICH_ERROR_CONTEXT = system.getBoolean(SystemProp.ENRICH_ERROR_CONTEXT) ?? false
 
 export const errorHandler = async (
@@ -24,7 +25,13 @@ export const errorHandler = async (
             [ErrorCode.SIGN_UP_DISABLED]: StatusCodes.FORBIDDEN,
             [ErrorCode.INVALID_CREDENTIALS]: StatusCodes.UNAUTHORIZED,
             [ErrorCode.EMAIL_IS_NOT_VERIFIED]: StatusCodes.FORBIDDEN,
+            [ErrorCode.USER_IS_INACTIVE]: StatusCodes.FORBIDDEN,
+            [ErrorCode.DOMAIN_NOT_ALLOWED]: StatusCodes.FORBIDDEN,
+            [ErrorCode.EMAIL_AUTH_DISABLED]: StatusCodes.FORBIDDEN,
             [ErrorCode.INVALID_OTP]: StatusCodes.GONE,
+            [ErrorCode.VALIDATION]: StatusCodes.CONFLICT,
+            [ErrorCode.INVITATION_ONLY_SIGN_UP]: StatusCodes.FORBIDDEN,
+            [ErrorCode.AUTHENTICATION]: StatusCodes.UNAUTHORIZED,
         }
 
         const statusCode = statusCodeMap[error.error.code] ?? StatusCodes.BAD_REQUEST

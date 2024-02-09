@@ -25,7 +25,6 @@ export class bumpFixPieceVersions1678928503715 implements MigrationInterface {
         logger.info('bumpFixPieceVersions1678928503715, started')
 
         let count = 0
-        const flowVersionRepo = queryRunner.connection.getRepository(FLOW_VERSION_TABLE)
         const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
 
         for (const flowVersion of flowVersions) {
@@ -33,7 +32,7 @@ export class bumpFixPieceVersions1678928503715 implements MigrationInterface {
             const update = updateStep(step)
             if (update) {
                 count++
-                await flowVersionRepo.update(flowVersion.id, flowVersion)
+                await queryRunner.query(`UPDATE ${FLOW_VERSION_TABLE} SET "trigger" = $1 WHERE id = $2`, [flowVersion.trigger, flowVersion.id])
             }
         }
 

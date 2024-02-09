@@ -1,21 +1,43 @@
 import { EntitySchema } from 'typeorm'
-import { Flow, Folder, FlowRun, FlowVersion, Project, TriggerEvent } from '@activepieces/shared'
-import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
+import { Flow, Folder, FlowRun, FlowVersion, Project, TriggerEvent, FlowStatus } from '@activepieces/shared'
+import { ApIdSchema, BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../../database/database-common'
 
-export type FlowSchema = {
+export type FlowSchema = Flow & {
     versions: FlowVersion[]
     project: Project
     runs: FlowRun[]
     folder?: Folder
     events: TriggerEvent[]
-} & Flow
+    publishedVersion?: FlowVersion
+}
 
 export const FlowEntity = new EntitySchema<FlowSchema>({
     name: 'flow',
     columns: {
         ...BaseColumnSchemaPart,
-        projectId: { ...ApIdSchema },
-        folderId: { ...ApIdSchema, nullable: true },
+        projectId: {
+            ...ApIdSchema,
+            nullable: false,
+        },
+        folderId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
+        status: {
+            type: String,
+            enum: FlowStatus,
+            nullable: false,
+            default: FlowStatus.DISABLED,
+        },
+        schedule: {
+            type: JSONB_COLUMN_TYPE,
+            nullable: true,
+        },
+        publishedVersionId: {
+            ...ApIdSchema,
+            nullable: true,
+            unique: true,
+        },
     },
     indices: [
         {
@@ -63,6 +85,17 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
             joinColumn: {
                 name: 'projectId',
                 foreignKeyConstraintName: 'fk_flow_project_id',
+            },
+        },
+        publishedVersion: {
+            type: 'one-to-one',
+            target: 'flow_version',
+            nullable: true,
+            onDelete: 'RESTRICT',
+            joinColumn: {
+                name: 'publishedVersionId',
+                referencedColumnName: 'id',
+                foreignKeyConstraintName: 'fk_flow_published_version',
             },
         },
     },

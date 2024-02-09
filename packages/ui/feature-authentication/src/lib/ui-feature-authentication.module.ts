@@ -22,6 +22,7 @@ import { ResetPasswordComponent } from './pages/auth-actions/reset-password/rese
 import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password.component';
 import { EeComponentsModule } from '@activepieces/ee-components';
 import { RedirectToDashboardIfLoggedIn } from './guards/redirect-to-dashboard-if-logged-in.guard';
+import { AuthenticationMethodsSeparatorComponent } from './components/authentication-methods-separator/authentication-methods-separator.component';
 
 @NgModule({
   imports: [
@@ -105,6 +106,7 @@ import { RedirectToDashboardIfLoggedIn } from './guards/redirect-to-dashboard-if
     VerifyEmailPostSignUpComponent,
     ResetPasswordComponent,
     ForgotPasswordComponent,
+    AuthenticationMethodsSeparatorComponent,
   ],
 })
 export class UiFeatureAuthenticationModule {}

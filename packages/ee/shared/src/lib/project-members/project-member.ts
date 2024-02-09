@@ -16,6 +16,8 @@ export const ProjectMember = Type.Object({
     projectId: Type.String(),
     role: Type.Enum(ProjectMemberRole),
     status: Type.Enum(ProjectMemberStatus),
+}, { 
+    description: "Project member is which user is assigned to a project."
 });
 
 export type ProjectMember = Static<typeof ProjectMember>;

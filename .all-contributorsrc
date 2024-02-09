@@ -744,6 +744,98 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "bigfluffycookie",
+      "name": "Leyla",
+      "avatar_url": "https://avatars.githubusercontent.com/u/54935347?v=4",
+      "profile": "https://github.com/bigfluffycookie",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "i-nithin",
+      "name": "i-nithin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/97078688?v=4",
+      "profile": "https://i-nithin.netlify.app/",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "la3rence",
+      "name": "la3rence",
+      "avatar_url": "https://avatars.githubusercontent.com/u/24540598?v=4",
+      "profile": "https://lawrenceli.me",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "dennisrongo",
+      "name": "Dennis Rongo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/51771021?v=4",
+      "profile": "http://dennisrongo.com",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "kartikmehta8",
+      "name": "Kartik Mehta",
+      "avatar_url": "https://avatars.githubusercontent.com/u/77505989?v=4",
+      "profile": "https://github.com/kartikmehta8",
+      "contributions": [
+        "doc",
+        "code"
+      ]
+    },
+    {
+      "login": "zaaakher",
+      "name": "Zakher Masri",
+      "avatar_url": "https://avatars.githubusercontent.com/u/46135573?v=4",
+      "profile": "https://zakher.me",
+      "contributions": [
+        "doc",
+        "code"
+      ]
+    },
+    {
+      "login": "AbdullahBitar",
+      "name": "AbdullahBitar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/122645579?v=4",
+      "profile": "https://github.com/AbdullahBitar",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "mariomeyer",
+      "name": "Mario Meyer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/867650?v=4",
+      "profile": "https://github.com/mariomeyer",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "karimkhaleel",
+      "name": "Karim Khaleel",
+      "avatar_url": "https://avatars.githubusercontent.com/u/94621779?v=4",
+      "profile": "https://github.com/karimkhaleel",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "CPonchet",
+      "name": "CPonchet",
+      "avatar_url": "https://avatars.githubusercontent.com/u/40756925?v=4",
+      "profile": "https://github.com/CPonchet",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "commitType": "docs"

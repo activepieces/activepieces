@@ -38,7 +38,7 @@ export class FlowItemTreeComponent implements OnInit {
 
   ngOnInit(): void {
     const flowVersion$ = this.store.select(
-      BuilderSelectors.selectShownFlowVersion
+      BuilderSelectors.selectViewedVersion
     );
     this.flowDrawer$ = flowVersion$.pipe(
       map((version) => {
