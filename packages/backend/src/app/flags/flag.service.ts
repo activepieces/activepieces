@@ -211,8 +211,8 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.APP_WEBHOOK_ENABLED,
-                value: !isNil(system.get(SystemProp.APP_WEBHOOK_SECRETS)),
+                id: ApFlagId.SUPPORTED_APP_WEBHOOKS,
+                value: Object.keys(system.get(SystemProp.APP_WEBHOOK_SECRETS) ?? {}),
                 created,
                 updated,
             },
@@ -221,7 +221,7 @@ export const flagService = {
         return flags
     },
     getThirdPartyRedirectUrl(platformId: string | undefined, hostname: string | undefined): string {
-        const isCustomerPlatform = platformId &&  !flagService.isCloudPlatform(platformId)
+        const isCustomerPlatform = platformId && !flagService.isCloudPlatform(platformId)
         if (isCustomerPlatform) {
             return `https://${hostname}/redirect`
         }

@@ -112,17 +112,16 @@ export class PieceMetadataService {
     return `${pieceName}-${pieceVersion}`;
   }
   private filterAppWebhooks(
+    pieceName: string,
     triggersMap: TriggersMetadata,
-    appWebhookEnabled: boolean
+    supportedApps: string[]
   ): TriggersMetadata {
-    if (!appWebhookEnabled) {
-      return triggersMap;
-    }
 
     const triggersList = Object.entries(triggersMap);
 
     const filteredTriggersList = triggersList.filter(
-      ([, trigger]) => trigger.type !== TriggerStrategy.APP_WEBHOOK
+      ([, trigger]) => trigger.type !== TriggerStrategy.APP_WEBHOOK ||
+        supportedApps.includes(pieceName)
     );
 
     return Object.fromEntries(filteredTriggersList);
@@ -221,10 +220,10 @@ export class PieceMetadataService {
 
     const pieceMetadata$ = combineLatest({
       edition: this.edition$,
-      appWebhookEnabled: this.flagsService.isFlagEnabled(ApFlagId.APP_WEBHOOK_ENABLED),
+      supportedApps: this.flagsService.getArrayFlag(ApFlagId.SUPPORTED_APP_WEBHOOKS),
     }).pipe(
       take(1),
-      switchMap(({ edition, appWebhookEnabled }) => {
+      switchMap(({ edition, supportedApps }) => {
         return this.fetchPieceMetadata({
           pieceName,
           pieceVersion,
@@ -234,7 +233,7 @@ export class PieceMetadataService {
           map((pieceMetadata) => {
             return {
               ...pieceMetadata,
-              triggers: this.filterAppWebhooks(pieceMetadata.triggers, appWebhookEnabled),
+              triggers: this.filterAppWebhooks(pieceMetadata.name, pieceMetadata.triggers, supportedApps),
             };
           })
         );
