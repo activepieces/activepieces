@@ -24,7 +24,11 @@ export async function getWebhookSecret(
     if (webhookSecrets === undefined) {
         webhookSecrets = await getWebhookSecrets()
     }
-    return webhookSecrets[appName].webhookSecret
+    const appConfig = webhookSecrets[appName]
+    if (isNil(appConfig)) {
+        return undefined
+    }
+    return appConfig.webhookSecret
 }
 
 async function getWebhookSecrets(): Promise<Record<string, {
