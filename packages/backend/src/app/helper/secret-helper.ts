@@ -2,7 +2,7 @@ import { ApEdition, FlowVersion, isNil } from '@activepieces/shared'
 import { system } from './system/system'
 import { SystemProp } from './system/system-prop'
 
-let webhookSecrets: Record<string, string> | undefined = undefined
+let webhookSecrets: Record<string, { webhookSecret: string }> | undefined = undefined
 
 export function getEdition(): ApEdition {
     const edition = system.get<ApEdition>(SystemProp.EDITION)
@@ -24,13 +24,15 @@ export async function getWebhookSecret(
     if (webhookSecrets === undefined) {
         webhookSecrets = await getWebhookSecrets()
     }
-    return webhookSecrets[appName]
+    return webhookSecrets[appName].webhookSecret
 }
 
-async function getWebhookSecrets(): Promise<Record<string, string>> {
-    const currentEdition = getEdition()
-    if (currentEdition !== ApEdition.CLOUD) {
+async function getWebhookSecrets(): Promise<Record<string, {
+    webhookSecret: string
+}>> {
+    const appSecret = system.get(SystemProp.APP_WEBHOOK_SECRETS)
+    if (isNil(appSecret)) {
         return {}
     }
-    return JSON.parse(system.getOrThrow(SystemProp.APP_WEBHOOK_SECRETS))
+    return JSON.parse(appSecret)
 }
