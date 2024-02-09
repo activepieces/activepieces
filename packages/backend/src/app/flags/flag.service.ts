@@ -5,7 +5,7 @@ import { SystemProp } from '../helper/system/system-prop'
 import { FlagEntity } from './flag.entity'
 import axios from 'axios'
 import { webhookService } from '../webhooks/webhook-service'
-import { getEdition, getWebhookSecret, getWebhookSecrets } from '../helper/secret-helper'
+import { getEdition, getSupportedAppWebhooks } from '../helper/secret-helper'
 import { defaultTheme } from './theme'
 
 const flagRepo = databaseConnection.getRepository(FlagEntity)
@@ -212,7 +212,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.SUPPORTED_APP_WEBHOOKS,
-                value: Object.keys(getWebhookSecrets()),
+                value: getSupportedAppWebhooks(),
                 created,
                 updated,
             },

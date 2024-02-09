@@ -22,7 +22,7 @@ export async function getWebhookSecret(
         return undefined
     }
     if (webhookSecrets === undefined) {
-        webhookSecrets = await getWebhookSecrets()
+        webhookSecrets =  getWebhookSecrets()
     }
     const appConfig = webhookSecrets[appName]
     if (isNil(appConfig)) {
@@ -31,9 +31,14 @@ export async function getWebhookSecret(
     return appConfig.webhookSecret
 }
 
-export async function getWebhookSecrets(): Promise<Record<string, {
+
+export function getSupportedAppWebhooks(): string[] {
+    return Object.keys(getWebhookSecrets())
+}
+
+export function getWebhookSecrets(): Record<string, {
     webhookSecret: string
-}>> {
+}> {
     const appSecret = system.get(SystemProp.APP_WEBHOOK_SECRETS)
     if (isNil(appSecret)) {
         return {}
