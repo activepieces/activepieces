@@ -12,6 +12,7 @@ import { searchRecords } from './lib/actions/search-record';
 import { updateRecord } from './lib/actions/update-record';
 import { instanceLogin, isBaseUrl } from './lib/common';
 import { newOrUpdatedRecord } from './lib/triggers/new-or-updated-record';
+import { queryRecords } from './lib/actions/query-records';
 
 const markdownProperty = `
 To obtain your Access Key, follow these steps:
@@ -110,6 +111,7 @@ export const vtiger = createPiece({
     getRecord,
     updateRecord,
     deleteRecord,
+    queryRecords,
     searchRecords,
     makeAPICall,
   ],

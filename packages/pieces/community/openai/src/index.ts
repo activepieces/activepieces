@@ -48,7 +48,7 @@ export const openaiAuth = PieceAuth.CustomAuth({
   },
   validate: async (auth) => {
     try {
-      
+
       let headers;
       if (auth.auth.apiVersion) {
         headers = {
@@ -66,6 +66,9 @@ export const openaiAuth = PieceAuth.CustomAuth({
         url: `${baseUrl}/models`,
         method: HttpMethod.GET,
         headers,
+        queryParams: auth.auth.apiVersion ? {
+          "api-version": auth.auth.apiVersion,
+        } : {},
       });
       return {
         valid: true,

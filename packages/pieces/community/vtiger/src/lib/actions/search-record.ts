@@ -1,11 +1,17 @@
 import {
-  DynamicPropsValue,
+  PiecePropValueSchema,
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
 import { vtigerAuth } from '../..';
-import { Operation, instanceLogin, prepareHttpRequest } from '../common';
-import { httpClient } from '@activepieces/pieces-common';
+import {
+  VTigerAuthValue,
+  queryRecords,
+  countRecords,
+  elementTypeProperty,
+  generateElementFields,
+  instanceLogin,
+} from '../common';
 
 //Docs: https://code.vtiger.com/vtiger/vtigercrm-manual/-/wikis/Webservice-Docs
 //Extra: https://help.vtiger.com/article/147111249-Rest-API-Manual
@@ -16,64 +22,39 @@ export const searchRecords = createAction({
   displayName: 'Search Records',
   description: 'Search for a record.',
   props: {
-    search_by: Property.StaticDropdown({
-      displayName: 'Search By',
-      description: `Select the mode of search for your records`,
-      required: true,
-      defaultValue: 'filter',
-      options: {
-        options: [
-          { label: 'Filter', value: 'filter' },
-          { label: 'Query', value: 'query' },
-        ],
-      },
-    }),
-    search: Property.DynamicProperties({
+    elementType: elementTypeProperty,
+    fields: Property.DynamicProperties({
       displayName: 'Search Fields',
-      description: 'Add new fields to be created in the new record',
+      description: 'Enter your filter criteria',
       required: true,
-      refreshers: ['search_by'],
-      props: async ({ auth, search_by }) => {
-        if (!auth || !search_by) {
+      refreshers: ['elementType'],
+      props: async ({ auth, elementType }) => {
+        if (!auth || !elementType) {
           return {};
         }
 
-        const fields: DynamicPropsValue = {};
+        const instance = await instanceLogin(
+          (auth as PiecePropValueSchema<typeof vtigerAuth>).instance_url,
+          (auth as PiecePropValueSchema<typeof vtigerAuth>).username,
+          (auth as PiecePropValueSchema<typeof vtigerAuth>).password
+        );
 
-        if ((search_by as unknown as string) === 'filter') {
-          fields['filter'] = Property.DynamicProperties({
-            displayName: 'filter',
-            description: `Enter your filter criteria`,
-            required: true,
-            refreshers: ['search_by'],
-            props: async ({ search_by }) => {
-              console.debug('search_by', search_by);
-
-              return {
-                simple: Property.LongText({
-                  displayName: 'query',
-                  description: `Enter the query to search for record new record`,
-                  required: true,
-                }),
-              } as DynamicPropsValue;
-            },
-          });
-        } else {
-          fields['query'] = Property.LongText({
-            displayName: 'query',
-            description: `Enter the query to search for record new record`,
-            required: true,
-          });
+        if (instance === null) {
+          return {};
         }
 
-        return fields;
+        return generateElementFields(
+          auth as VTigerAuthValue,
+          elementType as unknown as string,
+          {},
+          true
+        );
       },
     }),
     limit: Property.Number({
       displayName: 'Limit',
       description: 'Enter the maximum number of records to return.',
-      defaultValue: 100,
-      required: true,
+      required: false,
     }),
   },
   async run({ propsValue, auth }) {
@@ -84,23 +65,30 @@ export const searchRecords = createAction({
     );
     if (vtigerInstance === null) return;
 
-    const httpRequest = prepareHttpRequest(
-      auth.instance_url,
-      vtigerInstance.sessionId ?? vtigerInstance.sessionName,
-      'query' as Operation,
-      {}
-    );
+    const count = await countRecords(auth, propsValue.elementType as string);
+    if (count > 0) {
+      const records: Record<string, unknown>[] = await queryRecords(
+        auth,
+        propsValue.elementType as string,
+        0,
+        count
+      );
 
-    const response = await httpClient.sendRequest<Record<string, unknown>[]>(
-      httpRequest
-    );
+      const filtered = records.filter((record) => {
+        return Object.entries(propsValue['fields']).every(([key, value]) => {
+          if (typeof value === 'string') {
+            return (record[key] as unknown as string)
+              .toLowerCase()
+              .includes(value.toLowerCase());
+          } else {
+            return record[key] === value.toLowerCase();
+          }
+        });
+      });
 
-    if ([200, 201].includes(response.status)) {
-      return response.body;
+      return propsValue.limit ? filtered.slice(0, propsValue.limit) : filtered;
+    } else {
+      return [];
     }
-
-    return {
-      error: 'Unexpected outcome!',
-    };
   },
 });

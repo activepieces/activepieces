@@ -4,6 +4,7 @@ import {
     Cursor,
     ErrorCode,
     FlowId,
+    getPieceMajorAndMinorVersion,
     PieceTrigger,
     PopulatedFlow,
     ProjectId,
@@ -129,14 +130,17 @@ async function deleteOldFilesForTestData({ projectId, flowId, stepName }: { proj
 }
 function getSourceName(trigger: Trigger): string {
     switch (trigger.type) {
-        case TriggerType.WEBHOOK:
-            return TriggerType.WEBHOOK
         case TriggerType.PIECE: {
             const pieceTrigger = trigger as PieceTrigger
-            return pieceTrigger.settings.pieceName + '@' + pieceTrigger.settings.pieceVersion + ':' + pieceTrigger.settings.triggerName
+            const pieceName = pieceTrigger.settings.pieceName
+            const pieceVersion = getPieceMajorAndMinorVersion(pieceTrigger.settings.pieceVersion)
+            const triggerName = pieceTrigger.settings.triggerName
+            return `${pieceName}@${pieceVersion}:${triggerName}`
         }
+
+        case TriggerType.WEBHOOK:
         case TriggerType.EMPTY:
-            return TriggerType.EMPTY
+            return trigger.type
     }
 }
 
