@@ -31,7 +31,7 @@ export async function getWebhookSecret(
     return appConfig.webhookSecret
 }
 
-async function getWebhookSecrets(): Promise<Record<string, {
+export async function getWebhookSecrets(): Promise<Record<string, {
     webhookSecret: string
 }>> {
     const appSecret = system.get(SystemProp.APP_WEBHOOK_SECRETS)
