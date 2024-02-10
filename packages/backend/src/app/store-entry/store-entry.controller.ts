@@ -44,7 +44,7 @@ export const storeEntryController: FastifyPluginAsyncTypebox = async (fastify) =
             })
 
             if (!value) {
-                return reply.code(404).send('Value not found!')
+                return reply.code(StatusCodes.NOT_FOUND).send('Value not found!')
             }
 
             return value
