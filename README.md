@@ -250,6 +250,9 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/karimkhaleel"><img src="https://avatars.githubusercontent.com/u/94621779?v=4?s=100" width="100px;" alt="Karim Khaleel"/><br /><sub><b>Karim Khaleel</b></sub></a><br /><a href="#plugin-karimkhaleel" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/CPonchet"><img src="https://avatars.githubusercontent.com/u/40756925?v=4?s=100" width="100px;" alt="CPonchet"/><br /><sub><b>CPonchet</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3ACPonchet" title="Bug reports">🐛</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/AdamSelene"><img src="https://avatars.githubusercontent.com/u/79495?v=4?s=100" width="100px;" alt="Olivier Sambourg"/><br /><sub><b>Olivier Sambourg</b></sub></a><br /><a href="#plugin-AdamSelene" title="Plugin/utility libraries">🔌</a></td>
+    </tr>
   </tbody>
 </table>
 
