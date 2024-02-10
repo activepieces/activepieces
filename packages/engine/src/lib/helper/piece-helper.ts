@@ -1,4 +1,5 @@
 import {
+    AuthValidationContext,
     DropdownProperty,
     DropdownState,
     DynamicProperties,
@@ -21,6 +22,8 @@ import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { pieceLoader } from './piece-loader'
 import { variableService } from '../services/variable-service'
+import { createContextStore } from '../services/storage.service'
+import { utils } from '../utils'
 
 export const pieceHelper = {
     async executeProps({ params, piecesSource, executionState, constants }: { executionState: FlowExecutorContext, params: ExecutePropsOptions, piecesSource: string, constants: EngineConstants }) {
@@ -83,6 +86,14 @@ export const pieceHelper = {
         const { piece: piecePackage } = params
 
         const piece = await pieceLoader.loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, piecesSource })
+        const input: EngineConstants = await utils.parseJsonFile(EngineConstants.INPUT_FILE)
+        const context: AuthValidationContext  = {
+            store: createContextStore({
+                prefix: '',
+                flowId: '',
+                workerToken: input.workerToken,
+            }),
+        }
         if (piece.auth?.validate === undefined) {
             return {
                 valid: true,
@@ -97,18 +108,21 @@ export const pieceHelper = {
                         username: con.username,
                         password: con.password,
                     },
+                    ctx: context,
                 })
             }
             case PropertyType.SECRET_TEXT: {
                 const con = params.auth as SecretTextConnectionValue
                 return piece.auth.validate({
                     auth: con.secret_text,
+                    ctx: context,
                 })
             }
             case PropertyType.CUSTOM_AUTH: {
                 const con = params.auth as CustomAuthConnectionValue
                 return piece.auth.validate({
                     auth: con.props,
+                    ctx: context,
                 })
             }
             default: {

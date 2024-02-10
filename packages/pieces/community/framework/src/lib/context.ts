@@ -148,6 +148,10 @@ export type ActionContext<
   | BeginExecutionActionContext<PieceAuth, ActionProps>
   | ResumeExecutionActionContext<PieceAuth, ActionProps>;
 
+export type AuthValidationContext = {
+    store: Store;
+}
+
 export interface FilesService {
   write({
     fileName,

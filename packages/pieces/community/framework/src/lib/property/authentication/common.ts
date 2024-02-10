@@ -1,4 +1,5 @@
 import { Type } from "@sinclair/typebox";
+import { AuthValidationContext } from "../../context";
 
 export const BasePieceAuthSchema = Type.Object({
     displayName: Type.String(),
@@ -8,5 +9,5 @@ export const BasePieceAuthSchema = Type.Object({
 export type BasePieceAuthSchema<AuthValueSchema> = {
     displayName: string;
     description?: string;
-    validate?: (params: { auth: AuthValueSchema }) => Promise<{ valid: true } | { valid: false, error: string }>;
+    validate?: (params: { auth: AuthValueSchema; ctx: AuthValidationContext}) => Promise<{ valid: true } | { valid: false, error: string }>;
 }
