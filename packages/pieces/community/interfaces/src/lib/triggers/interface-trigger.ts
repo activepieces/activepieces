@@ -7,7 +7,7 @@ import {
 const markdown = `
 The interface title is same as the flow's title. \n
 Interface URL: \n
-\`<b>{{interfaceUrl}}</b>\`
+**{{interfaceUrl}}**
 `;
 
 export const onFormSubmission = createTrigger({
