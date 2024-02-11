@@ -16,6 +16,7 @@ import { textToSpeech } from './lib/actions/text-to-speech';
 import { transcribeAction } from './lib/actions/transcriptions';
 import { translateAction } from './lib/actions/translation';
 import { visionPrompt } from './lib/actions/vision-prompt';
+import { baseUrl } from './lib/common/common';
 
 const markdownDescription = `
 Follow these instructions to get your OpenAI API Key:
@@ -35,7 +36,7 @@ export const openaiAuth = PieceAuth.SecretText({
       await httpClient.sendRequest<{
         data: { id: string }[];
       }>({
-        url: 'https://api.openai.com/v1/models',
+        url: `${baseUrl}/models`,
         method: HttpMethod.GET,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
@@ -71,7 +72,7 @@ export const openai = createPiece({
     translateAction,
     createCustomApiCallAction({
       auth: openaiAuth,
-      baseUrl: () => 'https://api.openai.com/v1',
+      baseUrl: () => baseUrl,
       authMapping: (auth) => {
         return {
           Authorization: `Bearer ${auth}`,
