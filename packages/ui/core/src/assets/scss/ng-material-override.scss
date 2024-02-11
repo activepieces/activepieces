@@ -520,7 +520,7 @@ mat-option.add-auth {
 }
 
 .ql-editor {
-  padding: 0px !important;
+  padding:  0px  0px 8px 0px !important;
   @include mat.typography-level($ap-typography, "body-1");
   line-height: 1.9rem;
 }
@@ -711,6 +711,5 @@ app-platform-settings {
 }
 
 
-.smaller-input { 
-  @include mat.all-component-densities(-2);
-}
+@include mat.form-field-density(-2);
+@include mat.button-density(0);
