@@ -1,4 +1,4 @@
-<form *ngIf="form" [formGroup]="form" class="ap-flex  ap-flex-col ap-gap-2">
+<form *ngIf="form" [formGroup]="form" class="ap-flex  ap-flex-col">
   <div *ngFor="let property of requiredProperties|objectToArray; let i = index">
     <ng-container
       *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:property, propertyIndex:i,formGroup:form}"></ng-container>
@@ -647,7 +647,7 @@
 <!--Line clamp is not working with prefix on tailwind for some reason  -->
 <ng-template #description let-property let-hasError="hasError" let-errorMessage="errorMessage"
   let-isTouched="isTouched">
-  <div class="ap-py-2 ap-flex ap-gap-2 ap-justify-between ap-markdown ap-mb-3">
+  <div class="ap-justify-between ap-markdown">
     <div class="ap-line-clamp-1" [style.display]="descriptionExpandedMap[property.key]? 'block': '-webkit-box'">
       <div class="ap-typography-caption " apCheckOverflow (isOverflowed)="descriptionOverflownMap[property.key]=$event">
         <markdown
