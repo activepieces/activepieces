@@ -1,9 +1,9 @@
 <div class="flow-container ap-shadow-step-container-ds" (mouseenter)="hover = true" (mouseleave)="hover = false"
   [class.ap-pointer-events-none]="(isDragging$ | async) === true" [class.non-empty-step]="true"
   [class.empty-step]="false">
-  <div class="flow-item ap-flex ap-items-center ap-border-solid ap-border-border ap-border-[1px]"
-    [class.selected-non-empty]="selected" [class.selected-empty]="false"
-    [class.empty-trigger]="_flowItem.type === TriggerType.EMPTY" (click)="selectStep()">
+  <div class="flow-item ap-p-3 ap-gap-3 ap-flex ap-items-center ap-border-solid ap-border-border ap-border-[1px]"
+    [style.height]="FLOW_ITEM_HEIGHT+'px'" [style.width]="FLOW_ITEM_WIDTH+'px'" [class.selected-non-empty]="selected"
+    [class.selected-empty]="false" [class.empty-trigger]="_flowItem.type === TriggerType.EMPTY" (click)="selectStep()">
     <div class="flow-icon-container ap-flex ap-justify-center ap-items-center"
       [matTooltip]="((stepAppName$ | async ) || '')| titlecase">
       <ng-container *ngIf=" (flowItemDetails$ | async)">
@@ -19,9 +19,9 @@
     </div>
     <div class="flow-content ap-flex ap-flex-col ap-justify-center  ap-self-stretch">
       <div class="ap-flex ap-items-center ap-gap-2 ">
-        <div class="ap-flex ap-flex-grow ap-flex-col ap-gap-2">
+        <div class="ap-flex ap-flex-grow ap-flex-col ap-gap-1">
           <div
-            class="ap-typography-subtitle-1 ap-pointer-events-none  ap-select-none  flow-title ap-flex-grow ap-max-w-[193px] ap-text-body"
+            class="ap-typography-body-2 ap-pointer-events-none  ap-select-none  flow-title ap-flex-grow ap-max-w-[193px] ap-text-body"
             #stepTitle [matTooltip]="isOverflown(stepTitle)?_flowItem.displayName:''">
 
             {{stepIndex$ | async}}. {{ _flowItem.displayName }}

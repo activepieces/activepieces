@@ -13,8 +13,8 @@ export type PositionLabel = {
   label: string;
 };
 
-export const FLOW_ITEM_WIDTH = 300;
-export const FLOW_ITEM_HEIGHT = 92;
+export const FLOW_ITEM_WIDTH = 250;
+export const FLOW_ITEM_HEIGHT = 72;
 export const FLOW_ITEM_BOTTOM_PADDING = 16;
 /**Space between branch label and its next step */
 export const VERTICAL_SPACE_BETWEEN_LABEL_AND_FLOW_ITEM = 70;
