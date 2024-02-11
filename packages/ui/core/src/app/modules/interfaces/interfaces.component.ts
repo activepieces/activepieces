@@ -13,7 +13,7 @@ import {
 } from '@activepieces/ui/common';
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   Observable,
   Observer,
@@ -73,7 +73,8 @@ export class InterfacesComponent implements OnInit {
     private snackBar: MatSnackBar,
     private flagService: FlagService,
     private interfacesService: InterfacesService,
-    private telemteryService: TelemetryService
+    private telemteryService: TelemetryService,
+    private router: Router
   ) {
     this.fullLogoUrl$ = this.flagService
       .getLogos()
@@ -145,6 +146,11 @@ export class InterfacesComponent implements OnInit {
           this.props = null;
           this.error = 'This flow does not have an interface.';
         }
+      }),
+      catchError((err) => {
+        console.error(err);
+        this.router.navigate(['/']);
+        throw err;
       })
     );
   }
