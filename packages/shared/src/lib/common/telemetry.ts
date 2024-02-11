@@ -88,7 +88,7 @@ export enum TelemetryEventName {
     UPGRADE_CLICKED = 'upgrade.clicked',
     OPENED_PRICING_FROM_DASHBOARD = 'pricing.viewed',
     UPGRADE_POPUP = 'upgrade.popup',
-    FLOW_CREATED = 'flow.created',
+    CREATED_FLOW = 'flow.created',
     DEMO_IMPORTED = 'demo.imported',
     FLOW_RUN_CREATED = 'run.created',
     FLOW_PUBLISHED = 'flow.published',
@@ -117,7 +117,7 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.FLOW_RUN_CREATED, RunCreated>
     | BaseTelemetryEvent<TelemetryEventName.FLOW_PUBLISHED, FlowPublished>
     | BaseTelemetryEvent<TelemetryEventName.QUOTA_ALERT, QuotaAlert>
-    | BaseTelemetryEvent<TelemetryEventName.FLOW_CREATED, FlowCreated>
+    | BaseTelemetryEvent<TelemetryEventName.CREATED_FLOW, FlowCreated>
     | BaseTelemetryEvent<TelemetryEventName.TEMPLATE_SEARCH, TemplateSearch>
     | BaseTelemetryEvent<TelemetryEventName.PIECES_SEARCH, PiecesSearch>
     | BaseTelemetryEvent<TelemetryEventName.FLOW_IMPORTED, FlowImported>

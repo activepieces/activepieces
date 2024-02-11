@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/node'
-import { system } from '../../helper/system/system'
-import { logger } from '../../helper/logger'
-import { SystemProp } from '../../helper/system/system-prop'
+import { system } from './system/system'
+import { logger } from './logger'
+import { SystemProp } from './system/system-prop'
 
 const sentryDsn = system.get(SystemProp.SENTRY_DSN)
 

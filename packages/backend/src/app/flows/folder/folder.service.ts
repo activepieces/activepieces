@@ -83,7 +83,7 @@ export const flowFolderService = {
         })
         return paginationHelper.createPage<FolderDto>(dtosList, paginationResponse.cursor)
     },
-    async getOne({ projectId, folderId }: { projectId: ProjectId, folderId: FolderId }): Promise<FolderDto | null> {
+    async getOneOrThrow({ projectId, folderId }: { projectId: ProjectId, folderId: FolderId }): Promise<FolderDto> {
         const folder = await folderRepo.findOneBy({ projectId, id: folderId })
         if (!folder) {
             throw new ActivepiecesError({

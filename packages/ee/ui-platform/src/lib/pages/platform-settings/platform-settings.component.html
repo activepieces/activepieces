@@ -18,5 +18,8 @@
     <mat-tab label="SSO" bodyClass="!ap-overflow-visible">
         <app-sso-settings [platform]="platform" [isDemo]="isDemo"></app-sso-settings>
     </mat-tab>
+    <mat-tab label="Audit Logs" bodyClass="!ap-overflow-visible">
+        <app-audit-event-table [platform]="platform" [isDemo]="isDemo"></app-audit-event-table>
+    </mat-tab>
 </mat-tab-group>
 <ng-container *ngIf="fragmentChanged$ | async"></ng-container>

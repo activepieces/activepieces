@@ -5,6 +5,8 @@ import { flowFolderService as folderService } from './folder.service'
 import { StatusCodes } from 'http-status-codes'
 import { Static, Type } from '@sinclair/typebox'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
+import { eventsHooks } from '../../helper/audit-events'
+import { ApplicationEventName } from '@activepieces/ee-shared'
 
 const DEFUALT_PAGE_SIZE = 10
 
@@ -25,7 +27,13 @@ export const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
             },
         },
         async (request) => {
-            return folderService.create({ projectId: request.principal.projectId, request: request.body })
+            const createdFolder = await folderService.create({ projectId: request.principal.projectId, request: request.body })
+            void eventsHooks.get().send(request, {
+                action: ApplicationEventName.CREATED_FOLDER,
+                folder: createdFolder,
+                userId: request.principal.id,
+            })
+            return createdFolder
         },
     )
 
@@ -39,7 +47,15 @@ export const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
             },
         },
         async (request) => {
-            return folderService.update({ projectId: request.principal.projectId, folderId: request.params.folderId, request: request.body })
+            const updatedFlow = await folderService.update({ projectId: request.principal.projectId, folderId: request.params.folderId, request: request.body })
+
+            void eventsHooks.get().send(request, {
+                action: ApplicationEventName.UPDATED_FOLDER,
+                folder: updatedFlow,
+                userId: request.principal.id,
+            })
+
+            return updatedFlow
         },
     )
 
@@ -53,7 +69,7 @@ export const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
                 }
             }>,
         ) => {
-            return folderService.getOne({ projectId: request.principal.projectId, folderId: request.params.folderId })
+            return folderService.getOneOrThrow({ projectId: request.principal.projectId, folderId: request.params.folderId })
         },
     )
 
@@ -81,6 +97,13 @@ export const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
             }>,
             reply,
         ) => {
+
+            const folder = await folderService.getOneOrThrow({ projectId: request.principal.projectId, folderId: request.params.folderId })
+            void eventsHooks.get().send(request, {
+                action: ApplicationEventName.DELETED_FOLDER,
+                folder,
+                userId: request.principal.id,
+            })
             await folderService.delete({ projectId: request.principal.projectId, folderId: request.params.folderId })
             return reply.status(StatusCodes.OK).send()
         },

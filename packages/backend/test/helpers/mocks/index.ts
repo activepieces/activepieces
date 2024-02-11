@@ -1,4 +1,4 @@
-import { KeyAlgorithm, SigningKey, Platform, OAuthApp, FilteredPieceBehavior, CustomDomain, CustomDomainStatus, OtpModel, OtpType, OtpState, ProjectMember, ApiKey, ProjectMemberRole, ProjectMemberStatus, GitRepo } from '@activepieces/ee-shared'
+import { KeyAlgorithm, SigningKey, Platform, OAuthApp, FilteredPieceBehavior, CustomDomain, CustomDomainStatus, OtpModel, OtpType, OtpState, ProjectMember, ApiKey, ProjectMemberRole, ProjectMemberStatus, GitRepo, ApplicationEvent, ApplicationEventName } from '@activepieces/ee-shared'
 import { UserStatus, User, apId, Project, NotificationStatus, ProjectType, PieceType, PackageType, Flow, FlowStatus, FlowVersion, TriggerType, FlowVersionState, FlowTemplate, TemplateType, FlowRun, ExecutionOutputStatus, RunEnvironment } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
@@ -247,6 +247,21 @@ export const createMockPieceMetadata = (pieceMetadata?: Partial<Omit<PieceMetada
         pieceType: pieceMetadata?.pieceType ?? faker.helpers.enumValue(PieceType),
         packageType: pieceMetadata?.packageType ?? faker.helpers.enumValue(PackageType),
         archiveId: pieceMetadata?.archiveId,
+    }
+}
+
+export const createAuditEvent = (auditEvent: Partial<ApplicationEvent>) => {
+    return {
+        id: auditEvent.id ?? apId(),
+        created: auditEvent.created ?? faker.date.recent().toISOString(),
+        updated: auditEvent.updated ?? faker.date.recent().toISOString(),
+        ip: auditEvent.ip ?? faker.internet.ip(),
+        projectDisplayName: auditEvent.projectDisplayName ?? faker.lorem.word(),
+        platformId: auditEvent.platformId,
+        userId: auditEvent.userId,
+        userEmail: auditEvent.userEmail ?? faker.internet.email(),
+        action: auditEvent.action ?? faker.helpers.enumValue(ApplicationEventName),
+        data: auditEvent.data ?? {},
     }
 }
 

@@ -101,6 +101,7 @@ import { AddGitRepoMigrationPostgres1704503804056 } from './migration/postgres/1
 import { RemoveUniqueonAppNameAppCredentials1705586178452 } from './migration/postgres/1705586178452-RemoveUniqueonAppNameAppCredentials'
 import { AddTriggerTestStrategy1707087022764 } from './migration/common/1707087022764-add-trigger-test-strategy'
 import { AddCategoriesToPieceMetadataPostgres1707231704973 } from './migration/postgres/1707231704973-AddCategoriesToPieceMetadataPostgres'
+import { AddAuditEvents1707614902283 } from './migration/postgres/1707614902283-AddAuditEvents'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -217,6 +218,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddGitRepoMigrationPostgres1704503804056,
                 AddGitSyncEnabledToPlatform1704636362533,
                 RemoveUniqueonAppNameAppCredentials1705586178452,
+                AddAuditEvents1707614902283,
             )
             break
         case ApEdition.ENTERPRISE:
@@ -256,6 +258,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddEnableEmailAuthToPlatform1704797979825,
                 AddGitRepoMigrationPostgres1704503804056,
                 AddGitSyncEnabledToPlatform1704636362533,
+                AddAuditEvents1707614902283,
             )
             break
         case ApEdition.COMMUNITY:

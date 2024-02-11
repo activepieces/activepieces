@@ -20,7 +20,7 @@ export const rateLimitModule: FastifyPluginAsyncTypebox = FastifyPlugin(async (a
     }
 })
 
-const extractClientRealIp = (request: FastifyRequest): string | number | Promise<string | number> => {
+export const extractClientRealIp = (request: FastifyRequest): string => {
     return request.headers[CLIENT_REAL_IP_HEADER] as string
 }
 
