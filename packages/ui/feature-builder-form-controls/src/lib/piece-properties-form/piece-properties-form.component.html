@@ -55,7 +55,10 @@
           </ng-container>
         </ng-container>
       </ng-template>
-      <ng-container *ngTemplateOutlet="description; context:{$implicit:property}">
+      <ng-container *ngIf="!customizedInputs || !customizedInputs[property.key]">
+        <ng-container *ngTemplateOutlet="description; context:{$implicit:property}">
+        </ng-container>
+
       </ng-container>
     </ng-container>
     <div
