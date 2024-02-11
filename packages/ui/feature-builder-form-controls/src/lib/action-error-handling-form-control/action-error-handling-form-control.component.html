@@ -1,19 +1,19 @@
 <form [formGroup]="errorHandlingOptionsForm">
-  <div class="ap-flex ap-flex-col ap-mt-4 ap-gap-4">
-    <div apTrackHover #slider="hoverTrackerDirective" class="ap-flex ap-flex-col ap-align-center"
-      *ngIf="!hideContinueOnFailure">
+  <div class="ap-flex ap-flex-col  ap-gap-2">
+    <div apTrackHover #slider="hoverTrackerDirective" class="ap-flex ap-flex-col" *ngIf="!hideContinueOnFailure">
       <mat-slide-toggle [formControl]="errorHandlingOptionsForm.controls.continueOnFailure" color="primary"
         class="ap-flex-grow-1" i18n>Continue on Failure</mat-slide-toggle>
-      <div class="ap-py-2 ap-flex ap-gap-2 ap-justify-between ap-markdown ap-mb-3">
-        <div class="ap-line-clamp-1" [style.display]="continueOnFailureDescriptionExpanded? 'block': '-webkit-box'">
+      <div class=" ap-flex ap-gap-2 ap-justify-between ap-markdown ">
+        <div class="ap-line-clamp-1" [style.display]="continueOnFailureDescriptionExpanded? 'block': '-webkit-box'"
+          [class.ap-h-[24px]]="!continueOnFailureDescriptionExpanded">
           <div class="ap-typography-caption" apCheckOverflow
             (isOverflowed)="continueOnFailureDescriptionOverflows=$event">
             <markdown i18n>Enable this option to skip this step and continue the flow normally if it fails.</markdown>
           </div>
         </div>
-        <div class="ap-flex ap-items-start"
+        <div class="ap-flex  ap-items-start"
           *ngIf="continueOnFailureDescriptionExpanded || continueOnFailureDescriptionOverflows">
-          <button class="ap-underline ap-typography-caption"
+          <button class="ap-underline ap-typography-caption ap-mt-2"
             (click)="continueOnFailureDescriptionExpanded = !continueOnFailureDescriptionExpanded">
             {{continueOnFailureDescriptionExpanded? 'less' : 'more'}} </button>
         </div>
@@ -23,7 +23,7 @@
       *ngIf="!hideRetryOnFailure">
       <mat-slide-toggle [formControl]="errorHandlingOptionsForm.controls.retryOnFailure" color="primary"
         class="ap-flex-grow-1" i18n>Auto Retry on Failure</mat-slide-toggle>
-      <div class="ap-py-2 ap-flex ap-gap-2 ap-justify-between ap-markdown">
+      <div class="ap-flex ap-gap-2 ap-justify-between ap-markdown">
         <div class="ap-typography-caption">
           <markdown i18n>Automatically retry up to four attempts when failed.</markdown>
         </div>
