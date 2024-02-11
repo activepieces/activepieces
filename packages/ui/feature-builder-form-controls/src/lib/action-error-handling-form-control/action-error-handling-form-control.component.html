@@ -1,5 +1,5 @@
 <form [formGroup]="errorHandlingOptionsForm">
-  <div class="ap-flex ap-flex-col  ap-gap-2">
+  <div class="ap-flex ap-flex-col  ap-gap-3">
     <div apTrackHover #slider="hoverTrackerDirective" class="ap-flex ap-flex-col" *ngIf="!hideContinueOnFailure">
       <mat-slide-toggle [formControl]="errorHandlingOptionsForm.controls.continueOnFailure" color="primary"
         class="ap-flex-grow-1" i18n>Continue on Failure</mat-slide-toggle>

@@ -1,12 +1,12 @@
 <form *ngIf="form" [formGroup]="form" class="ap-flex  ap-flex-col">
   <div *ngFor="let property of requiredProperties|objectToArray; let i = index"
-    [class.ap-mb-2]="property.value.type === PropertyType.CHECKBOX">
+    [class.ap-mb-3]="property.value.type === PropertyType.CHECKBOX">
     <ng-container
       *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:property, propertyIndex:i,formGroup:form}"></ng-container>
   </div>
 
   <div *ngFor="let property of optionalProperties|objectToArray; let i = index"
-    [class.ap-mb-2]="property.value.type === PropertyType.CHECKBOX">
+    [class.ap-mb-3]="property.value.type === PropertyType.CHECKBOX">
     <ng-container *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:property, propertyIndex:i, formGroup:form}">
     </ng-container>
   </div>
