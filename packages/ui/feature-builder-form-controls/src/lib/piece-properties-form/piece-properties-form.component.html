@@ -1,10 +1,12 @@
-<form *ngIf="form" [formGroup]="form" class="ap-flex  ap-flex-col ap-gap-2">
-  <div *ngFor="let property of requiredProperties|objectToArray; let i = index">
+<form *ngIf="form" [formGroup]="form" class="ap-flex  ap-flex-col">
+  <div *ngFor="let property of requiredProperties|objectToArray; let i = index"
+    [class.ap-mb-3]="property.value.type === PropertyType.CHECKBOX">
     <ng-container
       *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:property, propertyIndex:i,formGroup:form}"></ng-container>
   </div>
 
-  <div *ngFor="let property of optionalProperties|objectToArray; let i = index">
+  <div *ngFor="let property of optionalProperties|objectToArray; let i = index"
+    [class.ap-mb-3]="property.value.type === PropertyType.CHECKBOX">
     <ng-container *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:property, propertyIndex:i, formGroup:form}">
     </ng-container>
   </div>
@@ -29,7 +31,7 @@
       </ng-container>
 
       <ng-template #checkboxInputTemplate>
-        <div class="ap-flex  ap-mr-[5px] ap-items-center ap-gap-2">
+        <div class="ap-flex  ap-mr-[5px] ap-items-center ap-gap-2 ">
 
           <div apTrackHover #slider="hoverTrackerDirective" class="ap-flex ap-items-center ap-gap-2 ap-align-center">
             <mat-slide-toggle [formControlName]="property.key" color="primary"
@@ -53,7 +55,10 @@
           </ng-container>
         </ng-container>
       </ng-template>
-      <ng-container *ngTemplateOutlet="description; context:{$implicit:property}">
+      <ng-container *ngIf="!customizedInputs || !customizedInputs[property.key]">
+        <ng-container *ngTemplateOutlet="description; context:{$implicit:property}">
+        </ng-container>
+
       </ng-container>
     </ng-container>
     <div
@@ -647,8 +652,9 @@
 <!--Line clamp is not working with prefix on tailwind for some reason  -->
 <ng-template #description let-property let-hasError="hasError" let-errorMessage="errorMessage"
   let-isTouched="isTouched">
-  <div class="ap-py-2 ap-flex ap-gap-2 ap-justify-between ap-markdown ap-mb-3">
-    <div class="ap-line-clamp-1" [style.display]="descriptionExpandedMap[property.key]? 'block': '-webkit-box'">
+  <div class="ap-flex ap-justify-between ap-markdown">
+    <div class="ap-line-clamp-1" [style.display]="descriptionExpandedMap[property.key]? 'block': '-webkit-box'"
+      [class.ap-h-[24px]]="!descriptionExpandedMap[property.key]">
       <div class="ap-typography-caption " apCheckOverflow (isOverflowed)="descriptionOverflownMap[property.key]=$event">
         <markdown
           [data]="isTouched && hasError? '<span class=\'ap-text-danger\'>'+errorMessage+'</span>. '+ (property.value.description? property.value.description: '') : property.value.description? property.value.description:''">
@@ -656,7 +662,7 @@
       </div>
     </div>
     <div class="ap-flex ap-items-start">
-      <button class="ap-underline ap-typography-caption"
+      <button class="ap-underline ap-typography-caption ap-mt-2"
         *ngIf="descriptionOverflownMap[property.key] || descriptionExpandedMap[property.key]"
         (click)="descriptionExpandedMap[property.key] = !descriptionExpandedMap[property.key]">
         {{descriptionExpandedMap[property.key]? 'less' : 'more'}} </button>
