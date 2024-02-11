@@ -27,24 +27,8 @@ export const askAssistant = createAction({
           };
         }
         try {
-          const { apiKey, baseUrl, apiVersion } = auth as {
-            apiKey: string;
-            baseUrl: string;
-            apiVersion: string;
-          };
           const openai = new OpenAI({
-            apiKey,
-            baseURL: baseUrl,
-            defaultHeaders: apiVersion
-              ? {
-                  'api-key': apiKey,
-                }
-              : undefined,
-            defaultQuery: apiVersion
-              ? {
-                  'api-version': apiVersion,
-                }
-              : undefined,
+            apiKey: auth as string,
           });
           const assistants = await openai.beta.assistants.list();
 
@@ -79,18 +63,7 @@ export const askAssistant = createAction({
   },
   async run({ auth, propsValue, store }) {
     const openai = new OpenAI({
-      apiKey: auth.apiKey,
-      baseURL: auth.baseUrl,
-      defaultHeaders: auth.apiVersion
-        ? {
-            'api-key': auth.apiKey,
-          }
-        : undefined,
-      defaultQuery: auth.apiVersion
-        ? {
-            'api-version': auth.apiVersion,
-          }
-        : undefined,
+      apiKey: auth,
     });
     const { assistant, prompt, memoryKey } = propsValue;
     const runCheckDelay = 1000;
