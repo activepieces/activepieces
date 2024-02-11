@@ -27,6 +27,7 @@ import { flowHelper } from '@activepieces/shared';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FlowItemComponent implements OnInit {
+  readonly FLOW_ITEM_HEIGHT = FLOW_ITEM_HEIGHT;
   flowGraphContainer = {};
   transformObs$: Observable<string>;
   draggingContainer: HTMLElement;
