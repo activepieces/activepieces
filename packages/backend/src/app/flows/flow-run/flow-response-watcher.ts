@@ -1,5 +1,5 @@
 import { logger } from '@sentry/utils'
-import { ExecutionOutput, ExecutionOutputStatus, StopExecutionOutput, apId } from '@activepieces/shared'
+import { ExecutionOutput, ExecutionOutputStatus, PauseExecutionOutput, PauseType, StopExecutionOutput, apId } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 import { pubSub } from '../../helper/pubsub'
 import { system } from '../../helper/system/system'
@@ -69,46 +69,62 @@ export const flowResponseWatcher = {
 
 async function getFlowResponse(executionOutput: ExecutionOutput): Promise<FlowResponse> {
 
-    if (executionOutput.status === ExecutionOutputStatus.STOPPED) {
-        return getResponseForStoppedRun(executionOutput)
+    switch (executionOutput.status) {
+        case ExecutionOutputStatus.PAUSED:
+            return getResponseForPausedRun(executionOutput)
+        case ExecutionOutputStatus.STOPPED:
+            return getResponseForStoppedRun(executionOutput)
+        case ExecutionOutputStatus.INTERNAL_ERROR:
+            return {
+                status: StatusCodes.INTERNAL_SERVER_ERROR,
+                body: {
+                    message: 'An internal error has occurred',
+                },
+                headers: {},
+            }
+        case ExecutionOutputStatus.FAILED:
+            return {
+                status: StatusCodes.INTERNAL_SERVER_ERROR,
+                body: {
+                    message: 'The flow has failed and there is no response returned',
+                },
+                headers: {},
+            }
+        case ExecutionOutputStatus.TIMEOUT:
+        case ExecutionOutputStatus.RUNNING:
+            return {
+                status: StatusCodes.GATEWAY_TIMEOUT,
+                body: {
+                    message: 'The request took too long to reply',
+                },
+                headers: {},
+            }
+        case ExecutionOutputStatus.SUCCEEDED:
+        case ExecutionOutputStatus.QUOTA_EXCEEDED:
+            return {
+                status: StatusCodes.NO_CONTENT,
+                body: {},
+                headers: {},
+            }
     }
-    else {
-        switch (executionOutput.status) {
-            case ExecutionOutputStatus.INTERNAL_ERROR:
-                return {
-                    status: StatusCodes.INTERNAL_SERVER_ERROR,
-                    body: {
-                        message: 'An internal error has occurred',
-                    },
-                    headers: {},
-                }
-            case ExecutionOutputStatus.FAILED:
-                return {
-                    status: StatusCodes.INTERNAL_SERVER_ERROR,
-                    body: {
-                        message: 'The flow has failed and there is no response returned',
-                    },
-                    headers: {},
-                }
-                break
-            case ExecutionOutputStatus.TIMEOUT:
-            case ExecutionOutputStatus.RUNNING:
-                return {
-                    status: StatusCodes.GATEWAY_TIMEOUT,
-                    body: {
-                        message: 'The request took too long to reply',
-                    },
-                    headers: {},
-                }
-                break
-            default:
-                return {
-                    status: StatusCodes.NO_CONTENT,
-                    body: {},
-                    headers: {},
-                }
+    
+}
+
+async function getResponseForPausedRun(executionOutput: PauseExecutionOutput): Promise<FlowResponse> {
+
+    if (executionOutput.pauseMetadata.type === PauseType.WEBHOOK) {
+        return {
+            status: StatusCodes.OK,
+            body: executionOutput.pauseMetadata.metadata,
+            headers: {},
         }
     }
+    return {
+        status: StatusCodes.NO_CONTENT,
+        body: {},
+        headers: {},
+    }
+    
 }
 
 async function getResponseForStoppedRun(executionOutput: StopExecutionOutput): Promise<FlowResponse> {

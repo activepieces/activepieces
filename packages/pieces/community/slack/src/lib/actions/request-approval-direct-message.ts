@@ -25,7 +25,7 @@ export const requestApprovalDirectMessageAction = createAction({
       context.run.pause({
         pauseMetadata: {
           type: PauseType.WEBHOOK,
-          actions: ['approve', 'disapprove'],
+          metadata: {},
         },
       });
       const token = context.auth.access_token;
@@ -78,10 +78,9 @@ export const requestApprovalDirectMessageAction = createAction({
         conversationId: userId,
       });
     } else {
-      const payload = context.resumePayload as { action: string };
 
       return {
-        approved: payload.action === 'approve',
+        approved: context.resumePayload.payload.queryParams['action'] === 'approve',
       };
     }
   },

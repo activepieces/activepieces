@@ -19,6 +19,7 @@ import {
     PiecePackage,
     ProjectId,
     ResumeExecuteFlowOperation,
+    ResumePayload,
     RunEnvironment,
     RunTerminationReason,
     SourceCode,
@@ -149,7 +150,7 @@ const loadInputAndLogFileId = async ({
                     executionType: ExecutionType.RESUME,
                     tasks: executionOutput.tasks,
                     executionState: executionOutput.executionState,
-                    resumePayload: jobData.payload,
+                    resumePayload: jobData.payload as ResumePayload,
                 },
                 logFileId: flowRun.logsFileId,
             }
