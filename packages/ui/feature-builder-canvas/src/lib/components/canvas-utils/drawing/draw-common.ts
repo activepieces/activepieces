@@ -37,3 +37,4 @@ export const DROP_ZONE_HEIGHT = 125;
 export const HORIZONTAL_SPACE_BETWEEN_RETURNING_LOOP_ARROW_AND_STARTING_LOOP_ARC = 20;
 export const VERTICAL_SPACE_BETWEEN_AFTERLOOP_LINE_AND_LOOP_BOTTOM = 67;
 export type ButtonType = 'big' | 'small';
+export const FLOW_ITEM_ICON_SIZE = 40 + 'px';

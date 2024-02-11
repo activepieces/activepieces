@@ -52,6 +52,7 @@ import {
 import {
   FLOW_ITEM_HEIGHT,
   FLOW_ITEM_WIDTH,
+  FLOW_ITEM_ICON_SIZE,
 } from '../../../canvas-utils/drawing/draw-common';
 
 @Component({
@@ -64,6 +65,7 @@ import {
 export class FlowItemContentComponent implements OnInit {
   readonly FLOW_ITEM_HEIGHT = FLOW_ITEM_HEIGHT;
   readonly FLOW_ITEM_WIDTH = FLOW_ITEM_WIDTH;
+  readonly FLOW_ITEM_ICON_SIZE = FLOW_ITEM_ICON_SIZE;
   //in case it is not reached, we return undefined
   @ViewChild('stepDragTemplate') stepDragTemplate: TemplateRef<any>;
   stepStatus$: Observable<StepOutputStatus | undefined>;

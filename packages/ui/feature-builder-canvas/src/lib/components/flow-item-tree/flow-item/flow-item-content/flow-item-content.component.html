@@ -4,14 +4,18 @@
   <div class="flow-item ap-p-3 ap-gap-3 ap-flex ap-items-center ap-border-solid ap-border-border ap-border-[1px]"
     [style.height]="FLOW_ITEM_HEIGHT+'px'" [style.width]="FLOW_ITEM_WIDTH+'px'" [class.selected-non-empty]="selected"
     [class.selected-empty]="false" [class.empty-trigger]="_flowItem.type === TriggerType.EMPTY" (click)="selectStep()">
-    <div class="flow-icon-container ap-flex ap-justify-center ap-items-center"
+    <div [style.minHeight]="FLOW_ITEM_ICON_SIZE" [style.minWidth]="FLOW_ITEM_ICON_SIZE"
+      [style.maxHeight]="FLOW_ITEM_ICON_SIZE" [style.maxWidth]="FLOW_ITEM_ICON_SIZE"
+      class="ap-relative ap-flex ap-justify-center ap-items-center"
       [matTooltip]="((stepAppName$ | async ) || '')| titlecase">
       <ng-container *ngIf=" (flowItemDetails$ | async)">
         <img #logo id="logo" *ngIf="stepIconUrl" class="logo-icon ap-pointer-events-none ap-select-none" @fadeIn
           [src]="stepIconUrl" />
       </ng-container>
 
-      <div *ngIf="!stepIconUrl" class="step-icon-loading-spinner-container">
+      <div *ngIf="!stepIconUrl" [style.minHeight]="FLOW_ITEM_ICON_SIZE" [style.minWidth]="FLOW_ITEM_ICON_SIZE"
+        [style.maxHeight]="FLOW_ITEM_ICON_SIZE" [style.maxWidth]="FLOW_ITEM_ICON_SIZE"
+        class="step-icon-loading-spinner-container ap-flex ap-items-center ap-left-0 ap-top-0 ap-justify-center">
         <div class="spinner-grow ap-text-primary ap-pointer-events-none ap-select-none">
           <span class="sr-only">...</span>
         </div>
@@ -66,7 +70,8 @@
   <div #stepShadow id="stepShadow"
     class="ap-p-4 ap-h-[78px] ap-opacity-75 ap-w-[78px] ap-flex ap-items-center ap-justify-center ap-rounded-lg ap-border ap-border-solid ap-border ap-bg-white ap-relative">
     <ng-container>
-      <img #logo id="logo" *ngIf="stepIconUrl" class="logo-icon !ap-static" @fadeIn [src]="stepIconUrl" />
+      <img #logo id="logo" *ngIf="stepIconUrl" [style.height]="FLOW_ITEM_ICON_SIZE" [style.width]="FLOW_ITEM_ICON_SIZE"
+        class="ap-object-contain ap-left-0 ap-right-0  ap-static" @fadeIn [src]="stepIconUrl" />
     </ng-container>
     <div class="ap-absolute -ap-bottom-[32px] ap-flex ap-items-center ap-content-center ap-gap-1">
       <ng-container *ngFor="let url$ of childStepsIconsUrls | keyvalue; let idx=index; let isLast=last;">

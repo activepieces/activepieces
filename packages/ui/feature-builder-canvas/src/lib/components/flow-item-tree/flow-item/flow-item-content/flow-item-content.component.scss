@@ -1,5 +1,6 @@
 @import "../../../../../../../core/src/assets/scss/variables.scss";
 @import "../../../../../../../core/src/assets/scss/derived-variables.scss";
+
 .flow-item {
   /* Auto Layout */
   display: flex;
@@ -13,14 +14,6 @@
   border-radius: 8px;
 }
 
-.logo-icon {
-  object-fit: contain;
-  width: 40px;
-  height: 40px;
-  position: absolute;
-  top: 0;
-  left: 0;
-}
 .flow-content {
   flex-grow: 1;
   gap: 0.25rem;
@@ -81,13 +74,6 @@
   margin-right: 0.625rem;
 }
 
-.flow-icon-container {
-  position: relative;
-  min-width: 40px;
-  min-height: 40px;
-  max-width: 40px;
-  max-height: 40px;
-}
 
 .empty-trigger {
   border: 1.5px dashed var(--primary-default) !important;
@@ -105,18 +91,6 @@
   overflow: hidden;
 }
 
-.step-icon-loading-spinner-container {
-  min-width: 40px;
-  min-height: 40px;
-  max-width: 40px;
-  max-height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: absolute;
-  left: 0;
-  top: 0;
-}
 .step-run-result-icon {
   width: 16px;
   height: 16px;
