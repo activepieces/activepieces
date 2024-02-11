@@ -1,6 +1,7 @@
 import { Property } from '@activepieces/pieces-framework';
 import {
   FileResponseInterface,
+  FlowVersion,
   PopulatedFlow,
   TelemetryEventName,
 } from '@activepieces/shared';
@@ -54,7 +55,7 @@ type InterfaceProps = {
 })
 export class InterfacesComponent implements OnInit {
   fullLogoUrl$: Observable<string>;
-  flow$: Observable<PopulatedFlow>;
+  flow$: Observable<FlowVersion>;
   submitInterface$: Observable<InterfaceResult | undefined>;
   interfaceForm: FormGroup;
   props: InterfaceProps | null = null;
@@ -85,24 +86,36 @@ export class InterfacesComponent implements OnInit {
         this.flowService.get(params.get('flowId') as string)
       ),
       tap((flow) => {
-        const { pieceName, triggerName } = flow.version.trigger.settings;
+        this.title = flow.version.displayName;
+        this.interfaceForm = new FormGroup({});
+        this.props = flow.version.trigger.settings.input;
+        this.telemteryService.capture({
+          name: TelemetryEventName.INTERFACES_VIEWED,
+          payload: {
+            flowId: flow.id,
+            interfaceProps: this.props!,
+            projectId: flow.projectId,
+          },
+        });
+        this.flow = flow;
+      }),
+      switchMap((flow) => {
+        {
+          if (flow.publishedVersionId)
+            return this.flowService
+              .get(flow.id, flow.publishedVersionId)
+              .pipe(map((flow) => flow.version));
+          return of(flow.version);
+        }
+      }),
+      tap((version) => {
+        const { pieceName, triggerName } = version.trigger.settings;
         if (
           pieceName === '@activepieces/piece-interfaces' &&
           triggerName === 'form_submission'
         ) {
-          this.webhookUrl = environment.apiUrl + '/webhooks/' + flow.id;
-          this.title = flow.version.displayName;
-          this.interfaceForm = new FormGroup({});
-          this.props = flow.version.trigger.settings.input;
-          this.telemteryService.capture({
-            name: TelemetryEventName.INTERFACES_VIEWED,
-            payload: {
-              flowId: flow.id,
-              interfaceProps: this.props!,
-              projectId: flow.projectId,
-            },
-          });
-          this.flow = flow;
+          this.webhookUrl = environment.apiUrl + '/webhooks/' + version.id;
+
           if (this.props?.waitForResponse) {
             this.webhookUrl += '/sync';
           }
