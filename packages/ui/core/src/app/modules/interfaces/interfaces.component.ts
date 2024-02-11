@@ -69,7 +69,7 @@ export class InterfacesComponent implements OnInit {
   markdownResponse: Subject<string | null> = new Subject<string | null>();
   constructor(
     private flowService: FlowService,
-    private router: ActivatedRoute,
+    private route: ActivatedRoute,
     private snackBar: MatSnackBar,
     private flagService: FlagService,
     private interfacesService: InterfacesService,
@@ -81,14 +81,14 @@ export class InterfacesComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.flow$ = this.router.paramMap.pipe(
+    this.flow$ = this.route.paramMap.pipe(
       switchMap((params) =>
         this.flowService.get(params.get('flowId') as string)
       ),
       tap((flow) => {
         this.title = flow.version.displayName;
         this.interfaceForm = new FormGroup({});
-        this.props = flow.version.trigger.settings.input;
+
         this.telemteryService.capture({
           name: TelemetryEventName.INTERFACES_VIEWED,
           payload: {
@@ -101,14 +101,18 @@ export class InterfacesComponent implements OnInit {
       }),
       switchMap((flow) => {
         {
-          if (flow.publishedVersionId)
-            return this.flowService
-              .get(flow.id, flow.publishedVersionId)
-              .pipe(map((flow) => flow.version));
+          if (flow.publishedVersionId) {
+            return this.flowService.get(flow.id, flow.publishedVersionId).pipe(
+              map((publishedFlow) => {
+                return publishedFlow.version;
+              })
+            );
+          }
           return of(flow.version);
         }
       }),
       tap((version) => {
+        this.props = version.trigger.settings.input;
         const { pieceName, triggerName } = version.trigger.settings;
         if (
           pieceName === '@activepieces/piece-interfaces' &&
