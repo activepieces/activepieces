@@ -77,6 +77,7 @@ export class InterpolatingTextFormControlComponent
   private _readOnly = false;
   private _placeholder = '';
   focused = false;
+  hasMention = false;
   readonly modules: QuillModules = {
     mention: {
       spaceAfterInsert: false,
@@ -195,7 +196,9 @@ export class InterpolatingTextFormControlComponent
             }
             val.ops.push(lastOp);
           }
-
+          this.hasMention = val.ops.some(
+            (o) => typeof o.insert === 'object' && o.insert.apMention
+          );
           this._value = fromOpsToText(val);
           this.onChange(this._value);
         }
@@ -273,6 +276,9 @@ export class InterpolatingTextFormControlComponent
     );
     if (value && typeof value === 'string') {
       const parsedTextToOps = fromTextToOps(value, stepsMetaData);
+      this.hasMention = parsedTextToOps.ops.some(
+        (o) => typeof o.insert === 'object' && o.insert.apMention
+      );
       this.editorFormControl.setValue(parsedTextToOps, { emitEvent: false });
     }
   }
