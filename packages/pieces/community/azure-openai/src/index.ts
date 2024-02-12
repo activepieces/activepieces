@@ -5,23 +5,21 @@ import {
 } from '@activepieces/pieces-framework';
 import { askGpt } from './lib/actions/ask-gpt';
 
-const markdownDescription = `
-
-`;
-
 export const azureOpenaiAuth = PieceAuth.CustomAuth({
-  description: markdownDescription,
   props: {
     endpoint: Property.ShortText({
         displayName: 'Endpoint',
+        description: 'https://<resource name>.openai.azure.com/',
         required: true
     }),
     apiKey: PieceAuth.SecretText({
         displayName: 'API Key',
+        description: 'Use the Azure Portal to browse to your OpenAI resource and retrieve an API key',
         required: true,
     }),
     deploymentId: Property.ShortText({
         displayName: 'Deployment ID',
+        description: 'The model deployment to use',
         required: true,
     }),
   },
