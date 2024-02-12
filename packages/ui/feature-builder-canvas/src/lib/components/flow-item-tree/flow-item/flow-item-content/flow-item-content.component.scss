@@ -3,15 +3,7 @@
 
 .flow-item {
   /* Auto Layout */
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  position: relative;
-
-  background: $white;
   mix-blend-mode: normal;
-  box-shadow: unset;
-  border-radius: 8px;
 }
 
 .flow-content {
