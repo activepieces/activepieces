@@ -22,6 +22,9 @@ export class FlowExecutorContext {
     tags: readonly string[]
     steps: Readonly<Record<string, StepOutput>>
     currentState: Record<string, unknown>
+    /**
+     * Execution duration in milliseconds
+     */
     duration: number
     verdict: ExecutionVerdict
     verdictResponse: VerdictResponse | undefined
@@ -52,7 +55,7 @@ export class FlowExecutorContext {
         assertEqual(stepOutput.type, ActionType.LOOP_ON_ITEMS, 'stepout', 'LoopStepOutput')
         return stepOutput as LoopStepOutput
     }
-    
+
     public isCompleted({ stepName }: { stepName: string }): boolean {
         const stateAtPath = getStateAtPath({ currentPath: this.currentPath, steps: this.steps })
         const stepOutput = stateAtPath[stepName]
