@@ -9,12 +9,12 @@ export type ActionRunner<PieceAuth extends PieceAuthProperty, ActionProps extend
 
 export const ErrorHandlingOptionsParam = Type.Object({
   retryOnFailure: Type.Object({
-    defaultValue: Type.Boolean(),
-    hide: Type.Boolean(),
+    defaultValue: Type.Optional(Type.Boolean()),
+    hide: Type.Optional(Type.Boolean()),
   }),
   continueOnFailure: Type.Object({
-    defaultValue: Type.Boolean(),
-    hide: Type.Boolean(),
+    defaultValue: Type.Optional(Type.Boolean()),
+    hide: Type.Optional(Type.Boolean()),
   }),
 })
 export type ErrorHandlingOptionsParam = Static<typeof ErrorHandlingOptionsParam>
@@ -69,11 +69,9 @@ export const createAction = <
     params.errorHandlingOptions ?? {
       continueOnFailure: {
         defaultValue: false,
-        hide: false,
       },
       retryOnFailure: {
         defaultValue: false,
-        hide: false,
       }
     },
   )

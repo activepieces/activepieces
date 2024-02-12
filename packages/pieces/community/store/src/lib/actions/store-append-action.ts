@@ -8,6 +8,14 @@ export const storageAppendAction = createAction({
   name: 'append',
   displayName: 'Append',
   description: 'Append to a value in storage',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      hide: true,
+    },
+    retryOnFailure: {
+      hide: true,
+    },
+  },
   props: {
     key: Property.ShortText({
       displayName: 'Key',

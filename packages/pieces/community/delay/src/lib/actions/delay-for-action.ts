@@ -15,6 +15,14 @@ export const delayForAction = createAction({
   name: 'delayFor',
   displayName: 'Delay For',
   description: 'Delays the execution of the next action for a given duration',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      hide: true,
+    },
+    retryOnFailure: {
+      hide: true,
+    },
+  },
   props: {
     unit: Property.StaticDropdown({
       displayName: 'Unit',
