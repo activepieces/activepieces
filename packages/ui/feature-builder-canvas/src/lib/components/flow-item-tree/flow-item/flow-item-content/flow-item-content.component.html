@@ -1,7 +1,8 @@
 <div class="flow-container ap-shadow-step-container-ds" (mouseenter)="hover = true" (mouseleave)="hover = false"
   [class.ap-pointer-events-none]="(isDragging$ | async) === true" [class.non-empty-step]="true"
   [class.empty-step]="false">
-  <div class="flow-item ap-p-3 ap-gap-3 ap-flex ap-items-center ap-border-solid ap-border-border ap-border-[1px]"
+  <div
+    class="flow-item ap-rounded-lg ap-bg-white ap-relative ap ap-p-3 ap-gap-3 ap-flex ap-items-center ap-border-solid ap-border-border ap-border-[1px]"
     [style.height]="FLOW_ITEM_HEIGHT+'px'" [style.width]="FLOW_ITEM_WIDTH+'px'" [class.selected-non-empty]="selected"
     [class.selected-empty]="false" [class.empty-trigger]="_flowItem.type === TriggerType.EMPTY" (click)="selectStep()">
     <div [style.minHeight]="FLOW_ITEM_ICON_SIZE" [style.minWidth]="FLOW_ITEM_ICON_SIZE"
