@@ -6,11 +6,9 @@ export const find = createAction({
   name: 'find',
   errorHandlingOptions: {
     continueOnFailure: {
-      defaultValue: false,
       hide: true,
     },
     retryOnFailure: {
-      defaultValue: false,
       hide: true,
     },
   },

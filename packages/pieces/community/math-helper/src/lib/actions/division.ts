@@ -12,11 +12,9 @@ export const division = createAction({
   description: 'Divide first number by the second number',
   errorHandlingOptions: {
     continueOnFailure: {
-      defaultValue: false,
       hide: true,
     },
     retryOnFailure: {
-      defaultValue: false,
       hide: true,
     },
   },

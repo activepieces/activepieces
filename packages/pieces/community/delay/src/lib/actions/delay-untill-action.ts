@@ -9,11 +9,9 @@ export const delayUntilAction = createAction({
     'Delays the execution of the next action until a given timestamp',
   errorHandlingOptions: {
     continueOnFailure: {
-      defaultValue: false,
       hide: true,
     },
     retryOnFailure: {
-      defaultValue: false,
       hide: true,
     },
   },

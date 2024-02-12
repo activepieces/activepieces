@@ -11,11 +11,9 @@ export const subtraction = createAction({
   description: 'Subtract the first number from the second number',
   errorHandlingOptions: {
     continueOnFailure: {
-      defaultValue: false,
       hide: true,
     },
     retryOnFailure: {
-      defaultValue: false,
       hide: true,
     },
   },

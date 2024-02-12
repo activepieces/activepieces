@@ -11,11 +11,9 @@ export const readFileAction = createAction({
   description: 'Read a file from the file system',
   errorHandlingOptions: {
     continueOnFailure: {
-      defaultValue: false,
       hide: true,
     },
     retryOnFailure: {
-      defaultValue: false,
       hide: true,
     },
   },

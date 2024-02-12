@@ -11,11 +11,9 @@ export const addition = createAction({
   description: 'Add the first number and the second number',
   errorHandlingOptions: {
     continueOnFailure: {
-      defaultValue: false,
       hide: true,
     },
     retryOnFailure: {
-      defaultValue: false,
       hide: true,
     },
   },

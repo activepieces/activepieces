@@ -8,11 +8,9 @@ export const htmlToMarkdown = createAction({
   description: 'Convert HTML to Markdown',
   errorHandlingOptions: {
     continueOnFailure: {
-      defaultValue: false,
       hide: true,
     },
     retryOnFailure: {
-      defaultValue: false,
       hide: true,
     },
   },

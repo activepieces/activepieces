@@ -8,11 +8,9 @@ export const waitForApprovalLink = createAction({
   props: {},
   errorHandlingOptions: {
     continueOnFailure: {
-      defaultValue: false,
       hide: true,
     },
     retryOnFailure: {
-      defaultValue: false,
       hide: true,
     },
   },

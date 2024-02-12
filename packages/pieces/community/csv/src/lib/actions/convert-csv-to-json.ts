@@ -8,11 +8,9 @@ export const parseCSVTextAction = createAction({
     'This function reads a CSV string and converts it into JSON array format.',
   errorHandlingOptions: {
     continueOnFailure: {
-      defaultValue: false,
       hide: true,
     },
     retryOnFailure: {
-      defaultValue: false,
       hide: true,
     },
   },

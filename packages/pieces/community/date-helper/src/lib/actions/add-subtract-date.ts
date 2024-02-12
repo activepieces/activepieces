@@ -14,11 +14,9 @@ export const addSubtractDateAction = createAction({
   description: 'Add or subtract time from a date',
   errorHandlingOptions: {
     continueOnFailure: {
-      defaultValue: false,
       hide: true,
     },
     retryOnFailure: {
-      defaultValue: false,
       hide: true,
     },
   },

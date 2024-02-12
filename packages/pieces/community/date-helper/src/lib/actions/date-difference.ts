@@ -15,11 +15,9 @@ export const dateDifferenceAction = createAction({
   description: 'Get the difference between two dates',
   errorHandlingOptions: {
     continueOnFailure: {
-      defaultValue: false,
       hide: true,
     },
     retryOnFailure: {
-      defaultValue: false,
       hide: true,
     },
   },

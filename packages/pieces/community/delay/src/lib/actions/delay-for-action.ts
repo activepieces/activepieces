@@ -17,11 +17,9 @@ export const delayForAction = createAction({
   description: 'Delays the execution of the next action for a given duration',
   errorHandlingOptions: {
     continueOnFailure: {
-      defaultValue: false,
       hide: true,
     },
     retryOnFailure: {
-      defaultValue: false,
       hide: true,
     },
   },

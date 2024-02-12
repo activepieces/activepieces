@@ -13,11 +13,9 @@ export const addTag = createAction({
   description: 'Add a tag to the current execution',
   errorHandlingOptions: {
     continueOnFailure: {
-      defaultValue: false,
       hide: true,
     },
     retryOnFailure: {
-      defaultValue: false,
       hide: true,
     },
   },

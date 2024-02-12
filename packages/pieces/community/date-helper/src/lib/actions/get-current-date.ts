@@ -14,11 +14,9 @@ export const getCurrentDate = createAction({
   description: 'Get the current date',
   errorHandlingOptions: {
     continueOnFailure: {
-      defaultValue: false,
       hide: true,
     },
     retryOnFailure: {
-      defaultValue: false,
       hide: true,
     },
   },

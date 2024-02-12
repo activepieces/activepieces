@@ -11,11 +11,9 @@ export const modulo = createAction({
   description: 'Get the remainder of the first number divided by second number',
   errorHandlingOptions: {
     continueOnFailure: {
-      defaultValue: false,
       hide: true,
     },
     retryOnFailure: {
-      defaultValue: false,
       hide: true,
     },
   },

@@ -16,11 +16,9 @@ export const extractDateParts = createAction({
     'Extract date units ( year , month , day , hour , minute , second , day of week , month name ) from a date',
   errorHandlingOptions: {
     continueOnFailure: {
-      defaultValue: false,
       hide: true,
     },
     retryOnFailure: {
-      defaultValue: false,
       hide: true,
     },
   },

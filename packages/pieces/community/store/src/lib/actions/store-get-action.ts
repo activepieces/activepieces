@@ -10,11 +10,9 @@ export const storageGetAction = createAction({
   description: 'Get a value from storage',
   errorHandlingOptions: {
     continueOnFailure: {
-      defaultValue: false,
       hide: true,
     },
     retryOnFailure: {
-      defaultValue: false,
       hide: true,
     },
   },

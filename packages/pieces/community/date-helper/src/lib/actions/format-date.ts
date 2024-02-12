@@ -13,11 +13,9 @@ export const formatDateAction = createAction({
   description: 'Converts a date from one format to another',
   errorHandlingOptions: {
     continueOnFailure: {
-      defaultValue: false,
       hide: true,
     },
     retryOnFailure: {
-      defaultValue: false,
       hide: true,
     },
   },

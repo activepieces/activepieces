@@ -11,11 +11,9 @@ export const multiplication = createAction({
   description: 'Multiply first number by the second number',
   errorHandlingOptions: {
     continueOnFailure: {
-      defaultValue: false,
       hide: true,
     },
     retryOnFailure: {
-      defaultValue: false,
       hide: true,
     },
   },

@@ -11,11 +11,9 @@ export const storageRemoveFromList = createAction({
   description: 'Remove Item from a list',
   errorHandlingOptions: {
     continueOnFailure: {
-      defaultValue: false,
       hide: true,
     },
     retryOnFailure: {
-      defaultValue: false,
       hide: true,
     },
   },

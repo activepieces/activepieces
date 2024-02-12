@@ -18,11 +18,9 @@ export const nextDayofWeek = createAction({
   description: 'Get the date and time of the next day of the week',
   errorHandlingOptions: {
     continueOnFailure: {
-      defaultValue: false,
       hide: true,
     },
     retryOnFailure: {
-      defaultValue: false,
       hide: true,
     },
   },

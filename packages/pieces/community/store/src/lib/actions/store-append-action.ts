@@ -10,11 +10,9 @@ export const storageAppendAction = createAction({
   description: 'Append to a value in storage',
   errorHandlingOptions: {
     continueOnFailure: {
-      defaultValue: false,
       hide: true,
     },
     retryOnFailure: {
-      defaultValue: false,
       hide: true,
     },
   },

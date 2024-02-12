@@ -6,11 +6,9 @@ export const advancedMapping = createAction({
   description: 'Map data from one format to another',
   errorHandlingOptions: {
     continueOnFailure: {
-      defaultValue: false,
       hide: true,
     },
     retryOnFailure: {
-      defaultValue: false,
       hide: true,
     },
   },

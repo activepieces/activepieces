@@ -11,11 +11,9 @@ export const storageAddtoList = createAction({
   description: 'Add Item to a list',
   errorHandlingOptions: {
     continueOnFailure: {
-      defaultValue: false,
       hide: true,
     },
     retryOnFailure: {
-      defaultValue: false,
       hide: true,
     },
   },

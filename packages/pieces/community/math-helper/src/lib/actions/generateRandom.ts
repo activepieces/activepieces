@@ -11,11 +11,9 @@ export const generateRandom = createAction({
   description: 'Generate random number between two numbers (inclusive)',
   errorHandlingOptions: {
     continueOnFailure: {
-      defaultValue: false,
       hide: true,
     },
     retryOnFailure: {
-      defaultValue: false,
       hide: true,
     },
   },
