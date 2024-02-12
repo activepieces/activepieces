@@ -1,12 +1,10 @@
-<form *ngIf="form" [formGroup]="form" class="ap-flex  ap-flex-col">
-  <div *ngFor="let property of requiredProperties|objectToArray; let i = index"
-    [class.ap-mb-3]="property.value.type === PropertyType.CHECKBOX">
+<form *ngIf="form" [formGroup]="form" class="ap-flex  ap-flex-col ap-gap-3">
+  <div *ngFor="let property of requiredProperties|objectToArray; let i = index">
     <ng-container
       *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:property, propertyIndex:i,formGroup:form}"></ng-container>
   </div>
 
-  <div *ngFor="let property of optionalProperties|objectToArray; let i = index"
-    [class.ap-mb-3]="property.value.type === PropertyType.CHECKBOX">
+  <div *ngFor="let property of optionalProperties|objectToArray; let i = index">
     <ng-container *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:property, propertyIndex:i, formGroup:form}">
     </ng-container>
   </div>
@@ -652,7 +650,7 @@
 <!--Line clamp is not working with prefix on tailwind for some reason  -->
 <ng-template #description let-property let-hasError="hasError" let-errorMessage="errorMessage"
   let-isTouched="isTouched">
-  <div class="ap-flex ap-justify-between ap-markdown">
+  <div class="ap-flex ap-justify-between ap-markdown" *ngIf="property.value.description || isTouched && hasError">
     <div class="ap-line-clamp-1" [style.display]="descriptionExpandedMap[property.key]? 'block': '-webkit-box'"
       [class.ap-h-[24px]]="!descriptionExpandedMap[property.key]">
       <div class="ap-typography-caption " apCheckOverflow (isOverflowed)="descriptionOverflownMap[property.key]=$event">
