@@ -1,0 +1,17 @@
+name: Automate Deploy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  Release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEV_OPS_HOST }}
+          username: ${{ secrets.DEV_OPS_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd mrsk && kamal deploy --version 0.20.0rc.4 --config-file=config/workers.yml --skip-push
