@@ -6,12 +6,30 @@ on:
 jobs:
   Release:
     runs-on: ubuntu-latest
+    env:
+      DEPLOY_VERSION: ${{ '0.20.0rc.3' }}
     steps:
-      - name: Set up SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.DEV_OPS_HOST }}
-          username: ${{ secrets.DEV_OPS_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd mrsk && kamal deploy --version 0.20.0rc.4 --config-file=config/workers.yml --skip-push
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/ops.key
+          chmod 600 ~/.ssh/ops.key
+          cat >>~/.ssh/config <<END
+          Host ops
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/ops.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: ${{ secrets.DEV_OPS_USERNAME }}
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
+
+      - name: Deploy Web
+        run: |
+          ssh ops -t -t 'bash -ic "cd mrsk && kamal deploy --version 0.20.0rc.3 --config-file=config/web.yml --skip-push; exit"'
+
+      - name: Deploy Workers
+        run: |
+          ssh ops -t -t 'bash -ic "cd mrsk && kamal deploy --version 0.20.0rc.3 --config-file=config/workers.yml --skip-push; exit"'
