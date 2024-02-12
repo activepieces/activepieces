@@ -16,6 +16,16 @@ export const nextDayofYear = createAction({
   name: 'next_day_of_year',
   displayName: 'Next Day of Year',
   description: 'Get the date and time of the next day of the year',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+    retryOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+  },
   props: {
     month: Property.StaticDropdown({
       displayName: 'Month',

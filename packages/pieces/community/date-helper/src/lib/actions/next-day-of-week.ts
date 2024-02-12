@@ -16,6 +16,16 @@ export const nextDayofWeek = createAction({
   name: 'next_day_of_week',
   displayName: 'Next Day of Week',
   description: 'Get the date and time of the next day of the week',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+    retryOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+  },
   props: {
     weekday: Property.StaticDropdown({
       displayName: 'Weekday',

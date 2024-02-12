@@ -11,6 +11,16 @@ export const addTag = createAction({
   name: 'add_tag',
   displayName: 'Add Tag',
   description: 'Add a tag to the current execution',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+    retryOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+  },
   props: {
     info: Property.MarkDown({
       value: markdown,

@@ -8,6 +8,16 @@ export const storageGetAction = createAction({
   name: 'get',
   displayName: 'Get',
   description: 'Get a value from storage',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+    retryOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+  },
   props: {
     key: Property.ShortText({
       displayName: 'Key',

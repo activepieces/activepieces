@@ -9,6 +9,16 @@ export const markdownToHTML = createAction({
   name: 'markdown_to_html',
   displayName: 'Markdown to HTML',
   description: 'Convert markdown to HTML',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+    retryOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+  },
   props: {
     markdown: Property.LongText({
       displayName: 'Markdown Content',

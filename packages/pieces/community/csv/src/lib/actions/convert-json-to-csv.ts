@@ -7,6 +7,16 @@ export const unparseCSVTextAction = createAction({
   displayName: 'Convert JSON to CSV',
   description:
     'This function reads a JSON file and converts it into a CSV file format.',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+    retryOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+  },
   props: {
     csv_object: Property.Json({
       displayName: 'CSV JSON',

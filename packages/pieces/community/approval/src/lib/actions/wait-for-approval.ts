@@ -6,6 +6,16 @@ export const waitForApprovalLink = createAction({
   displayName: 'Wait for Approval',
   description: 'Pauses the flow and wait for the approval from the user',
   props: {},
+  errorHandlingOptions: {
+    continueOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+    retryOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+  },
   async run(ctx) {
     if (ctx.executionType === ExecutionType.BEGIN) {
       ctx.run.pause({

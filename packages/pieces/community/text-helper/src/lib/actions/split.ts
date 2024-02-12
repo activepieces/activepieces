@@ -4,6 +4,16 @@ export const split = createAction({
   description: 'Split a text by a delimeter',
   displayName: 'Split',
   name: 'split',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+    retryOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+  },
   props: {
     text: Property.ShortText({
       displayName: 'Text',

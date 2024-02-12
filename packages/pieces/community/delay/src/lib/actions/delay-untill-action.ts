@@ -7,6 +7,16 @@ export const delayUntilAction = createAction({
   displayName: 'Delay Until',
   description:
     'Delays the execution of the next action until a given timestamp',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+    retryOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+  },
   props: {
     delayUntilTimestamp: Property.DateTime({
       displayName: 'Date and Time',

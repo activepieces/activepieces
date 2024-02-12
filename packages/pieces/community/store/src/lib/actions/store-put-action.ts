@@ -8,6 +8,16 @@ export const storagePutAction = createAction({
   name: 'put',
   displayName: 'Put',
   description: 'Put a value in storage',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+    retryOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+  },
   props: {
     key: Property.ShortText({
       displayName: 'Key',

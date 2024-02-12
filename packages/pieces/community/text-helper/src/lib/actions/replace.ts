@@ -5,6 +5,16 @@ export const replace = createAction({
     'Replaces all instances of any word, character or phrase in text, with another.',
   displayName: 'Replace',
   name: 'replace',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+    retryOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+  },
   props: {
     text: Property.ShortText({
       displayName: 'Text',

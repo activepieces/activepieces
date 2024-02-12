@@ -4,6 +4,16 @@ export const concat = createAction({
   description: 'Concatenate two or more texts',
   displayName: 'Concatenate',
   name: 'concat',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+    retryOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+  },
   props: {
     texts: Property.Array({
       displayName: 'Texts',

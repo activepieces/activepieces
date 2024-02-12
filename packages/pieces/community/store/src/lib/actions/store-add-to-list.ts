@@ -9,6 +9,16 @@ export const storageAddtoList = createAction({
   name: 'add_to_list',
   displayName: 'Add To List',
   description: 'Add Item to a list',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+    retryOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+  },
   props: {
     key: Property.ShortText({
       displayName: 'Key',

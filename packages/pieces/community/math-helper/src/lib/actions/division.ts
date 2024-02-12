@@ -10,6 +10,16 @@ export const division = createAction({
   auth: PieceAuth.None(),
   displayName: 'Division',
   description: 'Divide first number by the second number',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+    retryOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+  },
   props: {
     first_number: Property.Number({
       displayName: 'First Number',

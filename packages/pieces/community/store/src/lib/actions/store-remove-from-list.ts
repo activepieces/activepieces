@@ -9,6 +9,16 @@ export const storageRemoveFromList = createAction({
   name: 'remove_from_list',
   displayName: 'Remove from List',
   description: 'Remove Item from a list',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+    retryOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+  },
   props: {
     key: Property.ShortText({
       displayName: 'Key',

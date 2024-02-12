@@ -9,6 +9,16 @@ export const addition = createAction({
   auth: PieceAuth.None(),
   displayName: 'Addition',
   description: 'Add the first number and the second number',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+    retryOnFailure: {
+      defaultValue: false,
+      hide: true,
+    },
+  },
   props: {
     first_number: Property.Number({
       displayName: 'First Number',
