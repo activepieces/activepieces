@@ -90,6 +90,7 @@ export function playerFactory() {
       config: {
         tokenGetter,
         allowedDomains: [extractHostname(environment.apiUrl)],
+        disallowedRoutes: [`${environment.apiUrl}/flags`],
       },
     }),
     AngularSvgIconModule.forRoot(),
