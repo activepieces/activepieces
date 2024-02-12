@@ -2,16 +2,64 @@ name: Automate Deploy
 
 on:
   workflow_dispatch:
-
+  pull_request:
+      types: [closed]
+      branches:
+        - main
+  
 jobs:
   Release:
+    if: contains(github.event.pull_request.labels.*.name, 'auto-deploy')
     runs-on: ubuntu-latest
     steps:
-      - name: Set up SSH
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Check out repository code
+        uses: actions/checkout@v3
+
+      - name: Set RELEASE env var from package.json
+        run: echo "RELEASE=$(node --print \"require('./package.json').version\")" >> $GITHUB_ENV
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
         with:
-          host: ${{ secrets.DEV_OPS_HOST }}
-          username: ${{ secrets.DEV_OPS_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd mrsk && kamal deploy --version 0.20.0rc.4 --config-file=config/workers.yml --skip-push
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          build-args: |
+            ENVIRONMENT=cloud
+          platforms: |
+            linux/amd64
+          push: true
+          tags: |
+            ghcr.io/activepieces/activepieces-cloud:${{ env.RELEASE }}.${{ github.sha }}
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/ops.key
+          chmod 600 ~/.ssh/ops.key
+          cat >>~/.ssh/config <<END
+          Host ops
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/ops.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: ${{ secrets.DEV_OPS_USERNAME }}
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
+
+      - name: Deploy Web
+        run: |
+          ssh ops -t -t "bash -ic \"cd mrsk && kamal deploy --version ${{ env.RELEASE }}.${{ github.sha }} --config-file=config/web.yml --skip-push; exit\""
+  
+      - name: Deploy Workers
+        run: |
+          ssh ops -t -t "bash -ic \"cd mrsk && kamal deploy --version ${{ env.RELEASE }}.${{ github.sha }} --config-file=config/workers.yml --skip-push; exit\""
+  
