@@ -9,8 +9,10 @@ on:
   
 jobs:
   Release:
-    if: contains(github.event.pull_request.labels.*.name, 'auto-deploy')
+    if: contains(github.event.pull_request.labels.*.name, 'auto-deploy') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    env:
+      DEPLOY_VERSION: ${{ '0.20.0rc.3' }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
