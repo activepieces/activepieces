@@ -1,8 +1,11 @@
-import { BaseOAuth2ConnectionValue, OAuth2GrantType, deleteProps } from '@activepieces/shared'
+import { PropertyType } from '@activepieces/pieces-framework'
+import { ActivepiecesError, BaseOAuth2ConnectionValue, ErrorCode, OAuth2GrantType, assertNotNullOrUndefined, deleteProps } from '@activepieces/shared'
+import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
 
 export const oauth2Util = {
     formatOAuth2Response,
     isExpired,
+    getOAuth2TokenUrl,
 }
 
 function isExpired(connection: BaseOAuth2ConnectionValue): boolean {
@@ -19,7 +22,37 @@ function isExpired(connection: BaseOAuth2ConnectionValue): boolean {
     )
 }
 
+async function getOAuth2TokenUrl({ projectId, pieceName, props }: { projectId: string, pieceName: string, props?: Record<string, string> }): Promise<string> {
+    const pieceMetadata = await pieceMetadataService.getOrThrow({
+        name: pieceName,
+        projectId,
+        version: undefined,
+    })
+    const auth = pieceMetadata.auth
+    assertNotNullOrUndefined(auth, 'auth')
+    switch (auth.type) {
+        case PropertyType.OAUTH2:
+            return resolveUrl(auth.tokenUrl, props)
+        default:
+            throw new ActivepiecesError({
+                code: ErrorCode.INVALID_APP_CONNECTION,
+                params: {
+                    error: 'invalid auth type',
+                },
+            })
+    }
+}
 
+
+function resolveUrl(url: string, props: Record<string, unknown> | undefined): string {
+    if (!props) {
+        return url
+    }
+    for (const [key, value] of Object.entries(props)) {
+        url = url.replace(`{${key}}`, String(value))
+    }
+    return url
+}
 
 function formatOAuth2Response(response: Omit<BaseOAuth2ConnectionValue, 'claimed_at'>): BaseOAuth2ConnectionValue {
     const secondsSinceEpoch = Math.round(Date.now() / 1000)

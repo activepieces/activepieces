@@ -24,6 +24,7 @@ async function refresh({ pieceName, connectionValue }: RefreshOAuth2Request<Clou
     return {
         ...connectionValue,
         ...response,
+        props: connectionValue.props,
         type: AppConnectionType.CLOUD_OAUTH2,
     }
 }
@@ -39,9 +40,14 @@ async function claim({ request, pieceName }: ClaimOAuth2Request): Promise<CloudO
             pieceName,
             edition: getEdition(),
         }
-        return (await axios.post<CloudOAuth2ConnectionValue>('https://secrets.activepieces.com/claim', cloudRequest, {
+        const value = (await axios.post<CloudOAuth2ConnectionValue>('https://secrets.activepieces.com/claim', cloudRequest, {
             timeout: 10000,
         })).data
+        return {
+            ...value,
+            token_url: request.tokenUrl,
+            props: request.props,
+        }
     }
     catch (e: unknown) {
         logger.error(e)

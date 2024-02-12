@@ -97,7 +97,6 @@ export const connectionKeyService = {
                             type: AppConnectionType.OAUTH2,
                             redirect_url: apiRequest.redirectUrl,
                             code: apiRequest.code,
-                            token_url: appCredential.settings.tokenUrl,
                             scope: appCredential.settings.scope,
                             client_id: appCredential.settings.clientId,
                             client_secret: appCredential.settings.clientSecret!,
