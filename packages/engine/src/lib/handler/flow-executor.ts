@@ -28,22 +28,25 @@ export const flowExecutor = {
         executionState: FlowExecutorContext
         constants: EngineConstants
     }): Promise<FlowExecutorContext> {
-        const startTime = performance.now()
+        const flowStartTime = performance.now()
         let flowExecutionContext = executionState
         let currentAction: Action | undefined = action
         while (!isNil(currentAction)) {
             const handler = this.getExecutorForAction(currentAction.type)
+            const stepStartTime = performance.now()
             flowExecutionContext = await handler.handle({
                 action: currentAction,
                 executionState: flowExecutionContext,
                 constants,
             })
+            const stepEndTime = performance.now()
+            flowExecutionContext.steps[currentAction.name].duration = stepEndTime - stepStartTime
             if (flowExecutionContext.verdict !== ExecutionVerdict.RUNNING) {
                 return flowExecutionContext
             }
             currentAction = currentAction.nextAction
         }
-        const endTime = performance.now()
-        return flowExecutionContext.setDuration(endTime - startTime)
+        const flowEndTime = performance.now()
+        return flowExecutionContext.setDuration(flowEndTime - flowStartTime)
     },
 }
