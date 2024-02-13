@@ -108,7 +108,10 @@ export class SignUpComponent implements OnInit {
             response.body.verified
           ) {
             this.authenticationService.saveToken(response.body.token);
-            this.authenticationService.saveUser(response);
+            this.authenticationService.saveUser(
+              response.body,
+              response.body.token
+            );
           }
         }),
         tap((response) => {
