@@ -33,6 +33,7 @@ export const flowExecutor = {
         let currentAction: Action | undefined = action
         while (!isNil(currentAction)) {
             const handler = this.getExecutorForAction(currentAction.type)
+
             const stepStartTime = performance.now()
             flowExecutionContext = await handler.handle({
                 action: currentAction,
@@ -40,7 +41,12 @@ export const flowExecutor = {
                 constants,
             })
             const stepEndTime = performance.now()
-            flowExecutionContext.steps[currentAction.name].duration = stepEndTime - stepStartTime
+
+            flowExecutionContext = flowExecutionContext.setStepDuration({
+                stepName: currentAction.name,
+                duration: stepEndTime - stepStartTime,
+            })
+
             if (flowExecutionContext.verdict !== ExecutionVerdict.RUNNING) {
                 return flowExecutionContext
             }
