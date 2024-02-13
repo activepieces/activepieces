@@ -1,6 +1,16 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthenticationService, RedirectService } from '../service';
+import {
+  AuthenticationService,
+  PlatformService,
+  RedirectService,
+} from '../service';
+import { Store } from '@ngrx/store';
+import { ProjectActions, ProjectSelectors } from '../store';
+import { Observable, catchError, map, of, switchMap, tap } from 'rxjs';
+import { ProjectService } from '../service/project.service';
+import { StatusCodes } from 'http-status-codes';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Injectable({
   providedIn: 'root',
@@ -9,10 +19,14 @@ export class UserLoggedIn {
   constructor(
     private auth: AuthenticationService,
     private router: Router,
-    private redirectService: RedirectService
+    private redirectService: RedirectService,
+    private store: Store,
+    private projectService: ProjectService,
+    private platformService: PlatformService,
+    private snackBar: MatSnackBar
   ) {}
 
-  canActivate(): boolean {
+  canActivate(): boolean | Observable<boolean> {
     const currentURL = window.location.href;
     const relativeURL = currentURL.replace(window.location.origin, '');
 
@@ -30,6 +44,65 @@ export class UserLoggedIn {
       this.router.navigate([redirectTo]);
       return false;
     }
+
+    return this.store.select(ProjectSelectors.selectCurrentProject).pipe(
+      switchMap((project) => {
+        if (project) {
+          return of(true);
+        }
+        return this.projectService.list().pipe(
+          tap((projects) => {
+            if (!projects || projects.length === 0) {
+              console.error('No projects are assigned to the current user');
+              this.auth.logout();
+            }
+          }),
+          switchMap((projects) => {
+            const platformId =
+              projects.length > 0 ? projects[0].platformId : undefined;
+            const currentProjectId = this.auth.getProjectId();
+
+            if (platformId) {
+              // load platform as well as projects
+              return this.platformService.getPlatform(platformId).pipe(
+                tap((platform) => {
+                  this.store.dispatch(
+                    ProjectActions.setProjects({
+                      projects,
+                      selectedIndex: projects.findIndex(
+                        (p) => p.id === currentProjectId
+                      ),
+                      platform,
+                    })
+                  );
+                }),
+                map(() => true)
+              );
+            }
+            //load only projects
+            this.store.dispatch(
+              ProjectActions.setProjects({
+                projects,
+                selectedIndex: projects.findIndex(
+                  (p) => p.id === currentProjectId
+                ),
+                platform: undefined,
+              })
+            );
+            return of(true);
+          }),
+          catchError((error) => {
+            const status = error?.status;
+            if (status === StatusCodes.UNAUTHORIZED) {
+              this.snackBar.open($localize`Your session expired`);
+              this.auth.logout();
+              this.router.navigate(['/sign-in']);
+            }
+            return of(false);
+          })
+        );
+      })
+    );
 
     return true;
   }

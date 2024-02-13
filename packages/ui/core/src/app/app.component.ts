@@ -30,7 +30,6 @@ import {
 import { compareVersions } from 'compare-versions';
 import { ApEdition, ApFlagId, LocalesEnum } from '@activepieces/shared';
 import {
-  TelemetryService,
   EmbeddingService,
   AuthenticationService,
   fadeInUp400ms,
@@ -74,7 +73,6 @@ export class AppComponent implements OnInit {
     private apperanceService: AppearanceService,
     private authenticationService: AuthenticationService,
     private flagService: FlagService,
-    private telemetryService: TelemetryService,
     private router: Router,
     private maticonRegistry: MatIconRegistry,
     private domSanitizer: DomSanitizer,
@@ -134,13 +132,6 @@ export class AppComponent implements OnInit {
           this.store.dispatch(CommonActions.clearState());
           return;
         }
-        this.store.dispatch(
-          CommonActions.loadProjects({
-            user: user,
-            currentProjectId: decodedToken['projectId'],
-          })
-        );
-        this.telemetryService.init(user);
       })
     );
   }
