@@ -278,9 +278,11 @@ export class PieceActionInputFormComponent
       );
       if (!isNil(selectedAction.value.errorHandlingOptions)) {
         this.hideContinueOnFailure =
-          selectedAction.value.errorHandlingOptions.continueOnFailure.hide;
+          selectedAction.value.errorHandlingOptions.continueOnFailure.hide ??
+          false;
         this.hideRetryOnFailure =
-          selectedAction.value.errorHandlingOptions.retryOnFailure.hide;
+          selectedAction.value.errorHandlingOptions.retryOnFailure.hide ??
+          false;
       }
       const errorHandlingOptionsValue =
         this.initialComponentInputFormValue.errorHandlingOptions;
@@ -385,9 +387,10 @@ export class PieceActionInputFormComponent
     );
     if (!isNil(selectedActionValue.errorHandlingOptions)) {
       this.hideContinueOnFailure =
-        selectedActionValue.errorHandlingOptions.continueOnFailure.hide;
+        selectedActionValue.errorHandlingOptions.continueOnFailure.hide ??
+        false;
       this.hideRetryOnFailure =
-        selectedActionValue.errorHandlingOptions.retryOnFailure.hide;
+        selectedActionValue.errorHandlingOptions.retryOnFailure.hide ?? false;
     }
     const errorHandlingOptionsValue = {
       continueOnFailure: {

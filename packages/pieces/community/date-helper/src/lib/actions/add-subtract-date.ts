@@ -12,6 +12,14 @@ export const addSubtractDateAction = createAction({
   name: 'add_subtract_date',
   displayName: 'Add/Subtract Time',
   description: 'Add or subtract time from a date',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      hide: true,
+    },
+    retryOnFailure: {
+      hide: true,
+    },
+  },
   props: {
     inputDate: Property.ShortText({
       displayName: 'Input Date',

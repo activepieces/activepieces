@@ -9,6 +9,14 @@ export const modulo = createAction({
   auth: PieceAuth.None(),
   displayName: 'Modulo',
   description: 'Get the remainder of the first number divided by second number',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      hide: true,
+    },
+    retryOnFailure: {
+      hide: true,
+    },
+  },
   props: {
     first_number: Property.Number({
       displayName: 'First Number',

@@ -22,8 +22,9 @@ export class CanvasPannerDirective {
         return;
       }
     }
+
     if (
-      event.which === 2 &&
+      (event.button === 0 || event.button === 1) &&
       !this.flowRendererService.isDraggingStateSnapshot
     ) {
       this.pannerService.panningState.currentOffset.x = event.clientX;
