@@ -11,6 +11,7 @@ import { Observable, catchError, map, of, switchMap, tap } from 'rxjs';
 import { ProjectService } from '../service/project.service';
 import { StatusCodes } from 'http-status-codes';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { Project } from '@activepieces/shared';
 
 @Injectable({
   providedIn: 'root',
@@ -63,23 +64,13 @@ export class UserLoggedIn {
             const currentProjectId = this.auth.getProjectId();
 
             if (platformId) {
-              // load platform as well as projects
-              return this.platformService.getPlatform(platformId).pipe(
-                tap((platform) => {
-                  this.store.dispatch(
-                    ProjectActions.setProjects({
-                      projects,
-                      selectedIndex: projects.findIndex(
-                        (p) => p.id === currentProjectId
-                      ),
-                      platform,
-                    })
-                  );
-                }),
-                map(() => true)
-              );
+              return this.loadPlatformAndProjects({
+                platformId,
+                projects,
+                currentProjectId,
+              });
             }
-            //load only projects
+
             this.store.dispatch(
               ProjectActions.setProjects({
                 projects,
@@ -89,6 +80,7 @@ export class UserLoggedIn {
                 platform: undefined,
               })
             );
+
             return of(true);
           }),
           catchError((error) => {
@@ -103,7 +95,28 @@ export class UserLoggedIn {
         );
       })
     );
+  }
 
-    return true;
+  private loadPlatformAndProjects({
+    projects,
+    platformId,
+    currentProjectId,
+  }: {
+    platformId: string;
+    projects: Project[];
+    currentProjectId: string;
+  }) {
+    return this.platformService.getPlatform(platformId).pipe(
+      tap((platform) => {
+        this.store.dispatch(
+          ProjectActions.setProjects({
+            projects,
+            selectedIndex: projects.findIndex((p) => p.id === currentProjectId),
+            platform,
+          })
+        );
+      }),
+      map(() => true)
+    );
   }
 }
