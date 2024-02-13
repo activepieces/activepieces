@@ -57,10 +57,12 @@ async function claim({ request }: ClaimOAuth2Request): Promise<OAuth2ConnectionV
         return {
             type: AppConnectionType.OAUTH2,
             ...oauth2Util.formatOAuth2Response(response),
+            token_url: request.tokenUrl,
             client_id: request.clientId,
             client_secret: request.clientSecret!,
             redirect_url: request.redirectUrl!,
             grant_type: grantType,
+            props: request.props,
             authorization_method: authorizationMethod,
         }
     }
@@ -130,7 +132,10 @@ async function refresh(
         appConnection,
         oauth2Util.formatOAuth2Response({ ...response }),
     )
-    return mergedObject
+    return {
+        ...mergedObject,
+        props: appConnection.props,
+    }
 }
 
 /**

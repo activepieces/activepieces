@@ -169,7 +169,6 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
     const connectionName = this.dialogData.connectionToUpdate
       ? this.dialogData.connectionToUpdate.name
       : this.settingsForm.controls.name.value;
-    const { tokenUrl } = this.getTokenAndUrl();
     const newConnection: UpsertOAuth2Request = {
       projectId: this.authenticatiionService.getProjectId(),
       name: connectionName,
@@ -188,7 +187,6 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
         client_secret: this.settingsForm.controls.client_secret.value,
         redirect_url: this.settingsForm.controls.redirect_url.getRawValue(),
         scope: this.dialogData.pieceAuthProperty.scope.join(' ') || '',
-        token_url: tokenUrl,
         props: this.dialogData.pieceAuthProperty.props
           ? this.settingsForm.controls.props.value
           : undefined,
@@ -261,7 +259,7 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
 
   getOAuth2Settings(): OAuth2PopupParams {
     const formValue = this.settingsForm.getRawValue();
-    const { authUrl } = this.getTokenAndUrl();
+    const { authUrl } = this.getAuthUrl();
     return {
       auth_url: authUrl,
       client_id: formValue.client_id,
@@ -272,16 +270,11 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
     };
   }
 
-  getTokenAndUrl() {
+  getAuthUrl() {
     let authUrl = this.dialogData.pieceAuthProperty.authUrl;
-    let tokenUrl = this.dialogData.pieceAuthProperty.tokenUrl;
     if (this.dialogData.pieceAuthProperty.props) {
       Object.keys(this.dialogData.pieceAuthProperty.props).forEach((key) => {
         authUrl = authUrl.replaceAll(
-          `{${key}}`,
-          this.settingsForm.controls.props.value[key]
-        );
-        tokenUrl = tokenUrl.replaceAll(
           `{${key}}`,
           this.settingsForm.controls.props.value[key]
         );
@@ -289,7 +282,6 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
     }
     return {
       authUrl: authUrl,
-      tokenUrl: tokenUrl,
     };
   }
 

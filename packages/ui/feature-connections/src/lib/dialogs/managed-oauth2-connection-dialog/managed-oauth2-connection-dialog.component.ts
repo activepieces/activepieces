@@ -161,14 +161,12 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
       ? this.dialogData.connectionToUpdate.name
       : this.settingsForm.controls.name.value;
     const popupResponse = this.settingsForm.value.value!;
-    const { tokenUrl } = this.getTokenAndUrl();
     if (this.dialogData.connectionType === AppConnectionType.CLOUD_OAUTH2) {
       const newConnection: UpsertCloudOAuth2Request = {
         projectId: this.authenticationService.getProjectId(),
         pieceName: this.dialogData.pieceName,
         type: AppConnectionType.CLOUD_OAUTH2,
         value: {
-          token_url: tokenUrl,
           code: popupResponse.code,
           authorization_method:
             this.dialogData.pieceAuthProperty.authorizationMethod,
@@ -189,7 +187,6 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
         pieceName: this.dialogData.pieceName,
         type: AppConnectionType.PLATFORM_OAUTH2,
         value: {
-          token_url: tokenUrl,
           code: popupResponse.code,
           authorization_method:
             this.dialogData.pieceAuthProperty.authorizationMethod,
@@ -264,7 +261,7 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
   }
 
   get cloudConnectionPopupSettings(): OAuth2PopupParams {
-    const { authUrl } = this.getTokenAndUrl();
+    const { authUrl } = this.getAuthUrl();
     return {
       auth_url: authUrl,
       client_id: this._managedOAuth2ConnectionPopupSettings.client_id,
@@ -275,16 +272,11 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
     };
   }
 
-  getTokenAndUrl() {
+  getAuthUrl() {
     let authUrl = this.dialogData.pieceAuthProperty.authUrl;
-    let tokenUrl = this.dialogData.pieceAuthProperty.tokenUrl;
     if (this.dialogData.pieceAuthProperty.props) {
       Object.keys(this.dialogData.pieceAuthProperty.props).forEach((key) => {
         authUrl = authUrl.replaceAll(
-          `{${key}}`,
-          this.settingsForm.controls.props.value[key]
-        );
-        tokenUrl = tokenUrl.replaceAll(
           `{${key}}`,
           this.settingsForm.controls.props.value[key]
         );
@@ -292,7 +284,6 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
     }
     return {
       authUrl: authUrl,
-      tokenUrl: tokenUrl,
     };
   }
 
