@@ -86,7 +86,7 @@ export class FlowItemTreeComponent implements OnInit {
       translate: translate$,
     }).pipe(
       map((value) => {
-        return `${value.scale} ${value.translate}`;
+        return `${value.translate} ${value.scale}`;
       })
     );
     return transformObs$;
