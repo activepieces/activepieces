@@ -1,3 +1,4 @@
+import { Platform } from '@activepieces/ee-shared';
 import { Project } from '@activepieces/shared';
 
 export interface CommonStateModel {
@@ -5,7 +6,7 @@ export interface CommonStateModel {
 }
 
 export interface ProjectsState {
-  loaded: boolean;
   selectedIndex: number;
   projects: Project[];
+  platform?: Platform;
 }

@@ -1,8 +1,10 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   PieceAuth,
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { sendMessage } from './lib/actions/send-message';
 
 export const matrixAuth = PieceAuth.CustomAuth({
@@ -30,11 +32,22 @@ export const matrixAuth = PieceAuth.CustomAuth({
 
 export const matrix = createPiece({
   displayName: 'Matrix',
-
   logoUrl: 'https://cdn.activepieces.com/pieces/matrix.png',
+  categories: [PieceCategory.COMMUNICATION],
   minimumSupportedRelease: '0.5.0',
   authors: ['abuaboud'],
   auth: matrixAuth,
-  actions: [sendMessage],
+  actions: [
+    sendMessage,
+    createCustomApiCallAction({
+      baseUrl: (auth) => (auth as { base_url: string }).base_url,
+      auth: matrixAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${
+          (auth as { access_token: string }).access_token
+        }`,
+      }),
+    }),
+  ],
   triggers: [],
 });

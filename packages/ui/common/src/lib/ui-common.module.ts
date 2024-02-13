@@ -70,6 +70,7 @@ import { UpgradeNoteComponent } from '././components/upgrade-note/upgrade-note.c
 import { CardDirective } from './directives/card.directive';
 import { DropdownPropertySearchPipe } from './pipe/dropdown-search.pipe';
 import { ImportFlowDialogComponent } from './components/dialogs/import-flow-dialog/import-flow-dialog.component';
+import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -96,6 +97,7 @@ const exportedImports = [
   MatSliderModule,
   MatSnackBarModule,
   ScrollingModule,
+  MonacoEditorModule,
 ];
 const exportedDeclarations = [
   UploadFileControlComponent,

@@ -9,6 +9,14 @@ export const readFileAction = createAction({
   name: 'read_file',
   displayName: 'Read File',
   description: 'Read a file from the file system',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      hide: true,
+    },
+    retryOnFailure: {
+      hide: true,
+    },
+  },
   props: {
     file: Property.File({
       displayName: 'File',

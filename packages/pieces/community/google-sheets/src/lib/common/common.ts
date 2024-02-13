@@ -246,7 +246,7 @@ type AppendGoogleSheetValuesParams = {
   accessToken: string;
 };
 
-async function findSheetName(
+export async function findSheetName(
   access_token: string,
   spreadsheetId: string,
   sheetId: number
@@ -424,7 +424,7 @@ async function getValues(
   return res;
 }
 
-const columnToLabel = (columnIndex: number) => {
+export const columnToLabel = (columnIndex: number) => {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   let label = '';
 

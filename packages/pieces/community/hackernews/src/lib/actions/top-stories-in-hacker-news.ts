@@ -12,31 +12,28 @@ export const fetchTopStories = createAction({
       description: undefined,
       required: true,
     }),
-    array: Property.Array({
-      displayName: 'Fields',
-      description: undefined,
-      required: true,
-      properties: {
-        name: Property.ShortText({
-          displayName: 'Name',
-          description: 'Name of the person',
-          required: true,
-        }),
-        age: Property.Number({
-          displayName: 'Age',
-          description: 'Age of the person',
-          required: true,
-        }),
-      }
-    }),
-    simpleArray : Property.Array({
-      displayName: 'Simple Array',
-      description: undefined,
-      required: true,
-    }),
   },
   async run(configValue) {
-
-    return configValue.propsValue;
+    const HACKER_NEWS_API_URL = 'https://hacker-news.firebaseio.com/v0/';
+    const topStoryIdsResponse = await httpClient.sendRequest<string[]>({
+      method: HttpMethod.GET,
+      url: `${HACKER_NEWS_API_URL}topstories.json`,
+    });
+    const topStoryIds: string[] = topStoryIdsResponse.body;
+    const topStories: Record<string, unknown>[] = [];
+    for (
+      let i = 0;
+      i <
+      Math.min(configValue.propsValue['number_of_stories'], topStoryIds.length);
+      i++
+    ) {
+      const storyId = topStoryIds[i];
+      const storyResponse = await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: `${HACKER_NEWS_API_URL}item/${storyId}.json`,
+      });
+      topStories.push(storyResponse.body);
+    }
+    return topStories;
   },
 });

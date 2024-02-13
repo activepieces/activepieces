@@ -16,25 +16,25 @@ function getClientIdAndSecret(platform: Platform): { clientId: string, clientSec
 }
 
 export const gitHubAuthnProvider: AuthnProvider = {
-    async getLoginUrl(platform: Platform): Promise<string> {
+    async getLoginUrl(hostname: string, platform: Platform): Promise<string> {
         const { clientId } = getClientIdAndSecret(platform)
         const loginUrl = new URL('https://github.com/login/oauth/authorize')
         loginUrl.searchParams.set('client_id', clientId)
-        loginUrl.searchParams.set('redirect_uri', flagService.getThirdPartyRedirectUrl())
+        loginUrl.searchParams.set('redirect_uri', flagService.getThirdPartyRedirectUrl(platform.id, hostname))
         loginUrl.searchParams.set('scope', 'user:email')
 
         return loginUrl.href
     },
 
-    async authenticate(platform, authorizationCode): Promise<AuthenticationResponse> {
+    async authenticate(hostname, platform, authorizationCode): Promise<AuthenticationResponse> {
         const { clientId, clientSecret } = getClientIdAndSecret(platform)
-        const githubAccessToken = await getGitHubAccessToken(clientId, clientSecret, authorizationCode)
+        const githubAccessToken = await getGitHubAccessToken(platform, hostname, clientId, clientSecret, authorizationCode)
         const gitHubUserInfo = await getGitHubUserInfo(githubAccessToken)
         return authenticateUser(platform.id, gitHubUserInfo)
     },
 }
 
-const getGitHubAccessToken = async (clientId: string, clientSecret: string, authorizationCode: string): Promise<string> => {
+const getGitHubAccessToken = async (platform: Platform, hostname: string, clientId: string, clientSecret: string, authorizationCode: string): Promise<string> => {
     const response = await fetch('https://github.com/login/oauth/access_token', {
         method: 'POST',
         headers: {
@@ -44,7 +44,7 @@ const getGitHubAccessToken = async (clientId: string, clientSecret: string, auth
             client_id: clientId,
             client_secret: clientSecret,
             code: authorizationCode,
-            redirect_uri: flagService.getThirdPartyRedirectUrl(),
+            redirect_uri: flagService.getThirdPartyRedirectUrl(platform.id, hostname),
         }),
     })
 

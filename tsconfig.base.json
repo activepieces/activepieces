@@ -242,6 +242,9 @@
       "@activepieces/piece-intercom": [
         "packages/pieces/community/intercom/src/index.ts"
       ],
+      "@activepieces/piece-interfaces": [
+        "packages/pieces/community/interfaces/src/index.ts"
+      ],
       "@activepieces/piece-invoiceninja": [
         "packages/pieces/community/invoiceninja/src/index.ts"
       ],
@@ -328,6 +331,9 @@
       ],
       "@activepieces/piece-ntfy": [
         "packages/pieces/community/ntfy/src/index.ts"
+      ],
+      "@activepieces/piece-odoo": [
+        "packages/pieces/community/odoo/src/index.ts"
       ],
       "@activepieces/piece-onfleet": [
         "packages/pieces/community/onfleet/src/index.ts"
@@ -486,6 +492,9 @@
       "@activepieces/piece-webflow": [
         "packages/pieces/community/webflow/src/index.ts"
       ],
+      "@activepieces/piece-whatsable": [
+        "packages/pieces/community/whatsable/src/index.ts"
+      ],
       "@activepieces/piece-woocommerce": [
         "packages/pieces/community/woocommerce/src/index.ts"
       ],
@@ -522,6 +531,9 @@
       "@activepieces/ui-feature-builder-header": [
         "packages/ui/feature-builder-header/src/index.ts"
       ],
+      "@activepieces/ui-feature-git-sync": [
+        "packages/ui/feature-git-sync/src/index.ts"
+      ],
       "@activepieces/ui/common": ["packages/ui/common/src/index.ts"],
       "@activepieces/ui/feature-authentication": [
         "packages/ui/feature-authentication/src/index.ts"
@@ -550,6 +562,9 @@
       "@activepieces/ui/feature-dashboard": [
         "packages/ui/feature-dashboard/src/index.ts"
       ],
+      "@activepieces/ui/feature-folders-store": [
+        "packages/ui/feature-folders-store/src/index.ts"
+      ],
       "@activepieces/ui/feature-pieces": [
         "packages/ui/feature-pieces/src/index.ts"
       ],
@@ -559,7 +574,8 @@
       "@ee/*": ["packages/ee/*"],
       "ui-feature-flow-builder": [
         "packages/ui/feature-flow-builder/src/index.ts"
-      ]
+      ],
+      "ui-feature-interfaces": ["packages/ui/features-interfaces/src/index.ts"]
     },
     "resolveJsonModule": true
   },

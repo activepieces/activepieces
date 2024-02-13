@@ -5,7 +5,7 @@ import { SystemProp } from '../helper/system/system-prop'
 import { FlagEntity } from './flag.entity'
 import axios from 'axios'
 import { webhookService } from '../webhooks/webhook-service'
-import { getEdition } from '../helper/secret-helper'
+import { getEdition, getSupportedAppWebhooks } from '../helper/secret-helper'
 import { defaultTheme } from './theme'
 
 const flagRepo = databaseConnection.getRepository(FlagEntity)
@@ -104,7 +104,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
-                value: [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(getEdition()) ? this.getThirdPartyRedirectUrl() : undefined,
+                value: [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(getEdition()) ? this.getThirdPartyRedirectUrl(undefined, undefined) : undefined,
                 created,
                 updated,
             },
@@ -210,11 +210,21 @@ export const flagService = {
                 created,
                 updated,
             },
+            {
+                id: ApFlagId.SUPPORTED_APP_WEBHOOKS,
+                value: getSupportedAppWebhooks(),
+                created,
+                updated,
+            },
         )
 
         return flags
     },
-    getThirdPartyRedirectUrl(): string {
+    getThirdPartyRedirectUrl(platformId: string | undefined, hostname: string | undefined): string {
+        const isCustomerPlatform = platformId && !flagService.isCloudPlatform(platformId)
+        if (isCustomerPlatform) {
+            return `https://${hostname}/redirect`
+        }
         const frontendUrl = system.get(SystemProp.FRONTEND_URL)
         const trimmedFrontendUrl = frontendUrl?.endsWith('/') ? frontendUrl.slice(0, -1) : frontendUrl
         return `${trimmedFrontendUrl}/redirect`

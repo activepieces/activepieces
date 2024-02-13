@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Observable, switchMap, take, tap } from 'rxjs';
 import { PopulatedFlow, FolderDto, Project } from '@activepieces/shared';
-import { FoldersSelectors } from '../../../store/folders/folders.selector';
+import { FoldersSelectors } from '@activepieces/ui/feature-folders-store';
 import { Store } from '@ngrx/store';
 import {
   CURRENT_FLOW_IS_NEW_KEY_IN_LOCAL_STORAGE,

@@ -4,10 +4,13 @@
       <span class="ap-typography-subtitle-2">{{title}}</span>
     </div>
     <div class="ap-flex ap-items-center ap-gap-2">
+      <svg-icon class="ap-h-[16px] ap-w-[16px] ap-cursor-pointer" src="/assets/img/custom/download.svg"
+        [applyClass]="true" matTooltip="Download" (click)="downloadContent()"></svg-icon>
       <svg-icon class="ap-h-[16px] ap-w-[16px] ap-cursor-pointer ap-fill-body" src="/assets/img/custom/copy.svg"
         [applyClass]="true" matTooltip="Copy" (click)="copyContent()"></svg-icon>
       <svg-icon class="ap-h-[16px] ap-w-[16px] ap-cursor-pointer" src="/assets/img/custom/maximize-black.svg"
         [applyClass]="true" matTooltip="Expand" (click)="openModal()"></svg-icon>
+
     </div>
   </div>
   <div class="code-area">

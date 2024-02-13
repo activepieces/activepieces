@@ -421,104 +421,196 @@ export const recordProperty = (create = true) =>
         }
       }
 
-      const describe_response = await httpClient.sendRequest<{
-        success: boolean;
-        result: { fields: Field[] };
-      }>({
-        method: HttpMethod.GET,
-        url: `${auth['instance_url']}/webservice.php`,
-        queryParams: {
-          sessionName: instance.sessionId ?? instance.sessionName,
-          operation: 'describe',
-          elementType: elementType as unknown as string,
-        },
-      });
-
-      const fields: DynamicPropsValue = {};
-
-      if (describe_response.body.success) {
-        const generateField = async (field: Field) => {
-          const params = {
-            displayName: field.label,
-            description: `Field ${field.name} of object type ${elementType}`,
-            required: field.mandatory,
-          };
-
-          if (
-            ['string', 'text', 'mediumtext', 'phone', 'url', 'email'].includes(
-              field.type.name
-            )
-          ) {
-            if (['mediumtext', 'url'].includes(field.type.name)) {
-              fields[field.name] = Property.LongText({
-                ...params,
-                defaultValue: defaultValue?.[field.name] as string,
-              });
-            } else {
-              fields[field.name] = Property.ShortText({
-                ...params,
-                defaultValue: defaultValue?.[field.name] as string,
-              });
-            }
-          } else if (
-            ['picklist', 'reference', 'owner'].includes(field.type.name)
-          ) {
-            let options: DropdownState<string>;
-            if (field.type.name === 'picklist') {
-              options = {
-                disabled: false,
-                options: field.type.picklistValues ?? [],
-              };
-            } else if (field.type.name === 'owner') {
-              options = await getRecordReference(
-                auth as PiecePropValueSchema<typeof vtigerAuth>,
-                ['Users']
-              );
-            } else if (field.type.refersTo) {
-              options = await getRecordReference(
-                auth as PiecePropValueSchema<typeof vtigerAuth>,
-                field.type.refersTo ?? []
-              );
-            } else {
-              options = { disabled: false, options: [] };
-            }
-
-            fields[field.name] = Property.StaticDropdown({
-              ...params,
-              defaultValue: defaultValue?.[field.name] as string,
-              options,
-            });
-          } else if (
-            ['double', 'integer', 'currency'].includes(field.type.name)
-          ) {
-            fields[field.name] = Property.Number({
-              ...params,
-              defaultValue: defaultValue?.[field.name] as number,
-            });
-          } else if (['boolean'].includes(field.type.name)) {
-            fields[field.name] = Property.Checkbox({
-              displayName: field.label,
-              description: `The fields to fill in the object type ${elementType}`,
-              required: field.mandatory,
-              defaultValue: defaultValue?.[field.name] as boolean,
-            });
-          } else if (['date', 'datetime', 'time'].includes(field.type.name)) {
-            fields[field.name] = Property.DateTime({
-              displayName: field.label,
-              description: `The fields to fill in the object type ${elementType}`,
-              defaultValue: defaultValue?.[field.name] as string,
-              required: field.mandatory,
-            });
-          }
-        };
-
-        for (const field of describe_response.body.result.fields) {
-          if (field.name === 'id') continue;
-
-          await generateField(field);
-        }
-      }
-
-      return fields;
+      return generateElementFields(
+        auth as VTigerAuthValue,
+        elementType as unknown as string,
+        defaultValue
+      );
     },
   });
+
+export const queryRecords = async (
+  auth: VTigerAuthValue,
+  elementType: string,
+  page = 0,
+  limit = 100
+) => {
+  const instance = await instanceLogin(
+    auth['instance_url'],
+    auth['username'],
+    auth['password']
+  );
+  if (!instance) return [];
+
+  const response = await httpClient.sendRequest<{
+    success: boolean;
+    result: Record<string, unknown>[];
+  }>({
+    method: HttpMethod.GET,
+    url: `${(auth as VTigerAuthValue)['instance_url']}/webservice.php`,
+    queryParams: {
+      sessionName: instance.sessionId ?? instance.sessionName,
+      operation: 'query',
+      elementType: elementType as unknown as string,
+      query: `SELECT * FROM ${elementType} LIMIT ${page}, ${limit};`,
+    },
+  });
+
+  if (response.body.success) {
+    return response.body.result;
+  }
+
+  return [];
+};
+
+export const countRecords = async (
+  auth: VTigerAuthValue,
+  elementType: string
+) => {
+  const instance = await instanceLogin(
+    auth['instance_url'],
+    auth['username'],
+    auth['password']
+  );
+  if (!instance) return 0;
+
+  const response = await httpClient.sendRequest<{
+    success: boolean;
+    result: { count: string }[];
+  }>({
+    method: HttpMethod.GET,
+    url: `${(auth as VTigerAuthValue)['instance_url']}/webservice.php`,
+    queryParams: {
+      sessionName: instance.sessionId ?? instance.sessionName,
+      operation: 'query',
+      elementType: elementType as unknown as string,
+      query: `SELECT count(*) FROM ${elementType};`,
+    },
+  });
+
+  if (response.body.success) {
+    return Number.parseInt(response.body.result[0].count);
+  }
+
+  return 0;
+};
+
+export const generateElementFields = async (
+  auth: VTigerAuthValue,
+  elementType: string,
+  defaultValue: Record<string, unknown>,
+  skipMandatory = false
+): Promise<DynamicPropsValue> => {
+  const instance = await instanceLogin(
+    auth['instance_url'],
+    auth['username'],
+    auth['password']
+  );
+  if (!instance) return {};
+
+  const describe_response = await httpClient.sendRequest<{
+    success: boolean;
+    result: { fields: Field[] };
+  }>({
+    method: HttpMethod.GET,
+    url: `${auth['instance_url']}/webservice.php`,
+    queryParams: {
+      sessionName: instance.sessionId ?? instance.sessionName,
+      operation: 'describe',
+      elementType: elementType,
+    },
+  });
+
+  const fields: DynamicPropsValue = {};
+
+  if (describe_response.body.success) {
+    const generateField = async (field: Field) => {
+      const params = {
+        displayName: field.label,
+        description: `Field ${field.name} of object type ${elementType}`,
+        required: !skipMandatory ? field.mandatory : false,
+      };
+
+      if (
+        ['string', 'text', 'mediumtext', 'phone', 'url', 'email'].includes(
+          field.type.name
+        )
+      ) {
+        if (['mediumtext', 'url'].includes(field.type.name)) {
+          fields[field.name] = Property.LongText({
+            ...params,
+            defaultValue: defaultValue?.[field.name] as string,
+          });
+        } else {
+          fields[field.name] = Property.ShortText({
+            ...params,
+            defaultValue: defaultValue?.[field.name] as string,
+          });
+        }
+      } else if (['picklist', 'reference', 'owner'].includes(field.type.name)) {
+        let options: DropdownState<string>;
+        if (field.type.name === 'picklist') {
+          options = {
+            disabled: false,
+            options: field.type.picklistValues ?? [],
+          };
+        } else if (field.type.name === 'owner') {
+          options = await getRecordReference(
+            auth as PiecePropValueSchema<typeof vtigerAuth>,
+            ['Users']
+          );
+        } else if (field.type.refersTo) {
+          options = await getRecordReference(
+            auth as PiecePropValueSchema<typeof vtigerAuth>,
+            field.type.refersTo ?? []
+          );
+        } else {
+          options = { disabled: false, options: [] };
+        }
+
+        fields[field.name] = Property.StaticDropdown({
+          ...params,
+          defaultValue: defaultValue?.[field.name] as string,
+          options,
+        });
+      } else if (['double', 'integer', 'currency'].includes(field.type.name)) {
+        fields[field.name] = Property.Number({
+          ...params,
+          defaultValue: defaultValue?.[field.name] as number,
+        });
+      } else if (['boolean'].includes(field.type.name)) {
+        fields[field.name] = Property.Checkbox({
+          displayName: field.label,
+          description: `The fields to fill in the object type ${elementType}`,
+          required: !skipMandatory ? field.mandatory : false,
+          defaultValue: defaultValue?.[field.name] as boolean,
+        });
+      } else if (['date', 'datetime', 'time'].includes(field.type.name)) {
+        fields[field.name] = Property.DateTime({
+          displayName: field.label,
+          description: `The fields to fill in the object type ${elementType}`,
+          defaultValue: defaultValue?.[field.name] as string,
+          required: !skipMandatory ? field.mandatory : false,
+        });
+      }
+    };
+
+    for (const field of describe_response.body.result.fields) {
+      if (
+        [
+          'id',
+          'modifiedtime',
+          'createdtime',
+          'modifiedby',
+          'created_user_id',
+        ].includes(field.name)
+      ) {
+        continue;
+      }
+
+      await generateField(field);
+    }
+  }
+
+  return fields;
+};

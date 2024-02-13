@@ -3,35 +3,69 @@ import { ProjectsState } from '../common-state.model';
 import { ProjectActions } from './project.action';
 
 const initialState: ProjectsState = {
-  loaded: false,
   selectedIndex: 0,
   projects: [],
+  platform: undefined,
 };
 
 const _projectReducer = createReducer(
   initialState,
-  on(ProjectActions.updateProject, (state, { notifyStatus }): ProjectsState => {
-    const updatedProjects = [...state.projects];
-    updatedProjects[state.selectedIndex] = {
-      ...state.projects[state.selectedIndex],
-      notifyStatus: notifyStatus,
-    };
+  on(
+    ProjectActions.updateNotifyStatus,
+    (state, { notifyStatus }): ProjectsState => {
+      const updatedProjects = [...state.projects];
+      updatedProjects[state.selectedIndex] = {
+        ...state.projects[state.selectedIndex],
+        notifyStatus: notifyStatus,
+      };
 
-    return {
-      loaded: true,
-      projects: updatedProjects,
-      selectedIndex: state.selectedIndex,
-    };
-  }),
+      return {
+        platform: state.platform,
+        projects: updatedProjects,
+        selectedIndex: state.selectedIndex,
+      };
+    }
+  ),
   on(
     ProjectActions.setProjects,
-    (_state, { projects, selectedIndex }): ProjectsState => {
-      return { projects: projects, loaded: true, selectedIndex: selectedIndex };
+    (_state, { projects, platform, selectedIndex }): ProjectsState => {
+      return {
+        projects: projects,
+        platform,
+        selectedIndex: selectedIndex,
+      };
     }
   ),
   // eslint-disable-next-line no-empty-pattern, @typescript-eslint/no-unused-vars
   on(ProjectActions.clearProjects, (_state, {}): ProjectsState => {
-    return { projects: [], loaded: false, selectedIndex: 0 };
+    return {
+      projects: [],
+      selectedIndex: 0,
+      platform: undefined,
+    };
+  }),
+  on(ProjectActions.updateProject, (state, { project }): ProjectsState => {
+    const updatedProjects = [...JSON.parse(JSON.stringify(state.projects))];
+    const index = updatedProjects.findIndex((p) => p.id === project.id);
+
+    if (index < 0) {
+      console.error("Project updated wasn't found in the list of projects");
+    } else {
+      updatedProjects[index] = project;
+    }
+    return {
+      platform: state.platform,
+      projects: updatedProjects,
+      selectedIndex: state.selectedIndex,
+    };
+  }),
+  on(ProjectActions.addProject, (state, { project }): ProjectsState => {
+    const newState = JSON.parse(JSON.stringify(state));
+    return {
+      platform: newState.platform,
+      projects: [...newState.projects, project],
+      selectedIndex: newState.selectedIndex,
+    };
   })
 );
 

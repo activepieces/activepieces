@@ -1,19 +1,23 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { Observable, Subject, map, startWith, tap } from 'rxjs';
+import { Observable, Subject, startWith, tap } from 'rxjs';
 import { ProjectsDataSource } from './projects-table.datasource';
 import { Project } from '@activepieces/shared';
 import { MatDialog } from '@angular/material/dialog';
 import { CreateProjectDialogComponent } from './create-project-dialog/create-project-dialog.component';
-import { UpdateProjectDialogComponent } from './update-project-dialog/update-project-dialog.component';
+import {
+  UpdateProjectDialogComponent,
+  UpdateProjectDialogData,
+} from './update-project-dialog/update-project-dialog.component';
 import { Store } from '@ngrx/store';
 import {
   AuthenticationService,
-  CommonActions,
   PlatformProjectService,
+  ProjectActions,
   featureDisabledTooltip,
 } from '@activepieces/ui/common';
 import { ActivatedRoute } from '@angular/router';
 import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
+import { ProjectWithUsageAndPlanResponse } from '@activepieces/ee-shared';
 
 @Component({
   selector: 'app-projects-table',
@@ -33,8 +37,12 @@ export class ProjectsTableComponent {
   dataSource: ProjectsDataSource;
   loading = true;
   switchProject$: Observable<void> | undefined;
-  createProject$: Observable<void> | undefined;
-  updateProject$: Observable<void> | undefined;
+  createProject$:
+    | Observable<ProjectWithUsageAndPlanResponse | undefined>
+    | undefined;
+  updateProject$:
+    | Observable<ProjectWithUsageAndPlanResponse | undefined>
+    | undefined;
   title = $localize`Projects`;
   featureDisabledTooltip = featureDisabledTooltip;
   isDemo = false;
@@ -59,51 +67,37 @@ export class ProjectsTableComponent {
       .open(CreateProjectDialogComponent)
       .afterClosed()
       .pipe(
-        tap((res) => {
-          if (res) {
+        tap((project: ProjectWithUsageAndPlanResponse | undefined) => {
+          if (project) {
             this.refreshTable$.next(true);
-            this.reinitializeProjectsInStore();
+            this.store.dispatch(ProjectActions.addProject({ project }));
           }
-        }),
-        map(() => void 0)
+        })
       );
   }
   openProject(project: Project) {
     this.switchProject$ = this.projectsService.switchProject(project.id, true);
   }
 
-  updateProject(project: Project) {
+  updateProject(project: ProjectWithUsageAndPlanResponse) {
+    if (this.isDemo) {
+      return;
+    }
+    const data: UpdateProjectDialogData = { project };
     this.updateProject$ = this.matDialog
       .open(UpdateProjectDialogComponent, {
-        data: {
-          project,
-        },
+        data,
       })
       .afterClosed()
       .pipe(
-        tap((res) => {
-          if (res) {
+        tap((updatedProject) => {
+          if (updatedProject) {
             this.refreshTable$.next(true);
-            this.reinitializeProjectsInStore();
+            this.store.dispatch(
+              ProjectActions.updateProject({ project: updatedProject })
+            );
           }
-        }),
-        map(() => void 0)
-      );
-  }
-  reinitializeProjectsInStore() {
-    const user = this.authenticationService.currentUserSubject.value;
-    const decodedToken = this.authenticationService.getDecodedToken();
-    if (!decodedToken) {
-      console.error('Token is invalid or not set');
-      return;
-    }
-    if (user) {
-      this.store.dispatch(
-        CommonActions.loadProjects({
-          user,
-          currentProjectId: decodedToken['projectId'],
         })
       );
-    }
   }
 }

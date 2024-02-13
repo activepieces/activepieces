@@ -16,7 +16,10 @@ export const projectService = {
         return projectRepo.save(newProject)
     },
 
-    async getOne(projectId: ProjectId): Promise<Project | null> {
+    async getOne(projectId: ProjectId | undefined): Promise<Project | null> {
+        if (isNil(projectId)) {
+            return null
+        }
         return projectRepo.findOneBy({
             id: projectId,
         })

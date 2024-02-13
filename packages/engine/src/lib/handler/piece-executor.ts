@@ -1,4 +1,4 @@
-import { AUTHENTICATION_PROPERTY_NAME, GenericStepOutput, ActionType, ExecutionOutputStatus, PieceAction, StepOutputStatus, assertNotNullOrUndefined } from '@activepieces/shared'
+import { AUTHENTICATION_PROPERTY_NAME, GenericStepOutput, ActionType, ExecutionOutputStatus, PieceAction, StepOutputStatus, assertNotNullOrUndefined, isNil, ExecutionType } from '@activepieces/shared'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
 import { variableService } from '../services/variable-service'
@@ -69,9 +69,10 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             paused: false,
             tags: [],
         }
-
+        const isPaused = executionState.isPaused({ stepName: action.name })
         const context: ActionContext = {
-            executionType: constants.executionType,
+            executionType: isPaused ? ExecutionType.RESUME : ExecutionType.BEGIN,
+            resumePayload: constants.resumePayload,
             store: createContextStore({
                 prefix: '',
                 flowId: constants.flowId,
@@ -102,13 +103,13 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 stop: createStopHook(hookResponse),
                 pause: createPauseHook(hookResponse),
             },
-            resumePayload: constants.resumePayload,
             project: {
                 id: constants.projectId,
                 externalId: constants.externalProjectId,
             },
         }
-        const output = await pieceAction.run(context)
+        const runMethodToExecute = (constants.testSingleStepMode && !isNil(pieceAction.test)) ? pieceAction.test : pieceAction.run
+        const output = await runMethodToExecute(context)
         const newExecutionContext = executionState.addTags(hookResponse.tags)
 
         if (hookResponse.stopped) {
@@ -120,8 +121,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         }
         if (hookResponse.paused) {
             assertNotNullOrUndefined(hookResponse.pauseResponse, 'pauseResponse')
-            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)
-                .setStatus(StepOutputStatus.PAUSED))
+            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED))
                 .setVerdict(ExecutionVerdict.PAUSED, {
                     reason: ExecutionOutputStatus.PAUSED,
                     pauseMetadata: hookResponse.pauseResponse.pauseMetadata,

@@ -45,7 +45,7 @@ import { AddPieceTypeAndPackageTypeToPieceMetadata1695992551156 } from './migrat
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { AddPieceTypeAndPackageTypeToFlowTemplate1696245170062 } from './migration/common/1696245170062-add-piece-type-and-package-type-to-flow-template'
 import { AddVisibilityStatusToChatbot1695719749099 } from './migration/postgres/1695719749099-AddVisibilityStatusToChatbot'
-import { ApEdition, ApEnvironment } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
 import { getEdition } from '../helper/secret-helper'
 import { AddDatasourcesLimit1695916063833 } from '../ee/database/migrations/postgres/1695916063833-AddDatasourcesLimit'
 import { MakeStripeSubscriptionNullable1685053959806 } from '../ee/database/migrations/postgres/1685053959806-MakeStripeSubscriptionNullable'
@@ -99,6 +99,9 @@ import { AddEnableEmailAuthToPlatform1704797979825 } from './migration/postgres/
 import { AddGitSyncEnabledToPlatform1704636362533 } from './migration/postgres/1704636362533-AddGitSyncEnabledToPlatform'
 import { AddGitRepoMigrationPostgres1704503804056 } from './migration/postgres/1704503804056-AddGitRepoMigrationPostgres'
 import { RemoveUniqueonAppNameAppCredentials1705586178452 } from './migration/postgres/1705586178452-RemoveUniqueonAppNameAppCredentials'
+import { AddTriggerTestStrategy1707087022764 } from './migration/common/1707087022764-add-trigger-test-strategy'
+import { AddCategoriesToPieceMetadataPostgres1707231704973 } from './migration/postgres/1707231704973-AddCategoriesToPieceMetadataPostgres'
+import { AddAuditEvents1707614902283 } from './migration/postgres/1707614902283-AddAuditEvents'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -168,6 +171,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveFlowInstance1702379794665,
         RenameAppNameToPieceName1703711596105,
         AddVerifiedAndChangeStatus1703769034497,
+        AddTriggerTestStrategy1707087022764,
+        AddCategoriesToPieceMetadataPostgres1707231704973,
     ]
 
     const edition = getEdition()
@@ -213,6 +218,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddGitRepoMigrationPostgres1704503804056,
                 AddGitSyncEnabledToPlatform1704636362533,
                 RemoveUniqueonAppNameAppCredentials1705586178452,
+                AddAuditEvents1707614902283,
             )
             break
         case ApEdition.ENTERPRISE:
@@ -252,6 +258,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddEnableEmailAuthToPlatform1704797979825,
                 AddGitRepoMigrationPostgres1704503804056,
                 AddGitSyncEnabledToPlatform1704636362533,
+                AddAuditEvents1707614902283,
             )
             break
         case ApEdition.COMMUNITY:
@@ -276,6 +283,18 @@ const getMigrationConfig = (): MigrationConfig => {
 }
 
 export const createPostgresDataSource = (): DataSource => {
+    const migrationConfig = getMigrationConfig()
+    const url = system.get(SystemProp.POSTGRES_URL)
+
+    if (!isNil(url)) {
+        return new DataSource({
+            type: 'postgres',
+            url,
+            ssl: getSslConfig(),
+            ...migrationConfig,
+            ...commonProperties,
+        })
+    }
 
     const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE)
     const host = system.getOrThrow(SystemProp.POSTGRES_HOST)
@@ -283,7 +302,6 @@ export const createPostgresDataSource = (): DataSource => {
     const serializedPort = system.getOrThrow(SystemProp.POSTGRES_PORT)
     const port = Number.parseInt(serializedPort, 10)
     const username = system.getOrThrow(SystemProp.POSTGRES_USERNAME)
-    const migrationConfig = getMigrationConfig()
 
     return new DataSource({
         type: 'postgres',

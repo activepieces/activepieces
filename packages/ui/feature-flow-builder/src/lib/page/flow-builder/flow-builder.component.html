@@ -22,11 +22,9 @@
           </div>
         </mat-drawer>
         <mat-drawer-content [class.no-transition]="rightSidebarDragging || leftSidebarDragging">
-          <div class="box ap-relative ap-overflow-hidden"
-            [class.ap-cursor-grabbing]="(isPanning$| async) || (isDragging$ | async)"
-            [class.ap-cursor-default]="(isDragging$| async)===false && (isPanning$ | async) === false"
-            #draggingContainer id="draggingContainer">
-            <div class="content canvas" #canvasWrapper appCanvasPanner>
+          <div class="box ap-relative ap-overflow-hidden ap-cursor-grab"
+            [class.!ap-cursor-grabbing]="(isPanning$| async) || (isDragging$ | async)" id="draggingContainer">
+            <div class="content canvas " #canvasWrapper appCanvasPanner>
               <div class="ap-absolute ap-right-[0px]  transition-ease ap-z-50 ap-bottom-[20px] ap-right-[20px]"
                 id="mentionsDropdownContainer" [class.!ap-z-0]="dataInsertionPopupHidden$ | async"
                 [style.height]="(builderAutocompleteService.dataInsertionPopupSize$ | async) === 'fullscreen' ? 'calc(100% - 30px)' : mentionsDropdown.mentionsList?.nativeElement?.clientHeight + 'px'"
@@ -34,8 +32,7 @@
                 <app-builder-autocomplete-mentions-dropdown
                   #mentionsDropdown></app-builder-autocomplete-mentions-dropdown>
               </div>
-              <div *ngIf="showPoweredByAp$ | async"
-                class="ap-absolute ap-bottom-[20px] ap-left-[calc(50%-106px)] ap-z-40">
+              <div *ngIf="showPoweredByAp$ | async" class="ap-absolute ap-bottom-[20px] ap-right-[20px] ap-z-40">
                 <div class="ap-flex ap-items-center ap-justify-center">
                   <ap-powered-by-activepieces></ap-powered-by-activepieces>
                 </div>

@@ -52,7 +52,7 @@ export const flowService = {
         telemetry.trackProject(
             savedFlow.projectId,
             {
-                name: TelemetryEventName.FLOW_CREATED,
+                name: TelemetryEventName.CREATED_FLOW,
                 payload: {
                     flowId: savedFlow.id,
                 },

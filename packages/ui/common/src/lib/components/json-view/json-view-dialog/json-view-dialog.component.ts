@@ -1,33 +1,25 @@
-import {
-  AfterViewInit,
-  ChangeDetectionStrategy,
-  Component,
-  Inject,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { HighlightService } from '../../../service/highlight.service';
+import { FormControl } from '@angular/forms';
+import { jsonEditorOptionsMonaco } from '../../../utils/consts';
+export type JsonViewDialogData = {
+  title: string;
+  content: unknown;
+};
 
 @Component({
   selector: 'ap-json-view-dialog',
   templateUrl: './json-view-dialog.component.html',
-  styleUrls: ['./json-view-dialog.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class JsonViewDialogComponent implements AfterViewInit {
-  title = '';
-  content = '';
-  highlight = false;
-  constructor(
-    @Inject(MAT_DIALOG_DATA) dialogData: { title: string; content: string },
-    private highlightService: HighlightService
-  ) {
-    this.title = dialogData.title;
-    this.content = dialogData.content;
-  }
-  ngAfterViewInit(): void {
-    if (typeof this.content !== 'string') {
-      this.highlight = true;
-      this.highlightService.highlightAll();
-    }
+export class JsonViewDialogComponent {
+  data: JsonViewDialogData;
+  jsonEditorOptionsMonaco = jsonEditorOptionsMonaco;
+  jsonFormControl: FormControl<unknown>;
+  constructor(@Inject(MAT_DIALOG_DATA) dialogData: JsonViewDialogData) {
+    this.data = dialogData;
+    this.jsonFormControl = new FormControl(
+      JSON.stringify(this.data.content, null, 2)
+    );
   }
 }

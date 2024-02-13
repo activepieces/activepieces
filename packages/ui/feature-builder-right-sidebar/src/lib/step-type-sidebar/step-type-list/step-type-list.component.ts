@@ -10,7 +10,6 @@ import { FlowItemDetails } from '@activepieces/ui/common';
 @Component({
   selector: 'app-step-type-list',
   templateUrl: './step-type-list.component.html',
-  styleUrls: ['./step-type-list.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StepTypeListComponent {

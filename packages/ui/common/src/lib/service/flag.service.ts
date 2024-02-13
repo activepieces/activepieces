@@ -37,6 +37,15 @@ export class FlagService {
       })
     );
   }
+
+  getArrayFlag(flag: ApFlagId): Observable<string[]> {
+    return this.getAllFlags().pipe(
+      map((value) => {
+        return value[flag] as string[];
+      })
+    );
+  }
+
   getThirdPartyProvidersMap() {
     return this.getAllFlags().pipe(
       map((res) => {
@@ -79,6 +88,14 @@ export class FlagService {
     return this.getAllFlags().pipe(
       map((flags) => {
         return flags[ApFlagId.WEBHOOK_URL_PREFIX] as string;
+      })
+    );
+  }
+
+  getInterfaceUrlPrefix(): Observable<string> {
+    return this.getAllFlags().pipe(
+      map((flags) => {
+        return (flags[ApFlagId.FRONTEND_URL] as string) + '/interfaces';
       })
     );
   }

@@ -12,6 +12,7 @@ type GenerateCodeParams = {
 function getOpenAI(): OpenAI {
     return new OpenAI({
         apiKey: system.getOrThrow(SystemProp.OPENAI_API_KEY),
+        baseURL: system.get(SystemProp.OPENAI_API_BASE_URL),
     })
 }
 
@@ -72,6 +73,14 @@ export const copilotService = {
                                     },
                                 },
                             },
+                            packages: {
+                                type: 'array',
+                                description: 'The packages imported in the code snippet',
+                                items: {
+                                    type: 'string',
+                                    description: 'The name of the package, e.g axios, lodash, etc.',
+                                },
+                            },
                         },
                         required: ['code'],
                     },
@@ -107,7 +116,7 @@ You will use import to import any libraries you need. You will be penalized for 
                 content: null,
                 function_call: {
                     name: 'generate_code',
-                    arguments: '{ "code": "export const code = async (inputs) => {***NEW_LINE***  const combinedArray = [...inputs.array1, ...inputs.array2]***NEW_LINE***  const uniqueArray = Array.from(new Set(combinedArray))***NEW_LINE***  return uniqueArray***NEW_LINE***};", "inputs": [ { "key": "array1", "value": "[1,2,3]" }, { "key": "array2", "value": "[4,5,6]" } ] }',
+                    arguments: '{ "code": "export const code = async (inputs) => {***NEW_LINE***  const combinedArray = [...inputs.array1, ...inputs.array2]***NEW_LINE***  const uniqueArray = Array.from(new Set(combinedArray))***NEW_LINE***  return uniqueArray***NEW_LINE***};", "inputs": [ { "key": "array1", "value": "[1,2,3]" }, { "key": "array2", "value": "[4,5,6]" } ], "packages": [] }',
                 },
             },
             {
@@ -119,7 +128,7 @@ You will use import to import any libraries you need. You will be penalized for 
                 content: null,
                 function_call: {
                     name: 'generate_code',
-                    arguments: '{ "code": "export const code = async (inputs) => {***NEW_LINE***  const nameParts = inputs.fullName.split(\' \')***NEW_LINE***  const firstName = nameParts[0]***NEW_LINE***  const lastName = nameParts.slice(1).join(\'\')***NEW_LINE***  return { firstName, lastName }***NEW_LINE***};", "inputs": [ { "key": "fullName","value": "John Doe" } ] }',
+                    arguments: '{ "code": "export const code = async (inputs) => {***NEW_LINE***  const nameParts = inputs.fullName.split(\' \')***NEW_LINE***  const firstName = nameParts[0]***NEW_LINE***  const lastName = nameParts.slice(1).join(\'\')***NEW_LINE***  return { firstName, lastName }***NEW_LINE***};", "inputs": [ { "key": "fullName","value": "John Doe" } ], "packages": [] }',
                 },
             },
             {
@@ -131,7 +140,7 @@ You will use import to import any libraries you need. You will be penalized for 
                 content: null,
                 function_call: {
                     'name': 'generate_code',
-                    'arguments': '{ "code": "export const code = async (inputs) => {***NEW_LINE***  const isoStrings = inputs.array.map(obj => new Date(obj.created_at).toISOString())***NEW_LINE***  return isoStrings;***NEW_LINE***};", "inputs": [ { "key": "array","value": "[{ "created_at": "2022-01-14T12:34:56Z" }, { "created_at": "2022-01-15T09:45:30Z" } ]" } ] }',
+                    'arguments': '{ "code": "export const code = async (inputs) => {***NEW_LINE***  const isoStrings = inputs.array.map(obj => new Date(obj.created_at).toISOString())***NEW_LINE***  return isoStrings;***NEW_LINE***};", "inputs": [ { "key": "array","value": "[{ "created_at": "2022-01-14T12:34:56Z" }, { "created_at": "2022-01-15T09:45:30Z" } ]" } ], "packages": [] }',
                 },
             },
             {
@@ -143,7 +152,7 @@ You will use import to import any libraries you need. You will be penalized for 
                 content: null,
                 function_call: {
                     name: 'generate_code',
-                    arguments: '{ "code": "export const code = async (inputs) => {***NEW_LINE*** return \'Hi\'***NEW_LINE***};", "inputs": [] }',
+                    arguments: '{ "code": "export const code = async (inputs) => {***NEW_LINE*** return \'Hi\'***NEW_LINE***};", "inputs": [], "packages": [] }',
                 },
             },
             {
@@ -155,7 +164,7 @@ You will use import to import any libraries you need. You will be penalized for 
                 content: null,
                 function_call: {
                     name: 'generate_code',
-                    arguments: '{ "code": "export const code = async (inputs) => {***NEW_LINE*** return \'How are you?\'***NEW_LINE***};", "inputs": [] }',
+                    arguments: '{ "code": "export const code = async (inputs) => {***NEW_LINE*** return \'How are you?\'***NEW_LINE***};", "inputs": [], "packages": [] }',
                 },
             },
             {
@@ -167,7 +176,7 @@ You will use import to import any libraries you need. You will be penalized for 
                 content: null,
                 function_call: {
                     name: 'generate_code',
-                    arguments: '{ "code": "import axios from \'axios\'***NEW_LINE***export const code = async (inputs) => {***NEW_LINE***  const response = await axios.get(\'https://cloud.activepieces.com/api/v1/pieces\');***NEW_LINE***  return response.data;***NEW_LINE***};", "inputs": [] }',
+                    arguments: '{ "code": "import axios from \'axios\'***NEW_LINE***export const code = async (inputs) => {***NEW_LINE***  const response = await axios.get(\'https://cloud.activepieces.com/api/v1/pieces\');***NEW_LINE***  return response.data;***NEW_LINE***};", "inputs": [], "packages": ["axios"] }',
                 },
             },
         ]

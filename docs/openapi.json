@@ -1294,6 +1294,264 @@
                               "description": {
                                 "type": "string"
                               },
+                              "properties": {
+                                "type": "object",
+                                "additionalProperties": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "displayName": {
+                                          "type": "string"
+                                        },
+                                        "description": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "enum": [
+                                            "SHORT_TEXT"
+                                          ]
+                                        },
+                                        "required": {
+                                          "type": "boolean"
+                                        },
+                                        "defaultValue": {}
+                                      },
+                                      "required": [
+                                        "displayName",
+                                        "type",
+                                        "required"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "displayName": {
+                                          "type": "string"
+                                        },
+                                        "description": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "enum": [
+                                            "LONG_TEXT"
+                                          ]
+                                        },
+                                        "required": {
+                                          "type": "boolean"
+                                        },
+                                        "defaultValue": {}
+                                      },
+                                      "required": [
+                                        "displayName",
+                                        "type",
+                                        "required"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "displayName": {
+                                          "type": "string"
+                                        },
+                                        "description": {
+                                          "type": "string"
+                                        },
+                                        "options": {
+                                          "type": "object",
+                                          "properties": {
+                                            "disabled": {
+                                              "type": "boolean"
+                                            },
+                                            "placeholder": {
+                                              "type": "string"
+                                            },
+                                            "options": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "label": {
+                                                    "type": "string"
+                                                  },
+                                                  "value": {}
+                                                },
+                                                "required": [
+                                                  "label",
+                                                  "value"
+                                                ]
+                                              }
+                                            }
+                                          },
+                                          "required": [
+                                            "options"
+                                          ]
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "enum": [
+                                            "STATIC_DROPDOWN"
+                                          ]
+                                        },
+                                        "required": {
+                                          "type": "boolean"
+                                        },
+                                        "defaultValue": {}
+                                      },
+                                      "required": [
+                                        "displayName",
+                                        "options",
+                                        "type",
+                                        "required"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "displayName": {
+                                          "type": "string"
+                                        },
+                                        "description": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "enum": [
+                                            "MULTI_SELECT_DROPDOWN"
+                                          ]
+                                        },
+                                        "required": {
+                                          "type": "boolean"
+                                        },
+                                        "defaultValue": {},
+                                        "refreshers": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "string"
+                                          }
+                                        }
+                                      },
+                                      "required": [
+                                        "displayName",
+                                        "type",
+                                        "required",
+                                        "refreshers"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "displayName": {
+                                          "type": "string"
+                                        },
+                                        "description": {
+                                          "type": "string"
+                                        },
+                                        "options": {
+                                          "type": "object",
+                                          "properties": {
+                                            "disabled": {
+                                              "type": "boolean"
+                                            },
+                                            "placeholder": {
+                                              "type": "string"
+                                            },
+                                            "options": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "label": {
+                                                    "type": "string"
+                                                  },
+                                                  "value": {}
+                                                },
+                                                "required": [
+                                                  "label",
+                                                  "value"
+                                                ]
+                                              }
+                                            }
+                                          },
+                                          "required": [
+                                            "options"
+                                          ]
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "enum": [
+                                            "STATIC_MULTI_SELECT_DROPDOWN"
+                                          ]
+                                        },
+                                        "required": {
+                                          "type": "boolean"
+                                        },
+                                        "defaultValue": {}
+                                      },
+                                      "required": [
+                                        "displayName",
+                                        "options",
+                                        "type",
+                                        "required"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "displayName": {
+                                          "type": "string"
+                                        },
+                                        "description": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "enum": [
+                                            "CHECKBOX"
+                                          ]
+                                        },
+                                        "required": {
+                                          "type": "boolean"
+                                        },
+                                        "defaultValue": {}
+                                      },
+                                      "required": [
+                                        "displayName",
+                                        "type",
+                                        "required"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "displayName": {
+                                          "type": "string"
+                                        },
+                                        "description": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "enum": [
+                                            "NUMBER"
+                                          ]
+                                        },
+                                        "required": {
+                                          "type": "boolean"
+                                        },
+                                        "defaultValue": {}
+                                      },
+                                      "required": [
+                                        "displayName",
+                                        "type",
+                                        "required"
+                                      ]
+                                    }
+                                  ]
+                                }
+                              },
                               "type": {
                                 "type": "string",
                                 "enum": [
@@ -2321,6 +2579,264 @@
                               "description": {
                                 "type": "string"
                               },
+                              "properties": {
+                                "type": "object",
+                                "additionalProperties": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "displayName": {
+                                          "type": "string"
+                                        },
+                                        "description": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "enum": [
+                                            "SHORT_TEXT"
+                                          ]
+                                        },
+                                        "required": {
+                                          "type": "boolean"
+                                        },
+                                        "defaultValue": {}
+                                      },
+                                      "required": [
+                                        "displayName",
+                                        "type",
+                                        "required"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "displayName": {
+                                          "type": "string"
+                                        },
+                                        "description": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "enum": [
+                                            "LONG_TEXT"
+                                          ]
+                                        },
+                                        "required": {
+                                          "type": "boolean"
+                                        },
+                                        "defaultValue": {}
+                                      },
+                                      "required": [
+                                        "displayName",
+                                        "type",
+                                        "required"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "displayName": {
+                                          "type": "string"
+                                        },
+                                        "description": {
+                                          "type": "string"
+                                        },
+                                        "options": {
+                                          "type": "object",
+                                          "properties": {
+                                            "disabled": {
+                                              "type": "boolean"
+                                            },
+                                            "placeholder": {
+                                              "type": "string"
+                                            },
+                                            "options": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "label": {
+                                                    "type": "string"
+                                                  },
+                                                  "value": {}
+                                                },
+                                                "required": [
+                                                  "label",
+                                                  "value"
+                                                ]
+                                              }
+                                            }
+                                          },
+                                          "required": [
+                                            "options"
+                                          ]
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "enum": [
+                                            "STATIC_DROPDOWN"
+                                          ]
+                                        },
+                                        "required": {
+                                          "type": "boolean"
+                                        },
+                                        "defaultValue": {}
+                                      },
+                                      "required": [
+                                        "displayName",
+                                        "options",
+                                        "type",
+                                        "required"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "displayName": {
+                                          "type": "string"
+                                        },
+                                        "description": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "enum": [
+                                            "MULTI_SELECT_DROPDOWN"
+                                          ]
+                                        },
+                                        "required": {
+                                          "type": "boolean"
+                                        },
+                                        "defaultValue": {},
+                                        "refreshers": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "string"
+                                          }
+                                        }
+                                      },
+                                      "required": [
+                                        "displayName",
+                                        "type",
+                                        "required",
+                                        "refreshers"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "displayName": {
+                                          "type": "string"
+                                        },
+                                        "description": {
+                                          "type": "string"
+                                        },
+                                        "options": {
+                                          "type": "object",
+                                          "properties": {
+                                            "disabled": {
+                                              "type": "boolean"
+                                            },
+                                            "placeholder": {
+                                              "type": "string"
+                                            },
+                                            "options": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "label": {
+                                                    "type": "string"
+                                                  },
+                                                  "value": {}
+                                                },
+                                                "required": [
+                                                  "label",
+                                                  "value"
+                                                ]
+                                              }
+                                            }
+                                          },
+                                          "required": [
+                                            "options"
+                                          ]
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "enum": [
+                                            "STATIC_MULTI_SELECT_DROPDOWN"
+                                          ]
+                                        },
+                                        "required": {
+                                          "type": "boolean"
+                                        },
+                                        "defaultValue": {}
+                                      },
+                                      "required": [
+                                        "displayName",
+                                        "options",
+                                        "type",
+                                        "required"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "displayName": {
+                                          "type": "string"
+                                        },
+                                        "description": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "enum": [
+                                            "CHECKBOX"
+                                          ]
+                                        },
+                                        "required": {
+                                          "type": "boolean"
+                                        },
+                                        "defaultValue": {}
+                                      },
+                                      "required": [
+                                        "displayName",
+                                        "type",
+                                        "required"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "displayName": {
+                                          "type": "string"
+                                        },
+                                        "description": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "enum": [
+                                            "NUMBER"
+                                          ]
+                                        },
+                                        "required": {
+                                          "type": "boolean"
+                                        },
+                                        "defaultValue": {}
+                                      },
+                                      "required": [
+                                        "displayName",
+                                        "type",
+                                        "required"
+                                      ]
+                                    }
+                                  ]
+                                }
+                              },
                               "type": {
                                 "type": "string",
                                 "enum": [
@@ -3045,6 +3561,37 @@
           "version",
           "actions",
           "triggers"
+        ]
+      },
+      "git-repo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string"
+          },
+          "updated": {
+            "type": "string"
+          },
+          "remoteUrl": {
+            "type": "string"
+          },
+          "branch": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "created",
+          "updated",
+          "remoteUrl",
+          "branch",
+          "projectId"
         ]
       }
     }
@@ -5183,6 +5730,12 @@
                                                         "type": "string",
                                                         "enum": [
                                                           "NUMBER_IS_LESS_THAN"
+                                                        ]
+                                                      },
+                                                      {
+                                                        "type": "string",
+                                                        "enum": [
+                                                          "NUMBER_IS_EQUAL_TO"
                                                         ]
                                                       }
                                                     ]
@@ -7534,6 +8087,29 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/v1/git-repos/{id}/pull": {
+      "post": {
+        "tags": [
+          "git-repo"
+        ],
+        "description": "Pull all changes from the git repository and overwrite any conflicting changes in the project.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Default Response"
           }
         }
       }

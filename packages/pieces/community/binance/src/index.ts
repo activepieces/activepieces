@@ -5,6 +5,7 @@ export const binance = createPiece({
   displayName: 'Binance',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/binance.png',
+  categories: [],
   auth: PieceAuth.None(),
   actions: [fetchCryptoPairPrice],
   authors: ['m-tabaza'],

@@ -36,10 +36,11 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             modifiedFlags[ApFlagId.SHOW_GIT_SYNC] = platform.gitSyncEnabled
             modifiedFlags[ApFlagId.FRONTEND_URL] = `https://${hostname}`
             modifiedFlags[ApFlagId.WEBHOOK_URL_PREFIX] = `https://${hostname}/api/v1/webhooks`
-            modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL] = `https://${hostname}/redirect`
+            modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL] = flagService.getThirdPartyRedirectUrl(platform.id, hostname)
             modifiedFlags[ApFlagId.PRIVACY_POLICY_URL] = platform.privacyPolicyUrl
             modifiedFlags[ApFlagId.TERMS_OF_SERVICE_URL] = platform.termsOfServiceUrl
             modifiedFlags[ApFlagId.OWN_AUTH2_ENABLED] = false
+            modifiedFlags[ApFlagId.SHOW_PLATFORM_DEMO] = false
         }
         return modifiedFlags
     },

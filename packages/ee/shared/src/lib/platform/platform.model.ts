@@ -30,6 +30,7 @@ export const Platform = Type.Object({
     cloudAuthEnabled: Type.Boolean(),
     gitSyncEnabled: Type.Boolean(),
     showPoweredBy: Type.Boolean(),
+    auditLogEnabled: Type.Boolean(),
     embeddingEnabled: Type.Boolean(),
     defaultLocale: Type.Optional(Type.Enum(LocalesEnum)),
     ssoEnabled: Type.Boolean(),

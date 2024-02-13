@@ -32,6 +32,7 @@ import { logger } from '../../helper/logger'
 import { flowService } from '../flow/flow.service'
 import { MoreThanOrEqual } from 'typeorm'
 import { flowRunHooks } from './flow-run-hooks'
+import { flowResponseWatcher } from './flow-response-watcher'
 
 export const flowRunRepo = databaseConnection.getRepository(FlowRunEntity)
 
@@ -65,7 +66,7 @@ async function updateFlowRunToLatestFlowVersionId(flowRunId: FlowRunId): Promise
 }
 
 export const flowRunService = {
-    async list({ projectId, flowId, status, cursor, limit, tags }: ListParams): Promise<SeekPage<FlowRun>> {
+    async list({ projectId, flowId, status, cursor, limit, tags, createdAfter, createdBefore }: ListParams): Promise<SeekPage<FlowRun>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor)
         const paginator = buildPaginator({
             entity: FlowRunEntity,
@@ -83,6 +84,12 @@ export const flowRunService = {
             ...spreadIfDefined('status', status),
             environment: RunEnvironment.PRODUCTION,
         })
+        if (createdAfter) {
+            query = query.andWhere('flow_run.created >= :createdAfter', { createdAfter })
+        }
+        if (createdBefore) {
+            query = query.andWhere('flow_run.created <= :createdBefore', { createdBefore })
+        }
         if (tags) {
             query = APArrayContains('tags', tags, query)
         }
@@ -158,11 +165,12 @@ export const flowRunService = {
             finishTime: new Date().toISOString(),
         })
         const flowRun = await this.getOneOrThrow({ id: flowRunId, projectId: undefined })
+
         await flowRunSideEffects.finish({ flowRun })
         return flowRun
     },
 
-    async start({ projectId, flowVersionId, flowRunId, payload, environment, executionType, synchronousHandlerId }: StartParams): Promise<FlowRun> {
+    async start({ projectId, flowVersionId, flowRunId, payload, environment, executionType, synchronousHandlerId, hookType }: StartParams): Promise<FlowRun> {
         logger.info(`[flowRunService#start] flowRunId=${flowRunId} executionType=${executionType}`)
 
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
@@ -201,6 +209,7 @@ export const flowRunService = {
             payload,
             synchronousHandlerId,
             executionType,
+            hookType,
         })
 
         return savedFlowRun
@@ -217,6 +226,8 @@ export const flowRunService = {
             payload,
             environment: RunEnvironment.TESTING,
             executionType: ExecutionType.BEGIN,
+            synchronousHandlerId: flowResponseWatcher.getHandlerId(),
+            hookType: HookType.AFTER_LOG,
         })
     },
 
@@ -274,6 +285,11 @@ export const flowRunService = {
     },
 }
 
+export enum HookType {
+    BEFORE_LOG = 'BEFORE_LOG',
+    AFTER_LOG = 'AFTER_LOG',
+}
+
 type GetOrCreateParams = {
     id?: FlowRunId
     projectId: ProjectId
@@ -290,6 +306,8 @@ type ListParams = {
     cursor: Cursor | null
     tags?: string[]
     limit: number
+    createdAfter?: string
+    createdBefore?: string
 }
 
 type GetOneParams = {
@@ -304,6 +322,7 @@ type StartParams = {
     environment: RunEnvironment
     payload: unknown
     synchronousHandlerId?: string
+    hookType?: HookType
     executionType: ExecutionType
 }
 

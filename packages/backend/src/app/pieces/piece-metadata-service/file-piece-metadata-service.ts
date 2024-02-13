@@ -138,6 +138,7 @@ const toPieceMetadataModel = ({ pieceMetadata, projectId }: ToPieceMetadataModel
         minimumSupportedRelease: pieceMetadata.minimumSupportedRelease,
         maximumSupportedRelease: pieceMetadata.maximumSupportedRelease,
         actions: pieceMetadata.actions,
+        categories: pieceMetadata.categories,
         triggers: pieceMetadata.triggers,
         directoryPath: pieceMetadata.directoryPath,
         projectId,

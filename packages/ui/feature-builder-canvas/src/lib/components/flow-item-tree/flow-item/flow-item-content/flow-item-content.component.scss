@@ -1,31 +1,11 @@
 @import "../../../../../../../core/src/assets/scss/variables.scss";
 @import "../../../../../../../core/src/assets/scss/derived-variables.scss";
+
 .flow-item {
   /* Auto Layout */
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  position: relative;
-  width: 300px;
-  height: 92px;
-  background: $white;
   mix-blend-mode: normal;
-  box-shadow: unset;
-  border-radius: 8px;
 }
 
-.logo-icon {
-  object-fit: contain;
-  width: 60px;
-  height: 60px;
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-.flow-item {
-  gap: 0.9375rem;
-  padding: 0.9375rem;
-}
 .flow-content {
   flex-grow: 1;
   gap: 0.25rem;
@@ -86,13 +66,6 @@
   margin-right: 0.625rem;
 }
 
-.flow-icon-container {
-  position: relative;
-  min-width: 60px;
-  min-height: 60px;
-  max-width: 60px;
-  max-height: 60px;
-}
 
 .empty-trigger {
   border: 1.5px dashed var(--primary-default) !important;
@@ -110,18 +83,6 @@
   overflow: hidden;
 }
 
-.step-icon-loading-spinner-container {
-  min-width: 60px;
-  min-height: 60px;
-  max-width: 60px;
-  max-height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: absolute;
-  left: 0;
-  top: 0;
-}
 .step-run-result-icon {
   width: 16px;
   height: 16px;

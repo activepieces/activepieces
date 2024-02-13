@@ -1,5 +1,5 @@
 import { TriggerStrategy, WebhookHandshakeConfiguration } from '@activepieces/pieces-framework'
-import { ExactVersionType, PrincipalType } from '@activepieces/shared'
+import { ExactVersionType, PieceCategory, PrincipalType, TriggerTestStrategy } from '@activepieces/shared'
 import { Type } from '@fastify/type-provider-typebox'
 
 const Action = Type.Object({
@@ -16,6 +16,7 @@ const Trigger = Type.Composite([
         handshakeConfiguration: WebhookHandshakeConfiguration,
         sampleData: Type.Unknown(),
         type: Type.Enum(TriggerStrategy),
+        testStrategy: Type.Enum(TriggerTestStrategy),
     }),
 ])
 
@@ -28,6 +29,7 @@ export const CreatePieceRequest = {
             description: Type.Optional(Type.String()),
             version: ExactVersionType,
             auth: Type.Optional(Type.Any()),
+            categories: Type.Optional(Type.Array(Type.Enum(PieceCategory))),
             minimumSupportedRelease: ExactVersionType,
             maximumSupportedRelease: ExactVersionType,
             actions: Type.Record(Type.String(), Action),

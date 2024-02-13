@@ -6,6 +6,14 @@ export const parseCSVTextAction = createAction({
   displayName: 'Convert CSV to JSON',
   description:
     'This function reads a CSV string and converts it into JSON array format.',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      hide: true,
+    },
+    retryOnFailure: {
+      hide: true,
+    },
+  },
   props: {
     csv_text: Property.LongText({
       displayName: 'CSV Text',

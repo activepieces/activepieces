@@ -809,6 +809,42 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "mariomeyer",
+      "name": "Mario Meyer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/867650?v=4",
+      "profile": "https://github.com/mariomeyer",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "karimkhaleel",
+      "name": "Karim Khaleel",
+      "avatar_url": "https://avatars.githubusercontent.com/u/94621779?v=4",
+      "profile": "https://github.com/karimkhaleel",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "CPonchet",
+      "name": "CPonchet",
+      "avatar_url": "https://avatars.githubusercontent.com/u/40756925?v=4",
+      "profile": "https://github.com/CPonchet",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "AdamSelene",
+      "name": "Olivier Sambourg",
+      "avatar_url": "https://avatars.githubusercontent.com/u/79495?v=4",
+      "profile": "https://github.com/AdamSelene",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

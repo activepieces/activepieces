@@ -8,7 +8,7 @@ const edition = getEdition()
 
 export const resolvePlatformIdForRequest = async (request: FastifyRequest): Promise<string | null> => {
     if (edition === ApEdition.COMMUNITY) {
-        return getDefaultPlatformId()
+        return null
     }
 
     return await extractPlatformIdFromAuthenticatedPrincipal(request.principal)

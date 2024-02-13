@@ -1,12 +1,14 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   createPiece,
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
+import { addUsersToGroup } from './lib/actions/add-users-to-group.action';
+import { changeUserTrustLevel } from './lib/actions/change-trust-level.action';
 import { createPost } from './lib/actions/create-post.action';
 import { createTopic } from './lib/actions/create-topic.action';
-import { changeUserTrustLevel } from './lib/actions/change-trust-level.action';
-import { addUsersToGroup } from './lib/actions/add-users-to-group.action';
 import { sendPrivateMessage } from './lib/actions/send-private-message.action';
 
 const markdownPropertyDescription = `
@@ -39,6 +41,7 @@ export const discourse = createPiece({
   auth: discourseAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/discourse.png',
+  categories: [PieceCategory.COMMUNICATION],
   authors: ['pfernandez98'],
   actions: [
     createPost,
@@ -46,6 +49,14 @@ export const discourse = createPiece({
     changeUserTrustLevel,
     addUsersToGroup,
     sendPrivateMessage,
+    createCustomApiCallAction({
+      baseUrl: (auth) => (auth as { website_url: string }).website_url.trim(), // Replace with the actual base URL
+      auth: discourseAuth,
+      authMapping: (auth) => ({
+        'Api-Key': (auth as { api_key: string }).api_key,
+        'Api-Username': (auth as { api_username: string }).api_username,
+      }),
+    }),
   ],
   triggers: [],
 });

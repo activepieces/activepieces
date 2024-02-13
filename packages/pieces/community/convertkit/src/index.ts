@@ -1,72 +1,73 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import {
-  getSubscriberById,
+  createField,
+  deleteField,
+  listFields,
+  updateField,
+} from './lib/actions/custom-fields';
+import {
   getSubscriberByEmail,
+  getSubscriberById,
   listSubscribers,
-  updateSubscriber,
-  unsubscribeSubscriber,
   listSubscriberTagsByEmail,
   listTagsBySubscriberId,
+  unsubscribeSubscriber,
+  updateSubscriber,
 } from './lib/actions/subscribers';
-import {
-  listFields,
-  createField,
-  updateField,
-  deleteField,
-} from './lib/actions/custom-fields';
 
 import { createWebhook, deleteWebhook } from './lib/actions/webhooks';
 
 import {
-  listBroadcasts,
-  createBroadcast,
-  getBroadcastById,
-  updateBroadcast,
-  deleteBroadcast,
   broadcastStats,
+  createBroadcast,
+  deleteBroadcast,
+  getBroadcastById,
+  listBroadcasts,
+  updateBroadcast,
 } from './lib/actions/broadcasts';
 
 import {
-  listForms,
   addSubscriberToForm,
+  listForms,
   listFormSubscriptions,
 } from './lib/actions/forms';
 
 import {
-  listSequences,
   addSubscriberToSequence,
+  listSequences,
   listSupscriptionsToSequence,
 } from './lib/actions/sequences';
 
 import {
-  listTags,
   createTag,
-  tagSubscriber,
+  listSubscriptionsToATag,
+  listTags,
   removeTagFromSubscriberByEmail,
   removeTagFromSubscriberById,
-  listSubscriptionsToATag,
+  tagSubscriber,
 } from './lib/actions/tags';
 
 import {
-  listPurchases,
-  getPurchaseById,
-  createSinglePurchase,
   createPurchases,
+  createSinglePurchase,
+  getPurchaseById,
+  listPurchases,
 } from './lib/actions/purchases';
 
+import { PieceCategory } from '@activepieces/shared';
 import {
   addTag,
-  removeTag,
-  subscriberActivated,
-  subscriberUnsubscribed,
-  subscriberBounced,
-  subscriberComplained,
   formSubscribed,
-  sequenceSubscribed,
-  sequenceCompleted,
   linkClicked,
   productPurchased,
   purchaseCreated,
+  removeTag,
+  sequenceCompleted,
+  sequenceSubscribed,
+  subscriberActivated,
+  subscriberBounced,
+  subscriberComplained,
+  subscriberUnsubscribed,
 } from './lib/triggers';
 
 export const convertkitAuth = PieceAuth.SecretText({
@@ -80,6 +81,7 @@ export const convertkit = createPiece({
   auth: convertkitAuth,
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/convertkit.png',
+  categories: [PieceCategory.MARKETING],
   authors: [],
   actions: [
     getSubscriberById,

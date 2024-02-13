@@ -102,6 +102,8 @@ export const apMonacoTheme = {
       foreground: '881280',
       token: 'entity.name.tag',
     },
+    { token: 'string.key.json', foreground: 'C08B30' },
+    { token: 'string.value.json', foreground: '22A2C9' },
   ],
   colors: {
     'editor.foreground': '#0055AA',

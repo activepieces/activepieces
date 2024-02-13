@@ -1,9 +1,9 @@
 import MailerLite from '@mailerlite/mailerlite-nodejs';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { mailerListAuth } from '../..';
+import { mailerLiteAuth } from '../..';
 
 export const createOrUpdateSubscriber = createAction({
-  auth: mailerListAuth,
+  auth: mailerLiteAuth,
   name: 'add_or_update_subscriber',
   displayName: 'Add or Update subscriber',
   description: 'Create or update a existing subscription',

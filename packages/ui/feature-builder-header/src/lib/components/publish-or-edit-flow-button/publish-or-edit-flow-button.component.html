@@ -1,0 +1,22 @@
+<div [matTooltip]="(buttonTooltipText$ | async)!" *ngIf="(viewMode$ | async) === ViewModeEnum.BUILDING">
+  <ap-button btnSize="medium" placement="bottom" [disabled]="disablePublishButton$ |async"
+    [class.invalid-deploy]="disablePublishButton$| async" (buttonClicked)="publishButtonClicked()">
+    <ng-container *ngIf="flowState$ | async as flowState">
+      <div class="ap-flex ap-items-center loading-template">
+        <svg-icon *ngIf="flowState.isPublishing || flowState.isSaving;" src="assets/img/custom/loading.svg"
+          class="loading-spin-animation white-loader" [applyClass]="true">
+        </svg-icon>
+        {{ publishBtnText$ | async}}
+      </div>
+    </ng-container>
+  </ap-button>
+</div>
+<div [matTooltip]="(buttonTooltipText$ | async)!" *ngIf="(viewMode$ | async) !== ViewModeEnum.BUILDING">
+  <ap-button *ngIf="flow$ | async as flow" btnSize="medium" btnStyle="stroked" btnColor="primary" placement="bottom"
+    (buttonClicked)="editFlowButtonClicked(flow.id)" i18n>
+    Edit Flow
+  </ap-button>
+</div>
+
+<ng-container *ngIf="deploying$ | async"></ng-container>
+<ng-container *ngIf="dispatchAction$ | async"></ng-container>

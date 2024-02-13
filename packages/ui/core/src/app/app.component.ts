@@ -28,9 +28,8 @@ import {
   FlowBuilderService,
 } from '@activepieces/ui/common';
 import { compareVersions } from 'compare-versions';
-import { ApEdition, ApFlagId, LocalesEnum, User } from '@activepieces/shared';
+import { ApEdition, ApFlagId, LocalesEnum } from '@activepieces/shared';
 import {
-  TelemetryService,
   EmbeddingService,
   AuthenticationService,
   fadeInUp400ms,
@@ -38,6 +37,7 @@ import {
 } from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
 import { Platform } from '@activepieces/ee-shared';
+import { UserWithoutPassword } from '@activepieces/shared';
 
 interface UpgradeNotificationMetaDataInLocalStorage {
   latestVersion: string;
@@ -54,10 +54,10 @@ const upgradeNotificationMetadataKeyInLocalStorage =
 })
 export class AppComponent implements OnInit {
   routeLoader$: Observable<unknown>;
-  loggedInUser$: Observable<User | undefined>;
+  loggedInUser$: Observable<UserWithoutPassword | undefined>;
   showUpgradeNotification$: Observable<boolean>;
   hideUpgradeNotification = false;
-  openCommandBar$: Observable<void>;
+  logoutOldTokens$: Observable<void>;
   loading$: Subject<boolean> = new Subject();
   importTemplate$: Observable<void>;
   loadingTheme$: BehaviorSubject<boolean> = new BehaviorSubject(true);
@@ -73,7 +73,6 @@ export class AppComponent implements OnInit {
     private apperanceService: AppearanceService,
     private authenticationService: AuthenticationService,
     private flagService: FlagService,
-    private telemetryService: TelemetryService,
     private router: Router,
     private maticonRegistry: MatIconRegistry,
     private domSanitizer: DomSanitizer,
@@ -133,13 +132,6 @@ export class AppComponent implements OnInit {
           this.store.dispatch(CommonActions.clearState());
           return;
         }
-        this.store.dispatch(
-          CommonActions.loadProjects({
-            user: user,
-            currentProjectId: decodedToken['projectId'],
-          })
-        );
-        this.telemetryService.init(user);
       })
     );
   }

@@ -2,7 +2,6 @@ import { apId, SignUpRequest, User, UserId, UserMeta, UserStatus, isNil, Activep
 import { passwordHasher } from '../authentication/lib/password-hasher'
 import { databaseConnection } from '../database/database-connection'
 import { UserEntity } from './user-entity'
-import { PlatformId } from '@activepieces/ee-shared'
 import { IsNull } from 'typeorm'
 import dayjs from 'dayjs'
 
@@ -98,19 +97,19 @@ export const userService = {
 
 type CreateParams = SignUpRequest & {
     verified: boolean
-    platformId: PlatformId | null
+    platformId: string | null
     externalId?: string
 }
 
 type NewUser = Omit<User, 'created' | 'updated'>
 
 type GetByPlatformAndEmailParams = {
-    platformId: PlatformId | null
+    platformId: string | null
     email: string
 }
 
 type GetByPlatformAndExternalIdParams = {
-    platformId: PlatformId
+    platformId: string
     externalId: string
 }
 
@@ -125,5 +124,5 @@ type UpdatePasswordParams = {
 
 type UpdatePlatformIdParams = {
     id: UserId
-    platformId: PlatformId
+    platformId: string
 }

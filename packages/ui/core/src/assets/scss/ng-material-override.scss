@@ -520,10 +520,25 @@ mat-option.add-auth {
 }
 
 .ql-editor {
-  padding: 0px !important;
+  padding:  0px  0px 0px 0px !important;
   @include mat.typography-level($ap-typography, "body-1");
-  line-height: 1.9rem;
+  line-height: 1.5rem;
+ 
 }
+.has-mention
+ {
+  .ql-editor{
+    line-height: 28px;
+  }
+
+}
+app-array-form-control {
+  .has-mention{
+    .ql-editor{ padding:  0px  0px 4px 0px !important;} 
+  }
+}
+
+
 
 .mat-mdc-menu-panel.mat-mdc-menu-panel {
   max-width: unset !important;
@@ -706,3 +721,10 @@ app-platform-settings {
   }
 }
 
+.mat-horizontal-stepper-header-container{
+  pointer-events: none;
+}
+
+
+@include mat.form-field-density(-2);
+@include mat.button-density(0);

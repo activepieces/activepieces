@@ -1,4 +1,6 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { twilioSendSms } from './lib/action/send-sms';
 import { twilioNewIncomingSms } from './lib/trigger/new-incoming-sms';
 
@@ -21,7 +23,21 @@ export const twilio = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/twilio.png',
   auth: twilioAuth,
-  actions: [twilioSendSms],
+  categories: [PieceCategory.COMMUNICATION],
+  actions: [
+    twilioSendSms,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.twilio.com/2010-04-01',
+      auth: twilioAuth,
+      authMapping: (auth) => ({
+        Authorization: `Basic ${Buffer.from(
+          `${(auth as { username: string }).username}:${
+            (auth as { password: string }).password
+          }`
+        ).toString('base64')}`,
+      }),
+    }),
+  ],
   authors: ['abuaboud'],
   triggers: [twilioNewIncomingSms],
 });

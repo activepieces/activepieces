@@ -1,6 +1,6 @@
 import { Flow, FlowScheduleOptions, FlowStatus, FlowVersion, ScheduleOptions, ScheduleType, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { flowVersionService } from '../flow-version/flow-version.service'
-import { triggerUtils } from '../../helper/trigger-utils'
+import { triggerHooks } from '../trigger'
 
 export const flowServiceHooks = {
     async preUpdateStatus({ flowToUpdate, newStatus }: PreUpdateStatusParams): Promise<PreUpdateReturn> {
@@ -15,7 +15,7 @@ export const flowServiceHooks = {
 
         switch (newStatus) {
             case FlowStatus.ENABLED: {
-                const response = await triggerUtils.enable({
+                const response = await triggerHooks.enable({
                     flowVersion: publishedFlowVersion,
                     projectId: flowToUpdate.projectId,
                     simulate: false,
@@ -24,7 +24,7 @@ export const flowServiceHooks = {
                 break
             }
             case FlowStatus.DISABLED: {
-                await triggerUtils.disable({
+                await triggerHooks.disable({
                     flowVersion: publishedFlowVersion,
                     projectId: flowToUpdate.projectId,
                     simulate: false,
@@ -49,14 +49,14 @@ export const flowServiceHooks = {
 
     async preUpdatePublishedVersionId({ flowToUpdate, flowVersionToPublish }: PreUpdatePublishedVersionIdParams): Promise<PreUpdateReturn> {
         if (flowToUpdate.status === FlowStatus.ENABLED && flowToUpdate.publishedVersionId) {
-            await triggerUtils.disable({
+            await triggerHooks.disable({
                 flowVersion: await flowVersionService.getOneOrThrow(flowToUpdate.publishedVersionId),
                 projectId: flowToUpdate.projectId,
                 simulate: false,
             })
         }
 
-        const enableResult = await triggerUtils.enable({
+        const enableResult = await triggerHooks.enable({
             flowVersion: flowVersionToPublish,
             projectId: flowToUpdate.projectId,
             simulate: false,
@@ -88,7 +88,7 @@ export const flowServiceHooks = {
             versionId: flowToDelete.publishedVersionId,
         })
 
-        await triggerUtils.disable({
+        await triggerHooks.disable({
             flowVersion: publishedFlowVersion,
             projectId: flowToDelete.projectId,
             simulate: false,

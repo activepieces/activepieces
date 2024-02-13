@@ -3,7 +3,7 @@ import { PackageInfo, packageManager } from '../../helper/package-manager'
 import { SourceCode } from '@activepieces/shared'
 import { logger } from '../../helper/logger'
 
-const tsConfig = `
+const TS_CONFIG_CONTENT = `
 {
     "extends": "@tsconfig/node18/tsconfig.json",
     "compilerOptions": {
@@ -24,60 +24,49 @@ const tsConfig = `
 }
 `
 
-async function processCodeStep({
-    sourceCode,
-    sourceCodeId,
-    buildPath,
-}: {
-    sourceCode: SourceCode
-    sourceCodeId: string
-    buildPath: string
-}): Promise<void> {
-    const codePath = `${buildPath}/codes/${sourceCodeId}`
-    await fs.mkdir(codePath, { recursive: true })
-    try {
-        const { code, packageJson } = sourceCode
-        await fs.writeFile(`${codePath}/index.ts`, code)
-        await fs.writeFile(`${codePath}/package.json`, packageJson)
-        await addCodeDependencies(codePath)
-        const tsConfigPath = `${codePath}/tsconfig.json`
-        await fs.writeFile(tsConfigPath, tsConfig)
+const INVALID_ARTIFACT_TEMPLATE_PATH = './packages/backend/src/assets/invalid-code.js'
 
-        await packageManager.exec({
-            path: codePath,
-            command: 'tsc',
-        })
-    }
-    catch (error: unknown) {
-        logger.error({ codePath, error }, '[CodeBuilder#processCodeStep] error building code')
-        await handleCompilationError(codePath, error as (Error & { stdout: string }))
-    }
+const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '${ERROR_MESSAGE}'
+
+export const codeBuilder = {
+    async processCodeStep({ sourceCode, sourceCodeId, buildPath }: ProcessCodeStepParams): Promise<void> {
+        logger.debug({ name: 'CodeBuilder#processCodeStep', sourceCode, sourceCodeId, buildPath })
+
+        const codePath = `${buildPath}/codes/${sourceCodeId}`
+
+        try {
+            const { code, packageJson } = sourceCode
+
+            await createBuildDirectory(codePath)
+
+            await installDependencies({
+                path: codePath,
+                packageJson,
+            })
+
+            await compileCode({
+                path: codePath,
+                code,
+            })
+        }
+        catch (error: unknown) {
+            logger.error({ name: 'CodeBuilder#processCodeStep', codePath, error })
+
+            await handleCompilationError({
+                codePath,
+                error: error as Record<string, string | undefined>,
+            })
+        }
+    },
 }
 
-async function handleCompilationError(
-    buildPath: string,
-    error: Error & { stdout: string },
-): Promise<void> {
-    const invalidArtifactTemplate = await fs.readFile(
-        './packages/backend/src/assets/invalid-code.js',
-    )
-
-    const errorMessage =
-        'Compilation Error: \n' + error.stdout ??
-        error.message ??
-        'error building code'
-
-    const invalidArtifactFile = invalidArtifactTemplate
-        .toString('utf-8')
-        .replace(
-            '${ERROR_MESSAGE}',
-            JSON.stringify(errorMessage).replace(/"/g, '\\"'),
-        )
-
-    await fs.writeFile(`${buildPath}/index.js`, invalidArtifactFile)
+const createBuildDirectory = async (path: string): Promise<void> => {
+    await fs.mkdir(path, { recursive: true })
 }
 
-async function addCodeDependencies(codePath: string): Promise<void> {
+const installDependencies = async ({ path, packageJson }: InstallDependenciesParams): Promise<void> => {
+    await fs.writeFile(`${path}/package.json`, packageJson, 'utf8')
+
     const dependencies: PackageInfo[] = [
         {
             alias: '@tsconfig/node18',
@@ -94,11 +83,52 @@ async function addCodeDependencies(codePath: string): Promise<void> {
     ]
 
     await packageManager.add({
-        path: codePath,
+        path,
         dependencies,
     })
 }
 
-export const codeBuilder = {
-    processCodeStep,
+const compileCode = async ({ path, code }: CompileCodeParams): Promise<void> => {
+    await fs.writeFile(`${path}/tsconfig.json`, TS_CONFIG_CONTENT, 'utf8')
+    await fs.writeFile(`${path}/index.ts`, code, 'utf8')
+
+    await packageManager.exec({
+        path,
+        command: 'tsc',
+    })
+}
+
+const handleCompilationError = async ({ codePath, error }: HandleCompilationErrorParams): Promise<void> => {
+    const invalidArtifactTemplate = await fs.readFile(INVALID_ARTIFACT_TEMPLATE_PATH, 'utf8')
+
+    const errorMessage = `Compilation Error:\n${error.stdout ?? error.message ?? 'error building code'}`
+    const escapedErrorMessage = errorMessage.replace(/"/g, '\\"')
+
+    const invalidArtifactContent = invalidArtifactTemplate.replace(
+        INVALID_ARTIFACT_ERROR_PLACEHOLDER,
+        escapedErrorMessage,
+    )
+
+    await fs.writeFile(`${codePath}/index.js`, invalidArtifactContent, 'utf8')
+}
+
+type ProcessCodeStepParams = {
+    sourceCode: SourceCode
+    sourceCodeId: string
+    buildPath: string
+}
+
+type InstallDependenciesParams = {
+    path: string
+    packageJson: string
+}
+
+type CompileCodeParams = {
+    path: string
+    code: string
+}
+
+type HandleCompilationErrorParams = {
+    codePath: string
+    error: Record<string, string | undefined>
 }

@@ -1,4 +1,6 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { triggers } from './lib/triggers';
 
 const markdownPropertyDescription = `
@@ -23,7 +25,16 @@ export const frame = createPiece({
   auth: frameAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/frameio.png',
+  categories: [PieceCategory.MARKETING],
   authors: ['kanarelo'],
-  actions: [],
+  actions: [
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.frame.io/v2',
+      auth: frameAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
+  ],
   triggers,
 });

@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/shared'
+import { FlowVersionId, isNil } from '@activepieces/shared'
 import { ActivepiecesError, apId, ErrorCode, FlowId, ProjectId, WebhookSimulation } from '@activepieces/shared'
 import { acquireLock, ApLock } from '../../helper/lock'
 import { databaseConnection } from '../../database/database-connection'
@@ -8,6 +8,7 @@ import { logger } from '../../helper/logger'
 
 type BaseParams = {
     flowId: FlowId
+    flowVersionId?: FlowVersionId
     projectId: ProjectId
 }
 
@@ -33,7 +34,7 @@ export const webhookSimulationService = {
     async create(params: CreateParams): Promise<WebhookSimulation> {
         logger.debug(params, '[WebhookSimulationService#deleteByFlowId] params')
 
-        const { flowId, projectId } = params
+        const { flowId, flowVersionId, projectId } = params
 
         const lock = await createLock({
             flowId,
@@ -45,6 +46,7 @@ export const webhookSimulationService = {
             if (webhookSimulationExists) {
                 await this.delete({
                     flowId,
+                    flowVersionId,
                     projectId,
                     parentLock: lock,
                 })
@@ -93,7 +95,7 @@ export const webhookSimulationService = {
     async delete(params: DeleteParams): Promise<void> {
         logger.debug(params, '[WebhookSimulationService#deleteByFlowId] params')
 
-        const { flowId, projectId, parentLock } = params
+        const { flowId, flowVersionId, projectId, parentLock } = params
 
         let lock: ApLock | null = null
 
@@ -112,6 +114,7 @@ export const webhookSimulationService = {
             await webhookSideEffects.preDelete({
                 flowId,
                 projectId,
+                flowVersionId,
             })
 
             await webhookSimulationRepo.remove(webhookSimulation)
