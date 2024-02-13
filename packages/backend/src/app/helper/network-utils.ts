@@ -2,9 +2,11 @@ import dns from 'node:dns/promises'
 import { system } from './system/system'
 import { SystemProp } from './system/system-prop'
 import { ApEnvironment } from '@activepieces/shared'
+import { FastifyRequest } from 'fastify'
 
 const GOOGLE_DNS = '216.239.32.10'
 const PUBLIC_IP_ADDRESS_QUERY = 'o-o.myaddr.l.google.com'
+const CLIENT_REAL_IP_HEADER = system.getOrThrow(SystemProp.CLIENT_REAL_IP_HEADER)
 
 let ipMetadata: IpMetadata | undefined
 
@@ -26,6 +28,12 @@ const getPublicIp = async (): Promise<IpMetadata> => {
 
 type IpMetadata = {
     ip: string
+}
+
+
+
+export const extractClientRealIp = (request: FastifyRequest): string => {
+    return request.headers[CLIENT_REAL_IP_HEADER] as string
 }
 
 

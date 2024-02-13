@@ -25,7 +25,7 @@ export class AuditEventDataSource extends DataSource<ApplicationEvent> {
     private refresh$: Observable<boolean>,
     private auditEventService: AuditEventService,
     private paginator: ApPaginatorComponent,
-    private fakeData: boolean
+    private isEnabled$: Observable<boolean>
   ) {
     super();
   }
@@ -37,17 +37,18 @@ export class AuditEventDataSource extends DataSource<ApplicationEvent> {
    */
 
   connect(): Observable<ApplicationEvent[]> {
-    if (this.fakeData) {
-      return of(this.data).pipe(
-        delay(100),
-        tap(() => this.isLoading$.next(false))
-      );
-    }
-    return combineLatest([this.refresh$]).pipe(
+    return combineLatest([this.refresh$, this.isEnabled$]).pipe(
       tap(() => {
         this.isLoading$.next(true);
       }),
-      switchMap(() => {
+      switchMap(([refresh, isEnabled]) => {
+        if (!isEnabled) {
+          return of({
+            data: [],
+            next: null,
+            previous: null,
+          }).pipe(delay(100));
+        }
         return this.auditEventService.list({
           limit: 10,
         });

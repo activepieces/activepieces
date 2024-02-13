@@ -11,6 +11,7 @@ export type SuccessLicenseResponse = {
     ssoEnabled?: boolean
     embeddingEnabled?: boolean
     gitSyncEnabled?: boolean
+    auditLogEnabled?: boolean
 }
 export type LicenseResponse = SuccessLicenseResponse | {
     status: LiceneseStatus.INVALID

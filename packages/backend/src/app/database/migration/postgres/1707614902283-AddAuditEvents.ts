@@ -27,9 +27,28 @@ export class AddAuditEvents1707614902283 implements MigrationInterface {
             ALTER TABLE "audit_event"
             ADD CONSTRAINT "FK_8188cdbf5c16c58d431efddd451" FOREIGN KEY ("platformId") REFERENCES "platform"("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
+
+        await queryRunner.query(`
+            ALTER TABLE "platform"
+            ADD "auditLogEnabled" boolean NOT NULL
+        `)
+
+        await queryRunner.query(`
+            UPDATE "platform"
+            SET "auditLogEnabled" = false
+        `)
+
+        await queryRunner.query(`
+            ALTER TABLE "platform"
+            ALTER COLUMN "auditLogEnabled" SET NOT NULL
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`
+            ALTER TABLE "platform" DROP COLUMN "auditLogEnabled"
+        `)
+
         await queryRunner.query(`
             ALTER TABLE "audit_event" DROP CONSTRAINT "FK_8188cdbf5c16c58d431efddd451"
         `)

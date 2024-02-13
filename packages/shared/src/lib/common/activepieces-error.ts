@@ -41,6 +41,7 @@ type ErrorParams =
     | PieceNotFoundErrorParams
     | PieceTriggerNotFoundErrorParams
     | QuotaExceededParams
+    | FeatureDisabledErrorParams
     | SignUpDisabledParams
     | StepNotFoundErrorParams
     | SystemInvalidErrorParams
@@ -306,6 +307,12 @@ ErrorCode.QUOTA_EXCEEDED,
 }
 >
 
+export type FeatureDisabledErrorParams = BaseErrorParams<
+ErrorCode.FEATURE_DISABLED,
+{
+    message: string
+}>
+
 export type SignUpDisabledParams = BaseErrorParams<
 ErrorCode.SIGN_UP_DISABLED,
 Record<string, never>
@@ -353,6 +360,7 @@ export enum ErrorCode {
     PIECE_NOT_FOUND = 'PIECE_NOT_FOUND',
     PIECE_TRIGGER_NOT_FOUND = 'PIECE_TRIGGER_NOT_FOUND',
     QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
+    FEATURE_DISABLED = 'FEATURE_DISABLED',
     SIGN_UP_DISABLED = 'SIGN_UP_DISABLED',
     STEP_NOT_FOUND = 'STEP_NOT_FOUND',
     SYSTEM_PROP_INVALID = 'SYSTEM_PROP_INVALID',

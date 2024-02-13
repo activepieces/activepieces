@@ -8,7 +8,7 @@ import { ApplicationEventName } from '@activepieces/ee-shared'
 export const enterpriseLocalAuthnController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/verify-email', VerifyEmailRequest, async (req) => {
         await enterpriseLocalAuthnService.verifyEmail(req.body)
-        await eventsHooks.get().send(req, {
+        eventsHooks.get().send(req, {
             action: ApplicationEventName.VERIFIED_EMAIL,
             userId: req.body.userId,
             projectId: req.principal.projectId,
@@ -17,7 +17,7 @@ export const enterpriseLocalAuthnController: FastifyPluginAsyncTypebox = async (
 
     app.post('/reset-password', ResetPasswordRequest, async (req) => {
         await enterpriseLocalAuthnService.resetPassword(req.body)
-        await eventsHooks.get().send(req, {
+        eventsHooks.get().send(req, {
             action: ApplicationEventName.RESET_PASSWORD,
             userId: req.body.userId,
             projectId: req.principal.projectId,

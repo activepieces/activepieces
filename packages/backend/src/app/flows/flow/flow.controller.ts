@@ -32,7 +32,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             request: request.body,
         })
 
-        void eventsHooks.get().send(request, {
+        eventsHooks.get().send(request, {
             action: ApplicationEventName.CREATED_FLOW,
             flow: newFlow,
             userId: request.principal.id,
@@ -105,7 +105,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             id: request.params.id,
             projectId: request.principal.projectId,
         })
-        void eventsHooks.get().send(request, {
+        eventsHooks.get().send(request, {
             action: ApplicationEventName.DELETED_FLOW,
             flow,
             userId: request.principal.id,

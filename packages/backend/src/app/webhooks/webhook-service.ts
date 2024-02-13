@@ -12,7 +12,7 @@ import {
 import { HookType, flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { getServerUrl } from '../helper/public-ip-utils'
+import { getServerUrl } from '../helper/network-utils'
 import { triggerEventService } from '../flows/trigger-events/trigger-event.service'
 import { isNil } from '@activepieces/shared'
 import { logger } from '../helper/logger'

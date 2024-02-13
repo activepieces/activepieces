@@ -1,4 +1,4 @@
-import { getServerUrl } from './public-ip-utils'
+import { getServerUrl } from './network-utils'
 import { system } from './system/system'
 import { SystemProp } from './system/system-prop'
 

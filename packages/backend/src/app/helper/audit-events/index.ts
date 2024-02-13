@@ -4,7 +4,7 @@ import { AppConnection, Folder, PopulatedFlow } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 
 
-type CreateAuditEventParam = {
+export type CreateAuditEventParam = {
     action: ApplicationEventName.UPDATED_FOLDER | ApplicationEventName.DELETED_FOLDER | ApplicationEventName.CREATED_FOLDER
     folder: Folder
     userId: string
@@ -41,5 +41,5 @@ export const eventsHooks = {
 
 
 export type ApplicationEventHooks = {
-    send(request: FastifyRequest, params: CreateAuditEventParam): Promise<void>
+    send(request: FastifyRequest, params: CreateAuditEventParam): void
 }

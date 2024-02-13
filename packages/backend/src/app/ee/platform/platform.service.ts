@@ -23,6 +23,7 @@ export const platformService = {
             embeddingEnabled: false,
             defaultLocale: LocalesEnum.ENGLISH,
             emailAuthEnabled: true,
+            auditLogEnabled: false,
             filteredPieceNames: [],
             enforceAllowedAuthDomains: false,
             allowedAuthDomains: [],
@@ -64,6 +65,7 @@ export const platformService = {
         const updatedPlatform: Platform = {
             ...platform,
             ...spreadIfDefined('name', params.name),
+            ...spreadIfDefined('auditLogEnabled', params.auditLogEnabled),
             ...spreadIfDefined('primaryColor', params.primaryColor),
             ...spreadIfDefined('logoIconUrl', params.logoIconUrl),
             ...spreadIfDefined('fullLogoUrl', params.fullLogoUrl),
@@ -169,6 +171,7 @@ type NewPlatform = Omit<Platform, 'created' | 'updated'>
 type UpdateParams = UpdatePlatformRequestBody & {
     id: PlatformId
     userId: UserId
+    auditLogEnabled?: boolean
     showPoweredBy?: boolean
     ssoEnabled?: boolean
     gitSyncEnabled?: boolean
