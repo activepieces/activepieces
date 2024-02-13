@@ -1,5 +1,6 @@
 import { createAction, props } from '@ngrx/store';
-import { ProjectId, User } from '@activepieces/shared';
+import { ProjectId } from '@activepieces/shared';
+import { UserWithoutPassword } from '@activepieces/shared';
 
 export enum CommonActionType {
   LOAD_INITIAL = '[APP_STATE] LOAD_INITIAL',
@@ -8,7 +9,7 @@ export enum CommonActionType {
 
 export const loadProjects = createAction(
   CommonActionType.LOAD_INITIAL,
-  props<{ user: User; currentProjectId: ProjectId }>()
+  props<{ user: UserWithoutPassword; currentProjectId: ProjectId }>()
 );
 export const clearState = createAction(CommonActionType.CLEAR_STATE);
 
