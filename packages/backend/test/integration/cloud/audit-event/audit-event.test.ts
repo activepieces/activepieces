@@ -26,7 +26,7 @@ describe('Audit Event API', () => {
             const mockUser1 = createMockUser()
             await databaseConnection.getRepository('user').save(mockUser1)
 
-            const mockPlatform1 = createMockPlatform({ ownerId: mockUser1.id })
+            const mockPlatform1 = createMockPlatform({ ownerId: mockUser1.id, auditLogEnabled: true })
             await databaseConnection.getRepository('platform').save(mockPlatform1)
 
             const mockProject1 = createMockProject({ platformId: mockPlatform1.id, ownerId: mockUser1.id })
@@ -38,7 +38,7 @@ describe('Audit Event API', () => {
             const mockPlatform2 = createMockPlatform({ ownerId: mockUser2.id })
             await databaseConnection.getRepository('platform').save(mockPlatform2)
 
-            const mockProject2 = createMockProject({ platformId: mockPlatform2.id, ownerId: mockUser2.id  })
+            const mockProject2 = createMockProject({ platformId: mockPlatform2.id, ownerId: mockUser2.id })
             await databaseConnection.getRepository('project').save(mockProject2)
 
             const testToken1 = await generateMockToken({
@@ -89,7 +89,7 @@ describe('Audit Event API', () => {
             const mockPlatform1 = createMockPlatform({ ownerId: mockUser1.id })
             await databaseConnection.getRepository('platform').save(mockPlatform1)
 
-            const mockProject1 = createMockProject({ platformId: mockPlatform1.id, ownerId: mockUser1.id  })
+            const mockProject1 = createMockProject({ platformId: mockPlatform1.id, ownerId: mockUser1.id })
             await databaseConnection.getRepository('project').save(mockProject1)
 
             const testToken1 = await generateMockToken({
