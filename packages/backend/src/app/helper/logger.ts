@@ -2,7 +2,7 @@ import pino, { Logger, Level } from 'pino'
 import 'pino-loki'
 import { system } from './system/system'
 import { SystemProp } from './system/system-prop'
-import { exceptionHandler } from '../ee/helper/exception-handler'
+import { exceptionHandler } from './exception-handler'
 
 export const captureException = (error: unknown): void => {
     logger.error(error)

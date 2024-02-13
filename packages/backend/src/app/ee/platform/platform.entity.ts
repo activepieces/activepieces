@@ -119,6 +119,10 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
         federatedAuthProviders: {
             type: JSONB_COLUMN_TYPE,
         },
+        auditLogEnabled: {
+            type: Boolean,
+            nullable: false,
+        },
     },
     indices: [
     ],

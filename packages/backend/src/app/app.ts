@@ -33,7 +33,7 @@ import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
 import { platformRunHooks } from './ee/flow-run/cloud-flow-run-hooks'
 import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-template.module'
 import { platformWorkerHooks } from './ee/flow-worker/cloud-flow-worker-hooks'
-import { initilizeSentry } from './ee/helper/exception-handler'
+import { initilizeSentry } from './helper/exception-handler'
 import { adminPieceModule } from './ee/pieces/admin-piece-module'
 import { platformPieceServiceHooks } from './ee/pieces/piece-service/platform-piece-service-hooks'
 import { platformModule } from './ee/platform/platform.module'
@@ -83,6 +83,9 @@ import { Socket } from 'socket.io'
 import { accessTokenManager } from './authentication/lib/access-token-manager'
 import { websocketService } from './websockets/websockets.service'
 import { rateLimitModule } from './core/security/rate-limit'
+import { eventsHooks } from './helper/audit-events'
+import { auditLogService } from './ee/audit-logs/audit-event-service'
+import { auditEventModule } from './ee/audit-logs/audit-event-module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -261,9 +264,11 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(enterpriseUserModule)
             await app.register(platformFlowTemplateModule)
             await app.register(gitRepoModule)
+            await app.register(auditEventModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
+            eventsHooks.set(auditLogService)
             appConnectionsHooks.setHooks(cloudAppConnectionsHooks)
             flowWorkerHooks.setHooks(platformWorkerHooks)
             flowRunHooks.setHooks(platformRunHooks)
@@ -290,9 +295,12 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(enterpriseUserModule)
             await app.register(platformFlowTemplateModule)
             await app.register(gitRepoModule)
+
+            await app.register(auditEventModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
+            eventsHooks.set(auditLogService)
             pieceServiceHooks.set(platformPieceServiceHooks)
             flowRunHooks.setHooks(platformRunHooks)
             flowWorkerHooks.setHooks(platformWorkerHooks)

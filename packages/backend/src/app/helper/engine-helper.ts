@@ -45,7 +45,7 @@ import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { sandboxProvisioner } from '../workers/sandbox/provisioner/sandbox-provisioner'
 import { SandBoxCacheType } from '../workers/sandbox/provisioner/sandbox-cache-key'
 import { hashObject } from './encryption'
-import { getServerUrl } from './public-ip-utils'
+import { getServerUrl } from './network-utils'
 
 type GenerateWorkerTokenParams = {
     projectId: ProjectId
