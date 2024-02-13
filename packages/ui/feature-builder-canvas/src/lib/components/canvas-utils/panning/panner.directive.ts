@@ -87,19 +87,4 @@ export class CanvasPannerDirective {
     }
     event.preventDefault();
   }
-  @HostListener('touchmove', ['$event'])
-  onTouchMove(event: TouchEvent): void {
-    console.log('touchmove');
-    event.preventDefault();
-  }
-
-  @HostListener('touchstart', ['$event'])
-  onTouchStart(event: TouchEvent): void {
-    console.log('touchstart');
-    event.preventDefault();
-  }
-  @HostListener('contextmenu', ['$event'])
-  onContextMenu(event: MouseEvent): void {
-    event.preventDefault();
-  }
 }
