@@ -30,7 +30,7 @@ export class AddAuditEvents1707614902283 implements MigrationInterface {
 
         await queryRunner.query(`
             ALTER TABLE "platform"
-            ADD "auditLogEnabled" boolean NOT NULL
+            ADD "auditLogEnabled" boolean
         `)
 
         await queryRunner.query(`
