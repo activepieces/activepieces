@@ -1,4 +1,3 @@
-import type { HttpMessageBody } from './http-message-body';
 import type { HttpMethod } from './http-method';
 import type { QueryParams } from './query-params';
 import { HttpHeaders } from './http-headers';

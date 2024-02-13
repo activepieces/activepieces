@@ -17,11 +17,11 @@ export abstract class BaseHttpClient implements HttpClient {
   ) {}
 
   abstract sendRequest<
-    RequestBody extends HttpMessageBody|string,
+    RequestBody extends HttpMessageBody,
     ResponseBody extends HttpMessageBody
   >(request: HttpRequest<RequestBody>): Promise<HttpResponse<ResponseBody>>;
 
-  protected getUrl<RequestBody extends HttpMessageBody|string>(
+  protected getUrl<RequestBody extends HttpMessageBody>(
     request: HttpRequest<RequestBody>
   ): {
     urlWithoutQueryParams: string;

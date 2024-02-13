@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig, AxiosStatic } from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 import { DelegatingAuthenticationConverter } from '../core/delegating-authentication-converter';
 import { BaseHttpClient } from '../core/base-http-client';
 import { HttpError } from '../core/http-error';
@@ -17,7 +17,7 @@ export class AxiosHttpClient extends BaseHttpClient {
     super(baseUrl, authenticationConverter);
   }
 
-  async sendRequest<ResponseBody extends HttpMessageBody>(
+  async sendRequest<ResponseBody extends HttpMessageBody = any>(
     request: HttpRequest<HttpRequestBody>
   ): Promise<HttpResponse<ResponseBody>> {
     try {
