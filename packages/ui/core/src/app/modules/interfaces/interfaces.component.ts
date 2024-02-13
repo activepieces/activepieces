@@ -119,7 +119,7 @@ export class InterfacesComponent implements OnInit {
           pieceName === '@activepieces/piece-interfaces' &&
           triggerName === 'form_submission'
         ) {
-          this.webhookUrl = environment.apiUrl + '/webhooks/' + version.id;
+          this.webhookUrl = environment.apiUrl + '/webhooks/' + this.flow!.id;
 
           if (this.props?.waitForResponse) {
             this.webhookUrl += '/sync';
