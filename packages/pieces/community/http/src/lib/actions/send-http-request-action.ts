@@ -27,7 +27,7 @@ export const httpSendRequestAction = createAction({
       displayName: 'Query params',
       required: true,
     }),
-    body: Property.Json({
+    body: Property.LongText({
       displayName: 'Body',
       required: false,
     }),
