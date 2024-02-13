@@ -5,6 +5,7 @@ import { HttpHeader } from './http-header';
 import type { HttpHeaders } from './http-headers';
 import type { HttpMessageBody } from './http-message-body';
 import type { HttpRequest } from './http-request';
+import { HttpRequestBody } from './http-request-body';
 import { HttpResponse } from './http-response';
 import { MediaType } from './media-type';
 import { URL } from 'node:url';
@@ -39,7 +40,7 @@ export abstract class BaseHttpClient implements HttpClient {
     };
   }
 
-  protected getHeaders<RequestBody extends HttpMessageBody|string>(
+  protected getHeaders<RequestBody extends HttpRequestBody>(
     request: HttpRequest<RequestBody>
   ): HttpHeaders {
     let requestHeaders: HttpHeaders = {

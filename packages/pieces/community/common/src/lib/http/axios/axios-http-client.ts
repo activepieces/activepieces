@@ -7,6 +7,7 @@ import { HttpMessageBody } from '../core/http-message-body';
 import { HttpMethod } from '../core/http-method';
 import { HttpRequest } from '../core/http-request';
 import { HttpResponse } from '../core/http-response';
+import { HttpRequestBody } from '../core/http-request-body';
 
 export class AxiosHttpClient extends BaseHttpClient {
   constructor(
@@ -17,7 +18,7 @@ export class AxiosHttpClient extends BaseHttpClient {
   }
 
   async sendRequest<ResponseBody extends HttpMessageBody>(
-    request: HttpRequest<HttpMessageBody|string>
+    request: HttpRequest<HttpRequestBody>
   ): Promise<HttpResponse<ResponseBody>> {
     try {
       process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
