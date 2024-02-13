@@ -101,8 +101,11 @@ export class SignInComponent {
           return of(null);
         }),
         tap((response) => {
-          if (response) {
-            this.authenticationService.saveUser(response);
+          if (response && response.body) {
+            this.authenticationService.saveUser(
+              response.body,
+              response.body.token
+            );
             this.redirect();
           }
         }),
