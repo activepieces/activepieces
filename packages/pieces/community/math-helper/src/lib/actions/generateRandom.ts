@@ -9,6 +9,14 @@ export const generateRandom = createAction({
   auth: PieceAuth.None(),
   displayName: 'Generate Random Number',
   description: 'Generate random number between two numbers (inclusive)',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      hide: true,
+    },
+    retryOnFailure: {
+      hide: true,
+    },
+  },
   props: {
     first_number: Property.Number({
       displayName: 'First Number',

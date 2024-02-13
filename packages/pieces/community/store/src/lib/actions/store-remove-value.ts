@@ -8,6 +8,14 @@ export const storageRemoveValue = createAction({
   name: 'remove_value',
   displayName: 'Remove',
   description: 'Remove a value from storage',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      hide: true,
+    },
+    retryOnFailure: {
+      hide: true,
+    },
+  },
   props: {
     key: Property.ShortText({
       displayName: 'Key',

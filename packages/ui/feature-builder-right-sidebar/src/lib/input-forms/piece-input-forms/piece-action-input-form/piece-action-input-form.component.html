@@ -1,6 +1,6 @@
-<form [formGroup]="pieceActionForm" class="ap-flex ap-flex-col ap-gap-2">
+<form [formGroup]="pieceActionForm" class="ap-flex ap-flex-col ">
   <ng-container *ngIf="actions$ | async else loading">
-    <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-form-field class="ap-w-full ap-mb-2">
       <mat-label i18n> Action </mat-label>
       <mat-select placeholder="Select an action" [formControlName]="ACTION_FORM_CONTROL_NAME"
         [compareWith]="actionDropdownCompareFn">

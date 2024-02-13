@@ -4,6 +4,14 @@ export const find = createAction({
   description: 'Find substring (Regex or Text).',
   displayName: 'Find',
   name: 'find',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      hide: true,
+    },
+    retryOnFailure: {
+      hide: true,
+    },
+  },
   props: {
     text: Property.ShortText({
       displayName: 'text',

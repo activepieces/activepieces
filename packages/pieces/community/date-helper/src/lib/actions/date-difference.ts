@@ -13,6 +13,14 @@ export const dateDifferenceAction = createAction({
   name: 'date_difference',
   displayName: 'Date Difference',
   description: 'Get the difference between two dates',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      hide: true,
+    },
+    retryOnFailure: {
+      hide: true,
+    },
+  },
   props: {
     startDate: Property.ShortText({
       displayName: 'Starting Date',
