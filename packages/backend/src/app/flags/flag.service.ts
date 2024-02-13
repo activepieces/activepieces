@@ -5,7 +5,7 @@ import { SystemProp } from '../helper/system/system-prop'
 import { FlagEntity } from './flag.entity'
 import axios from 'axios'
 import { webhookService } from '../webhooks/webhook-service'
-import { getEdition } from '../helper/secret-helper'
+import { getEdition, getSupportedAppWebhooks } from '../helper/secret-helper'
 import { defaultTheme } from './theme'
 
 const flagRepo = databaseConnection.getRepository(FlagEntity)
@@ -210,12 +210,18 @@ export const flagService = {
                 created,
                 updated,
             },
+            {
+                id: ApFlagId.SUPPORTED_APP_WEBHOOKS,
+                value: getSupportedAppWebhooks(),
+                created,
+                updated,
+            },
         )
 
         return flags
     },
     getThirdPartyRedirectUrl(platformId: string | undefined, hostname: string | undefined): string {
-        const isCustomerPlatform = platformId &&  !flagService.isCloudPlatform(platformId)
+        const isCustomerPlatform = platformId && !flagService.isCloudPlatform(platformId)
         if (isCustomerPlatform) {
             return `https://${hostname}/redirect`
         }

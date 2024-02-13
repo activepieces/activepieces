@@ -5,8 +5,9 @@ import {
 } from '@activepieces/pieces-framework';
 
 const markdown = `
-Go to this URL to see the interface: \n
-\`{{interfaceUrl}}\`
+The interface title is same as the flow's title. \n
+Interface URL: \n
+**{{interfaceUrl}}**
 `;
 
 export const onFormSubmission = createTrigger({

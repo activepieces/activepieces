@@ -12,6 +12,14 @@ export const getCurrentDate = createAction({
   name: 'get_current_date',
   displayName: 'Get Current Date',
   description: 'Get the current date',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      hide: true,
+    },
+    retryOnFailure: {
+      hide: true,
+    },
+  },
   props: {
     timeFormat: Property.StaticDropdown({
       displayName: 'To Time Format',

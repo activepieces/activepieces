@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
   "version": "0.19.0",
-  "rcVersion": "0.20.0-rc.2",
+  "rcVersion": "0.20.0-rc.4",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve ui-core",
@@ -162,9 +162,10 @@
     "shade-generator": "1.2.7",
     "showdown": "2.1.0",
     "simple-git": "3.21.0",
+    "snowflake-sdk": "1.9.3",
     "soap": "1.0.0",
     "socket.io": "4.7.2",
-    "sqlite3": "5.1.6",
+    "sqlite3": "5.1.7",
     "ssh2-sftp-client": "9.1.0",
     "string-replace-async": "3.0.2",
     "stripe": "14.3.0",
@@ -233,6 +234,7 @@
     "@types/qs": "6.9.7",
     "@types/quill": "2.0.10",
     "@types/semver": "7.5.6",
+    "@types/snowflake-sdk": "1.6.20",
     "@types/ssh2-sftp-client": "9.0.0",
     "@types/tinycolor2": "1.4.5",
     "@types/xml2js": "0.4.14",

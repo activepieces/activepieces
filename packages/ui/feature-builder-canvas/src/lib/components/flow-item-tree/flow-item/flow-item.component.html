@@ -18,14 +18,8 @@
         <app-actions-container [trigger]="isTrigger" [flowItem]="_flowItemData.content!"
           [stepHovered]="itemContentHoverTracker.isHovered"></app-actions-container>
       </div>
-      <div apTrackHover #name="hoverTrackerDirective"
-        class="ap-absolute  ap-select-none  ap-typography-body-2 ap-h-[92px] ap-text-description ap-flex ap-flex-col ap-justify-center  ap-transition ap-fade-in ap-duration-500 ap-opacity-0  ap-top-0"
-        [class.ap-opacity-100]="itemContentHoverTracker.isHovered || name.isHovered" #nameDiv
-        [style.right]="-(15 + nameDiv.clientWidth)  + 'px'">
-        <div>
-          {{_flowItemData.content?.name}}
-        </div>
-      </div>
+
+      <ng-container *ngTemplateOutlet="stepName; context:{$implicit:itemContentHoverTracker}"></ng-container>
     </div>
 
   </ng-container>
@@ -41,8 +35,21 @@
           [stepHovered]="itemContentHoverTracker.isHovered"></app-actions-container>
       </div>
     </div>
+
+    <ng-container *ngTemplateOutlet="stepName; context:{$implicit:itemContentHoverTracker}"></ng-container>
   </ng-container>
 
 
-
 </div>
+
+
+<ng-template #stepName let-itemContentHoverTracker>
+  <div apTrackHover #name="hoverTrackerDirective" [style.height]="FLOW_ITEM_HEIGHT+'px'" class=" ap-absolute ap-select-none ap-typography-body-2 ap-text-description ap-flex ap-flex-col
+  ap-justify-center ap-transition ap-fade-in ap-duration-500 ap-opacity-0 ap-top-0"
+    [class.ap-opacity-100]="itemContentHoverTracker.isHovered || name.isHovered" #nameDiv
+    [style.right]="-(15 + nameDiv.clientWidth)  + 'px'">
+    <div>
+      {{_flowItemData.content?.name}}
+    </div>
+  </div>
+</ng-template>

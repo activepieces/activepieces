@@ -836,6 +836,15 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "AdamSelene",
+      "name": "Olivier Sambourg",
+      "avatar_url": "https://avatars.githubusercontent.com/u/79495?v=4",
+      "profile": "https://github.com/AdamSelene",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
