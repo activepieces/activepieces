@@ -4,7 +4,7 @@ import type { QueryParams } from './query-params';
 import { HttpHeaders } from './http-headers';
 import { Authentication } from '../../authentication';
 
-export type HttpRequest<RequestBody extends HttpMessageBody = any> = {
+export type HttpRequest<RequestBody extends HttpMessageBody|string = any> = {
   method: HttpMethod;
   url: string;
   body?: RequestBody | undefined;

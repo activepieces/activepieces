@@ -17,7 +17,7 @@ export class AxiosHttpClient extends BaseHttpClient {
   }
 
   async sendRequest<ResponseBody extends HttpMessageBody>(
-    request: HttpRequest<HttpMessageBody>
+    request: HttpRequest<HttpMessageBody|string>
   ): Promise<HttpResponse<ResponseBody>> {
     try {
       process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';

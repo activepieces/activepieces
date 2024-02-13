@@ -5,7 +5,7 @@ import { HttpResponse } from './http-response';
 
 export type HttpClient = {
   sendRequest<
-    RequestBody extends HttpMessageBody,
+    RequestBody extends HttpMessageBody|string,
     ResponseBody extends HttpMessageBody
   >(
     request: HttpRequest<RequestBody>

@@ -16,11 +16,11 @@ export abstract class BaseHttpClient implements HttpClient {
   ) {}
 
   abstract sendRequest<
-    RequestBody extends HttpMessageBody,
+    RequestBody extends HttpMessageBody|string,
     ResponseBody extends HttpMessageBody
   >(request: HttpRequest<RequestBody>): Promise<HttpResponse<ResponseBody>>;
 
-  protected getUrl<RequestBody extends HttpMessageBody>(
+  protected getUrl<RequestBody extends HttpMessageBody|string>(
     request: HttpRequest<RequestBody>
   ): {
     urlWithoutQueryParams: string;
@@ -39,7 +39,7 @@ export abstract class BaseHttpClient implements HttpClient {
     };
   }
 
-  protected getHeaders<RequestBody extends HttpMessageBody>(
+  protected getHeaders<RequestBody extends HttpMessageBody|string>(
     request: HttpRequest<RequestBody>
   ): HttpHeaders {
     let requestHeaders: HttpHeaders = {

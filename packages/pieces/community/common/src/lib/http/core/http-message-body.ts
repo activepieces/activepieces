@@ -1,1 +1,1 @@
-export type HttpMessageBody = Record<string, any> | string;
+export type HttpMessageBody = Record<string, any>;
