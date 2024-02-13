@@ -43,7 +43,7 @@ export class EmbedRedirectComponent implements OnDestroy, OnInit {
       .pipe(
         tap((res) => {
           this.authenticationService.saveToken(res.token);
-          this.authenticationService.updateUser({ ...res, password: '' });
+          this.authenticationService.updateUser({ ...res });
           window.parent.postMessage(
             {
               type: ActivepiecesClientEventName.CLIENT_INIT,

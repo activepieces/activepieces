@@ -17,7 +17,10 @@ export class PlatformProjectService {
   constructor(private http: HttpClient, private router: Router) {}
 
   create(req: CreatePlatformProjectRequest) {
-    return this.http.post<void>(environment.apiUrl + '/projects/', req);
+    return this.http.post<ProjectWithUsageAndPlanResponse>(
+      environment.apiUrl + '/projects/',
+      req
+    );
   }
   update(
     projectId: ProjectId,

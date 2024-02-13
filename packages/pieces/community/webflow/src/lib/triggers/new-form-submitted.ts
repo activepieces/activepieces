@@ -7,7 +7,7 @@ import {
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { webflowAuth } from '../..';
 
-const triggerNameInStore = 'webCREATED_FLOW_form_submissions_trigger';
+const triggerNameInStore = 'webflow_created_form_submissions_trigger';
 
 export const webflowNewSubmission = createTrigger({
   auth: webflowAuth,
