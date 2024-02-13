@@ -46,7 +46,7 @@ interface OAuth2PropertySettings {
   client_secret: FormControl<string>;
   client_id: FormControl<string>;
   name: FormControl<string>;
-  value: FormControl<OAuth2PopupResponse>;
+  value: FormControl<OAuth2PopupResponse | null>;
   props: UntypedFormGroup;
 }
 export const USE_CLOUD_CREDENTIALS = 'USE_CLOUD_CREDENTIALS';
@@ -65,7 +65,6 @@ export interface OAuth2ConnectionDialogData {
 })
 export class OAuth2ConnectionDialogComponent implements OnInit {
   PropertyType = PropertyType;
-  readonly FAKE_CODE = 'FAKE_CODE';
   readonly OAuth2GrantType = OAuth2GrantType;
   settingsForm: FormGroup<OAuth2PropertySettings>;
   loading = false;
@@ -136,13 +135,9 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
           ],
         }
       ),
-      value: new FormControl(
-        { code: '' },
-        {
-          nonNullable: true,
-          validators: Validators.required,
-        }
-      ),
+      value: new FormControl<OAuth2PopupResponse | null>(null, {
+        validators: Validators.required,
+      }),
       props: this.fb.group(propsControls),
     });
     this.settingsForm.controls.name.markAllAsTouched();
@@ -154,7 +149,6 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
         this.dialogData.connectionToUpdate.name
       );
       this.settingsForm.controls.name.disable();
-      this.settingsForm.controls.value.setValue({ code: this.FAKE_CODE });
     }
   }
   submit() {
@@ -175,8 +169,8 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
       pieceName: this.dialogData.pieceName,
       type: AppConnectionType.OAUTH2,
       value: {
-        code: this.settingsForm.controls.value.value.code,
-        code_challenge: this.settingsForm.controls.value.value.code_challenge,
+        code: this.settingsForm.controls.value.value!.code,
+        code_challenge: this.settingsForm.controls.value.value!.code_challenge,
         type: AppConnectionType.OAUTH2,
         grant_type:
           this.dialogData.pieceAuthProperty.grantType ??
@@ -201,10 +195,6 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
   };
 
   saveConnection(connection: UpsertOAuth2Request): void {
-    if (connection.value.code === this.FAKE_CODE) {
-      this.dialogRef.close(connection);
-      return;
-    }
     this.upsert$ = this.appConnectionsService.upsert(connection).pipe(
       catchError((err) => {
         console.error(err);

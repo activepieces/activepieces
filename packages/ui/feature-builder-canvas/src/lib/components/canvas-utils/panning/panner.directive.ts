@@ -62,6 +62,7 @@ export class CanvasPannerDirective {
         this.pannerService.lastPanningOffset
       );
     }
+    event.preventDefault();
   }
   @HostListener('wheel', ['$event'])
   macPanning(event: WheelEvent) {
@@ -84,5 +85,6 @@ export class CanvasPannerDirective {
         ...this.pannerService.lastPanningOffset,
       });
     }
+    event.preventDefault();
   }
 }

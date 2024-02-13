@@ -14,6 +14,7 @@ export type PositionLabel = {
 };
 
 export const FLOW_ITEM_WIDTH = 250;
+export const MAX_FLOW_ITEM_NAME_WIDTH = FLOW_ITEM_WIDTH * 0.68;
 export const FLOW_ITEM_HEIGHT = 72;
 export const FLOW_ITEM_BOTTOM_PADDING = 16;
 /**Space between branch label and its next step */

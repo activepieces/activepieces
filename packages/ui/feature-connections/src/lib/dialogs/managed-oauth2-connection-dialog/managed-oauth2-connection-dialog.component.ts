@@ -43,7 +43,7 @@ import { connectionNameRegex } from '../utils';
 
 interface AuthConfigSettings {
   name: FormControl<string>;
-  value: FormControl<OAuth2PopupResponse>;
+  value: FormControl<OAuth2PopupResponse | null>;
   props: UntypedFormGroup;
 }
 
@@ -128,13 +128,9 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
           ],
         }
       ),
-      value: new FormControl(
-        { code: '' },
-        {
-          nonNullable: true,
-          validators: Validators.required,
-        }
-      ),
+      value: new FormControl<OAuth2PopupResponse | null>(null, {
+        validators: Validators.required,
+      }),
       props: this.fb.group(propsControls),
     });
     if (this.dialogData.connectionToUpdate) {
