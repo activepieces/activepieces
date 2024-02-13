@@ -139,7 +139,7 @@ export const flowRunService = {
         const pauseMetadata = flowRunToResume.pauseMetadata
         const matchRequestId = !isNil(resumePayload) && pauseMetadata
             && pauseMetadata.type === PauseType.WEBHOOK
-            && resumePayload.payload.queryParams.requestId === pauseMetadata.requestId
+            && resumePayload.queryParams.requestId === pauseMetadata.requestId
         if (matchRequestId) {
             await flowRunService.start({
                 payload: resumePayload,

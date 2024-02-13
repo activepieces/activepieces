@@ -115,7 +115,7 @@ async function getResponseForPausedRun(executionOutput: PauseExecutionOutput): P
     if (executionOutput.pauseMetadata.type === PauseType.WEBHOOK) {
         return {
             status: StatusCodes.OK,
-            body: executionOutput.pauseMetadata.metadata,
+            body: executionOutput.pauseMetadata.response,
             headers: {},
         }
     }

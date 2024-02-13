@@ -11,7 +11,7 @@ export const waitForApprovalLink = createAction({
       ctx.run.pause({
         pauseMetadata: {
           type: PauseType.WEBHOOK,
-          metadata: {}
+          response: {}
         },
       });
 
@@ -20,7 +20,7 @@ export const waitForApprovalLink = createAction({
       };
     } else {
       return {
-        approved: ctx.resumePayload.payload.queryParams['action'] === 'approve',
+        approved: ctx.resumePayload.queryParams['action'] === 'approve',
       };
     }
   },

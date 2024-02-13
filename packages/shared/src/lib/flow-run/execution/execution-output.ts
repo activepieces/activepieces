@@ -53,14 +53,12 @@ export type DelayPauseMetadata = BasePauseMetadata<PauseType.DELAY> & {
 
 export type WebhookPauseMetadata = BasePauseMetadata<PauseType.WEBHOOK> & {
     requestId: string
-    metadata: Record<string, unknown>
+    response: Record<string, unknown>
 }
 
 export type PauseMetadata = DelayPauseMetadata | WebhookPauseMetadata
 
-export type ResumePayload = {
-    payload: TriggerPayload
-}
+export type ResumePayload = TriggerPayload
 
 export type PauseExecutionOutput = BaseExecutionOutput<ExecutionOutputStatus.PAUSED> & {
     pauseMetadata: PauseMetadata

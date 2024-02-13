@@ -73,11 +73,9 @@ export const flowRunController: FastifyPluginCallbackTypebox = (app, _options, d
         await flowRunService.addToQueue({
             flowRunId: req.params.id,
             resumePayload: {
-                payload: {
-                    body: req.body,
-                    headers,
-                    queryParams,
-                },
+                body: req.body,
+                headers,
+                queryParams,
             },
             executionType: ExecutionType.RESUME,
         })

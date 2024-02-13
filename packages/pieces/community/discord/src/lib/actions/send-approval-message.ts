@@ -27,7 +27,7 @@ export const discordSendApprovalMessage = createAction({
       configValue.run.pause({
         pauseMetadata: {
           type: PauseType.WEBHOOK,
-          metadata: {},
+          response: {},
         },
       });
 
@@ -70,7 +70,7 @@ export const discordSendApprovalMessage = createAction({
     } else {
 
       return {
-        approved: configValue.resumePayload.payload.queryParams['action'] === 'approve',
+        approved: configValue.resumePayload.queryParams['action'] === 'approve',
       };
     }
   },

@@ -25,7 +25,7 @@ export const requestSendApprovalMessageAction = createAction({
       context.run.pause({
         pauseMetadata: {
           type: PauseType.WEBHOOK,
-          metadata: {}
+          response: {}
         },
       });
       const token = context.auth.access_token;
@@ -80,7 +80,7 @@ export const requestSendApprovalMessageAction = createAction({
     } else {
 
       return {
-        approved: context.resumePayload.payload.queryParams['action'] === 'approve',
+        approved: context.resumePayload.queryParams['action'] === 'approve',
       };
     }
   },
