@@ -3,7 +3,6 @@ import { ProjectsState } from '../common-state.model';
 import { ProjectActions } from './project.action';
 
 const initialState: ProjectsState = {
-  loaded: false,
   selectedIndex: 0,
   projects: [],
   platform: undefined,
@@ -21,7 +20,6 @@ const _projectReducer = createReducer(
       };
 
       return {
-        loaded: true,
         platform: state.platform,
         projects: updatedProjects,
         selectedIndex: state.selectedIndex,
@@ -33,7 +31,6 @@ const _projectReducer = createReducer(
     (_state, { projects, platform, selectedIndex }): ProjectsState => {
       return {
         projects: projects,
-        loaded: true,
         platform,
         selectedIndex: selectedIndex,
       };
@@ -43,7 +40,6 @@ const _projectReducer = createReducer(
   on(ProjectActions.clearProjects, (_state, {}): ProjectsState => {
     return {
       projects: [],
-      loaded: false,
       selectedIndex: 0,
       platform: undefined,
     };
@@ -58,7 +54,6 @@ const _projectReducer = createReducer(
       updatedProjects[index] = project;
     }
     return {
-      loaded: true,
       platform: state.platform,
       projects: updatedProjects,
       selectedIndex: state.selectedIndex,
@@ -67,7 +62,6 @@ const _projectReducer = createReducer(
   on(ProjectActions.addProject, (state, { project }): ProjectsState => {
     const newState = JSON.parse(JSON.stringify(state));
     return {
-      loaded: true,
       platform: newState.platform,
       projects: [...newState.projects, project],
       selectedIndex: newState.selectedIndex,
