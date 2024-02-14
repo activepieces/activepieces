@@ -13,17 +13,7 @@ const filterBasedOnSearchQuery = ({ searchQuery, pieces }: { searchQuery: string
     if (!searchQuery) {
         return pieces
     }
-
-    const actionsAndTrigger = pieces.flatMap(p => [...Object.values(p.actions), ...Object.values(p.triggers)])
-    const convertPieces = pieces.map(p => ({
-        ...p,
-        actionOrTrigger: actionsAndTrigger.map(a => {
-            return {
-                displayName: a.displayName,
-            }
-        }),
-    }))
-    const fuse = new Fuse(convertPieces, {
+    const fuse = new Fuse(pieces, {
         isCaseSensitive: false,
         shouldSort: true,
         keys: [{
@@ -32,9 +22,6 @@ const filterBasedOnSearchQuery = ({ searchQuery, pieces }: { searchQuery: string
         }, {
             name: 'description',
             weight: 5,
-        }, {
-            name: 'actionOrTrigger.displayName',
-            weight: 1,
         }],
         threshold: 0.3,
     })
