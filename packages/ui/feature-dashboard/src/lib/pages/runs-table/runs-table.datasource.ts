@@ -9,7 +9,6 @@ import {
   of,
   take,
   BehaviorSubject,
-  filter,
 } from 'rxjs';
 import { ExecutionOutputStatus, FlowRun } from '@activepieces/shared';
 import {
@@ -57,10 +56,8 @@ export class RunsTableDataSource extends DataSource<FlowRun> {
   connect(): Observable<FlowRun[]> {
     return combineLatest({
       queryParams: this.queryParams$,
-      //wait till projects are loaded
       project: this.store
         .select(ProjectSelectors.selectCurrentProject)
-        .pipe(filter((project) => !!project))
         .pipe(take(1)),
       refresh: this.refreshForExecutingRuns$.asObservable(),
       refreshForReruns: this.refreshForReruns$,

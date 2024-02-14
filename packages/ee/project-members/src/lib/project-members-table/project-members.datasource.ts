@@ -16,7 +16,13 @@ import {
   ProjectMemberStatus,
 } from '@activepieces/ee-shared';
 import { ProjectMemberService } from '../service/project-members.service';
-import { AuthenticationService } from '@activepieces/ui/common';
+import {
+  ApPaginatorComponent,
+  AuthenticationService,
+  CURSOR_QUERY_PARAM,
+  LIMIT_QUERY_PARAM,
+} from '@activepieces/ui/common';
+import { Params } from '@angular/router';
 
 /**
  * Data source for the LogsTable view. This class should
@@ -30,7 +36,9 @@ export class ProjectMembersTableDataSource extends DataSource<ProjectMember> {
     private authenticationService: AuthenticationService,
     private projectMemberService: ProjectMemberService,
     private refresh$: Observable<boolean>,
-    private fakeData: boolean = false
+    private fakeData: boolean = false,
+    private paginator: ApPaginatorComponent,
+    private queryParams$: Observable<Params>
   ) {
     super();
   }
@@ -43,14 +51,20 @@ export class ProjectMembersTableDataSource extends DataSource<ProjectMember> {
   connect(): Observable<ProjectMember[]> {
     return combineLatest({
       refresh: this.refresh$,
+      queryParams: this.queryParams$,
     }).pipe(
-      switchMap(() => {
+      switchMap((res) => {
         if (!this.fakeData) {
           return this.projectMemberService
             .list({
               projectId: this.authenticationService.getProjectId(),
+              cursor: res.queryParams[CURSOR_QUERY_PARAM],
+              limit: res.queryParams[LIMIT_QUERY_PARAM],
             })
             .pipe(
+              tap((res) => {
+                this.paginator.setNextAndPrevious(res.next, res.previous);
+              }),
               catchError((e: any) => {
                 console.error(e);
                 return of({
