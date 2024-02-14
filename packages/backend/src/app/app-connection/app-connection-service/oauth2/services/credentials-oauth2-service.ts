@@ -88,19 +88,20 @@ async function refresh(
     if (!oauth2Util.isExpired(appConnection)) {
         return appConnection
     }
+    const grantType = connectionValue.grant_type ?? OAuth2GrantType.AUTHORIZATION_CODE
     const body: Record<string, string> = {}
-    switch (connectionValue.grant_type) {
+    switch (grantType) {
         case OAuth2GrantType.AUTHORIZATION_CODE: { 
             body.grant_type = 'refresh_token'
             body.refresh_token = appConnection.refresh_token
             break
         }
         case OAuth2GrantType.CLIENT_CREDENTIALS: {
-            body.grant_type = connectionValue.grant_type
+            body.grant_type = grantType
             break
         }
         default:
-            throw new Error(`Unknown grant type: ${connectionValue.grant_type}`)
+            throw new Error(`Unknown grant type: ${grantType}`)
     }
 
     const headers: Record<string, string> = {
