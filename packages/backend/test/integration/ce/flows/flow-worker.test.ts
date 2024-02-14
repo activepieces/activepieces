@@ -100,7 +100,7 @@ describe('flow execution', () => {
             environment: RunEnvironment.PRODUCTION,
             runId: mockFlowRun.id,
             payload: {
-    
+
             },
             executionType: ExecutionType.BEGIN,
         })
@@ -109,7 +109,7 @@ describe('flow execution', () => {
             id: mockFlowRun.id,
         })
         expect(flowRun.status).toEqual(ExecutionOutputStatus.SUCCEEDED)
-        
+
         const file = await databaseConnection.getRepository('file').findOneByOrFail({
             id: flowRun.logsFileId,
         })
@@ -134,6 +134,7 @@ describe('flow execution', () => {
                     'output': {
                         'key': 3,
                     },
+                    'duration': expect.any(Number),
                 },
                 'datamapper': {
                     'type': 'PIECE',
@@ -146,6 +147,7 @@ describe('flow execution', () => {
                     'output': {
                         'key': 3,
                     },
+                    'duration': expect.any(Number),
                 },
             },
         })
