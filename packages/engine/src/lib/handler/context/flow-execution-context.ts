@@ -45,6 +45,12 @@ export class FlowExecutorContext {
     static empty(): FlowExecutorContext {
         return new FlowExecutorContext()
     }
+    public setPauseRequestId(pauseRequestId: string): FlowExecutorContext {
+        return new FlowExecutorContext({
+            ...this,
+            pauseRequestId,
+        })
+    }
 
     public getLoopStepOutput({ stepName }: { stepName: string }): LoopStepOutput | undefined {
         const stateAtPath = getStateAtPath({ currentPath: this.currentPath, steps: this.steps })

@@ -45,7 +45,6 @@ export class EngineConstants {
         public readonly variableService: VariableService,
         public readonly testSingleStepMode: boolean,
         public readonly filesServiceType: 'local' | 'db',
-
         public readonly resumePayload?: ResumePayload,
     ) { }
 
