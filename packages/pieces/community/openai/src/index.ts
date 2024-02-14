@@ -1,11 +1,11 @@
 import {
+  AuthenticationType,
   HttpMethod,
   createCustomApiCallAction,
-  httpClient
+  httpClient,
 } from '@activepieces/pieces-common';
 import {
   PieceAuth,
-  Property,
   createPiece,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
@@ -16,6 +16,7 @@ import { textToSpeech } from './lib/actions/text-to-speech';
 import { transcribeAction } from './lib/actions/transcriptions';
 import { translateAction } from './lib/actions/translation';
 import { visionPrompt } from './lib/actions/vision-prompt';
+import { baseUrl } from './lib/common/common';
 
 const markdownDescription = `
 Follow these instructions to get your OpenAI API Key:
@@ -26,49 +27,21 @@ Follow these instructions to get your OpenAI API Key:
 It is strongly recommended that you add your credit card information to your OpenAI account and upgrade to the paid plan **before** generating the API Key. This will help you prevent 429 errors.
 `;
 
-export const openaiAuth = PieceAuth.CustomAuth({
-  required: true,
+export const openaiAuth = PieceAuth.SecretText({
   description: markdownDescription,
-  props: {
-    apiKey: PieceAuth.SecretText({
-      displayName: 'API Key',
-      required: true,
-    }),
-    baseUrl: Property.ShortText({
-      displayName: 'Base URL',
-      description: 'The base URL for the OpenAI instance.',
-      defaultValue: 'https://api.openai.com/v1',
-      required: true,
-    }),
-    apiVersion: Property.ShortText({
-      displayName: 'API Version',
-      description: 'The API version if you are using an Azure OpenAI resource',
-      required: false,
-    }),
-  },
+  displayName: 'API Key',
+  required: true,
   validate: async (auth) => {
     try {
-
-      let headers;
-      if (auth.auth.apiVersion) {
-        headers = {
-          'api-key': auth.auth.apiKey,
-        };
-      } else {
-        headers = {
-          Authorization: `Bearer ${auth.auth.apiKey}`,
-        };
-      }
-      const baseUrl = auth.auth.baseUrl.replace(/\/$/, '') ?? 'https://api.openai.com/v1';
       await httpClient.sendRequest<{
         data: { id: string }[];
       }>({
         url: `${baseUrl}/models`,
         method: HttpMethod.GET,
-        headers,
-        queryParams: auth.auth.apiVersion ? {
-          "api-version": auth.auth.apiVersion,
-        } : {},
+        authentication: {
+          type: AuthenticationType.BEARER_TOKEN,
+          token: auth.auth as string,
+        },
       });
       return {
         valid: true,
@@ -99,30 +72,11 @@ export const openai = createPiece({
     translateAction,
     createCustomApiCallAction({
       auth: openaiAuth,
-      baseUrl: (auth) => {
-        const typedAuth = auth as { baseUrl: string; apiVersion: string };
-        const baseUrl = typedAuth.baseUrl.replace(/\/$/, '') ?? 'https://api.openai.com/v1';
-        if (typedAuth.apiVersion) {
-          return baseUrl + `?api-version=${typedAuth.apiVersion}`;
-        } else {
-          return baseUrl;
-        }
-      },
+      baseUrl: () => baseUrl,
       authMapping: (auth) => {
-        const typedAuth = auth as {
-          baseUrl: string;
-          apiKey: string;
-          apiVersion: string;
+        return {
+          Authorization: `Bearer ${auth}`,
         };
-        if (typedAuth.apiVersion) {
-          return {
-            'api-key': typedAuth.apiKey,
-          };
-        } else {
-          return {
-            Authorization: `Bearer ${auth}`,
-          };
-        }
       },
     }),
   ],

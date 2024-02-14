@@ -13,8 +13,9 @@ export type PositionLabel = {
   label: string;
 };
 
-export const FLOW_ITEM_WIDTH = 300;
-export const FLOW_ITEM_HEIGHT = 92;
+export const FLOW_ITEM_WIDTH = 250;
+export const MAX_FLOW_ITEM_NAME_WIDTH = FLOW_ITEM_WIDTH * 0.68;
+export const FLOW_ITEM_HEIGHT = 72;
 export const FLOW_ITEM_BOTTOM_PADDING = 16;
 /**Space between branch label and its next step */
 export const VERTICAL_SPACE_BETWEEN_LABEL_AND_FLOW_ITEM = 70;
@@ -37,3 +38,4 @@ export const DROP_ZONE_HEIGHT = 125;
 export const HORIZONTAL_SPACE_BETWEEN_RETURNING_LOOP_ARROW_AND_STARTING_LOOP_ARC = 20;
 export const VERTICAL_SPACE_BETWEEN_AFTERLOOP_LINE_AND_LOOP_BOTTOM = 67;
 export type ButtonType = 'big' | 'small';
+export const FLOW_ITEM_ICON_SIZE = 40 + 'px';

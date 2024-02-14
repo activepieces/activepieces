@@ -47,7 +47,7 @@ describe('admin add platform endpoint', () => {
         // assert
         const responseBody = response?.json()
         expect(response?.statusCode).toBe(StatusCodes.CREATED)
-        expect(Object.keys(responseBody)).toHaveLength(29)
+        expect(Object.keys(responseBody)).toHaveLength(30)
         expect(responseBody.allowedAuthDomains).toEqual([])
         expect(responseBody.emailAuthEnabled).toBe(true)
         expect(responseBody.enforceAllowedAuthDomains).toBe(false)
@@ -55,6 +55,7 @@ describe('admin add platform endpoint', () => {
         expect(responseBody.id).toHaveLength(21)
         expect(responseBody.federatedAuthProviders).toStrictEqual({})
         expect(responseBody.id).toHaveLength(21)
+        expect(responseBody.auditLogEnabled).toBe(false)
         expect(responseBody.gitSyncEnabled).toBe(false)
         expect(responseBody.created).toBeDefined()
         expect(responseBody.updated).toBeDefined()

@@ -19,30 +19,33 @@
               <div class=" ap-mx-3 ap-typography-body-1">
                 #{{ idx+1 }}
               </div>
-              <ap-icon-button *ngIf="itemsCanBeDeleted()" [width]="9" [height]="9"
-                iconFilename="delete.svg" [tooltipText]="!deleteButton.isHovered ? '' : removeItemTooltip"
-                (buttonClicked)="removeValue(idx)" apTrackHover #deleteButton="hoverTrackerDirective"></ap-icon-button>
+              <ap-icon-button *ngIf="itemsCanBeDeleted()" [width]="9" [height]="9" iconFilename="delete.svg"
+                [tooltipText]="!deleteButton.isHovered ? '' : removeItemTooltip" (buttonClicked)="removeValue(idx)"
+                apTrackHover #deleteButton="hoverTrackerDirective"></ap-icon-button>
             </div>
 
           </mat-card-title>
 
         </mat-card-header>
         <mat-card-content>
-          <div *ngFor="
-              let property of property.properties | objectToArray;
-              let i = index
+          <div class="ap-flex ap-flex-col ap-gap-3">
+            <div *ngFor="
+            let property of property.properties | objectToArray;
+            let i = index
+          ">
+              <ng-container *ngTemplateOutlet="
+              formFieldsTemplate;
+              context: {
+                $implicit: property,
+                propertyIndex: i,
+                formGroup: objectControl,
+                prefix: prefix
+              }
             ">
-            <ng-container *ngTemplateOutlet="
-                formFieldsTemplate;
-                context: {
-                  $implicit: property,
-                  propertyIndex: i,
-                  formGroup: objectControl,
-                  prefix: prefix
-                }
-              ">
-            </ng-container>
+              </ng-container>
+            </div>
           </div>
+
         </mat-card-content>
       </mat-card>
     </ng-container>

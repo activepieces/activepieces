@@ -18,6 +18,8 @@ import { isNil } from 'lodash'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { projectService } from '../../project/project-service'
+import { eventsHooks } from '../../helper/audit-events'
+import { ApplicationEventName } from '@activepieces/ee-shared'
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -30,6 +32,12 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             request: request.body,
         })
 
+        eventsHooks.get().send(request, {
+            action: ApplicationEventName.CREATED_FLOW,
+            flow: newFlow,
+            userId: request.principal.id,
+        })
+
         return reply.status(StatusCodes.CREATED).send(newFlow)
     })
 
@@ -38,7 +46,6 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             id: request.params.id,
             projectId: request.principal.projectId,
         })
-
         // BEGIN EE
         const currentTime = dayjs()
         const userId = await extractUserIdFromPrincipal(request.principal)
@@ -51,12 +58,13 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         }
         // END EE
 
-        return flowService.update({
+        const updatedFlow = await flowService.update({
             id: request.params.id,
             userId,
             projectId: request.principal.projectId,
             operation: request.body,
         })
+        return updatedFlow
     })
 
     app.get('/', ListFlowsRequestOptions, async (request) => {
@@ -93,11 +101,19 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.delete('/:id', DeleteFlowRequestOptions, async (request, reply) => {
+        const flow = await flowService.getOnePopulatedOrThrow({
+            id: request.params.id,
+            projectId: request.principal.projectId,
+        })
+        eventsHooks.get().send(request, {
+            action: ApplicationEventName.DELETED_FLOW,
+            flow,
+            userId: request.principal.id,
+        })
         await flowService.delete({
             id: request.params.id,
             projectId: request.principal.projectId,
         })
-
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
 }

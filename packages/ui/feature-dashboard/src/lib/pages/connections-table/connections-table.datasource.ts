@@ -80,7 +80,6 @@ export class ConnectionsTableDataSource extends DataSource<any> {
         this.isLoading$.next(false);
         this.paginator.setNextAndPrevious(res.next, res.previous);
         this.data = res.data;
-        console.log(this.data);
       }),
       switchMap((res) => {
         const logos: Observable<string | undefined>[] = res.data.map((item) =>

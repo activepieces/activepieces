@@ -11,6 +11,14 @@ export const formatDateAction = createAction({
   name: 'format_date',
   displayName: 'Format Date',
   description: 'Converts a date from one format to another',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      hide: true,
+    },
+    retryOnFailure: {
+      hide: true,
+    },
+  },
   props: {
     inputDate: Property.ShortText({
       displayName: 'Input Date',

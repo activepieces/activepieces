@@ -165,7 +165,7 @@
     "snowflake-sdk": "1.9.3",
     "soap": "1.0.0",
     "socket.io": "4.7.2",
-    "sqlite3": "5.1.6",
+    "sqlite3": "5.1.7",
     "ssh2-sftp-client": "9.1.0",
     "string-replace-async": "3.0.2",
     "stripe": "14.3.0",

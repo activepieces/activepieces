@@ -10,6 +10,8 @@ import {
 import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { appConnectionService } from './app-connection-service/app-connection-service'
+import { eventsHooks } from '../helper/audit-events'
+import { ApplicationEventName } from '@activepieces/ee-shared'
 
 export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
     app.post('/', UpsertAppConnectionRequest, async (request, reply) => {
@@ -17,7 +19,11 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             projectId: request.principal.projectId,
             request: request.body,
         })
-
+        eventsHooks.get().send(request, {
+            action: ApplicationEventName.UPSERTED_CONNECTION,
+            connection: appConnection,
+            userId: request.principal.id,
+        })
         await reply.status(StatusCodes.CREATED).send(removeSensitiveData(appConnection))
     })
 
@@ -41,6 +47,15 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
     })
 
     app.delete('/:id', DeleteAppConnectionRequest, async (request, reply): Promise<void> => {
+        const connection = await appConnectionService.getOneOrThrow({
+            id: request.params.id,
+            projectId: request.principal.projectId,
+        })
+        eventsHooks.get().send(request, {
+            action: ApplicationEventName.DELETED_CONNECTION,
+            connection,
+            userId: request.principal.id,
+        })
         await appConnectionService.delete({
             id: request.params.id,
             projectId: request.principal.projectId,

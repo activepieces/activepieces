@@ -41,8 +41,10 @@ export class OAuth2ConnectControlComponent implements ControlValueAccessor {
     this.isDisabled = isDisabled;
   }
 
-  writeValue(obj: OAuth2PopupResponse): void {
-    this.responseData = obj;
+  writeValue(obj: OAuth2PopupResponse | null): void {
+    if (obj) {
+      this.responseData = obj;
+    }
   }
 
   registerOnChange(fn: (val: unknown) => void): void {

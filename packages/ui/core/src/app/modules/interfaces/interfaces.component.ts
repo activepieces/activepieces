@@ -1,9 +1,19 @@
 import { Property } from '@activepieces/pieces-framework';
-import { FileResponseInterface, PopulatedFlow } from '@activepieces/shared';
-import { FlagService, FlowService, environment } from '@activepieces/ui/common';
+import {
+  FileResponseInterface,
+  FlowVersion,
+  PopulatedFlow,
+  TelemetryEventName,
+} from '@activepieces/shared';
+import {
+  FlagService,
+  FlowService,
+  TelemetryService,
+  environment,
+} from '@activepieces/ui/common';
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   Observable,
   Observer,
@@ -45,7 +55,7 @@ type InterfaceProps = {
 })
 export class InterfacesComponent implements OnInit {
   fullLogoUrl$: Observable<string>;
-  flow$: Observable<PopulatedFlow>;
+  flow$: Observable<FlowVersion>;
   submitInterface$: Observable<InterfaceResult | undefined>;
   interfaceForm: FormGroup;
   props: InterfaceProps | null = null;
@@ -55,13 +65,16 @@ export class InterfacesComponent implements OnInit {
   error: string | null = null;
   webhookUrl: string | null = null;
   title: string | null = null;
+  flow: PopulatedFlow | null = null;
   markdownResponse: Subject<string | null> = new Subject<string | null>();
   constructor(
     private flowService: FlowService,
-    private router: ActivatedRoute,
+    private route: ActivatedRoute,
     private snackBar: MatSnackBar,
     private flagService: FlagService,
-    private interfacesService: InterfacesService
+    private interfacesService: InterfacesService,
+    private telemteryService: TelemetryService,
+    private router: Router
   ) {
     this.fullLogoUrl$ = this.flagService
       .getLogos()
@@ -69,20 +82,45 @@ export class InterfacesComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.flow$ = this.router.paramMap.pipe(
+    this.flow$ = this.route.paramMap.pipe(
       switchMap((params) =>
         this.flowService.get(params.get('flowId') as string)
       ),
       tap((flow) => {
-        const { pieceName, triggerName } = flow.version.trigger.settings;
+        this.title = flow.version.displayName;
+        this.interfaceForm = new FormGroup({});
+
+        this.telemteryService.capture({
+          name: TelemetryEventName.INTERFACES_VIEWED,
+          payload: {
+            flowId: flow.id,
+            interfaceProps: this.props!,
+            projectId: flow.projectId,
+          },
+        });
+        this.flow = flow;
+      }),
+      switchMap((flow) => {
+        {
+          if (flow.publishedVersionId) {
+            return this.flowService.get(flow.id, flow.publishedVersionId).pipe(
+              map((publishedFlow) => {
+                return publishedFlow.version;
+              })
+            );
+          }
+          return of(flow.version);
+        }
+      }),
+      tap((version) => {
+        this.props = version.trigger.settings.input;
+        const { pieceName, triggerName } = version.trigger.settings;
         if (
           pieceName === '@activepieces/piece-interfaces' &&
           triggerName === 'form_submission'
         ) {
-          this.webhookUrl = environment.apiUrl + '/webhooks/' + flow.id;
-          this.title = flow.version.displayName;
-          this.interfaceForm = new FormGroup({});
-          this.props = flow.version.trigger.settings.input;
+          this.webhookUrl = environment.apiUrl + '/webhooks/' + this.flow!.id;
+
           if (this.props?.waitForResponse) {
             this.webhookUrl += '/sync';
           }
@@ -108,6 +146,11 @@ export class InterfacesComponent implements OnInit {
           this.props = null;
           this.error = 'This flow does not have an interface.';
         }
+      }),
+      catchError((err) => {
+        console.error(err);
+        this.router.navigate(['/']);
+        throw err;
       })
     );
   }
@@ -144,6 +187,14 @@ export class InterfacesComponent implements OnInit {
           this.interfacesService.submitInterface(this.webhookUrl!, formData)
         ),
         tap((result: InterfaceResult) => {
+          this.telemteryService.capture({
+            name: TelemetryEventName.INTERFACES_SUBMITTED,
+            payload: {
+              flowId: this.flow!.id,
+              interfaceProps: this.props!,
+              projectId: this.flow!.projectId,
+            },
+          });
           if (result.type === InterfaceResultTypes.MARKDOWN) {
             this.markdownResponse.next(result.value as string);
           } else if (result.type === InterfaceResultTypes.FILE) {

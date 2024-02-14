@@ -5,9 +5,8 @@ import { Redis } from 'ioredis'
 import { createRedisClient } from '../../database/redis-connection'
 import { QueueMode, system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
-import { FastifyRequest } from 'fastify'
+import { extractClientRealIp } from '../../helper/network-utils'
 
-const CLIENT_REAL_IP_HEADER = system.getOrThrow(SystemProp.CLIENT_REAL_IP_HEADER)
 const API_RATE_LIMIT_AUTHN_ENABLED = system.getBoolean(SystemProp.API_RATE_LIMIT_AUTHN_ENABLED)
 
 export const rateLimitModule: FastifyPluginAsyncTypebox = FastifyPlugin(async (app) => {
@@ -19,10 +18,6 @@ export const rateLimitModule: FastifyPluginAsyncTypebox = FastifyPlugin(async (a
         })
     }
 })
-
-const extractClientRealIp = (request: FastifyRequest): string | number | Promise<string | number> => {
-    return request.headers[CLIENT_REAL_IP_HEADER] as string
-}
 
 const getRedisClient = (): Redis | undefined => {
     const redisIsNotConfigured = system.get<QueueMode>(SystemProp.QUEUE_MODE) !== QueueMode.REDIS

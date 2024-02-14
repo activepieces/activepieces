@@ -49,8 +49,11 @@ export class ThirdPartyAuthComponent {
                     })
                     .pipe(
                       tap((response) => {
-                        if (popupResponse) {
-                          this.authenticationService.saveUser(response);
+                        if (popupResponse && response.body) {
+                          this.authenticationService.saveUser(
+                            response.body,
+                            response.body.token
+                          );
                           this.redirectService.redirect();
                         }
                       }),

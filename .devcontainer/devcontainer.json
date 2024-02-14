@@ -13,7 +13,6 @@
 			"extensions": [
 				"dbaeumer.vscode-eslint",
 				"Angular.ng-template",
-				"nrwl.angular-console",
 				"cipchk.cssrem",
 				"huizhou.githd",
 				"GitHub.copilot",

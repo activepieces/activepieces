@@ -6,6 +6,14 @@ export const createApprovalLink = createAction({
   description:
     'Create links only without pausing the flow, use wait for approval to pause',
   props: {},
+  errorHandlingOptions: {
+    continueOnFailure: {
+      hide: true,
+    },
+    retryOnFailure: {
+      hide: true,
+    },
+  },
   async run(ctx) {
     return {
       approvalLink: ctx.generateResumeUrl({

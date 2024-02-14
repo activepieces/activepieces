@@ -18,7 +18,7 @@ services:
       AP_LICENSE_KEY: 1234567890
       AP_ENVIRONMENT: prod
       AP_ENCRYPTION_KEY: 7e19fad4c13eaea8f657afb12e8f9c40
-      AP_EXECUTION_MODE: SANDBOXED
+      AP_EXECUTION_MODE: UNSANDBOXED
       AP_JWT_SECRET: super-secret
       AP_POSTGRES_DATABASE: activepieces
       AP_POSTGRES_HOST: postgres
@@ -29,7 +29,6 @@ services:
       AP_REDIS_HOST: redis
       AP_REDIS_PORT: 6379
       AP_SIGN_UP_ENABLED: true
-    privileged: true
     ports:
      - "3000:3000"
      - "4200:4200"

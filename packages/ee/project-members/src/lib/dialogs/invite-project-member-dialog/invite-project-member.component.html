@@ -7,7 +7,7 @@
     </div>
     <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="invitationForm" (submit)="submit()">
       <mat-form-field class="ap-w-full" appearance="outline">
-        <input cdkFocusInitial formControlName="email" matInput type="text" placeholder="bugs.bunny@gmail.com" />
+        <input cdkFocusInitial formControlName="email" matInput type="email" placeholder="bugs.bunny@gmail.com" spellcheck="false" />
         <mat-error *ngIf="invitationForm.controls.email.invalid">
           <ng-container *ngIf="invitationForm.controls.email.getError('exists'); else emailRequired">
             <span i18n>The invited email already has an account. Please contact support for assistance.</span>
