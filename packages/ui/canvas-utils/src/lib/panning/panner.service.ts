@@ -7,6 +7,7 @@ import {
   ABOVE_FLOW_WIDGET_HEIGHT,
   DEFAULT_TOP_MARGIN,
   END_WIDGET_HEIGHT,
+  MAX_ZOOM,
   FLOW_BUILDER_HEADER_HEIGHT,
 } from '../drawing/draw-common';
 
@@ -28,7 +29,7 @@ export class PannerService {
     x: 0,
     y: 0,
   };
-  recenter(flowVersion: FlowVersion) {
+  fitToScreen(flowVersion: FlowVersion) {
     const flowHeight = FlowDrawer.construct(flowVersion.trigger)
       .offset(0, DEFAULT_TOP_MARGIN)
       .boundingBox().height;
@@ -39,16 +40,49 @@ export class PannerService {
       flowHeight +
       DEFAULT_TOP_MARGIN * 2;
     let zoomScale = 1.0;
-    if (canvasHeight < fullFlowHeightWithWidgets) {
-      zoomScale = canvasHeight / fullFlowHeightWithWidgets;
-    }
-    const scaledFlowHeight = fullFlowHeightWithWidgets * zoomScale;
+    zoomScale = canvasHeight / fullFlowHeightWithWidgets;
+    zoomScale = Math.min(zoomScale, MAX_ZOOM);
+    this.setCanvasTransform({
+      originalFlowHeight: fullFlowHeightWithWidgets,
+      scaledFlowHeight: fullFlowHeightWithWidgets * zoomScale,
+      zoomScale,
+    });
+  }
+  resetZoom(flowVersion: FlowVersion) {
+    const flowHeight = FlowDrawer.construct(flowVersion.trigger)
+      .offset(0, DEFAULT_TOP_MARGIN)
+      .boundingBox().height;
+    const canvasHeight = window.innerHeight - FLOW_BUILDER_HEADER_HEIGHT;
+    const fullFlowHeightWithWidgets = Math.min(
+      END_WIDGET_HEIGHT +
+        ABOVE_FLOW_WIDGET_HEIGHT +
+        flowHeight +
+        DEFAULT_TOP_MARGIN * 2,
+      canvasHeight * 2
+    );
+    let zoomScale = 1.0;
+    zoomScale = canvasHeight / fullFlowHeightWithWidgets;
+    zoomScale = Math.min(zoomScale, MAX_ZOOM);
+    this.setCanvasTransform({
+      originalFlowHeight: fullFlowHeightWithWidgets,
+      scaledFlowHeight: fullFlowHeightWithWidgets * zoomScale,
+      zoomScale,
+    });
+  }
+  setCanvasTransform({
+    originalFlowHeight,
+    zoomScale,
+    scaledFlowHeight,
+  }: {
+    originalFlowHeight: number;
+    scaledFlowHeight: number;
+    zoomScale: number;
+  }) {
     this.panningState = {
       currentOffset: {
         x: 0,
         y:
-          (-(fullFlowHeightWithWidgets - scaledFlowHeight) / 2 +
-            DEFAULT_TOP_MARGIN) *
+          (-(originalFlowHeight - scaledFlowHeight) / 2 + DEFAULT_TOP_MARGIN) *
           zoomScale,
       },
       isDragging: false,

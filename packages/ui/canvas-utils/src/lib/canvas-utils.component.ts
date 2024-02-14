@@ -14,7 +14,7 @@ export class CanvasUtilsComponent implements AfterViewInit {
     private pannerService: PannerService
   ) {}
   ngAfterViewInit(): void {
-    this.recenter();
+    this.resetZoom();
   }
   zoomIn() {
     this.zoomingService.zoomingScale$.next(
@@ -36,7 +36,12 @@ export class CanvasUtilsComponent implements AfterViewInit {
   }
   recenter() {
     if (this.flowVersion) {
-      this.pannerService.recenter(this.flowVersion);
+      this.pannerService.fitToScreen(this.flowVersion);
+    }
+  }
+  resetZoom() {
+    if (this.flowVersion) {
+      this.pannerService.resetZoom(this.flowVersion);
     }
   }
 }

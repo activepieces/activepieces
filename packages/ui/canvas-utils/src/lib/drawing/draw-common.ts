@@ -43,3 +43,4 @@ export const FLOW_BUILDER_HEADER_HEIGHT = 80;
 export const END_WIDGET_HEIGHT = 32;
 export const ABOVE_FLOW_WIDGET_HEIGHT = 46;
 export const DEFAULT_TOP_MARGIN = 40;
+export const MAX_ZOOM = 1.25;
