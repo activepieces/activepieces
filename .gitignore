@@ -6,7 +6,6 @@ tmp
 .nx/
 /out-tsc
 firebase-admin-sdk.json
-cache
 dev
 
 # SDK Build
@@ -49,7 +48,6 @@ Thumbs.db
 .angular
 activepieces-engine.js
 .history/
-packages/backend/.env
 
 # produced by unsandboxed engine execution
 .pnpm-store
@@ -61,4 +59,3 @@ packages/backend/.env
 scratch.md
 
 # environment variables
-.env
