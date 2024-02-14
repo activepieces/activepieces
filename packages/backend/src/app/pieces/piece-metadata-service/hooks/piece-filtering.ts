@@ -19,14 +19,24 @@ const filterBasedOnSearchQuery = ({ searchQuery, pieces }: { searchQuery: string
         ...p,
         actionOrTrigger: actionsAndTrigger.map(a => {
             return {
-                name: a.name,
-                description: a.description,
+                displayName: a.displayName,
             }
         }),
     }))
     const fuse = new Fuse(convertPieces, {
-        keys: ['name', 'description', 'actionOrTrigger.name', 'actionOrTrigger.description'],
-        threshold: 0.,
+        isCaseSensitive: false,
+        shouldSort: true,
+        keys: [{
+            name: 'name',
+            weight: 5,
+        }, {
+            name: 'description',
+            weight: 5,
+        }, {
+            name: 'actionOrTrigger.displayName',
+            weight: 1,
+        }],
+        threshold: 0.3,
     })
 
     return fuse.search(searchQuery).map(({ item }) => pieces.find(p => p.name === item.name)!)

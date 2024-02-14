@@ -30,7 +30,7 @@ const reverseIfDesc = (orderBy: PieceOrderBy, pieces: PieceMetadataSchema[]): Pi
 }
 
 const sortByName = (pieces: PieceMetadataSchema[]): PieceMetadataSchema[] => {
-    return pieces.sort((a, b) => a.name.localeCompare(b.name))
+    return pieces.sort((a, b) => a.name.toLocaleLowerCase().localeCompare(b.name.toLocaleLowerCase()))
 }
 
 const sortByDate = (pieces: PieceMetadataSchema[]): PieceMetadataSchema[] => {

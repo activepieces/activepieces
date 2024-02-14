@@ -8,6 +8,8 @@ import { PieceMetadataService } from './piece-metadata-service'
 import { AllPiecesStats } from './piece-stats-service'
 import importFresh from 'import-fresh'
 import { PieceMetadataModel, PieceMetadataModelSummary } from '../piece-metadata-entity'
+import { pieceMetadataServiceHooks } from './hooks'
+import { nanoid } from 'nanoid'
 
 const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
     const pieces = await findAllPieces()
@@ -68,10 +70,24 @@ async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | 
 }
 export const FilePieceMetadataService = (): PieceMetadataService => {
     return {
-        async list({ projectId }): Promise<PieceMetadataModelSummary[]> {
+        async list(params): Promise<PieceMetadataModelSummary[]> {
+            const { projectId } = params
             const piecesMetadata = await loadPiecesMetadata()
 
-            return piecesMetadata.map(p => toPieceMetadataModelSummary({
+            const pieces = await pieceMetadataServiceHooks.get().filterPieces({
+                ...params,
+                pieces: piecesMetadata.map(p => {
+                    return {
+                        id: nanoid(),
+                        ...p,
+                        pieceType: PieceType.OFFICIAL,
+                        packageType: PackageType.REGISTRY,
+                        created: new Date().toISOString(),
+                        updated: new Date().toISOString(),
+                    }
+                }),
+            })
+            return pieces.map(p => toPieceMetadataModelSummary({
                 pieceMetadata: p,
                 projectId,
             }))
