@@ -1,16 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { Observable, combineLatest, map } from 'rxjs';
 import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
-import { FlowDrawer } from '../canvas-utils/drawing/flow-drawer';
 import { Store } from '@ngrx/store';
-import { PositionedStep } from '../canvas-utils/drawing/step-card';
 import {
-  FLOW_ITEM_WIDTH,
-  PositionButton,
   FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING,
-} from '../canvas-utils/drawing/draw-common';
-import { ZoomingService } from '../canvas-utils/zooming/zooming.service';
-import { PannerService } from '../canvas-utils/panning/panner.service';
+  FLOW_ITEM_WIDTH,
+  FlowDrawer,
+  PannerService,
+  PositionButton,
+  ZoomingService,
+  PositionedStep,
+} from '@activepieces/ui-canvas-utils';
 
 type UiFlowDrawer = {
   centeringGraphTransform: string;

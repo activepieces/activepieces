@@ -12,7 +12,6 @@ import { ActivatedRoute } from '@angular/router';
 import {
   BuilderSelectors,
   FlowItemDetailsActions,
-  FlowRendererService,
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
 import { Store } from '@ngrx/store';
@@ -53,8 +52,8 @@ import {
   FlowBuilderService,
   FlowService,
   WebSocketService,
+  FlowRendererService,
 } from '@activepieces/ui/common';
-import { PannerService } from '@activepieces/ui/feature-builder-canvas';
 import { MatDialog } from '@angular/material/dialog';
 import {
   flowDisplayNameInRouteData,
@@ -68,6 +67,7 @@ import {
   TemplateDialogClosingResult,
 } from '@activepieces/ui/feature-templates';
 import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/common';
+import { PannerService } from '@activepieces/ui-canvas-utils';
 
 @Component({
   selector: 'app-flow-builder',
@@ -105,6 +105,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
   };
   setTitle$?: Observable<void>;
   showPoweredByAp$: Observable<boolean>;
+  viewedVersion$:Observable<FlowVersion>;
   constructor(
     private store: Store,
     private actRoute: ActivatedRoute,
@@ -124,6 +125,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     private flowService: FlowService,
     private websocketService: WebSocketService,
   ) {
+    this.viewedVersion$ = this.store.select(BuilderSelectors.selectViewedVersion);
     this.showPoweredByAp$ = this.flagService.getShowPoweredByAp();
     this.dataInsertionPopupHidden$ =
       this.builderAutocompleteService.currentAutocompleteInputId$.pipe(

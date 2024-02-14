@@ -1,6 +1,6 @@
 import { Directive, HostListener } from '@angular/core';
 import { PannerService } from './panner.service';
-import { FlowRendererService } from '@activepieces/ui/feature-builder-store';
+import { FlowRendererService } from '@activepieces/ui/common';
 
 @Directive({
   selector: '[appCanvasPanner]',

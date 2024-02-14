@@ -1,25 +1,21 @@
-import { AfterViewInit, Component } from '@angular/core';
+import { AfterViewInit, Component, Input } from '@angular/core';
 import { PannerService } from './panning/panner.service';
 import { ZoomingService } from './zooming/zooming.service';
-import { Store } from '@ngrx/store';
-import { Observable, map, take, tap } from 'rxjs';
-import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
-import { FlowDrawer } from './drawing/flow-drawer';
+import { FlowVersion } from '@activepieces/shared';
 
 @Component({
   selector: 'app-canvas-utils',
   templateUrl: './canvas-utils.component.html',
 })
 export class CanvasUtilsComponent implements AfterViewInit {
+  @Input({ required: true }) flowVersion!: FlowVersion;
   constructor(
     private zoomingService: ZoomingService,
-    private pannerService: PannerService,
-    private store: Store
+    private pannerService: PannerService
   ) {}
   ngAfterViewInit(): void {
     this.recenter();
   }
-  recenter$: Observable<void>;
   zoomIn() {
     this.zoomingService.zoomingScale$.next(
       Math.min(
@@ -39,18 +35,8 @@ export class CanvasUtilsComponent implements AfterViewInit {
     );
   }
   recenter() {
-    this.recenter$ = this.store
-      .select(BuilderSelectors.selectViewedVersion)
-      .pipe(
-        take(1),
-        map((version) => {
-          FlowDrawer.trigger = version.trigger;
-          return FlowDrawer.construct(version.trigger).offset(0, 40);
-        }),
-        tap((drawer) => {
-          this.pannerService.recenter(drawer.boundingBox().height);
-        }),
-        map(() => void 0)
-      );
+    if (this.flowVersion) {
+      this.pannerService.recenter(this.flowVersion);
+    }
   }
 }

@@ -45,7 +45,7 @@ import { ViewModeActions } from '../builder/viewmode/view-mode.action';
 import { ViewModeEnum } from '../../model';
 import { HttpStatusCode } from '@angular/common/http';
 import { FlowStructureUtil } from '../../utils/flowStructureUtil';
-
+import { PannerService } from '@activepieces/ui-canvas-utils';
 @Injectable()
 export class FlowsEffects {
   loadInitial$ = createEffect(() => {
@@ -214,7 +214,32 @@ export class FlowsEffects {
       })
     );
   });
-
+  addOrRemoveStep$ = createEffect(
+    () => {
+      return this.actions$.pipe(
+        ofType(FlowsActions.addAction, FlowsActions.deleteAction),
+        concatLatestFrom(() => [
+          this.store.select(BuilderSelectors.selectViewedVersion),
+        ]),
+        tap(([action, version]) => {
+          let modifiedVersion = version;
+          if (action.type === FlowsActionType.ADD_ACTION) {
+            modifiedVersion = flowHelper.apply(version, {
+              type: FlowOperationType.ADD_ACTION,
+              request: action.operation,
+            });
+          } else {
+            modifiedVersion = flowHelper.apply(version, {
+              type: FlowOperationType.DELETE_ACTION,
+              request: action.operation,
+            });
+          }
+          this.pannerService.recenter(modifiedVersion);
+        })
+      );
+    },
+    { dispatch: false }
+  );
   flowModified$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(...SingleFlowModifyingState),
@@ -553,7 +578,8 @@ export class FlowsEffects {
     private store: Store,
     private actions$: Actions,
     private snackBar: MatSnackBar,
-    private builderAutocompleteService: BuilderAutocompleteMentionsDropdownService
+    private builderAutocompleteService: BuilderAutocompleteMentionsDropdownService,
+    private pannerService: PannerService
   ) {}
 
   private setLastSaveDate() {
