@@ -26,7 +26,7 @@
 
       <mat-form-field class="ap-w-full" appearance="outline">
         <mat-label i18n>Email</mat-label>
-        <input matInput placeholder="Email" i18n-placeholder formControlName="email" />
+        <input type="email" matInput placeholder="Email" i18n-placeholder formControlName="email" />
 
         <mat-error *ngIf="registrationForm.controls.email.invalid">
           <ng-container *ngIf="

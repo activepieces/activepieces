@@ -38,7 +38,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.SHOW_PLATFORM_DEMO,
-                value: getEdition() === ApEdition.COMMUNITY,
+                value: [ApEdition.CLOUD, ApEdition.COMMUNITY].includes(getEdition()),
                 created,
                 updated,
             },
