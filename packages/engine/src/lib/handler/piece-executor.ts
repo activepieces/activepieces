@@ -113,6 +113,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 url.search = new URLSearchParams({
                     ...params.queryParams,
                     requestId: executionState.pauseRequestId,
+                    path: executionState.currentPath.toString(),
                 }).toString()
                 return url.toString()
             },            

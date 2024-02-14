@@ -17,4 +17,8 @@ export class StepExecutionPath {
         const newPath = this.path.slice(0, -1)
         return new StepExecutionPath(newPath)
     }
+
+    toString(): string {
+        return this.path.flatMap(pair => pair).join('.')
+    }
 }
