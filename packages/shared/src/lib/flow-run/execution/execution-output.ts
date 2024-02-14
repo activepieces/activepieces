@@ -1,3 +1,4 @@
+import { TriggerPayload } from '../../engine'
 import { StepOutput } from './step-output'
 
 export const MAX_LOG_SIZE = 2048 * 1024
@@ -51,11 +52,13 @@ export type DelayPauseMetadata = BasePauseMetadata<PauseType.DELAY> & {
 }
 
 export type WebhookPauseMetadata = BasePauseMetadata<PauseType.WEBHOOK> & {
-    actions: string[]
+    requestId: string
+    response: Record<string, unknown>
 }
 
 export type PauseMetadata = DelayPauseMetadata | WebhookPauseMetadata
 
+export type ResumePayload = TriggerPayload
 
 export type PauseExecutionOutput = BaseExecutionOutput<ExecutionOutputStatus.PAUSED> & {
     pauseMetadata: PauseMetadata

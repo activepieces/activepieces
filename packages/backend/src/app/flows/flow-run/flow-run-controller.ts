@@ -18,9 +18,6 @@ const ResumeFlowRunRequest = {
         params: Type.Object({
             id: ApId,
         }),
-        querystring: Type.Object({
-            action: Type.String(),
-        }),
     },
 }
 
@@ -71,10 +68,14 @@ export const flowRunController: FastifyPluginCallbackTypebox = (app, _options, d
 
 
     app.all('/:id/resume', ResumeFlowRunRequest, async (req) => {
+        const headers = req.headers as Record<string, string>
+        const queryParams = req.query as Record<string, string>
         await flowRunService.addToQueue({
             flowRunId: req.params.id,
-            payload: {
-                action: req.query.action,
+            resumePayload: {
+                body: req.body,
+                headers,
+                queryParams,
             },
             executionType: ExecutionType.RESUME,
         })
