@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Observable, combineLatest, map, startWith } from 'rxjs';
+import { Observable, combineLatest, map } from 'rxjs';
 import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
 import { FlowDrawer } from '../canvas-utils/drawing/flow-drawer';
 import { Store } from '@ngrx/store';
@@ -17,7 +17,7 @@ type UiFlowDrawer = {
   svg: string;
   boundingBox: { width: number; height: number };
 } & Pick<FlowDrawer, 'buttons' | 'steps' | 'labels'>;
-const GRAPH_Y_OFFSET_FROM_TEST_FLOW_WIDGET = 45;
+const GRAPH_Y_OFFSET_FROM_TEST_FLOW_WIDGET = 40;
 @Component({
   selector: 'app-flow-item-tree',
   templateUrl: './flow-item-tree.component.html',
@@ -43,7 +43,12 @@ export class FlowItemTreeComponent implements OnInit {
     this.flowDrawer$ = flowVersion$.pipe(
       map((version) => {
         FlowDrawer.trigger = version.trigger;
-        const drawer = FlowDrawer.construct(version.trigger).offset(0, 40);
+        return FlowDrawer.construct(version.trigger).offset(
+          0,
+          GRAPH_Y_OFFSET_FROM_TEST_FLOW_WIDGET
+        );
+      }),
+      map((drawer) => {
         return {
           svg: drawer.svg.toSvg().content,
           boundingBox: drawer.boundingBox(),
@@ -70,13 +75,11 @@ export class FlowItemTreeComponent implements OnInit {
 
   getTransform$() {
     const scale$ = this.zoomingService.zoomingScale$.asObservable().pipe(
-      startWith(1),
       map((val) => {
         return `scale(${val})`;
       })
     );
     const translate$ = this.pannerService.panningOffset$.asObservable().pipe(
-      startWith({ x: 0, y: 0 }),
       map((val) => {
         return `translate(${val.x}px,${val.y}px)`;
       })
