@@ -54,7 +54,8 @@
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
         "jestConfig": "packages/engine/jest.config.ts",
-        "passWithNoTests": true
+        "passWithNoTests": true,
+        "silent": true
       }
     }
   },
