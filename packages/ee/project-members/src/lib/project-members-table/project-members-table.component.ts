@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
 import { ProjectMembersTableDataSource } from './project-members.datasource';
 import { ProjectMemberService } from '../service/project-members.service';
 import {
@@ -22,6 +27,7 @@ import { BillingService, UpgradeDialogData } from '@activepieces/ee-billing-ui';
 import { UpgradeDialogComponent } from '@activepieces/ee-billing-ui';
 import { Store } from '@ngrx/store';
 import {
+  ApPaginatorComponent,
   AuthenticationService,
   IsFeatureEnabledBaseComponent,
   ProjectSelectors,
@@ -40,6 +46,8 @@ export class ProjectMembersTableComponent
   extends IsFeatureEnabledBaseComponent
   implements OnInit
 {
+  @ViewChild(ApPaginatorComponent, { static: true })
+  paginator!: ApPaginatorComponent;
   dataSource!: ProjectMembersTableDataSource;
   dialogClosed$: Observable<void> | undefined;
   deleteInvitation$: Observable<void> | undefined;
@@ -64,14 +72,17 @@ export class ProjectMembersTableComponent
     activatedRoute: ActivatedRoute
   ) {
     super(activatedRoute, ApFlagId.PROJECT_MEMBERS_ENABLED);
+  }
+  ngOnInit(): void {
     this.dataSource = new ProjectMembersTableDataSource(
       this.authenticationService,
       this.projectMemberService,
       this.refreshTableAtCurrentCursor$.asObservable().pipe(startWith(true)),
-      !this.isFeatureEnabled
+      !this.isFeatureEnabled,
+      this.paginator,
+      this.activatedRoute.queryParams
     );
-  }
-  ngOnInit(): void {
+
     this.projectOwnerId$ = this.store
       .select(ProjectSelectors.selectCurrentProjectOwnerId)
       .pipe(take(1));
