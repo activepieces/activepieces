@@ -14,11 +14,13 @@ export type PieceMetadataModel = PieceMetadata & PiecePackageMetadata
 
 export type PieceMetadataModelSummary = PieceMetadataSummary & PiecePackageMetadata
 
-export type PieceMetadataSchema = BaseModel<ApId> & PieceMetadataModel & {
+export type PieceMetadataSchema = BaseModel<ApId> & PieceMetadataModel
+
+type PieceMetadataSchemaWithRelations = PieceMetadataSchema & {
     project: Project
 }
 
-export const PieceMetadataEntity = new EntitySchema<PieceMetadataSchema>({
+export const PieceMetadataEntity = new EntitySchema<PieceMetadataSchemaWithRelations>({
     name: 'piece_metadata',
     columns: {
         ...BaseColumnSchemaPart,
