@@ -50,11 +50,12 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
                 })
             }
 
+            newExecutionContext = newExecutionContext.setCurrentPath(newExecutionContext.currentPath.removeLast())
+
             if (newExecutionContext.verdict !== ExecutionVerdict.RUNNING) {
                 return newExecutionContext
             }
 
-            newExecutionContext = newExecutionContext.setCurrentPath(newExecutionContext.currentPath.removeLast())
             if (constants.testSingleStepMode) {
                 break
             }

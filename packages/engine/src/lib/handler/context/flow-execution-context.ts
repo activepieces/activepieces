@@ -23,6 +23,9 @@ export class FlowExecutorContext {
     tags: readonly string[]
     steps: Readonly<Record<string, StepOutput>>
     currentState: Record<string, unknown>
+    /**
+     * Execution duration in milliseconds
+     */
     duration: number
     pauseRequestId: string
     verdict: ExecutionVerdict
@@ -58,10 +61,10 @@ export class FlowExecutorContext {
         if (isNil(stepOutput)) {
             return undefined
         }
-        assertEqual(stepOutput.type, ActionType.LOOP_ON_ITEMS, 'stepout', 'LoopStepOutput')
+        assertEqual(stepOutput.type, ActionType.LOOP_ON_ITEMS, 'stepOutput.type', 'LOOP_ON_ITEMS')
         return stepOutput as LoopStepOutput
     }
-    
+
     public isCompleted({ stepName }: { stepName: string }): boolean {
         const stateAtPath = getStateAtPath({ currentPath: this.currentPath, steps: this.steps })
         const stepOutput = stateAtPath[stepName]
@@ -122,6 +125,31 @@ export class FlowExecutorContext {
         })
     }
 
+    public setStepDuration({ stepName, duration }: SetStepDurationParams): FlowExecutorContext {
+        const steps = {
+            ...this.steps,
+        }
+
+        const targetMap = getStateAtPath({
+            steps,
+            currentPath: this.currentPath,
+        })
+
+        const stepOutput = targetMap[stepName]
+
+        if (isNil(stepOutput)) {
+            console.error(`[FlowExecutorContext#setStepDuration] Step ${stepName} not found in current path`)
+            return this
+        }
+
+        targetMap[stepName] = stepOutput.setDuration(duration)
+
+        return new FlowExecutorContext({
+            ...this,
+            steps,
+        })
+    }
+
     public setCurrentPath(currentStatePath: StepExecutionPath): FlowExecutorContext {
         return new FlowExecutorContext({
             ...this,
@@ -155,7 +183,7 @@ export class FlowExecutorContext {
             case ExecutionVerdict.PAUSED: {
                 const verdictResponse = this.verdictResponse
                 if (verdictResponse?.reason !== ExecutionOutputStatus.PAUSED) {
-                    throw new Error('Veridct Response should have pause metadata response')
+                    throw new Error('Verdict Response should have pause metadata response')
                 }
                 return {
                     ...baseExecutionOutput,
@@ -182,7 +210,6 @@ export class FlowExecutorContext {
     }
 }
 
-
 function getStateAtPath({ currentPath, steps }: { currentPath: StepExecutionPath, steps: Record<string, StepOutput> }): Record<string, StepOutput> {
     let targetMap = steps
     currentPath.path.forEach(([stepName, iteration]) => {
@@ -193,4 +220,9 @@ function getStateAtPath({ currentPath, steps }: { currentPath: StepExecutionPath
         targetMap = stepOutput.output.iterations[iteration]
     })
     return targetMap
+}
+
+type SetStepDurationParams = {
+    stepName: string
+    duration: number
 }

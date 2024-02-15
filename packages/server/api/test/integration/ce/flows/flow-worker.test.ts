@@ -155,6 +155,7 @@ describe('flow execution', () => {
                     output: {
                         key: 3,
                     },
+                    duration: expect.any(Number),
                 },
                 datamapper: {
                     type: 'PIECE',
@@ -167,6 +168,7 @@ describe('flow execution', () => {
                     output: {
                         key: 3,
                     },
+                    duration: expect.any(Number),
                 },
             },
         })
