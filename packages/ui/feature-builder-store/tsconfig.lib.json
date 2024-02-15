@@ -8,5 +8,5 @@
     "types": []
   },
   "exclude": ["src/**/*.spec.ts", "jest.config.ts", "src/**/*.test.ts"],
-  "include": ["src/**/*.ts", "../common/src/lib/service/flow-renderer.service.ts"]
+  "include": ["src/**/*.ts"]
 }
