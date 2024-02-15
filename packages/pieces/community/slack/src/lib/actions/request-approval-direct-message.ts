@@ -34,8 +34,12 @@ export const requestApprovalDirectMessageAction = createAction({
       assertNotNullOrUndefined(token, 'token');
       assertNotNullOrUndefined(text, 'text');
       assertNotNullOrUndefined(userId, 'userId');
-      const approvalLink = `${context.serverUrl}v1/flow-runs/${context.run.id}/resume?action=approve`;
-      const disapprovalLink = `${context.serverUrl}v1/flow-runs/${context.run.id}/resume?action=disapprove`;
+      const approvalLink = context.generateResumeUrl({
+        queryParams: { action: 'approve' },
+      })
+      const disapprovalLink = context.generateResumeUrl({
+        queryParams: { action: 'disapprove' },
+      })
 
       return await slackSendMessage({
         token,

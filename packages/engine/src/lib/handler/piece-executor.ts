@@ -109,11 +109,8 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 externalId: constants.externalProjectId,
             },
             generateResumeUrl: (params) => {
-                const url = new URL(`${constants.serverUrl}v1/flow-runs/${constants.flowRunId}/resume`)
-                url.search = new URLSearchParams({
-                    ...params.queryParams,
-                    requestId: executionState.pauseRequestId,
-                }).toString()
+                const url = new URL(`${constants.serverUrl}v1/flow-runs/${constants.flowRunId}/requests/${executionState.pauseRequestId}`)
+                url.search = new URLSearchParams(params.queryParams).toString()
                 return url.toString()
             },            
         }

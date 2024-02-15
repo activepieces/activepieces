@@ -30,6 +30,7 @@ const ResumeFlowRunRequest = {
     schema: {
         params: Type.Object({
             id: ApId,
+            requestId: Type.String(),
         }),
     },
 }
@@ -89,11 +90,12 @@ export const flowRunController: FastifyPluginCallbackTypebox = (
         },
     )
 
-    app.all('/:id/resume', ResumeFlowRunRequest, async (req) => {
+    app.all('/:id/requests/:requestId', ResumeFlowRunRequest, async (req) => {
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
         await flowRunService.addToQueue({
             flowRunId: req.params.id,
+            requestId: req.params.requestId,
             resumePayload: {
                 body: req.body,
                 headers,
@@ -102,6 +104,7 @@ export const flowRunController: FastifyPluginCallbackTypebox = (
             executionType: ExecutionType.RESUME,
         })
     })
+    
 
     app.post('/:id/retry', RetryFlowRequest, async (req) => {
         await flowRunService.retry({
