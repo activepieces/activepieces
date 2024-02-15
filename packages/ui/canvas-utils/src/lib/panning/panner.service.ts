@@ -84,7 +84,7 @@ export class PannerService {
     this.setLastPanningOffset({
       ...newState.currentOffset,
     });
-    this.zoomService.zoomingScale$.next(zoomScale);
+    this.zoomService.setZoomingScale(zoomScale);
   }
   get panningState$() {
     return this._panningState$.asObservable();

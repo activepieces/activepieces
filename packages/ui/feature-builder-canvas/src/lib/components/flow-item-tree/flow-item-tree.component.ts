@@ -76,7 +76,7 @@ export class FlowItemTreeComponent implements OnInit {
   }
 
   getTransform$() {
-    const scale$ = this.zoomingService.zoomingScale$.asObservable().pipe(
+    const scale$ = this.zoomingService.zoomingScale$.pipe(
       map((val) => {
         return `scale(${val})`;
       })

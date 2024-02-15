@@ -17,19 +17,17 @@ export class CanvasUtilsComponent implements AfterViewInit {
     this.resetZoom();
   }
   zoomIn() {
-    this.zoomingService.zoomingScale$.next(
+    this.zoomingService.setZoomingScale(
       Math.min(
-        this.zoomingService.zoomingScale$.value +
-          this.zoomingService.zoomingStep,
+        this.zoomingService.zoomingScale + this.zoomingService.zoomingStep,
         this.zoomingService.zoomingMax
       )
     );
   }
   zoomOut() {
-    this.zoomingService.zoomingScale$.next(
+    this.zoomingService.setZoomingScale(
       Math.max(
-        this.zoomingService.zoomingScale$.value -
-          this.zoomingService.zoomingStep,
+        this.zoomingService.zoomingScale - this.zoomingService.zoomingStep,
         this.zoomingService.zoomingMin
       )
     );
