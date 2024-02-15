@@ -7,7 +7,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { openaiAuth } from '../..';
 import FormData from 'form-data';
 import mime from 'mime-types';
-import { Languages } from '../common/common';
+import { Languages, baseUrl } from '../common/common';
 
 export const transcribeAction = createAction({
   name: 'transcribe',
@@ -47,32 +47,18 @@ export const transcribeAction = createAction({
     form.append('model', 'whisper-1');
     form.append('language', language);
 
-    let headers;
-    let queryParams;
-    if (context.auth.apiVersion) {
-        headers = {
-            'api-key': context.auth.apiKey
-        }
-        queryParams = {
-            'api-version': context.auth.apiVersion
-        }
-    }
-    else {
-        headers = {
-            Authorization: `Bearer ${context.auth.apiKey}`
-        }
-    }
+    const headers = {
+      Authorization: `Bearer ${context.auth}`,
+    };
 
-    const baseUrl = context.auth.baseUrl.replace(/\/$/, '') ?? 'https://api.openai.com/v1';
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `${baseUrl}/audio/transcriptions`,
       body: form,
       headers: {
         ...form.getHeaders(),
-        ...headers
+        ...headers,
       },
-      queryParams,
     };
     try {
       const response = await httpClient.sendRequest(request);

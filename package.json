@@ -1,11 +1,11 @@
 {
   "name": "activepieces",
-  "version": "0.19.0",
-  "rcVersion": "0.20.0-rc.2",
+  "version": "0.20.0",
+  "rcVersion": "0.21.0-rc.0",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve ui-core",
-    "serve:backend": "nx serve backend",
+    "serve:backend": "nx serve server-api",
     "serve:engine": "nx serve engine",
     "serve:pieces": "turbowatch tools/scripts/pieces/turbowatch.ts",
     "dev": "cross-env-shell FORCE_COLOR=true concurrently -n \"GUI,API,ENG,PCS\" -c \"bgBlue.bold,bgGreen.bold,bgRed.bold,bgYellow.bold\" \"npm:serve:frontend\" \"npm:serve:backend\" \"npm:serve:engine\" \"npm:serve:pieces\"",
@@ -162,9 +162,10 @@
     "shade-generator": "1.2.7",
     "showdown": "2.1.0",
     "simple-git": "3.21.0",
+    "snowflake-sdk": "1.9.3",
     "soap": "1.0.0",
     "socket.io": "4.7.2",
-    "sqlite3": "5.1.6",
+    "sqlite3": "5.1.7",
     "ssh2-sftp-client": "9.1.0",
     "string-replace-async": "3.0.2",
     "stripe": "14.3.0",
@@ -233,6 +234,7 @@
     "@types/qs": "6.9.7",
     "@types/quill": "2.0.10",
     "@types/semver": "7.5.6",
+    "@types/snowflake-sdk": "1.6.20",
     "@types/ssh2-sftp-client": "9.0.0",
     "@types/tinycolor2": "1.4.5",
     "@types/xml2js": "0.4.14",
@@ -279,6 +281,8 @@
     "typescript": "5.1.6",
     "verdaccio": "5.29.0",
     "wait-on": "7.2.0",
+    "webpack": "5.90.1",
+    "webpack-cli": "5.1.4",
     "webpack-ignore-dynamic-require": "1.0.0"
   },
   "nx": {

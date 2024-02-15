@@ -9,6 +9,14 @@ export const subtraction = createAction({
   auth: PieceAuth.None(),
   displayName: 'Subtraction',
   description: 'Subtract the first number from the second number',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      hide: true,
+    },
+    retryOnFailure: {
+      hide: true,
+    },
+  },
   props: {
     first_number: Property.Number({
       displayName: 'First Number',

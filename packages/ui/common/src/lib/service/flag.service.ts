@@ -37,6 +37,15 @@ export class FlagService {
       })
     );
   }
+
+  getArrayFlag(flag: ApFlagId): Observable<string[]> {
+    return this.getAllFlags().pipe(
+      map((value) => {
+        return value[flag] as string[];
+      })
+    );
+  }
+
   getThirdPartyProvidersMap() {
     return this.getAllFlags().pipe(
       map((res) => {

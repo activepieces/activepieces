@@ -4,7 +4,7 @@ import {
   ApEnvironment,
   ApFlagId,
   TelemetryEvent,
-  User,
+  UserWithoutPassword,
 } from '@activepieces/shared';
 import { FlagService } from '../service/flag.service';
 import { Observable, map, of, switchMap, take } from 'rxjs';
@@ -22,7 +22,7 @@ export class TelemetryService {
     private http: HttpClient,
     private authService: AuthenticationService
   ) {}
-  init(user: User) {
+  init(user: UserWithoutPassword) {
     if (user !== null && user !== undefined) {
       this.flagService.getAllFlags().subscribe((flags) => {
         if (flags[ApFlagId.TELEMETRY_ENABLED] === true) {
@@ -117,7 +117,7 @@ export class TelemetryService {
     );
   }
   // BEGIN EE
-  initializePf(user: User) {
+  initializePf(user: UserWithoutPassword) {
     if (!this.productFruitsInitialized) {
       productFruits.init(
         'cLCwk9nBPS1DBBiE',
@@ -131,7 +131,7 @@ export class TelemetryService {
         },
         { disableLocationChangeDetection: false }
       );
-      productFruits.safeExec(($pf) => {
+      productFruits.safeExec(() => {
         console.log('PF is Initialized');
         this.productFruitsInitialized = true;
       });

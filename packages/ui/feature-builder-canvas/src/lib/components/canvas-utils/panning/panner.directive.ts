@@ -22,8 +22,9 @@ export class CanvasPannerDirective {
         return;
       }
     }
+
     if (
-      event.which === 2 &&
+      (event.button === 0 || event.button === 1) &&
       !this.flowRendererService.isDraggingStateSnapshot
     ) {
       this.pannerService.panningState.currentOffset.x = event.clientX;
@@ -61,6 +62,7 @@ export class CanvasPannerDirective {
         this.pannerService.lastPanningOffset
       );
     }
+    event.preventDefault();
   }
   @HostListener('wheel', ['$event'])
   macPanning(event: WheelEvent) {
@@ -83,5 +85,6 @@ export class CanvasPannerDirective {
         ...this.pannerService.lastPanningOffset,
       });
     }
+    event.preventDefault();
   }
 }
