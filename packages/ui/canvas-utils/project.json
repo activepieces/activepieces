@@ -42,8 +42,7 @@
       "options": {
         "lintFilePatterns": [
           "packages/ui/canvas-utils/**/*.ts",
-          "packages/ui/canvas-utils/**/*.html",
-          "packages/ui/canvas-utils/package.json"
+          "packages/ui/canvas-utils/**/*.html"
         ]
       }
     }
