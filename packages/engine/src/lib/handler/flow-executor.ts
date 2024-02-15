@@ -31,6 +31,7 @@ export const flowExecutor = {
         const flowStartTime = performance.now()
         let flowExecutionContext = executionState
         let currentAction: Action | undefined = action
+
         while (!isNil(currentAction)) {
             const handler = this.getExecutorForAction(currentAction.type)
 
@@ -48,10 +49,12 @@ export const flowExecutor = {
             })
 
             if (flowExecutionContext.verdict !== ExecutionVerdict.RUNNING) {
-                return flowExecutionContext
+                break
             }
+
             currentAction = currentAction.nextAction
         }
+
         const flowEndTime = performance.now()
         return flowExecutionContext.setDuration(flowEndTime - flowStartTime)
     },
