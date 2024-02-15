@@ -39,3 +39,8 @@ export const HORIZONTAL_SPACE_BETWEEN_RETURNING_LOOP_ARROW_AND_STARTING_LOOP_ARC
 export const VERTICAL_SPACE_BETWEEN_AFTERLOOP_LINE_AND_LOOP_BOTTOM = 67;
 export type ButtonType = 'big' | 'small';
 export const FLOW_ITEM_ICON_SIZE = 40 + 'px';
+export const FLOW_BUILDER_HEADER_HEIGHT = 80;
+export const END_WIDGET_HEIGHT = 32;
+export const ABOVE_FLOW_WIDGET_HEIGHT = 46;
+export const DEFAULT_TOP_MARGIN = 40;
+export const MAX_ZOOM = 1.25;

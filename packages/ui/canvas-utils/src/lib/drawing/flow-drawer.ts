@@ -18,8 +18,6 @@ import { PositionedStep } from './step-card';
 import { BranchDrawer } from './branch-drawer';
 import { LoopDrawer } from './loop-drawer';
 
-export const ARC_LENGTH = 15;
-
 export class FlowDrawer {
   readonly steps: readonly PositionedStep[];
   readonly svg: SvgDrawer;

@@ -25,6 +25,7 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
 import { EmbeddingService, FlowBuilderService } from '@activepieces/ui/common';
+import { FLOW_BUILDER_HEADER_HEIGHT } from '@activepieces/ui-canvas-utils';
 import {
   FoldersSelectors,
   MoveFlowToFolderDialogComponent,
@@ -39,6 +40,7 @@ import {
 })
 export class FlowBuilderHeaderComponent implements OnInit {
   readonly flowActionsUiInfo = flowActionsUiInfo;
+  readonly FLOW_BUILDER_HEADER_HEIGHT = FLOW_BUILDER_HEADER_HEIGHT + 'px';
   isInDebugMode$: Observable<boolean>;
   isInReadOnlyMode$: Observable<boolean>;
   flowStatus$: Observable<FlowStatus>;
