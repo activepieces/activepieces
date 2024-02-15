@@ -13,6 +13,10 @@ import {
   DEFAULT_TOP_MARGIN,
 } from '@activepieces/ui-canvas-utils';
 
+type Transform = {
+  scale: string;
+  translate: string;
+};
 type UiFlowDrawer = {
   centeringGraphTransform: string;
   svg: string;
@@ -26,7 +30,7 @@ type UiFlowDrawer = {
 export class FlowItemTreeComponent implements OnInit {
   navbarOpen = false;
   flowDrawer$: Observable<UiFlowDrawer>;
-  transform$: Observable<string>;
+  transform$: Observable<Transform>;
   readOnly$: Observable<boolean>;
   constructor(
     private store: Store,
@@ -79,17 +83,13 @@ export class FlowItemTreeComponent implements OnInit {
     );
     const translate$ = this.pannerService.panningOffset$.asObservable().pipe(
       map((val) => {
-        return `translate(${val.x}px,${val.y}px)`;
+        return `${val.x}px ${val.y}px`;
       })
     );
     const transformObs$ = combineLatest({
       scale: scale$,
       translate: translate$,
-    }).pipe(
-      map((value) => {
-        return `${value.translate} ${value.scale}`;
-      })
-    );
+    });
     return transformObs$;
   }
 }
