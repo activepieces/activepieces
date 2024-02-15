@@ -1,3 +1,4 @@
+export * from './lib/canvas-utils.component';
 export * from './lib/canvas-utils.module';
 export * from './lib/panning/panner.service';
 export * from './lib/zooming/zooming.service';
