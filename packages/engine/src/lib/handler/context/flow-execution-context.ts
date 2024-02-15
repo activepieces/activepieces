@@ -128,7 +128,8 @@ export class FlowExecutorContext {
         const stepOutput = targetMap[stepName]
 
         if (isNil(stepOutput)) {
-            throw new Error(`[ExecutionState#setStepDuration] Step ${stepName} not found`)
+            console.error(`[FlowExecutorContext#setStepDuration] Step ${stepName} not found in current path`)
+            return this
         }
 
         targetMap[stepName] = stepOutput.setDuration(duration)
