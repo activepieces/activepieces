@@ -40,13 +40,13 @@ import { flowRunHooks } from './flow-run-hooks'
 import { flowResponseWatcher } from './flow-response-watcher'
 
 export const flowRunRepo =
-  databaseConnection.getRepository<FlowRun>(FlowRunEntity)
+    databaseConnection.getRepository<FlowRun>(FlowRunEntity)
 
 const getFlowRunOrCreate = async (
     params: GetOrCreateParams,
 ): Promise<Partial<FlowRun>> => {
     const { id, projectId, flowId, flowVersionId, flowDisplayName, environment } =
-    params
+        params
 
     if (id) {
         return flowRunService.getOneOrThrow({
@@ -143,9 +143,11 @@ export const flowRunService = {
     async addToQueue({
         flowRunId,
         resumePayload,
+        requestId,
         executionType,
     }: {
         flowRunId: FlowRunId
+        requestId?: string
         resumePayload?: ResumePayload
         executionType: ExecutionType
     }): Promise<void> {
@@ -164,11 +166,7 @@ export const flowRunService = {
             })
         }
         const pauseMetadata = flowRunToResume.pauseMetadata
-        const matchRequestId =
-      !isNil(resumePayload) &&
-      pauseMetadata &&
-      pauseMetadata.type === PauseType.WEBHOOK &&
-      resumePayload.queryParams.requestId === pauseMetadata.requestId
+        const matchRequestId = pauseMetadata?.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId
         if (matchRequestId) {
             await flowRunService.start({
                 payload: resumePayload,
@@ -276,7 +274,7 @@ export const flowRunService = {
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
 
         const payload =
-      flowVersion.trigger.settings.inputUiInfo.currentSelectedData
+            flowVersion.trigger.settings.inputUiInfo.currentSelectedData
 
         return this.start({
             projectId,
