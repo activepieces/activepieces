@@ -7,6 +7,7 @@ import {
   map,
   Observable,
   startWith,
+  Subject,
   switchMap,
   take,
   tap,
@@ -49,10 +50,15 @@ import {
   FlowItemDetails,
   getDefaultDisplayNameForPiece,
   getDisplayNameForTrigger,
+  PieceMetadataModelSummary,
   TelemetryService,
 } from '@activepieces/ui/common';
 import { Actions, ofType } from '@ngrx/effects';
-
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
+type ActionOrTriggerName = {
+  name: string;
+  displayName: string;
+};
 @Component({
   selector: 'app-step-type-sidebar',
   templateUrl: './step-type-sidebar.component.html',
@@ -66,7 +72,8 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
   //EE
   searchControlTelemetry$: Observable<void>;
   //EE end
-  showCommunity$: Observable<boolean>;
+  showRequestPiece$: Observable<boolean>;
+  loading$ = new Subject<boolean>();
   @Input() set showTriggers(shouldShowTriggers: boolean) {
     this._showTriggers = shouldShowTriggers;
     if (this._showTriggers) {
@@ -91,16 +98,17 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
     private codeService: CodeService,
     private actions: Actions,
     private flagsService: FlagService,
-    private telemetryService: TelemetryService
+    private telemetryService: TelemetryService,
+    private pieceMetadataService: PieceMetadataService
   ) {
     this.focusSearchInput$ = this.actions.pipe(
       ofType(CanvasActionType.SET_RIGHT_SIDEBAR),
       tap(() => {
-        this.searchInput.nativeElement.focus();
+        this.searchInput?.nativeElement.focus();
       }),
       map(() => void 0)
     );
-    this.showCommunity$ = this.flagsService.isFlagEnabled(
+    this.showRequestPiece$ = this.flagsService.isFlagEnabled(
       ApFlagId.SHOW_COMMUNITY
     );
     //EE
@@ -134,12 +142,14 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     setTimeout(() => {
-      this.searchInput.nativeElement.focus();
+      this.searchInput?.nativeElement.focus();
     }, 350);
   }
 
   populateTabsAndTheirLists() {
-    this.searchFormControl.setValue('', { emitEvent: false });
+    this.searchFormControl.setValue(this.searchFormControl.value, {
+      emitEvent: false,
+    });
     this.tabsAndTheirLists = [];
     const coreItemsDetails$ = this._showTriggers
       ? this.store.select(BuilderSelectors.selectFlowItemDetailsForCoreTriggers)
@@ -401,24 +411,115 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
   }
 
   applySearchToObservable(
-    obs$: Observable<FlowItemDetails[]>
+    tabItems$: Observable<FlowItemDetails[]>
   ): Observable<FlowItemDetails[]> {
+    this.loading$.next(true);
     return combineLatest({
-      items: obs$,
+      allTabItems: tabItems$,
       search: this.searchFormControl.valueChanges.pipe(
-        startWith(''),
-        map((search) => (search ? search : ''))
+        startWith(this.searchFormControl.value),
+        tap(() => {
+          this.loading$.next(true);
+        }),
+        debounceTime(300),
+        map((search) => (search ? search : '')),
+        switchMap((searchQuery) => {
+          return this.createSearchRequest(searchQuery);
+        })
       ),
     }).pipe(
       map((res) => {
-        return res.items.filter(
-          (item) =>
-            item.description
-              .toLowerCase()
-              .includes(res.search.trim().toLowerCase()) ||
-            item.name.toLowerCase().includes(res.search.trim().toLowerCase())
+        const matches = this.searchForMatchingFlowItemDetails(
+          res.search.searchQuery,
+          res.allTabItems,
+          res.search.serverResponse
         );
+        const matchesWithTriggersOrActions = this.showActionsOrTriggers(
+          matches,
+          res.search.serverResponse,
+          res.search.searchQuery
+        );
+        //sort by the order of the server response
+        return matchesWithTriggersOrActions.sort((a, b) => {
+          const aIndex = res.search.serverResponse.findIndex(
+            (p) => p.displayName === a.name
+          );
+          const bIndex = res.search.serverResponse.findIndex(
+            (p) => p.displayName === b.name
+          );
+          if (aIndex === -1) {
+            return 1;
+          }
+          if (bIndex === -1) {
+            return 1;
+          }
+          return aIndex - bIndex;
+        });
+      }),
+
+      tap(() => {
+        this.loading$.next(false);
       })
     );
+  }
+
+  private createSearchRequest(searchQuery: string) {
+    const serverRequestToSearchForPiece$ =
+      this.pieceMetadataService.getPiecesManifestFromServer({
+        includeHidden: false,
+        searchQuery,
+      });
+    return serverRequestToSearchForPiece$.pipe(
+      map((res) => {
+        return {
+          searchQuery,
+          serverResponse: res,
+        };
+      })
+    );
+  }
+  /**Need to search for core steps like webhook,loop,branch and code */
+  private searchForMatchingFlowItemDetails(
+    searchQuery: string,
+    allTabItems: FlowItemDetails[],
+    serverResponse: PieceMetadataModelSummary[]
+  ) {
+    return allTabItems.filter(
+      (item) =>
+        item.description
+          .toLowerCase()
+          .includes(searchQuery.trim().toLowerCase()) ||
+        item.name.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
+        serverResponse.findIndex((p) => p.displayName === item.name) > -1
+    );
+  }
+  private showActionsOrTriggers(
+    searchResult: FlowItemDetails[],
+    serverResponse: PieceMetadataModelSummary[],
+    searchQuery: string
+  ) {
+    return searchResult.map((item) => {
+      const serverResult = serverResponse.find((it) => {
+        return it.displayName === item.name;
+      });
+      if (
+        !serverResult ||
+        !serverResult.actions ||
+        !serverResult.triggers ||
+        searchQuery.length < 3
+      ) {
+        return {
+          ...item,
+          actionsOrTriggers: [] as ActionOrTriggerName[],
+        };
+      }
+
+      return {
+        ...item,
+        actionsOrTriggers: this._showTriggers
+          ? serverResult.triggers
+          : serverResult.actions,
+      };
+    });
   }
 }

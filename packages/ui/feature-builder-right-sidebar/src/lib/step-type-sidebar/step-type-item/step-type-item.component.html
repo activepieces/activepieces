@@ -22,13 +22,13 @@
 
 <ng-template #flowItemDetailsBody let-itemDetails>
   <div class="logo-container ap-relative ap-flex ">
-    <div *ngIf="!stepIconUrl" class="ap-flex-grow ap-flex ap-items-center ap-justify-center ">
+    <div *ngIf="!!!(stepIconUrl$ | async)" class="ap-flex-grow ap-flex ap-items-center ap-justify-center ">
       <div class="spinner-grow ap-text-primary ">
         <span class="sr-only">...</span>
       </div>
     </div>
 
-    <img *ngIf="stepIconUrl" @fadeIn class="type-logo" [src]="stepIconUrl" />
+    <img *ngIf="(stepIconUrl$ | async)" @fadeIn class="type-logo" [src]="itemDetails.logoUrl" />
   </div>
   <div class="type-text-container ap-flex-grow ap-flex ap-items-center ap-gap-0.5">
     <div>

@@ -65,7 +65,7 @@ export class PieceMetadataService {
   private release$ = this.flagsService.getRelease().pipe(shareReplay(1));
   private clearCache$ = new Subject<void>();
   private edition$ = this.flagsService.getEdition();
-  private piecesManifest$ = this.getPiecesMetadataIncludeHidden({
+  private piecesManifest$ = this.getPiecesManifestFromServer({
     includeHidden: false,
   });
   private piecesCache = new Map<string, Observable<PieceMetadataModel>>();
@@ -274,25 +274,34 @@ export class PieceMetadataService {
     throw new Error("Step type isn't accounted for");
   }
 
-  getPiecesMetadataIncludeHidden({
+  getPiecesManifestFromServer({
     includeHidden,
+    searchQuery
   }: {
     includeHidden: boolean;
+    searchQuery?: string;
   }) {
+    
     return combineLatest([
       this.edition$,
       this.release$,
       this.clearCache$.asObservable().pipe(startWith(void 0)),
     ]).pipe(
       switchMap(([edition, release]) => {
+        let params:Record<string,boolean|string>= {
+          includeHidden,
+          release,
+          edition
+        };
+        if(searchQuery)
+        {
+          params={...params,searchQuery}
+        }
+
         return this.http.get<PieceMetadataModelSummary[]>(
           `${environment.apiUrl}/pieces`,
           {
-            params: {
-              includeHidden,
-              release,
-              edition,
-            },
+            params
           }
         );
       }),

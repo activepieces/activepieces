@@ -1,11 +1,6 @@
-import {
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component,
-  Input,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
-import { Observable, tap } from 'rxjs';
+import { Observable, Subject, tap } from 'rxjs';
 import { FlowItemDetails, fadeIn400ms } from '@activepieces/ui/common';
 
 @Component({
@@ -35,17 +30,18 @@ export class StepTypeItemComponent {
       );
     }
   }
-  stepIconUrl = '';
+  stepIconUrl$: Subject<string> = new Subject<string>();
   faInfo = faInfoCircle;
   hover = false;
-  constructor(private cd: ChangeDetectorRef) {}
+  constructor() {
+    this.stepIconUrl$.next('');
+  }
 
   loadStepIcon(url: string) {
     const itemIcon = new Image();
     itemIcon.src = url;
     itemIcon.onload = () => {
-      this.stepIconUrl = url;
-      this.cd.markForCheck();
+      this.stepIconUrl$.next(url);
     };
   }
   openDocs(url: string) {
