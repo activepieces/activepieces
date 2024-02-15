@@ -94,6 +94,12 @@ export class BranchStepOutput extends GenericStepOutput<ActionType.BRANCH, Branc
         })
     }
 
+    override setDuration(duration: number): BranchStepOutput {
+        return new BranchStepOutput({
+            ...this,
+            duration,
+        })
+    }
 }
 
 
@@ -124,7 +130,7 @@ export class LoopStepOutput extends GenericStepOutput<ActionType.LOOP_ON_ITEMS, 
     hasIteration(iteration: number): boolean {
         return !isNil(this.output?.iterations[iteration])
     }
-    
+
     setItemAndIndex({ item, index }: { item: unknown, index: number }): LoopStepOutput {
         return new LoopStepOutput({
             ...this,
@@ -147,4 +153,10 @@ export class LoopStepOutput extends GenericStepOutput<ActionType.LOOP_ON_ITEMS, 
         })
     }
 
+    override setDuration(duration: number): LoopStepOutput {
+        return new LoopStepOutput({
+            ...this,
+            duration,
+        })
+    }
 }
