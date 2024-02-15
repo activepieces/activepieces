@@ -30,25 +30,24 @@ export class PannerService {
     y: 0,
   };
   fitToScreen(flowVersion: FlowVersion) {
-    const flowHeight = FlowDrawer.construct(flowVersion.trigger)
-      .offset(0, DEFAULT_TOP_MARGIN)
-      .boundingBox().height;
-    const canvasHeight = window.innerHeight - FLOW_BUILDER_HEADER_HEIGHT;
-    const fullFlowHeightWithWidgets =
-      END_WIDGET_HEIGHT +
-      ABOVE_FLOW_WIDGET_HEIGHT +
-      flowHeight +
-      DEFAULT_TOP_MARGIN * 2;
-    let zoomScale = 1.0;
-    zoomScale = canvasHeight / fullFlowHeightWithWidgets;
-    zoomScale = Math.min(zoomScale, MAX_ZOOM);
     this.setCanvasTransform({
-      originalFlowHeight: fullFlowHeightWithWidgets,
-      scaledFlowHeight: fullFlowHeightWithWidgets * zoomScale,
-      zoomScale,
+      flowVersion,
+      resetZoom: false,
     });
   }
   resetZoom(flowVersion: FlowVersion) {
+    this.setCanvasTransform({
+      flowVersion,
+      resetZoom: true,
+    });
+  }
+  setCanvasTransform({
+    flowVersion,
+    resetZoom,
+  }: {
+    flowVersion: FlowVersion;
+    resetZoom: boolean;
+  }) {
     const flowHeight = FlowDrawer.construct(flowVersion.trigger)
       .offset(0, DEFAULT_TOP_MARGIN)
       .boundingBox().height;
@@ -58,31 +57,18 @@ export class PannerService {
         ABOVE_FLOW_WIDGET_HEIGHT +
         flowHeight +
         DEFAULT_TOP_MARGIN * 2,
-      canvasHeight * 2
+      resetZoom ? canvasHeight * 2 : Number.MAX_VALUE
     );
     let zoomScale = 1.0;
     zoomScale = canvasHeight / fullFlowHeightWithWidgets;
     zoomScale = Math.min(zoomScale, MAX_ZOOM);
-    this.setCanvasTransform({
-      originalFlowHeight: fullFlowHeightWithWidgets,
-      scaledFlowHeight: fullFlowHeightWithWidgets * zoomScale,
-      zoomScale,
-    });
-  }
-  setCanvasTransform({
-    originalFlowHeight,
-    zoomScale,
-    scaledFlowHeight,
-  }: {
-    originalFlowHeight: number;
-    scaledFlowHeight: number;
-    zoomScale: number;
-  }) {
+    const scaledFlowHeight = fullFlowHeightWithWidgets * zoomScale;
     this.panningState = {
       currentOffset: {
         x: 0,
         y:
-          (-(originalFlowHeight - scaledFlowHeight) / 2 + DEFAULT_TOP_MARGIN) *
+          (-(fullFlowHeightWithWidgets - scaledFlowHeight) / 2 +
+            DEFAULT_TOP_MARGIN) *
           zoomScale,
       },
       isDragging: false,
