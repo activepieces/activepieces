@@ -16,5 +16,10 @@ export const StoreEntryEntity = new EntitySchema<StoreEntrySchema>({
             type: JSONB_COLUMN_TYPE,
             nullable: true,
         },
-    },
+    },    
+    uniques: [
+        {
+            columns: ['projectId', 'key'],
+        },
+    ],
 })
