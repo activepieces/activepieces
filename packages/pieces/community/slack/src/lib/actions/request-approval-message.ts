@@ -25,7 +25,7 @@ export const requestSendApprovalMessageAction = createAction({
       context.run.pause({
         pauseMetadata: {
           type: PauseType.WEBHOOK,
-          actions: ['approve', 'disapprove'],
+          response: {}
         },
       });
       const token = context.auth.access_token;
@@ -78,10 +78,9 @@ export const requestSendApprovalMessageAction = createAction({
         conversationId: channel,
       });
     } else {
-      const payload = context.resumePayload as { action: string };
 
       return {
-        approved: payload.action === 'approve',
+        approved: context.resumePayload.queryParams['action'] === 'approve',
       };
     }
   },

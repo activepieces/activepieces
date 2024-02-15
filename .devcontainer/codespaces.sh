@@ -11,4 +11,4 @@ gh codespace ports visibility 3000:public -c $CODESPACE_NAME
 gh codespace ports visibility 4200:public -c $CODESPACE_NAME
 export BACKEND_URL=$(gh codespace ports -c $CODESPACE_NAME --json sourcePort,browseUrl | jq -r '.[] | select(.sourcePort == 3000) | .browseUrl')
 sed -i "s|apiUrl: 'http://localhost:3000/v1'|apiUrl: '${BACKEND_URL}/v1'|g" /workspace/packages/ui/common/src/lib/environments/environment.ts
-sed -i "s|AP_WEBHOOK_URL=\"http://localhost:3000\"|AP_WEBHOOK_URL=\"${BACKEND_URL}\"|g" /workspace/packages/backend/.env
+sed -i "s|AP_WEBHOOK_URL=\"http://localhost:3000\"|AP_WEBHOOK_URL=\"${BACKEND_URL}\"|g" /workspace/packages/server/api/.env
