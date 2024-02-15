@@ -1,9 +1,9 @@
-import { enrichErrorContext } from './error-handler'
-import { exec } from './exec'
-import { logger } from 'server-shared'
 import { isEmpty } from '@activepieces/shared'
 import fs from 'fs/promises'
 import fsPath from 'path'
+import { logger } from './logger'
+import { exec } from './exec'
+import { enrichErrorContext } from './exception-handler'
 
 type PackageManagerOutput = {
     stdout: string

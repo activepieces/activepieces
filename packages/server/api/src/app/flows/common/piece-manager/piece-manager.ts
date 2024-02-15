@@ -6,9 +6,7 @@ import {
     getPackageArchivePathForPiece,
     isEmpty,
 } from '@activepieces/shared'
-import { SystemProp, system } from 'server-shared'
-import { PackageInfo } from '../../../helper/package-manager'
-import { enrichErrorContext } from '../../../helper/error-handler'
+import { PackageInfo, SystemProp, enrichErrorContext, system } from 'server-shared'
 
 export const PACKAGE_ARCHIVE_PATH = resolve(
     system.getOrThrow(SystemProp.PACKAGE_ARCHIVE_PATH),

@@ -14,7 +14,7 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import {
     ApplicationEventHooks,
     CreateAuditEventParam,
-} from '../../helper/audit-events'
+} from '../../helper/application-events'
 import {
     ApplicationEvent,
     ApplicationEventName,

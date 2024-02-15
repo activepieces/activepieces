@@ -9,7 +9,7 @@ import { flowFolderService as folderService } from './folder.service'
 import { StatusCodes } from 'http-status-codes'
 import { Static, Type } from '@sinclair/typebox'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
-import { eventsHooks } from '../../helper/audit-events'
+import { eventsHooks } from '../../helper/application-events'
 import { ApplicationEventName } from '@activepieces/ee-shared'
 
 const DEFUALT_PAGE_SIZE = 10

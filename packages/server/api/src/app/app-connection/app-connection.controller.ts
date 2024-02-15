@@ -13,7 +13,7 @@ import {
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { appConnectionService } from './app-connection-service/app-connection-service'
-import { eventsHooks } from '../helper/audit-events'
+import { eventsHooks } from '../helper/application-events'
 import { ApplicationEventName } from '@activepieces/ee-shared'
 
 export const appConnectionController: FastifyPluginCallbackTypebox = (

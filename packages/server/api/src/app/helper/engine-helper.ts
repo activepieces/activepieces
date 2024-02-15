@@ -29,7 +29,7 @@ import {
     FlowVersion,
     ExecuteFlowOperation,
 } from '@activepieces/shared'
-import { Sandbox } from '../workers/sandbox'
+import { Sandbox } from 'server-worker'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import {
     DropdownState,

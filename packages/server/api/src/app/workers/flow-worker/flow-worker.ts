@@ -26,7 +26,7 @@ import {
     Trigger,
     TriggerType,
 } from '@activepieces/shared'
-import { Sandbox } from '../sandbox'
+import { Sandbox } from 'server-worker'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { fileService } from '../../file/file.service'
 import {
@@ -40,10 +40,10 @@ import { MAX_LOG_SIZE } from '@activepieces/shared'
 import { sandboxProvisioner } from '../sandbox/provisioner/sandbox-provisioner'
 import { SandBoxCacheType } from '../sandbox/provisioner/sandbox-cache-key'
 import { flowWorkerHooks } from './flow-worker-hooks'
-import { logSerializer } from '../../flows/common/log-serializer'
 import { flowResponseWatcher } from '../../flows/flow-run/flow-response-watcher'
 import { getPiecePackage } from '../../pieces/piece-metadata-service'
 import { exceptionHandler, logger } from 'server-shared'
+import { logSerializer } from 'server-worker'
 
 type FinishExecutionParams = {
     flowRunId: FlowRunId

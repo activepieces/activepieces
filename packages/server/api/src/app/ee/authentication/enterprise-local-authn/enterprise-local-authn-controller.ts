@@ -5,7 +5,7 @@ import {
     VerifyEmailRequestBody,
 } from '@activepieces/ee-shared'
 import { ALL_PRINICPAL_TYPES } from '@activepieces/shared'
-import { eventsHooks } from '../../../helper/audit-events'
+import { eventsHooks } from '../../../helper/application-events'
 import { ApplicationEventName } from '@activepieces/ee-shared'
 
 export const enterpriseLocalAuthnController: FastifyPluginAsyncTypebox = async (

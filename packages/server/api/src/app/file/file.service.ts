@@ -10,9 +10,8 @@ import {
 } from '@activepieces/shared'
 import { isNil } from '@activepieces/shared'
 import { databaseConnection } from '../database/database-connection'
-import { logger } from 'server-shared'
+import { fileCompressor, logger } from 'server-shared'
 import { FileEntity } from './file.entity'
-import { fileCompressor } from './utils/file-compressor'
 
 type SaveParams = {
     fileId?: FileId | undefined

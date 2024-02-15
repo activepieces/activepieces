@@ -1,7 +1,6 @@
 import fs from 'node:fs/promises'
-import { PackageInfo, packageManager } from '../../helper/package-manager'
 import { SourceCode } from '@activepieces/shared'
-import { logger } from 'server-shared'
+import { PackageInfo, logger, packageManager } from 'server-shared'
 
 const TS_CONFIG_CONTENT = `
 {
@@ -124,7 +123,7 @@ const handleCompilationError = async ({
     )
 
     const errorMessage = `Compilation Error:\n${
-        error.stdout ?? error.message ?? 'error building code'
+        error['stdout'] ?? error['message'] ?? 'error building code'
     }`
     const escapedErrorMessage = errorMessage.replace(/"/g, '\\"')
 

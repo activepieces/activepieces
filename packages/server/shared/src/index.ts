@@ -1,3 +1,6 @@
+export * from './lib/file-compressor'
+export * from './lib/file-system'
+export * from './lib/package-manager'
 export * from './lib/system/system'
 export * from './lib/system/system-prop'
 export * from './lib/promise-handler'

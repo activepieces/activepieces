@@ -21,7 +21,7 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { projectService } from '../../project/project-service'
-import { eventsHooks } from '../../helper/audit-events'
+import { eventsHooks } from '../../helper/application-events'
 import { ApplicationEventName } from '@activepieces/ee-shared'
 
 const DEFAULT_PAGE_SIZE = 10

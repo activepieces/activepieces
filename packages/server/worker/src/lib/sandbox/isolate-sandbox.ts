@@ -80,13 +80,13 @@ export class IsolateSandbox extends AbstractSandbox {
             output = engineResponse.response
             verdict = engineResponse.status
             const metaResult = await this.parseMetaFile()
-            timeInSeconds = Number.parseFloat(metaResult.time as string)
+            timeInSeconds = Number.parseFloat(metaResult['time'] as string)
         }
         catch (e) {
             const metaResult = await this.parseMetaFile()
-            timeInSeconds = Number.parseFloat(metaResult.time as string)
+            timeInSeconds = Number.parseFloat(metaResult['time'] as string)
             verdict =
-        metaResult.status == 'TO'
+        metaResult['status'] == 'TO'
             ? EngineResponseStatus.TIMEOUT
             : EngineResponseStatus.ERROR
         }

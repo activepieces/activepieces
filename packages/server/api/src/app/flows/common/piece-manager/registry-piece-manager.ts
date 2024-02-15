@@ -5,11 +5,10 @@ import {
     PrivatePiecePackage,
     getPackageArchivePathForPiece,
 } from '@activepieces/shared'
-import { packageManager } from '../../../helper/package-manager'
 import { PACKAGE_ARCHIVE_PATH, PieceManager } from './piece-manager'
 import { fileService } from '../../../file/file.service'
-import { fileExists } from '../../../helper/file-system'
 import { mkdir, writeFile } from 'node:fs/promises'
+import { packageManager, fileExists } from 'server-shared'
 
 export class RegistryPieceManager extends PieceManager {
     protected override async installDependencies({
