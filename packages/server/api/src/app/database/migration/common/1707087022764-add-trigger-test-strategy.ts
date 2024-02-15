@@ -56,12 +56,16 @@ const addTestStrategyToTriggers = (pieceMetadata: PieceMetadata): void => {
         APP_WEBHOOK: 'TEST_FUNCTION',
     }
 
+    pieceMetadata.triggers = parseTriggers(pieceMetadata.triggers)
+
     for (const trigger of Object.values(pieceMetadata.triggers)) {
         trigger.testStrategy = testStrategyMap[trigger.type]
     }
 }
 
 const removeTestStrategyFromTriggers = (pieceMetadata: PieceMetadata): void => {
+    pieceMetadata.triggers = parseTriggers(pieceMetadata.triggers)
+
     for (const trigger of Object.values(pieceMetadata.triggers)) {
         delete trigger.testStrategy
     }
@@ -73,8 +77,16 @@ const updatePieceMetadata = async (
 ): Promise<void> => {
     await queryRunner.query(
         'UPDATE piece_metadata SET triggers = $1 WHERE id = $2',
-        [pieceMetadata.triggers, pieceMetadata.id],
+        [JSON.stringify(pieceMetadata.triggers), pieceMetadata.id],
     )
+}
+
+const parseTriggers = (triggers: string | Record<string, Trigger>): Record<string, Trigger> => {
+    if (typeof triggers === 'string') {
+        return JSON.parse(triggers)
+    }
+
+    return triggers
 }
 
 type TriggerType = 'POLLING' | 'WEBHOOK' | 'APP_WEBHOOK'
@@ -88,5 +100,5 @@ type Trigger = {
 
 type PieceMetadata = {
     id: string
-    triggers: Record<string, Trigger>
+    triggers: Record<string, Trigger> | string
 }
