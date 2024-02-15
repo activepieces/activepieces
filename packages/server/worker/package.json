@@ -1,0 +1,14 @@
+{
+  "name": "server-worker",
+  "version": "0.0.1",
+  "dependencies": {
+    "tslib": "^2.3.0",
+    "@activepieces/shared": "*",
+    "server-shared": "*",
+    "fs-extra": "11.2.0",
+    "async-mutex": "0.4.0"
+  },
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "typings": "./src/index.d.ts"
+}
