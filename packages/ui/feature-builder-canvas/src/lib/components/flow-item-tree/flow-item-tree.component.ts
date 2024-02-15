@@ -81,7 +81,7 @@ export class FlowItemTreeComponent implements OnInit {
         return `scale(${val})`;
       })
     );
-    const translate$ = this.pannerService.panningOffset$.asObservable().pipe(
+    const translate$ = this.pannerService.panningOffset$.pipe(
       map((val) => {
         return `${val.x}px ${val.y}px`;
       })

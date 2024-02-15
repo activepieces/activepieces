@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Subject } from 'rxjs';
+import { BehaviorSubject, map } from 'rxjs';
 import { ZoomingService } from '../zooming/zooming.service';
 import { FlowVersion } from '@activepieces/shared';
 import { FlowDrawer } from '../drawing/flow-drawer';
@@ -10,25 +10,32 @@ import {
   MAX_ZOOM,
   FLOW_BUILDER_HEADER_HEIGHT,
 } from '../drawing/draw-common';
-
+export type PanningState = {
+  currentOffset: {
+    x: number;
+    y: number;
+  };
+  isPanning: boolean;
+};
 @Injectable({
   providedIn: 'root',
 })
 export class PannerService {
   constructor(private zoomService: ZoomingService) {}
-  panningOffset$: Subject<{ x: number; y: number }> = new Subject();
-  isPanning$: Subject<boolean> = new Subject();
-  panningState = {
-    currentOffset: {
+  private _panningState$: BehaviorSubject<PanningState> =
+    new BehaviorSubject<PanningState>({
+      currentOffset: {
+        x: 0,
+        y: 0,
+      },
+      isPanning: false,
+    });
+
+  private _lastPanningOffset$: BehaviorSubject<{ x: number; y: number }> =
+    new BehaviorSubject({
       x: 0,
       y: 0,
-    },
-    isDragging: false,
-  };
-  lastPanningOffset = {
-    x: 0,
-    y: 0,
-  };
+    });
   fitToScreen(flowVersion: FlowVersion) {
     this.setCanvasTransform({
       flowVersion,
@@ -63,7 +70,7 @@ export class PannerService {
     zoomScale = canvasHeight / fullFlowHeightWithWidgets;
     zoomScale = Math.min(zoomScale, MAX_ZOOM);
     const scaledFlowHeight = fullFlowHeightWithWidgets * zoomScale;
-    this.panningState = {
+    const newState: PanningState = {
       currentOffset: {
         x: 0,
         y:
@@ -71,12 +78,34 @@ export class PannerService {
             DEFAULT_TOP_MARGIN) *
           zoomScale,
       },
-      isDragging: false,
+      isPanning: false,
     };
-    this.lastPanningOffset = {
-      ...this.panningState.currentOffset,
-    };
-    this.panningOffset$.next({ ...this.panningState.currentOffset });
+    this._panningState$.next(newState);
+    this.setLastPanningOffset({
+      ...newState.currentOffset,
+    });
     this.zoomService.zoomingScale$.next(zoomScale);
+  }
+  get panningState$() {
+    return this._panningState$.asObservable();
+  }
+  get panningState() {
+    return this._panningState$.value;
+  }
+
+  setPanningState(newState: PanningState) {
+    this._panningState$.next(newState);
+  }
+  setLastPanningOffset(offset: { x: number; y: number }) {
+    this._lastPanningOffset$.next(offset);
+  }
+  get lastPanningOffset() {
+    return this._lastPanningOffset$.value;
+  }
+  get isPanning$() {
+    return this._panningState$.pipe(map((state) => state.isPanning));
+  }
+  get panningOffset$() {
+    return this._lastPanningOffset$.asObservable();
   }
 }

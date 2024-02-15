@@ -14,7 +14,7 @@ export class FlowRendererService {
   setIsDraggingStep(isDragging: boolean) {
     this.draggingStepSubject.next(isDragging);
   }
-  get isDraggingStateSnapshot() {
+  get isDraggingStep() {
     return this.draggingStepSubject.value;
   }
 }

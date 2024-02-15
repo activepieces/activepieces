@@ -139,7 +139,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
       );
     this.testingStepSectionIsRendered$ =
       this.testStepService.testingStepSectionIsRendered$.asObservable();
-    this.isPanning$ = this.pannerService.isPanning$.asObservable();
+    this.isPanning$ = this.pannerService.isPanning$;
     this.isDragging$ = this.flowRendererService.isDragginStep$;
     this.openTemaplatesDialogForNewFlows();
     this.loadInitialData$ = this.actRoute.data.pipe(

@@ -1,7 +1,7 @@
 <ng-container *ngIf="flowDrawer$ | async as flowDrawer">
 <ng-container *ngIf="transform$ | async as transform">
   <div [style.transform]="transform.scale" [style.translate]="transform.translate"
-  class="ap-relative ap-w-full ap-h-full ap-transition-transform" >
+  class="ap-relative ap-w-full ap-h-full ap-transition-transform ap-duration-[400ms]" >
   <div class="ap-flex ap-flex-col ap-items-center ">
     <div class="ap-flex ap-justify-center ap-w-full ap-items-center ap-z-40 ap-relative ap-mb-3">
       <app-test-flow-widget></app-test-flow-widget>

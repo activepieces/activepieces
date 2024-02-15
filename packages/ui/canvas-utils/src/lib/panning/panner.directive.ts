@@ -25,42 +25,52 @@ export class CanvasPannerDirective {
 
     if (
       (event.button === 0 || event.button === 1) &&
-      !this.flowRendererService.isDraggingStateSnapshot
+      !this.flowRendererService.isDraggingStep
     ) {
-      this.pannerService.panningState.currentOffset.x = event.clientX;
-      this.pannerService.panningState.currentOffset.y = event.clientY;
-      this.pannerService.panningState.isDragging = true;
-      this.pannerService.isPanning$.next(true);
+      this.pannerService.setPanningState({
+        isPanning: true,
+        currentOffset: {
+          x: event.clientX,
+          y: event.clientY,
+        },
+      });
     }
   }
 
   @HostListener('mouseup', ['$event'])
   mouseUp(ignoredEvent: unknown) {
-    this.pannerService.panningState.isDragging = false;
-    this.pannerService.isPanning$.next(false);
+    this.pannerService.setPanningState({
+      ...this.pannerService.panningState,
+      isPanning: false,
+    });
   }
   @HostListener('mouseleave', ['$event'])
   mouseleave(ignoredEvent: unknown) {
-    this.pannerService.panningState.isDragging = false;
-    this.pannerService.isPanning$.next(false);
+    this.pannerService.setPanningState({
+      ...this.pannerService.panningState,
+      isPanning: false,
+    });
   }
 
   @HostListener('mousemove', ['$event'])
   mouseMover(event: MouseEvent) {
-    if (this.pannerService.panningState.isDragging) {
+    if (this.pannerService.panningState.isPanning) {
       const delta = {
         x: event.pageX - this.pannerService.panningState.currentOffset.x,
         y: event.pageY - this.pannerService.panningState.currentOffset.y,
       };
-      this.pannerService.lastPanningOffset = {
+      const lastPanningOffset = {
         x: this.pannerService.lastPanningOffset.x + delta.x,
         y: this.pannerService.lastPanningOffset.y + delta.y,
       };
-      this.pannerService.panningState.currentOffset.x = event.clientX;
-      this.pannerService.panningState.currentOffset.y = event.clientY;
-      this.pannerService.panningOffset$.next(
-        this.pannerService.lastPanningOffset
-      );
+      this.pannerService.setLastPanningOffset(lastPanningOffset);
+      this.pannerService.setPanningState({
+        currentOffset: {
+          x: event.clientX,
+          y: event.clientY,
+        },
+        isPanning: true,
+      });
     }
     event.preventDefault();
   }
@@ -76,13 +86,18 @@ export class CanvasPannerDirective {
       }
     }
 
-    if (!this.flowRendererService.isDraggingStateSnapshot) {
-      this.pannerService.lastPanningOffset.x -= event.deltaX;
-      this.pannerService.lastPanningOffset.y -= event.deltaY;
-      this.pannerService.panningState.currentOffset.x = event.clientX;
-      this.pannerService.panningState.currentOffset.y = event.clientY;
-      this.pannerService.panningOffset$.next({
-        ...this.pannerService.lastPanningOffset,
+    if (!this.flowRendererService.isDraggingStep) {
+      const lastPanningOffset = {
+        x: this.pannerService.lastPanningOffset.x - event.deltaX,
+        y: this.pannerService.lastPanningOffset.y - event.deltaY,
+      };
+      this.pannerService.setLastPanningOffset(lastPanningOffset);
+      this.pannerService.setPanningState({
+        currentOffset: {
+          x: event.clientX,
+          y: event.clientY,
+        },
+        isPanning: false,
       });
     }
     event.preventDefault();
