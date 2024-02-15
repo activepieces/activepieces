@@ -5,7 +5,7 @@
   class="ap-flex ap-flex-col ap-gap-2">
   <mat-form-field class="ap-w-full" appearance="outline">
     <mat-label>Email</mat-label>
-    <input matInput placeholder="Email" i18n-placeholder formControlName="email" />
+    <input type="email" matInput placeholder="Email" i18n-placeholder formControlName="email" />
     <mat-error *ngIf="loginForm.controls.email!.invalid">
       <ng-container *ngIf="loginForm.controls.email!.getError('email'); else emailRequired" i18n>
         Email is invalid

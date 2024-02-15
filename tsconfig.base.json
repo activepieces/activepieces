@@ -572,6 +572,8 @@
         "packages/ui/feature-templates/src/index.ts"
       ],
       "@ee/*": ["packages/ee/*"],
+      "server-shared": ["packages/server/shared/src/index.ts"],
+      "server-worker": ["packages/server/worker/src/index.ts"],
       "ui-feature-flow-builder": [
         "packages/ui/feature-flow-builder/src/index.ts"
       ],

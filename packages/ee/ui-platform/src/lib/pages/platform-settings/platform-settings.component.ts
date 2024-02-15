@@ -21,6 +21,7 @@ export class PlatformSettingsComponent implements AfterViewInit {
   fragmentChanged$: Observable<string | null>;
   readonly apiKeysTabTitle = $localize`API Keys`;
   readonly signingKeysTabTitle = $localize`Signing Keys`;
+  readonly AuditLogTabTitle = $localize`Audit Log`;
   readonly customDomainTabTitle = $localize`Custom Domains`;
   readonly privacyAndTermsTabTitle = $localize`Privacy & Terms`;
   readonly accountManagementEmailTabTitle = $localize`Mail Server`;
@@ -31,6 +32,7 @@ export class PlatformSettingsComponent implements AfterViewInit {
     3: 'CustomDomains',
     4: 'ApiKeys',
     5: 'SSO',
+    6: 'AuditLog',
   };
   isDemo = false;
   platform?: Platform;

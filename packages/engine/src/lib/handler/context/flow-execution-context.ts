@@ -1,6 +1,7 @@
 import { ActionType, ExecutionOutput, ExecutionOutputStatus, LoopStepOutput, PauseMetadata, StepOutput, StepOutputStatus, StopResponse, assertEqual, isNil } from '@activepieces/shared'
 import { StepExecutionPath } from './step-execution-path'
 import { loggingUtils } from '../../helper/logging-utils'
+import { nanoid } from 'nanoid'
 
 export enum ExecutionVerdict {
     RUNNING = 'RUNNING',
@@ -26,6 +27,7 @@ export class FlowExecutorContext {
      * Execution duration in milliseconds
      */
     duration: number
+    pauseRequestId: string
     verdict: ExecutionVerdict
     verdictResponse: VerdictResponse | undefined
     currentPath: StepExecutionPath
@@ -34,6 +36,7 @@ export class FlowExecutorContext {
         this.tasks = copyFrom?.tasks ?? 0
         this.tags = copyFrom?.tags ?? []
         this.steps = copyFrom?.steps ?? {}
+        this.pauseRequestId = copyFrom?.pauseRequestId ?? nanoid()
         this.duration = copyFrom?.duration ?? -1
         this.currentState = copyFrom?.currentState ?? {}
         this.verdict = copyFrom?.verdict ?? ExecutionVerdict.RUNNING
@@ -44,6 +47,12 @@ export class FlowExecutorContext {
 
     static empty(): FlowExecutorContext {
         return new FlowExecutorContext()
+    }
+    public setPauseRequestId(pauseRequestId: string): FlowExecutorContext {
+        return new FlowExecutorContext({
+            ...this,
+            pauseRequestId,
+        })
     }
 
     public getLoopStepOutput({ stepName }: { stepName: string }): LoopStepOutput | undefined {
@@ -80,6 +89,7 @@ export class FlowExecutorContext {
             duration,
         })
     }
+
 
     public addTags(tags: string[]): FlowExecutorContext {
         return new FlowExecutorContext({

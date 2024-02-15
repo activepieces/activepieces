@@ -4,4 +4,4 @@
 nginx -g "daemon off;" &
 
 # Start backend server
-node --enable-source-maps dist/packages/backend/main.js
+node --enable-source-maps dist/packages/server/api/main.js
