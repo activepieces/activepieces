@@ -18,7 +18,7 @@ import {
     createMockUser,
 } from '../../../helpers/mocks'
 import { flowWorker } from '../../../../src/app/workers/flow-worker/flow-worker'
-import { fileCompressor } from '../../../../../shared/src/lib/file-compressor'
+import { fileCompressor } from 'server-shared'
 
 let app: FastifyInstance | null = null
 
