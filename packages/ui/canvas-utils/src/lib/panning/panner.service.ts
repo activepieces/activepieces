@@ -75,10 +75,11 @@ export class PannerService {
     const newState: PanningState = {
       currentOffset: {
         x: 0,
+        // The number of pixels are affected by the zoom scale, that is why we divide by the zoom scale
         y:
-          (canvasHeight * zoomScale - canvasHeight) /
-            (zoomScale < 1.0 ? 1.0 : 2.0) +
-          DEFAULT_TOP_MARGIN,
+          ((canvasHeight * zoomScale - canvasHeight) / 2.0 +
+            DEFAULT_TOP_MARGIN) /
+          zoomScale,
       },
       isPanning: false,
     };
