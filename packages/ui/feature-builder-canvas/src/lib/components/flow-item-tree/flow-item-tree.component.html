@@ -1,8 +1,8 @@
 <ng-container *ngIf="flowDrawer$ | async as flowDrawer">
   <ng-container *ngIf="transform$ | async as transform">
-    <div [style.transform]="transform" [style.transition-duration]="(isPanning$ | async) === true ? '0ms' :  '400ms'"
-      [class]="'ap-relative ap-w-full ap-h-full ap-transition-transform'">
-      <div class="ap-flex ap-flex-col ap-items-center ">
+    <div [style.transform]="transform.translate" 
+      [class]="'ap-relative ap-w-full ap-h-full '">
+      <div [style.scale]="transform.scale" class="ap-flex ap-flex-col ap-items-center ">
         <div class="ap-flex ap-justify-center ap-w-full ap-items-center ap-z-40 ap-relative ap-mb-3">
           <app-test-flow-widget></app-test-flow-widget>
           <app-view-only-mode-widget></app-view-only-mode-widget>
