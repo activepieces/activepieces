@@ -1,6 +1,5 @@
 import {
   httpClient,
-  HttpError,
   HttpHeaders,
   HttpRequest,
   QueryParams,
@@ -86,14 +85,6 @@ export const httpSendRequestAction = createAction({
         return fields;
       },
     }),
-    // body: Property.LongText({
-    //   displayName: 'Body',
-    //   required: false,
-    // }),
-    failsafe: Property.Checkbox({
-      displayName: 'No Error On Failure',
-      required: false,
-    }),
     timeout: Property.Number({
       displayName: 'Timeout(in seconds)',
       required: false,
@@ -101,7 +92,7 @@ export const httpSendRequestAction = createAction({
   },
 
   async run(context) {
-    const { method, url, headers, queryParams, body, failsafe, timeout } =
+    const { method, url, headers, queryParams, body, timeout } =
       context.propsValue;
 
     assertNotNullOrUndefined(method, 'Method');
@@ -120,9 +111,6 @@ export const httpSendRequestAction = createAction({
     try {
       return await httpClient.sendRequest(request);
     } catch (error) {
-      if (failsafe) {
-        return (error as HttpError).errorMessage();
-      }
       throw error;
     }
   },
