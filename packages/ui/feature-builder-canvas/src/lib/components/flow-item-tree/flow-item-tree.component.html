@@ -1,52 +1,53 @@
 <ng-container *ngIf="flowDrawer$ | async as flowDrawer">
-<ng-container *ngIf="transform$ | async as transform">
-  <div [style.transform]="transform.scale" [style.translate]="transform.translate"
-  class="ap-relative ap-w-full ap-h-full ap-transition-transform ap-duration-[400ms]" >
-  <div class="ap-flex ap-flex-col ap-items-center ">
-    <div class="ap-flex ap-justify-center ap-w-full ap-items-center ap-z-40 ap-relative ap-mb-3">
-      <app-test-flow-widget></app-test-flow-widget>
-      <app-view-only-mode-widget></app-view-only-mode-widget>
-      <app-incomplete-steps-widget></app-incomplete-steps-widget>
-    </div>
-    <div [style.transform]="flowDrawer.centeringGraphTransform">
-      <div class="ap-relative " [style.height]="flowDrawer.boundingBox.height + 'px'"
-        [style.width]="flowDrawer.boundingBox.width + 'px'">
-        <svg class="ap-absolute ap-left-0 ap-top-0  ap-overflow-visible  ">
-          <g>
-            <path [attr.d]="flowDrawer.svg" class="ap-stroke-border" fill="transparent" stroke-width="2" />
-          </g>
-        </svg>
-  
-        <ng-container *ngFor="let step of flowDrawer.steps; trackBy: flowItemsTrackBy ">
-          <ng-container *ngIf="step.content">
-            <app-flow-item [flowItemData]="step"></app-flow-item>
-          </ng-container>
-        </ng-container>
-  
-        <ng-container *ngFor="let button of flowDrawer.buttons; trackBy: buttonsTrackBy">
-          <app-small-add-button *ngIf="button.type === 'small' && (readOnly$ | async) === false" [left]="button.x"
-            [top]="button.y" [stepLocationRelativeToParent]="button.stepLocationRelativeToParent"
-            [stepName]="button.stepName"></app-small-add-button>
-          <app-big-add-button [inReadOnlyMode]="(readOnly$ | async) || false" *ngIf="button.type === 'big'"
-            [left]="button.x" [top]="button.y" [stepLocationRelativeToParent]="button.stepLocationRelativeToParent"
-            [stepName]="button.stepName"></app-big-add-button>
-        </ng-container>
-  
-        <ng-container *ngFor="let label of flowDrawer.labels;">
-          <div [style.left]="label.x + 'px'" [style.top]="label.y + 'px'" class="ap-absolute ap-bg-white">{{ label.label
-            }}</div>
-        </ng-container>
-  
+  <ng-container *ngIf="transform$ | async as transform">
+    <div [style.transform]="transform" [style.transition-duration]="(isPanning$ | async) === true ? '0ms' :  '400ms'"
+      [class]="'ap-relative ap-w-full ap-h-full ap-transition-transform'">
+      <div class="ap-flex ap-flex-col ap-items-center ">
+        <div class="ap-flex ap-justify-center ap-w-full ap-items-center ap-z-40 ap-relative ap-mb-3">
+          <app-test-flow-widget></app-test-flow-widget>
+          <app-view-only-mode-widget></app-view-only-mode-widget>
+          <app-incomplete-steps-widget></app-incomplete-steps-widget>
+        </div>
+        <div [style.transform]="flowDrawer.centeringGraphTransform">
+          <div class="ap-relative " [style.height]="flowDrawer.boundingBox.height + 'px'"
+            [style.width]="flowDrawer.boundingBox.width + 'px'">
+            <svg class="ap-absolute ap-left-0 ap-top-0  ap-overflow-visible  ">
+              <g>
+                <path [attr.d]="flowDrawer.svg" class="ap-stroke-border" fill="transparent" stroke-width="2" />
+              </g>
+            </svg>
+
+            <ng-container *ngFor="let step of flowDrawer.steps; trackBy: flowItemsTrackBy ">
+              <ng-container *ngIf="step.content">
+                <app-flow-item [flowItemData]="step"></app-flow-item>
+              </ng-container>
+            </ng-container>
+
+            <ng-container *ngFor="let button of flowDrawer.buttons; trackBy: buttonsTrackBy">
+              <app-small-add-button *ngIf="button.type === 'small' && (readOnly$ | async) === false" [left]="button.x"
+                [top]="button.y" [stepLocationRelativeToParent]="button.stepLocationRelativeToParent"
+                [stepName]="button.stepName"></app-small-add-button>
+              <app-big-add-button [inReadOnlyMode]="(readOnly$ | async) || false" *ngIf="button.type === 'big'"
+                [left]="button.x" [top]="button.y" [stepLocationRelativeToParent]="button.stepLocationRelativeToParent"
+                [stepName]="button.stepName"></app-big-add-button>
+            </ng-container>
+
+            <ng-container *ngFor="let label of flowDrawer.labels;">
+              <div [style.left]="label.x + 'px'" [style.top]="label.y + 'px'" class="ap-absolute ap-bg-white">{{
+                label.label
+                }}</div>
+            </ng-container>
+
+          </div>
+        </div>
+        <div class="ap-flex ap-justify-center  ap-w-full ap-items-center ap-z-40">
+          <app-end-of-flow-widget></app-end-of-flow-widget>
+        </div>
       </div>
+
     </div>
-    <div class="ap-flex ap-justify-center  ap-w-full ap-items-center ap-z-40">
-      <app-end-of-flow-widget></app-end-of-flow-widget>
-    </div>
-  </div>
- 
-</div>
-</ng-container>
-  
+  </ng-container>
+
 
 
 </ng-container>
