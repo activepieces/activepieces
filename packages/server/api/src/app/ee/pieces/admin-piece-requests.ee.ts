@@ -1,4 +1,5 @@
 import {
+    ErrorHandlingOptionsParam,
     TriggerStrategy,
     WebhookHandshakeConfiguration,
 } from '@activepieces/pieces-framework'
@@ -16,6 +17,7 @@ const Action = Type.Object({
     description: Type.String(),
     requireAuth: Type.Boolean(),
     props: Type.Unknown(),
+    errorHandlingOptions: ErrorHandlingOptionsParam,
 })
 
 const Trigger = Type.Composite([
