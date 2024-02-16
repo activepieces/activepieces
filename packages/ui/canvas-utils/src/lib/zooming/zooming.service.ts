@@ -7,14 +7,9 @@ import { BehaviorSubject } from 'rxjs';
 export class ZoomingService {
   private _zoomingScale$: BehaviorSubject<number> = new BehaviorSubject(1);
   readonly zoomingStep = 0.25;
-  readonly zoomingMax = 1.25;
-  private _zoomingMin = 0.5;
-  get zoomingMin() {
-    return this._zoomingMin;
-  }
-  set zoomingMin(value: number) {
-    this._zoomingMin = value;
-  }
+  readonly maxZoom = 1.25;
+  readonly minZoom = 0.5;
+
   get zoomingScale$() {
     return this._zoomingScale$.asObservable();
   }
@@ -22,8 +17,6 @@ export class ZoomingService {
     return this._zoomingScale$.value;
   }
   setZoomingScale(scale: number) {
-    this._zoomingScale$.next(
-      Math.max(this.zoomingMin, Math.min(this.zoomingMax, scale))
-    );
+    this._zoomingScale$.next(scale);
   }
 }
