@@ -3,7 +3,6 @@ import { Observable, combineLatest, map } from 'rxjs';
 import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
 import { Store } from '@ngrx/store';
 import {
-  FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING,
   FLOW_ITEM_WIDTH,
   FlowDrawer,
   PannerService,
@@ -11,6 +10,7 @@ import {
   ZoomingService,
   PositionedStep,
   DEFAULT_TOP_MARGIN,
+  FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING,
 } from '@activepieces/ui-canvas-utils';
 
 type Transform = {

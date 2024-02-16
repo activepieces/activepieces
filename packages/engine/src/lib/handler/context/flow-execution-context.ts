@@ -142,7 +142,7 @@ export class FlowExecutorContext {
             return this
         }
 
-        targetMap[stepName] = stepOutput.setDuration(duration)
+        targetMap[stepName].duration = duration
 
         return new FlowExecutorContext({
             ...this,
