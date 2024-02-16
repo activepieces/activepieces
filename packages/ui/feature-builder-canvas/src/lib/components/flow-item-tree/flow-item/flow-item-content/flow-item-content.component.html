@@ -26,9 +26,9 @@
       <div class="ap-flex ap-items-center ap-gap-2 ">
         <div class="ap-flex ap-flex-grow ap-flex-col ap-gap-1">
           <div
-            class="ap-typography-body-2 ap-pointer-events-none  ap-select-none  flow-title ap-flex-grow ap-max-w-[193px] ap-text-body"
+            class="ap-typography-body-2    ap-select-none  flow-title ap-flex-grow ap-text-body"
+            [style.maxWidth]="MAX_FLOW_ITEM_NAME_WIDTH + 'px'"
             #stepTitle [matTooltip]="isOverflown(stepTitle)?_flowItem.displayName:''">
-
             {{stepIndex$ | async}}. {{ _flowItem.displayName }}
           </div>
           <div class="ap-select-none ap-typography-caption ap-flex ap-text-description ap-items-center">

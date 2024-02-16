@@ -16,8 +16,12 @@ export const createApprovalLink = createAction({
   },
   async run(ctx) {
     return {
-      approvalLink: `${ctx.serverUrl}v1/flow-runs/${ctx.run.id}/resume?action=approve`,
-      disapprovalLink: `${ctx.serverUrl}v1/flow-runs/${ctx.run.id}/resume?action=disapprove`,
+      approvalLink: ctx.generateResumeUrl({
+        queryParams: { action: 'approve' },
+      }),
+      disapprovalLink: ctx.generateResumeUrl({
+        queryParams: { action: 'disapprove' },
+      }),
     };
   },
 });

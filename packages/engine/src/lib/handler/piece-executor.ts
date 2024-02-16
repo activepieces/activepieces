@@ -1,4 +1,4 @@
-import { AUTHENTICATION_PROPERTY_NAME, GenericStepOutput, ActionType, ExecutionOutputStatus, PieceAction, StepOutputStatus, assertNotNullOrUndefined, isNil, ExecutionType } from '@activepieces/shared'
+import { AUTHENTICATION_PROPERTY_NAME, GenericStepOutput, ActionType, ExecutionOutputStatus, PieceAction, StepOutputStatus, assertNotNullOrUndefined, isNil, ExecutionType, PauseType } from '@activepieces/shared'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
 import { variableService } from '../services/variable-service'
@@ -10,6 +10,7 @@ import { EngineConstants } from './context/engine-constants'
 import { pieceLoader } from '../helper/piece-loader'
 import { utils } from '../utils'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
+import { URL } from 'url'
 
 type HookResponse = { stopResponse: StopHookParams | undefined, pauseResponse: PauseHookParams | undefined, tags: string[], stopped: boolean, paused: boolean }
 
@@ -72,7 +73,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         const isPaused = executionState.isPaused({ stepName: action.name })
         const context: ActionContext = {
             executionType: isPaused ? ExecutionType.RESUME : ExecutionType.BEGIN,
-            resumePayload: constants.resumePayload,
+            resumePayload: constants.resumePayload!,
             store: createContextStore({
                 prefix: '',
                 flowId: constants.flowId,
@@ -101,12 +102,17 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             run: {
                 id: constants.flowRunId,
                 stop: createStopHook(hookResponse),
-                pause: createPauseHook(hookResponse),
+                pause: createPauseHook(hookResponse, executionState.pauseRequestId),
             },
             project: {
                 id: constants.projectId,
                 externalId: constants.externalProjectId,
             },
+            generateResumeUrl: (params) => {
+                const url = new URL(`${constants.serverUrl}v1/flow-runs/${constants.flowRunId}/requests/${executionState.pauseRequestId}`)
+                url.search = new URLSearchParams(params.queryParams).toString()
+                return url.toString()
+            },            
         }
         const runMethodToExecute = (constants.testSingleStepMode && !isNil(pieceAction.test)) ? pieceAction.test : pieceAction.run
         const output = await runMethodToExecute(context)
@@ -174,9 +180,23 @@ function createStopHook(hookResponse: HookResponse): StopHook {
     }
 }
 
-function createPauseHook(hookResponse: HookResponse): PauseHook {
-    return (req: PauseHookParams) => {
+function createPauseHook(hookResponse: HookResponse, pauseId: string): PauseHook {
+    return (req) => {
         hookResponse.paused = true
-        hookResponse.pauseResponse = req
+        switch (req.pauseMetadata.type) {
+            case PauseType.DELAY:
+                hookResponse.pauseResponse = {
+                    pauseMetadata: req.pauseMetadata,
+                }
+                break
+            case PauseType.WEBHOOK:
+                hookResponse.pauseResponse = {
+                    pauseMetadata: {
+                        ...req.pauseMetadata,
+                        requestId: pauseId,
+                    },
+                }
+                break
+        }
     }
 }

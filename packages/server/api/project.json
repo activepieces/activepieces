@@ -1,0 +1,109 @@
+{
+  "name": "server-api",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/server/api/src",
+  "projectType": "application",
+  "implicitDependencies": ["engine"],
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/packages/server/api",
+        "main": "packages/server/api/src/main.ts",
+        "tsConfig": "packages/server/api/tsconfig.app.json",
+        "assets": ["packages/server/api/src/assets"],
+        "webpackConfig": "packages/server/api/webpack.config.js",
+        "isolatedConfig": true,
+        "generatePackageJson": true,
+        "babelUpwardRootMode": true
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "extractLicenses": true,
+          "inspect": false
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "options": {
+        "buildTarget": "server-api:build",
+        "host": "0.0.0.0"
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "server-api:build:production"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/server/api/**/*.ts"]
+      }
+    },
+    "test-ce": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "packages/server/api/jest.config.ts",
+        "passWithNoTests": false,
+        "bail": true,
+        "testPathPattern": ["packages/server/api/test/integration/ce"]
+      }
+    },
+    "test-cloud": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "packages/server/api/jest.config.ts",
+        "passWithNoTests": false,
+        "bail": true,
+        "testPathPattern": ["packages/server/api/test/integration/cloud"]
+      }
+    },
+    "test-ee": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "packages/server/api/jest.config.ts",
+        "passWithNoTests": false,
+        "bail": true,
+        "testPathPattern": ["packages/server/api/test/integration/ee"]
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "nx build server-api",
+          "export $(cat packages/server/api/.env.tests | xargs) && AP_EDITION=cloud nx test-cloud server-api --output-style stream-without-prefixes",
+          "export $(cat packages/server/api/.env.tests | xargs) && AP_EDITION=ce nx test-ce server-api --output-style stream-without-prefixes",
+          "export $(cat packages/server/api/.env.tests | xargs) && AP_EDITION=ee nx test-ee server-api --output-style stream-without-prefixes"
+        ],
+        "parallel": false
+      }
+    },
+    "test:docker": {
+      "command": "UID=\"$(id -u)\" GID=\"$(id -g)\" docker compose --profile full -f docker-compose.test.yml up --exit-code-from app --attach app"
+    },
+    "db": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "ts-node -r tsconfig-paths/register -P packages/server/api/tsconfig.app.json ./node_modules/typeorm/cli.js"
+      }
+    },
+    "db-migration": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "nx db server-api -- migration:generate -p -d packages/server/api/src/app/database/database-connection.ts packages/server/api/src/app/database/migration/{args.name}"
+      }
+    }
+  },
+  "tags": []
+}

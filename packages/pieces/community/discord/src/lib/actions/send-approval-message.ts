@@ -22,23 +22,28 @@ export const discordSendApprovalMessage = createAction({
     }),
     channel: discordCommon.channel,
   },
-  async run(configValue) {
-    if (configValue.executionType === ExecutionType.BEGIN) {
-      configValue.run.pause({
+  async run(ctx) {
+    if (ctx.executionType === ExecutionType.BEGIN) {
+      ctx.run.pause({
         pauseMetadata: {
           type: PauseType.WEBHOOK,
-          actions: ['approve', 'disapprove'],
+          response: {},
         },
       });
 
-      const approvalLink = `${configValue.serverUrl}v1/flow-runs/${configValue.run.id}/resume?action=approve`;
-      const disapprovalLink = `${configValue.serverUrl}v1/flow-runs/${configValue.run.id}/resume?action=disapprove`;
+      const approvalLink = ctx.generateResumeUrl({
+        queryParams: { action: 'approve' },
+      })
+      const disapprovalLink = ctx.generateResumeUrl({
+        queryParams: { action: 'disapprove' },
+      })
+
 
       const request: HttpRequest<any> = {
         method: HttpMethod.POST,
-        url: `https://discord.com/api/v9/channels/${configValue.propsValue.channel}/messages`,
+        url: `https://discord.com/api/v9/channels/${ctx.propsValue.channel}/messages`,
         body: {
-          content: configValue.propsValue.content,
+          content: ctx.propsValue.content,
           components: [
             {
               type: 1,
@@ -60,7 +65,7 @@ export const discordSendApprovalMessage = createAction({
           ],
         },
         headers: {
-          authorization: `Bot ${configValue.auth}`,
+          authorization: `Bot ${ctx.auth}`,
           'Content-Type': 'application/json',
         },
       };
@@ -68,10 +73,9 @@ export const discordSendApprovalMessage = createAction({
       await httpClient.sendRequest<never>(request);
       return {};
     } else {
-      const payload = configValue.resumePayload as { action: string };
 
       return {
-        approved: payload.action === 'approve',
+        approved: ctx.resumePayload.queryParams['action'] === 'approve',
       };
     }
   },

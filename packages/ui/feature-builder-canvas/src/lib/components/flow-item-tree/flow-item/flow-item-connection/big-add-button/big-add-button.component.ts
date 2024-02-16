@@ -1,15 +1,15 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { AddButtonCoreComponent } from '../add-button-core.component';
 import { Store } from '@ngrx/store';
-import { FlowRendererService } from '@activepieces/ui/feature-builder-store';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { StepLocationRelativeToParent } from '@activepieces/shared';
 import {
   BIG_BUTTON_SIZE,
   FLOW_ITEM_BOTTOM_PADDING,
   FLOW_ITEM_HEIGHT,
-} from '../../../../canvas-utils/drawing/draw-common';
-import { SvgDrawer } from '../../../../canvas-utils/drawing/svg-drawer';
-import { StepLocationRelativeToParent } from '@activepieces/shared';
+  SvgDrawer,
+} from '@activepieces/ui-canvas-utils';
+import { FlowRendererService } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-big-add-button',

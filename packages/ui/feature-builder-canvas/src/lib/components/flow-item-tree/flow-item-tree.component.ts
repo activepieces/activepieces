@@ -1,23 +1,24 @@
 import { Component, OnInit } from '@angular/core';
-import { Observable, combineLatest, map, startWith } from 'rxjs';
+import { Observable, combineLatest, map } from 'rxjs';
 import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
-import { FlowDrawer } from '../canvas-utils/drawing/flow-drawer';
 import { Store } from '@ngrx/store';
-import { PositionedStep } from '../canvas-utils/drawing/step-card';
 import {
-  FLOW_ITEM_WIDTH,
-  PositionButton,
   FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING,
-} from '../canvas-utils/drawing/draw-common';
-import { ZoomingService } from '../canvas-utils/zooming/zooming.service';
-import { PannerService } from '../canvas-utils/panning/panner.service';
+  FLOW_ITEM_WIDTH,
+  FlowDrawer,
+  PannerService,
+  PositionButton,
+  ZoomingService,
+  PositionedStep,
+  DEFAULT_TOP_MARGIN,
+} from '@activepieces/ui-canvas-utils';
 
 type UiFlowDrawer = {
   centeringGraphTransform: string;
   svg: string;
   boundingBox: { width: number; height: number };
 } & Pick<FlowDrawer, 'buttons' | 'steps' | 'labels'>;
-const GRAPH_Y_OFFSET_FROM_TEST_FLOW_WIDGET = 45;
+
 @Component({
   selector: 'app-flow-item-tree',
   templateUrl: './flow-item-tree.component.html',
@@ -27,12 +28,14 @@ export class FlowItemTreeComponent implements OnInit {
   flowDrawer$: Observable<UiFlowDrawer>;
   transform$: Observable<string>;
   readOnly$: Observable<boolean>;
+  isPanning$: Observable<boolean>;
   constructor(
     private store: Store,
     private pannerService: PannerService,
     private zoomingService: ZoomingService
   ) {
     this.transform$ = this.getTransform$();
+    this.isPanning$ = this.pannerService.isPanning$;
     this.readOnly$ = this.store.select(BuilderSelectors.selectReadOnly);
   }
 
@@ -43,7 +46,12 @@ export class FlowItemTreeComponent implements OnInit {
     this.flowDrawer$ = flowVersion$.pipe(
       map((version) => {
         FlowDrawer.trigger = version.trigger;
-        const drawer = FlowDrawer.construct(version.trigger).offset(0, 40);
+        return FlowDrawer.construct(version.trigger).offset(
+          0,
+          DEFAULT_TOP_MARGIN
+        );
+      }),
+      map((drawer) => {
         return {
           svg: drawer.svg.toSvg().content,
           boundingBox: drawer.boundingBox(),
@@ -52,10 +60,7 @@ export class FlowItemTreeComponent implements OnInit {
           labels: drawer.labels,
           centeringGraphTransform: `translate(${
             drawer.boundingBox().width / 2 - FLOW_ITEM_WIDTH / 2
-          }px,-${
-            FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING -
-            GRAPH_Y_OFFSET_FROM_TEST_FLOW_WIDGET
-          }px)`,
+          }px,-${FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING - DEFAULT_TOP_MARGIN}px)`,
         };
       })
     );
@@ -69,26 +74,24 @@ export class FlowItemTreeComponent implements OnInit {
   }
 
   getTransform$() {
-    const scale$ = this.zoomingService.zoomingScale$.asObservable().pipe(
-      startWith(1),
+    const scale$ = this.zoomingService.zoomingScale$.pipe(
       map((val) => {
         return `scale(${val})`;
       })
     );
-    const translate$ = this.pannerService.panningOffset$.asObservable().pipe(
-      startWith({ x: 0, y: 0 }),
+    const translate$ = this.pannerService.panningOffset$.pipe(
       map((val) => {
-        return `translate(${val.x}px,${val.y}px)`;
+        return `translate(${val.x}px, ${val.y}px)`;
       })
     );
     const transformObs$ = combineLatest({
       scale: scale$,
       translate: translate$,
-    }).pipe(
-      map((value) => {
-        return `${value.scale} ${value.translate}`;
-      })
+    });
+
+    // Combine the scale and translate values into transform to apply animation
+    return transformObs$.pipe(
+      map(({ scale, translate }) => `${scale} ${translate}`)
     );
-    return transformObs$;
   }
 }

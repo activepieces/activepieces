@@ -18,6 +18,7 @@ import { PortalModule } from '@angular/cdk/portal';
 import { UiFeatureTemplatesModule } from '@activepieces/ui/feature-templates';
 import { TimeagoModule } from 'ngx-timeago';
 import { UiFeatureFoldersStoreModule } from '@activepieces/ui/feature-folders-store';
+import { UiCanvasUtilsModule } from '@activepieces/ui-canvas-utils';
 @NgModule({
   imports: [
     CommonModule,
@@ -37,6 +38,7 @@ import { UiFeatureFoldersStoreModule } from '@activepieces/ui/feature-folders-st
     UiFeatureFoldersStoreModule,
     PortalModule,
     UiFeatureTemplatesModule,
+    UiCanvasUtilsModule
   ],
   declarations: [FlowBuilderComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],

@@ -8,5 +8,5 @@
     "types": []
   },
   "exclude": ["src/**/*.spec.ts", "jest.config.ts", "src/**/*.test.ts"],
-  "include": ["src/**/*.ts", "../feature-builder-store/src/lib/utils/draw-utils.ts", "../feature-builder-store/src/lib/service/flow-renderer.service.ts", "../feature-builder-store/src/lib/utils/draw-utils.ts", "../feature-builder-store/src/lib/model/flowStructureUtil.ts"]
+  "include": ["src/**/*.ts"]
 }

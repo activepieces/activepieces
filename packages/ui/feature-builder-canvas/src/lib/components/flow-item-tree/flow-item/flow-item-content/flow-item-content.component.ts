@@ -40,20 +40,21 @@ import {
 } from '@activepieces/ui/feature-pieces';
 import {
   FlowItemDetails,
+  FlowRendererService,
   fadeIn400ms,
   isOverflown,
 } from '@activepieces/ui/common';
 import {
   BuilderSelectors,
   Step,
-  FlowRendererService,
   canvasActions,
 } from '@activepieces/ui/feature-builder-store';
 import {
   FLOW_ITEM_HEIGHT,
   FLOW_ITEM_WIDTH,
   FLOW_ITEM_ICON_SIZE,
-} from '../../../canvas-utils/drawing/draw-common';
+  MAX_FLOW_ITEM_NAME_WIDTH,
+} from '@activepieces/ui-canvas-utils';
 
 @Component({
   selector: 'app-flow-item-content',
@@ -66,6 +67,7 @@ export class FlowItemContentComponent implements OnInit {
   readonly FLOW_ITEM_HEIGHT = FLOW_ITEM_HEIGHT;
   readonly FLOW_ITEM_WIDTH = FLOW_ITEM_WIDTH;
   readonly FLOW_ITEM_ICON_SIZE = FLOW_ITEM_ICON_SIZE;
+  readonly MAX_FLOW_ITEM_NAME_WIDTH = MAX_FLOW_ITEM_NAME_WIDTH;
   //in case it is not reached, we return undefined
   @ViewChild('stepDragTemplate') stepDragTemplate: TemplateRef<any>;
   stepStatus$: Observable<StepOutputStatus | undefined>;

@@ -1,6 +1,5 @@
 export * from './lib/ui-feature-builder-store.module';
 export * from './lib/service/code.service';
-export * from './lib/service/flow-renderer.service';
 export * from './lib/store/builder/index';
 export * from './lib/store/app-connections/index';
 export * from './lib/store/flow/index';

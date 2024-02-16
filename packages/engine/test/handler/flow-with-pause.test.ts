@@ -57,13 +57,14 @@ describe('flow with pause', () => {
     it('should pause and resume succesfully with loops and branch', async () => {
         const pauseResult = await flowExecutor.execute({
             action: pauseFlowWithLoopAndBranch,
-            executionState: FlowExecutorContext.empty(),
+            executionState: FlowExecutorContext.empty().setPauseRequestId('requestId'),
             constants: generateMockEngineConstants(),
         })
         expect(pauseResult.verdict).toBe(ExecutionVerdict.PAUSED)
         expect(pauseResult.verdictResponse).toEqual({
             'pauseMetadata': {
-                'actions': ['approve', 'disapprove'],
+                response: {},
+                requestId: 'requestId',
                 'type': 'WEBHOOK',
             },
             'reason': ExecutionOutputStatus.PAUSED,
@@ -75,7 +76,11 @@ describe('flow with pause', () => {
             executionState: pauseResult.setCurrentPath(StepExecutionPath.empty()),
             constants: generateMockEngineConstants({
                 resumePayload: {
-                    action: 'approve',
+                    queryParams: {
+                        action: 'approve',
+                    },
+                    body: {},
+                    headers: {},
                 },
             }),
         })
@@ -88,7 +93,7 @@ describe('flow with pause', () => {
     it('should pause and resume with two different steps in same flow successfully', async () => {
         const pauseResult1 = await flowExecutor.execute({
             action: flawWithTwoPause,
-            executionState: FlowExecutorContext.empty(),
+            executionState: FlowExecutorContext.empty().setPauseRequestId('requestId'),
             constants: generateMockEngineConstants(),
         })
         const resumeResult1 = await flowExecutor.execute({
@@ -96,14 +101,19 @@ describe('flow with pause', () => {
             executionState: pauseResult1,
             constants: generateMockEngineConstants({
                 resumePayload: {
-                    action: 'approve',
+                    queryParams: {
+                        action: 'approve',
+                    },
+                    body: {},
+                    headers: {},
                 },
             }),
         })
         expect(resumeResult1.verdict).toBe(ExecutionVerdict.PAUSED)
         expect(resumeResult1.verdictResponse).toEqual({
             'pauseMetadata': {
-                'actions': ['approve', 'disapprove'],
+                response: {},
+                requestId: 'requestId',
                 'type': 'WEBHOOK',
             },
             'reason': ExecutionOutputStatus.PAUSED,
@@ -113,7 +123,11 @@ describe('flow with pause', () => {
             executionState: resumeResult1.setVerdict(ExecutionVerdict.RUNNING, undefined),
             constants: generateMockEngineConstants({
                 resumePayload: {
-                    action: 'approve',
+                    queryParams: {
+                        action: 'approve',
+                    },
+                    body: {},
+                    headers: {},
                 },
             }),
         })
@@ -125,13 +139,14 @@ describe('flow with pause', () => {
     it('should pause and resume successfully', async () => {
         const pauseResult = await flowExecutor.execute({
             action: simplePauseFlow,
-            executionState: FlowExecutorContext.empty(),
+            executionState: FlowExecutorContext.empty().setPauseRequestId('requestId'),
             constants: generateMockEngineConstants(),
         })
         expect(pauseResult.verdict).toBe(ExecutionVerdict.PAUSED)
         expect(pauseResult.verdictResponse).toEqual({
             'pauseMetadata': {
-                'actions': ['approve', 'disapprove'],
+                response: {},
+                requestId: 'requestId',
                 'type': 'WEBHOOK',
             },
             'reason': ExecutionOutputStatus.PAUSED,
@@ -143,7 +158,11 @@ describe('flow with pause', () => {
             executionState: pauseResult,
             constants: generateMockEngineConstants({
                 resumePayload: {
-                    action: 'approve',
+                    queryParams: {
+                        action: 'approve',
+                    },
+                    body: {},
+                    headers: {},
                 },
             }),
         })

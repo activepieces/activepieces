@@ -459,14 +459,14 @@
               </mat-option>
 
               <mat-select-trigger>
-                <div class="ap-flex ap-gap-[6px] ap-pr-1">
+                <div class="ap-flex ap-gap-[6px] connections-dropdown-container ap-pr-1 ap-items-center">
                   <div class="ap-w-full ap-truncate">
                     {{((allAuthConfigs$ | async)!|
                     selectedAuthConfig:pieceName:formGroup.value[property.key])?.label?.name
                     ||
                     ''}}
                   </div>
-                  <div class=" -ap-mt-[6px]">
+                  <div >
                     <app-add-edit-connection-button *ngIf="formGroup.enabled && formGroup.get(property.key)!.value"
                       (click)="$event.stopPropagation()" btnSize="extraSmall" [isEditConnectionButton]="true"
                       [authProperty]="property.value" [pieceName]="pieceName" [pieceVersion]="pieceVersion"
@@ -474,7 +474,7 @@
                       [selectedConnectionInterpolatedString]="formGroup.get(property.key)!.value"
                       (connectionPropertyValueChanged)="connectionValueChanged($event)"
                       [triggerName]="actionOrTriggerName">
-                      <div class="ap-px-2">
+                      <div class="ap-px-2" i18n >
                         Reconnect
                       </div>
                     </app-add-edit-connection-button>

@@ -45,7 +45,6 @@ import { ViewModeActions } from '../builder/viewmode/view-mode.action';
 import { ViewModeEnum } from '../../model';
 import { HttpStatusCode } from '@angular/common/http';
 import { FlowStructureUtil } from '../../utils/flowStructureUtil';
-
 @Injectable()
 export class FlowsEffects {
   loadInitial$ = createEffect(() => {
