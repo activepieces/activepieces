@@ -26,7 +26,10 @@ type UiFlowDrawer = {
 export class FlowItemTreeComponent implements OnInit {
   navbarOpen = false;
   flowDrawer$: Observable<UiFlowDrawer>;
-  transform$: Observable<string>;
+  transform$: Observable<{
+    translate: string;
+    scale: string;
+  }>;
   readOnly$: Observable<boolean>;
   isPanning$: Observable<boolean>;
   constructor(
@@ -76,7 +79,7 @@ export class FlowItemTreeComponent implements OnInit {
   getTransform$() {
     const scale$ = this.zoomingService.zoomingScale$.pipe(
       map((val) => {
-        return `scale(${val})`;
+        return `${val}`;
       })
     );
     const translate$ = this.pannerService.panningOffset$.pipe(
@@ -90,8 +93,6 @@ export class FlowItemTreeComponent implements OnInit {
     });
 
     // Combine the scale and translate values into transform to apply animation
-    return transformObs$.pipe(
-      map(({ scale, translate }) => `${scale} ${translate}`)
-    );
+    return transformObs$;
   }
 }
