@@ -90,7 +90,10 @@ export const httpSendRequestAction = createAction({
       required: false,
     }),
   },
-
+  errorHandlingOptions: {
+    continueOnFailure: { hide: true },
+    retryOnFailure: { defaultValue: true },
+  },
   async run(context) {
     const { method, url, headers, queryParams, body, timeout } =
       context.propsValue;
