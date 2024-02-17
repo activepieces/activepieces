@@ -1,0 +1,43 @@
+{
+  "name": "pieces-quickzu",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/custom/quickzu/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/custom/quickzu",
+        "tsConfig": "packages/pieces/custom/quickzu/tsconfig.lib.json",
+        "packageJson": "packages/pieces/custom/quickzu/package.json",
+        "main": "packages/pieces/custom/quickzu/src/index.ts",
+        "assets": [
+          "packages/pieces/custom/quickzu/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-quickzu {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/custom/quickzu/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
