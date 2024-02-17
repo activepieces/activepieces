@@ -11,6 +11,7 @@ import { pieceLoader } from '../helper/piece-loader'
 import { utils } from '../utils'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
 import { URL } from 'url'
+import { ConnectionNotFoundError } from '../helper/execution-errors'
 
 type HookResponse = { stopResponse: StopHookParams | undefined, pauseResponse: PauseHookParams | undefined, tags: string[], stopped: boolean, paused: boolean }
 
@@ -112,7 +113,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 const url = new URL(`${constants.serverUrl}v1/flow-runs/${constants.flowRunId}/requests/${executionState.pauseRequestId}`)
                 url.search = new URLSearchParams(params.queryParams).toString()
                 return url.toString()
-            },            
+            },
         }
         const runMethodToExecute = (constants.testSingleStepMode && !isNil(pieceAction.test)) ? pieceAction.test : pieceAction.run
         const output = await runMethodToExecute(context)
@@ -167,6 +168,10 @@ const createConnectionManager = ({ workerToken, projectId, hookResponse }: { pro
                 return connection
             }
             catch (e) {
+                if (e instanceof ConnectionNotFoundError) {
+                    throw e
+                }
+
                 return null
             }
         },
