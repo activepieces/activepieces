@@ -1,5 +1,5 @@
 import { createAction, Property, PieceAuth } from "@activepieces/pieces-framework";
-import { wootricAuth, wootricAccessToken, WOOTRIC_API_URL } from "../../";
+import { wootricAuth, WOOTRIC_API_URL } from "../../";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 
 export const sendSurvey = async (surveyRequestPayload: object) => {
@@ -30,25 +30,18 @@ export const createWootricSurvey = createAction({
         })
     },
     async run(context) {
-        const { username, password } = context.auth;
         const { surveyImmediately, emails } = context.propsValue;
+        const { access_token } = context.auth;
         let surveyResponse;
 
         let surveyRequestPayload = {
             emails: emails,
             survey_immediately: surveyImmediately,
-            access_token: await wootricAccessToken(username, password, context.store)
+            access_token: access_token
         };
 
-        try {
-            surveyResponse = await sendSurvey(surveyRequestPayload);
-        }
-        catch (e) {
-            // try one more time with a new token
-            context.store.delete('wootricAccessToken');
-            surveyRequestPayload.access_token = await wootricAccessToken(username, password, context.store);
-            surveyResponse = await sendSurvey(surveyRequestPayload);
-        }
+        surveyResponse = await sendSurvey(surveyRequestPayload);
+
         return surveyResponse.body;
     },
 });
