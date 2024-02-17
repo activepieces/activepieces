@@ -201,7 +201,12 @@ export const flowVersionService = {
             },
         })
         const paginationResult = await paginator.paginate(
-            flowVersionRepo().createQueryBuilder('flow_version').where({
+            flowVersionRepo().createQueryBuilder('flow_version').innerJoinAndMapOne(
+                'flow_version.updatedByUser',
+                'user',
+                'user',
+                'flow_version.updatedBy = "user"."id"',
+            ).where({
                 flowId,
             }),
         )

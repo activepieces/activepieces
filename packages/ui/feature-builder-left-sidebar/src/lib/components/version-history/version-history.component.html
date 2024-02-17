@@ -9,7 +9,7 @@
                         <div class="ap-text-body">{{version.created |date:'mediumDate'
                             }}, {{version.created |date:'shortTime' }} </div>
                         <div class=" ap-text-description ap-typography-subtitle-2 ">Version
-                            #{{flowVersions.data.length - idx}}</div>
+                            #{{flowVersions.data.length - idx}} ({{version.updatedByUser?.email}})</div>
                     </div>
 
                     <div class="ap-flex-grow"></div>
