@@ -1,5 +1,5 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { AppConnection, Folder, PopulatedFlow } from '@activepieces/shared'
+import { AppConnection, FlowOperationRequest, Folder, PopulatedFlow } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 
 export type CreateAuditEventParam =
@@ -33,6 +33,12 @@ export type CreateAuditEventParam =
       | ApplicationEventName.VERIFIED_EMAIL
       userId: string
       projectId: string
+  }
+  | {
+      action: ApplicationEventName.UPDATED_FLOW
+      flow: PopulatedFlow
+      request: FlowOperationRequest
+      userId: string
   }
 
 let hooks: ApplicationEventHooks = {
