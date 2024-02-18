@@ -4,11 +4,10 @@ import { ZoomingService } from '../zooming/zooming.service';
 import { FlowVersion } from '@activepieces/shared';
 import { FlowDrawer } from '../drawing/flow-drawer';
 import {
-  ABOVE_FLOW_WIDGET_HEIGHT,
   DEFAULT_TOP_MARGIN,
-  END_WIDGET_HEIGHT,
   MAX_ZOOM,
   FLOW_BUILDER_HEADER_HEIGHT,
+  END_WIDGET_HEIGHT_AND_SPACE,
 } from '../drawing/draw-common';
 export type PanningState = {
   currentOffset: {
@@ -56,14 +55,11 @@ export class PannerService {
     resetZoom: boolean;
   }) {
     const flowHeight = FlowDrawer.construct(flowVersion.trigger)
-      .offset(0, DEFAULT_TOP_MARGIN)
+      .offset(0, 0)
       .boundingBox().height;
     const canvasHeight = window.innerHeight - FLOW_BUILDER_HEADER_HEIGHT;
     const fullFlowHeightWithWidgets =
-      END_WIDGET_HEIGHT +
-      ABOVE_FLOW_WIDGET_HEIGHT +
-      flowHeight +
-      DEFAULT_TOP_MARGIN * 2;
+      END_WIDGET_HEIGHT_AND_SPACE + flowHeight + DEFAULT_TOP_MARGIN;
     let zoomScale = 1.0;
     const maxPossibleViewedFlowHeight = Math.min(
       fullFlowHeightWithWidgets,
@@ -71,14 +67,14 @@ export class PannerService {
     );
     zoomScale = canvasHeight / maxPossibleViewedFlowHeight;
     zoomScale = Math.min(zoomScale, MAX_ZOOM);
-    this.zoomService.minZoom = canvasHeight / fullFlowHeightWithWidgets;
-    const scaledFlowHeight = maxPossibleViewedFlowHeight * zoomScale;
+    if (resetZoom) {
+      zoomScale = Math.max(zoomScale, 0.5);
+    }
     const newState: PanningState = {
       currentOffset: {
         x: 0,
-        y:
-          (scaledFlowHeight - maxPossibleViewedFlowHeight) / 2 +
-          DEFAULT_TOP_MARGIN,
+        // The number of pixels are affected by the zoom scale, that is why we divide by the zoom scale
+        y: (canvasHeight * zoomScale - canvasHeight) / 2.0 + DEFAULT_TOP_MARGIN,
       },
       isPanning: false,
     };
