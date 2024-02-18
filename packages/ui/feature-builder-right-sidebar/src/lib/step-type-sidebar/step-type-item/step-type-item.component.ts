@@ -30,18 +30,18 @@ export class StepTypeItemComponent {
       );
     }
   }
-  stepIconUrl$: Subject<string> = new Subject<string>();
+  loadingLogo$: Subject<boolean> = new Subject<boolean>();
   faInfo = faInfoCircle;
   hover = false;
   constructor() {
-    this.stepIconUrl$.next('');
+    this.loadingLogo$.next(true);
   }
 
   loadStepIcon(url: string) {
     const itemIcon = new Image();
     itemIcon.src = url;
     itemIcon.onload = () => {
-      this.stepIconUrl$.next(url);
+      this.loadingLogo$.next(false);
     };
   }
   openDocs(url: string) {
