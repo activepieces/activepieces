@@ -118,28 +118,8 @@ const searchWithinActionsAndTriggersAsWell = (searchQuery: string, pieces: Piece
         .search(searchQuery)
         .map(({ item }) => {
             const originalPiece = pieces.find((p) => p.id === item.id)!
-            const actionsAndTriggers = [
-                ...Object.keys(originalPiece.actions).map((key) => ({
-                    name: originalPiece.actions[key].name,
-                    displayName: originalPiece.actions[key].displayName,
-                    key,
-                })),
-                ...Object.keys(originalPiece.triggers).map((key) => ({
-                    name: originalPiece.triggers[key].name,
-                    displayName: originalPiece.triggers[key].displayName,
-                    key,
-                })),
-            ]
-            const suggestionLimit = 3
-            const nestedFuse = new Fuse(actionsAndTriggers, {
-                isCaseSensitive: false,
-                shouldSort: true,
-                keys: 
-                ['displayName', 'description'],
-                threshold: 0.2,
-            })
             
-            const suggestedActionsAndTriggers =  nestedFuse.search(searchQuery, { limit: suggestionLimit }).map(({ item }) => item)
+            const { suggestedActionsAndTriggers } = searchForRelatedActionsAndTriggers(originalPiece, searchQuery)
                     
             const actions = suggestedActionsAndTriggers.reduce<Record<string, ActionBase>>((filteredActions, suggestion) => {
                 if (suggestion.key in originalPiece.actions) {
@@ -164,3 +144,32 @@ const searchWithinActionsAndTriggersAsWell = (searchQuery: string, pieces: Piece
         })
 
 }
+function searchForRelatedActionsAndTriggers(originalPiece: PieceMetadataSchema, searchQuery: string):
+{
+    suggestedActionsAndTriggers: { name: string, displayName: string, key: string }[]
+} {
+  
+    const actionsAndTriggers = [
+        ...Object.keys(originalPiece.actions).map((key) => ({
+            name: originalPiece.actions[key].name,
+            displayName: originalPiece.actions[key].displayName,
+            key,
+        })),
+        ...Object.keys(originalPiece.triggers).map((key) => ({
+            name: originalPiece.triggers[key].name,
+            displayName: originalPiece.triggers[key].displayName,
+            key,
+        })),
+    ]
+    const suggestionLimit = 3
+    const nestedFuse = new Fuse(actionsAndTriggers, {
+        isCaseSensitive: false,
+        shouldSort: true,
+        keys: ['displayName', 'description'],
+        threshold: 0.2,
+    })
+
+    const suggestedActionsAndTriggers = nestedFuse.search(searchQuery, { limit: suggestionLimit }).map(({ item }) => item)
+    return { suggestedActionsAndTriggers }
+}
+
