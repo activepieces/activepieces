@@ -57,13 +57,6 @@ export class GenericStepOutput<T extends ActionType | TriggerType, OUTPUT> {
         })
     }
 
-    setDuration(duration: number): GenericStepOutput<T, OUTPUT> {
-        return new GenericStepOutput<T, OUTPUT>({
-            ...this,
-            duration,
-        })
-    }
-
     static create<T extends ActionType | TriggerType, OUTPUT>({ input, type, status, output }: { input: unknown, type: T, status: StepOutputStatus, output?: OUTPUT }): GenericStepOutput<T, OUTPUT> {
         return new GenericStepOutput<T, OUTPUT>({
             input,
@@ -94,12 +87,6 @@ export class BranchStepOutput extends GenericStepOutput<ActionType.BRANCH, Branc
         })
     }
 
-    override setDuration(duration: number): BranchStepOutput {
-        return new BranchStepOutput({
-            ...this,
-            duration,
-        })
-    }
 }
 
 
@@ -153,10 +140,4 @@ export class LoopStepOutput extends GenericStepOutput<ActionType.LOOP_ON_ITEMS, 
         })
     }
 
-    override setDuration(duration: number): LoopStepOutput {
-        return new LoopStepOutput({
-            ...this,
-            duration,
-        })
-    }
 }

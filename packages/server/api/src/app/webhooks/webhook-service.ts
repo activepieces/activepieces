@@ -43,7 +43,6 @@ export const webhookService = {
             logger.info(
                 `[WebhookService#handshake] flowInstance not found, flowId=${flow.id}`,
             )
-            saveSampleDataForWebhookTesting(flow, payload)
             return null
         }
 

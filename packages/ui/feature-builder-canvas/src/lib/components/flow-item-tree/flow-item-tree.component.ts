@@ -13,10 +13,6 @@ import {
   DEFAULT_TOP_MARGIN,
 } from '@activepieces/ui-canvas-utils';
 
-type Transform = {
-  scale: string;
-  translate: string;
-};
 type UiFlowDrawer = {
   centeringGraphTransform: string;
   svg: string;
@@ -30,14 +26,19 @@ type UiFlowDrawer = {
 export class FlowItemTreeComponent implements OnInit {
   navbarOpen = false;
   flowDrawer$: Observable<UiFlowDrawer>;
-  transform$: Observable<Transform>;
+  transform$: Observable<{
+    translate: string;
+    scale: string;
+  }>;
   readOnly$: Observable<boolean>;
+  isPanning$: Observable<boolean>;
   constructor(
     private store: Store,
     private pannerService: PannerService,
     private zoomingService: ZoomingService
   ) {
     this.transform$ = this.getTransform$();
+    this.isPanning$ = this.pannerService.isPanning$;
     this.readOnly$ = this.store.select(BuilderSelectors.selectReadOnly);
   }
 
@@ -78,18 +79,20 @@ export class FlowItemTreeComponent implements OnInit {
   getTransform$() {
     const scale$ = this.zoomingService.zoomingScale$.pipe(
       map((val) => {
-        return `scale(${val})`;
+        return `${val}`;
       })
     );
     const translate$ = this.pannerService.panningOffset$.pipe(
       map((val) => {
-        return `${val.x}px ${val.y}px`;
+        return `translate(${val.x}px, ${val.y}px)`;
       })
     );
     const transformObs$ = combineLatest({
       scale: scale$,
       translate: translate$,
     });
+
+    // Combine the scale and translate values into transform to apply animation
     return transformObs$;
   }
 }

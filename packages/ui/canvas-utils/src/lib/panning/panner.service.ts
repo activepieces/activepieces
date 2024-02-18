@@ -67,22 +67,18 @@ export class PannerService {
     let zoomScale = 1.0;
     const maxPossibleViewedFlowHeight = Math.min(
       fullFlowHeightWithWidgets,
-      resetZoom ? canvasHeight * 2 : Number.MAX_SAFE_INTEGER
+      resetZoom ? canvasHeight : Number.MAX_SAFE_INTEGER
     );
     zoomScale = canvasHeight / maxPossibleViewedFlowHeight;
     zoomScale = Math.min(zoomScale, MAX_ZOOM);
-    this.zoomService.zoomingMin = Math.min(
-      canvasHeight / fullFlowHeightWithWidgets,
-      0.5
-    );
+    this.zoomService.minZoom = canvasHeight / fullFlowHeightWithWidgets;
     const scaledFlowHeight = maxPossibleViewedFlowHeight * zoomScale;
     const newState: PanningState = {
       currentOffset: {
         x: 0,
         y:
-          (-(maxPossibleViewedFlowHeight - scaledFlowHeight) / 2 +
-            DEFAULT_TOP_MARGIN) *
-          zoomScale,
+          (scaledFlowHeight - maxPossibleViewedFlowHeight) / 2 +
+          DEFAULT_TOP_MARGIN,
       },
       isPanning: false,
     };
