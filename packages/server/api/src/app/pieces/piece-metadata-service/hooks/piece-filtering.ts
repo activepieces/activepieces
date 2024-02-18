@@ -117,22 +117,41 @@ const searchWithinActionsAndTriggersAsWell = (searchQuery: string, pieces: Piece
     return fuse
         .search(searchQuery)
         .map(({ item }) => {
-            const originalPiece = { ...pieces.find((p) => p.id === item.id)! }
-            originalPiece.actions
-            const foundActionsKeys = Object.keys(originalPiece.actions)
-                .filter((name)=> item.actions.findIndex(a=> a.name === originalPiece.actions[name].name) > -1)
+            const originalPiece = pieces.find((p) => p.id === item.id)!
+            const actionsAndTriggers = [
+                ...Object.keys(originalPiece.actions).map((key) => ({
+                    name: originalPiece.actions[key].name,
+                    displayName: originalPiece.actions[key].displayName,
+                    key,
+                })),
+                ...Object.keys(originalPiece.triggers).map((key) => ({
+                    name: originalPiece.triggers[key].name,
+                    displayName: originalPiece.triggers[key].displayName,
+                    key,
+                })),
+            ]
+            const suggestionLimit = 3
+            const nestedFuse = new Fuse(actionsAndTriggers, {
+                isCaseSensitive: false,
+                shouldSort: true,
+                keys: 
+                ['displayName', 'description'],
+                threshold: 0.2,
+            })
             
-            const foundATriggersKeys = Object.keys(originalPiece.triggers)
-                .filter((name)=> item.triggers.findIndex(a=> a.name === originalPiece.triggers[name].name) > -1)
-             
-            
-            const actions = foundActionsKeys.reduce<Record<string, ActionBase>>((filteredActions, key) => {
-                filteredActions[key] = originalPiece.actions[key]
+            const suggestedActionsAndTriggers =  nestedFuse.search(searchQuery, { limit: suggestionLimit }).map(({ item }) => item)
+                    
+            const actions = suggestedActionsAndTriggers.reduce<Record<string, ActionBase>>((filteredActions, suggestion) => {
+                if (suggestion.key in originalPiece.actions) {
+                    filteredActions[suggestion.key] = originalPiece.actions[suggestion.key]
+                }
                 return filteredActions
             }, {})
 
-            const triggers = foundATriggersKeys.reduce<Record<string, TriggerBase>>((filteredTriggers, key) => { 
-                filteredTriggers[key] = originalPiece.triggers[key]
+            const triggers = suggestedActionsAndTriggers.reduce<Record<string, TriggerBase>>((filteredTriggers, suggestion) => { 
+                if (suggestion.key in originalPiece.triggers) {
+                    filteredTriggers[suggestion.key] = originalPiece.triggers[suggestion.key]
+                }
                 return filteredTriggers
             }
             , {})

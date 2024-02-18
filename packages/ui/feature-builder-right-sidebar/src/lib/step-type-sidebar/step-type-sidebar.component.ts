@@ -480,7 +480,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
       this.pieceMetadataService.getPiecesManifestFromServer({
         includeHidden: false,
         searchQuery,
-        suggestActionsAndTrigger: searchQuery.length > 3,
+        suggestActionsAndTrigger: searchQuery.length >= 3,
       });
     return serverRequestToSearchForPiece$.pipe(
       map((res) => {
