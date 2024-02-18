@@ -468,6 +468,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
       this.pieceMetadataService.getPiecesManifestFromServer({
         includeHidden: false,
         searchQuery,
+        suggestActionsAndTrigger: true,
       });
     return serverRequestToSearchForPiece$.pipe(
       map((res) => {
@@ -489,8 +490,12 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
         item.description
           .toLowerCase()
           .includes(searchQuery.trim().toLowerCase()) ||
-        item.name.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
-        serverResponse.findIndex((p) => p.displayName === item.name) > -1
+        (item.name.toLowerCase().includes(searchQuery.trim().toLowerCase()) &&
+          (item.type === ActionType.CODE ||
+            item.type === ActionType.BRANCH ||
+            item.type === ActionType.LOOP_ON_ITEMS ||
+            item.type === TriggerType.WEBHOOK)) ||
+        serverResponse.findIndex((p) => p.displayName === item.type) > -1
     );
   }
   private showActionsOrTriggers(

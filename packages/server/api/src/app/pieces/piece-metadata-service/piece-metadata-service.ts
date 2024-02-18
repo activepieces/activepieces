@@ -25,6 +25,7 @@ type ListParams = {
     sortBy?: PieceSortBy
     orderBy?: PieceOrderBy
     searchQuery?: string
+    suggestActionsAndTrigger?: boolean
 }
 
 type GetOrThrowParams = {

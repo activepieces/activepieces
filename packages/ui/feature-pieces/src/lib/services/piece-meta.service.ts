@@ -7,6 +7,7 @@ import {
   TriggerType,
   ApFlagId,
   PieceScope,
+  ListPiecesRequestQuery,
 } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
 import {
@@ -276,11 +277,9 @@ export class PieceMetadataService {
 
   getPiecesManifestFromServer({
     includeHidden,
-    searchQuery
-  }: {
-    includeHidden: boolean;
-    searchQuery?: string;
-  }) {
+    searchQuery,
+    suggestActionsAndTrigger
+  }: ListPiecesRequestQuery) {
     
     return combineLatest([
       this.edition$,
@@ -289,15 +288,21 @@ export class PieceMetadataService {
     ]).pipe(
       switchMap(([edition, release]) => {
         let params:Record<string,boolean|string>= {
-          includeHidden,
           release,
           edition
         };
+        if(includeHidden)
+        {
+          params={...params,includeHidden}
+        }
         if(searchQuery)
         {
           params={...params,searchQuery}
         }
-
+        if(suggestActionsAndTrigger)
+        {
+          params = {...params, suggestActionsAndTrigger}
+        }
         return this.http.get<PieceMetadataModelSummary[]>(
           `${environment.apiUrl}/pieces`,
           {

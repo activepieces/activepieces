@@ -22,6 +22,7 @@ import {
 import { pieceMetadataServiceHooks } from './hooks'
 import { nanoid } from 'nanoid'
 import { exceptionHandler } from 'server-shared'
+import { toPieceMetadataModelSummary } from '.'
 
 const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
     const pieces = await findAllPieces()
@@ -106,13 +107,16 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
                         updated: new Date().toISOString(),
                     }
                 }),
+                includeActionsAndTriggers: params.suggestActionsAndTrigger,
             })
-            return pieces.map((p) =>
-                toPieceMetadataModelSummary({
+            const mappedToModel = pieces.map((p) =>
+                toPieceMetadataModel({
                     pieceMetadata: p,
                     projectId,
                 }),
             )
+            return toPieceMetadataModelSummary(mappedToModel, params.suggestActionsAndTrigger)
+
         },
 
         async getOrThrow({
@@ -192,21 +196,7 @@ const toPieceMetadataModel = ({
     }
 }
 
-const toPieceMetadataModelSummary = ({
-    pieceMetadata,
-    projectId,
-}: ToPieceMetadataModelParams): PieceMetadataModelSummary => {
-    const pieceMetadataModel = toPieceMetadataModel({
-        pieceMetadata,
-        projectId,
-    })
 
-    return {
-        ...pieceMetadataModel,
-        actions: Object.keys(pieceMetadataModel.actions).length,
-        triggers: Object.keys(pieceMetadataModel.triggers).length,
-    }
-}
 
 type ToPieceMetadataModelParams = {
     pieceMetadata: PieceMetadata

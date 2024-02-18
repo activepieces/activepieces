@@ -9,6 +9,7 @@ import {
     PrivatePiecePackage,
     PublicPiecePackage,
 } from '@activepieces/shared'
+import { PieceMetadataModel, PieceMetadataModelSummary, PieceMetadataSchema } from '../piece-metadata-entity'
 
 const initPieceMetadataService = (): PieceMetadataService => {
     const source = system.getOrThrow<PiecesSource>(SystemProp.PIECES_SOURCE)
@@ -47,4 +48,45 @@ export const getPiecePackage = async (
             return pkg
         }
     }
+}
+
+export function toPieceMetadataModelSummary<T extends PieceMetadataSchema | PieceMetadataModel>(
+    pieceMetadataEntityList: T [],
+    showSuggestedActionsAndTriggers?: boolean,
+): PieceMetadataModelSummary[] {
+    if (!showSuggestedActionsAndTriggers) {
+        return pieceMetadataEntityList.map((pieceMetadataEntity) => {
+            return {
+                ...pieceMetadataEntity,
+                actions: Object.keys(pieceMetadataEntity.actions).length,
+                triggers: Object.keys(pieceMetadataEntity.triggers).length,
+            
+            }
+        
+        })
+    }
+
+    const maximumNumberOfSuggestions = 3
+    return pieceMetadataEntityList.map((pieceMetadataEntity) => {
+        const suggestedActions = Object.keys(pieceMetadataEntity.actions).map((key) => {
+            return {
+                name: pieceMetadataEntity.actions[key].name,
+                displayName: pieceMetadataEntity.actions[key].displayName,
+            }
+        })
+        const suggestedTriggers = Object.keys(pieceMetadataEntity.triggers).map((key) => {
+            return {
+                name: pieceMetadataEntity.triggers[key].name,
+                displayName: pieceMetadataEntity.triggers[key].displayName,
+            }
+        })
+        return {
+            ...pieceMetadataEntity,
+            actions: Object.keys(pieceMetadataEntity.actions).length,
+            triggers: Object.keys(pieceMetadataEntity.triggers).length,
+            suggestedActions: suggestedActions.slice(0, maximumNumberOfSuggestions),
+            suggestedTriggers: suggestedTriggers.slice(0, maximumNumberOfSuggestions),
+        }
+    
+    })
 }

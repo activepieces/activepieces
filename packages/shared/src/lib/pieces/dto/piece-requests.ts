@@ -41,6 +41,7 @@ export const ListPiecesRequestQuery = Type.Object({
     sortBy: Type.Optional(Type.Enum(PieceSortBy)),
     orderBy: Type.Optional(Type.Enum(PieceOrderBy)),
     categories: Type.Optional(Type.Array(Type.Enum(PieceCategory))),
+    suggestActionsAndTrigger: Type.Optional(Type.Boolean()),
 })
 
 export type ListPiecesRequestQuery = Static<typeof ListPiecesRequestQuery>

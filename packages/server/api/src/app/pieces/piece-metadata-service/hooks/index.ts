@@ -13,6 +13,7 @@ export const defaultPieceHooks: PieceMetadataServiceHooks = {
                 categories: params.categories,
                 searchQuery: params.searchQuery,
                 pieces: params.pieces,
+                includeActionsAndTriggers: params.includeActionsAndTriggers,
             }),
         )
     },
@@ -42,4 +43,5 @@ export type FilterPiecesParams = {
     sortBy?: PieceSortBy
     orderBy?: PieceOrderBy
     pieces: PieceMetadataSchema[]
+    includeActionsAndTriggers?: boolean
 }

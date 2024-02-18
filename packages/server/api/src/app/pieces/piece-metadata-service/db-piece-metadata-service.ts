@@ -20,6 +20,7 @@ import { AllPiecesStats, pieceStatsService } from './piece-stats-service'
 import * as semver from 'semver'
 import { pieceMetadataServiceHooks as hooks } from './hooks'
 import { projectService } from '../../project/project-service'
+import { toPieceMetadataModelSummary } from '.'
 
 const repo = repoFactory(PieceMetadataEntity)
 
@@ -63,8 +64,9 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
             const pieces = await hooks.get().filterPieces({
                 ...params,
                 pieces: pieceMetadataEntityList,
+                includeActionsAndTriggers: params.suggestActionsAndTrigger,
             })
-            return toPieceMetadataModelSummary(pieces)
+            return toPieceMetadataModelSummary(pieces, params.suggestActionsAndTrigger)
         },
 
         async getOrThrow({
@@ -244,17 +246,7 @@ const applyVersionFilter = (
     }))
 }
 
-const toPieceMetadataModelSummary = (
-    pieceMetadataEntityList: PieceMetadataSchema[],
-): PieceMetadataModelSummary[] => {
-    return pieceMetadataEntityList.map((pieceMetadataEntity) => {
-        return {
-            ...pieceMetadataEntity,
-            actions: Object.keys(pieceMetadataEntity.actions).length,
-            triggers: Object.keys(pieceMetadataEntity.triggers).length,
-        }
-    })
-}
+
 
 const toPieceMetadataModel = (
     pieceMetadataEntity: PieceMetadataSchema,
