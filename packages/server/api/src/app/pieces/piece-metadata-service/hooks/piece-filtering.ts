@@ -146,17 +146,17 @@ const searchWithinActionsAndTriggersAsWell = (searchQuery: string, pieces: Piece
 }
 function searchForRelatedActionsAndTriggers(originalPiece: PieceMetadataSchema, searchQuery: string):
 {
-    suggestedActionsAndTriggers: { name: string, displayName: string, key: string }[]
+    suggestedActionsAndTriggers: { description: string, displayName: string, key: string }[]
 } {
   
     const actionsAndTriggers = [
         ...Object.keys(originalPiece.actions).map((key) => ({
-            name: originalPiece.actions[key].name,
+            description: originalPiece.actions[key].description,
             displayName: originalPiece.actions[key].displayName,
             key,
         })),
         ...Object.keys(originalPiece.triggers).map((key) => ({
-            name: originalPiece.triggers[key].name,
+            description: originalPiece.triggers[key].description,
             displayName: originalPiece.triggers[key].displayName,
             key,
         })),
