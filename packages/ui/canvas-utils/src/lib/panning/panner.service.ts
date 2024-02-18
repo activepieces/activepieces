@@ -71,14 +71,15 @@ export class PannerService {
     );
     zoomScale = canvasHeight / maxPossibleViewedFlowHeight;
     zoomScale = Math.min(zoomScale, MAX_ZOOM);
-    this.zoomService.minZoom = canvasHeight / fullFlowHeightWithWidgets;
-    const scaledFlowHeight = maxPossibleViewedFlowHeight * zoomScale;
+    zoomScale = Math.max(zoomScale, 0.5);
     const newState: PanningState = {
       currentOffset: {
         x: 0,
+        // The number of pixels are affected by the zoom scale, that is why we divide by the zoom scale
         y:
-          (scaledFlowHeight - maxPossibleViewedFlowHeight) / 2 +
-          DEFAULT_TOP_MARGIN,
+          ((canvasHeight * zoomScale - canvasHeight) / 2.0 +
+            DEFAULT_TOP_MARGIN) /
+          zoomScale,
       },
       isPanning: false,
     };
