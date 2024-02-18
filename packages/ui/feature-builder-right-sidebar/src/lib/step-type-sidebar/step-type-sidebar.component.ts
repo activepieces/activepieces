@@ -55,11 +55,7 @@ import {
 } from '@activepieces/ui/common';
 import { Actions, ofType } from '@ngrx/effects';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
-
-type ActionOrTriggerName = {
-  name: string;
-  displayName: string;
-};
+import { ActionOrTriggerName } from './common';
 
 @Component({
   selector: 'app-step-type-sidebar',
@@ -205,7 +201,13 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
     );
   }
 
-  onTypeSelected(flowItemDetails: FlowItemDetails) {
+  onTypeSelected({
+    flowItemDetails,
+    suggestion,
+  }: {
+    flowItemDetails: FlowItemDetails;
+    suggestion?: ActionOrTriggerName;
+  }) {
     this.flowTypeSelected$ = forkJoin({
       currentFlow: this.store
         .select(BuilderSelectors.selectCurrentFlow)
@@ -223,7 +225,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
           return;
         }
         if (this._showTriggers) {
-          this.replaceTrigger(flowItemDetails);
+          this.replaceTrigger(flowItemDetails, suggestion);
         } else {
           const operation = this.constructAddOperation(
             (results.rightSideBar.props as StepTypeSideBarProps).stepName,
@@ -231,7 +233,8 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
             flowItemDetails.type as ActionType,
             flowItemDetails,
             (results.rightSideBar.props as StepTypeSideBarProps)
-              .stepLocationRelativeToParent
+              .stepLocationRelativeToParent,
+            suggestion
           );
           this.store.dispatch(
             FlowsActions.addAction({
@@ -246,11 +249,16 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
     );
   }
 
-  private replaceTrigger(triggerDetails: FlowItemDetails) {
+  private replaceTrigger(
+    triggerDetails: FlowItemDetails,
+    suggestion?: ActionOrTriggerName
+  ) {
     const base = {
       name: 'trigger',
       nextAction: undefined,
-      displayName: getDisplayNameForTrigger(triggerDetails.type as TriggerType),
+      displayName:
+        suggestion?.displayName ||
+        getDisplayNameForTrigger(triggerDetails.type as TriggerType),
     };
     let trigger: Trigger;
     switch (triggerDetails.type as TriggerType) {
@@ -284,7 +292,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
             pieceName: triggerDetails.extra?.pieceName ?? 'NO_APP_NAME',
             pieceVersion:
               triggerDetails.extra?.pieceVersion ?? 'NO_APP_VERSION',
-            triggerName: '',
+            triggerName: suggestion?.name || '',
             input: {},
             inputUiInfo: {
               currentSelectedData: '',
@@ -305,14 +313,17 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
     flowVersion: FlowVersion,
     actionType: ActionType,
     flowItemDetails: FlowItemDetails,
-    stepLocationRelativeToParent: StepLocationRelativeToParent
+    stepLocationRelativeToParent: StepLocationRelativeToParent,
+    suggestion?: ActionOrTriggerName
   ): AddActionRequest {
     const baseProps = {
       name: flowHelper.findAvailableStepName(flowVersion, 'step'),
-      displayName: getDefaultDisplayNameForPiece(
-        flowItemDetails.type as ActionType,
-        flowItemDetails.name
-      ),
+      displayName:
+        suggestion?.displayName ||
+        getDefaultDisplayNameForPiece(
+          flowItemDetails.type as ActionType,
+          flowItemDetails.name
+        ),
       nextAction: undefined,
       valid: true,
     };
@@ -369,7 +380,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
               pieceName: flowItemDetails.extra?.pieceName ?? 'NO_APP_NAME',
               pieceVersion:
                 flowItemDetails.extra?.pieceVersion ?? 'NO_APP_VERSION',
-              actionName: undefined,
+              actionName: suggestion?.name,
               input: {},
               inputUiInfo: {
                 customizedInputs: {},
@@ -438,8 +449,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
         );
         const matchesWithTriggersOrActions = this.showActionsOrTriggers(
           matches,
-          res.search.serverResponse,
-          res.search.searchQuery
+          res.search.serverResponse
         );
         //sort by the order of the server response
         return matchesWithTriggersOrActions.sort((a, b) => {
@@ -502,25 +512,15 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
   }
   private showActionsOrTriggers(
     searchResult: FlowItemDetails[],
-    serverResponse: PieceMetadataModelSummary[],
-    searchQuery: string
+    serverResponse: PieceMetadataModelSummary[]
   ) {
     return searchResult.map((item) => {
       const serverResult = serverResponse.find((it) => {
         return it.displayName === item.name;
       });
-      if (
-        !serverResult ||
-        !serverResult.actions ||
-        !serverResult.triggers ||
-        searchQuery.length < 3
-      ) {
-        return {
-          ...item,
-          suggestedActionsOrTriggers: [] as ActionOrTriggerName[],
-        };
+      if (!serverResult) {
+        return item;
       }
-
       return {
         ...item,
         suggestedActionsOrTriggers: this._showTriggers

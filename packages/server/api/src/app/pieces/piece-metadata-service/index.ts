@@ -68,24 +68,29 @@ export function toPieceMetadataModelSummary<T extends PieceMetadataSchema | Piec
 
     const maximumNumberOfSuggestions = 3
     return pieceMetadataEntityList.map((pieceMetadataEntity) => {
-        const suggestedActions = Object.keys(pieceMetadataEntity.actions).map((key) => {
-            return {
+     
+        const suggestedActions = Object.keys(pieceMetadataEntity.actions).slice(0, maximumNumberOfSuggestions).map((key) => {
+            
+            const result = {
                 name: pieceMetadataEntity.actions[key].name,
                 displayName: pieceMetadataEntity.actions[key].displayName,
             }
+            return result
         })
-        const suggestedTriggers = Object.keys(pieceMetadataEntity.triggers).map((key) => {
-            return {
+        const suggestedTriggers = Object.keys(pieceMetadataEntity.triggers).slice(0, maximumNumberOfSuggestions).map((key) => {
+        
+            const result = {
                 name: pieceMetadataEntity.triggers[key].name,
                 displayName: pieceMetadataEntity.triggers[key].displayName,
             }
+            return result
         })
         return {
             ...pieceMetadataEntity,
             actions: Object.keys(pieceMetadataEntity.actions).length,
             triggers: Object.keys(pieceMetadataEntity.triggers).length,
-            suggestedActions: suggestedActions.slice(0, maximumNumberOfSuggestions),
-            suggestedTriggers: suggestedTriggers.slice(0, maximumNumberOfSuggestions),
+            suggestedActions,
+            suggestedTriggers,
         }
     
     })

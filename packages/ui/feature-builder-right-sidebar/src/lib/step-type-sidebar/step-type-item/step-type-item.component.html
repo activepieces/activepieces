@@ -36,7 +36,7 @@
         <div class="description">{{ itemDetails.description }}</div>
       </div>
       <mat-chip-listbox *ngIf="itemDetails.suggestedActionsOrTriggers" class="suggested-actions-or-triggers">
-        <mat-chip-option *ngFor="let suggestion of itemDetails.suggestedActionsOrTriggers"><div class="ap-typography-caption">{{suggestion.displayName}} </div></mat-chip-option>
+        <mat-chip-option (click)="$event.stopPropagation(); suggestionClicked.emit(suggestion);" *ngFor="let suggestion of itemDetails.suggestedActionsOrTriggers"><div class="ap-typography-caption">{{suggestion.displayName}} </div></mat-chip-option>
       </mat-chip-listbox>
 
     </div>
