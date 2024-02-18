@@ -13,6 +13,7 @@ import { FlowItemDetails, fadeIn400ms } from '@activepieces/ui/common';
 export class StepTypeItemComponent {
   _flowItemDetails: FlowItemDetails;
   _flowItemDetails$: Observable<FlowItemDetails | undefined>;
+
   @Input() clickable = true;
   @Input() set flowItemDetails(value: FlowItemDetails) {
     this._flowItemDetails = value;
@@ -32,7 +33,6 @@ export class StepTypeItemComponent {
   }
   loadingLogo$: Subject<boolean> = new Subject<boolean>();
   faInfo = faInfoCircle;
-  hover = false;
   constructor() {
     this.loadingLogo$.next(true);
   }

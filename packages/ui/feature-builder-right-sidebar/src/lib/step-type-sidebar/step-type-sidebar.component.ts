@@ -55,10 +55,12 @@ import {
 } from '@activepieces/ui/common';
 import { Actions, ofType } from '@ngrx/effects';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
+
 type ActionOrTriggerName = {
   name: string;
   displayName: string;
 };
+
 @Component({
   selector: 'app-step-type-sidebar',
   templateUrl: './step-type-sidebar.component.html',
@@ -468,7 +470,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
       this.pieceMetadataService.getPiecesManifestFromServer({
         includeHidden: false,
         searchQuery,
-        suggestActionsAndTrigger: true,
+        suggestActionsAndTrigger: searchQuery.length > 3,
       });
     return serverRequestToSearchForPiece$.pipe(
       map((res) => {
@@ -495,7 +497,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
             item.type === ActionType.BRANCH ||
             item.type === ActionType.LOOP_ON_ITEMS ||
             item.type === TriggerType.WEBHOOK)) ||
-        serverResponse.findIndex((p) => p.displayName === item.type) > -1
+        serverResponse.findIndex((p) => p.displayName === item.name) > -1
     );
   }
   private showActionsOrTriggers(
@@ -515,15 +517,15 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
       ) {
         return {
           ...item,
-          actionsOrTriggers: [] as ActionOrTriggerName[],
+          suggestedActionsOrTriggers: [] as ActionOrTriggerName[],
         };
       }
 
       return {
         ...item,
-        actionsOrTriggers: this._showTriggers
-          ? serverResult.triggers
-          : serverResult.actions,
+        suggestedActionsOrTriggers: this._showTriggers
+          ? serverResult.suggestedTriggers
+          : serverResult.suggestedActions,
       };
     });
   }
