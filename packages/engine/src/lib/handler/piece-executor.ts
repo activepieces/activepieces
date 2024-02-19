@@ -11,7 +11,6 @@ import { pieceLoader } from '../helper/piece-loader'
 import { utils } from '../utils'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
 import { URL } from 'url'
-import { ConnectionNotFoundError } from '../helper/execution-errors'
 
 type HookResponse = { stopResponse: StopHookParams | undefined, pauseResponse: PauseHookParams | undefined, tags: string[], stopped: boolean, paused: boolean }
 
@@ -171,10 +170,6 @@ const createConnectionManager = ({ workerToken, projectId, hookResponse }: { pro
                 return connection
             }
             catch (e) {
-                if (e instanceof ConnectionNotFoundError) {
-                    throw e
-                }
-
                 return null
             }
         },
