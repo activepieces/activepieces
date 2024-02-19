@@ -1,7 +1,6 @@
 import { AUTHENTICATION_PROPERTY_NAME, GenericStepOutput, ActionType, ExecutionOutputStatus, PieceAction, StepOutputStatus, assertNotNullOrUndefined, isNil, ExecutionType, PauseType } from '@activepieces/shared'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
-import { variableService } from '../services/variable-service'
 import { ActionContext, ConnectionsManager, PauseHook, PauseHookParams, PiecePropertyMap, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
 import { createContextStore } from '../services/storage.service'
 import { createFilesService } from '../services/files.service'
@@ -48,13 +47,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             piecesSource: constants.piecesSource,
         })
 
-        const {
-            censoredInput,
-            resolvedInput,
-        } = await variableService({
-            projectId: constants.projectId,
-            workerToken: constants.workerToken,
-        }).resolve<StaticPropsValue<PiecePropertyMap>>({
+        const { resolvedInput, censoredInput } = await constants.variableService.resolve<StaticPropsValue<PiecePropertyMap>>({
             unresolvedInput: action.settings.input,
             executionState,
         })
