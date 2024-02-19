@@ -8,6 +8,7 @@ import {
   ApFlagId,
   PieceScope,
   ListPiecesRequestQuery,
+  spreadIfDefined,
 } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
 import {
@@ -291,17 +292,11 @@ export class PieceMetadataService {
           release,
           edition
         };
-        if(includeHidden)
-        {
-          params={...params,includeHidden}
-        }
-        if(searchQuery)
-        {
-          params={...params,searchQuery}
-        }
-        if(suggestActionsAndTrigger)
-        {
-          params = {...params, suggestActionsAndTrigger}
+        params= {
+          ...params,
+          ...spreadIfDefined('includeHidden', includeHidden),
+          ...spreadIfDefined('searchQuery', searchQuery),
+          ...spreadIfDefined('suggestActionsAndTrigger', suggestActionsAndTrigger)
         }
         return this.http.get<PieceMetadataModelSummary[]>(
           `${environment.apiUrl}/pieces`,
