@@ -68,19 +68,19 @@ export function toPieceMetadataModelSummary<T extends PieceMetadataSchema | Piec
 
     return pieceMetadataEntityList.map((pieceMetadataEntity) => {
      
-        const suggestedActions = Object.keys(pieceMetadataEntity.actions).map((key) => {
+        const suggestedActions = Object.values(pieceMetadataEntity.actions).map((action) => {
             
             const result = {
-                name: pieceMetadataEntity.actions[key].name,
-                displayName: pieceMetadataEntity.actions[key].displayName,
+                name: action.name,
+                displayName: action.displayName,
             }
             return result
         })
-        const suggestedTriggers = Object.keys(pieceMetadataEntity.triggers).map((key) => {
+        const suggestedTriggers = Object.values(pieceMetadataEntity.triggers).map((trigger) => {
         
             const result = {
-                name: pieceMetadataEntity.triggers[key].name,
-                displayName: pieceMetadataEntity.triggers[key].displayName,
+                name: trigger.name,
+                displayName: trigger.displayName,
             }
             return result
         })
