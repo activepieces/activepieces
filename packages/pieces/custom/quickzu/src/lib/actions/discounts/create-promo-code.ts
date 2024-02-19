@@ -1,9 +1,9 @@
-import { quickzuAuth } from '@activepieces/piece-quickzu';
 import {
   DynamicPropsValue,
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
+import { quickzuAuth } from '../../..';
 import { makeClient } from '../../common';
 import {
   DiscountFilterType,
@@ -81,9 +81,9 @@ export const createPromoCodeAction = createAction({
           case DiscountFilterType.PRODUCTS: {
             const res = await client.listProducts();
             fields['values'] = Property.StaticMultiSelectDropdown({
-              displayName: 'Categories',
+              displayName: 'Products',
               required: true,
-              description: 'Categories eligible for a discount.',
+              description: 'Products eligible for a discount.',
               options: {
                 disabled: false,
                 options: res.data.map((product) => {
@@ -121,12 +121,14 @@ export const createPromoCodeAction = createAction({
       required: true,
       options: {
         disabled: false,
-        options: Object.values(DiscountValueType).map((value) => {
-          return {
-            label: value.toLowerCase(),
-            value: value,
-          };
-        }),
+        options: Object.values(DiscountValueType)
+          .filter((value) => value !== DiscountValueType.FIXED_PRICE)
+          .map((value) => {
+            return {
+              label: value.toLowerCase(),
+              value: value,
+            };
+          }),
       },
     }),
     value: Property.ShortText({
@@ -161,7 +163,7 @@ export const createPromoCodeAction = createAction({
     } = context.propsValue;
 
     let input: ProductDiscountInput = {
-      discount_method: DiscountMethod.ITEM_LEVEL,
+      discount_method: DiscountMethod.SUB_TOTAL,
       title,
       start_date,
       end_date,

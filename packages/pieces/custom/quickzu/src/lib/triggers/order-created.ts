@@ -1,6 +1,7 @@
 import {
   Property,
   TriggerStrategy,
+  WebhookHandshakeStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { quickzuAuth } from '../../';
@@ -260,8 +261,9 @@ const sampleData = {
 export const orderCreatedTrigger = createTrigger({
   auth: quickzuAuth,
   name: 'quickzu_order_created_trigger',
-  displayName: 'Order Created',
-  description: 'Triggers when a new order is created in store.',
+  displayName: 'Order Created/Updated',
+  description:
+    'Triggers when a new order is created or a order status is changed in store.',
   type: TriggerStrategy.WEBHOOK,
   sampleData: sampleData,
   props: {
@@ -276,9 +278,16 @@ export const orderCreatedTrigger = createTrigger({
     // Empty
   },
   async run(context) {
-    return [context.payload.body];
+    return [context.payload];
   },
-  async test(context) {
-    return [context.payload.body];
+  handshakeConfiguration: {
+    strategy: WebhookHandshakeStrategy.BODY_PARAM_PRESENT,
+    paramName: 'test',
+  },
+  async onHandshake(context) {
+    return {
+      status: 200,
+      body: {},
+    };
   },
 });

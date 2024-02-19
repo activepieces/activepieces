@@ -76,16 +76,18 @@ export const quickzuCommon = {
           };
         }
         const client = makeClient(auth as string);
-        const { body } = await client.listOrders(1, 20);
+        const res = await client.listOrders(1, 20);
 
         return {
           disabled: false,
-          options: body.data.map((order: { _id: string; order_id: number }) => {
-            return {
-              label: order.order_id,
-              value: order._id,
-            };
-          }),
+          options: res['data'].map(
+            (order: { _id: string; order_id: number }) => {
+              return {
+                label: order.order_id.toString(),
+                value: order._id,
+              };
+            }
+          ),
         };
       },
     }),

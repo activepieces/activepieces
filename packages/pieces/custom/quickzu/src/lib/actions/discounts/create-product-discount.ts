@@ -1,9 +1,9 @@
-import { quickzuAuth } from '@activepieces/piece-quickzu';
 import {
   DynamicPropsValue,
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
+import { quickzuAuth } from '../../..';
 import { makeClient } from '../../common';
 import {
   DiscountFilterType,
@@ -81,9 +81,9 @@ export const createProductDiscountAction = createAction({
           case DiscountFilterType.PRODUCTS: {
             const res = await client.listProducts();
             fields['values'] = Property.StaticMultiSelectDropdown({
-              displayName: 'Categories',
+              displayName: 'Products',
               required: true,
-              description: 'Categories eligible for a discount.',
+              description: 'Products eligible for a discount.',
               options: {
                 disabled: false,
                 options: res.data.map((product) => {

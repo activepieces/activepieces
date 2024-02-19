@@ -15,7 +15,6 @@ import { deleteProductAction } from './lib/actions/products/delete-product';
 import { listProductsAction } from './lib/actions/products/list-products';
 import { updateProductAction } from './lib/actions/products/update-product';
 import { orderCreatedTrigger } from './lib/triggers/order-created';
-import { orderUpdatedTrigger } from './lib/triggers/order-updated';
 
 const authHelpDescription = `
 1. Login to your Quickzu Dashboard.
@@ -51,5 +50,5 @@ export const quickzu = createPiece({
     createPromoCodeAction,
     updateBusinessTimeAction,
   ],
-  triggers: [orderCreatedTrigger, orderUpdatedTrigger],
+  triggers: [orderCreatedTrigger],
 });
