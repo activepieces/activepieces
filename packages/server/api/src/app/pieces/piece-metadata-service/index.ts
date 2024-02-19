@@ -60,16 +60,12 @@ export function toPieceMetadataModelSummary<T extends PieceMetadataSchema | Piec
                 ...pieceMetadataEntity,
                 actions: Object.keys(pieceMetadataEntity.actions).length,
                 triggers: Object.keys(pieceMetadataEntity.triggers).length,
-            
             }
-        
         })
     }
 
     return pieceMetadataEntityList.map((pieceMetadataEntity) => {
-     
         const suggestedActions = Object.values(pieceMetadataEntity.actions).map((action) => {
-            
             const result = {
                 name: action.name,
                 displayName: action.displayName,

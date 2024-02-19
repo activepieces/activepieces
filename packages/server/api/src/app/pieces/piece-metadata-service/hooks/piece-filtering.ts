@@ -4,15 +4,8 @@ import Fuse from 'fuse.js'
 import { ActionBase, TriggerBase } from '@activepieces/pieces-framework'
 
 
-const defaultFilterKeys = [  {
-    name: 'displayName',
-    weight: 5,
-},
-{
-    name: 'description',
-    weight: 5,
-}] 
-
+const pieceFilterKeys = [ 'displayName', 'description'] 
+const suggestionLimit = 3
 export const filterPiecesBasedUser = ({
     searchQuery,
     pieces,
@@ -49,7 +42,7 @@ const filterBasedOnSearchQuery = ({
         isCaseSensitive: false,
         shouldSort: true,
         keys: 
-        defaultFilterKeys,
+        pieceFilterKeys,
         threshold: 0.3,
     })
 
@@ -87,30 +80,18 @@ const searchWithinActionsAndTriggersAsWell = (searchQuery: string, pieces: Piece
         }
     })
 
-    const keysInAdditionToActionsAndTriggers = [ 
-        ...defaultFilterKeys,
-        {
-            name: 'actions.displayName',
-            weight: 5,
-        },
-        {
-            name: 'actions.description',
-            weight: 5,
-        },
-        {
-            name: 'triggers.description',
-            weight: 5,
-        },
-        {
-            name: 'triggers.displayName',
-            weight: 5,
-        },
+    const pieceWithTriggersAndActionsFilterKeys = [ 
+        ...pieceFilterKeys,
+        'actions.displayName',
+        'actions.description',
+        'triggers.displayName',
+        'triggers.description',
     ]
     const fuse = new Fuse(putActionsAndTriggersInAnArray, {
         isCaseSensitive: false,
         shouldSort: true,
         keys: 
-        keysInAdditionToActionsAndTriggers,
+        pieceWithTriggersAndActionsFilterKeys,
         threshold: 0.2,
     })
 
@@ -161,7 +142,7 @@ function searchForRelatedActionsAndTriggers(originalPiece: PieceMetadataSchema, 
             key,
         })),
     ]
-    const suggestionLimit = 3
+ 
     const nestedFuse = new Fuse(actionsAndTriggers, {
         isCaseSensitive: false,
         shouldSort: true,
