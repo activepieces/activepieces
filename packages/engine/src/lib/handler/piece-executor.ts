@@ -34,22 +34,12 @@ export const pieceExecutor: BaseExecutor<PieceAction> = {
 }
 
 const executeAction: ActionHandler<PieceAction> = async ({ action, executionState, constants }) => {
-    const {
-        censoredInput,
-        resolvedInput,
-    } = await variableService({
-        projectId: constants.projectId,
-        workerToken: constants.workerToken,
-    }).resolve<StaticPropsValue<PiecePropertyMap>>({
-        unresolvedInput: action.settings.input,
-        executionState,
-    })
-
     const stepOutput = GenericStepOutput.create({
-        input: censoredInput,
+        input: {},
         type: ActionType.PIECE,
         status: StepOutputStatus.SUCCEEDED,
     })
+
     try {
         assertNotNullOrUndefined(action.settings.actionName, 'actionName')
         const { pieceAction, piece } = await pieceLoader.getPieceAndActionOrThrow({
@@ -58,6 +48,19 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             actionName: action.settings.actionName,
             piecesSource: constants.piecesSource,
         })
+
+        const {
+            censoredInput,
+            resolvedInput,
+        } = await variableService({
+            projectId: constants.projectId,
+            workerToken: constants.workerToken,
+        }).resolve<StaticPropsValue<PiecePropertyMap>>({
+            unresolvedInput: action.settings.input,
+            executionState,
+        })
+
+        stepOutput.input = censoredInput
 
         const { processedInput, errors } = await constants.variableService.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth)
         if (Object.keys(errors).length > 0) {
