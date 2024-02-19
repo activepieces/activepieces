@@ -105,9 +105,10 @@ export const appConnectionService = {
         })
         if (isNil(connectionById)) {
             throw new ActivepiecesError({
-                code: ErrorCode.APP_CONNECTION_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    id: params.id,
+                    entityType: 'AppConnection',
+                    entityId: params.id,
                 },
             })
         }
