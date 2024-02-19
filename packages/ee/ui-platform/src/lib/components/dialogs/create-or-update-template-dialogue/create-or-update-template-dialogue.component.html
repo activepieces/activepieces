@@ -11,12 +11,6 @@
             <mat-error *ngIf="form.controls.name.invalid" i18n>Name is required</mat-error>
         </mat-form-field>
 
-        <mat-form-field class="ap-w-full ap-mb-1" appearance="outline">
-            <mat-label i18n>Description</mat-label>
-            <input [formControl]="form.controls.description" matInput type="text" />
-            <mat-error *ngIf="form.controls.description.invalid" i18n>Description is required</mat-error>
-        </mat-form-field>
-
         <mat-form-field class="ap-w-full ap-mb-1">
             <mat-label i18n>Flow template</mat-label>
             <ap-file-upload #flowInput [formControl]="form.controls.file" [required]="true"></ap-file-upload>
