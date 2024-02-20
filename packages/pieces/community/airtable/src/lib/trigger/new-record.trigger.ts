@@ -1,19 +1,20 @@
 import {
-  StaticPropsValue,
-  TriggerStrategy,
-  createTrigger,
-} from '@activepieces/pieces-framework';
-import { airtableCommon } from '../common';
-import {
   DedupeStrategy,
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
+import {
+  StaticPropsValue,
+  TriggerStrategy,
+  createTrigger,
+} from '@activepieces/pieces-framework';
 import { airtableAuth } from '../../';
+import { airtableCommon } from '../common';
 
 const props = {
   base: airtableCommon.base,
   tableId: airtableCommon.tableId,
+  viewId: airtableCommon.views,
 };
 
 const polling: Polling<string, StaticPropsValue<typeof props>> = {
@@ -23,6 +24,7 @@ const polling: Polling<string, StaticPropsValue<typeof props>> = {
       personalToken: auth,
       baseId: propsValue.base,
       tableId: propsValue.tableId!,
+      limitToView: propsValue.viewId,
     });
     return records.map((record) => ({
       epochMilliSeconds: Date.parse(record.createdTime),
