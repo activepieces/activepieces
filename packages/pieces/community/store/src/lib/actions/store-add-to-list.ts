@@ -9,6 +9,14 @@ export const storageAddtoList = createAction({
   name: 'add_to_list',
   displayName: 'Add To List',
   description: 'Add Item to a list',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      hide: true,
+    },
+    retryOnFailure: {
+      hide: true,
+    },
+  },
   props: {
     key: Property.ShortText({
       displayName: 'Key',
@@ -42,12 +50,19 @@ export const storageAddtoList = createAction({
     }),
   },
   async run(context) {
-    const items =
+    let items =
       (await context.store.get<unknown[]>(
         context.propsValue['key'],
         context.propsValue.store_scope
       )) ?? [];
-    if (!Array.isArray(items)) {
+    try {
+      if(typeof items === 'string') {
+        items = JSON.parse(items)
+      }
+      if (!Array.isArray(items)) {
+        throw new Error(`Key ${context.propsValue['key']} is not an array`);
+      }
+    } catch(err) {
       throw new Error(`Key ${context.propsValue['key']} is not an array`);
     }
     if (context.propsValue['ignore_if_exists']) {

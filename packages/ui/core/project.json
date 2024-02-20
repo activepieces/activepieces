@@ -11,7 +11,7 @@
         "{options.outputPath}"
       ],
       "options": {
-        "statsJson": true,
+        "statsJson": false,
         "outputPath": "dist/packages/ui/core",
         "index": "packages/ui/core/src/index.html",
         "main": "packages/ui/core/src/main.ts",

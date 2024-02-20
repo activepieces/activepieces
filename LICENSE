@@ -1,8 +1,8 @@
-Copyright (c) 2020-2023 Activepieces Inc.
+Copyright (c) 2020-2024 Activepieces Inc.
 
 Portions of this software are licensed as follows:
 
-* All content that resides under the "packages/ee/" and "packages/backend/src/app/ee/" directory of this repository, if that directory exists, is licensed under the license defined in packages/ee/LICENSE
+* All content that resides under the "packages/ee/" and "packages/server/api/src/app/ee" directory of this repository, if that directory exists, is licensed under the license defined in packages/ee/LICENSE
 * All third party components incorporated into the Activepieces Inc Software are licensed under the original license provided by the owner of the applicable component.
 * Content outside of the above mentioned directories or restrictions above is available under the "MIT Expat" license as defined below.
 

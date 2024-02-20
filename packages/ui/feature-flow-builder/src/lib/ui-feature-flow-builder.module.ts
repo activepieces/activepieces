@@ -17,7 +17,8 @@ import { UiFeatureBuilderRightSidebarModule } from '@activepieces/ui/feature-bui
 import { PortalModule } from '@angular/cdk/portal';
 import { UiFeatureTemplatesModule } from '@activepieces/ui/feature-templates';
 import { TimeagoModule } from 'ngx-timeago';
-
+import { UiFeatureFoldersStoreModule } from '@activepieces/ui/feature-folders-store';
+import { UiCanvasUtilsModule } from '@activepieces/ui-canvas-utils';
 @NgModule({
   imports: [
     CommonModule,
@@ -34,8 +35,10 @@ import { TimeagoModule } from 'ngx-timeago';
     UiFeatureBuilderCanvasModule,
     UiFeatureBuilderFormControlsModule,
     UiFeatureBuilderRightSidebarModule,
+    UiFeatureFoldersStoreModule,
     PortalModule,
     UiFeatureTemplatesModule,
+    UiCanvasUtilsModule
   ],
   declarations: [FlowBuilderComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],

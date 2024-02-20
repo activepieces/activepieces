@@ -28,7 +28,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatTableModule } from '@angular/material/table';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatSidenavModule } from '@angular/material/sidenav';
-import { DialogTitleTemplateComponent } from './components/dialog-title-template/dialog-title-template.component';
+import { DialogTitleTemplateComponent } from './components/dialogs/dialog-title-template/dialog-title-template.component';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
@@ -44,7 +44,7 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 import { TrackFocusDirective } from './directives/track-focus.directive';
 import { ObjectToArrayPipe } from './pipe/object-to-array.pipe';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { DeleteEntityDialogComponent } from './components/delete-enity-dialog/delete-entity-dialog.component';
+import { DeleteEntityDialogComponent } from './components/dialogs/delete-enity-dialog/delete-entity-dialog.component';
 import { MatDividerModule } from '@angular/material/divider';
 import { GenericSnackbarTemplateComponent } from './components/generic-snackbar-template/generic-snackbar-template.component';
 import { MatIconModule } from '@angular/material/icon';
@@ -69,6 +69,8 @@ import { ArrayFormControlComponent } from './components/array-form-control/array
 import { UpgradeNoteComponent } from '././components/upgrade-note/upgrade-note.component';
 import { CardDirective } from './directives/card.directive';
 import { DropdownPropertySearchPipe } from './pipe/dropdown-search.pipe';
+import { ImportFlowDialogComponent } from './components/dialogs/import-flow-dialog/import-flow-dialog.component';
+import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -95,6 +97,7 @@ const exportedImports = [
   MatSliderModule,
   MatSnackBarModule,
   ScrollingModule,
+  MonacoEditorModule,
 ];
 const exportedDeclarations = [
   UploadFileControlComponent,
@@ -133,6 +136,7 @@ const exportedDeclarations = [
   ArrayFormControlComponent,
   UpgradeNoteComponent,
   CardDirective,
+  ImportFlowDialogComponent,
   DropdownPropertySearchPipe,
 ];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {

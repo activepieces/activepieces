@@ -1,11 +1,8 @@
-<ap-dialog-title-template>{{title}}</ap-dialog-title-template>
+<ap-dialog-title-template>{{data.title}}</ap-dialog-title-template>
 <mat-dialog-content>
-    <div class="code-container  ap-min-w-[500px] ap-min-h-[500px] ap-max-h-[500px] ap-max-w-[750px]">
-        <div class="code-area ap-min-w-[500px] ap-min-h-[500px]">
-            <pre class="line-numbers ap-max-h-[500px]  ap-min-w-[500px] ap-min-h-[500px] ap-pb-1"
-                [class.ap-px-4]="!highlight" [class.ap-py-3]="!highlight"><code class="language-js"
-                [innerHTML]="content | outputLog:false"></code></pre>
-        </div>
+    <div class="ap-min-w-[500px]  ap-h-[500px] ap-max-h-[500px] ap-max-w-[750px]">
+        <ngx-monaco-editor class="!ap-h-full !ap-w-full" [options]="jsonEditorOptionsMonaco"
+            [formControl]="jsonFormControl"></ngx-monaco-editor>
     </div>
 </mat-dialog-content>
 <mat-dialog-actions align="end">

@@ -9,6 +9,7 @@ import { HighlightService } from '../../service/highlight.service';
 import { JsonViewDialogComponent } from './json-view-dialog/json-view-dialog.component';
 import { copyText } from '../../utils/tables.utils';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { downloadJson } from '../../utils/consts';
 
 @Component({
   selector: 'ap-json-viewer',
@@ -60,5 +61,9 @@ export class JsonViewComponent implements AfterViewInit {
     }
 
     this.snackbar.open(`${this.isInput ? 'Input' : 'Output'} copied`);
+  }
+
+  downloadContent() {
+    downloadJson(this._content, this.title);
   }
 }

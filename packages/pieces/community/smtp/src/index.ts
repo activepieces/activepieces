@@ -3,8 +3,9 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { sendEmail } from './lib/actions/send-email';
+import { PieceCategory } from '@activepieces/shared';
 import nodemailer from 'nodemailer';
+import { sendEmail } from './lib/actions/send-email';
 
 export const smtpAuth = PieceAuth.CustomAuth({
   required: true,
@@ -42,6 +43,9 @@ export const smtpAuth = PieceAuth.CustomAuth({
         },
         connectionTimeout: 10000, // 5 second timeout
         secure: auth.TLS === true ? true : undefined,
+        tls: {
+          rejectUnauthorized: false,
+        }
       });
       return new Promise((resolve, reject) => {
         transporter.verify(function (error, success) {
@@ -65,6 +69,7 @@ export const smtp = createPiece({
   displayName: 'SMTP',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/smtp.png',
+  categories: [PieceCategory.CORE],
   authors: ['abaza738'],
   auth: smtpAuth,
   actions: [sendEmail],

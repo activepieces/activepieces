@@ -11,10 +11,14 @@ import { map, Observable, of, shareReplay, switchMap, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { FormControl } from '@angular/forms';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
-import { ActionType, ApFlagId, TriggerType } from '@activepieces/shared';
+import {
+  ActionType,
+  ApFlagId,
+  TriggerTestStrategy,
+  TriggerType,
+} from '@activepieces/shared';
 import {
   BuilderSelectors,
-  CollectionBuilderService,
   Step,
   RightSideBarType,
   ViewModeEnum,
@@ -24,8 +28,8 @@ import {
   TestStepService,
   isOverflown,
   FlagService,
+  FlowBuilderService,
 } from '@activepieces/ui/common';
-import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/common';
 import {
   CORE_SCHEDULE,
@@ -53,9 +57,9 @@ export class FlowRightSidebarComponent implements OnInit {
   selectedStepResultContainer: ElementRef;
   elevateResizer$: Observable<void>;
   animateSectionsHeightChange = false;
-  isCurrentStepPollingTrigger$: Observable<boolean>;
+  triggerSupportsLoadingTestData$: Observable<boolean>;
   isResizerGrabbed = false;
-  isCurrentStepPieceWebhookTrigger$: Observable<boolean>;
+  triggerSupportsSimulation$: Observable<boolean>;
   viewMode$: Observable<ViewModeEnum>;
   ViewModeEnum = ViewModeEnum;
   showDocs$: Observable<boolean>;
@@ -74,7 +78,7 @@ export class FlowRightSidebarComponent implements OnInit {
     private renderer2: Renderer2,
     private flagService: FlagService,
     private pieceMetadaService: PieceMetadataService,
-    public builderService: CollectionBuilderService,
+    public builderService: FlowBuilderService,
     private builderAutocompleteMentionsDropdownService: BuilderAutocompleteMentionsDropdownService
   ) {}
 
@@ -85,8 +89,8 @@ export class FlowRightSidebarComponent implements OnInit {
       BuilderSelectors.selectCurrentRightSideBarType
     );
     this.listenToStepChangeAndAnimateResizer();
-    this.checkIfCurrentStepIsPollingTrigger();
-    this.checkIfCurrentStepIsPieceWebhookTrigger();
+    this.checkIfTriggerSupportsLoadingTestData();
+    this.checkIfTriggerSupportsSimulation();
     this.checkForViewMode();
   }
 
@@ -94,34 +98,20 @@ export class FlowRightSidebarComponent implements OnInit {
     this.viewMode$ = this.store.select(BuilderSelectors.selectViewMode);
   }
 
-  private checkIfCurrentStepIsPollingTrigger() {
-    this.isCurrentStepPollingTrigger$ = this.currentStep$.pipe(
-      switchMap((step) => {
-        if (step && step.type === TriggerType.PIECE) {
-          return this.pieceMetadaService
-            .getPieceMetadata(
-              step.settings.pieceName,
-              step.settings.pieceVersion
-            )
-            .pipe(
-              map((res) => {
-                return (
-                  res.triggers[step.settings.triggerName] &&
-                  (res.triggers[step.settings.triggerName].type ===
-                    TriggerStrategy.POLLING ||
-                    res.triggers[step.settings.triggerName].type ===
-                      TriggerStrategy.APP_WEBHOOK)
-                );
-              })
-            );
-        }
-        return of(false);
-      })
+  private checkIfTriggerSupportsLoadingTestData() {
+    this.triggerSupportsLoadingTestData$ = this.checkTriggerTestStrategyIs(
+      TriggerTestStrategy.TEST_FUNCTION
     );
   }
 
-  private checkIfCurrentStepIsPieceWebhookTrigger() {
-    this.isCurrentStepPieceWebhookTrigger$ = this.currentStep$.pipe(
+  private checkIfTriggerSupportsSimulation() {
+    this.triggerSupportsSimulation$ = this.checkTriggerTestStrategyIs(
+      TriggerTestStrategy.SIMULATION
+    );
+  }
+
+  private checkTriggerTestStrategyIs(strategy: TriggerTestStrategy) {
+    return this.currentStep$.pipe(
       switchMap((step) => {
         if (step && step.type === TriggerType.PIECE) {
           return this.pieceMetadaService
@@ -131,11 +121,8 @@ export class FlowRightSidebarComponent implements OnInit {
             )
             .pipe(
               map((res) => {
-                return (
-                  res.triggers[step.settings.triggerName] &&
-                  res.triggers[step.settings.triggerName].type ===
-                    TriggerStrategy.WEBHOOK
-                );
+                const pieceTrigger = res.triggers[step.settings.triggerName];
+                return pieceTrigger?.testStrategy === strategy;
               })
             );
         }

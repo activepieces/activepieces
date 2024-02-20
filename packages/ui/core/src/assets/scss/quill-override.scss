@@ -1,5 +1,8 @@
 @import "~quill/dist/quill.bubble.css";
 
+.ql-editor {
+  overflow:initial;
+}
 .ql-container {
   border: 0px solid transparent !important;
   .mention-content {
@@ -23,6 +26,7 @@
      margin-bottom:2px; 
        display:inline;
     }
+  
   }
   p {
     margin-bottom: 5px;
@@ -30,6 +34,9 @@
   p:last-child {
     margin-bottom: 0px;
   }
+  
+    overflow:initial;
+  
 }
 
 .ql-editor.ql-blank::before {
@@ -53,6 +60,6 @@
   white-space: pre-wrap;
   word-wrap: break-word;
 }
-.editor-allows-only-one-mention-as-value .ql-disabled {
+.editor-allows-only-one-mention-as-value {
   color: $body;
 }

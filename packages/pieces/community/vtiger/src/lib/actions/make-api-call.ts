@@ -14,7 +14,7 @@ import {
 export const makeAPICall = createAction({
   name: 'make_api_call',
   auth: vtigerAuth,
-  displayName: 'Make API Call',
+  displayName: 'Custom API Call',
   description: 'Performs an arbitrary authorized API call. ',
   props: {
     method: Property.StaticDropdown<HttpMethod>({

@@ -1,4 +1,4 @@
-<form *ngIf="form" [formGroup]="form" class="ap-flex  ap-flex-col ap-gap-2">
+<form *ngIf="form" [formGroup]="form" class="ap-flex  ap-flex-col ap-gap-3">
   <div *ngFor="let property of requiredProperties|objectToArray; let i = index">
     <ng-container
       *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:property, propertyIndex:i,formGroup:form}"></ng-container>
@@ -10,13 +10,16 @@
   </div>
 </form>
 
-<ng-template let-property let-propertyIndex="propertyIndex" #formFieldsTemplate let-formGroup="formGroup">
+<ng-template let-property let-propertyIndex="propertyIndex" #formFieldsTemplate let-formGroup="formGroup"
+  let-prefix="prefix">
 
   <ng-container [ngSwitch]="property.value.type" [formGroup]="formGroup">
 
     <ng-container *ngSwitchCase="PropertyType.MARKDOWN">
       <ng-container *ngIf="convertMarkdown(property.value.description) | async as markdown">
-        <ap-markdown [fullWidth]="true" [data]="markdown"> </ap-markdown>
+        <div class="ap-mb-8">
+          <ap-markdown [fullWidth]="true" [data]="markdown"> </ap-markdown>
+        </div>
       </ng-container>
     </ng-container>
 
@@ -26,7 +29,7 @@
       </ng-container>
 
       <ng-template #checkboxInputTemplate>
-        <div class="ap-flex  ap-mr-[5px] ap-items-center ap-gap-2">
+        <div class="ap-flex  ap-mr-[5px] ap-items-center ap-gap-2 ">
 
           <div apTrackHover #slider="hoverTrackerDirective" class="ap-flex ap-items-center ap-gap-2 ap-align-center">
             <mat-slide-toggle [formControlName]="property.key" color="primary"
@@ -50,7 +53,10 @@
           </ng-container>
         </ng-container>
       </ng-template>
-      <ng-container *ngTemplateOutlet="description; context:{$implicit:property}">
+      <ng-container *ngIf="!customizedInputs || !customizedInputs[property.key]">
+        <ng-container *ngTemplateOutlet="description; context:{$implicit:property}">
+        </ng-container>
+
       </ng-container>
     </ng-container>
     <div
@@ -207,7 +213,7 @@
             <ng-container
               *ngIf="!!(dropdownOptionsObservables$[property.key] | async) &&  (dropdownOptionsObservables$[property.key] | async)?.disabled === true">
               <mat-select [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
-                <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
+                <ng-container *ngIf="dropdownOptionsObservables$[property.key] | async as state">
                   <mat-option [disabled]="true"
                     *ngIf="state.disabled && ((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key])">
                     <div> {{state.placeholder}} </div>
@@ -363,7 +369,7 @@
 
 
     <ng-container *ngSwitchCase="PropertyType.ARRAY">
-      <span class="ap-flex ap-justify-end ap-mr-1 ap-text-primary">
+      <span class="ap-flex ap-justify-end -ap-mb-[1.75rem] ap-z-50 ap-relative ap-text-primary">
         <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
         </ng-container>
       </span>
@@ -373,11 +379,8 @@
 
       <ng-template #arrayInputTemplate>
         <div [class.ap-mb-5]="form.disabled" #hoverContainer="hoverTrackerDirective" apTrackHover>
-          <div class="ap-mb-2 ap-flex ap-gap-2 ap-items-center">
-            <div class="ap-cursor-pointer" (click)="array.focusFirstInput()">{{property.value.displayName}}
-            </div>
-          </div>
-          <app-array-form-control #array [formControlName]="property.key"></app-array-form-control>
+          <app-array-form-control #array [formControlName]="property.key" [property]="property.value"
+            [formFieldsTemplate]="formFieldsTemplate" [prefix]="property.key"></app-array-form-control>
         </div>
         <ng-container *ngTemplateOutlet="description; context:{$implicit:property}">
         </ng-container>
@@ -456,14 +459,14 @@
               </mat-option>
 
               <mat-select-trigger>
-                <div class="ap-flex ap-gap-[6px] ap-pr-1">
+                <div class="ap-flex ap-gap-[6px] connections-dropdown-container ap-pr-1 ap-items-center">
                   <div class="ap-w-full ap-truncate">
                     {{((allAuthConfigs$ | async)!|
                     selectedAuthConfig:pieceName:formGroup.value[property.key])?.label?.name
                     ||
                     ''}}
                   </div>
-                  <div class=" -ap-mt-[6px]">
+                  <div >
                     <app-add-edit-connection-button *ngIf="formGroup.enabled && formGroup.get(property.key)!.value"
                       (click)="$event.stopPropagation()" btnSize="extraSmall" [isEditConnectionButton]="true"
                       [authProperty]="property.value" [pieceName]="pieceName" [pieceVersion]="pieceVersion"
@@ -471,7 +474,7 @@
                       [selectedConnectionInterpolatedString]="formGroup.get(property.key)!.value"
                       (connectionPropertyValueChanged)="connectionValueChanged($event)"
                       [triggerName]="actionOrTriggerName">
-                      <div class="ap-px-2">
+                      <div class="ap-px-2" i18n >
                         Reconnect
                       </div>
                     </app-add-edit-connection-button>
@@ -549,8 +552,8 @@
 
     <ng-container *ngSwitchCase="PropertyType.DYNAMIC">
       <ng-container *ngIf="(refreshableConfigsLoadingFlags$[property.key] | async) === false ||
-        (refreshableConfigsLoadingFlags$[property.key] | async) === undefined ||
-        (refreshableConfigsLoadingFlags$[property.key] | async) === null; else loading">
+      (refreshableConfigsLoadingFlags$[property.key] | async) === undefined ||
+      (refreshableConfigsLoadingFlags$[property.key] | async) === null; else loading">
         <div class="ap-flex ap-flex-col ap-gap-2">
           <div *ngFor="let cp of (dynamicPropsObservables$[property.key] | async)| objectToArray; let i = index">
             <ng-container
@@ -647,8 +650,9 @@
 <!--Line clamp is not working with prefix on tailwind for some reason  -->
 <ng-template #description let-property let-hasError="hasError" let-errorMessage="errorMessage"
   let-isTouched="isTouched">
-  <div class="ap-py-2 ap-flex ap-gap-2 ap-justify-between ap-markdown ap-mb-3">
-    <div class="ap-line-clamp-1" [style.display]="descriptionExpandedMap[property.key]? 'block': '-webkit-box'">
+  <div class="ap-flex ap-justify-between ap-markdown" *ngIf="property.value.description || isTouched && hasError">
+    <div class="ap-line-clamp-1" [style.display]="descriptionExpandedMap[property.key]? 'block': '-webkit-box'"
+      [class.ap-h-[24px]]="!descriptionExpandedMap[property.key]">
       <div class="ap-typography-caption " apCheckOverflow (isOverflowed)="descriptionOverflownMap[property.key]=$event">
         <markdown
           [data]="isTouched && hasError? '<span class=\'ap-text-danger\'>'+errorMessage+'</span>. '+ (property.value.description? property.value.description: '') : property.value.description? property.value.description:''">
@@ -656,7 +660,7 @@
       </div>
     </div>
     <div class="ap-flex ap-items-start">
-      <button class="ap-underline ap-typography-caption"
+      <button class="ap-underline ap-typography-caption ap-mt-2"
         *ngIf="descriptionOverflownMap[property.key] || descriptionExpandedMap[property.key]"
         (click)="descriptionExpandedMap[property.key] = !descriptionExpandedMap[property.key]">
         {{descriptionExpandedMap[property.key]? 'less' : 'more'}} </button>

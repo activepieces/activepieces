@@ -4,10 +4,10 @@ import {
   Inject,
   InjectionToken,
 } from '@angular/core';
-import { CollectionBuilderService } from '@activepieces/ui/feature-builder-store';
-import { FlagService } from '@activepieces/ui/common';
-import { Observable } from 'rxjs';
-import { ApFlagId } from '@activepieces/shared';
+
+import { FlagService, FlowBuilderService } from '@activepieces/ui/common';
+import { Observable, map, switchMap } from 'rxjs';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 export const BLOG_URL_TOKEN = new InjectionToken<string>('BLOG_URL_TOKEN');
 @Component({
   selector: 'app-template-blog-notification',
@@ -19,12 +19,18 @@ export class TemplateBlogNotificationComponent {
   showBlogGuide$: Observable<boolean>;
 
   constructor(
-    private builderService: CollectionBuilderService,
+    private builderService: FlowBuilderService,
     private flagsService: FlagService,
     @Inject(BLOG_URL_TOKEN) private blogUrl: string
   ) {
-    this.showBlogGuide$ = this.flagsService.isFlagEnabled(
-      ApFlagId.SHOW_COMMUNITY
+    this.showBlogGuide$ = this.flagsService.getEdition().pipe(
+      switchMap((ed) => {
+        return this.flagsService.isFlagEnabled(ApFlagId.SHOW_COMMUNITY).pipe(
+          map((showCommunityBlogs) => {
+            return showCommunityBlogs || ed !== ApEdition.COMMUNITY;
+          })
+        );
+      })
     );
   }
   openBlog() {

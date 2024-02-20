@@ -1,4 +1,4 @@
-import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { Property, OAuth2PropertyValue, NumberProperty, Processors, Validators } from '@activepieces/pieces-framework';
 import {
   httpClient,
   HttpMethod,
@@ -246,7 +246,7 @@ type AppendGoogleSheetValuesParams = {
   accessToken: string;
 };
 
-async function findSheetName(
+export async function findSheetName(
   access_token: string,
   spreadsheetId: string,
   sheetId: number
@@ -255,7 +255,7 @@ async function findSheetName(
   const sheetName = sheets.find((f) => f.properties.sheetId === sheetId)
     ?.properties.title;
   if (!sheetName) {
-    throw Error(`Sheet with ID ${spreadsheetId} not found in spreadsheet`);
+    throw Error(`Sheet with ID ${sheetId} not found in spreadsheet ${spreadsheetId}`);
   }
   return sheetName;
 }
@@ -424,7 +424,7 @@ async function getValues(
   return res;
 }
 
-const columnToLabel = (columnIndex: number) => {
+export const columnToLabel = (columnIndex: number) => {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   let label = '';
 

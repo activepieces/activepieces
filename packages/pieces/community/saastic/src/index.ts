@@ -1,11 +1,13 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
-  HttpMethod,
+  createCustomApiCallAction,
   httpClient,
+  HttpMethod,
 } from '@activepieces/pieces-common';
-import { createCustomer } from './lib/actions/create-customer';
+import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { createCharge } from './lib/actions/create-charge';
+import { createCustomer } from './lib/actions/create-customer';
 
 export const saasticAuth = PieceAuth.SecretText({
   description:
@@ -41,7 +43,18 @@ export const saastic = createPiece({
   auth: saasticAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/saastic.png',
+  categories: [PieceCategory.MARKETING],
   authors: ['joselupianez'],
-  actions: [createCustomer, createCharge],
+  actions: [
+    createCustomer,
+    createCharge,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://api.saastic.com',
+      auth: saasticAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
+  ],
   triggers: [],
 });

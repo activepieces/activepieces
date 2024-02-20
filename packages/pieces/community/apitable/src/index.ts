@@ -1,12 +1,14 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   createPiece,
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { ApiTableNewRecord } from './lib/triggers/new-record';
-import { apiTableCreateRecord } from './lib/actions/create-record';
-import { apiTableUpdateRecord } from './lib/actions/update-record';
-import { apiTableFindRecord } from './lib/actions/find-record';
+import { PieceCategory } from '@activepieces/shared';
+import { createRecordAction } from './lib/actions/create-record';
+import { findRecordAction } from './lib/actions/find-record';
+import { updateRecordAction } from './lib/actions/update-record';
+import { newRecordTrigger } from './lib/triggers/new-record';
 
 export const APITableAuth = PieceAuth.CustomAuth({
   required: true,
@@ -42,7 +44,21 @@ export const apitable = createPiece({
   description: `Interactive spreadsheets with collaboration`,
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/apitable.png',
-  authors: ['abdallah-alwarawreh'],
-  actions: [apiTableCreateRecord, apiTableUpdateRecord, apiTableFindRecord],
-  triggers: [ApiTableNewRecord],
+  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE, PieceCategory.PRODUCTIVITY],
+  authors: ['abdallah-alwarawreh', 'kishanprmr'],
+  actions: [
+    createRecordAction,
+    updateRecordAction,
+    findRecordAction,
+    createCustomApiCallAction({
+      baseUrl: (auth) => {
+        return (auth as { apiTableUrl: string }).apiTableUrl;
+      },
+      auth: APITableAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${(auth as { token: string }).token}`,
+      }),
+    }),
+  ],
+  triggers: [newRecordTrigger],
 });

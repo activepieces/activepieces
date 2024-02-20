@@ -15,7 +15,6 @@ import {
   UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  ValidatorFn,
   Validators,
   FormControl,
 } from '@angular/forms';
@@ -62,6 +61,7 @@ import { PiecePropertiesFormValue } from '../models/piece-properties-form-value'
 import { AddEditConnectionButtonComponent } from '@activepieces/ui/feature-connections';
 import { PackageType, PieceType } from '@activepieces/shared';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
+import { createConfigsFormControls } from '../shared';
 
 type ConfigKey = string;
 
@@ -186,18 +186,23 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     this.requiredProperties = {};
     this.optionalProperties = {};
     Object.entries(this.properties).forEach(([pk]) => {
-      this.properties[pk].required
+      this.properties[pk].required ||
+      this.properties[pk].type === PropertyType.MARKDOWN
         ? (this.requiredProperties[pk] = this.properties[pk])
         : (this.optionalProperties[pk] = this.properties[pk]);
     });
 
-    const requiredConfigsControls = this.createConfigsFormControls(
+    const requiredConfigsControls = createConfigsFormControls(
       this.requiredProperties,
-      propertiesValues
+      propertiesValues,
+      this.fb,
+      this.customizedInputs
     );
-    const optionalConfigsControls = this.createConfigsFormControls(
+    const optionalConfigsControls = createConfigsFormControls(
       this.optionalProperties,
-      propertiesValues
+      propertiesValues,
+      this.fb,
+      this.customizedInputs
     );
 
     this.form = this.fb.group({
@@ -205,8 +210,8 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
       ...optionalConfigsControls,
     });
 
-    this.createDropdownConfigsObservables();
-    this.createDynamicConfigsObservables();
+    this.createDropdownConfigsObservables(this.properties);
+    this.createDynamicConfigsObservables(this.properties);
     this.updateValueOnChange$ = this.form.valueChanges.pipe(
       tap((value) => {
         this.OnChange(this.formValueMiddleWare(value));
@@ -219,9 +224,9 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
   addNewConnectionButtonPress() {
     this.addConnectionBtn.buttonClicked();
   }
-  createDropdownConfigsObservables() {
-    Object.keys(this.properties).forEach((pk) => {
-      const property = this.properties[pk];
+  createDropdownConfigsObservables(properties: PiecePropertyMap) {
+    Object.keys(properties).forEach((pk) => {
+      const property = properties[pk];
       if (
         property.type === PropertyType.DROPDOWN ||
         property.type === PropertyType.MULTI_SELECT_DROPDOWN
@@ -264,9 +269,9 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
       }
     });
   }
-  createDynamicConfigsObservables() {
-    Object.keys(this.properties).forEach((pk) => {
-      const parentProperty = this.properties[pk];
+  createDynamicConfigsObservables(properties: PiecePropertyMap) {
+    Object.keys(properties).forEach((pk) => {
+      const parentProperty = properties[pk];
       if (parentProperty.type == PropertyType.DYNAMIC) {
         this.dynamicPropsObservables$[pk] =
           this.createRefreshableConfigObservables<PiecePropertyMap>(
@@ -363,182 +368,39 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     if (obj.property.refreshers.length === 0) {
       refreshers$['oneTimeRefresh'] = of(true);
     }
-    return combineLatest(refreshers$).pipe(
-      switchMap((res) => {
-        return this.actionMetaDataService
-          .getPieceActionConfigOptions<T>({
-            packageType: this.packageType,
-            pieceType: this.pieceType,
-            pieceVersion: this.pieceVersion,
-            pieceName: this.pieceName,
-            propertyName: obj.propertyKey,
-            stepName: this.actionOrTriggerName,
-            input: res,
-          })
-          .pipe(
-            catchError((err) => {
-              console.error(err);
-              return of(fallbackObject);
-            })
-          );
-      }),
-      tap(() => {
-        this.refreshableConfigsLoadingFlags$[obj.propertyKey].next(false);
-      }),
-      shareReplay(1)
+    return this.store.select(BuilderSelectors.selectCurrentFlow).pipe(
+      take(1),
+      switchMap((flowVersion) =>
+        combineLatest(refreshers$).pipe(
+          switchMap((res) =>
+            this.actionMetaDataService
+              .getPieceActionConfigOptions<T>({
+                packageType: this.packageType,
+                pieceType: this.pieceType,
+                pieceVersion: this.pieceVersion,
+                pieceName: this.pieceName,
+                propertyName: obj.propertyKey,
+                stepName: this.actionOrTriggerName,
+                flowId: flowVersion.id,
+                flowVersionId: flowVersion.version.id,
+                input: res,
+              })
+              .pipe(
+                catchError((err) => {
+                  console.error(err);
+                  return of(fallbackObject);
+                })
+              )
+          ),
+          tap(() => {
+            this.refreshableConfigsLoadingFlags$[obj.propertyKey].next(false);
+          }),
+          shareReplay(1)
+        )
+      )
     );
   }
 
-  private createConfigsFormControls(
-    properties: PiecePropertyMap,
-    propertiesValues: Record<string, unknown>
-  ) {
-    const controls: { [key: string]: UntypedFormControl | UntypedFormGroup } =
-      {};
-    Object.keys(properties).forEach((pk) => {
-      const validators: ValidatorFn[] = [];
-      const prop = properties[pk];
-      const propValue = propertiesValues[pk];
-      switch (prop.type) {
-        case PropertyType.ARRAY: {
-          const controlValue = propValue
-            ? propValue
-            : Array.isArray(prop.defaultValue) && prop.defaultValue.length > 0
-            ? prop.defaultValue
-            : [];
-          controls[pk] = new UntypedFormControl(controlValue);
-          break;
-        }
-        case PropertyType.MARKDOWN: {
-          break;
-        }
-        case PropertyType.OBJECT: {
-          const controlValue = propValue
-            ? propValue
-            : typeof prop.defaultValue === 'object'
-            ? prop.defaultValue
-            : {};
-          controls[pk] = new UntypedFormControl(controlValue);
-          break;
-        }
-        case PropertyType.BASIC_AUTH:
-        case PropertyType.CUSTOM_AUTH:
-        case PropertyType.OAUTH2:
-        case PropertyType.SECRET_TEXT: {
-          if (prop.required) {
-            validators.push(Validators.required);
-          }
-          controls[pk] = new UntypedFormControl(propValue, validators);
-          break;
-        }
-        case PropertyType.CHECKBOX: {
-          controls[pk] = new UntypedFormControl(
-            propValue || prop.defaultValue || false
-          );
-          break;
-        }
-        case PropertyType.DATE_TIME:
-        case PropertyType.FILE:
-        case PropertyType.LONG_TEXT:
-        case PropertyType.NUMBER:
-        case PropertyType.SHORT_TEXT: {
-          if (prop.required) {
-            validators.push(Validators.required);
-          }
-          if (typeof prop.defaultValue !== 'object') {
-            const defaultValue = prop.defaultValue
-              ? prop.defaultValue.toString()
-              : '';
-            controls[pk] = new UntypedFormControl(
-              propValue ?? defaultValue,
-              validators
-            );
-          } else {
-            const defaultValue = prop.defaultValue
-              ? prop.defaultValue.base64
-              : '';
-            controls[pk] = new UntypedFormControl(
-              propValue ?? defaultValue,
-              validators
-            );
-          }
-
-          break;
-        }
-        case PropertyType.STATIC_DROPDOWN:
-        case PropertyType.STATIC_MULTI_SELECT_DROPDOWN: {
-          if (prop.required) {
-            validators.push(Validators.required);
-          }
-          controls[pk] = new UntypedFormControl(
-            propValue ?? prop.defaultValue,
-            validators
-          );
-          break;
-        }
-        case PropertyType.DROPDOWN:
-        case PropertyType.MULTI_SELECT_DROPDOWN: {
-          if (prop.required) {
-            validators.push(Validators.required);
-          }
-          controls[pk] = new UntypedFormControl(
-            propValue ?? prop.defaultValue,
-            validators
-          );
-          break;
-        }
-        case PropertyType.DYNAMIC: {
-          const dynamicConfigControls: Record<string, UntypedFormControl> = {};
-          if (propValue) {
-            Object.keys(propValue).forEach((k) => {
-              dynamicConfigControls[k] = new UntypedFormControl(
-                (propValue as Record<string, unknown>)[k]
-              );
-            });
-          } else {
-            controls[pk] = new UntypedFormControl(
-              propValue ?? (prop.defaultValue || '{}'),
-              validators
-            );
-          }
-          controls[pk] = this.fb.group(dynamicConfigControls);
-          break;
-        }
-        case PropertyType.JSON: {
-          if (prop.required) {
-            validators.push(Validators.required);
-          }
-          if (!this.customizedInputs || !this.customizedInputs[pk]) {
-            validators.push(jsonValidator);
-          }
-          if (typeof propValue === 'object') {
-            controls[pk] = new UntypedFormControl(
-              JSON.stringify(propValue, null, 2),
-              validators
-            );
-          } else if (propValue) {
-            controls[pk] = new UntypedFormControl(
-              propertiesValues[pk],
-              validators
-            );
-          } else {
-            controls[pk] = new UntypedFormControl(
-              prop.defaultValue
-                ? JSON.stringify(prop.defaultValue, null, 2)
-                : '',
-              validators
-            );
-          }
-          break;
-        }
-        default: {
-          const exhaustiveCheck: never = prop;
-          console.error(`Unhandled color case: ${exhaustiveCheck}`);
-        }
-      }
-    });
-    return controls;
-  }
   getControl(configKey: string) {
     return this.form.get(configKey);
   }
@@ -646,7 +508,11 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
         if (isCustomized) {
           ctrl.setValue('', silentChange);
         } else {
-          ctrl.setValue([''], silentChange);
+          if (property.properties) {
+            ctrl.setValue([{}], silentChange);
+          } else {
+            ctrl.setValue([''], silentChange);
+          }
         }
         break;
       }
@@ -654,7 +520,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
         ctrl.setValue(undefined, silentChange);
       }
     }
-    this.cd.detectChanges();
+    this.cd.markForCheck();
     const input = this.theInputs.find(
       (input) => input.nativeElement.getAttribute('name') === propertyKey
     );
@@ -677,12 +543,12 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     return forkJoin({
       flow: this.store.select(BuilderSelectors.selectCurrentFlow).pipe(take(1)),
       webhookPrefix: this.flagService.getWebhookUrlPrefix(),
+      interfacePrefix: this.flagService.getInterfaceUrlPrefix(),
     }).pipe(
       map((res) => {
-        return markdown.replace(
-          '{{webhookUrl}}',
-          `${res.webhookPrefix}/${res.flow.id}`
-        );
+        return markdown
+          .replace('{{webhookUrl}}', `${res.webhookPrefix}/${res.flow.id}`)
+          .replace('{{interfaceUrl}}', `${res.interfacePrefix}/${res.flow.id}`);
       })
     );
   }

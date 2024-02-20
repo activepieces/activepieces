@@ -6,16 +6,19 @@ import {
   Output,
 } from '@angular/core';
 import { FlowItemDetails } from '@activepieces/ui/common';
+import { ActionOrTriggerName } from '../common';
 
 @Component({
   selector: 'app-step-type-list',
   templateUrl: './step-type-list.component.html',
-  styleUrls: ['./step-type-list.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StepTypeListComponent {
   @Input() typesList: FlowItemDetails[];
-  @Output() typeSelected: EventEmitter<FlowItemDetails> = new EventEmitter();
+  @Output() typeSelected: EventEmitter<{
+    flowItemDetails: FlowItemDetails;
+    suggestion?: ActionOrTriggerName;
+  }> = new EventEmitter();
   @Input() emptyListText: string;
   @Input() showRequestPieceButton: boolean | null;
 

@@ -16,7 +16,11 @@ import {
 import { CodeStepInputFormSchema } from '../input-forms-schema';
 import { MatDialog } from '@angular/material/dialog';
 import { CodeWriterDialogComponent } from './code-writer-dialog/code-writer-dialog.component';
-import { FlagService } from '@activepieces/ui/common';
+import {
+  FlagService,
+  codeGeneratorTooltip,
+  disabledCodeGeneratorTooltip,
+} from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-code-step-input-form',
@@ -39,8 +43,8 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
   dialogClosed$?: Observable<unknown>;
   generateCodeEnabled$: Observable<boolean>;
   showGenerateCode$: Observable<boolean>;
-  codeGeneratorTooltip = $localize`Write code with assistance from AI`;
-  disabledCodeGeneratorTooltip = $localize`Configure api key in the envrionment variables to generate code using AI`;
+  codeGeneratorTooltip = codeGeneratorTooltip;
+  disabledCodeGeneratorTooltip = disabledCodeGeneratorTooltip;
   markdown = `
   To use data from previous steps in your code, include them as pairs of keys and values below.
   <br>
@@ -154,11 +158,30 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
         (result: {
           code: string;
           inputs: { key: string; value: unknown }[];
+          packages: { [key: string]: string }[];
         }) => {
           if (result) {
+            let packageJson = this.codeStepForm.value.sourceCode!.packageJson;
+            if (result.packages.length > 0) {
+              try {
+                const packageJsonObj = JSON.parse(packageJson);
+                if (!packageJsonObj.dependencies) {
+                  packageJsonObj.dependencies = {};
+                }
+                result.packages.forEach((pkg) => {
+                  packageJsonObj.dependencies = {
+                    ...packageJsonObj.dependencies,
+                    ...pkg,
+                  };
+                });
+                packageJson = JSON.stringify(packageJsonObj, null, 2);
+              } catch (e) {
+                console.error('Invalid package.json');
+              }
+            }
             this.codeStepForm.controls.sourceCode.setValue({
               code: result.code as string,
-              packageJson: this.codeStepForm.value.sourceCode!.packageJson,
+              packageJson,
             });
             const inputs: Record<string, unknown> = {};
             result.inputs.forEach((input) => {

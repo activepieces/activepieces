@@ -3,7 +3,7 @@ import { FlowRunId } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
 import { ProjectId } from '../project/project'
 import { PiecePackage } from '../pieces'
-import { ExecutionState, ExecutionType } from '../flow-run/execution/execution-output'
+import { ExecutionState, ExecutionType, ResumePayload } from '../flow-run/execution/execution-output'
 
 export enum EngineOperationType {
     EXTRACT_PIECE_METADATA = 'EXTRACT_PIECE_METADATA',
@@ -19,6 +19,7 @@ export enum TriggerHookType {
     ON_ENABLE = 'ON_ENABLE',
     ON_DISABLE = 'ON_DISABLE',
     HANDSHAKE = 'HANDSHAKE',
+    RENEW = 'RENEW',
     RUN = 'RUN',
     TEST = 'TEST',
 }
@@ -53,6 +54,7 @@ export type ExecutePropsOptions = BaseEngineOperation & {
     piece: PiecePackage
     propertyName: string
     stepName: string
+    flowVersion: FlowVersion
     input: Record<string, unknown>
 }
 
@@ -69,7 +71,7 @@ export type BeginExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.B
 export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.RESUME> & {
     executionState: ExecutionState
     tasks: number
-    resumePayload: unknown
+    resumePayload: ResumePayload
 }
 
 export type ExecuteFlowOperation = BeginExecuteFlowOperation | ResumeExecuteFlowOperation
@@ -145,8 +147,9 @@ type ExecuteOnEnableTriggerResponse = {
 export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends TriggerHookType.RUN ? ExecuteTestOrRunTriggerResponse :
     H extends TriggerHookType.HANDSHAKE ? ExecuteHandshakeTriggerResponse :
         H extends TriggerHookType.TEST ? ExecuteTestOrRunTriggerResponse :
-            H extends TriggerHookType.ON_DISABLE ? Record<string, never> :
-                ExecuteOnEnableTriggerResponse
+            H extends TriggerHookType.RENEW ? Record<string, never> :
+                H extends TriggerHookType.ON_DISABLE ? Record<string, never> :
+                    ExecuteOnEnableTriggerResponse
 
 export type ExecuteActionResponse = {
     success: boolean

@@ -1,3 +1,4 @@
+import { ProjectWithUsageAndPlanResponse } from '@activepieces/ee-shared';
 import { PlatformProjectService } from '@activepieces/ui/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import {
@@ -20,7 +21,7 @@ interface CreateProjectForm {
 export class CreateProjectDialogComponent {
   formGroup: FormGroup<CreateProjectForm>;
   loading = false;
-  createProject$?: Observable<void>;
+  createProject$?: Observable<ProjectWithUsageAndPlanResponse>;
   constructor(
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<CreateProjectDialogComponent>,
@@ -40,6 +41,7 @@ export class CreateProjectDialogComponent {
     });
   }
   createProject() {
+    this.formGroup.markAllAsTouched();
     //Create project logic
     if (this.formGroup.valid && !this.loading) {
       this.createProject$ = this.platformProjectService
@@ -47,9 +49,9 @@ export class CreateProjectDialogComponent {
           displayName: this.formGroup.getRawValue().displayName,
         })
         .pipe(
-          tap(() => {
+          tap((res) => {
             this.loading = true;
-            this.dialogRef.close(true);
+            this.dialogRef.close(res);
           }),
           catchError((err) => {
             console.error(err);

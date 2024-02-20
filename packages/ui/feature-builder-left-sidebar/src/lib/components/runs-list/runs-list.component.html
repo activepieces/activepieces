@@ -1,0 +1,57 @@
+<div class="p-3">
+    <ap-sidebar-header (closeClicked)="closeLeftSideBar()" title="Runs" i18n-title></ap-sidebar-header>
+</div>
+<ng-container *ngIf="(runs$ | async) as runs;else loading">
+
+    <div *ngIf="runs.length > 0">
+        <cdk-virtual-scroll-viewport class="ap-h-[calc(100vh-165px)]  ap-overflow-scroll thin-scrollbars" itemSize="48"
+            (scrolledIndexChange)="nextBatch()">
+
+            <div *cdkVirtualFor="let run of runs" class=" ap-px-5 ap-my-5 ap-flex ap-gap-2 ap-items-center">
+                <ap-state-icon [size]="19" [status]="run.status" [showStatusText]="false"></ap-state-icon>
+                <div class="ap-flex ap-flex-col ap-gap-1 ">
+                    <div class=" ap-text-body  ">
+                        {{run.created
+                        |date:'mediumDate'
+                        }}, {{run.created |date:'h:mm:ss a' }}
+                    </div>
+                    <div class="ap-text-description ap-typography-caption ">{{run.id}}</div>
+
+                </div>
+                <div class="ap-flex-grow"></div>
+
+                <ap-icon-button *ngIf="(currentRun$ | async)?.id !== run.id || (isInDebugMode$ | async)"
+                    iconFilename="enter-run.svg" (buttonClicked)="ShowRun(run)" tooltipText="View run" i18n-tooltipText
+                    [width]="20" [height]="20"></ap-icon-button>
+                <ng-container
+                    *ngIf="(currentRun$ | async)?.id === run.id && ((isInDebugMode$ | async) === false || (isInDebugMode$ | async) === undefined)">
+                    <div class="ap-flex ap-items-center ap-justify-center ap-w-[2.8125rem]">
+                        <svg-icon src="assets/img/custom/eye.svg" class="ap-w-[20px] ap-h-[20px] ap-fill-primary"
+                            i18n-matTooltip matTooltip="Viewing" [applyClass]="true"></svg-icon>
+                    </div>
+                </ng-container>
+                <ap-icon-button
+                    *ngIf="(currentRun$ | async)?.id === run.id && ((isInDebugMode$ | async) === false || (isInDebugMode$ | async) === undefined)"
+                    iconFilename="exit-run.svg" (buttonClicked)="exitRun()" tooltipText="Exit run" i18n-tooltipText
+                    [width]="20" [height]="20"></ap-icon-button>
+            </div>
+        </cdk-virtual-scroll-viewport>
+    </div>
+
+
+    <div *ngIf="runs.length === 0"
+        class="ap-h-[calc(100vh-140px)] ap-text-center ap-flex ap-flex-grow ap-justify-center ap-items-center ap-flex-col ap-p-5"
+        i18n>
+        <svg-icon src="assets/img/custom/variables-list.svg" [style]="{width:'70px', height:'70px'}"></svg-icon>
+        No runs found
+    </div>
+</ng-container>
+
+
+<ng-template #loading>
+    <div class="ap-h-[calc(100vh-125px)] ap-flex ap-flex-grow ap-justify-center ap-items-center ">
+        <ap-loading-icon> </ap-loading-icon>
+    </div>
+</ng-template>
+
+<ng-container *ngIf="showRun$ | async"></ng-container>

@@ -1,3 +1,4 @@
+import { performance } from 'node:perf_hooks'
 import { Action, ActionType, isNil } from '@activepieces/shared'
 import { codeExecutor } from './code-executor'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
@@ -27,21 +28,34 @@ export const flowExecutor = {
         executionState: FlowExecutorContext
         constants: EngineConstants
     }): Promise<FlowExecutorContext> {
-        const startTime = new Date().getMilliseconds()
+        const flowStartTime = performance.now()
         let flowExecutionContext = executionState
         let currentAction: Action | undefined = action
+
         while (!isNil(currentAction)) {
             const handler = this.getExecutorForAction(currentAction.type)
+
+            const stepStartTime = performance.now()
             flowExecutionContext = await handler.handle({
                 action: currentAction,
                 executionState: flowExecutionContext,
                 constants,
             })
+            const stepEndTime = performance.now()
+
+            flowExecutionContext = flowExecutionContext.setStepDuration({
+                stepName: currentAction.name,
+                duration: stepEndTime - stepStartTime,
+            })
+
             if (flowExecutionContext.verdict !== ExecutionVerdict.RUNNING) {
-                return flowExecutionContext
+                break
             }
+
             currentAction = currentAction.nextAction
         }
-        return flowExecutionContext.setDuration(new Date().getMilliseconds() - startTime)
+
+        const flowEndTime = performance.now()
+        return flowExecutionContext.setDuration(flowEndTime - flowStartTime)
     },
 }

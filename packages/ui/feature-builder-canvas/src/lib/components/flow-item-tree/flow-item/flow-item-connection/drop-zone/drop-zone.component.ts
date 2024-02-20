@@ -6,14 +6,15 @@ import {
   OnInit,
   Output,
 } from '@angular/core';
-import { FlowRendererService } from '@activepieces/ui/feature-builder-store';
 import { Observable } from 'rxjs';
 import { DropEvent } from 'angular-draggable-droppable';
+
+import { Action } from '@activepieces/shared';
 import {
   DROP_ZONE_HEIGHT,
   DROP_ZONE_WIDTH,
-} from '../../../../canvas-utils/drawing/draw-common';
-import { Action } from '@activepieces/shared';
+} from '@activepieces/ui-canvas-utils';
+import { FlowRendererService } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-drop-zone',

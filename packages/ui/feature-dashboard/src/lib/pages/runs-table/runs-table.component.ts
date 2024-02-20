@@ -24,6 +24,7 @@ import {
   startWith,
   Subject,
   switchMap,
+  take,
   tap,
 } from 'rxjs';
 import { RunsTableDataSource } from './runs-table.datasource';
@@ -38,8 +39,10 @@ import {
   FlowService,
   FLOW_QUERY_PARAM,
   STATUS_QUERY_PARAM,
+  DATE_RANGE_END_QUERY_PARAM,
+  DATE_RANGE_START_QUERY_PARAM,
 } from '@activepieces/ui/common';
-import { FormControl } from '@angular/forms';
+import { FormControl, FormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { RunsService } from '../../services/runs.service';
 import { DropdownOption } from '@activepieces/pieces-framework';
@@ -67,6 +70,10 @@ export class RunsTableComponent implements OnInit {
   > = new FormControl(allOptionValue, { nonNullable: true });
   flowFilterControl = new FormControl<string>(allOptionValue, {
     nonNullable: true,
+  });
+  dateFormGroup = new FormGroup({
+    start: new FormControl(),
+    end: new FormControl(),
   });
   selectedFlowName$: Observable<string | undefined>;
   flows$: Observable<DropdownOption<FlowId>[]>;
@@ -96,6 +103,16 @@ export class RunsTableComponent implements OnInit {
         STATUS_QUERY_PARAM
       ) as ExecutionOutputStatus) || this.allOptionValue
     );
+    this.dateFormGroup.setValue({
+      start:
+        this.activatedRoute.snapshot.queryParamMap.get(
+          DATE_RANGE_START_QUERY_PARAM
+        ) ?? null,
+      end:
+        this.activatedRoute.snapshot.queryParamMap.get(
+          DATE_RANGE_END_QUERY_PARAM
+        ) ?? null,
+    });
   }
 
   ngOnInit(): void {
@@ -138,15 +155,27 @@ export class RunsTableComponent implements OnInit {
       status: this.statusFilterControl.valueChanges.pipe(
         startWith(this.statusFilterControl.value)
       ),
+      date: this.dateFormGroup.valueChanges.pipe(
+        startWith(this.dateFormGroup.value)
+      ),
     }).pipe(
       distinctUntilChanged(),
       tap((result) => {
+        const createdAfter = new Date(result.date.start);
+        const createdBefore = new Date(result.date.end);
+        createdBefore.setHours(23, 59, 59, 999);
         this.router.navigate(['runs'], {
           queryParams: {
             flowId:
               result.flowId === this.allOptionValue ? undefined : result.flowId,
             status:
               result.status === this.allOptionValue ? undefined : result.status,
+            createdAfter: result.date.start
+              ? createdAfter.toISOString()
+              : undefined,
+            createdBefore: result.date.end
+              ? createdBefore.toISOString()
+              : undefined,
           },
           queryParamsHandling: 'merge',
         });
@@ -160,23 +189,24 @@ export class RunsTableComponent implements OnInit {
     this.updateNotificationsValue$ = this.store
       .select(ProjectSelectors.selectIsNotificationsEnabled)
       .pipe(
+        take(1),
         tap((enabled) => {
           this.toggleNotificationFormControl.setValue(enabled);
         }),
-        switchMap(() =>
-          this.toggleNotificationFormControl.valueChanges.pipe(
+        switchMap(() => {
+          return this.toggleNotificationFormControl.valueChanges.pipe(
             distinctUntilChanged(),
             tap((value) => {
               this.store.dispatch(
-                ProjectActions.updateProject({
+                ProjectActions.updateNotifyStatus({
                   notifyStatus: value
                     ? NotificationStatus.ALWAYS
                     : NotificationStatus.NEVER,
                 })
               );
             })
-          )
-        )
+          );
+        })
       );
 
     this.dataSource = new RunsTableDataSource(

@@ -3,7 +3,6 @@ import {
   AppConnectionWithoutSensitiveData,
   FlowRun,
   FlowVersion,
-  Folder,
   PopulatedFlow,
 } from '@activepieces/shared';
 import { ViewModeEnum } from '../../model/enums/view-mode.enum';
@@ -19,7 +18,6 @@ export const loadInitial = createAction(
     viewMode: ViewModeEnum;
     run?: FlowRun;
     appConnections: AppConnectionWithoutSensitiveData[];
-    folder?: Folder;
     publishedVersion?: FlowVersion;
   }>()
 );

@@ -8,17 +8,15 @@ import {
 import { map, Observable, of, Subject } from 'rxjs';
 import { Store } from '@ngrx/store';
 
-import { PositionedStep } from '../../canvas-utils/drawing/step-card';
 import {
+  PositionedStep,
   FLOW_ITEM_HEIGHT,
   FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING,
   FLOW_ITEM_WIDTH,
-} from '../../canvas-utils/drawing/draw-common';
-import {
-  BuilderSelectors,
-  FlowRendererService,
-} from '@activepieces/ui/feature-builder-store';
+} from '@activepieces/ui-canvas-utils';
+import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
 import { flowHelper } from '@activepieces/shared';
+import { FlowRendererService } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-flow-item',
@@ -27,6 +25,7 @@ import { flowHelper } from '@activepieces/shared';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FlowItemComponent implements OnInit {
+  readonly FLOW_ITEM_HEIGHT = FLOW_ITEM_HEIGHT;
   flowGraphContainer = {};
   transformObs$: Observable<string>;
   draggingContainer: HTMLElement;

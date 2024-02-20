@@ -131,6 +131,14 @@
             "endpoints/pieces/schema",
             "endpoints/pieces/install"
           ]
+        },
+        {
+          "group": "Git Sync",
+          "icon": "git",
+          "pages": [
+            "endpoints/git-repos/schema",
+            "endpoints/git-repos/pull"
+          ]
         }
       ]
     },
@@ -162,7 +170,8 @@
           "icon": "gear",
           "pages": [
             "install/configurations/environment-variables",
-            "install/configurations/error-notifications"
+            "install/configurations/error-notifications",
+            "install/configurations/setup-app-webhooks"
           ]
         },
         "install/setup-ssl",
@@ -192,15 +201,7 @@
           ]
         },
         "developers/building-pieces/create-action",
-        {
-          "group": "Create Triggers",
-          "icon": "circle-4",
-          "pages": [
-            "developers/building-pieces/triggers/overview",
-            "developers/building-pieces/triggers/create-polling-trigger",
-            "developers/building-pieces/triggers/create-webhook-trigger"
-          ]
-        },
+        "developers/building-pieces/create-trigger",
         {
           "group": "Sharing Pieces",
           "icon": "circle-5",
@@ -217,6 +218,15 @@
       "group": "Piece Reference",
       "pages": [
         "developers/piece-reference/authentication",
+        {
+          "group": "Triggers",
+          "icon": "bolt",
+          "pages": [
+            "developers/piece-reference/triggers/overview",
+            "developers/piece-reference/triggers/polling-trigger",
+            "developers/piece-reference/triggers/webhook-trigger"
+          ]
+        },
         "developers/piece-reference/properties",
         "developers/piece-reference/properties-validation",
         "developers/piece-reference/flow-control",
@@ -258,16 +268,16 @@
       ]
     },
     {
-      "group": "Platform",
+      "group": "Admin Console",
       "pages": [
-        "platform/overview",
-        "platform/appearance",
-        "platform/manage-projects",
-        "platform/custom-domain",
-        "platform/manage-templates",
-        "platform/manage-pieces",
-        "platform/manage-oauth2",
-        "platform/customize-emails"
+        "admin-console/overview",
+        "admin-console/appearance",
+        "admin-console/manage-projects",
+        "admin-console/custom-domain",
+        "admin-console/manage-templates",
+        "admin-console/manage-pieces",
+        "admin-console/manage-oauth2",
+        "admin-console/customize-emails"
       ]
     },
     {

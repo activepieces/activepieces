@@ -13,6 +13,7 @@ import {
   DeleteEntityDialogData,
   OAuth2AppsService,
   PlatformService,
+  featureDisabledTooltip,
 } from '@activepieces/ui/common';
 import { Platform } from '@activepieces/ee-shared';
 import { ActivatedRoute } from '@angular/router';
@@ -33,6 +34,7 @@ import {
   PieceMetadataService,
 } from '@activepieces/ui/feature-pieces';
 import { PLATFORM_RESOLVER_KEY } from '../../platform.resolver';
+import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
 import { PieceScope } from '@activepieces/shared';
 
 @Component({
@@ -44,7 +46,7 @@ export class PiecesTableComponent implements OnInit {
   displayedColumns = ['displayName', 'packageName', 'version', 'action'];
   title = $localize`Pieces`;
   saving$?: Observable<void>;
-  platform$!: BehaviorSubject<Platform>;
+  platform$?: BehaviorSubject<Platform>;
   readonly pieceShownText = $localize`is now available to users`;
   readonly pieceHiddenText = $localize`is now hidden from users`;
   readonly showPieceTooltip = $localize`Show this piece to users`;
@@ -59,7 +61,9 @@ export class PiecesTableComponent implements OnInit {
   dialogClosed$?: Observable<boolean>;
   addPackageDialogClosed$!: Observable<Record<string, string> | null>;
   cloudAuthToggleFormControl = new FormControl(false, { nonNullable: true });
-  toggelCloudOAuth2$: Observable<void>;
+  toggelCloudOAuth2$?: Observable<void>;
+  featDisabledTooltipText = featureDisabledTooltip;
+  isDemo = false;
   constructor(
     private piecesService: PieceMetadataService,
     private route: ActivatedRoute,
@@ -67,42 +71,55 @@ export class PiecesTableComponent implements OnInit {
     private matSnackbar: MatSnackBar,
     private matDialog: MatDialog,
     private oauth2AppsService: OAuth2AppsService
-  ) {
-    this.toggelCloudOAuth2$ = this.getCloudOAuth2ToggleListener();
-  }
+  ) {}
   ngOnInit(): void {
-    this.platform$ = new BehaviorSubject(
-      this.route.snapshot.data[PLATFORM_RESOLVER_KEY]
-    );
+    const platform: Platform | undefined =
+      this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
+    this.isDemo = this.route.snapshot.data[PLATFORM_DEMO_RESOLVER_KEY];
+    if (platform) {
+      this.platform$ = new BehaviorSubject(platform);
+    }
+    this.toggelCloudOAuth2$ = this.getCloudOAuth2ToggleListener();
+
     this.dataSource = new PiecesTableDataSource(
       this.piecesService,
       this.searchFormControl.valueChanges.pipe(startWith('')),
       this.oauth2AppsService,
-      this.refresh$.asObservable().pipe(startWith(true as const))
+      this.refresh$.asObservable().pipe(startWith(true as const)),
+      this.isDemo
     );
-    this.cloudAuthToggleFormControl.setValue(
-      this.platform$.value.cloudAuthEnabled
-    );
+    if (this.isDemo) {
+      this.cloudAuthToggleFormControl.disable();
+    } else if (this.platform$) {
+      this.cloudAuthToggleFormControl.setValue(
+        this.platform$.value.cloudAuthEnabled
+      );
+    }
   }
 
   getCloudOAuth2ToggleListener() {
+    if (!this.platform$) {
+      return undefined;
+    }
     return this.cloudAuthToggleFormControl.valueChanges.pipe(
       tap((cloudAuthEnabled) => {
-        this.platform$.next({ ...this.platform$.value, cloudAuthEnabled });
+        this.platform$!.next({ ...this.platform$!.value, cloudAuthEnabled });
       }),
       switchMap((cloudAuthEnabled) => {
         return this.platformService.updatePlatform(
           {
-            ...this.platform$.value,
+            ...this.platform$!.value,
             cloudAuthEnabled,
           },
-          this.platform$.value.id
+          this.platform$!.value.id
         );
       })
     );
   }
 
   togglePiece(piece: ManagedPieceMetadataModelSummary) {
+    if (!this.platform$) return;
+
     const pieceIncluded = !!this.platform$.value.filteredPieceNames.find(
       (pn) => pn === piece.name
     );
@@ -135,7 +152,7 @@ export class PiecesTableComponent implements OnInit {
     if (this.saving$) {
       this.saving$ = this.saving$.pipe(
         switchMap(() => {
-          return this.saveFilteredPieces(this.platform$.value);
+          return this.saveFilteredPieces(this.platform$!.value);
         }),
         finishedSavingPipe
       );
@@ -147,6 +164,7 @@ export class PiecesTableComponent implements OnInit {
   }
 
   installPiece() {
+    if (!this.platform$) return;
     this.addPackageDialogClosed$ = this.matDialog
       .open(InstallCommunityPieceModalComponent, {
         data: {

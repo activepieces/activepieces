@@ -8,13 +8,13 @@
     </mat-select>
   </mat-form-field>
   <button mat-icon-button matTooltip="Back" matTooltipPosition="below" [disabled]="!previous"
-    (click)="pageChanged.emit(previous!); setQueryParams(previous!)">
+    (click)="pageChanged.emit(previous!); setCursor(previous!)">
     <svg-icon [svgStyle]="{ width: '20px', height: '20px' }" class="ap-flex ap-justify-center ap-items-center"
       src="assets/img/custom/paginator/back.svg">
     </svg-icon>
   </button>
   <button mat-icon-button matTooltip="Next" matTooltipPosition="below" [disabled]="!next"
-    (click)="pageChanged.emit(next!); setQueryParams(next!)">
+    (click)="pageChanged.emit(next!); setCursor(next!)">
     <svg-icon [svgStyle]="{ width: '20px', height: '20px' }" class="ap-flex ap-justify-center ap-items-center"
       src="assets/img/custom/paginator/next.svg">
     </svg-icon>

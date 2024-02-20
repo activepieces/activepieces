@@ -1,121 +1,151 @@
 ---
-title: "Create Action"
-icon: "circle-3"
-description: ""
+title: 'Create Action'
+icon: 'circle-3'
+description: ''
 ---
 
-This tutorial will guide you through the process of creating a Hacker News piece with an action that fetches the top stories. It assumes that you are familiar with the following:
+This tutorial will guide you through the process of creating a Gelato piece with an action that fetches random icecream flavor and trigger that fetches new icecream flavor created. It assumes that you are familiar with the following:
 
-* [Activepieces Repo Structure](../architecture/repo-structure)
-* [Activepieces Local development](../development-setup/local) Or [Github Codespaces](../development-setup/codespaces).
-* TypeScript syntax.
-
-HackerNews is a social news website that allows users to submit and vote on stories related to computer science and entrepreneurship.
+- [Activepieces Repo Structure](../architecture/repo-structure)
+- [Activepieces Local development](../development-setup/local) Or [Github Codespaces](../development-setup/codespaces).
+- TypeScript syntax.
 
 ## Piece Definition
 
-To get started, let's generate a new piece for Hacker News
+To get started, let's generate a new piece for Gelato
 
 ```bash
-npm run create-piece hacker-news
+npm run cli pieces create
 ```
 
-The piece will be generated at `packages/pieces/hacker-news/`,
-the `src/index.ts` file should contain the following code
+You will be asked three questions to define your new piece:
 
-<Tip>
-This piece doesn't require authentication, check the Authentication Reference for more information.
-</Tip>
+1. `Piece Name`: Specify a name for your piece. This name uniquely identifies your piece within the ActivePieces ecosystem.
+2. `Package Name`: Optionally, you can enter a name for the npm package associated with your piece. If left blank, the default name will be used.
+3. `Piece Type`: Choose the piece type based on your intention. It can be either "custom" if it's a tailored solution for your needs, or "community" if it's designed to be shared and used by the broader community.
+
+**Example:**
+
+```bash
+npm run cli pieces create
+
+? Enter the piece name: gelato
+? Enter the package name: @activepieces/piece-gelato
+? Select the piece type: community
+```
+
+The piece will be generated at `packages/pieces/community/gelato/`,
+the `src/index.ts` file should contain the following code
 
 ```ts
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 
-export const hackerNews = createPiece({
-  displayName: 'hacker-news',
-  logoUrl: 'https://cdn.activepieces.com/pieces/hacker-news.png',
+export const gelato = createPiece({
+  displayName: 'Gelato',
+  logoUrl: 'https://cdn.activepieces.com/pieces/gelato.png',
   auth: PieceAuth.None(),
-  authors: [
-  ],
-  actions: [
-  ],
-  triggers: [
-  ],
+  authors: [],
+  actions: [],
+  triggers: [],
 });
 ```
+
+### Piece Authentication
+
+Now, let's establish authentication for this piece, which necessitates the inclusion of an API Key in the headers.
+
+Modify `src/index.ts` file to add authentication,
+
+```ts
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+
+export const gelatoAuth = PieceAuth.SecretText({
+  displayName: 'API Key',
+  required: true,
+  description: 'Please use **test-key** as value for API Key',
+});
+
+export const gelato = createPiece({
+  displayName: 'Gelato',
+  logoUrl: 'https://cdn.activepieces.com/pieces/gelato.png',
+  auth: gelatoAuth,
+  authors: [],
+  actions: [],
+  triggers: [],
+});
+```
+
+<Note>
+  Use the value **test-key** as the API key when testing actions or triggers for
+  Gelato.
+</Note>
 
 ## Action Definition
 
-Now let's create first action which fetch top stories from hackernews, The first step to do that is to create folder for the actions inside the hackernews folder (`packages/pieces/hacker-news/src/lib/`).
+Now let's create first action which fetch random ice-cream flavor.
 
 ```bash
-cd packages/pieces/hacker-news/src/lib/ && mkdir actions && cd actions
+npm run cli actions create
 ```
 
-Next, Let's create the action file:
+You will be asked three questions to define your new piece:
+
+1. `Piece Folder Name`: This is the name associated with the folder where the action resides. It helps organize and categorize actions within the piece.
+2. `Action Display Name`: The name users see in the interface, conveying the action's purpose clearly.
+3. `Action Description`: A brief, informative text in the UI, guiding users about the action's function and purpose.
+   Next, Let's create the action file:
+
+**Example:**
 
 ```bash
-touch fetch-top-stories.ts
+npm run cli actions create
+
+? Enter the piece folder name : gelato
+? Enter the action display name : get icecream flavor
+? Enter the action description : fetches random icecream flavor.
 ```
+
+This will create a new TypeScript file named `get-icecream-flavor.ts` in the `packages/pieces/community/gelato/src/lib/actions` directory.
 
 Inside this file, paste the following code:
 
-<Tip>
-You can ask ChatGPT3 to write the function to get top stories from hackernews.
-</Tip>
-
 ```typescript
-import { createAction, Property, PieceAuth } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod } from "@activepieces/pieces-common";
+import {
+  createAction,
+  Property,
+  PieceAuth,
+} from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { gelatoAuth } from '../..';
 
-export const fetchTopStories = createAction({
-	name: 'fetch_top_stories', // Must be a unique across the piece, this shouldn't be changed.
-  auth: PieceAuth.None(),
-  displayName:'Fetch Top Stories',
-  description: 'Fetch top stories from hackernews',
-	props: {
-        // Properties to ask from the user, in this ask we will take number of
-		number_of_stories: Property.Number({
-			displayName: 'Number of Stories',
-			description: undefined,
-			required: true,
-		})
-	},
-	async run(context) {
-        const HACKER_NEWS_API_URL = "https://hacker-news.firebaseio.com/v0/";
-        const topStoryIdsResponse = await httpClient.sendRequest<string[]>({
-			method: HttpMethod.GET,
-			url: `${HACKER_NEWS_API_URL}topstories.json`
-		});
-        const topStoryIds: string[] = topStoryIdsResponse.body;
-        const topStories = [];
-        for (let i = 0; i < Math.min(context.propsValue['number_of_stories'], topStoryIds.length); i++) {
-          const storyId = topStoryIds[i];
-          const storyResponse = await httpClient.sendRequest({
-            method: HttpMethod.GET,
-            url: `${HACKER_NEWS_API_URL}item/${storyId}.json`
-          });
-          topStories.push(storyResponse.body);
-        }
-		return topStories;
-	},
+export const getIcecreamFlavor = createAction({
+  name: 'get_icecream_flavor', // Must be a unique across the piece, this shouldn't be changed.
+  auth: gelatoAuth,
+  displayName: 'Get Icecream Flavor',
+  description: 'Fetches random icecream flavor',
+  props: {},
+  async run(context) {
+    const res = await httpClient.sendRequest<string[]>({
+      method: HttpMethod.GET,
+      url: 'https://cloud.activepieces.com/api/v1/webhooks/RGjv57ex3RAHOgs0YK6Ja/sync',
+      headers: {
+        Authorization: context.auth, // Pass API key in headers
+      },
+    });
+    return res.body;
+  },
 });
-
 ```
-
-<Tip>
-Friendly Tip: You can use `context.auth` If your piece contains authentication for this example, It doesn't have.
-</Tip>
-This code defines an `action` that fetches the top stories from Hacker News using API.
 
 The createAction function takes an object with several properties, including the `name`, `displayName`, `description`, `props`, and `run` function of the action.
 
 The `name` property is a unique identifier for the action. The `displayName` and `description` properties are used to provide a human-readable name and description for the action.
 
-The `props` property is an object that defines the properties that the action requires from the user. In this case, the action requires a single property called `number_of_stories`, which is a number representing the number of stories to fetch.
+The `props` property is an object that defines the properties that the action requires from the user. In this case, the action doesn't require any properties.
 
 The `run` function is the function that is called when the action is executed. It takes a single argument, context, which contains the values of the action's properties.
 
-The `run` function first defines the URL of the Hacker News API, and then makes a GET request to the topstories.json endpoint using the httpClient.sendRequest function to fetch the top story IDs. It then iterates over the top story IDs and makes a GET request to the `item/{id}.json` endpoint for each story ID to fetch the details of each story. Finally, it returns the top stories as an array.
+The `run` function utilizes the httpClient.sendRequest function to make a GET request, fetching a random ice cream flavor. It incorporates API key authentication in the request headers. Finally, it returns the response body.
 
 ## Expose The Definition
 
@@ -124,28 +154,27 @@ To make the action readable by Activepieces, add it to the array of actions in t
 ```typescript
 import { createPiece } from '@activepieces/pieces-framework';
 // Don't forget to add the following import.
-import { fetchTopStories } from './lib/actions/fetch-top-stories';
+import { getIcecreamFlavor } from './lib/actions/get-icecream-flavor';
 
-export const hackerNews = createPiece({
-  displayName: 'Hackernews Tutorial',
-  logoUrl: 'https://cdn.activepieces.com/pieces/hackernews.png',
+export const gelato = createPiece({
+  displayName: 'Gelato',
+  logoUrl: 'https://cdn.activepieces.com/pieces/gelato.png',
   authors: [],
-  auth: PieceAuth.None(),
-   // Add the action here.
-  actions: [fetchTopStories], // <--------
+  auth: gelatoAuth,
+  // Add the action here.
+  actions: [getIcecreamFlavor], // <--------
   triggers: [],
 });
 ```
 
 # Testing
 
-<Tip>
-By default dvelopment setup only builds modified pieces. If you want a new piece to be built automatically upon `npm start`, make sure you read about [Piece Development](../development-setup/getting-started) section.
-</Tip>
+By default, the development setup only builds specific components. Open the file `packages/server/api/.env` and include "gelato" in the `AP_DEV_PIECES`.
 
-Once you make an edit, the piece will be rebuilt. After this is finished, you'll need to **refresh** the frontend to see the changes.
+For more details, check out the [Piece Development](../development-setup/getting-started) section.
 
-To test the action, you can use the Flow Builder in Activepieces. It should work just like the screenshot demonstrates.
+Once you edit the environment variable, restart the backend. The piece will be rebuilt. After this process, you'll need to **refresh** the frontend to see the changes.
 
-<img src="/resources/screenshots/contributing-first-connector.png" />
+To test the action, use the flow builder in Activepieces. It should function as shown in the screenshot.
 
+![Gelato Action](/resources/screenshots/gelato-action.png)

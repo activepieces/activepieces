@@ -1,4 +1,4 @@
-import { NestedTreeControl } from '@angular/cdk/tree';
+import { FlatTreeControl } from '@angular/cdk/tree';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -7,17 +7,25 @@ import {
   OnInit,
   Output,
 } from '@angular/core';
-import { MatTreeNestedDataSource } from '@angular/material/tree';
+import {
+  MatTreeFlatDataSource,
+  MatTreeFlattener,
+} from '@angular/material/tree';
 import { map, Observable, tap } from 'rxjs';
 import {
   CHEVRON_SPACE_IN_MENTIONS_LIST,
   FIRST_LEVEL_PADDING_IN_MENTIONS_LIST,
   keysWithinPath,
+  MAX_ARRAY_LENGTH_BEFORE_SLICING,
   MentionListItem,
   MentionTreeNode,
 } from '../../utils';
 import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
 
+type MentionTreeNodeWithUiInfo = MentionTreeNode & {
+  level: number;
+  expandable: boolean;
+};
 @Component({
   selector: 'app-step-mentions-tree',
   templateUrl: './step-mentions-tree.component.html',
@@ -33,8 +41,31 @@ export class StepMentionsTreeComponent implements OnInit {
   @Output() mentionClicked: EventEmitter<MentionListItem> = new EventEmitter();
   @Input() markedNodesToShow: Map<string, boolean> | undefined;
   search$: Observable<string>;
-  treeControl = new NestedTreeControl<MentionTreeNode>((node) => node.children);
-  dataSource = new MatTreeNestedDataSource<MentionTreeNode>();
+  treeControl = new FlatTreeControl<MentionTreeNodeWithUiInfo>(
+    (node) => node.level,
+    (node) => node.expandable
+  );
+  private _transformer = (node: MentionTreeNode, level: number) => {
+    return {
+      expandable: !!node.children && node.children.length > 0,
+      ...node,
+      level: level,
+    };
+  };
+  treeFlattener = new MatTreeFlattener<
+    MentionTreeNode,
+    MentionTreeNodeWithUiInfo
+  >(
+    this._transformer,
+    (node) => node.level,
+    (node) => node.expandable,
+    (node) => node.children
+  );
+
+  dataSource = new MatTreeFlatDataSource<
+    MentionTreeNode,
+    MentionTreeNodeWithUiInfo
+  >(this.treeControl, this.treeFlattener);
   searchContainsStepDisplayName$: Observable<boolean>;
   currentlyTypedTextInSearchBar = '';
   constructor(public mentionsTreeCacheService: MentionsTreeCacheService) {
@@ -42,8 +73,13 @@ export class StepMentionsTreeComponent implements OnInit {
       tap((res) => {
         if (res) {
           this.dataSource.data = this.stepOutputObjectChildNodes;
-          this.treeControl.dataNodes = this.stepOutputObjectChildNodes;
-          this.treeControl.expandAll();
+          const childrenCount = this.calculateChildren(
+            this.stepOutputObjectChildNodes
+          );
+          console.log(this.stepOutputObjectChildNodes);
+          if (childrenCount <= MAX_ARRAY_LENGTH_BEFORE_SLICING) {
+            this.treeControl.expandAll();
+          }
         } else {
           this.treeControl.collapseAll();
         }
@@ -84,8 +120,16 @@ export class StepMentionsTreeComponent implements OnInit {
     ].join(' ');
     const mentionListItem = {
       value: `{{${node.propertyPath}}}`,
-      label: label,
+      label,
     };
     this.mentionClicked.emit(mentionListItem);
+  }
+
+  calculateChildren(children: MentionTreeNode[]): number {
+    return children.reduce((acc, child) => {
+      return (
+        acc + (child.children ? this.calculateChildren(child.children) : 0)
+      );
+    }, children.length);
   }
 }

@@ -39,6 +39,19 @@ export class Processors {
     return Number(value);
   };
 
+  static string: ProcessorFn<
+    string | number | undefined | null,
+    string | null | undefined
+  > = (property, value) => {
+    if (isNil(value)) {
+      return value;
+    }
+    if (typeof value === 'object') {
+      return JSON.stringify(value)
+    }
+    return value.toString();
+  }
+
   static datetime: ProcessorFn<
     number | string | undefined | null,
     string | undefined

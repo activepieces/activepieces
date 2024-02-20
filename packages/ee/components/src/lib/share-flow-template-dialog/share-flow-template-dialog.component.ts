@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  Input,
   TemplateRef,
 } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
@@ -29,6 +30,7 @@ import {
   ApEdition,
   ApFlagId,
   FlowTemplate,
+  PopulatedFlow,
   TelemetryEventName,
   TemplateType,
 } from '@activepieces/shared';
@@ -45,6 +47,7 @@ export class ShareFlowTemplateDialogComponent {
     tags: FormControl<string[]>;
     blogUrl: FormControl<string>;
   }>;
+  @Input({ required: true }) flow!: PopulatedFlow;
   shareTemplateMarkdown = `
   Generate or update a template link for the current flow to easily share it with others. 
   <br>
@@ -70,7 +73,7 @@ export class ShareFlowTemplateDialogComponent {
   ) {
     this.show$ = this.flagsService
       .getEdition()
-      .pipe(map((ed) => ed === ApEdition.CLOUD));
+      .pipe(map((ed) => ed === ApEdition.ENTERPRISE || ed === ApEdition.CLOUD));
     this.isPublicTemplatesProject$ = combineLatest({
       templateProjectId: this.flagsService.getAllFlags().pipe(
         map((flags) => {
@@ -92,44 +95,38 @@ export class ShareFlowTemplateDialogComponent {
   submit() {
     if (!this.loading) {
       this.loading = true;
-      this.shareFlow$ = this.store
-        .select(BuilderSelectors.selectCurrentFlow)
-        .pipe(
-          take(1),
-          switchMap((flow) => {
-            const request: CreateFlowTemplateRequest = {
-              description: this.form.value.description,
-              template: flow.version,
-              type: TemplateType.PROJECT,
-              blogUrl: this.form.value.blogUrl,
-              tags: this.form.value.tags,
-            };
-            this.telemetryService.capture({
-              name: TelemetryEventName.FLOW_SHARED,
-              payload: {
-                flowId: flow.id,
-                projectId: flow.projectId,
-              },
-            });
-            return this.templatesService.create(request).pipe(
-              switchMap((flowTemplate) => {
-                return this.flagsService
-                  .getFrontendUrl()
-                  .pipe(map((url) => `${url}/templates/${flowTemplate.id}`));
-              }),
-              tap((url) => {
-                this.dialogService.closeAll();
-                navigator.clipboard.writeText(url);
-                this.snackbar.open('Template URL copied to clipboard');
-                window.open(url, '_blank');
-                this.loading = false;
-              }),
-              map(() => {
-                return void 0;
-              })
-            );
-          })
-        );
+      const request: CreateFlowTemplateRequest = {
+        template: this.flow.version,
+        type: TemplateType.PROJECT,
+        blogUrl: this.form.value.blogUrl,
+        tags: this.form.value.tags,
+        description: this.form.value.description,
+      };
+      this.telemetryService.capture({
+        name: TelemetryEventName.FLOW_SHARED,
+        payload: {
+          flowId: this.flow.id,
+          projectId: this.flow.projectId,
+        },
+      });
+      this.shareFlow$ = this.templatesService.create(request).pipe(
+        switchMap((flowTemplate) => {
+          return this.flagsService
+            .getFrontendUrl()
+            .pipe(map((url) => `${url}/templates/${flowTemplate.id}`));
+        }),
+        tap((url) => {
+          this.dialogService.closeAll();
+          navigator.clipboard.writeText(url);
+          this.snackbar.open('Template URL copied to clipboard');
+          window.open(url, '_blank');
+          this.loading = false;
+        }),
+        map(() => {
+          return void 0;
+        })
+      );
+
       this.cd.markForCheck();
     }
   }
@@ -148,7 +145,6 @@ export class ShareFlowTemplateDialogComponent {
         tap((template) => {
           if (template) {
             this.form.patchValue({
-              description: template.description,
               blogUrl: template.blogUrl,
               tags: template.tags,
             });

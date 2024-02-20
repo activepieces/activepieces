@@ -9,7 +9,6 @@ import {
   of,
   take,
   BehaviorSubject,
-  filter,
 } from 'rxjs';
 import { ExecutionOutputStatus, FlowRun } from '@activepieces/shared';
 import {
@@ -21,6 +20,8 @@ import {
   CURSOR_QUERY_PARAM,
   STATUS_QUERY_PARAM,
   FLOW_QUERY_PARAM,
+  DATE_RANGE_START_QUERY_PARAM,
+  DATE_RANGE_END_QUERY_PARAM,
 } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 import { Params } from '@angular/router';
@@ -55,10 +56,8 @@ export class RunsTableDataSource extends DataSource<FlowRun> {
   connect(): Observable<FlowRun[]> {
     return combineLatest({
       queryParams: this.queryParams$,
-      //wait till projects are loaded
       project: this.store
         .select(ProjectSelectors.selectCurrentProject)
-        .pipe(filter((project) => !!project))
         .pipe(take(1)),
       refresh: this.refreshForExecutingRuns$.asObservable(),
       refreshForReruns: this.refreshForReruns$,
@@ -72,6 +71,8 @@ export class RunsTableDataSource extends DataSource<FlowRun> {
           limit: res.queryParams[LIMIT_QUERY_PARAM] || DEFAULT_PAGE_SIZE,
           cursor: res.queryParams[CURSOR_QUERY_PARAM],
           flowId: res.queryParams[FLOW_QUERY_PARAM],
+          createdAfter: res.queryParams[DATE_RANGE_START_QUERY_PARAM],
+          createdBefore: res.queryParams[DATE_RANGE_END_QUERY_PARAM],
         });
       }),
       catchError((err) => {
@@ -84,9 +85,7 @@ export class RunsTableDataSource extends DataSource<FlowRun> {
       }),
       tap((res) => {
         this.isLoading$.next(false);
-        this.paginator.next = res.next;
-        this.paginator.previous = res.previous;
-
+        this.paginator.setNextAndPrevious(res.next, res.previous);
         this.data = res.data;
         if (this.refreshTimer) {
           clearTimeout(this.refreshTimer);

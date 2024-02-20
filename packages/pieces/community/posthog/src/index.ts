@@ -1,4 +1,6 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { posthogCreateEvent } from './lib/actions/create-event';
 import { posthogCreateProject } from './lib/actions/create-project';
 
@@ -16,8 +18,19 @@ export const posthog = createPiece({
   displayName: 'PostHog',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/posthog.png',
+  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   auth: posthogAuth,
-  actions: [posthogCreateEvent, posthogCreateProject],
+  actions: [
+    posthogCreateEvent,
+    posthogCreateProject,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://app.posthog.com',
+      auth: posthogAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
+  ],
   authors: ['kanarelo'],
   triggers: [],
 });

@@ -5,7 +5,10 @@ import {
   AddPieceRequestBody,
   PieceOptionRequest,
   TriggerType,
+  ApFlagId,
   PieceScope,
+  ListPiecesRequestQuery,
+  spreadIfDefined,
 } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
 import {
@@ -64,7 +67,7 @@ export class PieceMetadataService {
   private release$ = this.flagsService.getRelease().pipe(shareReplay(1));
   private clearCache$ = new Subject<void>();
   private edition$ = this.flagsService.getEdition();
-  private piecesManifest$ = this.getPiecesMetadataIncludeHidden({
+  private piecesManifest$ = this.getPiecesManifestFromServer({
     includeHidden: false,
   });
   private piecesCache = new Map<string, Observable<PieceMetadataModel>>();
@@ -111,17 +114,16 @@ export class PieceMetadataService {
     return `${pieceName}-${pieceVersion}`;
   }
   private filterAppWebhooks(
+    pieceName: string,
     triggersMap: TriggersMetadata,
-    edition: ApEdition
+    supportedApps: string[]
   ): TriggersMetadata {
-    if (edition !== ApEdition.COMMUNITY) {
-      return triggersMap;
-    }
 
     const triggersList = Object.entries(triggersMap);
 
     const filteredTriggersList = triggersList.filter(
-      ([, trigger]) => trigger.type !== TriggerStrategy.APP_WEBHOOK
+      ([, trigger]) => trigger.type !== TriggerStrategy.APP_WEBHOOK ||
+        supportedApps.includes(pieceName)
     );
 
     return Object.fromEntries(filteredTriggersList);
@@ -218,9 +220,12 @@ export class PieceMetadataService {
       return this.piecesCache.get(cacheKey)!;
     }
 
-    const pieceMetadata$ = this.edition$.pipe(
+    const pieceMetadata$ = combineLatest({
+      edition: this.edition$,
+      supportedApps: this.flagsService.getArrayFlag(ApFlagId.SUPPORTED_APP_WEBHOOKS),
+    }).pipe(
       take(1),
-      switchMap((edition) => {
+      switchMap(({ edition, supportedApps }) => {
         return this.fetchPieceMetadata({
           pieceName,
           pieceVersion,
@@ -230,7 +235,7 @@ export class PieceMetadataService {
           map((pieceMetadata) => {
             return {
               ...pieceMetadata,
-              triggers: this.filterAppWebhooks(pieceMetadata.triggers, edition),
+              triggers: this.filterAppWebhooks(pieceMetadata.name, pieceMetadata.triggers, supportedApps),
             };
           })
         );
@@ -271,25 +276,32 @@ export class PieceMetadataService {
     throw new Error("Step type isn't accounted for");
   }
 
-  getPiecesMetadataIncludeHidden({
+  getPiecesManifestFromServer({
     includeHidden,
-  }: {
-    includeHidden: boolean;
-  }) {
+    searchQuery,
+    suggestionType
+  }: ListPiecesRequestQuery) {
+    
     return combineLatest([
       this.edition$,
       this.release$,
       this.clearCache$.asObservable().pipe(startWith(void 0)),
     ]).pipe(
       switchMap(([edition, release]) => {
+        let params:Record<string,boolean|string>= {
+          release,
+          edition
+        };
+        params= {
+          ...params,
+          ...spreadIfDefined('includeHidden', includeHidden),
+          ...spreadIfDefined('searchQuery', searchQuery),
+          ...spreadIfDefined('suggestionType', suggestionType)
+        }
         return this.http.get<PieceMetadataModelSummary[]>(
           `${environment.apiUrl}/pieces`,
           {
-            params: {
-              includeHidden,
-              release,
-              edition,
-            },
+            params
           }
         );
       }),

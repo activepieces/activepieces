@@ -25,10 +25,11 @@ import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
 import { UsersTableComponent } from './pages/users-table/users-table.component';
 import { SsoSettingsComponent } from './components/sso-settings/sso-settings.component';
 import { AddAllowedEmailDomainDialogComponent } from './components/dialogs/add-allowed-email-domain-dialog/add-allowed-email-domain-dialog.component';
-import { AllowedEmailDomainsListComponent } from './components/allowed-email-domains-list/allowed-email-domains-list.component';
-import { ConfigureConfederatedAuthnCardComponent } from './components/configure-confederated-authn-card/configure-confederated-authn-card.component';
+import { AllowedEmailDomainsListComponent } from './components/cards/allowed-email-domains-list/allowed-email-domains-list.component';
+import { ConfigureConfederatedAuthnCardComponent } from './components/cards/configure-confederated-authn-card/configure-confederated-authn-card.component';
 import { EnableFederatedAuthnProviderDialogComponent } from './components/dialogs/enable-federated-authn-provider-dialog/enable-federated-authn-provider-dialog.component';
-import { ConfigureAllowingEmailLoginsCardComponent } from './components/configure-allowing-email-logins-card/configure-allowing-email-logins-card.component';
+import { ConfigureAllowingEmailLoginsCardComponent } from './components/cards/configure-allowing-email-logins-card/configure-allowing-email-logins-card.component';
+import { AuditEventTableComponent } from './components/audit-event-table/audit-event-table.component';
 @NgModule({
   imports: [
     UiCommonModule,
@@ -55,6 +56,7 @@ import { ConfigureAllowingEmailLoginsCardComponent } from './components/configur
     TermsAndServicesSettingsComponent,
     TemplatesTableComponent,
     CustomDomainTableComponent,
+    AuditEventTableComponent,
     UsersTableComponent,
     SsoSettingsComponent,
     AddAllowedEmailDomainDialogComponent,

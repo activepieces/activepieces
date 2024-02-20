@@ -1,5 +1,7 @@
 import { encoding_for_model } from 'tiktoken';
 
+export const baseUrl = 'https://api.openai.com/v1';
+
 export const Languages = [
   { value: 'es', label: 'Spanish' },
   { value: 'it', label: 'Italian' },

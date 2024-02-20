@@ -15,7 +15,8 @@
   <ap-icon-button [class.!ap-visible]="searchFormControl.value" matSuffix class="ap-mr-[4.5rem] ap-invisible"
     (buttonClicked)="searchFormControl.setValue('')" [iconFilename]="'close.svg'"></ap-icon-button>
 </mat-form-field>
-<div class="ap-max-h-[338px] ap-h-[338px] ap-max-w-[357px] ap-w-[357px] ap-overflow-y-auto ap-overflow-x-hidden"
+<div
+  class="ap-max-h-[338px] ap-h-[338px] ap-max-w-[357px] ap-w-[357px] ap-overflow-y-auto ap-overflow-x-hidden thin-scrollbars"
   [class.!ap-h-full]="(builderAutocompleteService.dataInsertionPopupSize$ | async) === 'fullscreen'"
   [class.!ap-w-full]="(builderAutocompleteService.dataInsertionPopupSize$ | async) === 'fullscreen'"
   [class.!ap-max-h-full]="(builderAutocompleteService.dataInsertionPopupSize$ | async) === 'fullscreen'"

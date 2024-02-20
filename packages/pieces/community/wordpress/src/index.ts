@@ -1,20 +1,21 @@
 import {
-  PieceAuth,
-  PiecePropValueSchema,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { createWordpressPost } from './lib/actions/create-post.action';
-import { wordpressNewPost } from './lib/trigger/new-post.trigger';
-import { createWordpressPage } from './lib/actions/create-page.action';
-import { getWordpressPost } from './lib/actions/get-post.action';
-import {
   AuthenticationType,
   HttpMethod,
   HttpRequest,
+  createCustomApiCallAction,
   httpClient,
 } from '@activepieces/pieces-common';
+import {
+  PieceAuth,
+  Property,
+  createPiece,
+} from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
+import { createWordpressPage } from './lib/actions/create-page.action';
+import { createWordpressPost } from './lib/actions/create-post.action';
+import { getWordpressPost } from './lib/actions/get-post.action';
 import { wordpressCommon } from './lib/common';
+import { wordpressNewPost } from './lib/trigger/new-post.trigger';
 
 const markdownPropertyDescription = `
 **Enable Basic Authentication:**
@@ -97,7 +98,24 @@ export const wordpress = createPiece({
   displayName: 'Wordpress',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/wordpress.png',
+  categories: [PieceCategory.MARKETING],
   auth: wordpressAuth,
-  actions: [createWordpressPost, createWordpressPage, getWordpressPost],
+  actions: [
+    createWordpressPost,
+    createWordpressPage,
+    getWordpressPost,
+    createCustomApiCallAction({
+      baseUrl: (auth) =>
+        (auth as { website_url: string }).website_url.trim() + '/wp-json/wp/v2',
+      auth: wordpressAuth,
+      authMapping: (auth) => ({
+        Authorization: `Basic ${Buffer.from(
+          `${(auth as { username: string }).username}:${
+            (auth as { password: string }).password
+          }`
+        ).toString('base64')}`,
+      }),
+    }),
+  ],
   triggers: [wordpressNewPost],
 });

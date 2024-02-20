@@ -21,6 +21,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { BuilderSelectors } from '../builder/builder.selector';
 import { UUID } from 'angular2-uuid';
 import { BuilderActions } from '../builder/builder.action';
+import { PannerService } from '@activepieces/ui-canvas-utils';
 import {
   ActionType,
   PopulatedFlow,
@@ -34,29 +35,27 @@ import {
 import { RightSideBarType } from '../../model/enums/right-side-bar-type.enum';
 import { LeftSideBarType } from '../../model/enums/left-side-bar-type.enum';
 import { NO_PROPS } from '../../model/canvas-state';
-import { CollectionBuilderService } from '../../service/collection-builder.service';
 import {
   BuilderAutocompleteMentionsDropdownService,
   FlowService,
   environment,
+  FlowBuilderService,
 } from '@activepieces/ui/common';
 import { canvasActions } from '../builder/canvas/canvas.action';
 import { ViewModeActions } from '../builder/viewmode/view-mode.action';
 import { ViewModeEnum } from '../../model';
 import { HttpStatusCode } from '@angular/common/http';
 import { FlowStructureUtil } from '../../utils/flowStructureUtil';
-
 @Injectable()
 export class FlowsEffects {
   loadInitial$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(BuilderActions.loadInitial),
-      switchMap(({ type, flow, run, folder, publishedVersion }) => {
+      switchMap(({ type, flow, run, publishedVersion }) => {
         return of(
           FlowsActions.setInitial({
             flow: { ...flow, publishedFlowVersion: publishedVersion },
             run,
-            folder,
           })
         );
       }),
@@ -67,7 +66,7 @@ export class FlowsEffects {
     );
   });
 
-  replaceTrigger = createEffect(() => {
+  replaceTrigger$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(FlowsActions.updateTrigger),
       concatLatestFrom(() =>
@@ -82,6 +81,7 @@ export class FlowsEffects {
       })
     );
   });
+
   selectFirstInvalidStep$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(FlowsActions.selectFirstInvalidStep),
@@ -108,7 +108,7 @@ export class FlowsEffects {
     );
   });
 
-  deleteStep = createEffect(() => {
+  deleteStep$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(FlowsActions.deleteAction),
       concatLatestFrom(() => [
@@ -149,7 +149,7 @@ export class FlowsEffects {
     );
   });
 
-  addStep = createEffect(() => {
+  addStep$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(FlowsActions.addAction),
       concatLatestFrom(() =>
@@ -163,7 +163,7 @@ export class FlowsEffects {
     );
   });
 
-  stepSelectedEffect = createEffect(() => {
+  stepSelected$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(canvasActions.selectStepByName),
       concatLatestFrom(() => [
@@ -548,13 +548,26 @@ export class FlowsEffects {
     );
   });
 
+  flowImported$ = createEffect(
+    () => {
+      return this.actions$.pipe(
+        ofType(FlowsActions.importFlow),
+        tap((res) => {
+          this.pannerService.resetZoom(res.flow.version);
+        })
+      );
+    },
+    { dispatch: false }
+  );
+
   constructor(
-    private pieceBuilderService: CollectionBuilderService,
+    private pieceBuilderService: FlowBuilderService,
     private flowService: FlowService,
     private store: Store,
     private actions$: Actions,
     private snackBar: MatSnackBar,
-    private builderAutocompleteService: BuilderAutocompleteMentionsDropdownService
+    private builderAutocompleteService: BuilderAutocompleteMentionsDropdownService,
+    private pannerService: PannerService
   ) {}
 
   private setLastSaveDate() {

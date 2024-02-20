@@ -3,6 +3,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { publishToTopic } from './lib/action/publish-to-topic';
 import { common } from './lib/common';
 import { newMessageInTopic } from './lib/trigger/new-message-in-topic';
@@ -52,6 +53,7 @@ export const gcloudPubsub = createPiece({
   displayName: 'GCloud Pub/Sub',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/gcloud-pubsub.png',
+  categories: [PieceCategory.DEVELOPER_TOOLS],
   auth: googlePubsubAuth,
   authors: ['kidskey'],
   actions: [publishToTopic],

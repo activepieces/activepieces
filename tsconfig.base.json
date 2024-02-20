@@ -109,6 +109,9 @@
       "@activepieces/piece-convertkit": [
         "packages/pieces/community/convertkit/src/index.ts"
       ],
+      "@activepieces/piece-crypto": [
+        "packages/pieces/community/crypto/src/index.ts"
+      ],
       "@activepieces/piece-csv": ["packages/pieces/community/csv/src/index.ts"],
       "@activepieces/piece-data-mapper": [
         "packages/pieces/community/data-mapper/src/index.ts"
@@ -218,6 +221,9 @@
       "@activepieces/piece-hackernews": [
         "packages/pieces/community/hackernews/src/index.ts"
       ],
+      "@activepieces/piece-heartbeat": [
+        "packages/pieces/community/heartbeat/src/index.ts"
+      ],
       "@activepieces/piece-http": [
         "packages/pieces/community/http/src/index.ts"
       ],
@@ -235,6 +241,9 @@
       ],
       "@activepieces/piece-intercom": [
         "packages/pieces/community/intercom/src/index.ts"
+      ],
+      "@activepieces/piece-interfaces": [
+        "packages/pieces/community/interfaces/src/index.ts"
       ],
       "@activepieces/piece-invoiceninja": [
         "packages/pieces/community/invoiceninja/src/index.ts"
@@ -323,6 +332,9 @@
       "@activepieces/piece-ntfy": [
         "packages/pieces/community/ntfy/src/index.ts"
       ],
+      "@activepieces/piece-odoo": [
+        "packages/pieces/community/odoo/src/index.ts"
+      ],
       "@activepieces/piece-onfleet": [
         "packages/pieces/community/onfleet/src/index.ts"
       ],
@@ -352,6 +364,9 @@
       ],
       "@activepieces/piece-qdrant": [
         "packages/pieces/community/qdrant/src/index.ts"
+      ],
+      "@activepieces/piece-quickzu": [
+        "packages/pieces/community/quickzu/src/index.ts"
       ],
       "@activepieces/piece-read-file": [
         "packages/pieces/read-file/src/index.ts"
@@ -480,6 +495,9 @@
       "@activepieces/piece-webflow": [
         "packages/pieces/community/webflow/src/index.ts"
       ],
+      "@activepieces/piece-whatsable": [
+        "packages/pieces/community/whatsable/src/index.ts"
+      ],
       "@activepieces/piece-woocommerce": [
         "packages/pieces/community/woocommerce/src/index.ts"
       ],
@@ -515,9 +533,15 @@
         "packages/pieces/community/wootric/src/index.ts"
       ],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
+      "@activepieces/ui-canvas-utils": [
+        "packages/ui/canvas-utils/src/index.ts"
+      ],
       "@activepieces/ui-ee-platform": ["packages/ee/ui-platform/src/index.ts"],
       "@activepieces/ui-feature-builder-header": [
         "packages/ui/feature-builder-header/src/index.ts"
+      ],
+      "@activepieces/ui-feature-git-sync": [
+        "packages/ui/feature-git-sync/src/index.ts"
       ],
       "@activepieces/ui/common": ["packages/ui/common/src/index.ts"],
       "@activepieces/ui/feature-authentication": [
@@ -547,6 +571,9 @@
       "@activepieces/ui/feature-dashboard": [
         "packages/ui/feature-dashboard/src/index.ts"
       ],
+      "@activepieces/ui/feature-folders-store": [
+        "packages/ui/feature-folders-store/src/index.ts"
+      ],
       "@activepieces/ui/feature-pieces": [
         "packages/ui/feature-pieces/src/index.ts"
       ],
@@ -554,9 +581,12 @@
         "packages/ui/feature-templates/src/index.ts"
       ],
       "@ee/*": ["packages/ee/*"],
+      "server-shared": ["packages/server/shared/src/index.ts"],
+      "server-worker": ["packages/server/worker/src/index.ts"],
       "ui-feature-flow-builder": [
         "packages/ui/feature-flow-builder/src/index.ts"
-      ]
+      ],
+      "ui-feature-interfaces": ["packages/ui/features-interfaces/src/index.ts"]
     },
     "resolveJsonModule": true
   },

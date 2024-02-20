@@ -1,12 +1,27 @@
 import { Static, Type } from '@sinclair/typebox'
 import { ApEdition } from '../../flag/flag'
-import { PackageType, PieceType } from '../piece'
+import { PackageType, PieceCategory, PieceType } from '../piece'
 
 export const EXACT_VERSION_PATTERN = /^[0-9]+\.[0-9]+\.[0-9]+$/
 export const VERSION_PATTERN = /^([~^])?[0-9]+\.[0-9]+\.[0-9]+$/
 
 export const ExactVersionType = Type.RegEx(EXACT_VERSION_PATTERN)
 export const VersionType = Type.RegEx(VERSION_PATTERN)
+
+export enum SuggestionType {
+    ACTION = 'ACTION',
+    TRIGGER = 'TRIGGER',
+    ACTION_AND_TRIGGER = 'ACTION_AND_TRIGGER',
+}
+export enum PieceSortBy {
+    NAME = 'NAME',
+    DATE = 'DATE',
+}
+
+export enum PieceOrderBy {
+    ASC = 'ASC',
+    DESC = 'DESC',
+}
 
 export const GetPieceRequestWithScopeParams = Type.Object({
     name: Type.String(),
@@ -26,6 +41,11 @@ export const ListPiecesRequestQuery = Type.Object({
     release: Type.Optional(ExactVersionType),
     includeHidden: Type.Optional(Type.Boolean()),
     edition: Type.Optional(Type.Enum(ApEdition)),
+    searchQuery: Type.Optional(Type.String()),
+    sortBy: Type.Optional(Type.Enum(PieceSortBy)),
+    orderBy: Type.Optional(Type.Enum(PieceOrderBy)),
+    categories: Type.Optional(Type.Array(Type.Enum(PieceCategory))),
+    suggestionType: Type.Optional(Type.Enum(SuggestionType)),
 })
 
 export type ListPiecesRequestQuery = Static<typeof ListPiecesRequestQuery>
@@ -44,6 +64,8 @@ export const PieceOptionRequest = Type.Object({
     pieceVersion: VersionType,
     stepName: Type.String({}),
     propertyName: Type.String({}),
+    flowId: Type.String(),
+    flowVersionId: Type.String(),
     input: Type.Any({}),
 })
 

@@ -101,6 +101,7 @@ export enum BranchOperator {
     TEXT_DOES_NOT_END_WITH = 'TEXT_DOES_NOT_END_WITH',
     NUMBER_IS_GREATER_THAN = 'NUMBER_IS_GREATER_THAN',
     NUMBER_IS_LESS_THAN = 'NUMBER_IS_LESS_THAN',
+    NUMBER_IS_EQUAL_TO = 'NUMBER_IS_EQUAL_TO',
     BOOLEAN_IS_TRUE = 'BOOLEAN_IS_TRUE',
     BOOLEAN_IS_FALSE = 'BOOLEAN_IS_FALSE',
     EXISTS = 'EXISTS',
@@ -147,6 +148,7 @@ const BranchConditionValid = (addMinLength: boolean) => Type.Union([
         operator: Type.Optional(Type.Union([
             Type.Literal( BranchOperator.NUMBER_IS_GREATER_THAN),
             Type.Literal( BranchOperator.NUMBER_IS_LESS_THAN),
+            Type.Literal( BranchOperator.NUMBER_IS_EQUAL_TO),
         ])),
     }),
     Type.Object({

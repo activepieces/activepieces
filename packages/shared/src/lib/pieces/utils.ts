@@ -1,3 +1,6 @@
+import semverMajor from 'semver/functions/major'
+import semverMinor from 'semver/functions/minor'
+import semverMinVersion from 'semver/ranges/min-version'
 import { ActivepiecesError, ErrorCode } from '../common/activepieces-error'
 import { PackageType, PiecePackage } from './piece'
 
@@ -46,6 +49,13 @@ export const extractPieceFromModule = <T>(params: ExtractPieceFromModuleParams):
             pieceVersion,
         },
     })
+}
+
+export const getPieceMajorAndMinorVersion = (pieceVersion: string): string => {
+    const minimumSemver = semverMinVersion(pieceVersion)
+    return minimumSemver
+        ? `${semverMajor(minimumSemver)}.${semverMinor(minimumSemver)}`
+        : `${semverMajor(pieceVersion)}.${semverMinor(pieceVersion)}`
 }
 
 type GetPackageAliasForPieceParams = {

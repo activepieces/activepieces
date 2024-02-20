@@ -74,7 +74,7 @@ function getFlowExecutionState(input: ExecuteFlowOperation): FlowExecutorContext
         case ExecutionType.RESUME: {
             let flowContext = FlowExecutorContext.empty().increaseTask(input.tasks)
             for (const [step, output] of Object.entries(input.executionState.steps)) {
-                if (output.status === StepOutputStatus.SUCCEEDED) {
+                if ([StepOutputStatus.SUCCEEDED, StepOutputStatus.PAUSED].includes(output.status)) {
                     flowContext = flowContext.upsertStep(step, output)
                 }
             }
@@ -112,6 +112,12 @@ const execute = async (): Promise<void> => {
                 const output = await pieceHelper.executeProps({
                     params: input,
                     piecesSource: EngineConstants.PIECE_SOURCES,
+                    executionState: await testExecutionContext.stateFromFlowVersion({
+                        flowVersion: input.flowVersion,
+                        projectId: input.projectId,
+                        workerToken: input.workerToken,
+                    }),
+                    constants: EngineConstants.fromExecutePropertyInput(input),
                 })
                 await writeOutput({
                     status: EngineResponseStatus.OK,

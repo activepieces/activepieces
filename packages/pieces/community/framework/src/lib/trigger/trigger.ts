@@ -3,6 +3,7 @@ import { TestOrRunHookContext, TriggerHookContext } from '../context';
 import { TriggerBase } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
 import { PieceAuthProperty } from '../property/authentication';
+import { TriggerTestStrategy } from '@activepieces/shared';
 
 export enum TriggerStrategy {
   POLLING = 'POLLING',
@@ -17,6 +18,11 @@ export enum WebhookHandshakeStrategy {
   BODY_PARAM_PRESENT = 'BODY_PARAM_PRESENT'
 }
 
+export enum WebhookRenewStrategy {
+  CRON = 'CRON',
+  NONE = 'NONE',
+}
+
 export const WebhookHandshakeConfiguration = Type.Object({
   strategy: Type.Enum(WebhookHandshakeStrategy),
   paramName: Type.Optional(Type.String()),
@@ -24,34 +30,59 @@ export const WebhookHandshakeConfiguration = Type.Object({
 
 export type WebhookHandshakeConfiguration = Static<typeof WebhookHandshakeConfiguration>
 
+export const WebhookRenewConfiguration = Type.Union([
+  Type.Object({
+    strategy: Type.Literal(WebhookRenewStrategy.CRON),
+    cronExpression: Type.String(),
+  }),
+  Type.Object({
+    strategy: Type.Literal(WebhookRenewStrategy.NONE),
+  }),
+])
+export type WebhookRenewConfiguration = Static<typeof WebhookRenewConfiguration>
+
 export interface WebhookResponse {
   status: number,
   body?: any,
   headers?: Record<string, string>
 }
 
-type CreateTriggerParams<
+type BaseTriggerParams<
   PieceAuth extends PieceAuthProperty,
   TriggerProps extends InputPropertyMap,
   TS extends TriggerStrategy,
 > = {
-  /**
-   * A dummy parameter used to infer {@code PieceAuth} type
-   */
   name: string
   displayName: string
   description: string
   auth?: PieceAuth
   props: TriggerProps
   type: TS
-  handshakeConfiguration?: WebhookHandshakeConfiguration,
   onEnable: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>
-  onHandshake?: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<WebhookResponse>
   onDisable: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>
   run: (context: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>
   test?: (context: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>
   sampleData: unknown
 }
+
+type WebhookTriggerParams<
+PieceAuth extends PieceAuthProperty,
+TriggerProps extends InputPropertyMap,
+TS extends TriggerStrategy,
+> = BaseTriggerParams<PieceAuth, TriggerProps, TS> & {
+  handshakeConfiguration?: WebhookHandshakeConfiguration
+  onHandshake?: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<WebhookResponse>,
+  renewConfiguration?: WebhookRenewConfiguration
+  onRenew?(context: TriggerHookContext<PieceAuth, TriggerProps, TS>): Promise<void>,
+}
+
+type CreateTriggerParams<
+  PieceAuth extends PieceAuthProperty,
+  TriggerProps extends InputPropertyMap,
+  TS extends TriggerStrategy,
+> = TS extends TriggerStrategy.WEBHOOK
+    ? WebhookTriggerParams<PieceAuth, TriggerProps, TS>
+    : BaseTriggerParams<PieceAuth, TriggerProps, TS>
 
 export class ITrigger<
   TS extends TriggerStrategy,
@@ -65,12 +96,15 @@ export class ITrigger<
     public readonly props: TriggerProps,
     public readonly type: TS,
     public readonly handshakeConfiguration: WebhookHandshakeConfiguration,
-    public readonly onEnable: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>,
     public readonly onHandshake: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<WebhookResponse>,
+    public readonly renewConfiguration: WebhookRenewConfiguration,
+    public readonly onRenew: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>,
+    public readonly onEnable: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>,
     public readonly onDisable: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>,
     public readonly run: (ctx: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
     public readonly test: (ctx: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
-    public sampleData: unknown,
+    public readonly sampleData: unknown,
+    public readonly testStrategy: TriggerTestStrategy,
   ) { }
 }
 
@@ -80,23 +114,66 @@ export type Trigger<
   S extends TriggerStrategy = TriggerStrategy,
 > = ITrigger<S, PieceAuth, TriggerProps>
 
+// TODO refactor and extract common logic
 export const createTrigger = <
   TS extends TriggerStrategy,
   PieceAuth extends PieceAuthProperty,
   TriggerProps extends InputPropertyMap,
 >(params: CreateTriggerParams<PieceAuth, TriggerProps, TS>) => {
-  return new ITrigger(
-    params.name,
-    params.displayName,
-    params.description,
-    params.props,
-    params.type,
-    params.handshakeConfiguration ?? { strategy: WebhookHandshakeStrategy.NONE },
-    params.onEnable,
-    params.onHandshake ?? (async () => ({ status: 200 })),
-    params.onDisable,
-    params.run,
-    params.test ?? (() => Promise.resolve([params.sampleData])),
-    params.sampleData,
-  )
+  switch (params.type) {
+    case TriggerStrategy.WEBHOOK:
+      return new ITrigger(
+        params.name,
+        params.displayName,
+        params.description,
+        params.props,
+        params.type,
+        params.handshakeConfiguration ?? { strategy: WebhookHandshakeStrategy.NONE },
+        params.onHandshake ?? (async () => ({ status: 200 })),
+        params.renewConfiguration ?? { strategy: WebhookRenewStrategy.NONE },
+        params.onRenew ?? (async () => Promise.resolve()),
+        params.onEnable,
+        params.onDisable,
+        params.run,
+        params.test ?? (() => Promise.resolve([params.sampleData])),
+        params.sampleData,
+        params.test ? TriggerTestStrategy.TEST_FUNCTION : TriggerTestStrategy.SIMULATION,
+      )
+    case TriggerStrategy.POLLING:
+      return new ITrigger(
+        params.name,
+        params.displayName,
+        params.description,
+        params.props,
+        params.type,
+        { strategy: WebhookHandshakeStrategy.NONE },
+        async () => ({ status: 200 }),
+        { strategy: WebhookRenewStrategy.NONE },
+        (async () => Promise.resolve()),
+        params.onEnable,
+        params.onDisable,
+        params.run,
+        params.test ?? (() => Promise.resolve([params.sampleData])),
+        params.sampleData,
+        TriggerTestStrategy.TEST_FUNCTION,
+      )
+    case TriggerStrategy.APP_WEBHOOK:
+      return new ITrigger(
+        params.name,
+        params.displayName,
+        params.description,
+        params.props,
+        params.type,
+        { strategy: WebhookHandshakeStrategy.NONE },
+        async () => ({ status: 200 }),
+        { strategy: WebhookRenewStrategy.NONE },
+        (async () => Promise.resolve()),
+        params.onEnable,
+        params.onDisable,
+        params.run,
+        params.test ?? (() => Promise.resolve([params.sampleData])),
+        params.sampleData,
+        TriggerTestStrategy.TEST_FUNCTION,
+      )
+  }
 }
