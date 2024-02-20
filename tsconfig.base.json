@@ -529,6 +529,9 @@
       "@activepieces/pieces-framework": [
         "packages/pieces/community/framework/src/index.ts"
       ],
+      "@activepieces/pieces-wootric": [
+        "packages/pieces/community/wootric/src/index.ts"
+      ],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
       "@activepieces/ui-canvas-utils": [
         "packages/ui/canvas-utils/src/index.ts"
