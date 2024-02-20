@@ -87,7 +87,7 @@ export class MentionsListComponent implements OnInit, AfterViewInit {
   ngAfterViewInit(): void {
     if (this.focusSearchInput$) {
       setTimeout(() => {
-        this.searchInput.nativeElement.focus();
+        this.searchInput?.nativeElement.focus();
       }, 1);
     }
   }
@@ -96,7 +96,7 @@ export class MentionsListComponent implements OnInit, AfterViewInit {
       this.focusSearchInput$ = this.focusSearchInput$.pipe(
         tap((val) => {
           if (val && this.searchInput) {
-            this.searchInput.nativeElement.focus();
+            this.searchInput?.nativeElement.focus();
           }
         })
       );

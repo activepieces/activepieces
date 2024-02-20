@@ -4,9 +4,7 @@ import {
 } from '@fastify/type-provider-typebox'
 import {
     ALL_PRINICPAL_TYPES,
-    ActivepiecesError,
     ApEdition,
-    ErrorCode,
     GetPieceRequestParams,
     GetPieceRequestQuery,
     GetPieceRequestWithScopeParams,
@@ -16,7 +14,6 @@ import {
     PrincipalType,
 } from '@activepieces/shared'
 import { engineHelper } from '../helper/engine-helper'
-import { system, SystemProp } from 'server-shared'
 import {
     getPiecePackage,
     pieceMetadataService,
@@ -32,8 +29,6 @@ import { flowService } from '../flows/flow/flow.service'
 export const pieceModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(basePiecesController, { prefix: '/v1/pieces' })
 }
-
-const statsEnabled = system.getBoolean(SystemProp.STATS_ENABLED)
 
 const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
     app.get(
@@ -59,6 +54,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             },
             schema: {
                 querystring: ListPiecesRequestQuery,
+              
             },
         },
         async (req): Promise<PieceMetadataModelSummary[]> => {
@@ -75,6 +71,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 searchQuery: req.query.searchQuery,
                 sortBy: req.query.sortBy,
                 orderBy: req.query.orderBy,
+                suggestionType: req.query.suggestionType,
             })
             return pieceMetadataSummary
         },
@@ -175,27 +172,6 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             })
 
             return result
-        },
-    )
-
-    app.get(
-        '/stats',
-        {
-            config: {
-                allowedPrincipals: ALL_PRINICPAL_TYPES,
-            },
-        },
-        async () => {
-            if (!statsEnabled) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.ENTITY_NOT_FOUND,
-                    params: {
-                        message: 'not found',
-                    },
-                })
-            }
-
-            return pieceMetadataService.stats()
         },
     )
 

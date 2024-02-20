@@ -8,7 +8,7 @@ import {
 } from '../../../helpers/mocks'
 import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
-import { PlatformRole, PrincipalType, apId } from '@activepieces/shared'
+import { PlatformRole, PrincipalType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 
 let app: FastifyInstance | null = null
