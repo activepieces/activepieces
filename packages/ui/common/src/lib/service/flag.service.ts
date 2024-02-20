@@ -92,10 +92,10 @@ export class FlagService {
     );
   }
 
-  getInterfaceUrlPrefix(): Observable<string> {
+  getFormUrlPrefix(): Observable<string> {
     return this.getAllFlags().pipe(
       map((flags) => {
-        return (flags[ApFlagId.FRONTEND_URL] as string) + '/interfaces';
+        return (flags[ApFlagId.FRONTEND_URL] as string) + '/forms';
       })
     );
   }
