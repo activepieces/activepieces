@@ -13,7 +13,6 @@ import {
     isNil,
 } from '@activepieces/shared'
 import { PieceMetadataService } from './piece-metadata-service'
-import { AllPiecesStats } from './piece-stats-service'
 import importFresh from 'import-fresh'
 import {
     PieceMetadataModel,
@@ -22,6 +21,7 @@ import {
 import { pieceMetadataServiceHooks } from './hooks'
 import { nanoid } from 'nanoid'
 import { exceptionHandler } from 'server-shared'
+import { toPieceMetadataModelSummary } from '.'
 
 const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
     const pieces = await findAllPieces()
@@ -106,13 +106,16 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
                         updated: new Date().toISOString(),
                     }
                 }),
+                suggestionType: params.suggestionType,
             })
-            return pieces.map((p) =>
-                toPieceMetadataModelSummary({
+            const mappedToModel = pieces.map((p) =>
+                toPieceMetadataModel({
                     pieceMetadata: p,
                     projectId,
                 }),
             )
+            return toPieceMetadataModelSummary(mappedToModel, params.suggestionType)
+
         },
 
         async getOrThrow({
@@ -145,10 +148,6 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
 
         async create(): Promise<PieceMetadataModel> {
             throw new Error('Creating pieces is not supported in development mode')
-        },
-
-        async stats(): Promise<AllPiecesStats> {
-            return {}
         },
 
         async getExactPieceVersion({ projectId, name, version }): Promise<string> {
@@ -192,21 +191,7 @@ const toPieceMetadataModel = ({
     }
 }
 
-const toPieceMetadataModelSummary = ({
-    pieceMetadata,
-    projectId,
-}: ToPieceMetadataModelParams): PieceMetadataModelSummary => {
-    const pieceMetadataModel = toPieceMetadataModel({
-        pieceMetadata,
-        projectId,
-    })
 
-    return {
-        ...pieceMetadataModel,
-        actions: Object.keys(pieceMetadataModel.actions).length,
-        triggers: Object.keys(pieceMetadataModel.triggers).length,
-    }
-}
 
 type ToPieceMetadataModelParams = {
     pieceMetadata: PieceMetadata

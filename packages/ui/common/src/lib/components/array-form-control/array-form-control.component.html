@@ -9,7 +9,7 @@
                     (buttonClicked)="removeValue(idx)"></ap-icon-button>
             </div>
 
-            <div class="form-control value-control ap-py-2" [class.first]="isFirst && formArray.controls.length>1"
+            <div class="form-control value-control !ap-py-1" [class.first]="isFirst && formArray.controls.length>1"
                 [class.last]="isLast && formArray.controls.length>1" [class.only-one]="formArray.controls.length === 1"
                 apTrackHover #valueInput="hoverTrackerDirective" #interpolatingTextControlContainer>
                 <input [formControl]="formArray.controls[idx]" class="ap-w-full ap-outline-none !ap-bg-white"

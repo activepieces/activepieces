@@ -6,11 +6,9 @@ import {
 import {
     ApId,
     BaseModel,
-    FileId,
     PackageType,
     PieceType,
     Project,
-    ProjectId,
 } from '@activepieces/shared'
 import {
     ARRAY_COLUMN_TYPE,
@@ -20,18 +18,24 @@ import {
     JSON_COLUMN_TYPE,
     isPostgres,
 } from '../database/database-common'
+import { Static, Type } from '@sinclair/typebox'
 
-type PiecePackageMetadata = {
-    projectId?: ProjectId
-    pieceType: PieceType
-    packageType: PackageType
-    archiveId?: FileId
-}
+
+const PiecePackageMetadata = Type.Object({
+    projectId: Type.Optional(Type.String()),
+    pieceType: Type.Enum(PieceType),
+    packageType: Type.Enum(PackageType),
+    archiveId: Type.Optional(Type.String()),
+})
+type PiecePackageMetadata = Static<typeof PiecePackageMetadata>
 
 export type PieceMetadataModel = PieceMetadata & PiecePackageMetadata
 
-export type PieceMetadataModelSummary = PieceMetadataSummary &
-PiecePackageMetadata
+export const PieceMetadataModelSummary = Type.Union([
+    PieceMetadataSummary,
+    PiecePackageMetadata,
+])
+export type PieceMetadataModelSummary = Static<typeof PieceMetadataModelSummary>
 
 export type PieceMetadataSchema = BaseModel<ApId> & PieceMetadataModel
 

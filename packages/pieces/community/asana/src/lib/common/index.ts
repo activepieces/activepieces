@@ -200,7 +200,7 @@ export async function getTags(
   return response.data;
 }
 
-export async function callAsanaApi<T extends HttpMessageBody>(
+export async function callAsanaApi<T extends HttpMessageBody = any>(
   method: HttpMethod,
   apiUrl: string,
   accessToken: string,

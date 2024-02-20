@@ -213,6 +213,16 @@ const __CanvasReducer = createReducer(
   on(FlowsActions.importFlow, (state, { flow }) => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
     clonedState.viewedVersion = flow.version;
+    clonedState.leftSidebar = {
+      type: LeftSideBarType.NONE,
+    };
+    clonedState.rightSidebar = {
+      props: NO_PROPS,
+      type: RightSideBarType.NONE,
+    };
+    clonedState.selectedStepName = '';
+    clonedState.clickedAddBtnId = undefined;
+    clonedState.selectedRun = undefined;
     return clonedState;
   }),
   on(canvasActions.setAddButtonId, (state, { id }) => {

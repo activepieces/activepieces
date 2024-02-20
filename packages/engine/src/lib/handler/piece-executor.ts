@@ -1,7 +1,6 @@
 import { AUTHENTICATION_PROPERTY_NAME, GenericStepOutput, ActionType, ExecutionOutputStatus, PieceAction, StepOutputStatus, assertNotNullOrUndefined, isNil, ExecutionType, PauseType } from '@activepieces/shared'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
-import { variableService } from '../services/variable-service'
 import { ActionContext, ConnectionsManager, PauseHook, PauseHookParams, PiecePropertyMap, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
 import { createContextStore } from '../services/storage.service'
 import { createFilesService } from '../services/files.service'
@@ -33,22 +32,12 @@ export const pieceExecutor: BaseExecutor<PieceAction> = {
 }
 
 const executeAction: ActionHandler<PieceAction> = async ({ action, executionState, constants }) => {
-    const {
-        censoredInput,
-        resolvedInput,
-    } = await variableService({
-        projectId: constants.projectId,
-        workerToken: constants.workerToken,
-    }).resolve<StaticPropsValue<PiecePropertyMap>>({
-        unresolvedInput: action.settings.input,
-        executionState,
-    })
-
     const stepOutput = GenericStepOutput.create({
-        input: censoredInput,
+        input: {},
         type: ActionType.PIECE,
         status: StepOutputStatus.SUCCEEDED,
     })
+
     try {
         assertNotNullOrUndefined(action.settings.actionName, 'actionName')
         const { pieceAction, piece } = await pieceLoader.getPieceAndActionOrThrow({
@@ -57,6 +46,13 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             actionName: action.settings.actionName,
             piecesSource: constants.piecesSource,
         })
+
+        const { resolvedInput, censoredInput } = await constants.variableService.resolve<StaticPropsValue<PiecePropertyMap>>({
+            unresolvedInput: action.settings.input,
+            executionState,
+        })
+
+        stepOutput.input = censoredInput
 
         const { processedInput, errors } = await constants.variableService.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth)
         if (Object.keys(errors).length > 0) {
@@ -112,7 +108,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 const url = new URL(`${constants.serverUrl}v1/flow-runs/${constants.flowRunId}/requests/${executionState.pauseRequestId}`)
                 url.search = new URLSearchParams(params.queryParams).toString()
                 return url.toString()
-            },            
+            },
         }
         const runMethodToExecute = (constants.testSingleStepMode && !isNil(pieceAction.test)) ? pieceAction.test : pieceAction.run
         const output = await runMethodToExecute(context)

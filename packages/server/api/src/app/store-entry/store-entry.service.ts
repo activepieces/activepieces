@@ -11,26 +11,22 @@ const storeEntryRepo =
   databaseConnection.getRepository<StoreEntry>(StoreEntryEntity)
 
 export const storeEntryService = {
-    async upsert({
-        projectId,
-        request,
-    }: {
-        projectId: ProjectId
-        request: PutStoreEntryRequest
-    }): Promise<StoreEntry | null> {
-        const previousEntry = await this.getOne({ projectId, key: request.key })
-        if (previousEntry !== null) {
-            await storeEntryRepo.update(previousEntry.id, request)
-            return this.getOne({ projectId, key: request.key })
-        }
-        else {
-            const entryRequest: Omit<StoreEntry, 'created' | 'updated'> = {
-                id: apId(),
-                key: request.key,
-                value: request.value,
-                projectId,
-            }
-            return storeEntryRepo.save(entryRequest)
+    async upsert({ projectId, request }: { projectId: ProjectId, request: PutStoreEntryRequest }): Promise<StoreEntry | null> {
+
+        const insertResult = await storeEntryRepo.upsert({
+            id: apId(),
+            key: request.key,
+            value: request.value,
+            projectId,
+        }, ['projectId', 'key'])
+
+        return {
+            projectId,
+            key: request.key,
+            value: request.value,
+            id: insertResult.identifiers[0].id,
+            created: insertResult.generatedMaps[0].created,
+            updated: insertResult.generatedMaps[0].updated,
         }
     },
     async getOne({

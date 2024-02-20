@@ -845,6 +845,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "Verlich",
+      "name": "Ahmad(Ed)",
+      "avatar_url": "https://avatars.githubusercontent.com/u/30838131?v=4",
+      "profile": "https://github.com/Verlich",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

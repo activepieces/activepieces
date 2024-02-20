@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig, AxiosStatic } from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 import { DelegatingAuthenticationConverter } from '../core/delegating-authentication-converter';
 import { BaseHttpClient } from '../core/base-http-client';
 import { HttpError } from '../core/http-error';
@@ -7,6 +7,7 @@ import { HttpMessageBody } from '../core/http-message-body';
 import { HttpMethod } from '../core/http-method';
 import { HttpRequest } from '../core/http-request';
 import { HttpResponse } from '../core/http-response';
+import { HttpRequestBody } from '../core/http-request-body';
 
 export class AxiosHttpClient extends BaseHttpClient {
   constructor(
@@ -16,8 +17,8 @@ export class AxiosHttpClient extends BaseHttpClient {
     super(baseUrl, authenticationConverter);
   }
 
-  async sendRequest<ResponseBody extends HttpMessageBody>(
-    request: HttpRequest<HttpMessageBody>
+  async sendRequest<ResponseBody extends HttpMessageBody = any>(
+    request: HttpRequest<HttpRequestBody>
   ): Promise<HttpResponse<ResponseBody>> {
     try {
       process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
