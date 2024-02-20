@@ -63,9 +63,9 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
             const pieces = await hooks.get().filterPieces({
                 ...params,
                 pieces: pieceMetadataEntityList,
-                includeActionsAndTriggers: params.suggestActionsAndTrigger,
+                suggestionType: params.suggestionType,
             })
-            return toPieceMetadataModelSummary(pieces, params.suggestActionsAndTrigger)
+            return toPieceMetadataModelSummary(pieces, params.suggestionType)
         },
 
         async getOrThrow({

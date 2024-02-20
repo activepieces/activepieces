@@ -8,7 +8,11 @@ export const VERSION_PATTERN = /^([~^])?[0-9]+\.[0-9]+\.[0-9]+$/
 export const ExactVersionType = Type.RegEx(EXACT_VERSION_PATTERN)
 export const VersionType = Type.RegEx(VERSION_PATTERN)
 
-
+export enum SuggestionType {
+    ACTION = 'ACTION',
+    TRIGGER = 'TRIGGER',
+    ACTION_AND_TRIGGER = 'ACTION_AND_TRIGGER',
+}
 export enum PieceSortBy {
     NAME = 'NAME',
     DATE = 'DATE',
@@ -41,7 +45,7 @@ export const ListPiecesRequestQuery = Type.Object({
     sortBy: Type.Optional(Type.Enum(PieceSortBy)),
     orderBy: Type.Optional(Type.Enum(PieceOrderBy)),
     categories: Type.Optional(Type.Array(Type.Enum(PieceCategory))),
-    suggestActionsAndTrigger: Type.Optional(Type.Boolean()),
+    suggestionType: Type.Optional(Type.Enum(SuggestionType)),
 })
 
 export type ListPiecesRequestQuery = Static<typeof ListPiecesRequestQuery>

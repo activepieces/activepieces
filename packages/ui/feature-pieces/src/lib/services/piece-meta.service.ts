@@ -279,7 +279,7 @@ export class PieceMetadataService {
   getPiecesManifestFromServer({
     includeHidden,
     searchQuery,
-    suggestActionsAndTrigger
+    suggestionType
   }: ListPiecesRequestQuery) {
     
     return combineLatest([
@@ -296,7 +296,7 @@ export class PieceMetadataService {
           ...params,
           ...spreadIfDefined('includeHidden', includeHidden),
           ...spreadIfDefined('searchQuery', searchQuery),
-          ...spreadIfDefined('suggestActionsAndTrigger', suggestActionsAndTrigger)
+          ...spreadIfDefined('suggestionType', suggestionType)
         }
         return this.http.get<PieceMetadataModelSummary[]>(
           `${environment.apiUrl}/pieces`,

@@ -33,6 +33,7 @@ import {
   PieceType,
   PackageType,
   ApFlagId,
+  SuggestionType,
 } from '@activepieces/shared';
 import { FormControl } from '@angular/forms';
 import {
@@ -447,11 +448,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
           res.allTabItems,
           res.search.serverResponse
         );
-       return  this.showActionsOrTriggers(
-          matches,
-          res.search.serverResponse
-        );
-      
+        return this.showActionsOrTriggers(matches, res.search.serverResponse);
       }),
 
       tap(() => {
@@ -465,7 +462,12 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
       this.pieceMetadataService.getPiecesManifestFromServer({
         includeHidden: false,
         searchQuery,
-        suggestActionsAndTrigger: searchQuery.length >= 3,
+        suggestionType:
+          searchQuery.length >= 3
+            ? this._showTriggers
+              ? SuggestionType.TRIGGER
+              : SuggestionType.ACTION
+            : undefined,
       });
     return serverRequestToSearchForPiece$.pipe(
       map((res) => {

@@ -7,6 +7,7 @@ import {
     PieceSortBy,
     PieceType,
     ProjectId,
+    SuggestionType,
 } from '@activepieces/shared'
 import {
     PieceMetadataModel,
@@ -24,7 +25,7 @@ type ListParams = {
     sortBy?: PieceSortBy
     orderBy?: PieceOrderBy
     searchQuery?: string
-    suggestActionsAndTrigger?: boolean
+    suggestionType?: SuggestionType
 }
 
 type GetOrThrowParams = {

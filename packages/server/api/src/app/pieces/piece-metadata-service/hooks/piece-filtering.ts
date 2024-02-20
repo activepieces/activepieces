@@ -1,4 +1,4 @@
-import { PieceCategory, assertNotNullOrUndefined } from '@activepieces/shared'
+import { PieceCategory, SuggestionType, assertNotNullOrUndefined } from '@activepieces/shared'
 import { PieceMetadataSchema } from '../../piece-metadata-entity'
 import Fuse from 'fuse.js'
 import { ActionBase, TriggerBase } from '@activepieces/pieces-framework'
@@ -10,33 +10,33 @@ export const filterPiecesBasedUser = ({
     searchQuery,
     pieces,
     categories,
-    includeActionsAndTriggers,
+    suggestionType,
 }: {
     categories: PieceCategory[] | undefined
     searchQuery: string | undefined
     pieces: PieceMetadataSchema[]
-    includeActionsAndTriggers?: boolean
+    suggestionType?: SuggestionType
 }): PieceMetadataSchema[] => {
     return filterBasedOnCategories({
         categories,
-        pieces: filterBasedOnSearchQuery({ searchQuery, pieces, includeActionsAndTriggers }),
+        pieces: filterBasedOnSearchQuery({ searchQuery, pieces, suggestionType }),
     })
 }
 
 const filterBasedOnSearchQuery = ({
     searchQuery,
     pieces,
-    includeActionsAndTriggers,
+    suggestionType,
 }: {
     searchQuery: string | undefined
     pieces: PieceMetadataSchema[]
-    includeActionsAndTriggers?: boolean
+    suggestionType?: SuggestionType
 }): PieceMetadataSchema[] => {
     if (!searchQuery) {
         return pieces
     }
-    if (includeActionsAndTriggers) {
-        return searchWithinActionsAndTriggersAsWell(searchQuery, pieces)
+    if (suggestionType) {
+        return searchWithinActionsAndTriggersAsWell(searchQuery, pieces, suggestionType)
     }
     const fuse = new Fuse(pieces, {
         isCaseSensitive: false,
@@ -68,14 +68,14 @@ const filterBasedOnCategories = ({
 }
 
 
-const searchWithinActionsAndTriggersAsWell = (searchQuery: string, pieces: PieceMetadataSchema[]): PieceMetadataSchema[] => {
+const searchWithinActionsAndTriggersAsWell = (searchQuery: string, pieces: PieceMetadataSchema[], suggestionType: SuggestionType): PieceMetadataSchema[] => {
     const putActionsAndTriggersInAnArray = pieces.map((piece) => {
         const actions = Object.values(piece.actions)
         const triggers = Object.values(piece.triggers)
         return {
             ...piece,
-            actions,
-            triggers,
+            actions: suggestionType === SuggestionType.ACTION || suggestionType === SuggestionType.ACTION_AND_TRIGGER ? actions : [],
+            triggers: suggestionType === SuggestionType.TRIGGER || suggestionType === SuggestionType.ACTION_AND_TRIGGER ? triggers : [],
         }
     })
 

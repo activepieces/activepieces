@@ -106,7 +106,7 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
                         updated: new Date().toISOString(),
                     }
                 }),
-                includeActionsAndTriggers: params.suggestActionsAndTrigger,
+                suggestionType: params.suggestionType,
             })
             const mappedToModel = pieces.map((p) =>
                 toPieceMetadataModel({
@@ -114,7 +114,7 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
                     projectId,
                 }),
             )
-            return toPieceMetadataModelSummary(mappedToModel, params.suggestActionsAndTrigger)
+            return toPieceMetadataModelSummary(mappedToModel, params.suggestionType)
 
         },
 
