@@ -91,7 +91,7 @@ export class FlowItemTreeComponent implements OnInit {
 
     // Combine the scale and translate values into transform to apply animation
     return transformObs$.pipe(
-      map(({ scale, translate }) => `${scale} ${translate}`)
+      map(({ scale, translate }) => `${translate} ${scale}`)
     );
   }
 }

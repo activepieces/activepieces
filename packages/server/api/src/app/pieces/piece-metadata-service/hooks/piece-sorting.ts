@@ -40,7 +40,7 @@ const reverseIfDesc = (
 
 const sortByName = (pieces: PieceMetadataSchema[]): PieceMetadataSchema[] => {
     return pieces.sort((a, b) =>
-        a.name.toLocaleLowerCase().localeCompare(b.name.toLocaleLowerCase()),
+        a.displayName.toLocaleLowerCase().localeCompare(b.displayName.toLocaleLowerCase()),
     )
 }
 

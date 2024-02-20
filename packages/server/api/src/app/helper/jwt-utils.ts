@@ -122,11 +122,11 @@ export const jwtUtils = {
                     return reject(err)
                 }
 
-                // Todo - remove after old tokens has been invalidated, maybe after (April 2024)
+                // Todo - remove after old tokens has been invalidated, maybe after (April 2024), remove the hardcoded date
                 const decodedToken = jwtLibrary.decode(jwt, {
                     json: true,
                 })
-                if (decodedToken?.exp && decodedToken.exp > dayjs().add(2, 'weeks').unix()) {
+                if (decodedToken?.exp && decodedToken.exp !== 1754223678 && decodedToken.exp > dayjs().add(2, 'weeks').unix()) {
                     throw new ActivepiecesError({
                         code: ErrorCode.INVALID_BEARER_TOKEN,
                         params: {
