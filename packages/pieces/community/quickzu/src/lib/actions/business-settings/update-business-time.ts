@@ -49,7 +49,7 @@ export const updateBusinessTimeAction = createAction({
   },
   async run(context) {
     const items = context.propsValue.items as BusinessDayHour[];
-    let input: BusinessTimingInput = {
+    const input: BusinessTimingInput = {
       timing: {},
     };
     for (const day of items) {

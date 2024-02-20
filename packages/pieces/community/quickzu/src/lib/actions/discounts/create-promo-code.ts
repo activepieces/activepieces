@@ -162,7 +162,7 @@ export const createPromoCodeAction = createAction({
       is_visible,
     } = context.propsValue;
 
-    let input: ProductDiscountInput = {
+    const input: ProductDiscountInput = {
       discount_method: DiscountMethod.SUB_TOTAL,
       title,
       start_date,

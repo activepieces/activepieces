@@ -145,7 +145,7 @@ export const createProductDiscountAction = createAction({
       is_visible,
     } = context.propsValue;
 
-    let input: ProductDiscountInput = {
+    const input: ProductDiscountInput = {
       discount_method: DiscountMethod.ITEM_LEVEL,
       title,
       start_date,
