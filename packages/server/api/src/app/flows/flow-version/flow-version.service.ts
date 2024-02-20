@@ -142,6 +142,7 @@ export const flowVersionService = {
 
         mutatedFlowVersion.updated = dayjs().toISOString()
         mutatedFlowVersion.updatedBy = userId
+
         return flowVersionRepo(entityManager).save(mutatedFlowVersion)
     },
 
@@ -200,7 +201,12 @@ export const flowVersionService = {
             },
         })
         const paginationResult = await paginator.paginate(
-            flowVersionRepo().createQueryBuilder('flow_version').where({
+            flowVersionRepo().createQueryBuilder('flow_version').leftJoinAndMapOne(
+                'flow_version.updatedByUser',
+                'user',
+                'user',
+                'flow_version.updatedBy = "user"."id"',
+            ).where({
                 flowId,
             }),
         )
