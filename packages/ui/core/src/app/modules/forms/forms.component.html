@@ -7,7 +7,7 @@
         <ng-container *ngFor="let input of inputs">
           <ng-container [ngSwitch]="input.type">
             <ng-container *ngSwitchCase="PropertyType.SHORT_TEXT">
-              <mat-form-field class="ap-w-full ap-mb-4" appearance="outline">
+              <mat-form-field class="ap-w-full ap-mb-4" appearance="outline" subscriptSizing="dynamic">
                 <mat-label>{{ input.displayName }}</mat-label>
                 <input matInput type="text" [formControlName]="getInputKey(input.displayName)">
                 <mat-hint>{{ input.description }}</mat-hint>
@@ -17,7 +17,7 @@
               </mat-form-field>
             </ng-container>
             <ng-container *ngSwitchCase="PropertyType.FILE">
-              <mat-form-field class="ap-w-full">
+              <mat-form-field class="ap-w-full" subscriptSizing="dynamic">
                 <mat-label i18n>{{ input.displayName }}</mat-label>
                 <ap-file-upload [required]="input.required" #flowInput
                   [formControlName]="getInputKey(input.displayName)" [extensions]="['.*']"></ap-file-upload>
@@ -32,14 +32,17 @@
             </ng-container>
             <ng-container *ngSwitchCase="PropertyType.CHECKBOX">
               <div class="app-w-full ap-mb-4">
-                <mat-slide-toggle [formControlName]="getInputKey(input.displayName)" color="primary" i18n>{{ input.displayName }}</mat-slide-toggle>
+                <div>
+                  <mat-slide-toggle [formControlName]="getInputKey(input.displayName)" color="primary" i18n>{{ input.displayName }}</mat-slide-toggle>
+                </div>
+                <markdown class="ap-typography-caption">{{ input.description }}</markdown>
                 <mat-error *ngIf="form.controls[getInputKey(input.displayName)]?.invalid" class="ap-mt-2">
                   {{ input.displayName }} is required
                 </mat-error>
               </div>
             </ng-container>
             <ng-container *ngSwitchCase="PropertyType.LONG_TEXT">
-              <mat-form-field class="ap-w-full ap-mb-4" appearance="outline">
+              <mat-form-field class="ap-w-full ap-mb-4" appearance="outline" subscriptSizing="dynamic">
                 <mat-label>{{ input.displayName }}</mat-label>
                 <textarea matInput [formControlName]="getInputKey(input.displayName)"></textarea>
                 <mat-hint>{{ input.description }}</mat-hint>
