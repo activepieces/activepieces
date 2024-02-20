@@ -20,7 +20,7 @@ export class CanvasUtilsComponent implements AfterViewInit {
     this.zoomingService.setZoomingScale(
       Math.min(
         this.zoomingService.zoomingScale + this.zoomingService.zoomingStep,
-        this.zoomingService.zoomingMax
+        this.zoomingService.maxZoom
       )
     );
   }
@@ -28,7 +28,7 @@ export class CanvasUtilsComponent implements AfterViewInit {
     this.zoomingService.setZoomingScale(
       Math.max(
         this.zoomingService.zoomingScale - this.zoomingService.zoomingStep,
-        this.zoomingService.zoomingMin
+        this.zoomingService.minZoom
       )
     );
   }

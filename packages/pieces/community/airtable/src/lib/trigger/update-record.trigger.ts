@@ -1,19 +1,19 @@
 import {
+  DedupeStrategy,
+  Polling,
+  pollingHelper,
+} from '@activepieces/pieces-common';
+import {
   Property,
   StaticPropsValue,
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { airtableCommon } from '../common';
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import { airtableAuth } from '../../';
-import { AirtableField, AirtableTable } from '../common/models';
 import Airtable from 'airtable';
 import dayjs from 'dayjs';
+import { airtableAuth } from '../../';
+import { airtableCommon } from '../common';
+import { AirtableField, AirtableTable } from '../common/models';
 
 const props = {
   base: airtableCommon.base,
@@ -62,6 +62,7 @@ const props = {
       };
     },
   }),
+  viewId: airtableCommon.views,
 };
 const polling: Polling<string, StaticPropsValue<typeof props>> = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -75,6 +76,7 @@ const polling: Polling<string, StaticPropsValue<typeof props>> = {
       .table(propsValue.tableId!)
       .select({
         sort: [{ direction: 'desc', field: propsValue.sortFields! }],
+        view: propsValue.viewId ?? '',
       })
       .all();
     const records = currentValues.filter((record) => {

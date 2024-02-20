@@ -11,7 +11,12 @@ import {
 import { combineLatest } from 'rxjs';
 import { AuditEventService } from '../../service/audit-event-service';
 import { ApplicationEvent } from '@activepieces/ee-shared';
-import { ApPaginatorComponent } from '@activepieces/ui/common';
+import {
+  ApPaginatorComponent,
+  CURSOR_QUERY_PARAM,
+  LIMIT_QUERY_PARAM,
+} from '@activepieces/ui/common';
+import { Params } from '@angular/router';
 
 /**
  * Data source for the LogsTable view. This class should
@@ -25,7 +30,8 @@ export class AuditEventDataSource extends DataSource<ApplicationEvent> {
     private refresh$: Observable<boolean>,
     private auditEventService: AuditEventService,
     private paginator: ApPaginatorComponent,
-    private isEnabled$: Observable<boolean>
+    private isEnabled$: Observable<boolean>,
+    private queryParams$: Observable<Params>
   ) {
     super();
   }
@@ -37,11 +43,15 @@ export class AuditEventDataSource extends DataSource<ApplicationEvent> {
    */
 
   connect(): Observable<ApplicationEvent[]> {
-    return combineLatest([this.refresh$, this.isEnabled$]).pipe(
+    return combineLatest([
+      this.refresh$,
+      this.isEnabled$,
+      this.queryParams$,
+    ]).pipe(
       tap(() => {
         this.isLoading$.next(true);
       }),
-      switchMap(([refresh, isEnabled]) => {
+      switchMap(([refresh, isEnabled, queryParams]) => {
         if (!isEnabled) {
           return of({
             data: [],
@@ -50,7 +60,8 @@ export class AuditEventDataSource extends DataSource<ApplicationEvent> {
           }).pipe(delay(100));
         }
         return this.auditEventService.list({
-          limit: 10,
+          cursor: queryParams[CURSOR_QUERY_PARAM] ?? null,
+          limit: queryParams[LIMIT_QUERY_PARAM] ?? 10,
         });
       }),
       tap((res) => {

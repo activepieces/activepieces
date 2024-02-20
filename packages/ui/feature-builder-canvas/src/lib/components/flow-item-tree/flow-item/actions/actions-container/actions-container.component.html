@@ -4,7 +4,7 @@
                 ap-transition ap-fade-in ap-duration-500
                 ap-cursor-pointer ap-flex ap-items-center ap-mr-5 ap-justify-center
                 ap-bg-white ap-border-solid ap-border-[1px]
-                ap-border-line ap-min-w-[50px] ap-min-h-[50px]" apTrackHover
+                ap-border-line ap-w-[45px] ap-h-[45px]" apTrackHover
         #replaceTriggerContainer="hoverTrackerDirective" *ngIf="trigger"
         [class.ap-opacity-100]="(stepHovered || replaceTriggerContainer.isHovered)"
         [class.ap-opacity-0]="(!stepHovered && !replaceTriggerContainer.isHovered)"
@@ -17,7 +17,9 @@
                     ap-transition ap-fade-in ap-duration-500
                     ap-cursor-pointer ap-flex ap-items-center ap-mr-5 ap-justify-center
                     ap-bg-white ap-border-solid ap-border-[1px]
-                    ap-border-line ap-w-[40px] ap-h-[40px] ap-overflow-hidden" apTrackHover
+                    ap-border-line  ap-overflow-hidden" apTrackHover
+                    [style.width]="ACTION_BUTTON_DIMENSION+ 'px'"
+                    [style.height]="ACTION_BUTTON_DIMENSION+ 'px'"
             #deleteStepContainer="hoverTrackerDirective"
             [class.ap-opacity-100]="(stepHovered || deleteStepContainer.isHovered || duplicateStepContainer.isHovered  )"
             [class.ap-opacity-0]="(!stepHovered && !deleteStepContainer.isHovered && !duplicateStepContainer.isHovered)"
@@ -32,7 +34,10 @@
                     ap-transition ap-fade-in ap-duration-500
                     ap-cursor-pointer ap-flex ap-items-center ap-mr-5 ap-justify-center
                     ap-bg-white ap-border-solid ap-border-[1px]
-                    ap-border-line ap-w-[40px] ap-h-[40px] ap-overflow-hidden" apTrackHover
+                    ap-border-line  ap-overflow-hidden" apTrackHover
+                    [style.width]="ACTION_BUTTON_DIMENSION+ 'px'"
+                    [style.height]="ACTION_BUTTON_DIMENSION+ 'px'"
+
             #duplicateStepContainer="hoverTrackerDirective"
             [class.ap-opacity-100]="(stepHovered || duplicateStepContainer.isHovered || deleteStepContainer.isHovered)"
             [class.ap-opacity-0]="(!stepHovered && !duplicateStepContainer.isHovered && !deleteStepContainer.isHovered )"

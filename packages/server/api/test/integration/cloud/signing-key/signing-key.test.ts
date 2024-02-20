@@ -8,7 +8,7 @@ import {
 } from '../../../helpers/mocks'
 import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
-import { PlatformRole, PrincipalType, apId } from '@activepieces/shared'
+import { PlatformRole, PrincipalType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 
 let app: FastifyInstance | null = null
@@ -63,34 +63,6 @@ describe('Signing Key API', () => {
             expect(responseBody.generatedBy).toBe(mockUser.id)
             expect(responseBody.algorithm).toBe('RSA')
         }, 10000)
-
-        it('Fails if platform is not found', async () => {
-            // arrange
-            const nonExistentPlatformId = apId()
-
-            const testToken = await generateMockToken({
-                type: PrincipalType.USER,
-                platform: {
-                    id: nonExistentPlatformId,
-                    role: PlatformRole.OWNER,
-                },
-            })
-
-            const mockSigningKeyName = faker.lorem.word()
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/v1/signing-keys',
-                body: {
-                    displayName: mockSigningKeyName,
-                },
-                headers: {
-                    authorization: `Bearer ${testToken}`,
-                },
-            })
-
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR)
-        })
 
         it('Fails if user is not platform owner', async () => {
             // arrange

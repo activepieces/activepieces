@@ -84,7 +84,7 @@ export const flowVersionService = {
     }: ApplyOperationParams): Promise<FlowVersion> {
         let operations: FlowOperationRequest[] = []
         let mutatedFlowVersion: FlowVersion = flowVersion
-
+        
         switch (userOperation.type) {
             case FlowOperationType.USE_AS_DRAFT: {
                 const previousVersion = await flowVersionService.getFlowVersionOrThrow({
@@ -141,7 +141,7 @@ export const flowVersionService = {
         }
 
         mutatedFlowVersion.updated = dayjs().toISOString()
-        //mutatedFlowVersion.updatedBy = userId
+        mutatedFlowVersion.updatedBy = userId
 
         return flowVersionRepo(entityManager).save(mutatedFlowVersion)
     },
