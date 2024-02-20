@@ -34,7 +34,7 @@ export const httpSendRequestAction = createAction({
     body_type: Property.StaticDropdown({
       displayName: 'Body Type',
       required: false,
-      defaultValue: 'form_data',
+      defaultValue: 'json',
       options: {
         disabled: false,
         options: [
