@@ -17,7 +17,7 @@ const Action = Type.Object({
     description: Type.String(),
     requireAuth: Type.Boolean(),
     props: Type.Unknown(),
-    errorHandlingOptions: ErrorHandlingOptionsParam,
+    errorHandlingOptions: Type.Optional(ErrorHandlingOptionsParam),
 })
 
 const Trigger = Type.Composite([
