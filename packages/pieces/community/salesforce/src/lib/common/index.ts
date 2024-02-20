@@ -103,7 +103,7 @@ export async function querySalesforceApi<T extends HttpMessageBody>(
   });
 }
 
-export async function createBulkJob<T extends HttpMessageBody>(
+export async function createBulkJob<T extends HttpMessageBody = any>(
   method: HttpMethod,
   authentication: OAuth2PropertyValue,
   jobDetails: HttpMessageBody

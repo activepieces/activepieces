@@ -13,13 +13,13 @@ import { certopusCommon } from '.';
 export class CertopusClient {
   constructor(private token: string) {}
 
-  async makeRequest<T extends HttpMessageBody>(
+  async makeRequest<T extends HttpMessageBody = any>(
     method: HttpMethod,
     url: string,
     query?: QueryParams,
     body?: object
   ): Promise<T> {
-    const res = await httpClient.sendRequest<T>({
+    const res = await httpClient.sendRequest({
       method,
       url: certopusCommon.baseUrl + url,
       queryParams: query,

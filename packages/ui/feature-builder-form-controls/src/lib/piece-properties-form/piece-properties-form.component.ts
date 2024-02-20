@@ -401,10 +401,6 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     );
   }
 
-  getControl(configKey: string) {
-    return this.form.get(configKey);
-  }
-
   connectionValueChanged(event: {
     propertyKey: string;
     value: `{{connections['${string}']}}`;
