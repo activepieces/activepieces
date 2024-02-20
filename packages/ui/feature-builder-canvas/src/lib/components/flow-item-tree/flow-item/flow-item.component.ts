@@ -17,7 +17,10 @@ import {
 import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
 import { flowHelper } from '@activepieces/shared';
 import { FlowRendererService } from '@activepieces/ui/common';
-import { ACTION_BUTTON_DIMENSION, ACTIONS_CONTAINER_MARGIN } from './actions/common';
+import {
+  ACTION_BUTTON_DIMENSION,
+  ACTIONS_CONTAINER_MARGIN,
+} from './actions/common';
 
 @Component({
   selector: 'app-flow-item',
@@ -37,7 +40,8 @@ export class FlowItemComponent implements OnInit {
   touchStartLongPress = { delay: 750, delta: 10 };
   snappedDraggedShadowToCursor = false;
   readonly ACTION_BUTTON_DIMENSION = ACTION_BUTTON_DIMENSION;
-  readonly ACTION_CONTAINER_OFFSET = (ACTION_BUTTON_DIMENSION + ACTIONS_CONTAINER_MARGIN);
+  readonly ACTION_CONTAINER_OFFSET =
+    ACTION_BUTTON_DIMENSION + ACTIONS_CONTAINER_MARGIN;
   readonly ACTIONS_CONTAINER_MARGIN = ACTIONS_CONTAINER_MARGIN;
   hideDraggableSource$: Subject<boolean> = new Subject();
   @Input() set flowItemData(value: PositionedStep) {
