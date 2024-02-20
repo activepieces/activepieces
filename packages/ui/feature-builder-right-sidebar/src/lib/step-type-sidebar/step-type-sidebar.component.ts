@@ -55,7 +55,7 @@ import {
 } from '@activepieces/ui/common';
 import { Actions, ofType } from '@ngrx/effects';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
-import { ActionOrTriggerName } from './common';
+import { ActionOrTriggerName, doesQueryMatchStep, isCoreStep } from './common';
 
 @Component({
   selector: 'app-step-type-sidebar',
@@ -442,31 +442,16 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
       ),
     }).pipe(
       map((res) => {
-        const matches = this.searchForMatchingFlowItemDetails(
+        const matches = this.addMatchingCorePiecesToServerResponse(
           res.search.searchQuery,
           res.allTabItems,
           res.search.serverResponse
         );
-        const matchesWithTriggersOrActions = this.showActionsOrTriggers(
+       return  this.showActionsOrTriggers(
           matches,
           res.search.serverResponse
         );
-        //sort by the order of the server response
-        return matchesWithTriggersOrActions.sort((a, b) => {
-          const aIndex = res.search.serverResponse.findIndex(
-            (p) => p.displayName === a.name
-          );
-          const bIndex = res.search.serverResponse.findIndex(
-            (p) => p.displayName === b.name
-          );
-          if (aIndex === -1) {
-            return 1;
-          }
-          if (bIndex === -1) {
-            return 1;
-          }
-          return aIndex - bIndex;
-        });
+      
       }),
 
       tap(() => {
@@ -492,21 +477,14 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
     );
   }
   /**Need to search for core steps like webhook,loop,branch and code */
-  private searchForMatchingFlowItemDetails(
+  private addMatchingCorePiecesToServerResponse(
     searchQuery: string,
     allTabItems: FlowItemDetails[],
     serverResponse: PieceMetadataModelSummary[]
   ) {
     return allTabItems.filter(
       (item) =>
-        item.description
-          .toLowerCase()
-          .includes(searchQuery.trim().toLowerCase()) ||
-        (item.name.toLowerCase().includes(searchQuery.trim().toLowerCase()) &&
-          (item.type === ActionType.CODE ||
-            item.type === ActionType.BRANCH ||
-            item.type === ActionType.LOOP_ON_ITEMS ||
-            item.type === TriggerType.WEBHOOK)) ||
+        (isCoreStep(item) && doesQueryMatchStep(item, searchQuery)) ||
         serverResponse.findIndex((p) => p.displayName === item.name) > -1
     );
   }
@@ -523,7 +501,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
       }
       return {
         ...item,
-        suggestedActionsOrTriggers: this._showTriggers
+        suggestions: this._showTriggers
           ? serverResult.suggestedTriggers
           : serverResult.suggestedActions,
       };

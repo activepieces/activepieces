@@ -17,6 +17,6 @@ export class FlowItemDetails {
       pieceName: string;
       pieceVersion: string;
     },
-    public suggestedActionsOrTriggers?: { name: string; displayName: string }[]
+    public suggestions?: { name: string; displayName: string }[]
   ) {}
 }
