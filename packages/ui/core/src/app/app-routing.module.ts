@@ -25,7 +25,9 @@ export const routes: Routes = [
     data: {
       title: $localize`Import Flow`,
     },
-    canActivate: [showBasedOnEditionGuard([ApEdition.ENTERPRISE, ApEdition.CLOUD])],
+    canActivate: [
+      showBasedOnEditionGuard([ApEdition.ENTERPRISE, ApEdition.CLOUD]),
+    ],
   },
   {
     path: 'redirect',

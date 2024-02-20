@@ -63,7 +63,7 @@ export class ImportFlowComponent implements OnInit {
         return this.templatesService.getTemplate(templateId).pipe(
           catchError((err: HttpErrorResponse) => {
             throw err;
-          }),
+          })
         );
       }),
       tap((res) => {
