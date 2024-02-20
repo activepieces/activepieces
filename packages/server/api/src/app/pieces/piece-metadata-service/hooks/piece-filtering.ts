@@ -70,9 +70,8 @@ const filterBasedOnCategories = ({
 
 const searchWithinActionsAndTriggersAsWell = (searchQuery: string, pieces: PieceMetadataSchema[]): PieceMetadataSchema[] => {
     const putActionsAndTriggersInAnArray = pieces.map((piece) => {
-        const actions = Object.keys(piece.actions).map((name) => piece.actions[name])
-        const triggers = Object.keys(piece.triggers).map((name) => piece.triggers[name])
-
+        const actions = Object.values(piece.actions)
+        const triggers = Object.values(piece.triggers)
         return {
             ...piece,
             actions,
@@ -108,7 +107,6 @@ const searchWithinActionsAndTriggersAsWell = (searchQuery: string, pieces: Piece
             }
 
         })
-
 }
 function searchForSuggestion<T extends ActionBase | TriggerBase>(actions: T[], searchQuery: string): Record<string, T> {
     const nestedFuse = new Fuse(actions, {

@@ -25,7 +25,6 @@ import {
     PieceMetadataModelSummary,
 } from './piece-metadata-entity'
 import { flowService } from '../flows/flow/flow.service'
-import { StatusCodes } from 'http-status-codes'
 
 export const pieceModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(basePiecesController, { prefix: '/v1/pieces' })
@@ -55,9 +54,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             },
             schema: {
                 querystring: ListPiecesRequestQuery,
-                response: {
-                    [StatusCodes.OK]: Type.Array(PieceMetadataModelSummary),
-                },
+              
             },
         },
         async (req): Promise<PieceMetadataModelSummary[]> => {
