@@ -366,7 +366,7 @@
         "packages/pieces/community/qdrant/src/index.ts"
       ],
       "@activepieces/piece-quickzu": [
-        "packages/pieces/custom/quickzu/src/index.ts"
+        "packages/pieces/community/quickzu/src/index.ts"
       ],
       "@activepieces/piece-read-file": [
         "packages/pieces/read-file/src/index.ts"
