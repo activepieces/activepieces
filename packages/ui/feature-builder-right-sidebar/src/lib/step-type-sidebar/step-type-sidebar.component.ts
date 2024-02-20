@@ -134,9 +134,9 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit(): void {
-    this.flowItemDetailsLoaded$ = this.store
-      .select(BuilderSelectors.selectAllFlowItemsDetailsLoadedState)
-      .pipe(tap(console.log));
+    this.flowItemDetailsLoaded$ = this.store.select(
+      BuilderSelectors.selectAllFlowItemsDetailsLoadedState
+    );
   }
 
   ngAfterViewInit(): void {
@@ -166,9 +166,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
       core: coreItemsDetails$.pipe(take(1)),
     }).pipe(
       map((res) => {
-        return [...res.core, ...res.apps].sort((a, b) =>
-          a.name > b.name ? 1 : -1
-        );
+        return [...res.core, ...res.apps];
       })
     );
     this.tabsAndTheirLists.push({

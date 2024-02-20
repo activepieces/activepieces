@@ -1,10 +1,17 @@
-import { PieceCategory, SuggestionType, assertNotNullOrUndefined } from '@activepieces/shared'
+import { PieceCategory, SuggestionType } from '@activepieces/shared'
 import { PieceMetadataSchema } from '../../piece-metadata-entity'
 import Fuse from 'fuse.js'
 import { ActionBase, TriggerBase } from '@activepieces/pieces-framework'
 
 
-const pieceFilterKeys = ['displayName', 'description']
+const pieceFilterKeys = [{
+    name: 'displayName',
+    weight: 2,
+}, {
+    name: 'description',
+    weight: 1,
+}]
+
 const suggestionLimit = 3
 export const filterPiecesBasedUser = ({
     searchQuery,
@@ -35,40 +42,6 @@ const filterBasedOnSearchQuery = ({
     if (!searchQuery) {
         return pieces
     }
-    if (suggestionType) {
-        return searchWithinActionsAndTriggersAsWell(searchQuery, pieces, suggestionType)
-    }
-    const fuse = new Fuse(pieces, {
-        isCaseSensitive: false,
-        shouldSort: true,
-        keys:
-            pieceFilterKeys,
-        threshold: 0.3,
-    })
-
-    return fuse
-        .search(searchQuery)
-        .map(({ item }) => item)
-}
-
-const filterBasedOnCategories = ({
-    categories,
-    pieces,
-}: {
-    categories: PieceCategory[] | undefined
-    pieces: PieceMetadataSchema[]
-}): PieceMetadataSchema[] => {
-    if (!categories) {
-        return pieces
-    }
-
-    return pieces.filter((p) => {
-        return categories.some((item) => (p.categories ?? []).includes(item))
-    })
-}
-
-
-const searchWithinActionsAndTriggersAsWell = (searchQuery: string, pieces: PieceMetadataSchema[], suggestionType: SuggestionType): PieceMetadataSchema[] => {
     const putActionsAndTriggersInAnArray = pieces.map((piece) => {
         const actions = Object.values(piece.actions)
         const triggers = Object.values(piece.triggers)
@@ -96,18 +69,33 @@ const searchWithinActionsAndTriggersAsWell = (searchQuery: string, pieces: Piece
     return fuse
         .search(searchQuery)
         .map(({ item }) => {
-            const originalPiece = pieces.find((p) => p.id === item.id)
-            assertNotNullOrUndefined(originalPiece, 'Piece not found')
             const suggestedActions = searchForSuggestion(item.actions, searchQuery)
             const suggestedTriggers = searchForSuggestion(item.triggers, searchQuery)
             return {
-                ...originalPiece,
+                ...item,
                 actions: suggestedActions,
                 triggers: suggestedTriggers,
             }
-
         })
 }
+
+const filterBasedOnCategories = ({
+    categories,
+    pieces,
+}: {
+    categories: PieceCategory[] | undefined
+    pieces: PieceMetadataSchema[]
+}): PieceMetadataSchema[] => {
+    if (!categories) {
+        return pieces
+    }
+
+    return pieces.filter((p) => {
+        return categories.some((item) => (p.categories ?? []).includes(item))
+    })
+}
+
+
 function searchForSuggestion<T extends ActionBase | TriggerBase>(actions: T[], searchQuery: string): Record<string, T> {
     const nestedFuse = new Fuse(actions, {
         isCaseSensitive: false,
