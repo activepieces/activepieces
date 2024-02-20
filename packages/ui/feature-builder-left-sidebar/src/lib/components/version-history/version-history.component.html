@@ -3,13 +3,19 @@
     <ng-container *ngIf="!rewritingDraft; else loading">
         <div class="ap-flex ap-flex-col ap-gap-4 ap-p-5">
             <ng-container *ngFor="let version of flowVersions.data;let idx=index">
-                <div class="ap-flex  ap-items-center  ">
+                <div class="ap-flex ap-items-center">
 
                     <div>
                         <div class="ap-text-body">{{version.created |date:'mediumDate'
                             }}, {{version.created |date:'shortTime' }} </div>
-                        <div class=" ap-text-description ap-typography-subtitle-2 ">Version
-                            #{{flowVersions.data.length - idx}} ({{version.updatedByUser?.email}})</div>
+                        <div class="ap-flex ap-gap-2 ap-mt-2">
+                            <div class=" ap-text-description ap-typography-subtitle-2 ">Version
+                                #{{flowVersions.data.length - idx}}</div>
+                            <div *ngIf="version.updatedByUser" class="ap-w-[20px] ap-h-[20px]">
+                                <ap-letter-icon [letter]="version.updatedByUser!.firstName[0]" [matTooltipPosition]='"above"' [matTooltip]="version.updatedByUser!.firstName + ' ' + version.updatedByUser!.lastName + ' (' + version.updatedByUser!.email + ')'"></ap-letter-icon>
+                            </div>
+                        </div>
+
                     </div>
 
                     <div class="ap-flex-grow"></div>
