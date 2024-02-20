@@ -583,6 +583,15 @@ mat-form-field.\!ap-bg-white {
 .no-check-bg .mat-button-toggle-checked {
   background-color: $white;
 }
+app-canvas-utils{
+  mat-button-toggle-group{
+   
+  mat-button-toggle{
+    background: var(--white) !important;
+  }
+  }
+  
+}
 .mat-button-toggle-appearance-standard .mat-button-toggle-label-content {
   line-height: unset;
 }
@@ -728,3 +737,13 @@ app-platform-settings {
 
 @include mat.form-field-density(-2);
 @include mat.button-density(0);
+
+
+.suggested-actions-or-triggers
+{
+  .mat-mdc-standard-chip:not(.mdc-evolution-chip--disabled)
+  {
+    background-color: var(--primary-palette-50) ;
+    color: var(--primary-palette-contrast-400);
+  }
+}

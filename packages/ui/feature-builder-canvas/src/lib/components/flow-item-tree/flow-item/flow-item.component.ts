@@ -8,17 +8,19 @@ import {
 import { map, Observable, of, Subject } from 'rxjs';
 import { Store } from '@ngrx/store';
 
-import { PositionedStep } from '../../canvas-utils/drawing/step-card';
 import {
+  PositionedStep,
   FLOW_ITEM_HEIGHT,
   FLOW_ITEM_HEIGHT_WITH_BOTTOM_PADDING,
   FLOW_ITEM_WIDTH,
-} from '../../canvas-utils/drawing/draw-common';
-import {
-  BuilderSelectors,
-  FlowRendererService,
-} from '@activepieces/ui/feature-builder-store';
+} from '@activepieces/ui-canvas-utils';
+import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
 import { flowHelper } from '@activepieces/shared';
+import { FlowRendererService } from '@activepieces/ui/common';
+import {
+  ACTION_BUTTON_DIMENSION,
+  ACTIONS_CONTAINER_MARGIN,
+} from './actions/common';
 
 @Component({
   selector: 'app-flow-item',
@@ -37,6 +39,10 @@ export class FlowItemComponent implements OnInit {
   delayTimerSet = false;
   touchStartLongPress = { delay: 750, delta: 10 };
   snappedDraggedShadowToCursor = false;
+  readonly ACTION_BUTTON_DIMENSION = ACTION_BUTTON_DIMENSION;
+  readonly ACTION_CONTAINER_OFFSET =
+    ACTION_BUTTON_DIMENSION + ACTIONS_CONTAINER_MARGIN;
+  readonly ACTIONS_CONTAINER_MARGIN = ACTIONS_CONTAINER_MARGIN;
   hideDraggableSource$: Subject<boolean> = new Subject();
   @Input() set flowItemData(value: PositionedStep) {
     this._flowItemData = value;

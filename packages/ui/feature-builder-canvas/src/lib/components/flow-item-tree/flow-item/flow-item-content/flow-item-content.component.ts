@@ -40,13 +40,13 @@ import {
 } from '@activepieces/ui/feature-pieces';
 import {
   FlowItemDetails,
+  FlowRendererService,
   fadeIn400ms,
   isOverflown,
 } from '@activepieces/ui/common';
 import {
   BuilderSelectors,
   Step,
-  FlowRendererService,
   canvasActions,
 } from '@activepieces/ui/feature-builder-store';
 import {
@@ -54,7 +54,7 @@ import {
   FLOW_ITEM_WIDTH,
   FLOW_ITEM_ICON_SIZE,
   MAX_FLOW_ITEM_NAME_WIDTH,
-} from '../../../canvas-utils/drawing/draw-common';
+} from '@activepieces/ui-canvas-utils';
 
 @Component({
   selector: 'app-flow-item-content',

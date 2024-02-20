@@ -1,5 +1,4 @@
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { AllPiecesStats } from './piece-stats-service'
 import {
     ApEdition,
     PackageType,
@@ -8,6 +7,7 @@ import {
     PieceSortBy,
     PieceType,
     ProjectId,
+    SuggestionType,
 } from '@activepieces/shared'
 import {
     PieceMetadataModel,
@@ -25,6 +25,7 @@ type ListParams = {
     sortBy?: PieceSortBy
     orderBy?: PieceOrderBy
     searchQuery?: string
+    suggestionType?: SuggestionType
 }
 
 type GetOrThrowParams = {
@@ -59,6 +60,5 @@ export type PieceMetadataService = {
     getOrThrow(params: GetOrThrowParams): Promise<PieceMetadataModel>
     create(params: CreateParams): Promise<PieceMetadataModel>
     delete(params: DeleteParams): Promise<void>
-    stats(): Promise<AllPiecesStats>
     getExactPieceVersion(params: GetExactPieceVersionParams): Promise<string>
 }

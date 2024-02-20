@@ -17,7 +17,9 @@ import {
   ApplicationEvent,
   ApplicationEventName,
   Platform,
+  summarizeApplicationEvent,
 } from '@activepieces/ee-shared';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-audit-event-table',
@@ -45,7 +47,10 @@ export class AuditEventTableComponent
   dialogClosed$?: Observable<unknown>;
   featureDisabledTooltip = featureDisabledTooltip;
 
-  constructor(private auditEventService: AuditEventService) {
+  constructor(
+    private auditEventService: AuditEventService,
+    private activatedRoute: ActivatedRoute
+  ) {
     super();
   }
   ngOnInit(): void {
@@ -60,7 +65,8 @@ export class AuditEventTableComponent
       this.refresh$.asObservable().pipe(startWith(false)),
       this.auditEventService,
       this.paginator,
-      this.isEnabled$
+      this.isEnabled$,
+      this.activatedRoute.queryParams
     );
   }
 
@@ -76,6 +82,7 @@ export class AuditEventTableComponent
       case ApplicationEventName.CREATED_FLOW:
       case ApplicationEventName.DELETED_FLOW:
       case ApplicationEventName.CREATED_FOLDER:
+      case ApplicationEventName.UPDATED_FLOW:
         return {
           icon: 'assets/img/custom/dashboard/flows.svg',
           tooltip: 'Flow',
@@ -104,29 +111,6 @@ export class AuditEventTableComponent
   }
 
   convertToDetails(event: ApplicationEvent) {
-    switch (event.action) {
-      case ApplicationEventName.CREATED_FLOW:
-        return `${event.data.flowName} is created`;
-      case ApplicationEventName.DELETED_FLOW:
-        return `${event.data.flowName} is deleted`;
-      case ApplicationEventName.CREATED_FOLDER:
-        return `${event.data.folderName} is created`;
-      case ApplicationEventName.UPDATED_FOLDER:
-        return `${event.data.folderName} is updated`;
-      case ApplicationEventName.DELETED_FOLDER:
-        return `${event.data.folderName} is deleted`;
-      case ApplicationEventName.UPSERTED_CONNECTION:
-        return `${event.data.connectionName} is updated`;
-      case ApplicationEventName.DELETED_CONNECTION:
-        return `${event.data.connectionName} is deleted`;
-      case ApplicationEventName.SIGNED_UP:
-        return `User ${event.userEmail} signed up`;
-      case ApplicationEventName.SIGNED_IN:
-        return `User ${event.userEmail} signed in`;
-      case ApplicationEventName.RESET_PASSWORD:
-        return `User ${event.userEmail} reset password`;
-      case ApplicationEventName.VERIFIED_EMAIL:
-        return `User ${event.userEmail} verified email`;
-    }
+    return summarizeApplicationEvent(event);
   }
 }

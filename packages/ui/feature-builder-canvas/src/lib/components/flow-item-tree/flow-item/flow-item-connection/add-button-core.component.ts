@@ -2,7 +2,6 @@ import { Store } from '@ngrx/store';
 import { Observable, map } from 'rxjs';
 import {
   BuilderSelectors,
-  FlowRendererService,
   FlowsActions,
   RightSideBarType,
   canvasActions,
@@ -16,6 +15,7 @@ import {
 } from '@activepieces/shared';
 import { DropEvent } from 'angular-draggable-droppable';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { FlowRendererService } from '@activepieces/ui/common';
 @Component({ template: '' })
 export class AddButtonCoreComponent {
   readonly INVALID_DROP_MESSAGE = $localize`Can't move here`;

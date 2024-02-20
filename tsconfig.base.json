@@ -365,6 +365,9 @@
       "@activepieces/piece-qdrant": [
         "packages/pieces/community/qdrant/src/index.ts"
       ],
+      "@activepieces/piece-quickzu": [
+        "packages/pieces/community/quickzu/src/index.ts"
+      ],
       "@activepieces/piece-read-file": [
         "packages/pieces/read-file/src/index.ts"
       ],
@@ -526,7 +529,13 @@
       "@activepieces/pieces-framework": [
         "packages/pieces/community/framework/src/index.ts"
       ],
+      "@activepieces/pieces-wootric": [
+        "packages/pieces/community/wootric/src/index.ts"
+      ],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
+      "@activepieces/ui-canvas-utils": [
+        "packages/ui/canvas-utils/src/index.ts"
+      ],
       "@activepieces/ui-ee-platform": ["packages/ee/ui-platform/src/index.ts"],
       "@activepieces/ui-feature-builder-header": [
         "packages/ui/feature-builder-header/src/index.ts"

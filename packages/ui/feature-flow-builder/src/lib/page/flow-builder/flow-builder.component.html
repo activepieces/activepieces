@@ -37,7 +37,7 @@
                   <ap-powered-by-activepieces></ap-powered-by-activepieces>
                 </div>
               </div>
-              <app-canvas-utils class="ap-absolute ap-left-[20px] ap-bottom-[20px] ap-z-40"></app-canvas-utils>
+              <app-canvas-utils [flowVersion]="(viewedVersion$ | async)!" class="ap-absolute ap-left-[20px] ap-bottom-[20px] ap-z-40"></app-canvas-utils>
               <app-flow-item-tree></app-flow-item-tree>
               <div
                 class="ap-absolute ap-left-[15px] ap-bottom-[80px] ap-bg-white ap-rounded-lg ap-z-40 ap-shadow-portal-ds">

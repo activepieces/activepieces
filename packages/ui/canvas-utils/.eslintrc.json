@@ -1,0 +1,11 @@
+{
+  "extends": ["../.eslintrc.json"],
+  "overrides": [
+    {
+      "files": ["*.ts"],
+      "parserOptions": {
+        "project": ["packages/ui/canvas-utils/tsconfig.*?.json"]
+      }
+    }
+  ]
+}
