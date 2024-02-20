@@ -61,9 +61,6 @@ export class ImportFlowComponent implements OnInit {
       switchMap((params) => {
         const templateId = encodeURIComponent(params['templateId']);
         return this.templatesService.getTemplate(templateId).pipe(
-          tap((res)=>{
-            console.log(res)
-          }),
           catchError((err: HttpErrorResponse) => {
             throw err;
           }),
