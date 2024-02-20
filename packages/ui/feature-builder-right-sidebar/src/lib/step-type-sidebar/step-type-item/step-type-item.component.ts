@@ -24,7 +24,6 @@ export class StepTypeItemComponent {
   @Input() clickable = true;
   @Input() set flowItemDetails(value: FlowItemDetails) {
     this._flowItemDetails = value;
-    console.log(this._flowItemDetails);
     this.loadStepIcon(this._flowItemDetails.logoUrl || '');
   }
   @Input() set flowItemDetails$(

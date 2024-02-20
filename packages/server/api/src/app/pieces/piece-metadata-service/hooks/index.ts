@@ -6,16 +6,17 @@ import { sortAndOrderPieces } from './piece-sorting'
 
 export const defaultPieceHooks: PieceMetadataServiceHooks = {
     async filterPieces(params) {
-        return sortAndOrderPieces(
+        const sortedPieces = sortAndOrderPieces(
             params.sortBy,
             params.orderBy,
-            filterPiecesBasedUser({
-                categories: params.categories,
-                searchQuery: params.searchQuery,
-                pieces: params.pieces,
-                suggestionType: params.suggestionType,
-            }),
+            params.pieces,
         )
+        return filterPiecesBasedUser({
+            categories: params.categories,
+            searchQuery: params.searchQuery,
+            pieces: sortedPieces,
+            suggestionType: params.suggestionType,
+        })
     },
 }
 
