@@ -10,6 +10,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/shared';
+import FormData from 'form-data';
 import { httpMethodDropdown } from '../common/props';
 
 export const httpSendRequestAction = createAction({
@@ -54,12 +55,12 @@ export const httpSendRequestAction = createAction({
     }),
     body: Property.DynamicProperties({
       displayName: 'Body',
-      refreshers: ['bodytype'],
+      refreshers: ['body_type'],
       required: false,
-      props: async ({ bodytype }) => {
-        if (!bodytype) return {};
+      props: async ({ body_type }) => {
+        if (!body_type) return {};
 
-        const bodyTypeInput = bodytype as unknown as string;
+        const bodyTypeInput = body_type as unknown as string;
 
         const fields: DynamicPropsValue = {};
 
@@ -96,7 +97,7 @@ export const httpSendRequestAction = createAction({
     retryOnFailure: { defaultValue: true },
   },
   async run(context) {
-    const { method, url, headers, queryParams, body, timeout } =
+    const { method, url, headers, queryParams, body, body_type, timeout } =
       context.propsValue;
 
     assertNotNullOrUndefined(method, 'Method');
@@ -110,7 +111,17 @@ export const httpSendRequestAction = createAction({
       timeout: timeout ? timeout * 1000 : 0,
     };
     if (body) {
-      request.body = body['data'];
+      const bodyInput = body['data'];
+      if (body_type === 'form_data') {
+        const formData = new FormData();
+        for (const key in bodyInput) {
+          formData.append(key, bodyInput[key]);
+        }
+        request.body = formData;
+        request.headers = { ...request.headers, ...formData.getHeaders() };
+      } else {
+        request.body = bodyInput;
+      }
     }
     return await httpClient.sendRequest(request);
   },
