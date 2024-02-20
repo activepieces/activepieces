@@ -26,6 +26,7 @@ import {
   map,
   filter,
   of,
+  shareReplay,
 } from 'rxjs';
 
 @Component({
@@ -60,9 +61,12 @@ export class ImportFlowComponent implements OnInit {
       switchMap((params) => {
         const templateId = encodeURIComponent(params['templateId']);
         return this.templatesService.getTemplate(templateId).pipe(
+          tap((res)=>{
+            console.log(res)
+          }),
           catchError((err: HttpErrorResponse) => {
             throw err;
-          })
+          }),
         );
       }),
       tap((res) => {
@@ -75,7 +79,8 @@ export class ImportFlowComponent implements OnInit {
         console.error(error);
         this.router.navigate(['not-found']);
         return EMPTY;
-      })
+      }),
+      shareReplay(1)
     );
 
     this.hasDirectFlag$ = this.route.queryParamMap.pipe(

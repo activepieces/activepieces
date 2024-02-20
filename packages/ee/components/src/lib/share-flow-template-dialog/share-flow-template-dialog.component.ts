@@ -73,7 +73,7 @@ export class ShareFlowTemplateDialogComponent {
   ) {
     this.show$ = this.flagsService
       .getEdition()
-      .pipe(map((ed) => ed === ApEdition.CLOUD));
+      .pipe(map((ed) => ed === ApEdition.ENTERPRISE || ed === ApEdition.CLOUD));
     this.isPublicTemplatesProject$ = combineLatest({
       templateProjectId: this.flagsService.getAllFlags().pipe(
         map((flags) => {
@@ -100,6 +100,7 @@ export class ShareFlowTemplateDialogComponent {
         type: TemplateType.PROJECT,
         blogUrl: this.form.value.blogUrl,
         tags: this.form.value.tags,
+        description: this.form.value.description,
       };
       this.telemetryService.capture({
         name: TelemetryEventName.FLOW_SHARED,
