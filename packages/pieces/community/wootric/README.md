@@ -1,7 +1,7 @@
-# pieces-community-wootric
+# pieces-wootric
 
 This library was generated with [Nx](https://nx.dev).
 
 ## Building
 
-Run `nx build pieces-community-wootric` to build the library.
+Run `nx build pieces-wootric` to build the library.

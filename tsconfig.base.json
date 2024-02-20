@@ -218,7 +218,7 @@
       "@activepieces/piece-hackernews": [
         "packages/pieces/community/hackernews/src/index.ts"
       ],
-            "@activepieces/piece-http": [
+      "@activepieces/piece-http": [
         "packages/pieces/community/http/src/index.ts"
       ],
       "@activepieces/piece-hubspot": [
@@ -510,6 +510,9 @@
       ],
       "@activepieces/pieces-framework": [
         "packages/pieces/community/framework/src/index.ts"
+      ],
+      "@activepieces/pieces-wootric": [
+        "packages/pieces/community/wootric/src/index.ts"
       ],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
       "@activepieces/ui-ee-platform": ["packages/ee/ui-platform/src/index.ts"],

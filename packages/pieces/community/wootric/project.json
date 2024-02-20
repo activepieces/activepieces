@@ -1,41 +1,31 @@
 {
-  "name": "pieces-community-wootric",
+  "name": "pieces-wootric",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/pieces/community/wootric/src",
   "projectType": "library",
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/community/wootric",
         "tsConfig": "packages/pieces/community/wootric/tsconfig.lib.json",
         "packageJson": "packages/pieces/community/wootric/package.json",
         "main": "packages/pieces/community/wootric/src/index.ts",
-        "assets": [
-          "packages/pieces/community/wootric/*.md"
-        ],
+        "assets": ["packages/pieces/community/wootric/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-community-wootric {args.ver} {args.tag}",
-      "dependsOn": [
-        "build"
-      ]
+      "dependsOn": ["build"]
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/community/wootric/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/community/wootric/**/*.ts"]
       }
     }
   },
