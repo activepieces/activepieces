@@ -217,10 +217,10 @@ export const flowService = {
 
                 if (lastVersion.state === FlowVersionState.LOCKED) {
                     const lastVersionWithArtifacts =
-            await flowVersionService.getFlowVersionOrThrow({
-                flowId: id,
-                versionId: undefined,
-            })
+                        await flowVersionService.getFlowVersionOrThrow({
+                            flowId: id,
+                            versionId: undefined,
+                        })
 
                     lastVersion = await flowVersionService.createEmptyVersion(id, {
                         displayName: lastVersionWithArtifacts.displayName,

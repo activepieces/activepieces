@@ -21,6 +21,7 @@ type ErrorParams =
     | ExistingUserErrorParams
     | FileNotFoundErrorParams
     | FlowNotFoundErrorParams
+    | FlowIsLockedErrorParams
     | FlowOperationErrorParams
     | FlowRunNotFoundErrorParams
     | InvalidApiKeyParams
@@ -217,6 +218,13 @@ ErrorCode.FLOW_OPERATION_INVALID,
 Record<string, never>
 >
 
+export type FlowIsLockedErrorParams = BaseErrorParams<
+ErrorCode.FLOW_IN_USE,
+{
+    flowVersionId: FlowVersionId
+    message: string
+}>
+
 export type InvalidJwtTokenErrorParams = BaseErrorParams<
 ErrorCode.INVALID_OR_EXPIRED_JWT_TOKEN,
 {
@@ -333,6 +341,7 @@ export enum ErrorCode {
     FLOW_INSTANCE_NOT_FOUND = 'INSTANCE_NOT_FOUND',
     FLOW_NOT_FOUND = 'FLOW_NOT_FOUND',
     FLOW_OPERATION_INVALID = 'FLOW_OPERATION_INVALID',
+    FLOW_IN_USE = 'FLOW_IN_USE',
     FLOW_RUN_NOT_FOUND = 'FLOW_RUN_NOT_FOUND',
     INVALID_API_KEY = 'INVALID_API_KEY',
     INVALID_APP_CONNECTION = 'INVALID_APP_CONNECTION',
