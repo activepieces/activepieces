@@ -21,6 +21,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { BuilderSelectors } from '../builder/builder.selector';
 import { UUID } from 'angular2-uuid';
 import { BuilderActions } from '../builder/builder.action';
+import { PannerService } from '@activepieces/ui-canvas-utils';
 import {
   ActionType,
   PopulatedFlow,
@@ -65,7 +66,7 @@ export class FlowsEffects {
     );
   });
 
-  replaceTrigger = createEffect(() => {
+  replaceTrigger$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(FlowsActions.updateTrigger),
       concatLatestFrom(() =>
@@ -80,6 +81,7 @@ export class FlowsEffects {
       })
     );
   });
+
   selectFirstInvalidStep$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(FlowsActions.selectFirstInvalidStep),
@@ -106,7 +108,7 @@ export class FlowsEffects {
     );
   });
 
-  deleteStep = createEffect(() => {
+  deleteStep$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(FlowsActions.deleteAction),
       concatLatestFrom(() => [
@@ -147,7 +149,7 @@ export class FlowsEffects {
     );
   });
 
-  addStep = createEffect(() => {
+  addStep$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(FlowsActions.addAction),
       concatLatestFrom(() =>
@@ -161,7 +163,7 @@ export class FlowsEffects {
     );
   });
 
-  stepSelectedEffect = createEffect(() => {
+  stepSelected$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(canvasActions.selectStepByName),
       concatLatestFrom(() => [
@@ -546,13 +548,26 @@ export class FlowsEffects {
     );
   });
 
+  flowImported$ = createEffect(
+    () => {
+      return this.actions$.pipe(
+        ofType(FlowsActions.importFlow),
+        tap((res) => {
+          this.pannerService.resetZoom(res.flow.version);
+        })
+      );
+    },
+    { dispatch: false }
+  );
+
   constructor(
     private pieceBuilderService: FlowBuilderService,
     private flowService: FlowService,
     private store: Store,
     private actions$: Actions,
     private snackBar: MatSnackBar,
-    private builderAutocompleteService: BuilderAutocompleteMentionsDropdownService
+    private builderAutocompleteService: BuilderAutocompleteMentionsDropdownService,
+    private pannerService: PannerService
   ) {}
 
   private setLastSaveDate() {

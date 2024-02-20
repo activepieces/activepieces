@@ -96,7 +96,6 @@ export class ShareFlowTemplateDialogComponent {
     if (!this.loading) {
       this.loading = true;
       const request: CreateFlowTemplateRequest = {
-        description: this.form.value.description,
         template: this.flow.version,
         type: TemplateType.PROJECT,
         blogUrl: this.form.value.blogUrl,
@@ -145,7 +144,6 @@ export class ShareFlowTemplateDialogComponent {
         tap((template) => {
           if (template) {
             this.form.patchValue({
-              description: template.description,
               blogUrl: template.blogUrl,
               tags: template.tags,
             });
