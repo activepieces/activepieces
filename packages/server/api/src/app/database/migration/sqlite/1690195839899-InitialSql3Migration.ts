@@ -70,7 +70,7 @@ export class InitialSql3Migration1690195839899 implements MigrationInterface {
             'CREATE INDEX "idx_project_owner_id" ON "project" ("ownerId") ',
         )
         await queryRunner.query(
-            'CREATE TABLE "store-entry" ("id" varchar(21) PRIMARY KEY NOT NULL, "created" datetime NOT NULL DEFAULT (datetime(\'now\')), "updated" datetime NOT NULL DEFAULT (datetime(\'now\')), "key" varchar NOT NULL, "projectId" varchar(21) NOT NULL, "value" text, CONSTRAINT "UQ_projectid_and_key" UNIQUE("projectId", "key"))',
+            'CREATE TABLE "store-entry" ("id" varchar(21) PRIMARY KEY NOT NULL, "created" datetime NOT NULL DEFAULT (datetime(\'now\')), "updated" datetime NOT NULL DEFAULT (datetime(\'now\')), "key" varchar NOT NULL, "projectId" varchar(21) NOT NULL, "value" text)',
         )
         await queryRunner.query(
             'CREATE TABLE "user" ("id" varchar(21) PRIMARY KEY NOT NULL, "created" datetime NOT NULL DEFAULT (datetime(\'now\')), "updated" datetime NOT NULL DEFAULT (datetime(\'now\')), "email" varchar NOT NULL, "firstName" varchar NOT NULL, "lastName" varchar NOT NULL, "password" varchar NOT NULL, "status" varchar NOT NULL, "trackEvents" boolean, "newsLetter" boolean, CONSTRAINT "UQ_e12875dfb3b1d92d7d7c5377e22" UNIQUE ("email"))',

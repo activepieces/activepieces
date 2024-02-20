@@ -7,6 +7,7 @@ tmp
 /out-tsc
 firebase-admin-sdk.json
 dev
+cache
 
 # SDK Build
 builds
