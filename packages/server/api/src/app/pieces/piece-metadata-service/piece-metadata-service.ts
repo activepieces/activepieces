@@ -1,5 +1,4 @@
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { AllPiecesStats } from './piece-stats-service'
 import {
     ApEdition,
     PackageType,
@@ -60,6 +59,5 @@ export type PieceMetadataService = {
     getOrThrow(params: GetOrThrowParams): Promise<PieceMetadataModel>
     create(params: CreateParams): Promise<PieceMetadataModel>
     delete(params: DeleteParams): Promise<void>
-    stats(): Promise<AllPiecesStats>
     getExactPieceVersion(params: GetExactPieceVersionParams): Promise<string>
 }

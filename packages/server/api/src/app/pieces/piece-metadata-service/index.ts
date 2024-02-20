@@ -51,42 +51,16 @@ export const getPiecePackage = async (
 }
 
 export function toPieceMetadataModelSummary<T extends PieceMetadataSchema | PieceMetadataModel>(
-    pieceMetadataEntityList: T [],
+    pieceMetadataEntityList: T[],
     showSuggestedActionsAndTriggers?: boolean,
 ): PieceMetadataModelSummary[] {
-    if (!showSuggestedActionsAndTriggers) {
-        return pieceMetadataEntityList.map((pieceMetadataEntity) => {
-            return {
-                ...pieceMetadataEntity,
-                actions: Object.keys(pieceMetadataEntity.actions).length,
-                triggers: Object.keys(pieceMetadataEntity.triggers).length,
-            }
-        })
-    }
-
     return pieceMetadataEntityList.map((pieceMetadataEntity) => {
-        const suggestedActions = Object.values(pieceMetadataEntity.actions).map((action) => {
-            const result = {
-                name: action.name,
-                displayName: action.displayName,
-            }
-            return result
-        })
-        const suggestedTriggers = Object.values(pieceMetadataEntity.triggers).map((trigger) => {
-        
-            const result = {
-                name: trigger.name,
-                displayName: trigger.displayName,
-            }
-            return result
-        })
         return {
             ...pieceMetadataEntity,
             actions: Object.keys(pieceMetadataEntity.actions).length,
             triggers: Object.keys(pieceMetadataEntity.triggers).length,
-            suggestedActions,
-            suggestedTriggers,
+            suggestedActions: showSuggestedActionsAndTriggers ? Object.values(pieceMetadataEntity.actions) : undefined,
+            suggestedTriggers: showSuggestedActionsAndTriggers ? Object.values(pieceMetadataEntity.triggers) : undefined,
         }
-    
     })
 }

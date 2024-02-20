@@ -4,7 +4,6 @@ import {
     PieceMetadataSchema,
 } from '../piece-metadata-entity'
 import { PieceMetadataService } from './piece-metadata-service'
-import { AllPiecesStats, pieceStatsService } from './piece-stats-service'
 import { StatusCodes } from 'http-status-codes'
 import {
     ActivepiecesError,
@@ -78,10 +77,6 @@ export const CloudPieceMetadataService = (): PieceMetadataService => {
 
         async delete(): Promise<void> {
             throw new Error('operation not supported')
-        },
-
-        async stats(): Promise<AllPiecesStats> {
-            return pieceStatsService.get()
         },
 
         async getExactPieceVersion({ name, version, projectId }): Promise<string> {

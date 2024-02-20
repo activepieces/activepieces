@@ -1,10 +1,10 @@
-import { PieceCategory } from '@activepieces/shared'
+import { PieceCategory, assertNotNullOrUndefined } from '@activepieces/shared'
 import { PieceMetadataSchema } from '../../piece-metadata-entity'
 import Fuse from 'fuse.js'
 import { ActionBase, TriggerBase } from '@activepieces/pieces-framework'
 
 
-const pieceFilterKeys = [ 'displayName', 'description'] 
+const pieceFilterKeys = ['displayName', 'description']
 const suggestionLimit = 3
 export const filterPiecesBasedUser = ({
     searchQuery,
@@ -19,7 +19,7 @@ export const filterPiecesBasedUser = ({
 }): PieceMetadataSchema[] => {
     return filterBasedOnCategories({
         categories,
-        pieces: filterBasedOnSearchQuery({ searchQuery, pieces, includeActionsAndTriggers  }),
+        pieces: filterBasedOnSearchQuery({ searchQuery, pieces, includeActionsAndTriggers }),
     })
 }
 
@@ -41,8 +41,8 @@ const filterBasedOnSearchQuery = ({
     const fuse = new Fuse(pieces, {
         isCaseSensitive: false,
         shouldSort: true,
-        keys: 
-        pieceFilterKeys,
+        keys:
+            pieceFilterKeys,
         threshold: 0.3,
     })
 
@@ -80,7 +80,7 @@ const searchWithinActionsAndTriggersAsWell = (searchQuery: string, pieces: Piece
         }
     })
 
-    const pieceWithTriggersAndActionsFilterKeys = [ 
+    const pieceWithTriggersAndActionsFilterKeys = [
         ...pieceFilterKeys,
         'actions.displayName',
         'actions.description',
@@ -90,67 +90,37 @@ const searchWithinActionsAndTriggersAsWell = (searchQuery: string, pieces: Piece
     const fuse = new Fuse(putActionsAndTriggersInAnArray, {
         isCaseSensitive: false,
         shouldSort: true,
-        keys: 
-        pieceWithTriggersAndActionsFilterKeys,
+        keys: pieceWithTriggersAndActionsFilterKeys,
         threshold: 0.2,
     })
 
     return fuse
         .search(searchQuery)
         .map(({ item }) => {
-            const originalPiece = pieces.find((p) => p.id === item.id)!
-            
-            const { suggestedActionsAndTriggers } = searchForRelatedActionsAndTriggers(originalPiece, searchQuery)
-                    
-            const actions = suggestedActionsAndTriggers.reduce<Record<string, ActionBase>>((filteredActions, suggestion) => {
-                if (suggestion.key in originalPiece.actions) {
-                    filteredActions[suggestion.key] = originalPiece.actions[suggestion.key]
-                }
-                return filteredActions
-            }, {})
-
-            const triggers = suggestedActionsAndTriggers.reduce<Record<string, TriggerBase>>((filteredTriggers, suggestion) => { 
-                if (suggestion.key in originalPiece.triggers) {
-                    filteredTriggers[suggestion.key] = originalPiece.triggers[suggestion.key]
-                }
-                return filteredTriggers
-            }
-            , {})
+            const originalPiece = pieces.find((p) => p.id === item.id)
+            assertNotNullOrUndefined(originalPiece, 'Piece not found')
+            const suggestedActions = searchForSuggestion(item.actions, searchQuery)
+            const suggestedTriggers = searchForSuggestion(item.triggers, searchQuery)
             return {
                 ...originalPiece,
-                actions,
-                triggers,
+                actions: suggestedActions,
+                triggers: suggestedTriggers,
             }
-            
+
         })
 
 }
-function searchForRelatedActionsAndTriggers(originalPiece: PieceMetadataSchema, searchQuery: string):
-{
-    suggestedActionsAndTriggers: { description: string, displayName: string, key: string }[]
-} {
-  
-    const actionsAndTriggers = [
-        ...Object.keys(originalPiece.actions).map((key) => ({
-            description: originalPiece.actions[key].description,
-            displayName: originalPiece.actions[key].displayName,
-            key,
-        })),
-        ...Object.keys(originalPiece.triggers).map((key) => ({
-            description: originalPiece.triggers[key].description,
-            displayName: originalPiece.triggers[key].displayName,
-            key,
-        })),
-    ]
- 
-    const nestedFuse = new Fuse(actionsAndTriggers, {
+function searchForSuggestion<T extends ActionBase | TriggerBase>(actions: T[], searchQuery: string): Record<string, T> {
+    const nestedFuse = new Fuse(actions, {
         isCaseSensitive: false,
         shouldSort: true,
         keys: ['displayName', 'description'],
         threshold: 0.2,
     })
-
-    const suggestedActionsAndTriggers = nestedFuse.search(searchQuery, { limit: suggestionLimit }).map(({ item }) => item)
-    return { suggestedActionsAndTriggers }
+    const suggestions = nestedFuse.search(searchQuery, { limit: suggestionLimit }).map(({ item }) => item)
+    return suggestions.reduce<Record<string, T>>((filteredSuggestions, suggestion) => {
+        filteredSuggestions[suggestion.name] = suggestion
+        return filteredSuggestions
+    }, {})
 }
 

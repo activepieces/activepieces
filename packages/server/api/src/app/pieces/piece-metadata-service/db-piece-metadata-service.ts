@@ -16,7 +16,6 @@ import {
 import { PieceMetadataService } from './piece-metadata-service'
 import { EXACT_VERSION_PATTERN, PieceType, isNil } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode, apId } from '@activepieces/shared'
-import { AllPiecesStats, pieceStatsService } from './piece-stats-service'
 import * as semver from 'semver'
 import { pieceMetadataServiceHooks as hooks } from './hooks'
 import { projectService } from '../../project/project-service'
@@ -153,10 +152,6 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                 id,
                 projectId: projectId ?? undefined,
             })
-        },
-
-        async stats(): Promise<AllPiecesStats> {
-            return pieceStatsService.get()
         },
 
         async getExactPieceVersion({ name, version, projectId }): Promise<string> {

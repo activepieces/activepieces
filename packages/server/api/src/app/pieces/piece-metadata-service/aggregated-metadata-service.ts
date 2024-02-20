@@ -1,5 +1,4 @@
 import { PieceMetadataService } from './piece-metadata-service'
-import { AllPiecesStats } from './piece-stats-service'
 import { CloudPieceMetadataService } from './cloud-piece-metadata-service'
 import { DbPieceMetadataService } from './db-piece-metadata-service'
 import {
@@ -60,10 +59,6 @@ export const AggregatedPieceMetadataService = (): PieceMetadataService => {
 
         async delete(params): Promise<void> {
             return dbPieceProvider.delete(params)
-        },
-
-        async stats(): Promise<AllPiecesStats> {
-            throw new Error('operation not supported')
         },
 
         async getExactPieceVersion({ name, version, projectId }): Promise<string> {

@@ -13,7 +13,6 @@ import {
     isNil,
 } from '@activepieces/shared'
 import { PieceMetadataService } from './piece-metadata-service'
-import { AllPiecesStats } from './piece-stats-service'
 import importFresh from 'import-fresh'
 import {
     PieceMetadataModel,
@@ -149,10 +148,6 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
 
         async create(): Promise<PieceMetadataModel> {
             throw new Error('Creating pieces is not supported in development mode')
-        },
-
-        async stats(): Promise<AllPiecesStats> {
-            return {}
         },
 
         async getExactPieceVersion({ projectId, name, version }): Promise<string> {
