@@ -32,9 +32,9 @@ export const onFormSubmission = createTrigger({
           options: {
             options: [
               { value: 'text', label: 'Text' },
-              { value: 'Text Area', label: 'Text Area' },
+              { value: 'text_area', label: 'Text Area' },
               { value: 'file', label: 'File' },
-              { value: 'switch', label: 'Switch' },
+              { value: 'toggle', label: 'Toggle' },
             ],
           },
         }),

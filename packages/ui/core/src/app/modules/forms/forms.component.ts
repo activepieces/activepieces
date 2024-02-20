@@ -38,8 +38,8 @@ type Input = {
 enum InputTypes {
   TEXT = 'text',
   FILE = 'file',
-  TEXT_AREA = 'Text Area',
-  SWITCH = 'switch',
+  TEXT_AREA = 'text_area',
+  TOGGLE = 'toggle',
 }
 
 type FormProps = {
@@ -254,7 +254,7 @@ export class FormsComponent implements OnInit {
         case InputTypes.TEXT_AREA:
           this.inputs.push(Property.LongText(prop) as unknown as Input);
           break;
-        case InputTypes.SWITCH:
+        case InputTypes.TOGGLE:
           this.inputs.push(Property.Checkbox(prop) as unknown as Input);
           break;
       }
