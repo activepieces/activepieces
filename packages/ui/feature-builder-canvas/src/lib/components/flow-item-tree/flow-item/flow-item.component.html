@@ -14,8 +14,13 @@
             [selected]="selected$ | async | defaultFalse"></app-flow-item-content>
         </div>
       </div>
-      <div class="ap-absolute ap-w-[8px] -ap-left-[8px] ap-top-0 ap-z-50 " [style.height]="FLOW_ITEM_HEIGHT+ 'px'" apTrackHover #spacer="hoverTrackerDirective"></div>
-      <div class="ap-absolute ap-z-50 -ap-left-[58px] ap-w-[50px] ap-h-full ap-flex ap-flex-col ap-justify-center  ap-top-0">
+      <div class="ap-absolute ap-top-0 ap-z-50 " 
+              [style.left]="-ACTIONS_CONTAINER_MARGIN+'px'"
+              [style.width]="ACTIONS_CONTAINER_MARGIN+'px'"
+              [style.height]="FLOW_ITEM_HEIGHT+ 'px'"
+       apTrackHover #spacer="hoverTrackerDirective"></div>
+      <div [style.width]="ACTION_BUTTON_DIMENSION+'px'"  [style.left]="-ACTION_CONTAINER_OFFSET+'px'"
+       class="ap-absolute ap-z-50  ap-h-full ap-flex ap-flex-col ap-justify-center  ap-top-0">
         <app-actions-container [trigger]="isTrigger" [flowItem]="_flowItemData.content!"
           [stepHovered]="itemContentHoverTracker.isHovered || spacer.isHovered"></app-actions-container>
       </div>
@@ -25,17 +30,23 @@
 
   </ng-container>
   <ng-container *ngIf="isTrigger || (readOnly$ | async)===true">
-    <div #flowItem class=" ap-relative ap-z-50">
+    <div #flowItem class=" ap-relative ap-z-50" apTrackHover
+    #itemContentHoverTracker="hoverTrackerDirective" >
       <div class="ap-cursor-pointer">
-        <app-flow-item-content #ItemContent [flowItem]="_flowItemData.content!" apTrackHover
-        #itemContentHoverTracker="hoverTrackerDirective" [readOnly]="readOnly$ | async | defaultTrue"
+        <app-flow-item-content #ItemContent [flowItem]="_flowItemData.content!" [readOnly]="readOnly$ | async | defaultTrue"
         [selected]="selected$ | async | defaultFalse"></app-flow-item-content>
       </div>
  
         <ng-container *ngIf=" (readOnly$ | async)=== false;">      
-        <div class="ap-absolute ap-w-[8px] -ap-left-[8px] ap-top-0 ap-z-50 " [style.height]="FLOW_ITEM_HEIGHT+ 'px'" apTrackHover #spacer="hoverTrackerDirective"></div>
+        <div class="ap-absolute ap-top-0 ap-z-50" 
+            [style.left]="-ACTIONS_CONTAINER_MARGIN+'px'"
+            [style.width]="ACTIONS_CONTAINER_MARGIN+'px'" 
+            [style.height]="FLOW_ITEM_HEIGHT+ 'px'"    
+            apTrackHover #spacer="hoverTrackerDirective"></div>
           <div 
-            class="ap-absolute -ap-left-[58px] ap-w-[50px] ap-h-full ap-flex ap-flex-col ap-justify-center  ap-top-0">
+              [style.left]="-(ACTION_CONTAINER_OFFSET + (isTrigger? ACTIONS_CONTAINER_MARGIN:0))+'px'" 
+              [style.width]="ACTION_BUTTON_DIMENSION+'px'"
+            class="ap-absolute ap-h-full ap-flex ap-flex-col ap-justify-center  ap-top-0">
             <app-actions-container [trigger]="isTrigger" [flowItem]="_flowItemData.content!"
               [stepHovered]="itemContentHoverTracker.isHovered || spacer.isHovered"></app-actions-container>
           </div>
