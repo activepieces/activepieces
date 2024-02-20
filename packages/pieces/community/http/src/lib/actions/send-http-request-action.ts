@@ -30,9 +30,10 @@ export const httpSendRequestAction = createAction({
       displayName: 'Query params',
       required: true,
     }),
-    bodytype: Property.StaticDropdown({
+    body_type: Property.StaticDropdown({
       displayName: 'Body Type',
       required: false,
+      defaultValue: 'form_data',
       options: {
         disabled: false,
         options: [
@@ -111,10 +112,6 @@ export const httpSendRequestAction = createAction({
     if (body) {
       request.body = body['data'];
     }
-    try {
-      return await httpClient.sendRequest(request);
-    } catch (error) {
-      throw error;
-    }
+    return await httpClient.sendRequest(request);
   },
 });
