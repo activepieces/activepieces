@@ -13,11 +13,12 @@ export const doesQueryMatchStep = (
     step.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 };
+const coreSteps = [
+  ActionType.BRANCH,
+  ActionType.CODE,
+  ActionType.LOOP_ON_ITEMS,
+  TriggerType.WEBHOOK,
+];
 export const isCoreStep = (step: FlowItemDetails) => {
-  return (
-    step.type === ActionType.BRANCH ||
-    ActionType.CODE ||
-    ActionType.LOOP_ON_ITEMS ||
-    TriggerType.WEBHOOK
-  );
+  return coreSteps.includes(step.type);
 };
