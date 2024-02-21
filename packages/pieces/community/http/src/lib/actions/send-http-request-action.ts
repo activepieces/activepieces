@@ -34,10 +34,14 @@ export const httpSendRequestAction = createAction({
     body_type: Property.StaticDropdown({
       displayName: 'Body Type',
       required: false,
-      defaultValue: 'json',
+      defaultValue: 'none',
       options: {
         disabled: false,
         options: [
+          {
+            label: 'None',
+            value: 'none',
+          },
           {
             label: 'Form Data',
             value: 'form_data',
@@ -65,6 +69,8 @@ export const httpSendRequestAction = createAction({
         const fields: DynamicPropsValue = {};
 
         switch (bodyTypeInput) {
+          case 'none':
+            break;
           case 'json':
             fields['data'] = Property.Json({
               displayName: 'JSON Body',
