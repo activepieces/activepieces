@@ -73,7 +73,7 @@ export class ShareFlowTemplateDialogComponent {
   ) {
     this.show$ = this.flagsService
       .getEdition()
-      .pipe(map((ed) => ed === ApEdition.CLOUD));
+      .pipe(map((ed) => ed === ApEdition.ENTERPRISE || ed === ApEdition.CLOUD));
     this.isPublicTemplatesProject$ = combineLatest({
       templateProjectId: this.flagsService.getAllFlags().pipe(
         map((flags) => {
@@ -96,11 +96,11 @@ export class ShareFlowTemplateDialogComponent {
     if (!this.loading) {
       this.loading = true;
       const request: CreateFlowTemplateRequest = {
-        description: this.form.value.description,
         template: this.flow.version,
         type: TemplateType.PROJECT,
         blogUrl: this.form.value.blogUrl,
         tags: this.form.value.tags,
+        description: this.form.value.description,
       };
       this.telemetryService.capture({
         name: TelemetryEventName.FLOW_SHARED,
@@ -145,7 +145,6 @@ export class ShareFlowTemplateDialogComponent {
         tap((template) => {
           if (template) {
             this.form.patchValue({
-              description: template.description,
               blogUrl: template.blogUrl,
               tags: template.tags,
             });

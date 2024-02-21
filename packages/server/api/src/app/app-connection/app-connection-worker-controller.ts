@@ -29,9 +29,10 @@ export const appConnectionWorkerController: FastifyPluginCallbackTypebox = (
 
             if (isNil(appConnection)) {
                 throw new ActivepiecesError({
-                    code: ErrorCode.APP_CONNECTION_NOT_FOUND,
+                    code: ErrorCode.ENTITY_NOT_FOUND,
                     params: {
-                        id: request.params.connectionName,
+                        entityId: `connectionName=${request.params.connectionName}`,
+                        entityType: 'AppConnection',
                     },
                 })
             }

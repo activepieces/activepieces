@@ -737,3 +737,13 @@ app-platform-settings {
 
 @include mat.form-field-density(-2);
 @include mat.button-density(0);
+
+
+.suggested-actions-or-triggers
+{
+  .mat-mdc-standard-chip:not(.mdc-evolution-chip--disabled)
+  {
+    background-color: var(--primary-palette-50) ;
+    color: var(--primary-palette-contrast-400);
+  }
+}

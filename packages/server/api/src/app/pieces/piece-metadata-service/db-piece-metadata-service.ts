@@ -16,10 +16,10 @@ import {
 import { PieceMetadataService } from './piece-metadata-service'
 import { EXACT_VERSION_PATTERN, PieceType, isNil } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode, apId } from '@activepieces/shared'
-import { AllPiecesStats, pieceStatsService } from './piece-stats-service'
 import * as semver from 'semver'
 import { pieceMetadataServiceHooks as hooks } from './hooks'
 import { projectService } from '../../project/project-service'
+import { toPieceMetadataModelSummary } from '.'
 
 const repo = repoFactory(PieceMetadataEntity)
 
@@ -63,8 +63,9 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
             const pieces = await hooks.get().filterPieces({
                 ...params,
                 pieces: pieceMetadataEntityList,
+                suggestionType: params.suggestionType,
             })
-            return toPieceMetadataModelSummary(pieces)
+            return toPieceMetadataModelSummary(pieces, params.suggestionType)
         },
 
         async getOrThrow({
@@ -151,10 +152,6 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                 id,
                 projectId: projectId ?? undefined,
             })
-        },
-
-        async stats(): Promise<AllPiecesStats> {
-            return pieceStatsService.get()
         },
 
         async getExactPieceVersion({ name, version, projectId }): Promise<string> {
@@ -244,17 +241,7 @@ const applyVersionFilter = (
     }))
 }
 
-const toPieceMetadataModelSummary = (
-    pieceMetadataEntityList: PieceMetadataSchema[],
-): PieceMetadataModelSummary[] => {
-    return pieceMetadataEntityList.map((pieceMetadataEntity) => {
-        return {
-            ...pieceMetadataEntity,
-            actions: Object.keys(pieceMetadataEntity.actions).length,
-            triggers: Object.keys(pieceMetadataEntity.triggers).length,
-        }
-    })
-}
+
 
 const toPieceMetadataModel = (
     pieceMetadataEntity: PieceMetadataSchema,

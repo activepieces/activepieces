@@ -1,7 +1,7 @@
 import { Static, Type } from "@sinclair/typebox";
-import { BaseModelSchema } from "@activepieces/shared";
+import { BaseModelSchema, FlowOperationRequest, FlowOperationType } from "@activepieces/shared";
 export const ListAuditEventsRequest = Type.Object({
-    limit: Type.Optional( Type.Number()),
+    limit: Type.Optional(Type.Number()),
     cursor: Type.Optional(Type.String()),
 })
 
@@ -13,6 +13,7 @@ export enum ApplicationEventName {
     CREATED_FOLDER = 'CREATED_FOLDER',
     UPDATED_FOLDER = 'UPDATED_FOLDER',
     DELETED_FOLDER = 'DELETED_FOLDER',
+    UPDATED_FLOW = 'UPDATED_FLOW',
     UPSERTED_CONNECTION = 'UPSERTED_CONNECTION',
     DELETED_CONNECTION = 'DELETED_CONNECTION',
     SIGNED_IN = 'SIGNED_IN',
@@ -57,7 +58,10 @@ export type FolderEvent = Static<typeof FolderEvent>
 
 export const FlowEvent = Type.Object({
     ...BaseAuditEventProps,
-    action: Type.Union([Type.Literal(ApplicationEventName.CREATED_FLOW), Type.Literal(ApplicationEventName.DELETED_FLOW)]),
+    action: Type.Union([
+        Type.Literal(ApplicationEventName.CREATED_FLOW),
+        Type.Literal(ApplicationEventName.DELETED_FLOW),
+    ]),
     data: Type.Object({
         flowId: Type.String(),
         flowName: Type.String(),
@@ -65,6 +69,18 @@ export const FlowEvent = Type.Object({
 })
 
 export type FlowEvent = Static<typeof FlowEvent>
+
+export const UpdatedFlowEvent = Type.Object({
+    ...BaseAuditEventProps,
+    action: Type.Literal(ApplicationEventName.UPDATED_FLOW),
+    data: Type.Object({
+        flowId: Type.String(),
+        flowName: Type.String(),
+        request: FlowOperationRequest
+    }),
+})
+
+export type UpdatedFlowEvent = Static<typeof UpdatedFlowEvent>
 
 export const AuthenticationEvent = Type.Object({
     ...BaseAuditEventProps,
@@ -79,7 +95,71 @@ export const ApplicationEvent = Type.Union([
     FlowEvent,
     AuthenticationEvent,
     FolderEvent,
+    UpdatedFlowEvent,
 ])
 
 export type ApplicationEvent = Static<typeof ApplicationEvent>
 
+
+export function summarizeApplicationEvent(event: ApplicationEvent) {
+    switch (event.action) {
+        case ApplicationEventName.UPDATED_FLOW: {
+            return convertUpdateActionToDetails(event);
+        }
+        case ApplicationEventName.CREATED_FLOW:
+            return `${event.data.flowName} is created`;
+        case ApplicationEventName.DELETED_FLOW:
+            return `${event.data.flowName} is deleted`;
+        case ApplicationEventName.CREATED_FOLDER:
+            return `${event.data.folderName} is created`;
+        case ApplicationEventName.UPDATED_FOLDER:
+            return `${event.data.folderName} is updated`;
+        case ApplicationEventName.DELETED_FOLDER:
+            return `${event.data.folderName} is deleted`;
+        case ApplicationEventName.UPSERTED_CONNECTION:
+            return `${event.data.connectionName} is updated`;
+        case ApplicationEventName.DELETED_CONNECTION:
+            return `${event.data.connectionName} is deleted`;
+        case ApplicationEventName.SIGNED_UP:
+            return `User ${event.userEmail} signed up`;
+        case ApplicationEventName.SIGNED_IN:
+            return `User ${event.userEmail} signed in`;
+        case ApplicationEventName.RESET_PASSWORD:
+            return `User ${event.userEmail} reset password`;
+        case ApplicationEventName.VERIFIED_EMAIL:
+            return `User ${event.userEmail} verified email`;
+    }
+}
+
+function convertUpdateActionToDetails(event: UpdatedFlowEvent) {
+    switch (event.data.request.type) {
+        case FlowOperationType.ADD_ACTION:
+            return `Added action "${event.data.request.request.action.displayName}" to "${event.data.flowName}" Flow.`;
+        case FlowOperationType.UPDATE_ACTION:
+            return `Updated action "${event.data.request.request.displayName}" in "${event.data.flowName}" Flow.`;
+        case FlowOperationType.DELETE_ACTION:
+            return `Deleted action "${event.data.request.request.name}" from "${event.data.flowName}" Flow.`;
+        case FlowOperationType.CHANGE_NAME:
+            return `Renamed flow "${event.data.flowName}" to "${event.data.request.request.displayName}".`;
+        case FlowOperationType.LOCK_AND_PUBLISH:
+            return `Locked and published flow "${event.data.flowName}" Flow.`;
+        case FlowOperationType.USE_AS_DRAFT:
+            return `Unlocked and unpublished flow "${event.data.flowName}" Flow.`;
+        case FlowOperationType.MOVE_ACTION:
+            return `Moved action "${event.data.request.request.name}" to after "${event.data.request.request.newParentStep}".`;
+        case FlowOperationType.LOCK_FLOW:
+            return `Locked flow "${event.data.flowName}" Flow.`;
+        case FlowOperationType.CHANGE_STATUS:
+            return `Changed status of flow "${event.data.flowName}" Flow to "${event.data.request.request.status}".`;
+        case FlowOperationType.DUPLICATE_ACTION:
+            return `Duplicated action "${event.data.request.request.stepName}" in "${event.data.flowName}" Flow.`;
+        case FlowOperationType.IMPORT_FLOW:
+            return `Imported flow in "${event.data.request.request.displayName}" Flow.`;
+        case FlowOperationType.UPDATE_TRIGGER:
+            return `Updated trigger in "${event.data.flowName}" Flow to "${event.data.request.request.displayName}".`;
+        case FlowOperationType.CHANGE_FOLDER:
+            return `Moved flow "${event.data.flowName}" to folder id ${event.data.request.request.folderId}.`;
+    }
+
+
+}

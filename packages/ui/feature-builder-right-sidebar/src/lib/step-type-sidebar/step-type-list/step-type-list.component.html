@@ -10,10 +10,19 @@
 
 
 <!-- 100vh - (height of tabs + height of sidebar title) - builder header height  -->
-<cdk-virtual-scroll-viewport maxBufferPx="400" itemSize="80"
-  class="ap-h-[calc(100vh-204px-76px)] ap-flex-grow  thin-scrollbars  ap-my-2" *ngIf="typesList.length > 0">
+<cdk-virtual-scroll-viewport *ngIf="typesList.length> 50; else nonVirtualList" maxBufferPx="400" itemSize="80"
+  class="ap-h-[calc(100vh-204px-76px)] ap-flex-grow  thin-scrollbars  ap-my-2">
   <div class="ap-my-2 ap-mx-5" *cdkVirtualFor="let flowItemDetails of typesList">
-    <app-step-type-item [flowItemDetails]="flowItemDetails" (click)="typeSelected.emit(flowItemDetails)">
+    <app-step-type-item [flowItemDetails]="flowItemDetails" (click)="typeSelected.emit({flowItemDetails})" (suggestionClicked)="typeSelected.emit({flowItemDetails,suggestion:$event})"  >
     </app-step-type-item>
   </div>
 </cdk-virtual-scroll-viewport>
+
+<ng-template #nonVirtualList>
+  <div *ngIf="typesList.length>0" class="ap-h-[calc(100vh-204px-76px)] ap-overflow-auto  ap-flex-grow  thin-scrollbars  ap-my-2">
+    <div *ngFor="let flowItemDetails of typesList" class="ap-my-2 ap-mx-5">
+      <app-step-type-item [flowItemDetails]="flowItemDetails" (click)="typeSelected.emit({flowItemDetails})" (suggestionClicked)="typeSelected.emit({flowItemDetails,suggestion:$event})"  >
+      </app-step-type-item>
+    </div>
+  </div>
+</ng-template> 
