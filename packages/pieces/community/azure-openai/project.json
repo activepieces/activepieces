@@ -1,0 +1,43 @@
+{
+  "name": "pieces-azure-openai",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/azure-openai/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/azure-openai",
+        "tsConfig": "packages/pieces/community/azure-openai/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/azure-openai/package.json",
+        "main": "packages/pieces/community/azure-openai/src/index.ts",
+        "assets": [
+          "packages/pieces/community/azure-openai/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-azure-openai {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/community/azure-openai/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
