@@ -4,5 +4,5 @@
 </ap-button>
 
 <ng-container *ngIf="updateOrAddConnectionDialogClosed$ | async "></ng-container>
-<ng-container *ngIf="managedOAuth2Check$ | async"></ng-container>
 <ng-container *ngIf="checkConnectionLimitThenOpenDialog$ | async"></ng-container>
+<ng-container *ngIf="appsAndTheirClientIds$ | async"></ng-container>
