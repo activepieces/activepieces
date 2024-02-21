@@ -10,7 +10,6 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { TriggerType, WebhookTrigger } from '@activepieces/shared';
 import {
-  MentionListItem,
   MentionTreeNode,
   traverseStepOutputAndReturnMentionTree,
 } from '../../utils';
@@ -22,6 +21,7 @@ import {
   CustomPathMentionDialogData,
 } from '../custom-path-mention-dialog/custom-path-mention-dialog.component';
 import { Step, canvasActions } from '@activepieces/ui/feature-builder-store';
+import { MentionListItem } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-webhook-trigger-mention-item',

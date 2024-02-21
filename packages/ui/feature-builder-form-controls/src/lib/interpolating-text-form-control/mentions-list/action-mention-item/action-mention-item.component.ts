@@ -11,7 +11,6 @@ import { ActionType } from '@activepieces/shared';
 import {
   CHEVRON_SPACE_IN_MENTIONS_LIST,
   FIRST_LEVEL_PADDING_IN_MENTIONS_LIST,
-  MentionListItem,
   MentionTreeNode,
   traverseStepOutputAndReturnMentionTree,
 } from '../../utils';
@@ -19,6 +18,7 @@ import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
 import { Step } from '@activepieces/ui/feature-builder-store';
 import { Store } from '@ngrx/store';
 import { canvasActions } from '@activepieces/ui/feature-builder-store';
+import { MentionListItem } from '@activepieces/ui/common';
 @Component({
   selector: 'app-action-mention-item',
   templateUrl: './action-mention-item.component.html',

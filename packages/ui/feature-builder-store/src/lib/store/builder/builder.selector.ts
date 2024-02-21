@@ -13,10 +13,9 @@ import { ViewModeEnum } from '../../model/enums/view-mode.enum';
 import { FlowItemsDetailsState } from '../../model/flow-items-details-state.model';
 import { ActionType, TriggerType } from '@activepieces/shared';
 import { Step, StepWithIndex } from '../../model/step';
-import { MentionListItem } from '../../model/mention-list-item';
 import { FlowStructureUtil } from '../../utils/flowStructureUtil';
 import { BuilderSavingStatusEnum, CanvasState } from '../../model';
-import { FlowItemDetails } from '@activepieces/ui/common';
+import { FlowItemDetails, MentionListItem } from '@activepieces/ui/common';
 import { StepRunResult } from '../../utils/stepRunResult';
 import {
   CORE_PIECES_ACTIONS_NAMES,

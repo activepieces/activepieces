@@ -12,7 +12,6 @@ import { PieceTrigger, TriggerType } from '@activepieces/shared';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import {
   FIRST_LEVEL_PADDING_IN_MENTIONS_LIST,
-  MentionListItem,
   MentionTreeNode,
   traverseStepOutputAndReturnMentionTree,
 } from '../../utils';
@@ -22,7 +21,7 @@ import {
   Step,
   canvasActions,
 } from '@activepieces/ui/feature-builder-store';
-import { FlowItemDetails } from '@activepieces/ui/common';
+import { FlowItemDetails, MentionListItem } from '@activepieces/ui/common';
 import {
   PieceMetadataService,
   CORE_SCHEDULE,
