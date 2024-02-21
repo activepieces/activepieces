@@ -58,7 +58,7 @@ class Validators {
         if (isEmpty(processedValue)) return null;
 
         const isValid = processedValue.length <= max;
-
+        
         if (!isValid) {
           return formatErrorMessage(ErrorMessages.MAX_LENGTH, {
             userInput,

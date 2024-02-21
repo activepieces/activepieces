@@ -1,9 +1,16 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddUniqueStoreConstrain1708454855876 implements MigrationInterface {
-    name = 'AddUniqueStoreConstrain1708454855876'
+export class AddUniqueStoreConstraint1708527446535 implements MigrationInterface {
+    name = 'AddUniqueStoreConstraint1708527446535'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`
+        DELETE FROM "store-entry" AS se WHERE ("se"."projectId", "se"."key", "se"."created") NOT IN (SELECT "projectId", "key", MAX("created") FROM "store-entry" GROUP BY "projectId", "key");
+    `)
+        await queryRunner.query(`
+            DELETE FROM "store-entry"
+            WHERE LENGTH("key") > 128
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
         `)
@@ -84,6 +91,40 @@ export class AddUniqueStoreConstrain1708454855876 implements MigrationInterface 
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_partial_unique_email_platform_id_is_null" ON "user" ("email")
             WHERE "platformId" IS NULL
+        `)
+        await queryRunner.query(`
+            CREATE TABLE "temporary_store-entry" (
+                "id" varchar(21) PRIMARY KEY NOT NULL,
+                "created" datetime NOT NULL DEFAULT (datetime('now')),
+                "updated" datetime NOT NULL DEFAULT (datetime('now')),
+                "key" varchar(128) NOT NULL,
+                "projectId" varchar(21) NOT NULL,
+                "value" text
+            )
+        `)
+        await queryRunner.query(`
+            INSERT INTO "temporary_store-entry"(
+                    "id",
+                    "created",
+                    "updated",
+                    "key",
+                    "projectId",
+                    "value"
+                )
+            SELECT "id",
+                "created",
+                "updated",
+                "key",
+                "projectId",
+                "value"
+            FROM "store-entry"
+        `)
+        await queryRunner.query(`
+            DROP TABLE "store-entry"
+        `)
+        await queryRunner.query(`
+            ALTER TABLE "temporary_store-entry"
+                RENAME TO "store-entry"
         `)
         await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
@@ -171,7 +212,7 @@ export class AddUniqueStoreConstrain1708454855876 implements MigrationInterface 
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
                 "updated" datetime NOT NULL DEFAULT (datetime('now')),
-                "key" varchar NOT NULL,
+                "key" varchar(128) NOT NULL,
                 "projectId" varchar(21) NOT NULL,
                 "value" text,
                 CONSTRAINT "UQ_6f251cc141de0a8d84d7a4ac17d" UNIQUE ("projectId", "key")
@@ -213,7 +254,7 @@ export class AddUniqueStoreConstrain1708454855876 implements MigrationInterface 
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
                 "updated" datetime NOT NULL DEFAULT (datetime('now')),
-                "key" varchar NOT NULL,
+                "key" varchar(128) NOT NULL,
                 "projectId" varchar(21) NOT NULL,
                 "value" text
             )
@@ -318,6 +359,40 @@ export class AddUniqueStoreConstrain1708454855876 implements MigrationInterface 
         `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "email")
+        `)
+        await queryRunner.query(`
+            ALTER TABLE "store-entry"
+                RENAME TO "temporary_store-entry"
+        `)
+        await queryRunner.query(`
+            CREATE TABLE "store-entry" (
+                "id" varchar(21) PRIMARY KEY NOT NULL,
+                "created" datetime NOT NULL DEFAULT (datetime('now')),
+                "updated" datetime NOT NULL DEFAULT (datetime('now')),
+                "key" varchar NOT NULL,
+                "projectId" varchar(21) NOT NULL,
+                "value" text
+            )
+        `)
+        await queryRunner.query(`
+            INSERT INTO "store-entry"(
+                    "id",
+                    "created",
+                    "updated",
+                    "key",
+                    "projectId",
+                    "value"
+                )
+            SELECT "id",
+                "created",
+                "updated",
+                "key",
+                "projectId",
+                "value"
+            FROM "temporary_store-entry"
+        `)
+        await queryRunner.query(`
+            DROP TABLE "temporary_store-entry"
         `)
         await queryRunner.query(`
             DROP INDEX "idx_user_partial_unique_email_platform_id_is_null"

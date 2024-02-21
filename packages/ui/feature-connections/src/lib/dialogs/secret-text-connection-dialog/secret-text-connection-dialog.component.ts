@@ -14,13 +14,12 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { catchError, Observable, of, take, tap } from 'rxjs';
 import { ConnectionValidator } from '../../validators/connectionNameValidator';
-import {
-  BuilderSelectors,
-  appConnectionsActions,
-} from '@activepieces/ui/feature-builder-store';
+
 import {
   AppConnectionsService,
   AuthenticationService,
+  appConnectionsActions,
+  appConnectionsSelectors,
 } from '@activepieces/ui/common';
 import { connectionNameRegex } from '../utils';
 
@@ -33,6 +32,7 @@ export interface SecretTextConnectionDialogData {
   connectionName?: string;
   displayName: string;
   description: string;
+  pieceDisplayName: string;
 }
 
 @Component({
@@ -73,7 +73,7 @@ export class SecretTextConnectionDialogComponent {
           asyncValidators: [
             ConnectionValidator.createValidator(
               this.store
-                .select(BuilderSelectors.selectAllAppConnections)
+                .select(appConnectionsSelectors.selectAllAppConnections)
                 .pipe(take(1)),
               undefined
             ),

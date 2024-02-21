@@ -2,6 +2,7 @@ import {
   createAction,
   Property,
   StoreScope,
+  Validators,
 } from '@activepieces/pieces-framework';
 
 export const storageRemoveValue = createAction({
@@ -20,6 +21,7 @@ export const storageRemoveValue = createAction({
     key: Property.ShortText({
       displayName: 'Key',
       required: true,
+      validators: [Validators.maxLength(128)]
     }),
     store_scope: Property.StaticDropdown({
       displayName: 'Store Scope',
@@ -46,7 +48,7 @@ export const storageRemoveValue = createAction({
       context.propsValue.store_scope
     );
     return {
-      succuss: true,
+      success: true,
     };
   },
 });

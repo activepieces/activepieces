@@ -7,7 +7,8 @@ import {
   Validators,
 } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { MentionListItem, keysWithinPath } from '../../utils';
+import { keysWithinPath } from '../../utils';
+import { MentionListItem } from '@activepieces/ui/common';
 
 export interface CustomPathMentionDialogData {
   stepDisplayName: string;

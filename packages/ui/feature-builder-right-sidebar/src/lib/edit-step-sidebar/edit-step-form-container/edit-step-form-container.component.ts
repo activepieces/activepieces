@@ -14,9 +14,10 @@ import {
   tap,
 } from 'rxjs';
 import {
+  FormControl,
+  FormGroup,
   UntypedFormBuilder,
   UntypedFormControl,
-  UntypedFormGroup,
 } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -41,6 +42,7 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import { TriggerBase, TriggerStrategy } from '@activepieces/pieces-framework';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
+import { InputFormsSchema } from '../../input-forms/input-forms-schema';
 
 @Component({
   selector: 'app-edit-step-form-container',
@@ -51,12 +53,13 @@ export class EditStepFormContainerComponent {
   readOnly$: Observable<boolean> = of(false);
   cancelAutoSaveListener$: Subject<boolean> = new Subject();
   _selectedStep: Step;
-  stepForm: UntypedFormGroup;
+  stepForm: FormGroup<{ settings: FormControl<InputFormsSchema> }>;
   webhookUrl$: Observable<string>;
   ActionType = ActionType;
   TriggerType = TriggerType;
   ApEdition = ApEdition;
   edition$: Observable<ApEdition>;
+  setInitialFormValue$: Observable<void>;
   @Input() set selectedStep(step: Step) {
     this._selectedStep = step;
     this.cancelAutoSaveListener$.next(true);
@@ -97,11 +100,20 @@ export class EditStepFormContainerComponent {
   }
 
   updateFormValue(stepSelected: Step) {
-    const settingsControl = this.stepForm.get('settings')!;
-    settingsControl.setValue({
-      ...stepSelected.settings,
-      type: stepSelected.type,
-    });
+    const settingsControl = this.stepForm.controls.settings;
+    this.setInitialFormValue$ = this.store
+      .select(BuilderSelectors.selectFlowItemDetails(stepSelected))
+      .pipe(
+        take(1),
+        tap((res) => {
+          settingsControl.setValue({
+            ...stepSelected.settings,
+            pieceDisplayName: res?.name || '',
+            type: stepSelected.type,
+          });
+        }),
+        switchMap(() => of(void 0))
+      );
   }
 
   setAutoSaveListener() {
@@ -216,7 +228,7 @@ export class EditStepFormContainerComponent {
 
   createNewStepSettings(currentStep: Step) {
     const inputControlValue: StepSettings =
-      this.stepForm.get('settings')?.value;
+      this.stepForm.controls.settings.value;
 
     switch (currentStep.type) {
       case ActionType.CODE: {
@@ -259,7 +271,7 @@ export class EditStepFormContainerComponent {
 
   createPieceSettings(step: Step) {
     const inputControlValue: StepSettings =
-      this.stepForm.get('settings')?.value;
+      this.stepForm.controls.settings.value;
     const stepSettings: PieceTriggerSettings = {
       ...step.settings,
       ...inputControlValue,

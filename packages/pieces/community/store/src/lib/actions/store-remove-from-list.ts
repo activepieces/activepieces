@@ -2,6 +2,7 @@ import {
   createAction,
   Property,
   StoreScope,
+  Validators,
 } from '@activepieces/pieces-framework';
 import deepEqual from 'deep-equal';
 
@@ -21,6 +22,7 @@ export const storageRemoveFromList = createAction({
     key: Property.ShortText({
       displayName: 'Key',
       required: true,
+      validators: [Validators.maxLength(128)]
     }),
     value: Property.ShortText({
       displayName: 'Value',

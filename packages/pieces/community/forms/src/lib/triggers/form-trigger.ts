@@ -5,9 +5,9 @@ import {
 } from '@activepieces/pieces-framework';
 
 const markdown = `
-The interface title is same as the flow's title. \n
-Interface URL: \n
-**{{interfaceUrl}}**
+The form title is same as the flow's title. \n
+Form URL: \n
+**{{formUrl}}**
 `;
 
 export const onFormSubmission = createTrigger({
@@ -32,7 +32,9 @@ export const onFormSubmission = createTrigger({
           options: {
             options: [
               { value: 'text', label: 'Text' },
+              { value: 'text_area', label: 'Text Area' },
               { value: 'file', label: 'File' },
+              { value: 'toggle', label: 'Toggle' },
             ],
           },
         }),
@@ -49,7 +51,8 @@ export const onFormSubmission = createTrigger({
     waitForResponse: Property.Checkbox({
       displayName: 'Wait for Response',
       description:
-        'If enabled, the interface will return the flow output to the frontend. Make sure to use the Return Response action to return a response.',
+        'If enabled, the form will return the flow output to the frontend. Make sure to use the Return Response action to return a response.',
+      defaultValue: true,
       required: true,
     }),
   },

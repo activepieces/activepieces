@@ -1,6 +1,6 @@
 <ap-dialog-title-template>
     <ng-container *ngIf="!dialogData.connectionToUpdate; else editConnectionHeader">
-        <span i18n>New Connection</span>
+        <span i18n>New {{dialogData.pieceDisplayName}} Connection</span>
     </ng-container>
     <ng-template #editConnectionHeader>
         <span i18n>Edit</span> {{dialogData.connectionToUpdate!.name}}
@@ -17,7 +17,8 @@
             <input [matTooltip]="keyTooltip" cdkFocusInitial [formControl]="settingsForm.controls.name" matInput
                 type="text" />
             <mat-error *ngIf="settingsForm.controls.name.invalid">
-                <ng-container *ngIf="settingsForm.controls.name.getError('required'); else patternErrorOrAlreadyUsed" i18n>
+                <ng-container *ngIf="settingsForm.controls.name.getError('required'); else patternErrorOrAlreadyUsed"
+                    i18n>
                     Name is required
                 </ng-container>
                 <ng-template #patternErrorOrAlreadyUsed>
@@ -47,7 +48,8 @@
                 {{dialogData.pieceAuthProperty.password.displayName}} <span i18n>is required</span>
             </mat-error>
         </mat-form-field>
-        <mat-error *ngIf="settingsForm.getError('message')" class="ap-text-left">{{settingsForm.getError('message')}}</mat-error>
+        <mat-error *ngIf="settingsForm.getError('message')"
+            class="ap-text-left">{{settingsForm.getError('message')}}</mat-error>
     </form>
 </mat-dialog-content>
 

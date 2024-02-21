@@ -31,7 +31,7 @@ export const createStorageService = ({ workerToken }: { workerToken: string }) =
                 body: JSON.stringify(request),
             })
             if (!response.ok) {
-                throw new Error('Failed to store entry')
+                throw new Error(JSON.stringify(await response.json()))
             }
             return (await response.json()) ?? null
         },

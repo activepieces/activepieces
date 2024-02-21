@@ -16,6 +16,7 @@ import {
     GitRepo,
     ApplicationEvent,
     ApplicationEventName,
+    Activity,
 } from '@activepieces/ee-shared'
 import {
     UserStatus,
@@ -415,6 +416,18 @@ export const createMockFlowVersion = (
         state: flowVersion?.state ?? faker.helpers.enumValue(FlowVersionState),
         updatedBy: flowVersion?.updatedBy,
         valid: flowVersion?.valid ?? faker.datatype.boolean(),
+    }
+}
+
+export const createMockActivity = (activity?: Partial<Activity>): Activity => {
+    return {
+        id: activity?.id ?? apId(),
+        created: activity?.created ?? faker.date.recent().toISOString(),
+        updated: activity?.updated ?? faker.date.recent().toISOString(),
+        projectId: activity?.projectId ?? apId(),
+        event: activity?.status ?? faker.lorem.words(),
+        message: activity?.message ?? faker.lorem.paragraph(),
+        status: activity?.status ?? faker.lorem.word(),
     }
 }
 

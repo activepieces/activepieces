@@ -101,7 +101,9 @@ import { RemoveUniqueonAppNameAppCredentials1705586178452 } from './migration/po
 import { AddTriggerTestStrategy1707087022764 } from './migration/common/1707087022764-add-trigger-test-strategy'
 import { AddCategoriesToPieceMetadataPostgres1707231704973 } from './migration/postgres/1707231704973-AddCategoriesToPieceMetadataPostgres'
 import { AddAuditEvents1707614902283 } from './migration/postgres/1707614902283-AddAuditEvents'
-import { AddUniqueStoreConstrain1708455034835 } from './migration/postgres/1708455034835-AddUniqueStoreConstrain'
+import { AddUniqueStoreConstraint1708521505204 } from './migration/postgres/1708521505204-AddUniqueStoreConstraint'
+import { CreateActivityTable1708515756040 } from './migration/postgres/1708515756040-create-activity-table'
+import { AddLengthLimitsToActivity1708529586342 } from './migration/postgres/1708529586342-add-length-limits-to-activity'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -173,7 +175,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddVerifiedAndChangeStatus1703769034497,
         AddTriggerTestStrategy1707087022764,
         AddCategoriesToPieceMetadataPostgres1707231704973,
-        AddUniqueStoreConstrain1708455034835,
+        AddUniqueStoreConstraint1708521505204,
     ]
 
     const edition = getEdition()
@@ -220,6 +222,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddGitSyncEnabledToPlatform1704636362533,
                 RemoveUniqueonAppNameAppCredentials1705586178452,
                 AddAuditEvents1707614902283,
+                CreateActivityTable1708515756040,
+                AddLengthLimitsToActivity1708529586342,
             )
             break
         case ApEdition.ENTERPRISE:
@@ -260,6 +264,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddGitRepoMigrationPostgres1704503804056,
                 AddGitSyncEnabledToPlatform1704636362533,
                 AddAuditEvents1707614902283,
+                CreateActivityTable1708515756040,
+                AddLengthLimitsToActivity1708529586342,
             )
             break
         case ApEdition.COMMUNITY:

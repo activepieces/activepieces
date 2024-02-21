@@ -8,6 +8,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import {
   ProjectEffects,
   UiCommonModule,
+  appConnectionsReducer,
   environment,
   projectReducer,
 } from '@activepieces/ui/common';
@@ -31,7 +32,7 @@ import { apMonacoTheme } from './monaco-themes/ap-monaco-theme';
 import { cobalt2 } from './monaco-themes/cobalt-2-theme';
 import { EeComponentsModule } from '@activepieces/ee-components';
 import { UiFeatureAuthenticationModule } from '@activepieces/ui/feature-authentication';
-import { InterfacesComponent } from './modules/interfaces/interfaces.component';
+import { FormsComponent } from './modules/forms/forms.component';
 import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
 
 const monacoConfig: NgxMonacoEditorConfig = {
@@ -67,7 +68,7 @@ export function playerFactory() {
     RedirectUrlComponent,
     ImportFlowComponent,
     ImportFlowUriEncodedComponent,
-    InterfacesComponent,
+    FormsComponent,
   ],
   imports: [
     CommonModule,
@@ -75,6 +76,7 @@ export function playerFactory() {
     UiFeatureAuthenticationModule,
     StoreModule.forFeature('commonState', {
       projectsState: projectReducer,
+      appConnectionsState: appConnectionsReducer,
     }),
     EffectsModule.forFeature([ProjectEffects]),
     AppRoutingModule,

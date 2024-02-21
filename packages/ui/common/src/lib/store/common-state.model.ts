@@ -1,12 +1,7 @@
-import { Platform } from '@activepieces/ee-shared';
-import { Project } from '@activepieces/shared';
+import { AppConnectionsState } from './app-connections/app-connections-state.model';
+import { ProjectsState } from './project/project-state.model';
 
 export interface CommonStateModel {
   readonly projectsState: ProjectsState;
-}
-
-export interface ProjectsState {
-  selectedIndex: number;
-  projects: Project[];
-  platform?: Platform;
+  readonly appConnectionsState: AppConnectionsState;
 }
