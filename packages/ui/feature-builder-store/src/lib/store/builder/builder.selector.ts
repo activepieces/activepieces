@@ -2,7 +2,6 @@ import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { GlobalBuilderState } from '../../model/global-builder-state.model';
 
 import {
-  AppConnectionWithoutSensitiveData,
   ExecutionOutputStatus,
   FlowRun,
   FlowVersion,
@@ -16,7 +15,6 @@ import { ActionType, TriggerType } from '@activepieces/shared';
 import { Step, StepWithIndex } from '../../model/step';
 import { MentionListItem } from '../../model/mention-list-item';
 import { FlowStructureUtil } from '../../utils/flowStructureUtil';
-import { ConnectionDropdownItem } from '../../model/connections-dropdown-item';
 import { BuilderSavingStatusEnum, CanvasState } from '../../model';
 import { FlowItemDetails } from '@activepieces/ui/common';
 import { StepRunResult } from '../../utils/stepRunResult';
@@ -400,74 +398,6 @@ export const selectFlowItemDetails = (flowItem: Step) =>
     return triggerItemDetails;
   });
 
-const selectAllAppConnections = createSelector(
-  selectGlobalBuilderState,
-  (globalState) => globalState.appConnectionsState.connections
-);
-
-export const selectConnection = (connectionName: string) =>
-  createSelector(
-    selectAllAppConnections,
-    (connections: AppConnectionWithoutSensitiveData[]) => {
-      return connections.find((c) => c.name === connectionName);
-    }
-  );
-
-const selectAppConnectionsDropdownOptions = createSelector(
-  selectAllAppConnections,
-  (connections: AppConnectionWithoutSensitiveData[]) => {
-    return [...connections].map((c) => {
-      const result: ConnectionDropdownItem = {
-        label: { pieceName: c.pieceName, name: c.name },
-        value: `{{connections['${c.name}']}}`,
-      };
-      return result;
-    });
-  }
-);
-
-const selectAppConnectionsDropdownOptionsWithIds = createSelector(
-  selectAllAppConnections,
-  (connections: AppConnectionWithoutSensitiveData[]) => {
-    return [...connections].map((c) => {
-      const result: ConnectionDropdownItem = {
-        label: { pieceName: c.pieceName, name: c.name },
-        value: c.id,
-      };
-      return result;
-    });
-  }
-);
-
-const selectAppConnectionsDropdownOptionsForAppWithIds = (appName: string) => {
-  return createSelector(
-    selectAppConnectionsDropdownOptionsWithIds,
-    (connections) => {
-      return connections
-        .filter((opt) => opt.label.pieceName === appName)
-        .map((c) => {
-          const result: ConnectionDropdownItem = {
-            label: { pieceName: c.label.pieceName, name: c.label.name },
-            value: c.value,
-          };
-          return result;
-        });
-    }
-  );
-};
-const selectAppConnectionsForMentionsDropdown = createSelector(
-  selectAllAppConnections,
-  (connections: AppConnectionWithoutSensitiveData[]) => {
-    return [...connections].map((c) => {
-      const result: MentionListItem = {
-        label: c.name,
-        value: `{{connections['${c.name}']}}`,
-      };
-      return result;
-    });
-  }
-);
-
 const selectAllStepsForMentionsDropdown = createSelector(
   selectCurrentStep,
   selectViewedVersion,
@@ -628,11 +558,8 @@ export const BuilderSelectors = {
   selectFlowItemDetailsForCoreTriggers,
   selectCurrentFlowValidity,
   selectFlowItemDetailsForCustomPiecesActions,
-  selectAppConnectionsDropdownOptions,
   selectFlowItemDetailsForCustomPiecesTriggers,
-  selectAllAppConnections,
   selectAllStepsForMentionsDropdown,
-  selectAppConnectionsForMentionsDropdown,
   selectStepLogoUrl,
   selectCurrentStepSettings,
   selectTriggerSelectedSampleData,
@@ -654,8 +581,6 @@ export const BuilderSelectors = {
   selectStepDisplayNameAndDfsIndexForIterationOutput,
   selectLastClickedAddBtnId,
   selectFlowTriggerIsTested,
-  selectAppConnectionsDropdownOptionsForAppWithIds,
-  selectAppConnectionsDropdownOptionsWithIds,
   selectStepIndex,
   selectFlowStatus,
   selectViewedVersionHistoricalStatus,

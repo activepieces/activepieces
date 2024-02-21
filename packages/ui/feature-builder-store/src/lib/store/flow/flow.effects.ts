@@ -40,6 +40,7 @@ import {
   FlowService,
   environment,
   FlowBuilderService,
+  appConnectionsActions,
 } from '@activepieces/ui/common';
 import { canvasActions } from '../builder/canvas/canvas.action';
 import { ViewModeActions } from '../builder/viewmode/view-mode.action';
@@ -48,15 +49,29 @@ import { HttpStatusCode } from '@angular/common/http';
 import { FlowStructureUtil } from '../../utils/flowStructureUtil';
 @Injectable()
 export class FlowsEffects {
-  loadInitial$ = createEffect(() => {
+  initialiseFlowState$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(BuilderActions.loadInitial),
-      switchMap(({ type, flow, run, publishedVersion }) => {
+      switchMap(({ flow, run, publishedVersion }) => {
         return of(
           FlowsActions.setInitial({
             flow: { ...flow, publishedFlowVersion: publishedVersion },
             run,
           })
+        );
+      }),
+      catchError((err) => {
+        console.error(err);
+        throw err;
+      })
+    );
+  });
+  initialiseConnectionsState$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(BuilderActions.loadInitial),
+      switchMap(({ appConnections }) => {
+        return of(
+          appConnectionsActions.loadInitial({ connections: appConnections })
         );
       }),
       catchError((err) => {

@@ -23,7 +23,11 @@ import {
 import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { map, Observable, of, shareReplay, switchMap, take, tap } from 'rxjs';
-import { FlagService, ProjectSelectors } from '@activepieces/ui/common';
+import {
+  FlagService,
+  ProjectSelectors,
+  appConnectionsSelectors,
+} from '@activepieces/ui/common';
 import { CloudAuthConfigsService } from '../services/cloud-auth-configs.service';
 import {
   CustomAuthConnectionDialogComponent,
@@ -47,7 +51,6 @@ import {
   ManagedOAuth2ConnectionDialogData,
   USE_MY_OWN_CREDENTIALS,
 } from '../dialogs/managed-oauth2-connection-dialog/managed-oauth2-connection-dialog.component';
-import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
 import {
   BillingService,
   UpgradeDialogComponent,
@@ -361,7 +364,7 @@ export class AddEditConnectionButtonComponent {
 
   private editConnection() {
     const allConnections$ = this.store.select(
-      BuilderSelectors.selectAllAppConnections
+      appConnectionsSelectors.selectAllAppConnections
     );
     const currentConnection$ = allConnections$.pipe(
       take(1),

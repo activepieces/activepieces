@@ -79,7 +79,7 @@ const selectAppConnectionsForMentionsDropdown = createSelector(
   }
 );
 
-export const connectionsSelectors = {
+export const appConnectionsSelectors = {
   selectAllAppConnections,
   selectConnection,
   selectAppConnectionsDropdownOptions,

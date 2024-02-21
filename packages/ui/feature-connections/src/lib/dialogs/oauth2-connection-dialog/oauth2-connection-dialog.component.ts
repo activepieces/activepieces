@@ -25,7 +25,9 @@ import {
 import deepEqual from 'deep-equal';
 import {
   AuthenticationService,
+  appConnectionsSelectors,
   environment,
+  appConnectionsActions,
   fadeInUp400ms,
 } from '@activepieces/ui/common';
 import {
@@ -35,10 +37,6 @@ import {
 import { CloudAuthConfigsService } from '../../services/cloud-auth-configs.service';
 import { AppConnectionsService } from '@activepieces/ui/common';
 import { ConnectionValidator } from '../../validators/connectionNameValidator';
-import {
-  BuilderSelectors,
-  appConnectionsActions,
-} from '@activepieces/ui/feature-builder-store';
 import { connectionNameRegex } from '../utils';
 
 interface OAuth2PropertySettings {
@@ -128,7 +126,7 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
           asyncValidators: [
             ConnectionValidator.createValidator(
               this.store
-                .select(BuilderSelectors.selectAllAppConnections)
+                .select(appConnectionsSelectors.selectAllAppConnections)
                 .pipe(take(1)),
               undefined
             ),
