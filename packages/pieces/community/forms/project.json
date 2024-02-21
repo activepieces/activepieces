@@ -1,7 +1,7 @@
 {
-  "name": "pieces-interfaces",
+  "name": "pieces-forms",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/pieces/community/interfaces/src",
+  "sourceRoot": "packages/pieces/community/forms/src",
   "projectType": "library",
   "targets": {
     "build": {
@@ -10,19 +10,19 @@
         "{options.outputPath}"
       ],
       "options": {
-        "outputPath": "dist/packages/pieces/community/interfaces",
-        "tsConfig": "packages/pieces/community/interfaces/tsconfig.lib.json",
-        "packageJson": "packages/pieces/community/interfaces/package.json",
-        "main": "packages/pieces/community/interfaces/src/index.ts",
+        "outputPath": "dist/packages/pieces/community/forms",
+        "tsConfig": "packages/pieces/community/forms/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/forms/package.json",
+        "main": "packages/pieces/community/forms/src/index.ts",
         "assets": [
-          "packages/pieces/community/interfaces/*.md"
+          "packages/pieces/community/forms/*.md"
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "publish": {
-      "command": "node tools/scripts/publish.mjs pieces-interfaces {args.ver} {args.tag}",
+      "command": "node tools/scripts/publish.mjs pieces-forms {args.ver} {args.tag}",
       "dependsOn": [
         "build"
       ]
@@ -34,7 +34,7 @@
       ],
       "options": {
         "lintFilePatterns": [
-          "packages/pieces/community/interfaces/**/*.ts"
+          "packages/pieces/community/forms/**/*.ts"
         ]
       }
     }
