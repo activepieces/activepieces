@@ -16,7 +16,7 @@ services:
       AP_DB_TYPE: POSTGRES
       AP_EDITION: cloud
       AP_LICENSE_KEY: 1234567890
-      AP_ENVIRONMENT: prod
+      AP_ENVIRONMENT: dev
       AP_ENCRYPTION_KEY: 7e19fad4c13eaea8f657afb12e8f9c40
       AP_EXECUTION_MODE: SANDBOXED
       AP_JWT_SECRET: super-secret

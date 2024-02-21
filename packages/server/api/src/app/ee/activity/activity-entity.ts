@@ -1,6 +1,6 @@
 import { EntitySchema } from 'typeorm'
 import { Project } from '@activepieces/shared'
-import { Activity } from '@activepieces/ee-shared'
+import { ACTIVITY_EVENT_LENGTH, ACTIVITY_MESSAGE_LENGTH, ACTIVITY_STATUS_LENGTH, Activity } from '@activepieces/ee-shared'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
 type ActivitySchema = Activity & {
@@ -18,14 +18,17 @@ export const ActivityEntity = new EntitySchema<ActivitySchema>({
         event: {
             type: String,
             nullable: false,
+            length: ACTIVITY_EVENT_LENGTH,
         },
         message: {
             type: String,
             nullable: false,
+            length: ACTIVITY_MESSAGE_LENGTH,
         },
         status: {
             type: String,
             nullable: false,
+            length: ACTIVITY_STATUS_LENGTH,
         },
     },
     indices: [
