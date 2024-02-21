@@ -17,11 +17,6 @@ export const azureOpenaiAuth = PieceAuth.CustomAuth({
         description: 'Use the Azure Portal to browse to your OpenAI resource and retrieve an API key',
         required: true,
     }),
-    deploymentId: Property.ShortText({
-        displayName: 'Deployment ID',
-        description: 'The model deployment to use',
-        required: true,
-    }),
   },
   required: true,
 });
