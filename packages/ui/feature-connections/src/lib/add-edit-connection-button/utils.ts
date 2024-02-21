@@ -28,13 +28,12 @@ export function checkIfTriggerIsAppWebhook(
   metaData: PieceMetadataModel,
   triggerName: string
 ) {
-  let isTriggerAppWebhook = false;
-  Object.keys(metaData.triggers).forEach((k) => {
-    isTriggerAppWebhook =
-      isTriggerAppWebhook ||
-      (triggerName === k && metaData.triggers[k].type === 'APP_WEBHOOK');
-  });
-  return isTriggerAppWebhook;
+  return Object.values(metaData.triggers).reduce(
+    (result, trigger) =>
+      (trigger.name === triggerName && trigger.type === 'APP_WEBHOOK') ||
+      result,
+    false
+  );
 }
 
 export function getConnectionNameFromInterpolatedString(

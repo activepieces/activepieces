@@ -5,7 +5,6 @@ import { StoreModule } from '@ngrx/store';
 import { flowsReducer } from './store/flow/flow.reducer';
 import { viewModeReducer } from './store/builder/viewmode/view-mode.reducer';
 import { flowItemsDetailsReducer } from './store/builder/flow-item-details/flow-items-details.reducer';
-import { appConnectionsReducer } from './store/app-connections/app-connections.reducer';
 import { UiCommonModule } from '@activepieces/ui/common';
 import { FlowsEffects } from './store/flow/flow.effects';
 import { ViewModeEffects } from './store/builder/viewmode/view-mode.effects';
@@ -22,7 +21,6 @@ import { CanvasEffects } from './store/builder/canvas/canvas.effects';
       flowState: flowsReducer,
       viewMode: viewModeReducer,
       flowItemsDetailsState: flowItemsDetailsReducer,
-      appConnectionsState: appConnectionsReducer,
       canvasState: canvasReducer,
     }),
     EffectsModule.forFeature([

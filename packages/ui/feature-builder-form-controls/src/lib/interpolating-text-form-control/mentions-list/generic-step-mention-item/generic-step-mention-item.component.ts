@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { MentionListItem } from '../../utils';
 import { Step } from '@activepieces/ui/feature-builder-store';
+import { MentionListItem } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-generic-step-mention-item',

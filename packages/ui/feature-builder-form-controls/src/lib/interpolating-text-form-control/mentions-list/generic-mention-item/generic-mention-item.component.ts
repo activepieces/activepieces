@@ -5,8 +5,8 @@ import {
   Input,
   Output,
 } from '@angular/core';
-import { MentionListItem } from '../../utils';
 
+import { MentionListItem } from '@activepieces/ui/common';
 @Component({
   selector: 'app-generic-mention-item',
   templateUrl: './generic-mention-item.component.html',

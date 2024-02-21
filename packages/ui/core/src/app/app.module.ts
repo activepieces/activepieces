@@ -8,6 +8,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import {
   ProjectEffects,
   UiCommonModule,
+  appConnectionsReducer,
   environment,
   projectReducer,
 } from '@activepieces/ui/common';
@@ -75,6 +76,7 @@ export function playerFactory() {
     UiFeatureAuthenticationModule,
     StoreModule.forFeature('commonState', {
       projectsState: projectReducer,
+      appConnectionsState: appConnectionsReducer,
     }),
     EffectsModule.forFeature([ProjectEffects]),
     AppRoutingModule,

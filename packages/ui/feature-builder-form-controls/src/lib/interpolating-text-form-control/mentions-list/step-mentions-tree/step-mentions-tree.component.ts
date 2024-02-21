@@ -17,10 +17,10 @@ import {
   FIRST_LEVEL_PADDING_IN_MENTIONS_LIST,
   keysWithinPath,
   MAX_ARRAY_LENGTH_BEFORE_SLICING,
-  MentionListItem,
   MentionTreeNode,
 } from '../../utils';
 import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
+import { MentionListItem } from '@activepieces/ui/common';
 
 type MentionTreeNodeWithUiInfo = MentionTreeNode & {
   level: number;

@@ -22,7 +22,6 @@ import {
   tap,
 } from 'rxjs';
 import { ActionType, TriggerType } from '@activepieces/shared';
-import { MentionListItem } from '../utils';
 import { MentionsTreeCacheService } from './mentions-tree-cache.service';
 import {
   BuilderSelectors,
@@ -31,6 +30,7 @@ import {
 import {
   BuilderAutocompleteMentionsDropdownService,
   InsertMentionOperation,
+  MentionListItem,
 } from '@activepieces/ui/common';
 
 @Component({

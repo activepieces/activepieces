@@ -1,6 +1,6 @@
 import { Action, createReducer, on } from '@ngrx/store';
-import { ProjectsState } from '../common-state.model';
 import { ProjectActions } from './project.action';
+import { ProjectsState } from './project-state.model';
 
 const initialState: ProjectsState = {
   selectedIndex: 0,

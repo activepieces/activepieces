@@ -32,7 +32,6 @@ import {
   fromOpsToText,
   fromTextToOps,
   keysWithinPath,
-  MentionListItem,
   QuillEditorOperationsObject,
   QuillMaterialBase,
   TextInsertOperation,
@@ -44,7 +43,10 @@ import {
   BuilderSelectors,
   StepWithIndex,
 } from '@activepieces/ui/feature-builder-store';
-import { InsertMentionOperation } from '@activepieces/ui/common';
+import {
+  InsertMentionOperation,
+  MentionListItem,
+} from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-interpolating-text-form-control',
