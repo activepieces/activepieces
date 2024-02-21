@@ -21,6 +21,7 @@ import { FlowVersion, FlowVersionState } from './flow-version'
 import { ActivepiecesError, ErrorCode } from '../common/activepieces-error'
 import semver from 'semver'
 import { applyFunctionToValuesSync, isString } from '../common'
+import { FlowBuilder } from './flow-builder/flow-builder'
 
 type Step = Action | Trigger
 
@@ -919,15 +920,16 @@ export const flowHelper = {
         operation: FlowOperationRequest,
     ): FlowVersion {
         let clonedVersion: FlowVersion = JSON.parse(JSON.stringify(flowVersion))
+        const flowBuilder = new FlowBuilder(clonedVersion)
         switch (operation.type) {
             case FlowOperationType.MOVE_ACTION:
                 clonedVersion = moveAction(clonedVersion, operation.request)
                 break
             case FlowOperationType.LOCK_FLOW:
-                clonedVersion.state = FlowVersionState.LOCKED
+                clonedVersion = flowBuilder.lockFlow().build()
                 break
             case FlowOperationType.CHANGE_NAME:
-                clonedVersion.displayName = operation.request.displayName
+                clonedVersion = flowBuilder.changeName(operation.request.displayName).build()
                 break
             case FlowOperationType.DELETE_ACTION:
                 clonedVersion = deleteAction(clonedVersion, operation.request)
