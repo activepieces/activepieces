@@ -36,12 +36,13 @@ describe('piece with error handling', () => {
                 name: 'send_http',
                 pieceName: '@activepieces/piece-http',
                 actionName: 'send_request',
-                input: {
-                    'url': 'https://cloud.activepieces.com/api/v1/asd',
-                    'method': 'GET',
+                input: { 
+                    'method': 'POST',
+                    'url': 'https://cloud.activepieces.com/api/v1/flags',
                     'headers': {},
-                    'failsafe': false,
                     'queryParams': {},
+                    'body_type': 'none', 
+                    'body': {}, 
                 },
                 errorHandlingOptions: {
                     continueOnFailure: {

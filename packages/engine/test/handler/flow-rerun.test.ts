@@ -10,7 +10,8 @@ const failedHttpAction = buildPieceAction({
         'url': 'https://cloud.activepieces.com/api/v1/asd',
         'method': 'GET',
         'headers': {},
-        'failsafe': false,
+        'body_type': 'none', 
+        'body': {}, 
         'queryParams': {},
     },
 })
@@ -23,10 +24,12 @@ const successHttpAction =  buildPieceAction({
         'url': 'https://cloud.activepieces.com/api/v1/pieces',
         'method': 'GET',
         'headers': {},
-        'failsafe': false,
+        'body_type': 'none', 
+        'body': {}, 
         'queryParams': {},
     },
 })
+
 
 describe('flow retry', () => {
     const context = FlowExecutorContext.empty()
