@@ -18,10 +18,12 @@ import { ConnectionValidator } from '../../validators/connectionNameValidator';
 import {
   AppConnectionsService,
   AuthenticationService,
-  appConnectionsActions,
-  appConnectionsSelectors,
 } from '@activepieces/ui/common';
 import { connectionNameRegex } from '../utils';
+import {
+  appConnectionsActions,
+  appConnectionsSelectors,
+} from '@activepieces/common-store';
 
 interface SecretTextForm {
   secretText: FormControl<string>;

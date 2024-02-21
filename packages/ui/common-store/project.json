@@ -1,0 +1,37 @@
+{
+  "name": "common-store",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/ui/common-store/src",
+  "prefix": "lib",
+  "tags": [],
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/angular:ng-packagr-lite",
+      "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+      "options": {
+        "project": "packages/ui/common-store/ng-package.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "packages/ui/common-store/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "packages/ui/common-store/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": [
+          "packages/ui/common-store/**/*.ts",
+          "packages/ui/common-store/**/*.html",
+          "packages/ui/common-store/package.json"
+        ]
+      }
+    }
+  }
+}

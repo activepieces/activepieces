@@ -19,10 +19,12 @@ import { BasicAuthProperty } from '@activepieces/pieces-framework';
 import {
   AppConnectionsService,
   AuthenticationService,
-  appConnectionsSelectors,
-  appConnectionsActions,
 } from '@activepieces/ui/common';
 import { connectionNameRegex } from '../utils';
+import {
+  appConnectionsActions,
+  appConnectionsSelectors,
+} from '@activepieces/common-store';
 
 interface BasicAuthForm {
   name: FormControl<string>;

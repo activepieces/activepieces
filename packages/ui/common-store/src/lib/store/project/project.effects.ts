@@ -6,8 +6,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { Store } from '@ngrx/store';
 import { ProjectActions } from './project.action';
 import { ProjectSelectors } from './project.selector';
-import { PlatformProjectService } from '../../service/platform-project.service';
-
+import { PlatformProjectService } from '@activepieces/ui/common'
 @Injectable()
 export class ProjectEffects {
   constructor(

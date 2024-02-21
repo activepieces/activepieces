@@ -21,7 +21,6 @@ import { DomSanitizer } from '@angular/platform-browser';
 
 import {
   FlagService,
-  CommonActions,
   AppearanceService,
   environment,
   PlatformService,
@@ -38,6 +37,7 @@ import {
 import { MatDialog } from '@angular/material/dialog';
 import { Platform } from '@activepieces/ee-shared';
 import { UserWithoutPassword } from '@activepieces/shared';
+import { CommonActions } from '@activepieces/common-store';
 
 interface UpgradeNotificationMetaDataInLocalStorage {
   latestVersion: string;

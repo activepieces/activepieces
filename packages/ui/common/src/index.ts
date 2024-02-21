@@ -1,4 +1,3 @@
-export * from './lib/store';
 export * from './lib/ui-common.module';
 export * from './lib/animation/fade-in-up.animation';
 export * from './lib/animation/fade-in.animations';
@@ -26,4 +25,4 @@ import '@angular/localize/init';
 export * from './lib/pipe/comma-seperated.pipe';
 export * from './lib/utils/consts';
 export * from './lib/components/is-feature-enabled-base/is-feature-enabled-base.component';
-export * from './lib/models/mention-list-item';
+export { MentionListItem } from '@activepieces/shared';

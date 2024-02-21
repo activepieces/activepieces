@@ -14,7 +14,6 @@ import { ExecutionOutputStatus, FlowRun } from '@activepieces/shared';
 import {
   InstanceRunService,
   ApPaginatorComponent,
-  ProjectSelectors,
   DEFAULT_PAGE_SIZE,
   LIMIT_QUERY_PARAM,
   CURSOR_QUERY_PARAM,
@@ -25,6 +24,7 @@ import {
 } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 import { Params } from '@angular/router';
+import { ProjectSelectors } from '@activepieces/common-store';
 const REFRESH_TABLE_DELAY = 10000;
 /**
  * Data source for the LogsTable view. This class should

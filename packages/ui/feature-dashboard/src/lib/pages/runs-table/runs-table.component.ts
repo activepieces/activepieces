@@ -32,8 +32,6 @@ import {
   InstanceRunService,
   ApPaginatorComponent,
   FlagService,
-  ProjectSelectors,
-  ProjectActions,
   NavigationService,
   AuthenticationService,
   FlowService,
@@ -46,6 +44,7 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { RunsService } from '../../services/runs.service';
 import { DropdownOption } from '@activepieces/pieces-framework';
+import { ProjectActions, ProjectSelectors } from '@activepieces/common-store';
 const allOptionValue = 'all';
 @Component({
   templateUrl: './runs-table.component.html',

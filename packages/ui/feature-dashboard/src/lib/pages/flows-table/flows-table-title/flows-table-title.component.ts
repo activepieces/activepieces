@@ -10,10 +10,10 @@ import {
   flowActionsUiInfo,
   ImportFlowDialogComponent,
   ImporFlowDialogData,
-  ProjectSelectors,
 } from '@activepieces/ui/common';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
+import { ProjectSelectors } from '@activepieces/common-store';
 
 @Component({
   selector: 'app-flows-table-title',

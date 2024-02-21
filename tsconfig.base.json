@@ -17,6 +17,7 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@activepieces/common-store": ["packages/ui/common-store/src/index.ts"],
       "@activepieces/ee-auth": ["packages/ee/auth/src/index.ts"],
       "@activepieces/ee-billing-ui": ["packages/ee/billing/ui/src/index.ts"],
       "@activepieces/ee-components": ["packages/ee/components/src/index.ts"],

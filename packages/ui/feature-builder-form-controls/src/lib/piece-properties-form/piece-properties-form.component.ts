@@ -49,7 +49,6 @@ import {
   fadeInUp400ms,
   InsertMentionOperation,
   FlagService,
-  appConnectionsSelectors,
 } from '@activepieces/ui/common';
 import {
   BuilderSelectors,
@@ -63,6 +62,7 @@ import { AddEditConnectionButtonComponent } from '@activepieces/ui/feature-conne
 import { PackageType, PieceType } from '@activepieces/shared';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 import { createConfigsFormControls } from '../shared';
+import { appConnectionsSelectors } from '@activepieces/common-store';
 
 type ConfigKey = string;
 

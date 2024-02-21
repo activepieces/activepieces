@@ -22,8 +22,6 @@ import {
   AppConnectionsService,
   AuthenticationService,
   FlagService,
-  appConnectionsSelectors,
-  appConnectionsActions,
   fadeInUp400ms,
 } from '@activepieces/ui/common';
 import { ConnectionValidator } from '../../validators/connectionNameValidator';
@@ -38,6 +36,10 @@ import {
   StaticDropdownProperty,
 } from '@activepieces/pieces-framework';
 import { connectionNameRegex } from '../utils';
+import {
+  appConnectionsActions,
+  appConnectionsSelectors,
+} from '@activepieces/common-store';
 
 interface AuthConfigSettings {
   name: FormControl<string>;

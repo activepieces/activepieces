@@ -5,13 +5,7 @@ import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpClientModule } from '@angular/common/http';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import {
-  ProjectEffects,
-  UiCommonModule,
-  appConnectionsReducer,
-  environment,
-  projectReducer,
-} from '@activepieces/ui/common';
+import { UiCommonModule, environment } from '@activepieces/ui/common';
 import { JwtModule } from '@auth0/angular-jwt';
 import { NotFoundComponent } from './modules/not-found/not-found.component';
 import { RedirectUrlComponent } from './modules/redirect-url/redirect-url.component';
@@ -34,6 +28,7 @@ import { EeComponentsModule } from '@activepieces/ee-components';
 import { UiFeatureAuthenticationModule } from '@activepieces/ui/feature-authentication';
 import { InterfacesComponent } from './modules/interfaces/interfaces.component';
 import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
+import { CommonStoreModule } from '@activepieces/common-store';
 
 const monacoConfig: NgxMonacoEditorConfig = {
   baseUrl: '/assets', // configure base path for monaco editor. Starting with version 8.0.0 it defaults to './assets'. Previous releases default to '/assets'
@@ -74,11 +69,6 @@ export function playerFactory() {
     CommonModule,
     BrowserModule,
     UiFeatureAuthenticationModule,
-    StoreModule.forFeature('commonState', {
-      projectsState: projectReducer,
-      appConnectionsState: appConnectionsReducer,
-    }),
-    EffectsModule.forFeature([ProjectEffects]),
     AppRoutingModule,
     BrowserAnimationsModule,
     StoreModule.forRoot({}),
@@ -103,6 +93,7 @@ export function playerFactory() {
     LottieCacheModule.forRoot(),
     EeComponentsModule,
     MonacoEditorModule.forRoot(monacoConfig),
+    CommonStoreModule,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   exports: [],

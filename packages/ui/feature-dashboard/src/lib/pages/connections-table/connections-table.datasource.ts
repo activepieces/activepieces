@@ -15,7 +15,6 @@ import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 import {
   AppConnectionsService,
   ApPaginatorComponent,
-  ProjectSelectors,
   DEFAULT_PAGE_SIZE,
   LIMIT_QUERY_PARAM,
   CURSOR_QUERY_PARAM,
@@ -24,6 +23,7 @@ import {
 import { Store } from '@ngrx/store';
 import { Params } from '@angular/router';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
+import { ProjectSelectors } from '@activepieces/common-store';
 
 /**
  * Data source for the LogsTable view. This class should

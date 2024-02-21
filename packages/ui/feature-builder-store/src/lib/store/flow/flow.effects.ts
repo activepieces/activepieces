@@ -40,13 +40,13 @@ import {
   FlowService,
   environment,
   FlowBuilderService,
-  appConnectionsActions,
 } from '@activepieces/ui/common';
 import { canvasActions } from '../builder/canvas/canvas.action';
 import { ViewModeActions } from '../builder/viewmode/view-mode.action';
 import { ViewModeEnum } from '../../model';
 import { HttpStatusCode } from '@angular/common/http';
 import { FlowStructureUtil } from '../../utils/flowStructureUtil';
+import { appConnectionsActions } from '@activepieces/common-store';
 @Injectable()
 export class FlowsEffects {
   initialiseFlowState$ = createEffect(() => {

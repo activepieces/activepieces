@@ -6,12 +6,12 @@ import {
   RedirectService,
 } from '../service';
 import { Store } from '@ngrx/store';
-import { ProjectActions, ProjectSelectors } from '../store';
 import { Observable, catchError, map, of, switchMap, tap } from 'rxjs';
 import { ProjectService } from '../service/project.service';
 import { StatusCodes } from 'http-status-codes';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Project } from '@activepieces/shared';
+import { ProjectActions, ProjectSelectors } from '@activepieces/common-store';
 
 @Injectable({
   providedIn: 'root',

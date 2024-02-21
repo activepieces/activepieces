@@ -23,11 +23,7 @@ import {
 import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { map, Observable, of, shareReplay, switchMap, take, tap } from 'rxjs';
-import {
-  FlagService,
-  ProjectSelectors,
-  appConnectionsSelectors,
-} from '@activepieces/ui/common';
+import { FlagService } from '@activepieces/ui/common';
 import { CloudAuthConfigsService } from '../services/cloud-auth-configs.service';
 import {
   CustomAuthConnectionDialogComponent,
@@ -63,6 +59,10 @@ import {
 } from './utils';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 import { OAuth2Property } from '@activepieces/pieces-framework';
+import {
+  ProjectSelectors,
+  appConnectionsSelectors,
+} from '@activepieces/common-store';
 
 @Component({
   selector: 'app-add-edit-connection-button',

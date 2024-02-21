@@ -4,7 +4,7 @@ import { CommonStateModel } from '../common-state.model';
 import { AppConnectionsState } from './app-connections-state.model';
 import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 import { ConnectionDropdownItem } from './connections-dropdown-item';
-import { MentionListItem } from '../../models/mention-list-item';
+import { MentionListItem } from './mention-list-item';
 
 const selectConnectionsState = createSelector(
   selectCommonState,

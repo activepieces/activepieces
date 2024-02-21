@@ -8,9 +8,11 @@ import {
 import { Observable, map, of, shareReplay, switchMap, take, tap } from 'rxjs';
 import { GitRepo, PushSyncMode } from '@activepieces/ee-shared';
 import { Store } from '@ngrx/store';
-import { FlagService, ProjectSelectors, flowActionsUiInfo } from '@activepieces/ui/common';
+import { FlagService,  flowActionsUiInfo } from '@activepieces/ui/common';
 import { SyncProjectService } from '../../services/sync-project.service';
 import { ConfigureRepoDialogComponent } from '../dialogs/configure-repo-dialog/configure-repo-dialog.component';
+import { ProjectSelectors } from '@activepieces/common-store';
+
 
 @Component({
   selector: 'app-push-flow-to-git-button',

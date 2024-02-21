@@ -9,7 +9,6 @@ import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   FlagService,
-  ProjectSelectors,
   TelemetryService,
   TemplatesService,
 } from '@activepieces/ui/common';
@@ -35,6 +34,7 @@ import {
   TemplateType,
 } from '@activepieces/shared';
 import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
+import { ProjectSelectors } from '@activepieces/common-store';
 
 @Component({
   selector: 'ap-share-flow-template-dialog',

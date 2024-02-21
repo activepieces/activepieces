@@ -2,8 +2,8 @@ import { map, Observable, switchMap, take } from 'rxjs';
 import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 import { Store } from '@ngrx/store';
 import { AppConnectionsService } from '../service/app-connections.service';
-import { ProjectSelectors } from '../store/project/project.selector';
 import { AuthenticationService } from '../service';
+import { ProjectSelectors } from '@activepieces/common-store';
 
 export const connections$ = (
   store: Store,

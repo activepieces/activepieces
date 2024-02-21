@@ -25,9 +25,7 @@ import {
 import deepEqual from 'deep-equal';
 import {
   AuthenticationService,
-  appConnectionsSelectors,
   environment,
-  appConnectionsActions,
   fadeInUp400ms,
 } from '@activepieces/ui/common';
 import {
@@ -38,6 +36,10 @@ import { CloudAuthConfigsService } from '../../services/cloud-auth-configs.servi
 import { AppConnectionsService } from '@activepieces/ui/common';
 import { ConnectionValidator } from '../../validators/connectionNameValidator';
 import { connectionNameRegex } from '../utils';
+import {
+  appConnectionsActions,
+  appConnectionsSelectors,
+} from '@activepieces/common-store';
 
 interface OAuth2PropertySettings {
   redirect_url: FormControl<string>;

@@ -4,10 +4,7 @@ import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { GitRepo, PushSyncMode } from '@activepieces/ee-shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import {
-  GenericSnackbarTemplateComponent,
-  ProjectSelectors,
-} from '@activepieces/ui/common';
+import { GenericSnackbarTemplateComponent } from '@activepieces/ui/common';
 import { RepoResolverData } from '../../resolvers/repo.resolver';
 import { Store } from '@ngrx/store';
 import { Project } from '@activepieces/shared';
@@ -19,6 +16,7 @@ import {
   PushToGitDialogData,
   SyncProjectService,
 } from '@activepieces/ui-feature-git-sync';
+import { ProjectSelectors } from '@activepieces/common-store';
 
 @Component({
   selector: 'app-sync-project',

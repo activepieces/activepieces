@@ -6,7 +6,7 @@ import {
   LeftSideBarType,
 } from '@activepieces/ui/feature-builder-store';
 import { PopulatedFlow, Project } from '@activepieces/shared';
-import { ProjectSelectors } from '@activepieces/ui/common';
+import { ProjectSelectors } from '@activepieces/common-store';
 
 @Component({
   selector: 'app-flow-left-sidebar',

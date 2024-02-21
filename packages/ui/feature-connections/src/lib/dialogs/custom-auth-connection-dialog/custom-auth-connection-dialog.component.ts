@@ -23,11 +23,13 @@ import deepEqual from 'deep-equal';
 import {
   AppConnectionsService,
   AuthenticationService,
-  appConnectionsActions,
-  appConnectionsSelectors,
 } from '@activepieces/ui/common';
 import { ConnectionValidator } from '../../validators/connectionNameValidator';
 import { connectionNameRegex } from '../utils';
+import {
+  appConnectionsActions,
+  appConnectionsSelectors,
+} from '@activepieces/common-store';
 
 export interface CustomAuthDialogData {
   pieceAuthProperty: CustomAuthProperty<CustomAuthProps>;

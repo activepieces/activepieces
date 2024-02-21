@@ -12,12 +12,12 @@ import { Store } from '@ngrx/store';
 import {
   AuthenticationService,
   PlatformProjectService,
-  ProjectActions,
   featureDisabledTooltip,
 } from '@activepieces/ui/common';
 import { ActivatedRoute } from '@angular/router';
 import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
 import { ProjectWithUsageAndPlanResponse } from '@activepieces/ee-shared';
+import { ProjectActions } from '@activepieces/common-store';
 
 @Component({
   selector: 'app-projects-table',
