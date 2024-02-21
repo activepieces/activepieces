@@ -17,18 +17,15 @@
             </div>
 
             <div class="ap-flex-grow"></div>
-            <div *ngIf="opt.label.isWebhook"
-                 matTooltip="Instantly triggered once change occurs"
-                 i18n-matTooltip
-                 class="ap-rounded-full ap-drop-shadow-md ap-min-h-[30px] ap-min-w-[30px] ap-flex ap-items-center ap-justify-center">
+            <div *ngIf="opt.label.isWebhook" matTooltip="Instantly triggered once change occurs" i18n-matTooltip
+              class="ap-rounded-full ap-drop-shadow-md ap-min-h-[30px] ap-min-w-[30px] ap-flex ap-items-center ap-justify-center">
               <svg-icon src="assets/img/custom/triggers/instant.svg" class="ap-w-[25px] ap-h-[25px] ap-fill-body"
                 [applyClass]="true">
               </svg-icon>
             </div>
             <div *ngIf="!opt.label.isWebhook && pieceName !== CORE_SCHEDULE"
-                matTooltip="Checks for changes periodically, based on your plan"
-                i18n-matTooltip
-                class="ap-rounded-full  ap-drop-shadow-md ap-min-h-[30px] ap-justify-center ap-min-w-[30px] ap-flex ap-items-center">
+              matTooltip="Checks for changes periodically, based on your plan" i18n-matTooltip
+              class="ap-rounded-full  ap-drop-shadow-md ap-min-h-[30px] ap-justify-center ap-min-w-[30px] ap-flex ap-items-center">
               <svg-icon src="assets/img/custom/triggers/periodic.svg" class="ap-w-[25px] ap-h-[25px] ap-fill-body"
                 [applyClass]="true">
               </svg-icon>
@@ -37,7 +34,8 @@
           </div>
         </mat-option>
         <mat-option [disabled]="true"
-          *ngIf=" ( triggers$ | async) === undefined ||  (triggers$ | async) === null ||   (triggers$ | async)?.length === 0" i18n>
+          *ngIf=" ( triggers$ | async) === undefined ||  (triggers$ | async) === null ||   (triggers$ | async)?.length === 0"
+          i18n>
           No options available
         </mat-option>
       </mat-select>
@@ -51,11 +49,8 @@
 
         <app-piece-properties-form
           [actionOrTriggerName]="pieceTriggerInputForm.get(TRIGGER_FORM_CONTROL_NAME)!.value?.triggerName"
-          [isTriggerPieceForm]="true"
-          [packageType]="packageType"
-          [pieceType]="pieceType"
-          [pieceName]="pieceName"
-          [pieceVersion]="pieceVersion"
+          [isTriggerPieceForm]="true" [packageType]="packageType" [pieceType]="pieceType" [pieceName]="pieceName"
+          [pieceVersion]="pieceVersion" [pieceDisplayName]="pieceDisplayName"
           [formControlName]="CONFIGS_FORM_CONTROL_NAME">
         </app-piece-properties-form>
       </div>

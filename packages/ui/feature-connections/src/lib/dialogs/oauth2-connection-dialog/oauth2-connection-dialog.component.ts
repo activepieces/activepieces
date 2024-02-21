@@ -53,6 +53,7 @@ export interface OAuth2ConnectionDialogData {
   pieceName: string;
   connectionToUpdate?: AppConnectionWithoutSensitiveData;
   redirectUrl: string;
+  pieceDisplayName: string;
 }
 
 @Component({

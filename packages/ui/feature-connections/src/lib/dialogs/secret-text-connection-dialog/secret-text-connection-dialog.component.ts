@@ -32,6 +32,7 @@ export interface SecretTextConnectionDialogData {
   connectionName?: string;
   displayName: string;
   description: string;
+  pieceDisplayName: string;
 }
 
 @Component({

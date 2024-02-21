@@ -115,6 +115,7 @@ export class PieceActionInputFormComponent
   pieceType: PieceType;
   pieceName: string;
   pieceVersion: string;
+  pieceDisplayName: string;
   initialComponentInputFormValue: PieceActionInputFormSchema | null;
   selectedAction$: Observable<ActionDropdownOption | undefined>;
   actions$: Observable<ActionDropdownOption[]>;
@@ -303,7 +304,7 @@ export class PieceActionInputFormComponent
     this.pieceType = obj.pieceType;
     this.pieceName = obj.pieceName;
     this.pieceVersion = obj.pieceVersion;
-
+    this.pieceDisplayName = obj.pieceDisplayName;
     this.pieceActionForm
       .get(ACTION_FORM_CONTROL_NAME)
       ?.setValue(undefined, { emitEvent: false });
