@@ -31,10 +31,9 @@ describe('Activity API', () => {
             const mockProject = createMockProject({ ownerId: mockUser.id, platformId: mockPlatform.id })
             await databaseConnection.getRepository('project').save(mockProject)
 
-            const mockActivity1 = createMockActivity({ projectId: mockProject.id })
-            const mockActivity2 = createMockActivity({ projectId: mockProject.id })
-            await databaseConnection.getRepository('activity').save(mockActivity1)
-            await databaseConnection.getRepository('activity').save(mockActivity2)
+            const mockActivity1 = createMockActivity({ projectId: mockProject.id, created: '1999-01-01T00:00:00.000Z' })
+            const mockActivity2 = createMockActivity({ projectId: mockProject.id, created: '2111-01-01T00:00:00.000Z' })
+            await databaseConnection.getRepository('activity').save([mockActivity1, mockActivity2])
 
             const mockToken = await generateMockToken({
                 id: mockUser.id,
@@ -59,9 +58,9 @@ describe('Activity API', () => {
 
             const responseBody = response?.json()
 
-            expect(responseBody?.length).toBe(2)
-            expect(responseBody?.[0]?.id).toBe(mockActivity2.id)
-            expect(responseBody?.[1]?.id).toBe(mockActivity1.id)
+            expect(responseBody?.data.length).toBe(2)
+            expect(responseBody?.data?.[0]?.id).toBe(mockActivity2.id)
+            expect(responseBody?.data?.[1]?.id).toBe(mockActivity1.id)
         })
 
         it('Filters by projectId', async () => {
@@ -103,8 +102,8 @@ describe('Activity API', () => {
 
             const responseBody = response?.json()
 
-            expect(responseBody?.length).toBe(1)
-            expect(responseBody?.[0]?.id).toBe(mockActivity1.id)
+            expect(responseBody?.data?.length).toBe(1)
+            expect(responseBody?.data?.[0]?.id).toBe(mockActivity1.id)
         })
 
         it('Forbids access to projects other than principal\'s', async () => {

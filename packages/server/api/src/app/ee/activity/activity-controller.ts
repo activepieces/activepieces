@@ -6,6 +6,8 @@ export const activityController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListActivitiesRequest, async (req) => {
         return activityService.list({
             projectId: req.query.projectId,
+            cursor: req.query.cursor ?? null,
+            limit: req.query.limit ?? 10,
         })
     })
 }
@@ -19,6 +21,8 @@ const ListActivitiesRequest = {
     schema: {
         querystring: Type.Object({
             projectId: ApId,
+            cursor: Type.Optional(Type.String()),
+            limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 100 })),
         }),
     },
 }
