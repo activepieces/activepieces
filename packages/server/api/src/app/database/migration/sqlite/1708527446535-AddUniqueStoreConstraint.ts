@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddUniqueStoreConstraint1708527446535 implements MigrationInterface {
     name = 'AddUniqueStoreConstraint1708527446535'
@@ -13,13 +13,13 @@ export class AddUniqueStoreConstraint1708527446535 implements MigrationInterface
         `)
         await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_external_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_user_partial_unique_email_platform_id_is_null"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_user" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -39,7 +39,7 @@ export class AddUniqueStoreConstraint1708527446535 implements MigrationInterface
                 "verified" boolean NOT NULL,
                 CONSTRAINT "UQ_e12875dfb3b1d92d7d7c5377e22" UNIQUE ("email")
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_user"(
                     "id",
@@ -74,24 +74,24 @@ export class AddUniqueStoreConstraint1708527446535 implements MigrationInterface
                 "platformId",
                 "verified"
             FROM "user"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "user"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_user"
                 RENAME TO "user"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "email")
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_external_id" ON "user" ("platformId", "externalId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_partial_unique_email_platform_id_is_null" ON "user" ("email")
             WHERE "platformId" IS NULL
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_store-entry" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -101,7 +101,7 @@ export class AddUniqueStoreConstraint1708527446535 implements MigrationInterface
                 "projectId" varchar(21) NOT NULL,
                 "value" text
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_store-entry"(
                     "id",
@@ -118,23 +118,23 @@ export class AddUniqueStoreConstraint1708527446535 implements MigrationInterface
                 "projectId",
                 "value"
             FROM "store-entry"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "store-entry"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_store-entry"
                 RENAME TO "store-entry"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_external_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_user_partial_unique_email_platform_id_is_null"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_user" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -154,7 +154,7 @@ export class AddUniqueStoreConstraint1708527446535 implements MigrationInterface
                 "verified" boolean NOT NULL,
                 CONSTRAINT "UQ_e12875dfb3b1d92d7d7c5377e22" UNIQUE ("email")
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_user"(
                     "id",
@@ -189,24 +189,24 @@ export class AddUniqueStoreConstraint1708527446535 implements MigrationInterface
                 "platformId",
                 "verified"
             FROM "user"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "user"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_user"
                 RENAME TO "user"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_external_id" ON "user" ("platformId", "externalId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_partial_unique_email_platform_id_is_null" ON "user" ("email")
             WHERE "platformId" IS NULL
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "email")
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_store-entry" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -217,7 +217,7 @@ export class AddUniqueStoreConstraint1708527446535 implements MigrationInterface
                 "value" text,
                 CONSTRAINT "UQ_6f251cc141de0a8d84d7a4ac17d" UNIQUE ("projectId", "key")
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_store-entry"(
                     "id",
@@ -234,21 +234,21 @@ export class AddUniqueStoreConstraint1708527446535 implements MigrationInterface
                 "projectId",
                 "value"
             FROM "store-entry"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "store-entry"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_store-entry"
                 RENAME TO "store-entry"
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "store-entry"
                 RENAME TO "temporary_store-entry"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "store-entry" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -258,7 +258,7 @@ export class AddUniqueStoreConstraint1708527446535 implements MigrationInterface
                 "projectId" varchar(21) NOT NULL,
                 "value" text
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "store-entry"(
                     "id",
@@ -275,23 +275,23 @@ export class AddUniqueStoreConstraint1708527446535 implements MigrationInterface
                 "projectId",
                 "value"
             FROM "temporary_store-entry"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_store-entry"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_user_partial_unique_email_platform_id_is_null"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_external_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "user"
                 RENAME TO "temporary_user"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "user" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -311,7 +311,7 @@ export class AddUniqueStoreConstraint1708527446535 implements MigrationInterface
                 "verified" boolean NOT NULL,
                 CONSTRAINT "UQ_e12875dfb3b1d92d7d7c5377e22" UNIQUE ("email")
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "user"(
                     "id",
@@ -346,24 +346,24 @@ export class AddUniqueStoreConstraint1708527446535 implements MigrationInterface
                 "platformId",
                 "verified"
             FROM "temporary_user"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_user"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_partial_unique_email_platform_id_is_null" ON "user" ("email")
             WHERE "platformId" IS NULL
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_external_id" ON "user" ("platformId", "externalId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "email")
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "store-entry"
                 RENAME TO "temporary_store-entry"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "store-entry" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -373,7 +373,7 @@ export class AddUniqueStoreConstraint1708527446535 implements MigrationInterface
                 "projectId" varchar(21) NOT NULL,
                 "value" text
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "store-entry"(
                     "id",
@@ -390,23 +390,23 @@ export class AddUniqueStoreConstraint1708527446535 implements MigrationInterface
                 "projectId",
                 "value"
             FROM "temporary_store-entry"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_store-entry"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_user_partial_unique_email_platform_id_is_null"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_external_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "user"
                 RENAME TO "temporary_user"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "user" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -426,7 +426,7 @@ export class AddUniqueStoreConstraint1708527446535 implements MigrationInterface
                 "verified" boolean NOT NULL,
                 CONSTRAINT "UQ_e12875dfb3b1d92d7d7c5377e22" UNIQUE ("email")
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "user"(
                     "id",
@@ -461,20 +461,20 @@ export class AddUniqueStoreConstraint1708527446535 implements MigrationInterface
                 "platformId",
                 "verified"
             FROM "temporary_user"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_user"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_partial_unique_email_platform_id_is_null" ON "user" ("email")
             WHERE "platformId" IS NULL
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_external_id" ON "user" ("platformId", "externalId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "email")
-        `);
+        `)
     }
 
 }

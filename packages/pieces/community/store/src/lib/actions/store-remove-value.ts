@@ -48,7 +48,7 @@ export const storageRemoveValue = createAction({
       context.propsValue.store_scope
     );
     return {
-      succuss: true,
+      success: true,
     };
   },
 });

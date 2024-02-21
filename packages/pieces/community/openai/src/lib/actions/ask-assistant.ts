@@ -2,6 +2,7 @@ import {
   createAction,
   Property,
   StoreScope,
+  Validators,
 } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
 import { openaiAuth } from '../..';

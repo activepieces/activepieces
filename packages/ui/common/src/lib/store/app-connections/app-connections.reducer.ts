@@ -1,7 +1,7 @@
 import { Action, createReducer, on } from '@ngrx/store';
-import { BuilderActions } from '../builder/builder.action';
-import { AppConnectionsState } from '../../model/app-connections-state';
+
 import { appConnectionsActions } from './app-connections.action';
+import { AppConnectionsState } from './app-connections-state.model';
 
 const initialState: AppConnectionsState = {
   loaded: false,
@@ -9,15 +9,6 @@ const initialState: AppConnectionsState = {
 };
 const _appConnectionsReducer = createReducer(
   initialState,
-  on(
-    BuilderActions.loadInitial,
-    (state, { appConnections }): AppConnectionsState => {
-      return {
-        loaded: true,
-        connections: appConnections,
-      };
-    }
-  ),
   on(
     appConnectionsActions.loadInitial,
     (state, { connections }): AppConnectionsState => {

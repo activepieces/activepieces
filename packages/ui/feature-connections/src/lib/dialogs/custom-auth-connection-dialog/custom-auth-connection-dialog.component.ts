@@ -23,12 +23,10 @@ import deepEqual from 'deep-equal';
 import {
   AppConnectionsService,
   AuthenticationService,
+  appConnectionsActions,
+  appConnectionsSelectors,
 } from '@activepieces/ui/common';
 import { ConnectionValidator } from '../../validators/connectionNameValidator';
-import {
-  BuilderSelectors,
-  appConnectionsActions,
-} from '@activepieces/ui/feature-builder-store';
 import { connectionNameRegex } from '../utils';
 
 export interface CustomAuthDialogData {
@@ -87,7 +85,7 @@ export class CustomAuthConnectionDialogComponent {
           asyncValidators: [
             ConnectionValidator.createValidator(
               this.store
-                .select(BuilderSelectors.selectAllAppConnections)
+                .select(appConnectionsSelectors.selectAllAppConnections)
                 .pipe(take(1)),
               undefined
             ),

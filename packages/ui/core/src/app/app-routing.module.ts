@@ -8,7 +8,7 @@ import { RedirectUrlComponent } from './modules/redirect-url/redirect-url.compon
 import { NotFoundComponent } from './modules/not-found/not-found.component';
 import { EmbedRedirectComponent } from '@activepieces/ee-components';
 import { ApEdition } from '@activepieces/shared';
-import { InterfacesComponent } from './modules/interfaces/interfaces.component';
+import { FormsComponent } from './modules/forms/forms.component';
 
 export const routes: Routes = [
   {
@@ -68,8 +68,8 @@ export const routes: Routes = [
   },
 
   {
-    path: 'interfaces/:flowId',
-    component: InterfacesComponent,
+    path: 'forms/:flowId',
+    component: FormsComponent,
   },
   {
     path: '**',
