@@ -1,7 +1,8 @@
 import { createSelector } from '@ngrx/store';
-import { CommonStateModel, ProjectsState } from '../common-state.model';
+import { CommonStateModel } from '../common-state.model';
 import { selectCommonState } from '../common.selector';
 import { NotificationStatus } from '@activepieces/shared';
+import { ProjectsState } from './project-state.model';
 
 const selectProjectState = createSelector(
   selectCommonState,

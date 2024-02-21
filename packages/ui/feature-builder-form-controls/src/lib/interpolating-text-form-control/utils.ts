@@ -7,7 +7,10 @@ import {
 import { ErrorStateMatcher, mixinErrorState } from '@angular/material/core';
 import { Subject } from 'rxjs';
 import { Step, StepWithIndex } from '@activepieces/ui/feature-builder-store';
-import { InsertMentionOperation } from '@activepieces/ui/common';
+import {
+  InsertMentionOperation,
+  MentionListItem,
+} from '@activepieces/ui/common';
 
 export const customCodeMentionDisplayName = 'Custom Code';
 export const keysWithinPath = (path: string) => {
@@ -264,12 +267,6 @@ const handlingArrayStepOutput = (
     children: children,
   };
 };
-
-export interface MentionListItem {
-  label: string;
-  value: string;
-  logoUrl?: string;
-}
 
 function formatStepOutput(stepOutput: unknown) {
   if (stepOutput === null) {

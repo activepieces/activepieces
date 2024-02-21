@@ -49,6 +49,7 @@ import {
   fadeInUp400ms,
   InsertMentionOperation,
   FlagService,
+  appConnectionsSelectors,
 } from '@activepieces/ui/common';
 import {
   BuilderSelectors,
@@ -145,7 +146,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     private cd: ChangeDetectorRef
   ) {
     this.allAuthConfigs$ = this.store.select(
-      BuilderSelectors.selectAppConnectionsDropdownOptions
+      appConnectionsSelectors.selectAppConnectionsDropdownOptions
     );
   }
   writeValue(obj: PiecePropertiesFormValue): void {

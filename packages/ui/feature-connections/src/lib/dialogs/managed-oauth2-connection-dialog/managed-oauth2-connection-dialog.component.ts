@@ -22,13 +22,11 @@ import {
   AppConnectionsService,
   AuthenticationService,
   FlagService,
+  appConnectionsSelectors,
+  appConnectionsActions,
   fadeInUp400ms,
 } from '@activepieces/ui/common';
 import { ConnectionValidator } from '../../validators/connectionNameValidator';
-import {
-  BuilderSelectors,
-  appConnectionsActions,
-} from '@activepieces/ui/feature-builder-store';
 import {
   OAuth2PopupParams,
   OAuth2PopupResponse,
@@ -121,7 +119,7 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
           asyncValidators: [
             ConnectionValidator.createValidator(
               this.store
-                .select(BuilderSelectors.selectAllAppConnections)
+                .select(appConnectionsSelectors.selectAllAppConnections)
                 .pipe(take(1)),
               undefined
             ),
