@@ -53,17 +53,16 @@ class ActivepiecesEmbedded {
   parentOrigin = window.location.origin;
   configure({
     prefix,
-    initialRoute,
     hideSidebar,
     disableNavigationInBuilder
   }: {
     prefix?: string;
-    initialRoute?: string;
     hideSidebar?: boolean;
     disableNavigationInBuilder?: boolean;
   }) {
     this._prefix = prefix || '/';
-    this._initialRoute = initialRoute || '/';
+    const newInitialRoute = !window.location.pathname.startsWith(this._prefix) ? '/' : '/' + window.location.pathname.substring(this._prefix.length);
+    this._initialRoute = newInitialRoute || '/';
     this._hideSidebar = hideSidebar || false;
     this._disableNavigationInBuilder = disableNavigationInBuilder === undefined ? true : disableNavigationInBuilder;
     setIframeChecker(this);
@@ -111,8 +110,14 @@ const checkForClientRouteChanges = (client: ActivepiecesEmbedded) => {
       if (
         event.data.type === ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED
       ) {
-        const prefixStartsWithSlash = client._prefix.startsWith('/')? client._prefix : `/${client._prefix}`;
-        const routeWithPrefix = prefixStartsWithSlash + event.data.data.route;
+        let prefixStartsWithSlash = client._prefix.startsWith('/') ? client._prefix : `/${client._prefix}`;
+        if (prefixStartsWithSlash === '/') {
+          prefixStartsWithSlash = ''
+        }
+        let routeWithPrefix = prefixStartsWithSlash + event.data.data.route;
+        if (!routeWithPrefix.startsWith("/")) {
+          routeWithPrefix = '/' + routeWithPrefix
+        }
         if (!client.handleClientNavigation) {
           this.history.replaceState({}, '', routeWithPrefix);
         } else {
