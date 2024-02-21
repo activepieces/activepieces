@@ -14,9 +14,8 @@ export const askGpt = createAction({
     description: 'Ask ChatGPT anything you want!',
     props: {
         deploymentId: Property.ShortText({
-            displayName: 'Deployment ID',
-            description: 'The ID of your model deployment or model to use.',
-            defaultValue: 'gpt-3.5-turbo',
+            displayName: 'Deployment Name',
+            description: 'The name of your model deployment.',
             required: true,
         }),
         prompt: Property.LongText({
@@ -65,11 +64,13 @@ export const askGpt = createAction({
                 'A memory key that will keep the chat history shared across runs and flows. Keep it empty to leave ChatGPT without memory of previous messages.',
             required: false,
         }),
-        roles: Property.Array({
+        roles: Property.Json({
             displayName: 'Roles',
             required: false,
             description: 'Array of roles to specify more accurate response',
-            defaultValue: ['You are a helpful assistant.'],
+            defaultValue: [
+                { role: 'system', content: 'You are a helpful assistant.' },
+            ],
         }),
     },
 
@@ -82,19 +83,35 @@ export const askGpt = createAction({
             new AzureKeyCredential(auth.apiKey)
         );
 
-        let messageHistory: string[] | null = [];
+        let messageHistory: any[] | null = [];
         // If memory key is set, retrieve messages stored in history
         if (propsValue.memoryKey) {
             messageHistory = (await store.get(propsValue.memoryKey, StoreScope.PROJECT)) ?? [];
         }
 
         // Add user prompt to message history
-        messageHistory.push(propsValue.prompt);
+        messageHistory.push({
+            role: 'user',
+            content: propsValue.prompt,
+        });
 
         // Add system instructions if set by user
-        const roles = propsValue.roles ? (propsValue.roles as string[]) : [];
+        const rolesArray = propsValue.roles ? (propsValue.roles as any) : [];
+        const roles = rolesArray.map((item: any) => {
+            const rolesEnum = ['system', 'user', 'assistant'];
+            if (!rolesEnum.includes(item.role)) {
+                throw new Error(
+                    'The only available roles are: [system, user, assistant]'
+                );
+            }
 
-        const completion = await openai.getCompletions(propsValue.deploymentId, [...roles, ...messageHistory], {
+            return {
+                role: item.role,
+                content: item.content,
+            };
+        });
+
+        const completion = await openai.getChatCompletions(propsValue.deploymentId, [...roles, ...messageHistory], {
             maxTokens: propsValue.maxTokens,
             temperature: propsValue.temperature,
             frequencyPenalty: propsValue.frequencyPenalty,
@@ -102,27 +119,27 @@ export const askGpt = createAction({
             topP: propsValue.topP,
         });
 
-        const responseText = completion.choices[0].text;
+        const responseText = completion.choices[0].message?.content;
 
         // Add response to message history
         messageHistory = [...messageHistory, responseText];
-    
+
         // Check message history token size
         // System limit is 32K tokens, we can probably make it bigger but this is a safe spot
         const tokenLength = await calculateMessagesTokenSize(messageHistory, '');
         if (propsValue.memoryKey) {
-          // If tokens exceed 90% system limit or 90% of model limit - maxTokens, reduce history token size
-          if (exceedsHistoryLimit(tokenLength, '', propsValue.maxTokens)) {
-            messageHistory = await reduceContextSize(
-              messageHistory,
-              '',
-              propsValue.maxTokens
-            );
-          }
-          // Store history
-          await store.put(propsValue.memoryKey, messageHistory, StoreScope.PROJECT);
+            // If tokens exceed 90% system limit or 90% of model limit - maxTokens, reduce history token size
+            if (exceedsHistoryLimit(tokenLength, '', propsValue.maxTokens)) {
+                messageHistory = await reduceContextSize(
+                    messageHistory,
+                    '',
+                    propsValue.maxTokens
+                );
+            }
+            // Store history
+            await store.put(propsValue.memoryKey, messageHistory, StoreScope.PROJECT);
         }
 
-        return completion.choices[0].text;
+        return responseText;
     },
 });
