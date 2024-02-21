@@ -2,6 +2,7 @@ import {
   createAction,
   Property,
   StoreScope,
+  Validators,
 } from '@activepieces/pieces-framework';
 
 export const storagePutAction = createAction({
@@ -20,6 +21,7 @@ export const storagePutAction = createAction({
     key: Property.ShortText({
       displayName: 'Key',
       required: true,
+      validators: [Validators.maxLength(128)]
     }),
     value: Property.ShortText({
       displayName: 'Value',

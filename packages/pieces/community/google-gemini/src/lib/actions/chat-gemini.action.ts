@@ -36,14 +36,9 @@ export const chatGemini = createAction({
       required: true,
       description: 'The prompt to generate content from.',
     }),
-    /*image: Property.File({
-            displayName: 'Image',
-            required: false,
-            description: 'The image to generate content from. ONLY when using Gemini Pro Vision.',
-            validators: [Validators.image],
-        }),*/
     memoryKey: Property.ShortText({
       displayName: 'Memory Key',
+      validators: [Validators.maxLength(128)],
       description:
         'A memory key that will keep the chat history. Keep it empty to leave Gemini without memory of previous messages.',
       required: false,

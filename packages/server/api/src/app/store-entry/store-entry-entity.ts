@@ -5,6 +5,7 @@ import {
     JSONB_COLUMN_TYPE,
 } from '../database/database-common'
 import { StoreEntry } from '@activepieces/shared'
+import { STORE_KEY_MAX_LENGTH } from '@activepieces/shared'
 
 type StoreEntrySchema = StoreEntry
 
@@ -14,6 +15,7 @@ export const StoreEntryEntity = new EntitySchema<StoreEntrySchema>({
         ...BaseColumnSchemaPart,
         key: {
             type: String,
+            length: STORE_KEY_MAX_LENGTH,
         },
         projectId: ApIdSchema,
         value: {
