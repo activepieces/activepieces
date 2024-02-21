@@ -103,6 +103,7 @@ import { AddCategoriesToPieceMetadataPostgres1707231704973 } from './migration/p
 import { AddAuditEvents1707614902283 } from './migration/postgres/1707614902283-AddAuditEvents'
 import { AddUniqueStoreConstrain1708455034835 } from './migration/postgres/1708455034835-AddUniqueStoreConstrain'
 import { CreateActivityTable1708515756040 } from './migration/postgres/1708515756040-create-activity-table'
+import { AddLengthLimitsToActivity1708529586342 } from './migration/postgres/1708529586342-add-length-limits-to-activity'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -222,6 +223,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 RemoveUniqueonAppNameAppCredentials1705586178452,
                 AddAuditEvents1707614902283,
                 CreateActivityTable1708515756040,
+                AddLengthLimitsToActivity1708529586342,
             )
             break
         case ApEdition.ENTERPRISE:
@@ -263,6 +265,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddGitSyncEnabledToPlatform1704636362533,
                 AddAuditEvents1707614902283,
                 CreateActivityTable1708515756040,
+                AddLengthLimitsToActivity1708529586342,
             )
             break
         case ApEdition.COMMUNITY:
