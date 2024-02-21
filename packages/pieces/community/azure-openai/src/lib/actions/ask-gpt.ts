@@ -6,6 +6,7 @@ import {
     createAction,
 } from '@activepieces/pieces-framework';
 import { OpenAIClient, AzureKeyCredential } from '@azure/openai';
+import { calculateMessagesTokenSize, exceedsHistoryLimit, reduceContextSize } from '../common';
 
 export const askGpt = createAction({
     name: 'ask_gpt',
@@ -100,6 +101,27 @@ export const askGpt = createAction({
             presencePenalty: propsValue.presencePenalty,
             topP: propsValue.topP,
         });
+
+        const responseText = completion.choices[0].text;
+
+        // Add response to message history
+        messageHistory = [...messageHistory, responseText];
+    
+        // Check message history token size
+        // System limit is 32K tokens, we can probably make it bigger but this is a safe spot
+        const tokenLength = await calculateMessagesTokenSize(messageHistory, '');
+        if (propsValue.memoryKey) {
+          // If tokens exceed 90% system limit or 90% of model limit - maxTokens, reduce history token size
+          if (exceedsHistoryLimit(tokenLength, '', propsValue.maxTokens)) {
+            messageHistory = await reduceContextSize(
+              messageHistory,
+              '',
+              propsValue.maxTokens
+            );
+          }
+          // Store history
+          await store.put(propsValue.memoryKey, messageHistory, StoreScope.PROJECT);
+        }
 
         return completion.choices[0].text;
     },
