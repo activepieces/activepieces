@@ -22,16 +22,7 @@ import {
 } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
-import {
-  BehaviorSubject,
-  map,
-  Observable,
-  of,
-  shareReplay,
-  switchMap,
-  take,
-  tap,
-} from 'rxjs';
+import { map, Observable, of, shareReplay, switchMap, take, tap } from 'rxjs';
 import { FlagService, ProjectSelectors } from '@activepieces/ui/common';
 import { CloudAuthConfigsService } from '../services/cloud-auth-configs.service';
 import {
@@ -73,15 +64,13 @@ import { OAuth2Property } from '@activepieces/pieces-framework';
 @Component({
   selector: 'app-add-edit-connection-button',
   templateUrl: './add-edit-connection-button.component.html',
-  styleUrls: [],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AddEditConnectionButtonComponent {
   @Input()
   btnSize: 'extraSmall' | 'small' | 'medium' | 'large' | 'default';
-  checkingOAuth2ManagedConnections$: BehaviorSubject<boolean> =
-    new BehaviorSubject(false);
-  @Input()
+
+  @Input({ required: true })
   authProperty:
     | OAuth2Property<OAuth2Props>
     | CustomAuthProperty<CustomAuthProps>
@@ -91,9 +80,9 @@ export class AddEditConnectionButtonComponent {
   propertyKey: string;
   @Input()
   selectedConnectionInterpolatedString: string;
-  @Input()
+  @Input({ required: true })
   pieceName: string;
-  @Input()
+  @Input({ required: true })
   pieceVersion: string;
   @Input()
   isEditConnectionButton = false;
@@ -506,13 +495,7 @@ export class AddEditConnectionButtonComponent {
                   map(() => void 0)
                 );
             } else {
-              if (!this.checkingOAuth2ManagedConnections$.value) {
-                this.checkingOAuth2ManagedConnections$.next(true);
-              }
               return this.appsAndTheirClientIds$.pipe(
-                tap(() => {
-                  this.checkingOAuth2ManagedConnections$.next(false);
-                }),
                 switchMap((res) => {
                   if (this.authProperty.type === PropertyType.OAUTH2) {
                     const pieceOAuth2Details = res[this.pieceName];
