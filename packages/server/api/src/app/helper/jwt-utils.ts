@@ -13,7 +13,6 @@ import { localFileStore } from './store'
 import { QueueMode, SystemProp, system } from 'server-shared'
 import { promisify } from 'util'
 import { randomBytes } from 'crypto'
-import dayjs from 'dayjs'
 
 export enum JwtSignAlgorithm {
     HS256 = 'HS256',
@@ -121,20 +120,6 @@ export const jwtUtils = {
                 if (err) {
                     return reject(err)
                 }
-
-                // Todo - remove after old tokens has been invalidated, maybe after (April 2024), remove the hardcoded date
-                const decodedToken = jwtLibrary.decode(jwt, {
-                    json: true,
-                })
-                if (decodedToken?.exp && decodedToken.exp !== 1754223678 && decodedToken.exp > dayjs().add(2, 'weeks').unix()) {
-                    throw new ActivepiecesError({
-                        code: ErrorCode.INVALID_BEARER_TOKEN,
-                        params: {
-                            message: 'Old token in use. Please login again.',
-                        },
-                    })
-                }
-
                 return resolve(payload as T)
             })
         })
