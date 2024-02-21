@@ -30,7 +30,7 @@ const setDevDataSeededFlag = async (): Promise<void> => {
 
 const seedDevUser = async (): Promise<void> => {
     const DEV_EMAIL = 'dev@ap.com'
-    const DEV_PASSWORD = '123123123'
+    const DEV_PASSWORD = '12345678'
 
     await authenticationService.signUp({
         email: DEV_EMAIL,
