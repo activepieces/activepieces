@@ -146,7 +146,10 @@ export class FormsComponent implements OnInit {
     const { pieceName, triggerName } = version.trigger.settings;
     const validTriggerNames = ['form_submission', 'file_submission'];
 
-    return pieceName === '@activepieces/piece-forms' && validTriggerNames.includes(triggerName);
+    return (
+      pieceName === '@activepieces/piece-forms' &&
+      validTriggerNames.includes(triggerName)
+    );
   }
 
   async submit() {
