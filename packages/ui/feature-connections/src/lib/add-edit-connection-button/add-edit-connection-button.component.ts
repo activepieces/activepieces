@@ -62,7 +62,7 @@ import { OAuth2Property } from '@activepieces/pieces-framework';
 import {
   ProjectSelectors,
   appConnectionsSelectors,
-} from '@activepieces/common-store';
+} from '@activepieces/ui/common-store';
 
 @Component({
   selector: 'app-add-edit-connection-button',

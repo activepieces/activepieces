@@ -13,7 +13,7 @@ import {
 } from '@activepieces/ui/common';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
-import { ProjectSelectors } from '@activepieces/common-store';
+import { ProjectSelectors } from '@activepieces/ui/common-store';
 
 @Component({
   selector: 'app-flows-table-title',

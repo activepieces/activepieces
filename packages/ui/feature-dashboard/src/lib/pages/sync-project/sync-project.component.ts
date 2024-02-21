@@ -16,7 +16,7 @@ import {
   PushToGitDialogData,
   SyncProjectService,
 } from '@activepieces/ui-feature-git-sync';
-import { ProjectSelectors } from '@activepieces/common-store';
+import { ProjectSelectors } from '@activepieces/ui/common-store';
 
 @Component({
   selector: 'app-sync-project',

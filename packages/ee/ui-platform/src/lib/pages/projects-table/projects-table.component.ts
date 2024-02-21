@@ -17,7 +17,7 @@ import {
 import { ActivatedRoute } from '@angular/router';
 import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
 import { ProjectWithUsageAndPlanResponse } from '@activepieces/ee-shared';
-import { ProjectActions } from '@activepieces/common-store';
+import { ProjectActions } from '@activepieces/ui/common-store';
 
 @Component({
   selector: 'app-projects-table',

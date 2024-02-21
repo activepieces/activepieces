@@ -11,7 +11,7 @@ import { ProjectService } from '../service/project.service';
 import { StatusCodes } from 'http-status-codes';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Project } from '@activepieces/shared';
-import { ProjectActions, ProjectSelectors } from '@activepieces/common-store';
+import { ProjectActions, ProjectSelectors } from '@activepieces/ui/common-store';
 
 @Injectable({
   providedIn: 'root',

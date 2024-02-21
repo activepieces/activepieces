@@ -29,7 +29,7 @@ import { connectionNameRegex } from '../utils';
 import {
   appConnectionsActions,
   appConnectionsSelectors,
-} from '@activepieces/common-store';
+} from '@activepieces/ui/common-store';
 
 export interface CustomAuthDialogData {
   pieceAuthProperty: CustomAuthProperty<CustomAuthProps>;

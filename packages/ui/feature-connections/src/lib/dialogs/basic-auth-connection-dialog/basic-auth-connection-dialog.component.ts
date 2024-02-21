@@ -24,7 +24,7 @@ import { connectionNameRegex } from '../utils';
 import {
   appConnectionsActions,
   appConnectionsSelectors,
-} from '@activepieces/common-store';
+} from '@activepieces/ui/common-store';
 
 interface BasicAuthForm {
   name: FormControl<string>;

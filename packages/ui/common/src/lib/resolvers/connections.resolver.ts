@@ -3,7 +3,7 @@ import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 import { Store } from '@ngrx/store';
 import { AppConnectionsService } from '../service/app-connections.service';
 import { AuthenticationService } from '../service';
-import { ProjectSelectors } from '@activepieces/common-store';
+import { ProjectSelectors } from '@activepieces/ui/common-store';
 
 export const connections$ = (
   store: Store,

@@ -34,7 +34,7 @@ import {
   TemplateType,
 } from '@activepieces/shared';
 import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
-import { ProjectSelectors } from '@activepieces/common-store';
+import { ProjectSelectors } from '@activepieces/ui/common-store';
 
 @Component({
   selector: 'ap-share-flow-template-dialog',

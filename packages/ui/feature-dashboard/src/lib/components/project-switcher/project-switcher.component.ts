@@ -3,7 +3,7 @@ import { FlagService, PlatformProjectService } from '@activepieces/ui/common';
 import { Observable, switchMap, map } from 'rxjs';
 import { ApFlagId, Project } from '@activepieces/shared';
 import { Store } from '@ngrx/store';
-import { ProjectSelectors } from '@activepieces/common-store';
+import { ProjectSelectors } from '@activepieces/ui/common-store';
 
 @Component({
   selector: 'app-project-switcher',

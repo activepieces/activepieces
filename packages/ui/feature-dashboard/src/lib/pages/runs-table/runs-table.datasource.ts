@@ -24,7 +24,7 @@ import {
 } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 import { Params } from '@angular/router';
-import { ProjectSelectors } from '@activepieces/common-store';
+import { ProjectSelectors } from '@activepieces/ui/common-store';
 const REFRESH_TABLE_DELAY = 10000;
 /**
  * Data source for the LogsTable view. This class should

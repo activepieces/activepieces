@@ -28,7 +28,7 @@ import { EeComponentsModule } from '@activepieces/ee-components';
 import { UiFeatureAuthenticationModule } from '@activepieces/ui/feature-authentication';
 import { InterfacesComponent } from './modules/interfaces/interfaces.component';
 import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
-import { CommonStoreModule } from '@activepieces/common-store';
+import { CommonStoreModule } from '@activepieces/ui/common-store';
 
 const monacoConfig: NgxMonacoEditorConfig = {
   baseUrl: '/assets', // configure base path for monaco editor. Starting with version 8.0.0 it defaults to './assets'. Previous releases default to '/assets'

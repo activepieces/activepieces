@@ -23,7 +23,7 @@ import {
 import { Store } from '@ngrx/store';
 import { Params } from '@angular/router';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
-import { ProjectSelectors } from '@activepieces/common-store';
+import { ProjectSelectors } from '@activepieces/ui/common-store';
 
 /**
  * Data source for the LogsTable view. This class should

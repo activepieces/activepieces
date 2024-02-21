@@ -9,7 +9,7 @@ import { LocalesService } from '../../service/locales.service';
 import { LocalesEnum } from '@activepieces/shared';
 import { localesMap } from '../../utils/locales';
 import { PlatformProjectService } from '../../service/platform-project.service';
-import { ProjectSelectors } from '@activepieces/common-store';
+import { ProjectSelectors } from '@activepieces/ui/common-store';
 
 @Component({
   selector: 'ap-user-avatar',

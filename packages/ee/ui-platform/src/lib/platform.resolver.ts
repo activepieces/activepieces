@@ -5,7 +5,7 @@ import { AuthenticationService } from '@activepieces/ui/common';
 import { Platform } from '@activepieces/ee-shared';
 import { Store } from '@ngrx/store';
 import { of, take, switchMap } from 'rxjs';
-import { ProjectSelectors } from '@activepieces/common-store';
+import { ProjectSelectors } from '@activepieces/ui/common-store';
 export const PLATFORM_RESOLVER_KEY = 'platform';
 export const platformResolver: ResolveFn<Platform | null> = () => {
   const platformService: PlatformService = inject(PlatformService);

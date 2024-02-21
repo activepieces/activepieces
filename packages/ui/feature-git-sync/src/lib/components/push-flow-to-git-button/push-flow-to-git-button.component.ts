@@ -11,7 +11,7 @@ import { Store } from '@ngrx/store';
 import { FlagService,  flowActionsUiInfo } from '@activepieces/ui/common';
 import { SyncProjectService } from '../../services/sync-project.service';
 import { ConfigureRepoDialogComponent } from '../dialogs/configure-repo-dialog/configure-repo-dialog.component';
-import { ProjectSelectors } from '@activepieces/common-store';
+import { ProjectSelectors } from '@activepieces/ui/common-store';
 
 
 @Component({

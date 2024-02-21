@@ -34,7 +34,7 @@ import {
 import { RolesDisplayNames } from '../utils';
 import { ActivatedRoute } from '@angular/router';
 import { ApFlagId } from '@activepieces/shared';
-import { ProjectSelectors } from '@activepieces/common-store';
+import { ProjectSelectors } from '@activepieces/ui/common-store';
 
 @Component({
   selector: 'app-project-members-table',

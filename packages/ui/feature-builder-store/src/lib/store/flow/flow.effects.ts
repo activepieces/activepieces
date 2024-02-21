@@ -46,7 +46,7 @@ import { ViewModeActions } from '../builder/viewmode/view-mode.action';
 import { ViewModeEnum } from '../../model';
 import { HttpStatusCode } from '@angular/common/http';
 import { FlowStructureUtil } from '../../utils/flowStructureUtil';
-import { appConnectionsActions } from '@activepieces/common-store';
+import { appConnectionsActions } from '@activepieces/ui/common-store';
 @Injectable()
 export class FlowsEffects {
   initialiseFlowState$ = createEffect(() => {

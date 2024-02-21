@@ -1,5 +1,5 @@
 {
-  "name": "@activepieces/common-store",
+  "name": "@activepieces/ui/common-store",
   "version": "0.0.1",
   "peerDependencies": {
     "@angular/common": "^16.2.0",
