@@ -44,26 +44,27 @@ export const imapAuth = PieceAuth.CustomAuth({
     }),
   },
   validate: async ({ auth }) => {
+    const imapConfig = imapCommon.constructConfig(
+      auth as {
+        host: string;
+        username: string;
+        password: string;
+        port: number;
+        tls: boolean;
+      }
+    );
+    const imapClient = new ImapFlow({ ...imapConfig, logger: false });
     try {
-      const imapConfig = imapCommon.constructConfig(
-        auth as {
-          host: string;
-          username: string;
-          password: string;
-          port: number;
-          tls: boolean;
-        }
-      );
-      const imapClient = new ImapFlow({ ...imapConfig, logger: false });
       await imapClient.connect();
       await imapClient.noop();
-      await imapClient.logout();
       return { valid: true };
     } catch (e) {
       return {
         valid: false,
         error: JSON.stringify(e),
       };
+    } finally {
+      await imapClient.logout();
     }
   },
   required: true,

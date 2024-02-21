@@ -50,8 +50,6 @@ export const imapCommon = {
             value: mailbox.path,
           };
         });
-      } catch (error) {
-        throw error;
       } finally {
         await imapClient.logout();
       }
@@ -88,7 +86,7 @@ export const imapCommon = {
     );
     const imapClient = new ImapFlow({ ...imapConfig, logger: false });
     await imapClient.connect();
-    let lock = await imapClient.getMailboxLock(mailbox);
+    const lock = await imapClient.getMailboxLock(mailbox);
     try {
       const res = imapClient.fetch(
         {
