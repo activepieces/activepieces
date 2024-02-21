@@ -466,15 +466,15 @@
                     ||
                     ''}}
                   </div>
-                  <div >
+                  <div>
                     <app-add-edit-connection-button *ngIf="formGroup.enabled && formGroup.get(property.key)!.value"
                       (click)="$event.stopPropagation()" btnSize="extraSmall" [isEditConnectionButton]="true"
                       [authProperty]="property.value" [pieceName]="pieceName" [pieceVersion]="pieceVersion"
-                      [propertyKey]="property.key"
+                      [propertyKey]="property.key" [pieceDisplayName]="pieceDisplayName"
                       [selectedConnectionInterpolatedString]="formGroup.get(property.key)!.value"
                       (connectionPropertyValueChanged)="connectionValueChanged($event)"
                       [triggerName]="actionOrTriggerName">
-                      <div class="ap-px-2" i18n >
+                      <div class="ap-px-2" i18n>
                         Reconnect
                       </div>
                     </app-add-edit-connection-button>
@@ -487,7 +487,8 @@
           <app-add-edit-connection-button btnSize="medium" class="ap-hidden" *ngIf="formGroup.enabled"
             [isEditConnectionButton]="false" #addConnectionBtn [authProperty]="property.value" [pieceName]="pieceName"
             [pieceVersion]="pieceVersion" [propertyKey]="property.key"
-            (connectionPropertyValueChanged)="connectionValueChanged($event)" [triggerName]="actionOrTriggerName">
+            (connectionPropertyValueChanged)="connectionValueChanged($event)" [triggerName]="actionOrTriggerName"
+            [pieceDisplayName]="pieceDisplayName">
 
           </app-add-edit-connection-button>
         </div>

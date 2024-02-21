@@ -91,6 +91,7 @@ export class AddEditConnectionButtonComponent {
   isEditConnectionButton = false;
   @Input()
   triggerName: string;
+  @Input({ required: true }) pieceDisplayName: string;
   @Output()
   connectionPropertyValueChanged: EventEmitter<{
     propertyKey: string;
@@ -186,6 +187,7 @@ export class AddEditConnectionButtonComponent {
       pieceAuthProperty: this
         .authProperty as CustomAuthProperty<CustomAuthProps>,
       pieceName: this.pieceName,
+      pieceDisplayName: this.pieceDisplayName,
     };
 
     return this.dialogService
@@ -215,6 +217,7 @@ export class AddEditConnectionButtonComponent {
     const dialogData: BasicAuthDialogData = {
       pieceAuthProperty: this.authProperty as BasicAuthProperty,
       pieceName: this.pieceName,
+      pieceDisplayName: this.pieceDisplayName,
     };
     return this.dialogService
       .open(BasicAuthConnectionDialogComponent, {
@@ -231,6 +234,7 @@ export class AddEditConnectionButtonComponent {
       pieceName: this.pieceName,
       displayName: this.authProperty.displayName,
       description: this.authProperty.description || '',
+      pieceDisplayName: this.pieceDisplayName,
     };
     return this.dialogService
       .open(SecretTextConnectionDialogComponent, {
@@ -290,6 +294,7 @@ export class AddEditConnectionButtonComponent {
           pieceAuthProperty: this.authProperty as OAuth2Property<OAuth2Props>,
           pieceName: this.pieceName,
           redirectUrl: frontEndUrl + '/redirect',
+          pieceDisplayName: this.pieceDisplayName,
         };
 
         return this.dialogService
@@ -340,6 +345,7 @@ export class AddEditConnectionButtonComponent {
             isTriggerAppWebhook: isTriggerAppWebhook,
             connectionType: pieceOAuth2Details.connectionType,
             frontendUrl,
+            pieceDisplayName: this.pieceDisplayName,
           };
           return this.dialogService
             .open(ManagedOAuth2ConnectionDialogComponent, {
@@ -410,6 +416,7 @@ export class AddEditConnectionButtonComponent {
           pieceAuthProperty: this
             .authProperty as CustomAuthProperty<CustomAuthProps>,
           connectionToUpdate: customAuthConnection,
+          pieceDisplayName: this.pieceDisplayName,
         };
         return this.dialogService
           .open(CustomAuthConnectionDialogComponent, {
@@ -434,6 +441,7 @@ export class AddEditConnectionButtonComponent {
           displayName: this.authProperty.displayName,
           description: this.authProperty.description || '',
           connectionName: connection!.name,
+          pieceDisplayName: this.pieceDisplayName,
         };
         return this.dialogService
           .open(SecretTextConnectionDialogComponent, {
@@ -456,6 +464,7 @@ export class AddEditConnectionButtonComponent {
           pieceName: this.pieceName,
           pieceAuthProperty: this.authProperty as BasicAuthProperty,
           connectionToUpdate: connection,
+          pieceDisplayName: this.pieceDisplayName,
         };
 
         return this.dialogService
@@ -487,6 +496,7 @@ export class AddEditConnectionButtonComponent {
                 pieceAuthProperty: this.authProperty,
                 pieceName: this.pieceName,
                 redirectUrl: frontendUrl + '/redirect',
+                pieceDisplayName: this.pieceDisplayName,
               };
               return this.dialogService
                 .open(OAuth2ConnectionDialogComponent, {
@@ -510,6 +520,7 @@ export class AddEditConnectionButtonComponent {
                       isTriggerAppWebhook: false,
                       connectionType: pieceOAuth2Details.connectionType,
                       frontendUrl,
+                      pieceDisplayName: this.pieceDisplayName,
                     };
                     return this.dialogService
                       .open(ManagedOAuth2ConnectionDialogComponent, {

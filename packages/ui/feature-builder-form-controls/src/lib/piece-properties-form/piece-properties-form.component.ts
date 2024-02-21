@@ -121,13 +121,13 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
   requiredProperties: PiecePropertyMap = {};
   optionalProperties: PiecePropertyMap = {};
   optionalConfigsMenuOpened = false;
-  @Input() actionOrTriggerName: string;
-  @Input() packageType: PackageType;
-  @Input() pieceType: PieceType;
-  @Input() pieceName: string;
-  @Input() pieceVersion: string;
-  @Input() pieceDisplayName: string;
-  @Input() isTriggerPieceForm = false;
+  @Input({ required: true }) actionOrTriggerName: string;
+  @Input({ required: true }) packageType: PackageType;
+  @Input({ required: true }) pieceType: PieceType;
+  @Input({ required: true }) pieceName: string;
+  @Input({ required: true }) pieceVersion: string;
+  @Input({ required: true }) pieceDisplayName: string;
+  @Input({ required: true }) isTriggerPieceForm = false;
   @ViewChildren('textControl', { read: ElementRef })
   theInputs: QueryList<ElementRef>;
   @ViewChild('addConnectionBtn')

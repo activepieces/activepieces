@@ -32,6 +32,7 @@ interface BasicAuthForm {
 export interface BasicAuthDialogData {
   pieceAuthProperty: BasicAuthProperty;
   pieceName: string;
+  pieceDisplayName: string;
   connectionToUpdate?: AppConnectionWithoutSensitiveData;
 }
 

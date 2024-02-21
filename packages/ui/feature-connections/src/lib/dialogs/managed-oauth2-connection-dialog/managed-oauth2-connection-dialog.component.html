@@ -1,6 +1,6 @@
 <ap-dialog-title-template>
   <ng-container *ngIf="!dialogData.connectionToUpdate; else editConnectionHeader">
-    <span i18n>New Connection</span>
+    <span i18n>New {{dialogData.pieceDisplayName}} Connection</span>
   </ng-container>
   <ng-template #editConnectionHeader>
     <span i18n>Edit</span> {{dialogData.connectionToUpdate!.name}}
@@ -29,7 +29,8 @@
     </mat-form-field>
     <div *ngIf="dialogData.pieceAuthProperty.props" [formGroup]="settingsForm.controls.props">
       <ng-container *ngFor="let prop of dialogData.pieceAuthProperty.props |objectToArray">
-        <mat-form-field *ngIf="prop.value['type'] !== PropertyType.STATIC_DROPDOWN" class="ap-w-full" appearance="outline">
+        <mat-form-field *ngIf="prop.value['type'] !== PropertyType.STATIC_DROPDOWN" class="ap-w-full"
+          appearance="outline">
           <mat-label>{{prop.value.displayName}}</mat-label>
           <input [matTooltip]="prop.value.description || ''" [formControlName]="prop.key" matInput type="text" />
           <mat-error *ngIf="settingsForm.controls.props.controls[prop.key]!.invalid">
@@ -60,8 +61,9 @@
       </p>
     </div>
   </form>
-  <a class="ap-cursor-pointer ap-mt-2" *ngIf="!dialogData.connectionToUpdate && !isTriggerAppWebhook && (ownAuthEnabled$ | async)"
-    (click)="useOwnCred()" i18n>I
+  <a class="ap-cursor-pointer ap-mt-2"
+    *ngIf="!dialogData.connectionToUpdate && !isTriggerAppWebhook && (ownAuthEnabled$ | async)" (click)="useOwnCred()"
+    i18n>I
     would like
     to use my own
     app credentials </a>

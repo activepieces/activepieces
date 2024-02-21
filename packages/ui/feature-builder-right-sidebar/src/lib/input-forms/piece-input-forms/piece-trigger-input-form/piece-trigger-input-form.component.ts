@@ -31,7 +31,7 @@ import {
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
 import { PiecePropertiesFormValue } from '@activepieces/ui/feature-builder-form-controls';
-import { ComponentTriggerInputFormSchema } from '../../input-forms-schema';
+import { PieceTriggerInputFormSchema } from '../../input-forms-schema';
 import { PiecePropertyMap } from '@activepieces/pieces-framework';
 import {
   CORE_SCHEDULE,
@@ -83,6 +83,7 @@ export class PieceTriggerInputFormComponent {
   packageType: PackageType;
   pieceType: PieceType;
   pieceName: string;
+  pieceDisplayName: string;
   pieceVersion: string;
   initialComponentTriggerInputFormValue: {
     triggerName: string;
@@ -238,13 +239,13 @@ export class PieceTriggerInputFormComponent {
     }
   }
 
-  writeValue(obj: ComponentTriggerInputFormSchema): void {
+  writeValue(obj: PieceTriggerInputFormSchema): void {
     this.initialComponentTriggerInputFormValue = obj;
     this.packageType = obj.packageType;
     this.pieceType = obj.pieceType;
     this.pieceName = obj.pieceName;
     this.pieceVersion = obj.pieceVersion;
-
+    this.pieceDisplayName = obj.pieceDisplayName;
     this.pieceTriggerInputForm
       .get(TRIGGER_FORM_CONTROL_NAME)
       ?.setValue(undefined, { emitEvent: false });

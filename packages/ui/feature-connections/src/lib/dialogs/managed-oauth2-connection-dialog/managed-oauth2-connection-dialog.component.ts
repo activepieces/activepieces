@@ -56,6 +56,7 @@ export type ManagedOAuth2ConnectionDialogData = {
     | AppConnectionType.CLOUD_OAUTH2
     | AppConnectionType.PLATFORM_OAUTH2;
   frontendUrl: string;
+  pieceDisplayName: string;
 };
 
 @Component({

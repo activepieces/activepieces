@@ -33,6 +33,7 @@ export interface CustomAuthDialogData {
   pieceAuthProperty: CustomAuthProperty<CustomAuthProps>;
   pieceName: string;
   connectionToUpdate?: AppConnectionWithoutSensitiveData;
+  pieceDisplayName: string;
 }
 
 @Component({
