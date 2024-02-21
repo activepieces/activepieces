@@ -534,8 +534,8 @@
             (mentionEmitted)="addMentionToJsonControl($event)">
           </app-builder-autocomplete-dropdown-handler>
         </div>
-        <div *ngIf="getControl(property.key)!.invalid" class="ap-py-2">
-          <p *ngIf="getControl(property.key)!.hasError('required');else invalidJson"
+        <div *ngIf="formGroup.get(property.key)!.invalid" class="ap-py-2">
+          <p *ngIf="formGroup.get(property.key)!.hasError('required');else invalidJson"
             class="ap-text-danger ap-typography-caption">
             {{property.value.displayName}} is required
           </p>

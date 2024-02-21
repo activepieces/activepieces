@@ -1,11 +1,12 @@
-import Airtable from 'airtable';
-import { Property, DynamicPropsValue } from '@activepieces/pieces-framework';
 import {
-  HttpMethod,
   AuthenticationType,
-  httpClient,
+  HttpMethod,
   HttpRequest,
+  httpClient,
 } from '@activepieces/pieces-common';
+import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
+import Airtable from 'airtable';
+import { isNil } from 'lodash';
 import {
   AirtableBase,
   AirtableEnterpriseFields,
@@ -15,7 +16,6 @@ import {
   AirtableTable,
   AirtableView,
 } from './models';
-import { isNil } from 'lodash';
 
 export const airtableCommon = {
   base: Property.Dropdown({
@@ -318,7 +318,11 @@ export const airtableCommon = {
     });
     const airtable = new Airtable();
     const currentTablleSnapshot = (
-      await airtable.base(params.baseId).table(params.tableId).select().all()
+      await airtable
+        .base(params.baseId)
+        .table(params.tableId)
+        .select(params.limitToView ? { view: params.limitToView } : {})
+        .all()
     )
       .map((r) => r._rawJson)
       .sort(
@@ -373,19 +377,19 @@ export const airtableCommon = {
     baseId: string;
     tableId: string;
   }) {
-    const response = await httpClient.sendRequest<{ views: AirtableView[] }>({
+    const response = await httpClient.sendRequest<{ tables: AirtableTable[] }>({
       method: HttpMethod.GET,
-      url: `https://api.airtable.com/v0/${baseId}/${tableId}/views`,
+      url: `https://api.airtable.com/v0/meta/bases/${baseId}/tables`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token,
       },
     });
 
-    if (response.status === 200) {
-      return response.body.views;
+    const table = response.body.tables.find((table) => table.id === tableId);
+    if (table) {
+      return table.views;
     }
-
     return [];
   },
 

@@ -1,0 +1,43 @@
+{
+  "name": "pieces-dust",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/dust/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/dust",
+        "tsConfig": "packages/pieces/community/dust/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/dust/package.json",
+        "main": "packages/pieces/community/dust/src/index.ts",
+        "assets": [
+          "packages/pieces/community/dust/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-dust {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/community/dust/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

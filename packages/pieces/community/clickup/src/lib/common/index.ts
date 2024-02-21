@@ -500,7 +500,7 @@ export async function callClickupGetTask(accessToken: string, taskId: string) {
   ).body;
 }
 
-export async function callClickUpApi<T extends HttpMessageBody>(
+export async function callClickUpApi<T extends HttpMessageBody = any>(
   method: HttpMethod,
   apiUrl: string,
   accessToken: string,

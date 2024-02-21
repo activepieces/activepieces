@@ -1,4 +1,8 @@
-import { FlowOperationType, FlowVersion, SeekPage } from '@activepieces/shared';
+import {
+  FlowOperationType,
+  FlowVersionMetadata,
+  SeekPage,
+} from '@activepieces/shared';
 import { FlowService } from '@activepieces/ui/common';
 import {
   BuilderSelectors,
@@ -32,13 +36,13 @@ import { MatDialog } from '@angular/material/dialog';
 })
 export class VersionHistoryComponent {
   sideBarDisplayName = $localize`Versions`;
-  flowVersions$: Observable<SeekPage<FlowVersion>>;
+  flowVersions$: Observable<SeekPage<FlowVersionMetadata>>;
   useAsDraft$?: Observable<void>;
   rewritingDraft = false;
-  publishedVersion$: Observable<FlowVersion | undefined>;
+  publishedVersion$: Observable<FlowVersionMetadata | undefined>;
   draftVersionId$: Observable<string>;
   displayVersion$?: Observable<unknown>;
-  viewedVersion$: Observable<FlowVersion>;
+  viewedVersion$: Observable<FlowVersionMetadata>;
   constructor(
     private flowService: FlowService,
     private store: Store,
@@ -58,7 +62,7 @@ export class VersionHistoryComponent {
     );
   }
 
-  useAsDraft(flowVersion: FlowVersion, versionNumber: number) {
+  useAsDraft(flowVersion: FlowVersionMetadata, versionNumber: number) {
     if (this.rewritingDraft) {
       return;
     }
@@ -109,7 +113,7 @@ export class VersionHistoryComponent {
     );
   }
 
-  displayVersion(flowVersion: FlowVersion) {
+  displayVersion(flowVersion: FlowVersionMetadata) {
     this.displayVersion$ = forkJoin({
       flow: this.flowService.get(flowVersion.flowId, flowVersion.id),
       published: this.store

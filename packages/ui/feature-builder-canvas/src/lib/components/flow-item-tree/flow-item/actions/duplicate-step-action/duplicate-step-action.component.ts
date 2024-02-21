@@ -8,6 +8,7 @@ import { Observable, forkJoin, map, switchMap, take, tap } from 'rxjs';
 import { FlowVersion, flowHelper } from '@activepieces/shared';
 import { Store } from '@ngrx/store';
 import { FlowService } from '@activepieces/ui/common';
+import { ACTION_BUTTON_ICON_DIMENSION } from '../common';
 @Component({
   selector: 'app-duplicate-step-action',
   templateUrl: './duplicate-step-action.component.html',
@@ -17,6 +18,7 @@ export class DuplicateStepActionComponent {
   @Input({ required: true })
   flowItem: Step;
   duplicate$: Observable<void> | undefined;
+  readonly ACTION_BUTTON_ICON_DIMENSION = ACTION_BUTTON_ICON_DIMENSION;
   constructor(private store: Store, private flowService: FlowService) {}
   duplicateStep() {
     const flowVersionWithArtifacts$ = this.getFlowVersionWithArtifacts();

@@ -36,7 +36,7 @@ export class PiecesTableDataSource extends DataSource<ManagedPieceMetadataModelS
   ) {
     super();
     this.pieces$ = this.piecesService
-      .getPiecesMetadataIncludeHidden({
+      .getPiecesManifestFromServer({
         includeHidden: true,
       })
       .pipe(shareReplay(1));
