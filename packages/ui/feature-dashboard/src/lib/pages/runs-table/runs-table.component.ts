@@ -198,7 +198,7 @@ export class RunsTableComponent implements OnInit {
             distinctUntilChanged(),
             tap((value) => {
               this.store.dispatch(
-                ProjectActions.updateProject({
+                ProjectActions.updateNotifyStatus({
                   notifyStatus: value
                     ? NotificationStatus.ALWAYS
                     : NotificationStatus.NEVER,

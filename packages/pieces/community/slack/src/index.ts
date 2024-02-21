@@ -36,7 +36,7 @@ export const slackAuth = PieceAuth.OAuth2({
 
 export const slack = createPiece({
   displayName: 'Slack',
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/slack.png',
   categories: [PieceCategory.COMMUNICATION],
   auth: slackAuth,

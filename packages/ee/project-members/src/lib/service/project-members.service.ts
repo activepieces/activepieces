@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '@activepieces/ui/common';
+import { DEFAULT_PAGE_SIZE, environment } from '@activepieces/ui/common';
 import {
   AcceptInvitationRequest,
   AcceptProjectResponse,
@@ -41,7 +41,7 @@ export class ProjectMemberService {
     request: ListProjectMembersRequestQuery
   ): Observable<SeekPage<ProjectMember>> {
     const queryParams: { [key: string]: string | number } = {
-      limit: request.limit ?? 10,
+      limit: request.limit ?? DEFAULT_PAGE_SIZE,
       cursor: request.cursor || '',
       projectId: request.projectId,
     };

@@ -81,8 +81,8 @@ export class UpdateProjectDialogComponent {
           },
         })
         .pipe(
-          tap(() => {
-            this.dialogRef.close(true);
+          tap((res) => {
+            this.dialogRef.close(res);
             this.loading = false;
           }),
           catchError((err) => {

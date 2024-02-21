@@ -29,7 +29,6 @@ services:
       AP_REDIS_HOST: redis
       AP_REDIS_PORT: 6379
       AP_SIGN_UP_ENABLED: true
-    privileged: true
     ports:
      - "3000:3000"
      - "4200:4200"

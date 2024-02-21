@@ -29,6 +29,7 @@ import { AllowedEmailDomainsListComponent } from './components/cards/allowed-ema
 import { ConfigureConfederatedAuthnCardComponent } from './components/cards/configure-confederated-authn-card/configure-confederated-authn-card.component';
 import { EnableFederatedAuthnProviderDialogComponent } from './components/dialogs/enable-federated-authn-provider-dialog/enable-federated-authn-provider-dialog.component';
 import { ConfigureAllowingEmailLoginsCardComponent } from './components/cards/configure-allowing-email-logins-card/configure-allowing-email-logins-card.component';
+import { AuditEventTableComponent } from './components/audit-event-table/audit-event-table.component';
 @NgModule({
   imports: [
     UiCommonModule,
@@ -55,6 +56,7 @@ import { ConfigureAllowingEmailLoginsCardComponent } from './components/cards/co
     TermsAndServicesSettingsComponent,
     TemplatesTableComponent,
     CustomDomainTableComponent,
+    AuditEventTableComponent,
     UsersTableComponent,
     SsoSettingsComponent,
     AddAllowedEmailDomainDialogComponent,

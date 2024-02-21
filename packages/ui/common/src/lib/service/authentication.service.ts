@@ -21,12 +21,14 @@ import {
 } from '@activepieces/ee-shared';
 import { FlagService } from './flag.service';
 
+type UserWithoutPassword = Omit<User, 'password'>;
+
 @Injectable({
   providedIn: 'root',
 })
 export class AuthenticationService {
-  public currentUserSubject: BehaviorSubject<User | undefined> =
-    new BehaviorSubject<User | undefined>(this.currentUser);
+  public currentUserSubject: BehaviorSubject<UserWithoutPassword | undefined> =
+    new BehaviorSubject<UserWithoutPassword | undefined>(this.currentUser);
   private jwtHelper = new JwtHelperService();
   constructor(
     private router: Router,
@@ -34,18 +36,20 @@ export class AuthenticationService {
     private flagsService: FlagService
   ) {}
 
-  get currentUser(): User {
+  get currentUser(): UserWithoutPassword {
     return JSON.parse(
       localStorage.getItem(environment.userPropertyNameInLocalStorage) || '{}'
     );
   }
 
-  me(): Observable<User> {
-    return this.http.get<User>(environment.apiUrl + '/users/me');
+  me(): Observable<UserWithoutPassword> {
+    return this.http.get<UserWithoutPassword>(environment.apiUrl + '/users/me');
   }
 
-  signIn(request: SignInRequest): Observable<HttpResponse<User>> {
-    return this.http.post<User>(
+  signIn(
+    request: SignInRequest
+  ): Observable<HttpResponse<AuthenticationResponse>> {
+    return this.http.post<AuthenticationResponse>(
       environment.apiUrl + '/authentication/sign-in',
       request,
       {
@@ -70,12 +74,12 @@ export class AuthenticationService {
     localStorage.setItem(environment.jwtTokenName, token);
   }
 
-  saveUser(response: HttpResponse<any>) {
-    this.saveToken(response.body.token);
-    this.updateUser(response.body);
+  saveUser(user: UserWithoutPassword, token: string) {
+    this.saveToken(token);
+    this.updateUser(user);
   }
 
-  updateUser(user: User) {
+  updateUser(user: UserWithoutPassword) {
     localStorage.setItem(
       environment.userPropertyNameInLocalStorage,
       JSON.stringify(user)

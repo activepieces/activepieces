@@ -14,6 +14,14 @@ export const extractDateParts = createAction({
   displayName: 'Extract Date Units',
   description:
     'Extract date units ( year , month , day , hour , minute , second , day of week , month name ) from a date',
+  errorHandlingOptions: {
+    continueOnFailure: {
+      hide: true,
+    },
+    retryOnFailure: {
+      hide: true,
+    },
+  },
   props: {
     inputDate: Property.ShortText({
       displayName: 'Input Date',

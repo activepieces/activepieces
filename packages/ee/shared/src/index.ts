@@ -1,3 +1,4 @@
+export * from './lib/audit-events';
 export * from './lib/git-repo';
 export * from './lib/api-key';
 export * from './lib/project/project-with-usage-and-plan';
@@ -17,3 +18,4 @@ export * from './lib/managed-authn'
 export * from './lib/oauth-apps'
 export * from './lib/otp'
 export * from './lib/authn'
+export * from './lib/activity'

@@ -1,11 +1,14 @@
 import {
   AppConnectionValue,
+  DelayPauseMetadata,
   ExecutionType,
   FlowRunId,
   PauseMetadata,
   ProjectId,
+  ResumePayload,
   StopResponse,
   TriggerPayload,
+  WebhookPauseMetadata,
 } from '@activepieces/shared';
 import { TriggerStrategy } from './trigger/trigger';
 import {
@@ -86,17 +89,13 @@ export type StopHookParams = {
 
 export type StopHook = (params: StopHookParams) => void;
 
-type PauseMetadataWithoutResumeStepMetadata<T extends PauseMetadata> =
-  T extends PauseMetadata ? Omit<T, 'resumeStepMetadata'> : never;
-
-export type PauseHookPauseMetadata =
-  PauseMetadataWithoutResumeStepMetadata<PauseMetadata>;
-
 export type PauseHookParams = {
-  pauseMetadata: PauseHookPauseMetadata;
+  pauseMetadata: PauseMetadata;
 };
 
-export type PauseHook = (params: PauseHookParams) => void;
+export type PauseHook = (params: {
+  pauseMetadata: DelayPauseMetadata | Omit<WebhookPauseMetadata, 'requestId'>
+}) => void;
 
 export type PropertyContext = {
   server: ServerContext;
@@ -127,6 +126,9 @@ export type BaseActionContext<
     stop: StopHook;
     pause: PauseHook;
   };
+  generateResumeUrl: (params: {
+    queryParams: Record<string, string>
+  }) => string;
 };
 
 type BeginExecutionActionContext<
@@ -138,7 +140,7 @@ type ResumeExecutionActionContext<
   PieceAuth extends PieceAuthProperty = PieceAuthProperty,
   ActionProps extends InputPropertyMap = InputPropertyMap
 > = BaseActionContext<ExecutionType.RESUME, PieceAuth, ActionProps> & {
-  resumePayload: unknown;
+  resumePayload: ResumePayload;
 };
 
 export type ActionContext<

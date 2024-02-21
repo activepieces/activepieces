@@ -1,7 +1,6 @@
-import { AUTHENTICATION_PROPERTY_NAME, GenericStepOutput, ActionType, ExecutionOutputStatus, PieceAction, StepOutputStatus, assertNotNullOrUndefined, isNil, ExecutionType } from '@activepieces/shared'
+import { AUTHENTICATION_PROPERTY_NAME, GenericStepOutput, ActionType, ExecutionOutputStatus, PieceAction, StepOutputStatus, assertNotNullOrUndefined, isNil, ExecutionType, PauseType } from '@activepieces/shared'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
-import { variableService } from '../services/variable-service'
 import { ActionContext, ConnectionsManager, PauseHook, PauseHookParams, PiecePropertyMap, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
 import { createContextStore } from '../services/storage.service'
 import { createFilesService } from '../services/files.service'
@@ -10,6 +9,7 @@ import { EngineConstants } from './context/engine-constants'
 import { pieceLoader } from '../helper/piece-loader'
 import { utils } from '../utils'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
+import { URL } from 'url'
 
 type HookResponse = { stopResponse: StopHookParams | undefined, pauseResponse: PauseHookParams | undefined, tags: string[], stopped: boolean, paused: boolean }
 
@@ -32,22 +32,12 @@ export const pieceExecutor: BaseExecutor<PieceAction> = {
 }
 
 const executeAction: ActionHandler<PieceAction> = async ({ action, executionState, constants }) => {
-    const {
-        censoredInput,
-        resolvedInput,
-    } = await variableService({
-        projectId: constants.projectId,
-        workerToken: constants.workerToken,
-    }).resolve<StaticPropsValue<PiecePropertyMap>>({
-        unresolvedInput: action.settings.input,
-        executionState,
-    })
-
     const stepOutput = GenericStepOutput.create({
-        input: censoredInput,
+        input: {},
         type: ActionType.PIECE,
         status: StepOutputStatus.SUCCEEDED,
     })
+
     try {
         assertNotNullOrUndefined(action.settings.actionName, 'actionName')
         const { pieceAction, piece } = await pieceLoader.getPieceAndActionOrThrow({
@@ -56,6 +46,13 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             actionName: action.settings.actionName,
             piecesSource: constants.piecesSource,
         })
+
+        const { resolvedInput, censoredInput } = await constants.variableService.resolve<StaticPropsValue<PiecePropertyMap>>({
+            unresolvedInput: action.settings.input,
+            executionState,
+        })
+
+        stepOutput.input = censoredInput
 
         const { processedInput, errors } = await constants.variableService.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth)
         if (Object.keys(errors).length > 0) {
@@ -72,7 +69,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         const isPaused = executionState.isPaused({ stepName: action.name })
         const context: ActionContext = {
             executionType: isPaused ? ExecutionType.RESUME : ExecutionType.BEGIN,
-            resumePayload: constants.resumePayload,
+            resumePayload: constants.resumePayload!,
             store: createContextStore({
                 prefix: '',
                 flowId: constants.flowId,
@@ -101,11 +98,16 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             run: {
                 id: constants.flowRunId,
                 stop: createStopHook(hookResponse),
-                pause: createPauseHook(hookResponse),
+                pause: createPauseHook(hookResponse, executionState.pauseRequestId),
             },
             project: {
                 id: constants.projectId,
                 externalId: constants.externalProjectId,
+            },
+            generateResumeUrl: (params) => {
+                const url = new URL(`${constants.serverUrl}v1/flow-runs/${constants.flowRunId}/requests/${executionState.pauseRequestId}`)
+                url.search = new URLSearchParams(params.queryParams).toString()
+                return url.toString()
             },
         }
         const runMethodToExecute = (constants.testSingleStepMode && !isNil(pieceAction.test)) ? pieceAction.test : pieceAction.run
@@ -174,9 +176,23 @@ function createStopHook(hookResponse: HookResponse): StopHook {
     }
 }
 
-function createPauseHook(hookResponse: HookResponse): PauseHook {
-    return (req: PauseHookParams) => {
+function createPauseHook(hookResponse: HookResponse, pauseId: string): PauseHook {
+    return (req) => {
         hookResponse.paused = true
-        hookResponse.pauseResponse = req
+        switch (req.pauseMetadata.type) {
+            case PauseType.DELAY:
+                hookResponse.pauseResponse = {
+                    pauseMetadata: req.pauseMetadata,
+                }
+                break
+            case PauseType.WEBHOOK:
+                hookResponse.pauseResponse = {
+                    pauseMetadata: {
+                        ...req.pauseMetadata,
+                        requestId: pauseId,
+                    },
+                }
+                break
+        }
     }
 }

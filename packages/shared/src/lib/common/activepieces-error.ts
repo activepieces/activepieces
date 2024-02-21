@@ -1,4 +1,3 @@
-import { AppConnectionId } from '../app-connection/app-connection'
 import { FileId } from '../file/file'
 import { FlowRunId } from '../flow-run/flow-run'
 import { FlowId } from '../flows/flow'
@@ -12,7 +11,6 @@ export class ActivepiecesError extends Error {
 }
 
 type ErrorParams =
-    | AppConnectionNotFoundErrorParams
     | AuthenticationParams
     | AuthorizationErrorParams
     | ConfigNotFoundErrorParams
@@ -23,6 +21,7 @@ type ErrorParams =
     | ExistingUserErrorParams
     | FileNotFoundErrorParams
     | FlowNotFoundErrorParams
+    | FlowIsLockedErrorParams
     | FlowOperationErrorParams
     | FlowRunNotFoundErrorParams
     | InvalidApiKeyParams
@@ -41,6 +40,7 @@ type ErrorParams =
     | PieceNotFoundErrorParams
     | PieceTriggerNotFoundErrorParams
     | QuotaExceededParams
+    | FeatureDisabledErrorParams
     | SignUpDisabledParams
     | StepNotFoundErrorParams
     | SystemInvalidErrorParams
@@ -75,13 +75,6 @@ export type InvalidBearerTokenParams = BaseErrorParams<ErrorCode.INVALID_BEARER_
 export type FileNotFoundErrorParams = BaseErrorParams<ErrorCode.FILE_NOT_FOUND, { id: FileId }>
 
 export type EmailAuthIsDisabledParams = BaseErrorParams<ErrorCode.EMAIL_AUTH_DISABLED, Record<string, never>>
-
-export type AppConnectionNotFoundErrorParams = BaseErrorParams<
-ErrorCode.APP_CONNECTION_NOT_FOUND,
-{
-    id: AppConnectionId
-}
->
 
 export type AuthorizationErrorParams = BaseErrorParams<
 ErrorCode.AUTHORIZATION,
@@ -225,6 +218,13 @@ ErrorCode.FLOW_OPERATION_INVALID,
 Record<string, never>
 >
 
+export type FlowIsLockedErrorParams = BaseErrorParams<
+ErrorCode.FLOW_IN_USE,
+{
+    flowVersionId: FlowVersionId
+    message: string
+}>
+
 export type InvalidJwtTokenErrorParams = BaseErrorParams<
 ErrorCode.INVALID_OR_EXPIRED_JWT_TOKEN,
 {
@@ -306,6 +306,12 @@ ErrorCode.QUOTA_EXCEEDED,
 }
 >
 
+export type FeatureDisabledErrorParams = BaseErrorParams<
+ErrorCode.FEATURE_DISABLED,
+{
+    message: string
+}>
+
 export type SignUpDisabledParams = BaseErrorParams<
 ErrorCode.SIGN_UP_DISABLED,
 Record<string, never>
@@ -321,7 +327,6 @@ ErrorCode.AUTHENTICATION,
 export type InvalidOtpParams = BaseErrorParams<ErrorCode.INVALID_OTP, Record<string, never>>
 
 export enum ErrorCode {
-    APP_CONNECTION_NOT_FOUND = 'APP_CONNECTION_NOT_FOUND',
     AUTHENTICATION = 'AUTHENTICATION',
     AUTHORIZATION = 'AUTHORIZATION',
     CONFIG_NOT_FOUND = 'CONFIG_NOT_FOUND',
@@ -336,6 +341,7 @@ export enum ErrorCode {
     FLOW_INSTANCE_NOT_FOUND = 'INSTANCE_NOT_FOUND',
     FLOW_NOT_FOUND = 'FLOW_NOT_FOUND',
     FLOW_OPERATION_INVALID = 'FLOW_OPERATION_INVALID',
+    FLOW_IN_USE = 'FLOW_IN_USE',
     FLOW_RUN_NOT_FOUND = 'FLOW_RUN_NOT_FOUND',
     INVALID_API_KEY = 'INVALID_API_KEY',
     INVALID_APP_CONNECTION = 'INVALID_APP_CONNECTION',
@@ -353,6 +359,7 @@ export enum ErrorCode {
     PIECE_NOT_FOUND = 'PIECE_NOT_FOUND',
     PIECE_TRIGGER_NOT_FOUND = 'PIECE_TRIGGER_NOT_FOUND',
     QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
+    FEATURE_DISABLED = 'FEATURE_DISABLED',
     SIGN_UP_DISABLED = 'SIGN_UP_DISABLED',
     STEP_NOT_FOUND = 'STEP_NOT_FOUND',
     SYSTEM_PROP_INVALID = 'SYSTEM_PROP_INVALID',

@@ -7,6 +7,8 @@ import {
   TriggerType,
   ApFlagId,
   PieceScope,
+  ListPiecesRequestQuery,
+  spreadIfDefined,
 } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
 import {
@@ -65,7 +67,7 @@ export class PieceMetadataService {
   private release$ = this.flagsService.getRelease().pipe(shareReplay(1));
   private clearCache$ = new Subject<void>();
   private edition$ = this.flagsService.getEdition();
-  private piecesManifest$ = this.getPiecesMetadataIncludeHidden({
+  private piecesManifest$ = this.getPiecesManifestFromServer({
     includeHidden: false,
   });
   private piecesCache = new Map<string, Observable<PieceMetadataModel>>();
@@ -274,25 +276,32 @@ export class PieceMetadataService {
     throw new Error("Step type isn't accounted for");
   }
 
-  getPiecesMetadataIncludeHidden({
+  getPiecesManifestFromServer({
     includeHidden,
-  }: {
-    includeHidden: boolean;
-  }) {
+    searchQuery,
+    suggestionType
+  }: ListPiecesRequestQuery) {
+    
     return combineLatest([
       this.edition$,
       this.release$,
       this.clearCache$.asObservable().pipe(startWith(void 0)),
     ]).pipe(
       switchMap(([edition, release]) => {
+        let params:Record<string,boolean|string>= {
+          release,
+          edition
+        };
+        params= {
+          ...params,
+          ...spreadIfDefined('includeHidden', includeHidden),
+          ...spreadIfDefined('searchQuery', searchQuery),
+          ...spreadIfDefined('suggestionType', suggestionType)
+        }
         return this.http.get<PieceMetadataModelSummary[]>(
           `${environment.apiUrl}/pieces`,
           {
-            params: {
-              includeHidden,
-              release,
-              edition,
-            },
+            params
           }
         );
       }),

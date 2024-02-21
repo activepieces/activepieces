@@ -520,10 +520,25 @@ mat-option.add-auth {
 }
 
 .ql-editor {
-  padding: 0px !important;
+  padding:  0px  0px 0px 0px !important;
   @include mat.typography-level($ap-typography, "body-1");
-  line-height: 1.9rem;
+  line-height: 1.5rem;
+ 
 }
+.has-mention
+ {
+  .ql-editor{
+    line-height: 28px;
+  }
+
+}
+app-array-form-control {
+  .has-mention{
+    .ql-editor{ padding:  0px  0px 4px 0px !important;} 
+  }
+}
+
+
 
 .mat-mdc-menu-panel.mat-mdc-menu-panel {
   max-width: unset !important;
@@ -567,6 +582,15 @@ mat-form-field.\!ap-bg-white {
 }
 .no-check-bg .mat-button-toggle-checked {
   background-color: $white;
+}
+app-canvas-utils{
+  mat-button-toggle-group{
+   
+  mat-button-toggle{
+    background: var(--white) !important;
+  }
+  }
+  
 }
 .mat-button-toggle-appearance-standard .mat-button-toggle-label-content {
   line-height: unset;
@@ -711,6 +735,15 @@ app-platform-settings {
 }
 
 
-.smaller-input { 
-  @include mat.all-component-densities(-2);
+@include mat.form-field-density(-2);
+@include mat.button-density(0);
+
+
+.suggested-actions-or-triggers
+{
+  .mat-mdc-standard-chip:not(.mdc-evolution-chip--disabled)
+  {
+    background-color: var(--primary-palette-50) ;
+    color: var(--primary-palette-contrast-400);
+  }
 }

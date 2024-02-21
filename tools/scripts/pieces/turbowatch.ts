@@ -6,7 +6,7 @@ import { findPieceDirectoryInSource } from '../utils/piece-script-utils';
 import path from 'path';
 import { assertNotNullOrUndefined } from '../../../packages/shared/src';
 
-config({ path: 'packages/backend/.env' });
+config({ path: 'packages/server/api/.env' });
 
 const packages = process.env.AP_DEV_PIECES?.split(',') || [];
 

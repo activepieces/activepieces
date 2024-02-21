@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../../dist/out-tsc",
+    "module": "commonjs",
+    "types": ["jest", "node"]
+  },
+  "include": [
+    "types/**/*.d.ts",
+    "jest.config.ts",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "test/**/*.ts",
+    "node_modules/fastify-raw-body/plugin.d.ts"
+  ],
+  "exclude": []
+}

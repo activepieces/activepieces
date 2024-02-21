@@ -82,13 +82,20 @@ type CopilotGeneratedCode = {
     code: string
     prompt: string
 }
+
+type FormsViewed = {
+    flowId: string
+    projectId: string
+    formProps: Record<string, unknown>
+}
+
 export enum TelemetryEventName {
     SIGNED_UP = 'signed.up',
     QUOTA_ALERT = 'quota.alert',
     UPGRADE_CLICKED = 'upgrade.clicked',
     OPENED_PRICING_FROM_DASHBOARD = 'pricing.viewed',
     UPGRADE_POPUP = 'upgrade.popup',
-    FLOW_CREATED = 'flow.created',
+    CREATED_FLOW = 'flow.created',
     DEMO_IMPORTED = 'demo.imported',
     FLOW_RUN_CREATED = 'run.created',
     FLOW_PUBLISHED = 'flow.published',
@@ -102,6 +109,8 @@ export enum TelemetryEventName {
     FLOW_SHARED = 'flow.shared',
     TEMPLATE_SEARCH = 'template.search',
     COPILOT_GENERATED_CODE = 'copilot.code.generated',
+    FORMS_VIEWED = 'forms.viewed',
+    FORMS_SUBMITTED = 'forms.submitted',
 }
 
 type BaseTelemetryEvent<T, P> = {
@@ -117,7 +126,7 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.FLOW_RUN_CREATED, RunCreated>
     | BaseTelemetryEvent<TelemetryEventName.FLOW_PUBLISHED, FlowPublished>
     | BaseTelemetryEvent<TelemetryEventName.QUOTA_ALERT, QuotaAlert>
-    | BaseTelemetryEvent<TelemetryEventName.FLOW_CREATED, FlowCreated>
+    | BaseTelemetryEvent<TelemetryEventName.CREATED_FLOW, FlowCreated>
     | BaseTelemetryEvent<TelemetryEventName.TEMPLATE_SEARCH, TemplateSearch>
     | BaseTelemetryEvent<TelemetryEventName.PIECES_SEARCH, PiecesSearch>
     | BaseTelemetryEvent<TelemetryEventName.FLOW_IMPORTED, FlowImported>
@@ -127,3 +136,5 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.DEMO_IMPORTED, Record<string, never>>
     | BaseTelemetryEvent<TelemetryEventName.OPENED_PRICING_FROM_DASHBOARD, OpenedFromDasahboard>
     | BaseTelemetryEvent<TelemetryEventName.COPILOT_GENERATED_CODE, CopilotGeneratedCode>
+    | BaseTelemetryEvent<TelemetryEventName.FORMS_VIEWED, FormsViewed>
+    | BaseTelemetryEvent<TelemetryEventName.FORMS_SUBMITTED, FormsViewed>

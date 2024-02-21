@@ -57,13 +57,6 @@ export class GenericStepOutput<T extends ActionType | TriggerType, OUTPUT> {
         })
     }
 
-    setDuration(duration: number): GenericStepOutput<T, OUTPUT> {
-        return new GenericStepOutput<T, OUTPUT>({
-            ...this,
-            duration,
-        })
-    }
-
     static create<T extends ActionType | TriggerType, OUTPUT>({ input, type, status, output }: { input: unknown, type: T, status: StepOutputStatus, output?: OUTPUT }): GenericStepOutput<T, OUTPUT> {
         return new GenericStepOutput<T, OUTPUT>({
             input,
@@ -124,7 +117,7 @@ export class LoopStepOutput extends GenericStepOutput<ActionType.LOOP_ON_ITEMS, 
     hasIteration(iteration: number): boolean {
         return !isNil(this.output?.iterations[iteration])
     }
-    
+
     setItemAndIndex({ item, index }: { item: unknown, index: number }): LoopStepOutput {
         return new LoopStepOutput({
             ...this,

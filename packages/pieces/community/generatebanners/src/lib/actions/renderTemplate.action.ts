@@ -78,17 +78,8 @@ export const renderTemplate = createAction({
             label: 'Document (pdf)',
             value: 'pdf',
           },
-          {
-            label: 'Video (mp4)',
-            value: 'mp4',
-          },
         ],
       },
-    }),
-    audio_url: Property.ShortText({
-      displayName: 'Audio url',
-      description: 'Link to an audio file. Only used for videos.',
-      required: false,
     }),
     variables: Property.DynamicProperties({
       displayName: 'Variables',
@@ -155,8 +146,6 @@ export const renderTemplate = createAction({
         propsValue.template_id
       }/sign-url?filetype=${encodeURIComponent(
         propsValue.filetype
-      )}&audioUrl=${encodeURIComponent(
-        propsValue.audio_url || ''
       )}&${query.join('&')}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,

@@ -49,10 +49,10 @@ COPY . .
 COPY .npmrc package.json package-lock.json ./
 RUN npm ci
 
-RUN npx nx run-many --target=build --projects=backend,ui-core --configuration production --skip-nx-cache
+RUN npx nx run-many --target=build --projects=server-api,ui-core --configuration production --skip-nx-cache
 
 # Install backend production dependencies
-RUN cd dist/packages/backend && npm install --production --force
+RUN cd dist/packages/server/api && npm install --production --force
 
 ### STAGE 2: Run ###
 FROM base AS run
@@ -60,7 +60,7 @@ FROM base AS run
 # Set up backend
 WORKDIR /usr/src/app
 
-COPY packages/backend/src/assets/default.cf /usr/local/etc/isolate
+COPY packages/server/api/src/assets/default.cf /usr/local/etc/isolate
 
 # Install Nginx and gettext for envsubst
 RUN apt-get update && apt-get install -y nginx gettext
