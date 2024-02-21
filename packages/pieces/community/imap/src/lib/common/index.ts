@@ -1,7 +1,13 @@
-import { FilesService } from '@activepieces/pieces-framework';
-import imap from 'imap';
-import { Attachment, ParsedMail, simpleParser } from 'mailparser';
+import {
+  FilesService,
+  PiecePropValueSchema,
+  Property,
+} from '@activepieces/pieces-framework';
+import { FetchMessageObject, ImapFlow } from 'imapflow';
+import { imapAuth } from '../../';
 
+import dayjs from 'dayjs';
+import { Attachment, ParsedMail, simpleParser } from 'mailparser';
 export const imapCommon = {
   constructConfig(auth: {
     host: string;
@@ -11,116 +17,115 @@ export const imapCommon = {
     tls: boolean;
   }) {
     return {
-      user: auth.username,
-      password: auth.password,
       host: auth.host,
       port: auth.port,
-      tls: auth.tls,
-      tlsOptions: {
-        rejectUnauthorized: false,
-      },
+      secure: auth.tls,
+      auth: { user: auth.username, pass: auth.password },
+      tls: { rejectUnauthorized: false },
     };
   },
-  async getTotalMessages(imapConfig: any, mailbox: string): Promise<number> {
-    return new Promise((resolve, reject) => {
-      const imapClient = new imap(imapConfig);
-      imapClient.once('ready', () => {
-        imapClient.openBox(mailbox, false, (err, mailbox) => {
-          if (err) {
-            imapClient.end();
-            reject(err);
-          } else {
-            const total = mailbox.messages.total;
-            imapClient.end();
-            resolve(total);
-          }
+  mailbox: Property.Dropdown({
+    displayName: 'Mailbox',
+    description: 'Select the mailbox to search',
+    required: true,
+    refreshers: [],
+    options: async ({ auth }) => {
+      const imapConfig = imapCommon.constructConfig(
+        auth as {
+          host: string;
+          username: string;
+          password: string;
+          port: number;
+          tls: boolean;
+        }
+      );
+      let options: { label: string; value: string }[] = [];
+      const imapClient = new ImapFlow({ ...imapConfig, logger: false });
+      try {
+        await imapClient.connect();
+        const mailBoxList = await imapClient.list();
+        options = mailBoxList.map((mailbox) => {
+          return {
+            label: mailbox.name,
+            value: mailbox.path,
+          };
         });
-      });
-      imapClient.connect();
-    });
-  },
+      } catch (error) {
+        throw error;
+      } finally {
+        await imapClient.logout();
+      }
+      return {
+        disabled: false,
+        options: options,
+      };
+    },
+  }),
   async fetchEmails({
-    imapConfig,
-    lastTotalMessages,
-    test,
+    auth,
+    lastEpochMilliSeconds,
     mailbox,
     files,
   }: {
-    imapConfig: any;
-    lastTotalMessages: number | null;
-    test: boolean;
+    auth: PiecePropValueSchema<typeof imapAuth>;
+    lastEpochMilliSeconds: number;
     mailbox: string;
     files: FilesService;
-  }): Promise<{
-    parsedEmails: any[];
-    totalMessages: number;
-  }> {
-    const { parsedEmails, totalMessages } = await new Promise<{
-      parsedEmails: any[];
-      totalMessages: number;
-    }>((resolve, reject) => {
-      const imapClient = new imap(imapConfig);
-
-      imapClient.once('ready', () => {
-        imapClient.openBox(mailbox, (err, ml) => {
-          if (err) {
-            imapClient.end();
-            reject(err);
-          } else {
-            const messages = ml.messages.total;
-            if (messages === lastTotalMessages && !test) {
-              resolve({
-                parsedEmails: [],
-                totalMessages: messages,
-              });
-            } else {
-              const finalEmails: any[] = [];
-              const newMessages = test
-                ? Math.min(5, messages)
-                : messages - (lastTotalMessages ?? 0);
-              const range = test
-                ? `${Math.max(1, messages - 5)}:${messages}`
-                : `${lastTotalMessages! + 1}:${messages}`;
-              const listener = imapClient.seq.fetch(range, {
-                bodies: '',
-                struct: true,
-              });
-              listener.on('message', (msg, seqno) => {
-                msg.on('body', (stream) => {
-                  finalEmails.push(stream);
-                  if (finalEmails.length === newMessages) {
-                    imapClient.end();
-                    resolve({
-                      parsedEmails: finalEmails,
-                      totalMessages: messages,
-                    });
-                  }
-                });
-              });
-            }
-          }
-        });
-      });
-
-      imapClient.once('error', (err: any) => {
-        reject(err);
-      });
-
-      imapClient.connect();
-    });
-    const convertedItems = await Promise.all(
-      parsedEmails.map(async (item) => {
-        const castedItem = await parseStream(item);
-        return {
-          ...castedItem,
-          attachments: await convertAttachment(castedItem.attachments, files),
-        };
-      })
+  }): Promise<
+    {
+      epochMilliSeconds: number;
+      data: unknown;
+    }[]
+  > {
+    const imapConfig = imapCommon.constructConfig(
+      auth as {
+        host: string;
+        username: string;
+        password: string;
+        port: number;
+        tls: boolean;
+      }
     );
-    return {
-      parsedEmails: convertedItems,
-      totalMessages,
-    };
+    const imapClient = new ImapFlow({ ...imapConfig, logger: false });
+    await imapClient.connect();
+    let lock = await imapClient.getMailboxLock(mailbox);
+    try {
+      const res = imapClient.fetch(
+        {
+          since:
+            lastEpochMilliSeconds === 0
+              ? dayjs().subtract(2, 'hour').toISOString()
+              : dayjs(lastEpochMilliSeconds).toISOString(),
+        },
+        {
+          source: true,
+        }
+      );
+      const messages: FetchMessageObject[] = [];
+      for await (const message of res) {
+        messages.push(message);
+      }
+
+      const convertedItems = await Promise.all(
+        messages.map(async (mail) => {
+          const castedItem = await parseStream(mail.source);
+          return {
+            epochMilliSeconds: dayjs(castedItem.date).valueOf(),
+            data: {
+              ...castedItem,
+              attachments: await convertAttachment(
+                castedItem.attachments,
+                files
+              ),
+            },
+          };
+        })
+      );
+      return convertedItems;
+    } finally {
+      lock.release();
+      await imapClient.logout();
+    }
   },
 };
 
