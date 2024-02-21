@@ -4,7 +4,7 @@ import {
   createPiece,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-import imap from 'imap';
+import { ImapFlow } from 'imapflow';
 import { imapCommon } from './lib/common';
 import { newEmail } from './lib/triggers/new-email';
 
@@ -44,26 +44,27 @@ export const imapAuth = PieceAuth.CustomAuth({
     }),
   },
   validate: async ({ auth }) => {
+    const imapConfig = imapCommon.constructConfig(
+      auth as {
+        host: string;
+        username: string;
+        password: string;
+        port: number;
+        tls: boolean;
+      }
+    );
+    const imapClient = new ImapFlow({ ...imapConfig, logger: false });
     try {
-      const imapClient = new imap(imapCommon.constructConfig(auth));
-      return new Promise((resolve, reject) => {
-        imapClient.once('error', function (err: any) {
-          resolve({ valid: false, error: JSON.stringify(err) });
-        });
-        imapClient.once('ready', function () {
-          resolve({ valid: true });
-          imapClient.end();
-        });
-        imapClient.once('end', function () {
-          imapClient.end();
-        });
-        imapClient.connect();
-      });
+      await imapClient.connect();
+      await imapClient.noop();
+      return { valid: true };
     } catch (e) {
       return {
         valid: false,
         error: JSON.stringify(e),
       };
+    } finally {
+      await imapClient.logout();
     }
   },
   required: true,

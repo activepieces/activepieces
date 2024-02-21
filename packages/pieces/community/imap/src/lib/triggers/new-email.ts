@@ -1,14 +1,10 @@
 import {
-  DropdownOption,
-  FilesService,
-  PiecePropValueSchema,
   Property,
+  TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { TriggerStrategy } from '@activepieces/pieces-framework';
-import imap from 'imap';
-import { imapCommon } from '../common';
 import { imapAuth } from '../..';
+import { imapCommon } from '../common';
 
 const filterInstructions = `
 **Filter Emails:**
@@ -22,95 +18,48 @@ export const newEmail = createTrigger({
   displayName: 'New Email',
   description: 'Trigger when a new email is received.',
   props: {
-    mailbox: Property.Dropdown({
-      displayName: 'Mailbox',
-      description: 'Select the mailbox to search',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        const imapConfig = imapCommon.constructConfig(
-          auth as {
-            host: string;
-            username: string;
-            password: string;
-            port: number;
-            tls: boolean;
-          }
-        );
-        const options = await new Promise<DropdownOption<string>[]>(
-          (resolve, reject) => {
-            const imapClient = new imap(imapConfig);
-            imapClient.once('ready', () => {
-              imapClient.getBoxes((err, boxes) => {
-                if (err) {
-                  imapClient.end();
-                  reject(err);
-                } else {
-                  const mailboxOptions = Object.keys(boxes).map((box) => {
-                    return { label: box, value: box };
-                  });
-                  imapClient.end();
-                  resolve(mailboxOptions);
-                }
-              });
-            });
-            imapClient.once('error', (err: any) => {
-              reject(err);
-            });
-            imapClient.connect();
-          }
-        );
-        // Add all boxes option for gmail
-        if ((auth as any).host.includes('gmail.com')) {
-          options.unshift({
-            label: 'All',
-            value: '[Gmail]/All Mail',
-          });
-        }
-        return {
-          disabled: false,
-          options: options,
-        };
-      },
-    }),
+    mailbox: imapCommon.mailbox,
     filterInstructions: Property.MarkDown({
       value: filterInstructions,
     }),
   },
   type: TriggerStrategy.POLLING,
   onEnable: async (context) => {
-    const totalMessage = await imapCommon.getTotalMessages(
-      imapCommon.constructConfig(context.auth),
-      context.propsValue.mailbox
-    );
-    await context.store.put<number>('_imaplastmessage', totalMessage);
+    await context.store.put('lastPoll', Date.now());
   },
   onDisable: async (context) => {
-    await context.store.delete('_imaplastmessage');
+    return;
   },
   run: async (context) => {
-    const lastMessage = (await context.store.get<number>('_imaplastmessage'))!;
-    const { parsedEmails, totalMessages } = await imapCommon.fetchEmails({
-      imapConfig: imapCommon.constructConfig(context.auth),
-      lastTotalMessages: lastMessage,
-      test: false,
-      mailbox: context.propsValue.mailbox,
-      files: context.files,
+    const { auth, store, propsValue, files } = context;
+    const mailbox = propsValue.mailbox;
+    const lastEpochMilliSeconds = (await store.get<number>('lastPoll')) ?? 0;
+    const items = await imapCommon.fetchEmails({
+      auth,
+      lastEpochMilliSeconds,
+      mailbox,
+      files,
     });
-    if (totalMessages) {
-      await context.store.put<number>('_imaplastmessage', totalMessages);
-    }
-    return parsedEmails;
+    const newLastEpochMilliSeconds = items.reduce(
+      (acc, item) => Math.max(acc, item.epochMilliSeconds),
+      lastEpochMilliSeconds
+    );
+    await store.put('lastPoll', newLastEpochMilliSeconds);
+    return items
+      .filter((f) => f.epochMilliSeconds > lastEpochMilliSeconds)
+      .map((item) => item.data);
   },
   test: async (context) => {
-    const { parsedEmails } = await imapCommon.fetchEmails({
-      imapConfig: imapCommon.constructConfig(context.auth),
-      lastTotalMessages: null,
-      test: true,
-      mailbox: context.propsValue.mailbox,
-      files: context.files,
+    const { auth, propsValue, files } = context;
+    const mailbox = propsValue.mailbox;
+    const lastEpochMilliSeconds = 0;
+    const items = await imapCommon.fetchEmails({
+      auth,
+      lastEpochMilliSeconds,
+      mailbox,
+      files,
     });
-    return parsedEmails;
+    return getFirstFiveOrAll(items.map((item) => item.data));
   },
   sampleData: {
     html: 'My email body',
@@ -146,3 +95,11 @@ export const newEmail = createTrigger({
       '<CxE49ifJT5YZN9OE2O6j6Ef+BYgkKWq7X-deg483GkM1ui1xj3g@mail.gmail.com>',
   },
 });
+
+function getFirstFiveOrAll(array: unknown[]) {
+  if (array.length <= 5) {
+    return array;
+  } else {
+    return array.slice(0, 5);
+  }
+}
