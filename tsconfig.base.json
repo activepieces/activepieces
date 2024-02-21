@@ -242,8 +242,8 @@
       "@activepieces/piece-intercom": [
         "packages/pieces/community/intercom/src/index.ts"
       ],
-      "@activepieces/piece-interfaces": [
-        "packages/pieces/community/interfaces/src/index.ts"
+      "@activepieces/piece-forms": [
+        "packages/pieces/community/forms/src/index.ts"
       ],
       "@activepieces/piece-invoiceninja": [
         "packages/pieces/community/invoiceninja/src/index.ts"
@@ -586,7 +586,7 @@
       "ui-feature-flow-builder": [
         "packages/ui/feature-flow-builder/src/index.ts"
       ],
-      "ui-feature-interfaces": ["packages/ui/features-interfaces/src/index.ts"]
+      "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"]
     },
     "resolveJsonModule": true
   },

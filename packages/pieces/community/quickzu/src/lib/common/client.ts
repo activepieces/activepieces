@@ -41,14 +41,14 @@ export function prepareQuery(request?: Record<string, any>): QueryParams {
 
 export class QuickzuAPIClient {
   constructor(private apiToken: string) {}
-  async makeRequest<T extends HttpMessageBody>(
+  async makeRequest<T extends HttpMessageBody = any>(
     method: HttpMethod,
     resourceUri: string,
     query?: QueryParams,
     body: any | undefined = undefined
   ): Promise<T> {
     // const baseUrl = this.apiTableUrl.replace(/\/$/, '');
-    const res = await httpClient.sendRequest<T>({
+    const res = await httpClient.sendRequest<any>({
       method: method,
       url: `https://app.quickzu.com/api` + resourceUri,
       headers: {

@@ -54,7 +54,7 @@ export const auditLogService: AuditLogService = {
             entity: AuditEventEntity,
             query: {
                 limit,
-                order: 'ASC',
+                order: 'DESC',
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
@@ -110,6 +110,18 @@ const saveEvent = async (
                 ...baseProps,
                 action: rawEvent.action,
                 data: {},
+            }
+            break
+        }
+        case ApplicationEventName.UPDATED_FLOW: {
+            eventToSave = {
+                ...baseProps,
+                action: rawEvent.action,
+                data: {
+                    flowId: rawEvent.flow.id,
+                    flowName: rawEvent.flow.version.displayName,
+                    request: rawEvent.request,
+                },
             }
             break
         }

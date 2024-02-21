@@ -83,10 +83,10 @@ type CopilotGeneratedCode = {
     prompt: string
 }
 
-type InterfacesViewed = {
+type FormsViewed = {
     flowId: string
     projectId: string
-    interfaceProps: Record<string, unknown>
+    formProps: Record<string, unknown>
 }
 
 export enum TelemetryEventName {
@@ -109,8 +109,8 @@ export enum TelemetryEventName {
     FLOW_SHARED = 'flow.shared',
     TEMPLATE_SEARCH = 'template.search',
     COPILOT_GENERATED_CODE = 'copilot.code.generated',
-    INTERFACES_VIEWED = 'interfaces.viewed',
-    INTERFACES_SUBMITTED = 'interfaces.submitted',
+    FORMS_VIEWED = 'forms.viewed',
+    FORMS_SUBMITTED = 'forms.submitted',
 }
 
 type BaseTelemetryEvent<T, P> = {
@@ -136,5 +136,5 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.DEMO_IMPORTED, Record<string, never>>
     | BaseTelemetryEvent<TelemetryEventName.OPENED_PRICING_FROM_DASHBOARD, OpenedFromDasahboard>
     | BaseTelemetryEvent<TelemetryEventName.COPILOT_GENERATED_CODE, CopilotGeneratedCode>
-    | BaseTelemetryEvent<TelemetryEventName.INTERFACES_VIEWED, InterfacesViewed>
-    | BaseTelemetryEvent<TelemetryEventName.INTERFACES_SUBMITTED, InterfacesViewed>
+    | BaseTelemetryEvent<TelemetryEventName.FORMS_VIEWED, FormsViewed>
+    | BaseTelemetryEvent<TelemetryEventName.FORMS_SUBMITTED, FormsViewed>

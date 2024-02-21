@@ -40,6 +40,7 @@ export class ApPaginatorComponent implements OnInit {
             [PREVIOUS_QUERY_PARAM]: undefined,
           },
           queryParamsHandling: 'merge',
+          preserveFragment: true,
         });
       })
     );
@@ -55,6 +56,7 @@ export class ApPaginatorComponent implements OnInit {
       relativeTo: this.route,
       queryParams: params,
       queryParamsHandling: 'merge',
+      preserveFragment: true,
     });
   }
 

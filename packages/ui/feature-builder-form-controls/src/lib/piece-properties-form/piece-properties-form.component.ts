@@ -401,10 +401,6 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     );
   }
 
-  getControl(configKey: string) {
-    return this.form.get(configKey);
-  }
-
   connectionValueChanged(event: {
     propertyKey: string;
     value: `{{connections['${string}']}}`;
@@ -543,12 +539,12 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     return forkJoin({
       flow: this.store.select(BuilderSelectors.selectCurrentFlow).pipe(take(1)),
       webhookPrefix: this.flagService.getWebhookUrlPrefix(),
-      interfacePrefix: this.flagService.getInterfaceUrlPrefix(),
+      formsPrefix: this.flagService.getFormUrlPrefix(),
     }).pipe(
       map((res) => {
         return markdown
           .replace('{{webhookUrl}}', `${res.webhookPrefix}/${res.flow.id}`)
-          .replace('{{interfaceUrl}}', `${res.interfacePrefix}/${res.flow.id}`);
+          .replace('{{formUrl}}', `${res.formsPrefix}/${res.flow.id}`);
       })
     );
   }

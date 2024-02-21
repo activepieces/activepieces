@@ -1,4 +1,4 @@
-import { Property } from '@activepieces/pieces-framework';
+import { Property, PropertyType } from '@activepieces/pieces-framework';
 import {
   FileResponseInterface,
   FlowVersion,
@@ -25,12 +25,8 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
-import {
-  InterfaceResult,
-  InterfaceResultTypes,
-  InterfacesService,
-} from './interfaces.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { FormResult, FormResultTypes, FormsService } from './forms.service';
 
 type Input = {
   displayName: string;
@@ -42,37 +38,41 @@ type Input = {
 enum InputTypes {
   TEXT = 'text',
   FILE = 'file',
+  TEXT_AREA = 'text_area',
+  TOGGLE = 'toggle',
 }
 
-type InterfaceProps = {
+type FormProps = {
   inputs: Input[];
   waitForResponse: boolean;
 };
 
 @Component({
-  selector: 'app-interfaces',
-  templateUrl: './interfaces.component.html',
+  selector: 'app-forms',
+  templateUrl: './forms.component.html',
 })
-export class InterfacesComponent implements OnInit {
+export class FormsComponent implements OnInit {
   fullLogoUrl$: Observable<string>;
   flow$: Observable<FlowVersion>;
-  submitInterface$: Observable<InterfaceResult | undefined>;
-  interfaceForm: FormGroup;
-  props: InterfaceProps | null = null;
+  submitForm$: Observable<FormResult | undefined>;
+  form: FormGroup;
+  props: FormProps | null = null;
   textInputs: Input[] = [];
   fileInputs: Input[] = [];
+  inputs: Input[] = [];
   loading = false;
   error: string | null = null;
   webhookUrl: string | null = null;
   title: string | null = null;
   flow: PopulatedFlow | null = null;
   markdownResponse: Subject<string | null> = new Subject<string | null>();
+  PropertyType = PropertyType;
   constructor(
     private flowService: FlowService,
     private route: ActivatedRoute,
     private snackBar: MatSnackBar,
     private flagService: FlagService,
-    private interfacesService: InterfacesService,
+    private formsService: FormsService,
     private telemteryService: TelemetryService,
     private router: Router
   ) {
@@ -88,13 +88,13 @@ export class InterfacesComponent implements OnInit {
       ),
       tap((flow) => {
         this.title = flow.version.displayName;
-        this.interfaceForm = new FormGroup({});
+        this.form = new FormGroup({});
 
         this.telemteryService.capture({
-          name: TelemetryEventName.INTERFACES_VIEWED,
+          name: TelemetryEventName.FORMS_VIEWED,
           payload: {
             flowId: flow.id,
-            interfaceProps: this.props!,
+            formProps: this.props!,
             projectId: flow.projectId,
           },
         });
@@ -102,49 +102,36 @@ export class InterfacesComponent implements OnInit {
       }),
       switchMap((flow) => {
         {
-          if (flow.publishedVersionId) {
-            return this.flowService.get(flow.id, flow.publishedVersionId).pipe(
-              map((publishedFlow) => {
-                return publishedFlow.version;
-              })
-            );
-          }
           return of(flow.version);
         }
       }),
       tap((version) => {
         this.props = version.trigger.settings.input;
-        const { pieceName, triggerName } = version.trigger.settings;
-        if (
-          pieceName === '@activepieces/piece-interfaces' &&
-          triggerName === 'form_submission'
-        ) {
+        const { triggerName } = version.trigger.settings;
+        if (this.doesFlowHaveForm(version)) {
           this.webhookUrl = environment.apiUrl + '/webhooks/' + this.flow!.id;
-
           if (this.props?.waitForResponse) {
             this.webhookUrl += '/sync';
           }
-          const textInputs: Input[] = [];
-          const fileInputs: Input[] = [];
-          this.props?.inputs.forEach((input) => {
-            switch (input.type) {
-              case InputTypes.TEXT:
-                textInputs.push(input);
-                break;
-              case InputTypes.FILE:
-                fileInputs.push(input);
-                break;
-            }
-          });
-          if (textInputs.length > 0) {
-            this.buildTextInputs(textInputs);
-          }
-          if (fileInputs.length > 0) {
-            this.buildFileInputs(fileInputs);
+
+          switch (triggerName) {
+            case 'form_submission':
+              this.buildInputs(this.props!.inputs);
+              break;
+            case 'file_submission':
+              this.buildInputs([
+                {
+                  displayName: 'File',
+                  description: 'File to submit.',
+                  required: true,
+                  type: InputTypes.FILE,
+                },
+              ]);
+              break;
           }
         } else {
           this.props = null;
-          this.error = 'This flow does not have an interface.';
+          this.error = 'This flow does not have a form.';
         }
       }),
       catchError((err) => {
@@ -155,49 +142,59 @@ export class InterfacesComponent implements OnInit {
     );
   }
 
+  doesFlowHaveForm(version: FlowVersion) {
+    const { pieceName, triggerName } = version.trigger.settings;
+    const validTriggerNames = ['form_submission', 'file_submission'];
+
+    return (
+      pieceName === '@activepieces/piece-forms' &&
+      validTriggerNames.includes(triggerName)
+    );
+  }
+
   async submit() {
-    if (this.interfaceForm.valid && !this.loading) {
+    if (this.form.valid && !this.loading) {
       this.markdownResponse.next(null);
       this.loading = true;
 
       const observables: Observable<string>[] = [];
 
-      for (const key in this.interfaceForm.value) {
+      for (const key in this.form.value) {
         const isFileInput = this.fileInputs.find(
           (input) => this.getInputKey(input.displayName) === key
         );
 
-        if (isFileInput && this.interfaceForm.value[key]) {
-          observables.push(this.toBase64(this.interfaceForm.value[key]));
+        if (isFileInput && this.form.value[key]) {
+          observables.push(this.toBase64(this.form.value[key]));
         } else {
-          observables.push(of(this.interfaceForm.value[key]));
+          observables.push(of(this.form.value[key]));
         }
       }
 
-      this.submitInterface$ = forkJoin(observables).pipe(
+      this.submitForm$ = forkJoin(observables).pipe(
         map((values) => {
           const formData = new FormData();
           for (let i = 0; i < values.length; i++) {
-            const key = Object.keys(this.interfaceForm.value)[i];
+            const key = Object.keys(this.form.value)[i];
             formData.append(key, values[i]);
           }
           return formData;
         }),
         switchMap((formData) =>
-          this.interfacesService.submitInterface(this.webhookUrl!, formData)
+          this.formsService.submitForm(this.webhookUrl!, formData)
         ),
-        tap((result: InterfaceResult) => {
+        tap((result: FormResult) => {
           this.telemteryService.capture({
-            name: TelemetryEventName.INTERFACES_SUBMITTED,
+            name: TelemetryEventName.FORMS_SUBMITTED,
             payload: {
               flowId: this.flow!.id,
-              interfaceProps: this.props!,
+              formProps: this.props!,
               projectId: this.flow!.projectId,
             },
           });
-          if (result.type === InterfaceResultTypes.MARKDOWN) {
+          if (result.type === FormResultTypes.MARKDOWN) {
             this.markdownResponse.next(result.value as string);
-          } else if (result.type === InterfaceResultTypes.FILE) {
+          } else if (result.type === FormResultTypes.FILE) {
             const link = document.createElement('a');
             // Your base64 string
             const fileBase = result.value as FileResponseInterface;
@@ -248,25 +245,27 @@ export class InterfacesComponent implements OnInit {
       });
   }
 
-  buildTextInputs(inputs: Input[]) {
+  buildInputs(inputs: Input[]) {
     inputs.forEach((prop) => {
-      this.textInputs.push(Property.ShortText(prop) as unknown as Input);
-      this.interfaceForm.addControl(
+      switch (prop.type) {
+        case InputTypes.TEXT:
+          this.inputs.push(Property.ShortText(prop) as unknown as Input);
+          break;
+        case InputTypes.FILE:
+          this.inputs.push(Property.File(prop) as unknown as Input);
+          break;
+        case InputTypes.TEXT_AREA:
+          this.inputs.push(Property.LongText(prop) as unknown as Input);
+          break;
+        case InputTypes.TOGGLE:
+          this.inputs.push(Property.Checkbox(prop) as unknown as Input);
+          break;
+      }
+
+      this.form.addControl(
         this.getInputKey(prop.displayName),
         new FormControl('', {
           nonNullable: prop.required,
-          validators: prop.required ? [Validators.required] : [],
-        })
-      );
-    });
-  }
-
-  buildFileInputs(inputs: Input[]) {
-    inputs.forEach((prop) => {
-      this.fileInputs.push(Property.File(prop) as unknown as Input);
-      this.interfaceForm.addControl(
-        this.getInputKey(prop.displayName),
-        new FormControl('', {
           validators: prop.required ? [Validators.required] : [],
         })
       );

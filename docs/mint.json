@@ -38,6 +38,21 @@
   ],
   "anchors": [
     {
+      "name": "Deploy",
+      "url": "install",
+      "icon": "rocket"
+    },
+    {
+      "name": "Develop Pieces",
+      "url": "developers",
+      "icon": "code"
+    },
+    {
+      "name": "API",
+      "url": "endpoints",
+      "icon": "link"
+    },
+    {
       "name": "Discord",
       "icon": "discord",
       "url": "https://discord.gg/2jUXBKDdP8"
@@ -46,23 +61,11 @@
       "name": "Pieces",
       "icon": "plug",
       "url": "https://www.activepieces.com/pieces"
-    }
-  ],
-  "primaryTab": {
-    "name": "Learn"
-  },
-  "tabs": [
-    {
-      "name": "Develop Pieces",
-      "url": "developers"
     },
     {
-      "name": "Deploy",
-      "url": "install"
-    },
-    {
-      "name": "API",
-      "url": "endpoints"
+      "name": "Handbook",
+      "icon": "book",
+      "url": "handbook"
     }
   ],
   "navigation": [
@@ -309,6 +312,30 @@
         "about/changelog",
         "about/telemetry",
         "about/license"
+      ]
+    },
+    {
+      "group": "Handbook",
+      "pages": [
+        "handbook/overview",
+        "handbook/values",
+        {
+          "group": "Engineering",
+          "icon": "code",
+          "pages": [
+            "handbook/engineering/team",
+            "handbook/engineering/how-we-work",
+            "handbook/engineering/stack",
+            "handbook/engineering/hiring"
+          ]
+        },
+        {
+          "group": "People",
+          "icon": "users",
+          "pages": [
+            "handbook/people/time"
+          ]
+        }
       ]
     }
   ],

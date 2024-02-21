@@ -1,6 +1,8 @@
 import {
+    ActivepiecesError,
     ApId,
     CreateFlowRequest,
+    ErrorCode,
     FlowOperationRequest,
     FlowTemplateWithoutProjectInformation,
     GetFlowQueryParamsRequest,
@@ -44,23 +46,20 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         return reply.status(StatusCodes.CREATED).send(newFlow)
     })
 
-    app.post('/:id', UpdateFlowRequestOptions, async (request, reply) => {
+    app.post('/:id', UpdateFlowRequestOptions, async (request) => {
         const flow = await flowService.getOnePopulatedOrThrow({
             id: request.params.id,
             projectId: request.principal.projectId,
         })
-        // BEGIN EE
-        const currentTime = dayjs()
-        const userId = await extractUserIdFromPrincipal(request.principal)
 
-        if (
-            !isNil(flow.version.updatedBy) &&
-      flow.version.updatedBy !== userId &&
-      currentTime.diff(dayjs(flow.version.updated), 'minute') <= 1
-        ) {
-            return reply.status(StatusCodes.CONFLICT).send()
-        }
-        // END EE
+        const userId = await extractUserIdFromPrincipal(request.principal)
+        await assertThatFlowIsNotBeingUsed(flow, userId)
+        eventsHooks.get().send(request, {
+            action: ApplicationEventName.UPDATED_FLOW,
+            request: request.body,
+            flow,
+            userId: request.principal.id,
+        })
 
         const updatedFlow = await flowService.update({
             id: request.params.id,
@@ -120,6 +119,26 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         })
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
+}
+
+async function assertThatFlowIsNotBeingUsed(
+    flow: PopulatedFlow,
+    userId: string,
+): Promise<void> {
+    const currentTime = dayjs()
+    if (
+        !isNil(flow.version.updatedBy) &&
+        flow.version.updatedBy !== userId &&
+        currentTime.diff(dayjs(flow.version.updated), 'minute') <= 1
+    ) {
+        throw new ActivepiecesError({
+            code: ErrorCode.FLOW_IN_USE,
+            params: {
+                flowVersionId: flow.version.id,
+                message: 'Flow is being used by another user in the last minute. Please try again later.',
+            },
+        })
+    }
 }
 
 async function extractUserIdFromPrincipal(
