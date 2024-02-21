@@ -103,6 +103,7 @@ export const askOpenAI = createAction({
     }),
     memoryKey: Property.ShortText({
       displayName: 'Memory Key',
+      validators: [Validators.maxLength(128)],
       description:
         'A memory key that will keep the chat history shared across runs and flows. Keep it empty to leave ChatGPT without memory of previous messages.',
       required: false,

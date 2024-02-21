@@ -1,7 +1,10 @@
 import { Static, Type } from '@sinclair/typebox'
+import { STORE_KEY_MAX_LENGTH } from '../store-entry'
 
 export const PutStoreEntryRequest = Type.Object({
-    key: Type.String({}),
+    key: Type.String({
+        maxLength: STORE_KEY_MAX_LENGTH,
+    }),
     value: Type.Any({}),
 })
 

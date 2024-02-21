@@ -52,6 +52,7 @@ export * from './lib/flows/dto/list-flows-request'
 export * from './lib/project/project'
 export { FileResponseInterface } from './lib/forms'
 import { TypeSystem } from '@sinclair/typebox/system'
+export { STORE_KEY_MAX_LENGTH } from './lib/store-entry/store-entry'
 export { RetryFlowRequestBody } from './lib/flow-run/test-flow-run-request'
 export * from './lib/flows/dto/flow-template-request'
 // Look at https://github.com/sinclairzx81/typebox/issues/350
