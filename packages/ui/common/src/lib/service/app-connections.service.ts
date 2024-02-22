@@ -15,7 +15,7 @@ import { environment } from '../environments/environment';
   providedIn: 'root',
 })
 export class AppConnectionsService {
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
   private _newConnectionCreated$: Subject<boolean> = new Subject();
   upsert(
     request: UpsertAppConnectionRequestBody
