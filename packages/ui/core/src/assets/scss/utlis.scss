@@ -32,13 +32,16 @@
   border: 1px solid #ced4da;
   border-radius: 0.25rem;
   box-shadow: none;
+
   &:hover,
   &:focus {
     outline: black solid 0px;
   }
 }
+
 input.form-control {
   padding-bottom: 0.3125rem;
+
   &:disabled {
     color: rgba(0, 0, 0, 0.38);
   }
@@ -47,8 +50,9 @@ input.form-control {
 a {
   @apply ap-underline ap-text-blue-link ap-typography-caption;
 }
+
 a.no-link-styling {
- all:unset;
+  all: unset;
 }
 
 
@@ -69,19 +73,22 @@ ap-markdown {
     height: 8px;
   }
 }
+
 .dark-spinner {
   border-color: $title;
   border-right-color: transparent;
 }
 
-ap-markdown{
+ap-markdown {
+
   ul,
   ol {
     margin-top: 1em;
     margin-bottom: 1em;
     margin-left: 40px;
     padding-left: 0;
-    list-style-type: auto !important; /* for unordered lists */
+    list-style-type: auto !important;
+    /* for unordered lists */
   }
 
   li {
@@ -91,13 +98,14 @@ ap-markdown{
   }
 }
 
-.ap-markdown 
-{
+.ap-markdown {
+
   ul,
   ol {
-    
+
     padding-left: 0;
-    list-style-type: auto !important; /* for unordered lists */
+    list-style-type: auto !important;
+    /* for unordered lists */
   }
 
   li {
@@ -106,6 +114,7 @@ ap-markdown{
     list-style: inherit;
   }
 }
+
 .thin-scrollbars {
   &::-webkit-scrollbar {
     width: 16px;
@@ -118,6 +127,7 @@ ap-markdown{
     border-radius: 40px;
     scrollbar-width: thin;
   }
+
   &::-webkit-scrollbar-thumb:hover {
     background: rgba(179, 179, 179, 0.7);
     background-clip: content-box;
@@ -133,54 +143,51 @@ ap-markdown{
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
 }
-.ap-line-clamp-1
-{
+
+.ap-line-clamp-1 {
   overflow: hidden;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
 }
 
-app-templates-dialog 
-{
-  .thin-scrollbars.black-scrollbars
-  {
-    &::-webkit-scrollbar {
-      width: 16px;
-    }
-  
-    &::-webkit-scrollbar-thumb {
-      background: $body;
-      background-clip: content-box;
-      border: 5px solid transparent;
-      border-radius: 40px;
-      scrollbar-width: thin;
-    }
-    &::-webkit-scrollbar-thumb:hover {
-      background: $body;
-      background-clip: content-box;
-      border: 5px solid transparent;
-      border-radius: 40px;
-      scrollbar-width: thin;
-    }
+
+.thin-scrollbars.black-scrollbars {
+  &::-webkit-scrollbar {
+    width: 16px;
   }
-  mat-tab-header{
+
+  &::-webkit-scrollbar-thumb {
+    background: $body;
+    background-clip: content-box;
+    border: 5px solid transparent;
+    border-radius: 40px;
+    scrollbar-width: thin;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: $body;
+    background-clip: content-box;
+    border: 5px solid transparent;
+    border-radius: 40px;
+    scrollbar-width: thin;
+  }
+
+  mat-tab-header {
     border-bottom-color: $outline;
     border-style: solid;
     border-bottom-width: 1px;
-    .mat-mdc-tab-labels
-    {
+
+    .mat-mdc-tab-labels {
       padding-left: .75rem;
     }
-  
-    .mdc-tab
-    {
-      fill:var(--mat-tab-header-inactive-label-text-color)
+
+    .mdc-tab {
+      fill: var(--mat-tab-header-inactive-label-text-color)
     }
-    .mdc-tab--active
-    {
-      fill:var(--mat-tab-header-active-label-text-color);
+
+    .mdc-tab--active {
+      fill: var(--mat-tab-header-active-label-text-color);
     }
   }
-  
-}
 
+}

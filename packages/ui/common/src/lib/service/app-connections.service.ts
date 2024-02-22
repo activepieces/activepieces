@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subject, tap } from 'rxjs';
 import {
   SeekPage,
   AppConnectionId,
@@ -16,14 +16,16 @@ import { environment } from '../environments/environment';
 })
 export class AppConnectionsService {
   constructor(private http: HttpClient) {}
-
+  private _newConnectionCreated$: Subject<boolean> = new Subject();
   upsert(
     request: UpsertAppConnectionRequestBody
   ): Observable<AppConnectionWithoutSensitiveData> {
-    return this.http.post<AppConnectionWithoutSensitiveData>(
-      environment.apiUrl + '/app-connections',
-      request
-    );
+    return this.http
+      .post<AppConnectionWithoutSensitiveData>(
+        environment.apiUrl + '/app-connections',
+        request
+      )
+      .pipe(tap(() => this._newConnectionCreated$.next(true)));
   }
 
   list(
@@ -55,5 +57,8 @@ export class AppConnectionsService {
     return this.http.delete<void>(
       environment.apiUrl + '/app-connections/' + id
     );
+  }
+  get newConnectionCreated$() {
+    return this._newConnectionCreated$.asObservable();
   }
 }

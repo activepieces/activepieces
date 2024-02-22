@@ -10,6 +10,7 @@ import {
   BehaviorSubject,
   forkJoin,
   map,
+  merge,
 } from 'rxjs';
 import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 import {
@@ -56,7 +57,10 @@ export class ConnectionsTableDataSource extends DataSource<any> {
       project: this.store
         .select(ProjectSelectors.selectCurrentProject)
         .pipe(take(1)),
-      refresh: this.refresh$,
+      refresh: merge(
+        this.refresh$,
+        this.connectionsService.newConnectionCreated$
+      ),
     }).pipe(
       tap(() => {
         this.isLoading$.next(true);
