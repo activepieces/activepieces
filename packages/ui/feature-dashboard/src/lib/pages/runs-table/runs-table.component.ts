@@ -103,15 +103,15 @@ export class RunsTableComponent implements OnInit {
         STATUS_QUERY_PARAM
       ) as ExecutionOutputStatus) || this.allOptionValue
     );
+    const startDate = this.activatedRoute.snapshot.queryParamMap.get(
+      DATE_RANGE_START_QUERY_PARAM
+    );
+    const endDate = this.activatedRoute.snapshot.queryParamMap.get(
+      DATE_RANGE_END_QUERY_PARAM
+    );
     this.dateFormGroup.setValue({
-      start:
-        this.activatedRoute.snapshot.queryParamMap.get(
-          DATE_RANGE_START_QUERY_PARAM
-        ) ?? null,
-      end:
-        this.activatedRoute.snapshot.queryParamMap.get(
-          DATE_RANGE_END_QUERY_PARAM
-        ) ?? null,
+      start: startDate ? new Date(startDate) : null,
+      end: endDate ? new Date(endDate) : null,
     });
   }
 

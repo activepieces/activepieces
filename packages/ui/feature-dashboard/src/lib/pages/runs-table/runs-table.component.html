@@ -12,14 +12,18 @@
           <mat-option [value]="ExecutionOutputStatus.PAUSED" i18n>Paused</mat-option>
         </mat-select>
       </mat-form-field>
-      <mat-form-field class="!ap-min-w-[15.625rem]" *ngIf="flows$ | async as flows">
-        <mat-label i18n>Filter by flow</mat-label>
+      <mat-form-field class="!ap-min-w-[15.625rem]">
+        <mat-label i18n> Filter by flow</mat-label>
         <mat-select [formControl]="flowFilterControl" (closed)="searchControl.setValue('')">
           <mat-select-trigger>
             <div class="ap-mx-3">
-              {{ selectedFlowName$ | async }}
+              <ng-container *ngIf="selectedFlowName$ | async as flowName; else allLabel ">
+                {{flowName}}
+              </ng-container>
+              <ng-template #allLabel>
+                <span i18n>All</span>
+              </ng-template>
             </div>
-
           </mat-select-trigger>
           <div>
             <mat-form-field subscriptSizing="dynamic" appearance="fill" (click)="$event.stopPropagation();"
@@ -31,21 +35,24 @@
           </div>
 
           <mat-option [value]="allOptionValue" i18n>All</mat-option>
-          <mat-option *ngFor="let opt of (flows | dropdownSearch:searchControl | async)" [value]="opt.value">
-            {{opt.label}}
-          </mat-option>
-          <!-- you need them to stay in html so the mat-select-trigger renders, otherwise they disappear while searching -->
-          <mat-option *ngFor="let opt of (flows)" class="!ap-hidden" [value]="opt.value">
-            {{opt.label}}
-          </mat-option>
+          <ng-container *ngIf="flows$ | async as flows; else loading">
+            <mat-option *ngFor="let opt of (flows | dropdownSearch:searchControl | async)" [value]="opt.value">
+              {{opt.label}}
+            </mat-option>
+            <mat-option *ngFor="let opt of flows" class="!ap-hidden" [value]="opt.value">
+              {{opt.label}}
+            </mat-option></ng-container>
+            <ng-template #loading>
+              <mat-option [disabled]="true">Loading...</mat-option>
+            </ng-template>
         </mat-select>
       </mat-form-field>
       <mat-form-field>
         <mat-label i18n>Filter by date</mat-label>
-        <mat-date-range-input [formGroup]="dateFormGroup" [rangePicker]="runsPicker" [comparisonStart]="dateFormGroup.controls.start.value" 
-          [comparisonEnd]="dateFormGroup.controls.end.value">>
-          <input matStartDate placeholder="Start date" [formControl]="dateFormGroup.controls.start" i18n>
-          <input matEndDate placeholder="End date" [formControl]="dateFormGroup.controls.end" i18n>
+        <mat-date-range-input #picker (openedStream)="picker._updateFocus('mouse')" [formGroup]="dateFormGroup" [rangePicker]="runsPicker" [comparisonStart]="dateFormGroup.controls.start.value" 
+          [comparisonEnd]="dateFormGroup.controls.end.value">
+          <input matStartDate placeholder="Start date" [formControl]="dateFormGroup.controls.start" i18n-placeholder>
+          <input matEndDate placeholder="End date" [formControl]="dateFormGroup.controls.end" i18n-placeholder>
         </mat-date-range-input>
         <mat-datepicker-toggle matIconSuffix [for]="runsPicker"></mat-datepicker-toggle>
         <mat-date-range-picker #runsPicker></mat-date-range-picker>
