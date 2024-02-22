@@ -2,6 +2,7 @@ import {
     EndpointScope,
     PrincipalType,
     ProjectType,
+    SERVICE_KEY_SECURITY_OPENAPI,
     SeekPage,
     assertNotNullOrUndefined,
 } from '@activepieces/shared'
@@ -44,7 +45,7 @@ export const platformProjectController: FastifyPluginCallbackTypebox = (
             planLimits: DEFAULT_PLATFORM_PLAN,
         })
         const projectWithUsage =
-      await platformProjectService.getWithPlanAndUsageOrThrow(project.id)
+            await platformProjectService.getWithPlanAndUsageOrThrow(project.id)
         await reply.status(StatusCodes.CREATED).send(projectWithUsage)
     })
 
@@ -84,6 +85,7 @@ const UpdateProjectRequest = {
     },
     schema: {
         tags: ['projects'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: Type.Object({
             id: Type.String(),
         }),
@@ -104,6 +106,7 @@ const CreateProjectRequest = {
         response: {
             [StatusCodes.CREATED]: ProjectWithUsageAndPlanResponse,
         },
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         body: CreatePlatformProjectRequest,
     },
 }
@@ -121,5 +124,6 @@ const ListProjectRequestForApiKey = {
             externalId: Type.Optional(Type.String()),
         }),
         tags: ['projects'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
 }

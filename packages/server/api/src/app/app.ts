@@ -128,6 +128,13 @@ export const setupApp = async (): Promise<FastifyInstance> => {
                 },
             ],
             components: {
+                securitySchemes: {
+                    apiKey: {
+                        type: 'http',
+                        description: 'Use your api key generated from the admin console',
+                        scheme: 'bearer',
+                    },
+                },
                 schemas: {
                     'project-member': ProjectMember,
                     project: ProjectWithUsageAndPlanResponse,
@@ -356,16 +363,16 @@ const validateEnvPropsOnStartup = async (): Promise<void> => {
     )
     const executionMode = system.get<ExecutionMode>(SystemProp.EXECUTION_MODE)
     const signedUpEnabled =
-    system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
+        system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
     const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
     const environment = system.get(SystemProp.ENVIRONMENT)
     await loadEncryptionKey(queueMode)
 
     if (
         executionMode === ExecutionMode.UNSANDBOXED &&
-    codeSandboxType !== CodeSandboxType.V8_ISOLATE &&
-    signedUpEnabled &&
-    environment === ApEnvironment.PRODUCTION
+        codeSandboxType !== CodeSandboxType.V8_ISOLATE &&
+        signedUpEnabled &&
+        environment === ApEnvironment.PRODUCTION
     ) {
         throw new ActivepiecesError(
             {

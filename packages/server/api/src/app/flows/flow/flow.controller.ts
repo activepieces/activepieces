@@ -10,6 +10,7 @@ import {
     PopulatedFlow,
     Principal,
     PrincipalType,
+    SERVICE_KEY_SECURITY_OPENAPI,
     SeekPage,
 } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
@@ -159,6 +160,7 @@ const CreateFlowRequestOptions = {
     schema: {
         tags: ['flows'],
         description: 'Create a flow',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         body: CreateFlowRequest,
         response: {
             [StatusCodes.CREATED]: PopulatedFlow,
@@ -170,6 +172,7 @@ const UpdateFlowRequestOptions = {
     schema: {
         tags: ['flows'],
         description: 'Apply an operation to a flow',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         body: FlowOperationRequest,
         params: Type.Object({
             id: ApId,
@@ -184,6 +187,7 @@ const ListFlowsRequestOptions = {
     schema: {
         tags: ['flows'],
         description: 'List flows',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         querystring: ListFlowsRequest,
         response: {
             [StatusCodes.OK]: SeekPage(PopulatedFlow),
@@ -214,6 +218,7 @@ const GetFlowRequestOptions = {
     },
     schema: {
         tags: ['flows'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Get a flow by id',
         params: Type.Object({
             id: ApId,
@@ -231,6 +236,7 @@ const DeleteFlowRequestOptions = {
     },
     schema: {
         tags: ['flows'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Delete a flow',
         params: Type.Object({
             id: ApId,

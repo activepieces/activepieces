@@ -3,7 +3,7 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { gitRepoService } from './git-repo.service'
-import { PrincipalType, SeekPage } from '@activepieces/shared'
+import { PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, SeekPage } from '@activepieces/shared'
 import {
     ConfigureRepoRequest,
     GitRepoWithoutSenestiveData,
@@ -77,6 +77,7 @@ const PullRepoRequestSchema = {
             id: Type.String(),
         }),
         tags: ['git-repo'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         response: {
             [StatusCodes.NO_CONTENT]: Type.Undefined(),
         },

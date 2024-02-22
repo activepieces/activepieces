@@ -10,6 +10,7 @@ import {
     ActivepiecesError,
     ErrorCode,
     PrincipalType,
+    SERVICE_KEY_SECURITY_OPENAPI,
     assertNotNullOrUndefined,
     isNil,
 } from '@activepieces/shared'
@@ -103,6 +104,7 @@ const ListProjectMembersRequestQueryOptions = {
     },
     schema: {
         tags: ['project-members'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         querystring: ListProjectMembersRequestQuery,
     },
 }
@@ -113,6 +115,7 @@ const AddProjectMemberRequest = {
     },
     schema: {
         tags: ['project-members'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         body: AddProjectMemberRequestBody,
         response: {
             [StatusCodes.CREATED]: ProjectMember,
@@ -140,6 +143,7 @@ const DeleteProjectMemberRequest = {
     },
     schema: {
         tags: ['project-members'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         response: {
             [StatusCodes.NO_CONTENT]: Type.Undefined(),
         },
