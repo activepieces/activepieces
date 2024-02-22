@@ -65,6 +65,7 @@ export class SidenavRoutesListComponent implements OnInit {
       route: 'platform/users',
       showInSideNav$: of(true),
     },
+
     {
       icon: 'assets/img/custom/dashboard/settings.svg',
       caption: $localize`Settings`,
@@ -110,6 +111,12 @@ export class SidenavRoutesListComponent implements OnInit {
         icon: 'assets/img/custom/dashboard/members.svg',
         caption: $localize`Team`,
         route: 'team',
+        showInSideNav$: of(true),
+      },
+      {
+        icon: 'assets/img/custom/dashboard/activity.svg',
+        caption: $localize`Activity`,
+        route: '/activity',
         showInSideNav$: of(true),
       },
       {
