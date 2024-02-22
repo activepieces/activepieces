@@ -14,6 +14,323 @@ Semantic versioning is a standardized way of versioning software projects. It us
 
 Here's the revised text with improved grammar and spelling:
 
+### 22/2/2024
+
+**✨ Exciting New Features**
+
+* feat: show suggested triggers/actions while searching (#3955) @AbdulTheActivePiecer
+
+**🧩 Pieces**
+
+* fix(imap):  deleted emails issue after publish and revamped new email trigger using new library  (#3984) @kishanprmr
+* fix(azure-openai): use chat completions instead of completions (#3980) @MoShizzle
+* feat(azure-openai): ask GPT action (#3897) @MoShizzle
+* feat(forms): rename interfaces to forms (#3967) @MoShizzle
+* feat(wootric): create survey (#3775) @Verlich
+* feat(quickzu): order created/updated trigger and 15 actions (#3960) @kishanprmr
+* feat(airtable): add table view option for triggers (#3962) @kishanprmr
+* feat(dust): create conversation action  (#3940) @AdamSelene
+
+**🛠️ Piece Framework**
+
+* feat: store service operations are now atomic  (#3870) @MarceloRGonc
+
+**🐞 Bug Fixes**
+
+* fix: remove initial route from embedding sdk (#3988) @abuaboud
+* chore: enforce limit on storage key to be maximum 128 (#3979) @abuaboud
+* feat(audit-log): fix pagination and add update flow events  (#3954) @abuaboud
+* fix: show blog suggestion after imporitng templates in ee (#3958) @AbdulTheActivePiecer
+* fix(engine): set flow run status to `FAILED` if resolving inputs fails (#3959) @khaledmashaly
+* fix: panning offset is wrong when zoom out (#3947) @abuaboud
+* fix: force logout old tokens (#3946) @abuaboud
+* fix: remove duplicate sample data in webhook trigger (#3945) @abuaboud
+
+**🎨 Enhancements & Polish**
+
+* chore: show piece name in dialog title when creating a new connection (#3982) @AbdulTheActivePiecer
+* fix: http body for non-json requests (#3916) @JanHolger
+* fix: resize duplicate/delete step buttons (#3965) @AbdulTheActivePiecer
+* feat: allow users to share their flows on enterprise edition (#3961) @AbdulTheActivePiecer
+* fix: add animation back to panning  (#3956) @abuaboud
+
+**📚 Documentation**
+
+* docs: add handbook (#3973) @abuaboud
+* docs: add Verlich as a contributor for plugin (#3963) @allcontributors
+
+**🧹 Maintenance & Dev Experience**
+
+* refactor: activity limits (#3981) @khaledmashaly
+* chore(deps): bump ip from 2.0.0 to 2.0.1 (#3970) @dependabot
+* refactor(engine): clean connection service (#3953) @khaledmashaly
+
+**🖥️ API Changes**
+
+* feat: Activity APIs (#3972) @khaledmashaly
+
+**Thanks ❤️**
+@AbdulTheActivePiecer, @AdamSelene, @JanHolger, @MarceloRGonc, @MoShizzle, @Verlich, @abuaboud, @allcontributors, @allcontributors[bot], @dependabot, @dependabot[bot], @khaledmashaly, @kishanprmr and @wise-introvert
+
+
+### 16/2/2024
+
+**🧩 Pieces**
+
+* fix(GenerateBanners): remove deprecated fields (#3939) @tpatel
+
+**🐞 Bug Fixes**
+
+* fix: duration for the steps (#3941) @abuaboud
+
+**🎨 Enhancements & Polish**
+
+* fix: panning animation (#3943) @abuaboud
+
+**Thanks ❤️**
+@abuaboud and @tpatel
+
+
+### 15/2/2024
+
+**✨ Exciting New Features**
+
+* feat: add fit to screen and reset zoom buttons to builder (#3932) @AbdulTheActivePiecer
+
+**🧩 Pieces**
+
+* feat(linkedin): add custom api call (#3928) @abuaboud
+
+**🐞 Bug Fixes**
+
+* chore(api): fix test strategy migration for sqlite (#3935) @khaledmashaly
+* fix: flow execution durations (#3908) @khaledmashaly
+
+**🧹 Maintenance & Dev Experience**
+
+* chore: make request id in pause webhook a path param (#3934) @abuaboud
+* chore: split backend into server/api, server/shared and server/worker (#3931) @abuaboud
+
+**Thanks ❤️**
+@AbdulTheActivePiecer, @abuaboud and @khaledmashaly
+
+
+### 14/2/2024
+
+**Breaking Change:**
+https://community.activepieces.com/t/action-required-breaking-changes-approval-piece-on-0-20-0/3063 
+
+**✨ Exciting New Features**
+
+* feat: audit logs (#3880) @abuaboud
+* feat(interfaces): add simple form support with file and text input (#3816) @MoShizzle
+* feat: date range filter in runs page (#3860) @MoShizzle
+
+**🧩 Pieces**
+
+* feat(metabase): Get Question Action (#3893) @AdamSelene
+* feat(whatsable): send message action (#3906) @abuaboud
+* feat(snowflake): add run query action (#3878) @AdamSelene
+* feat(vtiger): query records action and element selection field for search record action (#3829) @kanarelo
+* feat(mailerlite): subscriber created,subscriber unsubscribed and subscriber added to group triggers (#3830) @kanarelo
+* fix: salesforce authentication popup (#3868) @abuaboud
+* feat(branch): add new condition "(number) is equal to" (#3828) @pfernandez98
+* feat(google-sheets): new row added instant trigger (BETA) (#3749) @kishanprmr
+* feat(image-helper): crop image / get metadata / resize image / rotate image actions (#3813) @AbdullahBitar
+* feat(odoo): get contacts / create contact / create comapany action (#3802) @mariomeyer
+* feat(discord): create channel and delete channel actions (#3819) @karimkhaleel
+* feat(google-calendar): add event details for create event action (#3814) @pfernandez98
+* feat(openai): allow custom base url + azure openai support (#3818) @MoShizzle
+
+**🛠️ Piece Framework**
+
+* refactor: allow implementation of test function in webhook trigger (#3791) @khaledmashaly
+
+**🐞 Bug Fixes**
+
+* fix: allow multiple approvals in same flow (#3887) @abuaboud
+* fix(pieces-search): weighted search, sorting by name (#3925) @abuaboud
+* fix(smtp): connection timeout (#3922) @MoShizzle
+* fix: build webhookUrl with flowId instead of versionId (#3918) @MoShizzle
+* fix: show full step name in tooltip when truncated in the builder (#3913) @AbdulTheActivePiecer
+* fix: resolve token url from props in oauth2 (#3909) @abuaboud
+* fix: notify on failed runs toggle wasn't working (#3910) @AbdulTheActivePiecer
+* fix: wrrong payload retry latest version (#3869) @abuaboud
+* fix: show delete/duplicate actions on hover for steps inside the false branch when the true branch is empty (#3866) @AbdulTheActivePiecer
+* fix: disappearing test data for piece triggers (#3861) @khaledmashaly
+* fix(ui): allow empty arrays for non required array props (#3857) @khaledmashaly
+* fix(sso): show correct url for platform on cloud edition  (#3850) @abuaboud
+* fix: only check email auth if provider is email (#3844) @abuaboud
+* fix: add categories db migration (#3843) @abuaboud
+* fix(api): bypass project authz for webhook endpoints (#3842) @khaledmashaly
+* fix: install ssh client for git (#3836) @abuaboud
+* fix: cloud oauth2 toggle in admin console (#3832) @abuaboud
+
+**🎨 Enhancements & Polish**
+
+* feat: add pagination to project members table in the admin console (#3924) @AbdulTheActivePiecer
+* fix: fixed email autofill issue (#3921) @AbdullahBitar
+* chore: disable spellcheck on email invite field (#3919) @AdamSelene
+* feat: hide error handling options from helper pieces (#3899) @MoShizzle
+* feat: allow panning in builder canvas on left click holding and moving (#3896) @AbdulTheActivePiecer
+* feat: add telemetry to interfaces and show error message for inputs when they required and not filled (#3886) @AbdulTheActivePiecer
+* fix: decrease steps visual space in builder (#3884) @AbdulTheActivePiecer
+* feat: decrease spacing between inputs in the builder and their sizes in all of the app. (#3882) @AbdulTheActivePiecer
+* feat: add support for app webhooks in self hosted (#3872) @abuaboud
+* fix: improve sorting of locales in locales list (#3867) @AbdulTheActivePiecer
+* fix: hide admin console for platform members (#3851) @abuaboud
+* fix: slice large arrays to prevent data to insert to crash (#3820) @AbdulTheActivePiecer
+
+**📚 Documentation**
+
+* docs: update execution_mode's default value to match the code (#3912) @wise-introvert
+* docs: add AdamSelene as a contributor for plugin (#3879) @allcontributors
+* docs: add CPonchet as a contributor for bug (#3859) @allcontributors
+* docs: add mariomeyer as a contributor for plugin (#3827) @allcontributors
+* docs: add karimkhaleel as a contributor for plugin (#3826) @allcontributors
+
+**🧹 Maintenance & Dev Experience**
+
+* chore: security upgrade sqlite3 from 5.1.6 to 5.1.7 (#3888) @abuaboud
+* ci: automate deployment  (#3898) @abuaboud
+* refactor(backend): clean code builder (#3885) @khaledmashaly
+* chore: bump package-lock (#3834) @abuaboud
+* chore: turn off stats json to reduce docker image size (#3835) @abuaboud
+
+**Thanks ❤️**
+@AbdulTheActivePiecer, @AbdullahBitar, @AdamSelene, @MoShizzle, @abuaboud, @allcontributors, @allcontributors[bot], @ashrafsamhouri, @kanarelo, @karimkhaleel, @khaledmashaly, @kishanprmr, @mariomeyer, @pfernandez98, @snyk-bot and @wise-introvert
+
+
+### 4/2/2024
+
+**✨ Exciting New Features**
+
+* feat: code writer now adds packages (#3817) @MoShizzle
+* feat: custom api call action for all pieces (#3787) @MoShizzle
+* feat: show previous runs inside the builder, and make tables restore viewed data depending on parameters in the URL (#3773) @AbdulTheActivePiecer
+* feat: realtime flow run feedback via websockets (#3725) @MoShizzle
+* feat: add user identity to the commit on push / multiple project support in same repo / push single flow / document pull api (#3756) @abuaboud
+* feat: Add custom API calls for Google Sheets, Jira Cloud, LeadConnector, OpenAI, Shopify, Discord and Slack (#3736) @MoShizzle
+
+**🧩 Pieces**
+
+* feat(flowlu): add pipeline field for create opportunity action (#3792) @kishanprmr
+* feat(ninja-invoice): create invoice / create client action (#3772) @buttonsbond
+* fix(storage-piece): "Key <key> is not an array" error when using add-to-list action (#3760) @wise-introvert
+* feat(google-calendar): update event / delete event / custom api call action (#3757) @pfernandez98
+* fix(matomo): Ensure compatibility with v5 API (#3754) @joeworkman
+* feat(clickup): list tasks and list time entries action (#3752) @kanarelo
+* feat: add custom api call for clickup (#3750) @abuaboud
+* feat(heartbeat): create user action  (#3738) @kanarelo
+* feat(mautic): new contact,contcat updated, contact channel/company  subscription change triggers (#3729) @kanarelo
+* feat(crypto): hash to text action / generate random password action (#3741) @AbdullahBitar
+* chore: fix file names in csv parser (#3735) @abuaboud
+* fix(apitable): new record trigger / data source is now dropdown (#3724) @kishanprmr
+* fix(airtable): fix multilink field property type (#3733) @kishanprmr
+* fix(gmail): body type dropdown/ newline in place of <br> (#3716) @kishanprmr
+* feat(google-drive): enrich search for file or folder with more options (#3705) @kanarelo
+
+**🛠️ Piece Framework**
+
+* feat(pieces-framework): add auto renew webhook (#3755) @abuaboud
+* fix(piece-framework): add default processor for the text property (#3706) @kishanprmr
+* feat: add external id to execute property (#3739) @abuaboud
+* feat(piece-framework): support array of objects (#2960) @iam-dev0
+
+**🐞 Bug Fixes**
+
+* fix: multiple delays should work (#3803) @abuaboud
+* fix: remove stale runs (#3808) @abuaboud
+* fix: install git in docker (#3809) @abuaboud
+* fix: use test method in actions (#3797) @abuaboud
+* fix: notify on flow run fail toggle wasn't being turned back on (#3788) @AbdulTheActivePiecer
+* fix: provide updated token each time on web socket connect  (#3784) @abuaboud
+* fix: don't append extra slash after route in case of query params in client route changed event. (#3768) @AbdulTheActivePiecer
+* fix: show edit project button (#3765) @abuaboud
+* fix: use $ syntax instead of ? in database migration (#3758) @abuaboud
+* fix: reattach trigger payload when retrying on latest version (#3744) @MoShizzle
+* fix: loading custom archive platform pieces  (#3748) @abuaboud
+* fix: resolve variables in dynamic props (#3737) @abuaboud
+
+**🎨 Enhancements & Polish**
+
+* feat: add categories to community pieces (#3794) @kishanprmr
+* feat: add search & sorting for pieces in the api (#3799) @abuaboud
+* feat: added ability to move flow to folder from inside the builder (#3781) @AbdulTheActivePiecer
+* feat: while viewing a run, users have the choice to navigate to the flow itself (#3782) @AbdulTheActivePiecer
+* feat: enhanced the user experience for code writer with revamped interface (#3778) @AbdulTheActivePiecer
+* feat: set base url as default value in custom api call action (#3745) @MoShizzle
+* feat: adds import/export/rename/share actions to the flows table. (#3746) @AbdulTheActivePiecer
+* chore: add code assistant inside full screen editor and improve user experience inside generate code dialog (#3747) @AbdulTheActivePiecer
+* feat: add project switcher /add navigation from and to Admin console (#3691) @AbdulTheActivePiecer
+* feat: add project switcher and navigation buttons for (Admin Console) (#3726) @AbdulTheActivePiecer
+* feat(piece): allow install piece using api key (#3713) @abuaboud
+* refactor(engine): sandbox variable substitution (#3714) @khaledmashaly
+* chore: add search input for flows filter in runs table (#3715) @AbdulTheActivePiecer
+
+**📚 Documentation**
+
+* docs: create action / trigger tutorial based on gelato api  (#3805) @kishanprmr
+* docs: add AbdullahBitar as a contributor for plugin (#3742) @allcontributors
+* docs: fix broken links. Changes to links to point to new community folder (#3740) @kanarelo
+* docs: update platform docs (#3732) @abuaboud
+* docs: fixed typo in local.mdx (#3707) @zaaakher
+
+**🧹 Maintenance & Dev Experience**
+
+* chore: support postgres connection string (#3806) @abuaboud
+* [Snyk] Security upgrade mailparser from 3.6.5 to 3.6.7 (#3804) @abuaboud
+* chore(deps): bump nodemailer from 6.9.4 to 6.9.9 (#3801) @dependabot
+* fix: merge the docker into single image (#3780) @abuaboud
+* feat: allow to sync custom pieces folder to platform (#3783) @abuaboud
+* feat: authn rate limit (#3763) @khaledmashaly
+* chore: smooth the cobranding (#3770) @abuaboud
+* refactor(backend): conditionally bind dirs for isolate engine sandbox (#3762) @khaledmashaly
+* refactor: use a shared `isolated-vm` instance for all sandboxes (#3731) @khaledmashaly
+* refactor(piece-framework): split properties in multiple files and provide json schema. (#3712) @abuaboud
+* feat(cli): create trigger command (#3704) @kishanprmr
+
+**Thanks ❤️**
+@AbdulTheActivePiecer, @AbdullahBitar, @MoShizzle, @abuaboud, @allcontributors, @allcontributors[bot], @buttonsbond, @dependabot, @dependabot[bot], @iam-dev0, @joeworkman, @kanarelo, @khaledmashaly, @kishanprmr, @pfernandez98, @snyk-bot, @wise-introvert and @zaaakher
+
+
+### 19/1/2024
+
+**✨ Exciting New Features**
+
+* feat(engine): use V8's Isolate to sandbox code piece to work with unprivileged docker (#3667) @khaledmashaly
+* feat: arbitrary http request action (#3693) @MoShizzle
+
+**🧩 Pieces**
+
+* feat(google-drive): search for file / folder action (#3635) @kanarelo
+* feat(image-helper): convert image to base64 action (#3686) @pfernandez98
+* feat(clickup): add filter tasks based on criteria  (#3688) @kanarelo
+
+**🐞 Bug Fixes**
+
+* fix: specify maxRetriesPerRequest to null (#3699) @abuaboud
+* fix: show projects of newly invited users (#3696) @abuaboud
+
+**👩‍💻 Developer Experience**
+
+* chore: move pieces to community folder (#3632) @abuaboud
+* feat(cli): add create-action script (#3623) @zaaakher
+* feat(cli): create piece command  (#3689) @kishanprmr
+* fix: isolate mode with local file pieces (#3697) @abuaboud
+
+**Thanks ❤️**
+@MoShizzle, @abuaboud, @kanarelo, @khaledmashaly, @kishanprmr, @pfernandez98 and @zaaakher
+
+
+### 18/1/2024
+
+**🐞 Bug Fixes**
+
+* fix(engine): validate auth is no longer broken in sandboxed mode (#3690) @abuaboud
+
+**Thanks ❤️**
+@AbdulTheActivePiecer and @abuaboud
 
 ### 17/1/2024
 
