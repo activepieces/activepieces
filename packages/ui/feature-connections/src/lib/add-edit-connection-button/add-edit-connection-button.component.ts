@@ -121,7 +121,9 @@ export class AddEditConnectionButtonComponent {
     private pieceMetadataService: PieceMetadataService,
     private cd: ChangeDetectorRef,
     private billingService: BillingService
-  ) { }
+  ) {
+    //ignore
+  }
 
   buttonClicked() {
     this.dialogService.closeAll();
