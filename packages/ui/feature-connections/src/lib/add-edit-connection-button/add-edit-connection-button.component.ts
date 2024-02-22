@@ -121,9 +121,10 @@ export class AddEditConnectionButtonComponent {
     private pieceMetadataService: PieceMetadataService,
     private cd: ChangeDetectorRef,
     private billingService: BillingService
-  ) {}
+  ) { }
 
   buttonClicked() {
+    this.dialogService.closeAll();
     if (this.isEditConnectionButton) {
       this.editConnection();
     } else {

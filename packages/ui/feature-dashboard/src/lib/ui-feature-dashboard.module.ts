@@ -27,6 +27,8 @@ import { UiFeatureGitSyncModule } from '@activepieces/ui-feature-git-sync';
 import { UiFeatureFoldersStoreModule } from '@activepieces/ui/feature-folders-store';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { NewConnectionDialogComponent } from './components/dialogs/new-connection-dialog/new-connection-dialog.component';
+import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections';
 
 @NgModule({
   imports: [
@@ -44,6 +46,7 @@ import { MatNativeDateModule } from '@angular/material/core';
     UiFeatureGitSyncModule,
     MatDatepickerModule,
     MatNativeDateModule,
+    UiFeatureConnectionsModule
   ],
   declarations: [
     DashboardContainerComponent,
@@ -59,6 +62,7 @@ import { MatNativeDateModule } from '@angular/material/core';
     SyncProjectComponent,
     ProjectSwitcherComponent,
     RenameFlowDialogComponent,
+    NewConnectionDialogComponent,
   ],
 })
-export class UiFeatureDashboardModule {}
+export class UiFeatureDashboardModule { }
