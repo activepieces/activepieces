@@ -25,7 +25,6 @@ import {
   Subject,
   switchMap,
   take,
-  delay,
   tap,
 } from 'rxjs';
 import { RunsTableDataSource } from './runs-table.datasource';
@@ -125,7 +124,6 @@ export class RunsTableComponent implements OnInit {
         limit: 1000,
       })
       .pipe(
-        delay(55000),
         map((res) => {
           return res.data.map((flow) => {
             return {
