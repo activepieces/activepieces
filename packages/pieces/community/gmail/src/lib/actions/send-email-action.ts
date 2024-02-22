@@ -129,7 +129,6 @@ export const gmailSendEmailAction = createAction({
     }
 
     const mail: any = new MailComposer(mailOptions).compile();
-
     mail.keepBcc = true;
     const mailBody = await mail.build();
 
