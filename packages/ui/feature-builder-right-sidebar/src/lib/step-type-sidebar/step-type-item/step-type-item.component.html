@@ -28,7 +28,7 @@
         </div>
       </div>
   
-      <img *ngIf="!!!(loadingLogo$ | async)" @fadeIn class="type-logo" [src]="itemDetails.logoUrl" />
+      <img *ngIf="!!!(loadingLogo$ | async)" @fadeIn class="type-logo" [attr.alt]="itemDetails.name" [src]="itemDetails.logoUrl" />
     </div>
     <div class="ap-flex ap-flex-col ap-gap-2">
       <div>

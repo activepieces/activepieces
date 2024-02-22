@@ -166,7 +166,8 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
       core: coreItemsDetails$.pipe(take(1)),
     }).pipe(
       map((res) => {
-        return [...res.core, ...res.apps];
+        const items = [...res.core, ...res.apps];
+        return items.sort((a, b) => (a.name > b.name ? 1 : -1));
       })
     );
     this.tabsAndTheirLists.push({
