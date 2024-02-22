@@ -51,7 +51,7 @@ export class ConnectionsTableComponent implements OnInit {
     private authenticationService: AuthenticationService,
     private connectionService: AppConnectionsService,
     private dialogService: MatDialog
-  ) { }
+  ) {}
 
   ngOnInit(): void {
     this.dataSource = new ConnectionsTableDataSource(

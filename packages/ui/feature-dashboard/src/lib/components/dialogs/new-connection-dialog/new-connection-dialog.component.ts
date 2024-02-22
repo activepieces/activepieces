@@ -13,7 +13,7 @@ import {
   tap,
 } from 'rxjs';
 @Component({
-  selector: 'activepieces-new-connection-dialog',
+  selector: 'app-new-connection-dialog',
   templateUrl: './new-connection-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

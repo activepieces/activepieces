@@ -46,7 +46,7 @@ import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections
     UiFeatureGitSyncModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    UiFeatureConnectionsModule
+    UiFeatureConnectionsModule,
   ],
   declarations: [
     DashboardContainerComponent,
@@ -65,4 +65,4 @@ import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections
     NewConnectionDialogComponent,
   ],
 })
-export class UiFeatureDashboardModule { }
+export class UiFeatureDashboardModule {}
