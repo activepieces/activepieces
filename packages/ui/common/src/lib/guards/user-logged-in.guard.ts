@@ -39,7 +39,7 @@ export class UserLoggedIn {
     private platformService: PlatformService,
     private snackBar: MatSnackBar,
     private connectionsService: AppConnectionsService
-  ) { }
+  ) {}
 
   canActivate(): boolean | Observable<boolean> {
     const currentURL = window.location.href;
