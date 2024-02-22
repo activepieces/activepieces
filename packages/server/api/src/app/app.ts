@@ -100,6 +100,8 @@ import { auditEventModule } from './ee/audit-logs/audit-event-module'
 import { ExecutionMode, QueueMode, SystemProp, system } from 'server-shared'
 import { loadEncryptionKey } from './helper/encryption'
 import { activityModule } from './ee/activity/activity-module'
+import { redisSystemJob } from './ee/helper/redis-system-job'
+import { usageTrackerModule } from './ee/usage-tracker/usage-tracker-module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -322,6 +324,8 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
             await app.register(activityModule)
+            await redisSystemJob.init()
+            await app.register(usageTrackerModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
@@ -343,6 +347,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
 
     app.addHook('onClose', async () => {
         await flowQueueConsumer.close()
+        await redisSystemJob.close()
         await flowResponseWatcher.shutdown()
     })
 
