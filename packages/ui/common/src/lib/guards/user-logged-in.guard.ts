@@ -1,13 +1,26 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import {
+  AppConnectionsService,
   AuthenticationService,
   PlatformService,
   RedirectService,
 } from '../service';
 import { Store } from '@ngrx/store';
-import { ProjectActions, ProjectSelectors } from '../store';
-import { Observable, catchError, map, of, switchMap, tap } from 'rxjs';
+import {
+  ProjectActions,
+  ProjectSelectors,
+  appConnectionsActions,
+} from '../store';
+import {
+  Observable,
+  catchError,
+  forkJoin,
+  map,
+  of,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { ProjectService } from '../service/project.service';
 import { StatusCodes } from 'http-status-codes';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -24,7 +37,8 @@ export class UserLoggedIn {
     private store: Store,
     private projectService: ProjectService,
     private platformService: PlatformService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private connectionsService: AppConnectionsService
   ) {}
 
   canActivate(): boolean | Observable<boolean> {
@@ -51,17 +65,29 @@ export class UserLoggedIn {
         if (project) {
           return of(true);
         }
-        return this.projectService.list().pipe(
-          tap((projects) => {
+        const observables = {
+          projects: this.projectService.list(),
+          connections: this.connectionsService.list({
+            limit: 999999,
+            projectId: this.auth.getProjectId(),
+          }),
+        };
+        return forkJoin(observables).pipe(
+          tap(({ projects }) => {
             if (!projects || projects.length === 0) {
               console.error('No projects are assigned to the current user');
               this.auth.logout();
             }
           }),
-          switchMap((projects) => {
+          switchMap(({ projects, connections }) => {
             const platformId =
               projects.length > 0 ? projects[0].platformId : undefined;
             const currentProjectId = this.auth.getProjectId();
+            this.store.dispatch(
+              appConnectionsActions.loadInitial({
+                connections: connections.data,
+              })
+            );
 
             if (platformId) {
               return this.loadPlatformAndProjects({
@@ -70,7 +96,6 @@ export class UserLoggedIn {
                 currentProjectId,
               });
             }
-
             this.store.dispatch(
               ProjectActions.setProjects({
                 projects,

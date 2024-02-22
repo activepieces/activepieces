@@ -16,26 +16,33 @@ import {
   AuthenticationService,
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
+  PieceMetadataModelSummary,
 } from '@activepieces/ui/common';
 import { ConnectionsTableDataSource } from './connections-table.datasource';
 import { ApPaginatorComponent } from '@activepieces/ui/common';
 import { AppConnectionsService } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
+import { NewConnectionDialogComponent } from '../../components/dialogs/new-connection-dialog/new-connection-dialog.component';
+import { AddEditConnectionButtonComponent } from '@activepieces/ui/feature-connections';
 
 @Component({
   templateUrl: './connections-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConnectionsTableComponent implements OnInit {
+  @ViewChild(AddEditConnectionButtonComponent)
+  createConnectionButton!: AddEditConnectionButtonComponent;
   @ViewChild(ApPaginatorComponent, { static: true })
   paginator!: ApPaginatorComponent;
   connectionPage$: Observable<SeekPage<AppConnection>>;
   dataSource!: ConnectionsTableDataSource;
   title = $localize`Connections`;
+  newConnectionPiece?: PieceMetadataModelSummary;
+  newConnectionDialogClosed$?: Observable<PieceMetadataModelSummary>;
   displayedColumns = ['app', 'name', 'status', 'created', 'updated', 'action'];
   connectionDeleted$: Subject<boolean> = new Subject();
-  deleteConnectionDialogClosed$: Observable<void>;
+  deleteConnectionDialogClosed$?: Observable<void>;
   readonly AppConnectionStatus = AppConnectionStatus;
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -77,5 +84,18 @@ export class ConnectionsTableComponent implements OnInit {
         return void 0;
       })
     );
+  }
+  openNewConnectionDialog() {
+    this.newConnectionDialogClosed$ = this.dialogService
+      .open(NewConnectionDialogComponent)
+      .afterClosed()
+      .pipe(
+        tap((piece: PieceMetadataModelSummary) => {
+          this.newConnectionPiece = piece;
+          setTimeout(() => {
+            this.createConnectionButton.buttonClicked();
+          });
+        })
+      );
   }
 }

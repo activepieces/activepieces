@@ -1,0 +1,40 @@
+<div
+    class="ap-border-b ap-border-solid ap-border-outline ap-justify-between ap-items-center ap-flex ap-typography-headline-6  ap-px-6">
+    <span i18n>New Connection</span>
+    <ap-icon-button tooltipText="Close" iconFilename="close.svg" mat-dialog-close></ap-icon-button>
+</div>
+<div class="ap-flex">
+    <mat-dialog-content class="!ap-flex ap-h-[705px] ap-w-[1100px] ap-gap-2 ap-p-0">
+        <div class="ap-bg-[#F0F1F3] ap-grow ap-overflow-y-auto  thin-scrollbars black-scrollbars ">
+            <div class="ap-p-3 ap-sticky ap-top-0 ap-z-50  ap-bg-[#F0F1F3]    ap-flex ap-items-center">
+                <mat-form-field class="ap-grow" appearance="outline" subscriptSizing="dynamic">
+                    <mat-icon matPrefix color="body-icon" svgIcon="search" class="!ap-w-[18px] !ap-h-[18px]"></mat-icon>
+                    <input cdkFocusInitial #searchInput [formControl]="searchControl" matInput
+                        placeholder="Search Pieces" i18n-placeholder autocomplete="off">
+                </mat-form-field>
+
+            </div>
+            <div class="ap-flex  ap-pl-3 ap-gap-4 ap-flex-wrap" [class.ap-items-center]="(loading$ | async)"
+                [class.ap-justify-center]="(loading$ | async)">
+
+                <ng-container *ngIf="(loading$ | async) === false">
+                    <ng-container *ngIf="pieces$ | async as pieces">
+                        <div *ngFor="let piece of pieces" (click)="openCreateConnectionDialog(piece)"
+                            class="ap-flex ap-items-center ap-gap-2 ap-justify-center ap-flex-col ap-border ap-border-outline ap-h-[241px] ap-w-[246px] ap-rounded ap-bg-white ap-rounded-lg ap-cursor-pointer ap-transition-colors hover:ap-border-primary hover:ap-bg-primary-light ">
+                            <img class="ap-w-[40px] ap-h-[40px] ap-object-contain" [src]="piece.logoUrl">
+                            <div class="ap-typography-subtitle-1" i18n>{{piece.displayName}}</div>
+                        </div>
+
+                    </ng-container>
+
+                </ng-container>
+
+                <ap-loading-icon *ngIf="loading$ | async" [outlineLoader]="false" [whiteLoader]="false" height="40px"
+                    width="40px">
+                </ap-loading-icon>
+            </div>
+        </div>
+    </mat-dialog-content>
+</div>
+
+<ng-container *ngIf="pieces$ | async"></ng-container>
