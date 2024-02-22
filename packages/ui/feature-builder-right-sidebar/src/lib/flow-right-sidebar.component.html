@@ -6,13 +6,16 @@
 
 
   <ng-container *ngIf="rightSidebarType === sidebarType.EDIT_STEP">
-    <div class="ap-relative ap-h-full ap-overflow-y-auto thin-scrollbars" #editStepSection [class.top-resizer-section]="
+    <div class="ap-h-full " #editStepSection [class.top-resizer-section]="
       (viewMode$ | async) === ViewModeEnum.BUILDING" [class.ap-transition-all]="animateSectionsHeightChange">
-      <app-edit-step-sidebar>
-      </app-edit-step-sidebar>
+      <div [class.!ap-h-full]="!!!(currentStepPieceVersion$|async)"   class="ap-h-[calc(100%-1.875rem)]">
+        <app-edit-step-sidebar>
+        </app-edit-step-sidebar>
+      </div>
+    
       <div *ngIf="currentStepPieceVersion$ | async as result"
-        class="ap-left-[0px] ap-bottom-[0px] ap-bg-white ap-body-2 !ap-text-description ap-w-full ap-px-4 ap-py-1 ap-z-40 ap-flex "
-        [class.ap-absolute]="!isOverflown(editStepSection)">
+        class="ap-bg-white ap-body-2 !ap-text-description ap-w-full ap-px-4 ap-py-1 ap-z-40 ap-flex "
+        >
 
         <ng-container *ngIf="showDocs$ | async; else showLink">
           <a href="https://activepieces.com/docs/developers/piece-reference/piece-versioning" target="_blank"

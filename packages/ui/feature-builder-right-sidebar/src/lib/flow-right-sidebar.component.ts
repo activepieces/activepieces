@@ -26,7 +26,6 @@ import {
 import { forkJoin } from 'rxjs';
 import {
   TestStepService,
-  isOverflown,
   FlagService,
   FlowBuilderService,
 } from '@activepieces/ui/common';
@@ -42,7 +41,6 @@ import {
   styleUrls: ['./flow-right-sidebar.component.scss'],
 })
 export class FlowRightSidebarComponent implements OnInit {
-  isOverflown = isOverflown;
   ActionType = ActionType;
   TriggerType = TriggerType;
   rightSidebarType$: Observable<RightSideBarType>;
