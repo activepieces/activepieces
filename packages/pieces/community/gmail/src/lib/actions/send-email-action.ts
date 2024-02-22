@@ -1,14 +1,14 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  HttpRequest,
-  HttpMethod,
   AuthenticationType,
   httpClient,
+  HttpMethod,
+  HttpRequest,
 } from '@activepieces/pieces-common';
-import { gmailAuth } from '../../';
-import MailComposer from 'nodemailer/lib/mail-composer';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import mime from 'mime-types';
+import MailComposer from 'nodemailer/lib/mail-composer';
 import Mail, { Attachment } from 'nodemailer/lib/mailer';
+import { gmailAuth } from '../../';
 
 export const gmailSendEmailAction = createAction({
   auth: gmailAuth,
@@ -45,14 +45,14 @@ export const gmailSendEmailAction = createAction({
         options: [
           {
             label: 'plain text',
-            value: 'plain_text'
+            value: 'plain_text',
           },
           {
             label: 'html',
-            value: 'html'
-          }
-        ]
-      }
+            value: 'html',
+          },
+        ],
+      },
     }),
     body: Property.ShortText({
       displayName: 'Body',
@@ -98,8 +98,14 @@ export const gmailSendEmailAction = createAction({
       bcc: bcc ? bcc.join(', ') : undefined,
       subject: `=?UTF-8?B?${subjectBase64}?=`,
       replyTo: replyTo ? replyTo.join(', ') : '',
-      text: configValue.propsValue.body_type === 'plain_text' ? configValue.propsValue['body'] : undefined,
-      html: configValue.propsValue.body_type === 'html' ? configValue.propsValue['body'].replace(/\n/g, '<br>') : undefined,
+      text:
+        configValue.propsValue.body_type === 'plain_text'
+          ? configValue.propsValue['body']
+          : undefined,
+      html:
+        configValue.propsValue.body_type === 'html'
+          ? configValue.propsValue['body'].replace(/\n/g, '<br>')
+          : undefined,
       attachments: [],
     };
     const gmailResponse = await getEmail(configValue.auth.access_token);
@@ -122,7 +128,9 @@ export const gmailSendEmailAction = createAction({
       mailOptions.attachments = attachmentOption;
     }
 
-    const mail = new MailComposer(mailOptions).compile();
+    const mail: any = new MailComposer(mailOptions).compile();
+
+    mail.keepBcc = true;
     const mailBody = await mail.build();
 
     const requestBody: SendEmailRequestBody = {
