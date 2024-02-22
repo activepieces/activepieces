@@ -2,8 +2,17 @@ import { Type, Static } from '@sinclair/typebox'
 import { ApId } from '@activepieces/shared'
 import { ACTIVITY_EVENT_LENGTH, ACTIVITY_MESSAGE_LENGTH, ACTIVITY_STATUS_LENGTH } from './activity-model'
 
+
+
+export const ListActivityParams = Type.Object({
+    projectId:ApId,
+    cursor: Type.Union([Type.String(),Type.Null()]),
+    limit: Type.Optional(Type.Integer({minimum: 1, maximum: 100})),
+})
+export type ListActivityParams = Static<typeof ListActivityParams>
+
 export const AddActivityRequestBody = Type.Object({
-    projectId: ApId,
+    projectId:ApId,
     event: Type.String({ maxLength: ACTIVITY_EVENT_LENGTH }),
     message: Type.String({ maxLength: ACTIVITY_MESSAGE_LENGTH }),
     status: Type.String({ maxLength: ACTIVITY_STATUS_LENGTH }),

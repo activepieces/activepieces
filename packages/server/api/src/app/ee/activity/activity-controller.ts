@@ -1,6 +1,7 @@
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { ApId, PrincipalType } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox  } from '@fastify/type-provider-typebox'
+import { PrincipalType } from '@activepieces/shared'
 import { activityService } from './activity-service'
+import { ListActivityParams } from '@activepieces/ee-shared'
 
 export const activityController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListActivitiesRequest, async (req) => {
@@ -19,10 +20,6 @@ const ListActivitiesRequest = {
         ],
     },
     schema: {
-        querystring: Type.Object({
-            projectId: ApId,
-            cursor: Type.Optional(Type.String()),
-            limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 100 })),
-        }),
+        querystring: ListActivityParams,
     },
 }
