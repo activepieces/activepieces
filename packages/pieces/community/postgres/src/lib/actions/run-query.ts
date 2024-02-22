@@ -10,7 +10,13 @@ export const runQuery = createAction({
   props: {
     query: Property.ShortText({
       displayName: 'Query',
+      description: 'Please use $1, $2, etc. for parameterized queries to avoid SQL injection.',
       required: true,
+    }),
+    args: Property.Array({
+      displayName: 'Arguments',
+      description: 'Arguments to be used in the query',
+      required: false,
     }),
     query_timeout: Property.Number({
       displayName: 'Query Timeout',
@@ -68,8 +74,9 @@ export const runQuery = createAction({
     });
     await client.connect();
 
+    const args = context.propsValue.args || [];
     return new Promise((resolve, reject) => {
-      client.query(query, function (error: any, results: { rows: unknown }) {
+      client.query(query, args, function (error: any, results: { rows: unknown }) {
         if (error) {
           client.end();
           return reject(error);

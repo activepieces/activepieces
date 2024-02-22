@@ -11,7 +11,7 @@ export default createAction({
     timezone: mysqlCommon.timezone,
     query: Property.ShortText({
       displayName: 'Query',
-      description: 'The query string to execute, use ? for arguments',
+      description: 'The query string to execute, use ? for arguments to avoid SQL injection.',
       required: true,
     }),
     args: Property.Array({
