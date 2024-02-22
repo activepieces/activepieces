@@ -747,3 +747,10 @@ app-platform-settings {
     color: var(--primary-palette-contrast-400);
   }
 }
+
+.mat-calendar-body-cell:not(.mat-calendar-body-disabled):hover >
+ .mat-calendar-body-cell-content:not(.mat-calendar-body-selected):not(.mat-calendar-body-comparison-identical),
+ .cdk-keyboard-focused .mat-calendar-body-active > .mat-calendar-body-cell-content:not(.mat-calendar-body-selected):not(.mat-calendar-body-comparison-identical), .cdk-program-focused .mat-calendar-body-active >
+  .mat-calendar-body-cell-content:not(.mat-calendar-body-selected):not(.mat-calendar-body-comparison-identical) {
+  color: var(--primary-palette-contrast-400);
+}
