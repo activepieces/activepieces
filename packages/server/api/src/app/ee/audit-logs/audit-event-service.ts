@@ -102,10 +102,24 @@ const saveEvent = async (
     }
     let eventToSave: ApplicationEvent | undefined
     switch (rawEvent.action) {
+        case ApplicationEventName.SIGNED_UP_USING_EMAIL:
+        case ApplicationEventName.SIGNED_UP_USING_SSO:
+        case ApplicationEventName.SIGNED_UP_USING_MANAGED_AUTH: {
+            eventToSave = {
+                ...baseProps,
+                action: rawEvent.action,
+                data: {
+                    createdUser: {
+                        id: rawEvent.createdUser.id,
+                        email: rawEvent.createdUser.email,
+                    },
+                },
+            }
+            break
+        }
         case ApplicationEventName.SIGNED_IN:
         case ApplicationEventName.RESET_PASSWORD:
-        case ApplicationEventName.VERIFIED_EMAIL:
-        case ApplicationEventName.SIGNED_UP: {
+        case ApplicationEventName.VERIFIED_EMAIL: {
             eventToSave = {
                 ...baseProps,
                 action: rawEvent.action,
