@@ -2,7 +2,6 @@ import {
     Brackets,
     EntitySchema,
     ObjectLiteral,
-    OrderByCondition,
     SelectQueryBuilder,
     WhereExpressionBuilder,
 } from 'typeorm'
@@ -43,7 +42,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
 
     private order: Order = Order.DESC
 
-    public constructor(private readonly entity: EntitySchema) {}
+    public constructor(private readonly entity: EntitySchema) { }
 
     public setAlias(alias: string): void {
         this.alias = alias
@@ -121,8 +120,9 @@ export default class Paginator<Entity extends ObjectLiteral> {
         }
 
         clonedBuilder.take(this.limit + 1)
-        clonedBuilder.orderBy(this.buildOrder())
-
+        for (const [key, value] of Object.entries(this.buildOrder())) {
+            clonedBuilder.addOrderBy(key, value)
+        }
         return clonedBuilder
     }
 
@@ -159,14 +159,14 @@ export default class Paginator<Entity extends ObjectLiteral> {
         return '='
     }
 
-    private buildOrder(): OrderByCondition {
+    private buildOrder(): Record<string, Order> {
         let { order } = this
 
         if (!this.hasAfterCursor() && this.hasBeforeCursor()) {
             order = this.flipOrder(order)
         }
 
-        const orderByCondition: OrderByCondition = {}
+        const orderByCondition: Record<string, Order> = {}
         orderByCondition[`${this.alias}.${PAGINATION_KEY}`] = order
 
         return orderByCondition
