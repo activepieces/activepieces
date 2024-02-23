@@ -4,12 +4,15 @@ import { SystemProp, system } from 'server-shared'
 import { flagService } from '../../flags/flag.service'
 import { databaseConnection } from '../../database/database-connection'
 import { UserEntity } from '../../user/user-entity'
-import { Between } from 'typeorm'
+import { Between, Equal } from 'typeorm'
 import { ProjectEntity } from '../../project/project-entity'
 import { redisSystemJob } from '../helper/redis-system-job'
+import { Platform } from '@activepieces/ee-shared'
+import { PlatformEntity } from '../platform/platform.entity'
 
 const userRepo = databaseConnection.getRepository(UserEntity)
 const projectRepo = databaseConnection.getRepository(ProjectEntity)
+const platformRepo = databaseConnection.getRepository(PlatformEntity)
 
 export const usageTrackerModule: FastifyPluginAsyncTypebox = async () => {
     await redisSystemJob.upsertJob({
@@ -18,30 +21,45 @@ export const usageTrackerModule: FastifyPluginAsyncTypebox = async () => {
     }, '*/59 23 * * *', async (job) => {
         const startOfDay = dayjs(job.timestamp).startOf('day').toISOString()
         const endOfDay = dayjs(job.timestamp).endOf('day').toISOString()
-        const report = await constructUsageReport(startOfDay, endOfDay)
-        await sendUsageReport(report)
+        const platforms = await platformRepo.find()
+        const reports = []
+        for (const platform of platforms) {
+            if (flagService.isCloudPlatform(platform.id)) {
+                continue
+            }
+            const report = await constructUsageReport(platform, startOfDay, endOfDay)
+            reports.push(report)
+        }
+        await sendUsageReport(reports)
+
     })
 }
 
 
-async function sendUsageReport(report: UsageReport): Promise<void> {
+async function sendUsageReport(reports: UsageReport[]): Promise<void> {
     await fetch('https://cloud.activepieces.com/api/v1/webhooks/ophE6T5QJBe7O3QT0sjvn', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify(report),
+        body: JSON.stringify(reports),
     })
 }
 
-async function constructUsageReport(startDate: string, endDate: string): Promise<UsageReport> {
+async function constructUsageReport(platform: Platform, startDate: string, endDate: string): Promise<UsageReport> {
     const licenseKey = system.getOrThrow(SystemProp.LICENSE_KEY)
     const version = await flagService.getCurrentRelease()
-    const addedProjects = await getAddedProjects(startDate, endDate)
-    const addedUsers = await getAddedUsers(startDate, endDate)
-    const activeProjects = await projectRepo.count()
-    const activeUsers = await userRepo.count()
+    const addedProjects = await getAddedProjects(platform.id, startDate, endDate)
+    const addedUsers = await getAddedUsers(platform.id, startDate, endDate)
+    const activeProjects = await projectRepo.countBy({
+        platformId: Equal(platform.id),
+    })
+    const activeUsers = await userRepo.countBy({
+        platformId: Equal(platform.id),
+    })
     return {
+        platformId: platform.id,
+        platformName: platform.name,
         timestamp: startDate,
         version,
         licenseKey,
@@ -58,8 +76,9 @@ async function constructUsageReport(startDate: string, endDate: string): Promise
     }
 }
 
-async function getAddedUsers(startDate: string, endDate: string): Promise<UsageReport['details']['projects']> {
+async function getAddedUsers(platformId: string, startDate: string, endDate: string): Promise<UsageReport['details']['projects']> {
     const users = await userRepo.findBy({
+        platformId: Equal(platformId),
         created: Between(startDate, endDate),
     })
     return users.map((user) => ({
@@ -69,9 +88,10 @@ async function getAddedUsers(startDate: string, endDate: string): Promise<UsageR
     }))
 }
 
-async function getAddedProjects(startDate: string, endDate: string): Promise<UsageReport['details']['projects']> {
+async function getAddedProjects(platformId: string, startDate: string, endDate: string): Promise<UsageReport['details']['projects']> {
     const projects = await projectRepo.findBy({
         created: Between(startDate, endDate),
+        platformId: Equal(platformId),
     })
     return projects.map((project) => ({
         id: project.id,
@@ -85,6 +105,8 @@ type UsageReport = {
     timestamp: string
     version: string
     licenseKey: string
+    platformId: string
+    platformName: string
     activeUsers: number
     addedUsers: number
     deletedUsers: number

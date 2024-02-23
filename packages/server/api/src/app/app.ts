@@ -299,6 +299,8 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
             await app.register(activityModule)
+            await redisSystemJob.init()
+            await app.register(usageTrackerModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
