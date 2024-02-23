@@ -328,7 +328,7 @@ export const flowRunService = {
         return flowRun
     },
 
-    async getAllProdRuns(params: GetAllProdRuns): Promise<number> {
+    async getTasksUsedAfter(params: GetAllProdRuns): Promise<number> {
         const { projectId, created } = params
 
         const sumOfTasks = await flowRunRepo

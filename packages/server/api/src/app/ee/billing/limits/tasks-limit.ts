@@ -6,13 +6,14 @@ import {
     isNil,
 } from '@activepieces/shared'
 
-import { ProjectPlan, ProjectUsage } from '@activepieces/ee-shared'
+import { ProjectPlan } from '@activepieces/ee-shared'
 import { apDayjs } from '../../../helper/dayjs-helper'
 import { flowRunService } from '../../../flows/flow-run/flow-run-service'
 import { getEdition } from '../../../helper/secret-helper'
 import { plansService } from '../project-plan/project-plan.service'
-import { projectUsageService } from '../project-usage/project-usage-service'
 import { exceptionHandler } from 'server-shared'
+import { projectUsageService } from '../project-usage/project-usage-service'
+import dayjs from 'dayjs'
 
 async function limitTasksPerDay({
     projectId,
@@ -37,12 +38,12 @@ async function limitTasksPerDay({
 
 async function limitTasksPerMonth({
     projectPlan,
-    projectUsage,
+    consumedTasks,
 }: {
     projectPlan: ProjectPlan
-    projectUsage: ProjectUsage
+    consumedTasks: number
 }): Promise<void> {
-    if (projectUsage.consumedTasks > projectPlan.tasks) {
+    if (consumedTasks > projectPlan.tasks) {
         throw new ActivepiecesError({
             code: ErrorCode.QUOTA_EXCEEDED,
             params: {
@@ -61,7 +62,7 @@ async function getTaskUserInUTCDay({
     const now = apDayjs()
     const startOfDay = now.startOf('day').utc()
 
-    return flowRunService.getAllProdRuns({
+    return flowRunService.getTasksUsedAfter({
         projectId,
         created: startOfDay.toISOString(),
     })
@@ -85,18 +86,23 @@ async function limit({ projectId }: { projectId: ProjectId }): Promise<void> {
                 tasksPerDay: projectPlan.tasksPerDay,
             })
         }
+
         const projectUsage = await projectUsageService.getUsageByProjectId(
             projectId,
         )
+        const consumedTasks = await flowRunService.getTasksUsedAfter({
+            projectId,
+            created: dayjs(projectUsage.nextResetDatetime).subtract(30, 'days').toISOString(),
+        })
         await limitTasksPerMonth({
-            projectUsage,
+            consumedTasks,
             projectPlan,
         })
     }
     catch (e) {
         if (
             e instanceof ActivepiecesError &&
-      e.error.code === ErrorCode.QUOTA_EXCEEDED
+            e.error.code === ErrorCode.QUOTA_EXCEEDED
         ) {
             throw e
         }
