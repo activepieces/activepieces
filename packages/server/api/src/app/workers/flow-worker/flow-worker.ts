@@ -178,14 +178,16 @@ const loadInputAndLogFileId = async ({
                     logsFileId: flowRun.logsFileId,
                     projectId: jobData.projectId,
                 })
-                const trigger = Object.values(
-                    executionOutput.executionState.steps,
-                ).find((step) => flowHelper.isTrigger(step.type))
-                assertNotNullOrUndefined(
-                    trigger,
-                    'Trigger not found in execution state',
-                )
-                jobData.payload = trigger.output
+                if (executionOutput.status !== ExecutionOutputStatus.INTERNAL_ERROR) {
+                    const trigger = Object.values(
+                        executionOutput.executionState.steps,
+                    ).find((step) => flowHelper.isTrigger(step.type))
+                    assertNotNullOrUndefined(
+                        trigger,
+                        'Trigger not found in execution state',
+                    )
+                    jobData.payload = trigger.output
+                }
             }
             return {
                 input: {
