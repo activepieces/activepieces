@@ -99,7 +99,9 @@ export class AuditEventTableComponent
           icon: 'assets/img/custom/dashboard/connections.svg',
           tooltip: 'Connection',
         };
-      case ApplicationEventName.SIGNED_UP:
+      case ApplicationEventName.SIGNED_UP_USING_EMAIL:
+      case ApplicationEventName.SIGNED_UP_USING_MANAGED_AUTH:
+      case ApplicationEventName.SIGNED_UP_USING_SSO:
       case ApplicationEventName.SIGNED_IN:
       case ApplicationEventName.RESET_PASSWORD:
       case ApplicationEventName.VERIFIED_EMAIL:
