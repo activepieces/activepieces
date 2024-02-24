@@ -1,6 +1,15 @@
 import { BaseModelSchema } from "@activepieces/shared";
 import { Static, Type } from "@sinclair/typebox";
 
+export enum ApSubscriptionStatus {
+    ACTIVE = 'active',
+    INCOMPLETE = 'incomplete',
+    INCOMPLETE_EXPIRED = 'incomplete_expired',
+    PAST_DUE = 'past_due',
+    CANCELED = 'canceled',
+    UNAPID = 'unpaid',
+}
+
 export const ProjectBilling = Type.Object({
     ...BaseModelSchema,
     projectId: Type.String(),
@@ -8,13 +17,8 @@ export const ProjectBilling = Type.Object({
     includedUsers: Type.Number(),
     stripeCustomerId: Type.String(),
     stripeSubscriptionId: Type.String(),
-    subscriptionStartDatetime: Type.String(),
+    subscriptionStatus: Type.Enum(ApSubscriptionStatus),
 })
 
 export type ProjectBilling = Static<typeof ProjectBilling>
 
-export const ProjectSubscriptionResponse = Type.Object({
-    subscription: ProjectBilling
-})
-
-export type ProjectSubscriptionResponse = Static<typeof ProjectSubscriptionResponse>

@@ -15,7 +15,6 @@ import { FlowTemplateEntity } from '../ee/flow-template/flow-template.entity'
 import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
 import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entity'
 import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
-import { AppSumoEntity } from '../ee/appsumo/appsumo.entity'
 import { ReferralEntity } from '../ee/referrals/referral.entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
@@ -27,7 +26,6 @@ import {
     SelectQueryBuilder,
 } from 'typeorm'
 import { StepFileEntity } from '../flows/step-file/step-file.entity'
-import { ProjectUsageEntity } from '../ee/billing/project-usage/project-usage.entity'
 import { ProjectMemberEntity } from '../ee/project-members/project-member.entity'
 import { getEdition } from '../helper/secret-helper'
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
@@ -35,13 +33,14 @@ import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
 import { PlatformEntity } from '../ee/platform/platform.entity'
 import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
-import { ProjectPlanEntity } from '../ee/billing/project-plan/project-plan.entity'
 import { OtpEntity } from '../ee/otp/otp-entity'
 import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
 import { GitRepoEntity } from '../ee/git-repos/git-repo.entity'
 import { AuditEventEntity } from '../ee/audit-logs/audit-event-entity'
 import { ActivityEntity } from '../ee/activity/activity-entity'
-import { ProjectBillingEntity } from '../ee/billing-v2/project-billing/project-billing.entity'
+import { ProjectBillingEntity } from '../ee/billing/project-billing/project-billing.entity'
+import { ProjectPlanEntity } from '../ee/project-plan/project-plan.entity'
+import { AppSumoEntity } from '../ee/billing/appsumo/appsumo.entity'
 
 const databaseType = system.get(SystemProp.DB_TYPE)
 
@@ -73,7 +72,6 @@ function getEntities(): EntitySchema<unknown>[] {
                 AppSumoEntity,
                 ReferralEntity,
                 ProjectPlanEntity,
-                ProjectUsageEntity,
                 FlowTemplateEntity,
                 ConnectionKeyEntity,
                 AppCredentialEntity,
@@ -93,7 +91,6 @@ function getEntities(): EntitySchema<unknown>[] {
             entities.push(
                 ProjectMemberEntity,
                 ProjectPlanEntity,
-                ProjectUsageEntity,
                 PlatformEntity,
                 CustomDomainEntity,
                 SigningKeyEntity,

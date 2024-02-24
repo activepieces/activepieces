@@ -11,7 +11,7 @@ import { StatusCodes } from 'http-status-codes'
 import { generateMockExternalToken } from '../../../helpers/auth'
 import { ProjectType, apId } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
-import { stripeHelper } from '../../../../src/app/ee/billing/billing/stripe-helper'
+import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
 
 let app: FastifyInstance | null = null
 

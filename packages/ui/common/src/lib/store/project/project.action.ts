@@ -1,5 +1,9 @@
 import { createAction, props } from '@ngrx/store';
-import { NotificationStatus, Project } from '@activepieces/shared';
+import {
+  NotificationStatus,
+  Project,
+  ProjectWithLimits,
+} from '@activepieces/shared';
 import { Platform } from '@activepieces/ee-shared';
 
 export enum ProjectActionType {
@@ -14,7 +18,7 @@ export enum ProjectActionType {
 export const setProjects = createAction(
   ProjectActionType.SET_PROJECTS,
   props<{
-    projects: Project[];
+    projects: ProjectWithLimits[];
     selectedIndex: number;
     platform: Platform | undefined;
   }>()

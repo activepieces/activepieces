@@ -3,7 +3,6 @@ import { CommonStateModel } from '../common-state.model';
 import { selectCommonState } from '../common.selector';
 import { NotificationStatus } from '@activepieces/shared';
 import { ProjectsState } from './project-state.model';
-import { ProjectWithUsageAndPlanResponse } from '@activepieces/ee-shared';
 
 const selectProjectState = createSelector(
   selectCommonState,
@@ -46,10 +45,10 @@ const selectCurrentProjectOwnerId = createSelector(
 );
 
 const selectTaskProgress = createSelector(selectCurrentProject, (project) => {
-  const castedProject = project as ProjectWithUsageAndPlanResponse;
+  const castedProject = project;
   return {
     tasksCap: castedProject.plan.tasks,
-    tasksExecuted: castedProject.usage.consumedTasks,
+    tasksExecuted: castedProject.usage.tasks,
   };
 });
 

@@ -1,17 +1,27 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { ProjectSubscriptionResponse } from '@activepieces/ee-shared';
-import { FlagService, environment } from '@activepieces/ui/common';
-import { of, switchMap } from 'rxjs';
+import {
+  FlagService,
+  ProjectSelectors,
+  environment,
+} from '@activepieces/ui/common';
+import { combineLatest, map } from 'rxjs';
+import { Store } from '@ngrx/store';
+import { ApEdition } from '@activepieces/shared';
+import { ProjectBilling } from '@activepieces/ee-shared';
 
 @Injectable({
   providedIn: 'root',
 })
 export class BillingService {
-  constructor(private http: HttpClient, private flagService: FlagService) {}
+  constructor(
+    private http: HttpClient,
+    private flagService: FlagService,
+    private store: Store
+  ) {}
 
   getSubscription() {
-    return this.http.get<ProjectSubscriptionResponse>(
+    return this.http.get<ProjectBilling>(
       environment.apiUrl + '/project-billing'
     );
   }
@@ -23,48 +33,29 @@ export class BillingService {
     );
   }
 
-  checkTeamMembers() {
-    return this.flagService.getEdition().pipe(
-      switchMap((value) => {
-        /*if (value === ApEdition.CLOUD) {
-          return this.getUsage().pipe(
-            map((usageResponse) => {
-              return {
-                exceeded:
-                  usageResponse.usage.teamMembers >=
-                  usageResponse.plan.teamMembers,
-                limit: usageResponse.plan.teamMembers,
-              };
-            })
-          );
-        }*/
-        return of({
-          exceeded: false,
-          limit: 99999,
-        });
-      })
+  portalLink() {
+    return this.http.post<{ portalLink: string }>(
+      environment.apiUrl + '/project-billing/portal',
+      {}
     );
   }
 
-  checkConnectionLimit() {
-    return this.flagService.getEdition().pipe(
-      switchMap((value) => {
-        /*if (value === ApEdition.CLOUD) {
-          return this.getUsage().pipe(
-            map((usageResponse) => {
-              return {
-                exceeded:
-                  usageResponse.usage.connections >=
-                  usageResponse.plan.connections,
-                limit: usageResponse.plan.connections,
-              };
-            })
-          );
-        }*/
-        return of({
+  checkTeamMembers() {
+    return combineLatest([
+      this.flagService.getEdition(),
+      this.store.select(ProjectSelectors.selectCurrentProject),
+    ]).pipe(
+      map(([value, project]) => {
+        if (value === ApEdition.CLOUD) {
+          return {
+            exceeded: project?.usage.teamMembers >= project?.plan?.teamMembers,
+            limit: project?.plan?.teamMembers,
+          };
+        }
+        return {
           exceeded: false,
-          limit: 99999,
-        });
+          limit: Number.MAX_SAFE_INTEGER,
+        };
       })
     );
   }

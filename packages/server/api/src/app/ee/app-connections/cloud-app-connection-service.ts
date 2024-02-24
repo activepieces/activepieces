@@ -1,7 +1,7 @@
 import { logger } from 'server-shared'
 import { acquireLock } from '../../helper/lock'
 import { AppConnectionHooks } from '../../app-connection/app-connection-service/app-connection-hooks'
-import { connectionsLimits } from '../billing/limits/connections-limits'
+import { connectionsLimits } from '../project-plan/connections-limits'
 
 export const cloudAppConnectionsHooks: AppConnectionHooks = {
     async preUpsert({ projectId }: { projectId: string }): Promise<void> {

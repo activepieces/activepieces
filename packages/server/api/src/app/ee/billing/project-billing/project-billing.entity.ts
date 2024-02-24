@@ -31,6 +31,10 @@ export const ProjectBillingEntity = new EntitySchema<ProjectBillingSchema>({
             type: String,
             nullable: true,
         },
+        subscriptionStatus: {
+            type: String,
+            nullable: true,
+        },
     },
     indices: [
         {

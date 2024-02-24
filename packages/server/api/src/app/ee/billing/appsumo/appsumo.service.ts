@@ -1,8 +1,15 @@
-import { databaseConnection } from '../../database/database-connection'
-import { FlowPlanLimits } from '../billing/project-plan/pricing-plans'
+import { databaseConnection } from '../../../database/database-connection'
 import { AppSumoEntity, AppSumoPlan } from './appsumo.entity'
 
 const appsumoRepo = databaseConnection.getRepository(AppSumoEntity)
+
+type FlowPlanLimits = {
+    nickname: string
+    tasks: number
+    minimumPollingInterval: number
+    connections: number
+    teamMembers: number
+}
 
 const appSumoPlans: Record<string, FlowPlanLimits> = {
     activepieces_tier1: {

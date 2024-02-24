@@ -5,6 +5,7 @@ import {
     PlatformRole,
     PrincipalType,
     ProjectType,
+    ProjectWithLimits,
     SERVICE_KEY_SECURITY_OPENAPI,
     SeekPage,
     assertNotNullOrUndefined,
@@ -17,13 +18,12 @@ import { platformProjectService } from './platform-project-service'
 import { projectService } from '../../project/project-service'
 import {
     CreatePlatformProjectRequest,
-    DEFAULT_PLATFORM_PLAN,
-    ProjectWithUsageAndPlanResponse,
+    DEFAULT_PLATFOR_LIMIT,
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
-import { plansService } from '../billing/project-plan/project-plan.service'
 import { StatusCodes } from 'http-status-codes'
 import { platformService } from '../platform/platform.service'
+import { projectLimitsService } from '../project-plan/project-plan.service'
 
 export const platformProjectController: FastifyPluginCallbackTypebox = (
     fastify,
@@ -42,11 +42,7 @@ export const platformProjectController: FastifyPluginCallbackTypebox = (
             externalId: request.body.externalId,
             type: ProjectType.PLATFORM_MANAGED,
         })
-        await plansService.update({
-            projectId: project.id,
-            subscription: null,
-            planLimits: DEFAULT_PLATFORM_PLAN,
-        })
+        await projectLimitsService.upsert(DEFAULT_PLATFOR_LIMIT, project.id)
         const projectWithUsage =
             await platformProjectService.getWithPlanAndUsageOrThrow(project.id)
         await reply.status(StatusCodes.CREATED).send(projectWithUsage)
@@ -94,7 +90,7 @@ const UpdateProjectRequest = {
             id: Type.String(),
         }),
         response: {
-            [StatusCodes.OK]: ProjectWithUsageAndPlanResponse,
+            [StatusCodes.OK]: ProjectWithLimits,
         },
         body: UpdateProjectPlatformRequest,
     },
@@ -108,7 +104,7 @@ const CreateProjectRequest = {
     schema: {
         tags: ['projects'],
         response: {
-            [StatusCodes.CREATED]: ProjectWithUsageAndPlanResponse,
+            [StatusCodes.CREATED]: ProjectWithLimits,
         },
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         body: CreatePlatformProjectRequest,
@@ -122,7 +118,7 @@ const ListProjectRequestForApiKey = {
     },
     schema: {
         response: {
-            [StatusCodes.OK]: SeekPage(ProjectWithUsageAndPlanResponse),
+            [StatusCodes.OK]: SeekPage(ProjectWithLimits),
         },
         querystring: Type.Object({
             externalId: Type.Optional(Type.String()),

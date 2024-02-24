@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddProjectBilling1708732666493 implements MigrationInterface {
-    name = 'AddProjectBilling1708732666493'
+export class AddProjectBilling1708811745694 implements MigrationInterface {
+    name = 'AddProjectBilling1708811745694'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -14,6 +14,7 @@ export class AddProjectBilling1708732666493 implements MigrationInterface {
                 "includedTasks" integer,
                 "includedUsers" integer,
                 "stripeSubscriptionId" character varying,
+                "subscriptionStatus" character varying,
                 CONSTRAINT "REL_915ee7969204c1118a3605da64" UNIQUE ("projectId"),
                 CONSTRAINT "PK_07b2429736c158fbe490cd67e4b" PRIMARY KEY ("id")
             )

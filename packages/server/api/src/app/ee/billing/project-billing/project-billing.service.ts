@@ -1,9 +1,9 @@
-import { ProjectBilling } from '@activepieces/ee-shared'
+import { ApSubscriptionStatus, DEFAULT_FREE_PLAN_LIMIT, ProjectBilling } from '@activepieces/ee-shared'
 import { ProjectBillingEntity } from './project-billing.entity'
 import { databaseConnection } from '../../../database/database-connection'
 import { User, apId, isNil } from '@activepieces/shared'
 import { acquireLock } from '../../../helper/lock'
-import { stripeHelper } from '../../billing/billing/stripe-helper'
+import { stripeHelper } from './stripe-helper'
 import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
 import { logger } from 'server-shared'
@@ -11,7 +11,6 @@ import Stripe from 'stripe'
 
 const projectBillingRepo =
     databaseConnection.getRepository<ProjectBilling>(ProjectBillingEntity)
-
 
 export const projectBillingService = {
     async getOrCreateForProject(projectId: string): Promise<ProjectBilling> {
@@ -34,16 +33,21 @@ export const projectBillingService = {
             await projectBilling.release()
         }
     },
-    async updateSubscriptionIdByCustomerId(subscription: Stripe.Subscription): Promise<void> {
+    async increaseTasks(projectId: string, tasks: number): Promise<ProjectBilling> {
+        await projectBillingRepo.increment({
+            projectId,
+        }, 'tasks', tasks)
+        return projectBillingService.getOrCreateForProject(projectId)
+    },
+    async updateSubscriptionIdByCustomerId(subscription: Stripe.Subscription): Promise<ProjectBilling> {
         const stripeCustomerId = subscription.customer as string
-        const projectBilling = await projectBillingRepo.findOneBy({ stripeCustomerId })
-        if (isNil(projectBilling)) {
-            logger.warn(`Project billing not found for customer ${stripeCustomerId}`)
-            return
-        }
+        const projectBilling = await projectBillingRepo.findOneByOrFail({ stripeCustomerId })
+        logger.info(`Updating subscription id for project billing ${projectBilling.id}`)
         await projectBillingRepo.update(projectBilling.id, {
-            stripeSubscriptionId: subscription.status === 'active' ? subscription.id : undefined,
+            stripeSubscriptionId: subscription.id,
+            subscriptionStatus: subscription.status as ApSubscriptionStatus,
         })
+        return projectBillingRepo.findOneByOrFail({ stripeCustomerId })
     },
 }
 
@@ -55,8 +59,8 @@ async function createInitialBilling(user: User, projectId: string): Promise<Proj
     const billing = projectBillingRepo.create({
         id: apId(),
         projectId,
-        includedTasks: 1000,
-        includedUsers: 1,
+        includedTasks: DEFAULT_FREE_PLAN_LIMIT.tasks,
+        includedUsers: DEFAULT_FREE_PLAN_LIMIT.teamMembers,
         stripeCustomerId,
     })
     return projectBillingRepo.save(billing)
