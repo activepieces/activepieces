@@ -1,3 +1,4 @@
+export * from './lib/billing/project-stripe';
 export * from './lib/audit-events';
 export * from './lib/git-repo';
 export * from './lib/api-key';

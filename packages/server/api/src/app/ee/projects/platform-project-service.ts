@@ -1,9 +1,6 @@
 import {
-    ActivepiecesError,
-    ErrorCode,
     Project,
     ProjectId,
-    ProjectType,
     UserId,
     isNil,
     SeekPage,
@@ -48,7 +45,7 @@ export const platformProjectService = {
                 'project.id = "project_plan"."projectId"',
             )
             .where(filters)
-        // TODO add pagination
+            // TODO add pagination
             .limit(50)
             .getMany()
         const projects: ProjectWithUsageAndPlanResponse[] = await Promise.all(
@@ -60,44 +57,17 @@ export const platformProjectService = {
         )
     },
 
-    async update({
-        userId,
-        projectId,
-        request,
-    }: {
-        userId: string
-        projectId: ProjectId
-        request: UpdateProjectPlatformRequest
-        platformId?: PlatformId
-    }): Promise<ProjectWithUsageAndPlanResponse> {
-        const project = await projectRepo.findOneBy({
-            id: projectId,
-        })
-        if (isNil(project)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    entityType: 'project',
-                    entityId: projectId,
-                },
-            })
-        }
-        const isProjectOwner = project.ownerId === userId
-        if (!isProjectOwner) {
-            throw new ActivepiecesError({
-                code: ErrorCode.AUTHORIZATION,
-                params: {},
-            })
-        }
+    async update({ projectId, request }: UpdateParams): Promise<ProjectWithUsageAndPlanResponse> {
         await projectRepo.update(projectId, {
             displayName: request.displayName,
             notifyStatus: request.notifyStatus,
         })
-        if (project.type === ProjectType.PLATFORM_MANAGED && !isNil(request.plan)) {
+        // TODO check for permission for teamMembers and tasks
+        if (!isNil(request.plan)) {
             await plansService.update({
                 projectId,
                 planLimits: {
-                    teamMembers: request.plan.teamMembers,
+                    ...spreadIfDefined('teamMembers', request.plan.teamMembers),
                     tasks: request.plan.tasks,
                 },
                 subscription: null,
@@ -168,4 +138,11 @@ async function enrichWithUsageAndPlan(
     )
 
     return clonedProject
+}
+
+
+type UpdateParams = {
+    projectId: ProjectId
+    request: UpdateProjectPlatformRequest
+    platformId?: PlatformId
 }

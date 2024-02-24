@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BillingResponse, UpgradeRequest } from '@activepieces/ee-shared';
+import { ProjectSubscriptionResponse } from '@activepieces/ee-shared';
 import { FlagService, environment } from '@activepieces/ui/common';
-import { map, of, switchMap } from 'rxjs';
-import { ApEdition } from '@activepieces/shared';
+import { of, switchMap } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -11,14 +10,23 @@ import { ApEdition } from '@activepieces/shared';
 export class BillingService {
   constructor(private http: HttpClient, private flagService: FlagService) {}
 
-  getUsage() {
-    return this.http.get<BillingResponse>(environment.apiUrl + '/billing');
+  getSubscription() {
+    return this.http.get<ProjectSubscriptionResponse>(
+      environment.apiUrl + '/project-billing'
+    );
+  }
+
+  upgrade() {
+    return this.http.post<{ paymentLink: string }>(
+      environment.apiUrl + '/project-billing/upgrade',
+      {}
+    );
   }
 
   checkTeamMembers() {
     return this.flagService.getEdition().pipe(
       switchMap((value) => {
-        if (value === ApEdition.CLOUD) {
+        /*if (value === ApEdition.CLOUD) {
           return this.getUsage().pipe(
             map((usageResponse) => {
               return {
@@ -29,7 +37,7 @@ export class BillingService {
               };
             })
           );
-        }
+        }*/
         return of({
           exceeded: false,
           limit: 99999,
@@ -41,7 +49,7 @@ export class BillingService {
   checkConnectionLimit() {
     return this.flagService.getEdition().pipe(
       switchMap((value) => {
-        if (value === ApEdition.CLOUD) {
+        /*if (value === ApEdition.CLOUD) {
           return this.getUsage().pipe(
             map((usageResponse) => {
               return {
@@ -52,18 +60,12 @@ export class BillingService {
               };
             })
           );
-        }
+        }*/
         return of({
           exceeded: false,
           limit: 99999,
         });
       })
-    );
-  }
-  upgrade(request: UpgradeRequest) {
-    return this.http.post<{ paymentLink: string }>(
-      environment.apiUrl + '/billing/upgrade',
-      request
     );
   }
 }

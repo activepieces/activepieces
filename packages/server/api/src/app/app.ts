@@ -102,6 +102,7 @@ import { loadEncryptionKey } from './helper/encryption'
 import { activityModule } from './ee/activity/activity-module'
 import { redisSystemJob } from './ee/helper/redis-system-job'
 import { usageTrackerModule } from './ee/usage-tracker/usage-tracker-module'
+import { projectBillingModule } from './ee/billing-v2/project-billing/project-billing.module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -299,6 +300,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
             await app.register(activityModule)
+            await app.register(projectBillingModule)
             await redisSystemJob.init()
             await app.register(usageTrackerModule)
             setPlatformOAuthService({

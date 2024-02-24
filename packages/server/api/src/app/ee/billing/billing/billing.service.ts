@@ -23,29 +23,6 @@ export const billingService = {
             subscription,
         })
     },
-    async upgrade({
-        projectId,
-        request,
-    }: {
-        projectId: string
-        request: UpgradeRequest
-    }): Promise<{
-            paymentLink: string | null
-        }> {
-        const plan = await plansService.getOrCreateDefaultPlan({ projectId })
-        if (!isNil(plan.stripeSubscriptionId)) {
-            return stripeHelper.upgrade({
-                request,
-                subscriptionId: plan.stripeSubscriptionId,
-            })
-        }
-        else {
-            return stripeHelper.createPaymentLink({
-                projectId,
-                request,
-            })
-        }
-    },
 }
 
 function findPlanOrReturnFree({
