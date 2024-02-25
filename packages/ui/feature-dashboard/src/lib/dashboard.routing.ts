@@ -71,6 +71,7 @@ export const DashboardLayoutRouting: Routes = [
         path: 'activity',
         pathMatch: 'full',
         component: ActivityTableComponent,
+        canActivate: [showBasedOnFlagGuard(ApFlagId.SHOW_ACTIVITY_LOG)],
       },
       {
         data: {

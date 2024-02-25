@@ -102,6 +102,14 @@ export class SidenavRoutesListComponent implements OnInit {
         showInSideNav$: of(true),
       },
       {
+        icon: 'assets/img/custom/dashboard/activity.svg',
+        caption: $localize`Activity`,
+        route: 'activity',
+        showInSideNav$: this.flagServices.isFlagEnabled(
+          ApFlagId.SHOW_ACTIVITY_LOG
+        ),
+      },
+      {
         icon: 'assets/img/custom/dashboard/connections.svg',
         caption: $localize`Connections`,
         route: 'connections',
@@ -113,12 +121,7 @@ export class SidenavRoutesListComponent implements OnInit {
         route: 'team',
         showInSideNav$: of(true),
       },
-      {
-        icon: 'assets/img/custom/dashboard/activity.svg',
-        caption: $localize`Activity`,
-        route: '/activity',
-        showInSideNav$: of(true),
-      },
+
       {
         icon: 'assets/img/custom/dashboard/settings.svg',
         caption: $localize`Settings`,
