@@ -1,5 +1,6 @@
 import {
   httpClient,
+  HttpError,
   HttpHeaders,
   HttpRequest,
   QueryParams,
@@ -97,13 +98,17 @@ export const httpSendRequestAction = createAction({
       displayName: 'Timeout(in seconds)',
       required: false,
     }),
+    failsafe: Property.Checkbox({
+      displayName: 'No Error on Failure',
+      required: false,
+    }),
   },
   errorHandlingOptions: {
     continueOnFailure: { hide: true },
     retryOnFailure: { defaultValue: true },
   },
   async run(context) {
-    const { method, url, headers, queryParams, body, body_type, timeout } =
+    const { method, url, headers, queryParams, body, body_type, timeout, failsafe } =
       context.propsValue;
 
     assertNotNullOrUndefined(method, 'Method');
@@ -129,6 +134,13 @@ export const httpSendRequestAction = createAction({
         request.body = bodyInput;
       }
     }
-    return await httpClient.sendRequest(request);
+    try {
+      return await httpClient.sendRequest(request);
+    } catch (error) {
+      if (failsafe) {
+        return (error as HttpError).errorMessage()
+      }
+      throw error;
+    }
   },
 });
