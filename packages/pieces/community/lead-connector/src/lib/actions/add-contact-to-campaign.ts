@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { addContactToCampaign, getCampaigns, getContacts } from '../common';
 import { leadConnectorAuth } from '../..';
 
@@ -20,7 +20,7 @@ export const addContactToCampaignAction = createAction({
             options: [],
           };
 
-        const contacts = await getContacts(auth as string);
+        const contacts = await getContacts(auth as OAuth2PropertyValue);
         return {
           options: contacts.map((contact) => {
             return {
@@ -43,7 +43,7 @@ export const addContactToCampaignAction = createAction({
           };
         }
 
-        const campaigns = await getCampaigns(auth as string);
+        const campaigns = await getCampaigns(auth as OAuth2PropertyValue);
         return {
           options: campaigns.map((campaign: any) => {
             return {
@@ -59,6 +59,6 @@ export const addContactToCampaignAction = createAction({
   async run({ auth, propsValue }) {
     const { contact, campaign } = propsValue;
 
-    return await addContactToCampaign(auth, contact, campaign);
+    return await addContactToCampaign(auth.access_token, contact, campaign);
   },
 });
