@@ -369,19 +369,34 @@
 
 
     <ng-container *ngSwitchCase="PropertyType.ARRAY">
-      <span class="ap-flex ap-justify-end  ap-z-50 ap-relative ap-text-primary" 
-        [style.marginTop]="!form.disabled? '-1.875rem' :'0'">
-        <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
-        </ng-container>
-      </span>
+
+      <ng-container #dynamicToggleIconForTextInput *ngIf="customizedInputs && customizedInputs[property.key]">
+        <div class="ap-flex ap-items-center ap-justify-end ap-mb-1 ap-mx-1">
+          <ng-container  *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
+          </ng-container>
+        </div>
+      
+      </ng-container>
+
       <ng-container
         *ngTemplateOutlet="customizedInputs && customizedInputs[property.key]? textInputTemplate:arrayInputTemplate ;context:{$implicit:property, formGroup:formGroup}">
       </ng-container>
 
+    
+     
       <ng-template #arrayInputTemplate>
-        <div [class.ap-mb-5]="form.disabled" #hoverContainer="hoverTrackerDirective" apTrackHover>
-          <app-array-form-control #array [formControlName]="property.key" [property]="property.value"
-            [formFieldsTemplate]="formFieldsTemplate" [prefix]="property.key"></app-array-form-control>
+        <div [class.ap-mb-5]="form.disabled" #hoverContainer="hoverTrackerDirective" class="ap-mx-1" apTrackHover>
+          <ng-template #dynamicInputTemplate>
+            <ng-container  *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
+            </ng-container>
+          </ng-template>
+      
+          <app-array-form-control [dynamicInputTemplate]="dynamicInputTemplate" #array [formControlName]="property.key" [property]="property.value"
+            [formFieldsTemplate]="formFieldsTemplate" [prefix]="property.key">      
+          
+            
+
+          </app-array-form-control>
         </div>
         <ng-container *ngTemplateOutlet="description; context:{$implicit:property}">
         </ng-container>
