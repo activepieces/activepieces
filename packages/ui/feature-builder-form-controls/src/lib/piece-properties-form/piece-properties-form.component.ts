@@ -50,6 +50,8 @@ import {
   InsertMentionOperation,
   FlagService,
   appConnectionsSelectors,
+  EMPTY_SPACE_BETWEEN_INPUTS_IN_PIECE_PROPERTIES_FORM,
+  BOTTOM_MARGIN_FOR_DESCRIPTION_IN_PIECE_PROPERTIES_FORM,
 } from '@activepieces/ui/common';
 import {
   BuilderSelectors,
@@ -86,6 +88,10 @@ type ConfigKey = string;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PiecePropertiesFormComponent implements ControlValueAccessor {
+  readonly BOTTOM_MARGIN_FOR_DESCRIPTION_IN_PIECE_PROPERTIES_FORM =
+    BOTTOM_MARGIN_FOR_DESCRIPTION_IN_PIECE_PROPERTIES_FORM;
+  readonly MIN_SPACING_BETWEEN_INPUTS =
+    EMPTY_SPACE_BETWEEN_INPUTS_IN_PIECE_PROPERTIES_FORM;
   updateValueOnChange$: Observable<void> = new Observable<void>();
   PropertyType = PropertyType;
   searchControl: FormControl<string> = new FormControl('', {
