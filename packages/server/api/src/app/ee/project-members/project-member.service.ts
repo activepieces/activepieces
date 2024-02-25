@@ -11,6 +11,7 @@ import {
     ErrorCode,
     Principal,
     ProjectId,
+    ProjectMemberRole,
     SeekPage,
     UserId,
     apId,
@@ -20,7 +21,6 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import {
     ProjectMember,
     ProjectMemberId,
-    ProjectMemberRole,
     ProjectMemberStatus,
     AddProjectMemberRequestBody,
 } from '@activepieces/ee-shared'

@@ -5,6 +5,13 @@
     "version": "0.14.3"
   },
   "components": {
+    "securitySchemes": {
+      "apiKey": {
+        "type": "http",
+        "description": "Use your api key generated from the admin console",
+        "scheme": "bearer"
+      }
+    },
     "schemas": {
       "project-member": {
         "description": "Project member is which user is assigned to a project.",
@@ -915,6 +922,103 @@
           },
           "version": {
             "type": "string"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "ARTIFICIAL_INTELLIGENCE"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "COMMUNICATION"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "COMMERCE"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "CORE"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "BUSINESS_INTELLIGENCE"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "ACCOUNTING"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "PRODUCTIVITY"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "CONTENT_AND_FILES"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "DEVELOPER_TOOLS"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "CUSTOMER_SUPPORT"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "FORMS_AND_SURVEYS"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "HUMAN_RESOURCES"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "PAYMENT_PROCESSING"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "MARKETING"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "SALES_AND_CRM"
+                  ]
+                }
+              ]
+            }
           },
           "minimumSupportedRelease": {
             "type": "string"
@@ -2170,11 +2274,7 @@
                         "hide": {
                           "type": "boolean"
                         }
-                      },
-                      "required": [
-                        "defaultValue",
-                        "hide"
-                      ]
+                      }
                     },
                     "continueOnFailure": {
                       "type": "object",
@@ -2185,11 +2285,7 @@
                         "hide": {
                           "type": "boolean"
                         }
-                      },
-                      "required": [
-                        "defaultValue",
-                        "hide"
-                      ]
+                      }
                     }
                   },
                   "required": [
@@ -3452,11 +3548,7 @@
                         "hide": {
                           "type": "boolean"
                         }
-                      },
-                      "required": [
-                        "defaultValue",
-                        "hide"
-                      ]
+                      }
                     },
                     "continueOnFailure": {
                       "type": "object",
@@ -3467,11 +3559,7 @@
                         "hide": {
                           "type": "boolean"
                         }
-                      },
-                      "required": [
-                        "defaultValue",
-                        "hide"
-                      ]
+                      }
                     }
                   },
                   "required": [
@@ -3540,6 +3628,58 @@
                   "required": [
                     "strategy"
                   ]
+                },
+                "renewConfiguration": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "strategy": {
+                          "type": "string",
+                          "enum": [
+                            "CRON"
+                          ]
+                        },
+                        "cronExpression": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "strategy",
+                        "cronExpression"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "strategy": {
+                          "type": "string",
+                          "enum": [
+                            "NONE"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "strategy"
+                      ]
+                    }
+                  ]
+                },
+                "testStrategy": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "SIMULATION"
+                      ]
+                    },
+                    {
+                      "type": "string",
+                      "enum": [
+                        "TEST_FUNCTION"
+                      ]
+                    }
+                  ]
                 }
               },
               "required": [
@@ -3548,7 +3688,8 @@
                 "description",
                 "props",
                 "type",
-                "sampleData"
+                "sampleData",
+                "testStrategy"
               ]
             }
           }
@@ -3628,6 +3769,11 @@
           },
           "required": true
         },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
         "responses": {
           "201": {
             "description": "Default Response",
@@ -4006,6 +4152,11 @@
             "in": "query",
             "name": "projectId",
             "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
           }
         ],
         "responses": {
@@ -5201,6 +5352,12 @@
                                                     "enum": [
                                                       "NUMBER_IS_LESS_THAN"
                                                     ]
+                                                  },
+                                                  {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "NUMBER_IS_EQUAL_TO"
+                                                    ]
                                                   }
                                                 ]
                                               }
@@ -6101,6 +6258,11 @@
             "required": true
           }
         ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Default Response"
@@ -6129,6 +6291,11 @@
             "in": "path",
             "name": "id",
             "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
           }
         ],
         "responses": {
@@ -6467,6 +6634,11 @@
             "required": true
           }
         ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
         "responses": {
           "204": {
             "description": "Default Response"
@@ -6577,9 +6749,6 @@
                               }
                             ]
                           },
-                          "token_url": {
-                            "type": "string"
-                          },
                           "props": {
                             "type": "object",
                             "additionalProperties": {}
@@ -6622,7 +6791,6 @@
                         "required": [
                           "client_id",
                           "client_secret",
-                          "token_url",
                           "scope",
                           "code",
                           "redirect_url",
@@ -6700,9 +6868,6 @@
                             "enum": [
                               "CLOUD_OAUTH2"
                             ]
-                          },
-                          "token_url": {
-                            "type": "string"
                           }
                         },
                         "required": [
@@ -6783,9 +6948,6 @@
                             "enum": [
                               "PLATFORM_OAUTH2"
                             ]
-                          },
-                          "token_url": {
-                            "type": "string"
                           },
                           "redirect_url": {
                             "type": "string"
@@ -6912,6 +7074,11 @@
             }
           }
         },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Default Response"
@@ -6955,6 +7122,11 @@
             "in": "query",
             "name": "limit",
             "required": false
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
           }
         ],
         "responses": {
@@ -7097,6 +7269,11 @@
             "required": true
           }
         ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
         "responses": {
           "204": {
             "description": "Default Response"
@@ -7130,6 +7307,11 @@
           },
           "required": true
         },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
         "responses": {
           "201": {
             "description": "Default Response",
@@ -7320,6 +7502,11 @@
             "in": "query",
             "name": "externalId",
             "required": false
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
           }
         ],
         "responses": {
@@ -7587,6 +7774,11 @@
             "required": true
           }
         ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Default Response",
@@ -7797,6 +7989,11 @@
             "required": false
           }
         ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Default Response"
@@ -7869,6 +8066,11 @@
           },
           "required": true
         },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
         "responses": {
           "201": {
             "description": "Project member is which user is assigned to a project.",
@@ -7966,6 +8168,11 @@
             "in": "path",
             "name": "id",
             "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
           }
         ],
         "responses": {
@@ -8076,6 +8283,11 @@
             }
           }
         },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
         "responses": {
           "201": {
             "description": "Default Response",
@@ -8105,6 +8317,11 @@
             "in": "path",
             "name": "id",
             "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
           }
         ],
         "responses": {

@@ -100,6 +100,8 @@ import { auditEventModule } from './ee/audit-logs/audit-event-module'
 import { ExecutionMode, QueueMode, SystemProp, system } from 'server-shared'
 import { loadEncryptionKey } from './helper/encryption'
 import { activityModule } from './ee/activity/activity-module'
+import { redisSystemJob } from './ee/helper/redis-system-job'
+import { usageTrackerModule } from './ee/usage-tracker/usage-tracker-module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -128,6 +130,13 @@ export const setupApp = async (): Promise<FastifyInstance> => {
                 },
             ],
             components: {
+                securitySchemes: {
+                    apiKey: {
+                        type: 'http',
+                        description: 'Use your api key generated from the admin console',
+                        scheme: 'bearer',
+                    },
+                },
                 schemas: {
                     'project-member': ProjectMember,
                     project: ProjectWithUsageAndPlanResponse,
@@ -290,6 +299,8 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
             await app.register(activityModule)
+            await redisSystemJob.init()
+            await app.register(usageTrackerModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
@@ -322,6 +333,8 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
             await app.register(activityModule)
+            await redisSystemJob.init()
+            await app.register(usageTrackerModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
@@ -343,6 +356,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
 
     app.addHook('onClose', async () => {
         await flowQueueConsumer.close()
+        await redisSystemJob.close()
         await flowResponseWatcher.shutdown()
     })
 
@@ -356,16 +370,16 @@ const validateEnvPropsOnStartup = async (): Promise<void> => {
     )
     const executionMode = system.get<ExecutionMode>(SystemProp.EXECUTION_MODE)
     const signedUpEnabled =
-    system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
+        system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
     const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
     const environment = system.get(SystemProp.ENVIRONMENT)
     await loadEncryptionKey(queueMode)
 
     if (
         executionMode === ExecutionMode.UNSANDBOXED &&
-    codeSandboxType !== CodeSandboxType.V8_ISOLATE &&
-    signedUpEnabled &&
-    environment === ApEnvironment.PRODUCTION
+        codeSandboxType !== CodeSandboxType.V8_ISOLATE &&
+        signedUpEnabled &&
+        environment === ApEnvironment.PRODUCTION
     ) {
         throw new ActivepiecesError(
             {

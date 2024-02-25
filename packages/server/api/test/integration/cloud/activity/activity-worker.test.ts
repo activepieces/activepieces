@@ -47,7 +47,7 @@ describe('[Worker] Activity API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/worker/activity',
+                url: '/v1/worker/activities',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -92,7 +92,7 @@ describe('[Worker] Activity API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/worker/activity',
+                url: '/v1/worker/activities',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -133,7 +133,7 @@ describe('[Worker] Activity API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/worker/activity',
+                url: '/v1/worker/activities',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -174,7 +174,7 @@ describe('[Worker] Activity API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/worker/activity',
+                url: '/v1/worker/activities',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -215,7 +215,7 @@ describe('[Worker] Activity API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/worker/activity',
+                url: '/v1/worker/activities',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -256,7 +256,7 @@ describe('[Worker] Activity API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/worker/activity',
+                url: '/v1/worker/activities',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },

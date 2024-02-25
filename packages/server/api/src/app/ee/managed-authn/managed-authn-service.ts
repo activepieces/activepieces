@@ -6,6 +6,7 @@ import {
     PrincipalType,
     Project,
     ProjectId,
+    ProjectMemberRole,
     ProjectType,
     User,
 } from '@activepieces/shared'
@@ -13,7 +14,6 @@ import { userService } from '../../user/user-service'
 import {
     DEFAULT_PLATFORM_PLAN,
     PlatformId,
-    ProjectMemberRole,
     ProjectMemberStatus,
 } from '@activepieces/ee-shared'
 import { platformService } from '../platform/platform.service'
@@ -43,9 +43,15 @@ export const managedAuthnService = {
             },
         })
 
+        const projectRole = await projectMemberService.getRole({
+            userId: user.id,
+            projectId: user.projectId,
+        })
+
         return {
             ...user,
             token,
+            projectRole,
         }
     },
 }

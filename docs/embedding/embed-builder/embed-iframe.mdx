@@ -14,7 +14,7 @@ Add the embed SDK script. This script helps synchronize the iframe and host rout
 The script shouldn't contain async or defer attributes as it must load before the iframe.
 </Tip>
 ```html
-<script src="https://cdn.activepieces.com/sdk/embed-sdk.js">
+<script src="https://cdn.activepieces.com/sdk/embed/0.0.1.js">
 </script>
 <script>
 activepieces.configure({
@@ -29,12 +29,15 @@ activepieces.configure({
 | Parameter Name | Required | Description |
 | --- | --- | --- |
 | prefix | ❌ | You can choose a URL prefix for generating URLs. URL prefixes for embedding follow this pattern: `<embedding_url_prefix>/<Activepieces_url>`. For example, if the prefix is `/automation` and the Activepieces URL is `/flows`, the corresponding vendor URL will be `/automations/flows`.
-| initialRoute | ❌ | Its value must be one of the following: `/flows`, `/runs`, `/connections`, `/flows/:id`, `/runs/:id`. Any other path will result in a 404 page. If left undefined, it will redirect to `/flows`.
 | hideSidebar | ❌ | Its value can be either false or true, and it controls the visibility of the sidebar in the dashboard, by default it is false.
 | disableNavigationInBuilder | ❌ | Its value can be either false or true, and it hide the folder name and back button in the builder, by default it is false.
 
+<Tip>
+The way navigation works is that the iframe will read the browser URL, remove the `prefix`, and map it to the same activepieces internal URL.
+</Tip>
 
 ## Step 2: Generate a JWT token
+
 Follow the instructions in the [generate jwt](./generate-jwt) page
 
 ## Step 3: Add an iframe

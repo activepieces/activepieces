@@ -12,6 +12,7 @@ import {
     ErrorCode,
     ApEdition,
     PlatformRole,
+    ProjectMemberRole,
 } from '@activepieces/shared'
 import { platformService } from '../../../platform/platform.service'
 import { accessTokenManager } from '../../../../authentication/lib/access-token-manager'
@@ -109,11 +110,23 @@ async function autoVerifyUserIfEligible(user: User): Promise<void> {
 
 async function getProjectAndTokenOrThrow(
     user: User,
-): Promise<{ project: Project, token: string }> {
+): Promise<{ project: Project, token: string, projectRole: ProjectMemberRole | null }> {
     const project = await getProjectForUserOrThrow(user)
+
+    const projectRole = await projectMemberService.getRole({
+        projectId: project.id,
+        userId: user.id,
+    })
+
+    const token = await populateTokenWithPlatformInfo({
+        user,
+        project,
+    })
+
     return {
         project,
-        token: await populateTokenWithPlatformInfo({ user, project }),
+        projectRole,
+        token,
     }
 }
 

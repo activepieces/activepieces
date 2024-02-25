@@ -5,7 +5,7 @@
     <div class="ap-typography-body-1 ap-text-body ap-mb-4" i18n>
       Type the email address of the user you want to invite.
     </div>
-    <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="invitationForm" (submit)="submit()">
+    <form class="ap-flex ap-flex-col ap-gap-3" [formGroup]="invitationForm" (submit)="submit()">
       <mat-form-field class="ap-w-full" appearance="outline">
         <input cdkFocusInitial formControlName="email" matInput type="email" placeholder="bugs.bunny@gmail.com" spellcheck="false" />
         <mat-error *ngIf="invitationForm.controls.email.invalid">

@@ -28,11 +28,20 @@ export type CreateAuditEventParam =
   | {
       action:
       | ApplicationEventName.SIGNED_IN
-      | ApplicationEventName.SIGNED_UP
       | ApplicationEventName.RESET_PASSWORD
       | ApplicationEventName.VERIFIED_EMAIL
       userId: string
-      projectId: string
+  } 
+  | {
+      action: 
+      | ApplicationEventName.SIGNED_UP_USING_EMAIL 
+      | ApplicationEventName.SIGNED_UP_USING_MANAGED_AUTH
+      | ApplicationEventName.SIGNED_UP_USING_SSO
+      userId: string
+      createdUser: {
+          id: string
+          email: string
+      }
   }
   | {
       action: ApplicationEventName.UPDATED_FLOW

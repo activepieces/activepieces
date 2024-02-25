@@ -1,9 +1,4 @@
-
-export enum ProjectMemberRole {
-    ADMIN = "ADMIN",
-    EDITOR = "EDITOR",
-    VIEWER = "VIEWER"
-}
+import { ProjectMemberRole } from "@activepieces/shared";
 
 export enum ProjectMemberPermission {
     READ_FLOW = "READ_FLOW",
@@ -12,6 +7,7 @@ export enum ProjectMemberPermission {
     WRITE_CONNECTION = "WRITE_CONNECTION",
     READ_PROJECT_MEMBER = "READ_PROJECT_MEMBER",
     WRITE_PROJECT_MEMBER = "WRITE_PROJECT_MEMBER",
+    READ_ACTIVITY = "READ_ACTIVITY",
 }
 
 export const ProjectMemberRoleToPermissions = {
@@ -22,15 +18,23 @@ export const ProjectMemberRoleToPermissions = {
         ProjectMemberPermission.WRITE_CONNECTION,
         ProjectMemberPermission.READ_PROJECT_MEMBER,
         ProjectMemberPermission.WRITE_PROJECT_MEMBER,
+        ProjectMemberPermission.READ_ACTIVITY,
     ],
     [ProjectMemberRole.EDITOR]: [
         ProjectMemberPermission.READ_FLOW,
         ProjectMemberPermission.WRITE_FLOW,
         ProjectMemberPermission.READ_CONNECTION,
         ProjectMemberPermission.WRITE_CONNECTION,
+        ProjectMemberPermission.READ_ACTIVITY,
     ],
     [ProjectMemberRole.VIEWER]: [
         ProjectMemberPermission.READ_FLOW,
         ProjectMemberPermission.READ_CONNECTION,
+        ProjectMemberPermission.READ_ACTIVITY,
+    ],
+    [ProjectMemberRole.EXTERNAL_CUSTOMER]: [
+        ProjectMemberPermission.READ_ACTIVITY,
+        ProjectMemberPermission.READ_CONNECTION,
+        ProjectMemberPermission.WRITE_CONNECTION,
     ],
 };

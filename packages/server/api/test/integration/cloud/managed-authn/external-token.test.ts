@@ -68,7 +68,6 @@ describe('Managed Authentication API', () => {
             const responseBody = response?.json()
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(Object.keys(responseBody)).toHaveLength(16)
             expect(responseBody?.id).toHaveLength(21)
             expect(responseBody?.email).toBe(mockExternalTokenPayload.email)
             expect(responseBody?.firstName).toBe(mockExternalTokenPayload.firstName)

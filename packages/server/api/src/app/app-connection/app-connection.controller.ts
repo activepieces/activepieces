@@ -4,6 +4,7 @@ import {
     AppConnectionWithoutSensitiveData,
     ListAppConnectionsRequestQuery,
     PrincipalType,
+    SERVICE_KEY_SECURITY_OPENAPI,
     SeekPage,
     UpsertAppConnectionRequestBody,
 } from '@activepieces/shared'
@@ -98,6 +99,7 @@ const UpsertAppConnectionRequest = {
     },
     schema: {
         tags: ['app-connections'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Upsert an app connection based on the app name',
         body: UpsertAppConnectionRequestBody,
         Response: {
@@ -112,6 +114,7 @@ const ListAppConnectionsRequest = {
     },
     schema: {
         tags: ['app-connections'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         querystring: ListAppConnectionsRequestQuery,
         description: 'List app connections',
         response: {
@@ -126,6 +129,7 @@ const DeleteAppConnectionRequest = {
     },
     schema: {
         tags: ['app-connections'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Delete an app connection',
         params: Type.Object({
             id: ApId,

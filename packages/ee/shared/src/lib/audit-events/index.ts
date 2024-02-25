@@ -16,8 +16,10 @@ export enum ApplicationEventName {
     UPDATED_FLOW = 'UPDATED_FLOW',
     UPSERTED_CONNECTION = 'UPSERTED_CONNECTION',
     DELETED_CONNECTION = 'DELETED_CONNECTION',
+    SIGNED_UP_USING_EMAIL = 'SIGNED_UP_USING_EMAIL',
+    SIGNED_UP_USING_SSO = 'SIGNED_UP_USING_SSO',
+    SIGNED_UP_USING_MANAGED_AUTH = 'SIGNED_UP_USING_MANAGED_AUTH',
     SIGNED_IN = 'SIGNED_IN',
-    SIGNED_UP = 'SIGNED_UP',
     RESET_PASSWORD = 'RESET_PASSWORD',
     VERIFIED_EMAIL = 'VERIFIED_EMAIL',
 }
@@ -84,11 +86,26 @@ export type UpdatedFlowEvent = Static<typeof UpdatedFlowEvent>
 
 export const AuthenticationEvent = Type.Object({
     ...BaseAuditEventProps,
-    action: Type.Union([Type.Literal(ApplicationEventName.SIGNED_UP), Type.Literal(ApplicationEventName.SIGNED_IN), Type.Literal(ApplicationEventName.RESET_PASSWORD), Type.Literal(ApplicationEventName.VERIFIED_EMAIL)]),
+    action: Type.Union([Type.Literal(ApplicationEventName.SIGNED_IN), Type.Literal(ApplicationEventName.RESET_PASSWORD), Type.Literal(ApplicationEventName.VERIFIED_EMAIL)]),
     data: Type.Object({}),
 })
 
 export type AuthenticationEvent = Static<typeof AuthenticationEvent>
+
+export const SignUpEvent = Type.Object({
+    ...BaseAuditEventProps,
+    action: Type.Union([
+        Type.Literal(ApplicationEventName.SIGNED_UP_USING_MANAGED_AUTH),
+        Type.Literal(ApplicationEventName.SIGNED_UP_USING_EMAIL),
+        Type.Literal(ApplicationEventName.SIGNED_UP_USING_SSO)]),
+    data: Type.Object({
+        createdUser: Type.Object({
+            id: Type.String(),
+            email: Type.String(),
+        }),
+    }),
+})
+export type SignUpEvent = Static<typeof SignUpEvent>
 
 export const ApplicationEvent = Type.Union([
     ConnectionEvent,
@@ -96,6 +113,7 @@ export const ApplicationEvent = Type.Union([
     AuthenticationEvent,
     FolderEvent,
     UpdatedFlowEvent,
+    SignUpEvent,
 ])
 
 export type ApplicationEvent = Static<typeof ApplicationEvent>
@@ -120,14 +138,18 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             return `${event.data.connectionName} is updated`;
         case ApplicationEventName.DELETED_CONNECTION:
             return `${event.data.connectionName} is deleted`;
-        case ApplicationEventName.SIGNED_UP:
-            return `User ${event.userEmail} signed up`;
         case ApplicationEventName.SIGNED_IN:
             return `User ${event.userEmail} signed in`;
         case ApplicationEventName.RESET_PASSWORD:
             return `User ${event.userEmail} reset password`;
         case ApplicationEventName.VERIFIED_EMAIL:
             return `User ${event.userEmail} verified email`;
+        case ApplicationEventName.SIGNED_UP_USING_EMAIL:
+            return `User ${event.data.createdUser.email} signed up using email`;
+        case ApplicationEventName.SIGNED_UP_USING_SSO:
+            return `User ${event.data.createdUser.email} signed up using SSO`;
+        case ApplicationEventName.SIGNED_UP_USING_MANAGED_AUTH:
+            return `User ${event.data.createdUser.email} signed up using managed auth`;
     }
 }
 
