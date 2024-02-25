@@ -3,7 +3,6 @@ import { StatusCodes } from 'http-status-codes'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { stripeHelper, stripeWebhookSecret } from './stripe-helper'
 import { billingService } from './billing.service'
-import { UpgradeRequest } from '@activepieces/ee-shared'
 import Stripe from 'stripe'
 import { plansService } from '../project-plan/project-plan.service'
 import { exceptionHandler, logger } from 'server-shared'
@@ -35,20 +34,6 @@ const billingController: FastifyPluginAsyncTypebox = async (fastify) => {
         }
     })
 
-    fastify.post(
-        '/upgrade',
-        {
-            schema: {
-                body: UpgradeRequest,
-            },
-        },
-        async (request) => {
-            return billingService.upgrade({
-                projectId: request.principal.projectId,
-                request: request.body,
-            })
-        },
-    )
 
     fastify.post(
         '/stripe/webhook',

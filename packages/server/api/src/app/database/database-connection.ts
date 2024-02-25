@@ -41,6 +41,7 @@ import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
 import { GitRepoEntity } from '../ee/git-repos/git-repo.entity'
 import { AuditEventEntity } from '../ee/audit-logs/audit-event-entity'
 import { ActivityEntity } from '../ee/activity/activity-entity'
+import { ProjectBillingEntity } from '../ee/billing-v2/project-billing/project-billing.entity'
 
 const databaseType = system.get(SystemProp.DB_TYPE)
 
@@ -85,6 +86,7 @@ function getEntities(): EntitySchema<unknown>[] {
                 GitRepoEntity,
                 AuditEventEntity,
                 ActivityEntity,
+                ProjectBillingEntity,
             )
             break
         case ApEdition.ENTERPRISE:

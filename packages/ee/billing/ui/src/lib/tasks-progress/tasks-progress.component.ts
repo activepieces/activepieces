@@ -1,9 +1,13 @@
 import { ApFlagId, TelemetryEventName } from '@activepieces/shared';
-import { FlagService, TelemetryService } from '@activepieces/ui/common';
+import {
+  FlagService,
+  ProjectSelectors,
+  TelemetryService,
+} from '@activepieces/ui/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, map } from 'rxjs';
-import { BillingService } from '../service/billing.service';
+import { Store } from '@ngrx/store';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-tasks-progress',
@@ -15,35 +19,19 @@ export class TasksProgressComponent {
   tasksStats$: Observable<{
     tasksCap: number;
     tasksExecuted: number;
-    perDay: boolean;
-    customerPortalUrl: string;
   }>;
   billingEnabled$: Observable<boolean>;
 
   constructor(
     private router: Router,
     private telemetryService: TelemetryService,
-    private billingService: BillingService,
-    private flagsService: FlagService
+    private flagsService: FlagService,
+    private store: Store
   ) {
     this.billingEnabled$ = this.flagsService.isFlagEnabled(
       ApFlagId.SHOW_BILLING
     );
-    this.tasksStats$ = this.billingService.getUsage().pipe(
-      map((res) => {
-        const perDay = !!res.plan.tasksPerDay;
-        return {
-          tasksCap: res.plan.tasksPerDay
-            ? res.plan.tasksPerDay
-            : res.plan.tasks,
-          tasksExecuted: res.plan.tasksPerDay
-            ? res.usage.consumedTasksToday
-            : res.usage.consumedTasks,
-          customerPortalUrl: res.customerPortalUrl,
-          perDay,
-        };
-      })
-    );
+    this.tasksStats$ = this.store.select(ProjectSelectors.selectTaskProgress);
   }
 
   openPricingPlans() {

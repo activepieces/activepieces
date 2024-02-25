@@ -8,6 +8,7 @@ export enum ProjectActionType {
   UPDATE_NOTIFY_STATUS = '[PROJECT] UPDATE_NOTIFY_STATUS',
   UPDATE_PROJECT = '[PROJECT] UPDATE_PROJECT',
   ADD_PROJECT = '[PROJECT] ADD_PROJECT',
+  UPDATE_LIMITS = '[PROJECT] UPDATE_LIMITS',
 }
 
 export const setProjects = createAction(
@@ -24,6 +25,11 @@ export const updateNotifyStatus = createAction(
   props<{ notifyStatus: NotificationStatus }>()
 );
 
+export const updateLimits = createAction(
+  ProjectActionType.UPDATE_LIMITS,
+  props<{ limits: { tasks: number } }>()
+);
+
 export const clearProjects = createAction(ProjectActionType.CLEAR_PROJECTS);
 export const updateProject = createAction(
   ProjectActionType.UPDATE_PROJECT,
@@ -37,6 +43,7 @@ export const ProjectActions = {
   setProjects,
   clearProjects,
   updateNotifyStatus,
+  updateLimits,
   addProject,
   updateProject,
 };

@@ -26,6 +26,23 @@ const _projectReducer = createReducer(
       };
     }
   ),
+  on(ProjectActions.updateLimits, (state, { limits }): ProjectsState => {
+    const updatedProjects = [...state.projects];
+    // TODO FIX
+    /* updatedProjects[state.selectedIndex] = {
+      ...state.projects[state.selectedIndex],
+      plan: {
+        ...state.projects[state.selectedIndex].plan,
+        tasks: limits.tasks,
+      },
+    };*/
+
+    return {
+      platform: state.platform,
+      projects: updatedProjects,
+      selectedIndex: state.selectedIndex,
+    };
+  }),
   on(
     ProjectActions.setProjects,
     (_state, { projects, platform, selectedIndex }): ProjectsState => {

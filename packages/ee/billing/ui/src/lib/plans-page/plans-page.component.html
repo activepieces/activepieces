@@ -2,128 +2,32 @@
   Subscription Settings
 </div>
 
-<div class="ap-p-2 lg:ap-p-8 ap-flex ap-justify-center ap-items-center ap-w-full"
-  *ngIf="loadPlans$ | async as response; else loadingTemplate">
-  <div class="ap-flex ap-flex-col">
-    <div
-      class="ap-bg-[#6E41E2] ap-justify-center md:ap-justify-between ap-text-white ap-flex ap-gap-10 ap-flex-wrap lg:ap-flex-nowrap ap-rounded">
-      <div class="ap-py-6 lg:ap-py-12 ap-px-6 lg:ap-pl-12  lg:ap-pr-0 ">
-        <div class="ap-mb-5 ap-typography-headline-3 !ap-text-[2.375rem]">
-          Refer & Increase Your Tasks!
-        </div>
-        <div class="ap-typography-body-1">
-          Invite a friend or a colleague to Activepieces using your referral link,
-          <br> so you both get <b>500 extra tasks/month </b>
-          and remove daily limits.
-        </div>
-        <div class="ap-mt-11 ap-flex ap-gap-7 ap-flex-wrap lg:ap-flex-nowrap">
-          <ap-button btnColor="white" (buttonClicked)="copyUrl()">
-            <div
-              class="ap-flex ap-text-body-2 !ap-font-semibold ap-w-[200px] md:ap-w-[400px] ap-items-center ap-justify-center ap-gap-2">
-              <svg-icon class="ap-fill-body ap-w-[13px] ap-h-[12px]" [applyClass]="true"
-                src="assets/img/custom/copy.svg">
-              </svg-icon>
-              Copy Link
-            </div>
-          </ap-button>
-          <div class="ap-flex ap-flex-col ap-gap-2 ap-typography-body-2 ap-justify-center">
-            <div class="ap-font-semibold" *ngIf="referrals$ | async as refs">
-              {{ refs.length}}/5 users referred
-            </div>
-
-          </div>
-        </div>
-      </div>
-      <img src="assets/img/custom/referrals.png"
-        class="ap-w-[345.1px] ap-h-[203.7px] md:ap-w-[493px] md:ap-h-[291px] ap-mt-[22px] ap-mx-6 lg:ap-mr-12 lg:ap-ml-0">
-    </div>
-
-    <div class="ap-typography-headline-6 !ap-font-semibold ap-mb-5 ap-mt-12">
-      Your Automation Plan
-    </div>
-    <div
-      class="ap-border ap-rounded ap-border-outline ap-flex ap-flex-col lg:ap-flex-row ap-gap-5 lg:ap-gap-0 ap-px-10 ap-py-11 ap-flex-wrap ap-divide-x-0  lg:ap-divide-x   ap-divide-dividers">
-      <ng-container *ngIf="tasksStats$ | async as stats">
-        <div class="ap-flex ap-gap-6 ap-pr-12 ap-items-center">
-          <div class="ap-relative">
-            <mat-progress-spinner class="progress-success-bg !ap-absolute !ap-left-0 !ap-top-0" [color]="'accent'"
-              [diameter]="50" [strokeWidth]="10" [mode]="'determinate'" [value]="100">
-            </mat-progress-spinner>
-            <mat-progress-spinner [ngClass]="{
-              'progress-success': stats.tasksExecuted / stats.tasksCap <= 0.8
-            }" [color]="'warn'" [diameter]="50" [strokeWidth]="10" [mode]="'determinate'"
-              [value]="(stats.tasksExecuted / stats.tasksCap) * 100">
-            </mat-progress-spinner>
-          </div>
-          <div class="ap-flex ap-flex-col ap-gap-1">
-            <div class="ap-typography-body-1 ap-font-semibold ap-items-center">
-              {{stats.tasksExecuted}} of {{stats.tasksCap}} Tasks
-            </div>
-            <div class="ap-typography-body-2 ap-text-description">
-
-              <ng-container *ngIf="response.currentUsage.daysLeftBeforeReset === 0">
-                Resets in {{ response.currentUsage.hoursLeftBeforeReset }}
-                hour{{response.currentUsage.hoursLeftBeforeReset > 1 ? 's': ''}}
-              </ng-container>
-              <ng-container *ngIf="response.currentUsage.daysLeftBeforeReset > 0">
-                Resets in {{ response.currentUsage.daysLeftBeforeReset }} day{{response.currentUsage.daysLeftBeforeReset
-                > 1 ? 's': ''}}
-              </ng-container>
-            </div>
-          </div>
-        </div>
-      </ng-container>
-      <div class="ap-pl-16 lg:ap-px-12 ">
-        <div class="ap-flex ap-flex-col ap-gap-1 ap-justify-center ap-h-full">
-          <div class="ap-typography-body-1 ap-font-semibold">
-            {{response.currentPlan.flowPlanName | planName}}
-          </div>
-        </div>
-      </div>
-      <div class="ap-pl-16 lg:ap-px-12">
-        <div class="ap-flex ap-flex-col ap-gap-1">
-          <div class="ap-typography-body-1 ap-flex ap-flex-col ap-gap-1">
-            <div>
-              <b>Connections:</b> {{response.currentPlan.connections >= 100
-              ? 'Unlimited'
-              : response.currentPlan.connections }}
-            </div>
-            <div>
-              <b>Sync Time:</b> {{ response.currentPlan.minimumPollingInterval }} minute{{
-              response.currentPlan.minimumPollingInterval > 1 ? 's' : ''}}
-            </div>
-            <div>
-              <b>Team Members:</b>
-              {{
-              response.currentPlan.teamMembers === -1
-              ? 'Unlimited'
-              : response.currentPlan.teamMembers
-              }}
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class=" ap-pl-16 lg:ap-px-12 ap-grow ">
-        <div class=" ap-flex ap-h-full ap-items-center  lg:ap-justify-end">
-          <ap-button btnSize="medium" [btnColor]="'primary'" [btnStyle]="'stroked'" *ngIf="loadPlans$ | async as plans"
-            (buttonClicked)="openPortal(plans.customerPortalUrl)"> Manage Billing </ap-button>
-        </div>
-
-      </div>
-    </div>
-
-    <div class="ap-typography-headline-6 !ap-font-semibold ap-mb-5 ap-mt-12">
-      Automation Plans
-    </div>
-    <div class="ap-flex ap-justify-start ap-gap-[50px]  ap-flex-wrap">
-      <app-automation-plan-card *ngFor="let plan of pricingPlans" [plan]="plan"
-        [loadPlans$]="loadPlans$"></app-automation-plan-card>
-    </div>
-
-  </div>
-</div>
 <ng-template #loadingTemplate>
   <div class="ap-flex ap-flex-grow ap-justify-center ap-items-center ap-h-full route-loader ap-w-full">
     <ap-loading-icon width="50px" height="50px"></ap-loading-icon>
   </div>
 </ng-template>
+
+<div class="ap-p-8 ap-flex ap-flex-col">
+  <div class="ap-typography-headline-5">
+    Usage Based
+  </div>
+  <div class="ap-typography-body-2">
+    Please upgrade to a paid plan to enable usage based billing.
+  </div>
+  <div class="ap-p-2 lg:ap-p-8 ap-w-full">
+    <mat-form-field appearance="outline">
+      <mat-label i18n>Hard Limit</mat-label>
+      <input matInput placeholder="15" [disabled]="true">
+    </mat-form-field>
+  </div>
+  <ap-button btnSize="default" i18n type="submit" btnColor="primary" (buttonClicked)="setTasksLimit(100)">
+    Save Limit
+  </ap-button>
+
+  <ap-button btnSize="default" i18n type="submit" btnColor="primary" (buttonClicked)="upgrade()">
+    Upgrade
+  </ap-button>
+</div>
+
+<ng-container *ngIf="upgrade$ | async"></ng-container>
