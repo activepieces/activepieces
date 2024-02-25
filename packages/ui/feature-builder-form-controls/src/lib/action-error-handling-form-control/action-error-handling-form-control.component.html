@@ -1,9 +1,9 @@
 <form [formGroup]="errorHandlingOptionsForm">
-  <div class="ap-flex ap-flex-col  ap-gap-3 ap-mt-2">
+  <div class="ap-flex ap-flex-col">
     <div apTrackHover #slider="hoverTrackerDirective" class="ap-flex ap-flex-col" *ngIf="!hideContinueOnFailure">
       <mat-slide-toggle [formControl]="errorHandlingOptionsForm.controls.continueOnFailure" color="primary"
         class="ap-flex-grow-1" i18n>Continue on Failure</mat-slide-toggle>
-      <div class=" ap-flex ap-gap-2 ap-justify-between ap-markdown ">
+      <div class=" ap-flex ap-gap-2 ap-justify-between ap-markdown " [style.marginBottom]="BOTTOM_MARGIN_FOR_DESCRIPTION_IN_PIECE_PROPERTIES_FORM">
         <div class="ap-line-clamp-1" [style.display]="continueOnFailureDescriptionExpanded? 'block': '-webkit-box'"
           [class.ap-h-[24px]]="!continueOnFailureDescriptionExpanded">
           <div class="ap-typography-caption" apCheckOverflow
