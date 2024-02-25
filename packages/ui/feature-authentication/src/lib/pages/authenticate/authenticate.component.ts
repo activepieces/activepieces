@@ -25,7 +25,12 @@ export class AuthenticationComponent {
     }
     this.authenticate$ = this.authenticationService.me().pipe(
       map((user) => {
-        this.authenticationService.updateUser(user);
+        this.authenticationService.updateUser({
+          ...user,
+          projectId: '',
+          projectRole: null,
+          token: token || '',
+        });
         this.redirectToBack();
       }),
       catchError((err) => {

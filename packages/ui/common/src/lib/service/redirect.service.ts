@@ -1,11 +1,21 @@
 import { Injectable } from '@angular/core';
 import { Router, UrlTree } from '@angular/router';
+import { findHomePageRouteForRole } from '../utils/consts';
+import { AuthenticationService } from './authentication.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class RedirectService {
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private authenticationService: AuthenticationService
+  ) {
+    if (this.authenticationService.currentUser.projectRole)
+      this._redirectRoute = findHomePageRouteForRole(
+        this.authenticationService.currentUser.projectRole
+      );
+  }
   private _redirectRoute = '/flows';
   get redirectRoute() {
     return this._redirectRoute;
