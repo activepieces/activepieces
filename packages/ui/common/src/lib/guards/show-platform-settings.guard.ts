@@ -2,16 +2,18 @@ import { inject } from '@angular/core';
 import { AuthenticationService } from '../service/authentication.service';
 import { Router } from '@angular/router';
 import { FlagService } from '../service';
-import { ApFlagId } from '@activepieces/shared';
-import { Observable, map, tap } from 'rxjs';
+import { Observable, tap } from 'rxjs';
+import { showPlatformDashboard$ } from '../utils/consts';
 
 export const showPlatformSettingsGuard: () => Observable<boolean> = () => {
   const authenticationService = inject(AuthenticationService);
   const router = inject(Router);
-  const platformAdmin = authenticationService.isPlatformOwner();
   const flagsService = inject(FlagService);
-  return flagsService.isFlagEnabled(ApFlagId.SHOW_PLATFORM_DEMO).pipe(
-    map((isDemo) => isDemo || platformAdmin),
+  const shouldShouldPlatformDashboard$ = showPlatformDashboard$(
+    authenticationService,
+    flagsService
+  );
+  return shouldShouldPlatformDashboard$.pipe(
     tap((showPlatformSettings) => {
       if (!showPlatformSettings) {
         router.navigate(['/404']);

@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import {
   AuthenticationService,
   EmbeddingService,
+  showPlatformDashboard$,
 } from '@activepieces/ui/common';
 import {
   DashboardService,
@@ -33,13 +34,10 @@ export class DashboardContainerComponent {
     private authenticationService: AuthenticationService,
     public router: Router
   ) {
-    this.showPlatform$ = this.flagService
-      .isFlagEnabled(ApFlagId.SHOW_PLATFORM_DEMO)
-      .pipe(
-        map((isDemo) => {
-          return isDemo || this.authenticationService.isPlatformOwner();
-        })
-      );
+    this.showPlatform$ = showPlatformDashboard$(
+      this.authenticationService,
+      this.flagService
+    );
     this.showPoweredByAp$ = combineLatest({
       showPoweredByAp: this.flagService.isFlagEnabled(
         ApFlagId.SHOW_POWERED_BY_AP
