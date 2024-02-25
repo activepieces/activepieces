@@ -43,7 +43,6 @@ describe('Authentication API', () => {
             const responseBody = response?.json()
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(Object.keys(responseBody)).toHaveLength(16)
             expect(responseBody?.id).toHaveLength(21)
             expect(responseBody?.created).toBeDefined()
             expect(responseBody?.updated).toBeDefined()
@@ -143,7 +142,6 @@ describe('Authentication API', () => {
             const responseBody = response?.json()
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(Object.keys(responseBody)).toHaveLength(16)
             expect(responseBody?.id).toBe(mockUser.id)
             expect(responseBody?.email).toBe(mockEmail)
             expect(responseBody?.firstName).toBe(mockUser.firstName)

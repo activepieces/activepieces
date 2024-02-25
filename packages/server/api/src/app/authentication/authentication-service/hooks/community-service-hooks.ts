@@ -1,19 +1,14 @@
-import {
-    PrincipalType,
-    Project,
-    ProjectType,
-    User,
-} from '@activepieces/shared'
+import { PrincipalType, Project, ProjectType, User } from '@activepieces/shared'
 import { projectService } from '../../../project/project-service'
 import { AuthenticationServiceHooks } from './authentication-service-hooks'
 import { accessTokenManager } from '../../lib/access-token-manager'
 
 export const communityAuthenticationServiceHooks: AuthenticationServiceHooks = {
     async preSignIn() {
-    // Empty
+        // Empty
     },
     async preSignUp() {
-    // Empty
+        // Empty
     },
     async postSignUp({ user }) {
         const project = await projectService.create({
@@ -32,21 +27,25 @@ export const communityAuthenticationServiceHooks: AuthenticationServiceHooks = {
             user,
             project,
             token,
+            projectRole: null,
         }
     },
 
     async postSignIn({ user }) {
         const project = await getProject(user)
+
         const token = await accessTokenManager.generateToken({
             id: user.id,
             type: PrincipalType.USER,
             projectId: project.id,
             projectType: project.type,
         })
+
         return {
             user,
             token,
             project,
+            projectRole: null,
         }
     },
 }

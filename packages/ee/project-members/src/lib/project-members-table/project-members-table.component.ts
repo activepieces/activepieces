@@ -19,10 +19,7 @@ import {
 } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { InviteProjectMemberDialogComponent } from '../dialogs/invite-project-member-dialog/invite-project-member.component';
-import {
-  ProjectMemberRole,
-  ProjectMemberStatus,
-} from '@activepieces/ee-shared';
+import { ProjectMemberStatus } from '@activepieces/ee-shared';
 import { BillingService, UpgradeDialogData } from '@activepieces/ee-billing-ui';
 import { UpgradeDialogComponent } from '@activepieces/ee-billing-ui';
 import { Store } from '@ngrx/store';
@@ -34,7 +31,7 @@ import {
 } from '@activepieces/ui/common';
 import { RolesDisplayNames } from '../utils';
 import { ActivatedRoute } from '@angular/router';
-import { ApFlagId } from '@activepieces/shared';
+import { ApFlagId, ProjectMemberRole } from '@activepieces/shared';
 
 @Component({
   selector: 'app-project-members-table',

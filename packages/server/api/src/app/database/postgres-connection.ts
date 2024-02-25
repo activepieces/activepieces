@@ -105,6 +105,7 @@ import { AddUniqueStoreConstraint1708521505204 } from './migration/postgres/1708
 import { CreateActivityTable1708515756040 } from './migration/postgres/1708515756040-create-activity-table'
 import { AddLengthLimitsToActivity1708529586342 } from './migration/postgres/1708529586342-add-length-limits-to-activity'
 import { AddProjectBilling1708811745694 } from './migration/postgres/1708811745694-AddProjectBilling'
+import { AddShowActivityLogToPlatform1708861032399 } from './migration/1708861032399-add-show-activity-log-to-platform'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -226,6 +227,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 CreateActivityTable1708515756040,
                 AddLengthLimitsToActivity1708529586342,
                 AddProjectBilling1708811745694,
+                AddShowActivityLogToPlatform1708861032399,
             )
             break
         case ApEdition.ENTERPRISE:
@@ -268,6 +270,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddAuditEvents1707614902283,
                 CreateActivityTable1708515756040,
                 AddLengthLimitsToActivity1708529586342,
+                AddShowActivityLogToPlatform1708861032399,
             )
             break
         case ApEdition.COMMUNITY:

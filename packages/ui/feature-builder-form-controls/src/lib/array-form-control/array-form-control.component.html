@@ -1,11 +1,13 @@
 <div class="ap-flex ap-flex-col">
+ 
   <ng-container *ngIf="isAnArrayOfObjects(); then arrayOfObjects else arrayOfStrings"></ng-container>
-
+  
   <ng-template #arrayOfObjects>
-    <div class="ap-mb-2 ap-flex ap-gap-2 ap-items-center">
+    <div class="ap-mb-2 ap-flex ap-justify-between ap-items-center">
       <div class="ap-select-none">
         {{ property.displayName }}
       </div>
+      <ng-container *ngTemplateOutlet="dynamicInputTemplate"></ng-container>
     </div>
     <ng-container *ngFor="
         let objectControl of formArray.controls;
@@ -57,10 +59,11 @@
   </ng-template>
 
   <ng-template #arrayOfStrings>
-    <div class="ap-mb-2 ap-flex ap-gap-2 ap-items-center">
+    <div class="ap-mb-2 ap-flex ap-gap-2 ap-justify-between ap-items-center">
       <div class="ap-cursor-pointer" (click)="focusFirstInput()">
         {{ property.displayName }}
       </div>
+      <ng-container *ngTemplateOutlet="dynamicInputTemplate"></ng-container>
     </div>
     <ng-container *ngFor="
         let val of formArray.controls;

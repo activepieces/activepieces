@@ -37,7 +37,8 @@ export const Platform = Type.Object({
     enforceAllowedAuthDomains: Type.Boolean(),
     allowedAuthDomains: Type.Array(Type.String()),
     federatedAuthProviders: FederatedAuthnProviderConfig,
-    emailAuthEnabled: Type.Boolean()
+    emailAuthEnabled: Type.Boolean(),
+    showActivityLog: Type.Boolean(),
 })
 
 export type Platform = Static<typeof Platform>

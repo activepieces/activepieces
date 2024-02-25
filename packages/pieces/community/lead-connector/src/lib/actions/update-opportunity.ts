@@ -1,11 +1,10 @@
 import {
   createAction,
+  OAuth2PropertyValue,
   Property,
   Validators,
 } from '@activepieces/pieces-framework';
 import {
-  addContact,
-  createOpportunity,
   getContacts,
   getOpportunities,
   getOpportunity,
@@ -26,7 +25,7 @@ export const updateOpportunityAction = createAction({
     pipeline: Property.Dropdown({
       displayName: 'Pipeline',
       description: 'The ID of the pipeline to use.',
-      required: true,
+      required: false,
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) {
@@ -36,7 +35,7 @@ export const updateOpportunityAction = createAction({
           };
         }
 
-        const pipelines = await getPipelines(auth as string);
+        const pipelines = await getPipelines(auth as OAuth2PropertyValue);
         return {
           options: pipelines.map((pipeline: any) => {
             return {
@@ -60,7 +59,7 @@ export const updateOpportunityAction = createAction({
         }
 
         const opportunities = await getOpportunities(
-          auth as string,
+          auth as OAuth2PropertyValue,
           pipeline as string
         );
         return {
@@ -87,7 +86,7 @@ export const updateOpportunityAction = createAction({
         }
 
         const pipelineObj = await getPipeline(
-          auth as string,
+          auth as OAuth2PropertyValue,
           pipeline as string
         );
         return {
@@ -116,7 +115,7 @@ export const updateOpportunityAction = createAction({
             options: [],
           };
 
-        const contacts = await getContacts(auth as string);
+        const contacts = await getContacts(auth as OAuth2PropertyValue);
         return {
           options: contacts.map((contact) => {
             return {
@@ -155,7 +154,7 @@ export const updateOpportunityAction = createAction({
             options: [],
           };
 
-        const users = await getUsers(auth as string);
+        const users = await getUsers(auth as OAuth2PropertyValue);
         return {
           options: users.map((user: any) => {
             return {
@@ -187,13 +186,14 @@ export const updateOpportunityAction = createAction({
 
     let originalData: any;
     if (!title || !stage || !status)
-      originalData = await getOpportunity(auth, pipeline, opportunity);
+      originalData = await getOpportunity(auth.access_token, pipeline, opportunity);
 
-    return await updateOpportunity(auth, pipeline, opportunity, {
-      stageId: stage ?? originalData.pipelineStageId,
+    return await updateOpportunity(auth.access_token, opportunity, {
+      pipelineId: pipeline ?? originalData.pipelineId,
+      pipelineStageId: stage ?? originalData.pipelineStageId,
       contactId: contact,
       status: status ?? originalData.status,
-      title: title ?? originalData.name,
+      name: title ?? originalData.name,
       assignedTo: assignedTo,
       monetaryValue: monetaryValue,
     });

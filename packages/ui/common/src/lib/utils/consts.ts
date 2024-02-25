@@ -67,3 +67,6 @@ export const jsonEditorOptionsMonaco = {
   readOnly: true,
   automaticLayout: true,
 };
+
+export const EMPTY_SPACE_BETWEEN_INPUTS_IN_PIECE_PROPERTIES_FORM = 24 + 'px';
+export const BOTTOM_MARGIN_FOR_DESCRIPTION_IN_PIECE_PROPERTIES_FORM = 18 + 'px';
