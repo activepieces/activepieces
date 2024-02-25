@@ -120,7 +120,8 @@ export class AddEditConnectionButtonComponent {
     if (this.isEditConnectionButton) {
       this.editConnection();
     } else {
-      this.openConnectionDialogAcordingToConnectionType();
+      this.checkConnectionLimitThenOpenDialog$ =
+        this.openConnectionDialogAcordingToConnectionType();
     }
     this.cd.markForCheck();
   }
