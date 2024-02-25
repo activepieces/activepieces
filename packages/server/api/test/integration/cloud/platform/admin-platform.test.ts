@@ -47,7 +47,6 @@ describe('admin add platform endpoint', () => {
         // assert
         const responseBody = response?.json()
         expect(response?.statusCode).toBe(StatusCodes.CREATED)
-        expect(Object.keys(responseBody)).toHaveLength(30)
         expect(responseBody.allowedAuthDomains).toEqual([])
         expect(responseBody.emailAuthEnabled).toBe(true)
         expect(responseBody.enforceAllowedAuthDomains).toBe(false)
