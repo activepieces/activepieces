@@ -56,6 +56,12 @@
                 "enum": [
                   "VIEWER"
                 ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "EXTERNAL_CUSTOMER"
+                ]
               }
             ]
           },
@@ -143,6 +149,21 @@
           "externalId": {
             "type": "string"
           },
+          "usage": {
+            "type": "object",
+            "properties": {
+              "tasks": {
+                "type": "number"
+              },
+              "teamMembers": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "tasks",
+              "teamMembers"
+            ]
+          },
           "plan": {
             "type": "object",
             "properties": {
@@ -156,6 +177,9 @@
                 "type": "string"
               },
               "projectId": {
+                "type": "string"
+              },
+              "stripeCustomerId": {
                 "type": "string"
               },
               "stripeSubscriptionId": {
@@ -190,55 +214,13 @@
               "created",
               "updated",
               "projectId",
+              "stripeCustomerId",
               "subscriptionStartDatetime",
               "flowPlanName",
               "minimumPollingInterval",
               "connections",
               "teamMembers",
               "tasks"
-            ]
-          },
-          "usage": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "created": {
-                "type": "string"
-              },
-              "updated": {
-                "type": "string"
-              },
-              "projectId": {
-                "type": "string"
-              },
-              "consumedTasks": {
-                "type": "number"
-              },
-              "connections": {
-                "type": "number"
-              },
-              "teamMembers": {
-                "type": "number"
-              },
-              "consumedTasksToday": {
-                "type": "number"
-              },
-              "nextResetDatetime": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "id",
-              "created",
-              "updated",
-              "projectId",
-              "consumedTasks",
-              "connections",
-              "teamMembers",
-              "consumedTasksToday",
-              "nextResetDatetime"
             ]
           }
         },
@@ -250,8 +232,8 @@
           "displayName",
           "notifyStatus",
           "type",
-          "plan",
-          "usage"
+          "usage",
+          "plan"
         ]
       },
       "flow": {
@@ -7374,6 +7356,21 @@
                     "externalId": {
                       "type": "string"
                     },
+                    "usage": {
+                      "type": "object",
+                      "properties": {
+                        "tasks": {
+                          "type": "number"
+                        },
+                        "teamMembers": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "tasks",
+                        "teamMembers"
+                      ]
+                    },
                     "plan": {
                       "type": "object",
                       "properties": {
@@ -7387,6 +7384,9 @@
                           "type": "string"
                         },
                         "projectId": {
+                          "type": "string"
+                        },
+                        "stripeCustomerId": {
                           "type": "string"
                         },
                         "stripeSubscriptionId": {
@@ -7421,55 +7421,13 @@
                         "created",
                         "updated",
                         "projectId",
+                        "stripeCustomerId",
                         "subscriptionStartDatetime",
                         "flowPlanName",
                         "minimumPollingInterval",
                         "connections",
                         "teamMembers",
                         "tasks"
-                      ]
-                    },
-                    "usage": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "created": {
-                          "type": "string"
-                        },
-                        "updated": {
-                          "type": "string"
-                        },
-                        "projectId": {
-                          "type": "string"
-                        },
-                        "consumedTasks": {
-                          "type": "number"
-                        },
-                        "connections": {
-                          "type": "number"
-                        },
-                        "teamMembers": {
-                          "type": "number"
-                        },
-                        "consumedTasksToday": {
-                          "type": "number"
-                        },
-                        "nextResetDatetime": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "created",
-                        "updated",
-                        "projectId",
-                        "consumedTasks",
-                        "connections",
-                        "teamMembers",
-                        "consumedTasksToday",
-                        "nextResetDatetime"
                       ]
                     }
                   },
@@ -7481,8 +7439,8 @@
                     "displayName",
                     "notifyStatus",
                     "type",
-                    "plan",
-                    "usage"
+                    "usage",
+                    "plan"
                   ]
                 }
               }
@@ -7576,6 +7534,21 @@
                           "externalId": {
                             "type": "string"
                           },
+                          "usage": {
+                            "type": "object",
+                            "properties": {
+                              "tasks": {
+                                "type": "number"
+                              },
+                              "teamMembers": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "tasks",
+                              "teamMembers"
+                            ]
+                          },
                           "plan": {
                             "type": "object",
                             "properties": {
@@ -7589,6 +7562,9 @@
                                 "type": "string"
                               },
                               "projectId": {
+                                "type": "string"
+                              },
+                              "stripeCustomerId": {
                                 "type": "string"
                               },
                               "stripeSubscriptionId": {
@@ -7623,55 +7599,13 @@
                               "created",
                               "updated",
                               "projectId",
+                              "stripeCustomerId",
                               "subscriptionStartDatetime",
                               "flowPlanName",
                               "minimumPollingInterval",
                               "connections",
                               "teamMembers",
                               "tasks"
-                            ]
-                          },
-                          "usage": {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string"
-                              },
-                              "created": {
-                                "type": "string"
-                              },
-                              "updated": {
-                                "type": "string"
-                              },
-                              "projectId": {
-                                "type": "string"
-                              },
-                              "consumedTasks": {
-                                "type": "number"
-                              },
-                              "connections": {
-                                "type": "number"
-                              },
-                              "teamMembers": {
-                                "type": "number"
-                              },
-                              "consumedTasksToday": {
-                                "type": "number"
-                              },
-                              "nextResetDatetime": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "id",
-                              "created",
-                              "updated",
-                              "projectId",
-                              "consumedTasks",
-                              "connections",
-                              "teamMembers",
-                              "consumedTasksToday",
-                              "nextResetDatetime"
                             ]
                           }
                         },
@@ -7683,8 +7617,8 @@
                           "displayName",
                           "notifyStatus",
                           "type",
-                          "plan",
-                          "usage"
+                          "usage",
+                          "plan"
                         ]
                       }
                     },
@@ -7750,7 +7684,6 @@
                       }
                     },
                     "required": [
-                      "teamMembers",
                       "tasks"
                     ]
                   }
@@ -7841,6 +7774,21 @@
                     "externalId": {
                       "type": "string"
                     },
+                    "usage": {
+                      "type": "object",
+                      "properties": {
+                        "tasks": {
+                          "type": "number"
+                        },
+                        "teamMembers": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "tasks",
+                        "teamMembers"
+                      ]
+                    },
                     "plan": {
                       "type": "object",
                       "properties": {
@@ -7854,6 +7802,9 @@
                           "type": "string"
                         },
                         "projectId": {
+                          "type": "string"
+                        },
+                        "stripeCustomerId": {
                           "type": "string"
                         },
                         "stripeSubscriptionId": {
@@ -7888,55 +7839,13 @@
                         "created",
                         "updated",
                         "projectId",
+                        "stripeCustomerId",
                         "subscriptionStartDatetime",
                         "flowPlanName",
                         "minimumPollingInterval",
                         "connections",
                         "teamMembers",
                         "tasks"
-                      ]
-                    },
-                    "usage": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "created": {
-                          "type": "string"
-                        },
-                        "updated": {
-                          "type": "string"
-                        },
-                        "projectId": {
-                          "type": "string"
-                        },
-                        "consumedTasks": {
-                          "type": "number"
-                        },
-                        "connections": {
-                          "type": "number"
-                        },
-                        "teamMembers": {
-                          "type": "number"
-                        },
-                        "consumedTasksToday": {
-                          "type": "number"
-                        },
-                        "nextResetDatetime": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "created",
-                        "updated",
-                        "projectId",
-                        "consumedTasks",
-                        "connections",
-                        "teamMembers",
-                        "consumedTasksToday",
-                        "nextResetDatetime"
                       ]
                     }
                   },
@@ -7948,8 +7857,8 @@
                     "displayName",
                     "notifyStatus",
                     "type",
-                    "plan",
-                    "usage"
+                    "usage",
+                    "plan"
                   ]
                 }
               }
@@ -8035,6 +7944,12 @@
                         "enum": [
                           "VIEWER"
                         ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "EXTERNAL_CUSTOMER"
+                        ]
                       }
                     ]
                   },
@@ -8118,6 +8033,12 @@
                           "type": "string",
                           "enum": [
                             "VIEWER"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "EXTERNAL_CUSTOMER"
                           ]
                         }
                       ]
