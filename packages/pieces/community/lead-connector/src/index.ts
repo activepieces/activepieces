@@ -1,11 +1,8 @@
 import {
-  AuthenticationType,
   createCustomApiCallAction,
-  httpClient,
-  HttpMethod,
 } from '@activepieces/pieces-common';
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { baseUrl } from './lib/common';
+import { createPiece, OAuth2PropertyValue, PieceAuth } from '@activepieces/pieces-framework';
+import { baseUrl, getContacts, leadConnectorHeaders } from './lib/common';
 
 import { PieceCategory } from '@activepieces/shared';
 import { addContactToCampaignAction } from './lib/actions/add-contact-to-campaign';
@@ -24,26 +21,39 @@ import { newFormSubmission } from './lib/triggers/new-form-submission';
 import { newOpportunity } from './lib/triggers/new-opportunity';
 
 const markdownDescription = `
-To obtain your API key, follow the steps below:
-1. Go to Settings -> Business Profile
-2. Under General Information, find the API Key
-3. Copy the API Key and paste it in the API Key field
+To use your own app, you need to create a Sub-Account application, with the following scopes:
+- campaigns.readonly
+- contacts.write
+- contacts.readonly
+- locations/tags.readonly
+- locations/tags.write
+- opportunities.readonly
+- opportunities.write
+- users.readonly
+- workflows.readonly
+- forms.readonly
 `;
 
-export const leadConnectorAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
+export const leadConnectorAuth = PieceAuth.OAuth2({
+  authUrl: 'https://marketplace.gohighlevel.com/oauth/chooselocation',
+  tokenUrl: 'https://services.leadconnectorhq.com/oauth/token',
+  scope: [
+    'campaigns.readonly',
+    'contacts.write',
+    'contacts.readonly',
+    'locations/tags.readonly',
+    'locations/tags.write',
+    'opportunities.readonly',
+    'opportunities.write',
+    'users.readonly',
+    'workflows.readonly',
+    'forms.readonly',
+  ],
   description: markdownDescription,
   required: true,
   async validate({ auth }) {
     try {
-      await httpClient.sendRequest({
-        url: `${baseUrl}/campaigns?status=published`,
-        method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: auth,
-        },
-      });
+      await getContacts(auth);
 
       return {
         valid: true,
@@ -77,13 +87,12 @@ export const leadConnector = createPiece({
     createTaskAction,
     updateTaskAction,
     createCustomApiCallAction({
-      baseUrl: () => {
-        return baseUrl;
-      },
+      baseUrl: () => baseUrl,
       auth: leadConnectorAuth,
       authMapping: (auth) => {
         return {
-          Authorization: `Bearer ${auth}`,
+          Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+          ...leadConnectorHeaders,
         };
       },
     }),
