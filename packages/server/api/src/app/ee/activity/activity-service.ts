@@ -21,7 +21,7 @@ export const activityService = {
     },
 
     async list({ projectId, cursor, limit }: ListActivityParams): Promise<SeekPage<Activity>> {
-        const decodedCursor = paginationHelper.decodeCursor(cursor)
+        const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
         const paginator = buildPaginator({
             entity: ActivityEntity,
             query: {

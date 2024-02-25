@@ -6,7 +6,7 @@ import { ACTIVITY_EVENT_LENGTH, ACTIVITY_MESSAGE_LENGTH, ACTIVITY_STATUS_LENGTH 
 
 export const ListActivityParams = Type.Object({
     projectId:ApId,
-    cursor: Type.Union([Type.String(),Type.Null()]),
+    cursor: Type.Optional(Type.String()),
     limit: Type.Optional(Type.Integer({minimum: 1, maximum: 100})),
 })
 export type ListActivityParams = Static<typeof ListActivityParams>

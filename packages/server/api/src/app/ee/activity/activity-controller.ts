@@ -7,7 +7,7 @@ export const activityController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListActivitiesRequest, async (req) => {
         return activityService.list({
             projectId: req.query.projectId,
-            cursor: req.query.cursor ?? null,
+            cursor: req.query.cursor,
             limit: req.query.limit ?? 10,
         })
     })
