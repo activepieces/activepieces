@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Actions, concatLatestFrom, createEffect, ofType } from '@ngrx/effects';
 import { EMPTY } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { catchError, switchMap, tap } from 'rxjs/operators';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Store } from '@ngrx/store';
 import { ProjectActions } from './project.action';
@@ -16,6 +16,43 @@ export class ProjectEffects {
     private platformProjectService: PlatformProjectService,
     private snackBar: MatSnackBar
   ) {}
+
+  updateLimits$ = createEffect(
+    () => {
+      return this.actions$.pipe(
+        ofType(ProjectActions.updateLimits),
+        concatLatestFrom(() =>
+          this.store.select(ProjectSelectors.selectCurrentProject)
+        ),
+        switchMap(([{ limits }, project]) => {
+          return this.platformProjectService
+            .update(project.id, {
+              plan: limits,
+              displayName: project.displayName,
+              notifyStatus: project.notifyStatus,
+            })
+            .pipe(
+              tap(() => {
+                this.snackBar.open('Project Limits is updated', '', {
+                  panelClass: 'success',
+                });
+              }),
+              catchError((error) => {
+                this.snackBar.open(
+                  `Error updating project: ${error.message}`,
+                  '',
+                  {
+                    panelClass: 'error',
+                  }
+                );
+                return EMPTY;
+              })
+            );
+        })
+      );
+    },
+    { dispatch: false }
+  );
 
   updateNotifyStatus$ = createEffect(
     () => {

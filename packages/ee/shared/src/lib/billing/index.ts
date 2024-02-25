@@ -1,25 +1,34 @@
-import { Static, Type } from "@sinclair/typebox"
-export * from './constants'
-export * from './usage'
-export * from './plan'
+export * from './project-stripe'
 
-export enum PlanName {
-    PRO = 'PRO',
-    PLATFORM = 'PLATFORM',
+
+export type FlowPlanLimits = {
+    nickname: string
+    tasks: number
+    minimumPollingInterval: number
+    connections: number
+    teamMembers: number
 }
 
-export const UpgradeRequest = Type.Union([
-    Type.Object({
-        plan: Type.Literal(PlanName.PLATFORM),
-        priceId: Type.String(),
-        extraUsers: Type.Number(),
-        extraTasks: Type.Number(),
-    }),
-    Type.Object({
-        plan: Type.Literal(PlanName.PRO),
-        priceId: Type.String(),
-        extraUsers: Type.Number(),
-    }),
-])
+export const MAXIMUM_ALLOWED_TASKS = 200000
 
-export type UpgradeRequest = Static<typeof UpgradeRequest>
+export const DEFAULT_FREE_PLAN_LIMIT = {
+    nickname: 'free-pay-as-you-go',
+    tasks: 1000,
+    teamMembers: 1,
+    connections: 200,
+    minimumPollingInterval: 5,
+}
+
+export const DEFAULT_PLATFOR_LIMIT = {
+    nickname: 'platform',
+    connections: 200,
+    tasks: 50000,
+    teamMembers: 5,
+    minimumPollingInterval: 1,
+}
+
+export function getTasksPriceId(stripeKey: string | undefined){
+    const testMode = stripeKey?.startsWith('sk_test')
+    return testMode ? 'price_1OnWqKKZ0dZRqLEKkcYBso8K' : 'price_1OngsdKZ0dZRqLEKPpvm67Sk'
+}
+export const PRICE_PER_1000_TASKS = 1

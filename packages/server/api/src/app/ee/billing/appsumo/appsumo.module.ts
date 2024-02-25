@@ -1,15 +1,15 @@
 import { FastifyInstance, FastifyRequest } from 'fastify'
 import { Static, Type } from '@sinclair/typebox'
-import { userService } from '../../user/user-service'
-import { projectService } from '../../project/project-service'
 import { StatusCodes } from 'http-status-codes'
 import { isNil } from 'lodash'
 import { appsumoService } from './appsumo.service'
 import { SystemProp, system } from 'server-shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { plansService } from '../billing/project-plan/project-plan.service'
-import { defaultPlanInformation } from '../billing/project-plan/pricing-plans'
 import { ALL_PRINICPAL_TYPES } from '@activepieces/shared'
+import { userService } from '../../../user/user-service'
+import { projectService } from '../../../project/project-service'
+import { projectLimitsService } from '../../project-plan/project-plan.service'
+import { DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
 
 export const appSumoModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(appsumoController, { prefix: '/v1/appsumo' })
@@ -96,8 +96,7 @@ const appsumoController: FastifyPluginAsyncTypebox = async (
             else {
                 const { plan_id, action, uuid } = request.body
                 const appSumoLicense = await appsumoService.getById(uuid)
-                const activation_email =
-          appSumoLicense?.activation_email ?? request.body.activation_email
+                const activation_email = appSumoLicense?.activation_email ?? request.body.activation_email
                 const appSumoPlan = appsumoService.getPlanInformation(plan_id)
                 const user = await userService.getByPlatformAndEmail({
                     platformId: system.getOrThrow(SystemProp.CLOUD_PLATFORM_ID),
@@ -106,18 +105,10 @@ const appsumoController: FastifyPluginAsyncTypebox = async (
                 if (!isNil(user)) {
                     const project = await projectService.getUserProjectOrThrow(user.id)
                     if (action === 'refund') {
-                        await plansService.update({
-                            projectId: project.id,
-                            subscription: null,
-                            planLimits: defaultPlanInformation,
-                        })
+                        await projectLimitsService.upsert(DEFAULT_FREE_PLAN_LIMIT, project.id)
                     }
                     else {
-                        await plansService.update({
-                            projectId: project.id,
-                            subscription: null,
-                            planLimits: appSumoPlan,
-                        })
+                        await projectLimitsService.upsert(appSumoPlan, project.id)
                     }
                 }
 

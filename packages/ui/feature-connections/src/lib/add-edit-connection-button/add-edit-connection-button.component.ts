@@ -23,11 +23,7 @@ import {
 import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { map, Observable, of, shareReplay, switchMap, take, tap } from 'rxjs';
-import {
-  FlagService,
-  ProjectSelectors,
-  appConnectionsSelectors,
-} from '@activepieces/ui/common';
+import { FlagService, appConnectionsSelectors } from '@activepieces/ui/common';
 import { CloudAuthConfigsService } from '../services/cloud-auth-configs.service';
 import {
   CustomAuthConnectionDialogComponent,
@@ -51,11 +47,6 @@ import {
   ManagedOAuth2ConnectionDialogData,
   USE_MY_OWN_CREDENTIALS,
 } from '../dialogs/managed-oauth2-connection-dialog/managed-oauth2-connection-dialog.component';
-import {
-  BillingService,
-  UpgradeDialogComponent,
-  UpgradeDialogData,
-} from '@activepieces/ee-billing-ui';
 import {
   PieceOAuth2DetailsValue,
   checkIfTriggerIsAppWebhook,
@@ -119,8 +110,7 @@ export class AddEditConnectionButtonComponent {
     private cloudAuthConfigsService: CloudAuthConfigsService,
     private flagService: FlagService,
     private pieceMetadataService: PieceMetadataService,
-    private cd: ChangeDetectorRef,
-    private billingService: BillingService
+    private cd: ChangeDetectorRef
   ) {
     //ignore
   }
@@ -130,32 +120,9 @@ export class AddEditConnectionButtonComponent {
     if (this.isEditConnectionButton) {
       this.editConnection();
     } else {
-      this.checkConnectionsLimitThenOpenCreationDialog();
+      this.openConnectionDialogAcordingToConnectionType();
     }
     this.cd.markForCheck();
-  }
-
-  private checkConnectionsLimitThenOpenCreationDialog() {
-    this.checkConnectionLimitThenOpenDialog$ =
-      this.getCurrentProjectAndConnectionLimit$().pipe(
-        switchMap((res) => {
-          if (res.limit.exceeded) {
-            const data: UpgradeDialogData = {
-              limit: res.limit.limit,
-              limitType: 'connections',
-              projectType: res.project.type,
-            };
-            return this.dialogService
-              .open(UpgradeDialogComponent, {
-                data,
-              })
-              .afterClosed();
-          } else {
-            return this.openConnectionDialogAcordingToConnectionType();
-          }
-        }),
-        map(() => void 0)
-      );
   }
 
   private openConnectionDialogAcordingToConnectionType() {
@@ -171,20 +138,7 @@ export class AddEditConnectionButtonComponent {
       }
     }
   }
-  private getCurrentProjectAndConnectionLimit$() {
-    return this.store.select(ProjectSelectors.selectCurrentProject).pipe(
-      switchMap((project) => {
-        return this.billingService.checkConnectionLimit().pipe(
-          map((limit) => {
-            return {
-              project,
-              limit,
-            };
-          })
-        );
-      })
-    );
-  }
+
   private openNewCustomAuthConnection(): Observable<void> {
     const dialogData: CustomAuthDialogData = {
       pieceAuthProperty: this

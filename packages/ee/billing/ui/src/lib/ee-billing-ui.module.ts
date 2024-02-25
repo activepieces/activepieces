@@ -10,8 +10,6 @@ import { TasksProgressComponent } from './tasks-progress/tasks-progress.componen
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { PlanNamePipe } from './plan-name.pipe';
 import { BillingSidenavItemComponent } from './billing-sidenav-item/billing-sidenav-item.component';
-import { UpgradePlanConfirmationDialogComponent } from './upgrade-dialog-confirmation/upgrade-plan-dialog-confirmration.component';
-import { AutomationPlanCardComponent } from './plans-page/automation-plan-card.component/automation-plan-card.component';
 
 export function playerFactory() {
   return player;
@@ -29,10 +27,8 @@ export function playerFactory() {
     PlansPageComponent,
     UpgradeDialogComponent,
     TasksProgressComponent,
-    UpgradePlanConfirmationDialogComponent,
     PlanNamePipe,
     BillingSidenavItemComponent,
-    AutomationPlanCardComponent,
   ],
   exports: [
     PlansPageComponent,
