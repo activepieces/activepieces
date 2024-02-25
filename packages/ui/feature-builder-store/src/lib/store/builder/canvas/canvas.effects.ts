@@ -9,6 +9,7 @@ import { BuilderSelectors } from '../builder.selector';
 import { LeftSideBarType, RightSideBarType } from '../../../model';
 import { RunDetailsService } from '../../../service/run-details.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { FlowsActions } from '../../flow';
 
 @Injectable()
 export class CanvasEffects {
@@ -84,23 +85,56 @@ export class CanvasEffects {
     },
     { dispatch: false }
   );
-  setRun$ = createEffect(() => {
+  openLeftSideBarToShowRun$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(canvasActions.setRun),
       concatLatestFrom(() => [
-        this.store.select(BuilderSelectors.selectCurrentFlow),
+        this.store.select(BuilderSelectors.selectCurrentFlowRun),
       ]),
       tap(([{ run }, currentRun]) => {
         if (run.id !== currentRun?.id) {
           this.runDetailsService.currentStepResult$.next(undefined);
         }
       }),
-      switchMap(([run]) => {
+      switchMap(() => {
         return of(
           canvasActions.setLeftSidebar({
             sidebarType: LeftSideBarType.SHOW_RUN,
           })
         );
+      })
+    );
+  });
+
+  selectTriggerOnTestRunEnd$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(canvasActions.setRun),
+      switchMap(({ run }) => {
+        if (run.status !== 'RUNNING') {
+          return of(canvasActions.selectStepByName({ stepName: 'trigger' }));
+        }
+        return EMPTY;
+      })
+    );
+  });
+
+  selectTriggerOnViewingRun$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(canvasActions.viewRun),
+      switchMap(() => {
+        return of(canvasActions.selectStepByName({ stepName: 'trigger' }));
+      })
+    );
+  });
+
+  selectTriggerOnOpeningBuilder$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(canvasActions.setInitial),
+      switchMap(({ run }) => {
+        if (run) {
+          return of(canvasActions.selectStepByName({ stepName: 'trigger' }));
+        }
+        return of(FlowsActions.selectFirstInvalidStep());
       })
     );
   });
