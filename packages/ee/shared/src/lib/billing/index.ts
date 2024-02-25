@@ -12,7 +12,7 @@ export type FlowPlanLimits = {
 export const MAXIMUM_ALLOWED_TASKS = 200000
 
 export const DEFAULT_FREE_PLAN_LIMIT = {
-    nickname: 'free',
+    nickname: 'free-pay-as-you-go',
     tasks: 1000,
     teamMembers: 1,
     connections: 200,

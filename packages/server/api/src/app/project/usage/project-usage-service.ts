@@ -17,13 +17,17 @@ export const projectUsageService = {
         }
     },
     getCurrentingStartPeriod,
+    getCurrentingEndPeriod,
 }
 
 function getCurrentingStartPeriod(datetime: string): string {
     const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000
     const date = apDayjs(datetime)
     const currentDate = apDayjs()
-    const nextResetInMs =
-        thirtyDaysInMs - (currentDate.diff(date, 'millisecond') % thirtyDaysInMs)
-    return currentDate.add(nextResetInMs, 'millisecond').subtract(30, 'days').toISOString()
+    const nextResetInMs = (currentDate.diff(date, 'millisecond') % thirtyDaysInMs)
+    return currentDate.subtract(nextResetInMs, 'millisecond').toISOString()
+}
+
+function getCurrentingEndPeriod(datetime: string): string {
+    return apDayjs(datetime).add(30, 'days').toISOString()
 }

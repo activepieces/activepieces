@@ -74,7 +74,11 @@ const projectBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
             allowedPrincipals: [PrincipalType.USER],
         },
     }, async (request) => {
-        return projectBillingService.getOrCreateForProject(request.principal.projectId)
+        const project = await projectService.getOneOrThrow(request.principal.projectId)
+        return {
+            subscription: await projectBillingService.getOrCreateForProject(request.principal.projectId),
+            nextBillingDate: projectUsageService.getCurrentingStartPeriod(project.created),
+        }
     })
 
     fastify.post('/portal', {}, async (request) => {

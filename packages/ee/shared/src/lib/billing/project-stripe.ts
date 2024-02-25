@@ -22,3 +22,10 @@ export const ProjectBilling = Type.Object({
 
 export type ProjectBilling = Static<typeof ProjectBilling>
 
+
+export const ProjectBillingRespone = Type.Object({
+    nextBillingDate: Type.String(),
+    subscription: ProjectBilling
+})
+
+export type ProjectBillingRespone = Static<typeof ProjectBillingRespone>

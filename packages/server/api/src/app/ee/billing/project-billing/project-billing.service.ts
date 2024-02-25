@@ -36,7 +36,7 @@ export const projectBillingService = {
     async increaseTasks(projectId: string, tasks: number): Promise<ProjectBilling> {
         await projectBillingRepo.increment({
             projectId,
-        }, 'tasks', tasks)
+        }, 'includedTasks', tasks)
         return projectBillingService.getOrCreateForProject(projectId)
     },
     async updateSubscriptionIdByCustomerId(subscription: Stripe.Subscription): Promise<ProjectBilling> {

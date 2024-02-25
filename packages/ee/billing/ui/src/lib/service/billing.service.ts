@@ -8,7 +8,7 @@ import {
 import { combineLatest, map } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { ApEdition } from '@activepieces/shared';
-import { ProjectBilling } from '@activepieces/ee-shared';
+import { ProjectBillingRespone } from '@activepieces/ee-shared';
 
 @Injectable({
   providedIn: 'root',
@@ -21,7 +21,7 @@ export class BillingService {
   ) {}
 
   getSubscription() {
-    return this.http.get<ProjectBilling>(
+    return this.http.get<ProjectBillingRespone>(
       environment.apiUrl + '/project-billing'
     );
   }

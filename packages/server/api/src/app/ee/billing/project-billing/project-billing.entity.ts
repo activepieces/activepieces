@@ -17,7 +17,6 @@ export const ProjectBillingEntity = new EntitySchema<ProjectBillingSchema>({
         projectId: ApIdSchema,
         stripeCustomerId: {
             type: String,
-            nullable: true,
         },
         includedTasks: {
             type: Number,

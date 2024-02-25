@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Observable, map, tap } from 'rxjs';
 import {
   MAXIMUM_ALLOWED_TASKS,
-  ProjectSubscriptionResponse,
+  ProjectBillingRespone,
   Referral,
 } from '@activepieces/ee-shared';
 import { ReferralService } from '../service/referral.service';
@@ -45,7 +45,7 @@ export class PlansPageComponent implements OnInit {
   billingForm: FormGroup<BillingLimits>;
   loadInitialValue$: Observable<void> | undefined;
   project$: Observable<ProjectWithLimits> | undefined;
-  billingInformation$: Observable<ProjectSubscriptionResponse> | undefined;
+  billingInformation$: Observable<ProjectBillingRespone> | undefined;
   openPortal$: Observable<void> | undefined;
   disableOrEnable$: Observable<void>;
   constructor(

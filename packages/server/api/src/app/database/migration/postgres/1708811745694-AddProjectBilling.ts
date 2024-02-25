@@ -10,7 +10,7 @@ export class AddProjectBilling1708811745694 implements MigrationInterface {
                 "created" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
                 "updated" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
                 "projectId" character varying(21) NOT NULL,
-                "stripeCustomerId" character varying,
+                "stripeCustomerId" character varying NOT NULL,
                 "includedTasks" integer,
                 "includedUsers" integer,
                 "stripeSubscriptionId" character varying,

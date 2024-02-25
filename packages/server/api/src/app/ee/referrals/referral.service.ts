@@ -7,7 +7,7 @@ import {
 } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { ReferralEntity } from './referral.entity'
-import { Referral } from '@activepieces/ee-shared'
+import { DEFAULT_FREE_PLAN_LIMIT, Referral } from '@activepieces/ee-shared'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { telemetry } from '../../helper/telemetry.utils'
@@ -84,6 +84,7 @@ async function addExtraTasks(userId: string): Promise<void> {
     const ownerProject = await projectService.getUserProjectOrThrow(userId)
     const projectBilling = await projectBillingService.getOrCreateForProject(ownerProject.id)
     const newBilling = await projectBillingService.increaseTasks(projectBilling.projectId, 500)
+    await projectLimitsService.getOrCreateDefaultPlan(ownerProject.id, DEFAULT_FREE_PLAN_LIMIT)
     await projectLimitsService.increaseTask(ownerProject.id, 500)
 
     logger.info({
