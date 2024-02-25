@@ -99,13 +99,14 @@ const appsumoController: FastifyPluginAsyncTypebox = async (
                 const appSumoLicense = await appsumoService.getById(uuid)
                 const activation_email = appSumoLicense?.activation_email ?? request.body.activation_email
                 const appSumoPlan = appsumoService.getPlanInformation(plan_id)
-                await projectBillingService.getOrCreateForProject(activation_email)
                 const user = await userService.getByPlatformAndEmail({
                     platformId: system.getOrThrow(SystemProp.CLOUD_PLATFORM_ID),
                     email: activation_email,
                 })
                 if (!isNil(user)) {
                     const project = await projectService.getUserProjectOrThrow(user.id)
+                    await projectBillingService.getOrCreateForProject(project.id)
+
                     if (action === 'refund') {
                         await projectLimitsService.upsert(DEFAULT_FREE_PLAN_LIMIT, project.id)
                         await projectBillingService.updateByProjectId(project.id, {
