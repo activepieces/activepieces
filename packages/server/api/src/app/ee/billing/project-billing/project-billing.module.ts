@@ -77,7 +77,7 @@ const projectBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
         const project = await projectService.getOneOrThrow(request.principal.projectId)
         return {
             subscription: await projectBillingService.getOrCreateForProject(request.principal.projectId),
-            nextBillingDate: projectUsageService.getCurrentingStartPeriod(project.created),
+            nextBillingDate: projectUsageService.getCurrentingEndPeriod(project.created),
         }
     })
 

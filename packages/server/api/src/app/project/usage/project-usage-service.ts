@@ -29,5 +29,5 @@ function getCurrentingStartPeriod(datetime: string): string {
 }
 
 function getCurrentingEndPeriod(datetime: string): string {
-    return apDayjs(datetime).add(30, 'days').toISOString()
+    return apDayjs(getCurrentingStartPeriod(datetime)).add(30, 'days').toISOString()
 }
