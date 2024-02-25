@@ -11,7 +11,6 @@ import {
     OtpState,
     ProjectMember,
     ApiKey,
-    ProjectMemberRole,
     ProjectMemberStatus,
     GitRepo,
     ApplicationEvent,
@@ -25,6 +24,7 @@ import {
     Project,
     NotificationStatus,
     ProjectType,
+    ProjectMemberRole,
     PieceType,
     PackageType,
     Flow,
@@ -163,6 +163,7 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         embeddingEnabled: platform?.embeddingEnabled ?? faker.datatype.boolean(),
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
         showPoweredBy: platform?.showPoweredBy ?? faker.datatype.boolean(),
+        showActivityLog: platform?.showActivityLog ?? faker.datatype.boolean(),
     }
 }
 

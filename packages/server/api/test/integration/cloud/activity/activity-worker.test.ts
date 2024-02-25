@@ -4,7 +4,7 @@ import { PrincipalType, apId } from '@activepieces/shared'
 import { setupApp } from '../../../../src/app/app'
 import { generateMockToken } from '../../../helpers/auth'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { createMockUser, createMockPlatform, createMockProject } from '../../../helpers/mocks'
+import { createMockUser, createMockPlatform, createMockProject, createMockActivity } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 
@@ -47,7 +47,7 @@ describe('[Worker] Activity API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/worker/activity',
+                url: '/v1/worker/activities',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -92,7 +92,7 @@ describe('[Worker] Activity API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/worker/activity',
+                url: '/v1/worker/activities',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -133,7 +133,7 @@ describe('[Worker] Activity API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/worker/activity',
+                url: '/v1/worker/activities',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -174,7 +174,7 @@ describe('[Worker] Activity API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/worker/activity',
+                url: '/v1/worker/activities',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -215,7 +215,7 @@ describe('[Worker] Activity API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/worker/activity',
+                url: '/v1/worker/activities',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -256,7 +256,7 @@ describe('[Worker] Activity API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/worker/activity',
+                url: '/v1/worker/activities',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -268,6 +268,57 @@ describe('[Worker] Activity API', () => {
 
             const responseBody = response?.json()
             expect(responseBody?.params?.message).toBe('invalid route for principal type')
+        })
+    })
+
+    describe('Update Activity endpoint', () => {
+        it('Edits existing Activity', async () => {
+            // arrange
+            const mockUser = createMockUser()
+            await databaseConnection.getRepository('user').save(mockUser)
+
+            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
+            const mockProject = createMockProject({ ownerId: mockUser.id, platformId: mockPlatform.id })
+            await databaseConnection.getRepository('project').save(mockProject)
+
+            const mockActivity = createMockActivity({ projectId: mockProject.id })
+            await databaseConnection.getRepository('activity').save(mockActivity)
+
+            const mockToken = await generateMockToken({
+                id: apId(),
+                type: PrincipalType.WORKER,
+                projectId: mockProject.id,
+            })
+
+            const mockRequestBody = {
+                projectId: mockProject.id,
+                event: 'updated-event',
+                message: 'updated-message',
+                status: 'updated-status',
+            }
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/v1/worker/activities/${mockActivity.id}`,
+                headers: {
+                    authorization: `Bearer ${mockToken}`,
+                },
+                body: mockRequestBody,
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+
+            const updatedMockActivity = await databaseConnection.getRepository('activity').findOneBy({
+                id: mockActivity.id,
+            })
+
+            expect(updatedMockActivity?.event).toBe('updated-event')
+            expect(updatedMockActivity?.message).toBe('updated-message')
+            expect(updatedMockActivity?.status).toBe('updated-status')
         })
     })
 })

@@ -50,6 +50,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             modifiedFlags[ApFlagId.TERMS_OF_SERVICE_URL] = platform.termsOfServiceUrl
             modifiedFlags[ApFlagId.OWN_AUTH2_ENABLED] = false
             modifiedFlags[ApFlagId.SHOW_PLATFORM_DEMO] = false
+            modifiedFlags[ApFlagId.SHOW_ACTIVITY_LOG] = platform.showActivityLog
         }
         return modifiedFlags
     },

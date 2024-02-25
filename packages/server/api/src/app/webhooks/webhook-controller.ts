@@ -16,10 +16,10 @@ import { isNil } from '@activepieces/shared'
 import { flowRepo } from '../flows/flow/flow.repo'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { getEdition } from '../helper/secret-helper'
-import { tasksLimit } from '../ee/billing/limits/tasks-limit'
 import { flowResponseWatcher } from '../flows/flow-run/flow-response-watcher'
 import { flowService } from '../flows/flow/flow.service'
 import { exceptionHandler, logger } from 'server-shared'
+import { tasksLimit } from '../ee/project-plan/tasks-limit'
 
 export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
     app.all(

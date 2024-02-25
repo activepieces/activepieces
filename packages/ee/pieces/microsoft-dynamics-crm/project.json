@@ -1,0 +1,43 @@
+{
+  "name": "pieces-microsoft-dynamics-crm",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/ee/pieces/microsoft-dynamics-crm/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/ee/pieces/microsoft-dynamics-crm",
+        "tsConfig": "packages/ee/pieces/microsoft-dynamics-crm/tsconfig.lib.json",
+        "packageJson": "packages/ee/pieces/microsoft-dynamics-crm/package.json",
+        "main": "packages/ee/pieces/microsoft-dynamics-crm/src/index.ts",
+        "assets": [
+          "packages/ee/pieces/microsoft-dynamics-crm/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-microsoft-dynamics-crm {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/ee/pieces/microsoft-dynamics-crm/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

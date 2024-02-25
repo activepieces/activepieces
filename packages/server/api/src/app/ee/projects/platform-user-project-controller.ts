@@ -3,6 +3,7 @@ import {
     ErrorCode,
     PlatformRole,
     PrincipalType,
+    ProjectWithLimits,
     SeekPage,
     isNil,
 } from '@activepieces/shared'
@@ -14,7 +15,6 @@ import { platformProjectService } from './platform-project-service'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { platformService } from '../platform/platform.service'
 import { StatusCodes } from 'http-status-codes'
-import { ProjectWithUsageAndPlanResponse } from '@activepieces/ee-shared'
 
 export const usersProjectController: FastifyPluginCallbackTypebox = (
     fastify,
@@ -38,6 +38,7 @@ export const usersProjectController: FastifyPluginCallbackTypebox = (
             const project = allProjects.data.find(
                 (project) => project.id === request.params.projectId,
             )
+            
             if (!project) {
                 throw new ActivepiecesError({
                     code: ErrorCode.ENTITY_NOT_FOUND,
@@ -90,7 +91,7 @@ const ListProjectRequestForUser = {
     },
     schema: {
         response: {
-            [StatusCodes.OK]: SeekPage(ProjectWithUsageAndPlanResponse),
+            [StatusCodes.OK]: SeekPage(ProjectWithLimits),
         },
         querystring: Type.Object({
             platformId: Type.Optional(Type.String()),

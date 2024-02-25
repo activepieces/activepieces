@@ -10,16 +10,15 @@ import {
     createMockUser,
 } from '../../../helpers/mocks'
 import { generateMockToken } from '../../../helpers/auth'
-import { stripeHelper } from '../../../../src/app/ee/billing/billing/stripe-helper'
+import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
 import { emailService } from '../../../../src/app/ee/helper/email/email-service'
 import { faker } from '@faker-js/faker'
 import { PlatformRole, Project, User } from '@activepieces/shared'
-import { PrincipalType } from '@activepieces/shared'
+import { PrincipalType, ProjectMemberRole } from '@activepieces/shared'
 import {
     AddProjectMemberRequestBody,
     ApiKeyResponseWithValue,
     Platform,
-    ProjectMemberRole,
     ProjectMemberStatus,
 } from '@activepieces/ee-shared'
 

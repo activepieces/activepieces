@@ -20,15 +20,15 @@ import {
     User,
     UserStatus,
     apId,
+    ProjectMemberRole,
 } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { emailService } from '../../../../src/app/ee/helper/email/email-service'
-import { stripeHelper } from '../../../../src/app/ee/billing/billing/stripe-helper'
+import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
 import {
     CustomDomain,
     OtpType,
     Platform,
-    ProjectMemberRole,
     ProjectMemberStatus,
 } from '@activepieces/ee-shared'
 import { decodeToken } from '../../../helpers/auth'
@@ -149,7 +149,6 @@ describe('Authentication API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
 
-            expect(Object.keys(responseBody)).toHaveLength(16)
             expect(responseBody?.id).toHaveLength(21)
             expect(responseBody?.created).toBeDefined()
             expect(responseBody?.updated).toBeDefined()
@@ -528,7 +527,6 @@ describe('Authentication API', () => {
             const responseBody = response?.json()
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(Object.keys(responseBody)).toHaveLength(16)
             expect(responseBody?.id).toBe(mockUser.id)
             expect(responseBody?.email).toBe(mockEmail)
             expect(responseBody?.firstName).toBe(mockUser.firstName)

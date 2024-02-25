@@ -1,4 +1,4 @@
-import { ProjectWithUsageAndPlanResponse } from '@activepieces/ee-shared';
+import { ProjectWithLimits } from '@activepieces/shared';
 import { PlatformProjectService } from '@activepieces/ui/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import {
@@ -21,7 +21,7 @@ interface CreateProjectForm {
 export class CreateProjectDialogComponent {
   formGroup: FormGroup<CreateProjectForm>;
   loading = false;
-  createProject$?: Observable<ProjectWithUsageAndPlanResponse>;
+  createProject$?: Observable<ProjectWithLimits>;
   constructor(
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<CreateProjectDialogComponent>,

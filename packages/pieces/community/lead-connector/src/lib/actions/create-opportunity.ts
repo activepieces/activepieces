@@ -1,5 +1,6 @@
 import {
   createAction,
+  OAuth2PropertyValue,
   Property,
   Validators,
 } from '@activepieces/pieces-framework';
@@ -32,7 +33,7 @@ export const createOpportunityAction = createAction({
           };
         }
 
-        const pipelines = await getPipelines(auth as string);
+        const pipelines = await getPipelines(auth as OAuth2PropertyValue);
         return {
           options: pipelines.map((pipeline: any) => {
             return {
@@ -57,7 +58,7 @@ export const createOpportunityAction = createAction({
         }
 
         const pipelineObj = await getPipeline(
-          auth as string,
+          auth as OAuth2PropertyValue,
           pipeline as string
         );
         return {
@@ -86,7 +87,7 @@ export const createOpportunityAction = createAction({
             options: [],
           };
 
-        const contacts = await getContacts(auth as string);
+        const contacts = await getContacts(auth as OAuth2PropertyValue);
         return {
           options: contacts.map((contact) => {
             return {
@@ -125,7 +126,7 @@ export const createOpportunityAction = createAction({
             options: [],
           };
 
-        const users = await getUsers(auth as string);
+        const users = await getUsers(auth as OAuth2PropertyValue);
         return {
           options: users.map((user: any) => {
             return {
@@ -154,11 +155,12 @@ export const createOpportunityAction = createAction({
       monetaryValue,
     } = propsValue;
 
-    return await createOpportunity(auth, pipeline, {
-      stageId: stage,
+    return await createOpportunity(auth, {
+      pipelineStageId: stage,
       contactId: contact,
       status: status,
-      title: title,
+      name: title,
+      pipelineId: pipeline,
       assignedTo: assignedTo,
       monetaryValue: monetaryValue,
     });

@@ -99,7 +99,7 @@ export const flowService = {
         }
 
         const paginationResult = await paginator.paginate(
-            flowRepo().createQueryBuilder('flow').where(queryWhere),
+            flowRepo().createQueryBuilder('flow').where(queryWhere).addOrderBy('flow.status', 'DESC'),
         )
 
         const populatedFlowPromises = paginationResult.data.map(async (flow) => {

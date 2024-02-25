@@ -5,16 +5,7 @@
       <ng-lottie [options]="options" width="100px" class="ap-text-center"></ng-lottie>
     </div>
     <div class="ap-typography-body-1 ap-text-body">
-      <div *ngIf="data?.limitType === 'connections'">
-        You have used all of your included {{data.limit}} connections.
-        <span class="ap-font-bold">Upgrade now </span> ⭐ to unlock more features.
-
-        <div>
-          You can manage your connections on <a class="ap-font-bold ap-typography-body-1"
-            (click)="openConnections()">this page</a>.
-        </div>
-      </div>
-      <div *ngIf="data?.limitType !== 'connections'" i18n>
+      <div *ngIf="data?.limitType === 'team'" i18n>
         You have reached the limits of your current plan.
         <span class="ap-font-bold"> {{teamMemebersNotes[data.projectType]}} </span> ⭐ to unlock more features.
       </div>

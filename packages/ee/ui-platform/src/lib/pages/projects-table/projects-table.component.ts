@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Observable, Subject, startWith, tap } from 'rxjs';
 import { ProjectsDataSource } from './projects-table.datasource';
-import { Project } from '@activepieces/shared';
+import { Project, ProjectWithLimits } from '@activepieces/shared';
 import { MatDialog } from '@angular/material/dialog';
 import { CreateProjectDialogComponent } from './create-project-dialog/create-project-dialog.component';
 import {
@@ -17,7 +17,6 @@ import {
 } from '@activepieces/ui/common';
 import { ActivatedRoute } from '@angular/router';
 import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
-import { ProjectWithUsageAndPlanResponse } from '@activepieces/ee-shared';
 
 @Component({
   selector: 'app-projects-table',
@@ -37,12 +36,8 @@ export class ProjectsTableComponent {
   dataSource: ProjectsDataSource;
   loading = true;
   switchProject$: Observable<void> | undefined;
-  createProject$:
-    | Observable<ProjectWithUsageAndPlanResponse | undefined>
-    | undefined;
-  updateProject$:
-    | Observable<ProjectWithUsageAndPlanResponse | undefined>
-    | undefined;
+  createProject$: Observable<ProjectWithLimits | undefined> | undefined;
+  updateProject$: Observable<ProjectWithLimits | undefined> | undefined;
   title = $localize`Projects`;
   featureDisabledTooltip = featureDisabledTooltip;
   isDemo = false;
@@ -67,7 +62,7 @@ export class ProjectsTableComponent {
       .open(CreateProjectDialogComponent)
       .afterClosed()
       .pipe(
-        tap((project: ProjectWithUsageAndPlanResponse | undefined) => {
+        tap((project: ProjectWithLimits | undefined) => {
           if (project) {
             this.refreshTable$.next(true);
             this.store.dispatch(ProjectActions.addProject({ project }));
@@ -79,7 +74,7 @@ export class ProjectsTableComponent {
     this.switchProject$ = this.projectsService.switchProject(project.id, true);
   }
 
-  updateProject(project: ProjectWithUsageAndPlanResponse) {
+  updateProject(project: ProjectWithLimits) {
     if (this.isDemo) {
       return;
     }

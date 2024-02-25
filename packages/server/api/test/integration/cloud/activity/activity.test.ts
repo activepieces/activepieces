@@ -44,7 +44,7 @@ describe('Activity API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/activity',
+                url: '/v1/activities',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -88,7 +88,7 @@ describe('Activity API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/activity',
+                url: '/v1/activities',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -117,7 +117,7 @@ describe('Activity API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/activity',
+                url: '/v1/activities',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -146,7 +146,7 @@ describe('Activity API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/activity',
+                url: '/v1/activities',
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },

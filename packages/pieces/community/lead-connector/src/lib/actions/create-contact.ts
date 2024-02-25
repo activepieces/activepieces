@@ -1,5 +1,6 @@
 import {
   createAction,
+  OAuth2PropertyValue,
   Property,
   Validators,
 } from '@activepieces/pieces-framework';
@@ -57,7 +58,7 @@ export const createContact = createAction({
             options: [],
           };
 
-        const tags = await getTags(auth as string);
+        const tags = await getTags(auth as OAuth2PropertyValue);
         return {
           options: tags.map((tag) => {
             return {
@@ -117,7 +118,7 @@ export const createContact = createAction({
             options: [],
           };
 
-        const timezones = await getTimezones(auth as string);
+        const timezones = await getTimezones(auth as OAuth2PropertyValue);
         return {
           options: timezones.map((timezone) => {
             return {

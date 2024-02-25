@@ -19,3 +19,17 @@ export const AddActivityRequestBody = Type.Object({
 })
 
 export type AddActivityRequestBody = Static<typeof AddActivityRequestBody>
+
+export const UpdateActivityRequestBody = Type.Composite([
+    Type.Object({
+        projectId: ApId,
+    }),
+    Type.Partial(
+        Type.Omit(AddActivityRequestBody, ['projectId']),
+        {
+            minProperties: 1,
+        }
+    ),
+])
+
+export type UpdateActivityRequestBody = Static<typeof UpdateActivityRequestBody>
