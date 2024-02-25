@@ -33,6 +33,10 @@ export const projectBillingService = {
             await projectBilling.release()
         }
     },
+    async updateByProjectId(projectId: string, update: Partial<ProjectBilling>): Promise<ProjectBilling> {
+        await projectBillingRepo.update({ projectId }, update)
+        return projectBillingRepo.findOneByOrFail({ projectId })
+    },
     async increaseTasks(projectId: string, tasks: number): Promise<ProjectBilling> {
         await projectBillingRepo.increment({
             projectId,

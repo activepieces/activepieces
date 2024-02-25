@@ -10,6 +10,7 @@ import { userService } from '../../../user/user-service'
 import { projectService } from '../../../project/project-service'
 import { projectLimitsService } from '../../project-plan/project-plan.service'
 import { DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
+import { projectBillingService } from '../project-billing/project-billing.service'
 
 export const appSumoModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(appsumoController, { prefix: '/v1/appsumo' })
@@ -98,6 +99,7 @@ const appsumoController: FastifyPluginAsyncTypebox = async (
                 const appSumoLicense = await appsumoService.getById(uuid)
                 const activation_email = appSumoLicense?.activation_email ?? request.body.activation_email
                 const appSumoPlan = appsumoService.getPlanInformation(plan_id)
+                await projectBillingService.getOrCreateForProject(activation_email)
                 const user = await userService.getByPlatformAndEmail({
                     platformId: system.getOrThrow(SystemProp.CLOUD_PLATFORM_ID),
                     email: activation_email,
@@ -106,9 +108,17 @@ const appsumoController: FastifyPluginAsyncTypebox = async (
                     const project = await projectService.getUserProjectOrThrow(user.id)
                     if (action === 'refund') {
                         await projectLimitsService.upsert(DEFAULT_FREE_PLAN_LIMIT, project.id)
+                        await projectBillingService.updateByProjectId(project.id, {
+                            includedTasks: DEFAULT_FREE_PLAN_LIMIT.tasks,
+                            includedUsers: DEFAULT_FREE_PLAN_LIMIT.teamMembers,
+                        })
                     }
                     else {
                         await projectLimitsService.upsert(appSumoPlan, project.id)
+                        await projectBillingService.updateByProjectId(project.id, {
+                            includedTasks: appSumoPlan.tasks,
+                            includedUsers: appSumoPlan.teamMembers,
+                        })
                     }
                 }
 
