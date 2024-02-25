@@ -21,7 +21,7 @@ import { newFormSubmission } from './lib/triggers/new-form-submission';
 import { newOpportunity } from './lib/triggers/new-opportunity';
 
 const markdownDescription = `
-To use your own app, you need to create a Sub-Account application, with the following scopes:
+To use your own app, you need to create a Sub-Account application at https://developers.gohighlevel.com/, with the following scopes:
 - campaigns.readonly
 - contacts.write
 - contacts.readonly
