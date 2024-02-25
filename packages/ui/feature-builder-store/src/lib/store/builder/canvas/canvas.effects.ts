@@ -84,23 +84,35 @@ export class CanvasEffects {
     },
     { dispatch: false }
   );
-  setRun$ = createEffect(() => {
+  openLeftSideBarToShowRun$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(canvasActions.setRun),
       concatLatestFrom(() => [
-        this.store.select(BuilderSelectors.selectCurrentFlow),
+        this.store.select(BuilderSelectors.selectCurrentFlowRun),
       ]),
       tap(([{ run }, currentRun]) => {
         if (run.id !== currentRun?.id) {
           this.runDetailsService.currentStepResult$.next(undefined);
         }
       }),
-      switchMap(([run]) => {
+      switchMap(() => {
         return of(
           canvasActions.setLeftSidebar({
             sidebarType: LeftSideBarType.SHOW_RUN,
           })
         );
+      })
+    );
+  });
+
+  selectTriggerOnTestRunEnd$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(canvasActions.setRun),
+      switchMap(({ run }) => {
+        if (run.status !== 'RUNNING') {
+          return of(canvasActions.selectStepByName({ stepName: 'trigger' }));
+        }
+        return EMPTY;
       })
     );
   });
