@@ -1,5 +1,5 @@
 import { Type, Static } from "@sinclair/typebox";
-import { ProjectMemberRole } from "./project-member-role";
+import { ProjectMemberRole } from "@activepieces/shared";
 import { ProjectMemberStatus } from "./project-member";
 
 export const AcceptInvitationRequest = Type.Object({

@@ -4,12 +4,12 @@ import {
     ApEdition,
     ErrorCode,
     PrincipalType,
+    ProjectMemberRole,
     isNil,
 } from '@activepieces/shared'
 import { projectMemberService } from '../../ee/project-members/project-member.service'
 import {
     ProjectMemberPermission,
-    ProjectMemberRole,
     ProjectMemberRoleToPermissions,
 } from '@activepieces/ee-shared'
 import { getEdition } from '../../helper/secret-helper'
@@ -40,9 +40,18 @@ const ProjectMemberPermissionResourceAndAction = {
         resource: 'project-members',
         action: ['POST', 'DELETE'],
     },
+    [ProjectMemberPermission.READ_ACTIVITY]: {
+        resource: 'activities',
+        action: ['GET'],
+    },
 }
 
-const managedResources = ['flows', 'connections', 'project-members']
+const managedResources = [
+    'activities',
+    'connections',
+    'flows',
+    'project-members',
+]
 
 export const rbacAuthMiddleware = async (
     req: FastifyRequest,

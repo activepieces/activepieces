@@ -10,7 +10,7 @@ import { catchError, map, Observable, of, tap } from 'rxjs';
 import { ProjectMemberService } from '../../service/project-members.service';
 import { DialogRef } from '@angular/cdk/dialog';
 import { HttpStatusCode } from '@angular/common/http';
-import { ProjectMemberRole } from '@activepieces/ee-shared';
+import { ProjectMemberRole } from '@activepieces/shared';
 import { AuthenticationService } from '@activepieces/ui/common';
 import { RolesDisplayNames } from '../../utils';
 
