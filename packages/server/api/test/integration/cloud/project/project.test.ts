@@ -23,7 +23,7 @@ import {
     Platform,
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
-import { stripeHelper } from '../../../../src/app/ee/billing/billing/stripe-helper'
+import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
 
 let app: FastifyInstance | null = null
 

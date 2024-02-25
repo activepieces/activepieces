@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
-import { ProjectId, SeekPage } from '@activepieces/shared';
+import { ProjectId, ProjectWithLimits, SeekPage } from '@activepieces/shared';
 import {
   CreatePlatformProjectRequest,
-  ProjectWithUsageAndPlanResponse,
   UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared';
 import { Router } from '@angular/router';
@@ -17,7 +16,7 @@ export class PlatformProjectService {
   constructor(private http: HttpClient, private router: Router) {}
 
   create(req: CreatePlatformProjectRequest) {
-    return this.http.post<ProjectWithUsageAndPlanResponse>(
+    return this.http.post<ProjectWithLimits>(
       environment.apiUrl + '/projects/',
       req
     );
@@ -25,17 +24,17 @@ export class PlatformProjectService {
   update(
     projectId: ProjectId,
     request: UpdateProjectPlatformRequest
-  ): Observable<ProjectWithUsageAndPlanResponse> {
-    return this.http.post<ProjectWithUsageAndPlanResponse>(
+  ): Observable<ProjectWithLimits> {
+    return this.http.post<ProjectWithLimits>(
       environment.apiUrl + '/projects/' + projectId,
       request
     );
   }
 
-  list(platformId?: string): Observable<ProjectWithUsageAndPlanResponse[]> {
+  list(platformId?: string): Observable<ProjectWithLimits[]> {
     const params: Record<string, string> = platformId ? { platformId } : {};
     return this.http
-      .get<SeekPage<ProjectWithUsageAndPlanResponse>>(
+      .get<SeekPage<ProjectWithLimits>>(
         environment.apiUrl + `/users/projects`,
         {
           params,

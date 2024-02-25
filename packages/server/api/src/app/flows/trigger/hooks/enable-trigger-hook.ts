@@ -17,7 +17,6 @@ import {
 } from '../../../workers/flow-worker/job-data'
 import { JobType } from '../../../workers/flow-worker/queues/queue'
 import { flowQueue } from '../../../workers/flow-worker/flow-queue'
-import { plansService } from '../../../ee/billing/project-plan/project-plan.service'
 import {
     TriggerStrategy,
     WebhookRenewStrategy,
@@ -30,6 +29,8 @@ import {
 } from '../../../helper/engine-helper'
 import { webhookService } from '../../../webhooks/webhook-service'
 import { getPieceTrigger } from './trigger-utils'
+import { projectLimitsService } from '../../../ee/project-plan/project-plan.service'
+import { DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
 
 const POLLING_FREQUENCY_CRON_EXPRESSON = constructEveryXMinuteCron(
     system.getNumber(SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5,
@@ -128,11 +129,8 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
                 // BEGIN EE
                 const edition = getEdition()
                 if (edition === ApEdition.CLOUD) {
-                    const plan = await plansService.getOrCreateDefaultPlan({
-                        projectId,
-                    })
-                    engineHelperResponse.result.scheduleOptions.cronExpression =
-            constructEveryXMinuteCron(plan.minimumPollingInterval)
+                    const plan = await projectLimitsService.getOrCreateDefaultPlan(projectId, DEFAULT_FREE_PLAN_LIMIT)
+                    engineHelperResponse.result.scheduleOptions.cronExpression = constructEveryXMinuteCron(plan.minimumPollingInterval)
                 }
                 // END EE
             }

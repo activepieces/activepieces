@@ -5,7 +5,7 @@ import { databaseConnection } from '../../../../src/app/database/database-connec
 import { createMockSignUpRequest } from '../../../helpers/mocks/authn'
 import { faker } from '@faker-js/faker'
 import { emailService } from '../../../../src/app/ee/helper/email/email-service'
-import { stripeHelper } from '../../../../src/app/ee/billing/billing/stripe-helper'
+import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
 import {
     createMockCustomDomain,
     createMockPlatform,

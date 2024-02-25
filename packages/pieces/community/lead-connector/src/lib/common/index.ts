@@ -3,58 +3,72 @@ import {
   HttpMethod,
   AuthenticationType,
 } from '@activepieces/pieces-common';
+import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import jwt from 'jsonwebtoken';
 
-export const baseUrl = 'https://rest.leadconnectorhq.com/v1';
+export const baseUrl = 'https://services.leadconnectorhq.com';
 
-export async function getCampaigns(auth: string): Promise<any> {
+export const leadConnectorHeaders = {
+  Version: '2021-07-28'
+}
+
+export async function getCampaigns(auth: OAuth2PropertyValue): Promise<any> {
   const result = await httpClient.sendRequest({
-    url: `${baseUrl}/campaigns`,
+    url: `${baseUrl}/campaigns/`,
     method: HttpMethod.GET,
+    headers: leadConnectorHeaders,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
-      token: auth,
+      token: auth.access_token,
     },
     queryParams: {
       status: 'published',
+      locationId: auth.data['locationId'],
     },
   });
 
   return result.body['campaigns'];
 }
 
-export async function getWorkflows(auth: string): Promise<any> {
+export async function getWorkflows(auth: OAuth2PropertyValue): Promise<any> {
   const result = await httpClient.sendRequest({
-    url: `${baseUrl}/workflows`,
+    url: `${baseUrl}/workflows/`,
     method: HttpMethod.GET,
+    headers: leadConnectorHeaders,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
-      token: auth,
+      token: auth.access_token,
     },
+    queryParams: {
+      locationId: auth.data['locationId'],
+    }
   });
 
   return result.body['workflows'];
 }
 
-export async function getTimezones(auth: string): Promise<string[]> {
+export async function getTimezones(auth: OAuth2PropertyValue): Promise<string[]> {
   const result = await httpClient.sendRequest({
-    url: `${baseUrl}/timezones`,
+    url: `${baseUrl}/locations/${auth.data['locationId']}/timezones`,
     method: HttpMethod.GET,
+    headers: leadConnectorHeaders,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
-      token: auth,
+      token: auth.access_token,
     },
   });
 
   return result.body['timezones'];
 }
 
-export async function getTags(auth: string): Promise<any[]> {
+export async function getTags(auth: OAuth2PropertyValue): Promise<any[]> {
   const result = await httpClient.sendRequest({
-    url: `${baseUrl}/tags`,
+    url: `${baseUrl}/locations/${auth.data['locationId']}/tags`,
     method: HttpMethod.GET,
+    headers: leadConnectorHeaders,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
-      token: auth,
+      token: auth.access_token,
     },
   });
 
@@ -62,15 +76,18 @@ export async function getTags(auth: string): Promise<any[]> {
 }
 
 export async function addContact(
-  auth: string,
+  auth: OAuth2PropertyValue,
   contact: LeadConnectorContactDto
 ) {
+  contact.locationId = auth.data['locationId'];
+
   const result = await httpClient.sendRequest({
-    url: `${baseUrl}/contacts`,
+    url: `${baseUrl}/contacts/`,
     method: HttpMethod.POST,
+    headers: leadConnectorHeaders,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
-      token: auth,
+      token: auth.access_token,
     },
     body: contact,
   });
@@ -86,6 +103,7 @@ export async function updateContact(
   const result = await httpClient.sendRequest({
     url: `${baseUrl}/contacts/${id}`,
     method: HttpMethod.PUT,
+    headers: leadConnectorHeaders,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
       token: auth,
@@ -117,7 +135,7 @@ export async function getCountries(): Promise<Country[]> {
 }
 
 export async function getContacts(
-  auth: string,
+  auth: OAuth2PropertyValue,
   filters?: {
     startAfterId?: string;
     sortOrder?: 'asc' | 'desc';
@@ -127,6 +145,7 @@ export async function getContacts(
 ): Promise<LeadConnectorContact[]> {
   const queryParams: any = {
     limit: '100',
+    locationId: auth.data['locationId'],
   };
 
   if (filters?.startAfterId) queryParams.startAfterId = filters.startAfterId;
@@ -135,11 +154,12 @@ export async function getContacts(
   if (filters?.query) queryParams.query = filters.query;
 
   const response = await httpClient.sendRequest({
-    url: `${baseUrl}/contacts`,
+    url: `${baseUrl}/contacts/`,
     method: HttpMethod.GET,
+    headers: leadConnectorHeaders,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
-      token: auth,
+      token: auth.access_token,
     },
     queryParams: queryParams,
   });
@@ -147,33 +167,39 @@ export async function getContacts(
   return result;
 }
 
-export async function getForms(auth: string): Promise<LeadConnectorForm[]> {
+export async function getForms(auth: OAuth2PropertyValue): Promise<LeadConnectorForm[]> {
   const response = await httpClient.sendRequest({
-    url: `${baseUrl}/forms`,
+    url: `${baseUrl}/forms/`,
     method: HttpMethod.GET,
+    headers: leadConnectorHeaders,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
-      token: auth,
+      token: auth.access_token,
     },
+    queryParams: {
+      locationId: auth.data['locationId'],
+    }
   });
   const result = response.body['forms'] as LeadConnectorForm[];
   return result;
 }
 
 export async function getFormSubmissions(
-  auth: string,
+  auth: OAuth2PropertyValue,
   formId: string
 ): Promise<any[]> {
   const response = await httpClient.sendRequest({
-    url: `${baseUrl}/forms/submissions`,
+    url: `${baseUrl}/forms/submissions/`,
     method: HttpMethod.GET,
+    headers: leadConnectorHeaders,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
-      token: auth,
+      token: auth.access_token,
     },
     queryParams: {
       limit: '100',
-      formId: formId,
+      formId,
+      locationId: auth.data['locationId'],
     },
   });
 
@@ -188,6 +214,7 @@ export async function addContactToCampaign(
   const response = await httpClient.sendRequest({
     url: `${baseUrl}/contacts/${contact}/campaigns/${campaign}`,
     method: HttpMethod.POST,
+    headers: leadConnectorHeaders,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
       token: auth,
@@ -205,6 +232,7 @@ export async function addContactToWorkflow(
   const response = await httpClient.sendRequest({
     url: `${baseUrl}/contacts/${contact}/workflow/${workflow}`,
     method: HttpMethod.POST,
+    headers: leadConnectorHeaders,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
       token: auth,
@@ -223,8 +251,9 @@ export async function addNoteToContact(
   }
 ) {
   const response = await httpClient.sendRequest({
-    url: `${baseUrl}/contacts/${contact}/notes`,
+    url: `${baseUrl}/contacts/${contact}/notes/`,
     method: HttpMethod.POST,
+    headers: leadConnectorHeaders,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
       token: auth,
@@ -235,21 +264,25 @@ export async function addNoteToContact(
   return response.body;
 }
 
-export async function getPipelines(auth: string): Promise<any[]> {
+export async function getPipelines(auth: OAuth2PropertyValue): Promise<any[]> {
   const response = await httpClient.sendRequest({
-    url: `${baseUrl}/pipelines`,
+    url: `${baseUrl}/opportunities/pipelines`,
     method: HttpMethod.GET,
+    headers: leadConnectorHeaders,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
-      token: auth,
+      token: auth.access_token,
     },
+    queryParams: {
+      locationId: auth.data['locationId'],
+    }
   });
   const result = response.body['pipelines'];
   return result;
 }
 
 export async function getPipeline(
-  auth: string,
+  auth: OAuth2PropertyValue,
   pipelineId: string
 ): Promise<any> {
   const pipelines = await getPipelines(auth);
@@ -257,7 +290,7 @@ export async function getPipeline(
 }
 
 export async function getOpportunities(
-  auth: string,
+  auth: OAuth2PropertyValue,
   pipeline: string,
   filters?: {
     startAfterId?: string;
@@ -265,15 +298,18 @@ export async function getOpportunities(
 ): Promise<any> {
   const queryParams: any = {
     limit: '100',
+    location_id: auth.data['locationId'],
+    pipeline_id: pipeline,
   };
   if (filters?.startAfterId) queryParams.startAfterId = filters.startAfterId;
 
   const response = await httpClient.sendRequest({
-    url: `${baseUrl}/pipelines/${pipeline}/opportunities`,
+    url: `${baseUrl}/opportunities/search`,
     method: HttpMethod.GET,
+    headers: leadConnectorHeaders,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
-      token: auth,
+      token: auth.access_token,
     },
     queryParams: queryParams,
   });
@@ -287,8 +323,9 @@ export async function getOpportunity(
   opportunity: string
 ): Promise<any> {
   const response = await httpClient.sendRequest({
-    url: `${baseUrl}/pipelines/${pipeline}/opportunities/${opportunity}`,
+    url: `${baseUrl}/opportunities/${opportunity}`,
     method: HttpMethod.GET,
+    headers: leadConnectorHeaders,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
       token: auth,
@@ -300,16 +337,17 @@ export async function getOpportunity(
 }
 
 export async function createOpportunity(
-  auth: string,
-  pipeline: string,
+  auth: OAuth2PropertyValue,
   data: LeadConnectorOpportunityDto
 ) {
+  data.locationId = auth.data['locationId'];
   const result = await httpClient.sendRequest({
-    url: `${baseUrl}/pipelines/${pipeline}/opportunities`,
+    url: `${baseUrl}/opportunities/`,
     method: HttpMethod.POST,
+    headers: leadConnectorHeaders,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
-      token: auth,
+      token: auth.access_token,
     },
     body: data,
   });
@@ -319,13 +357,13 @@ export async function createOpportunity(
 
 export async function updateOpportunity(
   auth: string,
-  pipeline: string,
   opportunity: string,
   data: LeadConnectorOpportunityDto
 ) {
   const result = await httpClient.sendRequest({
-    url: `${baseUrl}/pipelines/${pipeline}/opportunities/${opportunity}`,
+    url: `${baseUrl}/opportunities/${opportunity}`,
     method: HttpMethod.PUT,
+    headers: leadConnectorHeaders,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
       token: auth,
@@ -336,14 +374,19 @@ export async function updateOpportunity(
   return result.body;
 }
 
-export async function getUsers(auth: string): Promise<any> {
+export async function getUsers(auth: OAuth2PropertyValue): Promise<any> {
   const response = await httpClient.sendRequest({
-    url: `${baseUrl}/users/location`,
+    url: `${baseUrl}/users/search`,
     method: HttpMethod.GET,
+    headers: leadConnectorHeaders,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
-      token: auth,
+      token: auth.access_token,
     },
+    queryParams: {
+      locationId: auth.data['locationId'],
+      companyId: auth.data['companyId'],
+    }
   });
   const result = response.body['users'];
   return result;
@@ -353,6 +396,7 @@ export async function getTasks(auth: string, contact: string): Promise<any> {
   const response = await httpClient.sendRequest({
     url: `${baseUrl}/contacts/${contact}/tasks`,
     method: HttpMethod.GET,
+    headers: leadConnectorHeaders,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
       token: auth,
@@ -370,6 +414,7 @@ export async function getTask(
   const response = await httpClient.sendRequest({
     url: `${baseUrl}/contacts/${contact}/tasks/${task}`,
     method: HttpMethod.GET,
+    headers: leadConnectorHeaders,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
       token: auth,
@@ -387,6 +432,7 @@ export async function createTask(
   const result = await httpClient.sendRequest({
     url: `${baseUrl}/contacts/${contact}/tasks`,
     method: HttpMethod.POST,
+    headers: leadConnectorHeaders,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
       token: auth,
@@ -406,6 +452,7 @@ export async function updateTask(
   const result = await httpClient.sendRequest({
     url: `${baseUrl}/contacts/${contact}/tasks/${task}`,
     method: HttpMethod.PUT,
+    headers: leadConnectorHeaders,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
       token: auth,
@@ -414,6 +461,12 @@ export async function updateTask(
   });
 
   return result.body;
+}
+
+export function getLocationIdFromToken(auth: OAuth2PropertyValue): { authClass: string, authClassId: string } {
+  const result = jwt.decode(auth.access_token)
+
+  return result as { authClass: string, authClassId: string };
 }
 
 export interface LeadConnectorContact {
@@ -467,14 +520,16 @@ export interface LeadConnectorForm {
 export interface LeadConnectorTaskDto {
   title: string;
   dueDate: string;
-  description?: string;
+  body?: string;
   assignedTo?: string;
-  status?: LeadConnectorTaskStatus;
+  completed?: boolean;
 }
 
 export interface LeadConnectorOpportunityDto {
-  title: string;
-  stageId: string;
+  name: string;
+  pipelineId: string;
+  pipelineStageId: string;
+  locationId?: string;
   contactId?: string;
   status: LeadConnectorOpportunityStatus;
   monetaryValue?: number;
@@ -497,4 +552,13 @@ export interface Country {
   id: string;
   name: string;
   iso2Code: string;
+}
+
+export interface LeadConnectorLocation {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  country: string;
+  timezone: string;
 }

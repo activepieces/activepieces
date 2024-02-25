@@ -1,9 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import {
   createTask,
   getContacts,
   getUsers,
-  LeadConnectorTaskStatus,
 } from '../common';
 import { leadConnectorAuth } from '../..';
 
@@ -25,7 +24,7 @@ export const createTaskAction = createAction({
             options: [],
           };
 
-        const contacts = await getContacts(auth as string);
+        const contacts = await getContacts(auth as OAuth2PropertyValue);
 
         return {
           options: contacts.map((contact) => {
@@ -60,7 +59,7 @@ export const createTaskAction = createAction({
             options: [],
           };
 
-        const users = await getUsers(auth as string);
+        const users = await getUsers(auth as OAuth2PropertyValue);
         return {
           options: users.map((user: any) => {
             return {
@@ -71,36 +70,24 @@ export const createTaskAction = createAction({
         };
       },
     }),
-    status: Property.Dropdown({
-      displayName: 'Status',
-      required: false,
-      refreshers: [],
-      options: async () => {
-        const statuses = Object.values(LeadConnectorTaskStatus);
-
-        return {
-          options: statuses.map((status) => {
-            return {
-              label: status.charAt(0).toUpperCase() + status.slice(1),
-              value: status,
-            };
-          }),
-        };
-      },
+    completed: Property.Checkbox({
+      displayName: 'Completed',
+      required: true,
+      defaultValue: false,
     }),
   },
 
   async run({ auth, propsValue }) {
-    const { contact, title, dueDate, description, assignedTo, status } =
+    const { contact, title, dueDate, description, assignedTo, completed } =
       propsValue;
 
-    return await createTask(auth, contact, {
+    return await createTask(auth.access_token, contact, {
       title: title,
       // Needs to be ISO string without milliseconds
       dueDate: new Date(dueDate).toISOString().split('.')[0] + 'Z',
-      description: description,
+      body: description,
       assignedTo: assignedTo,
-      status: status as LeadConnectorTaskStatus,
+      completed,
     });
   },
 });

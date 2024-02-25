@@ -1,8 +1,8 @@
-import { Project } from '@activepieces/shared';
+import { ProjectWithLimits } from '@activepieces/shared';
 import { Platform } from '@activepieces/ee-shared';
 
 export interface ProjectsState {
   selectedIndex: number;
-  projects: Project[];
+  projects: ProjectWithLimits[];
   platform?: Platform;
 }
