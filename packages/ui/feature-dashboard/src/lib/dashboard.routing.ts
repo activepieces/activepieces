@@ -11,12 +11,13 @@ import { DashboardContainerComponent } from './dashboard-container.component';
 import {
   isFeatureFlagEnabledResolver,
   showBasedOnFlagGuard,
+  showBasedOnRoles,
   showPlatformSettingsGuard,
 } from '@activepieces/ui/common';
 import { PlansPageComponent } from '@activepieces/ee-billing-ui';
 import { ProjectMembersTableComponent } from '@activepieces/ee/project-members';
 import { CommunityPiecesTableComponent } from '@activepieces/ui/feature-pieces';
-import { ApFlagId } from '@activepieces/shared';
+import { ApFlagId, ProjectMemberRole } from '@activepieces/shared';
 import { SyncProjectComponent } from './pages/sync-project/sync-project.component';
 import { RepoResolver } from './resolvers/repo.resolver';
 import { ActivityTableComponent } from './pages/activity-table/activity-table.component';
@@ -35,12 +36,26 @@ export const DashboardLayoutRouting: Routes = [
         path: 'runs',
         pathMatch: 'full',
         component: RunsTableComponent,
+        canActivate: [
+          showBasedOnRoles([
+            ProjectMemberRole.ADMIN,
+            ProjectMemberRole.EDITOR,
+            ProjectMemberRole.VIEWER,
+          ]),
+        ],
       },
       {
         data: {
           title: $localize`Plans`,
         },
-        canActivate: [showBasedOnFlagGuard(ApFlagId.SHOW_BILLING)],
+        canActivate: [
+          showBasedOnFlagGuard(ApFlagId.SHOW_BILLING),
+          showBasedOnRoles([
+            ProjectMemberRole.ADMIN,
+            ProjectMemberRole.EDITOR,
+            ProjectMemberRole.VIEWER,
+          ]),
+        ],
         path: 'plans',
         component: PlansPageComponent,
       },
@@ -55,13 +70,27 @@ export const DashboardLayoutRouting: Routes = [
             ApFlagId.PROJECT_MEMBERS_ENABLED
           ),
         },
+        canActivate: [
+          showBasedOnRoles([
+            ProjectMemberRole.ADMIN,
+            ProjectMemberRole.EDITOR,
+            ProjectMemberRole.VIEWER,
+          ]),
+        ],
       },
       {
         data: {
           title: $localize`My Pieces`,
         },
         path: 'settings/my-pieces',
-        canActivate: [showBasedOnFlagGuard(ApFlagId.SHOW_COMMUNITY_PIECES)],
+        canActivate: [
+          showBasedOnFlagGuard(ApFlagId.SHOW_COMMUNITY_PIECES),
+          showBasedOnRoles([
+            ProjectMemberRole.ADMIN,
+            ProjectMemberRole.EDITOR,
+            ProjectMemberRole.VIEWER,
+          ]),
+        ],
         component: CommunityPiecesTableComponent,
       },
       {
@@ -71,6 +100,7 @@ export const DashboardLayoutRouting: Routes = [
         path: 'activity',
         pathMatch: 'full',
         component: ActivityTableComponent,
+        canActivate: [showBasedOnFlagGuard(ApFlagId.SHOW_ACTIVITY_LOG)],
       },
       {
         data: {
@@ -88,6 +118,13 @@ export const DashboardLayoutRouting: Routes = [
         pathMatch: 'full',
         component: SyncProjectComponent,
         resolve: { repo: RepoResolver },
+        canActivate: [
+          showBasedOnRoles([
+            ProjectMemberRole.ADMIN,
+            ProjectMemberRole.EDITOR,
+            ProjectMemberRole.VIEWER,
+          ]),
+        ],
       },
       {
         data: {
@@ -100,6 +137,13 @@ export const DashboardLayoutRouting: Routes = [
           [ARE_THERE_FLOWS_FLAG]: AreThereFlowsResovler,
           folders: FoldersResolver,
         },
+        canActivate: [
+          showBasedOnRoles([
+            ProjectMemberRole.ADMIN,
+            ProjectMemberRole.EDITOR,
+            ProjectMemberRole.VIEWER,
+          ]),
+        ],
       },
       {
         data: {
