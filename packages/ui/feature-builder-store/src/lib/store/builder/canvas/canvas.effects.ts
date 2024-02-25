@@ -9,6 +9,7 @@ import { BuilderSelectors } from '../builder.selector';
 import { LeftSideBarType, RightSideBarType } from '../../../model';
 import { RunDetailsService } from '../../../service/run-details.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { FlowsActions } from '../../flow';
 
 @Injectable()
 export class CanvasEffects {
@@ -113,6 +114,15 @@ export class CanvasEffects {
           return of(canvasActions.selectStepByName({ stepName: 'trigger' }));
         }
         return EMPTY;
+      })
+    );
+  });
+
+  selectTriggerOnViewingRun$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(canvasActions.viewRun),
+      switchMap(() => {
+        return of(canvasActions.selectStepByName({ stepName: 'trigger' }));
       })
     );
   });
