@@ -126,4 +126,16 @@ export class CanvasEffects {
       })
     );
   });
+
+  selectTriggerOnOpeningBuilder$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(canvasActions.setInitial),
+      switchMap(({ run }) => {
+        if (run) {
+          return of(canvasActions.selectStepByName({ stepName: 'trigger' }));
+        }
+        return of(FlowsActions.selectFirstInvalidStep());
+      })
+    );
+  });
 }
