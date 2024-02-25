@@ -10,12 +10,7 @@ export class RedirectService {
   constructor(
     private router: Router,
     private authenticationService: AuthenticationService
-  ) {
-    if (this.authenticationService.currentUser.projectRole)
-      this._redirectRoute = findHomePageRouteForRole(
-        this.authenticationService.currentUser.projectRole
-      );
-  }
+  ) {}
   private _redirectRoute = '/flows';
   get redirectRoute() {
     return this._redirectRoute;
@@ -23,13 +18,21 @@ export class RedirectService {
   setRedirectRouteToCurrentRoute() {
     const currentURL = window.location.href;
     const route = currentURL.replace(window.location.origin, '');
-    this._redirectRoute = route || '/flows';
-    console.log(route);
+    let defaultRoute = '/flows';
+    if (this.authenticationService.currentUser.projectRole)
+      defaultRoute = findHomePageRouteForRole(
+        this.authenticationService.currentUser.projectRole
+      );
+    this._redirectRoute = route || defaultRoute;
   }
 
   redirect() {
+    this._redirectRoute = '/flows';
+    if (this.authenticationService.currentUser.projectRole)
+      this._redirectRoute = findHomePageRouteForRole(
+        this.authenticationService.currentUser.projectRole
+      );
     const urlTree: UrlTree = this.router.parseUrl(this._redirectRoute);
     this.router.navigateByUrl(urlTree);
-    this._redirectRoute = '/flows';
   }
 }
