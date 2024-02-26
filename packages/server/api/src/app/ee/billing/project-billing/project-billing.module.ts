@@ -57,7 +57,7 @@ async function sendProjectRecords(timestamp: number): Promise<void> {
         assertNotNullOrUndefined(item, 'No item found for tasks')
         const project = await projectService.getOneOrThrow(projectId)
         const billingPeriod = projectUsageService.getCurrentingStartPeriod(project.created)
-        const usage = await projectUsageService.getDayUsageForBillingPeriod(projectId, billingPeriod)
+        const usage = await projectUsageService.getUsageForBillingPeriod(projectId, billingPeriod)
         await stripe.subscriptionItems.createUsageRecord(item.id, {
             quantity: Math.max(usage.tasks - projectBilling.includedTasks, 0),
             timestamp: dayjs(timestamp).unix(),

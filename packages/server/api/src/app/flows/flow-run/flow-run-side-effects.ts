@@ -16,6 +16,7 @@ import {
 import { JobType } from '../../workers/flow-worker/queues/queue'
 import { notifications } from '../../helper/notifications'
 import { HookType } from './flow-run-service'
+import { flowRunHooks } from './flow-run-hooks'
 
 type StartParams = {
     flowRun: FlowRun
@@ -46,6 +47,10 @@ const calculateDelayForResumeJob = (
 
 export const flowRunSideEffects = {
     async finish({ flowRun }: { flowRun: FlowRun }): Promise<void> {
+        await flowRunHooks
+            .getHooks()
+            .onFinish({ projectId: flowRun.projectId, tasks: flowRun.tasks! })
+
         await notifications.notifyRun({
             flowRun,
         })

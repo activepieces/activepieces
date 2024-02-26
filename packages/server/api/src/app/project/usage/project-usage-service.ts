@@ -5,7 +5,7 @@ import { apDayjs } from '../../helper/dayjs-helper'
 
 
 export const projectUsageService = {
-    async getDayUsageForBillingPeriod(projectId: string, startBillingPeriod: string): Promise<ProjectUsage> {
+    async getUsageForBillingPeriod(projectId: string, startBillingPeriod: string): Promise<ProjectUsage> {
         const flowTasks = await flowRunService.getTasksUsedAfter({
             projectId,
             created: getCurrentingStartPeriod(startBillingPeriod),
