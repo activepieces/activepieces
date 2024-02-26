@@ -1,15 +1,13 @@
-import {
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component,
-  OnInit,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { FolderActions } from '@activepieces/ui/feature-folders-store';
-import { NavigationService } from '@activepieces/ui/common';
-import { Observable, map, of } from 'rxjs';
-import { ApFlagId, supportUrl } from '@activepieces/shared';
+import {
+  AuthenticationService,
+  NavigationService,
+} from '@activepieces/ui/common';
+import { Observable, forkJoin, map, of } from 'rxjs';
+import { ApFlagId, ProjectMemberRole, supportUrl } from '@activepieces/shared';
 import { DashboardService, FlagService } from '@activepieces/ui/common';
 
 type SideNavRoute = {
@@ -31,7 +29,6 @@ export class SidenavRoutesListComponent implements OnInit {
   showSupport$: Observable<boolean>;
   showDocs$: Observable<boolean>;
   showBilling$: Observable<boolean>;
-  showGitSync: Observable<boolean>;
   sideNavRoutes$: Observable<SideNavRoute[]>;
   mainDashboardRoutes: SideNavRoute[] = [];
   platformDashboardRoutes: SideNavRoute[] = [
@@ -77,11 +74,10 @@ export class SidenavRoutesListComponent implements OnInit {
     public router: Router,
     private store: Store,
     private flagServices: FlagService,
-    private cd: ChangeDetectorRef,
     private dashboardService: DashboardService,
-    private navigationService: NavigationService
+    private navigationService: NavigationService,
+    private authenticationService: AuthenticationService
   ) {
-    this.showGitSync = flagServices.isFlagEnabled(ApFlagId.SHOW_GIT_SYNC);
     this.logoUrl$ = this.flagServices
       .getLogos()
       .pipe(map((logos) => logos.logoIconUrl));
@@ -126,7 +122,7 @@ export class SidenavRoutesListComponent implements OnInit {
         icon: 'assets/img/custom/dashboard/settings.svg',
         caption: $localize`Settings`,
         route: 'settings',
-        showInSideNav$: this.showGitSync,
+        showInSideNav$: this.flagServices.isFlagEnabled(ApFlagId.SHOW_GIT_SYNC),
       },
     ];
   }
@@ -139,7 +135,10 @@ export class SidenavRoutesListComponent implements OnInit {
     this.sideNavRoutes$ = this.dashboardService.getIsInPlatformRoute().pipe(
       map((isInPlatformDashboard) => {
         if (!isInPlatformDashboard) {
-          return this.mainDashboardRoutes;
+          return this.filterRoutesBasedOnRole(
+            this.authenticationService.currentUser.projectRole,
+            this.mainDashboardRoutes
+          );
         }
         return this.platformDashboardRoutes;
       })
@@ -153,15 +152,47 @@ export class SidenavRoutesListComponent implements OnInit {
     this.navigationService.navigate('/flows', newWindow);
   }
 
-  markChange() {
-    this.cd.detectChanges();
-  }
-
   public isActive(route: string) {
     return this.router.url.includes(route);
   }
 
   openSupport() {
     window.open(supportUrl, '_blank', 'noopener');
+  }
+
+  private filterRoutesBasedOnRole(
+    role: ProjectMemberRole | null | undefined,
+    routes: SideNavRoute[]
+  ): SideNavRoute[] {
+    return routes.map((route) => {
+      return {
+        ...route,
+        showInSideNav$: forkJoin({
+          roleCondition: this.isRouteAllowedForRole(role, route.route),
+          flagCondition: route.showInSideNav$,
+        }).pipe(
+          map(
+            (conditions) => conditions.roleCondition && conditions.flagCondition
+          )
+        ),
+      };
+    });
+  }
+
+  private isRouteAllowedForRole(
+    role: ProjectMemberRole | null | undefined,
+    route: string
+  ) {
+    if (role === undefined || role === null) {
+      return of(true);
+    }
+    switch (role) {
+      case ProjectMemberRole.ADMIN:
+      case ProjectMemberRole.EDITOR:
+      case ProjectMemberRole.VIEWER:
+        return of(true);
+      case ProjectMemberRole.EXTERNAL_CUSTOMER:
+        return of(route === 'connections' || route === 'activity');
+    }
   }
 }
