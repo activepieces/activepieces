@@ -7,6 +7,7 @@ import { projectService } from '../../../../project/project-service'
 import { userService } from '../../../../user/user-service'
 import { ProjectType, isNil } from '@activepieces/shared'
 import { flagService } from '../../../../../app/flags/flag.service'
+import { appsumoService } from '../../../billing/appsumo/appsumo.service'
 
 export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
     async preSignIn({ email, platformId, provider }) {
@@ -55,6 +56,15 @@ export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
                 platformId: updatedUser.platformId,
                 email: updatedUser.email,
                 type: OtpType.EMAIL_VERIFICATION,
+            })
+        }
+        const appSumo = await appsumoService.getByEmail(updatedUser.email)
+        if (appSumo) {
+            await appsumoService.handleRequest({
+                plan_id: appSumo.plan_id,
+                action: 'activate',
+                uuid: appSumo.uuid,
+                activation_email: appSumo.activation_email,
             })
         }
         return {
