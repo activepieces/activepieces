@@ -637,7 +637,7 @@
 
 
 <ng-template #dynamicVariableIcon let-config>
-  <svg-icon [svgStyle]="{width:'22px', height:'22px'}" *ngIf="form.enabled" class="ap-mb-[3px] ap-cursor-pointer"
+  <svg-icon [svgStyle]="{width:'20px', height:'20px'}" *ngIf="form.enabled" class="ap-mb-[3px] ap-cursor-pointer"
     apTrackHover [class.!ap-opacity-100]="hoverTracker.isHovered" #hoverTracker="hoverTrackerDirective"
     [class.ap-opacity-40]="customizedInputs && !customizedInputs[config.key]" src="assets/img/custom/variable.svg"
     matTooltip="Dynamic Value" (click)="toggleCustomizedInputFlag(config.key)">
