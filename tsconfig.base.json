@@ -33,6 +33,9 @@
       "@activepieces/piece-activity": [
         "packages/ee/pieces/activity/src/index.ts"
       ],
+      "@activepieces/piece-acumbamail": [
+        "packages/pieces/community/acumbamail/src/index.ts"
+      ],
       "@activepieces/piece-airtable": [
         "packages/pieces/community/airtable/src/index.ts"
       ],
