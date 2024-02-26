@@ -19,6 +19,7 @@ import { CommunityPiecesTableComponent } from '@activepieces/ui/feature-pieces';
 import { ApFlagId } from '@activepieces/shared';
 import { SyncProjectComponent } from './pages/sync-project/sync-project.component';
 import { RepoResolver } from './resolvers/repo.resolver';
+import { ActivityTableComponent } from './pages/activity-table/activity-table.component';
 
 export const DashboardLayoutRouting: Routes = [
   {
@@ -62,6 +63,15 @@ export const DashboardLayoutRouting: Routes = [
         path: 'settings/my-pieces',
         canActivate: [showBasedOnFlagGuard(ApFlagId.SHOW_COMMUNITY_PIECES)],
         component: CommunityPiecesTableComponent,
+      },
+      {
+        data: {
+          title: $localize`Activity`,
+        },
+        path: 'activity',
+        pathMatch: 'full',
+        component: ActivityTableComponent,
+        canActivate: [showBasedOnFlagGuard(ApFlagId.SHOW_ACTIVITY_LOG)],
       },
       {
         data: {

@@ -29,6 +29,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { NewConnectionDialogComponent } from './components/dialogs/new-connection-dialog/new-connection-dialog.component';
 import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections';
+import { ActivityTableComponent } from './pages/activity-table/activity-table.component';
 
 @NgModule({
   imports: [
@@ -63,6 +64,7 @@ import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections
     ProjectSwitcherComponent,
     RenameFlowDialogComponent,
     NewConnectionDialogComponent,
+    ActivityTableComponent,
   ],
 })
 export class UiFeatureDashboardModule {}
