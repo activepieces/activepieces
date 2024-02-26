@@ -1,16 +1,10 @@
 import { FastifyInstance, FastifyRequest } from 'fastify'
 import { Static, Type } from '@sinclair/typebox'
 import { StatusCodes } from 'http-status-codes'
-import { isNil } from 'lodash'
 import { appsumoService } from './appsumo.service'
 import { SystemProp, system } from 'server-shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { ALL_PRINICPAL_TYPES } from '@activepieces/shared'
-import { userService } from '../../../user/user-service'
-import { projectService } from '../../../project/project-service'
-import { projectLimitsService } from '../../project-plan/project-plan.service'
-import { DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
-import { projectBillingService } from '../project-billing/project-billing.service'
 
 export const appSumoModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(appsumoController, { prefix: '/v1/appsumo' })
@@ -95,47 +89,13 @@ const appsumoController: FastifyPluginAsyncTypebox = async (
                 return reply.status(StatusCodes.UNAUTHORIZED).send()
             }
             else {
-                const { plan_id, action, uuid } = request.body
-                const appSumoLicense = await appsumoService.getById(uuid)
-                const activation_email = appSumoLicense?.activation_email ?? request.body.activation_email
-                const appSumoPlan = appsumoService.getPlanInformation(plan_id)
-                const user = await userService.getByPlatformAndEmail({
-                    platformId: system.getOrThrow(SystemProp.CLOUD_PLATFORM_ID),
-                    email: activation_email,
+                const { plan_id, action, uuid, activation_email } = request.body
+                await appsumoService.handleRequest({
+                    plan_id,
+                    action,
+                    uuid,
+                    activation_email,
                 })
-                if (!isNil(user)) {
-                    const project = await projectService.getUserProjectOrThrow(user.id)
-                    await projectBillingService.getOrCreateForProject(project.id)
-
-                    if (action === 'refund') {
-                        await projectLimitsService.upsert(DEFAULT_FREE_PLAN_LIMIT, project.id)
-                        await projectBillingService.updateByProjectId(project.id, {
-                            includedTasks: DEFAULT_FREE_PLAN_LIMIT.tasks,
-                            includedUsers: DEFAULT_FREE_PLAN_LIMIT.teamMembers,
-                        })
-                    }
-                    else {
-                        await projectLimitsService.upsert(appSumoPlan, project.id)
-                        await projectBillingService.updateByProjectId(project.id, {
-                            includedTasks: appSumoPlan.tasks,
-                            includedUsers: appSumoPlan.teamMembers,
-                        })
-                    }
-                }
-
-                if (action === 'refund') {
-                    await appsumoService.delete({
-                        email: activation_email,
-                    })
-                }
-                else {
-                    await appsumoService.upsert({
-                        uuid,
-                        plan_id,
-                        activation_email,
-                    })
-                }
-
                 switch (action) {
                     case 'activate':
                         return reply.status(StatusCodes.CREATED).send({
