@@ -2,6 +2,9 @@ import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { addUpdateSubscriberAction } from './lib/actions/add-subscriber';
 import { createSubscriberListAction } from './lib/actions/create-subscriber-list';
 import { deleteSubscriberListAction } from './lib/actions/delete-subscriber-list';
+import { deleteSubscriberAction } from './lib/actions/delete-subscriber';
+import { searchSubscriberAction } from './lib/actions/search-subscriber';
+import { duplicateTemplateAction } from './lib/actions/duplicate-template';
 
 export const acumbamailAuth = PieceAuth.SecretText({
   displayName: 'Auth Token',
@@ -21,6 +24,13 @@ export const acumbamail = createPiece({
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/acumbamail.png',
   authors: ['kishanprmr'],
-  actions: [addUpdateSubscriberAction, createSubscriberListAction, deleteSubscriberListAction],
+  actions: [
+    addUpdateSubscriberAction,
+    createSubscriberListAction,
+    deleteSubscriberListAction,
+    deleteSubscriberAction,
+    duplicateTemplateAction,
+    searchSubscriberAction,
+  ],
   triggers: [],
 });

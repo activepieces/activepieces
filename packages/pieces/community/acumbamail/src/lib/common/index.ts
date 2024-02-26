@@ -1,7 +1,7 @@
 import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common';
 import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { SubscriberListFieldType } from './constants';
-import { GetListsResponse, SubscriberListField } from './types';
+import { GetListsResponse, GetTemplatesResponse, SubscriberListField } from './types';
 
 export const acumbamailCommon = {
   baseUrl: 'https://acumbamail.com/api/1',
@@ -69,6 +69,7 @@ export const acumbamailCommon = {
             fields[field.tag] = Property.DateTime({
               displayName: field.label,
               required: false,
+              description: 'Use dd/mm/yyy mm:ss format.',
             });
             break;
           case SubscriberListFieldType.EMAIL:
@@ -120,6 +121,37 @@ export const acumbamailCommon = {
         }
       }
       return fields;
+    },
+  }),
+  templateId: Property.Dropdown({
+    displayName: 'Origin Template',
+    required: true,
+    refreshers: [],
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          placeholder: 'Please connect your account',
+          options: [],
+        };
+      }
+
+      const request: HttpRequest = {
+        method: HttpMethod.GET,
+        url: acumbamailCommon.baseUrl + '/getTemplates/',
+        queryParams: { auth_token: auth as string },
+      };
+
+      const res = await httpClient.sendRequest<GetTemplatesResponse[]>(request);
+      return {
+        disabled: false,
+        options: res.body.map((template) => {
+          return {
+            label: template.name,
+            value: template.id,
+          };
+        }),
+      };
     },
   }),
 };

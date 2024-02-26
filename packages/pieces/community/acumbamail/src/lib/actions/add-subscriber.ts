@@ -1,5 +1,5 @@
-import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common';
 import { Property, createAction } from '@activepieces/pieces-framework';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common';
 import FormData from 'form-data';
 import { acumbamailAuth } from '../../';
 import { acumbamailCommon } from '../common';
@@ -28,21 +28,23 @@ export const addUpdateSubscriberAction = createAction({
   async run(context) {
     const { listId, listMergeFields, update_subscriber, double_optin } = context.propsValue;
 
-    const form = new FormData();
+    const formData = new FormData();
 
     Object.entries(listMergeFields).forEach(([key, value]) => {
-      form.append(`merge_fields[${key}]`, value);
+      formData.append(`merge_fields[${key}]`, value.toString());
     });
 
-    form.append('list_id', listId);
-    form.append('double_optin', double_optin ? 1 : 0);
-    form.append('update_subscriber', update_subscriber ? 1 : 0);
+    formData.append('auth_token', context.auth);
+    formData.append('list_id', listId.toString());
+    formData.append('double_optin', double_optin ? '1' : '0');
+    formData.append('update_subscriber', update_subscriber ? '1' : '0');
+    formData.append('complete_json ', '1');
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: acumbamailCommon.baseUrl + '/addSubscriber/',
-      headers: form.getHeaders(),
-      body: form,
+      headers: { ...formData.getHeaders() },
+      body: formData,
     };
 
     const res = await httpClient.sendRequest(request);

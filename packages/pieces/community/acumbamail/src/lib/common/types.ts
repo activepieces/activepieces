@@ -14,6 +14,11 @@ export type GetListsResponse = {
   };
 };
 
+export type GetTemplatesResponse = {
+  id: number;
+  name: string;
+};
+
 export type SubscriberListField = {
   name: string;
   label: string;
