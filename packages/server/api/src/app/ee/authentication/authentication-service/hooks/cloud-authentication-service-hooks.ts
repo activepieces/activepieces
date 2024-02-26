@@ -29,7 +29,7 @@ export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
     async postSignUp({ user, referringUserId }) {
         if (
             !isNil(user.platformId) &&
-      flagService.isCloudPlatform(user.platformId)
+            flagService.isCloudPlatform(user.platformId)
         ) {
             await projectService.create({
                 displayName: `${user.firstName}'s Project`,
@@ -48,8 +48,7 @@ export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
 
         await authenticationHelper.autoVerifyUserIfEligible(user)
         const updatedUser = await userService.getOneOrFail({ id: user.id })
-        const { project, token } =
-      await authenticationHelper.getProjectAndTokenOrThrow(user)
+        const { project, token, projectRole } = await authenticationHelper.getProjectAndTokenOrThrow(user)
 
         if (!updatedUser.verified) {
             await otpService.createAndSend({
@@ -61,17 +60,17 @@ export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
         return {
             user: updatedUser,
             project,
+            projectRole,
             token,
         }
     },
 
     async postSignIn({ user }) {
-        const { project, token } =
-      await authenticationHelper.getProjectAndTokenOrThrow(user)
+        const result = await authenticationHelper.getProjectAndTokenOrThrow(user)
+
         return {
             user,
-            project,
-            token,
+            ...result,
         }
     },
 }

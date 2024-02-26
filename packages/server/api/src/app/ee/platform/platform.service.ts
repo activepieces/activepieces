@@ -55,6 +55,7 @@ export const platformService = {
             federatedAuthProviders: {},
             cloudAuthEnabled: true,
             gitSyncEnabled: false,
+            showActivityLog: false,
         }
 
         const savedPlatform = await repo.save(newPlatform)

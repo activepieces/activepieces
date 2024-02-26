@@ -31,12 +31,12 @@ import {
     CodeSandboxType,
     ErrorCode,
     Flow,
+    ProjectWithLimits,
 } from '@activepieces/shared'
 import { appConnectionsHooks } from './app-connection/app-connection-service/app-connection-hooks'
 import { authenticationModule } from './authentication/authentication.module'
 import { cloudAppConnectionsHooks } from './ee/app-connections/cloud-app-connection-service'
 import { appCredentialModule } from './ee/app-credentials/app-credentials.module'
-import { appSumoModule } from './ee/appsumo/appsumo.module'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
 import { platformRunHooks } from './ee/flow-run/cloud-flow-run-hooks'
 import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-template.module'
@@ -72,12 +72,10 @@ import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { otpModule } from './ee/otp/otp-module'
 import { cloudAuthenticationServiceHooks } from './ee/authentication/authentication-service/hooks/cloud-authentication-service-hooks'
 import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local-authn/enterprise-local-authn-module'
-import { billingModule } from './ee/billing/billing/billing.module'
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
 import fastifyFavicon from 'fastify-favicon'
 import {
     ProjectMember,
-    ProjectWithUsageAndPlanResponse,
     GitRepoWithoutSenestiveData,
 } from '@activepieces/ee-shared'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
@@ -102,6 +100,8 @@ import { loadEncryptionKey } from './helper/encryption'
 import { activityModule } from './ee/activity/activity-module'
 import { redisSystemJob } from './ee/helper/redis-system-job'
 import { usageTrackerModule } from './ee/usage-tracker/usage-tracker-module'
+import { projectBillingModule } from './ee/billing/project-billing/project-billing.module'
+import { appSumoModule } from './ee/billing/appsumo/appsumo.module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -139,7 +139,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
                 },
                 schemas: {
                     'project-member': ProjectMember,
-                    project: ProjectWithUsageAndPlanResponse,
+                    project: ProjectWithLimits,
                     flow: Flow,
                     'app-connection': AppConnectionWithoutSensitiveData,
                     piece: PieceMetadata,
@@ -276,7 +276,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     logger.info(`Activepieces ${edition} Edition`)
     switch (edition) {
         case ApEdition.CLOUD:
-            await app.register(billingModule)
             await app.register(appCredentialModule)
             await app.register(connectionKeyModule)
             await app.register(platformProjectModule)
@@ -300,6 +299,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(auditEventModule)
             await app.register(activityModule)
             await redisSystemJob.init()
+            await app.register(projectBillingModule)
             await app.register(usageTrackerModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,

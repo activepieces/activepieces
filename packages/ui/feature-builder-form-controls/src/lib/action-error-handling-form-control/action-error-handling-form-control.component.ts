@@ -8,6 +8,7 @@ import {
 } from '@angular/forms';
 import { map, Observable, tap } from 'rxjs';
 import { ActionErrorHandlingOptions } from '@activepieces/shared';
+import { BOTTOM_MARGIN_FOR_DESCRIPTION_IN_PIECE_PROPERTIES_FORM } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-action-error-handling-form-control',
@@ -29,6 +30,8 @@ export class ActionErrorHandlingFormControlComponent
     continueOnFailure: FormControl<boolean>;
     retryOnFailure: FormControl<boolean>;
   }>;
+  readonly BOTTOM_MARGIN_FOR_DESCRIPTION_IN_PIECE_PROPERTIES_FORM =
+    BOTTOM_MARGIN_FOR_DESCRIPTION_IN_PIECE_PROPERTIES_FORM;
   continueOnFailureDescriptionExpanded = false;
   continueOnFailureDescriptionOverflows = false;
   @Input() hideContinueOnFailure = false;

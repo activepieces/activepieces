@@ -1,7 +1,11 @@
 import {
+    ActivepiecesError,
     EndpointScope,
+    ErrorCode,
+    PlatformRole,
     PrincipalType,
     ProjectType,
+    ProjectWithLimits,
     SERVICE_KEY_SECURITY_OPENAPI,
     SeekPage,
     assertNotNullOrUndefined,
@@ -14,13 +18,12 @@ import { platformProjectService } from './platform-project-service'
 import { projectService } from '../../project/project-service'
 import {
     CreatePlatformProjectRequest,
-    DEFAULT_PLATFORM_PLAN,
-    ProjectWithUsageAndPlanResponse,
+    DEFAULT_PLATFOR_LIMIT,
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
-import { plansService } from '../billing/project-plan/project-plan.service'
 import { StatusCodes } from 'http-status-codes'
 import { platformService } from '../platform/platform.service'
+import { projectLimitsService } from '../project-plan/project-plan.service'
 
 export const platformProjectController: FastifyPluginCallbackTypebox = (
     fastify,
@@ -39,11 +42,7 @@ export const platformProjectController: FastifyPluginCallbackTypebox = (
             externalId: request.body.externalId,
             type: ProjectType.PLATFORM_MANAGED,
         })
-        await plansService.update({
-            projectId: project.id,
-            subscription: null,
-            planLimits: DEFAULT_PLATFORM_PLAN,
-        })
+        await projectLimitsService.upsert(DEFAULT_PLATFOR_LIMIT, project.id)
         const projectWithUsage =
             await platformProjectService.getWithPlanAndUsageOrThrow(project.id)
         await reply.status(StatusCodes.CREATED).send(projectWithUsage)
@@ -60,17 +59,18 @@ export const platformProjectController: FastifyPluginCallbackTypebox = (
     })
 
     fastify.post('/:id', UpdateProjectRequest, async (request) => {
-        let userId = request.principal.id
-        if (request.principal.type === PrincipalType.SERVICE) {
-            const platformId = request.principal.platform?.id
-            assertNotNullOrUndefined(platformId, 'platformId')
-            const platform = await platformService.getOneOrThrow(platformId)
-            userId = platform.ownerId
-        }
+        const project = await projectService.getOneOrThrow(request.params.id)
+        const haveTokenForTheProject = request.principal.projectId === project.id
+        const ownThePlatform = request.principal.platform?.role === PlatformRole.OWNER && request.principal.platform.id === project.platformId
+        if (!haveTokenForTheProject && !ownThePlatform) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {},
+            })
+        }       
         return platformProjectService.update({
             platformId: request.principal.platform?.id,
             projectId: request.params.id,
-            userId,
             request: request.body,
         })
     })
@@ -90,7 +90,7 @@ const UpdateProjectRequest = {
             id: Type.String(),
         }),
         response: {
-            [StatusCodes.OK]: ProjectWithUsageAndPlanResponse,
+            [StatusCodes.OK]: ProjectWithLimits,
         },
         body: UpdateProjectPlatformRequest,
     },
@@ -104,7 +104,7 @@ const CreateProjectRequest = {
     schema: {
         tags: ['projects'],
         response: {
-            [StatusCodes.CREATED]: ProjectWithUsageAndPlanResponse,
+            [StatusCodes.CREATED]: ProjectWithLimits,
         },
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         body: CreatePlatformProjectRequest,
@@ -118,7 +118,7 @@ const ListProjectRequestForApiKey = {
     },
     schema: {
         response: {
-            [StatusCodes.OK]: SeekPage(ProjectWithUsageAndPlanResponse),
+            [StatusCodes.OK]: SeekPage(ProjectWithLimits),
         },
         querystring: Type.Object({
             externalId: Type.Optional(Type.String()),

@@ -44,10 +44,19 @@ const selectCurrentProjectOwnerId = createSelector(
   }
 );
 
+const selectTaskProgress = createSelector(selectCurrentProject, (project) => {
+  const castedProject = project;
+  return {
+    tasksCap: castedProject.plan.tasks,
+    tasksExecuted: castedProject.usage.tasks,
+  };
+});
+
 export const ProjectSelectors = {
   selectCurrentProjectOwnerId,
   selectIsNotificationsEnabled,
   selectPlatform,
   selectAllProjects,
   selectCurrentProject,
+  selectTaskProgress,
 };

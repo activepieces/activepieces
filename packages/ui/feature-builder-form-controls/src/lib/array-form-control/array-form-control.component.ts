@@ -44,6 +44,7 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
   @Input({ required: true }) formFieldsTemplate: TemplateRef<unknown>;
   @Input({ required: true }) property: ArrayProperty<true>;
   @Input({ required: true }) prefix: string;
+  @Input() dynamicInputTemplate: TemplateRef<unknown>;
   @ViewChild('textControl') firstInput: InterpolatingTextFormControlComponent;
   removeItemTooltip = $localize`Remove item`;
   updateValueOnChange$: Observable<void> = new Observable<void>();

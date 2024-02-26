@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../environments/environment';
 import { Observable, map } from 'rxjs';
-import { Project, SeekPage } from '@activepieces/shared';
+import { ProjectWithLimits, SeekPage } from '@activepieces/shared';
 
 @Injectable({
   providedIn: 'root',
@@ -10,9 +10,9 @@ import { Project, SeekPage } from '@activepieces/shared';
 export class ProjectService {
   constructor(private http: HttpClient) {}
 
-  list(): Observable<Project[]> {
+  list(): Observable<ProjectWithLimits[]> {
     return this.http
-      .get<SeekPage<Project>>(environment.apiUrl + `/users/projects`)
+      .get<SeekPage<ProjectWithLimits>>(environment.apiUrl + `/users/projects`)
       .pipe(map((res) => res.data));
   }
 }

@@ -1,10 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import {
   getContacts,
   getTask,
   getTasks,
   getUsers,
-  LeadConnectorTaskStatus,
   updateTask,
 } from '../common';
 import { leadConnectorAuth } from '../..';
@@ -27,7 +26,7 @@ export const updateTaskAction = createAction({
             options: [],
           };
 
-        const contacts = await getContacts(auth as string);
+        const contacts = await getContacts(auth as OAuth2PropertyValue);
 
         return {
           options: contacts.map((contact) => {
@@ -50,7 +49,7 @@ export const updateTaskAction = createAction({
             options: [],
           };
 
-        const tasks = await getTasks(auth as string, contact as string);
+        const tasks = await getTasks((auth as OAuth2PropertyValue).access_token, contact as string);
         return {
           options: tasks.map((task: any) => {
             return {
@@ -84,7 +83,7 @@ export const updateTaskAction = createAction({
             options: [],
           };
 
-        const users = await getUsers(auth as string);
+        const users = await getUsers(auth as OAuth2PropertyValue);
         return {
           options: users.map((user: any) => {
             return {
@@ -95,39 +94,27 @@ export const updateTaskAction = createAction({
         };
       },
     }),
-    status: Property.Dropdown({
-      displayName: 'Status',
+    completed: Property.Checkbox({
+      displayName: 'Completed',
       required: false,
-      refreshers: [],
-      options: async () => {
-        const statuses = Object.values(LeadConnectorTaskStatus);
-
-        return {
-          options: statuses.map((status) => {
-            return {
-              label: status.charAt(0).toUpperCase() + status.slice(1),
-              value: status,
-            };
-          }),
-        };
-      },
+      defaultValue: false,
     }),
   },
 
   async run({ auth, propsValue }) {
-    const { contact, task, title, dueDate, description, assignedTo, status } =
+    const { contact, task, title, dueDate, description, assignedTo, completed } =
       propsValue;
 
     let originalData: any;
-    if (!title || !dueDate) originalData = await getTask(auth, contact, task);
+    if (!title || !dueDate) originalData = await getTask(auth.access_token, contact, task);
 
-    return await updateTask(auth, contact, task, {
+    return await updateTask(auth.access_token, contact, task, {
       title: title ?? originalData.title,
       // Needs to be ISO string without milliseconds
       dueDate: dueDate ? formatDate(dueDate) : formatDate(originalData.dueDate),
-      description: description,
+      body: description,
       assignedTo: assignedTo,
-      status: status,
+      completed,
     });
   },
 });

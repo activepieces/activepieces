@@ -1,0 +1,43 @@
+{
+  "name": "pieces-activity",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/ee/pieces/activity/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/ee/pieces/activity",
+        "tsConfig": "packages/ee/pieces/activity/tsconfig.lib.json",
+        "packageJson": "packages/ee/pieces/activity/package.json",
+        "main": "packages/ee/pieces/activity/src/index.ts",
+        "assets": [
+          "packages/ee/pieces/activity/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-activity {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/ee/pieces/activity/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

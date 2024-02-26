@@ -1,4 +1,4 @@
-<form *ngIf="form" [formGroup]="form" class="ap-flex  ap-flex-col ap-gap-3">
+<form *ngIf="form" [formGroup]="form" class="ap-flex  ap-flex-col">
   <div *ngFor="let property of requiredProperties|objectToArray; let i = index">
     <ng-container
       *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:property, propertyIndex:i,formGroup:form}"></ng-container>
@@ -369,19 +369,34 @@
 
 
     <ng-container *ngSwitchCase="PropertyType.ARRAY">
-      <span class="ap-flex ap-justify-end  ap-z-50 ap-relative ap-text-primary" 
-        [style.marginTop]="!form.disabled? '-1.875rem' :'0'">
-        <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
-        </ng-container>
-      </span>
+
+      <ng-container #dynamicToggleIconForTextInput *ngIf="customizedInputs && customizedInputs[property.key]">
+        <div class="ap-flex ap-items-center ap-justify-end ap-mb-1 ap-mx-1">
+          <ng-container  *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
+          </ng-container>
+        </div>
+      
+      </ng-container>
+
       <ng-container
         *ngTemplateOutlet="customizedInputs && customizedInputs[property.key]? textInputTemplate:arrayInputTemplate ;context:{$implicit:property, formGroup:formGroup}">
       </ng-container>
 
+    
+     
       <ng-template #arrayInputTemplate>
-        <div [class.ap-mb-5]="form.disabled" #hoverContainer="hoverTrackerDirective" apTrackHover>
-          <app-array-form-control #array [formControlName]="property.key" [property]="property.value"
-            [formFieldsTemplate]="formFieldsTemplate" [prefix]="property.key"></app-array-form-control>
+        <div [class.ap-mb-5]="form.disabled" #hoverContainer="hoverTrackerDirective" class="ap-mx-1" apTrackHover>
+          <ng-template #dynamicInputTemplate>
+            <ng-container  *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
+            </ng-container>
+          </ng-template>
+      
+          <app-array-form-control [dynamicInputTemplate]="dynamicInputTemplate" #array [formControlName]="property.key" [property]="property.value"
+            [formFieldsTemplate]="formFieldsTemplate" [prefix]="property.key">      
+          
+            
+
+          </app-array-form-control>
         </div>
         <ng-container *ngTemplateOutlet="description; context:{$implicit:property}">
         </ng-container>
@@ -652,7 +667,7 @@
 <!--Line clamp is not working with prefix on tailwind for some reason  -->
 <ng-template #description let-property let-hasError="hasError" let-errorMessage="errorMessage"
   let-isTouched="isTouched">
-  <div class="ap-flex ap-justify-between ap-markdown" *ngIf="property.value.description || isTouched && hasError">
+  <div class="ap-flex ap-justify-between ap-markdown " [style.marginBottom]="BOTTOM_MARGIN_FOR_DESCRIPTION_IN_PIECE_PROPERTIES_FORM" *ngIf="property.value.description || isTouched && hasError">
     <div class="ap-line-clamp-1" [style.display]="descriptionExpandedMap[property.key]? 'block': '-webkit-box'"
       [class.ap-h-[24px]]="!descriptionExpandedMap[property.key]">
       <div class="ap-typography-caption " apCheckOverflow (isOverflowed)="descriptionOverflownMap[property.key]=$event">
@@ -668,6 +683,10 @@
         {{descriptionExpandedMap[property.key]? 'less' : 'more'}} </button>
     </div>
 
+
+  </div>
+
+  <div *ngIf="!property.value.description && (!isTouched || !hasError)" [style.height]="MIN_SPACING_BETWEEN_INPUTS">
 
   </div>
 

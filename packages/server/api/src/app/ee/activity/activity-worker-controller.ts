@@ -1,7 +1,7 @@
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { PrincipalType } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { ApId, PrincipalType } from '@activepieces/shared'
 import { activityService } from './activity-service'
-import { AddActivityRequestBody } from '@activepieces/ee-shared'
+import { AddActivityRequestBody, UpdateActivityRequestBody } from '@activepieces/ee-shared'
 import { StatusCodes } from 'http-status-codes'
 
 export const activityWorkerController: FastifyPluginAsyncTypebox = async (app) => {
@@ -11,6 +11,15 @@ export const activityWorkerController: FastifyPluginAsyncTypebox = async (app) =
         return res
             .status(StatusCodes.CREATED)
             .send(newActivity)
+    })
+
+    app.post('/:id', UpdateActivityRequest, async (req, res) => {
+        await activityService.update({
+            id: req.params.id,
+            ...req.body,
+        })
+
+        return res.status(StatusCodes.NO_CONTENT).send()
     })
 }
 
@@ -22,5 +31,19 @@ const AddActivityRequest = {
     },
     schema: {
         body: AddActivityRequestBody,
+    },
+}
+
+const UpdateActivityRequest = {
+    config: {
+        allowedPrincipals: [
+            PrincipalType.WORKER,
+        ],
+    },
+    schema: {
+        params: Type.Object({
+            id: ApId,
+        }),
+        body: UpdateActivityRequestBody,
     },
 }

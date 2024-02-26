@@ -1,69 +1,62 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BillingResponse, UpgradeRequest } from '@activepieces/ee-shared';
-import { FlagService, environment } from '@activepieces/ui/common';
-import { map, of, switchMap } from 'rxjs';
+import {
+  FlagService,
+  ProjectSelectors,
+  environment,
+} from '@activepieces/ui/common';
+import { combineLatest, map } from 'rxjs';
+import { Store } from '@ngrx/store';
 import { ApEdition } from '@activepieces/shared';
+import { ProjectBillingRespone } from '@activepieces/ee-shared';
 
 @Injectable({
   providedIn: 'root',
 })
 export class BillingService {
-  constructor(private http: HttpClient, private flagService: FlagService) {}
+  constructor(
+    private http: HttpClient,
+    private flagService: FlagService,
+    private store: Store
+  ) {}
 
-  getUsage() {
-    return this.http.get<BillingResponse>(environment.apiUrl + '/billing');
+  getSubscription() {
+    return this.http.get<ProjectBillingRespone>(
+      environment.apiUrl + '/project-billing'
+    );
+  }
+
+  upgrade() {
+    return this.http.post<{ paymentLink: string }>(
+      environment.apiUrl + '/project-billing/upgrade',
+      {}
+    );
+  }
+
+  portalLink() {
+    return this.http.post<{ portalLink: string }>(
+      environment.apiUrl + '/project-billing/portal',
+      {}
+    );
   }
 
   checkTeamMembers() {
-    return this.flagService.getEdition().pipe(
-      switchMap((value) => {
+    return combineLatest([
+      this.flagService.getEdition(),
+      this.store.select(ProjectSelectors.selectCurrentProject),
+    ]).pipe(
+      map(([value, project]) => {
         if (value === ApEdition.CLOUD) {
-          return this.getUsage().pipe(
-            map((usageResponse) => {
-              return {
-                exceeded:
-                  usageResponse.usage.teamMembers >=
-                  usageResponse.plan.teamMembers,
-                limit: usageResponse.plan.teamMembers,
-              };
-            })
-          );
+          return {
+            exceeded: project?.usage.teamMembers >= project?.plan?.teamMembers,
+            limit: project?.plan?.teamMembers,
+          };
         }
-        return of({
+        return {
           exceeded: false,
-          limit: 99999,
-        });
+          limit: Number.MAX_SAFE_INTEGER,
+        };
       })
-    );
-  }
-
-  checkConnectionLimit() {
-    return this.flagService.getEdition().pipe(
-      switchMap((value) => {
-        if (value === ApEdition.CLOUD) {
-          return this.getUsage().pipe(
-            map((usageResponse) => {
-              return {
-                exceeded:
-                  usageResponse.usage.connections >=
-                  usageResponse.plan.connections,
-                limit: usageResponse.plan.connections,
-              };
-            })
-          );
-        }
-        return of({
-          exceeded: false,
-          limit: 99999,
-        });
-      })
-    );
-  }
-  upgrade(request: UpgradeRequest) {
-    return this.http.post<{ paymentLink: string }>(
-      environment.apiUrl + '/billing/upgrade',
-      request
     );
   }
 }

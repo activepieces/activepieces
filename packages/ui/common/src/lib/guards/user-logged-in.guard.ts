@@ -24,7 +24,7 @@ import {
 import { ProjectService } from '../service/project.service';
 import { StatusCodes } from 'http-status-codes';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Project } from '@activepieces/shared';
+import { ProjectWithLimits } from '@activepieces/shared';
 
 @Injectable({
   providedIn: 'root',
@@ -128,7 +128,7 @@ export class UserLoggedIn {
     currentProjectId,
   }: {
     platformId: string;
-    projects: Project[];
+    projects: ProjectWithLimits[];
     currentProjectId: string;
   }) {
     return this.platformService.getPlatform(platformId).pipe(

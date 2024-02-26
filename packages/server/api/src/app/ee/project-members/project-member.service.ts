@@ -11,6 +11,7 @@ import {
     ErrorCode,
     Principal,
     ProjectId,
+    ProjectMemberRole,
     SeekPage,
     UserId,
     apId,
@@ -20,19 +21,18 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import {
     ProjectMember,
     ProjectMemberId,
-    ProjectMemberRole,
     ProjectMemberStatus,
     AddProjectMemberRequestBody,
 } from '@activepieces/ee-shared'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { projectService } from '../../project/project-service'
 import { emailService } from '../helper/email/email-service'
-import { projectMembersLimit } from '../billing/limits/members-limit'
 import dayjs from 'dayjs'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { getEdition } from '../../helper/secret-helper'
 import { IsNull } from 'typeorm'
 import { jwtUtils } from '../../helper/jwt-utils'
+import { projectMembersLimit } from '../project-plan/members-limit'
 
 const projectMemberRepo = databaseConnection.getRepository(ProjectMemberEntity)
 
