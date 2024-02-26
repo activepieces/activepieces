@@ -44,7 +44,7 @@
         </div>
       </ng-template>
       <ng-template #dynamicValueTemplate let-property>
-        <div class="ap-flex ap-justify-end ap-mb-1 ap-mr-1 ap-text-primary">
+        <div class="ap-flex ap-justify-end ap-mb-1 ap-mx-1 ap-text-primary">
           <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
           </ng-container>
         </div>
@@ -372,30 +372,23 @@
 
       <ng-container #dynamicToggleIconForTextInput *ngIf="customizedInputs && customizedInputs[property.key]">
         <div class="ap-flex ap-items-center ap-justify-end ap-mb-1 ap-mx-1">
-          <ng-container  *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
+          <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
           </ng-container>
         </div>
-      
       </ng-container>
 
       <ng-container
         *ngTemplateOutlet="customizedInputs && customizedInputs[property.key]? textInputTemplate:arrayInputTemplate ;context:{$implicit:property, formGroup:formGroup}">
       </ng-container>
-
-    
-     
       <ng-template #arrayInputTemplate>
         <div [class.ap-mb-5]="form.disabled" #hoverContainer="hoverTrackerDirective" class="ap-mx-1" apTrackHover>
           <ng-template #dynamicInputTemplate>
-            <ng-container  *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
+            <ng-container
+              *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
             </ng-container>
           </ng-template>
-      
-          <app-array-form-control [dynamicInputTemplate]="dynamicInputTemplate" #array [formControlName]="property.key" [property]="property.value"
-            [formFieldsTemplate]="formFieldsTemplate" [prefix]="property.key">      
-          
-            
-
+          <app-array-form-control [dynamicInputTemplate]="dynamicInputTemplate" #array [formControlName]="property.key"
+            [property]="property.value" [formFieldsTemplate]="formFieldsTemplate" [prefix]="property.key">
           </app-array-form-control>
         </div>
         <ng-container *ngTemplateOutlet="description; context:{$implicit:property}">
@@ -430,7 +423,7 @@
 
     <ng-container
       *ngIf="property.value.type === PropertyType.OAUTH2 || property.value.type === PropertyType.SECRET_TEXT || property.value.type === PropertyType.BASIC_AUTH || property.value.type === PropertyType.CUSTOM_AUTH">
-      <div class="ap-flex ap-justify-end">
+      <div class="ap-flex ap-justify-end  ap-mb-1 ap-mx-1">
 
         <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
         </ng-container>
@@ -644,7 +637,7 @@
 
 
 <ng-template #dynamicVariableIcon let-config>
-  <svg-icon [svgStyle]="{width:'22px', height:'22px'}" *ngIf="form.enabled" class="ap-mb-[3px] ap-cursor-pointer"
+  <svg-icon [svgStyle]="{width:'20px', height:'20px'}" *ngIf="form.enabled" class="ap-mb-[3px] ap-cursor-pointer"
     apTrackHover [class.!ap-opacity-100]="hoverTracker.isHovered" #hoverTracker="hoverTrackerDirective"
     [class.ap-opacity-40]="customizedInputs && !customizedInputs[config.key]" src="assets/img/custom/variable.svg"
     matTooltip="Dynamic Value" (click)="toggleCustomizedInputFlag(config.key)">
@@ -667,7 +660,9 @@
 <!--Line clamp is not working with prefix on tailwind for some reason  -->
 <ng-template #description let-property let-hasError="hasError" let-errorMessage="errorMessage"
   let-isTouched="isTouched">
-  <div class="ap-flex ap-justify-between ap-markdown " [style.marginBottom]="BOTTOM_MARGIN_FOR_DESCRIPTION_IN_PIECE_PROPERTIES_FORM" *ngIf="property.value.description || isTouched && hasError">
+  <div class="ap-flex ap-justify-between ap-markdown "
+    [style.marginBottom]="BOTTOM_MARGIN_FOR_DESCRIPTION_IN_PIECE_PROPERTIES_FORM"
+    *ngIf="property.value.description || isTouched && hasError">
     <div class="ap-line-clamp-1" [style.display]="descriptionExpandedMap[property.key]? 'block': '-webkit-box'"
       [class.ap-h-[24px]]="!descriptionExpandedMap[property.key]">
       <div class="ap-typography-caption " apCheckOverflow (isOverflowed)="descriptionOverflownMap[property.key]=$event">
