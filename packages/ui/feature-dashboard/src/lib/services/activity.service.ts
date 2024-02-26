@@ -17,7 +17,7 @@ export class ActivityService {
       limit: req.limit,
     };
     return this.http.get<SeekPage<Activity>>(
-      environment.apiUrl + `/acitivities`,
+      environment.apiUrl + `/activities`,
       {
         params,
       }
