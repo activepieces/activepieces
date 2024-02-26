@@ -137,7 +137,7 @@ async function enrichWithUsageAndPlan(
     return {
         ...project,
         plan: await projectLimitsService.getOrCreateDefaultPlan(project.id, DEFAULT_FREE_PLAN_LIMIT),
-        usage: await projectUsageService.getDayUsageForBillingPeriod(project.id, projectUsageService.getCurrentingStartPeriod(project.created)),
+        usage: await projectUsageService.getUsageForBillingPeriod(project.id, projectUsageService.getCurrentingStartPeriod(project.created)),
     }
 }
 
