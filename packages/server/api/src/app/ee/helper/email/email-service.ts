@@ -5,7 +5,6 @@ import { getEdition } from '../../../helper/secret-helper'
 import { projectService } from '../../../project/project-service'
 import { platformDomainHelper } from '../platform-domain-helper'
 import { jwtUtils } from '../../../helper/jwt-utils'
-import { ProjectMemberToken } from '../../project-members/project-member.service'
 import { EmailTemplateData, emailSender } from './email-sender/email-sender'
 
 const EDITION = getEdition()
@@ -36,7 +35,7 @@ export const emailService = {
 
         await emailSender.send({
             email,
-            platformId: project.platformId ?? null,
+            platformId: project.platformId,
             templateData: {
                 name: 'invitation-email',
                 vars: {
@@ -62,7 +61,7 @@ export const emailService = {
 
         await emailSender.send({
             email,
-            platformId: project.platformId || null,
+            platformId: project.platformId,
             templateData: {
                 name: templateName,
                 vars: {
@@ -73,7 +72,7 @@ export const emailService = {
         })
     },
 
-    async sendOtpEmail({ platformId, user, otp, type }: SendOtpArgs): Promise<void> {
+    async sendOtp({ platformId, user, otp, type }: SendOtpArgs): Promise<void> {
         if (EDITION_IS_NOT_PAID) {
             return
         }
@@ -118,7 +117,7 @@ export const emailService = {
 
         await emailSender.send({
             email: user.email,
-            platformId,
+            platformId: platformId ?? undefined,
             templateData: otpToTemplate[type],
         })
     },

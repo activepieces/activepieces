@@ -51,6 +51,6 @@ export type EmailTemplateData =
 
 type SendArgs = {
     email: string
-    platformId: string | null
+    platformId: string | undefined
     templateData: EmailTemplateData
 }

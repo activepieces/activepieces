@@ -33,7 +33,7 @@ export const smtpEmailSender: EmailSender = {
     },
 }
 
-const getPlatform = async (platformId: string | null): Promise<Platform | null> => {
+const getPlatform = async (platformId: string | undefined): Promise<Platform | null> => {
     return platformId ? platformService.getOne(platformId) : null
 }
 

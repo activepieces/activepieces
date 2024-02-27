@@ -36,7 +36,7 @@ export const otpService = {
                 state: OtpState.PENDING,
             }
             await repo.upsert(newOtp, ['userId', 'type'])
-            await emailService.sendOtpEmail({
+            await emailService.sendOtp({
                 platformId,
                 user,
                 otp: newOtp.value,
