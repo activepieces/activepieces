@@ -7,6 +7,8 @@ import { PieceCategory } from '@activepieces/shared';
 import nodemailer from 'nodemailer';
 import { sendEmail } from './lib/actions/send-email';
 
+const SMTPPorts = [25, 465, 587, 2525];
+
 export const smtpAuth = PieceAuth.CustomAuth({
   required: true,
   props: {
@@ -22,12 +24,21 @@ export const smtpAuth = PieceAuth.CustomAuth({
       displayName: 'Password',
       required: true,
     }),
-    port: Property.ShortText({
+    port: Property.StaticDropdown({
       displayName: 'Port',
       required: true,
+      options: {
+        disabled: false,
+        options: SMTPPorts.map((port) => {
+          return {
+            label: port.toString(),
+            value: port,
+          };
+        }),
+      },
     }),
     TLS: Property.Checkbox({
-      displayName: 'Use TLS',
+      displayName: 'Use SSL?',
       defaultValue: false,
       required: true,
     }),
@@ -36,16 +47,13 @@ export const smtpAuth = PieceAuth.CustomAuth({
     try {
       const transporter = nodemailer.createTransport({
         host: auth.host,
-        port: +auth.port,
+        port: auth.port,
         auth: {
           user: auth.email,
           pass: auth.password,
         },
         connectionTimeout: 10000, // 5 second timeout
         secure: auth.TLS === true ? true : undefined,
-        tls: {
-          rejectUnauthorized: false,
-        }
       });
       return new Promise((resolve, reject) => {
         transporter.verify(function (error, success) {

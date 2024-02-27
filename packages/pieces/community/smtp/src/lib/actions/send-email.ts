@@ -40,16 +40,13 @@ export const sendEmail = createAction({
   run: async ({ auth, propsValue }) => {
     const transporter = nodemailer.createTransport({
       host: auth.host,
-      port: +auth.port,
+      port: auth.port,
       auth: {
         user: auth.email,
         pass: auth.password,
       },
       connectionTimeout: 10000, // 5 second timeout
       secure: auth.TLS === true ? true : undefined,
-      tls: {
-        rejectUnauthorized: false,
-      }
     });
     const info = await transporter.sendMail({
       from: propsValue.from,
