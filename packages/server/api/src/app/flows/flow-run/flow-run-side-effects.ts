@@ -15,8 +15,8 @@ import {
 } from '../../workers/flow-worker/job-data'
 import { JobType } from '../../workers/flow-worker/queues/queue'
 import { notifications } from '../../helper/notifications'
-import { flowRunHooks } from './flow-run-hooks'
 import { HookType } from './flow-run-service'
+import { flowRunHooks } from './flow-run-hooks'
 
 type StartParams = {
     flowRun: FlowRun
@@ -50,6 +50,7 @@ export const flowRunSideEffects = {
         await flowRunHooks
             .getHooks()
             .onFinish({ projectId: flowRun.projectId, tasks: flowRun.tasks! })
+
         await notifications.notifyRun({
             flowRun,
         })

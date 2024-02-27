@@ -1,4 +1,4 @@
-import { Property, createTrigger } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, Property, createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -8,7 +8,7 @@ import {
 import { leadConnectorAuth } from '../..';
 import { getFormSubmissions, getForms } from '../common';
 
-const polling: Polling<string, { form: string }> = {
+const polling: Polling<OAuth2PropertyValue, { form: string }> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue }) => {
     const currentValues =
@@ -41,7 +41,7 @@ export const newFormSubmission = createTrigger({
             options: [],
           };
 
-        const forms = await getForms(auth as string);
+        const forms = await getForms(auth as OAuth2PropertyValue);
 
         return {
           options: forms.map((form) => {

@@ -8,7 +8,7 @@ export class PlanNamePipe implements PipeTransform {
   transform(planName: string): string {
     const free = planName.startsWith('free');
     if (free) {
-      return 'Hobbyist Plan';
+      return 'Pro Plan';
     }
 
     const pro =

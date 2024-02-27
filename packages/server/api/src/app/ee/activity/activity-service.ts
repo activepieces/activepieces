@@ -1,5 +1,5 @@
-import { Activity, AddActivityRequestBody, ListActivityParams } from '@activepieces/ee-shared'
-import { SeekPage, apId } from '@activepieces/shared'
+import { Activity, ActivityId, AddActivityRequestBody, ListActivityParams } from '@activepieces/ee-shared'
+import { ProjectId, SeekPage, apId, spreadIfDefined } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { ActivityEntity } from './activity-entity'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -21,7 +21,7 @@ export const activityService = {
     },
 
     async list({ projectId, cursor, limit }: ListActivityParams): Promise<SeekPage<Activity>> {
-        const decodedCursor = paginationHelper.decodeCursor(cursor)
+        const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
         const paginator = buildPaginator({
             entity: ActivityEntity,
             query: {
@@ -40,6 +40,29 @@ export const activityService = {
 
         return paginationHelper.createPage(data, newCursor)
     },
+
+    async update({ id, projectId, event, message, status }: UpdateParams): Promise<void> {
+        const query = {
+            id,
+            projectId,
+        }
+
+        const updatedProps = {
+            ...spreadIfDefined('event', event),
+            ...spreadIfDefined('message', message),
+            ...spreadIfDefined('status', status),
+        }
+
+        await repo.update(query, updatedProps)
+    },
 }
 
 
+
+type UpdateParams = {
+    id: ActivityId
+    projectId: ProjectId
+    event?: string
+    message?: string
+    status?: string
+}

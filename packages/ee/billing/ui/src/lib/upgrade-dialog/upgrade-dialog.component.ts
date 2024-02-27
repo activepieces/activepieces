@@ -58,8 +58,4 @@ export class UpgradeDialogComponent implements OnInit {
     this.router.navigate(['/plans']);
     this.matDialog.closeAll();
   }
-
-  openConnections() {
-    this.router.navigate(['/connection']);
-  }
 }

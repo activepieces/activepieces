@@ -6,7 +6,7 @@ import { ACTIVITY_EVENT_LENGTH, ACTIVITY_MESSAGE_LENGTH, ACTIVITY_STATUS_LENGTH 
 
 export const ListActivityParams = Type.Object({
     projectId:ApId,
-    cursor: Type.Union([Type.String(),Type.Null()]),
+    cursor: Type.Optional(Type.String()),
     limit: Type.Optional(Type.Integer({minimum: 1, maximum: 100})),
 })
 export type ListActivityParams = Static<typeof ListActivityParams>
@@ -19,3 +19,17 @@ export const AddActivityRequestBody = Type.Object({
 })
 
 export type AddActivityRequestBody = Static<typeof AddActivityRequestBody>
+
+export const UpdateActivityRequestBody = Type.Composite([
+    Type.Object({
+        projectId: ApId,
+    }),
+    Type.Partial(
+        Type.Omit(AddActivityRequestBody, ['projectId']),
+        {
+            minProperties: 1,
+        }
+    ),
+])
+
+export type UpdateActivityRequestBody = Static<typeof UpdateActivityRequestBody>

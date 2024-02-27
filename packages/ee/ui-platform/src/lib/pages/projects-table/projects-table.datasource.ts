@@ -1,9 +1,8 @@
 import { DataSource } from '@angular/cdk/collections';
 import { Observable, BehaviorSubject, tap, switchMap } from 'rxjs';
 import { combineLatest, of } from 'rxjs';
-import { Project } from '@activepieces/shared';
+import { Project, ProjectWithLimits } from '@activepieces/shared';
 import { PlatformProjectService } from '@activepieces/ui/common';
-import { ProjectWithUsageAndPlanResponse } from '@activepieces/ee-shared';
 
 /**
  * Data source for the LogsTable view. This class should
@@ -28,7 +27,7 @@ export class ProjectsDataSource extends DataSource<Project> {
    * @returns A stream of the items to be rendered.
    */
 
-  connect(): Observable<ProjectWithUsageAndPlanResponse[]> {
+  connect(): Observable<ProjectWithLimits[]> {
     if (this.isDemo) {
       return of([]);
     }

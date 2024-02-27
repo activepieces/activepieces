@@ -1,6 +1,7 @@
 <nav class="navbar-container ap-bg-header ap-py-4 ap-pr-3 navbar-expand ap-relative"
   [class.ap-pl-3]="(showNavigation$ | async )=== false" [style.height]="FLOW_BUILDER_HEADER_HEIGHT">
-  <div class="ap-absolute ap-w-full ap-flex ap-items-center ap-justify-center ap-p-3 ap-pointer-events-none">
+  <div
+    class="ap-absolute ap-w-full ap-h-full ap-left-0 ap-top-0 ap-flex ap-items-center ap-justify-center ap-p-3 ap-pointer-events-none">
     <div class="ap-h-[30px]">
       <img [src]=" (fullLogo$| async) ||'assets/img/custom/logo/full-logo.svg'" class="ap-max-w-full ap-h-full">
     </div>
