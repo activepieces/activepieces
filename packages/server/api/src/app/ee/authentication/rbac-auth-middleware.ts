@@ -48,7 +48,7 @@ const ProjectMemberPermissionResourceAndAction = {
 
 const managedResources = [
     'activities',
-    'connections',
+    'app-connections',
     'flows',
     'project-members',
 ]
