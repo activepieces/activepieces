@@ -13,7 +13,7 @@ import { updateRecordAction } from './lib/actions/update-record';
 export const dynamicsCRMAuth = PieceAuth.OAuth2({
   props: {
     hostUrl: Property.ShortText({
-      displayName: 'Host URL',
+      displayName: 'Host URL (without trailing slash)',
       description:
         'Host URL without trailing slash.For example **https://demo.crm.dynamics.com**',
       required: true,
@@ -21,7 +21,7 @@ export const dynamicsCRMAuth = PieceAuth.OAuth2({
   },
   required: true,
   scope: [
-    'https://orgac098933.crm.dynamics.com/.default',
+    '{hostUrl}/.default',
     'openid',
     'email',
     'profile',
