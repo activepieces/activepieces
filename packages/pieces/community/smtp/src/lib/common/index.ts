@@ -16,12 +16,8 @@ export const smtpCommon = {
   },
   createSMTPTransport(auth: smtpAuthParams) {
     const smtpOptions = smtpCommon.constructConfig(auth);
-    try {
-      const transporter = nodemailer.createTransport(smtpOptions);
-      return transporter;
-    } catch (error) {
-      throw error;
-    }
+    const transporter = nodemailer.createTransport(smtpOptions);
+    return transporter;
   },
 };
 
