@@ -275,8 +275,12 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
     if (!props) {
       return url;
     }
+
     Object.keys(props).forEach((key) => {
-      url = url.replaceAll(`{${key}}`, props[key].toString());
+      url = url.replaceAll(
+        `{${key}}`,
+        this.settingsForm.controls.props.value[key]
+      );
     });
     return url;
   }

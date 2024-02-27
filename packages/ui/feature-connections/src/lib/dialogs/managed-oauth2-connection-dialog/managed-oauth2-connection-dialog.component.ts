@@ -278,7 +278,10 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
       return url;
     }
     Object.keys(props).forEach((key) => {
-      url = url.replaceAll(`{${key}}`, props[key].toString());
+      url = url.replaceAll(
+        `{${key}}`,
+        this.settingsForm.controls.props.value[key]
+      );
     });
     return url;
   }

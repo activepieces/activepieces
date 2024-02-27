@@ -18,6 +18,12 @@ export const dynamicsCRMAuth = PieceAuth.OAuth2({
         'Host URL without trailing slash.For example **https://demo.crm.dynamics.com**',
       required: true,
     }),
+    tenatId: Property.ShortText({
+      displayName: 'Tenant ID',
+      description: 'You can find this in the Azure portal.',
+      defaultValue: 'common',
+      required: true,
+    }),
   },
   required: true,
   scope: [
@@ -27,8 +33,8 @@ export const dynamicsCRMAuth = PieceAuth.OAuth2({
     'profile',
     'offline_access',
   ],
-  authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
-  tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+  authUrl: 'https://login.microsoftonline.com/{tenatId}/oauth2/v2.0/authorize',
+  tokenUrl: 'https://login.microsoftonline.com/{tenatId}/oauth2/v2.0/token',
 });
 
 export const microsoftDynamicsCrm = createPiece({
