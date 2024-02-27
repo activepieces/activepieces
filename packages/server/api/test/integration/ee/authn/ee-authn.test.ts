@@ -20,7 +20,7 @@ beforeAll(async () => {
 })
 
 beforeEach(async () => {
-    emailService.sendOtpEmail = jest.fn()
+    emailService.sendOtp = jest.fn()
     stripeHelper.getOrCreateCustomer = jest
         .fn()
         .mockResolvedValue(faker.string.alphanumeric())
