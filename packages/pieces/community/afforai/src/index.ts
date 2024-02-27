@@ -1,5 +1,6 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { askChatbotAction } from './lib/actions/ask-chatbot';
+import { PieceCategory } from '@activepieces/shared';
 
 export const afforaiAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -16,6 +17,7 @@ export const afforai = createPiece({
   auth: afforaiAuth,
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/afforai.png',
+  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ['kishanprmr'],
   actions: [askChatbotAction],
   triggers: [],
