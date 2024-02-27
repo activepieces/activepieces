@@ -47,6 +47,7 @@
       "url": "developers",
       "icon": "code"
     },
+    
     {
       "name": "API",
       "url": "endpoints",
@@ -245,6 +246,15 @@
       "group": "Architecture",
       "pages": [
         "developers/architecture/repo-structure"
+      ]
+    },
+    {
+      "group":"Customer Portal",
+      "pages":[
+        "customer-portal/overview",
+        "customer-portal/activity",
+        "customer-portal/connections",
+        "customer-portal/inviting-customer"      
       ]
     },
     {
