@@ -22,7 +22,7 @@ import { userService } from '../../user/user-service'
 import { projectMemberService } from './project-member.service'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
-import { platformService } from '../platform/platform.service'
+import { platformService } from '../../platform/platform.service'
 
 const DEFAULT_LIMIT_SIZE = 10
 

@@ -1,6 +1,7 @@
 import { getEdition } from '../../../helper/secret-helper'
 import {
     ApEdition,
+    Platform,
     User,
     assertNotNullOrUndefined,
     isNil,
@@ -9,11 +10,11 @@ import fs from 'node:fs/promises'
 import Mustache from 'mustache'
 import nodemailer from 'nodemailer'
 
-import { platformService } from '../../platform/platform.service'
+import { platformService } from '../../../platform/platform.service'
 import { defaultTheme } from '../../../flags/theme'
 import { projectService } from '../../../project/project-service'
 import { SystemProp, system } from 'server-shared'
-import { OtpType, Platform } from '@activepieces/ee-shared'
+import { OtpType } from '@activepieces/ee-shared'
 import { logger } from 'server-shared'
 import { platformDomainHelper } from '../platform-domain-helper'
 import { jwtUtils } from '../../../helper/jwt-utils'

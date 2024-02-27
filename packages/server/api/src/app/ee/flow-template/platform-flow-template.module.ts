@@ -12,7 +12,7 @@ import {
 import { Static, Type } from '@sinclair/typebox'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { CreateFlowTemplateRequest } from '@activepieces/ee-shared'
-import { platformService } from '../platform/platform.service'
+import { platformService } from '../../platform/platform.service'
 import { StatusCodes } from 'http-status-codes'
 import { SystemProp, system } from 'server-shared'
 

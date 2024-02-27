@@ -1,7 +1,6 @@
 import {
     SigningKey,
     SigningKeyId,
-    PlatformId,
     AddSigningKeyResponse,
 } from '@activepieces/ee-shared'
 import {
@@ -11,6 +10,7 @@ import {
     UserId,
     apId,
     isNil,
+    PlatformId,
 } from '@activepieces/shared'
 import { signingKeyGenerator } from './signing-key-generator'
 import { databaseConnection } from '../../database/database-connection'

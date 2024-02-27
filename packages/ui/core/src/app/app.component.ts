@@ -36,7 +36,7 @@ import {
   LocalesService,
 } from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
-import { Platform } from '@activepieces/ee-shared';
+import { Platform } from '@activepieces/shared';
 import { UserWithoutPassword } from '@activepieces/shared';
 
 interface UpgradeNotificationMetaDataInLocalStorage {

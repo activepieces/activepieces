@@ -2,9 +2,8 @@ import {
     OtpModel,
     OtpState,
     OtpType,
-    PlatformId,
 } from '@activepieces/ee-shared'
-import { User, UserId, apId } from '@activepieces/shared'
+import { PlatformId, User, UserId, apId } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { OtpEntity } from './otp-entity'
 import dayjs from 'dayjs'
@@ -79,7 +78,7 @@ const getUser = async ({
 }
 
 type CreateParams = {
-    platformId: PlatformId | null
+    platformId: PlatformId 
     email: string
     type: OtpType
 }

@@ -8,13 +8,13 @@ import {
     spreadIfDefined,
     ProjectWithLimits,
     ApEdition,
+    PlatformId,
 } from '@activepieces/shared'
 import { Equal, In, IsNull } from 'typeorm'
 import {
     ApSubscriptionStatus,
     DEFAULT_FREE_PLAN_LIMIT,
     MAXIMUM_ALLOWED_TASKS,
-    PlatformId,
     ProjectMemberStatus,
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'

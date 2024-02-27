@@ -5,6 +5,7 @@ import { SystemProp, system } from 'server-shared'
 import { Provider } from '../../authentication/authentication-service/hooks/authentication-service-hooks'
 import { databaseConnection } from '../database-connection'
 import { FlagEntity } from '../../flags/flag.entity'
+import { platformService } from '../../platform/platform.service'
 
 const DEV_DATA_SEEDED_FLAG = 'DEV_DATA_SEEDED'
 

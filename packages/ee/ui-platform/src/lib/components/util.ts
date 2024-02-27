@@ -1,4 +1,4 @@
-import { Platform } from '@activepieces/ee-shared';
+import { Platform } from '@activepieces/shared';
 
 export const AtLeastOneLoginMethodMsg = $localize`At least one login method must be enabled`;
 export function doesPlatformHaveAtLeastOneLoginMethodEnabled(

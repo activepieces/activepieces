@@ -8,25 +8,23 @@ import {
     isNil,
     spreadIfDefined,
 } from '@activepieces/shared'
-import { databaseConnection } from '../../database/database-connection'
+import { databaseConnection } from '../database/database-connection'
 import { PlatformEntity } from './platform.entity'
 import {
     FilteredPieceBehavior,
     Platform,
     PlatformId,
     UpdatePlatformRequestBody,
-} from '@activepieces/ee-shared'
-import { defaultTheme } from '../../flags/theme'
-import { userService } from '../../user/user-service'
-import { projectService } from '../../project/project-service'
+} from '@activepieces/shared'
+import { defaultTheme } from '../flags/theme'
+import { userService } from '../user/user-service'
 
 const repo = databaseConnection.getRepository<Platform>(PlatformEntity)
 
 export const platformService = {
-    async add(params: AddParams): Promise<Platform> {
+    async create(params: AddParams): Promise<Platform> {
         const {
             ownerId,
-            projectId,
             name,
             primaryColor,
             logoIconUrl,
@@ -65,10 +63,6 @@ export const platformService = {
             ownerId,
         })
 
-        await addProjectToPlatform({
-            platformId: newPlatform.id,
-            projectId,
-        })
 
         return savedPlatform
     },
@@ -191,19 +185,9 @@ const addOwnerToPlatform = ({
     })
 }
 
-const addProjectToPlatform = ({
-    platformId,
-    projectId,
-}: AddProjectToPlatformParams): Promise<void> => {
-    return projectService.addProjectToPlatform({
-        projectId,
-        platformId,
-    })
-}
 
 type AddParams = {
     ownerId: UserId
-    projectId: ProjectId
     name: string
     primaryColor?: string
     logoIconUrl?: string
@@ -237,7 +221,3 @@ type AddOwnerToPlatformParams = {
     ownerId: UserId
 }
 
-type AddProjectToPlatformParams = {
-    platformId: PlatformId
-    projectId: ProjectId
-}

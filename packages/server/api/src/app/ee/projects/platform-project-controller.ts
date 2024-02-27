@@ -4,7 +4,6 @@ import {
     ErrorCode,
     PlatformRole,
     PrincipalType,
-    ProjectType,
     ProjectWithLimits,
     SERVICE_KEY_SECURITY_OPENAPI,
     SeekPage,
@@ -22,7 +21,7 @@ import {
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
 import { StatusCodes } from 'http-status-codes'
-import { platformService } from '../platform/platform.service'
+import { platformService } from '../../platform/platform.service'
 import { projectLimitsService } from '../project-plan/project-plan.service'
 
 export const platformProjectController: FastifyPluginCallbackTypebox = (
@@ -40,7 +39,6 @@ export const platformProjectController: FastifyPluginCallbackTypebox = (
             displayName: request.body.displayName,
             platformId,
             externalId: request.body.externalId,
-            type: ProjectType.PLATFORM_MANAGED,
         })
         await projectLimitsService.upsert(DEFAULT_PLATFOR_LIMIT, project.id)
         const projectWithUsage =

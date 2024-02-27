@@ -5,18 +5,18 @@ import { Router } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import {
   AuthenticationResponse,
+  ClaimTokenRequest,
+  FederatedAuthnLoginResponse,
   Principal,
   SignInRequest,
   SignUpRequest,
+  ThirdPartyAuthnProviderEnum,
   User,
 } from '@activepieces/shared';
 import { environment } from '../environments/environment';
 import {
-  ClaimTokenRequest,
   CreateOtpRequestBody,
-  FederatedAuthnLoginResponse,
   ResetPasswordRequestBody,
-  ThirdPartyAuthnProviderEnum,
   VerifyEmailRequestBody,
 } from '@activepieces/ee-shared';
 import { FlagService } from './flag.service';

@@ -5,7 +5,7 @@ import { referralService } from '../../../referrals/referral.service'
 import { authenticationHelper } from './authentication-helper'
 import { projectService } from '../../../../project/project-service'
 import { userService } from '../../../../user/user-service'
-import { ProjectType, isNil } from '@activepieces/shared'
+import { isNil } from '@activepieces/shared'
 import { flagService } from '../../../../../app/flags/flag.service'
 import { appsumoService } from '../../../billing/appsumo/appsumo.service'
 
@@ -36,7 +36,6 @@ export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
                 displayName: `${user.firstName}'s Project`,
                 ownerId: user.id,
                 platformId: user.platformId,
-                type: ProjectType.PLATFORM_MANAGED,
             })
         }
 
@@ -53,7 +52,7 @@ export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
 
         if (!updatedUser.verified) {
             await otpService.createAndSend({
-                platformId: updatedUser.platformId,
+                platformId: updatedUser.platformId!,
                 email: updatedUser.email,
                 type: OtpType.EMAIL_VERIFICATION,
             })

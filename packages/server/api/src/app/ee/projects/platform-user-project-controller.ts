@@ -13,7 +13,7 @@ import {
 } from '@fastify/type-provider-typebox'
 import { platformProjectService } from './platform-project-service'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
-import { platformService } from '../platform/platform.service'
+import { platformService } from '../../platform/platform.service'
 import { StatusCodes } from 'http-status-codes'
 
 export const usersProjectController: FastifyPluginCallbackTypebox = (
@@ -38,7 +38,7 @@ export const usersProjectController: FastifyPluginCallbackTypebox = (
             const project = allProjects.data.find(
                 (project) => project.id === request.params.projectId,
             )
-            
+
             if (!project) {
                 throw new ActivepiecesError({
                     code: ErrorCode.ENTITY_NOT_FOUND,
@@ -48,24 +48,19 @@ export const usersProjectController: FastifyPluginCallbackTypebox = (
                     },
                 })
             }
-            const platform = isNil(project.platformId)
-                ? null
-                : await platformService.getOne(project.platformId)
+            const platform = await platformService.getOneOrThrow(project.platformId)
             return {
                 token: await accessTokenManager.generateToken({
                     id: request.principal.id,
                     type: request.principal.type,
                     projectId: request.params.projectId,
-                    projectType: project.type,
-                    platform: isNil(platform)
-                        ? undefined
-                        : {
-                            id: platform.id,
-                            role:
-                  platform.ownerId === request.principal.id
-                      ? PlatformRole.OWNER
-                      : PlatformRole.MEMBER,
-                        },
+                    platform: {
+                        id: platform.id,
+                        role:
+                            platform.ownerId === request.principal.id
+                                ? PlatformRole.OWNER
+                                : PlatformRole.MEMBER,
+                    },
                 }),
             }
         },
