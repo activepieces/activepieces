@@ -1,11 +1,7 @@
-import {
-  PieceAuth,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-import nodemailer from 'nodemailer';
 import { sendEmail } from './lib/actions/send-email';
+import { smtpCommon } from './lib/common';
 
 const SMTPPorts = [25, 465, 587, 2525];
 
@@ -37,24 +33,15 @@ export const smtpAuth = PieceAuth.CustomAuth({
         }),
       },
     }),
-    TLS: Property.Checkbox({
-      displayName: 'Use SSL?',
+    requireTLS: Property.Checkbox({
+      displayName: 'Require TLS?',
       defaultValue: false,
       required: true,
     }),
   },
   validate: async ({ auth }) => {
     try {
-      const transporter = nodemailer.createTransport({
-        host: auth.host,
-        port: auth.port,
-        auth: {
-          user: auth.email,
-          pass: auth.password,
-        },
-        connectionTimeout: 10000, // 5 second timeout
-        secure: auth.TLS === true ? true : undefined,
-      });
+      const transporter = smtpCommon.createSMTPTransport(auth);
       return new Promise((resolve, reject) => {
         transporter.verify(function (error, success) {
           if (error) {
@@ -78,7 +65,7 @@ export const smtp = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/smtp.png',
   categories: [PieceCategory.CORE],
-  authors: ['abaza738'],
+  authors: ['abaza738', 'kishanprmr'],
   auth: smtpAuth,
   actions: [sendEmail],
   triggers: [],
