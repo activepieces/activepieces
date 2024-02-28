@@ -769,10 +769,75 @@ async function migrateProjects(queryRunner: QueryRunner) {
     for (const project of standaloneProjects) {
         const ownerId = project.ownerId
         const platformId = apId()
-        await queryRunner.query(`INSERT INTO "platform" ("id", "created", "updated", "ownerId", "name", "primaryColor", "logoIconUrl", "fullLogoUrl", "favIconUrl", "filteredPieceNames", "filteredPieceBehavior", "smtpHost", "smtpPort", "smtpUser", "smtpPassword", "smtpSenderEmail", "smtpUseSSL", "privacyPolicyUrl", "termsOfServiceUrl", "showPoweredBy", "cloudAuthEnabled", "defaultLocale", "embeddingEnabled", "gitSyncEnabled", "allowedAuthDomains", "enforceAllowedAuthDomains", "ssoEnabled", "federatedAuthProviders", "emailAuthEnabled", "auditLogEnabled", "showActivityLog")
-        VALUES 
-        ('${platformId}', current_timestamp, current_timestamp, '${ownerId}', 'Activepieces', '#6e41e2', 'https://cdn.activepieces.com/brand/logo.svg', 'https://cdn.activepieces.com/brand/full-logo.png', 'https://cdn.activepieces.com/brand/favicon.ico', '{}', 'BLOCKED', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'f', 't', 'en', 'f', 'f', '{}', 'f', 'f', '{}', 'f', 'f');
-        `)
+        await queryRunner.query(`
+        INSERT INTO "platform" (
+            "id", 
+            "created", 
+            "updated", 
+            "ownerId", 
+            "name", 
+            "primaryColor", 
+            "logoIconUrl", 
+            "fullLogoUrl", 
+            "favIconUrl", 
+            "filteredPieceNames", 
+            "filteredPieceBehavior", 
+            "smtpHost", 
+            "smtpPort", 
+            "smtpUser", 
+            "smtpPassword", 
+            "smtpSenderEmail", 
+            "smtpUseSSL", 
+            "privacyPolicyUrl", 
+            "termsOfServiceUrl", 
+            "showPoweredBy", 
+            "cloudAuthEnabled", 
+            "defaultLocale", 
+            "embeddingEnabled", 
+            "gitSyncEnabled", 
+            "allowedAuthDomains", 
+            "enforceAllowedAuthDomains", 
+            "ssoEnabled", 
+            "federatedAuthProviders", 
+            "emailAuthEnabled", 
+            "auditLogEnabled", 
+            "showActivityLog"
+        )
+        VALUES (
+            '${platformId}', 
+            current_timestamp, 
+            current_timestamp, 
+            '${ownerId}', 
+            'Activepieces', 
+            '#6e41e2', 
+            'https://cdn.activepieces.com/brand/logo.svg', 
+            'https://cdn.activepieces.com/brand/full-logo.png', 
+            'https://cdn.activepieces.com/brand/favicon.ico', 
+            '', 
+            'BLOCKED', 
+            NULL, 
+            NULL, 
+            NULL, 
+            NULL, 
+            NULL, 
+            NULL, 
+            NULL, 
+            NULL, 
+            0,
+            1, 
+            'en', 
+            0, 
+            0, 
+            '', 
+            0, 
+            0, 
+            '{}', 
+            1,
+            0,
+            0 
+        );
+    `)
+    
         await queryRunner.query(`update "project" set "platformId" = '${platformId}' where "id" = '${project.id}'`)
         await queryRunner.query(`update "user" set "platformId" = '${platformId}' where "id" = '${ownerId}'`)
     }
