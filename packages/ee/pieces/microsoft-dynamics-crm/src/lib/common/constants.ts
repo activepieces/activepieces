@@ -45,7 +45,7 @@ export const EntityDetails: {
     primaryNameAttribute: 'fullname',
   },
   campaign: {
-    displayName: 'Campaingn',
+    displayName: 'Campaign',
     value: 'campaign',
     urlPath: 'campaigns',
     primaryKey: 'campaignid',

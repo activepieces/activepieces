@@ -1,63 +1,44 @@
-import { getEdition } from '../../../helper/secret-helper'
-import {
-    ApEdition,
-    User,
-    assertNotNullOrUndefined,
-    isNil,
-} from '@activepieces/shared'
-import fs from 'node:fs/promises'
-import Mustache from 'mustache'
-import nodemailer from 'nodemailer'
-
-import { platformService } from '../../platform/platform.service'
-import { defaultTheme } from '../../../flags/theme'
-import { projectService } from '../../../project/project-service'
-import { SystemProp, system } from 'server-shared'
-import { OtpType, Platform } from '@activepieces/ee-shared'
+import { OtpType } from '@activepieces/ee-shared'
+import { ApEdition, User, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { logger } from 'server-shared'
+import { getEdition } from '../../../helper/secret-helper'
+import { projectService } from '../../../project/project-service'
 import { platformDomainHelper } from '../platform-domain-helper'
 import { jwtUtils } from '../../../helper/jwt-utils'
-import { ProjectMemberToken } from '../../project-members/project-member.service'
+import { EmailTemplateData, emailSender } from './email-sender/email-sender'
 
 const EDITION = getEdition()
-const EDITION_IS_NOT_PAID = ![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(
-    EDITION,
-)
+
+const EDITION_IS_NOT_PAID = ![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(EDITION)
+
 const EDITION_IS_NOT_CLOUD = EDITION !== ApEdition.CLOUD
 
 export const emailService = {
-    async sendInvitation({
-        email,
-        invitationId,
-        projectId,
-    }: {
-        email: string
-        invitationId: string
-        projectId: string
-    }): Promise<void> {
+    async sendInvitation({ email, invitationId, projectId }: SendInvitationArgs): Promise<void> {
         if (EDITION_IS_NOT_PAID) {
             return
         }
 
         const project = await projectService.getOneOrThrow(projectId)
-        const memberToken: ProjectMemberToken = {
-            id: invitationId,
-        }
+
         const token = await jwtUtils.sign({
-            payload: memberToken,
+            payload: {
+                id: invitationId,
+            },
             key: await jwtUtils.getJwtSecret(),
         })
+
         const setupLink = await platformDomainHelper.constructUrlFrom({
             platformId: project.platformId,
             path: `invitation?token=${token}&email=${encodeURIComponent(email)}`,
         })
 
-        await sendEmail({
+        await emailSender.send({
             email,
             platformId: project.platformId,
-            template: {
-                templateName: 'invitation-email',
-                data: {
+            templateData: {
+                name: 'invitation-email',
+                vars: {
                     setupLink,
                     projectName: project.displayName,
                 },
@@ -65,19 +46,7 @@ export const emailService = {
         })
     },
 
-    async sendQuotaAlert({
-        email,
-        projectId,
-        resetDate,
-        firstName,
-        templateId,
-    }: {
-        email: string
-        projectId: string
-        resetDate: string
-        firstName: string
-        templateId: 'quota-50' | 'quota-90' | 'quota-100'
-    }): Promise<void> {
+    async sendQuotaAlert({ email, projectId, resetDate, firstName, templateName }: SendQuotaAlertArgs): Promise<void> {
         if (EDITION_IS_NOT_CLOUD) {
             return
         }
@@ -90,31 +59,28 @@ export const emailService = {
             return
         }
 
-        await sendEmail({
+        await emailSender.send({
             email,
             platformId: project.platformId,
-            template: {
-                templateName: templateId,
-                data: {
+            templateData: {
+                name: templateName,
+                vars: {
                     resetDate,
                     firstName,
                 },
             },
         })
     },
-    async sendOtpEmail({
-        platformId,
-        user,
-        otp,
-        type,
-    }: SendOtpEmailParams): Promise<void> {
-        const edition = getEdition()
-        if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
+
+    async sendOtp({ platformId, user, otp, type }: SendOtpArgs): Promise<void> {
+        if (EDITION_IS_NOT_PAID) {
             return
         }
+
         if (user.verified && type === OtpType.EMAIL_VERIFICATION) {
             return
         }
+
         logger.info('Sending OTP email', {
             email: user.email,
             otp,
@@ -122,6 +88,7 @@ export const emailService = {
             firstName: user.email,
             type,
         })
+
         const frontendPath = {
             [OtpType.EMAIL_VERIFICATION]: 'verify-email',
             [OtpType.PASSWORD_RESET]: 'reset-password',
@@ -132,134 +99,47 @@ export const emailService = {
             path: frontendPath[type] + `?otpcode=${otp}&userId=${user.id}`,
         })
 
-        const otpToTemplate: Record<string, EmailTemplate> = {
+        const otpToTemplate: Record<string, EmailTemplateData> = {
             [OtpType.EMAIL_VERIFICATION]: {
-                templateName: 'verify-email',
-                data: {
+                name: 'verify-email',
+                vars: {
                     setupLink,
                 },
             },
             [OtpType.PASSWORD_RESET]: {
-                templateName: 'reset-password',
-                data: {
+                name: 'reset-password',
+                vars: {
                     setupLink,
                     firstName: user.firstName,
                 },
             },
         }
 
-        await sendEmail({
+        await emailSender.send({
             email: user.email,
             platformId: platformId ?? undefined,
-            template: otpToTemplate[type],
+            templateData: otpToTemplate[type],
         })
     },
 }
 
-async function sendEmail({
-    platformId,
-    email,
-    template,
-}: {
-    template: EmailTemplate
+type SendInvitationArgs = {
     email: string
-    platformId: string | undefined
-}): Promise<void> {
-    const platform = isNil(platformId)
-        ? null
-        : await platformService.getOne(platformId)
-    const transporter = nodemailer.createTransport({
-        host: platform?.smtpHost ?? system.getOrThrow(SystemProp.SMTP_HOST),
-        port: platform?.smtpPort ?? system.getNumber(SystemProp.SMTP_PORT)!,
-        auth: {
-            user: platform?.smtpUser ?? system.getOrThrow(SystemProp.SMTP_USERNAME),
-            pass:
-        platform?.smtpPassword ?? system.getOrThrow(SystemProp.SMTP_PASSWORD),
-        },
-        secure: platform?.smtpUseSSL ?? system.getBoolean(SystemProp.SMTP_USE_SSL),
-    })
-    const templateToSubject = {
-        'invitation-email': 'You have been invited to a team',
-        'quota-50': '[ACTION REQUIRED] 50% of your Activepieces tasks are consumed',
-        'quota-90': '[URGENT] 90% of your Activepieces tasks are consumed',
-        'quota-100': '[URGENT] 100% of your Activepieces tasks are consumed',
-        'verify-email': 'Verify your email address',
-        'reset-password': 'Reset your password',
-    }
-
-    const senderName = platform?.name ?? system.get(SystemProp.SMTP_SENDER_NAME)
-    const senderEmail =
-    platform?.smtpSenderEmail ?? system.get(SystemProp.SMTP_SENDER_EMAIL)
-    await transporter.sendMail({
-        from: `${senderName} <${senderEmail}>`,
-        to: email,
-        subject: templateToSubject[template.templateName],
-        html: await renderTemplate({ platform, request: template }),
-    })
+    invitationId: string
+    projectId: string
 }
 
-async function renderTemplate({
-    platform,
-    request,
-}: {
-    request: EmailTemplate
-    platform: Platform | null
-}): Promise<string> {
-    const templateHtml = await readTemplateFile(request.templateName)
-    return Mustache.render(templateHtml, {
-        ...request.data,
-        primaryColor: platform?.primaryColor ?? defaultTheme.colors.primary.default,
-        fullLogoUrl: platform?.fullLogoUrl ?? defaultTheme.logos.fullLogoUrl,
-        platformName: platform?.name ?? defaultTheme.websiteName,
-    })
-}
-
-async function readTemplateFile(templateName: string): Promise<string> {
-    return fs.readFile(
-        `./packages/server/api/src/assets/emails/${templateName}.html`,
-        'utf-8',
-    )
-}
-
-type InvitationEmailTemplate = {
-    templateName: 'invitation-email'
-    data: {
-        projectName: string
-        setupLink: string
-    }
-}
-
-type QuotaEmailTemplate = {
+type SendQuotaAlertArgs = {
+    email: string
+    projectId: string
+    resetDate: string
+    firstName: string
     templateName: 'quota-50' | 'quota-90' | 'quota-100'
-    data: {
-        resetDate: string
-        firstName: string
-    }
 }
 
-type VerifyEmailTemplate = {
-    templateName: 'verify-email'
-    data: {
-        setupLink: string
-    }
-}
-
-type ResetPasswordTemplate = {
-    templateName: 'reset-password'
-    data: {
-        setupLink: string
-        firstName: string
-    }
-}
-type EmailTemplate =
-  | InvitationEmailTemplate
-  | QuotaEmailTemplate
-  | VerifyEmailTemplate
-  | ResetPasswordTemplate
-
-type SendOtpEmailParams = {
+type SendOtpArgs = {
     type: OtpType
-    platformId: string | undefined | null
+    platformId: string | null
     otp: string
     user: User
 }

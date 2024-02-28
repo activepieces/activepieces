@@ -1,6 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import nodemailer from 'nodemailer';
 import { smtpAuth } from '../..';
+import { smtpCommon } from '../common';
 
 export const sendEmail = createAction({
   auth: smtpAuth,
@@ -38,19 +38,7 @@ export const sendEmail = createAction({
     }),
   },
   run: async ({ auth, propsValue }) => {
-    const transporter = nodemailer.createTransport({
-      host: auth.host,
-      port: +auth.port,
-      auth: {
-        user: auth.email,
-        pass: auth.password,
-      },
-      connectionTimeout: 10000, // 5 second timeout
-      secure: auth.TLS === true ? true : undefined,
-      tls: {
-        rejectUnauthorized: false,
-      }
-    });
+    const transporter = smtpCommon.createSMTPTransport(auth);
     const info = await transporter.sendMail({
       from: propsValue.from,
       to: propsValue.to.join(','),

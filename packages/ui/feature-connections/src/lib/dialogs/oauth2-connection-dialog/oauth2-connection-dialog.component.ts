@@ -162,6 +162,10 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
     const connectionName = this.dialogData.connectionToUpdate
       ? this.dialogData.connectionToUpdate.name
       : this.settingsForm.controls.name.value;
+    const scope = this.resolveUrlWithProps(
+      this.dialogData.pieceAuthProperty.scope!.join(' '),
+      this.settingsForm.controls.props.value
+    );
     const newConnection: UpsertOAuth2Request = {
       projectId: this.authenticatiionService.getProjectId(),
       name: connectionName,
@@ -179,7 +183,7 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
         client_id: this.settingsForm.controls.client_id.value,
         client_secret: this.settingsForm.controls.client_secret.value,
         redirect_url: this.settingsForm.controls.redirect_url.getRawValue(),
-        scope: this.dialogData.pieceAuthProperty.scope.join(' ') || '',
+        scope: scope || '',
         props: this.dialogData.pieceAuthProperty.props
           ? this.settingsForm.controls.props.value
           : undefined,
@@ -248,30 +252,37 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
 
   getOAuth2Settings(): OAuth2PopupParams {
     const formValue = this.settingsForm.getRawValue();
-    const { authUrl } = this.getAuthUrl();
+    const authUrl = this.resolveUrlWithProps(
+      this.dialogData.pieceAuthProperty.authUrl,
+      this.dialogData.pieceAuthProperty.props
+    );
+    const scope = this.resolveUrlWithProps(
+      this.dialogData.pieceAuthProperty.scope!.join(' '),
+      this.dialogData.pieceAuthProperty.props
+    );
+
     return {
       auth_url: authUrl,
       client_id: formValue.client_id,
       extraParams: this.dialogData.pieceAuthProperty.extra || {},
       redirect_url: formValue.redirect_url,
       pkce: this.dialogData.pieceAuthProperty.pkce,
-      scope: this.dialogData.pieceAuthProperty.scope.join(' '),
+      scope: scope,
     };
   }
 
-  getAuthUrl() {
-    let authUrl = this.dialogData.pieceAuthProperty.authUrl;
-    if (this.dialogData.pieceAuthProperty.props) {
-      Object.keys(this.dialogData.pieceAuthProperty.props).forEach((key) => {
-        authUrl = authUrl.replaceAll(
-          `{${key}}`,
-          this.settingsForm.controls.props.value[key]
-        );
-      });
+  resolveUrlWithProps(url: string, props: Record<string, any> | undefined) {
+    if (!props) {
+      return url;
     }
-    return {
-      authUrl: authUrl,
-    };
+
+    Object.keys(props).forEach((key) => {
+      url = url.replaceAll(
+        `{${key}}`,
+        this.settingsForm.controls.props.value[key]
+      );
+    });
+    return url;
   }
 
   castToStaticDropdown(t: unknown) {

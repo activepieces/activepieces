@@ -39,6 +39,9 @@
       "@activepieces/piece-acumbamail": [
         "packages/pieces/community/acumbamail/src/index.ts"
       ],
+      "@activepieces/piece-afforai": [
+        "packages/pieces/community/afforai/src/index.ts"
+      ],
       "@activepieces/piece-airtable": [
         "packages/pieces/community/airtable/src/index.ts"
       ],
