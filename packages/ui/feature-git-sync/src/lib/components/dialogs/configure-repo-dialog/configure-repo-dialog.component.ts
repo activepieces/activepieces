@@ -16,6 +16,7 @@ type ConfigureRepoDialogData = {
   repo?: GitRepo;
 };
 type ConfigreRepoDialogForm = {
+  slug: FormControl<string>;
   remoteUrl: FormControl<string>;
   branch: FormControl<string>;
   sshPrivateKey: FormControl<string>;
@@ -42,6 +43,10 @@ export class ConfigureRepoDialogComponent {
     }
 
     this.configureRepoForm = this.fb.group({
+      slug: new FormControl(this.data?.repo?.slug || '', {
+        nonNullable: true,
+        validators: Validators.required,
+      }),
       branch: new FormControl(this.data?.repo?.branch || '', {
         nonNullable: true,
         validators: Validators.required,

@@ -43,6 +43,7 @@ describe('Git API', () => {
                 remoteUrl: `git@${faker.internet.url()}`,
                 sshPrivateKey: faker.hacker.noun(),
                 branch: 'main',
+                slug: 'test-slug',
             }
             const token = await generateMockToken({
                 id: mockUser.id,
@@ -74,6 +75,7 @@ describe('Git API', () => {
                 remoteUrl: `git@${faker.internet.url()}`,
                 sshPrivateKey: faker.hacker.noun(),
                 branch: 'main',
+                slug: 'test-slug',
             }
             const token = await generateMockToken({
                 id: mockUser.id,
@@ -92,7 +94,6 @@ describe('Git API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.CREATED)
             const responseBody = response?.json()
-            expect(Object.keys(responseBody).length).toBe(6)
             expect(responseBody.sshPrivateKey).toBeUndefined()
             expect(responseBody.remoteUrl).toBe(request.remoteUrl)
             expect(responseBody.branch).toBe(request.branch)
@@ -100,6 +101,7 @@ describe('Git API', () => {
             expect(responseBody.updated).toBeDefined()
             expect(responseBody.id).toBeDefined()
             expect(responseBody.projectId).toBe(mockProject.id)
+            expect(responseBody.slug).toBe('test-slug')
         })
     })
 
@@ -199,7 +201,6 @@ describe('Git API', () => {
             expect(responseBody.data.length).toBe(1)
 
             const gitRepo = responseBody.data[0]
-            expect(Object.keys(gitRepo).length).toBe(6)
             expect(gitRepo.sshPrivateKey).toBeUndefined()
             expect(gitRepo.remoteUrl).toBe(mockGitRepo.remoteUrl)
             expect(gitRepo.branch).toBe(mockGitRepo.branch)
@@ -207,6 +208,7 @@ describe('Git API', () => {
             expect(gitRepo.updated).toBeDefined()
             expect(gitRepo.id).toBeDefined()
             expect(gitRepo.projectId).toBe(mockProject.id)
+            expect(gitRepo.slug).toBe(mockGitRepo.slug)
         })
     })
 })

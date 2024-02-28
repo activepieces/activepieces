@@ -7,12 +7,13 @@ export const GitRepo = Type.Object({
     branch: Type.String(),
     projectId: Type.String(),
     sshPrivateKey: Type.String(),
+    slug: Type.String(),
 })
 
 export type GitRepo = Static<typeof GitRepo>
 
-export const GitRepoWithoutSenestiveData = Type.Omit(GitRepo, ['sshPrivateKey'])
-export type GitRepoWithoutSenestiveData = Static<typeof GitRepoWithoutSenestiveData>
+export const GitRepoWithoutSensitiveData = Type.Omit(GitRepo, ['sshPrivateKey'])
+export type GitRepoWithoutSensitiveData = Static<typeof GitRepoWithoutSensitiveData>
 
 export enum PushSyncMode {
     FLOW = 'FLOW',
@@ -40,6 +41,7 @@ export const ConfigureRepoRequest = Type.Object({
     }),
     branch: Type.String(),
     sshPrivateKey: Type.String(),
+    slug: Type.String(),
 })
 
 export type ConfigureRepoRequest = Static<typeof ConfigureRepoRequest>

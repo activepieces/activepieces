@@ -75,7 +75,7 @@ import { federatedAuthModule } from './ee/authentication/federated-authn/federat
 import fastifyFavicon from 'fastify-favicon'
 import {
     ProjectMember,
-    GitRepoWithoutSenestiveData,
+    GitRepoWithoutSensitiveData,
 } from '@activepieces/ee-shared'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
 import { domainHelper } from './helper/domain-helper'
@@ -143,7 +143,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
                     flow: Flow,
                     'app-connection': AppConnectionWithoutSensitiveData,
                     piece: PieceMetadata,
-                    'git-repo': GitRepoWithoutSenestiveData,
+                    'git-repo': GitRepoWithoutSensitiveData,
                 },
             },
             info: {

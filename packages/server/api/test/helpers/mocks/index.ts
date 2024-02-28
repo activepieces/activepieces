@@ -125,6 +125,7 @@ export const createMockGitRepo = (gitRepo?: Partial<GitRepo>): GitRepo => {
         remoteUrl: gitRepo?.remoteUrl ?? `git@${faker.internet.url()}`,
         sshPrivateKey: gitRepo?.sshPrivateKey ?? faker.internet.password(),
         branch: gitRepo?.branch ?? faker.lorem.word(),
+        slug: gitRepo?.slug ?? faker.lorem.word(),
     }
 }
 
