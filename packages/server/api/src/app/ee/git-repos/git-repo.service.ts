@@ -29,6 +29,7 @@ export const gitRepoService = {
         sshPrivateKey,
         branch,
         remoteUrl,
+        slug,
     }: ConfigureRepoRequest): Promise<GitRepo> {
         const existingRepo = await repo.findOneBy({ projectId })
         const id = existingRepo?.id ?? apId()
@@ -39,6 +40,7 @@ export const gitRepoService = {
                 sshPrivateKey,
                 branch,
                 remoteUrl,
+                slug,
             },
             ['projectId'],
         )
@@ -201,7 +203,7 @@ async function createGitRepoAndReturnPaths(
     const flowFolderPath = path.join(
         tmpFolder,
         'projects',
-        gitRepo.projectId,
+        gitRepo.slug,
         'flows',
     )
     await fs.mkdir(flowFolderPath, { recursive: true })

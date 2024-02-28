@@ -108,6 +108,7 @@ import { AddProjectBilling1708811745694 } from './migration/postgres/17088117456
 import { AddShowActivityLogToPlatform1708861032399 } from './migration/postgres/1708861032399-add-show-activity-log-to-platform'
 import { MakePlatformNotNullable1705969874745 } from './migration/postgres/1705969874745-MakePlatformNotNullable'
 import { AddPlatformToPostgres1709052740378 } from './migration/postgres/1709052740378-AddPlatformToPostgres'
+import { AddSlugToGitRepo1709151540095 } from './migration/postgres/1709151540095-add-slug-to-git-repo'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -231,6 +232,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddProjectBilling1708811745694,
                 AddShowActivityLogToPlatform1708861032399,
                 MakePlatformNotNullable1705969874745,
+                AddSlugToGitRepo1709151540095,
             )
             break
         case ApEdition.ENTERPRISE:
@@ -275,6 +277,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddLengthLimitsToActivity1708529586342,
                 AddShowActivityLogToPlatform1708861032399,
                 MakePlatformNotNullable1705969874745,
+                AddSlugToGitRepo1709151540095,
             )
             break
         case ApEdition.COMMUNITY:

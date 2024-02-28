@@ -7,6 +7,7 @@ export const GitRepo = Type.Object({
     branch: Type.String(),
     projectId: Type.String(),
     sshPrivateKey: Type.String(),
+    slug: Type.String(),
 })
 
 export type GitRepo = Static<typeof GitRepo>
@@ -40,6 +41,7 @@ export const ConfigureRepoRequest = Type.Object({
     }),
     branch: Type.String(),
     sshPrivateKey: Type.String(),
+    slug: Type.String(),
 })
 
 export type ConfigureRepoRequest = Static<typeof ConfigureRepoRequest>

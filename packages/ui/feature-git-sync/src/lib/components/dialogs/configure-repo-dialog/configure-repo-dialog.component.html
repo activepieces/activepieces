@@ -15,6 +15,14 @@
                 </mat-error>
             </mat-form-field>
             <mat-form-field class="ap-w-full" appearance="outline">
+                <mat-label i18n>Slug</mat-label>
+                <input cdkFocusInitial [formControl]="configureRepoForm.controls.slug" matInput type="text"
+                    placeholder="slug" />
+                <mat-error *ngIf="configureRepoForm.controls.slug.invalid" i18n>
+                    Slug is required
+                </mat-error>
+            </mat-form-field>
+            <mat-form-field class="ap-w-full" appearance="outline">
                 <mat-label i18n>Branch Name</mat-label>
                 <input cdkFocusInitial [formControl]="configureRepoForm.controls.branch" matInput type="text"
                     placeholder="staging" />

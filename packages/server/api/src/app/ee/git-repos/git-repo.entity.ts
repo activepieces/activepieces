@@ -27,6 +27,10 @@ export const GitRepoEntity = new EntitySchema<GitRepoSchema>({
             type: String,
             nullable: true,
         },
+        slug: {
+            type: String,
+            nullable: false,
+        },
     },
     indices: [
         {
