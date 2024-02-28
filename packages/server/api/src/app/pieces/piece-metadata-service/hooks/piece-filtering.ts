@@ -24,11 +24,11 @@ export const filterPiecesBasedUser = async ({
     categories: PieceCategory[] | undefined
     searchQuery: string | undefined
     pieces: PieceMetadataSchema[]
-    suggestionType?: SuggestionType,
+    suggestionType?: SuggestionType
     platformId?: PlatformId
 }): Promise<PieceMetadataSchema[]> => {
 
-    return filterPiecesBasedOnFeatures(platformId, await filterBasedOnCategories({
+    return filterPiecesBasedOnFeatures(platformId, filterBasedOnCategories({
         categories,
         pieces: filterBasedOnSearchQuery({ searchQuery, pieces, suggestionType }),
     }))
@@ -36,7 +36,7 @@ export const filterPiecesBasedUser = async ({
 
 async function filterPiecesBasedOnFeatures(
     platformId: PlatformId | undefined,
-    pieces: PieceMetadataSchema[]
+    pieces: PieceMetadataSchema[],
 ): Promise<PieceMetadataSchema[]> {
     if (isNil(platformId)) {
         return pieces
@@ -46,7 +46,7 @@ async function filterPiecesBasedOnFeatures(
         if (piece.name === '@activepieces/piece-activity' && !platform.showActivityLog) {
             return false
         }
-        return true;
+        return true
     })
 }
 

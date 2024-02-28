@@ -1,9 +1,8 @@
 import { databaseConnection } from '../../database/database-connection'
 import { AuditEventEntity } from './audit-event-entity'
 import {
-    ActivepiecesError,
+    ApEdition,
     Cursor,
-    ErrorCode,
     PrincipalType,
     SeekPage,
     apId,
@@ -26,6 +25,7 @@ import { FastifyRequest } from 'fastify'
 import { extractClientRealIp } from '../../helper/network-utils'
 import { rejectedPromiseHandler } from 'server-shared'
 import { platformService } from '../../platform/platform.service'
+import { getEdition } from '../../helper/secret-helper'
 
 const auditLogRepo = databaseConnection.getRepository(AuditEventEntity)
 
@@ -79,7 +79,8 @@ const saveEvent = async (
         return
     }
     const platform = await platformService.getOneOrThrow(request.principal.platform.id)
-    if (!platform.auditLogEnabled) {
+    const edition = getEdition()
+    if (!platform.auditLogEnabled && edition !== ApEdition.CLOUD) {
         return
     }
     const userInformation = await userService.getMetaInfo({
