@@ -1,7 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '../environments/environment';
-import { Platform, SeekPage, UpdatePlatformRequestBody, UserResponse, UserStatus } from '@activepieces/shared';
+import {
+  Platform,
+  SeekPage,
+  UpdatePlatformRequestBody,
+  UserResponse,
+  UserStatus,
+} from '@activepieces/shared';
 
 @Injectable({
   providedIn: 'root',

@@ -1,4 +1,8 @@
-import { ApEdition, ApFlagId, ThirdPartyAuthnProvidersToShowMap } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  ThirdPartyAuthnProvidersToShowMap,
+} from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { map, Observable, shareReplay } from 'rxjs';

@@ -20,7 +20,6 @@ export type UpgradeDialogData = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UpgradeDialogComponent implements OnInit {
-
   options = {
     path: '/assets/lottie/rocket.json',
   };
