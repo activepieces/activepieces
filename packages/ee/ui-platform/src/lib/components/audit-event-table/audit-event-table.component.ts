@@ -4,7 +4,7 @@ import {
   OnInit,
   ViewChild,
 } from '@angular/core';
-import { BehaviorSubject, Observable, Subject, map } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, map, of } from 'rxjs';
 import { startWith } from 'rxjs';
 import {
   ApPaginatorComponent,
@@ -41,7 +41,7 @@ export class AuditEventTableComponent
     'created',
   ];
   platform$?: BehaviorSubject<Platform>;
-  isEnabled$!: Observable<boolean>;
+  isEnabled$: Observable<boolean> = of(false);
   dataSource!: AuditEventDataSource;
   refresh$: Subject<boolean> = new Subject();
   dialogClosed$?: Observable<unknown>;
@@ -56,7 +56,6 @@ export class AuditEventTableComponent
   ngOnInit(): void {
     if (this.platform) {
       this.platform$ = new BehaviorSubject(this.platform);
-      console.log(this.platform);
       this.isEnabled$ = this.platform$.pipe(
         map((platform) => platform?.auditLogEnabled && !this.isDemo)
       );
