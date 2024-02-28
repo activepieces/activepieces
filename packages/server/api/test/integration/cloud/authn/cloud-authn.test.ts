@@ -40,7 +40,7 @@ beforeAll(async () => {
 })
 
 beforeEach(async () => {
-    emailService.sendOtpEmail = jest.fn()
+    emailService.sendOtp = jest.fn()
     stripeHelper.getOrCreateCustomer = jest
         .fn()
         .mockResolvedValue(faker.string.alphanumeric())
@@ -184,8 +184,8 @@ describe('Authentication API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
 
-            expect(emailService.sendOtpEmail).toBeCalledTimes(1)
-            expect(emailService.sendOtpEmail).toHaveBeenCalledWith({
+            expect(emailService.sendOtp).toBeCalledTimes(1)
+            expect(emailService.sendOtp).toHaveBeenCalledWith({
                 otp: expect.stringMatching(/^([0-9A-F]|-){36}$/i),
                 platformId: mockPlatform.id,
                 type: OtpType.EMAIL_VERIFICATION,
