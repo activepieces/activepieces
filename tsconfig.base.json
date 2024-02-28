@@ -34,7 +34,7 @@
         "packages/pieces/community/activepieces/src/index.ts"
       ],
       "@activepieces/piece-activity": [
-        "packages/ee/pieces/activity/src/index.ts"
+        "packages/pieces/community/activity/src/index.ts"
       ],
       "@activepieces/piece-acumbamail": [
         "packages/pieces/community/acumbamail/src/index.ts"
