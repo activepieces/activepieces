@@ -1,9 +1,10 @@
-import { ProjectUsage, isNil } from '@activepieces/shared'
+import { ApEnvironment, ProjectUsage, isNil } from '@activepieces/shared'
 import { projectMemberService } from '../../ee/project-members/project-member.service'
 import { apDayjs } from '../../helper/dayjs-helper'
 import { createRedisClient } from '../../database/redis-connection'
 import { Redis } from 'ioredis'
 import { projectService } from '../project-service'
+import { SystemProp, system } from 'server-shared'
 
 export const projectUsageService = {
     async getUsageForBillingPeriod(projectId: string, startBillingPeriod: string): Promise<ProjectUsage> {
@@ -50,11 +51,19 @@ async function increaseTasks(projectId: string, incrementBy: number): Promise<nu
 }
 
 async function incrementOrCreateRedisRecord(projectId: string, startBillingPeriod: string, incrementBy: number): Promise<number> {
+    const environment = system.get(SystemProp.ENVIRONMENT)
+    if (environment === ApEnvironment.TESTING) {
+        return 0;
+    }
     const key = constructUsageKey(projectId, startBillingPeriod)
     return getRedisConnection().incrby(key, incrementBy)
 }
 
 async function getTasksUsage(projectId: string, startBillingPeriod: string): Promise<number> {
+    const environment = system.get(SystemProp.ENVIRONMENT)
+    if (environment === ApEnvironment.TESTING) {
+        return 0;
+    }
     const key = constructUsageKey(projectId, startBillingPeriod)
     const value = await getRedisConnection().get(key)
     return Number(value) || 0
