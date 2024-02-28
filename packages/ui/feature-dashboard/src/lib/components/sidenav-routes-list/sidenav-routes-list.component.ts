@@ -5,10 +5,12 @@ import { FolderActions } from '@activepieces/ui/feature-folders-store';
 import {
   AuthenticationService,
   NavigationService,
+  PlatformService,
 } from '@activepieces/ui/common';
 import { Observable, forkJoin, map, of } from 'rxjs';
 import { ApFlagId, ProjectMemberRole, supportUrl } from '@activepieces/shared';
 import { DashboardService, FlagService } from '@activepieces/ui/common';
+import { isGitSyncLocked } from '../../resolvers/repo.resolver';
 
 type SideNavRoute = {
   icon: string;
@@ -16,6 +18,7 @@ type SideNavRoute = {
   route: string;
   effect?: () => void;
   showInSideNav$: Observable<boolean>;
+  showLock$: Observable<boolean>;
 };
 
 @Component({
@@ -31,36 +34,44 @@ export class SidenavRoutesListComponent implements OnInit {
   showBilling$: Observable<boolean>;
   sideNavRoutes$: Observable<SideNavRoute[]>;
   mainDashboardRoutes: SideNavRoute[] = [];
+  demoPlatform$: Observable<boolean> = this.flagService.isFlagEnabled(
+    ApFlagId.SHOW_PLATFORM_DEMO
+  );
   platformDashboardRoutes: SideNavRoute[] = [
     {
       icon: 'assets/img/custom/dashboard/projects.svg',
       caption: $localize`Projects`,
       route: 'platform/projects',
       showInSideNav$: of(true),
+      showLock$: this.demoPlatform$,
     },
     {
       icon: 'assets/img/custom/dashboard/appearance.svg',
       caption: $localize`Appearance`,
       route: 'platform/appearance',
       showInSideNav$: of(true),
+      showLock$: this.demoPlatform$,
     },
     {
       icon: 'assets/img/custom/dashboard/pieces.svg',
       caption: $localize`Pieces`,
       route: 'platform/pieces',
       showInSideNav$: of(true),
+      showLock$: this.demoPlatform$,
     },
     {
       icon: 'assets/img/custom/dashboard/templates.svg',
       caption: $localize`Templates`,
       route: 'platform/templates',
       showInSideNav$: of(true),
+      showLock$: this.demoPlatform$,
     },
     {
       icon: 'assets/img/custom/dashboard/users.svg',
       caption: $localize`Users`,
       route: 'platform/users',
       showInSideNav$: of(true),
+      showLock$: this.demoPlatform$,
     },
 
     {
@@ -68,6 +79,7 @@ export class SidenavRoutesListComponent implements OnInit {
       caption: $localize`Settings`,
       route: 'platform/settings',
       showInSideNav$: of(true),
+      showLock$: this.demoPlatform$,
     },
   ];
   constructor(
@@ -76,7 +88,9 @@ export class SidenavRoutesListComponent implements OnInit {
     private flagServices: FlagService,
     private dashboardService: DashboardService,
     private navigationService: NavigationService,
-    private authenticationService: AuthenticationService
+    private authenticationService: AuthenticationService,
+    private platformService: PlatformService,
+    private flagService: FlagService
   ) {
     this.logoUrl$ = this.flagServices
       .getLogos()
@@ -90,12 +104,14 @@ export class SidenavRoutesListComponent implements OnInit {
           this.store.dispatch(FolderActions.showAllFlows());
         },
         showInSideNav$: of(true),
+        showLock$: of(false),
       },
       {
         icon: 'assets/img/custom/dashboard/runs.svg',
         caption: $localize`Runs`,
         route: 'runs',
         showInSideNav$: of(true),
+        showLock$: of(false),
       },
       {
         icon: 'assets/img/custom/dashboard/activity.svg',
@@ -104,18 +120,21 @@ export class SidenavRoutesListComponent implements OnInit {
         showInSideNav$: this.flagServices.isFlagEnabled(
           ApFlagId.SHOW_ACTIVITY_LOG
         ),
+        showLock$: of(false),
       },
       {
         icon: 'assets/img/custom/dashboard/connections.svg',
         caption: $localize`Connections`,
         route: 'connections',
         showInSideNav$: of(true),
+        showLock$: of(false),
       },
       {
         icon: 'assets/img/custom/dashboard/members.svg',
         caption: $localize`Team`,
         route: 'team',
         showInSideNav$: of(true),
+        showLock$: of(false),
       },
 
       {
@@ -123,6 +142,11 @@ export class SidenavRoutesListComponent implements OnInit {
         caption: $localize`Settings`,
         route: 'settings',
         showInSideNav$: this.flagServices.isFlagEnabled(ApFlagId.SHOW_GIT_SYNC),
+        showLock$: isGitSyncLocked(
+          this.flagServices,
+          this.platformService,
+          this.authenticationService.getPlatformId()
+        ),
       },
     ];
   }

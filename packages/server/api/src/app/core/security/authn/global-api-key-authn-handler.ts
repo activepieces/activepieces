@@ -4,6 +4,7 @@ import { SystemProp, system } from 'server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
+    PlatformRole,
     PrincipalType,
     apId,
     isNil,
@@ -34,6 +35,10 @@ export class GlobalApiKeyAuthnHandler extends BaseSecurityHandler {
             id: `SUPER_USER_${apId()}`,
             type: PrincipalType.SUPER_USER,
             projectId: `SUPER_USER_${apId()}`,
+            platform: {
+                id: `SUPER_USER_${apId()}`,
+                role: PlatformRole.MEMBER,
+            },
         }
 
         return Promise.resolve()

@@ -22,7 +22,7 @@ import { userService } from '../../user/user-service'
 import { projectMemberService } from './project-member.service'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
-import { platformService } from '../platform/platform.service'
+import { platformService } from '../../platform/platform.service'
 
 const DEFAULT_LIMIT_SIZE = 10
 
@@ -58,7 +58,7 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
 
             const user = await userService.getByPlatformAndEmail({
                 email: projectMember.email,
-                platformId: request.principal.platform?.id ?? null,
+                platformId: request.principal.platform.id ?? null,
             })
 
             return {
@@ -86,7 +86,7 @@ async function assertFeatureIsEnabled(
     reply: FastifyReply,
 ): Promise<void> {
     await platformMustBeOwnedByCurrentUser.call(app, request, reply)
-    const platformId = request.principal.platform?.id
+    const platformId = request.principal.platform.id
     assertNotNullOrUndefined(platformId, 'platformId')
     const platform = await platformService.getOneOrThrow(platformId)
     // TODO CHECK WITH BUSINESS LOGIC

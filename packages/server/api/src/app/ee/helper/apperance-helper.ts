@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/shared'
 import { defaultTheme, generateTheme } from '../../flags/theme'
-import { platformService } from '../platform/platform.service'
+import { platformService } from '../../platform/platform.service'
 
 const getPlatformByIdOrFallback = async (platformId: string | null) => {
     if (isNil(platformId)) {

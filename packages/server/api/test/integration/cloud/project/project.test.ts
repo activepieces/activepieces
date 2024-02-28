@@ -14,13 +14,12 @@ import {
     PlatformRole,
     PrincipalType,
     Project,
-    ProjectType,
+    Platform,
     User,
 } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import {
     ApiKeyResponseWithValue,
-    Platform,
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
 import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
@@ -175,7 +174,10 @@ describe('Project API', () => {
             const mockPlatform = createMockPlatform({
                 ownerId: mockUser.id,
             })
-            await databaseConnection.getRepository('platform').save([mockPlatform])
+            const mockPlatform2 = createMockPlatform({
+                ownerId: mockUser2.id,
+            })
+            await databaseConnection.getRepository('platform').save([mockPlatform, mockPlatform2])
 
             const mockProject = createMockProject({
                 ownerId: mockUser.id,
@@ -183,9 +185,11 @@ describe('Project API', () => {
             })
             const mockProject2 = createMockProject({
                 ownerId: mockUser.id,
+                platformId: mockPlatform2.id,
             })
             const mockProject3 = createMockProject({
                 ownerId: mockUser2.id,
+                platformId: mockPlatform2.id,
             })
             await databaseConnection
                 .getRepository('project')
@@ -218,8 +222,15 @@ describe('Project API', () => {
         it('it should update project and ignore plan as project owner', async () => {
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save(mockUser)
+
+            const mockPlatform = createMockPlatform({
+                ownerId: mockUser.id,
+            })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
             const mockProject = createMockProject({
                 ownerId: mockUser.id,
+                platformId: mockPlatform.id,
             })
             await databaseConnection.getRepository('project').save([mockProject])
 
@@ -311,7 +322,6 @@ describe('Project API', () => {
         await createProjectAndPlatformAndApiKey()
             const mockProjectTwo = createMockProject({
                 ownerId: mockUser.id,
-                type: ProjectType.PLATFORM_MANAGED,
                 platformId: mockPlatform.id,
             })
             await databaseConnection

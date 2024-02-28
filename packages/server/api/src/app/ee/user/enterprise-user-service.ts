@@ -6,7 +6,6 @@ import {
     UserId,
     UserStatus,
 } from '@activepieces/shared'
-import { PlatformId } from '@activepieces/ee-shared'
 import { databaseConnection } from '../../database/database-connection'
 import { UserEntity } from '../../user/user-entity'
 
@@ -52,11 +51,11 @@ export const enterpriseUserService = {
 }
 
 type ListParams = {
-    platformId: PlatformId
+    platformId: string
 }
 
 type UpdateParams = {
     id: UserId
     status: UserStatus
-    platformId: PlatformId
+    platformId: string
 }

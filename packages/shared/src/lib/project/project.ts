@@ -9,11 +9,6 @@ export enum NotificationStatus {
     ALWAYS = 'ALWAYS',
 }
 
-export enum ProjectType {
-    PLATFORM_MANAGED = 'PLATFORM_MANAGED',
-    STANDALONE = 'STANDALONE',
-}
-
 export const ProjectUsage = Type.Object({
     tasks: Type.Number(),
     teamMembers: Type.Number(),
@@ -45,8 +40,7 @@ export const Project = Type.Object({
     ownerId: Type.String(),
     displayName: Type.String(),
     notifyStatus: Type.Enum(NotificationStatus),
-    type: Type.Enum(ProjectType),
-    platformId: Type.Optional(ApId),
+    platformId: ApId,
     externalId: Type.Optional(Type.String()),
 })
 

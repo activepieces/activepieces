@@ -4,12 +4,11 @@ import {
     Flow,
     Folder,
     Project,
-    ProjectType,
+    Platform,
     TriggerEvent,
     User,
 } from '@activepieces/shared'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
-import { Platform } from '@activepieces/ee-shared'
 
 type ProjectSchema = Project & {
     owner: User
@@ -31,11 +30,6 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         },
         notifyStatus: {
             type: String,
-        },
-        type: {
-            type: String,
-            nullable: false,
-            default: ProjectType.STANDALONE,
         },
         platformId: {
             ...ApIdSchema,

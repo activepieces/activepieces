@@ -1,12 +1,12 @@
 import { Static, Type } from '@sinclair/typebox'
-import { ThirdPartyAuthnProviderEnum } from './authn-provider-name';
+import { ThirdPartyAuthnProviderEnum } from './authn-provider-name'
 
 export * from './authn-provider-name'
 
 export const federatedAuthnLoginResponse = Type.Object({
-    loginUrl: Type.String()
+    loginUrl: Type.String(),
 })
-export type FederatedAuthnLoginResponse = Static<typeof federatedAuthnLoginResponse>;
+export type FederatedAuthnLoginResponse = Static<typeof federatedAuthnLoginResponse>
 
 
 export const ClaimTokenRequest = Type.Object({

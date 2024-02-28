@@ -2,9 +2,9 @@ import { AuthenticationResponse } from '@activepieces/shared'
 import {
     FederatedAuthnLoginResponse,
     ThirdPartyAuthnProviderEnum,
-} from '@activepieces/ee-shared'
+} from '@activepieces/shared'
 import { providers } from './authn-provider/authn-provider'
-import { platformService } from '../../platform/platform.service'
+import { platformService } from '../../../platform/platform.service'
 
 export const federatedAuthnService = {
     async login({

@@ -1,5 +1,4 @@
-import { PlatformId } from '@activepieces/ee-shared'
-import { PackageType, PiecePackage, ProjectId } from '@activepieces/shared'
+import { PackageType, PiecePackage, PlatformId, ProjectId } from '@activepieces/shared'
 
 const defaultHooks: PieceServiceHooks = {
     async savePieceArchivePackage() {

@@ -13,14 +13,14 @@ const USER_NOT_ALLOWED_TO_PERFORM_OPERATION_ERROR = new ActivepiecesError({
 
 export const platformMustBeOwnedByCurrentUser: onRequestAsyncHookHandler =
   async (request, _res) => {
-      const platformId = request.principal.platform?.id
+      const platformId = request.principal.platform.id
 
       if (isNil(platformId)) {
           throw USER_NOT_ALLOWED_TO_PERFORM_OPERATION_ERROR
       }
 
       const canEditPlatform =
-      request.principal.platform?.role === PlatformRole.OWNER
+      request.principal.platform.role === PlatformRole.OWNER
       if (!canEditPlatform) {
           throw USER_NOT_ALLOWED_TO_PERFORM_OPERATION_ERROR
       }

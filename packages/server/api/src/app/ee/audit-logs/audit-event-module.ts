@@ -7,7 +7,7 @@ import {
 } from '@activepieces/shared'
 import { auditLogService } from './audit-event-service'
 import { ListAuditEventsRequest } from '@activepieces/ee-shared'
-import { platformService } from '../platform/platform.service'
+import { platformService } from '../../platform/platform.service'
 
 export const auditEventModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
@@ -23,7 +23,7 @@ const auditEventController: FastifyPluginAsyncTypebox = async (app) => {
             },
         },
         async (request) => {
-            const platformId = request.principal.platform?.id
+            const platformId = request.principal.platform.id
             assertNotNullOrUndefined(platformId, 'platformId')
             await assertAuditLogEnabled(platformId)
             return auditLogService.list({
