@@ -21,7 +21,7 @@ const extractPlatformIdFromAuthenticatedPrincipal = async (
     if (principal.type === PrincipalType.UNKNOWN) {
         return null
     }
-    return principal.platform?.id ?? getDefaultPlatformId()
+    return principal.platform.id ?? getDefaultPlatformId()
 }
 
 const getPlatformIdForHostname = async (

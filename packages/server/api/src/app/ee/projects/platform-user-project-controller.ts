@@ -5,7 +5,6 @@ import {
     PrincipalType,
     ProjectWithLimits,
     SeekPage,
-    isNil,
 } from '@activepieces/shared'
 import {
     FastifyPluginCallbackTypebox,

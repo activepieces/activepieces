@@ -22,7 +22,7 @@ export class AppSumoAuthnHandler extends BaseSecurityHandler {
             platform: {
                 id: 'app-sumo',
                 role: PlatformRole.MEMBER,
-            }
+            },
         }
     }
 }

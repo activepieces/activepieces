@@ -16,11 +16,11 @@ import {
 } from '../../../helpers/mocks'
 import {
     ApFlagId,
-    ProjectType,
     User,
     UserStatus,
     apId,
     ProjectMemberRole,
+    Platform,
 } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { emailService } from '../../../../src/app/ee/helper/email/email-service'
@@ -28,7 +28,6 @@ import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/str
 import {
     CustomDomain,
     OtpType,
-    Platform,
     ProjectMemberStatus,
 } from '@activepieces/ee-shared'
 import { decodeToken } from '../../../helpers/auth'
@@ -372,7 +371,6 @@ describe('Authentication API', () => {
 
             expect(project?.ownerId).toBe(responseBody.id)
             expect(project?.displayName).toBe(`${responseBody.firstName}'s Project`)
-            expect(project?.type).toBe(ProjectType.PLATFORM_MANAGED)
             expect(project?.platformId).toBe(mockPlatform.id)
         })
     })
@@ -505,8 +503,16 @@ describe('Authentication API', () => {
                 status: UserStatus.ACTIVE,
             })
             await databaseConnection.getRepository('user').save(mockUser)
-
+            const mockPlatform = createMockPlatform({
+                id: CLOUD_PLATFORM_ID,
+                ownerId: mockUser.id,
+            })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection.getRepository('user').update(mockUser.id, {
+                platformId: mockPlatform.id,
+            })
             const mockProject = createMockProject({
+                platformId: mockPlatform.id,
                 ownerId: mockUser.id,
             })
             await databaseConnection.getRepository('project').save(mockProject)
@@ -536,7 +542,7 @@ describe('Authentication API', () => {
             expect(responseBody?.password).toBeUndefined()
             expect(responseBody?.status).toBe(mockUser.status)
             expect(responseBody?.verified).toBe(mockUser.verified)
-            expect(responseBody?.platformId).toBe(null)
+            expect(responseBody?.platformId).toBe(CLOUD_PLATFORM_ID)
             expect(responseBody?.externalId).toBe(null)
             expect(responseBody?.projectId).toBe(mockProject.id)
             expect(responseBody?.token).toBeDefined()
@@ -624,7 +630,9 @@ describe('Authentication API', () => {
                 ownerId: mockUser.id,
             })
             await databaseConnection.getRepository('platform').save(mockPlatform)
-
+            await databaseConnection.getRepository('user').update(mockUser.id, {
+                platformId: mockPlatform.id,
+            })
             const mockCustomDomain = createMockCustomDomain({
                 platformId: mockPlatformId,
                 domain: mockPlatformDomain,
@@ -672,8 +680,15 @@ describe('Authentication API', () => {
             })
             await databaseConnection.getRepository('user').save(mockUser)
 
+            const mockPlatform = createMockPlatform({
+                id: CLOUD_PLATFORM_ID,
+                ownerId: mockUser.id,
+            })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
             const mockProject = createMockProject({
                 ownerId: mockUser.id,
+                platformId: mockPlatform.id,
             })
             await databaseConnection.getRepository('project').save(mockProject)
 
@@ -708,8 +723,18 @@ describe('Authentication API', () => {
             })
             await databaseConnection.getRepository('user').save(mockUser)
 
+            const mockPlatform = createMockPlatform({
+                id: CLOUD_PLATFORM_ID,
+                ownerId: mockUser.id,
+            })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection.getRepository('user').update(mockUser.id, {
+                platformId: mockPlatform.id,
+            })
+
             const mockProject = createMockProject({
                 ownerId: mockUser.id,
+                platformId: mockPlatform.id,
             })
             await databaseConnection.getRepository('project').save(mockProject)
 

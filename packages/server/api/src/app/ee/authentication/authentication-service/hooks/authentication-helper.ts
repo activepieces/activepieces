@@ -11,7 +11,6 @@ import {
     ApEdition,
     PlatformRole,
     ProjectMemberRole,
-    Platform,
 } from '@activepieces/shared'
 import { platformService } from '../../../../platform/platform.service'
 import { accessTokenManager } from '../../../../authentication/lib/access-token-manager'
@@ -59,13 +58,13 @@ const populateTokenWithPlatformInfo = async ({
         id: user.id,
         type: PrincipalType.USER,
         projectId: project.id,
-        platform:  {
-                id: platform.id,
-                role:
+        platform: {
+            id: platform.id,
+            role:
             platform.ownerId === user.id
                 ? PlatformRole.OWNER
                 : PlatformRole.MEMBER,
-            },
+        },
     })
 
     return updatedToken

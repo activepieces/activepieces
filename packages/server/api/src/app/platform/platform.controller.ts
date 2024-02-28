@@ -24,7 +24,7 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/:id', GetPlatformRequest, async (req) => {
         assertEqual(
-            req.principal.platform?.id,
+            req.principal.platform.id,
             req.params.id,
             'userPlatformId',
             'paramId',

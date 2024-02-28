@@ -5,7 +5,6 @@ import { SystemProp, system } from 'server-shared'
 import { Provider } from '../../authentication/authentication-service/hooks/authentication-service-hooks'
 import { databaseConnection } from '../database-connection'
 import { FlagEntity } from '../../flags/flag.entity'
-import { platformService } from '../../platform/platform.service'
 
 const DEV_DATA_SEEDED_FLAG = 'DEV_DATA_SEEDED'
 
@@ -32,6 +31,7 @@ const setDevDataSeededFlag = async (): Promise<void> => {
 const seedDevUser = async (): Promise<void> => {
     const DEV_EMAIL = 'dev@ap.com'
     const DEV_PASSWORD = '12345678'
+
 
     await authenticationService.signUp({
         email: DEV_EMAIL,

@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { createMockUser } from '../../../helpers/mocks'
+import { CLOUD_PLATFORM_ID, createMockPlatform, createMockUser } from '../../../helpers/mocks'
 import { OtpType } from '@activepieces/ee-shared'
 import { emailService } from '../../../../src/app/ee/helper/email/email-service'
 
@@ -28,6 +28,10 @@ describe('OTP API', () => {
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save(mockUser)
 
+            const mockPlatform = createMockPlatform({ id: CLOUD_PLATFORM_ID, ownerId: mockUser.id })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection.getRepository('user').update(mockUser.id, { platformId: mockPlatform.id })
+
             const mockCreateOtpRequest = {
                 email: mockUser.email,
                 type: OtpType.EMAIL_VERIFICATION,
@@ -48,6 +52,10 @@ describe('OTP API', () => {
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save(mockUser)
 
+            const mockPlatform = createMockPlatform({ id: CLOUD_PLATFORM_ID, ownerId: mockUser.id })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection.getRepository('user').update(mockUser.id, { platformId: mockPlatform.id })
+            
             const mockCreateOtpRequest = {
                 email: mockUser.email,
                 type: OtpType.EMAIL_VERIFICATION,
@@ -65,7 +73,7 @@ describe('OTP API', () => {
             expect(emailService.sendOtpEmail).toBeCalledTimes(1)
             expect(emailService.sendOtpEmail).toHaveBeenCalledWith({
                 otp: expect.stringMatching(/^([0-9A-F]|-){36}$/i),
-                platformId: null,
+                platformId: CLOUD_PLATFORM_ID,
                 type: OtpType.EMAIL_VERIFICATION,
                 user: expect.objectContaining({
                     email: mockUser.email,
@@ -76,6 +84,10 @@ describe('OTP API', () => {
         it('OTP is unique per user per OTP type', async () => {
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save(mockUser)
+
+            const mockPlatform = createMockPlatform({ id: CLOUD_PLATFORM_ID, ownerId: mockUser.id })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection.getRepository('user').update(mockUser.id, { platformId: mockPlatform.id })
 
             const mockCreateOtpRequest = {
                 email: mockUser.email,

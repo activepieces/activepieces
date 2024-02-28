@@ -9,7 +9,6 @@ import {
     PlatformRole,
     Principal,
     PrincipalType,
-    ProjectType,
     apId,
 } from '@activepieces/shared'
 import {
@@ -123,7 +122,6 @@ describe('API Security', () => {
                     id: mockApiKey.id,
                     type: PrincipalType.SERVICE,
                     projectId: expect.stringMatching(/ANONYMOUS_.{21}/),
-                    projectType: ProjectType.PLATFORM_MANAGED,
                     platform: {
                         id: mockPlatform.id,
                         role: PlatformRole.OWNER,
@@ -172,7 +170,6 @@ describe('API Security', () => {
                     id: mockApiKey.id,
                     type: PrincipalType.SERVICE,
                     projectId: mockProject.id,
-                    projectType: ProjectType.PLATFORM_MANAGED,
                     platform: {
                         id: mockPlatform.id,
                         role: PlatformRole.OWNER,
@@ -221,7 +218,6 @@ describe('API Security', () => {
                     id: mockApiKey.id,
                     type: PrincipalType.SERVICE,
                     projectId: mockProject.id,
-                    projectType: ProjectType.PLATFORM_MANAGED,
                     platform: {
                         id: mockPlatform.id,
                         role: PlatformRole.OWNER,
@@ -272,7 +268,6 @@ describe('API Security', () => {
                     id: mockApiKey.id,
                     type: PrincipalType.SERVICE,
                     projectId: mockProject.id,
-                    projectType: ProjectType.PLATFORM_MANAGED,
                     platform: {
                         id: mockPlatform.id,
                         role: PlatformRole.OWNER,
@@ -479,7 +474,6 @@ describe('API Security', () => {
                 id: apId(),
                 type: PrincipalType.USER,
                 projectId: apId(),
-                projectType: ProjectType.PLATFORM_MANAGED,
                 platform: {
                     id: apId(),
                     role: PlatformRole.OWNER,
@@ -508,9 +502,8 @@ describe('API Security', () => {
                     id: mockPrincipal.id,
                     type: PrincipalType.USER,
                     projectId: mockPrincipal.projectId,
-                    projectType: ProjectType.PLATFORM_MANAGED,
                     platform: {
-                        id: mockPrincipal.platform?.id,
+                        id: mockPrincipal.platform.id,
                         role: PlatformRole.OWNER,
                     },
                 }),
@@ -640,11 +633,12 @@ describe('API Security', () => {
                     id: expect.stringMatching(/ANONYMOUS_.{21}/),
                     type: PrincipalType.UNKNOWN,
                     projectId: expect.stringMatching(/ANONYMOUS_.{21}/),
-                    projectType: ProjectType.STANDALONE,
+                    platform: {
+                        id: expect.stringMatching(/ANONYMOUS_.{21}/),
+                        role: PlatformRole.MEMBER,
+                    },
                 }),
             )
-
-            expect(mockRequest.principal).not.toHaveProperty('platform')
         })
 
         it('Fails if route is authenticated', async () => {

@@ -38,7 +38,7 @@ export class GlobalApiKeyAuthnHandler extends BaseSecurityHandler {
             platform: {
                 id: `SUPER_USER_${apId()}`,
                 role: PlatformRole.MEMBER,
-            }
+            },
         }
 
         return Promise.resolve()

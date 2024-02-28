@@ -23,7 +23,7 @@ const auditEventController: FastifyPluginAsyncTypebox = async (app) => {
             },
         },
         async (request) => {
-            const platformId = request.principal.platform?.id
+            const platformId = request.principal.platform.id
             assertNotNullOrUndefined(platformId, 'platformId')
             await assertAuditLogEnabled(platformId)
             return auditLogService.list({

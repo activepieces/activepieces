@@ -24,7 +24,7 @@ export class AnonymousAuthnHandler extends BaseSecurityHandler {
                 platform: {
                     id: `ANONYMOUS_${apId()}`,
                     role: PlatformRole.MEMBER,
-                }
+                },
             }
         }
 

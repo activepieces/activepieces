@@ -1,7 +1,7 @@
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupApp } from '../../../../src/app/app'
 import { generateMockToken } from '../../../helpers/auth'
-import { createMockUser, createMockProject } from '../../../helpers/mocks'
+import { createMockUser, createMockProject, createMockPlatform } from '../../../helpers/mocks'
 import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
 import { PrincipalType } from '@activepieces/shared'
@@ -25,7 +25,12 @@ describe('Project Worker API', () => {
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save([mockUser])
 
-            const mockProject = createMockProject({ ownerId: mockUser.id })
+            const mockPlatform = createMockPlatform({
+                ownerId: mockUser.id,
+            })
+            await databaseConnection.getRepository('platform').save([mockPlatform])
+
+            const mockProject = createMockProject({ ownerId: mockUser.id, platformId: mockPlatform.id })
             await databaseConnection.getRepository('project').save([mockProject])
 
             const mockToken = await generateMockToken({
@@ -46,7 +51,7 @@ describe('Project Worker API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
 
-            expect(Object.keys(responseBody)).toHaveLength(9)
+            expect(Object.keys(responseBody)).toHaveLength(8)
             expect(responseBody?.id).toBe(mockProject.id)
         })
     })

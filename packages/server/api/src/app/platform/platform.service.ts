@@ -2,7 +2,6 @@ import {
     ActivepiecesError,
     ErrorCode,
     LocalesEnum,
-    ProjectId,
     UserId,
     apId,
     isNil,

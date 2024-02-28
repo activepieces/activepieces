@@ -55,8 +55,7 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
         },
         async (request) => {
             const platformId =
-        request.principal.platform?.id ??
-        system.getOrThrow(SystemProp.CLOUD_PLATFORM_ID)
+        request.principal.type === PrincipalType.UNKNOWN ? system.getOrThrow(SystemProp.CLOUD_PLATFORM_ID) : request.principal.platform.id
             return flowTemplateService.list(platformId, request.query)
         },
     )
@@ -75,12 +74,12 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
             const { type } = request.body
             if (type === TemplateType.PLATFORM) {
                 await assertUserIsPlatformOwner({
-                    platformId: request.principal.platform?.id,
+                    platformId: request.principal.platform.id,
                     userId: request.principal.id,
                 })
             }
             return flowTemplateService.upsert(
-                request.principal.platform?.id,
+                request.principal.platform.id,
                 request.principal.projectId,
                 request.body,
             )

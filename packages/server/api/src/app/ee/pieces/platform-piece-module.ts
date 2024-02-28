@@ -45,7 +45,7 @@ const platformPieceController: FastifyPluginCallbackTypebox = (
             },
         },
         async (req, reply) => {
-            const platformId = req.principal.platform?.id
+            const platformId = req.principal.platform.id
             assertPrincipalIsPlatformOwner(req.body.scope, req.principal)
             assertProjectScopeOnlyAllowedForUser(req.body.scope, req.principal)
             await pieceService.installPiece(
@@ -65,7 +65,7 @@ function assertPrincipalIsPlatformOwner(
     principal: Principal,
 ): void {
     if (scope == PieceScope.PLATFORM) {
-        if (principal.platform?.role !== PlatformRole.OWNER) {
+        if (principal.platform.role !== PlatformRole.OWNER) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENGINE_OPERATION_FAILURE,
                 params: {
