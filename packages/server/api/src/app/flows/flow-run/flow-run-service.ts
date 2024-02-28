@@ -35,7 +35,6 @@ import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { logger } from 'server-shared'
 import { flowService } from '../flow/flow.service'
-import { MoreThanOrEqual } from 'typeorm'
 import { flowRunHooks } from './flow-run-hooks'
 import { flowResponseWatcher } from './flow-response-watcher'
 
@@ -327,22 +326,6 @@ export const flowRunService = {
 
         return flowRun
     },
-
-    async getTasksUsedAfter(params: GetAllProdRuns): Promise<number> {
-        const { projectId, created } = params
-
-        const sumOfTasks = await flowRunRepo
-            .createQueryBuilder('flow_run')
-            .select('COALESCE(SUM(flow_run.tasks), 0)', 'tasks')
-            .where({
-                projectId,
-                environment: RunEnvironment.PRODUCTION,
-                created: MoreThanOrEqual(created),
-            })
-            .getRawOne()
-
-        return Number(sumOfTasks.tasks)
-    },
 }
 
 export enum HookType {
@@ -402,7 +385,3 @@ type RetryParams = {
     strategy: FlowRetryStrategy
 }
 
-type GetAllProdRuns = {
-    projectId: ProjectId
-    created: string
-}
