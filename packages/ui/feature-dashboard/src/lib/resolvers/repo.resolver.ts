@@ -30,19 +30,19 @@ export class RepoResolver {
       this.platformService,
       this.authenticationService.getPlatformId()
     ).pipe(
-      switchMap((showUpgrade) => {
-        if (!showUpgrade) {
+      switchMap((gitSyncLocked) => {
+        if (!gitSyncLocked) {
           return this.syncProjectService.list().pipe(
             map((res) => {
               return {
-                showUpgrade,
+                showUpgrade: false,
                 repo: res[0],
               };
             })
           );
         }
         return of({
-          showUpgrade,
+          showUpgrade: true,
         });
       }),
       catchError((err) => {
@@ -66,7 +66,7 @@ export const isGitSyncLocked = (
 
       return platformService.getPlatform(platformId!).pipe(
         map((p) => {
-          return p.gitSyncEnabled;
+          return !p.gitSyncEnabled;
         })
       );
     })
