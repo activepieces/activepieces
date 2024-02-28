@@ -6,7 +6,7 @@ import { gitRepoService } from './git-repo.service'
 import { PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, SeekPage } from '@activepieces/shared'
 import {
     ConfigureRepoRequest,
-    GitRepoWithoutSenestiveData,
+    GitRepoWithoutSensitiveData,
     PushGitRepoRequest,
 } from '@activepieces/ee-shared'
 import { StatusCodes } from 'http-status-codes'
@@ -109,7 +109,7 @@ const ConfigureRepoRequestSchema = {
         description: 'Upsert a git repository information for a project.',
         body: ConfigureRepoRequest,
         response: {
-            [StatusCodes.CREATED]: GitRepoWithoutSenestiveData,
+            [StatusCodes.CREATED]: GitRepoWithoutSensitiveData,
         },
     },
 }
@@ -123,7 +123,7 @@ const ListRepoRequestSchema = {
             projectId: Type.String(),
         }),
         response: {
-            [StatusCodes.OK]: SeekPage(GitRepoWithoutSenestiveData),
+            [StatusCodes.OK]: SeekPage(GitRepoWithoutSensitiveData),
         },
     },
 }

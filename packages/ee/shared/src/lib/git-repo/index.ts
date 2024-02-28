@@ -11,8 +11,8 @@ export const GitRepo = Type.Object({
 
 export type GitRepo = Static<typeof GitRepo>
 
-export const GitRepoWithoutSenestiveData = Type.Omit(GitRepo, ['sshPrivateKey'])
-export type GitRepoWithoutSenestiveData = Static<typeof GitRepoWithoutSenestiveData>
+export const GitRepoWithoutSensitiveData = Type.Omit(GitRepo, ['sshPrivateKey'])
+export type GitRepoWithoutSensitiveData = Static<typeof GitRepoWithoutSensitiveData>
 
 export enum PushSyncMode {
     FLOW = 'FLOW',
