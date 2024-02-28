@@ -30,19 +30,19 @@ export class RepoResolver {
       this.platformService,
       this.authenticationService.getPlatformId()
     ).pipe(
-      switchMap((showUpgrade) => {
-        if (!showUpgrade) {
+      switchMap((gitSyncEnabled) => {
+        if (gitSyncEnabled) {
           return this.syncProjectService.list().pipe(
             map((res) => {
               return {
-                showUpgrade,
+                showUpgrade: gitSyncEnabled,
                 repo: res[0],
               };
             })
           );
         }
         return of({
-          showUpgrade,
+          showUpgrade: gitSyncEnabled,
         });
       }),
       catchError((err) => {
