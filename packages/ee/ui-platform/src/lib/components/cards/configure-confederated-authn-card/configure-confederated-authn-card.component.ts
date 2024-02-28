@@ -6,7 +6,6 @@ import {
   OnInit,
   Output,
 } from '@angular/core';
-import { Platform } from '@activepieces/ee-shared';
 import { Observable, tap } from 'rxjs';
 import {
   EnableFederatedAuthnProviderDialogComponent,
@@ -25,6 +24,7 @@ import {
   doesPlatformHaveAtLeastOneLoginMethodEnabled,
 } from '../../util';
 import { PlatformSettingsBaseComponent } from '../../platform-settings-base.component';
+import { Platform } from '@activepieces/shared';
 
 @Component({
   selector: 'app-configure-confederated-authn-card',

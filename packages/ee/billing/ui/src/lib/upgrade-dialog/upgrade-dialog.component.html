@@ -7,7 +7,7 @@
     <div class="ap-typography-body-1 ap-text-body">
       <div *ngIf="data?.limitType === 'team'" i18n>
         You have reached the limits of your current plan.
-        <span class="ap-font-bold"> {{teamMemebersNotes[data.projectType]}} </span> ⭐ to unlock more features.
+        <span class="ap-font-bold"> Please upgrade to </span> ⭐ to unlock more features.
       </div>
     </div>
   </div>
@@ -17,10 +17,6 @@
   <div class="ap-flex ap-gap-2.5">
     <ap-button btnColor="basic" mat-dialog-close btnSize="default" class="ap-btnColor-basic">
       Cancel
-    </ap-button>
-    <ap-button cdkFocusInitial *ngIf="data.projectType !== ProjectType.PLATFORM_MANAGED " btnSize="default"
-      type="submit" mat-focus (click)="openPlans()" btnColor="primary">
-      Upgrade
     </ap-button>
   </div>
 </mat-dialog-actions>

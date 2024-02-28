@@ -1,9 +1,7 @@
 import {
     KeyAlgorithm,
     SigningKey,
-    Platform,
     OAuthApp,
-    FilteredPieceBehavior,
     CustomDomain,
     CustomDomainStatus,
     OtpModel,
@@ -23,7 +21,6 @@ import {
     apId,
     Project,
     NotificationStatus,
-    ProjectType,
     ProjectMemberRole,
     PieceType,
     PackageType,
@@ -37,6 +34,8 @@ import {
     FlowRun,
     ExecutionOutputStatus,
     RunEnvironment,
+    Platform,
+    FilteredPieceBehavior,
 } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
@@ -112,7 +111,6 @@ export const createMockProject = (project?: Partial<Project>): Project => {
         displayName: project?.displayName ?? faker.lorem.word(),
         notifyStatus:
       project?.notifyStatus ?? faker.helpers.enumValue(NotificationStatus),
-        type: project?.type ?? faker.helpers.enumValue(ProjectType),
         platformId: project?.platformId ?? apId(),
         externalId: project?.externalId ?? apId(),
     }

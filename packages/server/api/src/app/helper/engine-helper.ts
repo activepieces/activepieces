@@ -28,6 +28,7 @@ import {
     ActionType,
     FlowVersion,
     ExecuteFlowOperation,
+    PlatformRole,
 } from '@activepieces/shared'
 import { Sandbox } from 'server-worker'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
@@ -94,6 +95,11 @@ const generateWorkerToken = ({
         id: apId(),
         type: PrincipalType.WORKER,
         projectId,
+        // TODO NOW remove this hack
+        platform: {
+            id: apId(),
+            role: PlatformRole.OWNER,
+        },
     })
 }
 

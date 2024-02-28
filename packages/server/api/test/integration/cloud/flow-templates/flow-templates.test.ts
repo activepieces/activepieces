@@ -62,7 +62,7 @@ describe('Flow Templates', () => {
             const { mockPlatformTemplate } = await createMockPlatformTemplate({
                 platformId: CLOUD_PLATFORM_ID,
             })
-            const _randomPlatformTemplate = await createMockPlatformTemplate({
+            await createMockPlatformTemplate({
                 platformId: apId(),
             })
 

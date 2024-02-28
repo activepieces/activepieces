@@ -15,7 +15,7 @@ import {
   PlatformService,
   featureDisabledTooltip,
 } from '@activepieces/ui/common';
-import { Platform } from '@activepieces/ee-shared';
+import { Platform } from '@activepieces/shared';
 import { ActivatedRoute } from '@angular/router';
 import {
   ManagedPieceMetadataModelSummary,

@@ -20,7 +20,7 @@ const communityPiecesController: FastifyPluginAsyncTypebox = async (app) => {
             },
         },
         async (req, res): Promise<PieceMetadataModel> => {
-            const platformId = req.principal.platform?.id
+            const platformId = req.principal.platform.id
             const projectId = req.principal.projectId
             const pieceMetadata = await pieceService.installPiece(
                 platformId,

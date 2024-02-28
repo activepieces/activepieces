@@ -7,7 +7,7 @@ import {
 } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { BehaviorSubject, Observable, map, tap } from 'rxjs';
-import { Platform } from '@activepieces/ee-shared';
+import { Platform } from '@activepieces/shared';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { FlagService, PlatformService } from '@activepieces/ui/common';
 import { FederatedAuthnProviderEnum } from '../../sso-settings/federated-authn-provider.enum';

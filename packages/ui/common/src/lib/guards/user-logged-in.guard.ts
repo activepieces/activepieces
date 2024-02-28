@@ -24,7 +24,7 @@ import {
 import { ProjectService } from '../service/project.service';
 import { StatusCodes } from 'http-status-codes';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { ProjectWithLimits } from '@activepieces/shared';
+import { ProjectWithLimits, isNil } from '@activepieces/shared';
 
 @Injectable({
   providedIn: 'root',
@@ -38,6 +38,7 @@ export class UserLoggedIn {
     private projectService: ProjectService,
     private platformService: PlatformService,
     private snackBar: MatSnackBar,
+    private authenticationService: AuthenticationService,
     private connectionsService: AppConnectionsService
   ) {}
 
@@ -57,6 +58,10 @@ export class UserLoggedIn {
     if (!this.auth.isLoggedIn()) {
       this.redirectService.setRedirectRouteToCurrentRoute();
       this.router.navigate([redirectTo]);
+      return false;
+    }
+    if (this.auth.isLoggedIn() && isNil(this.auth.getPlatformId())) {
+      this.authenticationService.logout();
       return false;
     }
 
@@ -110,7 +115,10 @@ export class UserLoggedIn {
           }),
           catchError((error) => {
             const status = error?.status;
-            if (status === StatusCodes.UNAUTHORIZED) {
+            if (
+              status === StatusCodes.UNAUTHORIZED ||
+              status === StatusCodes.INTERNAL_SERVER_ERROR
+            ) {
               this.snackBar.open($localize`Your session expired`);
               this.auth.logout();
               this.router.navigate(['/sign-in']);

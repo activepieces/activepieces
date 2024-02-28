@@ -30,7 +30,7 @@ import { ProjectMemberEntity } from '../ee/project-members/project-member.entity
 import { getEdition } from '../helper/secret-helper'
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
 import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
-import { PlatformEntity } from '../ee/platform/platform.entity'
+import { PlatformEntity } from '../platform/platform.entity'
 import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
 import { OtpEntity } from '../ee/otp/otp-entity'
@@ -63,6 +63,7 @@ function getEntities(): EntitySchema<unknown>[] {
         FolderEntity,
         PieceMetadataEntity,
         StepFileEntity,
+        PlatformEntity,
     ]
 
     switch (edition) {
@@ -75,7 +76,6 @@ function getEntities(): EntitySchema<unknown>[] {
                 FlowTemplateEntity,
                 ConnectionKeyEntity,
                 AppCredentialEntity,
-                PlatformEntity,
                 CustomDomainEntity,
                 SigningKeyEntity,
                 OAuthAppEntity,
@@ -91,7 +91,6 @@ function getEntities(): EntitySchema<unknown>[] {
             entities.push(
                 ProjectMemberEntity,
                 ProjectPlanEntity,
-                PlatformEntity,
                 CustomDomainEntity,
                 SigningKeyEntity,
                 OAuthAppEntity,

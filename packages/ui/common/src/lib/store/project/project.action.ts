@@ -1,10 +1,10 @@
 import { createAction, props } from '@ngrx/store';
 import {
   NotificationStatus,
+  Platform,
   Project,
   ProjectWithLimits,
 } from '@activepieces/shared';
-import { Platform } from '@activepieces/ee-shared';
 
 export enum ProjectActionType {
   CLEAR_PROJECTS = '[PROJECT] CLEAR_PROJECTS',

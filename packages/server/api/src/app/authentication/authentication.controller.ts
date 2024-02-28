@@ -1,7 +1,7 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { RateLimitOptions } from '@fastify/rate-limit'
 import { authenticationService } from './authentication-service'
-import { resolvePlatformIdForRequest } from '../ee/platform/lib/platform-utils'
+import { resolvePlatformIdForRequest } from '../platform/platform-utils'
 import { getEdition } from '../helper/secret-helper'
 import {
     ApEdition,
