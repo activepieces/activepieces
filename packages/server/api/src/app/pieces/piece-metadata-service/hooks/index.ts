@@ -10,10 +10,12 @@ export const defaultPieceHooks: PieceMetadataServiceHooks = {
             params.orderBy,
             params.pieces,
         )
+        
         return filterPiecesBasedUser({
             categories: params.categories,
             searchQuery: params.searchQuery,
             pieces: sortedPieces,
+            platformId: params.platformId,
             suggestionType: params.suggestionType,
         })
     },
