@@ -27,6 +27,9 @@
         "packages/ee/project-members/src/index.ts"
       ],
       "@activepieces/engine": ["packages/engine/src/main.ts"],
+      "@activepieces/piece-activecampaign": [
+        "packages/pieces/community/activecampaign/src/index.ts"
+      ],
       "@activepieces/piece-activepieces": [
         "packages/pieces/community/activepieces/src/index.ts"
       ],
