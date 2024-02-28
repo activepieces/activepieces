@@ -6,10 +6,10 @@ import {
     Platform,
     PlatformWithoutSensitiveData,
     UpdatePlatformRequestBody,
-} from '@activepieces/ee-shared'
+} from '@activepieces/shared'
 import { ApId, Principal, assertEqual } from '@activepieces/shared'
 import { platformService } from './platform.service'
-import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
+import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { StatusCodes } from 'http-status-codes'
 
 export const platformController: FastifyPluginAsyncTypebox = async (app) => {
@@ -24,7 +24,7 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/:id', GetPlatformRequest, async (req) => {
         assertEqual(
-            req.principal.platform?.id,
+            req.principal.platform.id,
             req.params.id,
             'userPlatformId',
             'paramId',

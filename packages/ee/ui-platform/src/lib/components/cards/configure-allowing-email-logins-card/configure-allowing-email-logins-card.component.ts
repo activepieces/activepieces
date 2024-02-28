@@ -5,7 +5,6 @@ import {
   OnInit,
   Output,
 } from '@angular/core';
-import { Platform } from '@activepieces/ee-shared';
 import { Observable, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { PlatformService } from '@activepieces/ui/common';
@@ -15,6 +14,7 @@ import {
 } from '../../util';
 import { MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { PlatformSettingsBaseComponent } from '../../platform-settings-base.component';
+import { Platform } from '@activepieces/shared';
 
 @Component({
   selector: 'app-configure-allowing-email-logins-card',

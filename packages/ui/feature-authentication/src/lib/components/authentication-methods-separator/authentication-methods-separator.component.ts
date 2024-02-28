@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import {
   ThirdPartyAuthnProvidersToShowMap,
   ThirdPartyAuthnProviderEnum,
-} from '@activepieces/ee-shared';
+} from '@activepieces/shared';
 import { ApFlagId } from '@activepieces/shared';
 @Component({
   selector: 'app-authentication-methods-separator',

@@ -4,7 +4,6 @@ import {
     ErrorCode,
     PlatformRole,
     PrincipalType,
-    ProjectType,
     ProjectWithLimits,
     SERVICE_KEY_SECURITY_OPENAPI,
     SeekPage,
@@ -22,7 +21,7 @@ import {
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
 import { StatusCodes } from 'http-status-codes'
-import { platformService } from '../platform/platform.service'
+import { platformService } from '../../platform/platform.service'
 import { projectLimitsService } from '../project-plan/project-plan.service'
 
 export const platformProjectController: FastifyPluginCallbackTypebox = (
@@ -31,7 +30,7 @@ export const platformProjectController: FastifyPluginCallbackTypebox = (
     done,
 ) => {
     fastify.post('/', CreateProjectRequest, async (request, reply) => {
-        const platformId = request.principal.platform?.id
+        const platformId = request.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
         const platform = await platformService.getOneOrThrow(platformId)
 
@@ -40,7 +39,6 @@ export const platformProjectController: FastifyPluginCallbackTypebox = (
             displayName: request.body.displayName,
             platformId,
             externalId: request.body.externalId,
-            type: ProjectType.PLATFORM_MANAGED,
         })
         await projectLimitsService.upsert(DEFAULT_PLATFOR_LIMIT, project.id)
         const projectWithUsage =
@@ -49,7 +47,7 @@ export const platformProjectController: FastifyPluginCallbackTypebox = (
     })
 
     fastify.get('/', ListProjectRequestForApiKey, async (request) => {
-        const platformId = request.principal.platform?.id
+        const platformId = request.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
         return platformProjectService.getAll({
             platformId,
@@ -61,7 +59,7 @@ export const platformProjectController: FastifyPluginCallbackTypebox = (
     fastify.post('/:id', UpdateProjectRequest, async (request) => {
         const project = await projectService.getOneOrThrow(request.params.id)
         const haveTokenForTheProject = request.principal.projectId === project.id
-        const ownThePlatform = request.principal.platform?.role === PlatformRole.OWNER && request.principal.platform.id === project.platformId
+        const ownThePlatform = request.principal.platform.role === PlatformRole.OWNER && request.principal.platform.id === project.platformId
         if (!haveTokenForTheProject && !ownThePlatform) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
@@ -69,7 +67,7 @@ export const platformProjectController: FastifyPluginCallbackTypebox = (
             })
         }       
         return platformProjectService.update({
-            platformId: request.principal.platform?.id,
+            platformId: request.principal.platform.id,
             projectId: request.params.id,
             request: request.body,
         })

@@ -16,10 +16,10 @@ import { AuditEventService } from '../../service/audit-event-service';
 import {
   ApplicationEvent,
   ApplicationEventName,
-  Platform,
   summarizeApplicationEvent,
 } from '@activepieces/ee-shared';
 import { ActivatedRoute } from '@angular/router';
+import { Platform } from '@activepieces/shared';
 
 @Component({
   selector: 'app-audit-event-table',

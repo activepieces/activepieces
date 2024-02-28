@@ -1,9 +1,12 @@
-import { ApEdition, ApFlagId } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  ThirdPartyAuthnProvidersToShowMap,
+} from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { map, Observable, shareReplay } from 'rxjs';
 import { environment } from '../environments/environment';
-import { ThirdPartyAuthnProvidersToShowMap } from '@activepieces/ee-shared';
 
 type FlagsMap = Record<string, boolean | string | object | undefined>;
 

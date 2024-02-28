@@ -14,6 +14,7 @@ import {
     createMockFlow,
     createMockFlowRun,
     createMockFlowVersion,
+    createMockPlatform,
     createMockProject,
     createMockUser,
 } from '../../../helpers/mocks'
@@ -37,9 +38,12 @@ describe('flow execution', () => {
         const mockUser = createMockUser()
         await databaseConnection.getRepository('user').save([mockUser])
 
-        const mockProject = createMockProject({ ownerId: mockUser.id })
-        await databaseConnection.getRepository('project').save([mockProject])
+        const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
+        await databaseConnection.getRepository('platform').save([mockPlatform])
 
+        const mockProject = createMockProject({ ownerId: mockUser.id, platformId: mockPlatform.id })
+        await databaseConnection.getRepository('project').save([mockProject])
+        
         const mockFlow = createMockFlow({
             projectId: mockProject.id,
             status: FlowStatus.ENABLED,

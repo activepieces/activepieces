@@ -8,7 +8,6 @@ import {
     assertNotNullOrUndefined,
     isNil,
 } from '@activepieces/shared'
-import { PlatformId } from '@activepieces/ee-shared'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import {
@@ -30,7 +29,7 @@ const auditLogRepo = databaseConnection.getRepository(AuditEventEntity)
 type AuditLogService = {
     send: ApplicationEventHooks['send']
     list: (params: {
-        platformId: PlatformId
+        platformId: string
         cursorRequest: Cursor | null
         limit: number
     }) => Promise<SeekPage<ApplicationEvent>>
@@ -45,7 +44,7 @@ export const auditLogService: AuditLogService = {
         cursorRequest,
         limit,
     }: {
-        platformId: PlatformId
+        platformId: string
         cursorRequest: Cursor | null
         limit: number
     }): Promise<SeekPage<ApplicationEvent>> {

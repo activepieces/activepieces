@@ -9,7 +9,6 @@ import {
     PrincipalType,
     Project,
     ProjectId,
-    ProjectType,
     isNil,
     isObject,
 } from '@activepieces/shared'
@@ -70,7 +69,6 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
             id: apiKey.id,
             type: PrincipalType.SERVICE,
             projectId: 'ANONYMOUS_' + nanoid(),
-            projectType: ProjectType.PLATFORM_MANAGED,
             platform: {
                 id: apiKey.platformId,
                 role: PlatformRole.OWNER,

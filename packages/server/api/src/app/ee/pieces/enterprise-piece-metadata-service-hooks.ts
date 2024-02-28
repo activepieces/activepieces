@@ -1,11 +1,10 @@
-import { FilteredPieceBehavior } from '@activepieces/ee-shared'
-import { isNil } from '@activepieces/shared'
+import { FilteredPieceBehavior, isNil } from '@activepieces/shared'
 import { PieceMetadataSchema } from '../../pieces/piece-metadata-entity'
 import {
     PieceMetadataServiceHooks,
     defaultPieceHooks,
 } from '../../pieces/piece-metadata-service/hooks'
-import { platformService } from '../platform/platform.service'
+import { platformService } from '../../platform/platform.service'
 
 export const enterprisePieceMetadataServiceHooks: PieceMetadataServiceHooks = {
     async filterPieces(params) {

@@ -1,5 +1,4 @@
 import {
-    PlatformId,
     ApiKeyResponseWithValue,
     ApiKey,
 } from '@activepieces/ee-shared'
@@ -85,15 +84,15 @@ export function generateApiKey() {
 }
 
 type AddParams = {
-    platformId: PlatformId
+    platformId: string
     displayName: string
 }
 
 type DeleteParams = {
     id: string
-    platformId: PlatformId
+    platformId: string
 }
 
 type ListParams = {
-    platformId?: PlatformId
+    platformId?: string
 }

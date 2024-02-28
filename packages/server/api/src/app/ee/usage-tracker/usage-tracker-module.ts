@@ -7,8 +7,8 @@ import { UserEntity } from '../../user/user-entity'
 import { Between, Equal } from 'typeorm'
 import { ProjectEntity } from '../../project/project-entity'
 import { redisSystemJob } from '../helper/redis-system-job'
-import { Platform } from '@activepieces/ee-shared'
-import { PlatformEntity } from '../platform/platform.entity'
+import { PlatformEntity } from '../../platform/platform.entity'
+import { Platform } from '@activepieces/shared'
 
 const userRepo = databaseConnection.getRepository(UserEntity)
 const projectRepo = databaseConnection.getRepository(ProjectEntity)

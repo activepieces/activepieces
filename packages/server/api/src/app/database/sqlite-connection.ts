@@ -32,6 +32,7 @@ import { AddVerifiedAndChangeStatusSqlite1703768553820 } from './migration/sqlit
 import { AddTriggerTestStrategy1707087022764 } from './migration/common/1707087022764-add-trigger-test-strategy'
 import { AddCategoriesToPieceMetadata1707229986819 } from './migration/sqlite/1707229986819-AddCategoriesToPieceMetadata'
 import { AddUniqueStoreConstraint1708527446535 } from './migration/sqlite/1708527446535-AddUniqueStoreConstraint'
+import { CreateDefaultPlaformSqlite1709051625110 } from './migration/sqlite/1709051625110-CreateDefaultPlaformSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(SystemProp.CONFIG_PATH)
@@ -81,6 +82,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddTriggerTestStrategy1707087022764,
         AddCategoriesToPieceMetadata1707229986819,
         AddUniqueStoreConstraint1708527446535,
+        CreateDefaultPlaformSqlite1709051625110,
     ]
     const edition = getEdition()
     if (edition !== ApEdition.COMMUNITY) {

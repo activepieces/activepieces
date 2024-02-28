@@ -1,6 +1,4 @@
 import {
-    Platform,
-    PlatformId,
     ProjectMemberStatus,
 } from '@activepieces/ee-shared'
 import {
@@ -14,7 +12,7 @@ import {
     PlatformRole,
     ProjectMemberRole,
 } from '@activepieces/shared'
-import { platformService } from '../../../platform/platform.service'
+import { platformService } from '../../../../platform/platform.service'
 import { accessTokenManager } from '../../../../authentication/lib/access-token-manager'
 import { projectMemberService } from '../../../project-members/project-member.service'
 import { projectService } from '../../../../project/project-service'
@@ -55,34 +53,21 @@ const populateTokenWithPlatformInfo = async ({
     user,
     project,
 }: PopulateTokenWithPlatformInfoParams): Promise<string> => {
-    const platform = await getPlatform(user.platformId)
+    const platform = await platformService.getOneOrThrow(project.platformId)
     const updatedToken = await accessTokenManager.generateToken({
         id: user.id,
         type: PrincipalType.USER,
         projectId: project.id,
-        projectType: project.type,
-        platform: isNil(platform)
-            ? undefined
-            : {
-                id: platform.id,
-                role:
+        platform: {
+            id: platform.id,
+            role:
             platform.ownerId === user.id
                 ? PlatformRole.OWNER
                 : PlatformRole.MEMBER,
-            },
+        },
     })
 
     return updatedToken
-}
-
-const getPlatform = async (
-    platformId: PlatformId | null,
-): Promise<Platform | null> => {
-    if (isNil(platformId)) {
-        return null
-    }
-
-    return platformService.getOne(platformId)
 }
 
 type PopulateTokenWithPlatformInfoParams = {

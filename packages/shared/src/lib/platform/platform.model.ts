@@ -1,8 +1,10 @@
-import { ApId, BaseModelSchema, LocalesEnum } from "@activepieces/shared";
-import { Static, Type } from "@sinclair/typebox";
-import { FederatedAuthnProviderConfig, FederatedAuthnProviderConfigWithoutSensitiveData } from "../authn";
+import { Static, Type } from '@sinclair/typebox'
+import { FederatedAuthnProviderConfig, FederatedAuthnProviderConfigWithoutSensitiveData } from '../federated-authn'
+import { LocalesEnum } from '../common'
+import { ApId } from '../common/id-generator'
+import { BaseModelSchema } from '../common/base-model'
 
-export type PlatformId = ApId;
+export type PlatformId = ApId
 
 export enum FilteredPieceBehavior {
     ALLOWED = 'ALLOWED',
