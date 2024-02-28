@@ -5,7 +5,7 @@ export const smtpCommon = {
     return {
       host: auth.host,
       port: auth.port,
-      requireTLS: auth.requireTLS,
+      requireTLS: auth.TLS,
       auth: {
         user: auth.email,
         pass: auth.password,
@@ -26,5 +26,5 @@ export type smtpAuthParams = {
   email: string;
   password: string;
   port: number;
-  requireTLS: boolean;
+  TLS: boolean;
 };

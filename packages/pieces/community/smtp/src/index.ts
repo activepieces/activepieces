@@ -33,7 +33,7 @@ export const smtpAuth = PieceAuth.CustomAuth({
         }),
       },
     }),
-    requireTLS: Property.Checkbox({
+    TLS: Property.Checkbox({
       displayName: 'Require TLS?',
       defaultValue: false,
       required: true,
