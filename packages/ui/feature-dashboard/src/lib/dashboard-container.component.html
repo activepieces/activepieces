@@ -8,12 +8,20 @@
             <div class="ap-flex ap-items-center  ap-my-5 ap-mx-[1.875rem]">
                 <app-project-switcher
                     *ngIf="(isInPlatformRoute$ | async) === undefined || (isInPlatformRoute$ | async) === false "></app-project-switcher>
+
                 <div class="ap-typography-headline-5 !ap-font-semibold" *ngIf="(isInPlatformRoute$ | async) === true"
                     i18n>Admin Console</div>
+
                 <div class="ap-flex-grow"></div>
-                <ap-button *ngIf="!router.url.startsWith('/platform') && (showPlatform$ | async) === true" btnColor="white" btnStyle="stroked"
-                    btnSize="medium" (buttonClicked)="navigateToAdminConsole()" i18n>
+
+
+                <ap-button *ngIf="!router.url.startsWith('/platform') && (showPlatform$ | async) === true"
+                    btnColor="white" btnStyle="stroked" btnSize="medium" (buttonClicked)="navigateToAdminConsole()"
+                    i18n>
                     <div class="ap-flex ap-gap-2 ap-items-center">
+                        <svg-icon *ngIf="showAdminConsoleLock$ | async" [applyClass]="true" class="ap-fill-disable "
+                            [svgStyle]="{ width: '14px', height: '14px' }" src="assets/img/custom/lock.svg">
+                        </svg-icon>
                         <b>Admin Console</b>
                     </div>
 

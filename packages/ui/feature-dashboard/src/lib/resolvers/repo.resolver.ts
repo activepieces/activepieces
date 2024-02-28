@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { map, Observable, of, switchMap } from 'rxjs';
+import { catchError, map, Observable, of, switchMap } from 'rxjs';
 import { GitRepo } from '@activepieces/ee-shared';
 import {
   AuthenticationService,
@@ -25,32 +25,50 @@ export class RepoResolver {
   ) {}
 
   resolve(): Observable<RepoResolverData> {
-    return this.flagService.getEdition().pipe(
-      switchMap((ed) => {
-        if (ed === ApEdition.COMMUNITY) {
-          return of({
-            showUpgrade: true,
-          });
+    return isGitSyncLocked(
+      this.flagService,
+      this.platformService,
+      this.authenticationService.getPlatformId()
+    ).pipe(
+      switchMap((showUpgrade) => {
+        if (!showUpgrade) {
+          return this.syncProjectService.list().pipe(
+            map((res) => {
+              return {
+                showUpgrade,
+                repo: res[0],
+              };
+            })
+          );
         }
-        const platformId = this.authenticationService.getPlatformId()!;
-        return this.platformService.getPlatform(platformId).pipe(
-          switchMap((p) => {
-            if (p.gitSyncEnabled) {
-              return this.syncProjectService.list().pipe(
-                map((res) => {
-                  return {
-                    showUpgrade: false,
-                    repo: res[0],
-                  };
-                })
-              );
-            }
-            return of({
-              showUpgrade: true,
-            });
-          })
-        );
+        return of({
+          showUpgrade,
+        });
+      }),
+      catchError((err) => {
+        console.error(err);
+        return of({ showUpgrade: true });
       })
     );
   }
 }
+
+export const isGitSyncLocked = (
+  flagService: FlagService,
+  platformService: PlatformService,
+  platformId?: string
+) => {
+  return flagService.getEdition().pipe(
+    switchMap((ed) => {
+      if (ed === ApEdition.COMMUNITY) {
+        return of(true);
+      }
+
+      return platformService.getPlatform(platformId!).pipe(
+        map((p) => {
+          return p.gitSyncEnabled;
+        })
+      );
+    })
+  );
+};

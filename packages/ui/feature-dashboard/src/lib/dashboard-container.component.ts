@@ -27,6 +27,7 @@ export class DashboardContainerComponent {
   currentProject$: Observable<Project>;
   showPoweredByAp$: Observable<boolean>;
   showPlatform$: Observable<boolean>;
+  showAdminConsoleLock$: Observable<boolean>;
   constructor(
     private flagService: FlagService,
     private embeddedService: EmbeddingService,
@@ -54,6 +55,9 @@ export class DashboardContainerComponent {
       .getState$()
       .pipe(map((state) => !state.hideSideNav));
     this.isInPlatformRoute$ = this.dashboardService.getIsInPlatformRoute();
+    this.showAdminConsoleLock$ = this.flagService.isFlagEnabled(
+      ApFlagId.SHOW_PLATFORM_DEMO
+    );
   }
 
   navigateToAdminConsole() {
