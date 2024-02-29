@@ -1,6 +1,7 @@
 <div class="ap-w-full ap-pt-2">
 
     <ap-upgrade-note *ngIf="isDemo || !platform?.embeddingEnabled"
+      [featureNote]="upgradeNote"
         docsLink="https://www.activepieces.com/docs/embedding/embed-builder/generate-jwt#step-1-obtain-signing-key">
     </ap-upgrade-note>
 
