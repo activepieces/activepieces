@@ -2,8 +2,9 @@
 
 <div class="ap-flex ap-flex-col ap-justify-between" [style.height]="'calc(100vh - 209px)'">
     <div>
-        <ap-upgrade-note docsLink="https://www.activepieces.com/docs/admin-console/appearance"
-            *ngIf="isDemo"></ap-upgrade-note>
+        <ap-upgrade-note [featureNote]="upgradeNote"
+             docsLink="https://www.activepieces.com/docs/admin-console/appearance"
+             *ngIf="isDemo"></ap-upgrade-note>
         <form class="ap-flex ap-flex-col ap-gap-5" [formGroup]="formGroup" (ngSubmit)="save()">
             <mat-form-field class=" ap-max-w-[327px] ap-w-full">
                 <mat-label i18n>Name</mat-label>
@@ -55,7 +56,7 @@
 
 
             <mat-form-field class=" ap-max-w-[20.4375rem] ap-w-full">
-                <mat-label i18n>Primary Color</mat-label>
+                <mat-label i18n>Theme Color</mat-label>
                 <input matInput [formControl]="formGroup.controls.primaryColor">
                 <ngx-colors class="ap-px-[40px]" matSuffix ngx-colors-trigger
                     [formControl]="formGroup.controls.pickerCtrl"

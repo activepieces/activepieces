@@ -55,6 +55,7 @@ export class ProjectMembersTableComponent
   displayedColumns = ['email', 'role', 'status', 'created', 'action'];
   title = $localize`Project Members`;
   RolesDisplayNames = RolesDisplayNames;
+  upgradeNote = $localize`Effortlessly invite your teammates to your project and assign them roles, allowing them to view/edit flows or check runs.`;
   StatusDisplayNames: { [k: string]: string } = {
     [ProjectMemberStatus.ACTIVE]: $localize`Active`,
     [ProjectMemberStatus.PENDING]: $localize`Pending`,

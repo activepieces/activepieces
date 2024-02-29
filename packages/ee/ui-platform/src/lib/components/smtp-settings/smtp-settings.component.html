@@ -1,8 +1,8 @@
 <div class="ap-h-full ap-pt-2 ap-flex ap-flex-col">
-    <ap-upgrade-note *ngIf="isDemo"></ap-upgrade-note>
+    <ap-upgrade-note [featureNote]="upgradeNote" *ngIf="isDemo"></ap-upgrade-note>
     <div class="ap-mb-4 ap-max-w-[44.6875rem]">
-        <ap-markdown [fullWidth]="true"
-            [data]="'Configure your email server and sender details for sending messages to your users.'"></ap-markdown>
+        <ap-markdown  *ngIf="!upgradeNote" [fullWidth]="true"
+            [data]="upgradeNote"></ap-markdown>
     </div>
 
     <form [formGroup]="smtpSettingsForm" class="ap-flex  ap-max-w-[327px] ap-w-full ap-flex-col  ap-gap-4 ap-mb-10">

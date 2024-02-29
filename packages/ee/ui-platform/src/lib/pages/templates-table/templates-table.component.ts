@@ -30,6 +30,7 @@ export class TemplatesTableComponent {
   dialogClosed$?: Observable<unknown>;
   featureDisabledTooltip = featureDisabledTooltip;
   isDemo = false;
+  upgradeNote = $localize`Create and manage helpful templates for your users, by giving them a head start on their flows.`;
   constructor(
     private templateService: TemplatesService,
     private matDialog: MatDialog,

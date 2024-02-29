@@ -1,7 +1,7 @@
 <div class="ap-h-full ap-pt-2 ">
     <div class="ap-flex ap-max-w-[56.25rem] ap-flex-col ap-gap-4 ">
         <div class="ap-mb-2 " *ngIf="!(platform$ | async)?.ssoEnabled || isDemo">
-            <ap-upgrade-note></ap-upgrade-note>
+            <ap-upgrade-note [featureNote]="upgradeNote" docsLink="https://www.activepieces.com/docs/security/sso#supported-sso-providers"></ap-upgrade-note>
         </div>
         <app-allowed-email-domains-list [platform]="(platform$ | async) || undefined" [isDemo]="false"
             (platformUpdated)="platformUpdated($event)"></app-allowed-email-domains-list>

@@ -34,7 +34,7 @@ export class SmtpSettingsComponent
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   saving$?: Observable<void>;
   featureDisabledTooltip = featureDisabledTooltip;
-
+  upgradeNote = $localize`Configure your email provider settings for when you send users authentication emails or failed runs notifications.`;
   constructor(
     private fb: FormBuilder,
     private platformService: PlatformService,
