@@ -41,6 +41,7 @@ export class PlatformAppearanceComponent implements OnInit {
   locales = localesMap;
   title = $localize`Appearance`;
   featureDisabledTooltip = featureDisabledTooltip;
+  upgradeNote = $localize`Customize your platform's appearance and branding, including logo, theme color, and more.`;
   platform?: Platform;
   isDemo = false;
   constructor(
