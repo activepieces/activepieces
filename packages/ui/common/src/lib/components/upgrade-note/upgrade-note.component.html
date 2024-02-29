@@ -5,13 +5,7 @@
         <b>Premium Feature</b>
     </div>
     <div class="ap-typography-body-1  ap-text-white ap-max-w-[485px] ap-flex ap-flex-col ap-gap-4">
-       <ng-container *ngIf="!featureNote; else featureNoteTemplate">
-        Upgrade your plan to access features tailored to your needs.<br>
-        Empower your business and take it to new heights today!
-       </ng-container>
-       <ng-template #featureNoteTemplate>
         {{featureNote}}
-       </ng-template>
         <div class="ap-flex ap-gap-3 ap-items-center ap-h-[3rem]">
             <ap-button *ngIf="pricingUrl" (buttonClicked)="openPricing()" [fullWidthOfContainer]="true" btnColor="white"
                 btnSize="medium">
