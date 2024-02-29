@@ -53,7 +53,7 @@ async function increaseTasks(projectId: string, incrementBy: number): Promise<nu
 async function incrementOrCreateRedisRecord(projectId: string, startBillingPeriod: string, incrementBy: number): Promise<number> {
     const environment = system.get(SystemProp.ENVIRONMENT)
     if (environment === ApEnvironment.TESTING) {
-        return 0;
+        return 0
     }
     const key = constructUsageKey(projectId, startBillingPeriod)
     return getRedisConnection().incrby(key, incrementBy)
@@ -62,7 +62,7 @@ async function incrementOrCreateRedisRecord(projectId: string, startBillingPerio
 async function getTasksUsage(projectId: string, startBillingPeriod: string): Promise<number> {
     const environment = system.get(SystemProp.ENVIRONMENT)
     if (environment === ApEnvironment.TESTING) {
-        return 0;
+        return 0
     }
     const key = constructUsageKey(projectId, startBillingPeriod)
     const value = await getRedisConnection().get(key)
