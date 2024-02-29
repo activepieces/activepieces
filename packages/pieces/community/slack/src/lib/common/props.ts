@@ -57,6 +57,12 @@ export const profilePicture = Property.ShortText({
   required: false,
 });
 
+export const blocks = Property.Json({
+  displayName: 'Block Kit blocks',
+  description: 'See https://api.slack.com/block-kit for specs',
+  required: false,
+});
+
 export const userId = Property.Dropdown<string>({
   displayName: 'User',
   description: 'Message receiver',

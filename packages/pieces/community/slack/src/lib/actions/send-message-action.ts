@@ -1,5 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { profilePicture, slackChannel, username } from '../common/props';
+import {
+  profilePicture,
+  slackChannel,
+  username,
+  blocks,
+} from '../common/props';
 import { slackSendMessage } from '../common/utils';
 import { slackAuth } from '../../';
 
@@ -21,10 +26,11 @@ export const slackSendMessageAction = createAction({
       displayName: 'Attachment',
       required: false,
     }),
+    blocks,
   },
   async run(context) {
     const token = context.auth.access_token;
-    const { text, channel, username, profilePicture, file } =
+    const { text, channel, username, profilePicture, file, blocks } =
       context.propsValue;
 
     return slackSendMessage({
@@ -34,6 +40,7 @@ export const slackSendMessageAction = createAction({
       profilePicture,
       conversationId: channel,
       file,
+      blocks,
     });
   },
 });
