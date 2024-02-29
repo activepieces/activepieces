@@ -319,7 +319,6 @@ describe('Flow API', () => {
             ProjectMemberRole.ADMIN,
             ProjectMemberRole.EDITOR,
             ProjectMemberRole.VIEWER,
-            ProjectMemberRole.EXTERNAL_CUSTOMER,
         ])('Succeeds if user role is %s', async (testRole) => {
             // arrange
             const mockPlatformId = apId()
@@ -369,6 +368,63 @@ describe('Flow API', () => {
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
+        })
+
+        it('Fails if user role is EXTERNAL_CUSTOMER', async () => {
+            // arrange
+            const mockPlatformId = apId()
+            const mockOwner = createMockUser({ platformId: mockPlatformId })
+            const mockUser = createMockUser({ platformId: mockPlatformId })
+            await databaseConnection.getRepository('user').save([mockOwner, mockUser])
+
+            const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
+            const mockProject = createMockProject({
+                ownerId: mockOwner.id,
+                platformId: mockPlatform.id,
+            })
+            await databaseConnection.getRepository('project').save([mockProject])
+
+            const mockProjectMember = createMockProjectMember({
+                email: mockUser.email,
+                platformId: mockPlatform.id,
+                projectId: mockProject.id,
+                role: ProjectMemberRole.EXTERNAL_CUSTOMER,
+            })
+            await databaseConnection.getRepository('project_member').save([mockProjectMember])
+
+            const mockToken = await generateMockToken({
+                id: mockUser.id,
+                type: PrincipalType.USER,
+                projectId: mockProject.id,
+                platform: {
+                    id: mockPlatform.id,
+                    role: PlatformRole.MEMBER,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/v1/flows',
+                query: {
+                    projectId: mockProject.id,
+                    status: 'ENABLED',
+                },
+                headers: {
+                    authorization: `Bearer ${mockToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+
+            const responseBody = response?.json()
+            expect(responseBody?.code).toBe('PERMISSION_DENIED')
+            expect(responseBody?.params?.projectId).toBe(mockProject.id)
+            expect(responseBody?.params?.resource).toBe('flows')
+            expect(responseBody?.params?.action).toBe('GET')
         })
     })
 })
