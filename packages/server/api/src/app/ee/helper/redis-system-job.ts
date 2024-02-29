@@ -13,6 +13,7 @@ const useRedis = system.get(SystemProp.QUEUE_MODE) === QueueMode.REDIS
 type SystemJobHandler = (data: Job<SystemJobData, unknown>) => Promise<void>
 
 let systemJobsQueue: Queue<SystemJobData, unknown>
+let systemJobWorker: Worker<SystemJobData, unknown>
 const SYSTEM_JOB_QUEUE = 'system-job-queue'
 
 const handlers: Record<string, SystemJobHandler> = {}
@@ -37,7 +38,7 @@ export const redisSystemJob = {
         )
         await systemJobsQueue.waitUntilReady()
 
-        const systemJobWorker = new Worker<SystemJobData, unknown, ApId>(
+        systemJobWorker = new Worker<SystemJobData, unknown, ApId>(
             SYSTEM_JOB_QUEUE,
             async (job) => {
                 const handlerFn = handlers[job.name]
@@ -75,6 +76,7 @@ export const redisSystemJob = {
         if (isNil(systemJobsQueue)) {
             return
         }
+        await systemJobWorker.close()
         await systemJobsQueue.close()
     },
 }
