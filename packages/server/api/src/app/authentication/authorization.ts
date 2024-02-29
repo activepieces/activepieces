@@ -20,8 +20,9 @@ export const allowWorkersOnly: onRequestHookHandler = (request, _res, done) => {
 }
 
 export function extractResourceName(url: string): string | undefined {
+    const urlPath = url.split('?')[0]
     const resourceRegex = /\/v1\/(.+?)(\/|$)/
-    const resourceMatch = url.match(resourceRegex)
+    const resourceMatch = urlPath.match(resourceRegex)
     const resource = resourceMatch ? resourceMatch[1] : undefined
     return resource
 }

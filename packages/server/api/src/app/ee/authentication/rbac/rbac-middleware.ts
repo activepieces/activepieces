@@ -76,7 +76,7 @@ const ignoreRequest = (req: FastifyRequest): boolean => {
 }
 
 const getRoleOrThrow = async (params: GetRoleOrThrowArgs): Promise<ProjectMemberRole> => {
-    const { projectId, userId, resourceName, resourceAction } = params
+    const { projectId, userId } = params
 
     const role = await projectMemberService.getRole({
         projectId,
@@ -85,11 +85,11 @@ const getRoleOrThrow = async (params: GetRoleOrThrowArgs): Promise<ProjectMember
 
     if (isNil(role)) {
         throw new ActivepiecesError({
-            code: ErrorCode.PERMISSION_DENIED,
+            code: ErrorCode.AUTHORIZATION,
             params: {
+                message: 'No role found',
+                userId,
                 projectId,
-                resource: resourceName,
-                action: resourceAction,
             },
         })
     }
