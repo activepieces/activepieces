@@ -10,18 +10,13 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
-import {
-  FlowTemplate,
-  FolderId,
-  TelemetryEventName,
-} from '@activepieces/shared';
+import { FlowTemplate, TelemetryEventName } from '@activepieces/shared';
 
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TelemetryService, TemplatesService } from '@activepieces/ui/common';
 
 export interface TemplateDialogData {
   insideBuilder: boolean;
-  folderId$?: Observable<FolderId | undefined>;
 }
 type tabsNames = 'all ideas' | 'featured';
 
