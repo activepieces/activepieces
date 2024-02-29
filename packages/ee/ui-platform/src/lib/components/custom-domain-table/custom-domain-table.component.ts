@@ -27,7 +27,7 @@ export class CustomDomainTableComponent
   refresh$: Subject<boolean> = new Subject();
   dialogClosed$?: Observable<unknown>;
   featureDisabledTooltip = featureDisabledTooltip;
-
+  upgradeNote = $localize`Customize your domain to match your brand and provide a seamless experience for your users.`;
   constructor(
     private matDialog: MatDialog,
     private customDomainService: CustomDomainService
