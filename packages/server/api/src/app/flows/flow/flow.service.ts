@@ -185,7 +185,7 @@ export const flowService = {
         const flowLock = lock
             ? await acquireLock({
                 key: id,
-                timeout: 10000,
+                timeout: 30000,
             })
             : null
 
