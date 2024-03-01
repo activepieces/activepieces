@@ -1,6 +1,12 @@
 import { Static, Type } from "@sinclair/typebox";
 import { BaseModelSchema } from "@activepieces/shared";
 
+export enum ProjectOperationType {
+    UPDATE_FLOW = 'UPDATE_FLOW',
+    CREATE_FLOW = 'CREATE_FLOW',
+    DELETE_FLOW = 'DELETE_FLOW',
+}
+
 export const GitRepo = Type.Object({
     ...BaseModelSchema,
     remoteUrl: Type.String(),
@@ -15,24 +21,19 @@ export type GitRepo = Static<typeof GitRepo>
 export const GitRepoWithoutSensitiveData = Type.Omit(GitRepo, ['sshPrivateKey'])
 export type GitRepoWithoutSensitiveData = Static<typeof GitRepoWithoutSensitiveData>
 
-export enum PushSyncMode {
-    FLOW = 'FLOW',
-    PROJECT = 'PROJECT',
-}
 
-export const PushGitRepoRequest = Type.Union([
-    Type.Object({
-        commitMessage: Type.String(),
-        mode: Type.Literal(PushSyncMode.FLOW),
-        flowId: Type.String(),
-    }),
-    Type.Object({
-        commitMessage: Type.String(),
-        mode: Type.Literal(PushSyncMode.PROJECT),
-    }),
-])
+export const PushGitRepoRequest = Type.Object({
+    commitMessage: Type.String(),
+    flowId: Type.String(),
+    dryRun: Type.Optional(Type.Boolean()),
+})
 
 export type PushGitRepoRequest = Static<typeof PushGitRepoRequest>
+
+export const PullGitRepoRequest = Type.Object({
+    dryRun: Type.Optional(Type.Boolean()),
+})
+export type PullGitRepoRequest = Static<typeof PullGitRepoRequest>
 
 export const ConfigureRepoRequest = Type.Object({
     projectId: Type.String(),
@@ -45,3 +46,15 @@ export const ConfigureRepoRequest = Type.Object({
 })
 
 export type ConfigureRepoRequest = Static<typeof ConfigureRepoRequest>
+
+export const ProjectSyncPlan = Type.Object({
+    operations: Type.Array(Type.Object({
+        type: Type.Enum(ProjectOperationType),
+        flow: Type.Object({
+            id: Type.String(),
+            displayName: Type.String(),
+        }),
+    })),
+})
+
+export type ProjectSyncPlan = Static<typeof ProjectSyncPlan>

@@ -3,22 +3,14 @@ import { FormControl, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { BehaviorSubject, Observable, catchError, of, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { PushSyncMode } from '@activepieces/ee-shared';
 import { PopulatedFlow } from '@activepieces/shared';
 import { SyncProjectService } from '../../../services/sync-project.service';
 
-export type PushToGitDialogData =
-  | {
-      projectName: string;
-      repoId: string;
-      mode: PushSyncMode.PROJECT;
-    }
-  | {
-      projectName: string;
-      repoId: string;
-      mode: PushSyncMode.FLOW;
-      flow: PopulatedFlow;
-    };
+export type PushToGitDialogData = {
+  projectName: string;
+  repoId: string;
+  flow: PopulatedFlow;
+};
 
 @Component({
   selector: 'app-push-dialog',
@@ -26,14 +18,13 @@ export type PushToGitDialogData =
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PushToGitDialogComponent {
-  readonly PushSyncMode=PushSyncMode;
   commitMsgFormControl = new FormControl('', {
     nonNullable: true,
     validators: Validators.required,
   });
   loading$ = new BehaviorSubject<boolean>(false);
   push$?: Observable<void>;
-  flowDisplayName='';
+  flowDisplayName = '';
   constructor(
     private syncProjectService: SyncProjectService,
     @Inject(MAT_DIALOG_DATA)
@@ -41,30 +32,16 @@ export class PushToGitDialogComponent {
     private snackbar: MatSnackBar,
     private matDialogRef: MatDialogRef<PushToGitDialogComponent>
   ) {
-    if(this.data.mode===PushSyncMode.FLOW){
-      this.flowDisplayName=this.data.flow.version.displayName;
-    }
+    this.flowDisplayName = this.data.flow.version.displayName;
   }
   submit() {
     this.commitMsgFormControl.markAllAsTouched();
     if (this.commitMsgFormControl.valid && !this.loading$.value) {
       this.loading$.next(true);
-      let request;
-      switch (this.data.mode) {
-        case PushSyncMode.FLOW:
-          request = {
-            flowId: this.data.flow?.id,
-            mode: this.data.mode,
-            commitMessage: this.commitMsgFormControl.getRawValue(),
-          };
-          break;
-        case PushSyncMode.PROJECT:
-          request = {
-            mode: this.data.mode,
-            commitMessage: this.commitMsgFormControl.getRawValue(),
-          };
-          break;
-      }
+      const request = {
+        flowId: this.data.flow?.id,
+        commitMessage: this.commitMsgFormControl.getRawValue(),
+      };
 
       this.push$ = this.syncProjectService.push(this.data.repoId, request).pipe(
         tap(() => {

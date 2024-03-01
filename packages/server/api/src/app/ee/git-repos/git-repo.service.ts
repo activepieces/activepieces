@@ -1,13 +1,8 @@
-import { SimpleGit, simpleGit } from 'simple-git'
-import fs from 'fs/promises'
-import path from 'path'
-import { databaseConnection } from '../../database/database-connection'
 import { GitRepoEntity } from './git-repo.entity'
 import {
     ConfigureRepoRequest,
     GitRepo,
     PushGitRepoRequest,
-    PushSyncMode,
 } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
@@ -16,31 +11,33 @@ import {
     isNil,
     SeekPage,
 } from '@activepieces/shared'
+import { SimpleGit, simpleGit } from 'simple-git'
+import { databaseConnection } from '../../database/database-connection'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { FlowSyncOperation, gitSyncHelper } from './git-sync-helper'
-import { flowService } from '../../flows/flow/flow.service'
+import { gitSyncHelper } from './git-sync-helper'
+import { projectService } from '../../project/project-service'
+import { createOrUpdateFlowOperation, findFlowOperations } from './operations/project-diff.service'
+import { ProjectMappingState, ProjectOperation } from './operations/sync-operations'
+import fs from 'fs/promises'
+import path from 'path'
 import { userService } from '../../user/user-service'
+import { ProjectSyncPlan, ProjectOperationType } from '@activepieces/ee-shared'
+import { flowService } from '../../flows/flow/flow.service'
 
 const repo = databaseConnection.getRepository(GitRepoEntity)
 
 export const gitRepoService = {
-    async upsert({
-        projectId,
-        sshPrivateKey,
-        branch,
-        remoteUrl,
-        slug,
-    }: ConfigureRepoRequest): Promise<GitRepo> {
-        const existingRepo = await repo.findOneBy({ projectId })
+    async upsert(request: ConfigureRepoRequest): Promise<GitRepo> {
+        const existingRepo = await repo.findOneBy({ projectId: request.projectId })
         const id = existingRepo?.id ?? apId()
         await repo.upsert(
             {
                 id,
-                projectId,
-                sshPrivateKey,
-                branch,
-                remoteUrl,
-                slug,
+                projectId: request.projectId,
+                sshPrivateKey: request.sshPrivateKey,
+                branch: request.branch,
+                remoteUrl: request.remoteUrl,
+                slug: request.slug,
             },
             ['projectId'],
         )
@@ -63,73 +60,80 @@ export const gitRepoService = {
         const repos = await repo.findBy({ projectId })
         return paginationHelper.createPage<GitRepo>(repos, null)
     },
-    async push({
-        id,
-        userId,
-        request,
-    }: {
-        id: string
-        userId: string
-        request: PushGitRepoRequest
-    }): Promise<void> {
+    async push({ id, userId, request }: PushParams): Promise<ProjectSyncPlan> {
         const gitRepo = await gitRepoService.getOrThrow({ id })
-        const { flowFolderPath, git } = await createGitRepoAndReturnPaths(gitRepo)
-        const { email, firstName, lastName } = await userService.getOneOrFail({
-            id: userId,
+        const { git, flowFolderPath, stateFolderPath } = await createGitRepoAndReturnPaths(gitRepo, userId)
+        const project = await projectService.getOneOrThrow(gitRepo.projectId)
+        const { gitProjectState, mappingState } = await loadState(project.id, flowFolderPath, stateFolderPath)
+        const flow = await flowService.getOnePopulatedOrThrow({
+            id: request.flowId,
+            projectId: project.id,
         })
-        await git.addConfig('user.email', email)
-        await git.addConfig('user.name', `${firstName} ${lastName}`)
-        let operations: FlowSyncOperation[] = []
-        switch (request.mode) {
-            case PushSyncMode.FLOW: {
-                operations = [
-                    {
-                        type: 'upsert_flow_into_git',
-                        flow: await flowService.getOnePopulatedOrThrow({
-                            id: request.flowId,
-                            projectId: gitRepo.projectId,
-                            versionId: undefined,
-                            removeSecrets: false,
-                        }),
-                    },
-                ]
-                break
-            }
-            case PushSyncMode.PROJECT: {
-                operations = await planPushOperations(
-                    gitRepo.projectId,
-                    flowFolderPath,
-                )
-                break
+        const operations = [createOrUpdateFlowOperation({
+            fromFlow: flow,
+            destinationFlows: gitProjectState,
+            mapping: mappingState,
+        })]
+        if (request.dryRun) {
+            return toResponse(operations)
+        }
+        for (const operation of operations) {
+            switch (operation.type) {
+                case ProjectOperationType.CREATE_FLOW:
+                case ProjectOperationType.UPDATE_FLOW:
+                    await gitSyncHelper.upsertFlowToGit(operation.flow, flowFolderPath)
+                    break
+                case ProjectOperationType.DELETE_FLOW:
+                    await gitSyncHelper.deleteFlowFromProject(operation.flow.id, flowFolderPath)
+                    break
             }
         }
-        await gitSyncHelper.applyFlowOperations({
-            projectId: gitRepo.projectId,
-            flowFolderPath,
-            operations,
-        })
-        await commitAndPush(git, gitRepo, request.commitMessage)
+        await commitAndPush(git, gitRepo, `chore: updated state for project ${project.id}`)
+        return toResponse(operations)
     },
-    async pull({ id }: PullGitRepoRequest): Promise<void> {
+    async pull({ id, dryRun, userId }: PullGitRepoRequest): Promise<ProjectSyncPlan> {
         const gitRepo = await gitRepoService.getOrThrow({ id })
-        const { flowFolderPath } = await createGitRepoAndReturnPaths(gitRepo)
-        const operations: FlowSyncOperation[] = await planPullOperations(
-            gitRepo.projectId,
-            flowFolderPath,
-        )
-        await gitSyncHelper.applyFlowOperations({
-            projectId: gitRepo.projectId,
-            flowFolderPath,
-            operations,
+        const project = await projectService.getOneOrThrow(gitRepo.projectId)
+        const { git, flowFolderPath, stateFolderPath } = await createGitRepoAndReturnPaths(gitRepo, userId)
+        const { gitProjectState, mappingState } = await loadState(project.id, flowFolderPath, stateFolderPath)
+        const dbProjectState = await gitSyncHelper.getStateFromDB(project.id)
+        const operations = await findFlowOperations({
+            fromFlows: gitProjectState,
+            destinationFlows: dbProjectState,
+            mapping: mappingState,
         })
+        if (dryRun) {
+            return toResponse(operations)
+        }
+        let newMappState: ProjectMappingState = ProjectMappingState.empty()
+        for (const operation of operations) {
+            switch (operation.type) {
+                case ProjectOperationType.UPDATE_FLOW: {
+                    const flowCreated = await gitSyncHelper.updateFlowInProject(operation.targetFlow.id, operation.flow, gitRepo.projectId)
+                    newMappState = newMappState.mapFlow({
+                        sourceId: operation.flow.id,
+                        targetId: flowCreated.id,
+                    })
+                    break
+                }
+                case ProjectOperationType.CREATE_FLOW: {
+                    const flowCreated = await gitSyncHelper.createFlowInProject(operation.flow, gitRepo.projectId)
+                    newMappState = newMappState.mapFlow({
+                        sourceId: operation.flow.id,
+                        targetId: flowCreated.id,
+                    })
+                    break
+                }
+                case ProjectOperationType.DELETE_FLOW:
+                    await gitSyncHelper.deleteFlowFromProject(operation.flow.id, gitRepo.projectId)
+                    break
+            }
+        }
+        await gitSyncHelper.saveStateToGit(stateFolderPath, project.id, newMappState)
+        await commitAndPush(git, gitRepo, `chore: updated state for project ${project.id}`)
+        return toResponse(operations)
     },
-    async delete({
-        id,
-        projectId,
-    }: {
-        id: string
-        projectId: string
-    }): Promise<void> {
+    async delete({ id, projectId }: DeleteParams): Promise<void> {
         const gitRepo = await repo.findOneBy({ id, projectId })
         if (isNil(gitRepo)) {
             throw new ActivepiecesError({
@@ -144,61 +148,26 @@ export const gitRepoService = {
     },
 }
 
-async function planPullOperations(
-    projectId: string,
-    flowPath: string,
-): Promise<FlowSyncOperation[]> {
-    const projectFlows = await gitSyncHelper.fetchFlowsForProject(projectId)
-    const gitFlows = await gitSyncHelper.parseFlowsFromDirectory(flowPath)
-    const deleteOperations: FlowSyncOperation[] = projectFlows
-        .filter((f) => gitFlows.findIndex((pf) => pf.id === f.id) === -1)
-        .map((flow) => {
-            return {
-                type: 'delete_flow_from_project',
-                flowId: flow.id,
-            }
-        })
-    const upsertOperations: FlowSyncOperation[] = gitFlows.map((flow) => {
-        return {
-            type: 'upsert_flow_into_project',
-            flow,
-        }
-    })
-    return [...deleteOperations, ...upsertOperations]
-}
-
-async function planPushOperations(
-    projectId: string,
-    flowPath: string,
-): Promise<FlowSyncOperation[]> {
-    const projectFlows = await gitSyncHelper.fetchFlowsForProject(projectId)
-    const gitFlows = await gitSyncHelper.parseFlowsFromDirectory(flowPath)
-    const deleteOperations: FlowSyncOperation[] = gitFlows
-        .filter((f) => projectFlows.findIndex((pf) => pf.id === f.id) === -1)
-        .map((flow) => {
-            return {
-                type: 'delete_flow_from_git',
-                flowId: flow.id,
-            }
-        })
-    const upsertOperations: FlowSyncOperation[] = projectFlows.map((flow) => {
-        return {
-            type: 'upsert_flow_into_git',
-            flow,
-        }
-    })
-    return [...deleteOperations, ...upsertOperations]
+async function commitAndPush(
+    git: SimpleGit,
+    gitRepo: GitRepo,
+    commitMessage: string,
+): Promise<void> {
+    await git.add('.')
+    await git.commit(commitMessage)
+    await git.push('origin', gitRepo.branch)
 }
 
 async function createGitRepoAndReturnPaths(
     gitRepo: GitRepo,
-): Promise<{ flowFolderPath: string, git: SimpleGit }> {
+    userId: string,
+): Promise<{ flowFolderPath: string, git: SimpleGit, stateFolderPath: string }> {
     const tmpFolder = path.join('/', 'tmp', 'repo', gitRepo.projectId)
     try {
         await fs.rmdir(tmpFolder, { recursive: true })
     }
     catch (e) {
-    // ignore
+        // ignore
     }
     const flowFolderPath = path.join(
         tmpFolder,
@@ -207,21 +176,32 @@ async function createGitRepoAndReturnPaths(
         'flows',
     )
     await fs.mkdir(flowFolderPath, { recursive: true })
+    const stateFolderPath = path.join(
+        tmpFolder,
+        'projects',
+        gitRepo.slug,
+        'state',
+    )
+    await fs.mkdir(stateFolderPath, { recursive: true })
     const git = await initGitRepo(gitRepo, tmpFolder)
+
+    const { email, firstName, lastName } = await userService.getOneOrFail({
+        id: userId,
+    })
+    await git.addConfig('user.email', email)
+    await git.addConfig('user.name', `${firstName} ${lastName}`)
     return {
         git,
         flowFolderPath,
+        stateFolderPath,
     }
 }
 
-async function createOrGetSshKeyPath(gitRepo: GitRepo): Promise<string> {
-    const keyPath = path.resolve(path.join('tmp', 'keys', gitRepo.id))
-    await fs.mkdir(path.dirname(keyPath), { recursive: true })
-    await fs.writeFile(keyPath, gitRepo.sshPrivateKey)
-    await fs.chmod(keyPath, 0o600)
-    return keyPath
+async function loadState(projectId: string, flowFolderPath: string, stateFolderPath: string) {
+    const gitProjectState = await gitSyncHelper.getStateFromGit(flowFolderPath)
+    const mappingState = await gitSyncHelper.getMappingStateFromGit(stateFolderPath, projectId)
+    return { gitProjectState, mappingState }
 }
-
 async function initGitRepo(
     gitRepo: GitRepo,
     baseDir: string,
@@ -238,16 +218,39 @@ async function initGitRepo(
     return git
 }
 
-async function commitAndPush(
-    git: SimpleGit,
-    gitRepo: GitRepo,
-    commitMessage: string,
-): Promise<void> {
-    await git.add('.')
-    await git.commit(commitMessage)
-    await git.push('origin', gitRepo.branch)
+async function createOrGetSshKeyPath(gitRepo: GitRepo): Promise<string> {
+    const keyPath = path.resolve(path.join('tmp', 'keys', gitRepo.id))
+    await fs.mkdir(path.dirname(keyPath), { recursive: true })
+    await fs.writeFile(keyPath, gitRepo.sshPrivateKey)
+    await fs.chmod(keyPath, 0o600)
+    return keyPath
 }
 
+function toResponse(operations: ProjectOperation[]) {
+    return {
+        operations: operations.map((operation) => {
+            return {
+                type: operation.type,
+                flow: {
+                    id: operation.flow.id,
+                    displayName: operation.flow.version.displayName,
+                },
+            }
+        }),
+    }
+}
+
+type PushParams = {
+    id: string
+    userId: string
+    request: PushGitRepoRequest
+}
+type DeleteParams = {
+    id: string
+    projectId: string
+}
 type PullGitRepoRequest = {
     id: string
+    userId: string
+    dryRun: boolean
 }
