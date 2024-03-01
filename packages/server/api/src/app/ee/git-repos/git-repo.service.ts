@@ -45,6 +45,18 @@ export const gitRepoService = {
         )
         return repo.findOneByOrFail({ id })
     },
+    async getOneByProjectOrThrow({ projectId }: { projectId: string }): Promise<GitRepo> {
+        const gitRepo = await repo.findOneByOrFail({ projectId })
+        if (isNil(gitRepo)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'git-repo',
+                },
+            })
+        }
+        return gitRepo
+    },
     async getOrThrow({ id }: { id: string }): Promise<GitRepo> {
         const gitRepo = await repo.findOneByOrFail({ id })
         if (isNil(gitRepo)) {
@@ -93,8 +105,7 @@ export const gitRepoService = {
         await commitAndPush(git, gitRepo, `chore: updated state for project ${project.id}`)
         return toResponse(operations)
     },
-    async pull({ id, dryRun, userId }: PullGitRepoRequest): Promise<ProjectSyncPlan> {
-        const gitRepo = await gitRepoService.getOrThrow({ id })
+    async pull({ gitRepo, dryRun, userId }: PullGitRepoRequest): Promise<ProjectSyncPlan> {
         const project = await projectService.getOneOrThrow(gitRepo.projectId)
         const { git, flowFolderPath, stateFolderPath } = await createGitRepoAndReturnPaths(gitRepo, userId)
         const { gitProjectState, mappingState } = await loadState(project.id, flowFolderPath, stateFolderPath)
@@ -258,7 +269,7 @@ type DeleteParams = {
     projectId: string
 }
 type PullGitRepoRequest = {
-    id: string
+    gitRepo: GitRepo
     userId: string
     dryRun: boolean
 }

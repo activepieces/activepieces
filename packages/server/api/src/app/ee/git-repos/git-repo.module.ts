@@ -8,11 +8,13 @@ import {
     ConfigureRepoRequest,
     GitRepoWithoutSensitiveData,
     ProjectSyncPlan,
+    PullGitRepoFromPojectRequest,
     PullGitRepoRequest,
     PushGitRepoRequest,
 } from '@activepieces/ee-shared'
 import { StatusCodes } from 'http-status-codes'
 import { FastifyPluginAsync } from 'fastify'
+import { platformService } from '../../platform/platform.service'
 
 export const gitRepoModule: FastifyPluginAsync = async (app) => {
     await app.register(gitRepoController, { prefix: '/v1/git-repos' })
@@ -24,6 +26,18 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (
     _options,
     done,
 ): void => {
+
+    app.post('/pull', PullRepoFromProjectRequestSchema, async (request) => {
+        const gitRepo = await gitRepoService.getOneByProjectOrThrow({ projectId: request.body.projectId })
+        const platform = await platformService.getOneOrThrow(request.principal.platform.id)
+        const userId = platform.ownerId
+        await gitRepoService.pull({
+            gitRepo,
+            userId,
+            dryRun: false,
+        })
+    })
+
     app.post('/', ConfigureRepoRequestSchema, async (request, reply) => {
         await reply
             .status(StatusCodes.CREATED)
@@ -43,8 +57,11 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (
     })
 
     app.post('/:id/pull', PullRepoRequestSchema, async (request) => {
-        return gitRepoService.pull({
+        const gitRepo = await gitRepoService.getOrThrow({
             id: request.params.id,
+        })
+        return gitRepoService.pull({
+            gitRepo,
             dryRun: request.body.dryRun ?? false,
             userId: request.principal.id,
         })
@@ -59,6 +76,22 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (
     })
 
     done()
+}
+
+const PullRepoFromProjectRequestSchema = {
+    config: {
+        allowedPrincipals: [PrincipalType.SERVICE],
+    },
+    schema: {
+        description:
+            'Pull all changes from the git repository and overwrite any conflicting changes in the project.',
+        body: PullGitRepoFromPojectRequest,
+        tags: ['git-repo'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        response: {
+            [StatusCodes.OK]: Type.Object({}),
+        },
+    },
 }
 
 const DeleteRepoRequestSchema = {
@@ -87,8 +120,7 @@ const PullRepoRequestSchema = {
             id: Type.String(),
         }),
         body: PullGitRepoRequest,
-        tags: ['git-repo'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        security: [],
         response: {
             [StatusCodes.OK]: ProjectSyncPlan,
         },

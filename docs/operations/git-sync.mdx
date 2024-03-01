@@ -17,19 +17,51 @@ This example explains a simple setup for creating development and production env
 - Empty Git Repository
 - Two Projects in Activepieces: one for Development and one for Production.
 
-#### 1. Push to the repository
+#### 1. Push Flow to the repository
 
-After making changes in the development project, you can click on the "Push to Repository" button on the Git Sync page in Activepieces to push the changes to the repository.
+After making changes in the flow, You click on arrow near the flow name and select "Push to Git", Add commit and puysh.
 
-All flows in the Git Repository will be replaced with the ones in the Project.
+### 2. Pull from the Repository
 
-#### 2. Pull from the repository
 <Note>
-Please note that the credentials will not be synced automatically. You should manually create the same credentials in both environments.
+Please note that the credentials will not be synced automatically. You should manually create identical credentials with the same names in both environments.
 </Note>
 
-You can trigger a pull from the Git Repository button in Activepeces, then all flows in the project will be replaced with the ones in the git repository.
+You can trigger a pull from the Git Repository button in Activepieces. This action will replace all flows in the project with those from the git repository.
+
+- All flows that are enabled in production will be updated and republished, If a flow fails to republish, a new version will be created as a draft.
+- All flows that are **not** in the git repository will be deleted.
+- New flows created in production will be disabled by default.
 
 #### Approval Workflow (Optional)
 
 To manage your approval workflow, you can use Git by creating two branches: development and production. Then, you can use standard pull requests as the approval step.
+
+#### Github action
+This GitHub action can be used to automatically pull changes upon merging.
+
+<Tip>
+Don't forget to replace `INSTANCE_URL` and `PROJECT_ID`, and add `ACTIVEPIECES_API_KEY` to the secrets.
+</Tip>
+
+```yml
+name: Auto Deploy
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+jobs:
+  run-pull:
+    runs-on: ubuntu-latest
+    steps:
+      - name: deploy
+        # Use GitHub secrets
+        run: |
+          curl --request POST \
+            --url {INSTANCE_URL}/api/v1/git-repos/pull \
+            --header 'Authorization: Bearer ${{ secrets.ACTIVEPIECES_API_KEY }}' \
+            --header 'Content-Type: application/json' \
+            --data '{
+              "projectId": "{PROJECT_ID}"
+            }'
+```
