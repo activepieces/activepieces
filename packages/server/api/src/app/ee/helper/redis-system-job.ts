@@ -59,7 +59,7 @@ export const redisSystemJob = {
         if (!useRedis) {
             return
         }
-        const jobMQ = await systemJobsQueue.getJob(job.name)
+        const jobMQ = (await systemJobsQueue.getJobs()).find((j) => j.name === job.name)
         handlers[job.name] = handler
         if (isNil(jobMQ)) {
             logger.info(`Adding job ${job.name} with cron ${cron} to system job queue`)
