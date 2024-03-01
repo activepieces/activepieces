@@ -42,7 +42,7 @@ export const redisSystemJob = {
             SYSTEM_JOB_QUEUE,
             async (job) => {
                 const handlerFn = handlers[job.name]
-                logger.info(`Running system job ${job.name}`)
+                logger.debug(`Running system job ${job.name}`)
                 if (isNil(handlerFn)) {
                     throw new Error(`No handler for job ${job.name}`)
                 }
@@ -59,10 +59,9 @@ export const redisSystemJob = {
         if (!useRedis) {
             return
         }
-        const client = await systemJobsQueue.client
-        const jobKey = await client.get(job.name)
+        const jobMQ = await systemJobsQueue.getJob(job.name)
         handlers[job.name] = handler
-        if (isNil(jobKey)) {
+        if (isNil(jobMQ)) {
             logger.info(`Adding job ${job.name} with cron ${cron} to system job queue`)
             await systemJobsQueue.add(job.name, job, {
                 repeat: {

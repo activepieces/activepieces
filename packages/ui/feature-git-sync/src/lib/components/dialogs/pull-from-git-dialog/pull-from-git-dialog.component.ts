@@ -14,7 +14,7 @@ export type PullFromGitDialogData = {
   templateUrl: './pull-from-git-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PullFromGitDialogComponent  {
+export class PullFromGitDialogComponent {
   loading$ = new BehaviorSubject<boolean>(false);
   pull$?: Observable<void>;
   constructor(
@@ -23,7 +23,7 @@ export class PullFromGitDialogComponent  {
     public data: PullFromGitDialogData,
     private snackbar: MatSnackBar,
     private matDialogRef: MatDialogRef<PullFromGitDialogComponent>
-  ) {}
+  ) { }
 
   submit() {
     if (!this.loading$.value) {
@@ -31,8 +31,14 @@ export class PullFromGitDialogComponent  {
       this.pull$ = this.syncProjectService.pull(this.data.repoId, {
         dryRun: false,
       }).pipe(
-        tap(() => {
-          this.snackbar.open($localize`Pulled successfully`);
+        tap((response) => {
+          if (response.errors.length > 0) {
+            this.snackbar.open($localize`${response.errors.length} Flows failed to publish`, '', {
+              panelClass: 'error',
+            });
+          } else {
+            this.snackbar.open($localize`Pulled successfully`);
+          }
           this.matDialogRef.close();
         }),
         catchError((err) => {

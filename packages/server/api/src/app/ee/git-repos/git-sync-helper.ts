@@ -5,6 +5,7 @@ import { projectService } from '../../project/project-service'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowService } from '../../flows/flow/flow.service'
 import { ProjectMappingState } from './operations/sync-operations'
+import { ProjectSyncError } from '@activepieces/ee-shared'
 
 
 async function getStateFromDB(projectId: string): Promise<PopulatedFlow[]> {
@@ -80,6 +81,40 @@ async function updateFlowInProject(flowId: string, flow: PopulatedFlow,
     })
 }
 
+async function republishFlow(flowId: string, projectId: string): Promise<ProjectSyncError |  null> {
+    const project = await projectService.getOneOrThrow(projectId)
+    const flow = await flowService.getOnePopulated({ id: flowId, projectId })
+    if (!flow) {
+        return null
+    }
+    if (!flow.version.valid) {
+        return {
+            flowId,
+            message: `Flow ${flow.version.displayName} #${flow.id} is not valid`,
+        }
+    }
+    try {
+        await flowService.update({
+            id: flowId,
+            projectId,
+            lock: true,
+            userId: project.ownerId,
+            operation: {
+                type: FlowOperationType.LOCK_AND_PUBLISH,
+                request: {},
+            },
+        })
+        return null
+    }
+    catch (e) {
+        return {
+            flowId,
+            message: `Failed to publish flow ${flow.version.displayName} #${flow.id}`,
+        }
+    }
+
+}
+
 async function upsertFlowToGit(flow: Flow, flowFolderPath: string): Promise<void> {
     const flowJsonPath = path.join(flowFolderPath, `${flow.id}.json`)
     await fs.writeFile(flowJsonPath, JSON.stringify(flow, null, 2))
@@ -116,6 +151,7 @@ export const gitSyncHelper = {
     deleteFlowFromProject,
     createFlowInProject,
     updateFlowInProject,
+    republishFlow,
     saveStateToGit,
 }
 

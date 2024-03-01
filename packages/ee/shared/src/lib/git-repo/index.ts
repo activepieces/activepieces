@@ -47,6 +47,12 @@ export const ConfigureRepoRequest = Type.Object({
 
 export type ConfigureRepoRequest = Static<typeof ConfigureRepoRequest>
 
+export const ProjectSyncError = Type.Object({
+    flowId: Type.String(),
+    message: Type.String(),
+})
+export type ProjectSyncError = Static<typeof ProjectSyncError>
+
 export const ProjectSyncPlan = Type.Object({
     operations: Type.Array(Type.Object({
         type: Type.Enum(ProjectOperationType),
@@ -55,6 +61,7 @@ export const ProjectSyncPlan = Type.Object({
             displayName: Type.String(),
         }),
     })),
+    errors: Type.Array(ProjectSyncError),
 })
 
 export type ProjectSyncPlan = Static<typeof ProjectSyncPlan>

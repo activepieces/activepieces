@@ -2,12 +2,14 @@ import { GitRepoEntity } from './git-repo.entity'
 import {
     ConfigureRepoRequest,
     GitRepo,
+    ProjectSyncError,
     PushGitRepoRequest,
 } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     apId,
     ErrorCode,
+    FlowStatus,
     isNil,
     SeekPage,
 } from '@activepieces/shared'
@@ -106,13 +108,17 @@ export const gitRepoService = {
             return toResponse(operations)
         }
         let newMappState: ProjectMappingState = ProjectMappingState.empty()
+        const publishJobs: Promise<ProjectSyncError | null>[] = []
         for (const operation of operations) {
             switch (operation.type) {
                 case ProjectOperationType.UPDATE_FLOW: {
-                    const flowCreated = await gitSyncHelper.updateFlowInProject(operation.targetFlow.id, operation.flow, gitRepo.projectId)
+                    const flowUpdated = await gitSyncHelper.updateFlowInProject(operation.targetFlow.id, operation.flow, gitRepo.projectId)
+                    if (flowUpdated.status === FlowStatus.ENABLED) {
+                        publishJobs.push(gitSyncHelper.republishFlow(flowUpdated.id, gitRepo.projectId))
+                    }
                     newMappState = newMappState.mapFlow({
                         sourceId: operation.flow.id,
-                        targetId: flowCreated.id,
+                        targetId: flowUpdated.id,
                     })
                     break
                 }
@@ -131,7 +137,8 @@ export const gitRepoService = {
         }
         await gitSyncHelper.saveStateToGit(stateFolderPath, project.id, newMappState)
         await commitAndPush(git, gitRepo, `chore: updated state for project ${project.id}`)
-        return toResponse(operations)
+        const errors = (await Promise.all(publishJobs)).filter((f): f is ProjectSyncError => f !== null)
+        return toResponse(operations, errors)
     },
     async delete({ id, projectId }: DeleteParams): Promise<void> {
         const gitRepo = await repo.findOneBy({ id, projectId })
@@ -226,8 +233,9 @@ async function createOrGetSshKeyPath(gitRepo: GitRepo): Promise<string> {
     return keyPath
 }
 
-function toResponse(operations: ProjectOperation[]) {
+function toResponse(operations: ProjectOperation[], errors: ProjectSyncError[] = []) {
     return {
+        errors,
         operations: operations.map((operation) => {
             return {
                 type: operation.type,
