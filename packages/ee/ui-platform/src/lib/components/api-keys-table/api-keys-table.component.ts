@@ -26,6 +26,7 @@ export class ApiKeysTableComponent
   refresh$: Subject<boolean> = new Subject();
   dialogClosed$?: Observable<unknown>;
   featureDisabledTooltip = featureDisabledTooltip;
+  upgradeNote = $localize`Create and manage API keys to access Activepieces APIs.`;
   constructor(
     private matDialog: MatDialog,
     private apiKeysService: ApiKeysService

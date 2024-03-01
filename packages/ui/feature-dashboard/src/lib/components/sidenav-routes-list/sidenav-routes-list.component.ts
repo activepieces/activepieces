@@ -134,7 +134,9 @@ export class SidenavRoutesListComponent implements OnInit {
         caption: $localize`Team`,
         route: 'team',
         showInSideNav$: of(true),
-        showLock$: of(false),
+        showLock$: this.flagService
+          .isFlagEnabled(ApFlagId.PROJECT_MEMBERS_ENABLED)
+          .pipe(map((enabled) => !enabled)),
       },
 
       {

@@ -2,7 +2,7 @@
   <div class="ap-h-full">
     <ap-page-title [title]="title"></ap-page-title>
     <div class="ap-mb-4" *ngIf="!isFeatureEnabled">
-      <ap-upgrade-note docsLink="https://www.activepieces.com/docs/team/overview"></ap-upgrade-note>
+      <ap-upgrade-note [featureNote]="upgradeNote" ></ap-upgrade-note>
     </div>
     <div class="ap-min-h-[70%]">
       <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Project Members" i18n-aria-label>
