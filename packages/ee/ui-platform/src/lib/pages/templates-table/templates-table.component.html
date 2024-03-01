@@ -8,7 +8,8 @@
 </div>
 
 <ap-upgrade-note *ngIf="isDemo"
-    docsLink="https://www.activepieces.com/docs/admiin-console/manage-templates"></ap-upgrade-note>
+    [featureNote]="upgradeNote"
+    docsLink="https://www.activepieces.com/docs/admin-console/manage-templates"></ap-upgrade-note>
 
 <div class="ap-w-full ap-pt-2">
 

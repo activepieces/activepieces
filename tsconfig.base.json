@@ -453,6 +453,9 @@
       "@activepieces/piece-stability-ai": [
         "packages/pieces/community/stability-ai/src/index.ts"
       ],
+      "@activepieces/piece-stable-diffusion-webui": [
+        "packages/pieces/community/stable-diffusion-webui/src/index.ts"
+      ],
       "@activepieces/piece-store": [
         "packages/pieces/community/store/src/index.ts"
       ],
