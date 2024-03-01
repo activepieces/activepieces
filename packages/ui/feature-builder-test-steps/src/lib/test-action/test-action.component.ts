@@ -259,6 +259,6 @@ function formatErrorMessage(errorMessage: string): string {
   const indentationStep = '  ';
   return errorMessagesSplit.reduce((acc, current, index) => {
     const indentation = indentationStep.repeat(index);
-    return `${acc}${indentation}Error ${index}: ${current.trim()}\n`;
+    return `${acc}${indentation}Error ${index + 1}: ${current.trim()}\n`;
   }, '');
 }
