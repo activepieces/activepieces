@@ -15,13 +15,17 @@
                 </mat-error>
             </mat-form-field>
             <mat-form-field class="ap-w-full" appearance="outline">
-                <mat-label i18n>Slug</mat-label>
+                <mat-label i18n>Folder Name</mat-label>
                 <input cdkFocusInitial [formControl]="configureRepoForm.controls.slug" matInput type="text"
                     placeholder="slug" />
                 <mat-error *ngIf="configureRepoForm.controls.slug.invalid" i18n>
-                    Slug is required
+                    Folder name is required
                 </mat-error>
+                <mat-hint>
+                    Folder name is the name of the folder where the project will stored or fetched.
+                </mat-hint>
             </mat-form-field>
+          
             <mat-form-field class="ap-w-full" appearance="outline">
                 <mat-label i18n>Branch Name</mat-label>
                 <input cdkFocusInitial [formControl]="configureRepoForm.controls.branch" matInput type="text"
@@ -35,14 +39,19 @@
                 <mat-label i18n>Private SSH Key</mat-label>
                 <textarea cdkFocusInitial rows="4" [formControl]="configureRepoForm.controls.sshPrivateKey"
                     matInput></textarea>
-                <mat-error *ngIf="configureRepoForm.controls.sshPrivateKey.invalid && configureRepoForm.controls.sshPrivateKey.hasError('pattern')" i18n>
-                    Invalid private key format. Please check your private key and make sure it ends with new line and try again.
+                <mat-error
+                    *ngIf="configureRepoForm.controls.sshPrivateKey.invalid && configureRepoForm.controls.sshPrivateKey.hasError('pattern')"
+                    i18n>
+                    Invalid private key format. Please check your private key and make sure it ends with new line and
+                    try again.
                 </mat-error>
-                <mat-error *ngIf="configureRepoForm.controls.sshPrivateKey.invalid && configureRepoForm.controls.sshPrivateKey.hasError('required')" i18n>
+                <mat-error
+                    *ngIf="configureRepoForm.controls.sshPrivateKey.invalid && configureRepoForm.controls.sshPrivateKey.hasError('required')"
+                    i18n>
                     Private SSH key is required
                 </mat-error>
             </mat-form-field>
-                
+
         </form>
     </div>
 

@@ -72,6 +72,8 @@ import { DropdownPropertySearchPipe } from './pipe/dropdown-search.pipe';
 import { ImportFlowDialogComponent } from './components/dialogs/import-flow-dialog/import-flow-dialog.component';
 import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { LetterIconComponent } from './components/letter-icon/letter-icon.component';
+import { MatListModule } from '@angular/material/list';
+
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -99,6 +101,7 @@ const exportedImports = [
   MatSnackBarModule,
   ScrollingModule,
   MonacoEditorModule,
+  MatListModule,
 ];
 const exportedDeclarations = [
   UploadFileControlComponent,

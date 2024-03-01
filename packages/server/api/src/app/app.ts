@@ -82,7 +82,6 @@ import { domainHelper } from './helper/domain-helper'
 import { platformDomainHelper } from './ee/helper/platform-domain-helper'
 import { enterpriseUserModule } from './ee/user/enterprise-user-module'
 import { flowResponseWatcher } from './flows/flow-run/flow-response-watcher'
-import { gitRepoModule } from './ee/git-repos/git-repo.module'
 import { securityHandlerChain } from './core/security/security-handler-chain'
 import { communityFlowTemplateModule } from './flow-templates/community-flow-template.module'
 import { copilotModule } from './copilot/copilot.module'
@@ -102,6 +101,7 @@ import { usageTrackerModule } from './ee/usage-tracker/usage-tracker-module'
 import { projectBillingModule } from './ee/billing/project-billing/project-billing.module'
 import { appSumoModule } from './ee/billing/appsumo/appsumo.module'
 import { platformModule } from './platform/platform.module'
+import { gitRepoModule } from './ee/git-repos/git-repo.module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
