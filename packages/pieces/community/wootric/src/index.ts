@@ -1,7 +1,4 @@
-import {
-  createPiece,
-  PieceAuth,
-} from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { createWootricSurvey } from './lib/actions/create-survey';
 import { OAuth2GrantType } from '@activepieces/shared';
 
