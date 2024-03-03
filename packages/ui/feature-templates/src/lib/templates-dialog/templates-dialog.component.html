@@ -3,20 +3,70 @@
     <span i18n>Browse Templates</span>
     <ap-icon-button tooltipText="Close" iconFilename="close.svg" mat-dialog-close></ap-icon-button>
 </div>
-<div class="ap-flex">
-    <mat-dialog-content class="!ap-flex ap-h-[705px] ap-w-[1100px] ap-gap-2 ap-p-0">
-        <ng-container *ngTemplateOutlet="filtersColumn"></ng-container>
-        <ng-container *ngTemplateOutlet="contentColumn; context:{showFeaturedBanner:false}"></ng-container>
+<mat-tab-group [preserveContent]="true"  [animationDuration]="ANIMATION_DURATION">
+    <mat-tab  label="templates"> <div class="ap-flex">
+        <mat-dialog-content class="!ap-flex ap-h-[559px] ap-w-[1070px] ap-gap-2 ap-p-0">
+            <ng-container *ngTemplateOutlet="filtersColumn"></ng-container>
+            <ng-container *ngTemplateOutlet="contentColumn; context:{showFeaturedBanner:false}"></ng-container>
+        </mat-dialog-content>
+    </div>
+</mat-tab>
+    <mat-tab label="description"> 
+       <ng-container *ngIf="descriptionTemplate$ | async as template">
+        <div class="ap-pt-3 ap-px-6 ap-flex ap-items-center ap-justify-between ">
+            <ap-button btnSize="medium" btnColor="basic" btnStyle="basic" (buttonClicked)="backToTemplates()">
+                <div class="ap-flex ap-gap-2 ap-items-center">
+                    <svg-icon src="assets/img/custom/back.svg" class="ap-w-[14px] ap-h-[14px] ap-fill-body"></svg-icon>  Back
+                </div>
+            </ap-button>
+        </div>
+       
+        <div class="ap-h-[440px] ap-flex ap-text-body ap-p-0 ap-overflow-y-auto thin-scrollbars black-scrollbars">
+            
+            <div class="ap-pt-3 ap-px-6 ap-min-w-0  ap-grow ap-shrink ap-basis-[1070px] ap-max-w-[1070px] ap-typography-body-1 ap-text-body ap-grow ">
+            
+            <div class="ap-flex ap-gap-2 ap-flex-col">
+                
+                <div class="ap-flex ap-items-center ap-justify-center">
+                    <div class="ap-border ap-flex ap-items-center ap-h-[190px] ap-grow ap-justify-center ap-border-solid ap-overflow-hidden ap-rounded-lg ap-w-[300px]" [style.background]="template.name | templateDescriptionBannerColor" >
 
-    </mat-dialog-content>
-</div>
+                        <div>
+                            <ap-pieces-icons-from-flow [maxNumberOfIconsToLoad]="3" [iconSize]="50" [useCoreMentionIcons]="false" [flowVersion]="template.template" ></ap-pieces-icons-from-flow>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="ap-typography-headline-6 ap-px-2 ap-flex ap-gap-2">
+                   <b>{{template.name}}</b>  
+                </div>
+                <markdown [data]="template.description">
+                </markdown>
+            </div>
+            <div *ngIf="template.blogUrl" class="ap-px-2">
+                Read more about this template in <a [href]="template.blogUrl" target="_blank" class="ap-typography-body-1">this blog!</a> 
+            </div>
+        </div>
+    
+    </div>
+    <mat-dialog-actions align="end">
+        <div class="ap-flex ap-gap-2.5 ap-px-6 ap-mb-2">
+            <ap-button btnSize="large" btnColor="primary"
+                i18n>
+                Use Template
+            </ap-button>
+        </div>
+    </mat-dialog-actions>
+</ng-container>
+</mat-tab>
+    
+  </mat-tab-group>
 
 
 <ng-container *ngIf="templates$ | async"></ng-container>
 
 <ng-template #filtersColumn>
     <div
-        class="ap-w-[230px] ap-overflow-y-auto thin-scrollbars ap-flex ap-flex-col ap-gap-8  ap-px-5  ap-pt-5 ap-bg-white">
+        class="ap-w-[234px] ap-overflow-y-auto thin-scrollbars ap-flex ap-flex-col ap-gap-8  ap-px-6  ap-pt-5 ap-bg-white">
         <app-templates-filters *ngIf="filters$ | async as filters" [formControl]="dialogForm.controls.tags"
             [filters]="filters"></app-templates-filters>
         <app-template-apps-dropdown *ngIf="templates$ | async"
@@ -27,7 +77,7 @@
 
 <ng-template #contentColumn let-tabGroup="tabGroup">
     <div class="ap-bg-[#F0F1F3] ap-grow ap-overflow-y-auto  thin-scrollbars black-scrollbars ">
-        <div class="ap-p-3 ap-sticky ap-top-0 ap-z-50  ap-bg-[#F0F1F3]    ap-flex ap-items-center">
+        <div class="ap-p-3 ap-sticky ap-top-0 ap-z-50  ap-bg-[#F0F1F3] ap-max-w-[792px]    ap-flex ap-items-center">
             <mat-form-field class="ap-grow" appearance="outline" subscriptSizing="dynamic">
                 <mat-icon matPrefix color="body-icon" svgIcon="search" class="!ap-w-[18px] !ap-h-[18px]"></mat-icon>
                 <input cdkFocusInitial #searchInput [formControl]="dialogForm.controls.search" matInput
@@ -39,16 +89,7 @@
             [class.ap-items-center]="(loading$ | async)" [class.ap-justify-center]="(loading$ | async)">
 
             <ng-container *ngIf="(loading$ | async) === false">
-                <div (click)="closeDialog()"
-                    class="ap-flex ap-items-center ap-gap-2 ap-justify-center ap-flex-col ap-border ap-border-outline ap-h-[241px] ap-w-[246px] ap-rounded ap-bg-white ap-rounded-lg ap-cursor-pointer ap-transition-colors hover:ap-border-primary hover:ap-bg-primary-light ">
-                    <ng-container>
-                        <svg-icon src="assets/img/custom/add.svg" [applyClass]="true"
-                            class="ap-fill-primary ap-w-[26px] ap-h-[26px]"></svg-icon>
-                        <div class="ap-typography-subtitle-1 ap-text-primary" i18n>Start from scratch</div>
-                    </ng-container>
-                </div>
-
-                <app-template-card [template]="template" (useTemplateClicked)="useTemplate(template,'all ideas')"
+                <app-template-card (descriptionButtonClicked)="showTemplateDescription($event)" [template]="template" (useTemplateClicked)="useTemplate(template,'all ideas')"
                     *ngFor="let template of (templates$ | async)"></app-template-card>
             </ng-container>
 

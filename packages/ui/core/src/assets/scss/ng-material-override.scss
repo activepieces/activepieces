@@ -754,3 +754,8 @@ app-platform-settings {
   .mat-calendar-body-cell-content:not(.mat-calendar-body-selected):not(.mat-calendar-body-comparison-identical) {
   color: var(--primary-palette-contrast-400);
 }
+
+app-templates-dialog
+{
+  mat-tab-header{ display: none !important; }
+}

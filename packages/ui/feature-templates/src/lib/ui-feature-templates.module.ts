@@ -9,6 +9,7 @@ import { UiCommonModule } from '@activepieces/ui/common';
 import { TemplateBlogNotificationComponent } from './template-blog-notification/template-blog-notification.component';
 import { TimeagoModule } from 'ngx-timeago';
 import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
+import { TemplateDescriptionBannerColor } from './template-description-banner-color.pipe';
 const exportedDeclarations = [
   TemplatesDialogComponent,
   TemplatesFiltersComponent,
@@ -16,6 +17,7 @@ const exportedDeclarations = [
   TemplateAppTagContainerComponent,
   TemplateCardComponent,
   TemplateBlogNotificationComponent,
+  TemplateDescriptionBannerColor,
 ];
 @NgModule({
   imports: [
