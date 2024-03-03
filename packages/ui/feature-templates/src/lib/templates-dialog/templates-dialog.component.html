@@ -5,7 +5,7 @@
 </div>
 <mat-tab-group [preserveContent]="true"  [animationDuration]="ANIMATION_DURATION">
     <mat-tab  label="templates"> <div class="ap-flex">
-        <mat-dialog-content class="!ap-flex ap-h-[559px] ap-w-[1070px] ap-gap-2 ap-p-0">
+        <mat-dialog-content class="!ap-flex ap-h-[559px] !ap-max-h-[default] ap-w-[1070px] ap-gap-2 ap-p-0">
             <ng-container *ngTemplateOutlet="filtersColumn"></ng-container>
             <ng-container *ngTemplateOutlet="contentColumn; context:{showFeaturedBanner:false}"></ng-container>
         </mat-dialog-content>
@@ -25,27 +25,8 @@
             
             <div class="ap-pt-3 ap-px-6 ap-min-w-0  ap-grow ap-shrink ap-basis-[1070px] ap-max-w-[1070px] ap-typography-body-1 ap-text-body ap-grow ">
             
-            <div class="ap-flex ap-gap-2 ap-flex-col">
-                
-                <div class="ap-flex ap-items-center ap-justify-center">
-                    <div class="ap-border ap-flex ap-items-center ap-h-[190px] ap-grow ap-justify-center ap-border-solid ap-overflow-hidden ap-rounded-lg ap-w-[300px]" [style.background]="template.name | templateDescriptionBannerColor" >
-
-                        <div>
-                            <ap-pieces-icons-from-flow [maxNumberOfIconsToLoad]="3" [iconSize]="50" [useCoreMentionIcons]="false" [flowVersion]="template.template" ></ap-pieces-icons-from-flow>
-                        </div>
-
-                    </div>
-                </div>
-                <div class="ap-typography-headline-6 ap-px-2 ap-flex ap-gap-2">
-                   <b>{{template.name}}</b>  
-                </div>
-                <markdown [data]="template.description">
-                </markdown>
+                <app-template-description [template]="template"></app-template-description>
             </div>
-            <div *ngIf="template.blogUrl" class="ap-px-2">
-                Read more about this template in <a [href]="template.blogUrl" target="_blank" class="ap-typography-body-1">this blog!</a> 
-            </div>
-        </div>
     
     </div>
     <mat-dialog-actions align="end">

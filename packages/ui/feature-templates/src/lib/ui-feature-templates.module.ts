@@ -10,6 +10,7 @@ import { TemplateBlogNotificationComponent } from './template-blog-notification/
 import { TimeagoModule } from 'ngx-timeago';
 import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
 import { TemplateDescriptionBannerColor } from './template-description-banner-color.pipe';
+import { TemplateDescriptionComponent } from './templates-dialog/template-description/template-description.component';
 const exportedDeclarations = [
   TemplatesDialogComponent,
   TemplatesFiltersComponent,
@@ -26,7 +27,7 @@ const exportedDeclarations = [
     UiFeaturePiecesModule,
     TimeagoModule.forChild(),
   ],
-  declarations: [...exportedDeclarations],
+  declarations: [...exportedDeclarations, TemplateDescriptionComponent],
   exports: exportedDeclarations,
 })
 export class UiFeatureTemplatesModule {}
