@@ -16,7 +16,7 @@
 
 <ng-template #filtersColumn>
     <div
-        class="ap-w-[230px] ap-overflow-y-auto thin-scrollbars ap-flex ap-flex-col ap-gap-8  ap-px-5  ap-pt-5 ap-bg-white">
+        class="ap-w-[234px] ap-overflow-y-auto thin-scrollbars ap-flex ap-flex-col ap-gap-8  ap-px-6  ap-pt-5 ap-bg-white">
         <app-templates-filters *ngIf="filters$ | async as filters" [formControl]="dialogForm.controls.tags"
             [filters]="filters"></app-templates-filters>
         <app-template-apps-dropdown *ngIf="templates$ | async"
