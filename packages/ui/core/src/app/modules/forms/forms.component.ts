@@ -107,10 +107,6 @@ export class FormsComponent implements OnInit {
             ]);
             break;
         }
-        // } else {
-        //   this.props = null;
-        //   this.error = 'This flow does not have a form.';
-        // }
       }),
       catchError((err) => {
         console.error(err);
