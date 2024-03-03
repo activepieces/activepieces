@@ -1,5 +1,5 @@
 import {
-    ALL_PRINICPAL_TYPES,
+    ALL_PRINCIPAL_TYPES,
     ApId,
 } from '@activepieces/shared'
 
@@ -14,7 +14,7 @@ export const formController: FastifyPluginAsyncTypebox = async (app) => {
 
 const GetFormRequest = {
     config: {
-        allowedPrincipals: ALL_PRINICPAL_TYPES,
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
     schema: {
         description: 'Get a form by flow id',
