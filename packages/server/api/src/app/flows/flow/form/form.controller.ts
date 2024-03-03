@@ -7,7 +7,7 @@ import { formService } from './form.service'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 
 export const formController: FastifyPluginAsyncTypebox = async (app) => {
-    app.get('/:flowId', GetFormRequest, async (request, reply) => {
+    app.get('/:flowId', GetFormRequest, async (request) => {
         return formService.getFormByFlowIdOrThrow(request.params.flowId)
     })
 }

@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, FlowId, FormInput, FormInputType, FormResponse, PopulatedFlow, isNil } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, FlowId, FormInputType, FormResponse, PopulatedFlow, isNil } from '@activepieces/shared'
 import { flowRepo } from '../flow.repo'
 import { flowVersionService } from '../../flow-version/flow-version.service'
 
@@ -12,7 +12,7 @@ const SIMPLE_FILE_PROPS = {
             description: '',
             type: FormInputType.FILE,
             required: true,
-        }
+        },
     ],
     waitForResponse: true,
 }

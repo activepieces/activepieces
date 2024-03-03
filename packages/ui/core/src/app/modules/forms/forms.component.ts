@@ -5,10 +5,7 @@ import {
   FormResponse,
   TelemetryEventName,
 } from '@activepieces/shared';
-import {
-  TelemetryService,
-  environment,
-} from '@activepieces/ui/common';
+import { TelemetryService, environment } from '@activepieces/ui/common';
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -24,11 +21,7 @@ import {
   tap,
 } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import {
-  FormResult,
-  FormResultTypes,
-  FormsService,
-} from './forms.service';
+import { FormResult, FormResultTypes, FormsService } from './forms.service';
 import { StatusCodes } from 'http-status-codes';
 
 @Component({
@@ -54,18 +47,16 @@ export class FormsComponent implements OnInit {
     private formsService: FormsService,
     private telemteryService: TelemetryService,
     private router: Router
-  ) { }
+  ) {}
 
   ngOnInit(): void {
-
     this.flow$ = this.route.paramMap.pipe(
       switchMap((params) =>
         this.formsService.get(params.get('flowId') as string)
       ),
       tap((form) => {
         this.telemteryService.capture({
-          name: TelemetryEventName
-            .FORMS_VIEWED,
+          name: TelemetryEventName.FORMS_VIEWED,
           payload: {
             flowId: form.id,
             formProps: form.props,
@@ -76,7 +67,11 @@ export class FormsComponent implements OnInit {
         this.form = new FormGroup({});
         this.buildInputs(form.props.inputs);
         this.populatedForm = form;
-        this.webhookUrl = environment.apiUrl + '/webhooks/' + this.populatedForm!.id + (this.populatedForm!.props.waitForResponse ? '/sync' : '');
+        this.webhookUrl =
+          environment.apiUrl +
+          '/webhooks/' +
+          this.populatedForm!.id +
+          (this.populatedForm!.props.waitForResponse ? '/sync' : '');
       }),
       catchError((err) => {
         console.error(err);
@@ -86,7 +81,6 @@ export class FormsComponent implements OnInit {
     );
   }
 
-
   async submit() {
     if (this.form.valid && !this.loading) {
       this.markdownResponse.next(null);
@@ -95,9 +89,9 @@ export class FormsComponent implements OnInit {
       const observables: Observable<string>[] = [];
 
       for (const key in this.form.value) {
-        const isFileInput = this.inputs.filter((f) => f.type === FormInputType.FILE).find(
-          (input) => this.getInputKey(input.displayName) === key
-        );
+        const isFileInput = this.inputs
+          .filter((f) => f.type === FormInputType.FILE)
+          .find((input) => this.getInputKey(input.displayName) === key);
 
         if (isFileInput && this.form.value[key]) {
           observables.push(this.toBase64(this.form.value[key]));
@@ -152,10 +146,14 @@ export class FormsComponent implements OnInit {
         }),
         catchError((error) => {
           if (error.status === StatusCodes.NOT_FOUND) {
-            this.snackBar.open(`Flow is not found, please publish the flow`, '', {
-              panelClass: 'error',
-              duration: 5000,
-            });
+            this.snackBar.open(
+              `Flow is not found, please publish the flow`,
+              '',
+              {
+                panelClass: 'error',
+                duration: 5000,
+              }
+            );
           } else {
             this.snackBar.open(`Flow failed to execute`, '', {
               panelClass: 'error',

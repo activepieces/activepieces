@@ -8,10 +8,10 @@ import { environment } from '@activepieces/ui/common';
   providedIn: 'root',
 })
 export class FormsService {
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   submitForm(webhookUrl: string, request: FormData): Observable<FormResult> {
-    return this.http.post<FormResult>(webhookUrl, request)
+    return this.http.post<FormResult>(webhookUrl, request);
   }
 
   get(flowId: FlowId): Observable<FormResponse> {
