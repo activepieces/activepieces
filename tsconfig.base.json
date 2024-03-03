@@ -453,6 +453,9 @@
       "@activepieces/piece-stability-ai": [
         "packages/pieces/community/stability-ai/src/index.ts"
       ],
+      "@activepieces/piece-stable-diffusion-webui": [
+        "packages/pieces/community/stable-diffusion-webui/src/index.ts"
+      ],
       "@activepieces/piece-store": [
         "packages/pieces/community/store/src/index.ts"
       ],
@@ -519,6 +522,9 @@
       "@activepieces/piece-woocommerce": [
         "packages/pieces/community/woocommerce/src/index.ts"
       ],
+      "@activepieces/piece-wootric": [
+        "packages/pieces/community/wootric/src/index.ts"
+      ],
       "@activepieces/piece-wordpress": [
         "packages/pieces/community/wordpress/src/index.ts"
       ],
@@ -546,9 +552,6 @@
       ],
       "@activepieces/pieces-framework": [
         "packages/pieces/community/framework/src/index.ts"
-      ],
-      "@activepieces/pieces-wootric": [
-        "packages/pieces/community/wootric/src/index.ts"
       ],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
       "@activepieces/ui-canvas-utils": [

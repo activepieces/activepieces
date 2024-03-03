@@ -13,6 +13,7 @@ const useRedis = system.get(SystemProp.QUEUE_MODE) === QueueMode.REDIS
 type SystemJobHandler = (data: Job<SystemJobData, unknown>) => Promise<void>
 
 let systemJobsQueue: Queue<SystemJobData, unknown>
+let systemJobWorker: Worker<SystemJobData, unknown>
 const SYSTEM_JOB_QUEUE = 'system-job-queue'
 
 const handlers: Record<string, SystemJobHandler> = {}
@@ -37,11 +38,11 @@ export const redisSystemJob = {
         )
         await systemJobsQueue.waitUntilReady()
 
-        const systemJobWorker = new Worker<SystemJobData, unknown, ApId>(
+        systemJobWorker = new Worker<SystemJobData, unknown, ApId>(
             SYSTEM_JOB_QUEUE,
             async (job) => {
                 const handlerFn = handlers[job.name]
-                logger.info(`Running system job ${job.name}`)
+                logger.debug(`Running system job ${job.name}`)
                 if (isNil(handlerFn)) {
                     throw new Error(`No handler for job ${job.name}`)
                 }
@@ -58,10 +59,9 @@ export const redisSystemJob = {
         if (!useRedis) {
             return
         }
-        const client = await systemJobsQueue.client
-        const jobKey = await client.get(job.name)
+        const jobMQ = (await systemJobsQueue.getJobs()).find((j) => j.name === job.name)
         handlers[job.name] = handler
-        if (isNil(jobKey)) {
+        if (isNil(jobMQ)) {
             logger.info(`Adding job ${job.name} with cron ${cron} to system job queue`)
             await systemJobsQueue.add(job.name, job, {
                 repeat: {
@@ -75,6 +75,7 @@ export const redisSystemJob = {
         if (isNil(systemJobsQueue)) {
             return
         }
+        await systemJobWorker.close()
         await systemJobsQueue.close()
     },
 }

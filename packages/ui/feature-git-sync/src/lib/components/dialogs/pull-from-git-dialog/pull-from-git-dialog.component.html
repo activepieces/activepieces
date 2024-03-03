@@ -10,9 +10,15 @@
                 <svg-icon [svgStyle]="{ width: '20px', height: '20px' }" src="assets/img/custom/warn.svg">
                 </svg-icon> <span i18n>Warning</span>
             </div>
-            <div i18n>
-                    All the flows in <b>{{data.projectName}}</b> will be replaced with the flows from the Git repository.
+            <div i18n >
+                These are the changes that will be pulled from the repository:
+                <div  class="ap-mt-4" >
+
+                    <div *ngFor="let op of this.data.operations; let i = index">
+                        {{i + 1}}. {{op}}
+                    </div>
                 </div>
+            </div>
         </ap-warning-box>
     </div>
 

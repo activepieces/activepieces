@@ -347,6 +347,12 @@ function handleImportFlowOperation(
         type: FlowOperationType.UPDATE_TRIGGER,
         request: operation.trigger,
     })
+    operations.push({
+        type: FlowOperationType.CHANGE_NAME,
+        request: {
+            displayName: operation.displayName,
+        },
+    })
     operations.push(...flowHelper.getImportOperations(operation.trigger))
     return operations
 }
