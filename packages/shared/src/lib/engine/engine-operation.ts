@@ -70,7 +70,6 @@ export type BeginExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.B
 
 export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.RESUME> & {
     executionState: ExecutionState
-    tasks: number
     resumePayload: ResumePayload
 }
 

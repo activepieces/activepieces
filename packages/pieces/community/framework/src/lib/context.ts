@@ -1,14 +1,11 @@
 import {
   AppConnectionValue,
-  DelayPauseMetadata,
   ExecutionType,
   FlowRunId,
-  PauseMetadata,
   ProjectId,
   ResumePayload,
   StopResponse,
   TriggerPayload,
-  WebhookPauseMetadata,
 } from '@activepieces/shared';
 import { TriggerStrategy } from './trigger/trigger';
 import {
@@ -17,6 +14,7 @@ import {
   StaticPropsValue,
 } from './property';
 import { PieceAuthProperty } from './property/authentication';
+import { DelayPauseMetadata, PauseMetadata, WebhookPauseMetadata } from '@activepieces/shared';
 
 type BaseContext<
   PieceAuth extends PieceAuthProperty,

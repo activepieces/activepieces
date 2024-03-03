@@ -48,6 +48,8 @@ import { logSerializer } from 'server-worker'
 type FinishExecutionParams = {
     flowRunId: FlowRunId
     logFileId: FileId
+    tasks: number
+    tags?: string[]
     executionOutput: ExecutionOutput
 }
 
@@ -106,9 +108,9 @@ const finishExecution = async (
             flowRunId,
             status: getTerminalStatus(executionOutput.status),
             terminationReason: getTerminationReason(executionOutput),
-            tasks: executionOutput.tasks,
+            tasks: params.tasks,
             logsFileId: logFileId,
-            tags: executionOutput.tags ?? [],
+            tags: params.tags ?? [],
         })
     }
 }
@@ -165,7 +167,6 @@ const loadInputAndLogFileId = async ({
                 input: {
                     ...baseInput,
                     executionType: ExecutionType.RESUME,
-                    tasks: executionOutput.tasks,
                     executionState: executionOutput.executionState,
                     resumePayload: jobData.payload as ResumePayload,
                 },
@@ -258,24 +259,23 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
         })
 
         logger.info(
-            `[FlowWorker#executeFlow] flowRunId=${jobData.runId} sandboxId=${
-                sandbox.boxId
+            `[FlowWorker#executeFlow] flowRunId=${jobData.runId} sandboxId=${sandbox.boxId
             } prepareTime=${Date.now() - startTime}ms`,
         )
 
-        const { result: executionOutput } = await engineHelper.executeFlow(
+        const { result } = await engineHelper.executeFlow(
             sandbox,
             input,
         )
-
+        
         if (
             jobData.synchronousHandlerId &&
-      jobData.hookType === HookType.BEFORE_LOG
+            jobData.hookType === HookType.BEFORE_LOG
         ) {
             await flowResponseWatcher.publish(
                 jobData.runId,
                 jobData.synchronousHandlerId,
-                executionOutput,
+                result,
             )
         }
 
@@ -293,7 +293,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
 
         if (
             jobData.synchronousHandlerId &&
-      jobData.hookType === HookType.AFTER_LOG
+            jobData.hookType === HookType.AFTER_LOG
         ) {
             await flowResponseWatcher.publish(
                 jobData.runId,
@@ -303,17 +303,15 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
         }
 
         logger.info(
-            `[FlowWorker#executeFlow] flowRunId=${
-                jobData.runId
-            } executionOutputStatus=${executionOutput.status} sandboxId=${
-                sandbox.boxId
+            `[FlowWorker#executeFlow] flowRunId=${jobData.runId
+            } executionOutputStatus=${result.status} sandboxId=${sandbox.boxId
             } duration=${Date.now() - startTime} ms`,
         )
     }
     catch (e: unknown) {
         if (
             e instanceof ActivepiecesError &&
-      (e as ActivepiecesError).error.code === ErrorCode.QUOTA_EXCEEDED
+            (e as ActivepiecesError).error.code === ErrorCode.QUOTA_EXCEEDED
         ) {
             await flowRunService.finish({
                 flowRunId: jobData.runId,
@@ -325,7 +323,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
         }
         else if (
             e instanceof ActivepiecesError &&
-      e.error.code === ErrorCode.EXECUTION_TIMEOUT
+            e.error.code === ErrorCode.EXECUTION_TIMEOUT
         ) {
             await flowRunService.finish({
                 flowRunId: jobData.runId,

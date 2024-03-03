@@ -1,15 +1,15 @@
 import { logger } from '@sentry/utils'
 import {
-    ExecutionOutput,
-    ExecutionOutputStatus,
-    PauseExecutionOutput,
+    FlowExecutionResponse,
+    FlowExecutionStatus,
     PauseType,
-    StopExecutionOutput,
+    StopResponse,
     apId,
 } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 import { pubSub } from '../../helper/pubsub'
 import { SystemProp, system } from 'server-shared'
+import { PauseMetadata } from 'packages/shared/src/lib/flow-run/execution/flow-execution'
 
 const listeners = new Map<string, (flowResponse: FlowResponse) => void>()
 
@@ -25,7 +25,7 @@ type FlowResponseWithId = {
 }
 
 const WEBHOOK_TIMEOUT_MS =
-  (system.getNumber(SystemProp.WEBHOOK_TIMEOUT_SECONDS) ?? 30) * 1000
+    (system.getNumber(SystemProp.WEBHOOK_TIMEOUT_SECONDS) ?? 30) * 1000
 const HANDLER_ID = apId()
 export const flowResponseWatcher = {
     getHandlerId(): string {
@@ -70,10 +70,10 @@ export const flowResponseWatcher = {
     async publish(
         flowRunId: string,
         handlerId: string,
-        executionOutput: ExecutionOutput,
+        result: FlowExecutionResponse
     ): Promise<void> {
         logger.info(`[flowRunWatcher#publish] flowRunId=${flowRunId}`)
-        const flowResponse = await getFlowResponse(executionOutput)
+        const flowResponse = await getFlowResponse(result)
         const message: FlowResponseWithId = { flowRunId, flowResponse }
         await pubSub.publish(`flow-run:sync:${handlerId}`, JSON.stringify(message))
     },
@@ -83,14 +83,29 @@ export const flowResponseWatcher = {
 }
 
 async function getFlowResponse(
-    executionOutput: ExecutionOutput,
+    result: FlowExecutionResponse
 ): Promise<FlowResponse> {
-    switch (executionOutput.status) {
-        case ExecutionOutputStatus.PAUSED:
-            return getResponseForPausedRun(executionOutput)
-        case ExecutionOutputStatus.STOPPED:
-            return getResponseForStoppedRun(executionOutput)
-        case ExecutionOutputStatus.INTERNAL_ERROR:
+    switch (result.status) {
+        case FlowExecutionStatus.PAUSED:
+            if (result.pauseMetadata && result.pauseMetadata.type === PauseType.WEBHOOK) {
+                return {
+                    status: StatusCodes.OK,
+                    body: result.pauseMetadata.response,
+                    headers: {},
+                }
+            }
+            return {
+                status: StatusCodes.NO_CONTENT,
+                body: {},
+                headers: {},
+            }
+        case FlowExecutionStatus.STOPPED:
+            return {
+                status: result.stopResponse?.status ?? StatusCodes.OK,
+                body: result.stopResponse?.body,
+                headers: result.stopResponse?.headers ?? {},
+            }
+        case FlowExecutionStatus.INTERNAL_ERROR:
             return {
                 status: StatusCodes.INTERNAL_SERVER_ERROR,
                 body: {
@@ -98,7 +113,7 @@ async function getFlowResponse(
                 },
                 headers: {},
             }
-        case ExecutionOutputStatus.FAILED:
+        case FlowExecutionStatus.FAILED:
             return {
                 status: StatusCodes.INTERNAL_SERVER_ERROR,
                 body: {
@@ -106,8 +121,8 @@ async function getFlowResponse(
                 },
                 headers: {},
             }
-        case ExecutionOutputStatus.TIMEOUT:
-        case ExecutionOutputStatus.RUNNING:
+        case FlowExecutionStatus.TIMEOUT:
+        case FlowExecutionStatus.RUNNING:
             return {
                 status: StatusCodes.GATEWAY_TIMEOUT,
                 body: {
@@ -115,39 +130,12 @@ async function getFlowResponse(
                 },
                 headers: {},
             }
-        case ExecutionOutputStatus.SUCCEEDED:
-        case ExecutionOutputStatus.QUOTA_EXCEEDED:
+        case FlowExecutionStatus.SUCCEEDED:
+        case FlowExecutionStatus.QUOTA_EXCEEDED:
             return {
                 status: StatusCodes.NO_CONTENT,
                 body: {},
                 headers: {},
             }
-    }
-}
-
-async function getResponseForPausedRun(
-    executionOutput: PauseExecutionOutput,
-): Promise<FlowResponse> {
-    if (executionOutput.pauseMetadata.type === PauseType.WEBHOOK) {
-        return {
-            status: StatusCodes.OK,
-            body: executionOutput.pauseMetadata.response,
-            headers: {},
-        }
-    }
-    return {
-        status: StatusCodes.NO_CONTENT,
-        body: {},
-        headers: {},
-    }
-}
-
-async function getResponseForStoppedRun(
-    executionOutput: StopExecutionOutput,
-): Promise<FlowResponse> {
-    return {
-        status: executionOutput.stopResponse?.status ?? StatusCodes.OK,
-        body: executionOutput.stopResponse?.body,
-        headers: executionOutput.stopResponse?.headers ?? {},
     }
 }

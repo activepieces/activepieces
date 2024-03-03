@@ -1,7 +1,8 @@
-import { ActionType, ExecutionOutput, ExecutionOutputStatus, LoopStepOutput, PauseMetadata, StepOutput, StepOutputStatus, StopResponse, assertEqual, isNil } from '@activepieces/shared'
+import { ActionType, ExecutionOutputStatus, LoopStepOutput, PauseMetadata, StepOutput, StepOutputStatus, StopResponse, assertEqual, isNil } from '@activepieces/shared'
 import { StepExecutionPath } from './step-execution-path'
 import { loggingUtils } from '../../helper/logging-utils'
 import { nanoid } from 'nanoid'
+import { FlowExecutionResponse, FlowExecutionStatus } from '@activepieces/shared'
 
 export enum ExecutionVerdict {
     RUNNING = 'RUNNING',
@@ -165,21 +166,17 @@ export class FlowExecutorContext {
         })
     }
 
-    public async toExecutionOutput(): Promise<ExecutionOutput> {
+    public async toResponse(): Promise<FlowExecutionResponse> {
         const baseExecutionOutput = {
             duration: this.duration,
             tasks: this.tasks,
             tags: [...this.tags],
-            executionState: {
-                steps: await loggingUtils.trimExecution(this.steps),
-            },
+            steps: await loggingUtils.trimExecution(this.steps),
+            status: this.verdict,
         }
         switch (this.verdict) {
             case ExecutionVerdict.FAILED:
-                return {
-                    ...baseExecutionOutput,
-                    status: ExecutionOutputStatus.FAILED,
-                }
+                return baseExecutionOutput
             case ExecutionVerdict.PAUSED: {
                 const verdictResponse = this.verdictResponse
                 if (verdictResponse?.reason !== ExecutionOutputStatus.PAUSED) {
@@ -187,7 +184,6 @@ export class FlowExecutorContext {
                 }
                 return {
                     ...baseExecutionOutput,
-                    status: ExecutionOutputStatus.PAUSED,
                     pauseMetadata: verdictResponse.pauseMetadata,
                 }
             }
@@ -197,14 +193,10 @@ export class FlowExecutorContext {
                 if (verdictResponse?.reason === ExecutionOutputStatus.STOPPED) {
                     return {
                         ...baseExecutionOutput,
-                        status: ExecutionOutputStatus.STOPPED,
                         stopResponse: verdictResponse.stopResponse,
                     }
                 }
-                return {
-                    ...baseExecutionOutput,
-                    status: ExecutionOutputStatus.SUCCEEDED,
-                }
+                return baseExecutionOutput
             }
         }
     }

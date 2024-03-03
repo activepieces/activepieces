@@ -9,6 +9,8 @@ import {
     ApId,
     ALL_PRINICPAL_TYPES,
     ExecutionType,
+    SERVICE_KEY_SECURITY_OPENAPI,
+    PrincipalType,
 } from '@activepieces/shared'
 import {
     ActivepiecesError,
@@ -49,9 +51,8 @@ export const flowRunController: FastifyPluginCallbackTypebox = (
     _options,
     done,
 ): void => {
-    // list
-    app.get('/', ListRequest, async (request, reply) => {
-        const flowRunPage = await flowRunService.list({
+    app.get('/', ListRequest, async (request) => {
+        return flowRunService.list({
             projectId: request.principal.projectId,
             flowId: request.query.flowId,
             tags: request.query.tags,
@@ -61,11 +62,8 @@ export const flowRunController: FastifyPluginCallbackTypebox = (
             createdAfter: request.query.createdAfter,
             createdBefore: request.query.createdBefore,
         })
-
-        await reply.send(flowRunPage)
     })
 
-    // get one
     app.get(
         '/:id',
         async (
@@ -104,7 +102,7 @@ export const flowRunController: FastifyPluginCallbackTypebox = (
             executionType: ExecutionType.RESUME,
         })
     })
-    
+
 
     app.post('/:id/retry', RetryFlowRequest, async (req) => {
         await flowRunService.retry({
@@ -117,7 +115,13 @@ export const flowRunController: FastifyPluginCallbackTypebox = (
 }
 
 const ListRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+    },
     schema: {
+        tags: ['flows'],
+        description: 'List flows',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         querystring: ListFlowRunsRequestQuery,
     },
 }

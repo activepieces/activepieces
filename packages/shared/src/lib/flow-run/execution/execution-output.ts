@@ -1,4 +1,5 @@
 import { TriggerPayload } from '../../engine'
+import { PauseMetadata } from './flow-execution'
 import { StepOutput } from './step-output'
 
 export const MAX_LOG_SIZE = 2048 * 1024
@@ -33,36 +34,11 @@ type BaseExecutionOutput<T extends ExecutionOutputStatus> = {
     status: T
     executionState: ExecutionState
     duration: number
-    tasks: number
-    tags?: string[]
     errorMessage?: ExecutionError
 }
 
-export enum PauseType {
-    DELAY = 'DELAY',
-    WEBHOOK = 'WEBHOOK',
-}
-
-type BasePauseMetadata<T extends PauseType> = {
-    type: T
-}
-
-export type DelayPauseMetadata = BasePauseMetadata<PauseType.DELAY> & {
-    resumeDateTime: string
-}
-
-export type WebhookPauseMetadata = BasePauseMetadata<PauseType.WEBHOOK> & {
-    requestId: string
-    response: Record<string, unknown>
-}
-
-export type PauseMetadata = DelayPauseMetadata | WebhookPauseMetadata
 
 export type ResumePayload = TriggerPayload
-
-export type PauseExecutionOutput = BaseExecutionOutput<ExecutionOutputStatus.PAUSED> & {
-    pauseMetadata: PauseMetadata
-}
 
 export type StopResponse = {
     status?: number
@@ -84,5 +60,4 @@ export type StopExecutionOutput = BaseExecutionOutput<ExecutionOutputStatus.STOP
 
 export type ExecutionOutput =
     | FinishExecutionOutput
-    | PauseExecutionOutput
     | StopExecutionOutput
