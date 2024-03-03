@@ -1,9 +1,9 @@
 <div class="ap-inline-block" [matTooltip]="tooltipText">
     <ng-container *ngFor="let url$ of urlsToLoad$; let isFirst=first">
-        <ap-piece-icon-container [url]="(url$|async) || ''" [class.ap-ml-[5px]]="!isFirst">
+        <ap-piece-icon-container [iconSize]="iconSize" [url]="(url$|async) || ''" [class.ap-ml-[5px]]="!isFirst">
         </ap-piece-icon-container>
     </ng-container>
-    <ap-piece-icon-container *ngIf="numberOfStepsLeft > 0" [moreIconsNumber]="numberOfStepsLeft">
+    <ap-piece-icon-container [iconSize]="iconSize" *ngIf="numberOfStepsLeft > 0" [moreIconsNumber]="numberOfStepsLeft">
     </ap-piece-icon-container>
 </div>
 <ng-container *ngFor=" let metaData$ of piecesMetadata$">

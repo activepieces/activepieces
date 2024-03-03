@@ -16,12 +16,16 @@ import { CORE_PIECES_ACTIONS_NAMES, CORE_PIECES_TRIGGERS, PieceMetadataService, 
 })
 export class PiecesIconsFromFlowComponent implements OnInit {
   @Input({ required: true}) flowVersion!: FlowVersionTemplate | FlowVersion;
+  @Input() useCoreMentionIcons = true;
+  @Input() iconSize= 20;
+  @Input() maxNumberOfIconsToLoad = 2;
   numberOfStepsLeft = 0;
   loadedIcons: Record<number, boolean> = {};
   urlsToLoad$: Observable<string>[] = [];
   tooltipText = '';
   stepNamesMap: Record<string, string> = {};
   piecesMetadata$: Observable<string>[] = [];
+ 
   constructor(private actionMetaDataService: PieceMetadataService) {}
   ngOnInit(): void {
     const icons$ = this.extractIconUrlsAndTooltipText();
@@ -41,10 +45,9 @@ export class PiecesIconsFromFlowComponent implements OnInit {
             }),
             map((md) => {
               if (
-                CORE_PIECES_ACTIONS_NAMES.find(
-                  (n) => s.settings.pieceName === n
-                ) ||
-                CORE_PIECES_TRIGGERS.find((n) => s.settings.pieceName === n)
+               (CORE_PIECES_ACTIONS_NAMES.find((n) => s.settings.pieceName === n) ||
+                CORE_PIECES_TRIGGERS.find((n) => s.settings.pieceName === n))
+                && this.useCoreMentionIcons
               ) {
                 return corePieceIconUrl(s.settings.pieceName);
               }
@@ -69,8 +72,8 @@ export class PiecesIconsFromFlowComponent implements OnInit {
   }
 
   loadIconUrls(urls$: Observable<string>[]) {
-    this.numberOfStepsLeft = Math.min(urls$.length - 2, 9);
-    this.urlsToLoad$ = urls$.slice(0, 2);
+    this.numberOfStepsLeft = Math.min(urls$.length - this.maxNumberOfIconsToLoad, 9);
+    this.urlsToLoad$ = urls$.slice(0, this.maxNumberOfIconsToLoad);
     this.piecesMetadata$ = urls$;
   }
   extractTooltipText() {
