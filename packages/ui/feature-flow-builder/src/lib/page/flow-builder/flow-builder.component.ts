@@ -2,6 +2,7 @@ import {
   Component,
   ElementRef,
   HostListener,
+  Injector,
   NgZone,
   OnDestroy,
   OnInit,
@@ -11,10 +12,12 @@ import { ActivatedRoute } from '@angular/router';
 import {
   BuilderSelectors,
   FlowItemDetailsActions,
+  FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
 import { Store } from '@ngrx/store';
 import {
   delay,
+  EMPTY,
   firstValueFrom,
   map,
   Observable,
@@ -29,7 +32,10 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { RunDetailsService } from '@activepieces/ui/feature-builder-left-sidebar';
 import {
   ExecutionOutputStatus,
+  FlowOperationType,
+  FlowTemplate,
   FlowVersion,
+  TelemetryEventName,
   TriggerType,
 } from '@activepieces/shared';
 import {
@@ -38,15 +44,28 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import {
   AppearanceService,
+  CURRENT_FLOW_IS_NEW_KEY_IN_LOCAL_STORAGE,
   FlagService,
+  TelemetryService,
+  TemplatesService,
   TestStepService,
   FlowBuilderService,
+  FlowService,
   WebSocketService,
   FlowRendererService,
 } from '@activepieces/ui/common';
+import { MatDialog } from '@angular/material/dialog';
 import {
   flowDisplayNameInRouteData,
 } from '../../resolvers/builder-route-data';
+import { ComponentPortal } from '@angular/cdk/portal';
+import {
+  TemplatesDialogComponent,
+  TemplateDialogData,
+  TemplateBlogNotificationComponent,
+  BLOG_URL_TOKEN,
+  TemplateDialogClosingResult,
+} from '@activepieces/ui/feature-templates';
 import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/common';
 import { PannerService } from '@activepieces/ui-canvas-utils';
 
@@ -98,8 +117,12 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     private testStepService: TestStepService,
     private flowRendererService: FlowRendererService,
     public builderService: FlowBuilderService,
+    private matDialog: MatDialog,
     private flagService: FlagService,
+    private telemetryService: TelemetryService,
     public builderAutocompleteService: BuilderAutocompleteMentionsDropdownService,
+    private templatesService: TemplatesService,
+    private flowService: FlowService,
     private websocketService: WebSocketService,
   ) {
     this.viewedVersion$ = this.store.select(BuilderSelectors.selectViewedVersion);
@@ -118,6 +141,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
       this.testStepService.testingStepSectionIsRendered$.asObservable();
     this.isPanning$ = this.pannerService.isPanning$;
     this.isDragging$ = this.flowRendererService.isDragginStep$;
+    this.openTemaplatesDialogForNewFlows();
     this.loadInitialData$ = this.actRoute.data.pipe(
       tap((value) => {
           this.setTitle$ = this.appearanceService.setTitle(value[flowDisplayNameInRouteData])
@@ -130,6 +154,22 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     );
     this.rightSidebar$ = this.store.select(
       BuilderSelectors.selectCurrentRightSideBarType
+    );
+  }
+  private showBlogNotification(template: FlowTemplate) {
+    this.builderService.componentToShowInsidePortal$.next(
+      new ComponentPortal(
+        TemplateBlogNotificationComponent,
+        null,
+        Injector.create({
+          providers: [
+            {
+              provide: BLOG_URL_TOKEN,
+              useValue: template.blogUrl,
+            },
+          ],
+        })
+      )
     );
   }
 
@@ -224,5 +264,64 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     }
   }
 
+  openTemaplatesDialogForNewFlows() {
 
+    if (localStorage.getItem(CURRENT_FLOW_IS_NEW_KEY_IN_LOCAL_STORAGE)) {
+      const TemplateDialogData: TemplateDialogData = {
+        insideBuilder: true
+      };
+      const templates$ = this.templatesService.list({});
+      this.importTemplate$ = templates$.pipe(switchMap((templates) => {
+        if (templates.length === 0) {
+          return of(void 0);
+        }
+        return this.matDialog
+          .open(TemplatesDialogComponent, {
+            data: TemplateDialogData,
+          })
+          .afterClosed()
+          .pipe(
+            switchMap((dialogResult?: TemplateDialogClosingResult) => {
+              if (dialogResult) {
+                this.builderService.showLoading();
+                return this.store
+                  .select(BuilderSelectors.selectCurrentFlow)
+                  .pipe(
+                    take(1),
+                    switchMap((flow) => {
+                      return this.flowService
+                        .update(flow.id, {
+                          type: FlowOperationType.IMPORT_FLOW,
+                          request: {
+                            displayName: dialogResult.template.name,
+                            trigger: dialogResult.template.template.trigger,
+                          },
+                        })
+                    }),
+                    tap((res) => {
+                      this.builderService.hideLoading();
+                      this.store.dispatch(FlowsActions.importFlow({ flow: res }));
+                      this.telemetryService.capture({
+                        name: TelemetryEventName.FLOW_IMPORTED,
+                        payload: {
+                          id: dialogResult.template.id,
+                          name: dialogResult.template.name,
+                          location: `inside the builder`,
+                          tab: `${dialogResult.activeTab}`,
+                        },
+                      });
+                      if (dialogResult.template.blogUrl) {
+                        this.showBlogNotification(dialogResult.template);
+                      }
+                    })
+                  );
+              }
+              return EMPTY;
+            }),
+            map(() => void 0)
+          )
+      }));
+      localStorage.removeItem(CURRENT_FLOW_IS_NEW_KEY_IN_LOCAL_STORAGE);
+    }
+  }
 }

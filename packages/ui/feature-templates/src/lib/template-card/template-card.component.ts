@@ -16,7 +16,6 @@ import { FlowTemplate } from '@activepieces/shared';
 })
 export class TemplateCardComponent implements AfterViewInit {
   @Output() useTemplateClicked = new EventEmitter<FlowTemplate>();
-  @Output() descriptionButtonClicked = new EventEmitter<FlowTemplate>();
   @Input() template: FlowTemplate;
   loading = false;
   constructor(private cd: ChangeDetectorRef) {}
@@ -25,8 +24,5 @@ export class TemplateCardComponent implements AfterViewInit {
     setTimeout(() => {
       this.cd.markForCheck();
     }, 100);
-  }
-  showTemplateDescription() {
-    this.descriptionButtonClicked.emit(this.template);
   }
 }

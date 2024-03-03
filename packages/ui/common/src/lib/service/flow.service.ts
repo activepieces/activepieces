@@ -21,6 +21,7 @@ import {
   TestFlowRunRequestBody,
 } from '@activepieces/shared';
 import { AuthenticationService } from './authentication.service';
+export const CURRENT_FLOW_IS_NEW_KEY_IN_LOCAL_STORAGE = 'newFlow';
 @Injectable({
   providedIn: 'root',
 })

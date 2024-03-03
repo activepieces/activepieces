@@ -38,7 +38,6 @@ import {
 
 type TriggersMetadata = Record<string, TriggerBase>;
 
-//TODO remove all hardcoded pieces names and mentions
 export const CORE_PIECES_ACTIONS_NAMES = [
   '@activepieces/piece-store',
   '@activepieces/piece-data-mapper',
@@ -53,10 +52,6 @@ export const CORE_PIECES_ACTIONS_NAMES = [
   '@activepieces/piece-date-helper',
   '@activepieces/piece-file-helper',
   '@activepieces/piece-math-helper',
-  '@activepieces/piece-activity',
-  '@activepieces/piece-image-helper',
-  '@activepieces/piece-crypto',
-
 ];
 export const corePieceIconUrl = (pieceName: string) =>
   `assets/img/custom/piece/${pieceName.replace(

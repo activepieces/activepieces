@@ -1,14 +1,8 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  Inject,
-  ViewChild,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import {
   BehaviorSubject,
   Observable,
-  Subject,
   debounceTime,
   map,
   shareReplay,
@@ -16,14 +10,18 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
-import { FlowTemplate, TelemetryEventName } from '@activepieces/shared';
+import {
+  FlowTemplate,
+  FolderId,
+  TelemetryEventName,
+} from '@activepieces/shared';
 
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TelemetryService, TemplatesService } from '@activepieces/ui/common';
-import { MatTabGroup } from '@angular/material/tabs';
 
 export interface TemplateDialogData {
   insideBuilder: boolean;
+  folderId$?: Observable<FolderId | undefined>;
 }
 type tabsNames = 'all ideas' | 'featured';
 
@@ -38,9 +36,6 @@ export interface TemplateDialogClosingResult {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TemplatesDialogComponent {
-  @ViewChild(MatTabGroup) matTabGroup!: MatTabGroup;
-  descriptionTemplate$: Subject<FlowTemplate | undefined> = new Subject();
-  readonly ANIMATION_DURATION = 500;
   dialogForm: FormGroup<{
     search: FormControl<string>;
     tags: FormControl<string[]>;
@@ -106,15 +101,5 @@ export class TemplatesDialogComponent {
 
   closeDialog() {
     this.dialogRef.close();
-  }
-  showTemplateDescription(template: FlowTemplate) {
-    this.matTabGroup.selectedIndex = 1;
-    this.descriptionTemplate$.next(template);
-  }
-  backToTemplates() {
-    this.matTabGroup.selectedIndex = 0;
-    setTimeout(() => {
-      this.descriptionTemplate$.next(undefined);
-    }, this.ANIMATION_DURATION);
   }
 }
