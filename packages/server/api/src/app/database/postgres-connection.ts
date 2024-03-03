@@ -109,6 +109,7 @@ import { AddShowActivityLogToPlatform1708861032399 } from './migration/postgres/
 import { MakePlatformNotNullable1705969874745 } from './migration/postgres/1705969874745-MakePlatformNotNullable'
 import { AddPlatformToPostgres1709052740378 } from './migration/postgres/1709052740378-AddPlatformToPostgres'
 import { AddSlugToGitRepo1709151540095 } from './migration/postgres/1709151540095-add-slug-to-git-repo'
+import { DropUnusedPlatformIndex1709500873378 } from './migration/postgres/1709500873378-DropUnusedPlatformIndex'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -181,6 +182,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddTriggerTestStrategy1707087022764,
         AddCategoriesToPieceMetadataPostgres1707231704973,
         AddUniqueStoreConstraint1708521505204,
+        DropUnusedPlatformIndex1709500873378,
     ]
 
     const edition = getEdition()
