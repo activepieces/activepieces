@@ -7,7 +7,7 @@ import {
     FlowRunId,
     ListFlowRunsRequestQuery,
     ApId,
-    ALL_PRINICPAL_TYPES,
+    ALL_PRINCIPAL_TYPES,
     ExecutionType,
 } from '@activepieces/shared'
 import {
@@ -25,7 +25,7 @@ type GetOnePathParams = {
 
 const ResumeFlowRunRequest = {
     config: {
-        allowedPrincipals: ALL_PRINICPAL_TYPES,
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
     schema: {
         params: Type.Object({
@@ -104,7 +104,7 @@ export const flowRunController: FastifyPluginCallbackTypebox = (
             executionType: ExecutionType.RESUME,
         })
     })
-    
+
 
     app.post('/:id/retry', RetryFlowRequest, async (req) => {
         await flowRunService.retry({

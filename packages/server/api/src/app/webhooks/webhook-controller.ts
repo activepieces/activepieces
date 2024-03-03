@@ -1,7 +1,7 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import {
-    ALL_PRINICPAL_TYPES,
+    ALL_PRINCIPAL_TYPES,
     ActivepiecesError,
     ApEdition,
     ErrorCode,
@@ -26,7 +26,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
         '/:flowId/sync',
         {
             config: {
-                allowedPrincipals: ALL_PRINICPAL_TYPES,
+                allowedPrincipals: ALL_PRINCIPAL_TYPES,
             },
             schema: {
                 params: WebhookUrlParams,
@@ -67,7 +67,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
         '/:flowId',
         {
             config: {
-                allowedPrincipals: ALL_PRINICPAL_TYPES,
+                allowedPrincipals: ALL_PRINCIPAL_TYPES,
             },
             schema: {
                 params: WebhookUrlParams,
@@ -89,7 +89,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
         '/',
         {
             config: {
-                allowedPrincipals: ALL_PRINICPAL_TYPES,
+                allowedPrincipals: ALL_PRINCIPAL_TYPES,
             },
             schema: {
                 querystring: WebhookUrlParams,
@@ -114,7 +114,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
         '/:flowId/simulate',
         {
             config: {
-                allowedPrincipals: ALL_PRINICPAL_TYPES,
+                allowedPrincipals: ALL_PRINCIPAL_TYPES,
             },
             schema: {
                 params: WebhookUrlParams,

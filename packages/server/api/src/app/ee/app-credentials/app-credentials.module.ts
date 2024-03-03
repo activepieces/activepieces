@@ -1,6 +1,6 @@
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { ALL_PRINICPAL_TYPES, SeekPage } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, SeekPage } from '@activepieces/shared'
 import { appCredentialService } from './app-credentials.service'
 import {
     ListAppCredentialsRequest,
@@ -24,7 +24,7 @@ const appCredentialController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/',
         {
             config: {
-                allowedPrincipals: ALL_PRINICPAL_TYPES,
+                allowedPrincipals: ALL_PRINCIPAL_TYPES,
             },
             schema: {
                 querystring: ListAppCredentialsRequest,
