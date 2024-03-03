@@ -5,7 +5,6 @@ export * from './lib/api-key';
 export * from './lib/billing';
 export * from './lib/project/project-requests';
 export * from './lib/custom-domains';
-export * from './lib/project-members/project-member-role';
 export * from './lib/referral/referral';
 export * from './lib/project-members/project-member-request';
 export * from './lib/project-members/project-member';

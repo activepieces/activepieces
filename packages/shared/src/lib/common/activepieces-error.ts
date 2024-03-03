@@ -78,6 +78,7 @@ export type EmailAuthIsDisabledParams = BaseErrorParams<ErrorCode.EMAIL_AUTH_DIS
 
 export type AuthorizationErrorParams = BaseErrorParams<
 ErrorCode.AUTHORIZATION,
+Record<string, string> &
 {
     message?: string
 }

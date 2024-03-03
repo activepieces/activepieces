@@ -1,10 +1,10 @@
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { PrincipalType, apId } from '@activepieces/shared'
+import { PlatformRole, PrincipalType, ProjectMemberRole, apId } from '@activepieces/shared'
 import { setupApp } from '../../../../src/app/app'
 import { generateMockToken } from '../../../helpers/auth'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { createMockUser, createMockPlatform, createMockProject, createMockActivity } from '../../../helpers/mocks'
+import { createMockUser, createMockPlatform, createMockProject, createMockActivity, createMockProjectMember } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 
@@ -160,6 +160,61 @@ describe('Activity API', () => {
 
             const responseBody = response?.json()
             expect(responseBody?.params?.message).toBe('invalid route for principal type')
+        })
+
+        it.each([
+            ProjectMemberRole.ADMIN,
+            ProjectMemberRole.EDITOR,
+            ProjectMemberRole.VIEWER,
+            ProjectMemberRole.EXTERNAL_CUSTOMER,
+        ])('Succeeds if user role is %s', async (testRole) => {
+            // arrange
+            const mockPlatformId = apId()
+            const mockOwner = createMockUser({ platformId: mockPlatformId })
+            const mockUser = createMockUser({ platformId: mockPlatformId })
+            await databaseConnection.getRepository('user').save([mockOwner, mockUser])
+
+            const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
+            const mockProject = createMockProject({
+                ownerId: mockOwner.id,
+                platformId: mockPlatform.id,
+            })
+            await databaseConnection.getRepository('project').save([mockProject])
+
+            const mockProjectMember = createMockProjectMember({
+                email: mockUser.email,
+                platformId: mockPlatform.id,
+                projectId: mockProject.id,
+                role: testRole,
+            })
+            await databaseConnection.getRepository('project_member').save([mockProjectMember])
+
+            const mockToken = await generateMockToken({
+                id: mockUser.id,
+                type: PrincipalType.USER,
+                projectId: mockProject.id,
+                platform: {
+                    id: mockPlatform.id,
+                    role: PlatformRole.MEMBER,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/v1/activities',
+                headers: {
+                    authorization: `Bearer ${mockToken}`,
+                },
+                query: {
+                    projectId: mockProject.id,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
         })
     })
 })

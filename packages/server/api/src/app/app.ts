@@ -21,7 +21,7 @@ import { appEventRoutingModule } from './app-event-routing/app-event-routing.mod
 import { triggerEventModule } from './flows/trigger-events/trigger-event.module'
 import { fastifyRawBody } from 'fastify-raw-body'
 import { stepFileModule } from './flows/step-file/step-file.module'
-import { rbacAuthMiddleware } from './ee/authentication/rbac-auth-middleware'
+import { rbacMiddleware } from './ee/authentication/rbac/rbac-middleware'
 import { userModule } from './user/user.module'
 import {
     ActivepiecesError,
@@ -219,7 +219,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     })
 
     app.addHook('preHandler', securityHandlerChain)
-    app.addHook('preHandler', rbacAuthMiddleware)
+    app.addHook('preHandler', rbacMiddleware)
     app.setErrorHandler(errorHandler)
     await app.register(fileModule)
     await app.register(flagModule)
