@@ -7,6 +7,7 @@ import {
     FlowTemplateWithoutProjectInformation,
     GetFlowQueryParamsRequest,
     ListFlowsRequest,
+    Permission,
     PopulatedFlow,
     Principal,
     PrincipalType,
@@ -156,6 +157,7 @@ async function extractUserIdFromPrincipal(
 const CreateFlowRequestOptions = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.WRITE_FLOW,
     },
     schema: {
         tags: ['flows'],
@@ -169,6 +171,9 @@ const CreateFlowRequestOptions = {
 }
 
 const UpdateFlowRequestOptions = {
+    config: {
+        permission: Permission.WRITE_FLOW,
+    },
     schema: {
         tags: ['flows'],
         description: 'Apply an operation to a flow',
@@ -183,6 +188,7 @@ const UpdateFlowRequestOptions = {
 const ListFlowsRequestOptions = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.READ_FLOW,
     },
     schema: {
         tags: ['flows'],
@@ -215,6 +221,7 @@ const GetFlowTemplateRequestOptions = {
 const GetFlowRequestOptions = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.READ_FLOW,
     },
     schema: {
         tags: ['flows'],
@@ -233,6 +240,7 @@ const GetFlowRequestOptions = {
 const DeleteFlowRequestOptions = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.WRITE_FLOW,
     },
     schema: {
         tags: ['flows'],

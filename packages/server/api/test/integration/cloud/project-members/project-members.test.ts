@@ -240,9 +240,8 @@ describe('Project Member API', () => {
 
             const responseBody = response?.json()
             expect(responseBody?.code).toBe('PERMISSION_DENIED')
+            expect(responseBody?.params?.userId).toBe(mockUser.id)
             expect(responseBody?.params?.projectId).toBe(mockProject.id)
-            expect(responseBody?.params?.resource).toBe('project-members')
-            expect(responseBody?.params?.action).toBe('POST')
         })
     })
 
@@ -382,9 +381,8 @@ describe('Project Member API', () => {
 
                 const responseBody = response?.json()
                 expect(responseBody?.code).toBe('PERMISSION_DENIED')
+                expect(responseBody?.params?.userId).toBe(mockUser.id)
                 expect(responseBody?.params?.projectId).toBe(mockProject.id)
-                expect(responseBody?.params?.resource).toBe('project-members')
-                expect(responseBody?.params?.action).toBe('GET')
             })
         })
     })
@@ -456,9 +454,8 @@ describe('Project Member API', () => {
 
             const responseBody = response?.json()
             expect(responseBody?.code).toBe('PERMISSION_DENIED')
+            expect(responseBody?.params?.userId).toBe(mockUser.id)
             expect(responseBody?.params?.projectId).toBe(mockProject.id)
-            expect(responseBody?.params?.resource).toBe('project-members')
-            expect(responseBody?.params?.action).toBe('DELETE')
         })
 
         it('Delete project member from api', async () => {

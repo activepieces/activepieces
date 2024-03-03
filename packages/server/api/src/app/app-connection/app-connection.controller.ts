@@ -3,6 +3,7 @@ import {
     AppConnection,
     AppConnectionWithoutSensitiveData,
     ListAppConnectionsRequestQuery,
+    Permission,
     PrincipalType,
     SERVICE_KEY_SECURITY_OPENAPI,
     SeekPage,
@@ -96,6 +97,7 @@ const removeSensitiveData = (
 const UpsertAppConnectionRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.WRITE_APP_CONNECTION,
     },
     schema: {
         tags: ['app-connections'],
@@ -111,6 +113,7 @@ const UpsertAppConnectionRequest = {
 const ListAppConnectionsRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.READ_APP_CONNECTION,
     },
     schema: {
         tags: ['app-connections'],
@@ -126,6 +129,7 @@ const ListAppConnectionsRequest = {
 const DeleteAppConnectionRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.WRITE_APP_CONNECTION,
     },
     schema: {
         tags: ['app-connections'],
