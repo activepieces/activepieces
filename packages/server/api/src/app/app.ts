@@ -102,7 +102,7 @@ import { projectBillingModule } from './ee/billing/project-billing/project-billi
 import { appSumoModule } from './ee/billing/appsumo/appsumo.module'
 import { platformModule } from './platform/platform.module'
 import { gitRepoModule } from './ee/git-repos/git-repo.module'
-import { formModule } from './form/form.module'
+import { formModule } from './flows/flow/form/form.module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({

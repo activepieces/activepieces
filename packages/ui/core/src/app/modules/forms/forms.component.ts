@@ -1,11 +1,11 @@
-import { Property, PropertyType } from '@activepieces/pieces-framework';
 import {
   FileResponseInterface,
-  FlowVersion,
+  FormInput,
+  FormInputType,
+  FormResponse,
   TelemetryEventName,
 } from '@activepieces/shared';
 import {
-  FlagService,
   TelemetryService,
   environment,
 } from '@activepieces/ui/common';
@@ -25,106 +25,67 @@ import {
 } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
-  FormProps,
   FormResult,
   FormResultTypes,
   FormsService,
-  Input,
-  InputTypes,
-  PopulatedForm,
 } from './forms.service';
+import { StatusCodes } from 'http-status-codes';
 
 @Component({
   selector: 'app-forms',
   templateUrl: './forms.component.html',
 })
 export class FormsComponent implements OnInit {
-  fullLogoUrl$: Observable<string>;
-  flow$: Observable<PopulatedForm>;
+  flow$: Observable<FormResponse>;
   submitForm$: Observable<FormResult | undefined>;
   form: FormGroup;
-  props: FormProps | null = null;
-  textInputs: Input[] = [];
-  fileInputs: Input[] = [];
-  inputs: Input[] = [];
+  inputs: FormInput[] = [];
   loading = false;
   error: string | null = null;
   webhookUrl: string | null = null;
   title: string | null = null;
-  populatedForm: PopulatedForm | null = null;
+  populatedForm: FormResponse | null = null;
   markdownResponse: Subject<string | null> = new Subject<string | null>();
-  PropertyType = PropertyType;
+  FormInputType = FormInputType;
+
   constructor(
     private route: ActivatedRoute,
     private snackBar: MatSnackBar,
-    private flagService: FlagService,
     private formsService: FormsService,
     private telemteryService: TelemetryService,
     private router: Router
-  ) {
-    this.fullLogoUrl$ = this.flagService
-      .getLogos()
-      .pipe(map((logos) => logos.fullLogoUrl));
-  }
+  ) { }
 
   ngOnInit(): void {
+
     this.flow$ = this.route.paramMap.pipe(
       switchMap((params) =>
         this.formsService.get(params.get('flowId') as string)
       ),
       tap((form) => {
-        this.title = form.title;
-        this.form = new FormGroup({});
-
         this.telemteryService.capture({
-          name: TelemetryEventName.FORMS_VIEWED,
+          name: TelemetryEventName
+            .FORMS_VIEWED,
           payload: {
             flowId: form.id,
-            formProps: this.props!,
+            formProps: form.props,
             projectId: form.projectId,
           },
         });
+        this.title = form.title;
+        this.form = new FormGroup({});
+        this.buildInputs(form.props.inputs);
         this.populatedForm = form;
-        this.props = form.props;
-        this.webhookUrl =
-          environment.apiUrl + '/webhooks/' + this.populatedForm!.id;
-        if (this.props?.waitForResponse) {
-          this.webhookUrl += '/sync';
-        }
-
-        switch (form.triggerName) {
-          case 'form_submission':
-            this.buildInputs(this.props!.inputs);
-            break;
-          case 'file_submission':
-            this.buildInputs([
-              {
-                displayName: 'File',
-                description: 'File to submit.',
-                required: true,
-                type: InputTypes.FILE,
-              },
-            ]);
-            break;
-        }
+        this.webhookUrl = environment.apiUrl + '/webhooks/' + this.populatedForm!.id + (this.populatedForm!.props.waitForResponse ? '/sync' : '');
       }),
       catchError((err) => {
         console.error(err);
-        this.router.navigate(['/']);
+        this.router.navigate(['/404']);
         throw err;
       })
     );
   }
 
-  doesFlowHaveForm(version: FlowVersion) {
-    const { pieceName, triggerName } = version.trigger.settings;
-    const validTriggerNames = ['form_submission', 'file_submission'];
-
-    return (
-      pieceName === '@activepieces/piece-forms' &&
-      validTriggerNames.includes(triggerName)
-    );
-  }
 
   async submit() {
     if (this.form.valid && !this.loading) {
@@ -134,7 +95,7 @@ export class FormsComponent implements OnInit {
       const observables: Observable<string>[] = [];
 
       for (const key in this.form.value) {
-        const isFileInput = this.fileInputs.find(
+        const isFileInput = this.inputs.filter((f) => f.type === FormInputType.FILE).find(
           (input) => this.getInputKey(input.displayName) === key
         );
 
@@ -162,7 +123,7 @@ export class FormsComponent implements OnInit {
             name: TelemetryEventName.FORMS_SUBMITTED,
             payload: {
               flowId: this.populatedForm!.id,
-              formProps: this.props!,
+              formProps: this.populatedForm!.props,
               projectId: this.populatedForm!.projectId,
             },
           });
@@ -190,8 +151,8 @@ export class FormsComponent implements OnInit {
           this.loading = false;
         }),
         catchError((error) => {
-          if (error.status === 404) {
-            this.snackBar.open(`Flow not found. Please publish the flow.`, '', {
+          if (error.status === StatusCodes.NOT_FOUND) {
+            this.snackBar.open(`Flow is not found, please publish the flow`, '', {
               panelClass: 'error',
               duration: 5000,
             });
@@ -219,23 +180,8 @@ export class FormsComponent implements OnInit {
       });
   }
 
-  buildInputs(inputs: Input[]) {
+  buildInputs(inputs: FormInput[]) {
     inputs.forEach((prop) => {
-      switch (prop.type) {
-        case InputTypes.TEXT:
-          this.inputs.push(Property.ShortText(prop) as unknown as Input);
-          break;
-        case InputTypes.FILE:
-          this.inputs.push(Property.File(prop) as unknown as Input);
-          break;
-        case InputTypes.TEXT_AREA:
-          this.inputs.push(Property.LongText(prop) as unknown as Input);
-          break;
-        case InputTypes.TOGGLE:
-          this.inputs.push(Property.Checkbox(prop) as unknown as Input);
-          break;
-      }
-
       this.form.addControl(
         this.getInputKey(prop.displayName),
         new FormControl('', {
@@ -249,14 +195,11 @@ export class FormsComponent implements OnInit {
   toBase64(file: File): Observable<string> {
     return new Observable((observer: Observer<string>) => {
       const reader = new FileReader();
-
       reader.readAsDataURL(file);
-
       reader.onload = () => {
         observer.next(reader.result as string);
         observer.complete();
       };
-
       reader.onerror = (error) => {
         observer.error(error);
       };
