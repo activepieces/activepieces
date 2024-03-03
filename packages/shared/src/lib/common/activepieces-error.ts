@@ -2,6 +2,8 @@ import { FileId } from '../file/file'
 import { FlowRunId } from '../flow-run/flow-run'
 import { FlowId } from '../flows/flow'
 import { FlowVersionId } from '../flows/flow-version'
+import { ProjectId } from '../project'
+import { UserId } from '../user'
 import { ApId } from './id-generator'
 
 export class ActivepiecesError extends Error {
@@ -78,6 +80,7 @@ export type EmailAuthIsDisabledParams = BaseErrorParams<ErrorCode.EMAIL_AUTH_DIS
 
 export type AuthorizationErrorParams = BaseErrorParams<
 ErrorCode.AUTHORIZATION,
+Record<string, string> &
 {
     message?: string
 }
@@ -86,9 +89,8 @@ ErrorCode.AUTHORIZATION,
 export type PermissionDeniedErrorParams = BaseErrorParams<
 ErrorCode.PERMISSION_DENIED,
 {
-    resource: string
-    action: string
-    projectId: string
+    userId: UserId
+    projectId: ProjectId
 }
 >
 

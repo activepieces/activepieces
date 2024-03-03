@@ -191,6 +191,58 @@ describe('Project Member API', () => {
 
             expect(emailService.sendInvitation).not.toBeCalled()
         })
+
+        it.each([
+            ProjectMemberRole.EDITOR,
+            ProjectMemberRole.VIEWER,
+            ProjectMemberRole.EXTERNAL_CUSTOMER,
+        ])('Fails if user role is %s', async (testRole) => {
+            const { mockPlatform, mockProject } = await createBasicEnvironment()
+
+            const mockUser = createMockUser({ platformId: mockPlatform.id })
+            await databaseConnection.getRepository('user').save(mockUser)
+
+            const mockProjectMember = createMockProjectMember({
+                email: mockUser.email,
+                platformId: mockPlatform.id,
+                projectId: mockProject.id,
+                role: testRole,
+            })
+            await databaseConnection.getRepository('project_member').save([mockProjectMember])
+
+            const mockToken = await generateMockToken({
+                id: mockUser.id,
+                type: PrincipalType.USER,
+                projectId: mockProject.id,
+                platform: {
+                    id: mockPlatform.id,
+                    role: PlatformRole.MEMBER,
+                },
+            })
+
+            const randomEmail = faker.internet.email()
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/project-members',
+                headers: {
+                    authorization: `Bearer ${mockToken}`,
+                },
+                body: {
+                    email: randomEmail,
+                    role: 'VIEWER',
+                    projectId: mockProject.id,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+
+            const responseBody = response?.json()
+            expect(responseBody?.code).toBe('PERMISSION_DENIED')
+            expect(responseBody?.params?.userId).toBe(mockUser.id)
+            expect(responseBody?.params?.projectId).toBe(mockProject.id)
+        })
     })
 
     describe('List project members Endpoint', () => {
@@ -245,6 +297,94 @@ describe('Project Member API', () => {
                 expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
             })
         })
+
+        describe('List project members by user', () => {
+
+            it.each([
+                ProjectMemberRole.ADMIN,
+                ProjectMemberRole.EDITOR,
+                ProjectMemberRole.VIEWER,
+            ])('Succeeds if user role is %s', async (testRole) => {
+                // arrange
+                const { mockPlatform, mockProject } = await createBasicEnvironment()
+
+                const mockUser = createMockUser({ platformId: mockPlatform.id })
+                await databaseConnection.getRepository('user').save(mockUser)
+
+                const mockProjectMember = createMockProjectMember({
+                    email: mockUser.email,
+                    platformId: mockPlatform.id,
+                    projectId: mockProject.id,
+                    role: testRole,
+                })
+                await databaseConnection.getRepository('project_member').save([mockProjectMember])
+
+                const mockToken = await generateMockToken({
+                    id: mockUser.id,
+                    type: PrincipalType.USER,
+                    projectId: mockProject.id,
+                    platform: {
+                        id: mockPlatform.id,
+                        role: PlatformRole.MEMBER,
+                    },
+                })
+
+                // act
+                const response = await app?.inject({
+                    method: 'GET',
+                    url: `/v1/project-members?projectId=${mockProject.id}`,
+                    headers: {
+                        authorization: `Bearer ${mockToken}`,
+                    },
+                })
+
+                // assert
+                expect(response?.statusCode).toBe(StatusCodes.OK)
+            })
+
+            it('Fails if user role is EXTERNAL_CUSTOMER', async () => {
+                // arrange
+                const { mockPlatform, mockProject } = await createBasicEnvironment()
+
+                const mockUser = createMockUser({ platformId: mockPlatform.id })
+                await databaseConnection.getRepository('user').save(mockUser)
+
+                const mockProjectMember = createMockProjectMember({
+                    email: mockUser.email,
+                    platformId: mockPlatform.id,
+                    projectId: mockProject.id,
+                    role: ProjectMemberRole.EXTERNAL_CUSTOMER,
+                })
+                await databaseConnection.getRepository('project_member').save([mockProjectMember])
+
+                const mockToken = await generateMockToken({
+                    id: mockUser.id,
+                    type: PrincipalType.USER,
+                    projectId: mockProject.id,
+                    platform: {
+                        id: mockPlatform.id,
+                        role: PlatformRole.MEMBER,
+                    },
+                })
+
+                // act
+                const response = await app?.inject({
+                    method: 'GET',
+                    url: `/v1/project-members?projectId=${mockProject.id}`,
+                    headers: {
+                        authorization: `Bearer ${mockToken}`,
+                    },
+                })
+
+                // assert
+                expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+
+                const responseBody = response?.json()
+                expect(responseBody?.code).toBe('PERMISSION_DENIED')
+                expect(responseBody?.params?.userId).toBe(mockUser.id)
+                expect(responseBody?.params?.projectId).toBe(mockProject.id)
+            })
+        })
     })
 
     describe('Delete project member Endpoint', () => {
@@ -269,6 +409,53 @@ describe('Project Member API', () => {
                 },
             })
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+        })
+
+        it.each([
+            ProjectMemberRole.EDITOR,
+            ProjectMemberRole.VIEWER,
+            ProjectMemberRole.EXTERNAL_CUSTOMER,
+        ])('Fails if user role is %s', async (testRole) => {
+            // arrange
+            const { mockPlatform, mockProject } = await createBasicEnvironment()
+
+            const mockUser = createMockUser({ platformId: mockPlatform.id })
+            await databaseConnection.getRepository('user').save(mockUser)
+
+            const mockProjectMember = createMockProjectMember({
+                email: mockUser.email,
+                platformId: mockPlatform.id,
+                projectId: mockProject.id,
+                role: testRole,
+            })
+            await databaseConnection.getRepository('project_member').save([mockProjectMember])
+
+            const mockToken = await generateMockToken({
+                id: mockUser.id,
+                type: PrincipalType.USER,
+                projectId: mockProject.id,
+                platform: {
+                    id: mockPlatform.id,
+                    role: PlatformRole.MEMBER,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/v1/project-members/${mockProjectMember.id}`,
+                headers: {
+                    authorization: `Bearer ${mockToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+
+            const responseBody = response?.json()
+            expect(responseBody?.code).toBe('PERMISSION_DENIED')
+            expect(responseBody?.params?.userId).toBe(mockUser.id)
+            expect(responseBody?.params?.projectId).toBe(mockProject.id)
         })
 
         it('Delete project member from api', async () => {
