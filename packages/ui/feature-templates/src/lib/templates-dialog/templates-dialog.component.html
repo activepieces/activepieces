@@ -5,7 +5,7 @@
 </div>
 <mat-tab-group [preserveContent]="true"  [animationDuration]="ANIMATION_DURATION">
     <mat-tab  label="templates"> <div class="ap-flex">
-        <mat-dialog-content class="!ap-flex ap-h-[559px] !ap-max-h-[default] ap-w-[1070px] ap-gap-2 ap-p-0">
+        <mat-dialog-content class="!ap-flex ap-h-[559px] !ap-max-h-[initial] ap-w-[1070px] ap-gap-2 ap-p-0">
             <ng-container *ngTemplateOutlet="filtersColumn"></ng-container>
             <ng-container *ngTemplateOutlet="contentColumn; context:{showFeaturedBanner:false}"></ng-container>
         </mat-dialog-content>

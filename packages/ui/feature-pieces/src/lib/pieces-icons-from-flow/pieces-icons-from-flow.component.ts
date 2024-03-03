@@ -16,7 +16,6 @@ import { CORE_PIECES_ACTIONS_NAMES, CORE_PIECES_TRIGGERS, PieceMetadataService, 
 })
 export class PiecesIconsFromFlowComponent implements OnInit {
   @Input({ required: true}) flowVersion!: FlowVersionTemplate | FlowVersion;
-  @Input() useCoreMentionIcons = true;
   @Input() iconSize= 20;
   @Input() maxNumberOfIconsToLoad = 2;
   numberOfStepsLeft = 0;
@@ -47,7 +46,6 @@ export class PiecesIconsFromFlowComponent implements OnInit {
               if (
                (CORE_PIECES_ACTIONS_NAMES.find((n) => s.settings.pieceName === n) ||
                 CORE_PIECES_TRIGGERS.find((n) => s.settings.pieceName === n))
-                && this.useCoreMentionIcons
               ) {
                 return corePieceIconUrl(s.settings.pieceName);
               }
