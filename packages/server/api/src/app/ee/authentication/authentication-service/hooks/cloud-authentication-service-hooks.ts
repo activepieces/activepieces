@@ -8,6 +8,7 @@ import { userService } from '../../../../user/user-service'
 import { isNil } from '@activepieces/shared'
 import { flagService } from '../../../../../app/flags/flag.service'
 import { appsumoService } from '../../../billing/appsumo/appsumo.service'
+import { logger } from 'server-shared'
 
 export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
     async preSignIn({ email, platformId, provider }) {
@@ -40,10 +41,16 @@ export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
         }
 
         if (referringUserId) {
-            await referralService.upsert({
-                referringUserId,
-                referredUserId: user.id,
-            })
+            try {
+                await referralService.add({
+                    referringUserId,
+                    referredUserId: user.id,
+                    referredUserEmail: user.email,
+                })
+            }
+            catch (e) {
+                logger.error(e, '[CloudAuthenticationServiceHooks#postSignUp] referralService.add')
+            }
         }
 
         await authenticationHelper.autoVerifyUserIfEligible(user)
