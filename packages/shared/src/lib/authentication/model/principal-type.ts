@@ -10,7 +10,7 @@ export enum PrincipalType {
     SUPER_USER = 'SUPER_USER',
 }
 
-export const ALL_PRINICPAL_TYPES = Object.values(PrincipalType)
+export const ALL_PRINCIPAL_TYPES = Object.values(PrincipalType)
 
 export const SERVICE_KEY_SECURITY_OPENAPI = {
     apiKey: [],

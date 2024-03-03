@@ -6,7 +6,7 @@ import {
     ProjectMemberStatus,
 } from '@activepieces/ee-shared'
 import {
-    ALL_PRINICPAL_TYPES,
+    ALL_PRINCIPAL_TYPES,
     ActivepiecesError,
     ErrorCode,
     PrincipalType,
@@ -125,7 +125,7 @@ const AddProjectMemberRequest = {
 
 const AcceptProjectMemberRequest = {
     config: {
-        allowedPrincipals: ALL_PRINICPAL_TYPES,
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
     schema: {
         body: Type.Object({

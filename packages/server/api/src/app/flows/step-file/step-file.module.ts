@@ -3,7 +3,7 @@ import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/author
 import { Type } from '@sinclair/typebox'
 import { stepFileService } from './step-file.service'
 import {
-    ALL_PRINICPAL_TYPES,
+    ALL_PRINCIPAL_TYPES,
     PrincipalType,
     StepFileUpsert,
 } from '@activepieces/shared'
@@ -19,7 +19,7 @@ export const stepFileController: FastifyPluginAsyncTypebox = async (app) => {
         '/signed',
         {
             config: {
-                allowedPrincipals: ALL_PRINICPAL_TYPES,
+                allowedPrincipals: ALL_PRINCIPAL_TYPES,
             },
             schema: {
                 querystring: Type.Object({

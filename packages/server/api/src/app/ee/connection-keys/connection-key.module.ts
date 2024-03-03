@@ -10,7 +10,7 @@ import { connectionKeyService } from './connection-key.service'
 import { StatusCodes } from 'http-status-codes'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
-import { ALL_PRINICPAL_TYPES } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
 
 export const connectionKeyModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(connectionKeyController, {
@@ -25,7 +25,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/app-connections',
         {
             config: {
-                allowedPrincipals: ALL_PRINICPAL_TYPES,
+                allowedPrincipals: ALL_PRINCIPAL_TYPES,
             },
             schema: {
                 querystring: GetOrDeleteConnectionFromTokenRequest,
@@ -52,7 +52,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/app-connections',
         {
             config: {
-                allowedPrincipals: ALL_PRINICPAL_TYPES,
+                allowedPrincipals: ALL_PRINCIPAL_TYPES,
             },
             schema: {
                 querystring: GetOrDeleteConnectionFromTokenRequest,
@@ -71,7 +71,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/app-connections',
         {
             config: {
-                allowedPrincipals: ALL_PRINICPAL_TYPES,
+                allowedPrincipals: ALL_PRINCIPAL_TYPES,
             },
             schema: {
                 body: UpsertConnectionFromToken,
