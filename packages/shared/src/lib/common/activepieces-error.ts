@@ -22,6 +22,7 @@ type ErrorParams =
     | ExecutionTimeoutErrorParams
     | ExistingUserErrorParams
     | FileNotFoundErrorParams
+    | FlowFormNotFoundError
     | FlowNotFoundErrorParams
     | FlowIsLockedErrorParams
     | FlowOperationErrorParams
@@ -220,6 +221,13 @@ ErrorCode.FLOW_OPERATION_INVALID,
 Record<string, never>
 >
 
+export type FlowFormNotFoundError = BaseErrorParams<
+ErrorCode.FLOW_FORM_NOT_FOUND,
+{
+    flowId: FlowVersionId
+    message: string
+}>
+
 export type FlowIsLockedErrorParams = BaseErrorParams<
 ErrorCode.FLOW_IN_USE,
 {
@@ -339,6 +347,7 @@ export enum ErrorCode {
     EXECUTION_TIMEOUT = 'EXECUTION_TIMEOUT',
     EMAIL_AUTH_DISABLED = 'EMAIL_AUTH_DISABLED',
     EXISTING_USER = 'EXISTING_USER',
+    FLOW_FORM_NOT_FOUND = 'FLOW_FORM_NOT_FOUND',
     FILE_NOT_FOUND = 'FILE_NOT_FOUND',
     FLOW_INSTANCE_NOT_FOUND = 'INSTANCE_NOT_FOUND',
     FLOW_NOT_FOUND = 'FLOW_NOT_FOUND',
