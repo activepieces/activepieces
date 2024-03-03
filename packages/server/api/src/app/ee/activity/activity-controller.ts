@@ -1,5 +1,5 @@
 import { FastifyPluginAsyncTypebox  } from '@fastify/type-provider-typebox'
-import { PrincipalType } from '@activepieces/shared'
+import { Permission, PrincipalType } from '@activepieces/shared'
 import { activityService } from './activity-service'
 import { ListActivityParams } from '@activepieces/ee-shared'
 
@@ -18,6 +18,7 @@ const ListActivitiesRequest = {
         allowedPrincipals: [
             PrincipalType.USER,
         ],
+        permission: Permission.READ_ACTIVITY,
     },
     schema: {
         querystring: ListActivityParams,

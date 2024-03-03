@@ -9,6 +9,7 @@ import {
     ALL_PRINICPAL_TYPES,
     ActivepiecesError,
     ErrorCode,
+    Permission,
     PrincipalType,
     SERVICE_KEY_SECURITY_OPENAPI,
     assertNotNullOrUndefined,
@@ -101,6 +102,7 @@ async function assertFeatureIsEnabled(
 const ListProjectMembersRequestQueryOptions = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.READ_PROJECT_MEMBER,
     },
     schema: {
         tags: ['project-members'],
@@ -112,6 +114,7 @@ const ListProjectMembersRequestQueryOptions = {
 const AddProjectMemberRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.WRITE_PROJECT_MEMBER,
     },
     schema: {
         tags: ['project-members'],
@@ -140,6 +143,7 @@ const AcceptProjectMemberRequest = {
 const DeleteProjectMemberRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.WRITE_PROJECT_MEMBER,
     },
     schema: {
         tags: ['project-members'],
