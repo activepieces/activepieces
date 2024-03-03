@@ -126,22 +126,6 @@
               }
             ]
           },
-          "type": {
-            "anyOf": [
-              {
-                "type": "string",
-                "enum": [
-                  "PLATFORM_MANAGED"
-                ]
-              },
-              {
-                "type": "string",
-                "enum": [
-                  "STANDALONE"
-                ]
-              }
-            ]
-          },
           "platformId": {
             "pattern": "^[0-9a-zA-Z]{21}$",
             "type": "string"
@@ -231,7 +215,7 @@
           "ownerId",
           "displayName",
           "notifyStatus",
-          "type",
+          "platformId",
           "usage",
           "plan"
         ]
@@ -3706,6 +3690,9 @@
           },
           "projectId": {
             "type": "string"
+          },
+          "slug": {
+            "type": "string"
           }
         },
         "required": [
@@ -3714,7 +3701,8 @@
           "updated",
           "remoteUrl",
           "branch",
-          "projectId"
+          "projectId",
+          "slug"
         ]
       }
     }
@@ -7333,22 +7321,6 @@
                         }
                       ]
                     },
-                    "type": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                          "enum": [
-                            "PLATFORM_MANAGED"
-                          ]
-                        },
-                        {
-                          "type": "string",
-                          "enum": [
-                            "STANDALONE"
-                          ]
-                        }
-                      ]
-                    },
                     "platformId": {
                       "pattern": "^[0-9a-zA-Z]{21}$",
                       "type": "string"
@@ -7438,7 +7410,7 @@
                     "ownerId",
                     "displayName",
                     "notifyStatus",
-                    "type",
+                    "platformId",
                     "usage",
                     "plan"
                   ]
@@ -7507,22 +7479,6 @@
                                 "type": "string",
                                 "enum": [
                                   "ALWAYS"
-                                ]
-                              }
-                            ]
-                          },
-                          "type": {
-                            "anyOf": [
-                              {
-                                "type": "string",
-                                "enum": [
-                                  "PLATFORM_MANAGED"
-                                ]
-                              },
-                              {
-                                "type": "string",
-                                "enum": [
-                                  "STANDALONE"
                                 ]
                               }
                             ]
@@ -7616,7 +7572,7 @@
                           "ownerId",
                           "displayName",
                           "notifyStatus",
-                          "type",
+                          "platformId",
                           "usage",
                           "plan"
                         ]
@@ -7751,22 +7707,6 @@
                         }
                       ]
                     },
-                    "type": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                          "enum": [
-                            "PLATFORM_MANAGED"
-                          ]
-                        },
-                        {
-                          "type": "string",
-                          "enum": [
-                            "STANDALONE"
-                          ]
-                        }
-                      ]
-                    },
                     "platformId": {
                       "pattern": "^[0-9a-zA-Z]{21}$",
                       "type": "string"
@@ -7856,7 +7796,7 @@
                     "ownerId",
                     "displayName",
                     "notifyStatus",
-                    "type",
+                    "platformId",
                     "usage",
                     "plan"
                   ]
@@ -8224,30 +8164,49 @@
         }
       }
     },
-    "/v1/git-repos/{id}/pull": {
+    "/v1/git-repos/pull": {
       "post": {
         "tags": [
           "git-repo"
         ],
         "description": "Pull all changes from the git repository and overwrite any conflicting changes in the project.",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "projectId": {
+                    "type": "string"
+                  },
+                  "dryRun": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "projectId"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
         "security": [
           {
             "apiKey": []
           }
         ],
         "responses": {
-          "204": {
-            "description": "Default Response"
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                }
+              }
+            }
           }
         }
       }
