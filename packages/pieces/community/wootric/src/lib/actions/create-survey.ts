@@ -1,7 +1,4 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { wootricAuth, WOOTRIC_API_URL } from '../../';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
