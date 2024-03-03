@@ -3,7 +3,7 @@
 </ap-dialog-title-template>
 
 <mat-dialog-content class="thin-scrollbars">
-    <form [formGroup]="form" class="ap-max-w-[34.375rem] ap-min-w-[31.25rem] ">
+    <form [formGroup]="form" class="ap-max-w-[34.375rem] ap-flex ap-flex-col ap-gap-2 ap-min-w-[31.25rem] ">
         <ap-markdown [fullWidth]="true" [data]="shareTemplateMarkdown" class="ap-mb-2"></ap-markdown>
         <mat-form-field class="ap-w-full ap-mb-1" appearance="outline">
             <mat-label i18n>Name</mat-label>
@@ -13,7 +13,7 @@
 
         <mat-form-field class="ap-w-full ap-mb-1" appearance="outline">
             <mat-label i18n>Description</mat-label>
-            <textarea [formControl]="form.controls.description" matInput type="text" rows="2" > </textarea>
+            <textarea [formControl]="form.controls.description" matInput type="text" rows="4" > </textarea>
             <mat-error *ngIf="form.controls.description.invalid" i18n>Description is required</mat-error>
             <mat-hint>
                 Description can be in markdown format
