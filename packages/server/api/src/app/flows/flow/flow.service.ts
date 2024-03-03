@@ -384,6 +384,25 @@ export const flowService = {
             projectId,
         })
     },
+
+    async getPopulatedFlowById(id: FlowId): Promise<PopulatedFlow | null> {
+        const flow = await flowRepo().findOneBy({ id })
+
+
+        if (isNil(flow)) {
+            return null
+        }
+
+        const flowVersion = await flowVersionService.getFlowVersionOrThrow({
+            flowId: id,
+            versionId: undefined,
+        })
+
+        return {
+            ...flow,
+            version: flowVersion,
+        }
+    },
 }
 
 const lockFlowVersionIfNotLocked = async ({

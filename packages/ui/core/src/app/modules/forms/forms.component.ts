@@ -2,12 +2,10 @@ import { Property, PropertyType } from '@activepieces/pieces-framework';
 import {
   FileResponseInterface,
   FlowVersion,
-  PopulatedFlow,
   TelemetryEventName,
 } from '@activepieces/shared';
 import {
   FlagService,
-  FlowService,
   TelemetryService,
   environment,
 } from '@activepieces/ui/common';
@@ -26,26 +24,15 @@ import {
   tap,
 } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { FormResult, FormResultTypes, FormsService } from './forms.service';
-
-type Input = {
-  displayName: string;
-  required: boolean;
-  description: string;
-  type: InputTypes;
-};
-
-enum InputTypes {
-  TEXT = 'text',
-  FILE = 'file',
-  TEXT_AREA = 'text_area',
-  TOGGLE = 'toggle',
-}
-
-type FormProps = {
-  inputs: Input[];
-  waitForResponse: boolean;
-};
+import {
+  FormProps,
+  FormResult,
+  FormResultTypes,
+  FormsService,
+  Input,
+  InputTypes,
+  PopulatedForm,
+} from './forms.service';
 
 @Component({
   selector: 'app-forms',
@@ -53,7 +40,7 @@ type FormProps = {
 })
 export class FormsComponent implements OnInit {
   fullLogoUrl$: Observable<string>;
-  flow$: Observable<FlowVersion>;
+  flow$: Observable<PopulatedForm>;
   submitForm$: Observable<FormResult | undefined>;
   form: FormGroup;
   props: FormProps | null = null;
@@ -64,11 +51,10 @@ export class FormsComponent implements OnInit {
   error: string | null = null;
   webhookUrl: string | null = null;
   title: string | null = null;
-  flow: PopulatedFlow | null = null;
+  populatedForm: PopulatedForm | null = null;
   markdownResponse: Subject<string | null> = new Subject<string | null>();
   PropertyType = PropertyType;
   constructor(
-    private flowService: FlowService,
     private route: ActivatedRoute,
     private snackBar: MatSnackBar,
     private flagService: FlagService,
@@ -84,55 +70,47 @@ export class FormsComponent implements OnInit {
   ngOnInit(): void {
     this.flow$ = this.route.paramMap.pipe(
       switchMap((params) =>
-        this.flowService.get(params.get('flowId') as string)
+        this.formsService.get(params.get('flowId') as string)
       ),
-      tap((flow) => {
-        this.title = flow.version.displayName;
+      tap((form) => {
+        this.title = form.title;
         this.form = new FormGroup({});
 
         this.telemteryService.capture({
           name: TelemetryEventName.FORMS_VIEWED,
           payload: {
-            flowId: flow.id,
+            flowId: form.id,
             formProps: this.props!,
-            projectId: flow.projectId,
+            projectId: form.projectId,
           },
         });
-        this.flow = flow;
-      }),
-      switchMap((flow) => {
-        {
-          return of(flow.version);
+        this.populatedForm = form;
+        this.props = form.props;
+        this.webhookUrl =
+          environment.apiUrl + '/webhooks/' + this.populatedForm!.id;
+        if (this.props?.waitForResponse) {
+          this.webhookUrl += '/sync';
         }
-      }),
-      tap((version) => {
-        this.props = version.trigger.settings.input;
-        const { triggerName } = version.trigger.settings;
-        if (this.doesFlowHaveForm(version)) {
-          this.webhookUrl = environment.apiUrl + '/webhooks/' + this.flow!.id;
-          if (this.props?.waitForResponse) {
-            this.webhookUrl += '/sync';
-          }
 
-          switch (triggerName) {
-            case 'form_submission':
-              this.buildInputs(this.props!.inputs);
-              break;
-            case 'file_submission':
-              this.buildInputs([
-                {
-                  displayName: 'File',
-                  description: 'File to submit.',
-                  required: true,
-                  type: InputTypes.FILE,
-                },
-              ]);
-              break;
-          }
-        } else {
-          this.props = null;
-          this.error = 'This flow does not have a form.';
+        switch (form.triggerName) {
+          case 'form_submission':
+            this.buildInputs(this.props!.inputs);
+            break;
+          case 'file_submission':
+            this.buildInputs([
+              {
+                displayName: 'File',
+                description: 'File to submit.',
+                required: true,
+                type: InputTypes.FILE,
+              },
+            ]);
+            break;
         }
+        // } else {
+        //   this.props = null;
+        //   this.error = 'This flow does not have a form.';
+        // }
       }),
       catchError((err) => {
         console.error(err);
@@ -187,9 +165,9 @@ export class FormsComponent implements OnInit {
           this.telemteryService.capture({
             name: TelemetryEventName.FORMS_SUBMITTED,
             payload: {
-              flowId: this.flow!.id,
+              flowId: this.populatedForm!.id,
               formProps: this.props!,
-              projectId: this.flow!.projectId,
+              projectId: this.populatedForm!.projectId,
             },
           });
           if (result.type === FormResultTypes.MARKDOWN) {
