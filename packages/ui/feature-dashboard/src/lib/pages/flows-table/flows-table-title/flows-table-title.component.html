@@ -28,11 +28,28 @@
             <span class="ap-flex ap-gap-2" i18n><svg-icon [src]="flowActionsUiInfo.import.icon"
                     [class]="flowActionsUiInfo.iconSizeTailWind" [applyClass]="true"> </svg-icon>Import Flow</span>
         </ap-button>
-        <ap-button btnColor="primary" btnSize="medium" [loading]="creatingFlow" (buttonClicked)="createFlow()">
-            <span i18n>+ New Flow</span>
+        <ap-button btnColor="primary" [matMenuTriggerFor]="newFlowMenu" btnSize="medium" [loading]="creatingFlow" >
+            <div class="ap-flex ap-gap-2 ap-items-center" i18n> New Flow <svg-icon class="ap-fill-white" [applyClass]="true" [svgStyle]="{ width: '16px', height: '16px' }" src="assets/img/custom/chevron.svg">
+            </svg-icon></div>
         </ap-button>
+        <mat-menu #newFlowMenu="matMenu" xPosition="before">
+            <button mat-menu-item (click)="createFlow(true)"> <div class="ap-flex ap-gap-2 ap-items-center">  
+
+                <svg-icon class="ap-fill-body"
+                 [applyClass]="true" 
+                 [svgStyle]="{ width: '14px', height: '14px' }" 
+                 src="assets/img/custom/add.svg"> </svg-icon>
+                 From Scratch
+            </div> </button>
+            <button mat-menu-item (click)="openTemplatesDialog()"><div class="ap-flex ap-gap-2 ap-items-center">
+                <svg-icon class="ap-fill-body"
+                 [applyClass]="true"
+                  [svgStyle]="{ width: '18px', height: '18px' }"
+                 src="assets/img/custom/dashboard/templates.svg"> </svg-icon>Use a Template</div></button>
+          </mat-menu>
     </div>
 
 </div>
 
 <ng-container *ngIf="createFlow$ | async"></ng-container>
+<ng-container *ngIf="openTemplatesDialog$ | async"></ng-container>

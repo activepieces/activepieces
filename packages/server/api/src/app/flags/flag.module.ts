@@ -2,7 +2,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { flagService } from './flag.service'
 import { FastifyRequest } from 'fastify'
 import { flagHooks } from './flags.hooks'
-import { ALL_PRINICPAL_TYPES } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
 
 export const flagModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(flagController, { prefix: '/v1/flags' })
@@ -13,7 +13,7 @@ export const flagController: FastifyPluginAsyncTypebox = async (app) => {
         '/',
         {
             config: {
-                allowedPrincipals: ALL_PRINICPAL_TYPES,
+                allowedPrincipals: ALL_PRINCIPAL_TYPES,
             },
             logLevel: 'silent',
         },

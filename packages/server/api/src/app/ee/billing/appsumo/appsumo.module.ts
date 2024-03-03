@@ -4,7 +4,7 @@ import { StatusCodes } from 'http-status-codes'
 import { appsumoService } from './appsumo.service'
 import { SystemProp, system } from 'server-shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { ALL_PRINICPAL_TYPES } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
 
 export const appSumoModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(appsumoController, { prefix: '/v1/appsumo' })
@@ -41,7 +41,7 @@ const appsumoController: FastifyPluginAsyncTypebox = async (
         '/token',
         {
             config: {
-                allowedPrincipals: ALL_PRINICPAL_TYPES,
+                allowedPrincipals: ALL_PRINCIPAL_TYPES,
             },
             schema: {
                 body: ExchangeTokenRequest,
@@ -71,7 +71,7 @@ const appsumoController: FastifyPluginAsyncTypebox = async (
         '/action',
         {
             config: {
-                allowedPrincipals: ALL_PRINICPAL_TYPES,
+                allowedPrincipals: ALL_PRINCIPAL_TYPES,
             },
             schema: {
                 headers: AuthorizationHeaders,

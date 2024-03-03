@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import fastify from 'fastify'
-import { EndpointScope, Principal, PrincipalType } from '@activepieces/shared'
+import { EndpointScope, Permission, Principal, PrincipalType } from '@activepieces/shared'
 
 declare module 'fastify' {
     // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
@@ -17,5 +17,6 @@ declare module 'fastify' {
         allowedPrincipals?: PrincipalType[]
         rawBody?: boolean
         scope?: EndpointScope
+        permission?: Permission
     }
 }

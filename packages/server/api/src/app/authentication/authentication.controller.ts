@@ -7,7 +7,7 @@ import {
     ApEdition,
     SignUpRequest,
     SignInRequest,
-    ALL_PRINICPAL_TYPES,
+    ALL_PRINCIPAL_TYPES,
 } from '@activepieces/shared'
 import { system, SystemProp } from 'server-shared'
 import { Provider } from './authentication-service/hooks/authentication-service-hooks'
@@ -65,7 +65,7 @@ const rateLimitOptions: RateLimitOptions = {
 
 const SignUpRequestOptions = {
     config: {
-        allowedPrincipals: ALL_PRINICPAL_TYPES,
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
         rateLimit: rateLimitOptions,
     },
     schema: {
@@ -75,7 +75,7 @@ const SignUpRequestOptions = {
 
 const SignInRequestOptions = {
     config: {
-        allowedPrincipals: ALL_PRINICPAL_TYPES,
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
         rateLimit: rateLimitOptions,
     },
     schema: {

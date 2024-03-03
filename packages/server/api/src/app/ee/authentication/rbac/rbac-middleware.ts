@@ -3,16 +3,15 @@ import {
     ActivepiecesError,
     ApEdition,
     ErrorCode,
+    Permission,
+    Principal,
     PrincipalType,
-    ProjectId,
     ProjectMemberRole,
     isNil,
 } from '@activepieces/shared'
 import { projectMemberService } from '../../project-members/project-member.service'
 import { getEdition } from '../../../helper/secret-helper'
-import { extractResourceName } from '../../../authentication/authorization'
-import { ResourceAction, ResourceName, accessControlledResourceNames } from './resources'
-import { accessControlList, rolePermissions } from './access-control-list'
+import { rolePermissions } from './access-control-list'
 
 const EDITION_IS_COMMUNITY = getEdition() === ApEdition.COMMUNITY
 
@@ -21,39 +20,16 @@ export const rbacMiddleware = async (req: FastifyRequest): Promise<void> => {
         return
     }
 
-    const resourceName = extractResourceNameOrThrow(req)
-    const resourceAction = extractResourceAction(req)
-    const projectId = req.principal.projectId
-
-    const role = await getRoleOrThrow({
-        projectId,
-        userId: req.principal.id,
-        resourceName,
-        resourceAction,
-    })
+    const principalRole = await getPrincipalRoleOrThrow(req.principal)
 
     const access = grantAccess({
-        role,
-        resourceName,
-        resourceAction,
+        principalRole,
+        routePermission: req.routeConfig.permission,
     })
 
     if (!access) {
-        throwPermissionDenied({
-            projectId,
-            resourceName,
-            resourceAction,
-        })
+        throwPermissionDenied(req.principal)
     }
-}
-
-const grantAccess = ({ role, resourceName, resourceAction }: GrantAccessArgs): boolean => {
-    const permissions = rolePermissions[role]
-
-    return permissions.some(permission => {
-        const { resource, actions } = accessControlList[permission]
-        return resource === resourceName && actions.includes(resourceAction)
-    })
 }
 
 const ignoreRequest = (req: FastifyRequest): boolean => {
@@ -70,13 +46,11 @@ const ignoreRequest = (req: FastifyRequest): boolean => {
         return true
     }
 
-    const resourceName = extractResourceNameOrThrow(req)
-
-    return !accessControlledResourceNames.includes(resourceName)
+    return req.routeConfig.permission === undefined
 }
 
-const getRoleOrThrow = async (params: GetRoleOrThrowArgs): Promise<ProjectMemberRole> => {
-    const { projectId, userId } = params
+const getPrincipalRoleOrThrow = async (principal: Principal): Promise<ProjectMemberRole> => {
+    const { id: userId, projectId } = principal
 
     const role = await projectMemberService.getRole({
         projectId,
@@ -98,51 +72,26 @@ const getRoleOrThrow = async (params: GetRoleOrThrowArgs): Promise<ProjectMember
 
 }
 
-const extractResourceNameOrThrow = (req: FastifyRequest): ResourceName => {
-    const resourceName = extractResourceName(req.url) as ResourceName | undefined
-
-    if (isNil(resourceName)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.AUTHORIZATION,
-            params: {
-                message: 'Invalid resource',
-            },
-        })
+const grantAccess = ({ principalRole, routePermission }: GrantAccessArgs): boolean => {
+    if (isNil(routePermission)) {
+        return true
     }
 
-    return resourceName
+    const principalPermissions = rolePermissions[principalRole]
+    return principalPermissions.includes(routePermission)
 }
 
-const extractResourceAction = (req: FastifyRequest): ResourceAction => {
-    return req.method as ResourceAction
-}
-
-const throwPermissionDenied = ({ projectId, resourceName, resourceAction }: ThrowPermissionDeniedArgs): never => {
+const throwPermissionDenied = (principal: Principal): never => {
     throw new ActivepiecesError({
         code: ErrorCode.PERMISSION_DENIED,
         params: {
-            projectId,
-            resource: resourceName,
-            action: resourceAction,
+            userId: principal.id,
+            projectId: principal.projectId,
         },
     })
 }
 
 type GrantAccessArgs = {
-    role: ProjectMemberRole
-    resourceName: ResourceName
-    resourceAction: ResourceAction
-}
-
-type ThrowPermissionDeniedArgs = {
-    projectId: ProjectId
-    resourceName: ResourceName
-    resourceAction: ResourceAction
-}
-
-type GetRoleOrThrowArgs = {
-    projectId: ProjectId
-    userId: string
-    resourceName: ResourceName
-    resourceAction: ResourceAction
+    principalRole: ProjectMemberRole
+    routePermission: Permission | undefined
 }

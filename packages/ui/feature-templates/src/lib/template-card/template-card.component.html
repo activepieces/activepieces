@@ -5,7 +5,14 @@
     <div class="ap-typography-subtitle-1 ap-h-[96px] ap-text-body ap-clamp-4 ap-w-[212px]">
         {{template.name}}
     </div>
-    <ap-button btnSize="medium" btnStyle="flat" btnColor="primary" (buttonClicked)="useTemplateClicked.emit()" i18n>
-        Use Template
-    </ap-button>
+    <div class="ap-flex ap-gap-2 ap-items-center">
+        <ap-button btnSize="medium" btnStyle="flat" btnColor="primary" (buttonClicked)="useTemplateClicked.emit()" i18n>
+            Use Template
+        </ap-button>
+
+        <ap-icon-button *ngIf="template.blogUrl || template.description" [height]="24" [width]="24" iconFilename="info.svg" i18n-tooltipText
+        tooltipText="Learn more" (buttonClicked)="showTemplateDescription()">
+    </ap-icon-button>
+    </div>
+    
 </div>

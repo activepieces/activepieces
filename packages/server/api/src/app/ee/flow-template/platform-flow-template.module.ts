@@ -1,7 +1,7 @@
 import { flowTemplateService } from './flow-template.service'
 import {
     ListFlowTemplatesRequest,
-    ALL_PRINICPAL_TYPES,
+    ALL_PRINCIPAL_TYPES,
     PrincipalType,
     TemplateType,
     ActivepiecesError,
@@ -32,7 +32,7 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/:id',
         {
             config: {
-                allowedPrincipals: ALL_PRINICPAL_TYPES,
+                allowedPrincipals: ALL_PRINCIPAL_TYPES,
             },
             schema: {
                 params: GetIdParams,
@@ -47,7 +47,7 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/',
         {
             config: {
-                allowedPrincipals: ALL_PRINICPAL_TYPES,
+                allowedPrincipals: ALL_PRINCIPAL_TYPES,
             },
             schema: {
                 querystring: ListFlowTemplatesRequest,
