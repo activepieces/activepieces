@@ -101,23 +101,23 @@ $ap-typography: mat.define-typography-config(
     ),
 );
 @layer utilities {
-  .ap-typography-headline-1 {
+  h1, .ap-typography-headline-1 {
     @include mat.typography-level($ap-typography, "headline-1");
   }
-  .ap-typography-headline-2 {
+  h2,.ap-typography-headline-2 {
     @include mat.typography-level($ap-typography, "headline-2");
   }
-  .ap-typography-headline-3 {
+ h3, .ap-typography-headline-3 {
     @include mat.typography-level($ap-typography, "headline-3");
   }
-  .ap-typography-headline-4 {
+  h4,.ap-typography-headline-4 {
     @include mat.typography-level($ap-typography, "headline-4");
   }
-  .ap-typography-headline-5 {
+  h5,.ap-typography-headline-5 {
     @include mat.typography-level($ap-typography, "headline-5");
   }
 
-  .ap-typography-headline-6 {
+  h6,.ap-typography-headline-6 {
     @include mat.typography-level($ap-typography, "headline-6");
   }
 
