@@ -3,7 +3,10 @@ export enum PrincipalType {
     WORKER = 'WORKER',
     SERVICE = 'SERVICE',
     UNKNOWN = 'UNKNOWN',
-    // Deprecated
+
+    /**
+     * @deprecated
+     */
     SUPER_USER = 'SUPER_USER',
 }
 
