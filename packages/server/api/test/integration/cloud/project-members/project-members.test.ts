@@ -300,7 +300,12 @@ describe('Project Member API', () => {
         })
 
         describe('List project members by user', () => {
-            it('Succeeds if user role is ADMIN', async () => {
+
+            it.each([
+                ProjectMemberRole.ADMIN,
+                ProjectMemberRole.EDITOR,
+                ProjectMemberRole.VIEWER,
+            ])('Succeeds if user role is %s', async (testRole) => {
                 // arrange
                 const { mockPlatform, mockProject } = await createBasicEnvironment()
 
@@ -311,7 +316,7 @@ describe('Project Member API', () => {
                     email: mockUser.email,
                     platformId: mockPlatform.id,
                     projectId: mockProject.id,
-                    role: ProjectMemberRole.ADMIN,
+                    role: testRole,
                 })
                 await databaseConnection.getRepository('project_member').save([mockProjectMember])
 
@@ -338,11 +343,7 @@ describe('Project Member API', () => {
                 expect(response?.statusCode).toBe(StatusCodes.OK)
             })
 
-            it.each([
-                ProjectMemberRole.EDITOR,
-                ProjectMemberRole.VIEWER,
-                ProjectMemberRole.EXTERNAL_CUSTOMER,
-            ])('Fails if user role is %s', async (testRole) => {
+            it('Fails if user role is EXTERNAL_CUSTOMER', async () => {
                 // arrange
                 const { mockPlatform, mockProject } = await createBasicEnvironment()
 
@@ -353,7 +354,7 @@ describe('Project Member API', () => {
                     email: mockUser.email,
                     platformId: mockPlatform.id,
                     projectId: mockProject.id,
-                    role: testRole,
+                    role: ProjectMemberRole.EXTERNAL_CUSTOMER,
                 })
                 await databaseConnection.getRepository('project_member').save([mockProjectMember])
 
