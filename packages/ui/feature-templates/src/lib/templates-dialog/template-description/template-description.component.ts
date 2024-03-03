@@ -7,6 +7,5 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TemplateDescriptionComponent {
-
-  @Input({required:true}) template: FlowTemplate;
+  @Input({ required: true }) template: FlowTemplate;
 }
