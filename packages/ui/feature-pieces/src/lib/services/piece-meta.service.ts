@@ -38,6 +38,7 @@ import {
 
 type TriggersMetadata = Record<string, TriggerBase>;
 
+//TODO remove all hardcoded pieces names and mentions
 export const CORE_PIECES_ACTIONS_NAMES = [
   '@activepieces/piece-store',
   '@activepieces/piece-data-mapper',

@@ -5,39 +5,47 @@
 </div>
 <mat-tab-group [preserveContent]="true"  [animationDuration]="ANIMATION_DURATION">
     <mat-tab  label="templates"> <div class="ap-flex">
-        <mat-dialog-content class="!ap-flex ap-h-[559px] !ap-max-h-[initial] ap-w-[1070px] ap-gap-2 ap-p-0">
+        <mat-dialog-content class="!ap-flex ap-min-h-[559px] ap-h-[67.5vh] !ap-max-h-[950px] ap-w-[100vw] ap-max-w-[1070px] ap-gap-2 ap-p-0">
             <ng-container *ngTemplateOutlet="filtersColumn"></ng-container>
             <ng-container *ngTemplateOutlet="contentColumn; context:{showFeaturedBanner:false}"></ng-container>
         </mat-dialog-content>
     </div>
 </mat-tab>
     <mat-tab label="description"> 
-       <ng-container *ngIf="descriptionTemplate$ | async as template">
-        <div class="ap-pt-3 ap-px-6 ap-flex ap-items-center ap-justify-between ">
-            <ap-button btnSize="medium" btnColor="basic" btnStyle="basic" (buttonClicked)="backToTemplates()">
-                <div class="ap-flex ap-gap-2 ap-items-center">
-                    <svg-icon src="assets/img/custom/back.svg" class="ap-w-[14px] ap-h-[14px] ap-fill-body"></svg-icon>  Back
+        <div class=" ap-min-h-[559px] ap-h-[67.5vh] ap-flex ap-flex-col !ap-max-h-[950px] ap-w-[calc(100vw-257px)] ap-max-w-[1070px]">
+            <ng-container *ngIf="descriptionTemplate$ | async as template">
+                <div class="ap-pt-3 ap-px-6 ap-flex ap-items-center ap-justify-between ">
+                    <ap-button btnSize="medium" btnColor="basic" btnStyle="basic" (buttonClicked)="backToTemplates()">
+                        <div class="ap-flex ap-gap-2 ap-items-center">
+                            <svg-icon src="assets/img/custom/back.svg" class="ap-w-[14px] ap-h-[14px] ap-fill-body"></svg-icon>  Back
+                        </div>
+                    </ap-button>
                 </div>
-            </ap-button>
-        </div>
-       
-        <div class="ap-h-[440px] ap-flex ap-text-body ap-p-0 ap-overflow-y-auto thin-scrollbars black-scrollbars">
+               
+                <div class="ap-max-h-[calc(67.5vh-119px)] ap-min-h-[440px]  ap-flex ap-text-body ap-p-0 ap-overflow-y-auto thin-scrollbars black-scrollbars">
+                    
+                    <div class="ap-pt-3 ap-px-6 ap-min-w-0  ap-grow ap-shrink ap-basis-[1070px] ap-typography-body-1 ap-text-body ap-grow ">
+                    
+                        <app-template-description [template]="template"></app-template-description>
+                    </div>
             
-            <div class="ap-pt-3 ap-px-6 ap-min-w-0  ap-grow ap-shrink ap-basis-[1070px] ap-max-w-[1070px] ap-typography-body-1 ap-text-body ap-grow ">
-            
-                <app-template-description [template]="template"></app-template-description>
             </div>
-    
-    </div>
-    <mat-dialog-actions align="end">
-        <div class="ap-flex ap-gap-2.5 ap-px-6 ap-mb-2">
-            <ap-button btnSize="large" btnColor="primary" (buttonClicked)="useTemplate(template,'all ideas')"
-                i18n>
-                Use Template
-            </ap-button>
+            
+                <div class="ap-flex ap-grow ap-gap-2.5 ap-px-6 ap-my-2 ap-flex ap-items-end  ap-justify-end ap-flex-col">
+                  
+                        <ap-button btnSize="large" btnColor="primary" (buttonClicked)="useTemplate(template,'all ideas')"
+                        i18n>
+                        Use Template
+                    </ap-button>
+                    
+              
+                </div>
+            
+           
+        
+        </ng-container>
         </div>
-    </mat-dialog-actions>
-</ng-container>
+     
 </mat-tab>
     
   </mat-tab-group>
