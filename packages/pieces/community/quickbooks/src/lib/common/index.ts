@@ -39,40 +39,42 @@ export const quickBooksCommon = {
 				};
 			},
 		}),
-	itemId: Property.Dropdown({
-		displayName: 'Product/Service',
-		refreshers: [],
-		required: true,
-		options: async ({ auth }) => {
-			if (!auth) {
-				return {
-					disabled: true,
-					placeholder: 'Please connect your account first.',
-					options: [],
-				};
-			}
-			const authValue = auth as PiecePropValueSchema<typeof quickBooksAuth>;
-
-			const client = new QuickBooksAPIClient({
-				accessToken: authValue.access_token,
-				companyId: authValue.props?.['companyId'],
-			});
-
-			const response = await client.items.query({
-				query: 'select * from Item orderby MetaData.LastUpdatedTime desc',
-			});
-
-			return {
-				disabled: false,
-				options: response.QueryResponse.Item.map((item) => {
+	itemId: (required = false, displayName: string, description: string = '') =>
+		Property.Dropdown({
+			displayName,
+			description,
+			refreshers: [],
+			required,
+			options: async ({ auth }) => {
+				if (!auth) {
 					return {
-						label: item.Name,
-						value: item.Id,
+						disabled: true,
+						placeholder: 'Please connect your account first.',
+						options: [],
 					};
-				}),
-			};
-		},
-	}),
+				}
+				const authValue = auth as PiecePropValueSchema<typeof quickBooksAuth>;
+
+				const client = new QuickBooksAPIClient({
+					accessToken: authValue.access_token,
+					companyId: authValue.props?.['companyId'],
+				});
+
+				const response = await client.items.query({
+					query: 'select * from Item orderby MetaData.LastUpdatedTime desc',
+				});
+
+				return {
+					disabled: false,
+					options: response.QueryResponse.Item.map((item) => {
+						return {
+							label: item.Name,
+							value: item.Id,
+						};
+					}),
+				};
+			},
+		}),
 	paymentMethodId: (required = false, displayName: string, description: string = '') =>
 		Property.Dropdown({
 			displayName,
@@ -176,6 +178,78 @@ export const quickBooksCommon = {
 						return {
 							label: currency.Name,
 							value: currency.Code,
+						};
+					}),
+				};
+			},
+		}),
+	classId: (required = false, displayName: string, description: string = '') =>
+		Property.Dropdown({
+			displayName,
+			description,
+			refreshers: [],
+			required,
+			options: async ({ auth }) => {
+				if (!auth) {
+					return {
+						disabled: true,
+						placeholder: 'Please connect your account first.',
+						options: [],
+					};
+				}
+				const authValue = auth as PiecePropValueSchema<typeof quickBooksAuth>;
+
+				const client = new QuickBooksAPIClient({
+					accessToken: authValue.access_token,
+					companyId: authValue.props?.['companyId'],
+				});
+
+				const response = await client.classes.query({
+					query: 'select * from Class orderby MetaData.LastUpdatedTime desc',
+				});
+
+				return {
+					disabled: false,
+					options: response.QueryResponse.Class.map((cls) => {
+						return {
+							label: cls.Name,
+							value: cls.Id,
+						};
+					}),
+				};
+			},
+		}),
+	taxCodeId: (required = false, displayName: string, description: string = '') =>
+		Property.Dropdown({
+			displayName,
+			description,
+			refreshers: [],
+			required,
+			options: async ({ auth }) => {
+				if (!auth) {
+					return {
+						disabled: true,
+						placeholder: 'Please connect your account first.',
+						options: [],
+					};
+				}
+				const authValue = auth as PiecePropValueSchema<typeof quickBooksAuth>;
+
+				const client = new QuickBooksAPIClient({
+					accessToken: authValue.access_token,
+					companyId: authValue.props?.['companyId'],
+				});
+
+				const response = await client.taxcodes.query({
+					query: 'select * from TaxCode  orderby MetaData.LastUpdatedTime desc',
+				});
+
+				return {
+					disabled: false,
+					options: response.QueryResponse.TaxCode.map((code) => {
+						return {
+							label: code.Name,
+							value: code.Id,
 						};
 					}),
 				};

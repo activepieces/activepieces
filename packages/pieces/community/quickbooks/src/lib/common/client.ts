@@ -9,17 +9,16 @@ import {
 import {
 	CreateCustomerParameters,
 	CreateCustomerResponse,
+	CreateInvoiceParameters,
 	GetCustomerParameters,
 	GetCustomerResponse,
-	QueryCompanyCurrencyParameters,
+	QueryClassResponse,
 	QueryCompanyCurrencyResponse,
-	QueryCustomerParameters,
 	QueryCustomerResponse,
-	QueryItemParameters,
 	QueryItemResponse,
-	QueryPaymentMethodParameters,
+	QueryParameters,
 	QueryPaymentMethodResponse,
-	QueryTermParameters,
+	QueryTaxCodeResponse,
 	QueryTermResponse,
 	UpdateCustomerParameters,
 	UpdateCustomerResponse,
@@ -79,7 +78,7 @@ export class QuickBooksAPIClient {
 			const response = await httpClient.sendRequest<ResponseBody>(request);
 			return response.body;
 		} catch (error) {
-			throw new Error(JSON.stringify(error));
+			throw new Error(JSON.stringify((error as Error).message));
 		}
 	}
 	customers = {
@@ -115,7 +114,7 @@ export class QuickBooksAPIClient {
 		/**
 		 * Query customers
 		 */
-		query: (args: QueryCustomerParameters): Promise<QueryCustomerResponse> => {
+		query: (args: QueryParameters): Promise<QueryCustomerResponse> => {
 			return this.makeRequest<QueryCustomerResponse>({
 				path: '/query',
 				method: HttpMethod.GET,
@@ -123,11 +122,23 @@ export class QuickBooksAPIClient {
 			});
 		},
 	};
+	invoices = {
+		/**
+		 * Create a invoice
+		 */
+		create: (args: CreateInvoiceParameters) => {
+			return this.makeRequest({
+				path: '/invoice',
+				method: HttpMethod.POST,
+				body: args,
+			});
+		},
+	};
 	companycurrencies = {
 		/**
 		 * Query company currencies
 		 */
-		query: (args: QueryCompanyCurrencyParameters): Promise<QueryCompanyCurrencyResponse> => {
+		query: (args: QueryParameters): Promise<QueryCompanyCurrencyResponse> => {
 			return this.makeRequest<QueryCompanyCurrencyResponse>({
 				path: '/query',
 				method: HttpMethod.GET,
@@ -139,7 +150,7 @@ export class QuickBooksAPIClient {
 		/**
 		 * Query items
 		 */
-		query: (args: QueryItemParameters): Promise<QueryItemResponse> => {
+		query: (args: QueryParameters): Promise<QueryItemResponse> => {
 			return this.makeRequest<QueryItemResponse>({
 				path: '/query',
 				method: HttpMethod.GET,
@@ -151,7 +162,7 @@ export class QuickBooksAPIClient {
 		/**
 		 * Query payment methods
 		 */
-		query: (args: QueryPaymentMethodParameters): Promise<QueryPaymentMethodResponse> => {
+		query: (args: QueryParameters): Promise<QueryPaymentMethodResponse> => {
 			return this.makeRequest<QueryPaymentMethodResponse>({
 				path: '/query',
 				method: HttpMethod.GET,
@@ -163,8 +174,32 @@ export class QuickBooksAPIClient {
 		/**
 		 * Query terms
 		 */
-		query: (args: QueryTermParameters): Promise<QueryTermResponse> => {
+		query: (args: QueryParameters): Promise<QueryTermResponse> => {
 			return this.makeRequest<QueryTermResponse>({
+				path: '/query',
+				method: HttpMethod.GET,
+				query: { query: args.query },
+			});
+		},
+	};
+	classes = {
+		/**
+		 * Query classes
+		 */
+		query: (args: QueryParameters): Promise<QueryClassResponse> => {
+			return this.makeRequest<QueryClassResponse>({
+				path: '/query',
+				method: HttpMethod.GET,
+				query: { query: args.query },
+			});
+		},
+	};
+	taxcodes = {
+		/**
+		 * Query tax codes
+		 */
+		query: (args: QueryParameters): Promise<QueryTaxCodeResponse> => {
+			return this.makeRequest<QueryTaxCodeResponse>({
 				path: '/query',
 				method: HttpMethod.GET,
 				query: { query: args.query },

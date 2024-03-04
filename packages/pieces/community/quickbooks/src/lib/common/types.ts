@@ -101,6 +101,37 @@ export type UpdateCustomerParameters = {
 	sparse: boolean;
 } & Partial<CreateCustomerParameters>;
 
+type SalesItemLineDetail = {
+	ItemRef?: ReferenceType;
+	ClassRef?: ReferenceType;
+	TaxCodeRef?: ReferenceType;
+	ServiceDate?: string;
+	Qty?: number;
+	UnitPrice?: number;
+};
+export type SalesItemLine = {
+	DetailType: string;
+	Amount: number;
+	Description?: string;
+	SalesItemLineDetail: SalesItemLineDetail;
+};
+type MemoRef = {
+	value: string;
+};
+export type CreateInvoiceParameters = {
+	CustomerRef: ReferenceType;
+	BillEmail?: EmailAddress;
+	BillEmailCc?: EmailAddress;
+	BillEmailBcc?: EmailAddress;
+	Line: Array<SalesItemLine>;
+	TxnDate?: string;
+	DueDate?: string;
+	ShipDate?: string;
+	TrackingNum?: string;
+	CustomerMemo?: MemoRef;
+	PrivateNote?: string;
+};
+
 export type GetCustomerParameters = {
 	customerId: string;
 };
@@ -168,22 +199,28 @@ export type ItemResponse = {
 	MetaData: ModificationMetaData;
 };
 
-export type QueryCustomerParameters = {
-	query?: string;
+export type ClassResponse = {
+	FullyQualifiedName: string;
+	domain: string;
+	Name: string;
+	SyncToken: string;
+	SubClass: boolean;
+	sparse: boolean;
+	Active: boolean;
+	Id: string;
+	MetaData: ModificationMetaData;
 };
 
-export type QueryCompanyCurrencyParameters = {
-	query?: string;
+export type TaxCodeResponse = {
+	Name: string;
+	Description: string;
+	Taxable: boolean;
+	TaxGroup: boolean;
+	Id: string;
+	MetaData: ModificationMetaData;
 };
 
-export type QueryItemParameters = {
-	query?: string;
-};
-export type QueryPaymentMethodParameters = {
-	query?: string;
-};
-
-export type QueryTermParameters = {
+export type QueryParameters = {
 	query?: string;
 };
 
@@ -226,6 +263,25 @@ export type QueryTermResponse = {
 		Term: Array<TermResponse>;
 		startPosition?: number;
 		maxResults?: number;
+	};
+	time: string;
+};
+
+export type QueryClassResponse = {
+	QueryResponse: {
+		Class: Array<ClassResponse>;
+		startPosition?: number;
+		maxResults?: number;
+	};
+	time: string;
+};
+
+export type QueryTaxCodeResponse = {
+	QueryResponse: {
+		TaxCode: Array<TaxCodeResponse>;
+		startPosition?: number;
+		maxResults?: number;
+		totalCount?: number;
 	};
 	time: string;
 };

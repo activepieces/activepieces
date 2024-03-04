@@ -40,7 +40,7 @@ export const findCustomerAction = createAction({
 
 		const query = `select * from Customer where ${searchField} = '${searchValue}'`;
 
-		return await client.customers.query({ query: escapeSepcialCharacter(query) });
+		return await client.customers.query({ query: query });
 	},
 });
 

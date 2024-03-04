@@ -3,6 +3,7 @@ import { PieceCategory } from '@activepieces/shared';
 import { createCustomerAction } from './lib/actions/customer/create-customer';
 import { updateCustomerAction } from './lib/actions/customer/update-customer';
 import { findCustomerAction } from './lib/actions/customer/find-customer';
+import { createInvoiceAction } from './lib/actions/invoice/create-invoice';
 
 export const quickBooksAuth = PieceAuth.OAuth2({
 	required: true,
@@ -25,6 +26,6 @@ export const quickbooks = createPiece({
 	logoUrl: 'https://cdn.activepieces.com/pieces/quickbooks.png',
 	categories: [PieceCategory.ACCOUNTING],
 	authors: ['kishanprmr'],
-	actions: [createCustomerAction, updateCustomerAction, findCustomerAction],
+	actions: [createCustomerAction, updateCustomerAction, findCustomerAction, createInvoiceAction],
 	triggers: [],
 });
