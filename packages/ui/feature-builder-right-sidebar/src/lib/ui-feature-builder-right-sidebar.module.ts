@@ -19,6 +19,7 @@ import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-bui
 import { CodeWriterDialogComponent } from './input-forms/code-step-input-form/code-writer-dialog/code-writer-dialog.component';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatChipsModule } from '@angular/material/chips';
+import { InputWriterDialogComponent } from './edit-step-sidebar/input-writer-dialog/input-writer-dialog.component';
 @NgModule({
   imports: [
     CommonModule,
@@ -43,6 +44,7 @@ import { MatChipsModule } from '@angular/material/chips';
     FlowRightSidebarComponent,
     NewEditPieceSidebarComponent,
     CodeWriterDialogComponent,
+    InputWriterDialogComponent,
   ],
   exports: [FlowRightSidebarComponent],
 })

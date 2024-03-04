@@ -24,5 +24,12 @@ export const copilotController: FastifyPluginCallbackTypebox = (
         return res.send({ result })
     })
 
+    app.post('/inputs', GenerateCodeRequest, async (req, res) => {
+        const { prompt } = req.body
+
+        const result = await copilotService.generateInputs({ prompt })
+        return res.send({ result })
+    })
+
     done()
 }

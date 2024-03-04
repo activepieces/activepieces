@@ -43,6 +43,8 @@ import {
 import { TriggerBase, TriggerStrategy } from '@activepieces/pieces-framework';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 import { InputFormsSchema } from '../../input-forms/input-forms-schema';
+import { MatDialog } from '@angular/material/dialog';
+import { InputWriterDialogComponent } from '../input-writer-dialog/input-writer-dialog.component';
 
 @Component({
   selector: 'app-edit-step-form-container',
@@ -60,6 +62,7 @@ export class EditStepFormContainerComponent {
   ApEdition = ApEdition;
   edition$: Observable<ApEdition>;
   setInitialFormValue$: Observable<void>;
+  dialogClosed$?: Observable<unknown>;
   @Input() set selectedStep(step: Step) {
     this._selectedStep = step;
     this.cancelAutoSaveListener$.next(true);
@@ -73,7 +76,8 @@ export class EditStepFormContainerComponent {
     private snackbar: MatSnackBar,
     private flagService: FlagService,
     private actionMetaService: PieceMetadataService,
-    private builderService: FlowBuilderService
+    private builderService: FlowBuilderService,
+    private dialogService: MatDialog
   ) {
     this.webhookUrl$ = forkJoin({
       flow: this.store.select(BuilderSelectors.selectCurrentFlow).pipe(take(1)),
@@ -281,5 +285,38 @@ export class EditStepFormContainerComponent {
   copyUrl(url: string) {
     navigator.clipboard.writeText(url);
     this.snackbar.open('Webhook URL copied to clipboard');
+  }
+
+  openInputWriterDialog() {
+    this.dialogClosed$ = this.store
+      .select(BuilderSelectors.selectCurrentFlow)
+      .pipe(
+        take(1),
+        switchMap((flow) => {
+          const dialogRef = this.dialogService.open(
+            InputWriterDialogComponent,
+            {
+              data: {
+                flowVersion: flow.version,
+                selectedStep: this._selectedStep.name,
+              },
+            }
+          );
+
+          return dialogRef.afterClosed().pipe(
+            tap((result) => {
+              if (result) {
+                this.stepForm.controls.settings.setValue({
+                  ...this._selectedStep.settings,
+                  input: {
+                    ...this._selectedStep.settings.input,
+                    ...result.inputs,
+                  },
+                });
+              }
+            })
+          );
+        })
+      );
   }
 }
