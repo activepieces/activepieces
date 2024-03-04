@@ -1,0 +1,43 @@
+{
+  "name": "pieces-json",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/json/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/json",
+        "tsConfig": "packages/pieces/community/json/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/json/package.json",
+        "main": "packages/pieces/community/json/src/index.ts",
+        "assets": [
+          "packages/pieces/community/json/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-json {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/community/json/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
