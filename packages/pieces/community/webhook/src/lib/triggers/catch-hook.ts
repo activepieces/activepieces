@@ -8,7 +8,7 @@ Copy the following URL:
 
 If you are expecting a reply from this webhook, append **/sync** to the URL.
 
-In that case, you will also have to add an HTTP step with **return response** to the end of your flow.
+In that case, you will also have to add an HTTP step with **return response** at the end of your flow.
 
 If the flow takes more than **30 seconds**, it will give a **408 Request Timeout** response.
 `;

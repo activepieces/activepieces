@@ -12,8 +12,7 @@ export class MigrateWebhookTemplate1709581196564 implements MigrationInterface {
 
         for (const { id } of flowVersionsIds) {
             const [flowVersion] = await queryRunner.query('SELECT * FROM flow_template WHERE id = $1', [id])
-            const step = parseJson(flowVersion.template.trigger)
-            const isString = typeof flowVersion.template.trigger === 'string'
+            const step = flowVersion.template.trigger
             if (step.type === 'WEBHOOK') {
                 step.type = 'PIECE_TRIGGER'
                 step.settings = {
@@ -26,10 +25,13 @@ export class MigrateWebhookTemplate1709581196564 implements MigrationInterface {
                     'packageType': 'REGISTRY',
                 }
                 count++
-                const result = isString ? JSON.stringify(step) : step
+                const endResult = {
+                    ...flowVersion.template,
+                    trigger: step,
+                }
                 await queryRunner.query(
                     'UPDATE flow_template SET template = $1 WHERE id = $2',
-                    [result, flowVersion.id],
+                    [endResult, flowVersion.id],
                 )
             }
         }
@@ -45,8 +47,7 @@ export class MigrateWebhookTemplate1709581196564 implements MigrationInterface {
         for (const { id } of flowVersionsIds) {
             const [flowVersion] = await queryRunner.query('SELECT * FROM flow_template WHERE id = $1', [id])
 
-            const step = parseJson(flowVersion.template.trigger)
-            const isString = typeof flowVersion.template.trigger === 'string'
+            const step = flowVersion.template.trigger
             if (step.type === 'PIECE_TRIGGER') {
                 if (step.settings.pieceName === '@activepieces/piece-webhook') {
                     step.type = 'WEBHOOK'
@@ -54,10 +55,13 @@ export class MigrateWebhookTemplate1709581196564 implements MigrationInterface {
                         'inputUiInfo': step.settings.inputUiInfo,
                     }
                     count++
-                    const result = isString ? JSON.stringify(step) : step
+                    const endResult = {
+                        ...flowVersion.template,
+                        trigger: step,
+                    }
                     await queryRunner.query(
                         'UPDATE flow_template SET template = $1 WHERE id = $2',
-                        [result, flowVersion.id],
+                        [endResult, flowVersion.id],
                     )
                 }
             }
@@ -65,15 +69,5 @@ export class MigrateWebhookTemplate1709581196564 implements MigrationInterface {
         logger.info(
             'rolling back  MigrateWebhookTemplate1709581196564, finished flows ' + count,
         )
-    }
-}
-
-
-const parseJson = (json: string) => {
-    try {
-        return JSON.parse(json)
-    }
-    catch (e) {
-        return json
     }
 }

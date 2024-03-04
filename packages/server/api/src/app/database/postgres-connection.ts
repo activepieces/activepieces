@@ -113,6 +113,7 @@ import { DropUnusedPlatformIndex1709500873378 } from './migration/postgres/17095
 import { SetNotNullOnPlatform1709505632771 } from './migration/postgres/1709505632771-SetNotNullOnPlatform'
 import { MigrateWebhook1709581196563 } from './migration/common/1709581196563-migrate-webhook'
 import { MigrateWebhookTemplate1709581196564 } from './migration/postgres/1709581196564-migrate-webhook-templates'
+import { AddPlatformForeignKeyToProjectPostgres1709566642531 } from './migration/postgres/1709566642531-add-platform-foreign-key-to-project-postgres'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -240,6 +241,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddSlugToGitRepo1709151540095,
                 DropUnusedPlatformIndex1709500873378,
                 MigrateWebhookTemplate1709581196564,
+                AddPlatformForeignKeyToProjectPostgres1709566642531,
             )
             break
         case ApEdition.ENTERPRISE:
@@ -287,12 +289,14 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddSlugToGitRepo1709151540095,
                 DropUnusedPlatformIndex1709500873378,
                 MigrateWebhookTemplate1709581196564,
+                AddPlatformForeignKeyToProjectPostgres1709566642531,
             )
             break
         case ApEdition.COMMUNITY:
             commonMigration.push(
-                AddPlatformToPostgres1709052740378, 
-                SetNotNullOnPlatform1709505632771)
+                AddPlatformToPostgres1709052740378,
+                SetNotNullOnPlatform1709505632771,
+            )
             break
     }
 

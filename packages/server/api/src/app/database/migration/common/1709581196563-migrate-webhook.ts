@@ -16,6 +16,9 @@ export class MigrateWebhook1709581196563 implements MigrationInterface {
             const [flowVersion] = await queryRunner.query('SELECT * FROM flow_version WHERE id = $1', [id])
             const step = parseJson(flowVersion.trigger)
             const isString = typeof flowVersion.trigger === 'string'
+            if (count % 1000 === 0) {
+                logger.info('MigrateWebhook1709581196563, flows migrated ' + count)
+            }
             if (step.type === 'WEBHOOK') {
                 step.type = 'PIECE_TRIGGER'
                 step.settings = {
