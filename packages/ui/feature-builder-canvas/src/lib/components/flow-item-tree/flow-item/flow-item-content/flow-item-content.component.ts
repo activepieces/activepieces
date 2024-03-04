@@ -24,7 +24,7 @@ import { RunDetailsService } from '@activepieces/ui/feature-builder-left-sidebar
 import {
   Action,
   ActionType,
-  FlowExecutionStatus,
+  FlowRunStatus,
   FlowRun,
   StepOutput,
   StepOutputStatus,
@@ -81,7 +81,7 @@ export class FlowItemContentComponent implements OnInit {
   isOverflown = isOverflown;
   childStepsIconsUrls: Record<string, Observable<string>> = {};
   StepOutputStatus = StepOutputStatus;
-  ExecutionOutputStatus = FlowExecutionStatus;
+  ExecutionOutputStatus = FlowRunStatus;
   TriggerType = TriggerType;
   ActionType = ActionType;
   stepIndex$: Observable<number>;
@@ -164,7 +164,7 @@ export class FlowItemContentComponent implements OnInit {
       distinctUntilChanged(),
       map((selectedRun) => {
         if (selectedRun) {
-          if (selectedRun.status !== FlowExecutionStatus.RUNNING) {
+          if (selectedRun.status !== FlowRunStatus.RUNNING) {
             const stepName = this._flowItem.name;
             const result = selectedRun.steps[stepName.toString()];
             if (result) {

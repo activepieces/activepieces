@@ -1,5 +1,5 @@
 import {
-    FlowExecutionStatus,
+    FlowRunStatus,
     FlowRun,
     NotificationStatus,
     RunEnvironment,
@@ -19,8 +19,8 @@ export const notifications = {
         }
         if (
             ![
-                FlowExecutionStatus.FAILED,
-                FlowExecutionStatus.INTERNAL_ERROR,
+                FlowRunStatus.FAILED,
+                FlowRunStatus.INTERNAL_ERROR,
             ].includes(flowRun.status)
         ) {
             return

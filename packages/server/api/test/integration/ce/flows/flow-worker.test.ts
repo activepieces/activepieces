@@ -1,6 +1,6 @@
 import {
     ActionType,
-    FlowExecutionStatus,
+    FlowRunStatus,
     ExecutionType,
     FlowStatus,
     FlowVersionState,
@@ -111,7 +111,7 @@ describe('flow execution', () => {
             flowVersionId: mockFlowVersion.id,
             projectId: mockProject.id,
             flowId: mockFlow.id,
-            status: FlowExecutionStatus.RUNNING,
+            status: FlowRunStatus.RUNNING,
         })
         await databaseConnection.getRepository('flow_run').save([mockFlowRun])
 
@@ -129,7 +129,7 @@ describe('flow execution', () => {
             .findOneByOrFail({
                 id: mockFlowRun.id,
             })
-        expect(flowRun.status).toEqual(FlowExecutionStatus.SUCCEEDED)
+        expect(flowRun.status).toEqual(FlowRunStatus.SUCCEEDED)
 
         const file = await databaseConnection
             .getRepository('file')

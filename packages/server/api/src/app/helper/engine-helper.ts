@@ -28,7 +28,7 @@ import {
     FlowVersion,
     ExecuteFlowOperation,
     PlatformRole,
-    FlowExecutionResponse,
+    FlowRunResponse,
 } from '@activepieces/shared'
 import { Sandbox } from 'server-worker'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
@@ -55,7 +55,7 @@ type GenerateWorkerTokenParams = {
     projectId: ProjectId
 }
 
-export type EngineHelperFlowResult = FlowExecutionResponse
+export type EngineHelperFlowResult = FlowRunResponse
 
 export type EngineHelperTriggerResult<
     T extends TriggerHookType = TriggerHookType,

@@ -2,7 +2,7 @@
 import { Static, Type } from '@sinclair/typebox'
 import { ExecutionState } from './execution-output'
 
-export enum FlowExecutionStatus {
+export enum FlowRunStatus {
     FAILED = 'FAILED',
     QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
     INTERNAL_ERROR = 'INTERNAL_ERROR',
@@ -55,22 +55,22 @@ const BaseExecutiionResponse = {
     stopResponse: Type.Optional(StopResponse),
 }
 
-export const FlowExecutionResponse = Type.Union([
+export const FlowRunResponse = Type.Union([
     Type.Object({
-        status: Type.Literal(FlowExecutionStatus.PAUSED),
+        status: Type.Literal(FlowRunStatus.PAUSED),
         ...BaseExecutiionResponse,
         pauseMetadata: Type.Optional(PauseMetadata),
     }),
     Type.Object({
-        status: Type.Union([Type.Literal(FlowExecutionStatus.FAILED), 
-            Type.Literal(FlowExecutionStatus.SUCCEEDED), 
-            Type.Literal(FlowExecutionStatus.RUNNING),
-            Type.Literal(FlowExecutionStatus.QUOTA_EXCEEDED),
-            Type.Literal(FlowExecutionStatus.TIMEOUT),
-            Type.Literal(FlowExecutionStatus.INTERNAL_ERROR),
-            Type.Literal(FlowExecutionStatus.STOPPED),
+        status: Type.Union([Type.Literal(FlowRunStatus.FAILED), 
+            Type.Literal(FlowRunStatus.SUCCEEDED), 
+            Type.Literal(FlowRunStatus.RUNNING),
+            Type.Literal(FlowRunStatus.QUOTA_EXCEEDED),
+            Type.Literal(FlowRunStatus.TIMEOUT),
+            Type.Literal(FlowRunStatus.INTERNAL_ERROR),
+            Type.Literal(FlowRunStatus.STOPPED),
         ]),
         ...BaseExecutiionResponse,
     }),
 ])
-export type FlowExecutionResponse = Static<typeof FlowExecutionResponse> & ExecutionState
+export type FlowRunResponse = Static<typeof FlowRunResponse> & ExecutionState

@@ -19,7 +19,7 @@ import {
     FlowRetryStrategy,
     PauseType,
     ResumePayload,
-    FlowExecutionStatus,
+    FlowRunStatus,
     ExecutioOutputFile,
 } from '@activepieces/shared'
 import {
@@ -186,7 +186,7 @@ export const flowRunService = {
         tags,
     }: {
         flowRunId: FlowRunId
-        status: FlowExecutionStatus
+        status: FlowRunStatus
         tasks: number
         tags: string[]
         logsFileId: FileId | null
@@ -240,7 +240,7 @@ export const flowRunService = {
             flowDisplayName: flowVersion.displayName,
         })
 
-        flowRun.status = FlowExecutionStatus.RUNNING
+        flowRun.status = FlowRunStatus.RUNNING
 
         const savedFlowRun = await flowRunRepo.save(flowRun)
 
@@ -293,7 +293,7 @@ export const flowRunService = {
         const { flowRunId, logFileId, pauseMetadata } = params
 
         await flowRunRepo.update(flowRunId, {
-            status: FlowExecutionStatus.PAUSED,
+            status: FlowRunStatus.PAUSED,
             logsFileId: logFileId,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             pauseMetadata: pauseMetadata as any,
@@ -360,7 +360,7 @@ type GetOrCreateParams = {
 type ListParams = {
     projectId: ProjectId
     flowId: FlowId | undefined
-    status: FlowExecutionStatus | undefined
+    status: FlowRunStatus | undefined
     cursor: Cursor | null
     tags?: string[]
     limit: number

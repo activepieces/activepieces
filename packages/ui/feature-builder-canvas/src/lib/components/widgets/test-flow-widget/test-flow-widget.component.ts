@@ -9,7 +9,7 @@ import {
 import { Store } from '@ngrx/store';
 import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
 import {
-  FlowExecutionStatus,
+  FlowRunStatus,
   FlowRun,
   PopulatedFlow,
   TriggerType,
@@ -30,8 +30,8 @@ import { canvasActions } from '@activepieces/ui/feature-builder-store';
 })
 export class TestFlowWidgetComponent implements OnInit {
   triggerType = TriggerType;
-  statusEnum = FlowExecutionStatus;
-  instanceRunStatus$: Observable<undefined | FlowExecutionStatus>;
+  statusEnum = FlowRunStatus;
+  instanceRunStatus$: Observable<undefined | FlowRunStatus>;
   isSaving$: Observable<boolean> = of(false);
   selectedFlow$: Observable<PopulatedFlow | undefined>;
   instanceRunStatusChecker$: Observable<FlowRun>;

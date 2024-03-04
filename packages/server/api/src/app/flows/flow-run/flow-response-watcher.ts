@@ -1,7 +1,7 @@
 import { logger } from '@sentry/utils'
 import {
-    FlowExecutionResponse,
-    FlowExecutionStatus,
+    FlowRunResponse,
+    FlowRunStatus,
     PauseType,
     apId,
 } from '@activepieces/shared'
@@ -68,7 +68,7 @@ export const flowResponseWatcher = {
     async publish(
         flowRunId: string,
         handlerId: string,
-        result: FlowExecutionResponse,
+        result: FlowRunResponse,
     ): Promise<void> {
         logger.info(`[flowRunWatcher#publish] flowRunId=${flowRunId}`)
         const flowResponse = await getFlowResponse(result)
@@ -81,10 +81,10 @@ export const flowResponseWatcher = {
 }
 
 async function getFlowResponse(
-    result: FlowExecutionResponse,
+    result: FlowRunResponse,
 ): Promise<FlowResponse> {
     switch (result.status) {
-        case FlowExecutionStatus.PAUSED:
+        case FlowRunStatus.PAUSED:
             if (result.pauseMetadata && result.pauseMetadata.type === PauseType.WEBHOOK) {
                 return {
                     status: StatusCodes.OK,
@@ -97,13 +97,13 @@ async function getFlowResponse(
                 body: {},
                 headers: {},
             }
-        case FlowExecutionStatus.STOPPED:
+        case FlowRunStatus.STOPPED:
             return {
                 status: result.stopResponse?.status ?? StatusCodes.OK,
                 body: result.stopResponse?.body,
                 headers: result.stopResponse?.headers ?? {},
             }
-        case FlowExecutionStatus.INTERNAL_ERROR:
+        case FlowRunStatus.INTERNAL_ERROR:
             return {
                 status: StatusCodes.INTERNAL_SERVER_ERROR,
                 body: {
@@ -111,7 +111,7 @@ async function getFlowResponse(
                 },
                 headers: {},
             }
-        case FlowExecutionStatus.FAILED:
+        case FlowRunStatus.FAILED:
             return {
                 status: StatusCodes.INTERNAL_SERVER_ERROR,
                 body: {
@@ -119,8 +119,8 @@ async function getFlowResponse(
                 },
                 headers: {},
             }
-        case FlowExecutionStatus.TIMEOUT:
-        case FlowExecutionStatus.RUNNING:
+        case FlowRunStatus.TIMEOUT:
+        case FlowRunStatus.RUNNING:
             return {
                 status: StatusCodes.GATEWAY_TIMEOUT,
                 body: {
@@ -128,8 +128,8 @@ async function getFlowResponse(
                 },
                 headers: {},
             }
-        case FlowExecutionStatus.SUCCEEDED:
-        case FlowExecutionStatus.QUOTA_EXCEEDED:
+        case FlowRunStatus.SUCCEEDED:
+        case FlowRunStatus.QUOTA_EXCEEDED:
             return {
                 status: StatusCodes.NO_CONTENT,
                 body: {},

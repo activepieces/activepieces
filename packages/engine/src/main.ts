@@ -19,7 +19,7 @@ import {
     Action,
     ActionType,
     isNil,
-    FlowExecutionResponse,
+    FlowRunResponse,
 } from '@activepieces/shared'
 import { pieceHelper } from './lib/helper/piece-helper'
 import { triggerHelper } from './lib/helper/trigger-helper'
@@ -29,7 +29,7 @@ import { ExecutionVerdict, FlowExecutorContext } from './lib/handler/context/flo
 import { EngineConstants } from './lib/handler/context/engine-constants'
 import { testExecutionContext } from './lib/handler/context/test-execution-context'
 
-const executeFlow = async (input: ExecuteFlowOperation, context: FlowExecutorContext): Promise<EngineResponse<FlowExecutionResponse>> => {
+const executeFlow = async (input: ExecuteFlowOperation, context: FlowExecutorContext): Promise<EngineResponse<FlowRunResponse>> => {
     const output = await flowExecutor.execute({
         action: input.flowVersion.trigger.nextAction,
         executionState: context,

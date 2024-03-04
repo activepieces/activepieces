@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import {
   AppConnectionStatus,
-  FlowExecutionStatus,
+  FlowRunStatus,
   StepOutputStatus,
 } from '@activepieces/shared';
 
@@ -18,9 +18,9 @@ import {
 export class StateIconComponent implements OnInit, OnChanges {
   @Input() size = 16;
   @Input() showStatusText = true;
-  @Input() status: FlowExecutionStatus | StepOutputStatus | AppConnectionStatus;
+  @Input() status: FlowRunStatus | StepOutputStatus | AppConnectionStatus;
   textAfter = '';
-  readonly ExecutionOutputStatus = FlowExecutionStatus;
+  readonly ExecutionOutputStatus = FlowRunStatus;
   readonly StepOutputStatus = StepOutputStatus;
 
   iconUrl = '';
@@ -33,52 +33,52 @@ export class StateIconComponent implements OnInit, OnChanges {
     this.iconUrl = this.findIconUrl(this.status);
   }
   findIconUrl(
-    status: FlowExecutionStatus | StepOutputStatus | AppConnectionStatus
+    status: FlowRunStatus | StepOutputStatus | AppConnectionStatus
   ): string {
     switch (status) {
-      case FlowExecutionStatus.STOPPED:
-      case FlowExecutionStatus.SUCCEEDED:
+      case FlowRunStatus.STOPPED:
+      case FlowRunStatus.SUCCEEDED:
       case StepOutputStatus.SUCCEEDED:
       case StepOutputStatus.STOPPED:
       case AppConnectionStatus.ACTIVE:
         return 'assets/img/custom/status/success.svg';
-      case FlowExecutionStatus.FAILED:
-      case FlowExecutionStatus.INTERNAL_ERROR:
-      case FlowExecutionStatus.TIMEOUT:
+      case FlowRunStatus.FAILED:
+      case FlowRunStatus.INTERNAL_ERROR:
+      case FlowRunStatus.TIMEOUT:
       case StepOutputStatus.FAILED:
       case AppConnectionStatus.ERROR:
-      case FlowExecutionStatus.QUOTA_EXCEEDED:
+      case FlowRunStatus.QUOTA_EXCEEDED:
         return 'assets/img/custom/status/error.svg';
-      case FlowExecutionStatus.PAUSED:
+      case FlowRunStatus.PAUSED:
       case StepOutputStatus.PAUSED:
         return 'assets/img/custom/status/paused.svg';
       case StepOutputStatus.RUNNING:
-      case FlowExecutionStatus.RUNNING:
+      case FlowRunStatus.RUNNING:
         return '';
     }
   }
   findTextAfter(
-    status: FlowExecutionStatus | StepOutputStatus | AppConnectionStatus
+    status: FlowRunStatus | StepOutputStatus | AppConnectionStatus
   ): string {
     switch (status) {
-      case FlowExecutionStatus.STOPPED:
-      case FlowExecutionStatus.SUCCEEDED:
+      case FlowRunStatus.STOPPED:
+      case FlowRunStatus.SUCCEEDED:
       case StepOutputStatus.SUCCEEDED:
       case StepOutputStatus.STOPPED:
         return $localize`Succeeded`;
-      case FlowExecutionStatus.QUOTA_EXCEEDED:
+      case FlowRunStatus.QUOTA_EXCEEDED:
         return 'Quota Exceeded';
-      case FlowExecutionStatus.INTERNAL_ERROR:
+      case FlowRunStatus.INTERNAL_ERROR:
         return $localize`Internal Error`;
-      case FlowExecutionStatus.TIMEOUT:
+      case FlowRunStatus.TIMEOUT:
         return $localize`Timed Out`;
-      case FlowExecutionStatus.FAILED:
+      case FlowRunStatus.FAILED:
       case StepOutputStatus.FAILED:
         return $localize`Failed`;
-      case FlowExecutionStatus.PAUSED:
+      case FlowRunStatus.PAUSED:
       case StepOutputStatus.PAUSED:
         return $localize`Paused`;
-      case FlowExecutionStatus.RUNNING:
+      case FlowRunStatus.RUNNING:
       case StepOutputStatus.RUNNING:
         return $localize`Running`;
       case AppConnectionStatus.ACTIVE:

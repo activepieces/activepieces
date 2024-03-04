@@ -1,5 +1,5 @@
 import { ApId } from '../common/id-generator'
-import { FlowExecutionStatus, PauseMetadata } from './execution/flow-execution'
+import { FlowRunStatus, PauseMetadata } from './execution/flow-execution'
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ExecutionState } from './execution/execution-output'
@@ -31,7 +31,7 @@ export const FlowRun = Type.Object({
     terminationReason: Type.Optional(Type.String()),
     logsFileId: Nullable(Type.String()),
     tasks: Type.Optional(Type.Number()),
-    status: Type.Enum(FlowExecutionStatus),
+    status: Type.Enum(FlowRunStatus),
     startTime: Type.String(),
     finishTime: Type.String(),
     environment: Type.Enum(RunEnvironment),

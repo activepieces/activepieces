@@ -12,8 +12,7 @@ import {
     FileCompression,
     FileId,
     FileType,
-    FlowExecutionResponse,
-    FlowExecutionStatus,
+    FlowRunStatus,
     flowHelper,
     FlowRunId,
     FlowVersion,
@@ -25,6 +24,7 @@ import {
     SourceCode,
     Trigger,
     TriggerType,
+    FlowRunResponse,
 } from '@activepieces/shared'
 import { Sandbox } from 'server-worker'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
@@ -48,7 +48,7 @@ import { logSerializer } from 'server-worker'
 type FinishExecutionParams = {
     flowRunId: FlowRunId
     logFileId: FileId
-    result: FlowExecutionResponse
+    result: FlowRunResponse
 }
 
 type LoadInputAndLogFileIdParams = {
@@ -94,7 +94,7 @@ const finishExecution = async (
 
     const { flowRunId, logFileId, result } = params
 
-    if (result.status === FlowExecutionStatus.PAUSED) {
+    if (result.status === FlowRunStatus.PAUSED) {
         await flowRunService.pause({
             flowRunId,
             logFileId,
@@ -113,10 +113,10 @@ const finishExecution = async (
 }
 
 const getTerminalStatus = (
-    status: FlowExecutionStatus,
-): FlowExecutionStatus => {
-    return status == FlowExecutionStatus.STOPPED
-        ? FlowExecutionStatus.SUCCEEDED
+    status: FlowRunStatus,
+): FlowRunStatus => {
+    return status == FlowRunStatus.STOPPED
+        ? FlowRunStatus.SUCCEEDED
         : status
 }
 
@@ -160,7 +160,7 @@ const loadInputAndLogFileId = async ({
         }
         case ExecutionType.BEGIN:
             if (!isNil(flowRun.logsFileId)) {
-                if (flowRun.status !== FlowExecutionStatus.INTERNAL_ERROR) {
+                if (flowRun.status !== FlowRunStatus.INTERNAL_ERROR) {
                     const trigger = Object.values(flowRun.steps).find((step) => flowHelper.isTrigger(step.type))
                     assertNotNullOrUndefined(
                         trigger,
@@ -280,7 +280,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
         ) {
             await flowRunService.finish({
                 flowRunId: jobData.runId,
-                status: FlowExecutionStatus.QUOTA_EXCEEDED,
+                status: FlowRunStatus.QUOTA_EXCEEDED,
                 tasks: 0,
                 logsFileId: null,
                 tags: [],
@@ -292,7 +292,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
         ) {
             await flowRunService.finish({
                 flowRunId: jobData.runId,
-                status: FlowExecutionStatus.TIMEOUT,
+                status: FlowRunStatus.TIMEOUT,
                 // TODO REVIST THIS
                 tasks: 10,
                 logsFileId: null,
@@ -302,7 +302,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
         else {
             await flowRunService.finish({
                 flowRunId: jobData.runId,
-                status: FlowExecutionStatus.INTERNAL_ERROR,
+                status: FlowRunStatus.INTERNAL_ERROR,
                 tasks: 0,
                 logsFileId: null,
                 tags: [],

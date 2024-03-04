@@ -28,7 +28,7 @@ import { CdkDragMove } from '@angular/cdk/drag-drop';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { RunDetailsService } from '@activepieces/ui/feature-builder-left-sidebar';
 import {
-  FlowExecutionStatus,
+  FlowRunStatus,
   FlowVersion,
   TriggerType,
 } from '@activepieces/shared';
@@ -155,7 +155,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
   }
 
   public get instanceRunStatus() {
-    return FlowExecutionStatus;
+    return FlowRunStatus;
   }
 
   public get leftSideBarType() {
