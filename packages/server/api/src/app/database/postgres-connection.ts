@@ -110,7 +110,9 @@ import { MakePlatformNotNullable1705969874745 } from './migration/postgres/17059
 import { AddPlatformToPostgres1709052740378 } from './migration/postgres/1709052740378-AddPlatformToPostgres'
 import { AddSlugToGitRepo1709151540095 } from './migration/postgres/1709151540095-add-slug-to-git-repo'
 import { DropUnusedPlatformIndex1709500873378 } from './migration/postgres/1709500873378-DropUnusedPlatformIndex'
-import { SetNotNullOnPlatform1709505632771 } from './migration/1709505632771-SetNotNullOnPlatform'
+import { SetNotNullOnPlatform1709505632771 } from './migration/postgres/1709505632771-SetNotNullOnPlatform'
+import { MigrateWebhook1709581196563 } from './migration/common/1709581196563-migrate-webhook'
+import { MigrateWebhookTemplate1709581196564 } from './migration/postgres/1709581196564-migrate-webhook-templates'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -183,6 +185,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddTriggerTestStrategy1707087022764,
         AddCategoriesToPieceMetadataPostgres1707231704973,
         AddUniqueStoreConstraint1708521505204,
+        MigrateWebhook1709581196563,
     ]
 
     const edition = getEdition()
@@ -236,6 +239,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 MakePlatformNotNullable1705969874745,
                 AddSlugToGitRepo1709151540095,
                 DropUnusedPlatformIndex1709500873378,
+                MigrateWebhookTemplate1709581196564,
             )
             break
         case ApEdition.ENTERPRISE:
@@ -282,6 +286,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 MakePlatformNotNullable1705969874745,
                 AddSlugToGitRepo1709151540095,
                 DropUnusedPlatformIndex1709500873378,
+                MigrateWebhookTemplate1709581196564,
             )
             break
         case ApEdition.COMMUNITY:

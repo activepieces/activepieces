@@ -10,8 +10,6 @@ export class TriggerTooltipPipe implements PipeTransform {
   transform(flow: PopulatedFlow, locale: string): string {
     const trigger = flow.version.trigger;
     switch (trigger.type) {
-      case TriggerType.WEBHOOK:
-        return $localize`Real time flow`;
       case TriggerType.PIECE: {
         const cronExpression = flow.schedule?.cronExpression;
         return cronExpression

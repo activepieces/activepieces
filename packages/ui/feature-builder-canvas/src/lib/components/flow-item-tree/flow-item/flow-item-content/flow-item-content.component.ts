@@ -211,8 +211,6 @@ export class FlowItemContentComponent implements OnInit {
           .pipe(map((p) => p.displayName));
       case TriggerType.EMPTY:
         return of($localize`Choose a trigger`);
-      case TriggerType.WEBHOOK:
-        return of($localize`Webhook trigger`);
     }
   }
   extractChildStepsIconsUrls() {
