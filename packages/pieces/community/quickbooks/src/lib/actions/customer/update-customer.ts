@@ -116,8 +116,6 @@ export const updateCustomerAction = createAction({
 				: undefined,
 		};
 
-		console.log(params);
-
 		return await client.customers.update(params);
 	},
 });

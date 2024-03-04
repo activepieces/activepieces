@@ -102,7 +102,6 @@ export const createCustomerAction = createAction({
 			companyId: context.auth.props?.['companyId'],
 		});
 
-		const res = await client.customers.create(params);
-		return res;
+		return await client.customers.create(params);
 	},
 });
