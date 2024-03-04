@@ -6,9 +6,10 @@ import {
     ProjectMemberStatus,
 } from '@activepieces/ee-shared'
 import {
-    ALL_PRINICPAL_TYPES,
+    ALL_PRINCIPAL_TYPES,
     ActivepiecesError,
     ErrorCode,
+    Permission,
     PrincipalType,
     SERVICE_KEY_SECURITY_OPENAPI,
     assertNotNullOrUndefined,
@@ -101,6 +102,7 @@ async function assertFeatureIsEnabled(
 const ListProjectMembersRequestQueryOptions = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.READ_PROJECT_MEMBER,
     },
     schema: {
         tags: ['project-members'],
@@ -112,6 +114,7 @@ const ListProjectMembersRequestQueryOptions = {
 const AddProjectMemberRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.WRITE_PROJECT_MEMBER,
     },
     schema: {
         tags: ['project-members'],
@@ -125,7 +128,7 @@ const AddProjectMemberRequest = {
 
 const AcceptProjectMemberRequest = {
     config: {
-        allowedPrincipals: ALL_PRINICPAL_TYPES,
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
     schema: {
         body: Type.Object({
@@ -140,6 +143,7 @@ const AcceptProjectMemberRequest = {
 const DeleteProjectMemberRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.WRITE_PROJECT_MEMBER,
     },
     schema: {
         tags: ['project-members'],

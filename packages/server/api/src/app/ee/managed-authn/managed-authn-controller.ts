@@ -1,5 +1,5 @@
 import {
-    ALL_PRINICPAL_TYPES,
+    ALL_PRINCIPAL_TYPES,
     AuthenticationResponse,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
@@ -34,7 +34,7 @@ export const managedAuthnController: FastifyPluginAsyncTypebox = async (
 
 const ManagedAuthnRequest = {
     config: {
-        allowedPrincipals: ALL_PRINICPAL_TYPES,
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
     schema: {
         body: ManagedAuthnRequestBody,

@@ -1,0 +1,20 @@
+<div class="ap-flex ap-gap-2 ap-flex-col">
+                
+    <div class="ap-flex ap-items-center ap-justify-center">
+        <div class="ap-border ap-flex ap-items-center ap-h-[190px] ap-grow ap-justify-center ap-border-solid ap-overflow-hidden ap-rounded-lg ap-w-[300px]" [style.background]="template.name | templateDescriptionBannerColor" >
+
+            <div>
+                <ap-pieces-icons-from-flow [maxNumberOfIconsToLoad]="3" [iconSize]="48" [flowVersion]="template.template" ></ap-pieces-icons-from-flow>
+            </div>
+
+        </div>
+    </div>
+    <div class="ap-typography-headline-6 ap-px-2 ap-flex ap-gap-2">
+       <b>{{template.name}}</b>     
+    </div>
+    <markdown [data]="template.description">
+    </markdown>
+</div>
+<div *ngIf="template.blogUrl" class="ap-px-2">
+    Read more about this template in <a [href]="template.blogUrl" target="_blank" class="ap-typography-body-1">this blog!</a> 
+</div>

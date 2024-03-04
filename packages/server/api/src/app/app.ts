@@ -103,6 +103,7 @@ import { projectBillingModule } from './ee/billing/project-billing/project-billi
 import { appSumoModule } from './ee/billing/appsumo/appsumo.module'
 import { platformModule } from './platform/platform.module'
 import { gitRepoModule } from './ee/git-repos/git-repo.module'
+import { formModule } from './flows/flow/form/form.module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -240,6 +241,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(authenticationModule)
     await app.register(copilotModule)
     await app.register(platformModule)
+    await app.register(formModule)
 
     await setupBullMQBoard(app)
 

@@ -5,7 +5,7 @@ import {
 import {
     ListFlowRunsRequestQuery,
     ApId,
-    ALL_PRINICPAL_TYPES,
+    ALL_PRINCIPAL_TYPES,
     ExecutionType,
     SERVICE_KEY_SECURITY_OPENAPI,
     PrincipalType,
@@ -115,7 +115,7 @@ const GetRequest = {
 
 const ResumeFlowRunRequest = {
     config: {
-        allowedPrincipals: ALL_PRINICPAL_TYPES,
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
     schema: {
         params: Type.Object({

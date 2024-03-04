@@ -38,7 +38,7 @@ export class CreateOrUpdateTemplateDialogueComponent {
   form: FormGroup<{
     file: FormControl<File | null>;
     name: FormControl<string>;
-
+    description: FormControl<string>;
     blogUrl: FormControl<string>;
     tags: FormControl<string[]>;
   }>;
@@ -55,7 +55,10 @@ export class CreateOrUpdateTemplateDialogueComponent {
       file: new FormControl<File | null>(null, {
         validators: Validators.required,
       }),
-
+      description: new FormControl('', {
+        nonNullable: true,
+        validators: Validators.required,
+      }),
       name: new FormControl('', {
         nonNullable: true,
         validators: Validators.required,
@@ -66,6 +69,7 @@ export class CreateOrUpdateTemplateDialogueComponent {
     if (data?.template) {
       this.form.patchValue({
         name: data.template.name,
+        description: data.template.description,
         blogUrl: data.template.blogUrl,
         tags: data.template.tags,
       });
@@ -94,6 +98,7 @@ export class CreateOrUpdateTemplateDialogueComponent {
       this.createTemplate$ = this.templateService
         .create({
           ...template,
+          description: this.form.value.description,
           type: TemplateType.PLATFORM,
           blogUrl: this.form.value.blogUrl,
           tags: this.form.value.tags,

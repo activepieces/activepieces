@@ -191,9 +191,8 @@ describe('AppConnection API', () => {
 
             const responseBody = response?.json()
             expect(responseBody?.code).toBe('PERMISSION_DENIED')
+            expect(responseBody?.params?.userId).toBe(mockUser.id)
             expect(responseBody?.params?.projectId).toBe(mockProject.id)
-            expect(responseBody?.params?.resource).toBe('app-connections')
-            expect(responseBody?.params?.action).toBe('POST')
         })
     })
 

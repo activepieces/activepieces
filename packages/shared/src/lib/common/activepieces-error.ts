@@ -2,6 +2,8 @@ import { FileId } from '../file/file'
 import { FlowRunId } from '../flow-run/flow-run'
 import { FlowId } from '../flows/flow'
 import { FlowVersionId } from '../flows/flow-version'
+import { ProjectId } from '../project'
+import { UserId } from '../user'
 import { ApId } from './id-generator'
 
 export class ActivepiecesError extends Error {
@@ -20,6 +22,7 @@ type ErrorParams =
     | ExecutionTimeoutErrorParams
     | ExistingUserErrorParams
     | FileNotFoundErrorParams
+    | FlowFormNotFoundError
     | FlowNotFoundErrorParams
     | FlowIsLockedErrorParams
     | FlowOperationErrorParams
@@ -87,9 +90,8 @@ Record<string, string> &
 export type PermissionDeniedErrorParams = BaseErrorParams<
 ErrorCode.PERMISSION_DENIED,
 {
-    resource: string
-    action: string
-    projectId: string
+    userId: UserId
+    projectId: ProjectId
 }
 >
 
@@ -219,6 +221,13 @@ ErrorCode.FLOW_OPERATION_INVALID,
 Record<string, never>
 >
 
+export type FlowFormNotFoundError = BaseErrorParams<
+ErrorCode.FLOW_FORM_NOT_FOUND,
+{
+    flowId: FlowVersionId
+    message: string
+}>
+
 export type FlowIsLockedErrorParams = BaseErrorParams<
 ErrorCode.FLOW_IN_USE,
 {
@@ -338,6 +347,7 @@ export enum ErrorCode {
     EXECUTION_TIMEOUT = 'EXECUTION_TIMEOUT',
     EMAIL_AUTH_DISABLED = 'EMAIL_AUTH_DISABLED',
     EXISTING_USER = 'EXISTING_USER',
+    FLOW_FORM_NOT_FOUND = 'FLOW_FORM_NOT_FOUND',
     FILE_NOT_FOUND = 'FILE_NOT_FOUND',
     FLOW_INSTANCE_NOT_FOUND = 'INSTANCE_NOT_FOUND',
     FLOW_NOT_FOUND = 'FLOW_NOT_FOUND',

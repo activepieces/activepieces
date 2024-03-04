@@ -9,7 +9,7 @@ import {
 import {
     ClaimTokenRequest,
     ThirdPartyAuthnProviderEnum,
-    ALL_PRINICPAL_TYPES,
+    ALL_PRINCIPAL_TYPES,
     assertNotNullOrUndefined,
 } from '@activepieces/shared'
 import { resolvePlatformIdForRequest } from '../../../platform/platform-utils'
@@ -51,7 +51,7 @@ export const federatedAuthnController: FastifyPluginAsyncTypebox = async (
 
 const LoginRequestSchema = {
     config: {
-        allowedPrincipals: ALL_PRINICPAL_TYPES,
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
     schema: {
         querystring: Type.Object({
@@ -62,7 +62,7 @@ const LoginRequestSchema = {
 
 const ClaimTokenRequestSchema = {
     config: {
-        allowedPrincipals: ALL_PRINICPAL_TYPES,
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
     schema: {
         body: ClaimTokenRequest,
