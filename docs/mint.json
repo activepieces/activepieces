@@ -129,6 +129,15 @@
           ]
         },
         {
+          "group": "Flow Runs",
+          "icon": "play",
+          "pages": [
+            "endpoints/flow-runs/schema",
+            "endpoints/flow-runs/get",
+            "endpoints/flow-runs/list"
+          ]
+        },
+        {
           "group": "Pieces",
           "icon": "plug",
           "pages": [

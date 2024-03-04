@@ -1,4 +1,4 @@
-import { AUTHENTICATION_PROPERTY_NAME, GenericStepOutput, ActionType, ExecutionOutputStatus, PieceAction, StepOutputStatus, assertNotNullOrUndefined, isNil, ExecutionType, PauseType } from '@activepieces/shared'
+import { AUTHENTICATION_PROPERTY_NAME, GenericStepOutput, ActionType, PieceAction, StepOutputStatus, assertNotNullOrUndefined, isNil, ExecutionType, PauseType, FlowRunStatus } from '@activepieces/shared'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
 import { ActionContext, ConnectionsManager, PauseHook, PauseHookParams, PiecePropertyMap, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
@@ -113,11 +113,11 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         const runMethodToExecute = (constants.testSingleStepMode && !isNil(pieceAction.test)) ? pieceAction.test : pieceAction.run
         const output = await runMethodToExecute(context)
         const newExecutionContext = executionState.addTags(hookResponse.tags)
-
+        
         if (hookResponse.stopped) {
             assertNotNullOrUndefined(hookResponse.stopResponse, 'stopResponse')
             return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).setVerdict(ExecutionVerdict.SUCCEEDED, {
-                reason: ExecutionOutputStatus.STOPPED,
+                reason: FlowRunStatus.STOPPED,
                 stopResponse: hookResponse.stopResponse.response,
             }).increaseTask()
         }
@@ -125,7 +125,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             assertNotNullOrUndefined(hookResponse.pauseResponse, 'pauseResponse')
             return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED))
                 .setVerdict(ExecutionVerdict.PAUSED, {
-                    reason: ExecutionOutputStatus.PAUSED,
+                    reason: FlowRunStatus.PAUSED,
                     pauseMetadata: hookResponse.pauseResponse.pauseMetadata,
                 })
         }

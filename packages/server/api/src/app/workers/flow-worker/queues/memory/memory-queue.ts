@@ -13,8 +13,8 @@ import cronParser from 'cron-parser'
 import { logger } from 'server-shared'
 import {
     DelayPauseMetadata,
-    ExecutionOutputStatus,
     Flow,
+    FlowRunStatus,
     PauseType,
     RunEnvironment,
     TriggerType,
@@ -164,7 +164,7 @@ export const inMemoryQueueManager: InMemoryQueueManager = {
         })
 
         const flowRuns = await flowRunRepo.findBy({
-            status: ExecutionOutputStatus.PAUSED,
+            status: FlowRunStatus.PAUSED,
         })
         logger.info(`Adding ${flowRuns.length} flow runs to the queue manager.`)
         flowRuns.forEach((flowRun) => {

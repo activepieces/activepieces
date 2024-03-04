@@ -6,13 +6,13 @@ import {
     BeginExecuteFlowOperation,
     CodeAction,
     ErrorCode,
-    ExecutionOutput,
-    ExecutionOutputStatus,
     ExecutionType,
+    ExecutioOutputFile,
     File,
     FileCompression,
     FileId,
     FileType,
+    FlowRunStatus,
     flowHelper,
     FlowRunId,
     FlowVersion,
@@ -21,10 +21,10 @@ import {
     ResumeExecuteFlowOperation,
     ResumePayload,
     RunEnvironment,
-    RunTerminationReason,
     SourceCode,
     Trigger,
     TriggerType,
+    FlowRunResponse,
 } from '@activepieces/shared'
 import { Sandbox } from 'server-worker'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
@@ -48,7 +48,7 @@ import { logSerializer } from 'server-worker'
 type FinishExecutionParams = {
     flowRunId: FlowRunId
     logFileId: FileId
-    executionOutput: ExecutionOutput
+    result: FlowRunResponse
 }
 
 type LoadInputAndLogFileIdParams = {
@@ -92,43 +92,34 @@ const finishExecution = async (
 ): Promise<void> => {
     logger.trace(params, '[FlowWorker#finishExecution] params')
 
-    const { flowRunId, logFileId, executionOutput } = params
+    const { flowRunId, logFileId, result } = params
 
-    if (executionOutput.status === ExecutionOutputStatus.PAUSED) {
+    if (result.status === FlowRunStatus.PAUSED) {
         await flowRunService.pause({
             flowRunId,
             logFileId,
-            pauseMetadata: executionOutput.pauseMetadata,
+            pauseMetadata: result.pauseMetadata!,
         })
     }
     else {
         await flowRunService.finish({
             flowRunId,
-            status: getTerminalStatus(executionOutput.status),
-            terminationReason: getTerminationReason(executionOutput),
-            tasks: executionOutput.tasks,
+            status: getTerminalStatus(result.status),
+            tasks: result.tasks,
             logsFileId: logFileId,
-            tags: executionOutput.tags ?? [],
+            tags: result.tags ?? [],
         })
     }
 }
 
 const getTerminalStatus = (
-    executionOutputStatus: ExecutionOutputStatus,
-): ExecutionOutputStatus => {
-    return executionOutputStatus == ExecutionOutputStatus.STOPPED
-        ? ExecutionOutputStatus.SUCCEEDED
-        : executionOutputStatus
+    status: FlowRunStatus,
+): FlowRunStatus => {
+    return status == FlowRunStatus.STOPPED
+        ? FlowRunStatus.SUCCEEDED
+        : status
 }
 
-const getTerminationReason = (
-    executionOutput: ExecutionOutput,
-): RunTerminationReason | undefined => {
-    if (executionOutput.status === ExecutionOutputStatus.STOPPED) {
-        return RunTerminationReason.STOPPED_BY_HOOK
-    }
-    return undefined
-}
 
 const loadInputAndLogFileId = async ({
     flowVersion,
@@ -140,7 +131,7 @@ const loadInputAndLogFileId = async ({
         projectId: jobData.projectId,
     }
 
-    const flowRun = await flowRunService.getOneOrThrow({
+    const flowRun = await flowRunService.getOnePopulatedOrThrow({
         id: jobData.runId,
         projectId: jobData.projectId,
     })
@@ -156,17 +147,12 @@ const loadInputAndLogFileId = async ({
                 })
             }
 
-            const executionOutput = await loadPayload({
-                logsFileId: flowRun.logsFileId,
-                projectId: jobData.projectId,
-            })
-
             return {
                 input: {
                     ...baseInput,
+                    tasks: flowRun.tasks ?? 0,
                     executionType: ExecutionType.RESUME,
-                    tasks: executionOutput.tasks,
-                    executionState: executionOutput.executionState,
+                    steps: flowRun.steps,
                     resumePayload: jobData.payload as ResumePayload,
                 },
                 logFileId: flowRun.logsFileId,
@@ -174,14 +160,8 @@ const loadInputAndLogFileId = async ({
         }
         case ExecutionType.BEGIN:
             if (!isNil(flowRun.logsFileId)) {
-                const executionOutput = await loadPayload({
-                    logsFileId: flowRun.logsFileId,
-                    projectId: jobData.projectId,
-                })
-                if (executionOutput.status !== ExecutionOutputStatus.INTERNAL_ERROR) {
-                    const trigger = Object.values(
-                        executionOutput.executionState.steps,
-                    ).find((step) => flowHelper.isTrigger(step.type))
+                if (flowRun.status !== FlowRunStatus.INTERNAL_ERROR) {
+                    const trigger = Object.values(flowRun.steps).find((step) => flowHelper.isTrigger(step.type))
                     assertNotNullOrUndefined(
                         trigger,
                         'Trigger not found in execution state',
@@ -199,24 +179,6 @@ const loadInputAndLogFileId = async ({
     }
 }
 
-async function loadPayload({
-    logsFileId,
-    projectId,
-}: {
-    logsFileId: string
-    projectId: string
-}): Promise<ExecutionOutput> {
-    const logFile = await fileService.getOneOrThrow({
-        fileId: logsFileId,
-        projectId,
-    })
-
-    const serializedExecutionOutput = logFile.data.toString('utf-8')
-    const executionOutput: ExecutionOutput = JSON.parse(
-        serializedExecutionOutput,
-    )
-    return executionOutput
-}
 
 async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     logger.info(
@@ -258,66 +220,67 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
         })
 
         logger.info(
-            `[FlowWorker#executeFlow] flowRunId=${jobData.runId} sandboxId=${
-                sandbox.boxId
+            `[FlowWorker#executeFlow] flowRunId=${jobData.runId} sandboxId=${sandbox.boxId
             } prepareTime=${Date.now() - startTime}ms`,
         )
 
-        const { result: executionOutput } = await engineHelper.executeFlow(
+        const { result } = await engineHelper.executeFlow(
             sandbox,
             input,
         )
 
         if (
             jobData.synchronousHandlerId &&
-      jobData.hookType === HookType.BEFORE_LOG
+            jobData.hookType === HookType.BEFORE_LOG
         ) {
             await flowResponseWatcher.publish(
                 jobData.runId,
                 jobData.synchronousHandlerId,
-                executionOutput,
+                result,
             )
         }
 
         const logsFile = await saveToLogFile({
             fileId: logFileId,
             projectId: jobData.projectId,
-            executionOutput,
+            executionOutput: {
+                executionState: {
+                    steps: result.steps,
+                },
+            },
         })
 
         await finishExecution({
             flowRunId: jobData.runId,
             logFileId: logsFile.id,
-            executionOutput,
+            result,
         })
 
         if (
             jobData.synchronousHandlerId &&
-      jobData.hookType === HookType.AFTER_LOG
+            jobData.hookType === HookType.AFTER_LOG
         ) {
             await flowResponseWatcher.publish(
                 jobData.runId,
                 jobData.synchronousHandlerId,
-                executionOutput,
+                result,
             )
         }
 
         logger.info(
-            `[FlowWorker#executeFlow] flowRunId=${
-                jobData.runId
-            } executionOutputStatus=${executionOutput.status} sandboxId=${
-                sandbox.boxId
+            `[FlowWorker#executeFlow] flowRunId=${jobData.runId
+            } executionOutputStatus=${result.status} sandboxId=${sandbox.boxId
             } duration=${Date.now() - startTime} ms`,
         )
     }
     catch (e: unknown) {
         if (
             e instanceof ActivepiecesError &&
-      (e as ActivepiecesError).error.code === ErrorCode.QUOTA_EXCEEDED
+            (e as ActivepiecesError).error.code === ErrorCode.QUOTA_EXCEEDED
         ) {
             await flowRunService.finish({
                 flowRunId: jobData.runId,
-                status: ExecutionOutputStatus.QUOTA_EXCEEDED,
+                status: FlowRunStatus.QUOTA_EXCEEDED,
                 tasks: 0,
                 logsFileId: null,
                 tags: [],
@@ -325,11 +288,11 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
         }
         else if (
             e instanceof ActivepiecesError &&
-      e.error.code === ErrorCode.EXECUTION_TIMEOUT
+            e.error.code === ErrorCode.EXECUTION_TIMEOUT
         ) {
             await flowRunService.finish({
                 flowRunId: jobData.runId,
-                status: ExecutionOutputStatus.TIMEOUT,
+                status: FlowRunStatus.TIMEOUT,
                 // TODO REVIST THIS
                 tasks: 10,
                 logsFileId: null,
@@ -339,7 +302,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
         else {
             await flowRunService.finish({
                 flowRunId: jobData.runId,
-                status: ExecutionOutputStatus.INTERNAL_ERROR,
+                status: FlowRunStatus.INTERNAL_ERROR,
                 tasks: 0,
                 logsFileId: null,
                 tags: [],
@@ -365,7 +328,7 @@ async function saveToLogFile({
 }: {
     fileId: FileId | undefined
     projectId: ProjectId
-    executionOutput: ExecutionOutput
+    executionOutput: ExecutioOutputFile
 }): Promise<File> {
     const serializedLogs = await logSerializer.serialize(executionOutput)
 

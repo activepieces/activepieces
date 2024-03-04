@@ -32,7 +32,7 @@ import {
     FlowTemplate,
     TemplateType,
     FlowRun,
-    ExecutionOutputStatus,
+    FlowRunStatus,
     RunEnvironment,
     Platform,
     FilteredPieceBehavior,
@@ -110,7 +110,7 @@ export const createMockProject = (project?: Partial<Project>): Project => {
         ownerId: project?.ownerId ?? apId(),
         displayName: project?.displayName ?? faker.lorem.word(),
         notifyStatus:
-      project?.notifyStatus ?? faker.helpers.enumValue(NotificationStatus),
+            project?.notifyStatus ?? faker.helpers.enumValue(NotificationStatus),
         platformId: project?.platformId ?? apId(),
         externalId: project?.externalId ?? apId(),
     }
@@ -148,8 +148,8 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         filteredPieceNames: platform?.filteredPieceNames ?? [],
         ssoEnabled: platform?.ssoEnabled ?? faker.datatype.boolean(),
         filteredPieceBehavior:
-      platform?.filteredPieceBehavior ??
-      faker.helpers.enumValue(FilteredPieceBehavior),
+            platform?.filteredPieceBehavior ??
+            faker.helpers.enumValue(FilteredPieceBehavior),
         smtpHost: platform?.smtpHost ?? faker.internet.domainName(),
         smtpPort: platform?.smtpPort ?? faker.internet.port(),
         smtpUser: platform?.smtpUser ?? faker.internet.userName(),
@@ -202,7 +202,7 @@ export const createMockProjectMember = (
         projectId: projectMember?.projectId ?? apId(),
         role: projectMember?.role ?? faker.helpers.enumValue(ProjectMemberRole),
         status:
-      projectMember?.status ?? faker.helpers.enumValue(ProjectMemberStatus),
+            projectMember?.status ?? faker.helpers.enumValue(ProjectMemberStatus),
     }
 }
 
@@ -281,7 +281,7 @@ export const createProjectMember = (
         projectId: projectMember.projectId ?? apId(),
         role: projectMember.role ?? faker.helpers.enumValue(ProjectMember.Role),
         status:
-      projectMember.status ?? faker.helpers.enumValue(ProjectMember.Status),
+            projectMember.status ?? faker.helpers.enumValue(ProjectMember.Status),
         created: projectMember.created ?? faker.date.recent().toISOString(),
         updated: projectMember.updated ?? faker.date.recent().toISOString(),
     }
@@ -309,7 +309,7 @@ export const createMockPieceMetadata = (
         triggers: pieceMetadata?.triggers ?? {},
         pieceType: pieceMetadata?.pieceType ?? faker.helpers.enumValue(PieceType),
         packageType:
-      pieceMetadata?.packageType ?? faker.helpers.enumValue(PackageType),
+            pieceMetadata?.packageType ?? faker.helpers.enumValue(PackageType),
         archiveId: pieceMetadata?.archiveId,
     }
 }
@@ -350,14 +350,14 @@ export const createMockOtp = (otp?: Partial<OtpModel>): OtpModel => {
         id: otp?.id ?? apId(),
         created: otp?.created ?? faker.date.recent().toISOString(),
         updated:
-      otp?.updated ??
-      faker.date
-          .between({ from: twentyMinutesAgo.toDate(), to: now.toDate() })
-          .toISOString(),
+            otp?.updated ??
+            faker.date
+                .between({ from: twentyMinutesAgo.toDate(), to: now.toDate() })
+                .toISOString(),
         type: otp?.type ?? faker.helpers.enumValue(OtpType),
         userId: otp?.userId ?? apId(),
         value:
-      otp?.value ?? faker.number.int({ min: 100000, max: 999999 }).toString(),
+            otp?.value ?? faker.number.int({ min: 100000, max: 999999 }).toString(),
         state: otp?.state ?? faker.helpers.enumValue(OtpState),
     }
 }
@@ -370,15 +370,16 @@ export const createMockFlowRun = (flowRun?: Partial<FlowRun>): FlowRun => {
         projectId: flowRun?.projectId ?? apId(),
         flowId: flowRun?.flowId ?? apId(),
         tags: flowRun?.tags ?? [],
+        steps: {},
         flowVersionId: flowRun?.flowVersionId ?? apId(),
         flowDisplayName: flowRun?.flowDisplayName ?? faker.lorem.word(),
         logsFileId: flowRun?.logsFileId ?? null,
         tasks: flowRun?.tasks,
-        status: flowRun?.status ?? faker.helpers.enumValue(ExecutionOutputStatus),
+        status: flowRun?.status ?? faker.helpers.enumValue(FlowRunStatus),
         startTime: flowRun?.startTime ?? faker.date.recent().toISOString(),
         finishTime: flowRun?.finishTime ?? faker.date.recent().toISOString(),
         environment:
-      flowRun?.environment ?? faker.helpers.enumValue(RunEnvironment),
+            flowRun?.environment ?? faker.helpers.enumValue(RunEnvironment),
     }
 }
 
