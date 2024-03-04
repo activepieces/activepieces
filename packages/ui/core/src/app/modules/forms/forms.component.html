@@ -1,12 +1,12 @@
 <div
-  class="ap-h-screen ap-w-full ap-flex ap-items-center ap-justify-center ap-bg-center ap-bg-cover ap-bg-authBg ap-flex-col">
-  <ng-container *ngIf="!error && props">
+  class="ap-h-screen ap-w-full ap-flex ap-items-center ap-justify-center ap-bg-center ap-bg-cover ap-bg-authBg ap-flex-col" *ngIf="flow$ | async as flow">
+  <ng-container *ngIf="!error">
     <form [formGroup]="form" (ngSubmit)="submit()" class="ap-flex ap-flex-col ap-gap-2">
       <mat-card class="md:ap-min-w-[480px] md:ap-max-w-initial ap-min-w-[350px] ap-max-w-[350px] auth-card ap-max-h-[80vh] ap-overflow-scroll">
         <div class="ap-typography-headline-5 ap-text-center ap-mb-6">{{ title }}</div>
-        <ng-container *ngFor="let input of inputs">
+        <ng-container *ngFor="let input of flow.props.inputs">
           <ng-container [ngSwitch]="input.type">
-            <ng-container *ngSwitchCase="PropertyType.SHORT_TEXT">
+            <ng-container *ngSwitchCase="FormInputType.TEXT">
               <mat-form-field class="ap-w-full ap-mb-4" appearance="outline" subscriptSizing="dynamic">
                 <mat-label>{{ input.displayName }}</mat-label>
                 <input matInput type="text" [formControlName]="getInputKey(input.displayName)">
@@ -16,7 +16,7 @@
                 </mat-error>
               </mat-form-field>
             </ng-container>
-            <ng-container *ngSwitchCase="PropertyType.FILE">
+            <ng-container *ngSwitchCase="FormInputType.FILE">
               <mat-form-field class="ap-w-full" subscriptSizing="dynamic">
                 <mat-label i18n>{{ input.displayName }}</mat-label>
                 <ap-file-upload [required]="input.required" #flowInput
@@ -30,7 +30,7 @@
                 </mat-error>
               </mat-form-field>
             </ng-container>
-            <ng-container *ngSwitchCase="PropertyType.CHECKBOX">
+            <ng-container *ngSwitchCase="FormInputType.TOGGLE">
               <div class="app-w-full ap-mb-4">
                 <div>
                   <mat-slide-toggle [formControlName]="getInputKey(input.displayName)" color="primary" i18n>{{ input.displayName }}</mat-slide-toggle>
@@ -41,7 +41,7 @@
                 </mat-error>
               </div>
             </ng-container>
-            <ng-container *ngSwitchCase="PropertyType.LONG_TEXT">
+            <ng-container *ngSwitchCase="FormInputType.TEXT_AREA">
               <mat-form-field class="ap-w-full ap-mb-4" appearance="outline" subscriptSizing="dynamic">
                 <mat-label>{{ input.displayName }}</mat-label>
                 <textarea matInput [formControlName]="getInputKey(input.displayName)"></textarea>
@@ -72,5 +72,4 @@
   </ng-container>
   <ap-powered-by-activepieces class="ap-mt-4"></ap-powered-by-activepieces>
 </div>
-<ng-container *ngIf="flow$ | async as flow"></ng-container>
 <ng-container *ngIf="submitForm$ | async"></ng-container>

@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { BehaviorSubject, Observable, catchError, of, tap } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, map, of, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { SyncProjectService } from '../../../services/sync-project.service';
 
 export type PullFromGitDialogData = {
-  projectName: string;
+  operations: string[]
   repoId: string;
 };
 
@@ -23,15 +23,23 @@ export class PullFromGitDialogComponent {
     public data: PullFromGitDialogData,
     private snackbar: MatSnackBar,
     private matDialogRef: MatDialogRef<PullFromGitDialogComponent>
-  ) {}
+  ) { }
+
   submit() {
     if (!this.loading$.value) {
       this.loading$.next(true);
-      this.pull$ = this.syncProjectService.pull(this.data.repoId).pipe(
-        tap(() => {
-          this.snackbar.open($localize`Pulled successfully`);
+      this.pull$ = this.syncProjectService.pull(this.data.repoId, {
+        dryRun: false,
+      }).pipe(
+        tap((response) => {
+          if (response.errors.length > 0) {
+            this.snackbar.open($localize`${response.errors.length} Flows failed to publish`, '', {
+              panelClass: 'error',
+            });
+          } else {
+            this.snackbar.open($localize`Pulled successfully`);
+          }
           this.matDialogRef.close();
-          window.location.reload();
         }),
         catchError((err) => {
           console.error(err);
@@ -44,6 +52,7 @@ export class PullFromGitDialogComponent {
           );
           return of(void 0);
         }),
+        map(() => void 0),
         tap(() => {
           this.loading$.next(false);
         })

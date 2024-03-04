@@ -1,23 +1,9 @@
-<ap-dialog-title-template *ngIf="data.mode === PushSyncMode.PROJECT" i18n>
-    Push flows to repo
-</ap-dialog-title-template>
-<ap-dialog-title-template *ngIf="data.mode === PushSyncMode.FLOW" i18n>
+<ap-dialog-title-template i18n>
     Push {{flowDisplayName}} to repo
 </ap-dialog-title-template>
 
 <mat-dialog-content>
     <div class="md:ap-min-w-[500px] ap-max-w-[750px]">
-
-        <ap-warning-box *ngIf="data.mode === PushSyncMode.PROJECT">
-            <div class="ap-flex ap-items-center ap-gap-2 ap-ml-[-3px] ">
-                <svg-icon [svgStyle]="{ width: '20px', height: '20px' }" src="assets/img/custom/warn.svg">
-                </svg-icon> <span i18n>Warning</span>
-            </div>
-            <p i18n>
-                A new commit will be pushed with all flows within the project: <b>{{data.projectName}}</b>.
-            </p>
-        </ap-warning-box>
-
         <form class="ap-flex ap-flex-col ap-gap-1 ap-mt-4" (submit)="submit()">
             <mat-form-field class="ap-w-full" appearance="outline">
                 <mat-label i18n>Commit Message</mat-label>

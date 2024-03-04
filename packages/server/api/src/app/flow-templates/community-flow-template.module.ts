@@ -1,6 +1,6 @@
 import {
     ListFlowTemplatesRequest,
-    ALL_PRINICPAL_TYPES,
+    ALL_PRINCIPAL_TYPES,
     isNil,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
@@ -18,7 +18,7 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/',
         {
             config: {
-                allowedPrincipals: ALL_PRINICPAL_TYPES,
+                allowedPrincipals: ALL_PRINCIPAL_TYPES,
             },
             schema: {
                 querystring: ListFlowTemplatesRequest,

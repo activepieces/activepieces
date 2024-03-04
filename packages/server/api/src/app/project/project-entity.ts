@@ -33,7 +33,6 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         },
         platformId: {
             ...ApIdSchema,
-            nullable: true,
         },
         externalId: {
             type: String,

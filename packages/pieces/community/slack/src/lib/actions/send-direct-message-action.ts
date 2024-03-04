@@ -2,7 +2,13 @@ import { createAction } from '@activepieces/pieces-framework';
 import { slackSendMessage } from '../common/utils';
 import { slackAuth } from '../../';
 import { assertNotNullOrUndefined } from '@activepieces/shared';
-import { profilePicture, text, userId, username } from '../common/props';
+import {
+  profilePicture,
+  text,
+  userId,
+  username,
+  blocks,
+} from '../common/props';
 
 export const slackSendDirectMessageAction = createAction({
   auth: slackAuth,
@@ -14,10 +20,11 @@ export const slackSendDirectMessageAction = createAction({
     text,
     username,
     profilePicture,
+    blocks,
   },
   async run(context) {
     const token = context.auth.access_token;
-    const { text, userId } = context.propsValue;
+    const { text, userId, blocks } = context.propsValue;
 
     assertNotNullOrUndefined(token, 'token');
     assertNotNullOrUndefined(text, 'text');
@@ -29,6 +36,7 @@ export const slackSendDirectMessageAction = createAction({
       username: context.propsValue.username,
       profilePicture: context.propsValue.profilePicture,
       conversationId: userId,
+      blocks,
     });
   },
 });

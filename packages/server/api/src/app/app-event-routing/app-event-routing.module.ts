@@ -2,7 +2,7 @@ import { FastifyRequest } from 'fastify'
 import { webhookService } from '../webhooks/webhook-service'
 import { appEventRoutingService } from './app-event-routing.service'
 import { logger } from 'server-shared'
-import { ALL_PRINICPAL_TYPES, isNil } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, isNil } from '@activepieces/shared'
 import {
     ActivepiecesError,
     ErrorCode,
@@ -40,7 +40,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
         {
             config: {
                 rawBody: true,
-                allowedPrincipals: ALL_PRINICPAL_TYPES,
+                allowedPrincipals: ALL_PRINCIPAL_TYPES,
             },
             logLevel: 'silent',
         },

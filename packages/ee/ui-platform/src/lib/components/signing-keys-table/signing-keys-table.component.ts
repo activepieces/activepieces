@@ -27,7 +27,7 @@ export class SigningKeysTableComponent
   refresh$: Subject<boolean> = new Subject();
   dialogClosed$?: Observable<unknown>;
   featureDisabledTooltip = featureDisabledTooltip;
-
+  upgradeNote = $localize`Streamline authenticating your users to our embedded SDK from within your SaaS application.`;
   constructor(
     private matDialog: MatDialog,
     private signingKeysService: SigningKeysService

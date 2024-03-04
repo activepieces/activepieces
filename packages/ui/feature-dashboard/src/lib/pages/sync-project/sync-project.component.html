@@ -10,7 +10,7 @@
         </ap-page-title>
         <ng-container *ngIf="showUpgrade">
             <div class="ap-mb-4 ">
-                <ap-upgrade-note></ap-upgrade-note>
+                <ap-upgrade-note [featureNote]="upgradeNote" docsLink="https://www.activepieces.com/docs/operations/git-sync"></ap-upgrade-note>
             </div>
         </ng-container>
         <div apCard
@@ -40,15 +40,7 @@
             <div class="ap-flex ap-flex-col ap-gap-4 ap-divide-y ap-divide-dividers  ap-w-[700px]">
                 <div class="ap-flex ap-gap-4 ap-items-center">
                     <ap-button *ngIf="(currentProject$ | async) as currentProject" actionButton btnColor="primary"
-                        btnSize='medium' btnStyle="stroked" (buttonClicked)="push(currentProject?.displayName || '')">
-                        <div class="ap-flex ap-gap-2">
-                            <svg-icon src="/assets/img/custom/upload.svg"
-                                class="ap-w-[20px] ap-h-[20px] ap-fill-primary" [applyClass]="true">
-                            </svg-icon> Push to Repo
-                        </div>
-                    </ap-button>
-                    <ap-button *ngIf="(currentProject$ | async) as currentProject" actionButton btnColor="primary"
-                        btnSize='medium' btnStyle="stroked" (buttonClicked)="pull(currentProject?.displayName || '')">
+                        btnSize='medium' btnStyle="stroked" (buttonClicked)="pull()" [loading]="pullDialogLoading$ | async | defaultFalse" [darkLoadingSpinner]="true">
                         <div class="ap-flex ap-gap-2 ">
                             <svg-icon src="/assets/img/custom/download.svg"
                                 class="ap-w-[20px] ap-h-[20px] ap-fill-primary" [applyClass]="true">
@@ -63,3 +55,4 @@
 
     <ng-container *ngIf="dialogOpened$ | async"></ng-container>
     <ng-container *ngIf="disconnect$ | async"></ng-container>
+    <ng-container *ngIf="openPullDialog$ | async"></ng-container>

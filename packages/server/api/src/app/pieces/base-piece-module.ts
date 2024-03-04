@@ -3,7 +3,7 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import {
-    ALL_PRINICPAL_TYPES,
+    ALL_PRINCIPAL_TYPES,
     ApEdition,
     GetPieceRequestParams,
     GetPieceRequestQuery,
@@ -35,7 +35,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         '/categories',
         {
             config: {
-                allowedPrincipals: ALL_PRINICPAL_TYPES,
+                allowedPrincipals: ALL_PRINCIPAL_TYPES,
             },
             schema: {
                 querystring: ListPiecesRequestQuery,
@@ -50,11 +50,11 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         '/',
         {
             config: {
-                allowedPrincipals: ALL_PRINICPAL_TYPES,
+                allowedPrincipals: ALL_PRINCIPAL_TYPES,
             },
             schema: {
                 querystring: ListPiecesRequestQuery,
-              
+
             },
         },
         async (req): Promise<PieceMetadataModelSummary[]> => {
@@ -82,7 +82,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         '/:scope/:name',
         {
             config: {
-                allowedPrincipals: ALL_PRINICPAL_TYPES,
+                allowedPrincipals: ALL_PRINCIPAL_TYPES,
             },
             schema: {
                 params: GetPieceRequestWithScopeParams,
@@ -110,7 +110,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         '/:name',
         {
             config: {
-                allowedPrincipals: ALL_PRINICPAL_TYPES,
+                allowedPrincipals: ALL_PRINCIPAL_TYPES,
             },
             schema: {
                 params: GetPieceRequestParams,

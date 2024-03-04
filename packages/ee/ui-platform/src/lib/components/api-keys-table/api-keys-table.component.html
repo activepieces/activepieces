@@ -1,6 +1,6 @@
 <div class="ap-w-full ap-pt-2">
 
-    <ap-upgrade-note *ngIf="isDemo"></ap-upgrade-note>
+    <ap-upgrade-note *ngIf="isDemo" [featureNote]="upgradeNote" docsLink="https://www.activepieces.com/docs/endpoints/overview"></ap-upgrade-note>
 
     <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" i18n-aria-label aria-label="API Keys">
 

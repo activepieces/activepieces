@@ -32,6 +32,7 @@ export class ProjectsTableComponent {
     'externalId',
     'action',
   ];
+  upgradeNote = $localize`Create new projects and set limits on tasks and users for each project.`;
   refreshTable$: Subject<boolean> = new Subject();
   dataSource: ProjectsDataSource;
   loading = true;

@@ -21,7 +21,7 @@ import { appEventRoutingModule } from './app-event-routing/app-event-routing.mod
 import { triggerEventModule } from './flows/trigger-events/trigger-event.module'
 import { fastifyRawBody } from 'fastify-raw-body'
 import { stepFileModule } from './flows/step-file/step-file.module'
-import { rbacAuthMiddleware } from './ee/authentication/rbac-auth-middleware'
+import { rbacMiddleware } from './ee/authentication/rbac/rbac-middleware'
 import { userModule } from './user/user.module'
 import {
     ActivepiecesError,
@@ -82,7 +82,6 @@ import { domainHelper } from './helper/domain-helper'
 import { platformDomainHelper } from './ee/helper/platform-domain-helper'
 import { enterpriseUserModule } from './ee/user/enterprise-user-module'
 import { flowResponseWatcher } from './flows/flow-run/flow-response-watcher'
-import { gitRepoModule } from './ee/git-repos/git-repo.module'
 import { securityHandlerChain } from './core/security/security-handler-chain'
 import { communityFlowTemplateModule } from './flow-templates/community-flow-template.module'
 import { copilotModule } from './copilot/copilot.module'
@@ -102,6 +101,8 @@ import { usageTrackerModule } from './ee/usage-tracker/usage-tracker-module'
 import { projectBillingModule } from './ee/billing/project-billing/project-billing.module'
 import { appSumoModule } from './ee/billing/appsumo/appsumo.module'
 import { platformModule } from './platform/platform.module'
+import { gitRepoModule } from './ee/git-repos/git-repo.module'
+import { formModule } from './flows/flow/form/form.module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -219,7 +220,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     })
 
     app.addHook('preHandler', securityHandlerChain)
-    app.addHook('preHandler', rbacAuthMiddleware)
+    app.addHook('preHandler', rbacMiddleware)
     app.setErrorHandler(errorHandler)
     await app.register(fileModule)
     await app.register(flagModule)
@@ -238,6 +239,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(authenticationModule)
     await app.register(copilotModule)
     await app.register(platformModule)
+    await app.register(formModule)
 
     await setupBullMQBoard(app)
 

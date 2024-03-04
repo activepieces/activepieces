@@ -3,7 +3,7 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { webhookSimulationService } from './webhook-simulation-service'
-import { ALL_PRINICPAL_TYPES } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
 
 export const webhookSimulationController: FastifyPluginCallbackTypebox = (
     app,
@@ -45,7 +45,7 @@ export const webhookSimulationController: FastifyPluginCallbackTypebox = (
 
 const CreateWebhookSimulationRequest = {
     config: {
-        allowedPrincipals: ALL_PRINICPAL_TYPES,
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
     schema: {
         body: Type.Object({
@@ -56,7 +56,7 @@ const CreateWebhookSimulationRequest = {
 
 const GetWebhookSimulationRequest = {
     config: {
-        allowedPrincipals: ALL_PRINICPAL_TYPES,
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
     schema: {
         querystring: Type.Object({

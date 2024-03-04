@@ -1,6 +1,6 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { TASKS_PAYG_PRICE_ID, stripeHelper, stripeWebhookSecret } from './stripe-helper'
-import { ALL_PRINICPAL_TYPES, FlowRun, PrincipalType, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, FlowRun, PrincipalType, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { projectBillingService } from './project-billing.service'
 import { FastifyRequest } from 'fastify'
 import { exceptionHandler, logger } from 'server-shared'
@@ -114,7 +114,7 @@ const projectBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/stripe/webhook',
         {
             config: {
-                allowedPrincipals: ALL_PRINICPAL_TYPES,
+                allowedPrincipals: ALL_PRINCIPAL_TYPES,
                 rawBody: true,
             },
         },

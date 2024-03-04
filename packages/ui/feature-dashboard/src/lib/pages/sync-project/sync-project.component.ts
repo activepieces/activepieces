@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, map, tap } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { GitRepo, PushSyncMode } from '@activepieces/ee-shared';
+import { GitRepo, ProjectOperationType } from '@activepieces/ee-shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   GenericSnackbarTemplateComponent,
@@ -15,8 +15,6 @@ import {
   ConfigureRepoDialogComponent,
   PullFromGitDialogComponent,
   PullFromGitDialogData,
-  PushToGitDialogComponent,
-  PushToGitDialogData,
   SyncProjectService,
 } from '@activepieces/ui-feature-git-sync';
 
@@ -32,6 +30,9 @@ export class SyncProjectComponent {
   showUpgrade = false;
   disconnect$?: Observable<void>;
   currentProject$: Observable<Project>;
+  openPullDialog$: Observable<void>;
+  pullDialogLoading$ = new BehaviorSubject<boolean>(false);
+  upgradeNote = $localize`Create external backups, environments, and maintain a version history all through your own managed Git repos.`;
   configureButtonTooltip = $localize`Upgrade to enable`;
   constructor(
     private matDialog: MatDialog,
@@ -79,34 +80,42 @@ export class SyncProjectComponent {
         );
     }
   }
-  push(projectDisplayName: string) {
-    const repoId = this.currentRepo$.value?.id;
-    if (repoId) {
-      const data: PushToGitDialogData = {
-        projectName: projectDisplayName,
-        repoId: repoId,
-        mode: PushSyncMode.PROJECT,
-      };
-      this.matDialog
-        .open(PushToGitDialogComponent, {
-          data,
-        })
-        .afterClosed();
-    }
-  }
 
-  pull(projectDisplayName: string) {
+  pull() {
     const repoId = this.currentRepo$.value?.id;
     if (repoId) {
-      const data: PullFromGitDialogData = {
-        projectName: projectDisplayName,
-        repoId: repoId,
-      };
-      this.matDialog
-        .open(PullFromGitDialogComponent, {
-          data,
+      if (this.pullDialogLoading$.value) {
+        return;
+      }
+      this.pullDialogLoading$.next(true);
+      this.openPullDialog$ = this.syncProjectService
+        .pull(repoId, {
+          dryRun: false,
         })
-        .afterClosed();
+        .pipe(
+          tap((plan) => {
+            this.pullDialogLoading$.next(false);
+            const data: PullFromGitDialogData = {
+              operations: plan.operations.map((op) => {
+                switch (op.type) {
+                  case ProjectOperationType.CREATE_FLOW:
+                    return $localize`Create flow ${op.flow.displayName}`;
+                  case ProjectOperationType.UPDATE_FLOW:
+                    return $localize`Update flow ${op.flow.displayName}`;
+                  case ProjectOperationType.DELETE_FLOW:
+                    return $localize`Delete flow ${op.flow.displayName}`;
+                }
+              }),
+              repoId: repoId,
+            };
+            this.matDialog
+              .open(PullFromGitDialogComponent, {
+                data,
+              })
+              .afterClosed();
+          }),
+          map(() => void 0)
+        );
     }
   }
 }

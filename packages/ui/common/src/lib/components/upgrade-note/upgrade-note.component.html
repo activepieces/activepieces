@@ -2,11 +2,10 @@
 <div apCard
     class="ap-typography-body-1 ap-max-w-[900px] ap-p-5  ap-min-h-[150px] ap-bg-[#6e41e2]  ap-gap-4 ap-text-white ap-flex ap-justify-center ap-flex-col ap-relative ap-mb-8 !ap-border-primary-light">
     <div class="ap-typography-headline-5 ap-mt-1 ">
-        <b>Unlock Feature: Upgrade & Thrive</b>
+        <b>Premium Feature</b>
     </div>
     <div class="ap-typography-body-1  ap-text-white ap-max-w-[485px] ap-flex ap-flex-col ap-gap-4">
-        Upgrade your plan to access features tailored to your needs.<br>
-        Empower your business and take it to new heights today!
+        {{featureNote}}
         <div class="ap-flex ap-gap-3 ap-items-center ap-h-[3rem]">
             <ap-button *ngIf="pricingUrl" (buttonClicked)="openPricing()" [fullWidthOfContainer]="true" btnColor="white"
                 btnSize="medium">
