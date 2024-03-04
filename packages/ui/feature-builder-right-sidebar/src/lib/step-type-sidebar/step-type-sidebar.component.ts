@@ -270,16 +270,6 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
           settings: undefined,
         };
         break;
-      case TriggerType.WEBHOOK:
-        trigger = {
-          ...base,
-          valid: true,
-          type: TriggerType.WEBHOOK,
-          settings: {
-            inputUiInfo: { currentSelectedData: '' },
-          },
-        };
-        break;
       case TriggerType.PIECE:
         trigger = {
           ...base,

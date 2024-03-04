@@ -3,7 +3,7 @@ import {
     CodeActionSchema, BranchActionSchema, LoopOnItemsActionSchema, PieceActionSchema, Action,
 } from './actions/action'
 import { FlowStatus } from './flow'
-import { EmptyTrigger, PieceTrigger, WebhookTrigger } from './triggers/trigger'
+import { EmptyTrigger, PieceTrigger } from './triggers/trigger'
 import { Static, Type } from '@sinclair/typebox'
 
 
@@ -43,7 +43,7 @@ export type LockFlowRequest = Static<typeof LockFlowRequest>
 
 export const ImportFlowRequest = Type.Object({
     displayName: Type.String({}),
-    trigger: Type.Union([Type.Composite([WebhookTrigger, optionalNextAction]), Type.Composite([PieceTrigger, optionalNextAction]), Type.Composite([EmptyTrigger, optionalNextAction])]),
+    trigger: Type.Union([Type.Composite([PieceTrigger, optionalNextAction]), Type.Composite([EmptyTrigger, optionalNextAction])]),
 })
 
 export type ImportFlowRequest = Static<typeof ImportFlowRequest>
@@ -91,7 +91,7 @@ export const AddActionRequest = Type.Object({
 })
 export type AddActionRequest = Static<typeof AddActionRequest>
 
-export const UpdateTriggerRequest = Type.Union([EmptyTrigger, PieceTrigger, WebhookTrigger])
+export const UpdateTriggerRequest = Type.Union([EmptyTrigger, PieceTrigger])
 export type UpdateTriggerRequest = Static<typeof UpdateTriggerRequest>
 
 export const UpdateFlowStatusRequest =  Type.Object({

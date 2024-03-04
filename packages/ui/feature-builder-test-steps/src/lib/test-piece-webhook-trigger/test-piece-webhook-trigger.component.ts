@@ -53,6 +53,7 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
   deleteWebhookSimulation$: Observable<void>;
   useMockData$: Observable<void>;
   test: Observable<unknown>;
+  pieceSampleData$: Observable<unknown>;
   constructor(
     testStepService: TestStepService,
     store: Store,
@@ -85,6 +86,27 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
           this.currentResults$ = new BehaviorSubject<TriggerHistoricalData[]>(
             res
           );
+        })
+      );
+
+    this.pieceSampleData$ = this.store
+      .select(BuilderSelectors.selectCurrentStep)
+      .pipe(
+        take(1),
+        switchMap((step) => {
+          if (step && step.type === TriggerType.PIECE) {
+            return this.actionMetaService
+              .getPieceMetadata(
+                step.settings.pieceName,
+                step.settings.pieceVersion
+              )
+              .pipe(
+                map((piece) => {
+                  return piece.triggers[step.settings.triggerName].sampleData;
+                })
+              );
+          }
+          return of(null);
         })
       );
 
