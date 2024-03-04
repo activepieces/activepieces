@@ -1,4 +1,3 @@
-import { ExecutionOutputStatus } from '@activepieces/shared'
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { buildPieceAction, generateMockEngineConstants } from './test-helper'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
@@ -25,7 +24,7 @@ describe('flow with response', () => {
         })
         expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
         expect(result.verdictResponse).toEqual({
-            reason: ExecutionOutputStatus.STOPPED,
+            reason: 'STOPPED',
             stopResponse: response,
         })
         expect(result.steps.http.output).toEqual(response)

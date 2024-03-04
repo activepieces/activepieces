@@ -2,7 +2,7 @@ import {
     ActivepiecesError,
     ApEdition,
     ErrorCode,
-    ExecutionOutputStatus,
+    FlowExecutionStatus,
 } from '@activepieces/shared'
 import { getEdition } from '../../helper/secret-helper'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
@@ -32,7 +32,7 @@ export const platformWorkerHooks: FlowWorkerHooks = {
                 ) {
                     await flowRunService.finish({
                         flowRunId: runId,
-                        status: ExecutionOutputStatus.QUOTA_EXCEEDED,
+                        status: FlowExecutionStatus.QUOTA_EXCEEDED,
                         tasks: 0,
                         logsFileId: null,
                         tags: [],

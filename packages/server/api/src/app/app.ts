@@ -31,6 +31,7 @@ import {
     CodeSandboxType,
     ErrorCode,
     Flow,
+    FlowRun,
     ProjectWithLimits,
 } from '@activepieces/shared'
 import { appConnectionsHooks } from './app-connection/app-connection-service/app-connection-hooks'
@@ -141,6 +142,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
                     'project-member': ProjectMember,
                     project: ProjectWithLimits,
                     flow: Flow,
+                    'flow-run': FlowRun,
                     'app-connection': AppConnectionWithoutSensitiveData,
                     piece: PieceMetadata,
                     'git-repo': GitRepoWithoutSensitiveData,

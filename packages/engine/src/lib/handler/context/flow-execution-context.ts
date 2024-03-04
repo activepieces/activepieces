@@ -1,4 +1,4 @@
-import { ActionType, ExecutionOutputStatus, LoopStepOutput, PauseMetadata, StepOutput, StepOutputStatus, StopResponse, assertEqual, isNil } from '@activepieces/shared'
+import { ActionType, LoopStepOutput, PauseMetadata, StepOutput, StepOutputStatus, StopResponse, assertEqual, isNil } from '@activepieces/shared'
 import { StepExecutionPath } from './step-execution-path'
 import { loggingUtils } from '../../helper/logging-utils'
 import { nanoid } from 'nanoid'
@@ -12,10 +12,10 @@ export enum ExecutionVerdict {
 }
 
 type VerdictResponse = {
-    reason: ExecutionOutputStatus.PAUSED
+    reason: FlowExecutionStatus.PAUSED
     pauseMetadata: PauseMetadata
 } | {
-    reason: ExecutionOutputStatus.STOPPED
+    reason: FlowExecutionStatus.STOPPED
     stopResponse: StopResponse
 }
 
@@ -172,31 +172,38 @@ export class FlowExecutorContext {
             tasks: this.tasks,
             tags: [...this.tags],
             steps: await loggingUtils.trimExecution(this.steps),
-            status: this.verdict,
         }
         switch (this.verdict) {
             case ExecutionVerdict.FAILED:
-                return baseExecutionOutput
+                return {
+                    ...baseExecutionOutput,
+                    status: FlowExecutionStatus.FAILED,
+                }
             case ExecutionVerdict.PAUSED: {
                 const verdictResponse = this.verdictResponse
-                if (verdictResponse?.reason !== ExecutionOutputStatus.PAUSED) {
+                if (verdictResponse?.reason !== FlowExecutionStatus.PAUSED) {
                     throw new Error('Verdict Response should have pause metadata response')
                 }
                 return {
                     ...baseExecutionOutput,
+                    status: FlowExecutionStatus.PAUSED,
                     pauseMetadata: verdictResponse.pauseMetadata,
                 }
             }
             case ExecutionVerdict.RUNNING:
             case ExecutionVerdict.SUCCEEDED: {
                 const verdictResponse = this.verdictResponse
-                if (verdictResponse?.reason === ExecutionOutputStatus.STOPPED) {
+                if (verdictResponse?.reason === FlowExecutionStatus.STOPPED) {
                     return {
                         ...baseExecutionOutput,
+                        status: FlowExecutionStatus.STOPPED,
                         stopResponse: verdictResponse.stopResponse,
                     }
                 }
-                return baseExecutionOutput
+                return {
+                    ...baseExecutionOutput,
+                    status: FlowExecutionStatus.SUCCEEDED,
+                }
             }
         }
     }

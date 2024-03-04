@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import {
   AppConnectionStatus,
-  ExecutionOutputStatus,
+  FlowExecutionStatus,
   StepOutputStatus,
 } from '@activepieces/shared';
 
@@ -18,12 +18,9 @@ import {
 export class StateIconComponent implements OnInit, OnChanges {
   @Input() size = 16;
   @Input() showStatusText = true;
-  @Input() status:
-    | ExecutionOutputStatus
-    | StepOutputStatus
-    | AppConnectionStatus;
+  @Input() status: FlowExecutionStatus | StepOutputStatus | AppConnectionStatus;
   textAfter = '';
-  readonly ExecutionOutputStatus = ExecutionOutputStatus;
+  readonly ExecutionOutputStatus = FlowExecutionStatus;
   readonly StepOutputStatus = StepOutputStatus;
 
   iconUrl = '';
@@ -36,52 +33,52 @@ export class StateIconComponent implements OnInit, OnChanges {
     this.iconUrl = this.findIconUrl(this.status);
   }
   findIconUrl(
-    status: ExecutionOutputStatus | StepOutputStatus | AppConnectionStatus
+    status: FlowExecutionStatus | StepOutputStatus | AppConnectionStatus
   ): string {
     switch (status) {
-      case ExecutionOutputStatus.STOPPED:
-      case ExecutionOutputStatus.SUCCEEDED:
+      case FlowExecutionStatus.STOPPED:
+      case FlowExecutionStatus.SUCCEEDED:
       case StepOutputStatus.SUCCEEDED:
       case StepOutputStatus.STOPPED:
       case AppConnectionStatus.ACTIVE:
         return 'assets/img/custom/status/success.svg';
-      case ExecutionOutputStatus.FAILED:
-      case ExecutionOutputStatus.INTERNAL_ERROR:
-      case ExecutionOutputStatus.TIMEOUT:
+      case FlowExecutionStatus.FAILED:
+      case FlowExecutionStatus.INTERNAL_ERROR:
+      case FlowExecutionStatus.TIMEOUT:
       case StepOutputStatus.FAILED:
       case AppConnectionStatus.ERROR:
-      case ExecutionOutputStatus.QUOTA_EXCEEDED:
+      case FlowExecutionStatus.QUOTA_EXCEEDED:
         return 'assets/img/custom/status/error.svg';
-      case ExecutionOutputStatus.PAUSED:
+      case FlowExecutionStatus.PAUSED:
       case StepOutputStatus.PAUSED:
         return 'assets/img/custom/status/paused.svg';
       case StepOutputStatus.RUNNING:
-      case ExecutionOutputStatus.RUNNING:
+      case FlowExecutionStatus.RUNNING:
         return '';
     }
   }
   findTextAfter(
-    status: ExecutionOutputStatus | StepOutputStatus | AppConnectionStatus
+    status: FlowExecutionStatus | StepOutputStatus | AppConnectionStatus
   ): string {
     switch (status) {
-      case ExecutionOutputStatus.STOPPED:
-      case ExecutionOutputStatus.SUCCEEDED:
+      case FlowExecutionStatus.STOPPED:
+      case FlowExecutionStatus.SUCCEEDED:
       case StepOutputStatus.SUCCEEDED:
       case StepOutputStatus.STOPPED:
         return $localize`Succeeded`;
-      case ExecutionOutputStatus.QUOTA_EXCEEDED:
+      case FlowExecutionStatus.QUOTA_EXCEEDED:
         return 'Quota Exceeded';
-      case ExecutionOutputStatus.INTERNAL_ERROR:
+      case FlowExecutionStatus.INTERNAL_ERROR:
         return $localize`Internal Error`;
-      case ExecutionOutputStatus.TIMEOUT:
+      case FlowExecutionStatus.TIMEOUT:
         return $localize`Timed Out`;
-      case ExecutionOutputStatus.FAILED:
+      case FlowExecutionStatus.FAILED:
       case StepOutputStatus.FAILED:
         return $localize`Failed`;
-      case ExecutionOutputStatus.PAUSED:
+      case FlowExecutionStatus.PAUSED:
       case StepOutputStatus.PAUSED:
         return $localize`Paused`;
-      case ExecutionOutputStatus.RUNNING:
+      case FlowExecutionStatus.RUNNING:
       case StepOutputStatus.RUNNING:
         return $localize`Running`;
       case AppConnectionStatus.ACTIVE:

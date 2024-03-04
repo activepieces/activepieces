@@ -1,4 +1,4 @@
-import { BranchOperator, ExecutionOutputStatus, LoopStepOutput } from '@activepieces/shared'
+import { BranchOperator, LoopStepOutput } from '@activepieces/shared'
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { buildActionWithOneCondition, buildCodeAction, buildPieceAction, buildSimpleLoopAction, generateMockEngineConstants } from './test-helper'
@@ -67,7 +67,7 @@ describe('flow with pause', () => {
                 requestId: 'requestId',
                 'type': 'WEBHOOK',
             },
-            'reason': ExecutionOutputStatus.PAUSED,
+            'reason': 'PAUSED',
         })
         expect(Object.keys(pauseResult.steps)).toEqual(['loop'])
 
@@ -116,7 +116,7 @@ describe('flow with pause', () => {
                 requestId: 'requestId',
                 'type': 'WEBHOOK',
             },
-            'reason': ExecutionOutputStatus.PAUSED,
+            'reason': 'PAUSED',
         })
         const resumeResult2 = await flowExecutor.execute({
             action: flawWithTwoPause,
@@ -149,7 +149,7 @@ describe('flow with pause', () => {
                 requestId: 'requestId',
                 'type': 'WEBHOOK',
             },
-            'reason': ExecutionOutputStatus.PAUSED,
+            'reason': 'PAUSED',
         })
         expect(Object.keys(pauseResult.currentState).length).toBe(1)
 

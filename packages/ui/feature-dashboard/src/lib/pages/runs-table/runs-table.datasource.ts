@@ -10,7 +10,7 @@ import {
   take,
   BehaviorSubject,
 } from 'rxjs';
-import { ExecutionOutputStatus, FlowRun } from '@activepieces/shared';
+import { FlowExecutionStatus, FlowRun } from '@activepieces/shared';
 import {
   InstanceRunService,
   ApPaginatorComponent,
@@ -91,7 +91,7 @@ export class RunsTableDataSource extends DataSource<FlowRun> {
           clearTimeout(this.refreshTimer);
         }
         if (
-          res.data.find((run) => run.status === ExecutionOutputStatus.RUNNING)
+          res.data.find((run) => run.status === FlowExecutionStatus.RUNNING)
         ) {
           this.refreshTimer = setTimeout(() => {
             this.refreshForExecutingRuns$.next(true);

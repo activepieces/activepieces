@@ -1,6 +1,6 @@
-import { BranchAction, BranchActionSettings, BranchCondition, BranchOperator, BranchStepOutput, FlowExecutionStatus, StepOutputStatus } from '@activepieces/shared'
+import { BranchAction, BranchActionSettings, BranchCondition, BranchOperator, BranchStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { BaseExecutor } from './base-executor'
-import { FlowExecutorContext } from './context/flow-execution-context'
+import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
 import { flowExecutor } from './flow-executor'
 import { EngineConstants } from './context/engine-constants'
 
@@ -49,7 +49,7 @@ export const branchExecutor: BaseExecutor<BranchAction> = {
         catch (e) {
             console.error(e)
             const failedStepOutput = stepOutput.setErrorMessage((e as Error).message).setStatus(StepOutputStatus.FAILED)
-            return executionState.upsertStep(action.name, failedStepOutput).setVerdict(FlowExecutionStatus.FAILED, undefined)
+            return executionState.upsertStep(action.name, failedStepOutput).setVerdict(ExecutionVerdict.FAILED, undefined)
         }
     },
 }

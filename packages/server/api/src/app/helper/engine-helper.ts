@@ -5,7 +5,6 @@ import {
     EngineOperationType,
     ExecutePropsOptions,
     ExecuteTriggerOperation,
-    ExecutionOutput,
     PieceTrigger,
     PrincipalType,
     ProjectId,

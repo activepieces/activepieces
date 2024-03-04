@@ -32,7 +32,7 @@ import {
     FlowTemplate,
     TemplateType,
     FlowRun,
-    ExecutionOutputStatus,
+    FlowExecutionStatus,
     RunEnvironment,
     Platform,
     FilteredPieceBehavior,
@@ -374,7 +374,7 @@ export const createMockFlowRun = (flowRun?: Partial<FlowRun>): FlowRun => {
         flowDisplayName: flowRun?.flowDisplayName ?? faker.lorem.word(),
         logsFileId: flowRun?.logsFileId ?? null,
         tasks: flowRun?.tasks,
-        status: flowRun?.status ?? faker.helpers.enumValue(ExecutionOutputStatus),
+        status: flowRun?.status ?? faker.helpers.enumValue(FlowExecutionStatus),
         startTime: flowRun?.startTime ?? faker.date.recent().toISOString(),
         finishTime: flowRun?.finishTime ?? faker.date.recent().toISOString(),
         environment:

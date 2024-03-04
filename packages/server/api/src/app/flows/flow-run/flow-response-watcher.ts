@@ -3,13 +3,11 @@ import {
     FlowExecutionResponse,
     FlowExecutionStatus,
     PauseType,
-    StopResponse,
     apId,
 } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 import { pubSub } from '../../helper/pubsub'
 import { SystemProp, system } from 'server-shared'
-import { PauseMetadata } from 'packages/shared/src/lib/flow-run/execution/flow-execution'
 
 const listeners = new Map<string, (flowResponse: FlowResponse) => void>()
 
@@ -70,7 +68,7 @@ export const flowResponseWatcher = {
     async publish(
         flowRunId: string,
         handlerId: string,
-        result: FlowExecutionResponse
+        result: FlowExecutionResponse,
     ): Promise<void> {
         logger.info(`[flowRunWatcher#publish] flowRunId=${flowRunId}`)
         const flowResponse = await getFlowResponse(result)
@@ -83,7 +81,7 @@ export const flowResponseWatcher = {
 }
 
 async function getFlowResponse(
-    result: FlowExecutionResponse
+    result: FlowExecutionResponse,
 ): Promise<FlowResponse> {
     switch (result.status) {
         case FlowExecutionStatus.PAUSED:

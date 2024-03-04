@@ -11,7 +11,6 @@ import {
     Flow,
     FlowRun,
     Project,
-    RunTerminationReason,
 } from '@activepieces/shared'
 
 type FlowRunSchema = FlowRun & {
@@ -39,7 +38,6 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         },
         terminationReason: {
             type: String,
-            enum: RunTerminationReason,
             nullable: true,
         },
         tags: {

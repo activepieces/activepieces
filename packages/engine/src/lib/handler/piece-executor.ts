@@ -1,4 +1,4 @@
-import { AUTHENTICATION_PROPERTY_NAME, GenericStepOutput, ActionType, ExecutionOutputStatus, PieceAction, StepOutputStatus, assertNotNullOrUndefined, isNil, ExecutionType, PauseType, FlowExecutionStatus } from '@activepieces/shared'
+import { AUTHENTICATION_PROPERTY_NAME, GenericStepOutput, ActionType, PieceAction, StepOutputStatus, assertNotNullOrUndefined, isNil, ExecutionType, PauseType, FlowExecutionStatus } from '@activepieces/shared'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
 import { ActionContext, ConnectionsManager, PauseHook, PauseHookParams, PiecePropertyMap, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
@@ -117,7 +117,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         if (hookResponse.stopped) {
             assertNotNullOrUndefined(hookResponse.stopResponse, 'stopResponse')
             return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).setVerdict(ExecutionVerdict.SUCCEEDED, {
-                reason: ExecutionOutputStatus.STOPPED,
+                reason: FlowExecutionStatus.STOPPED,
                 stopResponse: hookResponse.stopResponse.response,
             }).increaseTask()
         }
@@ -125,7 +125,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             assertNotNullOrUndefined(hookResponse.pauseResponse, 'pauseResponse')
             return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED))
                 .setVerdict(ExecutionVerdict.PAUSED, {
-                    reason: ExecutionOutputStatus.PAUSED,
+                    reason: FlowExecutionStatus.PAUSED,
                     pauseMetadata: hookResponse.pauseResponse.pauseMetadata,
                 })
         }

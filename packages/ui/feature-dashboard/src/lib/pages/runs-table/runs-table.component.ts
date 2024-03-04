@@ -6,7 +6,7 @@ import {
 } from '@angular/core';
 import {
   ApEdition,
-  ExecutionOutputStatus,
+  FlowExecutionStatus,
   FlowId,
   FlowRetryStrategy,
   FlowRun,
@@ -66,7 +66,7 @@ export class RunsTableComponent implements OnInit {
   updateNotificationsValue$: Observable<boolean>;
   refreshTableForReruns$: Subject<boolean> = new Subject();
   statusFilterControl: FormControl<
-    ExecutionOutputStatus | typeof allOptionValue
+    FlowExecutionStatus | typeof allOptionValue
   > = new FormControl(allOptionValue, { nonNullable: true });
   flowFilterControl = new FormControl<string>(allOptionValue, {
     nonNullable: true,
@@ -79,7 +79,7 @@ export class RunsTableComponent implements OnInit {
   flows$: Observable<DropdownOption<FlowId>[]>;
   currentProject: ProjectId;
   filtersChanged$: Observable<void>;
-  readonly ExecutionOutputStatus = ExecutionOutputStatus;
+  readonly ExecutionOutputStatus = FlowExecutionStatus;
   FlowRetryStrategy: typeof FlowRetryStrategy = FlowRetryStrategy;
   retryFlow$?: Observable<void>;
   setInitialFilters$?: Observable<void>;
@@ -101,7 +101,7 @@ export class RunsTableComponent implements OnInit {
     this.statusFilterControl.setValue(
       (this.activatedRoute.snapshot.queryParamMap.get(
         STATUS_QUERY_PARAM
-      ) as ExecutionOutputStatus) || this.allOptionValue
+      ) as FlowExecutionStatus) || this.allOptionValue
     );
     const startDate = this.activatedRoute.snapshot.queryParamMap.get(
       DATE_RANGE_START_QUERY_PARAM

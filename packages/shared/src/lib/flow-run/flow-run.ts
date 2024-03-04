@@ -1,20 +1,10 @@
-import { BaseModel } from '../common/base-model'
-import { ProjectId } from '../project/project'
-import { FlowVersionId } from '../flows/flow-version'
-import { FileId } from '../file/file'
 import { ApId } from '../common/id-generator'
-import {
-    ExecutionOutputStatus,
-} from './execution/execution-output'
-import { FlowId } from '../flows/flow'
-import { PauseMetadata } from './execution/flow-execution'
+import { FlowExecutionStatus, PauseMetadata } from './execution/flow-execution'
+import { Static, Type } from '@sinclair/typebox'
+import { BaseModelSchema, Nullable } from '../common/base-model'
+import { ExecutionState } from './execution/execution-output'
 
 export type FlowRunId = ApId
-
-export enum RunTerminationReason {
-    STOPPED_BY_HOOK = 'STOPPED_BY_HOOK',
-}
-
 
 export enum RunEnvironment {
     PRODUCTION = 'PRODUCTION',
@@ -30,19 +20,23 @@ export type FlowRetryPayload = {
     strategy: FlowRetryStrategy
 }
 
-export type FlowRun = BaseModel<FlowRunId> & {
-    id: FlowRunId
-    projectId: ProjectId
-    flowId: FlowId
-    tags?: string[]
-    flowVersionId: FlowVersionId
-    flowDisplayName: string
-    terminationReason?: RunTerminationReason
-    logsFileId: FileId | null
-    tasks?: number
-    status: ExecutionOutputStatus
-    startTime: string
-    finishTime: string
-    environment: RunEnvironment
-    pauseMetadata?: PauseMetadata
-}
+export const FlowRun = Type.Object({
+    ...BaseModelSchema,
+    projectId: Type.String(),
+    flowId: Type.String(),
+    tags: Type.Optional(Type.Array(Type.String())),
+    flowVersionId: Type.String(),
+    flowDisplayName: Type.String(),
+    // TODO remove this, and create migration to remove it
+    terminationReason: Type.Optional(Type.String()),
+    logsFileId: Nullable(Type.String()),
+    tasks: Type.Optional(Type.Number()),
+    status: Type.Enum(FlowExecutionStatus),
+    startTime: Type.String(),
+    finishTime: Type.String(),
+    environment: Type.Enum(RunEnvironment),
+    pauseMetadata: Type.Optional(PauseMetadata),
+    ...ExecutionState,
+})
+
+export type FlowRun = Static<typeof FlowRun> & ExecutionState

@@ -1,5 +1,5 @@
 import {
-  ExecutionOutputStatus,
+  FlowExecutionStatus,
   FlowRun,
   RunEnvironment,
 } from '@activepieces/shared';
@@ -10,7 +10,8 @@ export const initializedRun: FlowRun = {
   flowVersionId: '',
   flowId: '',
   tags: [],
-  status: ExecutionOutputStatus.RUNNING,
+  steps: {},
+  status: FlowExecutionStatus.RUNNING,
   logsFileId: '',
   startTime: '',
   finishTime: '',

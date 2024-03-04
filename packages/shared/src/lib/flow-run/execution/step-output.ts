@@ -6,6 +6,7 @@ export enum StepOutputStatus {
     FAILED = 'FAILED',
     PAUSED = 'PAUSED',
     RUNNING = 'RUNNING',
+    STOPPED = 'STOPPED',
     SUCCEEDED = 'SUCCEEDED',
 }
 
