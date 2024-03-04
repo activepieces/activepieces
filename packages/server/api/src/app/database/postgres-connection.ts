@@ -111,6 +111,7 @@ import { AddPlatformToPostgres1709052740378 } from './migration/postgres/1709052
 import { AddSlugToGitRepo1709151540095 } from './migration/postgres/1709151540095-add-slug-to-git-repo'
 import { DropUnusedPlatformIndex1709500873378 } from './migration/postgres/1709500873378-DropUnusedPlatformIndex'
 import { SetNotNullOnPlatform1709505632771 } from './migration/1709505632771-SetNotNullOnPlatform'
+import { AddPlatformForeignKeyToProjectPostgres1709566642531 } from './migration/postgres/1709566642531-add-platform-foreign-key-to-project-postgres'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -236,6 +237,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 MakePlatformNotNullable1705969874745,
                 AddSlugToGitRepo1709151540095,
                 DropUnusedPlatformIndex1709500873378,
+                AddPlatformForeignKeyToProjectPostgres1709566642531,
             )
             break
         case ApEdition.ENTERPRISE:
@@ -282,12 +284,14 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 MakePlatformNotNullable1705969874745,
                 AddSlugToGitRepo1709151540095,
                 DropUnusedPlatformIndex1709500873378,
+                AddPlatformForeignKeyToProjectPostgres1709566642531,
             )
             break
         case ApEdition.COMMUNITY:
             commonMigration.push(
-                AddPlatformToPostgres1709052740378, 
-                SetNotNullOnPlatform1709505632771)
+                AddPlatformToPostgres1709052740378,
+                SetNotNullOnPlatform1709505632771,
+            )
             break
     }
 

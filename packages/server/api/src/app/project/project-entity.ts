@@ -52,6 +52,25 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         },
     ],
     relations: {
+        owner: {
+            type: 'many-to-one',
+            target: 'user',
+            joinColumn: {
+                name: 'ownerId',
+                foreignKeyConstraintName: 'fk_project_owner_id',
+            },
+        },
+        platform: {
+            type: 'many-to-one',
+            target: 'platform',
+            cascade: true,
+            onDelete: 'RESTRICT',
+            onUpdate: 'RESTRICT',
+            joinColumn: {
+                name: 'platformId',
+                foreignKeyConstraintName: 'fk_project_platform_id',
+            },
+        },
         folders: {
             type: 'one-to-many',
             target: 'folder',
@@ -61,14 +80,6 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             type: 'one-to-many',
             target: 'app_connection',
             inverseSide: 'project',
-        },
-        owner: {
-            type: 'many-to-one',
-            target: 'user',
-            joinColumn: {
-                name: 'ownerId',
-                foreignKeyConstraintName: 'fk_project_owner_id',
-            },
         },
         events: {
             type: 'one-to-many',
