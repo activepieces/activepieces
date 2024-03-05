@@ -202,7 +202,6 @@ export class FlowsEffects {
             case ActionType.CODE:
             case ActionType.LOOP_ON_ITEMS:
             case TriggerType.PIECE:
-            case TriggerType.WEBHOOK:
             case ActionType.PIECE: {
               const actionsToDispatch: Array<any> = [
                 canvasActions.setRightSidebar({

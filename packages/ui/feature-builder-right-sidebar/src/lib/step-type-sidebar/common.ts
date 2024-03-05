@@ -17,7 +17,7 @@ const coreSteps = [
   ActionType.BRANCH,
   ActionType.CODE,
   ActionType.LOOP_ON_ITEMS,
-  TriggerType.WEBHOOK,
+  TriggerType.EMPTY,
 ];
 export const isCoreStep = (step: FlowItemDetails) => {
   return coreSteps.includes(step.type);

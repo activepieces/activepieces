@@ -62,8 +62,6 @@ export const triggerEventService = {
         const trigger = flow.version.trigger
         const emptyPage = paginationHelper.createPage<TriggerEvent>([], null)
         switch (trigger.type) {
-            case TriggerType.WEBHOOK:
-                throw new Error('Cannot be tested')
             case TriggerType.PIECE: {
                 await deleteOldFilesForTestData({
                     projectId,
@@ -167,7 +165,6 @@ function getSourceName(trigger: Trigger): string {
             return `${pieceName}@${pieceVersion}:${triggerName}`
         }
 
-        case TriggerType.WEBHOOK:
         case TriggerType.EMPTY:
             return trigger.type
     }

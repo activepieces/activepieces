@@ -2,10 +2,6 @@ import { ActionType, TriggerType } from '@activepieces/shared';
 
 export function getDisplayNameForTrigger(triggerType: TriggerType) {
   switch (triggerType) {
-    case TriggerType.WEBHOOK: {
-      return $localize`Webhook Trigger`;
-      break;
-    }
     case TriggerType.EMPTY: {
       return $localize`Empty Trigger`;
     }

@@ -2,7 +2,7 @@ import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { GlobalBuilderState } from '../../model/global-builder-state.model';
 
 import {
-  ExecutionOutputStatus,
+  FlowRunStatus,
   FlowRun,
   FlowVersion,
   FlowVersionState,
@@ -143,11 +143,7 @@ const selectCurrentStepSettings = createSelector(
 const selectTriggerSelectedSampleData = createSelector(
   selectCurrentStep,
   (step) => {
-    if (
-      step &&
-      (step.type === TriggerType.PIECE || step.type === TriggerType.WEBHOOK) &&
-      step.settings.inputUiInfo
-    ) {
+    if (step && step.type === TriggerType.PIECE && step.settings.inputUiInfo) {
       return step.settings.inputUiInfo.currentSelectedData;
     }
     return undefined;
@@ -259,23 +255,19 @@ const selectStepResultsAccordion = createSelector(
   selectCurrentFlow,
   selectCurrentFlowRun,
   (flow, run) => {
-    if (!run || run.status === ExecutionOutputStatus.RUNNING) {
+    if (!run || run.status === FlowRunStatus.RUNNING) {
       return [];
     }
     const steps = flowHelper.getAllSteps(flow.version.trigger);
     const results: StepRunResult[] = [];
-    const executionState = run.executionOutput?.executionState;
-    if (!executionState) {
-      return [];
-    }
     steps.forEach((s) => {
       const stepIndex = FlowStructureUtil.findStepIndex(
         flow.version.trigger,
         s.name
       );
-      if (executionState?.steps[s.name]) {
+      if (run.steps[s.name]) {
         results.push({
-          output: executionState.steps[s.name],
+          output: run.steps[s.name],
           stepName: s.name,
           displayName: s.displayName,
           index: stepIndex,
@@ -457,8 +449,6 @@ function findStepLogoUrlForMentions(
       return 'assets/img/custom/piece/emptyTrigger.png';
     case ActionType.BRANCH:
       return 'assets/img/custom/piece/branch_mention.png';
-    case TriggerType.WEBHOOK:
-      return 'assets/img/custom/piece/webhook_mention.png';
     case ActionType.LOOP_ON_ITEMS:
       return 'assets/img/custom/piece/loop_mention.png';
     case ActionType.CODE:
@@ -515,8 +505,6 @@ const selectFlowTriggerIsTested = createSelector(selectCurrentFlow, (flow) => {
   switch (flow.version.trigger.type) {
     case TriggerType.EMPTY:
       return false;
-    case TriggerType.WEBHOOK:
-      return !!flow.version.trigger.settings.inputUiInfo.currentSelectedData;
     case TriggerType.PIECE:
       return !!flow.version.trigger.settings.inputUiInfo.currentSelectedData;
   }

@@ -5,7 +5,7 @@ import {
   MatSnackBarRef,
   MAT_SNACK_BAR_DATA,
 } from '@angular/material/snack-bar';
-import { ExecutionOutputStatus, FlowId, FlowRun } from '@activepieces/shared';
+import { FlowRunStatus, FlowId, FlowRun } from '@activepieces/shared';
 import { BuilderSelectors } from '../store/builder/builder.selector';
 import { FlagService } from '@activepieces/ui/common';
 import { canvasActions } from '../store/builder/canvas/canvas.action';
@@ -59,6 +59,6 @@ export class TestRunBarComponent implements OnInit {
   }
 
   get instanceRunStatus() {
-    return ExecutionOutputStatus;
+    return FlowRunStatus;
   }
 }

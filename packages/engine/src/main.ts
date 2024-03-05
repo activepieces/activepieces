@@ -11,7 +11,6 @@ import {
     StepOutputStatus,
     ExecutionType,
     EngineTestOperation,
-    ExecutionOutput,
     ExecuteActionResponse,
     EngineResponse,
     GenericStepOutput,
@@ -20,6 +19,7 @@ import {
     Action,
     ActionType,
     isNil,
+    FlowRunResponse,
 } from '@activepieces/shared'
 import { pieceHelper } from './lib/helper/piece-helper'
 import { triggerHelper } from './lib/helper/trigger-helper'
@@ -29,7 +29,7 @@ import { ExecutionVerdict, FlowExecutorContext } from './lib/handler/context/flo
 import { EngineConstants } from './lib/handler/context/engine-constants'
 import { testExecutionContext } from './lib/handler/context/test-execution-context'
 
-const executeFlow = async (input: ExecuteFlowOperation, context: FlowExecutorContext): Promise<EngineResponse<ExecutionOutput>> => {
+const executeFlow = async (input: ExecuteFlowOperation, context: FlowExecutorContext): Promise<EngineResponse<FlowRunResponse>> => {
     const output = await flowExecutor.execute({
         action: input.flowVersion.trigger.nextAction,
         executionState: context,
@@ -37,7 +37,7 @@ const executeFlow = async (input: ExecuteFlowOperation, context: FlowExecutorCon
     })
     return {
         status: EngineResponseStatus.OK,
-        response: await output.toExecutionOutput(),
+        response: await output.toResponse(),
     }
 }
 
@@ -73,7 +73,7 @@ function getFlowExecutionState(input: ExecuteFlowOperation): FlowExecutorContext
             }).setOutput(input.triggerPayload))
         case ExecutionType.RESUME: {
             let flowContext = FlowExecutorContext.empty().increaseTask(input.tasks)
-            for (const [step, output] of Object.entries(input.executionState.steps)) {
+            for (const [step, output] of Object.entries(input.steps)) {
                 if ([StepOutputStatus.SUCCEEDED, StepOutputStatus.PAUSED].includes(output.status)) {
                     flowContext = flowContext.upsertStep(step, output)
                 }

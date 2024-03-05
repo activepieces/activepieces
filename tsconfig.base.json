@@ -519,6 +519,9 @@
       "@activepieces/piece-webflow": [
         "packages/pieces/community/webflow/src/index.ts"
       ],
+      "@activepieces/piece-webhook": [
+        "packages/pieces/community/webhook/src/index.ts"
+      ],
       "@activepieces/piece-whatsable": [
         "packages/pieces/community/whatsable/src/index.ts"
       ],

@@ -128,7 +128,7 @@ const consumeDelayedJob = async (data: DelayedJobData): Promise<void> => {
 
 const consumeRepeatingJob = async (data: RepeatingJobData): Promise<void> => {
     try {
-    // TODO REMOVE AND FIND PERMANENT SOLUTION
+        // TODO REMOVE AND FIND PERMANENT SOLUTION
         const flow = await flowService.getOne({
             id: data.flowId,
             projectId: data.projectId,
@@ -136,14 +136,10 @@ const consumeRepeatingJob = async (data: RepeatingJobData): Promise<void> => {
 
         if (
             isNil(flow) ||
-      flow.status !== FlowStatus.ENABLED ||
-      flow.publishedVersionId !== data.flowVersionId
+            flow.status !== FlowStatus.ENABLED ||
+            flow.publishedVersionId !== data.flowVersionId
         ) {
-            exceptionHandler.handle(
-                new Error(
-                    `[repeatableJobConsumer] removing project.id=${data.projectId} instance.flowVersionId=${flow?.publishedVersionId} data.flowVersion.id=${data.flowVersionId}`,
-                ),
-            )
+            
 
             const flowVersion = await flowVersionService.getOne(data.flowVersionId)
             if (isNil(flowVersion)) {
@@ -159,6 +155,11 @@ const consumeRepeatingJob = async (data: RepeatingJobData): Promise<void> => {
                     ignoreError: true,
                 })
             }
+            exceptionHandler.handle(
+                new Error(
+                    `[repeatableJobConsumer] removing project.id=${data.projectId} instance.flowVersionId=${flow?.publishedVersionId} data.flowVersion.id=${data.flowVersionId}`,
+                ),
+            )
 
             return
         }
@@ -170,7 +171,7 @@ const consumeRepeatingJob = async (data: RepeatingJobData): Promise<void> => {
     catch (e) {
         if (
             e instanceof ActivepiecesError &&
-      e.error.code === ErrorCode.QUOTA_EXCEEDED
+            e.error.code === ErrorCode.QUOTA_EXCEEDED
         ) {
             logger.info(
                 `[repeatableJobConsumer] removing project.id=${data.projectId} run out of flow quota`,

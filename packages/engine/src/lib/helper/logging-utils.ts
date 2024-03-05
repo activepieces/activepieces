@@ -21,7 +21,6 @@ async function trimStepOutput(stepOutput: StepOutput): Promise<StepOutput> {
     modified.input = await applyFunctionToValues(modified.input, trim)
     switch (modified.type) {
         case ActionType.BRANCH:
-        case TriggerType.WEBHOOK:
         case TriggerType.EMPTY:
         case TriggerType.PIECE:
             modified.output = await applyFunctionToValues(modified.output, trim)

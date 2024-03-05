@@ -24,7 +24,7 @@ import { RunDetailsService } from '@activepieces/ui/feature-builder-left-sidebar
 import {
   Action,
   ActionType,
-  ExecutionOutputStatus,
+  FlowRunStatus,
   FlowRun,
   StepOutput,
   StepOutputStatus,
@@ -81,7 +81,7 @@ export class FlowItemContentComponent implements OnInit {
   isOverflown = isOverflown;
   childStepsIconsUrls: Record<string, Observable<string>> = {};
   StepOutputStatus = StepOutputStatus;
-  ExecutionOutputStatus = ExecutionOutputStatus;
+  ExecutionOutputStatus = FlowRunStatus;
   TriggerType = TriggerType;
   ActionType = ActionType;
   stepIndex$: Observable<number>;
@@ -164,13 +164,9 @@ export class FlowItemContentComponent implements OnInit {
       distinctUntilChanged(),
       map((selectedRun) => {
         if (selectedRun) {
-          if (selectedRun.status !== ExecutionOutputStatus.RUNNING) {
+          if (selectedRun.status !== FlowRunStatus.RUNNING) {
             const stepName = this._flowItem.name;
-            const executionState = selectedRun.executionOutput?.executionState;
-            if (!executionState) {
-              throw new Error('Flow is done but there is no executionState');
-            }
-            const result = executionState.steps[stepName.toString()];
+            const result = selectedRun.steps[stepName.toString()];
             if (result) {
               this.stepOutput = result;
             }
@@ -215,8 +211,6 @@ export class FlowItemContentComponent implements OnInit {
           .pipe(map((p) => p.displayName));
       case TriggerType.EMPTY:
         return of($localize`Choose a trigger`);
-      case TriggerType.WEBHOOK:
-        return of($localize`Webhook trigger`);
     }
   }
   extractChildStepsIconsUrls() {
