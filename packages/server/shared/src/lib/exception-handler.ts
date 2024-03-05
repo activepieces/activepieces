@@ -14,7 +14,8 @@ export const initilizeSentry = () => {
                 if (event?.exception?.values?.[0].type === 'AxiosError') {
                     return null;
                 }
-                if (event?.exception?.values?.[0]?.value === 'EXECUTION_TIMEOUT') {
+                const value = event?.exception?.values?.[0]?.value
+                if (value && ['EXECUTION_TIMEOUT', 'ENTITY_NOT_FOUND'].includes(value)) {
                     return null;
                 }
                 return event
