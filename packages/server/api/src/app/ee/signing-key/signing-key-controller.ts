@@ -19,7 +19,6 @@ export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
         assertNotNullOrUndefined(platformId, 'platformId')
 
         const newSigningKey = await signingKeyService.add({
-            userId: req.principal.id,
             platformId,
             displayName: req.body.displayName,
         })
