@@ -109,7 +109,6 @@ export class FlowsTableTitleComponent {
           if (dialogResult) {
             const template = dialogResult.template;
             this.builderService.showLoading();
-            debugger;
             if (typeof template === 'string') {
               return this.createFlow(true);
             }
