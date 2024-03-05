@@ -26,6 +26,7 @@ import {
   environment,
   PlatformService,
   FlowBuilderService,
+  TelemetryService,
 } from '@activepieces/ui/common';
 import { compareVersions } from 'compare-versions';
 import { ApEdition, ApFlagId, LocalesEnum } from '@activepieces/shared';
@@ -79,7 +80,8 @@ export class AppComponent implements OnInit {
     private embeddedService: EmbeddingService,
     private localesService: LocalesService,
     private platformService: PlatformService,
-    private builderService: FlowBuilderService
+    private builderService: FlowBuilderService,
+    private telemetryService: TelemetryService
   ) {
     this.toggleLoading$ = this.builderService.loading$.pipe(
       tap((res) => {
@@ -132,6 +134,7 @@ export class AppComponent implements OnInit {
           this.store.dispatch(CommonActions.clearState());
           return;
         }
+        this.telemetryService.init(user);
       })
     );
   }

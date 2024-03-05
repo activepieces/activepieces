@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import posthog from 'posthog-js';
 import {
+  ApEdition,
   ApEnvironment,
   ApFlagId,
   TelemetryEvent,
@@ -23,25 +24,28 @@ export class TelemetryService {
     private authService: AuthenticationService
   ) {}
   init(user: UserWithoutPassword) {
-    if (user !== null && user !== undefined) {
-      this.flagService.getAllFlags().subscribe((flags) => {
-        if (flags[ApFlagId.TELEMETRY_ENABLED] === true) {
-          posthog.init('phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh', {
-            autocapture: false,
-          });
+    this.flagService.getAllFlags().subscribe((flags) => {
+      if (flags[ApFlagId.TELEMETRY_ENABLED] === true) {
+        posthog.init('phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh', {
+          autocapture: false,
+        });
+
+        if (flags[ApFlagId.ENVIRONMENT] === ApEnvironment.PRODUCTION) {
           const currentVersion =
             (flags[ApFlagId.CURRENT_VERSION] as string) || '0.0.0';
           const environment =
             (flags[ApFlagId.ENVIRONMENT] as string) || '0.0.0';
-
           posthog.identify(user.id, {
             activepiecesVersion: currentVersion,
             activepiecesEnvironment: environment,
           });
-          this.initializePf(user);
         }
-      });
-    }
+      }
+
+      if (flags[ApFlagId.EDITION] === ApEdition.CLOUD) {
+        this.initializePf(user);
+      }
+    });
   }
 
   capture(event: TelemetryEvent) {
