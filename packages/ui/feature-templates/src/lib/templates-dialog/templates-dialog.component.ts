@@ -24,11 +24,12 @@ import { MatTabGroup } from '@angular/material/tabs';
 
 export interface TemplateDialogData {
   insideBuilder: boolean;
+  showStartFromScratch?: boolean;
 }
 type tabsNames = 'all ideas' | 'featured';
-
+const START_FROM_SCRATCH = 'Start from scratch';
 export interface TemplateDialogClosingResult {
-  template: FlowTemplate;
+  template: FlowTemplate | typeof START_FROM_SCRATCH;
   activeTab: tabsNames;
 }
 
@@ -106,6 +107,14 @@ export class TemplatesDialogComponent {
 
   closeDialog() {
     this.dialogRef.close();
+  }
+
+  startFromScratch() {
+    const result: TemplateDialogClosingResult = {
+      template: START_FROM_SCRATCH,
+      activeTab: 'all ideas',
+    };
+    this.dialogRef.close(result);
   }
   showTemplateDescription(template: FlowTemplate) {
     this.matTabGroup.selectedIndex = 1;
