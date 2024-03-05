@@ -28,7 +28,7 @@ export const platformWorkerHooks: FlowWorkerHooks = {
             catch (e: unknown) {
                 if (
                     e instanceof ActivepiecesError &&
-          (e as ActivepiecesError).error.code === ErrorCode.QUOTA_EXCEEDED
+                    (e as ActivepiecesError).error.code === ErrorCode.QUOTA_EXCEEDED
                 ) {
                     await flowRunService.finish({
                         flowRunId: runId,
