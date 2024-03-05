@@ -219,8 +219,8 @@ async function findRepeatableJobKey(id: ApId): Promise<string | undefined> {
     if (isNil(jobKey)) {
         logger.warn({ jobKey: id }, 'Job key not found in redis, trying to find it in the queue')
         // TODO: this temporary solution for jobs that doesn't have repeatJobKey in redis, it's also confusing because it search by flowVersionId
-        const job = (await scheduledJobQueue.getJobs())
-        return job.find((f) => f.data.flowVersionId === id)?.repeatJobKey
+        const jobs = await scheduledJobQueue.getJobs()
+        return jobs.filter(f => !isNil(f) && !isNil(f.data)).find((f) => f.data.flowVersionId === id)?.repeatJobKey
     }
     return jobKey
 }
