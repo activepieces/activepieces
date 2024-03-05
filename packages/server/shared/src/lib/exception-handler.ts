@@ -10,7 +10,15 @@ export const initilizeSentry = () => {
         logger.info('Initializing Sentry')
         Sentry.init({
             dsn: sentryDsn,
-            tracesSampleRate: 0.2,
+            beforeSend: (event) => {
+                if (event?.exception?.values?.[0].type === 'AxiosError') {
+                    return null;
+                }
+                if (event?.exception?.values?.[0]?.value === 'EXECUTION_TIMEOUT') {
+                    return null;
+                }
+                return event
+            }
         })
     }
 }
@@ -27,9 +35,9 @@ export const exceptionHandler = {
 
 
 const ENRICH_ERROR_CONTEXT =
-  system.getBoolean(SystemProp.ENRICH_ERROR_CONTEXT) ?? false
+    system.getBoolean(SystemProp.ENRICH_ERROR_CONTEXT) ?? false
 
-  
+
 export const enrichErrorContext = ({
     error,
     key,
