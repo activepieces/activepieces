@@ -85,18 +85,29 @@
             [class.ap-items-center]="(loading$ | async)" [class.ap-justify-center]="(loading$ | async)">
 
             <ng-container *ngIf="(loading$ | async) === false">
-                <div (click)="startFromScratch()" *ngIf="data?.showStartFromScratch"
-                    class="ap-flex ap-items-center ap-gap-2 ap-justify-center ap-flex-col ap-border ap-border-outline ap-h-[241px] ap-w-[246px] ap-rounded ap-bg-white ap-rounded-lg ap-cursor-pointer ap-transition-colors hover:ap-border-primary hover:ap-bg-primary-light ">
-                    <ng-container>
-                        <svg-icon src="assets/img/custom/add.svg" [applyClass]="true"
-                            class="ap-fill-primary ap-w-[26px] ap-h-[26px]"></svg-icon>
-                        <div class="ap-typography-subtitle-1 ap-text-primary" i18n>Start from scratch</div>
-                    </ng-container>
-                </div>
 
-                <app-template-card (descriptionButtonClicked)="showTemplateDescription($event)" [template]="template"
-                    (useTemplateClicked)="useTemplate(template,'all ideas')"
-                    *ngFor="let template of (templates$ | async)"></app-template-card>
+
+                <ng-container *ngIf=" templates$ | async as templates">
+
+                    <div (click)="startFromScratch()" *ngIf="data?.showStartFromScratch"
+                        class="ap-flex ap-items-center ap-gap-2 ap-justify-center ap-flex-col ap-border ap-border-outline ap-h-[241px] ap-w-[246px] ap-rounded ap-bg-white ap-rounded-lg ap-cursor-pointer ap-transition-colors hover:ap-border-primary hover:ap-bg-primary-light ">
+                        <ng-container>
+                            <svg-icon src="assets/img/custom/add.svg" [applyClass]="true"
+                                class="ap-fill-primary ap-w-[26px] ap-h-[26px]"></svg-icon>
+                            <div class="ap-typography-subtitle-1 ap-text-primary" i18n>Start from scratch</div>
+                        </ng-container>
+                    </div>
+                    <div *ngIf="templates.length === 0 && !data?.showStartFromScratch"
+                        class="ap-flex ap-items-center ap-justify-center ap-grow"> No templates found, try adjusting
+                        your
+                        filters or search.
+                    </div>
+
+                    <app-template-card (descriptionButtonClicked)="showTemplateDescription($event)"
+                        [template]="template" (useTemplateClicked)="useTemplate(template,'all ideas')"
+                        *ngFor="let template of (templates$ | async)"></app-template-card>
+
+                </ng-container>
             </ng-container>
 
             <ap-loading-icon *ngIf="loading$ | async" [outlineLoader]="false" [whiteLoader]="false" height="40px"

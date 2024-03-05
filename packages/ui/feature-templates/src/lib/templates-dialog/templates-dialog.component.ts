@@ -15,6 +15,7 @@ import {
   startWith,
   switchMap,
   tap,
+  take,
 } from 'rxjs';
 import { FlowTemplate, TelemetryEventName } from '@activepieces/shared';
 
@@ -86,16 +87,15 @@ export class TemplatesDialogComponent {
       }),
       shareReplay(1)
     );
-    this.filters$ = this.templates$
-      .pipe(
-        map((templates) => {
-          const tags = templates.flatMap((template) => template.tags);
-          const uniqueTags = Array.from(new Set(tags));
-          const sortedTags = uniqueTags.sort();
-          return sortedTags.filter((tag) => tag !== '');
-        })
-      )
-      .pipe(shareReplay(1));
+    this.filters$ = this.templates$.pipe(
+      take(1),
+      map((templates) => {
+        const tags = templates.flatMap((template) => template.tags);
+        const uniqueTags = Array.from(new Set(tags));
+        const sortedTags = uniqueTags.sort();
+        return sortedTags.filter((tag) => tag !== '');
+      })
+    );
   }
   useTemplate(template: FlowTemplate, tab: tabsNames) {
     const result: TemplateDialogClosingResult = {
