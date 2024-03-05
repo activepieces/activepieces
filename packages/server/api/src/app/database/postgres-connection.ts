@@ -113,6 +113,7 @@ import { DropUnusedPlatformIndex1709500873378 } from './migration/postgres/17095
 import { SetNotNullOnPlatform1709505632771 } from './migration/1709505632771-SetNotNullOnPlatform'
 import { AddPlatformForeignKeyToProjectPostgres1709566642531 } from './migration/postgres/1709566642531-add-platform-foreign-key-to-project-postgres'
 import { AddUserEmailToReferral1709500213947 } from './migration/postgres/1709500213947-add-user-email-to-referral'
+import { AddGeneratedByEmailToSigningKeyPostgres1709638978925 } from './migration/1709638978925-add-generated-by-email-to-signing-key-postgres'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -240,6 +241,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 DropUnusedPlatformIndex1709500873378,
                 AddPlatformForeignKeyToProjectPostgres1709566642531,
                 AddUserEmailToReferral1709500213947,
+                AddGeneratedByEmailToSigningKeyPostgres1709638978925,
             )
             break
         case ApEdition.ENTERPRISE:
@@ -287,6 +289,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddSlugToGitRepo1709151540095,
                 DropUnusedPlatformIndex1709500873378,
                 AddPlatformForeignKeyToProjectPostgres1709566642531,
+                AddGeneratedByEmailToSigningKeyPostgres1709638978925,
             )
             break
         case ApEdition.COMMUNITY:

@@ -15,21 +15,21 @@ import {
 import { signingKeyGenerator } from './signing-key-generator'
 import { databaseConnection } from '../../database/database-connection'
 import { SigningKeyEntity } from './signing-key-entity'
+import { userService } from '../../user/user-service'
 
 const repo = databaseConnection.getRepository<SigningKey>(SigningKeyEntity)
 
 export const signingKeyService = {
-    async add({
-        userId,
-        platformId,
-        displayName,
-    }: AddParams): Promise<AddSigningKeyResponse> {
+    async add({ userId, platformId, displayName }: AddParams): Promise<AddSigningKeyResponse> {
         const generatedSigningKey = await signingKeyGenerator.generate()
+
+        const userEmail = await getUserEmailOrThrow(userId)
 
         const newSigningKey: NewSigningKey = {
             id: apId(),
             platformId,
             generatedBy: userId,
+            generatedByEmail: userEmail,
             publicKey: generatedSigningKey.publicKey,
             algorithm: generatedSigningKey.algorithm,
             displayName,
@@ -79,6 +79,22 @@ export const signingKeyService = {
             id,
         })
     },
+}
+
+const getUserEmailOrThrow = async (userId: UserId): Promise<string> => {
+    const user = await userService.getMetaInfo({ id: userId })
+
+    if (isNil(user)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: {
+                entityId: userId,
+                entityType: 'user',
+            },
+        })
+    }
+
+    return user.email
 }
 
 type AddParams = {

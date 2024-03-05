@@ -34,6 +34,11 @@ export const SigningKeyEntity = new EntitySchema<SigningKeySchema>({
         },
         generatedBy: {
             ...ApIdSchema,
+            nullable: true,
+        },
+        generatedByEmail: {
+            type: String,
+            length: 500,
             nullable: false,
         },
     },
@@ -53,7 +58,7 @@ export const SigningKeyEntity = new EntitySchema<SigningKeySchema>({
         generator: {
             type: 'many-to-one',
             target: 'user',
-            onDelete: 'RESTRICT',
+            onDelete: 'SET NULL',
             onUpdate: 'RESTRICT',
             joinColumn: {
                 name: 'generatedBy',
