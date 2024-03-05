@@ -24,7 +24,11 @@
                             <img class="ap-w-[40px] ap-h-[40px] ap-object-contain" [src]="piece.logoUrl">
                             <div class="ap-typography-subtitle-1" i18n>{{piece.displayName}}</div>
                         </div>
-
+                        <div *ngIf="pieces.length===0" class="ap-flex ap-items-center ap-justify-center ap-grow">
+                            No pieces found, try adjusting
+                            your
+                            search.
+                        </div>
                     </ng-container>
 
                 </ng-container>

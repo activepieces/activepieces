@@ -15,6 +15,7 @@ import {
   startWith,
   switchMap,
   tap,
+  take,
 } from 'rxjs';
 import { FlowTemplate, TelemetryEventName } from '@activepieces/shared';
 
@@ -24,11 +25,12 @@ import { MatTabGroup } from '@angular/material/tabs';
 
 export interface TemplateDialogData {
   insideBuilder: boolean;
+  showStartFromScratch?: boolean;
 }
 type tabsNames = 'all ideas' | 'featured';
-
+const START_FROM_SCRATCH = 'Start from scratch';
 export interface TemplateDialogClosingResult {
-  template: FlowTemplate;
+  template: FlowTemplate | typeof START_FROM_SCRATCH;
   activeTab: tabsNames;
 }
 
@@ -85,16 +87,15 @@ export class TemplatesDialogComponent {
       }),
       shareReplay(1)
     );
-    this.filters$ = this.templates$
-      .pipe(
-        map((templates) => {
-          const tags = templates.flatMap((template) => template.tags);
-          const uniqueTags = Array.from(new Set(tags));
-          const sortedTags = uniqueTags.sort();
-          return sortedTags.filter((tag) => tag !== '');
-        })
-      )
-      .pipe(shareReplay(1));
+    this.filters$ = this.templates$.pipe(
+      take(1),
+      map((templates) => {
+        const tags = templates.flatMap((template) => template.tags);
+        const uniqueTags = Array.from(new Set(tags));
+        const sortedTags = uniqueTags.sort();
+        return sortedTags.filter((tag) => tag !== '');
+      })
+    );
   }
   useTemplate(template: FlowTemplate, tab: tabsNames) {
     const result: TemplateDialogClosingResult = {
@@ -106,6 +107,14 @@ export class TemplatesDialogComponent {
 
   closeDialog() {
     this.dialogRef.close();
+  }
+
+  startFromScratch() {
+    const result: TemplateDialogClosingResult = {
+      template: START_FROM_SCRATCH,
+      activeTab: 'all ideas',
+    };
+    this.dialogRef.close(result);
   }
   showTemplateDescription(template: FlowTemplate) {
     this.matTabGroup.selectedIndex = 1;
