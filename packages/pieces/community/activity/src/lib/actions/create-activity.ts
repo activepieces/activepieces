@@ -1,27 +1,12 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import axios from 'axios';
+import {  props } from './shared';
 
 export const createActivity = createAction({
   name: 'create_activity',
-  displayName: 'create activity',
+  displayName: 'Create Activity',
   description: '',
-  props: {
-    event: Property.ShortText({
-      displayName: 'Event',
-      description: '',
-      required: true,
-    }),
-    message: Property.LongText({
-      displayName: 'Message',
-      description: '',
-      required: true,
-    }),
-    status: Property.ShortText({
-      displayName: 'Status',
-      description: '',
-      required: true,
-    }),
-  },
+  props: props,
   async run(context) {
     const response = await axios({
       method: 'POST',
