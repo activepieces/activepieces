@@ -20,14 +20,19 @@ export const googleSheetsCommon = {
   spreadsheet_id: Property.Dropdown({
     displayName: 'Spreadsheet',
     required: true,
+    refreshOnSearch: true,
     refreshers: ['include_team_drives'],
-    options: async ({ auth, include_team_drives }) => {
+    options: async ({ auth, include_team_drives }, { searchValue }) => {
       if (!auth) {
         return {
           disabled: true,
           options: [],
           placeholder: 'Please authenticate first',
         };
+      }
+      const queries = ["mimeType='application/vnd.google-apps.spreadsheet'", "trashed=false"];
+      if (searchValue) {
+        queries.push(`name contains '${searchValue}'`);
       }
       const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
       const spreadsheets = (
@@ -36,7 +41,7 @@ export const googleSheetsCommon = {
             method: HttpMethod.GET,
             url: `https://www.googleapis.com/drive/v3/files`,
             queryParams: {
-              q: "mimeType='application/vnd.google-apps.spreadsheet'",
+              q: queries.join(' and '),
               includeItemsFromAllDrives: include_team_drives ? 'true' : 'false',
               supportsAllDrives: 'true',
             },

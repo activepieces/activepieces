@@ -151,6 +151,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 input,
                 flowVersionId,
                 flowId,
+                searchValue,
             } = req.body
             const { projectId } = req.principal
             const flow = await flowService.getOnePopulatedOrThrow({
@@ -170,6 +171,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 stepName,
                 input,
                 projectId,
+                searchValue,
             })
 
             return result

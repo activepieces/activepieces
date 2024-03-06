@@ -20,6 +20,7 @@ export const DropdownProperty = Type.Composite([
 
 export type DropdownProperty<T, R extends boolean> = BasePropertySchema & {
   refreshers: string[];
+  refreshOnSearch?: boolean;
   options: DynamicDropdownOptions<T>;
 } & TPropertyValue<T, PropertyType.DROPDOWN, ValidationInputType.ANY, R>;
 

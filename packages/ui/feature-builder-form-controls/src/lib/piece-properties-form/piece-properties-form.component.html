@@ -80,25 +80,27 @@
             <mat-label> {{ (refreshableConfigsLoadingFlags$[property.key] | async)? 'Loading...' :
               property.value.displayName
               }}</mat-label>
-            <mat-select #matSelect [formControlName]="property.key" (closed)="searchControl.setValue('')"
+            <mat-select #matSelect [formControlName]="property.key" (closed)="searchControls[property.key].setValue('')"
               [compareWith]="dropdownCompareWithFunction">
 
 
               <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
+                <ng-container *ngIf="(state.options | dropdownSearch:searchControls[property.key]) | async as options">
+                  <ng-container *ngTemplateOutlet="searchInputForDropdowns; context: {$implicit: property.key}">
+                  </ng-container>
 
+                  <mat-option [disabled]="true" *ngIf="(refreshableConfigsLoadingFlags$[property.key] | async)">
+                    <div class="ap-flex ap-items-center ap-justify-center">
+                      <ap-loading-icon> </ap-loading-icon>
+                    </div>
+                  </mat-option>
 
-                <ng-container
-                  *ngIf="(((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key]))">
-                  <ng-container *ngIf="(state.options | dropdownSearch:searchControl) | async as options">
-                    <ng-container *ngIf="!state.disabled">
-                      <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
-                    </ng-container>
+                  <ng-container *ngIf="(refreshableConfigsLoadingFlags$[property.key] | async) === false">
 
                     <cdk-virtual-scroll-viewport *ngIf="matSelect.panelOpen && !state.disabled" [itemSize]="48"
                       minBufferPx="200" maxBufferPx="400" class="ap-max-h-[195px] thin-scrollbars  ap-overflow-y-auto"
                       [class.ap-h-[50px]]="options.length === 1 " [class.ap-h-[100px]]="options.length === 2 "
                       [class.ap-h-[150px]]="options.length === 3 " [class.ap-h-[195px]]="options.length >= 4 ">
-
 
                       <mat-option *cdkVirtualFor="let opt of options" [value]="opt.value"
                         [class.mdc-list-item--selected]="(opt.value| isDropdownItemSelected:property.key:formGroup ) | async">
@@ -111,21 +113,20 @@
                         </div>
                       </mat-option>
                     </cdk-virtual-scroll-viewport>
-
-                    <mat-option
-                      *ngFor="let init of (state.options | dropdownInitialValue:property.key:formGroup)|async "
-                      class="!ap-hidden" [value]="init.value">
-                      {{init.label}}
-                    </mat-option>
-
-                    <mat-option [disabled]="true"
-                      *ngIf="state.disabled && ((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key])">
-                      <div> {{state.placeholder}} </div>
-                    </mat-option>
-
-                    <!-- need at least 1 pre-existing option to open the select -->
-                    <mat-option class="!ap-hidden"></mat-option>
                   </ng-container>
+
+                  <mat-option *ngFor="let init of (state.options | dropdownInitialValue:property.key:formGroup)|async "
+                    class="!ap-hidden" [value]="init.value">
+                    {{init.label}}
+                  </mat-option>
+
+                  <mat-option [disabled]="true"
+                    *ngIf="state.disabled && ((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key])">
+                    <div> {{state.placeholder}} </div>
+                  </mat-option>
+
+                  <!-- need at least 1 pre-existing option to open the select -->
+                  <mat-option class="!ap-hidden"></mat-option>
                 </ng-container>
 
 
@@ -167,7 +168,7 @@
               }}</mat-label>
 
 
-            <mat-select #matSelect (closed)="searchControl.setValue('')" [style.display]="((dropdownOptionsObservables$[property.key] | async) === undefined 
+            <mat-select #matSelect (closed)="searchControls[property.key].setValue('')" [style.display]="((dropdownOptionsObservables$[property.key] | async) === undefined 
                 || (dropdownOptionsObservables$[property.key] | async) === null || 
                  (dropdownOptionsObservables$[property.key] | async)?.disabled === true)? 'none':'block' " multiple
               [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
@@ -186,7 +187,8 @@
 
                 <ng-container
                   *ngIf="(((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key])) && !state.disabled">
-                  <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
+                  <ng-container
+                    *ngTemplateOutlet="searchInputForDropdowns; context: {$implicit: property.key}"></ng-container>
 
                   <cdk-virtual-scroll-viewport *ngIf="matSelect.panelOpen" [itemSize]="48" minBufferPx="200"
                     maxBufferPx="400" class="ap-max-h-[195px] thin-scrollbars  ap-overflow-y-auto"
@@ -253,9 +255,11 @@
 
 
             <mat-select #matSelect [matTooltip]="property.value.description" [formControlName]="property.key"
-              (closed)="searchControl.setValue('')" [compareWith]="dropdownCompareWithFunction">
-              <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
-              <ng-container *ngIf="(property.value.options.options | dropdownSearch:searchControl) | async as options">
+              (closed)="searchControls[property.key].setValue('')" [compareWith]="dropdownCompareWithFunction">
+              <ng-container
+                *ngTemplateOutlet="searchInputForDropdowns; context: {$implicit: property.key}"></ng-container>
+              <ng-container
+                *ngIf="(property.value.options.options | dropdownSearch:searchControls[property.key]) | async as options">
 
                 <cdk-virtual-scroll-viewport *ngIf="matSelect.panelOpen" [itemSize]="48" minBufferPx="200"
                   maxBufferPx="400" class="ap-max-h-[195px] thin-scrollbars  ap-overflow-y-auto"
@@ -318,7 +322,7 @@
             <mat-label> {{ property.value.displayName }} </mat-label>
 
             <mat-select #matSelect [matTooltip]="property.value.description" [formControlName]="property.key"
-              (closed)="searchControl.setValue('')" [compareWith]="dropdownCompareWithFunction" multiple>
+              (closed)="searchControls[property.key].setValue('')" [compareWith]="dropdownCompareWithFunction" multiple>
 
               <mat-select-trigger>
 
@@ -332,8 +336,10 @@
 
               </mat-select-trigger>
 
-              <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
-              <ng-container *ngIf="(property.value.options.options | dropdownSearch:searchControl) | async as options">
+              <ng-container
+                *ngTemplateOutlet="searchInputForDropdowns; context: {$implicit: property.key}"></ng-container>
+              <ng-container
+                *ngIf="(property.value.options.options | dropdownSearch:searchControls[property.key]) | async as options">
                 <cdk-virtual-scroll-viewport *ngIf="matSelect.panelOpen" [itemSize]="48" minBufferPx="200"
                   maxBufferPx="400" class="ap-max-h-[195px] thin-scrollbars  ap-overflow-y-auto"
                   [class.ap-h-[50px]]="options.length === 1 " [class.ap-h-[100px]]="options.length === 2"
@@ -647,11 +653,11 @@
 <ng-container *ngIf="setDefaultValue$ | async"></ng-container>
 
 
-<ng-template #searchInputForDropdowns>
+<ng-template #searchInputForDropdowns let-propertyKey>
   <mat-form-field subscriptSizing="dynamic" subscriptSizing="dynamic" appearance="fill"
     (click)="$event.stopPropagation();" class="ap-w-full ">
     <mat-icon matPrefix color="placeholder-icon" svgIcon="search"></mat-icon>
-    <input #searchInput [formControl]="searchControl" matInput placeholder="Search" autocomplete="off"
+    <input #searchInput [formControl]="searchControls[propertyKey]" matInput [placeholder]="'Search'" autocomplete="off"
       (keydown.Space)="$event.stopPropagation()">
   </mat-form-field>
 </ng-template>
