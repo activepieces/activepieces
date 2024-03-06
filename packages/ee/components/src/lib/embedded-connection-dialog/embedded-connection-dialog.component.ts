@@ -41,7 +41,7 @@ export class EmbeddedConnectionDialogComponent {
           this.hideConnectionIframe();
           return of(void 0);
         }
-        return this.pieceMetadataService.getPieceMetadata(pieceName, '').pipe(
+        return this.pieceMetadataService.getPieceMetadata(pieceName).pipe(
           tap(() => {
             setTimeout(() => {
               this.createConnectionButton.buttonClicked();

@@ -68,12 +68,13 @@ class ActivepiecesEmbedded {
     iframe.style.cssText = style;
     return iframe;
   }
-  private connectoToEmbed ({instanceUrl,jwtToken,iframeContainer,iframeStyling,client}: {
+  private connectoToEmbed ({instanceUrl,jwtToken,iframeContainer,iframeStyling,client,name}: {
     instanceUrl: string,
     jwtToken: string,
     iframeStyling: string | undefined,
     iframeContainer: Element,
     client: ActivepiecesEmbedded,
+    name:string
   }
   ): IframeWithWindow {
     const iframe = this.createIframe({src:`${instanceUrl}/embed?${jwtTokenQueryParamName}=${jwtToken}`,style:iframeStyling || ''});
@@ -87,6 +88,7 @@ class ActivepiecesEmbedded {
       window.addEventListener(
         'message',
         function (event: MessageEvent<ActivepiecesClientEvent>) {
+     
           if (event.source === iframeWindow) {
             switch (event.data.type) {
               case ActivepiecesClientEventName.CLIENT_INIT: {
@@ -106,19 +108,9 @@ class ActivepiecesEmbedded {
           }
         }
       );
-     this.addConnectionsIframe(instanceUrl);
      return iframe;
   };
   _connectionsIframe: HTMLIFrameElement | null = null;
-private addConnectionsIframe(instanceUrl:string){
-  const connectionsIframeStyle=['display:none','position:fixed','top:0','left:0','width:100%','height:100%','border:none'].join(';');
-  const connectionsRoute =`${instanceUrl}/embed/connections`;
-  this._connectionsIframe= this.createIframe({
-    src:connectionsRoute,
-    style:connectionsIframeStyle
-  });
-  document.body.appendChild(this._connectionsIframe);
-}
   configure({
     prefix,
     hideSidebar,
@@ -149,22 +141,25 @@ private addConnectionsIframe(instanceUrl:string){
       jwtToken,
       iframeStyling
     });
+
  
   }
 
-  connect ({pieceName}:{pieceName:string}) {
+  connect({pieceName}:{pieceName:string}) {
     if (!this._connectionsIframe || !this.doesFrameHaveWindow(this._connectionsIframe)) {
       console.error('Activepieces: connections iframe not found');
       return;
-    }
+      }
+       const apEvent: ActivepiecesVendorRouteChanged = {
+         type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
+         data: {
+          //added date so angular queryparams will be updated and open the dialog, because if you try to create two connections with the same piece, the second one will not open the dialog
+           vendorRoute:`/embed/connections?${NEW_CONNECTION_QUERY_PARAMS.name}=${pieceName}&date=${Date.now()}`
+         },
+       };
+    this._connectionsIframe.contentWindow.postMessage(apEvent, '*');
+    this._connectionsIframe.style.display = 'block';
  
-    this._connectionsIframe.src=`${this._instanceUrl}/embed/connections?${NEW_CONNECTION_QUERY_PARAMS.name}=${pieceName}`,
-    this._connectionsIframe.onload = () => {
-      if(this._connectionsIframe){
-      this._connectionsIframe.style.display = 'block';}
-    }
-    this.checkIfNewConnectionDialogClosed(this,this._connectionsIframe.contentWindow);
-    
   }
   private initializeBuilderIframe = ({client,builderIframeContainerSelector, instanceUrl,jwtToken, iframeStyling}
     :{client: ActivepiecesEmbedded,
@@ -177,9 +172,12 @@ private addConnectionsIframe(instanceUrl:string){
     console.error('Activepieces: iframe container not found');
     return;
    }
-   const iframeWindow = this.connectoToEmbed({instanceUrl, jwtToken, iframeStyling, iframeContainer, client}).contentWindow;
+   const iframeWindow = this.connectoToEmbed({instanceUrl, jwtToken, iframeStyling, iframeContainer, client,name:'builder'}).contentWindow;
+   const connectionsIframeStyle=['display:none','position:fixed','top:0','left:0','width:100%','height:100%','border:none'].join(';');
+   this._connectionsIframe= this.connectoToEmbed({instanceUrl, jwtToken, iframeStyling:connectionsIframeStyle, iframeContainer:document.body, client,name:'connections'});
    this.checkForVendorRouteChanges(iframeWindow, client);
    this.checkForClientRouteChanges(client,iframeWindow);
+   this.checkIfNewConnectionDialogClosed();
  };
  
  private checkForClientRouteChanges = (client: ActivepiecesEmbedded,source:Window) => {
@@ -243,19 +241,24 @@ private addConnectionsIframe(instanceUrl:string){
  private doesFrameHaveWindow(frame: HTMLIFrameElement): frame is IframeWithWindow {
    return frame.contentWindow !== null;
  }
- private checkIfNewConnectionDialogClosed = (client: ActivepiecesEmbedded,source:Window) => {
-  window.addEventListener(
-    'message',
-    function (event: MessageEvent<ActivepiecesNewConnectionDialogClosed>) {
-      if (
-        event.data.type === ActivepiecesClientEventName.CLIENT_NEW_CONNECTION_DIALOG_CLOSED
-        && event.source === source
-        && client._connectionsIframe
-      ) {
-        client._connectionsIframe.style.display = 'none';
+ checkIfNewConnectionDialogClosed() {
+ 
+    window.addEventListener(
+      'message',
+      (event: MessageEvent<ActivepiecesNewConnectionDialogClosed>)=> {
+        if(this._connectionsIframe && this.doesFrameHaveWindow(this._connectionsIframe))
+        {
+        if (
+          event.data.type === ActivepiecesClientEventName.CLIENT_NEW_CONNECTION_DIALOG_CLOSED
+     
+        ) {
+          this._connectionsIframe.style.display = 'none';
+        }
       }
-    }
-  );
+  }
+
+    );
+ 
 };
 }
 
