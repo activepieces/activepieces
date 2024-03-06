@@ -22,7 +22,10 @@
         "@typescript-eslint/quotes": ["error", "single"],
         "@typescript-eslint/semi": ["error", "never"],
         "@typescript-eslint/consistent-type-definitions": ["error", "type"],
-        "@typescript-eslint/no-explicit-any": "error",
+        // ---- PROCOL_CODE_STARTS ----
+        // "@typescript-eslint/no-explicit-any": "error",
+        "@typescript-eslint/no-explicit-any": ["off"],
+        // ---- PROCOL_CODE_ENDS ----
         "@typescript-eslint/no-redundant-type-constituents": "error",
         "@typescript-eslint/await-thenable": "error",
         "@typescript-eslint/adjacent-overload-signatures": "error",
