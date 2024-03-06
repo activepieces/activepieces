@@ -48,11 +48,11 @@ export type CreateAuditEventParam =
       flow: PopulatedFlow
       request: FlowOperationRequest
       userId: string
-  }| {
-    action: ApplicationEventName.CREATED_SIGNING_KEY
-    userId: string
-    signingKey: SigningKey
-}
+  } | {
+      action: ApplicationEventName.CREATED_SIGNING_KEY
+      userId: string
+      signingKey: SigningKey
+  }
 
 let hooks: ApplicationEventHooks = {
     async send(_request, _params) {
