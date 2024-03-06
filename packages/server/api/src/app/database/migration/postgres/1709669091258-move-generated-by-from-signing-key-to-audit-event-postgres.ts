@@ -54,7 +54,7 @@ export class MoveGeneratedByFromSigningKeyToAuditEventPostgres1709669091258 impl
 
 const getAllSigningKeyIds = async (queryRunner: QueryRunner): Promise<string[]> => {
     const queryResult: { id: string }[] = await queryRunner.query(
-        'SELECT id FROM piece_metadata',
+        'SELECT id FROM "signing_key"',
     )
 
     return queryResult.map(({ id }) => id)
@@ -62,7 +62,7 @@ const getAllSigningKeyIds = async (queryRunner: QueryRunner): Promise<string[]> 
 
 const getSigningKeyById = async (id: string, queryRunner: QueryRunner): Promise<SigningKey> => {
     const queryResult = await queryRunner.query(
-        'SELECT "id", "created", "generatedBy", "platformId" FROM "piece_metadata" WHERE "id" = $1',
+        'SELECT "id", "created", "generatedBy", "platformId", "displayName" FROM "signing_key" WHERE "id" = $1',
         [id],
     )
 
