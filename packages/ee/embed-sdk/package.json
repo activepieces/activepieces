@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/ee-embed-sdk",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "type": "commonjs",
   "main": "./src/index.js",
   "typings": "./src/index.d.ts",

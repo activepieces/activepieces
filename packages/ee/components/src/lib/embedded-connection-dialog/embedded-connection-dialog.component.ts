@@ -34,32 +34,29 @@ export class EmbeddedConnectionDialogComponent {
     this.openNewConnectionsDialog$ = this.activatedRoute.queryParams.pipe(
       switchMap((params) => {
         const pieceName = params[NEW_CONNECTION_QUERY_PARAMS.name];
-        const pieceVersion = params[NEW_CONNECTION_QUERY_PARAMS.version];
-        if (!pieceVersion || !pieceName) {
+        if (!pieceName) {
           console.error(
             `Activepieces: pieceName and pieceVersion are required query parameters`
           );
           this.hideConnectionIframe();
           return of(void 0);
         }
-        return this.pieceMetadataService
-          .getPieceMetadata(pieceName, pieceVersion)
-          .pipe(
-            tap(() => {
-              setTimeout(() => {
-                this.createConnectionButton.buttonClicked();
-                this.isDialogOpen = true;
-              });
-            }),
-            catchError((err) => {
-              console.error(
-                `Activepieces: Failed to fetch piece metadata for ${pieceName} and ${pieceVersion}`,
-                err
-              );
-              this.hideConnectionIframe();
-              return of(void 0);
-            })
-          );
+        return this.pieceMetadataService.getPieceMetadata(pieceName, '').pipe(
+          tap(() => {
+            setTimeout(() => {
+              this.createConnectionButton.buttonClicked();
+              this.isDialogOpen = true;
+            });
+          }),
+          catchError((err) => {
+            console.error(
+              `Activepieces: Failed to fetch piece metadata for ${pieceName}`,
+              err
+            );
+            this.hideConnectionIframe();
+            return of(void 0);
+          })
+        );
       })
     );
   }
