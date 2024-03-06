@@ -48,6 +48,7 @@ export const routes: Routes = [
     component: EmbeddedConnectionDialogComponent,
     canActivate: [
       showBasedOnEditionGuard([ApEdition.ENTERPRISE, ApEdition.CLOUD]),
+      UserLoggedIn,
     ],
   },
   {
