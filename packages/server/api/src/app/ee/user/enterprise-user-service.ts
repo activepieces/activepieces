@@ -1,6 +1,7 @@
 import {
     ActivepiecesError,
     ErrorCode,
+    PlatformId,
     SeekPage,
     User,
     UserId,
@@ -48,14 +49,36 @@ export const enterpriseUserService = {
             platformId,
         })
     },
+
+    async delete({ id, platformId }: DeleteParams): Promise<void> {
+        const deleteResult = await repo.delete({
+            id,
+            platformId,
+        })
+
+        if (deleteResult.affected !== 1) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'user',
+                    entityId: id,
+                },
+            })
+        }
+    },
 }
 
 type ListParams = {
-    platformId: string
+    platformId: PlatformId
 }
 
 type UpdateParams = {
     id: UserId
     status: UserStatus
-    platformId: string
+    platformId: PlatformId
+}
+
+type DeleteParams = {
+    id: UserId
+    platformId: PlatformId
 }

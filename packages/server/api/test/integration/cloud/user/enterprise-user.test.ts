@@ -2,8 +2,10 @@ import { databaseConnection } from '../../../../src/app/database/database-connec
 import { setupApp } from '../../../../src/app/app'
 import { generateMockToken } from '../../../helpers/auth'
 import {
+    createMockOtp,
     createMockPlatformWithOwner,
     createMockUser,
+    mockBasicSetup,
     setupMockApiKeyServiceAccount,
 } from '../../../helpers/mocks'
 import { StatusCodes } from 'http-status-codes'
@@ -106,7 +108,7 @@ describe('Enterprise User API', () => {
 
         it('Requires principal to be platform owner', async () => {
             // arrange
-    
+
             const { mockPlatform, mockOwner } = createMockPlatformWithOwner()
 
             const testToken = await generateMockToken({
@@ -277,6 +279,101 @@ describe('Enterprise User API', () => {
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
             const responseBody = response?.json()
 
+            expect(responseBody?.code).toBe('AUTHORIZATION')
+        })
+    })
+
+    describe('Delete user endpoint', () => {
+        it('Removes a user', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockBasicSetup()
+
+            const mockEditor = createMockUser({ platformId: mockPlatform.id })
+            await databaseConnection.getRepository('user').save([mockEditor])
+
+            const mockOwnerToken = await generateMockToken({
+                id: mockOwner.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                    role: PlatformRole.OWNER,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/v1/users/${mockEditor.id}`,
+                headers: {
+                    authorization: `Bearer ${mockOwnerToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+        })
+
+        it('Removes OTP for deleted user', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockBasicSetup()
+
+            const mockEditor = createMockUser({ platformId: mockPlatform.id })
+            await databaseConnection.getRepository('user').save([mockEditor])
+
+            const mockOtp = createMockOtp({ userId: mockEditor.id })
+            await databaseConnection.getRepository('otp').save(mockOtp)
+
+            const mockOwnerToken = await generateMockToken({
+                id: mockOwner.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                    role: PlatformRole.OWNER,
+                },
+            })
+
+            // act
+            await app?.inject({
+                method: 'DELETE',
+                url: `/v1/users/${mockEditor.id}`,
+                headers: {
+                    authorization: `Bearer ${mockOwnerToken}`,
+                },
+            })
+
+            // assert
+            const otp = await databaseConnection.getRepository('otp').findOneBy({ id: mockOtp.id })
+            expect(otp).toBe(null)
+        })
+
+        it('Fails if user is not platform owner', async () => {
+            // arrange
+            const { mockPlatform } = await mockBasicSetup()
+
+            const mockUser = createMockUser({ platformId: mockPlatform.id })
+            await databaseConnection.getRepository('user').save([mockUser])
+
+            const mockUserToken = await generateMockToken({
+                id: mockUser.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                    role: PlatformRole.MEMBER,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/v1/users/${mockUser.id}`,
+                headers: {
+                    authorization: `Bearer ${mockUserToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            const responseBody = response?.json()
             expect(responseBody?.code).toBe('AUTHORIZATION')
         })
     })
