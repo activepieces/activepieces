@@ -8,7 +8,7 @@ import { userService } from '../../../../user/user-service'
 import { isNil } from '@activepieces/shared'
 import { flagService } from '../../../../../app/flags/flag.service'
 import { appsumoService } from '../../../billing/appsumo/appsumo.service'
-import { logger } from 'server-shared'
+import { exceptionHandler, logger } from 'server-shared'
 
 export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
     async preSignIn({ email, platformId, provider }) {
@@ -49,6 +49,7 @@ export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
                 })
             }
             catch (e) {
+                exceptionHandler.handle(e)
                 logger.error(e, '[CloudAuthenticationServiceHooks#postSignUp] referralService.add')
             }
         }
