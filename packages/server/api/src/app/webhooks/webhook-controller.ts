@@ -81,7 +81,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
                 return
             }
             // ---- PROCOL_CODE_STARTS ----
-            const run = asyncHandler(payload, flow).catch(exceptionHandler.handle)
+            const run = await asyncHandler(payload, flow).catch(exceptionHandler.handle)
             await reply.status(StatusCodes.OK).headers({}).send({ run })
             // ---- PROCOL_CODE_ENDS ----
         },
