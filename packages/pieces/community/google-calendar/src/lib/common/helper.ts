@@ -97,7 +97,7 @@ export async function getEvents(
     updatedMin: minUpdated?.toISOString() ?? yesterday.toISOString(),
     maxResults: '2500', // Modified
     orderBy: 'updated',
-    singleEvents: 'true',
+    // singleEvents: 'true',
     showDeleted: 'true',
   };
 
