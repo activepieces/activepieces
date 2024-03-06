@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
   "version": "0.20.3",
-  "rcVersion": "0.21.0-rc.1",
+  "rcVersion": "0.21.0-rc.2",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve ui-core",
