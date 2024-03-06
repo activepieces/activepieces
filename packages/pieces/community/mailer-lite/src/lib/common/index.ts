@@ -55,7 +55,11 @@ export const mailerLiteCommon = {
 				}
 
 				const client = new MailerLite({ api_key: auth as string });
-				const response = await client.groups.get({ page: 1, limit: 100, sort: '-created_at' });
+				const response = await client.groups.get({
+					page: 1,
+					limit: 100,
+					sort: '-created_at',
+				});
 
 				return {
 					disabled: false,
@@ -83,7 +87,11 @@ export const mailerLiteCommon = {
 				}
 
 				const client = new MailerLite({ api_key: auth as string });
-				const response = await client.groups.get({ page: 1, limit: 100, sort: '-created_at' });
+				const response = await client.groups.get({
+					page: 1,
+					limit: 100,
+					sort: '-created_at',
+				});
 
 				return {
 					disabled: false,
@@ -110,11 +118,14 @@ export const mailerLiteCommon = {
 					};
 				}
 				const client = new MailerLite({ api_key: auth as string });
-				const options: { label: string; value: string }[] = [];
+				const subscribers: { label: string; value: string }[] = [];
 				let cursor;
 				do {
-					let response = await client.subscribers.get({ limit: 25, cursor: cursor });
-					options.push(
+					const response = await client.subscribers.get({
+						limit: 25,
+						cursor: cursor,
+					});
+					subscribers.push(
 						...response.data.data.map((subscriber) => ({
 							label: subscriber.email,
 							value: subscriber.id,
@@ -122,10 +133,9 @@ export const mailerLiteCommon = {
 					);
 					cursor = response.data.meta.next_cursor;
 				} while (cursor !== null);
-
 				return {
 					disabled: false,
-					options: options,
+					options: subscribers,
 				};
 			},
 		}),
