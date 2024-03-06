@@ -60,7 +60,6 @@ describe('Signing Key API', () => {
             expect(responseBody.publicKey).toBeDefined()
             expect(responseBody.displayName).toBe(mockSigningKeyName)
             expect(responseBody.privateKey).toBeDefined()
-            expect(responseBody.generatedBy).toBe(mockUser.id)
             expect(responseBody.algorithm).toBe('RSA')
         }, 10000)
 
@@ -74,7 +73,6 @@ describe('Signing Key API', () => {
 
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
-                generatedBy: mockUser.id,
             })
 
             await databaseConnection
@@ -115,7 +113,6 @@ describe('Signing Key API', () => {
 
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
-                generatedBy: mockUser.id,
             })
 
             await databaseConnection
@@ -144,7 +141,6 @@ describe('Signing Key API', () => {
             expect(responseBody.id).toBe(mockSigningKey.id)
             expect(responseBody.platformId).toBe(mockSigningKey.platformId)
             expect(responseBody.publicKey).toBe(mockSigningKey.publicKey)
-            expect(responseBody.generatedBy).toBe(mockSigningKey.generatedBy)
             expect(responseBody.algorithm).toBe(mockSigningKey.algorithm)
         })
     })
@@ -166,7 +162,6 @@ describe('Signing Key API', () => {
 
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
-                generatedBy: mockUser.id,
             })
 
             await databaseConnection
@@ -210,12 +205,10 @@ describe('Signing Key API', () => {
 
             const mockSigningKeyOne = createMockSigningKey({
                 platformId: mockPlatformOne.id,
-                generatedBy: mockUserOne.id,
             })
 
             const mockSigningKeyTwo = createMockSigningKey({
                 platformId: mockPlatformTwo.id,
-                generatedBy: mockUserTwo.id,
             })
 
             await databaseConnection
