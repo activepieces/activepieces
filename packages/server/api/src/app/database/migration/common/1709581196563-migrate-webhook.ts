@@ -26,7 +26,7 @@ export class MigrateWebhook1709581196563 implements MigrationInterface {
                     'inputUiInfo': step.settings.inputUiInfo,
                     triggerName: 'catch_request',
                     pieceName: '@activepieces/piece-webhook',
-                    pieceVersion: '~0.0.1',
+                    pieceVersion: '0.0.1',
                     'pieceType': 'OFFICIAL',
                     'packageType': 'REGISTRY',
                 }

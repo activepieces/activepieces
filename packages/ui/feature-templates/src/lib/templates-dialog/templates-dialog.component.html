@@ -3,52 +3,59 @@
     <span i18n>Browse Templates</span>
     <ap-icon-button tooltipText="Close" iconFilename="close.svg" mat-dialog-close></ap-icon-button>
 </div>
-<mat-tab-group [preserveContent]="true"  [animationDuration]="ANIMATION_DURATION">
-    <mat-tab  label="templates"> <div class="ap-flex">
-        <mat-dialog-content class="!ap-flex ap-min-h-[559px] ap-h-[67.5vh] !ap-max-h-[950px] ap-w-[100vw] ap-max-w-[1070px] ap-gap-2 ap-p-0">
-            <ng-container *ngTemplateOutlet="filtersColumn"></ng-container>
-            <ng-container *ngTemplateOutlet="contentColumn; context:{showFeaturedBanner:false}"></ng-container>
-        </mat-dialog-content>
-    </div>
-</mat-tab>
-    <mat-tab label="description"> 
-        <div class=" ap-min-h-[559px] ap-h-[67.5vh] ap-flex ap-flex-col !ap-max-h-[950px] ap-w-[calc(100vw-257px)] ap-max-w-[1070px]">
+<mat-tab-group [preserveContent]="true" [animationDuration]="ANIMATION_DURATION">
+    <mat-tab label="templates">
+        <div class="ap-flex">
+            <mat-dialog-content
+                class="!ap-flex ap-min-h-[559px] ap-h-[67.5vh] !ap-max-h-[950px] ap-w-[100vw] ap-max-w-[1070px] ap-gap-2 ap-p-0">
+                <ng-container *ngTemplateOutlet="filtersColumn"></ng-container>
+                <ng-container *ngTemplateOutlet="contentColumn; context:{showFeaturedBanner:false}"></ng-container>
+            </mat-dialog-content>
+        </div>
+    </mat-tab>
+    <mat-tab label="description">
+        <div
+            class=" ap-min-h-[559px] ap-h-[67.5vh] ap-flex ap-flex-col !ap-max-h-[950px] ap-w-[calc(100vw-257px)] ap-max-w-[1070px]">
             <ng-container *ngIf="descriptionTemplate$ | async as template">
                 <div class="ap-pt-3 ap-px-6 ap-flex ap-items-center ap-justify-between ">
                     <ap-button btnSize="medium" btnColor="basic" btnStyle="basic" (buttonClicked)="backToTemplates()">
                         <div class="ap-flex ap-gap-2 ap-items-center">
-                            <svg-icon src="assets/img/custom/back.svg" class="ap-w-[14px] ap-h-[14px] ap-fill-body"></svg-icon>  Back
+                            <svg-icon src="assets/img/custom/back.svg"
+                                class="ap-w-[14px] ap-h-[14px] ap-fill-body"></svg-icon> Back
                         </div>
                     </ap-button>
                 </div>
-               
-                <div class="ap-max-h-[calc(67.5vh-119px)] ap-min-h-[440px]  ap-flex ap-text-body ap-p-0 ap-overflow-y-auto thin-scrollbars black-scrollbars">
-                    
-                    <div class="ap-pt-3 ap-px-6 ap-min-w-0  ap-grow ap-shrink ap-basis-[1070px] ap-typography-body-1 ap-text-body ap-grow ">
-                    
+
+                <div
+                    class="ap-max-h-[calc(67.5vh-119px)] ap-min-h-[440px]  ap-flex ap-text-body ap-p-0 ap-overflow-y-auto thin-scrollbars black-scrollbars">
+
+                    <div
+                        class="ap-pt-3 ap-px-6 ap-min-w-0  ap-grow ap-shrink ap-basis-[1070px] ap-typography-body-1 ap-text-body ap-grow ">
+
                         <app-template-description [template]="template"></app-template-description>
                     </div>
-            
-            </div>
-            
-                <div class="ap-flex ap-grow ap-gap-2.5 ap-px-6 ap-my-2 ap-flex ap-items-end  ap-justify-end ap-flex-col">
-                  
-                        <ap-button btnSize="large" btnColor="primary" (buttonClicked)="useTemplate(template,'all ideas')"
+
+                </div>
+
+                <div
+                    class="ap-flex ap-grow ap-gap-2.5 ap-px-6 ap-my-2 ap-flex ap-items-end  ap-justify-end ap-flex-col">
+
+                    <ap-button btnSize="large" btnColor="primary" (buttonClicked)="useTemplate(template,'all ideas')"
                         i18n>
                         Use Template
                     </ap-button>
-                    
-              
+
+
                 </div>
-            
-           
-        
-        </ng-container>
+
+
+
+            </ng-container>
         </div>
-     
-</mat-tab>
-    
-  </mat-tab-group>
+
+    </mat-tab>
+
+</mat-tab-group>
 
 
 <ng-container *ngIf="templates$ | async"></ng-container>
@@ -78,8 +85,29 @@
             [class.ap-items-center]="(loading$ | async)" [class.ap-justify-center]="(loading$ | async)">
 
             <ng-container *ngIf="(loading$ | async) === false">
-                <app-template-card (descriptionButtonClicked)="showTemplateDescription($event)" [template]="template" (useTemplateClicked)="useTemplate(template,'all ideas')"
-                    *ngFor="let template of (templates$ | async)"></app-template-card>
+
+
+                <ng-container *ngIf=" templates$ | async as templates">
+
+                    <div (click)="startFromScratch()" *ngIf="data?.showStartFromScratch"
+                        class="ap-flex ap-items-center ap-gap-2 ap-justify-center ap-flex-col ap-border ap-border-outline ap-h-[241px] ap-w-[246px] ap-rounded ap-bg-white ap-rounded-lg ap-cursor-pointer ap-transition-colors hover:ap-border-primary hover:ap-bg-primary-light ">
+                        <ng-container>
+                            <svg-icon src="assets/img/custom/add.svg" [applyClass]="true"
+                                class="ap-fill-primary ap-w-[26px] ap-h-[26px]"></svg-icon>
+                            <div class="ap-typography-subtitle-1 ap-text-primary" i18n>Start from scratch</div>
+                        </ng-container>
+                    </div>
+                    <div *ngIf="templates.length === 0 && !data?.showStartFromScratch"
+                        class="ap-flex ap-items-center ap-justify-center ap-grow"> No templates found, try adjusting
+                        your
+                        filters or search.
+                    </div>
+
+                    <app-template-card (descriptionButtonClicked)="showTemplateDescription($event)"
+                        [template]="template" (useTemplateClicked)="useTemplate(template,'all ideas')"
+                        *ngFor="let template of (templates$ | async)"></app-template-card>
+
+                </ng-container>
             </ng-container>
 
             <ap-loading-icon *ngIf="loading$ | async" [outlineLoader]="false" [whiteLoader]="false" height="40px"
