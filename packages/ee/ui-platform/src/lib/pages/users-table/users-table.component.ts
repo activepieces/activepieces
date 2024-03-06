@@ -18,6 +18,7 @@ import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
 })
 export class UsersTableComponent {
   deactivate$?: Observable<void>;
+  delete$?: Observable<void>;
   activate$?: Observable<void>;
   title = $localize`Users`;
   deactivated = $localize`Inactive`;
@@ -67,6 +68,19 @@ export class UsersTableComponent {
       );
   }
 
+  deleteUser(user: UserResponse) {
+    this.delete$ = this.platformService.deleteUser(user.id).pipe(
+      tap(() => {
+        this.refresh$.next(true);
+        this.snackBar.openFromComponent(GenericSnackbarTemplateComponent, {
+          data: `<b>${user.firstName} ${
+            user.lastName
+          }</b> ${$localize`deleted`} `,
+        });
+      })
+    );
+  }
+
   activateUser(user: UserResponse) {
     this.activate$ = this.platformService
       .updateUser(user.id, { status: UserStatus.ACTIVE })
@@ -80,5 +94,9 @@ export class UsersTableComponent {
           });
         })
       );
+  }
+
+  disableDeleteButton(user: UserResponse) {
+    return this.isDemo || user.id === this.platformOwnerId;
   }
 }
