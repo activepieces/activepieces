@@ -46,9 +46,6 @@
             *ngIf="currentStep.type === ActionType.PIECE || currentStep.type === ActionType.BRANCH || currentStep.type === ActionType.LOOP_ON_ITEMS  || currentStep.type === ActionType.CODE"
             [step]="currentStep"></app-test-action>
 
-          <app-test-webhook-trigger
-            *ngIf="currentStep.type === TriggerType.WEBHOOK"
-          ></app-test-webhook-trigger>
 
           <app-test-polling-trigger
             *ngIf="triggerSupportsLoadingTestData$ | async"

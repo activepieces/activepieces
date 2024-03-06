@@ -143,11 +143,7 @@ const selectCurrentStepSettings = createSelector(
 const selectTriggerSelectedSampleData = createSelector(
   selectCurrentStep,
   (step) => {
-    if (
-      step &&
-      (step.type === TriggerType.PIECE || step.type === TriggerType.WEBHOOK) &&
-      step.settings.inputUiInfo
-    ) {
+    if (step && step.type === TriggerType.PIECE && step.settings.inputUiInfo) {
       return step.settings.inputUiInfo.currentSelectedData;
     }
     return undefined;
@@ -453,8 +449,6 @@ function findStepLogoUrlForMentions(
       return 'assets/img/custom/piece/emptyTrigger.png';
     case ActionType.BRANCH:
       return 'assets/img/custom/piece/branch_mention.png';
-    case TriggerType.WEBHOOK:
-      return 'assets/img/custom/piece/webhook_mention.png';
     case ActionType.LOOP_ON_ITEMS:
       return 'assets/img/custom/piece/loop_mention.png';
     case ActionType.CODE:
@@ -511,8 +505,6 @@ const selectFlowTriggerIsTested = createSelector(selectCurrentFlow, (flow) => {
   switch (flow.version.trigger.type) {
     case TriggerType.EMPTY:
       return false;
-    case TriggerType.WEBHOOK:
-      return !!flow.version.trigger.settings.inputUiInfo.currentSelectedData;
     case TriggerType.PIECE:
       return !!flow.version.trigger.settings.inputUiInfo.currentSelectedData;
   }

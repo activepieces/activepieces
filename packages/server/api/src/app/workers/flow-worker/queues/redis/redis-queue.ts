@@ -2,7 +2,7 @@ import { DefaultJobOptions, Queue } from 'bullmq'
 import { ApEdition, ApEnvironment, ApId } from '@activepieces/shared'
 import { createRedisClient } from '../../../../database/redis-connection'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { logger } from 'server-shared'
+import { exceptionHandler, logger } from 'server-shared'
 import { isNil } from '@activepieces/shared'
 import {
     OneTimeJobData,
@@ -87,7 +87,7 @@ export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
         serverAdapter,
     })
     const environment =
-    system.get(SystemProp.ENVIRONMENT) ?? ApEnvironment.DEVELOPMENT
+        system.get(SystemProp.ENVIRONMENT) ?? ApEnvironment.DEVELOPMENT
     switch (environment) {
         case ApEnvironment.DEVELOPMENT:
             serverAdapter.setBasePath(QUEUE_BASE_PATH)
@@ -188,17 +188,14 @@ export const redisQueueManager: QueueManager = {
 
     async removeRepeatingJob({ id }: RemoveParams): Promise<void> {
         const client = await scheduledJobQueue.client
-        const jobKey = await client.get(repeatingJobKey(id))
-
-        if (jobKey === null) {
+        const jobKey = await findRepeatableJobKey(id)
+        if (isNil(jobKey)) {
             /*
                 If the trigger activation failed, don't let the function fail, just ignore the action, and log an error
                 message indicating that the job with key "${jobKey}" couldn't be found, even though it should exist, and
                 proceed to skip the deletion.
             */
-            logger.error(
-                `Couldn't find job ${jobKey}, even though It should exists, skipping delete`,
-            )
+            exceptionHandler.handle(new Error(`Couldn't find job key for id "${id}"`))
         }
         else {
             const result = await scheduledJobQueue.removeRepeatableByKey(jobKey)
@@ -216,6 +213,18 @@ export const redisQueueManager: QueueManager = {
     },
 }
 
+async function findRepeatableJobKey(id: ApId): Promise<string | undefined> {
+    const client = await scheduledJobQueue.client
+    const jobKey = await client.get(repeatingJobKey(id))
+    if (isNil(jobKey)) {
+        logger.warn({ jobKey: id }, 'Job key not found in redis, trying to find it in the queue')
+        // TODO: this temporary solution for jobs that doesn't have repeatJobKey in redis, it's also confusing because it search by flowVersionId
+        const jobs = await scheduledJobQueue.getJobs()
+        return jobs.filter(f => !isNil(f) && !isNil(f.data)).find((f) => f.data.flowVersionId === id)?.repeatJobKey
+    }
+    return jobKey
+}
+
 type MaybeJob = Job<ScheduledJobData, unknown> | undefined
 
 const jobDataSchemaVersionIsNotLatest = (
@@ -223,8 +232,8 @@ const jobDataSchemaVersionIsNotLatest = (
 ): job is Job<ScheduledJobData, unknown> => {
     return (
         !isNil(job) &&
-    !isNil(job.data) &&
-    job.data.schemaVersion !== LATEST_JOB_DATA_SCHEMA_VERSION
+        !isNil(job.data) &&
+        job.data.schemaVersion !== LATEST_JOB_DATA_SCHEMA_VERSION
     )
 }
 
@@ -246,7 +255,7 @@ const migrateScheduledJobs = async (): Promise<void> => {
             let modifiedJobData = JSON.parse(JSON.stringify(job.data))
             if (
                 modifiedJobData.schemaVersion === undefined ||
-        modifiedJobData.schemaVersion === 1
+                modifiedJobData.schemaVersion === 1
             ) {
                 const { flowVersion, projectId, triggerType } = modifiedJobData
                 modifiedJobData = {

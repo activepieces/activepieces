@@ -16,11 +16,13 @@
                     [disabled]="(isValid$ | async) === false || (isSaving$ | async) === true" i18n>Test
                     Trigger </ap-button>
             </div>
-            <div class="ap-typography-subtitle-2 ap-text-description" i18n>
-                Or
-            </div>
-            <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium" (buttonClicked)="useMockData()" i18n>Use Mock
-                Data </ap-button>
+            <ng-container *ngIf="pieceSampleData$ | async as sampleData">
+                <div class="ap-typography-subtitle-2 ap-text-description" i18n>
+                    Or
+                </div>
+                <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium" (buttonClicked)="useMockData()" i18n>Use Mock
+                    Data </ap-button>
+            </ng-container>
         </div>
 
         <ng-container *ngIf="currentResults.length >0 && !testing">
