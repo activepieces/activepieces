@@ -252,7 +252,7 @@ export class AppComponent implements OnInit {
           tap((embedded) => {
             if (
               routingEvent instanceof NavigationStart &&
-              routingEvent.url.startsWith('/embed') &&
+              routingEvent.url === '/embed' &&
               embedded
             ) {
               console.error('visiting /embed after init');
