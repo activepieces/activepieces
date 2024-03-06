@@ -4,6 +4,7 @@ import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockOtp,
     createMockPlatformWithOwner,
+    createMockProjectMember,
     createMockUser,
     mockBasicSetup,
     setupMockApiKeyServiceAccount,
@@ -344,6 +345,43 @@ describe('Enterprise User API', () => {
             // assert
             const otp = await databaseConnection.getRepository('otp').findOneBy({ id: mockOtp.id })
             expect(otp).toBe(null)
+        })
+
+        it('Removes deleted user project memberships', async () => {
+            // arrange
+            const { mockOwner, mockPlatform, mockProject } = await mockBasicSetup()
+
+            const mockUser = createMockUser({ platformId: mockPlatform.id })
+            await databaseConnection.getRepository('user').save([mockUser])
+
+            const mockProjectMember = createMockProjectMember({
+                email: mockUser.email,
+                platformId: mockPlatform.id,
+                projectId: mockProject.id,
+            })
+            await databaseConnection.getRepository('project_member').save(mockProjectMember)
+
+            const mockOwnerToken = await generateMockToken({
+                id: mockOwner.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                    role: PlatformRole.OWNER,
+                },
+            })
+
+            // act
+            await app?.inject({
+                method: 'DELETE',
+                url: `/v1/users/${mockUser.id}`,
+                headers: {
+                    authorization: `Bearer ${mockOwnerToken}`,
+                },
+            })
+
+            // assert
+            const deletedProjectMember = await databaseConnection.getRepository('project_member').findOneBy({ id: mockProjectMember.id })
+            expect(deletedProjectMember).toBe(null)
         })
 
         it('Fails if user is not platform owner', async () => {
