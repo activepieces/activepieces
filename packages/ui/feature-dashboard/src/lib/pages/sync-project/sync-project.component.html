@@ -10,7 +10,8 @@
         </ap-page-title>
         <ng-container *ngIf="showUpgrade">
             <div class="ap-mb-4 ">
-                <ap-upgrade-note [featureNote]="upgradeNote" docsLink="https://www.activepieces.com/docs/operations/git-sync"></ap-upgrade-note>
+                <ap-upgrade-note [featureNote]="upgradeNote"
+                    docsLink="https://www.activepieces.com/docs/operations/git-sync"></ap-upgrade-note>
             </div>
         </ng-container>
         <div apCard
@@ -29,7 +30,8 @@
                     [applyClass]="true"></svg-icon>
                 <div i18n>
                     Connected Repo: <b>{{currentRepo?.remoteUrl}}</b> <br>
-                    Branch: <b>{{currentRepo?.branch}}</b>
+                    Branch: <b>{{currentRepo?.branch}}</b> <br>
+                    Folder: <b>{{currentRepo.slug}}</b>
                 </div>
                 <ap-icon-button i18n-tooltipText tooltipText="Disconnect" iconFilename="disconnect.svg" [width]="18"
                     [height]="18" (buttonClicked)="disconnect()" color="warn">
@@ -40,7 +42,8 @@
             <div class="ap-flex ap-flex-col ap-gap-4 ap-divide-y ap-divide-dividers  ap-w-[700px]">
                 <div class="ap-flex ap-gap-4 ap-items-center">
                     <ap-button *ngIf="(currentProject$ | async) as currentProject" actionButton btnColor="primary"
-                        btnSize='medium' btnStyle="stroked" (buttonClicked)="pull()" [loading]="pullDialogLoading$ | async | defaultFalse" [darkLoadingSpinner]="true">
+                        btnSize='medium' btnStyle="stroked" (buttonClicked)="pull()"
+                        [loading]="pullDialogLoading$ | async | defaultFalse" [darkLoadingSpinner]="true">
                         <div class="ap-flex ap-gap-2 ">
                             <svg-icon src="/assets/img/custom/download.svg"
                                 class="ap-w-[20px] ap-h-[20px] ap-fill-primary" [applyClass]="true">
