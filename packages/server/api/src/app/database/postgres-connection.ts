@@ -117,6 +117,7 @@ import { AddPlatformForeignKeyToProjectPostgres1709566642531 } from './migration
 import { AddUserEmailToReferral1709500213947 } from './migration/postgres/1709500213947-add-user-email-to-referral'
 import { SetFlowVersionUpdatedByToNullIfUserIsDeletedPostgres1709641016072 } from './migration/postgres/1709641016072-set-flow-version-updated-by-to-null-if-user-is-deleted-postgres'
 import { MoveGeneratedByFromSigningKeyToAuditEventPostgres1709669091258 } from './migration/postgres/1709669091258-move-generated-by-from-signing-key-to-audit-event-postgres'
+import { AddMappingStateToGit1709753080714 } from './migration/postgres/1709753080714-AddMappingStateToGit'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -248,6 +249,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddPlatformForeignKeyToProjectPostgres1709566642531,
                 AddUserEmailToReferral1709500213947,
                 MoveGeneratedByFromSigningKeyToAuditEventPostgres1709669091258,
+                AddMappingStateToGit1709753080714,
             )
             break
         case ApEdition.ENTERPRISE:
@@ -297,6 +299,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 MigrateWebhookTemplate1709581196564,
                 AddPlatformForeignKeyToProjectPostgres1709566642531,
                 MoveGeneratedByFromSigningKeyToAuditEventPostgres1709669091258,
+                AddMappingStateToGit1709753080714,
             )
             break
         case ApEdition.COMMUNITY:
