@@ -12,7 +12,7 @@
         <ng-container *ngIf="!openToDemo$">
           <svg-icon src="assets/img/custom/arrow_right.svg" [applyClass]="true"
             class="ap-fill-primary ap-w-[26px]  ap-h-[26px]"></svg-icon>
-          <div class="ap-typography-subtitle-1 ap-text-primary" i18n>Demo flow</div>
+          <div class="ap-typography-subtitle-1 ap-text-primary" i18n>Demo Flow</div>
           <div class="ap-typography-subtitle-2 ap-text-description ap-px-3" i18n>
             Learn from our Gelato maker demo flow
           </div>
@@ -29,24 +29,20 @@
     <div class="ap-h-full ap-border-r ap-border-solid ap-border-dividers">
     </div>
     <div class="ap-flex ap-items-center ap-flex-col ap-justify-center ap-gap-3">
-      <div (click)="createFlow()"
+      <div (click)="openTemplatesDialog.emit()"
         class="ap-flex ap-items-center ap-gap-2 ap-justify-center ap-flex-col ap-border ap-border-outline ap-h-[249px] ap-w-[200px] ap-rounded ap-bg-white ap-rounded-lg ap-cursor-pointer ap-transition-colors hover:ap-border-primary hover:ap-bg-primary-light ">
-        <ng-container *ngIf="!createFlow$">
-          <svg-icon src="assets/img/custom/add.svg" [applyClass]="true"
-            class="ap-fill-primary ap-w-[26px]  ap-h-[26px] "></svg-icon>
-          <div class="ap-typography-subtitle-1 ap-text-primary" i18n>Build flow </div>
-          <div class="ap-typography-subtitle-2 ap-text-description ap-px-3" i18n>
-            Start building your first flow from scratch
-          </div>
-        </ng-container>
 
-        <ap-loading-icon *ngIf="!!createFlow$" [outlineLoader]="false" [whiteLoader]="false" height="40px" width="40px">
-        </ap-loading-icon>
+        <svg-icon src="assets/img/custom/add.svg" [applyClass]="true"
+          class="ap-fill-primary ap-w-[26px]  ap-h-[26px] "></svg-icon>
+        <div class="ap-typography-subtitle-1 ap-text-primary" i18n>Build Flow </div>
+        <div class="ap-typography-subtitle-2 ap-text-description ap-px-3" i18n>
+          Start building your first flow
+        </div>
+
       </div>
 
     </div>
   </div>
 
 </div>
-<ng-container *ngIf="createFlow$ | async"></ng-container>
 <ng-container *ngIf="openToDemo$ | async"></ng-container>

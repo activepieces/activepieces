@@ -4,6 +4,7 @@ import {
     TriggerHookType,
     TriggerPayload,
     TriggerType,
+    isNil,
 } from '@activepieces/shared'
 import { getPieceTrigger } from './trigger-utils'
 import { logger } from 'server-shared'
@@ -33,7 +34,7 @@ export async function executeTrigger(
                 projectId,
             })
 
-            if (result.success && Array.isArray(result.output)) {
+            if (!isNil(result) && result.success && Array.isArray(result.output)) {
                 payloads = result.output
             }
             else {

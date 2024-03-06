@@ -1,29 +1,5 @@
 <div class="edit-step-accordion-container ap-flex ap-flex-col">
   <form class="ap-w-full" [formGroup]="stepForm">
-    <div *ngIf="_selectedStep.type ===TriggerType.WEBHOOK" class="ap-p-4">
-
-      <div class="ap-mt-1">
-        <ng-container *ngIf="webhookUrl$ | async as url">
-          <section class="ap-typography-body-2">
-            <p class="ap-mt-1 ap-flex ap-items-center">URL: <ap-icon-button [width]="15" [height]="15"
-                iconFilename="copy.svg" extraClasses="ap-fill-body" tooltipText="Copy"
-                (buttonClicked)="copyUrl(url)"></ap-icon-button>
-            </p>
-            <mat-form-field class="ap-w-full">
-              <input matInput [value]="url" readonly #webhookUrl (click)="webhookUrl.select()">
-            </mat-form-field>
-
-            <ap-markdown [fullWidth]="true" data="If you are expecting a reply from this webhook, append <b>/sync</b> to the URL.<br> <br>
-                  In that case, you will also have to add an <b>HTTP step</b>  with return response to the end of your flow.<br> <br>
-                  **If the flow takes more than 30 seconds, it will give a 408 Request Timeout response.**<br>
-                  {{ (edition$ | async) === ApEdition.CLOUD ? '' : 'To change this, set the **AP_WEBHOOK_TIMEOUT_SECONDS** to desired number.' }}
-                  " i18n-data></ap-markdown>
-          </section>
-        </ng-container>
-      </div>
-
-
-    </div>
     <div class="ap-px-4  ap-py-2 expansion-panel-body">
       <ng-container *ngTemplateOutlet="inputFormSelection"></ng-container>
     </div>

@@ -9,8 +9,6 @@ export class TriggerIconPipe implements PipeTransform {
   transform(flow: PopulatedFlow): string {
     const trigger = flow.version.trigger;
     switch (trigger.type) {
-      case TriggerType.WEBHOOK:
-        return 'assets/img/custom/triggers/instant-filled.svg';
       case TriggerType.PIECE: {
         const cronExpression = flow.schedule?.cronExpression;
         if (cronExpression) {

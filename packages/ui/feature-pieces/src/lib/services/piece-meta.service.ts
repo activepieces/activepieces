@@ -100,12 +100,6 @@ export class PieceMetadataService {
 
   public triggerItemsDetails: FlowItemDetails[] = [
     {
-      type: TriggerType.WEBHOOK,
-      name: 'Webhook',
-      description: 'Trigger flow by calling a unique web url',
-      logoUrl: '/assets/img/custom/piece/webhook.svg',
-    },
-    {
       type: TriggerType.EMPTY,
       name: 'Trigger',
       description: 'Choose a trigger',
@@ -270,11 +264,6 @@ export class PieceMetadataService {
         return {
           url: 'assets/img/custom/piece/loop_mention.png',
           key: 'loop',
-        };
-      case TriggerType.WEBHOOK:
-        return {
-          url: 'assets/img/custom/piece/webhook_mention.png',
-          key: 'webhook',
         };
     }
 

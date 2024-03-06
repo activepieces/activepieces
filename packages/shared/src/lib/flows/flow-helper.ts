@@ -604,16 +604,8 @@ function createTrigger(
                 settings: request.settings,
             }
             break
-        case TriggerType.WEBHOOK:
-            trigger = {
-                ...baseProperties,
-                type: TriggerType.WEBHOOK,
-                settings: request.settings,
-            }
-            break
     }
-    trigger.valid =
-    (request.valid ?? true) && triggerSchemaValidation.Check(trigger)
+    trigger.valid = (request.valid ?? true) && triggerSchemaValidation.Check(trigger)
     return trigger
 }
 
@@ -678,7 +670,6 @@ export function getImportOperations(
             case ActionType.CODE:
             case ActionType.PIECE: 
             case TriggerType.PIECE:
-            case TriggerType.WEBHOOK:
             case TriggerType.EMPTY:
             {
                 break

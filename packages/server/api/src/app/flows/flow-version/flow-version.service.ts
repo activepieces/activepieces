@@ -459,9 +459,6 @@ async function prepareRequest(
                         projectId,
                     })
                     break
-                default:
-                    clonedRequest.request.valid = true
-                    break
             }
             break
 
