@@ -114,6 +114,7 @@ import { SetNotNullOnPlatform1709505632771 } from './migration/postgres/17095056
 import { MigrateWebhook1709581196563 } from './migration/common/1709581196563-migrate-webhook'
 import { MigrateWebhookTemplate1709581196564 } from './migration/postgres/1709581196564-migrate-webhook-templates'
 import { AddPlatformForeignKeyToProjectPostgres1709566642531 } from './migration/postgres/1709566642531-add-platform-foreign-key-to-project-postgres'
+import { FlowRunSubscriber } from '../flows/flow-run/flow-run-subscriber'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -328,6 +329,7 @@ export const createPostgresDataSource = (): DataSource => {
             ssl: getSslConfig(),
             ...migrationConfig,
             ...commonProperties,
+            subscribers: [FlowRunSubscriber],
         })
     }
 

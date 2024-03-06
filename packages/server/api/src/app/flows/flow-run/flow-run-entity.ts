@@ -13,7 +13,7 @@ import {
     Project,
 } from '@activepieces/shared'
 
-type FlowRunSchema = FlowRun & {
+export type FlowRunSchema = FlowRun & {
     project: Project
     flow: Flow
 }

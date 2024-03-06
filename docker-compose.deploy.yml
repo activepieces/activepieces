@@ -3,6 +3,9 @@ services:
   procol-workflows:
     container_name: procol-workflows
     restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: ${AP_DOCKER_IMAGE}
     platform: linux/arm64
     ports:
