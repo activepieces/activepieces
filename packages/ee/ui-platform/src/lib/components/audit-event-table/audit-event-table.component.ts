@@ -108,6 +108,11 @@ export class AuditEventTableComponent
           icon: 'assets/img/custom/dashboard/users.svg',
           tooltip: 'User',
         };
+      case ApplicationEventName.CREATED_SIGNING_KEY:
+        return {
+          icon: 'assets/img/custom/dashboard/lock.svg',
+          tooltip: 'Signing Key',
+        };
     }
   }
 
