@@ -1,4 +1,5 @@
 import {
+    FlowRunId,
     FlowVersion,
     ProjectId,
     TriggerHookType,
@@ -14,7 +15,7 @@ import { webhookService } from '../../../webhooks/webhook-service'
 export async function executeTrigger(
     params: ExecuteTrigger,
 ): Promise<unknown[]> {
-    const { payload, flowVersion, projectId, simulate } = params
+    const { payload, flowVersion, projectId, simulate, flowRunId } = params
     const flowTrigger = flowVersion.trigger
     let payloads: unknown[] = []
     switch (flowTrigger.type) {
@@ -32,6 +33,7 @@ export async function executeTrigger(
                     simulate,
                 }),
                 projectId,
+                flowRunId,
             })
 
             if (!isNil(result) && result.success && Array.isArray(result.output)) {
@@ -59,4 +61,5 @@ type ExecuteTrigger = {
     projectId: ProjectId
     simulate: boolean
     payload: TriggerPayload
+    flowRunId?: FlowRunId
 }

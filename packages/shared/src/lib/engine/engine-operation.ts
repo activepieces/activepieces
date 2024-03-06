@@ -91,6 +91,7 @@ export type ExecuteTriggerOperation<HT extends TriggerHookType> = BaseEngineOper
     edition?: string
     appWebhookUrl?: string
     webhookSecret?: string
+    flowRunId?: FlowRunId
 }
 
 export type TriggerPayload<T = unknown> = {

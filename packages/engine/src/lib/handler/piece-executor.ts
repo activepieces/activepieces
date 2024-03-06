@@ -74,6 +74,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 prefix: '',
                 flowId: constants.flowId,
                 workerToken: constants.workerToken,
+                runId: constants.flowRunId,
             }),
             auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
             files: createFilesService({

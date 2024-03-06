@@ -8,6 +8,8 @@ import {
     FlowVersion,
     ProjectId,
     RunEnvironment,
+    FlowRunId,
+    apId,
 } from '@activepieces/shared'
 import { HookType, flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
@@ -94,6 +96,9 @@ export const webhookService = {
             )
             return []
         }
+
+        const flowRunId: FlowRunId = apId()
+
         const flowVersion = await flowVersionService.getOneOrThrow(
             flow.publishedVersionId,
         )
@@ -102,6 +107,7 @@ export const webhookService = {
             flowVersion,
             payload,
             simulate: false,
+            flowRunId,
         })
 
         payloads.forEach((payload) => {
@@ -128,6 +134,8 @@ export const webhookService = {
                 hookType: HookType.BEFORE_LOG,
                 projectId,
                 executionType: ExecutionType.BEGIN,
+                flowRunId,
+                isNewRun: true,
             }),
         )
 

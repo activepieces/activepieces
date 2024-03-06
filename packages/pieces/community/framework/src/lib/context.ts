@@ -177,4 +177,5 @@ export enum StoreScope {
   // Collection were deprecated in favor of project
   PROJECT = 'COLLECTION',
   FLOW = 'FLOW',
+  RUN = 'RUN',
 }
