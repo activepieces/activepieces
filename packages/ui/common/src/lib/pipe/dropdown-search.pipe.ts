@@ -13,7 +13,7 @@ export class DropdownPropertySearchPipe implements PipeTransform {
     search: FormControl<string>
   ): Observable<DropdownOption<unknown>[]> {
     return search.valueChanges.pipe(
-      startWith(''),
+      startWith(search.value),
       map((searchText) => {
         return options.filter((o) => {
           return o.label.toLowerCase().includes(searchText.toLowerCase());
