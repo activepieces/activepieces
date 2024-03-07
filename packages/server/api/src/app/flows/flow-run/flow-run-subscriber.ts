@@ -14,6 +14,8 @@ export class FlowRunSubscriber implements EntitySubscriberInterface<FlowRunSchem
 
     async afterUpdate(event: UpdateEvent<FlowRunSchema>): Promise<any> {
         const fileId = event.entity?.logsFileId
+        console.log("\n\n\n\n\n\n\n", "event.entity", event.entity, "\n\n\n\n\n")
+        logger.info("\n\n\n\n\n\n\n", "event.entity", event.entity, "\n\n\n\n\n")
         if (fileId) {
             const fileRepo = databaseConnection.getRepository<File>(FileEntity)
             const file = await fileRepo.findOneBy({ id: fileId })
@@ -33,6 +35,7 @@ export class FlowRunSubscriber implements EntitySubscriberInterface<FlowRunSchem
                 body: {
                     runData,
                     fileId,
+                    status: event.entity?.status,
                 },
                 endpoint: 'workflow_runs/sync_procol',
             }
