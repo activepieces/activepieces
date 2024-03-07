@@ -112,14 +112,14 @@ class ActivepiecesEmbedded {
     prefix,
     hideSidebar,
     disableNavigationInBuilder,
-    containerSelector,
+    containerId,
     jwtToken,
     instanceUrl
   }: {
     prefix?: string;
     hideSidebar?: boolean;
     disableNavigationInBuilder?: boolean;
-    containerSelector:string;
+    containerId:string;
     jwtToken:string;
     instanceUrl:string;
   }) {
@@ -131,7 +131,7 @@ class ActivepiecesEmbedded {
     this._disableNavigationInBuilder = disableNavigationInBuilder === undefined ? true : disableNavigationInBuilder;
     this.initializeBuilderIframe({
       client: this,
-      containerSelector,
+      containerSelector: containerId,
       instanceUrl,
       jwtToken
     }); 
