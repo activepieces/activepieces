@@ -61,23 +61,20 @@ class ActivepiecesEmbedded {
   handleVendorNavigation?: (data: { route: string }) => void;
   handleClientNavigation?: (data: { route: string }) => void;
   parentOrigin = window.location.origin;
-  private createIframe({src,style}:{src:string,style:string})
+  private createIframe({src}:{src:string})
   {
     const iframe = document.createElement('iframe');
     iframe.src = src;
-    iframe.style.cssText = style;
     return iframe;
   }
-  private connectoToEmbed ({instanceUrl,jwtToken,iframeContainer,iframeStyling,client,name}: {
+  private connectoToEmbed ({instanceUrl,jwtToken,iframeContainer,client}: {
     instanceUrl: string,
     jwtToken: string,
-    iframeStyling: string | undefined,
     iframeContainer: Element,
-    client: ActivepiecesEmbedded,
-    name:string
+    client: ActivepiecesEmbedded
   }
   ): IframeWithWindow {
-    const iframe = this.createIframe({src:`${instanceUrl}/embed?${jwtTokenQueryParamName}=${jwtToken}`,style:iframeStyling || ''});
+    const iframe = this.createIframe({src:`${instanceUrl}/embed?${jwtTokenQueryParamName}=${jwtToken}`});
     iframeContainer.appendChild(iframe);
     if (!this.doesFrameHaveWindow(iframe)) {
       const error = 'Activepieces: iframe window not accessible';
@@ -115,34 +112,29 @@ class ActivepiecesEmbedded {
     prefix,
     hideSidebar,
     disableNavigationInBuilder,
-    builderIframeContainerSelector,
+    apContainerSelector,
     jwtToken,
-    instanceUrl,
-    iframeStyling
+    instanceUrl
   }: {
     prefix?: string;
     hideSidebar?: boolean;
     disableNavigationInBuilder?: boolean;
-    builderIframeContainerSelector:string;
+    apContainerSelector:string;
     jwtToken:string;
     instanceUrl:string;
-    iframeStyling?: string;
   }) {
     this._prefix = prefix || '/';
     const newInitialRoute = !window.location.pathname.startsWith(this._prefix) ? '/' : '/' + window.location.pathname.substring(this._prefix.length);
     this._initialRoute = newInitialRoute || '/';
     this._hideSidebar = hideSidebar || false;
-    this._instanceUrl = instanceUrl;
+    this._instanceUrl = this.removeTrailingSlashes(instanceUrl);
     this._disableNavigationInBuilder = disableNavigationInBuilder === undefined ? true : disableNavigationInBuilder;
     this.initializeBuilderIframe({
       client: this,
-      builderIframeContainerSelector,
+      apContainerSelector,
       instanceUrl,
-      jwtToken,
-      iframeStyling
-    });
-
- 
+      jwtToken
+    }); 
   }
 
   connect({pieceName}:{pieceName:string}) {
@@ -161,20 +153,20 @@ class ActivepiecesEmbedded {
     this._connectionsIframe.style.display = 'block';
  
   }
-  private initializeBuilderIframe = ({client,builderIframeContainerSelector, instanceUrl,jwtToken, iframeStyling}
+  private initializeBuilderIframe = ({client,apContainerSelector, instanceUrl,jwtToken}
     :{client: ActivepiecesEmbedded,
-     builderIframeContainerSelector:string,
+     apContainerSelector:string,
      instanceUrl:string,
-      jwtToken:string,
-      iframeStyling?:string }) => {
-   const iframeContainer = document.querySelector(builderIframeContainerSelector);
+      jwtToken:string }) => {
+   const iframeContainer = document.querySelector(apContainerSelector);
    if(!iframeContainer) {
     console.error('Activepieces: iframe container not found');
     return;
    }
-   const iframeWindow = this.connectoToEmbed({instanceUrl, jwtToken, iframeStyling, iframeContainer, client,name:'builder'}).contentWindow;
+   const iframeWindow = this.connectoToEmbed({instanceUrl, jwtToken, iframeContainer, client}).contentWindow;
+   this._connectionsIframe= this.connectoToEmbed({instanceUrl, jwtToken, iframeContainer:document.body, client});
    const connectionsIframeStyle=['display:none','position:fixed','top:0','left:0','width:100%','height:100%','border:none'].join(';');
-   this._connectionsIframe= this.connectoToEmbed({instanceUrl, jwtToken, iframeStyling:connectionsIframeStyle, iframeContainer:document.body, client,name:'connections'});
+  this._connectionsIframe.style.cssText=connectionsIframeStyle
    this.checkForVendorRouteChanges(iframeWindow, client);
    this.checkForClientRouteChanges(client,iframeWindow);
    this.checkIfNewConnectionDialogClosed();
@@ -241,7 +233,7 @@ class ActivepiecesEmbedded {
  private doesFrameHaveWindow(frame: HTMLIFrameElement): frame is IframeWithWindow {
    return frame.contentWindow !== null;
  }
- checkIfNewConnectionDialogClosed() {
+ private checkIfNewConnectionDialogClosed() {
  
     window.addEventListener(
       'message',
@@ -259,7 +251,12 @@ class ActivepiecesEmbedded {
 
     );
  
-};
+}
+private removeTrailingSlashes(str: string) {
+  return str.endsWith('/')? str.slice(0,-1):str;
+}
+
+
 }
 
 (window as any).activepieces = new ActivepiecesEmbedded();
