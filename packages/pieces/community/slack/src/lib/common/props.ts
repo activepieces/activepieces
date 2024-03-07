@@ -46,7 +46,7 @@ export const slackChannel = Property.Dropdown({
 				...response.body.channels.map((channel) => ({ label: channel.name, value: channel.id })),
 			);
 			cursor = response.body.response_metadata.next_cursor;
-		} while (cursor !== '');
+		} while (cursor !== '' && channels.length < 600);
 		return {
 			disabled: false,
 			placeholder: 'Select channel',
@@ -110,7 +110,7 @@ export const userId = Property.Dropdown<string>({
 				...response.body.members.map((member) => ({ label: member.name, value: member.id })),
 			);
 			cursor = response.body.response_metadata.next_cursor;
-		} while (cursor !== '');
+		} while (cursor !== '' && users.length < 600);
 
 		return {
 			disabled: false,
