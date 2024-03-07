@@ -374,6 +374,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     if (obj.property.refreshers.length === 0) {
       refreshers$['oneTimeRefresh'] = of(true);
     }
+    //Add search control as a refresher as well
     if (
       obj.property.type === PropertyType.DROPDOWN &&
       obj.property.refreshOnSearch

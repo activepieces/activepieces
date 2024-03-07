@@ -82,19 +82,17 @@
               }}</mat-label>
             <mat-select #matSelect [formControlName]="property.key" (closed)="searchControls[property.key].setValue('')"
               [compareWith]="dropdownCompareWithFunction">
-
+              <ng-container *ngTemplateOutlet="searchInputForDropdowns; context: {$implicit: property.key}">
+              </ng-container>
+              <mat-option [disabled]="true" *ngIf="(refreshableConfigsLoadingFlags$[property.key] | async)">
+                <div class="ap-flex ap-items-center ap-justify-center">
+                  <ap-loading-icon> </ap-loading-icon>
+                </div>
+              </mat-option>
 
               <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
                 <ng-container *ngIf="(state.options | dropdownSearch:searchControls[property.key]) | async as options">
-                  <ng-container *ngTemplateOutlet="searchInputForDropdowns; context: {$implicit: property.key}">
-                  </ng-container>
-
-                  <mat-option [disabled]="true" *ngIf="(refreshableConfigsLoadingFlags$[property.key] | async)">
-                    <div class="ap-flex ap-items-center ap-justify-center">
-                      <ap-loading-icon> </ap-loading-icon>
-                    </div>
-                  </mat-option>
-
+                 
                   <ng-container *ngIf="(refreshableConfigsLoadingFlags$[property.key] | async) === false">
 
                     <cdk-virtual-scroll-viewport *ngIf="matSelect.panelOpen && !state.disabled" [itemSize]="48"
