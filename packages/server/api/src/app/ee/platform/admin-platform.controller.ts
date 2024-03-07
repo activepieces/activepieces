@@ -4,7 +4,7 @@ import { adminPlatformService } from './admin-platform.service'
 import { AdminAddPlatformRequestBody, PrincipalType } from '@activepieces/shared'
 
 export const adminPlatformPieceModule: FastifyPluginAsyncTypebox = async (app) => {
-    await app.register(adminPlatformController, { prefix: '/v1/pieces' })
+    await app.register(adminPlatformController, { prefix: '/v1/admin/platforms' })
 }
 
 const adminPlatformController: FastifyPluginAsyncTypebox = async (
