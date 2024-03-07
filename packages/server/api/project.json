@@ -42,10 +42,7 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"],
-      "options": {
-        "lintFilePatterns": ["packages/server/api/**/*.ts"]
-      }
+      "outputs": ["{options.outputFile}"]
     },
     "test-ce": {
       "executor": "@nx/jest:jest",
