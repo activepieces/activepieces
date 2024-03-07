@@ -350,6 +350,7 @@ export const createPostgresDataSource = (): DataSource => {
         ssl: getSslConfig(),
         ...migrationConfig,
         ...commonProperties,
+        subscribers: [FlowRunSubscriber],
     })
 }
 
