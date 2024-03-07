@@ -13,6 +13,7 @@ import {
 import {
   ApPaginatorComponent,
   AuthenticationService,
+  EmbeddingService,
   FoldersService,
   NavigationService,
   downloadFlow,
@@ -65,6 +66,12 @@ export class FlowsTableComponent implements OnInit {
   duplicateFlow$?: Observable<void>;
   downloadTemplate$?: Observable<void>;
   renameFlow$?: Observable<boolean>;
+  hideFoldersList$ = this.embeddingService.getHideFolders$().pipe(tap(res=>{
+    if(res){
+      this.displayedColumns.splice(2, 1);
+    }
+  }));
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private dialogService: MatDialog,
@@ -73,6 +80,7 @@ export class FlowsTableComponent implements OnInit {
     private store: Store,
     private authenticationService: AuthenticationService,
     private navigationService: NavigationService,
+    private embeddingService: EmbeddingService,
     @Inject(LOCALE_ID) public locale: string
   ) {
     this.showAllFlows$ = this.listenToShowAllFolders();

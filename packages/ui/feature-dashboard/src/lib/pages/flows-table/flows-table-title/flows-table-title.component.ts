@@ -18,6 +18,7 @@ import {
   ProjectSelectors,
   FlowBuilderService,
   TelemetryService,
+  EmbeddingService,
 } from '@activepieces/ui/common';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
@@ -43,6 +44,7 @@ export class FlowsTableTitleComponent {
   currentProject$: Observable<Project>;
   openTemplatesDialog$?: Observable<void>;
   readonly flowActionsUiInfo = flowActionsUiInfo;
+  hideFoldersList$ = this.embeddingService.getHideFolders$();
   constructor(
     private store: Store,
     private flowService: FlowService,
@@ -50,7 +52,8 @@ export class FlowsTableTitleComponent {
     private authenticationService: AuthenticationService,
     private matDialog: MatDialog,
     private builderService: FlowBuilderService,
-    private telemetryService: TelemetryService
+    private telemetryService: TelemetryService,
+    private embeddingService: EmbeddingService
   ) {
     this.currentProject$ = this.store.select(
       ProjectSelectors.selectCurrentProject
