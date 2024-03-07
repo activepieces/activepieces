@@ -43,7 +43,6 @@ describe('Managed Authentication API', () => {
 
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
-                generatedBy: mockUser.id,
             })
             await databaseConnection
                 .getRepository('signing_key')
@@ -95,7 +94,6 @@ describe('Managed Authentication API', () => {
 
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
-                generatedBy: mockUser.id,
             })
             await databaseConnection
                 .getRepository('signing_key')
@@ -147,7 +145,6 @@ describe('Managed Authentication API', () => {
 
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
-                generatedBy: mockUser.id,
             })
             await databaseConnection
                 .getRepository('signing_key')
@@ -199,7 +196,6 @@ describe('Managed Authentication API', () => {
 
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
-                generatedBy: mockUser.id,
             })
             await databaseConnection
                 .getRepository('signing_key')
@@ -248,7 +244,6 @@ describe('Managed Authentication API', () => {
 
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
-                generatedBy: mockPlatformOwner.id,
             })
             await databaseConnection
                 .getRepository('signing_key')

@@ -11,7 +11,8 @@ import {
 } from '@activepieces/shared'
 import { signingKeyService } from './signing-key-service'
 import { StatusCodes } from 'http-status-codes'
-import { AddSigningKeyRequestBody } from '@activepieces/ee-shared'
+import { AddSigningKeyRequestBody, ApplicationEventName } from '@activepieces/ee-shared'
+import { eventsHooks } from '../../helper/application-events'
 
 export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', AddSigningKeyRequest, async (req, res) => {
@@ -19,9 +20,14 @@ export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
         assertNotNullOrUndefined(platformId, 'platformId')
 
         const newSigningKey = await signingKeyService.add({
-            userId: req.principal.id,
             platformId,
             displayName: req.body.displayName,
+        })
+
+        eventsHooks.get().send(req, {
+            action: ApplicationEventName.CREATED_SIGNING_KEY,
+            userId: req.principal.id,
+            signingKey: newSigningKey,
         })
 
         return res.status(StatusCodes.CREATED).send(newSigningKey)

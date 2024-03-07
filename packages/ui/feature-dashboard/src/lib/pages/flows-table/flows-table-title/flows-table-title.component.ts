@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, Injector } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  Injector,
+} from '@angular/core';
 import { EMPTY, Observable, map, switchMap, take, tap } from 'rxjs';
 import {
   PopulatedFlow,
@@ -53,7 +58,9 @@ export class FlowsTableTitleComponent {
     private matDialog: MatDialog,
     private builderService: FlowBuilderService,
     private telemetryService: TelemetryService,
-    private embeddingService: EmbeddingService
+    private embeddingService: EmbeddingService,
+    private cd: ChangeDetectorRef
+
   ) {
     this.currentProject$ = this.store.select(
       ProjectSelectors.selectCurrentProject
@@ -65,36 +72,38 @@ export class FlowsTableTitleComponent {
       FoldersSelectors.selectCurrentFolder
     );
   }
-  createFlow(navigateAfterCreation: boolean, name?: string) {
-    if (!this.createFlow$) {
-      if (navigateAfterCreation) {
-        this.builderService.showLoading();
-      }
-      this.createFlow$ = this.currentFolder$.pipe(
-        take(1),
-        switchMap((res) => {
-          return this.flowService
-            .create({
-              projectId: this.authenticationService.getProjectId(),
-              displayName: name || $localize`Untitled`,
-              folderId: res?.id,
-            })
-            .pipe(
-              tap((flow) => {
-                if (navigateAfterCreation) {
-                  this.builderService.hideLoading();
-                  this.router.navigate(['/flows/', flow.id]);
-                }
-              })
-            );
-        })
-      );
-    }
-    return this.createFlow$;
+
+  createFlowButtonClicked() {
+    this.createFlow$ = this.createFlow(true);
   }
-  openTemplatesDialog() {
+  createFlow(navigateAfterCreation: boolean, name?: string) {
+    if (navigateAfterCreation) {
+      this.builderService.showLoading();
+    }
+    return this.currentFolder$.pipe(
+      take(1),
+      switchMap((res) => {
+        return this.flowService
+          .create({
+            projectId: this.authenticationService.getProjectId(),
+            displayName: name || $localize`Untitled`,
+            folderId: res?.id,
+          })
+          .pipe(
+            tap((flow) => {
+              if (navigateAfterCreation) {
+                this.builderService.hideLoading();
+                this.router.navigate(['/flows/', flow.id]);
+              }
+            })
+          );
+      })
+    );
+  }
+  openTemplatesDialog(showStartFromScratch?: boolean) {
     const data: TemplateDialogData = {
       insideBuilder: false,
+      showStartFromScratch,
     };
     this.openTemplatesDialog$ = this.matDialog
       .open(TemplatesDialogComponent, { data })
@@ -102,28 +111,33 @@ export class FlowsTableTitleComponent {
       .pipe(
         switchMap((dialogResult?: TemplateDialogClosingResult) => {
           if (dialogResult) {
+            const template = dialogResult.template;
             this.builderService.showLoading();
-            return this.createFlow(false, dialogResult.template.name).pipe(
+            if (typeof template === 'string') {
+              return this.createFlow(true);
+            }
+
+            return this.createFlow(false, template.name).pipe(
               switchMap((flow) => {
                 return this.flowService.update(flow.id, {
                   type: FlowOperationType.IMPORT_FLOW,
                   request: {
-                    displayName: dialogResult.template.name,
-                    trigger: dialogResult.template.template.trigger,
+                    displayName: template.name,
+                    trigger: template.template.trigger,
                   },
                 });
               }),
               tap((flow) => {
                 this.builderService.hideLoading();
                 this.router.navigate(['/flows/', flow.id]);
-                if (dialogResult.template.blogUrl) {
-                  this.showBlogNotification(dialogResult.template.blogUrl);
+                if (template.blogUrl) {
+                  this.showBlogNotification(template.blogUrl);
                 }
                 this.telemetryService.capture({
                   name: TelemetryEventName.FLOW_IMPORTED,
                   payload: {
-                    id: dialogResult.template.id,
-                    name: dialogResult.template.name,
+                    id: template.id,
+                    name: template.name,
                     location: `inside the builder`,
                     tab: `${dialogResult.activeTab}`,
                   },
@@ -135,6 +149,7 @@ export class FlowsTableTitleComponent {
         }),
         map(() => void 0)
       );
+    this.cd.markForCheck();
   }
 
   importFlow(projectId: string) {

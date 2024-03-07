@@ -8,9 +8,15 @@ export const Referral = Type.Object({
   referredUserId: Type.String({
     description: 'The ID of the user who was referred.'
   }),
+  referredUserEmail: Type.String({
+    format: 'email',
+  }),
   referringUserId: Type.String({
     description: 'The ID of the user who made the referral.'
-  })
+  }),
+  referringUserEmail: Type.String({
+    format: 'email',
+  }),
 });
 
 export type Referral = Static<typeof Referral>;
