@@ -83,14 +83,16 @@ export class UsersTableComponent {
         });
       })
     );
-    const dialogData:DeleteEntityDialogData ={
+    const dialogData: DeleteEntityDialogData = {
       deleteEntity$: delete$,
       entityName: user.firstName + ' ' + user.lastName,
       note: $localize`Are you sure you want to <b> delete ${user.firstName} ${user.lastName} </b>?`,
-    }
-    this.delete$ = this.matDialog.open(DeleteEntityDialogComponent, {
-      data: dialogData,
-    }).afterClosed();
+    };
+    this.delete$ = this.matDialog
+      .open(DeleteEntityDialogComponent, {
+        data: dialogData,
+      })
+      .afterClosed();
   }
 
   activateUser(user: UserResponse) {
