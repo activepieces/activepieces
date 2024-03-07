@@ -1,5 +1,5 @@
 import { assertNotNullOrUndefined } from '@activepieces/shared'
-import { logger } from 'server-shared'
+import { CopilotInstanceTypes, logger } from 'server-shared'
 import OpenAI from 'openai'
 import { system, SystemProp } from 'server-shared'
 import {
@@ -11,33 +11,31 @@ type GenerateCodeParams = {
     prompt: string
 }
 
-export enum CopilotInstanceTypes {
-    AZURE_OPENAI = 'AZURE_OPENAI',
-    OPENAI = 'OPENAI',
-}
 
 function getOpenAI(): OpenAI {
-    let openai;
-    const apiKey = system.getOrThrow(SystemProp.OPENAI_API_KEY);
-    const openaiInstanceType = system.get(SystemProp.COPILOT_INSTANCE_TYPE)
+    let openai
+    const apiKey = system.getOrThrow(SystemProp.OPENAI_API_KEY)
+    const openaiInstanceType = system.getOrThrow<CopilotInstanceTypes>(SystemProp.COPILOT_INSTANCE_TYPE)
 
-    if (openaiInstanceType && openaiInstanceType === CopilotInstanceTypes.AZURE_OPENAI) {
-        const apiVersion = system.get(SystemProp.AZURE_OPENAI_API_VERSION) ?? '2023-06-01-preview';
-
-        openai = new OpenAI({
-            apiKey,
-            baseURL: system.getOrThrow(SystemProp.AZURE_OPENAI_ENDPOINT),
-            defaultQuery: { 'api-version': apiVersion },
-            defaultHeaders: { 'api-key': apiKey },
-        })
+    switch (openaiInstanceType) {
+        case CopilotInstanceTypes.AZURE_OPENAI: {
+            const apiVersion = system.getOrThrow(SystemProp.AZURE_OPENAI_API_VERSION)
+            openai = new OpenAI({
+                apiKey,
+                baseURL: system.getOrThrow(SystemProp.AZURE_OPENAI_ENDPOINT),
+                defaultQuery: { 'api-version': apiVersion },
+                defaultHeaders: { 'api-key': apiKey },
+            })
+            break
+        }
+        case CopilotInstanceTypes.OPENAI: {
+            openai = new OpenAI({
+                apiKey,
+                baseURL: system.get(SystemProp.OPENAI_API_BASE_URL),
+            })
+            break
+        }
     }
-    else {
-        openai = new OpenAI({
-            apiKey,
-            baseURL: system.get(SystemProp.OPENAI_API_BASE_URL),
-        })
-    }
-
     return openai
 }
 
