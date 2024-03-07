@@ -4,7 +4,7 @@
                 src="assets/img/custom/all-flows.svg" class="ap-h-[15px] ap-w-[15px] ap-fill-bleached-gray"
                 [applyClass]="true"></svg-icon>
 
-                <span i18n *ngIf="!(hideFoldersList$ | async)">
+                <span i18n *ngIf="(hideFoldersList$ | async) === false || (hideFoldersList$ | async) === undefined">
                   All flows
                 </span>
             <span i18n *ngIf="hideFoldersList$ | async">
