@@ -47,19 +47,21 @@ export interface ActivepiecesVendorInit {
     initialRoute: string;
     hideSidebar: boolean;
     disableNavigationInBuilder: boolean;
+    hideFolders?:boolean;
   };
 }
 export const jwtTokenQueryParamName = "jwtToken"
-
 
 class ActivepiecesEmbedded {
   _prefix = '';
   _initialRoute = '';
   _instanceUrl = '';
   _hideSidebar = false;
+  _hideFolders = false;
   _disableNavigationInBuilder = true;
   handleVendorNavigation?: (data: { route: string }) => void;
   handleClientNavigation?: (data: { route: string }) => void;
+  _connectionsIframeIsAuthenticated = false;
   parentOrigin = window.location.origin;
   private createIframe({src}:{src:string})
   {
@@ -67,11 +69,12 @@ class ActivepiecesEmbedded {
     iframe.src = src;
     return iframe;
   }
-  private connectoToEmbed ({instanceUrl,jwtToken,iframeContainer,client}: {
+  private connectoToEmbed ({instanceUrl,jwtToken,iframeContainer,client,callbackAfterAuthentication}: {
     instanceUrl: string,
     jwtToken: string,
     iframeContainer: Element,
-    client: ActivepiecesEmbedded
+    client: ActivepiecesEmbedded,
+    callbackAfterAuthentication?: () => void
   }
   ): IframeWithWindow {
     const iframe = this.createIframe({src:`${instanceUrl}/embed?${jwtTokenQueryParamName}=${jwtToken}`});
@@ -85,7 +88,6 @@ class ActivepiecesEmbedded {
       window.addEventListener(
         'message',
         function (event: MessageEvent<ActivepiecesClientEvent>) {
-     
           if (event.source === iframeWindow) {
             switch (event.data.type) {
               case ActivepiecesClientEventName.CLIENT_INIT: {
@@ -96,9 +98,11 @@ class ActivepiecesEmbedded {
                     initialRoute:  client._initialRoute,
                     hideSidebar: client._hideSidebar,
                     disableNavigationInBuilder: client._disableNavigationInBuilder,
+                    hideFolders: client._hideFolders
                   },
                 };
                 iframeWindow.postMessage(apEvent, '*');
+                if(callbackAfterAuthentication){ callbackAfterAuthentication() }
                 break;
               }
             }
@@ -114,7 +118,8 @@ class ActivepiecesEmbedded {
     disableNavigationInBuilder,
     containerId,
     jwtToken,
-    instanceUrl
+    instanceUrl,
+    hideFolders
   }: {
     prefix?: string;
     hideSidebar?: boolean;
@@ -122,17 +127,19 @@ class ActivepiecesEmbedded {
     containerId:string;
     jwtToken:string;
     instanceUrl:string;
+    hideFolders?: boolean;
   }) {
     this._prefix = prefix || '/';
     const newInitialRoute = !window.location.pathname.startsWith(this._prefix) ? '/' : '/' + window.location.pathname.substring(this._prefix.length);
     this._initialRoute = newInitialRoute || '/';
     this._hideSidebar = hideSidebar || false;
     this._instanceUrl = this.removeTrailingSlashes(instanceUrl);
+    this._hideFolders = hideFolders?? false;
     this._disableNavigationInBuilder = disableNavigationInBuilder === undefined ? true : disableNavigationInBuilder;
     this.initializeBuilderIframe({
       client: this,
       containerSelector: `#${containerId}`,
-      instanceUrl,
+      instanceUrl: this._instanceUrl,
       jwtToken
     }); 
   }
@@ -142,31 +149,39 @@ class ActivepiecesEmbedded {
       console.error('Activepieces: connections iframe not found');
       return;
       }
-       const apEvent: ActivepiecesVendorRouteChanged = {
-         type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
-         data: {
-          //added date so angular queryparams will be updated and open the dialog, because if you try to create two connections with the same piece, the second one will not open the dialog
-           vendorRoute:`/embed/connections?${NEW_CONNECTION_QUERY_PARAMS.name}=${pieceName}&date=${Date.now()}`
-         },
-       };
-    this._connectionsIframe.contentWindow.postMessage(apEvent, '*');
-    this._connectionsIframe.style.display = 'block';
- 
+     const authenticationCheckInterval= setInterval(()=>{
+      if(this._connectionsIframeIsAuthenticated){
+        clearInterval(authenticationCheckInterval);
+        const apEvent: ActivepiecesVendorRouteChanged = {
+          type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
+          data: {
+           //added date so angular queryparams will be updated and open the dialog, because if you try to create two connections with the same piece, the second one will not open the dialog
+            vendorRoute:`/embed/connections?${NEW_CONNECTION_QUERY_PARAMS.name}=${pieceName}&date=${Date.now()}`
+          },
+        };
+        if (!this._connectionsIframe || !this.doesFrameHaveWindow(this._connectionsIframe)) {
+          console.error('Activepieces: connections iframe not found');
+          return;
+          }
+        this._connectionsIframe.contentWindow.postMessage(apEvent, '*');
+        this._connectionsIframe.style.display = 'block';
+      }
+      },300) 
   }
-  private initializeBuilderIframe = ({client,containerSelector, instanceUrl,jwtToken}
+  private initializeBuilderIframe = ({client,containerSelector, instanceUrl, jwtToken, }
     :{client: ActivepiecesEmbedded,
      containerSelector:string,
      instanceUrl:string,
-      jwtToken:string }) => {
+     jwtToken:string }) => {
    const iframeContainer = document.querySelector(containerSelector);
    if(!iframeContainer) {
     console.error('Activepieces: iframe container not found');
     return;
    }
    const iframeWindow = this.connectoToEmbed({instanceUrl, jwtToken, iframeContainer, client}).contentWindow;
-   this._connectionsIframe= this.connectoToEmbed({instanceUrl, jwtToken, iframeContainer:document.body, client});
+   this._connectionsIframe= this.connectoToEmbed({instanceUrl, jwtToken, iframeContainer:document.body, client, callbackAfterAuthentication: () => {client._connectionsIframeIsAuthenticated = true}});
    const connectionsIframeStyle=['display:none','position:fixed','top:0','left:0','width:100%','height:100%','border:none'].join(';');
-  this._connectionsIframe.style.cssText=connectionsIframeStyle
+   this._connectionsIframe.style.cssText=connectionsIframeStyle
    this.checkForVendorRouteChanges(iframeWindow, client);
    this.checkForClientRouteChanges(client,iframeWindow);
    this.checkIfNewConnectionDialogClosed();

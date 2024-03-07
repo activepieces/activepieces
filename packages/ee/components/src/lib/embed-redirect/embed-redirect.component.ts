@@ -30,7 +30,9 @@ export class EmbedRedirectComponent implements OnDestroy, OnInit {
     private embedService: EmbeddingService,
     private router: Router,
     private authenticationService: AuthenticationService
-  ) {}
+  ) {
+   
+  }
 
   ngOnInit(): void {
     const jwt = this.route.snapshot.queryParamMap.get(jwtTokenQueryParamName);
@@ -67,6 +69,7 @@ export class EmbedRedirectComponent implements OnDestroy, OnInit {
         isEmbedded: true,
         prefix: event.data.data.prefix,
         disableNavigationInBuilder: event.data.data.disableNavigationInBuilder,
+        hideFolders:event.data.data.hideFolders || false
       });
       this.router.navigate([event.data.data.initialRoute], {
         skipLocationChange: true,
