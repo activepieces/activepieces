@@ -1,14 +1,10 @@
-import { KeyAlgorithm, SigningKey } from '@activepieces/ee-shared'
 import { EntitySchema } from 'typeorm'
-import {
-    ApIdSchema,
-    BaseColumnSchemaPart,
-} from '../../database/database-common'
-import { Platform, User } from '@activepieces/shared'
+import { KeyAlgorithm, SigningKey } from '@activepieces/ee-shared'
+import { Platform } from '@activepieces/shared'
+import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
 type SigningKeySchema = SigningKey & {
     platform: Platform
-    generator: User
 }
 
 export const SigningKeyEntity = new EntitySchema<SigningKeySchema>({
@@ -32,10 +28,6 @@ export const SigningKeyEntity = new EntitySchema<SigningKeySchema>({
             enum: KeyAlgorithm,
             nullable: false,
         },
-        generatedBy: {
-            ...ApIdSchema,
-            nullable: false,
-        },
     },
     indices: [],
     relations: {
@@ -48,17 +40,6 @@ export const SigningKeyEntity = new EntitySchema<SigningKeySchema>({
                 name: 'platformId',
                 referencedColumnName: 'id',
                 foreignKeyConstraintName: 'fk_signing_key_platform_id',
-            },
-        },
-        generator: {
-            type: 'many-to-one',
-            target: 'user',
-            onDelete: 'RESTRICT',
-            onUpdate: 'RESTRICT',
-            joinColumn: {
-                name: 'generatedBy',
-                referencedColumnName: 'id',
-                foreignKeyConstraintName: 'fk_signing_key_generated_by',
             },
         },
     },

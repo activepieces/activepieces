@@ -46,7 +46,7 @@ export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
             type: 'many-to-one',
             target: 'user',
             cascade: true,
-            onDelete: 'CASCADE',
+            onDelete: 'SET NULL',
             joinColumn: {
                 name: 'updatedBy',
                 foreignKeyConstraintName: 'fk_updated_by_user_flow',

@@ -67,6 +67,7 @@ export const PieceOptionRequest = Type.Object({
     flowId: Type.String(),
     flowVersionId: Type.String(),
     input: Type.Any({}),
+    searchValue: Type.Optional(Type.String()),
 })
 
 export type PieceOptionRequest = Static<typeof PieceOptionRequest>

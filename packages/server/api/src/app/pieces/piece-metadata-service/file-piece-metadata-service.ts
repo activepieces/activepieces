@@ -21,7 +21,7 @@ import {
 } from '../piece-metadata-entity'
 import { pieceMetadataServiceHooks } from './hooks'
 import { nanoid } from 'nanoid'
-import { exceptionHandler } from 'server-shared'
+import { exceptionHandler, logger } from 'server-shared'
 import { toPieceMetadataModelSummary } from '.'
 import { getEdition } from '../../helper/secret-helper'
 
@@ -38,9 +38,16 @@ async function findAllPieces(): Promise<PieceMetadata[]> {
 }
 
 async function loadPiecesFromFolder(folderPath: string): Promise<PieceMetadata[]> {
-    const paths = await traverseFolder(folderPath)
-    const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
-    return pieces.filter((p): p is PieceMetadata => p !== null)
+    try {
+        const paths = await traverseFolder(folderPath)
+        const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
+        return pieces.filter((p): p is PieceMetadata => p !== null)
+    }
+    catch (e) {
+        const err = e as Error
+        logger.warn({ name: 'FilePieceMetadataService#loadPiecesFromFolder', message: err.message, stack: err.stack })
+        return []
+    }
 }
 
 async function traverseFolder(folderPath: string): Promise<string[]> {

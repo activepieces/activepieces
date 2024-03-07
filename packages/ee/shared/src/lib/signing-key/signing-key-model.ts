@@ -14,8 +14,6 @@ export const SigningKey = Type.Object({
     displayName: Type.String(),
     /* algorithm used to generate this key pair */
     algorithm: Type.Enum(KeyAlgorithm),
-    /* ID of user who generated this key pair */
-    generatedBy: ApId,
 })
 
 export type SigningKey = Static<typeof SigningKey>
