@@ -1,8 +1,8 @@
-import { ExecutionOutput, FileCompression } from '@activepieces/shared'
+import { FileCompression, ExecutioOutputFile } from '@activepieces/shared'
 import { logger, fileCompressor } from 'server-shared'
 
 export const logSerializer = {
-    async serialize(log: ExecutionOutput): Promise<Buffer> {
+    async serialize(log: ExecutioOutputFile): Promise<Buffer> {
         const stringifiedLog = JSON.stringify(log, memoryFileReplacer)
         const binaryLog = Buffer.from(stringifiedLog)
 

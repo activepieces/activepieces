@@ -1,11 +1,13 @@
 import {
     ActionType,
-    ExecutionOutputStatus,
+    FlowRunStatus,
     ExecutionType,
     FlowStatus,
     FlowVersionState,
     RunEnvironment,
     TriggerType,
+    PackageType,
+    PieceType,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -55,8 +57,16 @@ describe('flow execution', () => {
             updatedBy: mockUser.id,
             state: FlowVersionState.LOCKED,
             trigger: {
-                type: TriggerType.WEBHOOK,
+                type: TriggerType.PIECE,
                 settings: {
+                    pieceName: '@activepieces/piece-schedule',
+                    pieceVersion: '0.1.0',
+                    input: {
+                        run_on_weekends: false,
+                    },
+                    triggerName: 'everyHourTrigger',
+                    'pieceType': PieceType.OFFICIAL,
+                    'packageType': PackageType.REGISTRY,
                     inputUiInfo: {},
                 },
                 valid: true,
@@ -111,7 +121,7 @@ describe('flow execution', () => {
             flowVersionId: mockFlowVersion.id,
             projectId: mockProject.id,
             flowId: mockFlow.id,
-            status: ExecutionOutputStatus.RUNNING,
+            status: FlowRunStatus.RUNNING,
         })
         await databaseConnection.getRepository('flow_run').save([mockFlowRun])
 
@@ -129,7 +139,7 @@ describe('flow execution', () => {
             .findOneByOrFail({
                 id: mockFlowRun.id,
             })
-        expect(flowRun.status).toEqual(ExecutionOutputStatus.SUCCEEDED)
+        expect(flowRun.status).toEqual(FlowRunStatus.SUCCEEDED)
 
         const file = await databaseConnection
             .getRepository('file')
@@ -145,7 +155,7 @@ describe('flow execution', () => {
         ).toEqual({
             steps: {
                 webhook: {
-                    type: 'WEBHOOK',
+                    type: 'PIECE_TRIGGER',
                     status: 'SUCCEEDED',
                     input: {},
                     output: {},

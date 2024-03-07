@@ -1,13 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../environments/environment';
-import { map, Observable, of, switchMap, tap } from 'rxjs';
+import { map, Observable, switchMap, tap } from 'rxjs';
 import {
   CountFlowsRequest,
   CreateFlowRequest,
-  ExecutionOutputStatus,
-  ExecutionState,
-  FileId,
   FlowId,
   FlowOperationRequest,
   FlowOperationType,
@@ -135,28 +132,9 @@ export class FlowService {
   }
 
   execute(request: TestFlowRunRequestBody): Observable<FlowRun> {
-    return this.http
-      .post<FlowRun>(environment.apiUrl + '/flow-runs/test', request)
-      .pipe(
-        switchMap((run) => {
-          if (
-            run.status !== ExecutionOutputStatus.RUNNING &&
-            run.logsFileId !== null
-          ) {
-            return this.loadStateLogs(run.logsFileId).pipe(
-              map((state) => {
-                return { ...run, state: state };
-              })
-            );
-          }
-          return of(run);
-        })
-      );
-  }
-
-  loadStateLogs(fileId: FileId): Observable<ExecutionState> {
-    return this.http.get<ExecutionState>(
-      environment.apiUrl + `/files/${fileId}`
+    return this.http.post<FlowRun>(
+      environment.apiUrl + '/flow-runs/test',
+      request
     );
   }
 

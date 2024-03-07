@@ -1,7 +1,6 @@
 import {
     apId,
     Cursor,
-    ExecutionOutputStatus,
     FileId,
     FlowRun,
     FlowRunId,
@@ -17,10 +16,11 @@ import {
     ErrorCode,
     ExecutionType,
     isNil,
-    RunTerminationReason,
     FlowRetryStrategy,
     PauseType,
     ResumePayload,
+    FlowRunStatus,
+    ExecutioOutputFile,
 } from '@activepieces/shared'
 import {
     APArrayContains,
@@ -37,6 +37,7 @@ import { logger } from 'server-shared'
 import { flowService } from '../flow/flow.service'
 import { flowRunHooks } from './flow-run-hooks'
 import { flowResponseWatcher } from './flow-response-watcher'
+import { fileService } from '../../file/file.service'
 
 export const flowRunRepo =
     databaseConnection.getRepository<FlowRun>(FlowRunEntity)
@@ -183,12 +184,10 @@ export const flowRunService = {
         tasks,
         logsFileId,
         tags,
-        terminationReason,
     }: {
         flowRunId: FlowRunId
-        status: ExecutionOutputStatus
+        status: FlowRunStatus
         tasks: number
-        terminationReason?: RunTerminationReason
         tags: string[]
         logsFileId: FileId | null
     }): Promise<FlowRun> {
@@ -196,7 +195,7 @@ export const flowRunService = {
             ...spreadIfDefined('logsFileId', logsFileId),
             status,
             tasks,
-            terminationReason,
+            terminationReason: undefined,
             tags,
             finishTime: new Date().toISOString(),
         })
@@ -241,7 +240,7 @@ export const flowRunService = {
             flowDisplayName: flowVersion.displayName,
         })
 
-        flowRun.status = ExecutionOutputStatus.RUNNING
+        flowRun.status = FlowRunStatus.RUNNING
 
         const savedFlowRun = await flowRunRepo.save(flowRun)
 
@@ -294,7 +293,7 @@ export const flowRunService = {
         const { flowRunId, logFileId, pauseMetadata } = params
 
         await flowRunRepo.update(flowRunId, {
-            status: ExecutionOutputStatus.PAUSED,
+            status: FlowRunStatus.PAUSED,
             logsFileId: logFileId,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             pauseMetadata: pauseMetadata as any,
@@ -305,15 +304,11 @@ export const flowRunService = {
         await flowRunSideEffects.pause({ flowRun })
     },
 
-    async getOne({ projectId, id }: GetOneParams): Promise<FlowRun | null> {
-        return flowRunRepo.findOneBy({
-            projectId,
-            id,
-        })
-    },
-
     async getOneOrThrow(params: GetOneParams): Promise<FlowRun> {
-        const flowRun = await this.getOne(params)
+        const flowRun = await flowRunRepo.findOneBy({
+            projectId: params.projectId,
+            id: params.id,
+        })
 
         if (isNil(flowRun)) {
             throw new ActivepiecesError({
@@ -325,6 +320,26 @@ export const flowRunService = {
         }
 
         return flowRun
+    },
+    async getOnePopulatedOrThrow(params: GetOneParams): Promise<FlowRun> {
+        const flowRun = await this.getOneOrThrow(params)
+        let steps = {}
+        if (!isNil(flowRun.logsFileId)) {
+            const logFile = await fileService.getOneOrThrow({
+                fileId: flowRun.logsFileId,
+                projectId: flowRun.projectId,
+            })
+        
+            const serializedExecutionOutput = logFile.data.toString('utf-8')
+            const executionOutput: ExecutioOutputFile = JSON.parse(
+                serializedExecutionOutput,
+            )
+            steps = executionOutput.executionState.steps
+        }
+        return {
+            ...flowRun,
+            steps,
+        }
     },
 }
 
@@ -345,7 +360,7 @@ type GetOrCreateParams = {
 type ListParams = {
     projectId: ProjectId
     flowId: FlowId | undefined
-    status: ExecutionOutputStatus | undefined
+    status: FlowRunStatus | undefined
     cursor: Cursor | null
     tags?: string[]
     limit: number

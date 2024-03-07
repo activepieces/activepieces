@@ -36,11 +36,6 @@
           (mentionClicked)="mentionClicked($event)" [stepMention]="stepMention"></app-piece-trigger-mention-item>
       </ng-container>
 
-      <ng-container *ngSwitchCase="TriggerType.WEBHOOK">
-        <app-webhook-trigger-mention-item [stepIndex]="stepMention.step.indexInDfsTraversal"
-          (mentionEmitted)="mentionClicked($event)" [stepMention]="stepMention"></app-webhook-trigger-mention-item>
-      </ng-container>
-
 
     </ng-container>
 

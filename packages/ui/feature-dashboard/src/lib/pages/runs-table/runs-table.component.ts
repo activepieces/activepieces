@@ -6,7 +6,7 @@ import {
 } from '@angular/core';
 import {
   ApEdition,
-  ExecutionOutputStatus,
+  FlowRunStatus,
   FlowId,
   FlowRetryStrategy,
   FlowRun,
@@ -65,9 +65,8 @@ export class RunsTableComponent implements OnInit {
   displayedColumns = ['flowName', 'status', 'started', 'finished', 'action'];
   updateNotificationsValue$: Observable<boolean>;
   refreshTableForReruns$: Subject<boolean> = new Subject();
-  statusFilterControl: FormControl<
-    ExecutionOutputStatus | typeof allOptionValue
-  > = new FormControl(allOptionValue, { nonNullable: true });
+  statusFilterControl: FormControl<FlowRunStatus | typeof allOptionValue> =
+    new FormControl(allOptionValue, { nonNullable: true });
   flowFilterControl = new FormControl<string>(allOptionValue, {
     nonNullable: true,
   });
@@ -79,7 +78,7 @@ export class RunsTableComponent implements OnInit {
   flows$: Observable<DropdownOption<FlowId>[]>;
   currentProject: ProjectId;
   filtersChanged$: Observable<void>;
-  readonly ExecutionOutputStatus = ExecutionOutputStatus;
+  readonly ExecutionOutputStatus = FlowRunStatus;
   FlowRetryStrategy: typeof FlowRetryStrategy = FlowRetryStrategy;
   retryFlow$?: Observable<void>;
   setInitialFilters$?: Observable<void>;
@@ -101,7 +100,7 @@ export class RunsTableComponent implements OnInit {
     this.statusFilterControl.setValue(
       (this.activatedRoute.snapshot.queryParamMap.get(
         STATUS_QUERY_PARAM
-      ) as ExecutionOutputStatus) || this.allOptionValue
+      ) as FlowRunStatus) || this.allOptionValue
     );
     const startDate = this.activatedRoute.snapshot.queryParamMap.get(
       DATE_RANGE_START_QUERY_PARAM

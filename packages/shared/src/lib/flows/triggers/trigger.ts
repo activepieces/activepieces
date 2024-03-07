@@ -6,7 +6,6 @@ export const AUTHENTICATION_PROPERTY_NAME = 'auth'
 
 export enum TriggerType {
     EMPTY = 'EMPTY',
-    WEBHOOK = 'WEBHOOK',
     PIECE = 'PIECE_TRIGGER',
 }
 
@@ -24,16 +23,6 @@ export const EmptyTrigger = Type.Object({
 })
 
 export type EmptyTrigger = Static<typeof EmptyTrigger>
-
-export const WebhookTrigger = Type.Object({
-    ...commonProps,
-    type: Type.Literal(TriggerType.WEBHOOK),
-    settings: Type.Object({
-        inputUiInfo: SampleDataSettingsObject,
-    }),
-})
-
-export type WebhookTrigger = Static<typeof WebhookTrigger>
 
 export const PieceTriggerSettings = Type.Object({
     pieceName: Type.String({}),
@@ -56,7 +45,6 @@ export const PieceTrigger = Type.Object({
 export type PieceTrigger = Static<typeof PieceTrigger>
 
 export const Trigger = Type.Union([
-    WebhookTrigger,
     PieceTrigger,
     EmptyTrigger,
 ])

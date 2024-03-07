@@ -250,7 +250,7 @@ describe('Flow API', () => {
             // arrange
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save([mockUser])
-            
+
             const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
             await databaseConnection.getRepository('platform').save(mockPlatform)
 
@@ -327,7 +327,7 @@ describe('Flow API', () => {
                 platformId: mockPlatform.id,
             })
             await databaseConnection.getRepository('project').save([mockProject])
-            
+
             const mockEnabledFlow = createMockFlow({
                 projectId: mockProject.id,
                 status: FlowStatus.ENABLED,
@@ -381,7 +381,10 @@ describe('Flow API', () => {
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save([mockUser])
 
-            const mockProject = createMockProject({ ownerId: mockUser.id })
+            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
+            const mockProject = createMockProject({ platformId: mockPlatform.id, ownerId: mockUser.id })
             await databaseConnection.getRepository('project').save([mockProject])
 
             const mockFlow = createMockFlow({ projectId: mockProject.id })
@@ -423,7 +426,10 @@ describe('Flow API', () => {
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save([mockUser])
 
-            const mockProject = createMockProject({ ownerId: mockUser.id })
+            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
+            const mockProject = createMockProject({ platformId: mockPlatform.id, ownerId: mockUser.id })
             await databaseConnection.getRepository('project').save([mockProject])
 
             const mockFlow = createMockFlow({ projectId: mockProject.id })

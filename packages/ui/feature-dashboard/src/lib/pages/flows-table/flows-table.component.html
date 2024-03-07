@@ -138,8 +138,14 @@
 
 </div>
 
+<ng-container *ngIf="(areThereFlows$|async)===false">
+  <div class="ap-hidden">
+    <app-flows-table-title #actionHandler></app-flows-table-title>
+  </div>
+  <app-empty-flows-table (openTemplatesDialog)="actionHandler.openTemplatesDialog(true)"></app-empty-flows-table>
+</ng-container>
 
-<app-empty-flows-table *ngIf="(areThereFlows$|async)===false"></app-empty-flows-table>
+
 <ng-container *ngIf="deleteFlowDialogClosed$ | async"></ng-container>
 <ng-container *ngIf="moveFlowDialogClosed$ | async"></ng-container>
 <ng-container *ngFor="let obs$ of flowsUpdateStatusRequest$ | keyvalue">

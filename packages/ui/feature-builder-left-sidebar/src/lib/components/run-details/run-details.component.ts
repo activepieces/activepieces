@@ -13,7 +13,7 @@ import { Store } from '@ngrx/store';
 import { RunDetailsService } from './iteration-details.service';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
 import {
-  ExecutionOutputStatus,
+  FlowRunStatus,
   FlowRun,
   StepOutput,
   StepOutputStatus,
@@ -115,7 +115,7 @@ export class RunDetailsComponent implements OnInit {
   }
 
   public get InstanceRunStatus() {
-    return ExecutionOutputStatus;
+    return FlowRunStatus;
   }
 
   resizerDragStarted(stepsResultsAccordion: HTMLElement) {
