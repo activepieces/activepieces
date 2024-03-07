@@ -1,6 +1,14 @@
 import { Component, Inject, LOCALE_ID, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { map, Observable, shareReplay, startWith, Subject, switchMap, tap } from 'rxjs';
+import {
+  map,
+  Observable,
+  shareReplay,
+  startWith,
+  Subject,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { FlowsTableDataSource } from './flows-table.datasource';
 import { MatDialog } from '@angular/material/dialog';
 import {
@@ -75,7 +83,7 @@ export class FlowsTableComponent implements OnInit {
     private authenticationService: AuthenticationService,
     private navigationService: NavigationService,
     private embeddingService: EmbeddingService,
-    @Inject(LOCALE_ID) public locale: string,
+    @Inject(LOCALE_ID) public locale: string
   ) {
     this.showAllFlows$ = this.listenToShowAllFolders();
     this.folderId$ = this.store.select(FoldersSelectors.selectCurrentFolderId);
@@ -83,10 +91,12 @@ export class FlowsTableComponent implements OnInit {
 
   private listenToShowAllFolders() {
     return this.store.select(FoldersSelectors.selectDisplayAllFlows).pipe(
-      switchMap((displayAllFlows)=>{
-       return this.hideFolders$.pipe(map(hideFoldersList => {
-          return displayAllFlows && !hideFoldersList;
-        }))
+      switchMap((displayAllFlows) => {
+        return this.hideFolders$.pipe(
+          map((hideFoldersList) => {
+            return displayAllFlows && !hideFoldersList;
+          })
+        );
       }),
       tap((showFoldersColumn) => {
         this.toggleFoldersColumn(showFoldersColumn);

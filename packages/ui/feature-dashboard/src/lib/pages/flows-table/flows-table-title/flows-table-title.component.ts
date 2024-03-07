@@ -60,7 +60,6 @@ export class FlowsTableTitleComponent {
     private telemetryService: TelemetryService,
     private embeddingService: EmbeddingService,
     private cd: ChangeDetectorRef
-
   ) {
     this.currentProject$ = this.store.select(
       ProjectSelectors.selectCurrentProject
