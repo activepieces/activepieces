@@ -34,7 +34,7 @@ const GetApprovalForm = {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
     schema: {
-        description: 'Get an approval form by flow run ID and request ID',
+        description: 'Get an approval form by flow ID',
         params: Type.Object({
             flowId: ApId,
         }),
