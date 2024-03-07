@@ -131,7 +131,7 @@ class ActivepiecesEmbedded {
     this._disableNavigationInBuilder = disableNavigationInBuilder === undefined ? true : disableNavigationInBuilder;
     this.initializeBuilderIframe({
       client: this,
-      containerSelector: containerId,
+      containerSelector: `#${containerId}`,
       instanceUrl,
       jwtToken
     }); 
