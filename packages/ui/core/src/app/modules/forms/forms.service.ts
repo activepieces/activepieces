@@ -23,6 +23,24 @@ export class FormsService {
       }
     );
   }
+
+  getApprovalForm(flowId: string): Observable<FormResponse> {
+    return this.http.get<FormResponse>(
+      environment.apiUrl + '/forms/' + flowId + '/approval'
+    );
+  }
+
+  submitApprovalForm(webhookUrl: string, isApproved: boolean): Observable<any> {
+    return this.http.post(
+      webhookUrl,
+      {},
+      {
+        params: {
+          action: isApproved ? 'approve' : 'disapprove',
+        },
+      }
+    );
+  }
 }
 
 export type FormResult = {

@@ -72,6 +72,13 @@ export const routes: Routes = [
     component: FormsComponent,
   },
   {
+    path: 'approvals/:flowId/flow-run/:flowRunId/requests/:requestId',
+    component: FormsComponent,
+    data: {
+      approval: true,
+    },
+  },
+  {
     path: '**',
     component: NotFoundComponent,
     data: {

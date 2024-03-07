@@ -58,8 +58,8 @@ type LoadInputAndLogFileIdParams = {
 
 type LoadInputAndLogFileIdResponse = {
     input:
-    | Omit<BeginExecuteFlowOperation, 'serverUrl' | 'workerToken'>
-    | Omit<ResumeExecuteFlowOperation, 'serverUrl' | 'workerToken'>
+    | Omit<BeginExecuteFlowOperation, 'serverUrl' | 'workerToken' | 'frontendUrl'>
+    | Omit<ResumeExecuteFlowOperation, 'serverUrl' | 'workerToken' | 'frontendUrl'>
     logFileId?: FileId | undefined
 }
 

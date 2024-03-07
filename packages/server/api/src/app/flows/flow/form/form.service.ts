@@ -20,6 +20,17 @@ const FORMS_TRIGGER_NAMES = [
     FORM_TRIIGGER,
     FILE_TRIGGER,
 ]
+const SIMPLE_APPROVAL_PROPS = {
+    inputs: [
+        {
+            displayName: 'Approval',
+            description: 'When enabled, approve the flow, otherwise disapprove.',
+            type: FormInputType.TOGGLE,
+            required: true,
+        },
+    ],
+    waitForResponse: false,
+}
 
 export const formService = {
     getFormByFlowIdOrThrow: async (flowId: string): Promise<FormResponse> => {
@@ -48,6 +59,26 @@ export const formService = {
             id: flow.id,
             title: flow.version.displayName,
             props: flow.version.trigger.settings.input,
+            projectId: flow.projectId,
+        }
+    },
+
+    getApprovalForm: async ({ flowId }: { flowId: string }): Promise<FormResponse> => {
+        const flow = await getPopulatedFlowById(flowId)
+        if (!flow) {
+            throw new ActivepiecesError({
+                code: ErrorCode.FLOW_FORM_NOT_FOUND,
+                params: {
+                    flowId,
+                    message: 'Flow form not found in flow run.',
+                },
+            })
+        }
+        
+        return {
+            id: flow.id,
+            title: flow.version.displayName,
+            props: SIMPLE_APPROVAL_PROPS,
             projectId: flow.projectId,
         }
     },

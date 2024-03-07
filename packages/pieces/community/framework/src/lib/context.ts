@@ -129,6 +129,7 @@ export type BaseActionContext<
   generateResumeUrl: (params: {
     queryParams: Record<string, string>
   }) => string;
+  generateApprovalUrl: (() => string);
 };
 
 type BeginExecutionActionContext<

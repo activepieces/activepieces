@@ -49,7 +49,7 @@ import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { sandboxProvisioner } from '../workers/sandbox/provisioner/sandbox-provisioner'
 import { SandBoxCacheType } from '../workers/sandbox/provisioner/sandbox-cache-key'
 import { hashObject } from './encryption'
-import { getServerUrl } from './network-utils'
+import { getFrontendUrl, getServerUrl } from './network-utils'
 
 type GenerateWorkerTokenParams = {
     projectId: ProjectId
@@ -184,6 +184,7 @@ export const engineHelper = {
                 projectId: operation.projectId,
             }),
             serverUrl: await getServerUrl(),
+            frontendUrl: getFrontendUrl(),
         }
         return execute(EngineOperationType.EXECUTE_FLOW, sandbox, input)
     },
@@ -234,6 +235,7 @@ export const engineHelper = {
                 appName: pieceName,
             }),
             serverUrl: await getServerUrl(),
+            frontendUrl: getFrontendUrl(),
             webhookSecret: await getWebhookSecret(operation.flowVersion),
             workerToken: await generateWorkerToken({
                 projectId: operation.projectId,
@@ -273,6 +275,7 @@ export const engineHelper = {
         const input = {
             ...operation,
             serverUrl: await getServerUrl(),
+            frontendUrl: getFrontendUrl(),
             workerToken: await generateWorkerToken({
                 projectId: operation.projectId,
             }),
@@ -327,6 +330,7 @@ export const engineHelper = {
             stepName: operation.stepName,
             projectId: operation.projectId,
             serverUrl: await getServerUrl(),
+            frontendUrl: getFrontendUrl(),
             workerToken: await generateWorkerToken({
                 projectId: operation.projectId,
             }),
@@ -361,6 +365,7 @@ export const engineHelper = {
         const input = {
             ...operation,
             serverUrl: await getServerUrl(),
+            frontendUrl: getFrontendUrl(),
             workerToken: await generateWorkerToken({
                 projectId: operation.projectId,
             }),
@@ -386,6 +391,7 @@ export const engineHelper = {
         return execute(EngineOperationType.EXECUTE_TEST_FLOW, sandbox, {
             ...operation,
             serverUrl: await getServerUrl(),
+            frontendUrl: getFrontendUrl(),
             workerToken: await generateWorkerToken({
                 projectId: operation.projectId,
             }),
@@ -465,4 +471,4 @@ async function getSandboxForAction(
             })
     }
 }
-type EngineConstants = 'serverUrl' | 'workerToken'
+type EngineConstants = 'serverUrl' | 'workerToken' | 'frontendUrl'

@@ -109,6 +109,10 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 url.search = new URLSearchParams(params.queryParams).toString()
                 return url.toString()
             },
+            generateApprovalUrl: () => {
+                const url = new URL(`${constants.frontendUrl}/approvals/${constants.flowId}/flow-run/${constants.flowRunId}/requests/${executionState.pauseRequestId}`)
+                return url.toString()
+            },
         }
         const runMethodToExecute = (constants.testSingleStepMode && !isNil(pieceAction.test)) ? pieceAction.test : pieceAction.run
         const output = await runMethodToExecute(context)

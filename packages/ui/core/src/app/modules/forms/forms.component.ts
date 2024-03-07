@@ -8,12 +8,13 @@ import {
 import { TelemetryService, environment } from '@activepieces/ui/common';
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Data, ParamMap, Router } from '@angular/router';
 import {
   Observable,
   Observer,
   Subject,
   catchError,
+  combineLatest,
   forkJoin,
   map,
   of,
@@ -29,17 +30,20 @@ import { StatusCodes } from 'http-status-codes';
   templateUrl: './forms.component.html',
 })
 export class FormsComponent implements OnInit {
-  flow$: Observable<FormResponse>;
+  formStructure$: Observable<FormResponse>;
   submitForm$: Observable<FormResult | undefined>;
-  form: FormGroup;
+  formGroup: FormGroup;
   inputs: FormInput[] = [];
   loading = false;
   error: string | null = null;
   webhookUrl: string | null = null;
+  webhookUrl$: Observable<Data | null>;
   title: string | null = null;
   populatedForm: FormResponse | null = null;
   markdownResponse: Subject<string | null> = new Subject<string | null>();
   FormInputType = FormInputType;
+  routeData$: Observable<Data>;
+  routeParamMap: ParamMap;
 
   constructor(
     private route: ActivatedRoute,
@@ -50,10 +54,24 @@ export class FormsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.flow$ = this.route.paramMap.pipe(
-      switchMap((params) =>
-        this.formsService.get(params.get('flowId') as string)
-      ),
+    this.initializeForm();
+  }
+
+  initializeForm() {
+    this.formStructure$ = combineLatest([
+      this.route.data,
+      this.route.paramMap,
+    ]).pipe(
+      switchMap(([data, params]) => {
+        this.routeParamMap = params;
+        if (data['approval']) {
+          return this.formsService.getApprovalForm(
+            params.get('flowId') as string
+          );
+        } else {
+          return this.formsService.get(params.get('flowId') as string);
+        }
+      }),
       tap((form) => {
         this.telemteryService.capture({
           name: TelemetryEventName.FORMS_VIEWED,
@@ -64,14 +82,10 @@ export class FormsComponent implements OnInit {
           },
         });
         this.title = form.title;
-        this.form = new FormGroup({});
+        this.formGroup = new FormGroup({});
         this.buildInputs(form.props.inputs);
         this.populatedForm = form;
-        this.webhookUrl =
-          environment.apiUrl +
-          '/webhooks/' +
-          this.populatedForm!.id +
-          (this.populatedForm!.props.waitForResponse ? '/sync' : '');
+        this.buildWebhookUrl();
       }),
       catchError((err) => {
         console.error(err);
@@ -82,21 +96,33 @@ export class FormsComponent implements OnInit {
   }
 
   async submit() {
-    if (this.form.valid && !this.loading) {
+    this.routeData$ = this.route.data.pipe(
+      tap((data) => {
+        if (data['approval']) {
+          this.submitApproval();
+        } else {
+          this.submitForm();
+        }
+      })
+    );
+  }
+
+  async submitForm() {
+    if (this.formGroup.valid && !this.loading) {
       this.markdownResponse.next(null);
       this.loading = true;
 
       const observables: Observable<string>[] = [];
 
-      for (const key in this.form.value) {
+      for (const key in this.formGroup.value) {
         const isFileInput = this.inputs
           .filter((f) => f.type === FormInputType.FILE)
           .find((input) => this.getInputKey(input.displayName) === key);
 
-        if (isFileInput && this.form.value[key]) {
-          observables.push(this.toBase64(this.form.value[key]));
+        if (isFileInput && this.formGroup.value[key]) {
+          observables.push(this.toBase64(this.formGroup.value[key]));
         } else {
-          observables.push(of(this.form.value[key]));
+          observables.push(of(this.formGroup.value[key]));
         }
       }
 
@@ -104,7 +130,7 @@ export class FormsComponent implements OnInit {
         map((values) => {
           const formData = new FormData();
           for (let i = 0; i < values.length; i++) {
-            const key = Object.keys(this.form.value)[i];
+            const key = Object.keys(this.formGroup.value)[i];
             formData.append(key, values[i]);
           }
           return formData;
@@ -167,6 +193,51 @@ export class FormsComponent implements OnInit {
     }
   }
 
+  async submitApproval() {
+    if (this.formGroup.valid && !this.loading) {
+      this.markdownResponse.next(null);
+      this.loading = true;
+      const isApproved = this.formGroup.controls['approval'].value;
+
+      this.submitForm$ = this.formsService
+        .submitApprovalForm(this.webhookUrl!, isApproved)
+        .pipe(
+          tap(() => {
+            this.formGroup.disable();
+            this.snackBar.open(
+              `Flow run ${
+                isApproved ? 'approved' : 'disapproved'
+              } successfully.`,
+              '',
+              {
+                duration: 5000,
+              }
+            );
+            this.loading = false;
+          }),
+          catchError((error) => {
+            if (error.status === StatusCodes.NOT_FOUND) {
+              this.snackBar.open(
+                `Flow is not found, please publish the flow`,
+                '',
+                {
+                  panelClass: 'error',
+                  duration: 5000,
+                }
+              );
+            } else {
+              this.snackBar.open(`Flow failed to execute`, '', {
+                panelClass: 'error',
+                duration: 5000,
+              });
+            }
+            this.loading = false;
+            return of(void 0);
+          })
+        );
+    }
+  }
+
   getInputKey(str: string) {
     return str
       .replace(/\s(.)/g, function ($1) {
@@ -180,9 +251,13 @@ export class FormsComponent implements OnInit {
 
   buildInputs(inputs: FormInput[]) {
     inputs.forEach((prop) => {
-      this.form.addControl(
+      let defaultValue: string | boolean = '';
+      if (prop.type === FormInputType.TOGGLE) {
+        defaultValue = false;
+      }
+      this.formGroup.addControl(
         this.getInputKey(prop.displayName),
-        new FormControl('', {
+        new FormControl(defaultValue, {
           nonNullable: prop.required,
           validators: prop.required ? [Validators.required] : [],
         })
@@ -202,5 +277,23 @@ export class FormsComponent implements OnInit {
         observer.error(error);
       };
     });
+  }
+
+  buildWebhookUrl() {
+    this.webhookUrl$ = this.route.data.pipe(
+      tap((data) => {
+        if (data['approval']) {
+          this.webhookUrl = `${
+            environment.apiUrl
+          }/flow-runs/${this.routeParamMap.get(
+            'flowRunId'
+          )}/requests/${this.routeParamMap.get('requestId')}`;
+        } else {
+          this.webhookUrl = `${environment.apiUrl}/webhooks/${
+            this.populatedForm!.id
+          }${this.populatedForm!.props.waitForResponse ? '/sync' : ''}`;
+        }
+      })
+    );
   }
 }

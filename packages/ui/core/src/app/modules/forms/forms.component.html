@@ -1,17 +1,17 @@
 <div
-  class="ap-h-screen ap-w-full ap-flex ap-items-center ap-justify-center ap-bg-center ap-bg-cover ap-bg-authBg ap-flex-col" *ngIf="flow$ | async as flow">
+  class="ap-h-screen ap-w-full ap-flex ap-items-center ap-justify-center ap-bg-center ap-bg-cover ap-bg-authBg ap-flex-col" *ngIf="formStructure$ | async as formStructure">
   <ng-container *ngIf="!error">
-    <form [formGroup]="form" (ngSubmit)="submit()" class="ap-flex ap-flex-col ap-gap-2">
+    <form [formGroup]="formGroup" (ngSubmit)="submit()" class="ap-flex ap-flex-col ap-gap-2">
       <mat-card class="md:ap-min-w-[480px] md:ap-max-w-initial ap-min-w-[350px] ap-max-w-[350px] auth-card ap-max-h-[80vh] ap-overflow-scroll">
         <div class="ap-typography-headline-5 ap-text-center ap-mb-6">{{ title }}</div>
-        <ng-container *ngFor="let input of flow.props.inputs">
+        <ng-container *ngFor="let input of formStructure.props.inputs">
           <ng-container [ngSwitch]="input.type">
             <ng-container *ngSwitchCase="FormInputType.TEXT">
               <mat-form-field class="ap-w-full ap-mb-4" appearance="outline" subscriptSizing="dynamic">
                 <mat-label>{{ input.displayName }}</mat-label>
                 <input matInput type="text" [formControlName]="getInputKey(input.displayName)">
                 <mat-hint>{{ input.description }}</mat-hint>
-                <mat-error *ngIf="form.controls[getInputKey(input.displayName)]?.invalid">
+                <mat-error *ngIf="formGroup.controls[getInputKey(input.displayName)]?.invalid">
                   {{ input.displayName }} is required
                 </mat-error>
               </mat-form-field>
@@ -25,7 +25,7 @@
                   (buttonClicked)="flowInput.fileInput.nativeElement.click()"></ap-icon-button>
 
                 <mat-hint>{{ input.description }}</mat-hint>
-                <mat-error *ngIf="form.controls[getInputKey(input.displayName)]?.invalid">
+                <mat-error *ngIf="formGroup.controls[getInputKey(input.displayName)]?.invalid">
                   {{ input.displayName }} is required
                 </mat-error>
               </mat-form-field>
@@ -36,7 +36,7 @@
                   <mat-slide-toggle [formControlName]="getInputKey(input.displayName)" color="primary" i18n>{{ input.displayName }}</mat-slide-toggle>
                 </div>
                 <markdown class="ap-typography-caption">{{ input.description }}</markdown>
-                <mat-error *ngIf="form.controls[getInputKey(input.displayName)]?.invalid" class="ap-mt-2">
+                <mat-error *ngIf="formGroup.controls[getInputKey(input.displayName)]?.invalid" class="ap-mt-2">
                   {{ input.displayName }} is required
                 </mat-error>
               </div>
@@ -46,7 +46,7 @@
                 <mat-label>{{ input.displayName }}</mat-label>
                 <textarea matInput [formControlName]="getInputKey(input.displayName)"></textarea>
                 <mat-hint>{{ input.description }}</mat-hint>
-                <mat-error *ngIf="form.controls[getInputKey(input.displayName)]?.invalid">
+                <mat-error *ngIf="formGroup.controls[getInputKey(input.displayName)]?.invalid">
                   {{ input.displayName }} is required
                 </mat-error>
               </mat-form-field>
@@ -73,3 +73,5 @@
   <ap-powered-by-activepieces class="ap-mt-4"></ap-powered-by-activepieces>
 </div>
 <ng-container *ngIf="submitForm$ | async"></ng-container>
+<ng-container *ngIf="webhookUrl$ | async"></ng-container>
+<ng-container *ngIf="routeData$ | async"></ng-container>

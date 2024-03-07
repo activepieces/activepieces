@@ -8,7 +8,7 @@ export const approval = createPiece({
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/approval.svg',
-  authors: ['khaledmashaly'],
+  authors: ['khaledmashaly', 'MoShizzle'],
   categories: [PieceCategory.CORE],
   actions: [waitForApprovalLink, createApprovalLink],
   triggers: [],

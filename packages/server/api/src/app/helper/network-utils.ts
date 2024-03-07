@@ -57,6 +57,10 @@ export const getServerUrl = async (): Promise<string> => {
     return `${url}${slash}${redirect}`
 }
 
+export const getFrontendUrl = (): string => {
+    return system.getOrThrow(SystemProp.FRONTEND_URL)
+}
+
 function extractHostname(url: string): string | null {
     try {
         const hostname = new URL(url).hostname
