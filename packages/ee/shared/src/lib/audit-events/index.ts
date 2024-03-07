@@ -22,6 +22,7 @@ export enum ApplicationEventName {
     SIGNED_IN = 'SIGNED_IN',
     RESET_PASSWORD = 'RESET_PASSWORD',
     VERIFIED_EMAIL = 'VERIFIED_EMAIL',
+    CREATED_SIGNING_KEY = 'CREATED_SIGNING_KEY',
 }
 
 const BaseAuditEventProps = {
@@ -107,6 +108,19 @@ export const SignUpEvent = Type.Object({
 })
 export type SignUpEvent = Static<typeof SignUpEvent>
 
+export const SigningKeyEvent = Type.Object({
+    ...BaseAuditEventProps,
+    action: Type.Union([
+        Type.Literal(ApplicationEventName.CREATED_SIGNING_KEY),
+    ]),
+    data: Type.Object({
+        signingKeyId: Type.String(),
+        signingKeyName: Type.String(),
+    }),
+})
+
+export type SigningKeyEvent = Static<typeof SigningKeyEvent>
+
 export const ApplicationEvent = Type.Union([
     ConnectionEvent,
     FlowEvent,
@@ -114,6 +128,7 @@ export const ApplicationEvent = Type.Union([
     FolderEvent,
     UpdatedFlowEvent,
     SignUpEvent,
+    SigningKeyEvent,
 ])
 
 export type ApplicationEvent = Static<typeof ApplicationEvent>
@@ -150,6 +165,8 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             return `User ${event.data.createdUser.email} signed up using SSO`;
         case ApplicationEventName.SIGNED_UP_USING_MANAGED_AUTH:
             return `User ${event.data.createdUser.email} signed up using managed auth`;
+        case ApplicationEventName.CREATED_SIGNING_KEY:
+            return `${event.data.signingKeyName} is created`;
     }
 }
 

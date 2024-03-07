@@ -35,4 +35,8 @@ export class PlatformService {
       status,
     });
   }
+
+  deleteUser(userId: string) {
+    return this.http.delete<void>(`${environment.apiUrl}/users/${userId}`);
+  }
 }

@@ -4,6 +4,7 @@ import {
     TelemetryEventName,
     UserId,
     apId,
+    isNil,
 } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { ReferralEntity } from './referral.entity'
@@ -20,23 +21,23 @@ import { projectBillingService } from '../billing/project-billing/project-billin
 const referralRepo = databaseConnection.getRepository(ReferralEntity)
 
 export const referralService = {
-    async upsert({
-        referredUserId,
-        referringUserId,
-    }: UpsertParams): Promise<void> {
-        const referingUser = await userService.getMetaInfo({ id: referringUserId })
-        if (!referingUser) {
-            logger.warn(`Referring user ${referringUserId} not found, ignoring.`)
+    async add({ referringUserId, referredUserId, referredUserEmail }: AddParams): Promise<void> {
+        const referringUser = await userService.getMetaInfo({ id: referringUserId })
+
+        if (isNil(referringUser)) {
+            logger.warn({ name: 'ReferralService#add', referringUserId, referredUserId }, 'Referring user not found')
             return
         }
-        await referralRepo.upsert(
-            {
-                referredUserId,
-                referringUserId,
-                id: apId(),
-            },
-            ['referredUserId', 'referringUserId'],
-        )
+
+        const newReferral: NewReferral = {
+            id: apId(),
+            referringUserId,
+            referringUserEmail: referringUser.email,
+            referredUserId,
+            referredUserEmail,
+        }
+
+        await referralRepo.save(newReferral)
 
         telemetry
             .trackUser(referringUserId, {
@@ -94,8 +95,10 @@ async function addExtraTasks(userId: string): Promise<void> {
     })
 }
 
-
-type UpsertParams = {
-    referringUserId: string
-    referredUserId: string
+type AddParams = {
+    referringUserId: UserId
+    referredUserId: UserId
+    referredUserEmail: string
 }
+
+type NewReferral = Omit<Referral, 'created' | 'updated'>

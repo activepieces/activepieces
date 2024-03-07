@@ -15,8 +15,24 @@ export const ReferralEntity = new EntitySchema<ReferralSchema>({
     name: 'referal',
     columns: {
         ...BaseColumnSchemaPart,
-        referredUserId: ApIdSchema,
-        referringUserId: ApIdSchema,
+        referredUserId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
+        referredUserEmail: {
+            type: String,
+            length: 500,
+            nullable: false,
+        },
+        referringUserId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
+        referringUserEmail: {
+            type: String,
+            length: 500,
+            nullable: false,
+        },
     },
     indices: [
         {
@@ -30,7 +46,7 @@ export const ReferralEntity = new EntitySchema<ReferralSchema>({
             type: 'many-to-one',
             target: 'user',
             cascade: true,
-            onDelete: 'CASCADE',
+            onDelete: 'SET NULL',
             joinColumn: {
                 name: 'referredUserId',
                 foreignKeyConstraintName: 'fk_referral_referred_user_id',
@@ -40,7 +56,7 @@ export const ReferralEntity = new EntitySchema<ReferralSchema>({
             type: 'many-to-one',
             target: 'user',
             cascade: true,
-            onDelete: 'CASCADE',
+            onDelete: 'SET NULL',
             joinColumn: {
                 name: 'referringUserId',
                 foreignKeyConstraintName: 'fk_referral_referring_user_id',

@@ -179,6 +179,17 @@ const saveEvent = async (
             }
             break
         }
+        case ApplicationEventName.CREATED_SIGNING_KEY: {
+            eventToSave = {
+                ...baseProps,
+                action: rawEvent.action,
+                data: {
+                    signingKeyId: rawEvent.signingKey.id,
+                    signingKeyName: rawEvent.signingKey.displayName,
+                },
+            }
+            break
+        }
     }
     await auditLogRepo.save(eventToSave)
 }

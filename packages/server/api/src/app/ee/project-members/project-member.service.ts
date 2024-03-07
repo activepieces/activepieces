@@ -2,13 +2,13 @@ import {
     ProjectMemberEntity,
     ProjectMemberSchema,
 } from './project-member.entity'
-import { databaseConnection } from '../../database/database-connection'
 import { userService } from '../../user/user-service'
 import {
     ActivepiecesError,
     ApEdition,
     Cursor,
     ErrorCode,
+    PlatformId,
     Principal,
     ProjectId,
     ProjectMemberRole,
@@ -30,11 +30,12 @@ import { emailService } from '../helper/email/email-service'
 import dayjs from 'dayjs'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { getEdition } from '../../helper/secret-helper'
-import { IsNull } from 'typeorm'
+import { EntityManager, IsNull } from 'typeorm'
 import { jwtUtils } from '../../helper/jwt-utils'
 import { projectMembersLimit } from '../project-plan/members-limit'
+import { repoFactory } from '../../core/db/repo-factory'
 
-const projectMemberRepo = databaseConnection.getRepository(ProjectMemberEntity)
+const repo = repoFactory(ProjectMemberEntity)
 
 export const projectMemberService = {
     async upsert({
@@ -49,7 +50,7 @@ export const projectMemberService = {
 
         const project = await projectService.getOneOrThrow(projectId)
         const platformId = project.platformId ?? null
-        const existingProjectMember = await projectMemberRepo.findOneBy({
+        const existingProjectMember = await repo().findOneBy({
             projectId,
             email,
             platformId: isNil(platformId) ? IsNull() : platformId,
@@ -66,7 +67,7 @@ export const projectMemberService = {
             status: status ?? getStatusFromEdition(),
         }
 
-        const upsertResult = await projectMemberRepo.upsert(projectMember, [
+        const upsertResult = await repo().upsert(projectMember, [
             'projectId',
             'email',
             'platformId',
@@ -115,7 +116,7 @@ export const projectMemberService = {
         )
         const projectMember = await getOrThrow(projectMemberId)
 
-        await projectMemberRepo.update(projectMemberId, {
+        await repo().update(projectMemberId, {
             status: ProjectMemberStatus.ACTIVE,
         })
         return {
@@ -139,7 +140,7 @@ export const projectMemberService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const queryBuilder = projectMemberRepo
+        const queryBuilder = repo()
             .createQueryBuilder('project_member')
             .where({ projectId })
         const { data, cursor } = await paginator.paginate(queryBuilder)
@@ -177,7 +178,7 @@ export const projectMemberService = {
         const user = await userService.getMetaInfo({
             id: userId,
         })
-        const member = await projectMemberRepo.findOneBy({
+        const member = await repo().findOneBy({
             projectId,
             email: user?.email,
             platformId: isNil(user?.platformId) ? IsNull() : user?.platformId,
@@ -191,7 +192,7 @@ export const projectMemberService = {
         email: string
         platformId: null | string
     }): Promise<ProjectMemberSchema[]> {
-        return projectMemberRepo.findBy({
+        return repo().findBy({
             email,
             status: ProjectMemberStatus.ACTIVE,
             platformId: isNil(platformId) ? IsNull() : platformId,
@@ -201,14 +202,21 @@ export const projectMemberService = {
         projectId: ProjectId,
         invitationId: ProjectMemberId,
     ): Promise<void> {
-        await projectMemberRepo.delete({ projectId, id: invitationId })
+        await repo().delete({ projectId, id: invitationId })
     },
     async countTeamMembersIncludingOwner(projectId: ProjectId): Promise<number> {
         return (
-            (await projectMemberRepo.countBy({
+            (await repo().countBy({
                 projectId,
             })) + 1
         )
+    },
+
+    async deleteAllByPlatformAndEmail({ email, platformId, entityManager }: DeleteAllByPlatformAndEmailParams): Promise<void> {
+        await repo(entityManager).delete({
+            email,
+            platformId,
+        })
     },
 }
 
@@ -236,7 +244,7 @@ function getStatusFromEdition(): ProjectMemberStatus {
 }
 
 const getOrThrow = async (id: string): Promise<ProjectMember> => {
-    const projectMember = await projectMemberRepo.findOneBy({
+    const projectMember = await repo().findOneBy({
         id,
     })
 
@@ -276,4 +284,10 @@ export type ProjectMemberToken = {
 type UpsertAndSendResponse = {
     projectMember: ProjectMember
     invitationToken: string
+}
+
+type DeleteAllByPlatformAndEmailParams = {
+    email: string
+    platformId: PlatformId
+    entityManager?: EntityManager
 }
