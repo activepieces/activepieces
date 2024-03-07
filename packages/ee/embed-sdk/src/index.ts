@@ -112,14 +112,14 @@ class ActivepiecesEmbedded {
     prefix,
     hideSidebar,
     disableNavigationInBuilder,
-    apContainerSelector,
+    containerSelector,
     jwtToken,
     instanceUrl
   }: {
     prefix?: string;
     hideSidebar?: boolean;
     disableNavigationInBuilder?: boolean;
-    apContainerSelector:string;
+    containerSelector:string;
     jwtToken:string;
     instanceUrl:string;
   }) {
@@ -131,7 +131,7 @@ class ActivepiecesEmbedded {
     this._disableNavigationInBuilder = disableNavigationInBuilder === undefined ? true : disableNavigationInBuilder;
     this.initializeBuilderIframe({
       client: this,
-      apContainerSelector,
+      containerSelector,
       instanceUrl,
       jwtToken
     }); 
@@ -153,12 +153,12 @@ class ActivepiecesEmbedded {
     this._connectionsIframe.style.display = 'block';
  
   }
-  private initializeBuilderIframe = ({client,apContainerSelector, instanceUrl,jwtToken}
+  private initializeBuilderIframe = ({client,containerSelector, instanceUrl,jwtToken}
     :{client: ActivepiecesEmbedded,
-     apContainerSelector:string,
+     containerSelector:string,
      instanceUrl:string,
       jwtToken:string }) => {
-   const iframeContainer = document.querySelector(apContainerSelector);
+   const iframeContainer = document.querySelector(containerSelector);
    if(!iframeContainer) {
     console.error('Activepieces: iframe container not found');
     return;
