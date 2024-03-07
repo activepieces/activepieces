@@ -20,7 +20,7 @@ import { TypeCompiler } from '@sinclair/typebox/compiler'
 import { FlowVersion, FlowVersionState } from './flow-version'
 import { ActivepiecesError, ErrorCode } from '../common/activepieces-error'
 import semver from 'semver'
-import { applyFunctionToValuesSync, isString } from '../common'
+import { applyFunctionToValuesSync, isNil, isString } from '../common'
 
 type Step = Action | Trigger
 
@@ -67,14 +67,14 @@ function deleteAction(
             case ActionType.BRANCH: {
                 if (
                     parentStep.onFailureAction &&
-          parentStep.onFailureAction.name === request.name
+                    parentStep.onFailureAction.name === request.name
                 ) {
                     const stepToUpdate: Action = parentStep.onFailureAction
                     parentStep.onFailureAction = stepToUpdate.nextAction
                 }
                 if (
                     parentStep.onSuccessAction &&
-          parentStep.onSuccessAction.name === request.name
+                    parentStep.onSuccessAction.name === request.name
                 ) {
                     const stepToUpdate: Action = parentStep.onSuccessAction
                     parentStep.onSuccessAction = stepToUpdate.nextAction
@@ -84,7 +84,7 @@ function deleteAction(
             case ActionType.LOOP_ON_ITEMS: {
                 if (
                     parentStep.firstLoopAction &&
-          parentStep.firstLoopAction.name === request.name
+                    parentStep.firstLoopAction.name === request.name
                 ) {
                     const stepToUpdate: Action = parentStep.firstLoopAction
                     parentStep.firstLoopAction = stepToUpdate.nextAction
@@ -256,19 +256,19 @@ function getAllChildSteps(action: LoopOnItemsAction | BranchAction): Action[] {
     }
 }
 
-function getAllDirectChildStepsForLoop(action: LoopOnItemsAction ): Action[] {
+function getAllDirectChildStepsForLoop(action: LoopOnItemsAction): Action[] {
     const actions: Action[] = []
-    
+
     let child = action.firstLoopAction
     while (child) {
         actions.push(child)
         child = child.nextAction
     }
-   
+
     return actions
 }
 
-function getAllDirectChildStepsForBranch(action: BranchAction, branch: 'success' | 'failure' ): Action[] {
+function getAllDirectChildStepsForBranch(action: BranchAction, branch: 'success' | 'failure'): Action[] {
     const actions: Action[] = []
     if (branch === 'success') {
         let child = action.onSuccessAction
@@ -283,9 +283,9 @@ function getAllDirectChildStepsForBranch(action: BranchAction, branch: 'success'
             actions.push(child)
             child = child.nextAction
         }
-    }   
+    }
     return actions
-   
+
 }
 
 function getStep(
@@ -326,14 +326,14 @@ function updateAction(
         if (parentStep.type === ActionType.BRANCH) {
             if (
                 parentStep.onFailureAction &&
-        parentStep.onFailureAction.name === request.name
+                parentStep.onFailureAction.name === request.name
             ) {
                 const actions = extractActions(parentStep.onFailureAction)
                 parentStep.onFailureAction = createAction(request, actions)
             }
             if (
                 parentStep.onSuccessAction &&
-        parentStep.onSuccessAction.name === request.name
+                parentStep.onSuccessAction.name === request.name
             ) {
                 const actions = extractActions(parentStep.onSuccessAction)
                 parentStep.onSuccessAction = createAction(request, actions)
@@ -342,7 +342,7 @@ function updateAction(
         if (parentStep.type === ActionType.LOOP_ON_ITEMS) {
             if (
                 parentStep.firstLoopAction &&
-        parentStep.firstLoopAction.name === request.name
+                parentStep.firstLoopAction.name === request.name
             ) {
                 const actions = extractActions(parentStep.firstLoopAction)
                 parentStep.firstLoopAction = createAction(request, actions)
@@ -360,11 +360,11 @@ function extractActions(step: Trigger | Action): {
 } {
     const nextAction = step.nextAction
     const onSuccessAction =
-    step.type === ActionType.BRANCH ? step.onSuccessAction : undefined
+        step.type === ActionType.BRANCH ? step.onSuccessAction : undefined
     const onFailureAction =
-    step.type === ActionType.BRANCH ? step.onFailureAction : undefined
+        step.type === ActionType.BRANCH ? step.onFailureAction : undefined
     const firstLoopAction =
-    step.type === ActionType.LOOP_ON_ITEMS ? step.firstLoopAction : undefined
+        step.type === ActionType.LOOP_ON_ITEMS ? step.firstLoopAction : undefined
     return { nextAction, onSuccessAction, onFailureAction, firstLoopAction }
 }
 
@@ -399,9 +399,9 @@ function moveAction(
     const clonedSourceStep: Step = JSON.parse(JSON.stringify(sourceStep))
     if (
         clonedSourceStep.type === ActionType.LOOP_ON_ITEMS ||
-    clonedSourceStep.type === ActionType.BRANCH
+        clonedSourceStep.type === ActionType.BRANCH
     ) {
-    // Don't Clone the next action for first step only
+        // Don't Clone the next action for first step only
         clonedSourceStep.nextAction = undefined
         childOperation.push(...getImportOperations(clonedSourceStep))
     }
@@ -430,11 +430,11 @@ function addAction(
         }
         if (
             parentStep.type === ActionType.LOOP_ON_ITEMS &&
-      request.stepLocationRelativeToParent
+            request.stepLocationRelativeToParent
         ) {
             if (
                 request.stepLocationRelativeToParent ===
-        StepLocationRelativeToParent.INSIDE_LOOP
+                StepLocationRelativeToParent.INSIDE_LOOP
             ) {
                 parentStep.firstLoopAction = createAction(request.action, {
                     nextAction: parentStep.firstLoopAction,
@@ -442,7 +442,7 @@ function addAction(
             }
             else if (
                 request.stepLocationRelativeToParent ===
-        StepLocationRelativeToParent.AFTER
+                StepLocationRelativeToParent.AFTER
             ) {
 
                 parentStep.nextAction = createAction(request.action, {
@@ -462,11 +462,11 @@ function addAction(
         }
         else if (
             parentStep.type === ActionType.BRANCH &&
-      request.stepLocationRelativeToParent
+            request.stepLocationRelativeToParent
         ) {
             if (
                 request.stepLocationRelativeToParent ===
-        StepLocationRelativeToParent.INSIDE_TRUE_BRANCH
+                StepLocationRelativeToParent.INSIDE_TRUE_BRANCH
             ) {
                 parentStep.onSuccessAction = createAction(request.action, {
                     nextAction: parentStep.onSuccessAction,
@@ -474,7 +474,7 @@ function addAction(
             }
             else if (
                 request.stepLocationRelativeToParent ===
-        StepLocationRelativeToParent.INSIDE_FALSE_BRANCH
+                StepLocationRelativeToParent.INSIDE_FALSE_BRANCH
             ) {
                 parentStep.onFailureAction = createAction(request.action, {
                     nextAction: parentStep.onFailureAction,
@@ -482,7 +482,7 @@ function addAction(
             }
             else if (
                 request.stepLocationRelativeToParent ===
-        StepLocationRelativeToParent.AFTER
+                StepLocationRelativeToParent.AFTER
             ) {
                 parentStep.nextAction = createAction(request.action, {
                     nextAction: parentStep.nextAction,
@@ -561,8 +561,10 @@ function createAction(
             }
             break
     }
-    action.valid = (request.valid ?? true) && actionSchemaValidator.Check(action)
-    return action
+    return {
+        ...action,
+        valid: (isNil(request.valid) ? true : request.valid) && actionSchemaValidator.Check(action),
+    }
 }
 
 function isChildOf(parent: LoopOnItemsAction | BranchAction, childStepName: string): boolean {
@@ -605,8 +607,10 @@ function createTrigger(
             }
             break
     }
-    trigger.valid = (request.valid ?? true) && triggerSchemaValidation.Check(trigger)
-    return trigger
+    return {
+        ...trigger,
+        valid: (isNil(request.valid) ? true : request.valid) && triggerSchemaValidation.Check(trigger),
+    }
 }
 
 export function getImportOperations(
@@ -631,7 +635,7 @@ export function getImportOperations(
                         request: {
                             parentStep: step.name,
                             stepLocationRelativeToParent:
-                  StepLocationRelativeToParent.INSIDE_FALSE_BRANCH,
+                                StepLocationRelativeToParent.INSIDE_FALSE_BRANCH,
                             action: removeAnySubsequentAction(step.onFailureAction),
                         },
                     })
@@ -643,7 +647,7 @@ export function getImportOperations(
                         request: {
                             parentStep: step.name,
                             stepLocationRelativeToParent:
-                  StepLocationRelativeToParent.INSIDE_TRUE_BRANCH,
+                                StepLocationRelativeToParent.INSIDE_TRUE_BRANCH,
                             action: removeAnySubsequentAction(step.onSuccessAction),
                         },
                     })
@@ -658,7 +662,7 @@ export function getImportOperations(
                         request: {
                             parentStep: step.name,
                             stepLocationRelativeToParent:
-                StepLocationRelativeToParent.INSIDE_LOOP,
+                                StepLocationRelativeToParent.INSIDE_LOOP,
                             action: removeAnySubsequentAction(step.firstLoopAction),
                         },
                     })
@@ -668,15 +672,15 @@ export function getImportOperations(
 
             }
             case ActionType.CODE:
-            case ActionType.PIECE: 
+            case ActionType.PIECE:
             case TriggerType.PIECE:
             case TriggerType.EMPTY:
             {
                 break
             }
         }
-      
-      
+
+
         step = step.nextAction
     }
     return steps
@@ -740,13 +744,13 @@ function isLegacyApp({ pieceName, pieceVersion }: { pieceName: string, pieceVers
     }
     if (
         pieceName === '@activepieces/piece-google-sheets' &&
-    semver.lt(newVersion, '0.3.0')
+        semver.lt(newVersion, '0.3.0')
     ) {
         return true
     }
     if (
         pieceName === '@activepieces/piece-gmail' &&
-    semver.lt(newVersion, '0.3.0')
+        semver.lt(newVersion, '0.3.0')
     ) {
         return true
     }
@@ -801,7 +805,7 @@ function duplicateStep(stepName: string, flowVersionWithArtifacts: FlowVersion):
 function replaceOldStepNameWithNewOne({ input, oldStepName, newStepName }: { input: string, oldStepName: string, newStepName: string }): string {
     const regex = /{{(.*?)}}/g // Regular expression to match strings inside {{ }}
     return input.replace(regex, (match, content) => {
-    // Replace the content inside {{ }} using the provided function
+        // Replace the content inside {{ }} using the provided function
         const replacedContent = content.replaceAll(new RegExp(`\\b${oldStepName}\\b`, 'g'), `${newStepName}`)
 
         // Reconstruct the {{ }} with the replaced content
@@ -809,9 +813,9 @@ function replaceOldStepNameWithNewOne({ input, oldStepName, newStepName }: { inp
     })
 }
 
-function doesActionHaveChildren(action: Action ): action  is (LoopOnItemsAction | BranchAction)   {
+function doesActionHaveChildren(action: Action): action is (LoopOnItemsAction | BranchAction) {
     const actionTypesWithChildren = [ActionType.BRANCH, ActionType.LOOP_ON_ITEMS]
-    return actionTypesWithChildren.includes(action.type) 
+    return actionTypesWithChildren.includes(action.type)
 }
 
 
@@ -847,24 +851,24 @@ function getDirectParentStep(child: Step, parent: Trigger | Step | undefined): S
             next = next.nextAction
         }
     }
-   
+
     if (parent.type === ActionType.BRANCH) {
-           
+
         const isChildOfBranch = isChildOf(parent, child.name)
         if (isChildOfBranch) {
             const directTrueBranchChildren = getAllDirectChildStepsForBranch(parent, 'success')
             const directFalseBranchChildren = getAllDirectChildStepsForBranch(parent, 'failure')
-            if (directTrueBranchChildren.at(-1)?.name === child.name || directFalseBranchChildren.at(-1)?.name === child.name ) {
+            if (directTrueBranchChildren.at(-1)?.name === child.name || directFalseBranchChildren.at(-1)?.name === child.name) {
                 return parent
             }
-           
-            return getDirectParentStep(child, parent.onSuccessAction) ?? getDirectParentStep(child, parent.onFailureAction)       
-             
+
+            return getDirectParentStep(child, parent.onSuccessAction) ?? getDirectParentStep(child, parent.onFailureAction)
+
         }
     }
     if (parent.type === ActionType.LOOP_ON_ITEMS) {
         const isChildOfLoop = isChildOf(parent, child.name)
-        if ( isChildOfLoop) {
+        if (isChildOfLoop) {
             const directChildren = getAllDirectChildStepsForLoop(parent)
             if (directChildren.at(-1)?.name === child.name) {
                 return parent
@@ -876,7 +880,7 @@ function getDirectParentStep(child: Step, parent: Trigger | Step | undefined): S
 }
 
 function isStepLastChildOfParent(child: Step, trigger: Trigger): boolean {
-  
+
     const parent = getDirectParentStep(child, trigger)
     if (parent) {
         if (doesStepHaveChildren(parent)) {
@@ -902,7 +906,7 @@ function isStepLastChildOfParent(child: Step, trigger: Trigger): boolean {
 
 function doesStepHaveChildren(step: Step): step is LoopOnItemsAction | BranchAction {
     return step.type === ActionType.BRANCH || step.type === ActionType.LOOP_ON_ITEMS
-} 
+}
 export const flowHelper = {
     isValid,
     apply(
@@ -974,5 +978,5 @@ export const flowHelper = {
     duplicateStep,
     findAvailableStepName,
     doesActionHaveChildren,
- 
+
 }
