@@ -35,6 +35,9 @@ import { DropdownPropertyInitialValuePipe } from './pipes/dropdown-initial-value
 import { isDropdownItemSelectedPipe } from './pipes/is-selected.pipe';
 import { MatPseudoCheckboxModule } from '@angular/material/core';
 import { ActionErrorHandlingFormControlComponent } from './action-error-handling-form-control/action-error-handling-form-control.component';
+import { FormControlHintComponent } from './form-control-hint/form-control-hint.component';
+import { ArrayFormControlTextItemComponent } from './array-form-control/array-form-control-text-item.component';
+import { ArrayFormControlObjectItemComponent } from './array-form-control/array-form-control-object-item.component';
 const exportedDeclarations = [
   ArrayFormControlComponent,
   BranchConditionFormControlComponent,
@@ -52,7 +55,7 @@ const exportedDeclarations = [
     CommonModule,
     UiCommonModule,
     CodemirrorModule,
-
+    FormControlHintComponent,
     ReactiveFormsModule,
     FormsModule,
     UiFeatureConnectionsModule,
@@ -65,6 +68,8 @@ const exportedDeclarations = [
   declarations: [
     ...exportedDeclarations,
     AddNpmPackageModalComponent,
+    ArrayFormControlObjectItemComponent,
+    ArrayFormControlTextItemComponent,
     CodeArtifactControlFullscreenComponent,
     MentionsListComponent,
     ActionMentionItemComponent,

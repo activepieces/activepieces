@@ -8,12 +8,11 @@ import {
 } from '@angular/forms';
 import { map, Observable, tap } from 'rxjs';
 import { ActionErrorHandlingOptions } from '@activepieces/shared';
-import { BOTTOM_MARGIN_FOR_DESCRIPTION_IN_PIECE_PROPERTIES_FORM } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-action-error-handling-form-control',
   templateUrl: './action-error-handling-form-control.component.html',
-  styleUrls: ['./action-error-handling-form-control.component.scss'],
+  styleUrls: [],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -30,19 +29,13 @@ export class ActionErrorHandlingFormControlComponent
     continueOnFailure: FormControl<boolean>;
     retryOnFailure: FormControl<boolean>;
   }>;
-  readonly BOTTOM_MARGIN_FOR_DESCRIPTION_IN_PIECE_PROPERTIES_FORM =
-    BOTTOM_MARGIN_FOR_DESCRIPTION_IN_PIECE_PROPERTIES_FORM;
-  continueOnFailureDescriptionExpanded = false;
-  continueOnFailureDescriptionOverflows = false;
+
   @Input() hideContinueOnFailure = false;
   @Input() hideRetryOnFailure = false;
   valueChanges$: Observable<void>;
-  onChange: (val: unknown) => void = () => {
-    //ignore
-  };
-  onTouched: () => void = () => {
-    //ignore
-  };
+  onChange: (val: unknown) => void;
+
+  onTouched: () => void;
 
   constructor(private fb: FormBuilder) {
     this.errorHandlingOptionsForm = this.fb.group({
