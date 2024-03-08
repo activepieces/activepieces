@@ -7,7 +7,6 @@ import { createFilesService } from '../services/files.service'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { pieceLoader } from './piece-loader'
 import { EngineConstants } from '../handler/context/engine-constants'
-import { get } from 'lodash'
 
 type Listener = {
     events: string[]
@@ -17,7 +16,6 @@ type Listener = {
 
 export const triggerHelper = {
     async executeTrigger({ params, constants }: ExecuteTriggerParams): Promise<ExecuteTriggerResponse<TriggerHookType>> {
-        console.log(`[trigger-helper#executeTrigger] params: ${JSON.stringify(params, null, 2)}`)
         const { pieceName, pieceVersion, triggerName, input } = (params.flowVersion.trigger as PieceTrigger).settings
 
         const piece = await pieceLoader.loadPieceOrThrow({ pieceName, pieceVersion, piecesSource: constants.piecesSource })
@@ -52,7 +50,6 @@ export const triggerHelper = {
                 prefix,
                 flowId: params.flowVersion.flowId,
                 workerToken: params.workerToken,
-                runId: get(params, 'flowRunId', ''),
             }),
             app: {
                 createListeners({ events, identifierKey, identifierValue }: Listener): void {

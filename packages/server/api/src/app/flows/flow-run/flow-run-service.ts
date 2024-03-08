@@ -38,7 +38,6 @@ import { flowService } from '../flow/flow.service'
 import { flowRunHooks } from './flow-run-hooks'
 import { flowResponseWatcher } from './flow-response-watcher'
 import { fileService } from '../../file/file.service'
-import { isEmpty } from 'lodash'
 
 export const flowRunRepo =
     databaseConnection.getRepository<FlowRun>(FlowRunEntity)
@@ -46,10 +45,10 @@ export const flowRunRepo =
 const getFlowRunOrCreate = async (
     params: GetOrCreateParams,
 ): Promise<Partial<FlowRun>> => {
-    const { id, projectId, flowId, flowVersionId, flowDisplayName, environment, isNewRun, flowRunId } =
+    const { id, projectId, flowId, flowVersionId, flowDisplayName, environment } =
         params
 
-    if (id && !isNewRun) {
+    if (id) {
         return flowRunService.getOneOrThrow({
             id,
             projectId,
@@ -57,7 +56,7 @@ const getFlowRunOrCreate = async (
     }
 
     return {
-        id: isEmpty(flowRunId) ? apId() : flowRunId,
+        id: apId(),
         projectId,
         flowId,
         flowVersionId,
@@ -218,12 +217,7 @@ export const flowRunService = {
         executionType,
         synchronousHandlerId,
         hookType,
-        isNewRun,
     }: StartParams): Promise<FlowRun> {
-        logger.info(
-            `[flowRunService#start] flowRunId=${flowRunId} executionType=${executionType}`,
-        )
-
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
 
         const flow = await flowService.getOneOrThrow({
@@ -240,7 +234,6 @@ export const flowRunService = {
             flowVersionId: flowVersion.id,
             environment,
             flowDisplayName: flowVersion.displayName,
-            isNewRun,
         })
 
         flowRun.status = FlowRunStatus.RUNNING
@@ -387,7 +380,6 @@ type StartParams = {
     synchronousHandlerId?: string
     hookType?: HookType
     executionType: ExecutionType
-    isNewRun?: boolean
 }
 
 type TestParams = {
