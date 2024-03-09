@@ -6,8 +6,8 @@ export class ConnectionNotFoundError extends Error {
 }
 
 export class ConnectionLoadingFailureError extends Error {
-    constructor(connectionName: string, url: string) {
-        super(`Failed to load connection (${connectionName}) from ${url}`)
+    constructor(connectionName: string, url: string, execption: unknown) {
+        super(`Failed to load connection (${connectionName}) from ${url} error: ${JSON.stringify(execption)}`)
         this.name = 'ConnectionLoadingFailure'
     }
 }
