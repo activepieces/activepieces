@@ -39,6 +39,7 @@ export const createConnectionService = ({ projectId, workerToken }: CreateConnec
 
                 return handleErrors({
                     connectionName,
+                    exception: e,
                     url,
                 })
             }
@@ -46,12 +47,12 @@ export const createConnectionService = ({ projectId, workerToken }: CreateConnec
     }
 }
 
-const handleErrors = ({ httpStatus, connectionName, url }: HandleErrorsParams): never => {
+const handleErrors = ({ httpStatus, connectionName, url, exception }: HandleErrorsParams): never => {
     if (httpStatus === StatusCodes.NOT_FOUND.valueOf()) {
         handleNotFoundError(connectionName)
     }
 
-    throw new ConnectionLoadingFailureError(connectionName, url)
+    throw new ConnectionLoadingFailureError(connectionName, url, exception)
 }
 
 const handleNotFoundError = (connectionName: string): never => {
@@ -91,4 +92,5 @@ type HandleErrorsParams = {
     httpStatus?: number
     connectionName: string
     url: string
+    exception?: unknown
 }
