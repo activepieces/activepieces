@@ -16,7 +16,7 @@ export interface ActivepiecesClientRouteChanged {
 }
 export interface ActivepiecesNewConnectionDialogClosed {
   type: ActivepiecesClientEventName.CLIENT_NEW_CONNECTION_DIALOG_CLOSED;
-  data:{ newConnectionId?:string } 
+  data:{ newConnection?: { id: string; name: string } }
 }
 
 type IframeWithWindow = HTMLIFrameElement & {contentWindow: Window}
@@ -59,7 +59,7 @@ class ActivepiecesEmbedded {
   _hideSidebar = false;
   _disableNavigationInBuilder = true;
   _connectionsIframeInitialized = false;
-  _resolveNewConnectionDialogClosed?: (result: { newConnectionId?: string }) => void;
+  _resolveNewConnectionDialogClosed?: (result:  ActivepiecesNewConnectionDialogClosed['data'] ) => void;
   handleVendorNavigation?: (data: { route: string }) => void;
   handleClientNavigation?: (data: { route: string }) => void;
   _parentOrigin = window.location.origin;
@@ -170,7 +170,7 @@ class ActivepiecesEmbedded {
        };
     this._connectionsIframe.contentWindow.postMessage(apEvent, '*');
     this._connectionsIframe.style.display = 'block';
-    return new Promise<{ newConnectionId?: string }>((resolve) => {
+    return new Promise<ActivepiecesNewConnectionDialogClosed['data']>((resolve) => {
       this._resolveNewConnectionDialogClosed = resolve;
     });
  
