@@ -27,8 +27,10 @@ activepieces.configure({
       jwtToken:'GENERATED_JWT_TOKEN',
       instanceUrl:'http://your-instance-url.com',
       prefix:'/',
-      hideSidebar:true,
-      disableNavigationInBuilder:false,
+      builder:{
+            hideSidebar:true,
+            disableNavigation:false,
+      },
       hideFolders:false
 })
 </script>
