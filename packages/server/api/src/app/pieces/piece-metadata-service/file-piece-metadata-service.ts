@@ -193,7 +193,6 @@ const toPieceMetadataModel = ({
         logoUrl: pieceMetadata.logoUrl,
         version: pieceMetadata.version,
         auth: pieceMetadata.auth,
-        authors: pieceMetadata.authors,
         minimumSupportedRelease: pieceMetadata.minimumSupportedRelease,
         maximumSupportedRelease: pieceMetadata.maximumSupportedRelease,
         actions: pieceMetadata.actions,
