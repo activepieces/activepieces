@@ -126,7 +126,7 @@ class ActivepiecesEmbedded {
     prefix?: string;
     hideSidebar?: boolean;
     builder?:{
-      disableNavigationInBuilder: boolean;
+      disableNavigation: boolean;
     },
     containerId:string;
     jwtToken:string;
@@ -137,7 +137,7 @@ class ActivepiecesEmbedded {
     this._initialRoute = newInitialRoute || '/';
     this._hideSidebar =  hideSidebar|| false;
     this._instanceUrl = this.removeTrailingSlashes(instanceUrl);
-    this._disableNavigationInBuilder = builder === undefined ? false : builder.disableNavigationInBuilder;
+    this._disableNavigationInBuilder = builder?.disableNavigation ?? false;
     this.initializeBuilderIframe({
       client: this,
       containerSelector: `#${containerId}`,
