@@ -60,13 +60,15 @@ export class EmbeddedConnectionDialogComponent {
       })
     );
   }
-  hideConnectionIframe(newConnectionId?: string) {
+  hideConnectionIframe(
+    connection?: ActivepiecesNewConnectionDialogClosed['data']['connection']
+  ) {
     if (this.isDialogOpen) {
       this.isDialogOpen = false;
       const newConnectionDialogClosedEvent: ActivepiecesNewConnectionDialogClosed =
         {
           data: {
-            newConnectionId,
+            connection,
           },
           type: ActivepiecesClientEventName.CLIENT_NEW_CONNECTION_DIALOG_CLOSED,
         };
