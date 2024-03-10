@@ -119,13 +119,14 @@ class ActivepiecesEmbedded {
     containerId,
     jwtToken,
     instanceUrl,
+    hideFolders
   }: {
     prefix?: string;
     hideSidebar?: boolean;
     builder?:{
       disableNavigation: boolean;
-      hideFolders:boolean;
     },
+    hideFolders?:boolean;
     containerId:string;
     jwtToken:string;
     instanceUrl:string;
@@ -135,7 +136,7 @@ class ActivepiecesEmbedded {
     this._initialRoute = newInitialRoute || '/';
     this._hideSidebar = hideSidebar || false;
     this._instanceUrl = this.removeTrailingSlashes(instanceUrl);
-    this._hideFolders = builder?.hideFolders?? false;
+    this._hideFolders = hideFolders?? false;
     this._disableNavigationInBuilder =  builder?.disableNavigation?? false;
     this.initializeBuilderIframe({
       client: this,
