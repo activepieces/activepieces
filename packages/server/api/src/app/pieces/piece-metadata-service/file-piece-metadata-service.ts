@@ -196,6 +196,7 @@ const toPieceMetadataModel = ({
         minimumSupportedRelease: pieceMetadata.minimumSupportedRelease,
         maximumSupportedRelease: pieceMetadata.maximumSupportedRelease,
         actions: pieceMetadata.actions,
+        authors: pieceMetadata.authors,
         categories: pieceMetadata.categories,
         triggers: pieceMetadata.triggers,
         directoryPath: pieceMetadata.directoryPath,

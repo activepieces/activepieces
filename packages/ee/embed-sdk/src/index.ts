@@ -47,16 +47,17 @@ export interface ActivepiecesVendorInit {
     initialRoute: string;
     hideSidebar: boolean;
     disableNavigationInBuilder: boolean;
+    hideFolders?:boolean;
   };
 }
 export const jwtTokenQueryParamName = "jwtToken"
-
 
 class ActivepiecesEmbedded {
   _prefix = '';
   _initialRoute = '';
   _instanceUrl = '';
   _hideSidebar = false;
+  _hideFolders = false;
   _disableNavigationInBuilder = true;
   _connectionsIframeInitialized = false;
   _resolveNewConnectionDialogClosed?: (result:  ActivepiecesNewConnectionDialogClosed['data'] ) => void;
@@ -65,18 +66,19 @@ class ActivepiecesEmbedded {
   _parentOrigin = window.location.origin;
   _connectionsIframe: HTMLIFrameElement | null = null;
 
+
   private createIframe({src}:{src:string})
   {
     const iframe = document.createElement('iframe');
     iframe.src = src;
     return iframe;
   }
-  private connectoToEmbed ({instanceUrl,jwtToken,iframeContainer,client, isForConnections}: {
+  private connectoToEmbed ({instanceUrl,jwtToken,iframeContainer,client,callbackAfterAuthentication}: {
     instanceUrl: string,
     jwtToken: string,
     iframeContainer: Element,
     client: ActivepiecesEmbedded,
-    isForConnections?: boolean
+    callbackAfterAuthentication?: () => void
   }
   ): IframeWithWindow {
     const iframe = this.createIframe({src:`${instanceUrl}/embed?${jwtTokenQueryParamName}=${jwtToken}`});
@@ -100,13 +102,11 @@ class ActivepiecesEmbedded {
                     initialRoute:  client._initialRoute,
                     hideSidebar: client._hideSidebar,
                     disableNavigationInBuilder: client._disableNavigationInBuilder,
+                    hideFolders: client._hideFolders
                   },
                 };
                 iframeWindow.postMessage(apEvent, '*');
-                if(isForConnections)
-                {
-                  client._connectionsIframeInitialized = true;
-                }
+                if(callbackAfterAuthentication){ callbackAfterAuthentication() }
                 break;
               }
             }
@@ -117,17 +117,19 @@ class ActivepiecesEmbedded {
   };
   configure({
     prefix,
+    hideSidebar,
     builder,
     containerId,
     jwtToken,
     instanceUrl,
-    hideSidebar
+    hideFolders
   }: {
     prefix?: string;
     hideSidebar?: boolean;
     builder?:{
       disableNavigation: boolean;
     },
+    hideFolders?:boolean;
     containerId:string;
     jwtToken:string;
     instanceUrl:string;
@@ -138,10 +140,11 @@ class ActivepiecesEmbedded {
     this._hideSidebar =  hideSidebar|| false;
     this._instanceUrl = this.removeTrailingSlashes(instanceUrl);
     this._disableNavigationInBuilder = builder?.disableNavigation ?? false;
+    this._hideFolders = hideFolders?? false;
     this.initializeBuilderIframe({
       client: this,
       containerSelector: `#${containerId}`,
-      instanceUrl,
+      instanceUrl: this._instanceUrl,
       jwtToken
     }); 
   }
@@ -175,20 +178,19 @@ class ActivepiecesEmbedded {
     return new Promise<ActivepiecesNewConnectionDialogClosed['data']>((resolve) => {
       this._resolveNewConnectionDialogClosed = resolve;
     });
- 
   }
-  private initializeBuilderIframe = ({client,containerSelector, instanceUrl,jwtToken}
+  private initializeBuilderIframe = ({client,containerSelector, instanceUrl, jwtToken, }
     :{client: ActivepiecesEmbedded,
      containerSelector:string,
      instanceUrl:string,
-      jwtToken:string }) => {
+     jwtToken:string }) => {
    const iframeContainer = document.querySelector(containerSelector);
    if(!iframeContainer) {
     console.error('Activepieces: iframe container not found');
     return;
    }
    const iframeWindow = this.connectoToEmbed({instanceUrl, jwtToken, iframeContainer, client}).contentWindow;
-   this._connectionsIframe= this.connectoToEmbed({instanceUrl, jwtToken, iframeContainer:document.body, client, isForConnections:true});
+   this._connectionsIframe= this.connectoToEmbed({instanceUrl, jwtToken, iframeContainer:document.body, client, callbackAfterAuthentication: () => {client._connectionsIframeInitialized = true}});
    const connectionsIframeStyle=['display:none','position:fixed','top:0','left:0','width:100%','height:100%','border:none'].join(';');
    this._connectionsIframe.style.cssText=connectionsIframeStyle
    this.checkForVendorRouteChanges(iframeWindow, client);

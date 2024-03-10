@@ -269,6 +269,9 @@
       "@activepieces/piece-jotform": [
         "packages/pieces/community/jotform/src/index.ts"
       ],
+      "@activepieces/piece-json": [
+        "packages/pieces/community/json/src/index.ts"
+      ],
       "@activepieces/piece-kimai": [
         "packages/pieces/community/kimai/src/index.ts"
       ],
