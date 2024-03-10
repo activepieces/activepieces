@@ -52,6 +52,11 @@ export const PieceMetadataEntity =
               type: String,
               nullable: false,
           },
+          authors: {
+              type: ARRAY_COLUMN_TYPE,
+              nullable: false,
+              array: isPostgres(),
+          },
           displayName: {
               type: String,
               nullable: false,
