@@ -1,0 +1,34 @@
+---
+title: "Create Connections"
+description: ""
+---
+
+You can use the embedded SDK to create connections.
+
+## Step 1: Initialize the SDK
+
+Follow the instructions in the [Initialize SDK](../configuration/initialize-embed) page
+
+## Step 2: Call Connect method
+After initializing the SDK you will have access to a property called `activepieces` inside your `window` object,
+call the its `connect` method to open a new connection dialog as follows.
+
+```html
+<script> 
+activepieces.connect({pieceName:'@activepieces/piece-google-sheets'});
+</script>
+```
+
+**Connect Parameters:**
+
+| Parameter Name |  Required |  Type | Description |
+| --- | --- | --- | --- |
+| pieceName | ✅ | string | The name of the piece you want to create a connection for.
+
+**Connect Result** 
+
+The `connect` method returns a `promise` that resolves to the following object:
+
+| Property Name |  Required |  Type | Description |
+| --- | --- | --- | --- |
+| newConnectionId | ❌ | string | If the user creates a new connection, this would be the connection id.
