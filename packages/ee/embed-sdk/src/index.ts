@@ -16,7 +16,7 @@ export interface ActivepiecesClientRouteChanged {
 }
 export interface ActivepiecesNewConnectionDialogClosed {
   type: ActivepiecesClientEventName.CLIENT_NEW_CONNECTION_DIALOG_CLOSED;
-  data:{ newConnection?: { id: string; name: string } }
+  data:{ connection?: { id: string; name: string } }
 }
 
 type IframeWithWindow = HTMLIFrameElement & {contentWindow: Window}
