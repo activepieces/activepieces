@@ -27,8 +27,8 @@ activepieces.configure({
       jwtToken:'GENERATED_JWT_TOKEN',
       instanceUrl:'http://your-instance-url.com',
       prefix:'/',
+      hideSidebar:true,
       builder:{
-            hideSidebar:true,
             disableNavigation:false,
       },
       hideFolders:false
@@ -47,7 +47,7 @@ activepieces.configure({
 | instanceUrl| ✅ |  string | The url of the instance hosting Activepieces, could be https://cloud.activepieces.com if you are a cloud user.
 | prefix | ❌ | string | Some customers have an embedding prefix, like this `<embedding_url_prefix>/<Activepieces_url>`. For example if the prefix is `/automations` and the Activepieces url is `/flows` the full url would be `/automations/flows`.
 | hideSidebar | ❌ | boolean | Controls the visibility of the sidebar in the dashboard, by default it is false.
-| disableNavigationInBuilder | ❌ |  boolean | Hides the folder name and back button in the builder, by default it is false.
+| disableNavigation | ❌ |  boolean | Hides the folder name and back button in the builder, by default it is false.
 | hideFolders | ❌ | boolean | Hides all things related to folders in both the flows table and builder by default it is false.
 
 <Info>
