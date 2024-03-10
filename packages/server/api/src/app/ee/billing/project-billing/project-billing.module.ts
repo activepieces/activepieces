@@ -131,9 +131,9 @@ const projectBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
                 )
                 const subscription = webhook.data.object as Stripe.Subscription
                 if (!stripeHelper.isPriceForTasks(subscription)) {
-                    return await reply.status(StatusCodes.NO_CONTENT).send({
-                        message: 'Not a price for tasks',
-                    })
+                    return {
+                        message: 'Subscription does not have a price for tasks',
+                    }
                 }
                 const projectBilling = await projectBillingService.updateSubscriptionIdByCustomerId(subscription)
                 if (subscription.status === ApSubscriptionStatus.CANCELED) {

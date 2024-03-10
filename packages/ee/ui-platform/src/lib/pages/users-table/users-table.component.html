@@ -40,7 +40,18 @@
                     <ap-icon-button (buttonClicked)="deactivateUser(user)" i18n-tooltipText [buttonDisabled]="isDemo"
                         tooltipText="Deactivate User" iconFilename="suspend.svg"
                         [buttonDisabled]="user.id === platformOwnerId" *ngIf="user.status === UserStatus.ACTIVE"
-                        [width]="20" [height]="20" color="warn" [height]="16"></ap-icon-button>
+                        [width]="20" [height]="20"  [height]="16"></ap-icon-button>
+
+                    <ap-icon-button
+                        (buttonClicked)="deleteUser(user)"
+                        [buttonDisabled]="disableDeleteButton(user)"
+                        i18n-tooltipText
+                        iconFilename="trash.svg"
+                        tooltipText="Delete User"
+                        [height]="16"
+                        [width]="20"
+                        color="warn"
+                    ></ap-icon-button>
                 </div>
 
             </td>
@@ -69,3 +80,4 @@
 </div>
 <ng-container *ngIf="deactivate$ | async"></ng-container>
 <ng-container *ngIf="activate$ | async"></ng-container>
+<ng-container *ngIf="delete$ | async"></ng-container>

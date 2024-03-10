@@ -8,6 +8,12 @@ import path from 'path';
 import os from 'os';
 import { SystemProp } from './system-prop';
 
+
+export enum CopilotInstanceTypes {
+  AZURE_OPENAI = 'AZURE_OPENAI',
+  OPENAI = 'OPENAI',
+}
+
 export enum PiecesSource {
   CLOUD_AND_DB = 'CLOUD_AND_DB',
   DB = 'DB',
@@ -34,6 +40,8 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
   [SystemProp.CONFIG_PATH]: path.join(os.homedir(), '.activepieces'),
   [SystemProp.DB_TYPE]: DatabaseType.POSTGRES,
   [SystemProp.EDITION]: 'ce',
+  [SystemProp.COPILOT_INSTANCE_TYPE]: CopilotInstanceTypes.OPENAI,
+  [SystemProp.AZURE_OPENAI_API_VERSION]:  '2023-06-01-preview',
   [SystemProp.ENGINE_EXECUTABLE_PATH]: 'dist/packages/engine/main.js',
   [SystemProp.ENVIRONMENT]: 'prod',
   [SystemProp.EXECUTION_MODE]: 'UNSANDBOXED',

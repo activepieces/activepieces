@@ -1,9 +1,13 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Output,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, switchMap, tap } from 'rxjs';
 import {
   Flow,
-  PopulatedFlow,
   FlowOperationType,
   TelemetryEventName,
 } from '@activepieces/shared';
@@ -22,10 +26,10 @@ import { demoTemplate } from './demo-flow-template';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EmptyFlowsTableComponent {
-  creatingFlow = false;
-  createFlow$: Observable<PopulatedFlow>;
+  creatingDemo = false;
   openToDemo$: Observable<Flow>;
   showPoweredByAp$: Observable<boolean>;
+  @Output() openTemplatesDialog = new EventEmitter();
   constructor(
     private router: Router,
     private flowService: FlowService,
@@ -36,27 +40,9 @@ export class EmptyFlowsTableComponent {
     this.showPoweredByAp$ = this.flagService.getShowPoweredByAp();
   }
 
-  createFlow() {
-    if (!this.creatingFlow) {
-      this.creatingFlow = true;
-      localStorage.setItem('newFlow', 'true');
-      this.createFlow$ = this.flowService
-        .create({
-          displayName: $localize`Untitled`,
-          projectId: this.authenticationService.getProjectId(),
-        })
-        .pipe(
-          tap((flow) => {
-            localStorage.setItem('newFlow', 'true');
-            this.router.navigate(['/flows/', flow.id]);
-          })
-        );
-    }
-  }
-
   openToDemo() {
-    if (!this.creatingFlow) {
-      this.creatingFlow = true;
+    if (!this.creatingDemo) {
+      this.creatingDemo = true;
       this.openToDemo$ = this.flowService
         .create({
           projectId: this.authenticationService.getProjectId(),

@@ -76,9 +76,10 @@ export const gitRepoService = {
     },
     async push({ id, userId, request }: PushParams): Promise<ProjectSyncPlan> {
         const gitRepo = await gitRepoService.getOrThrow({ id })
-        const { git, flowFolderPath, stateFolderPath } = await createGitRepoAndReturnPaths(gitRepo, userId)
+        const { git, flowFolderPath } = await createGitRepoAndReturnPaths(gitRepo, userId)
+        const gitProjectState = await gitSyncHelper.getStateFromGit(flowFolderPath)
         const project = await projectService.getOneOrThrow(gitRepo.projectId)
-        const { gitProjectState, mappingState } = await loadState(project.id, flowFolderPath, stateFolderPath)
+        const mappingState = gitRepo.mapping ? new ProjectMappingState(gitRepo.mapping) : ProjectMappingState.empty()
         const flow = await flowService.getOnePopulatedOrThrow({
             id: request.flowId,
             projectId: project.id,
@@ -102,13 +103,14 @@ export const gitRepoService = {
                     break
             }
         }
-        await commitAndPush(git, gitRepo, `chore: updated state for project ${project.id}`)
+        await commitAndPush(git, gitRepo, request.commitMessage ?? `chore: updated flow ${flow.id}`)
         return toResponse(operations)
     },
     async pull({ gitRepo, dryRun, userId }: PullGitRepoRequest): Promise<ProjectSyncPlan> {
         const project = await projectService.getOneOrThrow(gitRepo.projectId)
-        const { git, flowFolderPath, stateFolderPath } = await createGitRepoAndReturnPaths(gitRepo, userId)
-        const { gitProjectState, mappingState } = await loadState(project.id, flowFolderPath, stateFolderPath)
+        const { flowFolderPath } = await createGitRepoAndReturnPaths(gitRepo, userId)
+        const gitProjectState = await gitSyncHelper.getStateFromGit(flowFolderPath)
+        const mappingState = gitRepo.mapping ? new ProjectMappingState(gitRepo.mapping) : ProjectMappingState.empty()
         const dbProjectState = await gitSyncHelper.getStateFromDB(project.id)
         const operations = await findFlowOperations({
             fromFlows: gitProjectState,
@@ -146,8 +148,7 @@ export const gitRepoService = {
                     break
             }
         }
-        await gitSyncHelper.saveStateToGit(stateFolderPath, project.id, newMappState)
-        await commitAndPush(git, gitRepo, `chore: updated state for project ${project.id}`)
+        await repo.update({ id: gitRepo.id }, { mapping: newMappState })
         const errors = (await Promise.all(publishJobs)).filter((f): f is ProjectSyncError => f !== null)
         return toResponse(operations, errors)
     },
@@ -215,11 +216,6 @@ async function createGitRepoAndReturnPaths(
     }
 }
 
-async function loadState(projectId: string, flowFolderPath: string, stateFolderPath: string) {
-    const gitProjectState = await gitSyncHelper.getStateFromGit(flowFolderPath)
-    const mappingState = await gitSyncHelper.getMappingStateFromGit(stateFolderPath, projectId)
-    return { gitProjectState, mappingState }
-}
 async function initGitRepo(
     gitRepo: GitRepo,
     baseDir: string,
