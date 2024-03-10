@@ -29,6 +29,15 @@ activepieces.connect({pieceName:'@activepieces/piece-google-sheets'});
 
 The `connect` method returns a `promise` that resolves to the following object:
 
-| Property Name |  Required |  Type | Description |
-| --- | --- | --- | --- |
-| newConnectionId | ❌ | string | If the user creates a new connection, this would be the connection id.
+```ts
+{
+    newConnection?: {
+        id:string,
+        name:string
+    }
+}
+
+```
+<Info>
+`newConnection` is undefined if the user closes the dialog and doesn't create a connection.
+ </Info>
