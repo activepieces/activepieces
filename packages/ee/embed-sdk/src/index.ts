@@ -117,15 +117,17 @@ class ActivepiecesEmbedded {
   };
   configure({
     prefix,
-    hideSidebar,
-    disableNavigationInBuilder,
+    builder,
     containerId,
     jwtToken,
-    instanceUrl
+    instanceUrl,
+    hideSidebar
   }: {
     prefix?: string;
     hideSidebar?: boolean;
-    disableNavigationInBuilder?: boolean;
+    builder?:{
+      disableNavigationInBuilder: boolean;
+    },
     containerId:string;
     jwtToken:string;
     instanceUrl:string;
@@ -133,9 +135,9 @@ class ActivepiecesEmbedded {
     this._prefix = prefix || '/';
     const newInitialRoute = !window.location.pathname.startsWith(this._prefix) ? '/' : '/' + window.location.pathname.substring(this._prefix.length);
     this._initialRoute = newInitialRoute || '/';
-    this._hideSidebar = hideSidebar || false;
+    this._hideSidebar =  hideSidebar|| false;
     this._instanceUrl = this.removeTrailingSlashes(instanceUrl);
-    this._disableNavigationInBuilder = disableNavigationInBuilder === undefined ? true : disableNavigationInBuilder;
+    this._disableNavigationInBuilder = builder === undefined ? false : builder.disableNavigationInBuilder;
     this.initializeBuilderIframe({
       client: this,
       containerSelector: `#${containerId}`,
