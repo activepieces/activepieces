@@ -37,7 +37,6 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
       logoUrl: this.logoUrl,
       actions: this._actions,
       triggers: this._triggers,
-      authors: this.authors,
       categories: this.categories,
       description: this.description,
       auth: this.auth,
