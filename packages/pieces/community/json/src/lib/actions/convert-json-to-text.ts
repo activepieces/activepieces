@@ -1,21 +1,19 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 export const convertJsonToText = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
-  name: 'convertJsonToText',
+  name: 'convert_json_to_text',
   displayName: 'Convert Json to Text',
   description: '',
   props: {
-    text_object: Property.Json({
-      displayName: 'TEXT JSON',
+    json: Property.Json({
+      displayName: 'JSON',
       defaultValue: {},
       required: true,
     }),
   },
   async run(context) {
-    const { text_object } = context.propsValue;
-    const result = JSON.stringify(text_object)
-    console.debug(result)
+    const { json } = context.propsValue;
+    const result = JSON.stringify(json)
     return result
   },
 });
