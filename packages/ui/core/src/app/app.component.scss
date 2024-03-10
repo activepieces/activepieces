@@ -1,25 +1,6 @@
 @import 'packages/ui/core/src/assets/scss/variables.scss';
 
-@keyframes loading-spin {
-  from {
-    transform: rotate(0deg);
-  }
 
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.loading-spin-animation {
-  svg {
-    transform-origin: 25px 25px 0;
-    animation-name: loading-spin;
-    animation-duration: 1s;
-    animation-iteration-count: infinite;
-    animation-timing-function: linear;
-  }
-  fill: $description;
-}
 
 .route-loader {
   position: absolute;
