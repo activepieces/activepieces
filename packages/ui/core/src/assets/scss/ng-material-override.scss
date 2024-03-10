@@ -759,3 +759,6 @@ app-templates-dialog
 {
   mat-tab-header{ display: none !important; }
 }
+.ap-opacity-100 * {
+  opacity: 1 !important;
+}

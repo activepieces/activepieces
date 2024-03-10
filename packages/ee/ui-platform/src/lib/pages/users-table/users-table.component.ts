@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { UsersDataSource } from './users-table.datasource';
 import {
   AuthenticationService,
+  DeleteEntityDialogComponent,
+  DeleteEntityDialogData,
   GenericSnackbarTemplateComponent,
   PlatformService,
 } from '@activepieces/ui/common';
@@ -10,6 +12,7 @@ import { UserResponse, UserStatus } from '@activepieces/shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute } from '@angular/router';
 import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-users-table',
@@ -41,7 +44,8 @@ export class UsersTableComponent {
     private platformService: PlatformService,
     private snackBar: MatSnackBar,
     private authenticationService: AuthenticationService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private matDialog: MatDialog
   ) {
     this.isDemo = this.route.snapshot.data[PLATFORM_DEMO_RESOLVER_KEY];
     this.platformOwnerId = this.authenticationService.currentUser.id;
@@ -69,7 +73,7 @@ export class UsersTableComponent {
   }
 
   deleteUser(user: UserResponse) {
-    this.delete$ = this.platformService.deleteUser(user.id).pipe(
+    const delete$ = this.platformService.deleteUser(user.id).pipe(
       tap(() => {
         this.refresh$.next(true);
         this.snackBar.openFromComponent(GenericSnackbarTemplateComponent, {
@@ -79,6 +83,16 @@ export class UsersTableComponent {
         });
       })
     );
+    const dialogData: DeleteEntityDialogData = {
+      deleteEntity$: delete$,
+      entityName: user.firstName + ' ' + user.lastName,
+      note: $localize`Are you sure you want to <b> delete ${user.firstName} ${user.lastName} </b>?`,
+    };
+    this.delete$ = this.matDialog
+      .open(DeleteEntityDialogComponent, {
+        data: dialogData,
+      })
+      .afterClosed();
   }
 
   activateUser(user: UserResponse) {
