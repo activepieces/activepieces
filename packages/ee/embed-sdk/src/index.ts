@@ -58,20 +58,25 @@ class ActivepiecesEmbedded {
   _instanceUrl = '';
   _hideSidebar = false;
   _disableNavigationInBuilder = true;
+  _connectionsIframeInitialized = false;
+  _resolveNewConnectionDialogClosed?: (result: { newConnectionId?: string }) => void;
   handleVendorNavigation?: (data: { route: string }) => void;
   handleClientNavigation?: (data: { route: string }) => void;
-  parentOrigin = window.location.origin;
+  _parentOrigin = window.location.origin;
+  _connectionsIframe: HTMLIFrameElement | null = null;
+
   private createIframe({src}:{src:string})
   {
     const iframe = document.createElement('iframe');
     iframe.src = src;
     return iframe;
   }
-  private connectoToEmbed ({instanceUrl,jwtToken,iframeContainer,client}: {
+  private connectoToEmbed ({instanceUrl,jwtToken,iframeContainer,client, isForConnections}: {
     instanceUrl: string,
     jwtToken: string,
     iframeContainer: Element,
-    client: ActivepiecesEmbedded
+    client: ActivepiecesEmbedded,
+    isForConnections?: boolean
   }
   ): IframeWithWindow {
     const iframe = this.createIframe({src:`${instanceUrl}/embed?${jwtTokenQueryParamName}=${jwtToken}`});
@@ -85,7 +90,6 @@ class ActivepiecesEmbedded {
       window.addEventListener(
         'message',
         function (event: MessageEvent<ActivepiecesClientEvent>) {
-     
           if (event.source === iframeWindow) {
             switch (event.data.type) {
               case ActivepiecesClientEventName.CLIENT_INIT: {
@@ -99,6 +103,10 @@ class ActivepiecesEmbedded {
                   },
                 };
                 iframeWindow.postMessage(apEvent, '*');
+                if(isForConnections)
+                {
+                  client._connectionsIframeInitialized = true;
+                }
                 break;
               }
             }
@@ -107,7 +115,6 @@ class ActivepiecesEmbedded {
       );
      return iframe;
   };
-  _connectionsIframe: HTMLIFrameElement | null = null;
   configure({
     prefix,
     hideSidebar,
@@ -137,10 +144,22 @@ class ActivepiecesEmbedded {
     }); 
   }
 
-  connect({pieceName}:{pieceName:string}) {
+  async connect({pieceName}:{pieceName:string}) {
     if (!this._connectionsIframe || !this.doesFrameHaveWindow(this._connectionsIframe)) {
       console.error('Activepieces: connections iframe not found');
       return;
+      }
+      if(!this._connectionsIframeInitialized)
+      {
+        //wait for the connections iframe to be initialized
+        await new Promise((resolve) => {
+          const interval = setInterval(() => {
+            if (this._connectionsIframeInitialized) {
+              clearInterval(interval);
+              resolve(null);
+            }
+          }, 300);
+        });
       }
        const apEvent: ActivepiecesVendorRouteChanged = {
          type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
@@ -151,6 +170,9 @@ class ActivepiecesEmbedded {
        };
     this._connectionsIframe.contentWindow.postMessage(apEvent, '*');
     this._connectionsIframe.style.display = 'block';
+    return new Promise<{ newConnectionId?: string }>((resolve) => {
+      this._resolveNewConnectionDialogClosed = resolve;
+    });
  
   }
   private initializeBuilderIframe = ({client,containerSelector, instanceUrl,jwtToken}
@@ -164,9 +186,9 @@ class ActivepiecesEmbedded {
     return;
    }
    const iframeWindow = this.connectoToEmbed({instanceUrl, jwtToken, iframeContainer, client}).contentWindow;
-   this._connectionsIframe= this.connectoToEmbed({instanceUrl, jwtToken, iframeContainer:document.body, client});
+   this._connectionsIframe= this.connectoToEmbed({instanceUrl, jwtToken, iframeContainer:document.body, client, isForConnections:true});
    const connectionsIframeStyle=['display:none','position:fixed','top:0','left:0','width:100%','height:100%','border:none'].join(';');
-  this._connectionsIframe.style.cssText=connectionsIframeStyle
+   this._connectionsIframe.style.cssText=connectionsIframeStyle
    this.checkForVendorRouteChanges(iframeWindow, client);
    this.checkForClientRouteChanges(client,iframeWindow);
    this.checkIfNewConnectionDialogClosed();
@@ -217,8 +239,8 @@ class ActivepiecesEmbedded {
            vendorRoute: this.extractRouteAfterPrefix(
              currentRoute,
              prefixStartsWithSlash
-               ? client.parentOrigin + client._prefix
-               : `${client.parentOrigin}/${client._prefix}`
+               ? client._parentOrigin + client._prefix
+               : `${client._parentOrigin}/${client._prefix}`
            ),
          },
        };
@@ -245,6 +267,10 @@ class ActivepiecesEmbedded {
      
         ) {
           this._connectionsIframe.style.display = 'none';
+          if(this._resolveNewConnectionDialogClosed)
+          {
+            this._resolveNewConnectionDialogClosed(event.data.data)
+          }
         }
       }
   }
