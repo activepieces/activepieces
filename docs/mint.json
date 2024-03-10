@@ -270,21 +270,18 @@
       "group": "Embedding",
       "pages": [
         {
-          "group": "Embed Builder",
+          "group": "Configuration",
           "icon": "code",
           "pages": [
-            "embedding/embed-builder/generate-jwt",
-            "embedding/embed-builder/embed-iframe"
+            "embedding/configuration/generate-jwt",
+            "embedding/configuration/initialize-embed"
           ]
         },
         {
-          "group": "Connection Cards",
+          "group": "Connections",
           "icon": "cards-blank",
           "pages": [
-            "embedding/connection-cards/overview",
-            "embedding/connection-cards/user-authentication",
-            "embedding/connection-cards/frontend-sdk",
-            "embedding/connection-cards/user-flows"
+            "embedding/connections/overview"
           ]
         }
       ]
