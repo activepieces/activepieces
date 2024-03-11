@@ -21,10 +21,12 @@ export type StableDiffusionAuthType = {
 
 export const stableDiffusion = createPiece({
   displayName: 'Stable Dffusion web UI',
+  description: 'A web interface for Stable Diffusion',
+
   auth: stableDiffusionAuth,
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/stable-diffusion-webui.png',
-  authors: ['AdamSelene'],
+  authors: ["AdamSelene","abuaboud"],
   actions: [textToImage],
   triggers: [],
 });

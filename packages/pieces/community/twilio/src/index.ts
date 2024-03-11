@@ -20,6 +20,9 @@ export const twilioAuth = PieceAuth.BasicAuth({
 
 export const twilio = createPiece({
   displayName: 'Twilio',
+  description:
+    'Cloud communications platform for building SMS, Voice & Messaging applications',
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/twilio.png',
   auth: twilioAuth,
@@ -38,6 +41,6 @@ export const twilio = createPiece({
       }),
     }),
   ],
-  authors: ['abuaboud'],
+  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   triggers: [twilioNewIncomingSms],
 });

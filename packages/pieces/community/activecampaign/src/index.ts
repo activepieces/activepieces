@@ -1,4 +1,8 @@
-import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework';
+import {
+  createPiece,
+  PieceAuth,
+  Property,
+} from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { newDealAddedOrUpdatedTrigger } from './lib/triggers/new-deal-added-or-updated';
 import { createAccountAction } from './lib/actions/accounts/create-account';
@@ -27,57 +31,59 @@ To obtain your ActiveCampaign API URL and Key, follow these steps:
 `;
 
 export const activeCampaignAuth = PieceAuth.CustomAuth({
-	required: true,
-	description: authGuide,
-	props: {
-		apiUrl: Property.ShortText({
-			displayName: 'API URL',
-			required: true,
-		}),
-		apiKey: Property.ShortText({
-			displayName: 'API Key',
-			required: true,
-		}),
-	},
-	validate: async ({ auth }) => {
-		try {
-			const client = makeClient(auth);
-			await client.authenticate();
-			return { valid: true };
-		} catch (error) {
-			return {
-				valid: false,
-				error: 'Invalid API credentials',
-			};
-		}
-	},
+  required: true,
+  description: authGuide,
+  props: {
+    apiUrl: Property.ShortText({
+      displayName: 'API URL',
+      required: true,
+    }),
+    apiKey: Property.ShortText({
+      displayName: 'API Key',
+      required: true,
+    }),
+  },
+  validate: async ({ auth }) => {
+    try {
+      const client = makeClient(auth);
+      await client.authenticate();
+      return { valid: true };
+    } catch (error) {
+      return {
+        valid: false,
+        error: 'Invalid API credentials',
+      };
+    }
+  },
 });
 
 export const activecampaign = createPiece({
-	displayName: 'ActiveCampaign',
-	auth: activeCampaignAuth,
-	minimumSupportedRelease: '0.20.0',
-	logoUrl: 'https://cdn.activepieces.com/pieces/activecampaign.png',
-	categories: [PieceCategory.MARKETING, PieceCategory.SALES_AND_CRM],
-	authors: ['kishanprmr'],
-	actions: [
-		addContactToAccountAction,
-		addTagToContactAction,
-		createAccountAction,
-		createContactAction,
-		updateAccountAction,
-		updateContactAction,
-		subscribeOrUnsubscribeContactFromListAction,
-	],
-	triggers: [
-		dealTaskCompletedTrigger,
-		newContactNoteTrigger,
-		newContactTaskTrigger,
-		newDealAddedOrUpdatedTrigger,
-		newOrUpdatedAccountTrigger,
-		newDealNoteTrigger,
-		newDealTaskTrigger,
-		newtagAddedOrRemovedFromContactTrigger,
-		updatedContactTrigger,
-	],
+  displayName: 'ActiveCampaign',
+  description:
+    'Email marketing, marketing automation, and CRM tools you need to create incredible customer experiences.',
+  auth: activeCampaignAuth,
+  minimumSupportedRelease: '0.20.0',
+  logoUrl: 'https://cdn.activepieces.com/pieces/activecampaign.png',
+  categories: [PieceCategory.MARKETING, PieceCategory.SALES_AND_CRM],
+  authors: ["kishanprmr","abuaboud"],
+  actions: [
+    addContactToAccountAction,
+    addTagToContactAction,
+    createAccountAction,
+    createContactAction,
+    updateAccountAction,
+    updateContactAction,
+    subscribeOrUnsubscribeContactFromListAction,
+  ],
+  triggers: [
+    dealTaskCompletedTrigger,
+    newContactNoteTrigger,
+    newContactTaskTrigger,
+    newDealAddedOrUpdatedTrigger,
+    newOrUpdatedAccountTrigger,
+    newDealNoteTrigger,
+    newDealTaskTrigger,
+    newtagAddedOrRemovedFromContactTrigger,
+    updatedContactTrigger,
+  ],
 });

@@ -17,9 +17,10 @@ export const facebookLeadsAuth = PieceAuth.OAuth2({
 
 export const facebookLeads = createPiece({
   displayName: 'Facebook Leads',
+  description: 'Capture leads from Facebook',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/facebook.png',
-  authors: ['MoShizzle'],
+  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   categories: [PieceCategory.MARKETING],
   auth: facebookLeadsAuth,
   actions: [],

@@ -65,11 +65,14 @@ export const retuneAuth = PieceAuth.CustomAuth({
 
 export const retune = createPiece({
   displayName: 're:tune',
+  description:
+    'Everything you need to transform your business with AI, from custom chatbots to autonomous agents.',
+
   auth: retuneAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/retune.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
-  authors: ['MoShizzle'],
+  authors: ["kishanprmr","MoShizzle","abuaboud"],
   actions: [
     askChatbot,
     createCustomApiCallAction({

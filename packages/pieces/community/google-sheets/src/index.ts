@@ -32,14 +32,7 @@ export const googleSheets = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-sheets.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: [
-    'abuaboud',
-    'AbdulTheActivepiecer',
-    'Shay Punter',
-    'Abdallah-Alwarawreh',
-    'Salem-Alaa',
-    'kishanprmr',
-  ],
+  authors: ["ShayPunter","Ozak93","Abdallah-Alwarawreh","Salem-Alaa","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   actions: [
     insertRowAction,
     deleteRowAction,
@@ -61,6 +54,7 @@ export const googleSheets = createPiece({
     }),
   ],
   displayName: 'Google Sheets',
+  description: 'Create, edit, and collaborate on spreadsheets online',
   triggers: [readNewRows, newRowAddedTrigger],
   auth: googleSheetsAuth,
 });

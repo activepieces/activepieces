@@ -10,10 +10,11 @@ export const calcomAuth = PieceAuth.SecretText({
 
 export const calcom = createPiece({
   displayName: 'Cal.com',
+  description: 'Open-source alternative to Calendly',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/cal.com.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ['kanarelo'],
+  authors: ["kishanprmr","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   auth: calcomAuth,
   actions: [],
   triggers,

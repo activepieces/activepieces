@@ -74,7 +74,7 @@ export const leadConnector = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/lead-connector.png',
   categories: [PieceCategory.SALES_AND_CRM],
-  authors: ['MoShizzle'],
+  authors: ["kishanprmr","MoShizzle","abuaboud"],
   actions: [
     createContact,
     updateContactAction,

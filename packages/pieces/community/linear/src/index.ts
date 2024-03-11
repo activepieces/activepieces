@@ -32,10 +32,12 @@ export const linearAuth = PieceAuth.SecretText({
 });
 export const linear = createPiece({
   displayName: 'Linear',
+  description: 'Issue tracking for modern software teams',
+
   auth: linearAuth,
   minimumSupportedRelease: '0.7.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/linear.png',
-  authors: ['kishanprmr', 'lldiegon'],
+  authors: ["lldiegon","kishanprmr","abuaboud"],
   categories: [PieceCategory.PRODUCTIVITY],
   actions: [
     linearCreateIssue,

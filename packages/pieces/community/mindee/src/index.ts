@@ -16,10 +16,12 @@ export const mindeeAuth = PieceAuth.SecretText({
 
 export const mindee = createPiece({
   displayName: 'Mindee',
+  description: 'Document automation API',
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/mindee.png',
-  categories:[PieceCategory.COMMUNICATION],
-  authors: ['kanarelo'],
+  categories: [PieceCategory.COMMUNICATION],
+  authors: ["kanarelo","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: mindeeAuth,
   actions: [
     mindeePredictDocumentAction,

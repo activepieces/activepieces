@@ -17,6 +17,9 @@ export const githubAuth = PieceAuth.OAuth2({
 
 export const github = createPiece({
   displayName: 'GitHub',
+  description:
+    'Developer platform that allows developers to create, store, manage and share their code',
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/github.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
@@ -31,6 +34,6 @@ export const github = createPiece({
       }),
     }),
   ],
-  authors: ['kanarelo'],
+  authors: ["kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   triggers: githubTriggers,
 });

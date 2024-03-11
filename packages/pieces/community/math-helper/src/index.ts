@@ -18,7 +18,7 @@ export const math = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/math-helper.svg',
   categories: [PieceCategory.CORE],
-  authors: ['lisander-lopez'],
+  authors: ["kishanprmr","MoShizzle","abuaboud"],
   actions: [
     addition,
     subtraction,

@@ -2,7 +2,7 @@
     <app-add-edit-connection-button *ngIf="openNewConnectionsDialog$ | async as newConnectionPiece " #connectionButton
         btnSize="extraSmall" [isEditConnectionButton]="false" [authProperty]="newConnectionPiece.auth!"
         [pieceName]="newConnectionPiece.name" [pieceVersion]="newConnectionPiece.version" [propertyKey]="''"
-        [pieceDisplayName]="newConnectionPiece.displayName" (connectionIdChanged)="hideConnectionIframe($event.value)"
+        [pieceDisplayName]="newConnectionPiece.displayName" (newConnection)="hideConnectionIframe($event)"
         (newConnectionDialogClosed)="hideConnectionIframe()"></app-add-edit-connection-button>
 </div>
 <div class="ap-flex  ap-items-center ap-justify-center ap-h-full ap-w-full ap-bg-[transparent]"

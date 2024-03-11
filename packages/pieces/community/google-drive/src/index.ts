@@ -33,14 +33,8 @@ export const googleDrive = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/google-drive.png',
   categories: [PieceCategory.CONTENT_AND_FILES],
   displayName: 'Google Drive',
-  authors: [
-    'kanarelo',
-    'BastienMe',
-    'MoShizzle',
-    'Armangiau',
-    'vitalini',
-    'PFernandez98',
-  ],
+  description: 'Cloud storage and file backup',
+  authors: ["BastienMe","ArmanGiau3","Vitalini","pfernandez98","kanarelo","Salem-Alaa","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   triggers: [newFile, newFolder],
   actions: [
     googleDriveCreateNewFolder,

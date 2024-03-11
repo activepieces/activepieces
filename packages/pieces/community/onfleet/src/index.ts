@@ -69,11 +69,13 @@ export const onfleetAuth = PieceAuth.SecretText({
 
 export const onfleet = createPiece({
   displayName: 'Onfleet',
+  description: 'Last mile delivery software',
+
   auth: onfleetAuth,
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/onfleet.png',
   categories: [],
-  authors: ['MoShizzle'],
+  authors: ["kishanprmr","MoShizzle","abuaboud"],
   actions: [
     createRecipient,
     updateRecipient,

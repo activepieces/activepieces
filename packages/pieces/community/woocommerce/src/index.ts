@@ -59,11 +59,13 @@ export const wooAuth = PieceAuth.CustomAuth({
 
 export const woocommerce = createPiece({
   displayName: 'WooCommerce',
+  description: 'E-commerce platform built on WordPress',
+
   logoUrl: 'https://cdn.activepieces.com/pieces/woocommerce.png',
   categories: [PieceCategory.COMMERCE],
   auth: wooAuth,
   minimumSupportedRelease: '0.7.1',
-  authors: ['MoShizzle', 'TaskMagicKyle', 'kishanprmr'],
+  authors: ["TaskMagicKyle","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   actions: [
     wooCreateCustomer,
     wooCreateCoupon,

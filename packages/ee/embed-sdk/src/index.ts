@@ -16,7 +16,7 @@ export interface ActivepiecesClientRouteChanged {
 }
 export interface ActivepiecesNewConnectionDialogClosed {
   type: ActivepiecesClientEventName.CLIENT_NEW_CONNECTION_DIALOG_CLOSED;
-  data:{ newConnectionId?:string } 
+  data:{ connection?: { id: string; name: string } }
 }
 
 type IframeWithWindow = HTMLIFrameElement & {contentWindow: Window}
@@ -59,10 +59,14 @@ class ActivepiecesEmbedded {
   _hideSidebar = false;
   _hideFolders = false;
   _disableNavigationInBuilder = true;
+  _connectionsIframeInitialized = false;
+  _resolveNewConnectionDialogClosed?: (result:  ActivepiecesNewConnectionDialogClosed['data'] ) => void;
   handleVendorNavigation?: (data: { route: string }) => void;
   handleClientNavigation?: (data: { route: string }) => void;
-  _connectionsIframeIsAuthenticated = false;
-  parentOrigin = window.location.origin;
+  _parentOrigin = window.location.origin;
+  _connectionsIframe: HTMLIFrameElement | null = null;
+
+
   private createIframe({src}:{src:string})
   {
     const iframe = document.createElement('iframe');
@@ -111,7 +115,6 @@ class ActivepiecesEmbedded {
       );
      return iframe;
   };
-  _connectionsIframe: HTMLIFrameElement | null = null;
   configure({
     prefix,
     hideSidebar,
@@ -134,10 +137,10 @@ class ActivepiecesEmbedded {
     this._prefix = prefix || '/';
     const newInitialRoute = !window.location.pathname.startsWith(this._prefix) ? '/' : '/' + window.location.pathname.substring(this._prefix.length);
     this._initialRoute = newInitialRoute || '/';
-    this._hideSidebar = hideSidebar || false;
+    this._hideSidebar =  hideSidebar|| false;
     this._instanceUrl = this.removeTrailingSlashes(instanceUrl);
+    this._disableNavigationInBuilder = builder?.disableNavigation ?? false;
     this._hideFolders = hideFolders?? false;
-    this._disableNavigationInBuilder =  builder?.disableNavigation?? false;
     this.initializeBuilderIframe({
       client: this,
       containerSelector: `#${containerId}`,
@@ -146,29 +149,35 @@ class ActivepiecesEmbedded {
     }); 
   }
 
-  connect({pieceName}:{pieceName:string}) {
+  async connect({pieceName}:{pieceName:string}) {
     if (!this._connectionsIframe || !this.doesFrameHaveWindow(this._connectionsIframe)) {
       console.error('Activepieces: connections iframe not found');
       return;
       }
-     const authenticationCheckInterval= setInterval(()=>{
-      if(this._connectionsIframeIsAuthenticated){
-        clearInterval(authenticationCheckInterval);
-        const apEvent: ActivepiecesVendorRouteChanged = {
-          type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
-          data: {
-           //added date so angular queryparams will be updated and open the dialog, because if you try to create two connections with the same piece, the second one will not open the dialog
-            vendorRoute:`/embed/connections?${NEW_CONNECTION_QUERY_PARAMS.name}=${pieceName}&date=${Date.now()}`
-          },
-        };
-        if (!this._connectionsIframe || !this.doesFrameHaveWindow(this._connectionsIframe)) {
-          console.error('Activepieces: connections iframe not found');
-          return;
-          }
-        this._connectionsIframe.contentWindow.postMessage(apEvent, '*');
-        this._connectionsIframe.style.display = 'block';
+      if(!this._connectionsIframeInitialized)
+      {
+        //wait for the connections iframe to be initialized
+        await new Promise((resolve) => {
+          const interval = setInterval(() => {
+            if (this._connectionsIframeInitialized) {
+              clearInterval(interval);
+              resolve(null);
+            }
+          }, 300);
+        });
       }
-      },300) 
+       const apEvent: ActivepiecesVendorRouteChanged = {
+         type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
+         data: {
+          //added date so angular queryparams will be updated and open the dialog, because if you try to create two connections with the same piece, the second one will not open the dialog
+           vendorRoute:`/embed/connections?${NEW_CONNECTION_QUERY_PARAMS.name}=${pieceName}&date=${Date.now()}`
+         },
+       };
+    this._connectionsIframe.contentWindow.postMessage(apEvent, '*');
+    this._connectionsIframe.style.display = 'block';
+    return new Promise<ActivepiecesNewConnectionDialogClosed['data']>((resolve) => {
+      this._resolveNewConnectionDialogClosed = resolve;
+    });
   }
   private initializeBuilderIframe = ({client,containerSelector, instanceUrl, jwtToken, }
     :{client: ActivepiecesEmbedded,
@@ -181,7 +190,7 @@ class ActivepiecesEmbedded {
     return;
    }
    const iframeWindow = this.connectoToEmbed({instanceUrl, jwtToken, iframeContainer, client}).contentWindow;
-   this._connectionsIframe= this.connectoToEmbed({instanceUrl, jwtToken, iframeContainer:document.body, client, callbackAfterAuthentication: () => {client._connectionsIframeIsAuthenticated = true}});
+   this._connectionsIframe= this.connectoToEmbed({instanceUrl, jwtToken, iframeContainer:document.body, client, callbackAfterAuthentication: () => {client._connectionsIframeInitialized = true}});
    const connectionsIframeStyle=['display:none','position:fixed','top:0','left:0','width:100%','height:100%','border:none'].join(';');
    this._connectionsIframe.style.cssText=connectionsIframeStyle
    this.checkForVendorRouteChanges(iframeWindow, client);
@@ -234,8 +243,8 @@ class ActivepiecesEmbedded {
            vendorRoute: this.extractRouteAfterPrefix(
              currentRoute,
              prefixStartsWithSlash
-               ? client.parentOrigin + client._prefix
-               : `${client.parentOrigin}/${client._prefix}`
+               ? client._parentOrigin + client._prefix
+               : `${client._parentOrigin}/${client._prefix}`
            ),
          },
        };
@@ -262,6 +271,10 @@ class ActivepiecesEmbedded {
      
         ) {
           this._connectionsIframe.style.display = 'none';
+          if(this._resolveNewConnectionDialogClosed)
+          {
+            this._resolveNewConnectionDialogClosed(event.data.data)
+          }
         }
       }
   }

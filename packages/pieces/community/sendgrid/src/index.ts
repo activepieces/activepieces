@@ -13,9 +13,12 @@ export const sendgridAuth = PieceAuth.SecretText({
 
 export const sendgrid = createPiece({
   displayName: 'SendGrid',
+  description:
+    'Email delivery service for sending transactional and marketing emails',
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/sendgrid.png',
-  authors: ['ashrafsamhouri', 'abuaboud'],
+  authors: ["ashrafsamhouri","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   categories: [PieceCategory.COMMUNICATION, PieceCategory.MARKETING],
   auth: sendgridAuth,
   actions: [

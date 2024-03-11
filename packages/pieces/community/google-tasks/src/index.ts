@@ -33,7 +33,9 @@ export const googleTasks = createPiece({
     }),
   ],
   displayName: 'Google Tasks',
-  authors: ['abaza738', 'Salem-Alaa'],
+  description: 'Task list management application',
+
+  authors: ["Salem-Alaa","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   triggers: [newTaskTrigger],
   auth: googleTasksAuth,
 });

@@ -45,10 +45,12 @@ export const zohoCrmAuth = PieceAuth.OAuth2({
 
 export const zohoCrm = createPiece({
   displayName: 'Zoho CRM',
+  description: 'Customer relationship management software',
+
   logoUrl: 'https://cdn.activepieces.com/pieces/zoho-crm.png',
   minimumSupportedRelease: '0.5.0',
   categories: [PieceCategory.SALES_AND_CRM],
-  authors: ['abuaboud'],
+  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: zohoCrmAuth,
   actions: [
     createCustomApiCallAction({

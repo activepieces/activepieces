@@ -48,7 +48,7 @@ export const qdrant = createPiece({
   auth: qdrantAuth,
   minimumSupportedRelease: '0.8.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/qdrant.png',
-  authors: ['ArmanGiau'],
+  authors: ["ArmanGiau3","kishanprmr","abuaboud"],
   categories: [PieceCategory.DEVELOPER_TOOLS],
   actions: [
     addPointsToCollection,
