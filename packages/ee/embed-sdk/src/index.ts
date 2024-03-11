@@ -61,29 +61,95 @@ class ActivepiecesEmbedded {
   _disableNavigationInBuilder = true;
   _connectionsIframeInitialized = false;
   _resolveNewConnectionDialogClosed?: (result:  ActivepiecesNewConnectionDialogClosed['data'] ) => void;
-  handleVendorNavigation?: (data: { route: string }) => void;
-  handleClientNavigation?: (data: { route: string }) => void;
+  _handleVendorNavigation?: (data: { route: string }) => void;
+  _handleClientNavigation?: (data: { route: string }) => void;
   _parentOrigin = window.location.origin;
   _connectionsIframe: HTMLIFrameElement | null = null;
 
+  configure({
+    prefix,
+    jwtToken,
+    instanceUrl,
+    builderAndDashboardSettings,
+    enableEmbeddedDialogs
+  }: {
+    prefix?: string;
+    instanceUrl:string;
+    jwtToken:string;
+    builderAndDashboardSettings?: {
+      containerId?:string,
+      builder?:{
+        disableNavigation:boolean
+      },
+      dashboard?: {
+        hideSidebar?: boolean;
+      },
+      hideFolders?:boolean;
+    },   
+    enableEmbeddedDialogs?: boolean;
+  }) {
+    this._prefix = prefix || '/';
+    const newInitialRoute = !window.location.pathname.startsWith(this._prefix) ? '/' : '/' + window.location.pathname.substring(this._prefix.length);
+    this._initialRoute = newInitialRoute || '/';
+    this._hideSidebar =  builderAndDashboardSettings?.dashboard?.hideSidebar|| false;
+    this._instanceUrl = this._removeTrailingSlashes(instanceUrl);
+    this._disableNavigationInBuilder = builderAndDashboardSettings?.builder?.disableNavigation ?? false;
+    this._hideFolders = builderAndDashboardSettings?.hideFolders?? false;
+    if(builderAndDashboardSettings?.containerId)
+    {
+      this._initializeBuilderAndDashboardIframe({
+        containerSelector: `#${builderAndDashboardSettings.containerId}`,
+        jwtToken
+      }); 
+    }
 
-  private createIframe({src}:{src:string})
-  {
-    const iframe = document.createElement('iframe');
-    iframe.src = src;
-    return iframe;
+    if(enableEmbeddedDialogs)
+    {
+      this._initializeConnectionsIframe({ jwtToken })
+    }
+   
+    if(!builderAndDashboardSettings && !enableEmbeddedDialogs)
+    {
+      console.warn('Activepieces:  No settings provided, nothing will be initialized, please provide settings to initialize the (builder and dashboard) or embedded dialogs');
+    }
+
   }
-  private connectoToEmbed ({instanceUrl,jwtToken,iframeContainer,client,callbackAfterAuthentication}: {
-    instanceUrl: string,
+
+  
+  private _initializeBuilderAndDashboardIframe = ({containerSelector, jwtToken}
+    :{
+     containerSelector:string,
+     jwtToken:string 
+    }) => {
+   const iframeContainer = document.querySelector(containerSelector);
+   if(!iframeContainer) {
+    console.error('Activepieces: container not found');
+    return;
+   }
+   const iframeWindow = this.connectoToEmbed({jwtToken, iframeContainer}).contentWindow;
+   this._checkForVendorRouteChanges(iframeWindow);
+   this._checkForClientRouteChanges(iframeWindow);
+ };
+ 
+private _initializeConnectionsIframe = ({jwtToken}:{jwtToken:string}) =>
+{
+  this._connectionsIframe= this.connectoToEmbed({jwtToken, iframeContainer:document.body, callbackAfterAuthentication: () => {this._connectionsIframeInitialized = true}});
+  const connectionsIframeStyle=['display:none','position:fixed','top:0','left:0','width:100%','height:100%','border:none'].join(';');
+  this._connectionsIframe.style.cssText=connectionsIframeStyle;
+  this._checkIfNewConnectionDialogClosed();
+}
+
+
+
+  private connectoToEmbed ({jwtToken,iframeContainer,callbackAfterAuthentication}: {
     jwtToken: string,
     iframeContainer: Element,
-    client: ActivepiecesEmbedded,
     callbackAfterAuthentication?: () => void
   }
   ): IframeWithWindow {
-    const iframe = this.createIframe({src:`${instanceUrl}/embed?${jwtTokenQueryParamName}=${jwtToken}`});
+    const iframe = this._createIframe({src:`${this._instanceUrl}/embed?${jwtTokenQueryParamName}=${jwtToken}`});
     iframeContainer.appendChild(iframe);
-    if (!this.doesFrameHaveWindow(iframe)) {
+    if (!this._doesFrameHaveWindow(iframe)) {
       const error = 'Activepieces: iframe window not accessible';
       console.error(error);
       throw new Error(error);
@@ -91,18 +157,18 @@ class ActivepiecesEmbedded {
     const iframeWindow = iframe.contentWindow;
       window.addEventListener(
         'message',
-        function (event: MessageEvent<ActivepiecesClientEvent>) {
+         (event: MessageEvent<ActivepiecesClientEvent>) => {
           if (event.source === iframeWindow) {
             switch (event.data.type) {
               case ActivepiecesClientEventName.CLIENT_INIT: {
                 const apEvent: ActivepiecesVendorInit = {
                   type: ActivepiecesVendorEventName.VENDOR_INIT,
                   data: {
-                    prefix: client._prefix,
-                    initialRoute:  client._initialRoute,
-                    hideSidebar: client._hideSidebar,
-                    disableNavigationInBuilder: client._disableNavigationInBuilder,
-                    hideFolders: client._hideFolders
+                    prefix: this._prefix,
+                    initialRoute:  this._initialRoute,
+                    hideSidebar: this._hideSidebar,
+                    disableNavigationInBuilder: this._disableNavigationInBuilder,
+                    hideFolders: this._hideFolders
                   },
                 };
                 iframeWindow.postMessage(apEvent, '*');
@@ -115,43 +181,18 @@ class ActivepiecesEmbedded {
       );
      return iframe;
   };
-  configure({
-    prefix,
-    hideSidebar,
-    builder,
-    containerId,
-    jwtToken,
-    instanceUrl,
-    hideFolders
-  }: {
-    prefix?: string;
-    hideSidebar?: boolean;
-    builder?:{
-      disableNavigation: boolean;
-    },
-    hideFolders?:boolean;
-    containerId:string;
-    jwtToken:string;
-    instanceUrl:string;
-  }) {
-    this._prefix = prefix || '/';
-    const newInitialRoute = !window.location.pathname.startsWith(this._prefix) ? '/' : '/' + window.location.pathname.substring(this._prefix.length);
-    this._initialRoute = newInitialRoute || '/';
-    this._hideSidebar =  hideSidebar|| false;
-    this._instanceUrl = this.removeTrailingSlashes(instanceUrl);
-    this._disableNavigationInBuilder = builder?.disableNavigation ?? false;
-    this._hideFolders = hideFolders?? false;
-    this.initializeBuilderIframe({
-      client: this,
-      containerSelector: `#${containerId}`,
-      instanceUrl: this._instanceUrl,
-      jwtToken
-    }); 
+
+  private _createIframe({src}:{src:string})
+  {
+    const iframe = document.createElement('iframe');
+    iframe.src = src;
+    return iframe;
   }
 
+
   async connect({pieceName}:{pieceName:string}) {
-    if (!this._connectionsIframe || !this.doesFrameHaveWindow(this._connectionsIframe)) {
-      console.error('Activepieces: connections iframe not found');
+    if (!this._connectionsIframe || !this._doesFrameHaveWindow(this._connectionsIframe)) {
+      console.error('Activepieces: connections iframe not found, please make sure you enabled embedded dialiogs in the configure method');
       return;
       }
       if(!this._connectionsIframeInitialized)
@@ -179,35 +220,18 @@ class ActivepiecesEmbedded {
       this._resolveNewConnectionDialogClosed = resolve;
     });
   }
-  private initializeBuilderIframe = ({client,containerSelector, instanceUrl, jwtToken, }
-    :{client: ActivepiecesEmbedded,
-     containerSelector:string,
-     instanceUrl:string,
-     jwtToken:string }) => {
-   const iframeContainer = document.querySelector(containerSelector);
-   if(!iframeContainer) {
-    console.error('Activepieces: iframe container not found');
-    return;
-   }
-   const iframeWindow = this.connectoToEmbed({instanceUrl, jwtToken, iframeContainer, client}).contentWindow;
-   this._connectionsIframe= this.connectoToEmbed({instanceUrl, jwtToken, iframeContainer:document.body, client, callbackAfterAuthentication: () => {client._connectionsIframeInitialized = true}});
-   const connectionsIframeStyle=['display:none','position:fixed','top:0','left:0','width:100%','height:100%','border:none'].join(';');
-   this._connectionsIframe.style.cssText=connectionsIframeStyle
-   this.checkForVendorRouteChanges(iframeWindow, client);
-   this.checkForClientRouteChanges(client,iframeWindow);
-   this.checkIfNewConnectionDialogClosed();
- };
- 
- private checkForClientRouteChanges = (client: ActivepiecesEmbedded,source:Window) => {
+
+
+ private _checkForClientRouteChanges = (source:Window) => {
    window.addEventListener(
      'message',
-     function (event: MessageEvent<ActivepiecesClientRouteChanged>) {
+     (event: MessageEvent<ActivepiecesClientRouteChanged>)=> {
        if (
          event.data.type === ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED
          && event.source === source
      
        ) {
-         let prefixStartsWithSlash = client._prefix.startsWith('/') ? client._prefix : `/${client._prefix}`;
+         let prefixStartsWithSlash = this._prefix.startsWith('/') ? this._prefix : `/${this._prefix}`;
          if (prefixStartsWithSlash === '/') {
            prefixStartsWithSlash = ''
          }
@@ -215,36 +239,35 @@ class ActivepiecesEmbedded {
          if (!routeWithPrefix.startsWith("/")) {
            routeWithPrefix = '/' + routeWithPrefix
          }
-         if (!client.handleClientNavigation) {
-           this.history.replaceState({}, '', routeWithPrefix);
+         if (!this._handleClientNavigation) {
+           window.history.replaceState({}, '', routeWithPrefix);
          } else {
-           client.handleClientNavigation({ route: routeWithPrefix });
+           this._handleClientNavigation({ route: routeWithPrefix });
          }
        }
      }
    );
  };
  
- private checkForVendorRouteChanges = (
-   iframeWindow: Window,
-   client: ActivepiecesEmbedded
+ private _checkForVendorRouteChanges = (
+   iframeWindow: Window
  ) => {
    let currentRoute = window.location.href;
    setInterval(() => {
      if (currentRoute !== window.location.href) {
        currentRoute = window.location.href;
-       if (client.handleVendorNavigation) {
-         client.handleVendorNavigation({ route: currentRoute });
+       if (this._handleVendorNavigation) {
+         this._handleVendorNavigation({ route: currentRoute });
        }
-       const prefixStartsWithSlash = client._prefix.startsWith('/');
+       const prefixStartsWithSlash = this._prefix.startsWith('/');
        const apEvent: ActivepiecesVendorRouteChanged = {
          type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
          data: {
-           vendorRoute: this.extractRouteAfterPrefix(
+           vendorRoute: this._extractRouteAfterPrefix(
              currentRoute,
              prefixStartsWithSlash
-               ? client._parentOrigin + client._prefix
-               : `${client._parentOrigin}/${client._prefix}`
+               ? this._parentOrigin + this._prefix
+               : `${this._parentOrigin}/${this._prefix}`
            ),
          },
        };
@@ -253,18 +276,18 @@ class ActivepiecesEmbedded {
    }, 50);
  };
  
-  private extractRouteAfterPrefix(href: string, prefix: string) {
+  private _extractRouteAfterPrefix(href: string, prefix: string) {
    return href.split(prefix)[1];
  }
- private doesFrameHaveWindow(frame: HTMLIFrameElement): frame is IframeWithWindow {
+ private _doesFrameHaveWindow(frame: HTMLIFrameElement): frame is IframeWithWindow {
    return frame.contentWindow !== null;
  }
- private checkIfNewConnectionDialogClosed() {
+ private _checkIfNewConnectionDialogClosed() {
  
     window.addEventListener(
       'message',
       (event: MessageEvent<ActivepiecesNewConnectionDialogClosed>)=> {
-        if(this._connectionsIframe && this.doesFrameHaveWindow(this._connectionsIframe))
+        if(this._connectionsIframe && this._doesFrameHaveWindow(this._connectionsIframe))
         {
         if (
           event.data.type === ActivepiecesClientEventName.CLIENT_NEW_CONNECTION_DIALOG_CLOSED
@@ -278,11 +301,10 @@ class ActivepiecesEmbedded {
         }
       }
   }
-
     );
- 
 }
-private removeTrailingSlashes(str: string) {
+
+private _removeTrailingSlashes(str: string) {
   return str.endsWith('/')? str.slice(0,-1):str;
 }
 
