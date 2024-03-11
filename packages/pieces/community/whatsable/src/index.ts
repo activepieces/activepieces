@@ -13,7 +13,7 @@ export const whatsable = createPiece({
   auth: whatsableAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/whatsable.png',
-  authors: ['abuaboud'],
+  authors: ["abuaboud"],
   actions: [sendMessage],
   triggers: [],
 });

@@ -42,6 +42,6 @@ export const openai = createPiece({
       }),
     }),
   ],
-  authors: ['hboujrida'],
+  authors: ["hkboujrida","kishanprmr","MoShizzle","abuaboud"],
   triggers: [],
 });

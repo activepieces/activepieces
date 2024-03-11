@@ -8,7 +8,7 @@ export const tally = createPiece({
   minimumSupportedRelease: '0.8.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/tally.png',
   categories: [PieceCategory.FORMS_AND_SURVEYS],
-  authors: ['kishanprmr'],
+  authors: ["kishanprmr","abuaboud"],
   actions: [],
   triggers: [tallyFormsNewSubmission],
 });

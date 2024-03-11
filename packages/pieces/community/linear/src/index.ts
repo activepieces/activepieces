@@ -37,7 +37,7 @@ export const linear = createPiece({
   auth: linearAuth,
   minimumSupportedRelease: '0.7.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/linear.png',
-  authors: ['kishanprmr', 'lldiegon'],
+  authors: ["lldiegon","kishanprmr","abuaboud"],
   categories: [PieceCategory.PRODUCTIVITY],
   actions: [
     linearCreateIssue,

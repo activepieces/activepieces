@@ -41,6 +41,6 @@ export const twilio = createPiece({
       }),
     }),
   ],
-  authors: ['abuaboud'],
+  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   triggers: [twilioNewIncomingSms],
 });

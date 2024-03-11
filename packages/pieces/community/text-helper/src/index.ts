@@ -12,7 +12,7 @@ export const textHelper = createPiece({
   description: 'Tools for text processing',
   auth: PieceAuth.None(),
   logoUrl: 'https://cdn.activepieces.com/pieces/text-helper.svg',
-  authors: ['abaza738', 'joeworkman', 'AbdulTheActivePiecer'],
+  authors: ["joeworkman","kishanprmr","MoShizzle","AbdulTheActivePiecer","abuaboud"],
   categories: [PieceCategory.CORE],
   actions: [concat, replace, split, find, markdownToHTML, htmlToMarkdown],
   triggers: [],

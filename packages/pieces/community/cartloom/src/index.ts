@@ -17,7 +17,7 @@ export const cartloom = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/cartloom.png',
   categories: [PieceCategory.COMMERCE],
-  authors: ['joeworkman'],
+  authors: ["joeworkman","kishanprmr","MoShizzle","abuaboud"],
   actions: [
     getProductsAction,
     getOrderAction,

@@ -23,7 +23,7 @@ export const acumbamail = createPiece({
   auth: acumbamailAuth,
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/acumbamail.png',
-  authors: ['kishanprmr'],
+  authors: ["kishanprmr","abuaboud"],
   actions: [
     addUpdateSubscriberAction,
     createSubscriberListAction,

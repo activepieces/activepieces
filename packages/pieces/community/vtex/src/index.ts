@@ -58,7 +58,7 @@ export const vtex = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/vtex.png',
   categories: [PieceCategory.COMMERCE],
-  authors: ['Willianwg'],
+  authors: ["Willianwg","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   auth: vtexAuth,
   actions: [
     getProductById,

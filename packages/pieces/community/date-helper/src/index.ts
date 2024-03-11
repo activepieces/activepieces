@@ -16,7 +16,7 @@ export const utilityDate = createPiece({
   minimumSupportedRelease: '0.8.0',
   categories: [PieceCategory.CORE],
   logoUrl: 'https://cdn.activepieces.com/pieces/calendar_piece.svg',
-  authors: ['Salem-Alaa', 'joeworkman'],
+  authors: ["joeworkman","kishanprmr","MoShizzle","abuaboud"],
   actions: [
     getCurrentDate,
     formatDateAction,

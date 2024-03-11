@@ -9,7 +9,7 @@ export const filesHelper = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/file-piece.svg',
   categories: [PieceCategory.CORE],
-  authors: ['Salem-Alaa'],
+  authors: ["kishanprmr","MoShizzle","abuaboud"],
   actions: [readFileAction],
   triggers: [],
 });

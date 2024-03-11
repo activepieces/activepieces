@@ -35,7 +35,7 @@ export const azureOpenai = createPiece({
   auth: azureOpenaiAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/azure-openai.png',
-  authors: ['MoShizzle'],
+  authors: ["MoShizzle","abuaboud"],
   actions: [askGpt],
   triggers: [],
 });

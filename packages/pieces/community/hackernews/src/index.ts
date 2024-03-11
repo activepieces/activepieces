@@ -9,7 +9,7 @@ export const hackernews = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/hackernews.png',
   auth: PieceAuth.None(),
   categories: [],
-  authors: ['abuaboud'],
+  authors: ["kishanprmr","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   actions: [fetchTopStories],
   triggers: [],
 });

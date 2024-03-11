@@ -80,12 +80,6 @@ export const openai = createPiece({
       },
     }),
   ],
-  authors: [
-    'aboudzein',
-    'creed983',
-    'astorozhevsky',
-    'Salem-Alaa',
-    'MoShizzle',
-  ],
+  authors: ["aboudzein","astorozhevsky","Willianwg","Nilesh","Salem-Alaa","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   triggers: [],
 });

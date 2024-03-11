@@ -26,7 +26,7 @@ export const box = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/box.png',
   categories: [PieceCategory.CONTENT_AND_FILES],
-  authors: ['kanarelo', 'MoShizzle'],
+  authors: ["kishanprmr","MoShizzle","abuaboud"],
   actions: [
     createCustomApiCallAction({
       baseUrl: () => common.baseUrl,

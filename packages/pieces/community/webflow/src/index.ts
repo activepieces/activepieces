@@ -30,7 +30,7 @@ export const webflow = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/webflow.png',
   categories: [PieceCategory.MARKETING],
-  authors: ['Ahmad-AbuOsbeh', 'TaskMagicKyle'],
+  authors: ["Ahmad-AbuOsbeh","TaskMagicKyle","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: webflowAuth,
   actions: [
     webflowCreateCollectionItem,

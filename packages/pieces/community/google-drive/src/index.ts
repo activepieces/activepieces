@@ -34,14 +34,7 @@ export const googleDrive = createPiece({
   categories: [PieceCategory.CONTENT_AND_FILES],
   displayName: 'Google Drive',
   description: 'Cloud storage and file backup',
-  authors: [
-    'kanarelo',
-    'BastienMe',
-    'MoShizzle',
-    'Armangiau',
-    'vitalini',
-    'PFernandez98',
-  ],
+  authors: ["BastienMe","ArmanGiau3","Vitalini","pfernandez98","kanarelo","Salem-Alaa","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   triggers: [newFile, newFolder],
   actions: [
     googleDriveCreateNewFolder,

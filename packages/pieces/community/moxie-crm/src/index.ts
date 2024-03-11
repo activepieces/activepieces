@@ -40,7 +40,7 @@ export const moxieCrm = createPiece({
   auth: moxieCRMAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/moxie-crm.png',
-  authors: ['kishanprmr'],
+  authors: ["kishanprmr","MoShizzle","abuaboud"],
   categories: [PieceCategory.SALES_AND_CRM],
   actions: [
     moxieCreateClientAction,

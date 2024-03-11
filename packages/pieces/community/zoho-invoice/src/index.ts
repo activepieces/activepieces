@@ -55,7 +55,7 @@ export const zohoInvoice = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/zoho-invoice.png',
   categories: [PieceCategory.ACCOUNTING],
-  authors: ['MoShizzle'],
+  authors: ["kishanprmr","MoShizzle","abuaboud"],
   actions: [
     createCustomApiCallAction({
       baseUrl: (auth) =>

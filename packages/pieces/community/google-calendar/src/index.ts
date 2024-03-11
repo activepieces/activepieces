@@ -32,7 +32,7 @@ export const googleCalendar = createPiece({
   displayName: 'Google Calendar',
   description: 'Get organized and stay on schedule',
 
-  authors: ['osamahaikal', 'bibhuty-did-this', 'MoShizzle', 'PFernandez98'],
+  authors: ["OsamaHaikal","bibhuty-did-this","Vitalini","pfernandez98","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: googleCalendarAuth,
   actions: [
     createQuickCalendarEvent,

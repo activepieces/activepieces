@@ -39,7 +39,7 @@ export const brilliantDirectories = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/brilliant-directories.png',
   categories: [],
-  authors: ['Shay Punter', 'Tim M'],
+  authors: ["ShayPunter","dennisrongo","kishanprmr","MoShizzle","abuaboud"],
   actions: [
     createNewUser,
     createCustomApiCallAction({

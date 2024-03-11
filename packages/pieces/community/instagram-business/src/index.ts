@@ -10,7 +10,7 @@ export const instagramBusiness = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/instagram.png',
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
-  authors: ['MoShizzle'],
+  authors: ["kishanprmr","MoShizzle","abuaboud"],
   auth: instagramCommon.authentication,
   actions: [uploadPhoto, uploadReel],
   triggers: [],

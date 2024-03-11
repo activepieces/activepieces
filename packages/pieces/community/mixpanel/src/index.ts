@@ -16,7 +16,7 @@ export const mixpanel = createPiece({
   description: 'Simple and powerful product analytics that helps everyone make better decisions',
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/mixpanel.png',
-  authors: ['yann120'],
+  authors: ["yann120","kishanprmr","MoShizzle","abuaboud"],
   auth: mixpanelAuth,
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   actions: [

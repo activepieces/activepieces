@@ -35,7 +35,7 @@ export const kizeoForms = createPiece({
 
   minimumSupportedRelease: '0.6.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/kizeo-forms.png',
-  authors: ['BastienMe'],
+  authors: ["BastienMe","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   categories: [PieceCategory.FORMS_AND_SURVEYS],
   auth: kizeoFormsAuth,
   actions: [

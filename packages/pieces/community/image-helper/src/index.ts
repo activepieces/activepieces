@@ -13,7 +13,7 @@ export const imageHelper = createPiece({
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/image-helper.png',
-  authors: ['PFernandez98', 'AbdullahBitar'],
+  authors: ["AbdullahBitar","kishanprmr","abuaboud"],
   categories: [PieceCategory.CORE],
   actions: [imageToBase64, getMetaData, cropImage, rotateImage, resizeImage],
   triggers: [],

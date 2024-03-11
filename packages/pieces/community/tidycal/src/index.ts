@@ -40,7 +40,7 @@ export const tidycal = createPiece({
   minimumSupportedRelease: '0.7.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/tidycal.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ['Salem-Alaa'],
+  authors: ["Salem-Alaa","kishanprmr","MoShizzle","abuaboud"],
   actions: [
     createCustomApiCallAction({
       baseUrl: () => 'https://tidycal.com/api',

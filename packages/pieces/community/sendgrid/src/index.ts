@@ -18,7 +18,7 @@ export const sendgrid = createPiece({
 
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/sendgrid.png',
-  authors: ['ashrafsamhouri', 'abuaboud'],
+  authors: ["ashrafsamhouri","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   categories: [PieceCategory.COMMUNICATION, PieceCategory.MARKETING],
   auth: sendgridAuth,
   actions: [

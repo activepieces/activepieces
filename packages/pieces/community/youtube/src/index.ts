@@ -11,7 +11,7 @@ export const youtube = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/youtube.png',
   categories: [PieceCategory.CONTENT_AND_FILES],
   auth: PieceAuth.None(),
-  authors: ['abuaboud'],
+  authors: ["abaza738","kishanprmr","khaledmashaly","abuaboud"],
   actions: [],
   triggers: [youtubeNewVideoTrigger],
 });

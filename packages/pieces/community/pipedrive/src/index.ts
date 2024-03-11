@@ -38,6 +38,6 @@ export const pipedrive = createPiece({
       }),
     }),
   ],
-  authors: ['ashrafsamhouri'],
+  authors: ["ashrafsamhouri","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   triggers: [newPerson, newDeal, newActivity, updatedPerson, updatedDeal],
 });

@@ -34,6 +34,6 @@ export const github = createPiece({
       }),
     }),
   ],
-  authors: ['kanarelo'],
+  authors: ["kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   triggers: githubTriggers,
 });

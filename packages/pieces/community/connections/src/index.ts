@@ -9,7 +9,7 @@ export const connections = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/connections.png',
   categories: [PieceCategory.CORE],
   auth: PieceAuth.None(),
-  authors: ['abuaboud'],
+  authors: ["kishanprmr","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   actions: [readConnection],
   triggers: [],
 });

@@ -54,7 +54,7 @@ export const airtable = createPiece({
 
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/airtable.png',
-  authors: ['AbdulTheActivePiecer', 'kanarelo', 'TaskMagicKyle'],
+  authors: ["kanarelo","TaskMagicKyle","Salem-Alaa","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   categories: [PieceCategory.PRODUCTIVITY],
   auth: airtableAuth,
   actions: [

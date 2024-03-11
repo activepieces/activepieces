@@ -31,6 +31,6 @@ export const typeform = createPiece({
     }),
   ],
   auth: typeformAuth,
-  authors: ['ShahedAlMashni'],
+  authors: ["ashrafsamhouri","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   triggers: [typeformNewSubmission],
 });

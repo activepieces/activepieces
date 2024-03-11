@@ -16,7 +16,7 @@ export const jiraCloud = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/jira.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ['MoShizzle'],
+  authors: ["kishanprmr","MoShizzle","abuaboud"],
   actions: [
     createIssue,
     searchIssues,

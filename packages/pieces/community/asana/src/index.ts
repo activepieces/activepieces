@@ -21,7 +21,7 @@ export const asana = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/asana.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ['abuaboud'],
+  authors: ["ShayPunter","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: asanaAuth,
   actions: [
     asanaCreateTaskAction,

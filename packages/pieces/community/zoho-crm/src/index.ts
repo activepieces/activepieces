@@ -50,7 +50,7 @@ export const zohoCrm = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/zoho-crm.png',
   minimumSupportedRelease: '0.5.0',
   categories: [PieceCategory.SALES_AND_CRM],
-  authors: ['abuaboud'],
+  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: zohoCrmAuth,
   actions: [
     createCustomApiCallAction({

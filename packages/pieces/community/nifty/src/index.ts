@@ -35,7 +35,7 @@ export const nifty = createPiece({
   minimumSupportedRelease: '0.7.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/nifty.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ['Salem-Alaa'],
+  authors: ["kishanprmr","MoShizzle","abuaboud"],
   actions: [
     createTask,
     createCustomApiCallAction({

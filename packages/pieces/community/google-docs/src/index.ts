@@ -24,7 +24,7 @@ export const googleDocs = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-docs.png',
   categories: [PieceCategory.CONTENT_AND_FILES],
-  authors: ['MoShizzle', 'PFernandez98'],
+  authors: ["pfernandez98","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: googleDocsAuth,
   actions: [
     createDocument,

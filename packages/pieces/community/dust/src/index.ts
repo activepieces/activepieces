@@ -34,7 +34,7 @@ export const dust = createPiece({
   auth: dustAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/dust.png',
-  authors: ['AdamSelene'],
+  authors: ["AdamSelene","abuaboud"],
   actions: [createConversation, replyToConversation, upsertDocument],
   triggers: [],
 });

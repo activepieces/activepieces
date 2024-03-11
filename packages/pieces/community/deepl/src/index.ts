@@ -50,7 +50,7 @@ export const deepl = createPiece({
   minimumSupportedRelease: '0.6.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/deepl.png',
   categories: [],
-  authors: ['BBND'],
+  authors: ["BBND","kishanprmr","MoShizzle","abuaboud"],
   actions: [
     translateText,
     createCustomApiCallAction({

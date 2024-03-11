@@ -35,7 +35,7 @@ export const googleContacts = createPiece({
   displayName: 'Google Contacts',
   description: 'Stay connected and organized',
 
-  authors: ['abuaboud', 'abdallah-alwarawreh'],
+  authors: ["Abdallah-Alwarawreh","Salem-Alaa","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   triggers: [googleContactNewOrUpdatedContact],
   auth: googleContactsAuth,
 });

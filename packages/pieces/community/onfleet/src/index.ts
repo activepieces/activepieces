@@ -75,7 +75,7 @@ export const onfleet = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/onfleet.png',
   categories: [],
-  authors: ['MoShizzle'],
+  authors: ["kishanprmr","MoShizzle","abuaboud"],
   actions: [
     createRecipient,
     updateRecipient,

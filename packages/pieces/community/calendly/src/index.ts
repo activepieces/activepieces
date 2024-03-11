@@ -36,7 +36,7 @@ export const calendly = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/calendly.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ['AbdulTheActivePiecer'],
+  authors: ["kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   auth: calendlyAuth,
   actions: [
     createCustomApiCallAction({

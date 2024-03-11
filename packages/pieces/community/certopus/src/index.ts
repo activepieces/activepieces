@@ -15,7 +15,7 @@ export const certopus = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/certopus.png',
   categories: [],
-  authors: ['VrajGohil'],
+  authors: ["VrajGohil","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: certopusAuth,
   actions: [
     createCredential,

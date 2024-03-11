@@ -48,7 +48,7 @@ export const apitable = createPiece({
     PieceCategory.ARTIFICIAL_INTELLIGENCE,
     PieceCategory.PRODUCTIVITY,
   ],
-  authors: ['abdallah-alwarawreh', 'kishanprmr'],
+  authors: ["alerdenisov","Abdallah-Alwarawreh","kishanprmr","MoShizzle","abuaboud"],
   actions: [
     createRecordAction,
     updateRecordAction,

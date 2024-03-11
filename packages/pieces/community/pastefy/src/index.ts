@@ -33,7 +33,7 @@ export const pastefy = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/pastefy.png',
   categories: [],
-  authors: ['JanHolger'],
+  authors: ["JanHolger","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: pastefyAuth,
   actions: [
     ...actions,

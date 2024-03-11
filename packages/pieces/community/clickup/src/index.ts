@@ -67,6 +67,6 @@ export const clickup = createPiece({
       },
     }),
   ],
-  authors: ['abuaboud', 'ShayPunter', 'kanarelo'],
+  authors: ["kanarelo","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   triggers,
 });

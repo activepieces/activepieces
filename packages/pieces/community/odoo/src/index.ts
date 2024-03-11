@@ -64,7 +64,7 @@ export const odoo = createPiece({
   auth: odooAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/odoo.png',
-  authors: ['MarioMeyer'],
+  authors: ["mariomeyer","kishanprmr","abuaboud"],
   actions,
   triggers: [],
 });

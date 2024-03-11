@@ -24,7 +24,7 @@ export const googleForms = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-forms.png',
   categories: [PieceCategory.FORMS_AND_SURVEYS],
-  authors: ['abuaboud'],
+  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: googleFormsAuth,
   actions: [
     createCustomApiCallAction({

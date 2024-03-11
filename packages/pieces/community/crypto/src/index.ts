@@ -10,7 +10,7 @@ export const Crypto = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/crypto.png',
   categories: [PieceCategory.CORE],
-  authors: ['AbdullahBitar'],
+  authors: ["AbdullahBitar","kishanprmr","abuaboud"],
   actions: [hashText, generatePassword],
   triggers: [],
 });

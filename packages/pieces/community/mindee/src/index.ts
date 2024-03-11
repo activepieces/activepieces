@@ -21,7 +21,7 @@ export const mindee = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/mindee.png',
   categories: [PieceCategory.COMMUNICATION],
-  authors: ['kanarelo'],
+  authors: ["kanarelo","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: mindeeAuth,
   actions: [
     mindeePredictDocumentAction,

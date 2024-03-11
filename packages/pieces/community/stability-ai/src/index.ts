@@ -26,7 +26,7 @@ export const stabilityAi = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/stability-ai.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
-  authors: ['Willianwg', 'AbdulTheActivepiecer'],
+  authors: ["Willianwg","camilou","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   auth: stabilityAiAuth,
   actions: [
     textToImage,

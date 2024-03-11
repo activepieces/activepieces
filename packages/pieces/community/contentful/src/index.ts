@@ -16,7 +16,7 @@ export const contentful = createPiece({
   minimumSupportedRelease: '0.6.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/contentful.png',
   categories: [PieceCategory.MARKETING],
-  authors: ['cyrilselasi'],
+  authors: ["cyrilselasi","kishanprmr","MoShizzle","abuaboud"],
   actions: [
     ContentfulSearchRecordsAction,
     ContentfulGetRecordAction,

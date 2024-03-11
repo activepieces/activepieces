@@ -14,7 +14,7 @@ export const bettermode = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/bettermode.png',
   categories: [PieceCategory.MARKETING],
-  authors: ['joeworkman'],
+  authors: ["joeworkman","kishanprmr","MoShizzle","abuaboud"],
   actions: [
     createDiscussionAction,
     createQuestionAction,

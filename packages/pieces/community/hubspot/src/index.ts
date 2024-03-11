@@ -39,7 +39,7 @@ export const hubspot = createPiece({
 
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/hubspot.png',
-  authors: ['khaledmashaly', 'MoShizzle', 'Salem-Alaa', 'kishanprmr'],
+  authors: ["Salem-Alaa","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   categories: [PieceCategory.SALES_AND_CRM],
   auth: hubspotAuth,
   actions: [

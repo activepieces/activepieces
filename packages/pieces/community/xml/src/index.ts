@@ -10,7 +10,7 @@ export const xml = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/xml.png',
   categories: [PieceCategory.CORE],
   auth: PieceAuth.None(),
-  authors: ['Willianwg'],
+  authors: ["Willianwg","kishanprmr","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   actions: [convertJsonToXml],
   triggers: [],
 });

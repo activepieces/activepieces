@@ -47,7 +47,7 @@ export const salesforce = createPiece({
 
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/salesforce.png',
-  authors: ['abuaboud', 'HKudria'],
+  authors: ["HKudria","tanoggy","landonmoir","kishanprmr","khaledmashaly","abuaboud"],
   categories: [PieceCategory.SALES_AND_CRM],
   auth: salesforceAuth,
   actions: [

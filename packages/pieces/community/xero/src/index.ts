@@ -29,7 +29,7 @@ export const xero = createPiece({
 
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/xero.png',
-  authors: ['kanarelo'],
+  authors: ["kanarelo","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   auth: xeroAuth,
   actions: [

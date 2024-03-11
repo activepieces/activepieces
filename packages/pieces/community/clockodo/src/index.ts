@@ -40,7 +40,7 @@ export const clockodo = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/clockodo.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ['JanHolger'],
+  authors: ["JanHolger","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: clockodoAuth,
   actions,
   triggers,

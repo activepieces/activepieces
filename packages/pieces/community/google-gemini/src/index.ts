@@ -52,7 +52,7 @@ export const googleGemini = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-gemini.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
-  authors: ['pfernandez98'],
+  authors: ["pfernandez98","kishanprmr","MoShizzle","AbdulTheActivePiecer","abuaboud"],
   actions: [
     generateContentAction,
     generateContentFromImageAction,

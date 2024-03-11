@@ -31,7 +31,7 @@ export const monday = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/monday.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ['kanarelo', 'kishanprmr'],
+  authors: ["kanarelo","haseebrehmanpc","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   auth: mondayAuth,
   actions: [
     createColumnAction,

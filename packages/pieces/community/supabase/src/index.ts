@@ -27,7 +27,7 @@ export const supabase = createPiece({
   minimumSupportedRelease: '0.6.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/supabase.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
-  authors: ['abuaboud'],
+  authors: ["kishanprmr","MoShizzle","abuaboud"],
   actions: [
     uploadFile,
     createCustomApiCallAction({

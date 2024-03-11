@@ -57,7 +57,7 @@ export const dropbox = createPiece({
   ],
   displayName: 'Dropbox',
   description: 'Cloud storage and file synchronization',
-  authors: ['kanarelo', 'BastienMe'],
+  authors: ["BastienMe","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   categories: [PieceCategory.CONTENT_AND_FILES],
   triggers: [],
   auth: dropboxAuth,

@@ -53,7 +53,7 @@ export const openRouter = createPiece({
   minimumSupportedRelease: '0.8.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/open-router.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
-  authors: ['Salem-Alaa'],
+  authors: ["Salem-Alaa","kishanprmr","MoShizzle","abuaboud"],
   actions: [
     askOpenRouterAction,
     createCustomApiCallAction({

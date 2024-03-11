@@ -38,7 +38,7 @@ export const mattermost = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/mattermost.png',
   minimumSupportedRelease: '0.5.0',
   categories: [PieceCategory.COMMUNICATION],
-  authors: ['abuaboud'],
+  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: mattermostAuth,
   actions: [
     sendMessage,
