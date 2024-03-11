@@ -61,7 +61,7 @@ export const googleSheets = createPiece({
     }),
   ],
   displayName: 'Google Sheets',
-  description: 'Create and edit spreadsheets online',
+  description: 'Create, edit, and collaborate on spreadsheets online',
   triggers: [readNewRows, newRowAddedTrigger],
   auth: googleSheetsAuth,
 });

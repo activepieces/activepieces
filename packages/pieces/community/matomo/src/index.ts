@@ -6,7 +6,7 @@ import { matomoAuth } from './lib/auth';
 
 export const matomo = createPiece({
   displayName: 'Matomo',
-  description: 'The ethical alternative to Google Analytics',
+  description: 'Open source alternative to Google Analytics',
 
   auth: matomoAuth,
   minimumSupportedRelease: '0.9.0',

@@ -19,7 +19,7 @@ export const acumbamailAuth = PieceAuth.SecretText({
 
 export const acumbamail = createPiece({
   displayName: 'Acumbamail',
-  description: 'Email marketing made easy',
+  description: 'Easily send email and SMS campaigns and boost your business',
   auth: acumbamailAuth,
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/acumbamail.png',

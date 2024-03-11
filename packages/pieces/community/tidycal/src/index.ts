@@ -36,7 +36,6 @@ export const tidyCalAuth = PieceAuth.SecretText({
 export const tidycal = createPiece({
   displayName: 'TidyCal',
   description: 'Streamline your scheduling',
-
   auth: tidyCalAuth,
   minimumSupportedRelease: '0.7.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/tidycal.png',

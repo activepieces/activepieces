@@ -13,8 +13,6 @@ Perform mathematical operations.
 
 export const math = createPiece({
   displayName: 'Math Helper',
-  description: 'Solve mathematical equations easily',
-
   description: markdownDescription,
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.9.0',

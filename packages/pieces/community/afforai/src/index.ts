@@ -15,8 +15,7 @@ export const afforaiAuth = PieceAuth.SecretText({
 export const afforai = createPiece({
   displayName: 'Afforai',
   description:
-    'Afforai helps you search, summarize, and translate knowledge from hundreds of documents to help you produce trustworthy research.',
-
+    'Helps you search, summarize, and translate knowledge from hundreds of documents to help you produce trustworthy research.',
   auth: afforaiAuth,
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/afforai.png',

@@ -23,8 +23,7 @@ export const smAuth = PieceAuth.OAuth2({
 
 export const surveymonkey = createPiece({
   displayName: 'SurveyMonkey',
-  description: 'Create and send surveys with ease',
-
+  description: 'Recieve survey responses from SurveyMonkey',
   auth: smAuth,
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/surveymonkey.png',

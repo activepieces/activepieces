@@ -50,7 +50,7 @@ export const airtableAuth = PieceAuth.SecretText({
 export const airtable = createPiece({
   displayName: 'Airtable',
   description:
-    'Airtable is a low‒code platform to build next‒gen apps. Move beyond rigid tools, operationalize your critical data, and reimagine workflows with AI.',
+    'Low‒code platform to build apps.',
 
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/airtable.png',

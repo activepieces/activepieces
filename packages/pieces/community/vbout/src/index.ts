@@ -43,7 +43,6 @@ export const vboutAuth = PieceAuth.SecretText({
 export const vbout = createPiece({
   displayName: 'VBOUT',
   description: 'Marketing automation platform for agencies',
-
   auth: vboutAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/vbout.png',

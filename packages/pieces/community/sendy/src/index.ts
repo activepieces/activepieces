@@ -15,7 +15,6 @@ import { sendyAuth } from './lib/auth';
 export const sendy = createPiece({
   displayName: 'Sendy',
   description: 'Self-hosted email marketing software',
-
   auth: sendyAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/sendy.png',

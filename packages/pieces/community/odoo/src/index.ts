@@ -60,8 +60,7 @@ export const odooAuth = PieceAuth.CustomAuth({
 
 export const odoo = createPiece({
   displayName: 'Odoo',
-  description: 'All-in-one management software',
-
+  description: 'Open source all-in-one management software',
   auth: odooAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/odoo.png',

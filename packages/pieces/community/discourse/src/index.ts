@@ -38,8 +38,7 @@ export const discourseAuth = PieceAuth.CustomAuth({
 
 export const discourse = createPiece({
   displayName: 'Discourse',
-  description: 'Modern forum software',
-
+  description: 'Modern open source forum software',
   auth: discourseAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/discourse.png',

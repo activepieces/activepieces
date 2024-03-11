@@ -29,8 +29,7 @@ export const pastefyAuth = PieceAuth.CustomAuth({
 
 export const pastefy = createPiece({
   displayName: 'Pastefy',
-  description: 'Effortlessly share code snippets',
-
+  description: 'Sharing code snippets platform',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/pastefy.png',
   categories: [],

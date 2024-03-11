@@ -40,7 +40,6 @@ export const flowluAuth = PieceAuth.CustomAuth({
 export const flowlu = createPiece({
   displayName: 'Flowlu',
   description: 'Business management software',
-
   auth: flowluAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/flowlu.png',
