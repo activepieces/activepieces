@@ -4,7 +4,7 @@ import { rssNewItemTrigger } from './lib/triggers/new-item-trigger';
 export const rssFeed = createPiece({
   displayName: 'RSS Feed',
   description: 'Stay updated with RSS feeds',
-
+  authors: [],
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/rss.png',
   categories: [],

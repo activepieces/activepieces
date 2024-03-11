@@ -85,7 +85,7 @@ type CreatePieceParams<
 > = {
   displayName: string;
   logoUrl: string;
-  authors?: string[];
+  authors: string[];
   description?: string;
   auth: PieceAuth | undefined;
   events?: PieceEventProcessors;

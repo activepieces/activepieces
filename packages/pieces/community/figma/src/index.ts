@@ -23,6 +23,7 @@ export const figma = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/figma.png',
   categories: [],
+  authors: [],
   auth: figmaAuth,
   actions: [
     getFileAction,

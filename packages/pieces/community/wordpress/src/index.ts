@@ -102,6 +102,7 @@ export const wordpress = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/wordpress.png',
   categories: [PieceCategory.MARKETING],
   auth: wordpressAuth,
+  authors: [],
   actions: [
     createWordpressPost,
     createWordpressPage,
