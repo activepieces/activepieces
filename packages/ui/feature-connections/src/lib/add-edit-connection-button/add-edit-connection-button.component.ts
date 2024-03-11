@@ -89,9 +89,9 @@ export class AddEditConnectionButtonComponent {
     value: `{{connections['${string}']}}`;
   }> = new EventEmitter();
   @Output()
-  connectionIdChanged: EventEmitter<{
-    propertyKey: string;
-    value: string;
+  newConnection: EventEmitter<{
+    name: string;
+    id: string;
   }> = new EventEmitter();
   updateOrAddConnectionDialogClosed$: Observable<void>;
   checkConnectionLimitThenOpenDialog$: Observable<void>;
@@ -168,9 +168,9 @@ export class AddEditConnectionButtonComponent {
       propertyKey: this.propertyKey,
       value: authConfigOptionValue,
     });
-    this.connectionIdChanged.emit({
-      propertyKey: this.propertyKey,
-      value: result.id,
+    this.newConnection.emit({
+      name: result.name,
+      id: result.id,
     });
   }
 

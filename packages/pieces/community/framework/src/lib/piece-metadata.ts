@@ -12,6 +12,7 @@ export const PieceBase = Type.Object({
   logoUrl: Type.String(),
   description: Type.String(),
   projectId: Type.Optional(Type.String()),
+  authors: Type.Array(Type.String()),
   platformId: Type.Optional(Type.String()),
   directoryPath: Type.Optional(Type.String()),
   auth: Type.Optional(PieceAuthProperty),
@@ -29,6 +30,7 @@ export type PieceBase = {
   description: string;
   projectId?: ProjectId;
   platformId?: string;
+  authors: string[],
   directoryPath?: string;
   auth?: PieceAuthProperty;
   version: string;
