@@ -85,10 +85,7 @@ export class PieceTriggerInputFormComponent {
   pieceName: string;
   pieceDisplayName: string;
   pieceVersion: string;
-  initialComponentTriggerInputFormValue: {
-    triggerName: string;
-    input: { [key: string]: any };
-  } | null;
+  initialComponentTriggerInputFormValue: PieceTriggerInputFormSchema | null;
   selectedTrigger$: Observable<any>;
   triggers$: Observable<TriggerDropdownOption[]>;
   valueChanges$: Observable<void>;
@@ -222,6 +219,9 @@ export class PieceTriggerInputFormComponent {
               properties: properties,
               propertiesValues: propertiesValues,
               setDefaultValues: false,
+              customizedInputs:
+                this.initialComponentTriggerInputFormValue?.inputUiInfo
+                  ?.customizedInputs || {},
             };
             this.pieceTriggerInputForm.addControl(
               PIECE_PROPERTIES_FORM_CONTROL_NAME,
@@ -312,6 +312,7 @@ export class PieceTriggerInputFormComponent {
       properties: properties,
       propertiesValues: {},
       setDefaultValues: true,
+      customizedInputs: {},
     };
     if (!propertiesForm) {
       this.pieceTriggerInputForm.addControl(
@@ -329,6 +330,7 @@ export class PieceTriggerInputFormComponent {
   getFormattedFormData(): {
     triggerName: string;
     input: { [configKey: string]: any };
+    inputUiInfo: { customizedInputs?: Record<string, boolean> };
   } {
     const trigger = this.pieceTriggerInputForm.get(
       TRIGGER_FORM_CONTROL_NAME
@@ -339,8 +341,9 @@ export class PieceTriggerInputFormComponent {
     const res = {
       triggerName: trigger?.triggerName,
       input: {
-        ...configs,
+        ...configs.input,
       },
+      inputUiInfo: { customizedInputs: configs.customizedInputs },
     };
     return res;
   }
