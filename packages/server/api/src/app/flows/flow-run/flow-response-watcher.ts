@@ -47,24 +47,30 @@ export const flowResponseWatcher = {
             },
         )
     },
-    async listen(flowRunId: string): Promise<FlowResponse> {
+    async listen(flowRunId: string, timeoutRequest: boolean): Promise<FlowResponse> {
         logger.info(`[flowRunWatcher#listen] flowRunId=${flowRunId}`)
         return new Promise((resolve) => {
-            const timeout = setTimeout(() => {
-                const defaultResponse: FlowResponse = {
-                    status: StatusCodes.NO_CONTENT,
-                    body: {},
-                    headers: {},
-                }
-                resolve(defaultResponse)
-            }, WEBHOOK_TIMEOUT_MS)
-
-            listeners.set(flowRunId, (flowResponse) => {
+            const defaultResponse: FlowResponse = {
+                status: StatusCodes.NO_CONTENT,
+                body: {},
+                headers: {},
+            }
+            const responseHandler = (flowResponse: FlowResponse) => {
                 clearTimeout(timeout)
                 resolve(flowResponse)
-            })
+            }
+            let timeout: NodeJS.Timeout
+            if (!timeoutRequest) {
+                listeners.set(flowRunId, resolve)
+            }
+            else {
+                timeout = setTimeout(() => {
+                    resolve(defaultResponse)
+                }, WEBHOOK_TIMEOUT_MS)
+                listeners.set(flowRunId, responseHandler)
+            }
         })
-    },
+    },    
     async publish(
         flowRunId: string,
         handlerId: string,
