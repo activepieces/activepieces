@@ -12,9 +12,9 @@ export interface ActivepiecesClientRouteChanged {
   type: ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED;
   data: {
     route: string;
-  };
+  };  
 }
-export interface ActivepiecesNewConnectionDialogClosed {
+export    interface ActivepiecesNewConnectionDialogClosed {
   type: ActivepiecesClientEventName.CLIENT_NEW_CONNECTION_DIALOG_CLOSED;
   data:{ connection?: { id: string; name: string } }
 }
@@ -35,7 +35,7 @@ export enum ActivepiecesVendorEventName {
 
 export interface ActivepiecesVendorRouteChanged {
   type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED;
-  data: {
+  data: {  
     vendorRoute: string;
   };
 }
@@ -70,13 +70,12 @@ class ActivepiecesEmbedded {
     prefix,
     jwtToken,
     instanceUrl,
-    builderAndDashboardSettings,
-    enableEmbeddedDialogs
+    embedding,
   }: {
     prefix?: string;
     instanceUrl:string;
     jwtToken:string;
-    builderAndDashboardSettings?: {
+    embedding?: {
       containerId?:string,
       builder?:{
         disableNavigation:boolean
@@ -86,33 +85,23 @@ class ActivepiecesEmbedded {
       },
       hideFolders?:boolean;
     },   
-    enableEmbeddedDialogs?: boolean;
   }) {
     this._prefix = prefix || '/';
     const newInitialRoute = !window.location.pathname.startsWith(this._prefix) ? '/' : '/' + window.location.pathname.substring(this._prefix.length);
     this._initialRoute = newInitialRoute || '/';
-    this._hideSidebar =  builderAndDashboardSettings?.dashboard?.hideSidebar|| false;
+    this._hideSidebar =  embedding?.dashboard?.hideSidebar|| false;
     this._instanceUrl = this._removeTrailingSlashes(instanceUrl);
-    this._disableNavigationInBuilder = builderAndDashboardSettings?.builder?.disableNavigation ?? false;
-    this._hideFolders = builderAndDashboardSettings?.hideFolders?? false;
-    if(builderAndDashboardSettings?.containerId)
+    this._disableNavigationInBuilder = embedding?.builder?.disableNavigation ?? false;
+    this._hideFolders = embedding?.hideFolders?? false;
+    if(embedding?.containerId)
     {
       this._initializeBuilderAndDashboardIframe({
-        containerSelector: `#${builderAndDashboardSettings.containerId}`,
+        containerSelector: `#${embedding.containerId}`,
         jwtToken
       }); 
     }
-
-    if(enableEmbeddedDialogs)
-    {
-      this._initializeConnectionsIframe({ jwtToken })
-    }
-   
-    if(!builderAndDashboardSettings && !enableEmbeddedDialogs)
-    {
-      console.warn('Activepieces:  No settings provided, nothing will be initialized, please provide settings to initialize the (builder and dashboard) or embedded dialogs');
-    }
-
+    this._initializeConnectionsIframe({ jwtToken })
+  
   }
 
   
@@ -121,14 +110,25 @@ class ActivepiecesEmbedded {
      containerSelector:string,
      jwtToken:string 
     }) => {
-   const iframeContainer = document.querySelector(containerSelector);
-   if(!iframeContainer) {
-    console.error('Activepieces: container not found');
-    return;
-   }
-   const iframeWindow = this.connectoToEmbed({jwtToken, iframeContainer}).contentWindow;
-   this._checkForVendorRouteChanges(iframeWindow);
-   this._checkForClientRouteChanges(iframeWindow);
+      const MAX_CONTAINER_CHECK_COUNT = 100;
+      let containerCheckCount = 0;
+      const containerChecker= setInterval(()=>{
+        if(containerCheckCount >= MAX_CONTAINER_CHECK_COUNT)
+        {
+          clearInterval(containerChecker);
+          console.error('Activepieces: container not found');
+          return;
+        }
+
+        const iframeContainer = document.querySelector(containerSelector);
+        if(iframeContainer) {
+        const iframeWindow = this.connectoToEmbed({jwtToken, iframeContainer}).contentWindow;
+        this._checkForVendorRouteChanges(iframeWindow);
+        this._checkForClientRouteChanges(iframeWindow);
+        clearInterval(containerChecker);
+        }
+      },100);
+     
  };
  
 private _initializeConnectionsIframe = ({jwtToken}:{jwtToken:string}) =>
