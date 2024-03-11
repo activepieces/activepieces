@@ -66,7 +66,10 @@ export const platformProjectService = {
     },
 
     async update({ projectId, request }: UpdateParams): Promise<ProjectWithLimits> {
-        await projectRepo.update(projectId, {
+        await projectRepo.update({
+            id: projectId,
+            deleted: IsNull(),
+        }, {
             displayName: request.displayName,
             notifyStatus: request.notifyStatus,
         })
@@ -92,6 +95,7 @@ export const platformProjectService = {
         return enrichWithUsageAndPlan(
             await projectRepo.findOneByOrFail({
                 id: projectId,
+                deleted: IsNull(),
             }),
         )
     },
@@ -103,6 +107,7 @@ async function createFilters(
     externalId?: string | undefined,
 ) {
     const extraFilter = {
+        deleted: IsNull(),
         ...spreadIfDefined('platformId', platformId),
         ...spreadIfDefined('externalId', externalId),
     }

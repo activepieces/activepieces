@@ -19,7 +19,7 @@ export const DEFAULT_FREE_PLAN_LIMIT = {
     minimumPollingInterval: 5,
 }
 
-export const DEFAULT_PLATFOR_LIMIT = {
+export const DEFAULT_PLATFORM_LIMIT = {
     nickname: 'platform',
     connections: 200,
     tasks: 50000,
