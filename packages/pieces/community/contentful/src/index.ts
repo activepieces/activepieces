@@ -10,6 +10,8 @@ import { ContentfulAuth } from './lib/common';
 
 export const contentful = createPiece({
   displayName: 'Contentful',
+description: "Content infrastructure for digital teams",
+
   auth: ContentfulAuth,
   minimumSupportedRelease: '0.6.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/contentful.png',

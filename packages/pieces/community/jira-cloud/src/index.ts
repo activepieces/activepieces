@@ -10,6 +10,8 @@ import { updatedIssue } from './lib/triggers/updated-issue';
 
 export const jiraCloud = createPiece({
   displayName: 'Jira Cloud',
+description: "Issue tracking and project management",
+
   auth: jiraCloudAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/jira.png',

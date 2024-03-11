@@ -30,6 +30,8 @@ export const googleCalendar = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/google-calendar.png',
   categories: [PieceCategory.PRODUCTIVITY],
   displayName: 'Google Calendar',
+description: "Get organized and stay on schedule",
+
   authors: ['osamahaikal', 'bibhuty-did-this', 'MoShizzle', 'PFernandez98'],
   auth: googleCalendarAuth,
   actions: [

@@ -33,6 +33,8 @@ export const googleTasks = createPiece({
     }),
   ],
   displayName: 'Google Tasks',
+description: "Get things done with Google Tasks",
+
   authors: ['abaza738', 'Salem-Alaa'],
   triggers: [newTaskTrigger],
   auth: googleTasksAuth,

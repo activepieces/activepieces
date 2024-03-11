@@ -5,6 +5,8 @@ import { hashText } from './lib/actions/hash-text';
 
 export const Crypto = createPiece({
   displayName: 'Crypto',
+description: "Stay updated on cryptocurrency markets",
+
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/crypto.png',

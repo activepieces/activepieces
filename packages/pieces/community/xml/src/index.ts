@@ -4,6 +4,8 @@ import { convertJsonToXml } from './lib/actions/convert-json-to-xml';
 
 export const xml = createPiece({
   displayName: 'XML',
+description: "Extensible Markup Language for storing and transporting data",
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/xml.png',
   categories: [PieceCategory.CORE],

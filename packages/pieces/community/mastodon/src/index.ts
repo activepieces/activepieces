@@ -39,6 +39,8 @@ export const mastodonAuth = PieceAuth.CustomAuth({
 
 export const mastodon = createPiece({
   displayName: 'Mastodon',
+description: "Open-source decentralized social network",
+
 
   logoUrl: 'https://cdn.activepieces.com/pieces/mastodon.png',
   categories: [PieceCategory.COMMUNICATION],

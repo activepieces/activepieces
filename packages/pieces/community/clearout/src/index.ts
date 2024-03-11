@@ -6,6 +6,8 @@ import { clearoutAuth } from './lib/auth';
 
 export const clearout = createPiece({
   displayName: 'Clearout',
+description: "Bulk email validation and verification",
+
   auth: clearoutAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/clearout.png',

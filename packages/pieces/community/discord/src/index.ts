@@ -29,6 +29,8 @@ export const discordAuth = PieceAuth.SecretText({
 
 export const discord = createPiece({
   displayName: 'Discord',
+description: "Communicate and collaborate with ease",
+
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/discord.png',
   categories: [PieceCategory.COMMUNICATION],

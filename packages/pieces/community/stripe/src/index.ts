@@ -18,6 +18,8 @@ export const stripeAuth = PieceAuth.SecretText({
 
 export const stripe = createPiece({
   displayName: 'Stripe',
+description: "Online payment processing for internet businesses",
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/stripe.png',
   authors: ['ashrafsamhouri', 'lldiegon', 'doskyft'],

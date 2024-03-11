@@ -29,6 +29,8 @@ export type AzureOpenAIAuth = {
 
 export const azureOpenai = createPiece({
   displayName: 'Azure OpenAI',
+description: "Powerful AI tools from Microsoft",
+
   auth: azureOpenaiAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/azure-openai.png',

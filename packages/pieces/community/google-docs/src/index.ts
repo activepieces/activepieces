@@ -19,6 +19,8 @@ export const googleDocsAuth = PieceAuth.OAuth2({
 
 export const googleDocs = createPiece({
   displayName: 'Google Docs',
+description: "Create and edit documents online",
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-docs.png',
   categories: [PieceCategory.CONTENT_AND_FILES],

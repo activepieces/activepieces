@@ -46,6 +46,8 @@ export const mauticAuth = PieceAuth.CustomAuth({
 
 export const mautic = createPiece({
   displayName: 'Mautic',
+description: "Open-source marketing automation software",
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/mautic.png',
   authors: ['bibhuty-did-this', 'kanarelo'],

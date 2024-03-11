@@ -81,6 +81,8 @@ export const kimaiAuth = PieceAuth.CustomAuth({
 
 export const kimai = createPiece({
   displayName: 'Kimai',
+description: "Open-source time tracking software",
+
   auth: kimaiAuth,
   minimumSupportedRelease: '0.6.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/kimai.png',

@@ -46,6 +46,8 @@ export const talkableAuth = PieceAuth.CustomAuth({
 
 export const talkable = createPiece({
   displayName: 'Talkable',
+description: "Referral marketing programs that drive revenue",
+
   auth: talkableAuth,
   minimumSupportedRelease: '0.7.1',
   logoUrl:

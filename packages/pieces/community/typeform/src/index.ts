@@ -16,6 +16,8 @@ export const typeformAuth = PieceAuth.OAuth2({
 
 export const typeform = createPiece({
   displayName: 'Typeform',
+description: "Create beautiful online forms and surveys",
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/typeform.png',
   categories: [PieceCategory.FORMS_AND_SURVEYS],

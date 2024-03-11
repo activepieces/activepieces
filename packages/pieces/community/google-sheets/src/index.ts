@@ -60,7 +60,9 @@ export const googleSheets = createPiece({
       },
     }),
   ],
-  displayName: 'Google Sheets',
+  displayName: 'Google Sh,
+description: "Create and edit spreadsheets online",
+ets',
   triggers: [readNewRows, newRowAddedTrigger],
   auth: googleSheetsAuth,
 });

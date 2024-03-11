@@ -33,6 +33,8 @@ export const pushoverAuth = PieceAuth.CustomAuth({
 
 export const pushover = createPiece({
   displayName: 'Pushover',
+description: "Simple push notification service",
+
 
   logoUrl: 'https://cdn.activepieces.com/pieces/pushover.png',
   categories: [PieceCategory.COMMUNICATION],

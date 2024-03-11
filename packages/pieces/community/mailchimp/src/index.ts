@@ -19,6 +19,8 @@ export const mailchimpAuth = PieceAuth.OAuth2({
 
 export const mailchimp = createPiece({
   displayName: 'Mailchimp',
+description: "All-in-One integrated marketing platform",
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/mailchimp.png',
   authors: ['AbdulTheActivePiecer', 'TaskMagicKyle'],

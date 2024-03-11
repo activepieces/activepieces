@@ -22,6 +22,8 @@ export const linkedinAuth = PieceAuth.OAuth2({
 
 export const linkedin = createPiece({
   displayName: 'LinkedIn',
+description: "Connect and network with professionals",
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/linkedin.png',
   categories: [PieceCategory.MARKETING],

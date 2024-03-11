@@ -55,6 +55,8 @@ export const activeCampaignAuth = PieceAuth.CustomAuth({
 
 export const activecampaign = createPiece({
 	displayName: 'ActiveCampaign',
+description: "Email marketing, marketing automation, and CRM tools you need to create incredible customer experiences.",
+
 	auth: activeCampaignAuth,
 	minimumSupportedRelease: '0.20.0',
 	logoUrl: 'https://cdn.activepieces.com/pieces/activecampaign.png',

@@ -3,6 +3,8 @@ import { fetchCryptoPairPrice } from './lib/actions/fetch-pair-price';
 
 export const binance = createPiece({
   displayName: 'Binance',
+description: "Buy, sell, trade cryptocurrency",
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/binance.png',
   categories: [],

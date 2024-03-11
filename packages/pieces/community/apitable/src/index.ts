@@ -40,6 +40,8 @@ export const APITableAuth = PieceAuth.CustomAuth({
 
 export const apitable = createPiece({
   displayName: 'AITable',
+description: "Unlock your data potential with AI",
+
   auth: APITableAuth,
   description: `Interactive spreadsheets with collaboration`,
   minimumSupportedRelease: '0.5.0',

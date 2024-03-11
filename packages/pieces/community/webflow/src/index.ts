@@ -26,6 +26,8 @@ export const webflowAuth = PieceAuth.OAuth2({
 
 export const webflow = createPiece({
   displayName: 'Webflow',
+description: "Design, build, and launch responsive websites visually",
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/webflow.png',
   categories: [PieceCategory.MARKETING],

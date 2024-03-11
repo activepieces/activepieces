@@ -32,6 +32,8 @@ export const matrixAuth = PieceAuth.CustomAuth({
 
 export const matrix = createPiece({
   displayName: 'Matrix',
+description: "Open standard for interoperable, decentralized, real-time communication",
+
   logoUrl: 'https://cdn.activepieces.com/pieces/matrix.png',
   categories: [PieceCategory.COMMUNICATION],
   minimumSupportedRelease: '0.5.0',

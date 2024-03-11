@@ -35,6 +35,8 @@ export const moxieCRMAuth = PieceAuth.CustomAuth({
 
 export const moxieCrm = createPiece({
   displayName: 'Moxie',
+description: "CRM build for the freelancers.",
+
   auth: moxieCRMAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/moxie-crm.png',

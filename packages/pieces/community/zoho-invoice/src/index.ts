@@ -49,6 +49,8 @@ export const zohoAuth = PieceAuth.OAuth2({
 
 export const zohoInvoice = createPiece({
   displayName: 'Zoho Invoice',
+description: "Online invoicing software for businesses",
+
   auth: zohoAuth,
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/zoho-invoice.png',

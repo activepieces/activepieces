@@ -11,6 +11,8 @@ export const bannerbearAuth = PieceAuth.SecretText({
 
 export const bannerbear = createPiece({
   displayName: 'Bannerbear',
+description: "Automate image generation",
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/bannerbear.png',
   categories: [PieceCategory.MARKETING],

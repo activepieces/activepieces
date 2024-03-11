@@ -21,6 +21,8 @@ export const activePieceAuth = PieceAuth.SecretText({
 
 export const activepieces = createPiece({
   displayName: 'Activepieces Platform',
+description: "Open source no-code business automation",
+
   auth: activePieceAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/activepieces.png',

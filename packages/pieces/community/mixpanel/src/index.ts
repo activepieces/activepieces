@@ -13,6 +13,8 @@ export const mixpanelAuth = PieceAuth.SecretText({
 
 export const mixpanel = createPiece({
   displayName: 'Mixpanel',
+description: "Product analytics for everyone",
+
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/mixpanel.png',
   authors: ['yann120'],

@@ -9,6 +9,8 @@ import triggers from './lib/triggers';
 
 export const spotify = createPiece({
   displayName: 'Spotify',
+description: "Music for everyone",
+
   auth: spotifyCommon.authentication,
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/spotify.png',

@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-saastic",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "dependencies": {
     "@activepieces/pieces-framework": "latest",
     "@activepieces/pieces-common": "latest",

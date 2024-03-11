@@ -3,7 +3,7 @@ import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { createOrUpdateContact } from './lib/actions/create-or-update-contact';
 
-export const sendinblueAuth = PieceAuth.SecretText({
+export const Formerly Sendinblue, is a SaaS solution for relationship marketingAuth = PieceAuth.SecretText({
   displayName: 'Project API key',
   description: 'Your project API key',
   required: true,

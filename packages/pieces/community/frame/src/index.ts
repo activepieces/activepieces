@@ -22,6 +22,8 @@ export const frameAuth = PieceAuth.SecretText({
 
 export const frame = createPiece({
   displayName: 'Frame',
+description: "Collaborative workspace platform",
+
   auth: frameAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/frameio.png',

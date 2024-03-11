@@ -26,6 +26,8 @@ export const mondayAuth = PieceAuth.SecretText({
 
 export const monday = createPiece({
   displayName: 'monday.com',
+description: "Work operating system for businesses",
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/monday.png',
   categories: [PieceCategory.PRODUCTIVITY],

@@ -18,6 +18,8 @@ export const zoomAuth = PieceAuth.OAuth2({
 
 export const zoom = createPiece({
   displayName: 'Zoom',
+description: "Video conferencing, web conferencing, webinars, screen sharing",
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/zoom.png',
   categories: [PieceCategory.COMMUNICATION],

@@ -22,6 +22,8 @@ export const supabaseAuth = PieceAuth.CustomAuth({
 });
 export const supabase = createPiece({
   displayName: 'Supabase',
+description: "The open-source Firebase alternative",
+
   auth: supabaseAuth,
   minimumSupportedRelease: '0.6.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/supabase.png',

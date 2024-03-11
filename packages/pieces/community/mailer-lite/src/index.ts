@@ -24,6 +24,8 @@ export const mailerLiteAuth = PieceAuth.SecretText({
 
 export const mailerLite = createPiece({
 	displayName: 'MailerLite',
+description: "Email marketing software",
+
 	minimumSupportedRelease: '0.5.0',
 	logoUrl: 'https://cdn.activepieces.com/pieces/mailer-lite.png',
 	categories: [PieceCategory.MARKETING],

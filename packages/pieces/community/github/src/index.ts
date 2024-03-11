@@ -17,6 +17,8 @@ export const githubAuth = PieceAuth.OAuth2({
 
 export const github = createPiece({
   displayName: 'GitHub',
+description: "GitHub is a developer platform that allows developers to create, store, manage and share their code",
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/github.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],

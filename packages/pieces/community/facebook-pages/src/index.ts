@@ -33,6 +33,8 @@ export const facebookPagesAuth = PieceAuth.OAuth2({
 
 export const facebookPages = createPiece({
   displayName: 'Facebook Pages',
+description: "Create a Facebook Page to grow your business",
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/facebook.png',
   categories: [PieceCategory.MARKETING],

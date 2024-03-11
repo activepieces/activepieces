@@ -46,6 +46,8 @@ export const bubbleAuth = PieceAuth.CustomAuth({
 
 export const bubble = createPiece({
   displayName: 'Bubble',
+description: "No-code platform for web and mobile apps",
+
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/bubble.png',

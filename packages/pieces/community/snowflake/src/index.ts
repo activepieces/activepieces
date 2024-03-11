@@ -46,6 +46,8 @@ export const snowflakeAuth = PieceAuth.CustomAuth({
 });
 export const snowflake = createPiece({
   displayName: 'Snowflake',
+  description: 'Data warehouse built for the cloud',
+
   auth: snowflakeAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/snowflake.png',

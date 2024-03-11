@@ -91,6 +91,8 @@ export const shopifyAuth = PieceAuth.CustomAuth({
 
 export const shopify = createPiece({
   displayName: 'Shopify',
+description: "Ecommerce platform for online stores",
+
   logoUrl: 'https://cdn.activepieces.com/pieces/shopify.png',
   authors: ['abuaboud', 'MoShizzle'],
   categories: [PieceCategory.COMMERCE],

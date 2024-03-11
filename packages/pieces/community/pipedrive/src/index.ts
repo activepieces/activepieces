@@ -22,6 +22,8 @@ export const pipedriveAuth = PieceAuth.OAuth2({
 
 export const pipedrive = createPiece({
   displayName: 'Pipedrive',
+description: "Sales CRM and pipeline management software",
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/pipedrive.png',
   categories: [PieceCategory.SALES_AND_CRM],

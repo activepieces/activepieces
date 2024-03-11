@@ -10,6 +10,8 @@ export const whatsableAuth =  PieceAuth.SecretText({
 
 export const whatsable = createPiece({
   displayName: "Whatsable",
+description: "Effortlessly manage your WhatsApp business account",
+
   auth: whatsableAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: "https://cdn.activepieces.com/pieces/whatsable.png",
