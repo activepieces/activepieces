@@ -44,7 +44,7 @@ export const flowlu = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/flowlu.png',
   categories: [PieceCategory.SALES_AND_CRM],
-  authors: ['kishanprmr'],
+  authors: ["kishanprmr","abuaboud"],
   actions: [
     createContactAction,
     updateContactAction,

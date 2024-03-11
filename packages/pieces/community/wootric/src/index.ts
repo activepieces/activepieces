@@ -21,7 +21,7 @@ export const wootric = createPiece({
   auth: wootricAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: WOOTRIC_IMAGE_URL,
-  authors: [],
+  authors: ["abuaboud"],
   actions: [createWootricSurvey],
   triggers: [],
 });

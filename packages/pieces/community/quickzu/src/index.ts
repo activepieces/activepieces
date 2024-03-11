@@ -34,7 +34,7 @@ export const quickzu = createPiece({
   auth: quickzuAuth,
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/quickzu.png',
-  authors: ['kishanprmr'],
+  authors: ["kishanprmr","abuaboud"],
   actions: [
     addProductAction,
     updateProductAction,

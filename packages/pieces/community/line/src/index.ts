@@ -17,7 +17,7 @@ export const line = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/line.png',
   categories: [PieceCategory.COMMUNICATION],
-  authors: ['abuaboud'],
+  authors: ["kishanprmr","MoShizzle","abuaboud"],
   actions: [
     pushMessage,
     createCustomApiCallAction({

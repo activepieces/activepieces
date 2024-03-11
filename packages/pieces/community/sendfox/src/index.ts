@@ -19,7 +19,7 @@ export const sendfox = createPiece({
   minimumSupportedRelease: '0.7.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/sendfox.png',
   categories: [PieceCategory.MARKETING],
-  authors: ['Salem-Alaa'],
+  authors: ["Salem-Alaa","kishanprmr","MoShizzle","abuaboud"],
   actions: [
     createList,
     unsubscribe,

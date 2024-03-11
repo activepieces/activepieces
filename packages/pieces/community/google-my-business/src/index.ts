@@ -21,7 +21,7 @@ export const googleBusiness = createPiece({
   description: 'Manage your business on Google',
 
   logoUrl: 'https://cdn.activepieces.com/pieces/google-business.png',
-  authors: ['abuaboud'],
+  authors: ["kishanprmr","MoShizzle","abuaboud"],
   categories: [PieceCategory.MARKETING],
   actions: [
     createReply,

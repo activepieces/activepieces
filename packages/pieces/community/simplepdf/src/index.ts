@@ -8,7 +8,7 @@ export const simplepdf = createPiece({
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.7.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/simplepdf.png',
-  authors: ['bendersej'],
+  authors: ["bendersej","kishanprmr","khaledmashaly","abuaboud"],
   categories: [PieceCategory.CONTENT_AND_FILES],
   actions: [],
   triggers: [simplePDFNewSubmission],

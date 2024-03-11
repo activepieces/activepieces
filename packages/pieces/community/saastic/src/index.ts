@@ -46,7 +46,7 @@ export const saastic = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/saastic.png',
   categories: [PieceCategory.MARKETING],
-  authors: ['joselupianez'],
+  authors: ["joselupianez","kishanprmr","MoShizzle","abuaboud"],
   actions: [
     createCustomer,
     createCharge,

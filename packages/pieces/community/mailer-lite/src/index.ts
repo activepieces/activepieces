@@ -29,7 +29,7 @@ export const mailerLite = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/mailer-lite.png',
   categories: [PieceCategory.MARKETING],
-  authors: ['Willianwg', 'kanarelo'],
+  authors: ["Willianwg","kanarelo","kishanprmr","khaledmashaly","abuaboud"],
   auth: mailerLiteAuth,
   actions: [
     addSubscriberToGroupAction,

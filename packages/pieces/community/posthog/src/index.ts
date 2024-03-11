@@ -33,6 +33,6 @@ export const posthog = createPiece({
       }),
     }),
   ],
-  authors: ['kanarelo'],
+  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   triggers: [],
 });

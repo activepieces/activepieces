@@ -23,7 +23,7 @@ export const mailchimp = createPiece({
 
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/mailchimp.png',
-  authors: ['AbdulTheActivePiecer', 'TaskMagicKyle'],
+  authors: ["abdullahranginwala","TaskMagicKyle","kishanprmr","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   categories: [PieceCategory.MARKETING],
   auth: mailchimpAuth,
   actions: [

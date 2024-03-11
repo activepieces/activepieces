@@ -11,7 +11,7 @@ export const bonjoro = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/bonjoro.png',
   categories: [PieceCategory.CUSTOMER_SUPPORT],
-  authors: ['joeworkman'],
+  authors: ["joeworkman","kishanprmr","MoShizzle","abuaboud"],
   actions: [
     addGreetAction,
     createCustomApiCallAction({

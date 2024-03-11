@@ -24,7 +24,7 @@ export const intercom = createPiece({
   categories: [PieceCategory.CUSTOMER_SUPPORT],
   auth: intercomAuth,
   triggers: [],
-  authors: [],
+  authors: ["kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   actions: [
     getOrCreateContact,
     createContact,

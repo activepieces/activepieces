@@ -28,7 +28,7 @@ export const surveymonkey = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/surveymonkey.png',
   categories: [PieceCategory.FORMS_AND_SURVEYS],
-  authors: ['MoShizzle'],
+  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   actions: [
     createCustomApiCallAction({
       baseUrl: () => 'https://api.surveymonkey.com/v3',

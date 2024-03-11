@@ -37,7 +37,7 @@ export const gotify = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/gotify.png',
   minimumSupportedRelease: '0.5.0',
   categories: [PieceCategory.DEVELOPER_TOOLS],
-  authors: ['MyWay'],
+  authors: ["MyWay","kishanprmr","khaledmashaly","abuaboud"],
   auth: gotifyAuth,
   actions: [sendNotification],
   triggers: [],

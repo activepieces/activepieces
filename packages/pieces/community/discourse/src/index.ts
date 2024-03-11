@@ -43,7 +43,7 @@ export const discourse = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/discourse.png',
   categories: [PieceCategory.COMMUNICATION],
-  authors: ['pfernandez98'],
+  authors: ["pfernandez98","kishanprmr","MoShizzle","abuaboud"],
   actions: [
     createPost,
     createTopic,

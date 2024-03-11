@@ -55,7 +55,7 @@ export const clarifai = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/clarifai.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
-  authors: ['akatechis', 'Salem-Alaa'],
+  authors: ["akatechis","zeiler","Salem-Alaa","kishanprmr","MoShizzle","abuaboud"],
   auth: clarifaiAuth,
   actions: [
     clarifaiAskLLM,

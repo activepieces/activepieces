@@ -40,7 +40,7 @@ export const ntfy = createPiece({
   minimumSupportedRelease: '0.5.0',
   categories: [PieceCategory.COMMUNICATION],
   auth: ntfyAuth,
-  authors: ['MyWay'],
+  authors: ["MyWay","facferreira","la3rence","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   actions: [
     sendNotification,
     createCustomApiCallAction({

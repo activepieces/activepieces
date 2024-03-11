@@ -10,7 +10,7 @@ export const dataMapper = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/data-mapper.png',
   auth: PieceAuth.None(),
   categories: [PieceCategory.CORE],
-  authors: ['abuaboud'],
+  authors: ["kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   actions: [advancedMapping],
   triggers: [],
 });

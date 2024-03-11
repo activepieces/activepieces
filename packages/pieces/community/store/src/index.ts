@@ -14,7 +14,7 @@ export const storage = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/store.png',
   categories: [PieceCategory.CORE],
   auth: PieceAuth.None(),
-  authors: [],
+  authors: ["JanHolger","fardeenpanjwani-codeglo","Abdallah-Alwarawreh","Salem-Alaa","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   actions: [
     storageGetAction,
     storagePutAction,

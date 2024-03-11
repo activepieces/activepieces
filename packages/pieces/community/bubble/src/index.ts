@@ -52,7 +52,7 @@ export const bubble = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/bubble.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
-  authors: ['TaskMagicKyle'],
+  authors: ["TaskMagicKyle","kishanprmr","abuaboud"],
   actions: [
     bubbleCreateThingAction,
     bubbleDeleteThingAction,

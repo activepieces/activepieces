@@ -14,7 +14,7 @@ export const calcom = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/cal.com.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ['kanarelo'],
+  authors: ["kishanprmr","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   auth: calcomAuth,
   actions: [],
   triggers,

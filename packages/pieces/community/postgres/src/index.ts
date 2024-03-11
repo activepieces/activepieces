@@ -70,7 +70,7 @@ export const postgres = createPiece({
   minimumSupportedRelease: '0.5.0',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   logoUrl: 'https://cdn.activepieces.com/pieces/postgres.png',
-  authors: ['Willianwg'],
+  authors: ["Willianwg","dentych","kishanprmr","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   auth: postgresAuth,
   actions: [runQuery],
   triggers: [],

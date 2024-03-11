@@ -45,7 +45,7 @@ export const mysql = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/mysql.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
-  authors: ['JanHolger'],
+  authors: ["JanHolger","kishanprmr","khaledmashaly","abuaboud"],
   auth: mysqlAuth,
   actions,
   triggers: [],

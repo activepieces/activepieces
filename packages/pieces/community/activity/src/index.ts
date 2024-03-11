@@ -9,7 +9,7 @@ export const activity = createPiece({
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/activity.svg',
-  authors: ['khaledmashaly'],
+  authors: ["AbdulTheActivePiecer","abuaboud"],
   actions: [createActivity, updateActivity],
   triggers: [],
 });

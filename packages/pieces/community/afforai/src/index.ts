@@ -20,7 +20,7 @@ export const afforai = createPiece({
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/afforai.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
-  authors: ['kishanprmr'],
+  authors: ["kishanprmr","abuaboud"],
   actions: [askChatbotAction],
   triggers: [],
 });

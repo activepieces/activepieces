@@ -68,7 +68,7 @@ export const sftp = createPiece({
   minimumSupportedRelease: '0.7.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/sftp.svg',
   categories: [PieceCategory.CORE, PieceCategory.DEVELOPER_TOOLS],
-  authors: ['Abdallah-Alwarawreh', 'abuaboud'],
+  authors: ["Abdallah-Alwarawreh","kishanprmr","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   auth: sftpAuth,
   actions: [createFile, readFileContent],
   triggers: [newOrModifiedFile],

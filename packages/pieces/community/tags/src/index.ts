@@ -9,7 +9,7 @@ export const tags = createPiece({
   minimumSupportedRelease: '0.7.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/tags.svg',
   categories: [PieceCategory.CORE],
-  authors: ['abuaboud'],
+  authors: ["kishanprmr","MoShizzle","abuaboud"],
   actions: [addTag],
   triggers: [],
 });

@@ -84,7 +84,7 @@ export const convertkit = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/convertkit.png',
   categories: [PieceCategory.MARKETING],
-  authors: [],
+  authors: ["Gunther-Schulz","kishanprmr","abuaboud"],
   actions: [
     getSubscriberById,
     getSubscriberByEmail,

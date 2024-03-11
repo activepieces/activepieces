@@ -77,7 +77,7 @@ export const imapPiece = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/imap.png',
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
-  authors: ['MoShizzle'],
+  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: imapAuth,
   actions: [],
   triggers: [newEmail],

@@ -46,7 +46,7 @@ export const vbout = createPiece({
   auth: vboutAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/vbout.png',
-  authors: ['kishanprmr'],
+  authors: ["kishanprmr","abuaboud"],
   categories: [PieceCategory.MARKETING],
   actions: [
     addContactAction,

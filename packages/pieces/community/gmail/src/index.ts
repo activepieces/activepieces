@@ -37,7 +37,7 @@ export const gmail = createPiece({
   displayName: 'Gmail',
   description: 'Email service by Google',
 
-  authors: [],
+  authors: ["kanarelo","abdullahranginwala","BastienMe","Salem-Alaa","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   triggers: [],
   auth: gmailAuth,
 });

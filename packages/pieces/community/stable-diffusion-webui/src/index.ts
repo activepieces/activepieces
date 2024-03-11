@@ -26,7 +26,7 @@ export const stableDiffusion = createPiece({
   auth: stableDiffusionAuth,
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/stable-diffusion-webui.png',
-  authors: ['AdamSelene'],
+  authors: ["AdamSelene","abuaboud"],
   actions: [textToImage],
   triggers: [],
 });

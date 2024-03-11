@@ -20,7 +20,7 @@ export const beamer = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/beamer.png',
   categories: [PieceCategory.PRODUCTIVITY],
   auth: beamerAuth,
-  authors: ['i-nithin'],
+  authors: ["i-nithin","kishanprmr","MoShizzle","abuaboud"],
   actions: [
     createBeamerPost,
     createNewFeatureRequest,

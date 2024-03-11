@@ -87,7 +87,7 @@ export const twitter = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/twitter.png',
   categories: [PieceCategory.COMMUNICATION],
-  authors: ['abuaboud', 'Abdallah-Alwarawreh'],
+  authors: ["Abdallah-Alwarawreh","Salem-Alaa","kishanprmr","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   auth: twitterAuth,
   actions: [createTweet],
   triggers: [],

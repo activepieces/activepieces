@@ -22,7 +22,7 @@ export const stripe = createPiece({
 
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/stripe.png',
-  authors: ['ashrafsamhouri', 'lldiegon', 'doskyft'],
+  authors: ["lldiegon","doskyft","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   categories: [PieceCategory.COMMERCE, PieceCategory.PAYMENT_PROCESSING],
   auth: stripeAuth,
   actions: [

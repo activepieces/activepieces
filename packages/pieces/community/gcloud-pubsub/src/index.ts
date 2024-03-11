@@ -57,7 +57,7 @@ export const gcloudPubsub = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/gcloud-pubsub.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   auth: googlePubsubAuth,
-  authors: ['kidskey'],
+  authors: ["DGurskij","kishanprmr","khaledmashaly","abuaboud"],
   actions: [publishToTopic],
   triggers: [newMessageInTopic],
 });

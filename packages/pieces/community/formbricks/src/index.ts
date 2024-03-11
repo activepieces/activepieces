@@ -27,7 +27,7 @@ export const formbricks = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/formbricks.png',
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
-  authors: ['kanarelo'],
+  authors: ["kanarelo","kishanprmr","MoShizzle","abuaboud"],
   actions: [
     createCustomApiCallAction({
       auth: formBricksAuth,

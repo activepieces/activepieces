@@ -106,7 +106,7 @@ export const vtiger = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/vtiger.png',
   categories: [PieceCategory.SALES_AND_CRM],
-  authors: ['kanarelo'],
+  authors: ["kanarelo","kishanprmr","abuaboud"],
   actions: [
     createRecord,
     getRecord,

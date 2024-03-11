@@ -40,7 +40,7 @@ export const microsoftExcel = createPiece({
   minimumSupportedRelease: '0.8.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-excel-365.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ['BastienMe'],
+  authors: ["BastienMe","kishanprmr","MoShizzle","abuaboud"],
   actions: [
     appendRowAction,
     getWorksheetsAction,

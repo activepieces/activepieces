@@ -11,7 +11,7 @@ export const clearout = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/clearout.png',
   categories: [PieceCategory.SALES_AND_CRM],
-  authors: ['joeworkman'],
+  authors: ["joeworkman","kishanprmr","MoShizzle","abuaboud"],
   actions: [
     instantVerifyAction,
     createCustomApiCallAction({

@@ -70,7 +70,7 @@ export const smtp = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/smtp.png',
   categories: [PieceCategory.CORE],
-  authors: ['abaza738', 'kishanprmr'],
+  authors: ["abaza738","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: smtpAuth,
   actions: [sendEmail],
   triggers: [],

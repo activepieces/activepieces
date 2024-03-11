@@ -84,7 +84,7 @@ export const flowise = createPiece({
   auth: flowiseAuth,
   minimumSupportedRelease: '0.9.0',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
-  authors: [],
+  authors: ["aasimsani","kishanprmr","MoShizzle","abuaboud"],
   actions: [
     flowisePredict,
     createCustomApiCallAction({

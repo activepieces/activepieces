@@ -297,6 +297,10 @@ const contributors = [
         "login": "aboudzein",
     },
     {
+        "name": "aboudzeineddin",
+        "login": "aboudzein",
+    },
+    {
         "name": "Alexander Storozhevsky",
         "login": "astorozhevsky"
     },
@@ -379,6 +383,14 @@ const contributors = [
     {
         "name": "Activepieces Dev",
         "login": "ashrafsamhouri"
+    },
+    {
+        "name": "hiasat",
+        "login": "abuaboud"
+    },
+    {
+        "name": "Mohammad",
+        "login": "abuaboud"
     },
     {
         "name": "ActivePieces",

@@ -52,7 +52,7 @@ export const talkable = createPiece({
   minimumSupportedRelease: '0.7.1',
   logoUrl:
     'https://www.talkable.com/wp-content/uploads/2021/12/talkable-favicon.svg',
-  authors: ['vitalini'],
+  authors: ["Vitalini","kishanprmr","MoShizzle","abuaboud"],
   categories: [PieceCategory.MARKETING],
   actions: [
     findPerson,

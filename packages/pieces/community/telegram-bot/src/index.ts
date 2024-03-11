@@ -42,6 +42,6 @@ export const telegramBot = createPiece({
       auth: telegramBotAuth,
     }),
   ],
-  authors: ['abuaboud', 'Abdallah-Alwarawreh'],
+  authors: ["abdullahranginwala","tanoggy","alerdenisov","Abdallah-Alwarawreh","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   triggers: [telegramNewMessage],
 });

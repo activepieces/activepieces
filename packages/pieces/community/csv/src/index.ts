@@ -12,6 +12,6 @@ export const csv = createPiece({
   auth: PieceAuth.None(),
   categories: [PieceCategory.CORE],
   actions: [parseCSVTextAction, unparseCSVTextAction],
-  authors: ['kanarelo'],
+  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   triggers: [],
 });

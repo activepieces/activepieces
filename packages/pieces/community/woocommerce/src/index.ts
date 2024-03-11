@@ -65,7 +65,7 @@ export const woocommerce = createPiece({
   categories: [PieceCategory.COMMERCE],
   auth: wooAuth,
   minimumSupportedRelease: '0.7.1',
-  authors: ['MoShizzle', 'TaskMagicKyle', 'kishanprmr'],
+  authors: ["TaskMagicKyle","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   actions: [
     wooCreateCustomer,
     wooCreateCoupon,

@@ -29,7 +29,7 @@ export const generatebanners = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/generatebanners.png',
   categories: [PieceCategory.CONTENT_AND_FILES],
-  authors: [],
+  authors: ["tpatel","kishanprmr","khaledmashaly","abuaboud"],
   auth: generatebannersAuth,
   actions: [renderTemplate],
   triggers: [],

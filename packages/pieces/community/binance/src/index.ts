@@ -9,6 +9,6 @@ export const binance = createPiece({
   categories: [],
   auth: PieceAuth.None(),
   actions: [fetchCryptoPairPrice],
-  authors: ['m-tabaza'],
+  authors: ["kishanprmr","khaledmashaly","abuaboud"],
   triggers: [],
 });

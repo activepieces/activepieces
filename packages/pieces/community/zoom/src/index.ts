@@ -38,6 +38,6 @@ export const zoom = createPiece({
     }),
   ],
   auth: zoomAuth,
-  authors: ['kanarelo'],
+  authors: ["kanarelo","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   triggers: [],
 });

@@ -32,7 +32,7 @@ export const freshdesk = createPiece({
 
   logoUrl: 'https://cdn.activepieces.com/pieces/freshdesk.png',
   categories: [PieceCategory.CUSTOMER_SUPPORT],
-  authors: ['buttonsbond'],
+  authors: ["buttonsbond","kishanprmr","MoShizzle","AbdulTheActivePiecer","abuaboud"],
   auth: freshdeskAuth,
   actions: [
     getTickets,

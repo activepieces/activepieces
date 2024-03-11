@@ -21,7 +21,7 @@ export const constantContact = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/constant-contact.png',
   categories: [PieceCategory.MARKETING],
-  authors: ['abuaboud'],
+  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: constantContactAuth,
   actions: [
     createOrUpdateContact,
