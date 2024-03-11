@@ -22,6 +22,7 @@ export const formBricksAuth = PieceAuth.SecretText({
 
 export const formbricks = createPiece({
   displayName: 'Formbricks',
+  description: 'Open source Survey Platform',
   auth: formBricksAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/formbricks.png',

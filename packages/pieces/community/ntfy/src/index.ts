@@ -34,6 +34,8 @@ export const ntfyAuth = PieceAuth.CustomAuth({
 
 export const ntfy = createPiece({
   displayName: 'ntfy',
+  description: 'Notification management made easy',
+
   logoUrl: 'https://cdn.activepieces.com/pieces/ntfy.png',
   minimumSupportedRelease: '0.5.0',
   categories: [PieceCategory.COMMUNICATION],

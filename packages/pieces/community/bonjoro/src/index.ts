@@ -6,6 +6,7 @@ import { bonjoroAuth } from './lib/auth';
 
 export const bonjoro = createPiece({
   displayName: 'Bonjoro',
+  description: 'Send personal video messages to delight customers',
   auth: bonjoroAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/bonjoro.png',

@@ -19,6 +19,8 @@ export const googleFormsAuth = PieceAuth.OAuth2({
 
 export const googleForms = createPiece({
   displayName: 'Google Forms',
+  description: 'Recieve form responses from Google Forms',
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-forms.png',
   categories: [PieceCategory.FORMS_AND_SURVEYS],

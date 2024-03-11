@@ -30,6 +30,7 @@ export type DustAuthType = {
 
 export const dust = createPiece({
   displayName: 'Dust',
+  description: 'Secure messaging and collaboration',
   auth: dustAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/dust.png',

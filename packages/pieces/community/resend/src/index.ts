@@ -10,6 +10,8 @@ export const resendAuth = PieceAuth.SecretText({
 
 export const resend = createPiece({
   displayName: 'Resend',
+  description: 'Email for developers',
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/resend.png',
   categories: [PieceCategory.BUSINESS_INTELLIGENCE, PieceCategory.MARKETING],

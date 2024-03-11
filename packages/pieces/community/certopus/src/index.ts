@@ -1,6 +1,5 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
 import { createCredential } from './lib/actions/create-credential';
 import { certopusCommon } from './lib/common';
 
@@ -12,6 +11,7 @@ export const certopusAuth = PieceAuth.SecretText({
 
 export const certopus = createPiece({
   displayName: 'Certopus',
+  description: 'Your certificates, made simple',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/certopus.png',
   categories: [],

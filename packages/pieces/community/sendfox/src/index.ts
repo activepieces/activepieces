@@ -13,6 +13,8 @@ export const sendfoxAuth = PieceAuth.SecretText({
 
 export const sendfox = createPiece({
   displayName: 'SendFox',
+  description: 'Email marketing made simple',
+
   auth: sendfoxAuth,
   minimumSupportedRelease: '0.7.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/sendfox.png',

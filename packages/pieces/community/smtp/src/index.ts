@@ -1,4 +1,8 @@
-import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework';
+import {
+  PieceAuth,
+  Property,
+  createPiece,
+} from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { sendEmail } from './lib/actions/send-email';
 import { smtpCommon } from './lib/common';
@@ -62,6 +66,7 @@ export const smtpAuth = PieceAuth.CustomAuth({
 
 export const smtp = createPiece({
   displayName: 'SMTP',
+  description: 'Send emails using Simple Mail Transfer Protocol',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/smtp.png',
   categories: [PieceCategory.CORE],

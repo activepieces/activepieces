@@ -18,6 +18,8 @@ export const googleAuth = PieceAuth.OAuth2({
 export const googleBusiness = createPiece({
   auth: googleAuth,
   displayName: 'Google My Business',
+  description: 'Manage your business on Google',
+
   logoUrl: 'https://cdn.activepieces.com/pieces/google-business.png',
   authors: ['abuaboud'],
   categories: [PieceCategory.MARKETING],

@@ -31,6 +31,8 @@ export const kizeoFormsAuth = PieceAuth.SecretText({
 
 export const kizeoForms = createPiece({
   displayName: 'Kizeo Forms',
+  description: 'Create custom mobile forms',
+
   minimumSupportedRelease: '0.6.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/kizeo-forms.png',
   authors: ['BastienMe'],

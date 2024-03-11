@@ -8,7 +8,7 @@ import { getCurrentDate } from './lib/actions/get-current-date';
 import { nextDayofWeek } from './lib/actions/next-day-of-week';
 import { nextDayofYear } from './lib/actions/next-day-of-year';
 
-const description = `Effortlessly manipulate, format, and extract time units for all your date and time needs.`;
+const description = `Manipulate, format, and extract time units for all your date and time needs.`;
 
 export const utilityDate = createPiece({
   displayName: 'Date Helper',

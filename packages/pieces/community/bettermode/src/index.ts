@@ -9,6 +9,7 @@ import { bettermodeAuth } from './lib/auth';
 
 export const bettermode = createPiece({
   displayName: 'Bettermode',
+  description: 'Feature-rich engagement platform. Browse beautifully designed templates, each flexible for precise customization to your needs.',
   auth: bettermodeAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/bettermode.png',

@@ -166,7 +166,7 @@ export const flowRunService = {
             })
         }
         const pauseMetadata = flowRunToResume.pauseMetadata
-        const matchRequestId = isNil(pauseMetadata) || (pauseMetadata?.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId)
+        const matchRequestId = isNil(pauseMetadata) || (pauseMetadata.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId)
         if (matchRequestId) {
             await flowRunService.start({
                 payload: resumePayload,

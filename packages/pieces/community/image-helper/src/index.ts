@@ -8,6 +8,8 @@ import { resizeImage } from './lib/actions/resize-Image.action';
 
 export const imageHelper = createPiece({
   displayName: 'Image Helper',
+  description: 'Tools for image manipulations',
+
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/image-helper.png',

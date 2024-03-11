@@ -29,6 +29,8 @@ export const quickzuAuth = PieceAuth.SecretText({
 
 export const quickzu = createPiece({
   displayName: 'Quickzu',
+  description: 'Streamline ordering from whatsapp',
+
   auth: quickzuAuth,
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/quickzu.png',

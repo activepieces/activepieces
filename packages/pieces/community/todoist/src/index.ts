@@ -13,6 +13,7 @@ export const todoistAuth = PieceAuth.OAuth2({
 
 export const todoist = createPiece({
   displayName: 'Todoist',
+  description: 'To-do list and task manager',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/todoist.png',
   authors: ['khaledmashaly'],
