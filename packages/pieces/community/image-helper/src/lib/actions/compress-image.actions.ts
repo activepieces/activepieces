@@ -21,6 +21,17 @@ export const compressImage = createAction({
         ]
       }
     }),
+    format: Property.StaticDropdown({
+      displayName: 'Format',
+      description: 'Specifies the format of the image after compression.',
+      required: true,
+      options: {
+        options:[
+          {label: 'JPG', value: 'jpg'},
+          {label: 'PNG', value: 'png'}
+        ]
+      }
+    }),
   },
   async run(context) {
     const image = await jimp.read(context.propsValue.image.data);
@@ -30,7 +41,7 @@ export const compressImage = createAction({
     const imageBuffer = await image.getBufferAsync(image.getMIME());
 
     const imageReference = await context.files.write({
-      fileName: 'image.' + image.getExtension(),
+      fileName: 'image.' + context.propsValue.format,
       data: imageBuffer
     });
 
