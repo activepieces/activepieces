@@ -69,6 +69,7 @@ export const slack = createPiece({
       return signature === computedSignature;
     },
   },
+  authors: ['AdamSelene', 'rita-gorokhod', 'khaledmashaly', 'abuaboud'],
   actions: [
     slackSendDirectMessageAction,
     slackSendMessageAction,
