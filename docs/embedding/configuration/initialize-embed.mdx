@@ -19,20 +19,26 @@ The following scripts shouldn't contain async or defer attributes.
 </Tip>
 
 ```html
-<script src="https://cdn.activepieces.com/sdk/embed/0.1.0.js">
+<script src="https://cdn.activepieces.com/sdk/embed/0.2.0.js">
 </script>
 <script>
-activepieces.configure({
-      containerId:'container',
-      jwtToken:'GENERATED_JWT_TOKEN',
-      instanceUrl:'http://your-instance-url.com',
-      prefix:'/',
-      hideSidebar:true,
+activepieces.configure(
+ {
+    prefix: "/";
+    instanceUrl:"http://your-instance-url.com",
+    jwtToken:"GENERATED_JWT_TOKEN",
+    embedding: {
+      containerId: "container",
       builder:{
-            disableNavigation:false,
+        disableNavigation:false
       },
-      hideFolders:false
-})
+      dashboard: {
+        hideSidebar:true
+      },
+      hideFolders:true
+    },   
+ }
+)
 </script>
 ```
 
