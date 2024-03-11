@@ -12,6 +12,8 @@ const description = `Effortlessly manipulate, format, and extract time units for
 
 export const utilityDate = createPiece({
   displayName: 'Date Helper',
+  description: 'Date & Time manipulation tools',
+
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.8.0',
   categories: [PieceCategory.CORE],

@@ -96,6 +96,8 @@ export const wordpressAuth = PieceAuth.CustomAuth({
 
 export const wordpress = createPiece({
   displayName: 'Wordpress',
+  description: 'Open-source website creation software',
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/wordpress.png',
   categories: [PieceCategory.MARKETING],

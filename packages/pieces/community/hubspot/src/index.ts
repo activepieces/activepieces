@@ -35,6 +35,8 @@ export const hubspotAuth = PieceAuth.OAuth2({
 
 export const hubspot = createPiece({
   displayName: 'HubSpot',
+  description: 'Grow your business with HubSpot',
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/hubspot.png',
   authors: ['khaledmashaly', 'MoShizzle', 'Salem-Alaa', 'kishanprmr'],

@@ -66,6 +66,8 @@ export const trelloAuth = PieceAuth.BasicAuth({
 
 export const trello = createPiece({
   displayName: 'Trello',
+  description: 'Organize anything, together',
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/trello.png',
   authors: ['ShayPunter', 'Salem-Alaa', 'MoShizzle'],

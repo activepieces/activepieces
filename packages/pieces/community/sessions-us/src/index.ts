@@ -50,6 +50,8 @@ export const sessionAuth = PieceAuth.SecretText({
 
 export const sessionsUs = createPiece({
   displayName: 'Sessions.us',
+  description: 'Effortless session management',
+
   auth: sessionAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/sessions-us.png',

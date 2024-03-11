@@ -36,6 +36,8 @@ export const clockodoAuth = PieceAuth.CustomAuth({
 
 export const clockodo = createPiece({
   displayName: 'Clockodo',
+  description: 'Time tracking made easy',
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/clockodo.png',
   categories: [PieceCategory.PRODUCTIVITY],

@@ -45,6 +45,8 @@ export const deeplAuth = PieceAuth.CustomAuth({
 
 export const deepl = createPiece({
   displayName: 'DeepL',
+  description: 'AI-powered language translation',
+
   auth: deeplAuth,
   minimumSupportedRelease: '0.6.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/deepl.png',

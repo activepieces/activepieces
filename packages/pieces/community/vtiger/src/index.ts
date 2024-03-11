@@ -101,6 +101,8 @@ export const vtigerAuth = PieceAuth.CustomAuth({
 
 export const vtiger = createPiece({
   displayName: 'Vtiger',
+  description: 'CRM software for sales, marketing, and support teams',
+
   auth: vtigerAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/vtiger.png',

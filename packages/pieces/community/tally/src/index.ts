@@ -3,6 +3,8 @@ import { PieceCategory } from '@activepieces/shared';
 import { tallyFormsNewSubmission } from './lib/triggers/new-submission';
 export const tally = createPiece({
   displayName: 'Tally',
+  description: 'Tally - The simple way to keep score',
+
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.8.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/tally.png',

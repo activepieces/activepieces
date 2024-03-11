@@ -34,6 +34,8 @@ export const baserowAuth = PieceAuth.CustomAuth({
 
 export const baserow = createPiece({
   displayName: 'Baserow',
+  description: 'Open-source online database tool',
+
   auth: baserowAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/baserow.png',

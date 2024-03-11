@@ -40,11 +40,16 @@ export const APITableAuth = PieceAuth.CustomAuth({
 
 export const apitable = createPiece({
   displayName: 'AITable',
+  description: 'Unlock your data potential with AI',
+
   auth: APITableAuth,
   description: `Interactive spreadsheets with collaboration`,
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/apitable.png',
-  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE, PieceCategory.PRODUCTIVITY],
+  categories: [
+    PieceCategory.ARTIFICIAL_INTELLIGENCE,
+    PieceCategory.PRODUCTIVITY,
+  ],
   authors: ['abdallah-alwarawreh', 'kishanprmr'],
   actions: [
     createRecordAction,

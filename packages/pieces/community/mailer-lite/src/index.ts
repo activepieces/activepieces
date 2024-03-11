@@ -17,30 +17,32 @@ To obtain your API key, follow these steps:
 `;
 
 export const mailerLiteAuth = PieceAuth.SecretText({
-	displayName: 'API Key',
-	description: markdownDescription,
-	required: true,
+  displayName: 'API Key',
+  description: markdownDescription,
+  required: true,
 });
 
 export const mailerLite = createPiece({
-	displayName: 'MailerLite',
-	minimumSupportedRelease: '0.5.0',
-	logoUrl: 'https://cdn.activepieces.com/pieces/mailer-lite.png',
-	categories: [PieceCategory.MARKETING],
-	authors: ['Willianwg', 'kanarelo'],
-	auth: mailerLiteAuth,
-	actions: [
-		addSubscriberToGroupAction,
-		createOrUpdateSubscriber,
-		findSubscriberAction,
-		removeSubscriberFromGroupAction,
-		createCustomApiCallAction({
-			baseUrl: () => 'https://connect.mailerlite.com/',
-			auth: mailerLiteAuth,
-			authMapping: (auth) => ({
-				Authorization: `Bearer ${auth}`,
-			}),
-		}),
-	],
-	triggers,
+  displayName: 'MailerLite',
+  description: 'Email marketing software',
+
+  minimumSupportedRelease: '0.5.0',
+  logoUrl: 'https://cdn.activepieces.com/pieces/mailer-lite.png',
+  categories: [PieceCategory.MARKETING],
+  authors: ['Willianwg', 'kanarelo'],
+  auth: mailerLiteAuth,
+  actions: [
+    addSubscriberToGroupAction,
+    createOrUpdateSubscriber,
+    findSubscriberAction,
+    removeSubscriberFromGroupAction,
+    createCustomApiCallAction({
+      baseUrl: () => 'https://connect.mailerlite.com/',
+      auth: mailerLiteAuth,
+      authMapping: (auth) => ({
+        Authorization: `Bearer ${auth}`,
+      }),
+    }),
+  ],
+  triggers,
 });

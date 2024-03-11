@@ -17,6 +17,8 @@ export const asanaAuth = PieceAuth.OAuth2({
 
 export const asana = createPiece({
   displayName: 'Asana',
+  description: "Organize your team's work",
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/asana.png',
   categories: [PieceCategory.PRODUCTIVITY],

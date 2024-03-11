@@ -20,6 +20,8 @@ export const heartbeatAuth = PieceAuth.SecretText({
 
 export const Heartbeat = createPiece({
   displayName: 'Heartbeat',
+  description: 'Monitoring and alerting made easy',
+
   auth: heartbeatAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/heartbeat.png',

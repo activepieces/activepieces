@@ -29,6 +29,8 @@ export const niftyAuth = PieceAuth.OAuth2({
 
 export const nifty = createPiece({
   displayName: 'Nifty',
+  description: 'Project management made simple',
+
   auth: niftyAuth,
   minimumSupportedRelease: '0.7.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/nifty.png',

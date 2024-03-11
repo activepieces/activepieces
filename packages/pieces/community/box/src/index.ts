@@ -20,6 +20,8 @@ export const boxAuth = PieceAuth.OAuth2({
 
 export const box = createPiece({
   displayName: 'Box',
+  description: 'Secure content management and collaboration',
+
   auth: boxAuth,
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/box.png',
