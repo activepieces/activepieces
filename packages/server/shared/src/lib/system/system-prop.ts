@@ -75,4 +75,11 @@ export enum SystemProp {
 
   // CLOUD_ONLY
   CLOUD_PLATFORM_ID = 'CLOUD_PLATFORM_ID',
+
+
+
+  // ---- PROCOL_CODE_STARTS ----
+  PROCOL_BASE_URL = 'PROCOL_BASE_URL',
+  PROCOL_AUTH_TOKEN = 'PROCOL_AUTH_TOKEN',
+  // ---- PROCOL_CODE_ENDS ----
 }

@@ -62,3 +62,8 @@ scratch.md
 
 # environment variables
 .env
+
+
+# ---- PROCOL_CODE_STARTS ----
+*.pem
+# ---- PROCOL_CODE_ENDS ----

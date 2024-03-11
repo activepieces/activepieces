@@ -6,3 +6,8 @@
 .angular
 
 /.nx/cache
+
+#  ---- PROCOL_CODE_STARTS ----
+# ignoring all files because it is conflicting with eslint auto-save
+ **
+#  ---- PROCOL_CODE_ENDS ----

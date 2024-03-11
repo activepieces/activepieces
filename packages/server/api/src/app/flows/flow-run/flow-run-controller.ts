@@ -79,7 +79,9 @@ export const flowRunController: FastifyPluginCallbackTypebox = (
     done()
 }
 
-const FlowRunFiltered = Type.Omit(FlowRun, ['logsFileId', 'terminationReason', 'pauseMetadata'])
+// ---- PROCOL_CODE_STARTS ----
+const FlowRunFiltered = Type.Omit(FlowRun, ['terminationReason', 'pauseMetadata'])
+// ---- PROCOL_CODE_ENDS ----
 
 const ListRequest = {
     config: {
