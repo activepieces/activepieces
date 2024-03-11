@@ -191,6 +191,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
         cors: {
             origin: '*',
         },
+        transports: ['websocket'],
     })
 
     app.io.use((socket: Socket, next: (err?: Error) => void) => {

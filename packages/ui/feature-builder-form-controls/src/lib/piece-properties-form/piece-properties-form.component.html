@@ -82,9 +82,11 @@
               }}</mat-label>
             <mat-select #matSelect [formControlName]="property.key" (closed)="searchControls[property.key].setValue('')"
               [compareWith]="dropdownCompareWithFunction">
-              <ng-container *ngTemplateOutlet="searchInputForDropdowns; context: {$implicit: searchControls[property.key]}">
+              <ng-container
+                *ngTemplateOutlet="searchInputForDropdowns; context: {$implicit: searchControls[property.key]}">
               </ng-container>
-              <mat-option class="ap-opacity-100" [disabled]="true" *ngIf="(refreshableConfigsLoadingFlags$[property.key] | async)">
+              <mat-option class="ap-opacity-100" [disabled]="true"
+                *ngIf="(refreshableConfigsLoadingFlags$[property.key] | async)">
                 <div class="ap-flex ap-items-center ap-justify-center">
                   <ap-loading-icon> </ap-loading-icon>
                 </div>
@@ -92,7 +94,7 @@
 
               <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
                 <ng-container *ngIf="(state.options | dropdownSearch:searchControls[property.key]) | async as options">
-                 
+
                   <ng-container *ngIf="(refreshableConfigsLoadingFlags$[property.key] | async) === false">
 
                     <cdk-virtual-scroll-viewport *ngIf="matSelect.panelOpen && !state.disabled" [itemSize]="48"
@@ -426,7 +428,8 @@
       *ngIf="property.value.type === PropertyType.OAUTH2 || property.value.type === PropertyType.SECRET_TEXT || property.value.type === PropertyType.BASIC_AUTH || property.value.type === PropertyType.CUSTOM_AUTH">
       <div class="ap-flex ap-justify-end  ap-mb-1 ap-mx-1">
 
-        <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
+        <ng-container
+          *ngTemplateOutlet="customizedInputs && !isTriggerPieceForm? dynamicVariableIcon: null; context:{$implicit:property} ">
         </ng-container>
 
       </div>
