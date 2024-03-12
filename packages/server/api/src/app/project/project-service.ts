@@ -1,5 +1,4 @@
 import { ApId, PlatformId, isNil } from '@activepieces/shared'
-import { databaseConnection } from '../database/database-connection'
 import { ProjectEntity } from './project-entity'
 import {
     ActivepiecesError,
@@ -10,9 +9,12 @@ import {
     ProjectId,
     UserId,
 } from '@activepieces/shared'
-import { IsNull } from 'typeorm'
+import { EntityManager, IsNull } from 'typeorm'
+import { projectSideEffects } from './project-side-effects'
+import { transaction } from '../core/db/transaction'
+import { repoFactory } from '../core/db/repo-factory'
 
-const projectRepo = databaseConnection.getRepository<Project>(ProjectEntity)
+const repo = repoFactory(ProjectEntity)
 
 export const projectService = {
     async create(params: CreateParams): Promise<Project> {
@@ -22,7 +24,7 @@ export const projectService = {
             notifyStatus: NotificationStatus.ALWAYS,
         }
 
-        return projectRepo.save(newProject)
+        return repo().save(newProject)
     },
 
     async getOne(projectId: ProjectId | undefined): Promise<Project | null> {
@@ -30,7 +32,7 @@ export const projectService = {
             return null
         }
 
-        return projectRepo.findOneBy({
+        return repo().findOneBy({
             id: projectId,
             deleted: IsNull(),
         })
@@ -53,7 +55,7 @@ export const projectService = {
     },
 
     async getUserProject(ownerId: UserId): Promise<Project | null> {
-        return projectRepo.findOneBy({
+        return repo().findOneBy({
             ownerId,
             deleted: IsNull(),
         })
@@ -85,14 +87,14 @@ export const projectService = {
             platformId,
         }
 
-        await projectRepo.update(query, update)
+        await repo().update(query, update)
     },
 
     async getByPlatformIdAndExternalId({
         platformId,
         externalId,
     }: GetByPlatformIdAndExternalIdParams): Promise<Project | null> {
-        return projectRepo.findOneBy({
+        return repo().findOneBy({
             platformId,
             externalId,
             deleted: IsNull(),
@@ -100,12 +102,23 @@ export const projectService = {
     },
 
     async delete({ id, platformId }: DeleteParams): Promise<void> {
-        await softDeleteOrThrow({ id, platformId })
+        await transaction(async (entityManager) => {
+            await softDeleteOrThrow({
+                id,
+                platformId,
+                entityManager,
+            })
+
+            await projectSideEffects.onSoftDelete({
+                id,
+                entityManager,
+            })
+        })
     },
 }
 
-const softDeleteOrThrow = async ({ id, platformId }: SoftDeleteOrThrowParams): Promise<void> => {
-    const deleteResult = await projectRepo.softDelete({
+const softDeleteOrThrow = async ({ id, platformId, entityManager }: SoftDeleteOrThrowParams): Promise<void> => {
+    const deleteResult = await repo(entityManager).softDelete({
         id,
         platformId,
         deleted: IsNull(),
@@ -144,6 +157,8 @@ type DeleteParams = {
     platformId: PlatformId
 }
 
-type SoftDeleteOrThrowParams = DeleteParams
+type SoftDeleteOrThrowParams = DeleteParams & {
+    entityManager: EntityManager
+}
 
 type NewProject = Omit<Project, 'created' | 'updated' | 'deleted'>

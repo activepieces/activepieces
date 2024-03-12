@@ -119,8 +119,8 @@ export const flowService = {
         return paginationHelper.createPage(populatedFlows, paginationResult.cursor)
     },
 
-    async getOne({ id, projectId }: GetOneParams): Promise<Flow | null> {
-        return flowRepo().findOneBy({
+    async getOne({ id, projectId, entityManager }: GetOneParams): Promise<Flow | null> {
+        return flowRepo(entityManager).findOneBy({
             id,
             projectId,
         })
@@ -137,8 +137,9 @@ export const flowService = {
         projectId,
         versionId,
         removeSecrets = false,
+        entityManager,
     }: GetOnePopulatedParams): Promise<PopulatedFlow | null> {
-        const flow = await flowRepo().findOneBy({
+        const flow = await flowRepo(entityManager).findOneBy({
             id,
             projectId,
         })
@@ -151,6 +152,7 @@ export const flowService = {
             flowId: id,
             versionId,
             removeSecrets,
+            entityManager,
         })
 
         return {
@@ -164,12 +166,14 @@ export const flowService = {
         projectId,
         versionId,
         removeSecrets = false,
+        entityManager,
     }: GetOnePopulatedParams): Promise<PopulatedFlow> {
         const flow = await this.getOnePopulated({
             id,
             projectId,
             versionId,
             removeSecrets,
+            entityManager,
         })
         assertFlowIsNotNull(flow)
         return flow
@@ -260,24 +264,31 @@ export const flowService = {
         id,
         projectId,
         newStatus,
+        entityManager,
     }: UpdateStatusParams): Promise<PopulatedFlow> {
-        const flowToUpdate = await this.getOneOrThrow({ id, projectId })
+        const flowToUpdate = await this.getOneOrThrow({
+            id,
+            projectId,
+            entityManager,
+        })
 
         if (flowToUpdate.status !== newStatus) {
             const { scheduleOptions } = await hooks.preUpdateStatus({
                 flowToUpdate,
                 newStatus,
+                entityManager,
             })
 
             flowToUpdate.status = newStatus
             flowToUpdate.schedule = scheduleOptions
 
-            await flowRepo().save(flowToUpdate)
+            await flowRepo(entityManager).save(flowToUpdate)
         }
 
         return this.getOnePopulatedOrThrow({
             id,
             projectId,
+            entityManager,
         })
     },
 
@@ -384,6 +395,19 @@ export const flowService = {
             projectId,
         })
     },
+
+    async disableAllForProject({ projectId, entityManager }: DisableAllForProjectParams): Promise<void> {
+        const enabledFlowIds = await getEnabledFlowIdsForProject({
+            projectId,
+            entityManager,
+        })
+
+        await batchDisableFlows({
+            flowIds: enabledFlowIds,
+            projectId,
+            entityManager,
+        })
+    },
 }
 
 const lockFlowVersionIfNotLocked = async ({
@@ -421,6 +445,33 @@ const assertFlowIsNotNull: <T extends Flow>(
     }
 }
 
+const getEnabledFlowIdsForProject = async (params: GetEnabledFlowIdsForProjectParams): Promise<FlowId[]> => {
+    const { projectId, entityManager } = params
+
+    const flows = await flowRepo(entityManager).find({
+        where: {
+            projectId,
+            status: FlowStatus.ENABLED,
+        },
+        select: {
+            id: true,
+        },
+    })
+
+    return flows.map((flow) => flow.id)
+}
+
+const batchDisableFlows = async ({ flowIds, projectId, entityManager }: BatchDisableFlowsParams): Promise<void> => {
+    for (const flowId of flowIds) {
+        await flowService.updateStatus({
+            id: flowId,
+            projectId,
+            newStatus: FlowStatus.DISABLED,
+            entityManager,
+        })
+    }
+}
+
 type CreateParams = {
     projectId: ProjectId
     request: CreateFlowRequest
@@ -437,6 +488,7 @@ type ListParams = {
 type GetOneParams = {
     id: FlowId
     projectId: ProjectId
+    entityManager?: EntityManager
 }
 
 type GetOnePopulatedParams = GetOneParams & {
@@ -467,6 +519,7 @@ type UpdateStatusParams = {
     id: FlowId
     projectId: ProjectId
     newStatus: FlowStatus
+    entityManager?: EntityManager
 }
 
 type UpdatePublishedVersionIdParams = {
@@ -485,6 +538,22 @@ type NewFlow = Omit<Flow, 'created' | 'updated'>
 type LockFlowVersionIfNotLockedParams = {
     flowVersion: FlowVersion
     userId: UserId
+    projectId: ProjectId
+    entityManager: EntityManager
+}
+
+type DisableAllForProjectParams = {
+    projectId: ProjectId
+    entityManager: EntityManager
+}
+
+type GetEnabledFlowIdsForProjectParams = {
+    projectId: ProjectId
+    entityManager: EntityManager
+}
+
+type BatchDisableFlowsParams = {
+    flowIds: FlowId[]
     projectId: ProjectId
     entityManager: EntityManager
 }
