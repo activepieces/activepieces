@@ -122,7 +122,7 @@ class ActivepiecesEmbedded {
             this._checkForClientRouteChanges(iframeWindow);
           }
         },
-        errorMessage: 'Activepieces: container not found'
+        errorMessage: 'container not found'
       })
 
   };
@@ -140,7 +140,7 @@ class ActivepiecesEmbedded {
       this._connectionsIframe.style.cssText = connectionsIframeStyle;
       this._checkIfNewConnectionDialogClosed();
       },
-      errorMessage:'Activepieces: document body not found'
+      errorMessage:'document body not found while trying to add connections iframe'
     });
 
   }
@@ -198,14 +198,13 @@ class ActivepiecesEmbedded {
   async connect({ pieceName }: { pieceName: string }) {
 
     return this._addGracePeriodBeforeMethod({
-      errorMessage:'Activepieces: connections iframe not initialized',
+      errorMessage:'connections iframe not initialized',
       condition:()=>this._connectionsIframeInitialized,
       method:()=>{
         if (!this._connectionsIframe || !this._doesFrameHaveWindow(this._connectionsIframe)) {
           console.error('Activepieces: connections iframe not found, please make sure you enabled embedded dialiogs in the configure method');
           return;
         }
-
         const apEvent: ActivepiecesVendorRouteChanged = {
           type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
           data: {
