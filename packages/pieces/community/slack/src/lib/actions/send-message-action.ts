@@ -15,6 +15,11 @@ export const slackSendMessageAction = createAction({
   description: 'Send message to a channel',
   props: {
     channel: slackChannel,
+    threadTs: Property.ShortText({
+      displayName: 'Thread ts',
+      description: 'Provide another message\'s ts value to make this message a reply. Avoid using a reply\'s ts value; use its parent instead.',
+      required: false,
+    }),
     text: Property.LongText({
       displayName: 'Message',
       description: 'The text of your message',
@@ -30,7 +35,7 @@ export const slackSendMessageAction = createAction({
   },
   async run(context) {
     const token = context.auth.access_token;
-    const { text, channel, username, profilePicture, file, blocks } =
+    const { text, channel, username, profilePicture, file, threadTs, blocks } =
       context.propsValue;
 
     return slackSendMessage({
@@ -39,6 +44,7 @@ export const slackSendMessageAction = createAction({
       username,
       profilePicture,
       conversationId: channel,
+      threadTs,
       file,
       blocks,
     });
