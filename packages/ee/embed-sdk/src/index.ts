@@ -110,14 +110,14 @@ class ActivepiecesEmbedded {
       jwtToken: string
     }) => {
     const MAX_CONTAINER_CHECK_COUNT = 100;
-    const containerCheckCount = 0;
+    let containerCheckCount = 0;
     const containerChecker = setInterval(() => {
       if (containerCheckCount >= MAX_CONTAINER_CHECK_COUNT) {
         clearInterval(containerChecker);
         console.error('Activepieces: container not found');
         return;
       }
-
+      containerCheckCount++;
       const iframeContainer = document.querySelector(containerSelector);
       if (iframeContainer) {
         const iframeWindow = this.connectoToEmbed({ jwtToken, iframeContainer }).contentWindow;
@@ -129,11 +129,26 @@ class ActivepiecesEmbedded {
 
   };
 
+
   private _initializeConnectionsIframe = ({ jwtToken }: { jwtToken: string }) => {
-    this._connectionsIframe = this.connectoToEmbed({ jwtToken, iframeContainer: document.body, callbackAfterAuthentication: () => { this._connectionsIframeInitialized = true } });
-    const connectionsIframeStyle = ['display:none', 'position:fixed', 'top:0', 'left:0', 'width:100%', 'height:100%', 'border:none'].join(';');
-    this._connectionsIframe.style.cssText = connectionsIframeStyle;
-    this._checkIfNewConnectionDialogClosed();
+    const MAX_CONTAINER_CHECK_COUNT = 100;
+    let containerCheckCount = 0;
+    const checkContainer=setInterval(()=>{
+      if (containerCheckCount >= MAX_CONTAINER_CHECK_COUNT) {
+        console.error('Activepieces: document body not found');
+        return;
+      }
+      containerCheckCount++;
+      if(document.body)
+      {   
+      this._connectionsIframe = this.connectoToEmbed({ jwtToken, iframeContainer: document.body, callbackAfterAuthentication: () => { this._connectionsIframeInitialized = true } });
+      const connectionsIframeStyle = ['display:none', 'position:fixed', 'top:0', 'left:0', 'width:100%', 'height:100%', 'border:none'].join(';');
+      this._connectionsIframe.style.cssText = connectionsIframeStyle;
+      this._checkIfNewConnectionDialogClosed();
+      clearInterval(checkContainer);
+      }
+    },100)
+
   }
 
 
