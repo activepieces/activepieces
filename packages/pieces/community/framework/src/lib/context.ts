@@ -21,7 +21,7 @@ type BaseContext<
 > = {
   auth: PiecePropValueSchema<PieceAuth>;
   propsValue: StaticPropsValue<Props>;
-  store: Store;
+  store: Store<StoreScope>;
   project: {
     id: ProjectId;
     externalId: () => Promise<string | undefined>;
@@ -167,14 +167,13 @@ export interface TagsManager {
   add(params: { name: string }): Promise<void>;
 }
 
-export interface Store {
-  put<T>(key: string, value: T, scope?: StoreScope): Promise<T>;
-  get<T>(key: string, scope?: StoreScope): Promise<T | null>;
-  delete(key: string, scope?: StoreScope): Promise<void>;
+export interface Store<SCOPE extends StoreScope | Omit<StoreScope, 'RUN'>> {
+  put<T>(key: string, value: T, scope?: SCOPE): Promise<T>;
+  get<T>(key: string, scope?: SCOPE): Promise<T | null>;
+  delete(key: string, scope?: SCOPE): Promise<void>;
 }
 
 export enum StoreScope {
-  // Collection were deprecated in favor of project
   PROJECT = 'COLLECTION',
   FLOW = 'FLOW',
   RUN = 'RUN',

@@ -51,9 +51,23 @@ export const createStorageService = ({ workerToken }: { workerToken: string }) =
     }
 }
 
-export function createContextStore({ prefix, flowId, workerToken, runId }: { prefix: string, flowId: FlowId, workerToken: string, runId: FlowRunId }): Store {
+export function createContextStore<
+    SCOPE extends StoreScope | Omit<StoreScope, 'RUN'>,
+>({
+    prefix,
+    flowId,
+    workerToken,
+    runId,
+    defaultScope,
+}: {
+    prefix: string
+    flowId: FlowId
+    workerToken: string
+    defaultScope: SCOPE
+    runId: SCOPE extends StoreScope.RUN ? FlowRunId : undefined
+}): Store<SCOPE> {
     return {
-        async put<T>(key: string, value: T, scope = StoreScope.FLOW): Promise<T> {
+        async put<T>(key: string, value: T, scope = defaultScope): Promise<T> {
             const modifiedKey = createKey(prefix, scope, flowId, key, runId)
             await createStorageService({ workerToken }).put({
                 key: modifiedKey,
@@ -61,15 +75,17 @@ export function createContextStore({ prefix, flowId, workerToken, runId }: { pre
             })
             return value
         },
-        async delete(key: string, scope = StoreScope.FLOW): Promise<void> {
+        async delete(key: string, scope = defaultScope as SCOPE): Promise<void> {
             const modifiedKey = createKey(prefix, scope, flowId, key, runId)
             await createStorageService({ workerToken }).delete({
                 key: modifiedKey,
             })
         },
-        async get<T>(key: string, scope = StoreScope.FLOW): Promise<T | null> {
+        async get<T>(key: string, scope = defaultScope): Promise<T | null> {
             const modifiedKey = createKey(prefix, scope, flowId, key, runId)
-            const storeEntry = await createStorageService({ workerToken }).get(modifiedKey)
+            const storeEntry = await createStorageService({ workerToken }).get(
+                modifiedKey,
+            )
             if (storeEntry === null) {
                 return null
             }
@@ -78,7 +94,13 @@ export function createContextStore({ prefix, flowId, workerToken, runId }: { pre
     }
 }
 
-function createKey(prefix: string, scope: StoreScope, flowId: FlowId, key: string, runId: FlowRunId): string {
+function createKey(
+    prefix: string,
+    scope: StoreScope | Omit<StoreScope, 'RUN'>,
+    flowId: FlowId,
+    key: string,
+    runId?: FlowRunId,
+): string {
     switch (scope) {
         case StoreScope.RUN:
             return prefix + 'run_' + runId + '/' + key
