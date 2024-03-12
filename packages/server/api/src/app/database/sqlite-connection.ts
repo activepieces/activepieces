@@ -36,6 +36,7 @@ import { CreateDefaultPlaformSqlite1709051625110 } from './migration/sqlite/1709
 import { MigrateWebhook1709581196563 } from './migration/common/1709581196563-migrate-webhook'
 import { AddPlatformForeignKeyToProjectSqlite1709566629593 } from './migration/sqlite/1709566629593-add-platform-foreign-key-to-project-sqlite'
 import { AddAuthorsToPieces1710098009544 } from './migration/sqlite/1710098009544-AddAuthorsToPieces'
+import { AddDeletedToProjectSqlite1710248182409 } from './migration/sqlite/1710248182409-add-deleted-to-project-sqlite'
 
 
 const getSqliteDatabaseFilePath = (): string => {
@@ -90,6 +91,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         MigrateWebhook1709581196563,
         AddPlatformForeignKeyToProjectSqlite1709566629593,
         AddAuthorsToPieces1710098009544,
+        AddDeletedToProjectSqlite1710248182409,
     ]
     const edition = getEdition()
     if (edition !== ApEdition.COMMUNITY) {

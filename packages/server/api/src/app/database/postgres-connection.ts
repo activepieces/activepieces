@@ -119,6 +119,7 @@ import { SetFlowVersionUpdatedByToNullIfUserIsDeletedPostgres1709641016072 } fro
 import { MoveGeneratedByFromSigningKeyToAuditEventPostgres1709669091258 } from './migration/postgres/1709669091258-move-generated-by-from-signing-key-to-audit-event-postgres'
 import { AddMappingStateToGit1709753080714 } from './migration/postgres/1709753080714-AddMappingStateToGit'
 import { AddAuthorsToPieces1710098373707 } from './migration/postgres/1710098373707-AddAuthorsToPieces'
+import { AddDeletedToProjectPostgres1710243591721 } from './migration/postgres/1710243591721-add-deleted-to-project-postgres'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -194,6 +195,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         SetFlowVersionUpdatedByToNullIfUserIsDeletedPostgres1709641016072,
         MigrateWebhook1709581196563,
         AddAuthorsToPieces1710098373707,
+        AddDeletedToProjectPostgres1710243591721,
     ]
 
     const edition = getEdition()
