@@ -75,9 +75,6 @@ type BranchStepResult = {
 }
 
 export class BranchStepOutput extends GenericStepOutput<ActionType.BRANCH, BranchStepResult> {
-    constructor(step: BaseStepOutputParams<ActionType.BRANCH, BranchStepResult>) {
-        super(step)
-    }
 
     static init({ input }: { input: unknown }): BranchStepOutput {
         return new BranchStepOutput({

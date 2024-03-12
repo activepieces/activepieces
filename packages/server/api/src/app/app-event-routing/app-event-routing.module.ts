@@ -1,7 +1,7 @@
 import { FastifyRequest } from 'fastify'
 import { webhookService } from '../webhooks/webhook-service'
 import { appEventRoutingService } from './app-event-routing.service'
-import { logger } from 'server-shared'
+import { logger, rejectedPromiseHandler } from 'server-shared'
 import { ALL_PRINCIPAL_TYPES, isNil } from '@activepieces/shared'
 import {
     ActivepiecesError,
@@ -85,9 +85,9 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                     event,
                     identifierValue,
                 })
-                listeners.map((listener) => {
+                rejectedPromiseHandler(Promise.all(listeners.map((listener) => {
                     return callback(listener, eventPayload)
-                })
+                })))
             }
             return requestReply
                 .status(200)
