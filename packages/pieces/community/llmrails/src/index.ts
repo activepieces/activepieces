@@ -30,10 +30,12 @@ export const llmrailsAuth = PieceAuth.SecretText({
 
 export const llmrails = createPiece({
   displayName: 'LLMRails',
+  description: 'LLM Rails Platform',
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/llmrails.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
-  authors: ['w95'],
+  authors: ["w95","kishanprmr","MoShizzle","abuaboud"],
   auth: llmrailsAuth,
   actions: [
     datastoreSearch,

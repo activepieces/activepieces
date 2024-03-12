@@ -1,9 +1,4 @@
 {
   "name": "@activepieces/piece-activepieces",
-  "version": "0.0.2",
-  "dependencies": {
-    "@activepieces/pieces-common": "0.2.9",
-    "@activepieces/pieces-framework": "0.7.23",
-    "tslib": "2.6.2"
-  }
+  "version": "0.0.4"
 }

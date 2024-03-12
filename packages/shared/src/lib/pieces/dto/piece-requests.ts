@@ -15,7 +15,8 @@ export enum SuggestionType {
 }
 export enum PieceSortBy {
     NAME = 'NAME',
-    DATE = 'DATE',
+    UPDATED = 'UPDATED',
+    CREATED = 'CREATED',
 }
 
 export enum PieceOrderBy {

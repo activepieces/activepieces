@@ -40,10 +40,12 @@ export const mysqlAuth = PieceAuth.CustomAuth({
 
 export const mysql = createPiece({
   displayName: 'MySQL',
+  description: "The world's most popular open-source database",
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/mysql.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
-  authors: ['JanHolger'],
+  authors: ["JanHolger","kishanprmr","khaledmashaly","abuaboud"],
   auth: mysqlAuth,
   actions,
   triggers: [],

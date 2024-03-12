@@ -26,12 +26,12 @@ export const APITableAuth = PieceAuth.CustomAuth({
   props: {
     token: PieceAuth.SecretText({
       displayName: 'Token',
-      description: 'The token of the APITable account',
+      description: 'The token of the AITable account',
       required: true,
     }),
     apiTableUrl: Property.ShortText({
       displayName: 'Instance Url',
-      description: 'The url of the APITable instance.',
+      description: 'The url of the AITable instance.',
       required: true,
       defaultValue: 'https://api.aitable.ai',
     }),
@@ -44,8 +44,11 @@ export const apitable = createPiece({
   description: `Interactive spreadsheets with collaboration`,
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/apitable.png',
-  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE, PieceCategory.PRODUCTIVITY],
-  authors: ['abdallah-alwarawreh', 'kishanprmr'],
+  categories: [
+    PieceCategory.ARTIFICIAL_INTELLIGENCE,
+    PieceCategory.PRODUCTIVITY,
+  ],
+  authors: ["alerdenisov","Abdallah-Alwarawreh","kishanprmr","MoShizzle","abuaboud"],
   actions: [
     createRecordAction,
     updateRecordAction,

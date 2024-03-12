@@ -16,10 +16,12 @@ export const constantContactAuth = PieceAuth.OAuth2({
 
 export const constantContact = createPiece({
   displayName: 'Constant Contact',
+  description: 'Email marketing for small businesses',
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/constant-contact.png',
   categories: [PieceCategory.MARKETING],
-  authors: ['abuaboud'],
+  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: constantContactAuth,
   actions: [
     createOrUpdateContact,

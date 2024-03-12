@@ -29,6 +29,7 @@ export const discordAuth = PieceAuth.SecretText({
 
 export const discord = createPiece({
   displayName: 'Discord',
+  description: 'Instant messaging and VoIP social platform',
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/discord.png',
   categories: [PieceCategory.COMMUNICATION],
@@ -55,6 +56,6 @@ export const discord = createPiece({
       },
     }),
   ],
-  authors: ['creed983', 'Abdallah-Alwarawreh', 'TaskMagicKyle'],
+  authors: ["creed983","TaskMagicKyle","karimkhaleel","Abdallah-Alwarawreh","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   triggers: [newMessage],
 });

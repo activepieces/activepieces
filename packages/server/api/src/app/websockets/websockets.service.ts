@@ -17,7 +17,7 @@ export const websocketService = {
             })
             socket.emit('flowRunStarted', flowRun)
 
-            await flowResponseWatcher.listen(flowRun.id)
+            await flowResponseWatcher.listen(flowRun.id, false)
             socket.emit('flowRunFinished', flowRun)
         })
     },

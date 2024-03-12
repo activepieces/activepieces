@@ -12,7 +12,7 @@ export const forms = createPiece({
   minimumSupportedRelease: '0.20.3',
   categories: [PieceCategory.CORE],
   logoUrl: 'https://cdn.activepieces.com/pieces/forms.png',
-  authors: ['MoShizzle'],
+  authors: ["MoShizzle","abuaboud"],
   actions: [
     returnFile,
     returnMarkdown

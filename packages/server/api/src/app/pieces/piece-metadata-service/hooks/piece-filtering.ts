@@ -7,7 +7,7 @@ import { platformService } from '../../../platform/platform.service'
 
 const pieceFilterKeys = [{
     name: 'displayName',
-    weight: 2,
+    weight: 3,
 }, {
     name: 'description',
     weight: 1,

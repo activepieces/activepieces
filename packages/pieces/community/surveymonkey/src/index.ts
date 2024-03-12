@@ -23,11 +23,12 @@ export const smAuth = PieceAuth.OAuth2({
 
 export const surveymonkey = createPiece({
   displayName: 'SurveyMonkey',
+  description: 'Recieve survey responses from SurveyMonkey',
   auth: smAuth,
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/surveymonkey.png',
   categories: [PieceCategory.FORMS_AND_SURVEYS],
-  authors: ['MoShizzle'],
+  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   actions: [
     createCustomApiCallAction({
       baseUrl: () => 'https://api.surveymonkey.com/v3',

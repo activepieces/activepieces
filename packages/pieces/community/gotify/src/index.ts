@@ -32,11 +32,12 @@ export const gotifyAuth = PieceAuth.CustomAuth({
 
 export const gotify = createPiece({
   displayName: 'Gotify',
+  description: 'Self-hosted push notification service',
 
   logoUrl: 'https://cdn.activepieces.com/pieces/gotify.png',
   minimumSupportedRelease: '0.5.0',
   categories: [PieceCategory.DEVELOPER_TOOLS],
-  authors: ['MyWay'],
+  authors: ["MyWay","kishanprmr","khaledmashaly","abuaboud"],
   auth: gotifyAuth,
   actions: [sendNotification],
   triggers: [],

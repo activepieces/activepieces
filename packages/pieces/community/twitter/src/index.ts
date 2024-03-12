@@ -82,10 +82,12 @@ export const twitterAuth = PieceAuth.CustomAuth({
 
 export const twitter = createPiece({
   displayName: 'Twitter',
+  description: 'Social media platform with over 500 million user',
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/twitter.png',
   categories: [PieceCategory.COMMUNICATION],
-  authors: ['abuaboud', 'Abdallah-Alwarawreh'],
+  authors: ["Abdallah-Alwarawreh","Salem-Alaa","kishanprmr","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   auth: twitterAuth,
   actions: [createTweet],
   triggers: [],

@@ -61,9 +61,9 @@ import { OAuth2Property } from '@activepieces/pieces-framework';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AddEditConnectionButtonComponent {
+  @Output() newConnectionDialogClosed = new EventEmitter();
   @Input()
   btnSize: 'extraSmall' | 'small' | 'medium' | 'large' | 'default';
-
   @Input({ required: true })
   authProperty:
     | OAuth2Property<OAuth2Props>
@@ -88,11 +88,10 @@ export class AddEditConnectionButtonComponent {
     propertyKey: string;
     value: `{{connections['${string}']}}`;
   }> = new EventEmitter();
-
   @Output()
-  connectionIdChanged: EventEmitter<{
-    propertyKey: string;
-    value: string;
+  newConnection: EventEmitter<{
+    name: string;
+    id: string;
   }> = new EventEmitter();
   updateOrAddConnectionDialogClosed$: Observable<void>;
   checkConnectionLimitThenOpenDialog$: Observable<void>;
@@ -121,7 +120,11 @@ export class AddEditConnectionButtonComponent {
       this.editConnection();
     } else {
       this.checkConnectionLimitThenOpenDialog$ =
-        this.openConnectionDialogAcordingToConnectionType();
+        this.openConnectionDialogAcordingToConnectionType().pipe(
+          tap(() => {
+            this.newConnectionDialogClosed.emit();
+          })
+        );
     }
     this.cd.markForCheck();
   }
@@ -165,9 +168,9 @@ export class AddEditConnectionButtonComponent {
       propertyKey: this.propertyKey,
       value: authConfigOptionValue,
     });
-    this.connectionIdChanged.emit({
-      propertyKey: this.propertyKey,
-      value: result.id,
+    this.newConnection.emit({
+      name: result.name,
+      id: result.id,
     });
   }
 

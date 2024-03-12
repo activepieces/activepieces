@@ -50,10 +50,11 @@ export const sessionAuth = PieceAuth.SecretText({
 
 export const sessionsUs = createPiece({
   displayName: 'Sessions.us',
+  description: 'Video conferencing platform for businesses and professionals',
   auth: sessionAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/sessions-us.png',
-  authors: ['Owlcept', 'MoShizzle'],
+  authors: ["kishanprmr","MoShizzle","abuaboud"],
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   actions: [
     createSession,

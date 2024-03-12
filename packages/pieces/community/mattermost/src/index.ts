@@ -33,10 +33,12 @@ export const mattermostAuth = PieceAuth.CustomAuth({
 
 export const mattermost = createPiece({
   displayName: 'Mattermost',
+  description: 'Open-source, self-hosted Slack alternative',
+
   logoUrl: 'https://cdn.activepieces.com/pieces/mattermost.png',
   minimumSupportedRelease: '0.5.0',
   categories: [PieceCategory.COMMUNICATION],
-  authors: ['abuaboud'],
+  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: mattermostAuth,
   actions: [
     sendMessage,

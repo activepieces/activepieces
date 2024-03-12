@@ -78,11 +78,13 @@ export const convertkitAuth = PieceAuth.SecretText({
 
 export const convertkit = createPiece({
   displayName: 'ConvertKit',
+  description: 'Email marketing for creators',
+
   auth: convertkitAuth,
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/convertkit.png',
   categories: [PieceCategory.MARKETING],
-  authors: [],
+  authors: ["Gunther-Schulz","kishanprmr","abuaboud"],
   actions: [
     getSubscriberById,
     getSubscriberByEmail,

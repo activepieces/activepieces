@@ -45,10 +45,12 @@ export const jotformAuth = PieceAuth.CustomAuth({
 
 export const jotform = createPiece({
   displayName: 'Jotform',
+  description: 'Create online forms and surveys',
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/jotform.svg',
   categories: [PieceCategory.FORMS_AND_SURVEYS],
-  authors: ['MoShizzle'],
+  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: jotformAuth,
   actions: [
     createCustomApiCallAction({

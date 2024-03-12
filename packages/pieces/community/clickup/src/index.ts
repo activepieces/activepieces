@@ -33,6 +33,7 @@ export const clickupAuth = PieceAuth.OAuth2({
 
 export const clickup = createPiece({
   displayName: 'ClickUp',
+  description: 'All-in-one productivity platform',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/clickup.png',
   categories: [PieceCategory.PRODUCTIVITY],
@@ -66,6 +67,6 @@ export const clickup = createPiece({
       },
     }),
   ],
-  authors: ['abuaboud', 'ShayPunter', 'kanarelo'],
+  authors: ["kanarelo","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   triggers,
 });

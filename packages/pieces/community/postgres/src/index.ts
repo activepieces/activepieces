@@ -65,10 +65,12 @@ export const postgresAuth = PieceAuth.CustomAuth({
 
 export const postgres = createPiece({
   displayName: 'Postgres',
+  description: "The world's most advanced open-source relational database",
+
   minimumSupportedRelease: '0.5.0',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   logoUrl: 'https://cdn.activepieces.com/pieces/postgres.png',
-  authors: ['Willianwg'],
+  authors: ["Willianwg","dentych","kishanprmr","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   auth: postgresAuth,
   actions: [runQuery],
   triggers: [],

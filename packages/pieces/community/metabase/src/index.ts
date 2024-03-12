@@ -45,10 +45,12 @@ export const metabaseAuth = PieceAuth.CustomAuth({
 });
 export const metabase = createPiece({
   displayName: 'Metabase',
+  description: 'The simplest way to ask questions and learn from data',
+
   auth: metabaseAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/metabase.png',
-  authors: ['AdamSelene'],
+  authors: ['AdamSelene', 'abuaboud'],
   actions: [getQuestion],
   triggers: [],
 });

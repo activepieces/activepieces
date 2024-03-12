@@ -140,6 +140,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
   setDefaultValue$: Observable<null>;
   OnChange: (value: unknown) => void;
   OnTouched: () => void;
+  staticDropdownSearchControl = new FormControl('', { nonNullable: true });
   jsonMonacoEditor: any;
   constructor(
     private fb: UntypedFormBuilder,

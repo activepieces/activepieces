@@ -39,6 +39,7 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
       triggers: this._triggers,
       categories: this.categories,
       description: this.description,
+      authors: this.authors,
       auth: this.auth,
       minimumSupportedRelease: this.minimumSupportedRelease,
       maximumSupportedRelease: this.maximumSupportedRelease,
@@ -85,7 +86,7 @@ type CreatePieceParams<
 > = {
   displayName: string;
   logoUrl: string;
-  authors?: string[];
+  authors: string[];
   description?: string;
   auth: PieceAuth | undefined;
   events?: PieceEventProcessors;

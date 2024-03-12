@@ -301,6 +301,7 @@ export const createMockPieceMetadata = (
         projectId: pieceMetadata?.projectId,
         directoryPath: pieceMetadata?.directoryPath,
         auth: pieceMetadata?.auth,
+        authors: pieceMetadata?.authors ?? [],
         platformId: pieceMetadata?.platformId,
         version: pieceMetadata?.version ?? faker.system.semver(),
         minimumSupportedRelease: pieceMetadata?.minimumSupportedRelease ?? '0.0.0',

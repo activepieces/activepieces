@@ -52,6 +52,9 @@ export interface PieceTriggerInputFormSchema
     CommonPieceFormsProps {
   triggerName: string;
   input: ConfigsAndTheirValues;
+  inputUiInfo: {
+    customizedInputs: Record<string, boolean>;
+  };
 }
 
 export type InputFormsSchema =

@@ -6,7 +6,10 @@ import { ImportFlowUriEncodedComponent } from './modules/import-flow-uri-encoded
 import { ImportFlowComponent } from './modules/import-flow/import-flow.component';
 import { RedirectUrlComponent } from './modules/redirect-url/redirect-url.component';
 import { NotFoundComponent } from './modules/not-found/not-found.component';
-import { EmbedRedirectComponent } from '@activepieces/ee-components';
+import {
+  EmbedRedirectComponent,
+  EmbeddedConnectionDialogComponent,
+} from '@activepieces/ee-components';
 import { ApEdition } from '@activepieces/shared';
 import { FormsComponent } from './modules/forms/forms.component';
 
@@ -38,6 +41,14 @@ export const routes: Routes = [
     component: EmbedRedirectComponent,
     canActivate: [
       showBasedOnEditionGuard([ApEdition.ENTERPRISE, ApEdition.CLOUD]),
+    ],
+  },
+  {
+    path: 'embed/connections',
+    component: EmbeddedConnectionDialogComponent,
+    canActivate: [
+      showBasedOnEditionGuard([ApEdition.ENTERPRISE, ApEdition.CLOUD]),
+      UserLoggedIn,
     ],
   },
   {
