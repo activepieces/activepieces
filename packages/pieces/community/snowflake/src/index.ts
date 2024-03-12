@@ -52,7 +52,7 @@ export const snowflake = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/snowflake.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
-  authors: ["AdamSelene","abuaboud"],
+  authors: ['AdamSelene', 'abuaboud'],
   actions: [runQuery],
   triggers: [],
 });
