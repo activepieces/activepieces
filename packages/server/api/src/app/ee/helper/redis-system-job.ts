@@ -1,12 +1,29 @@
-import { ApId, isNil } from '@activepieces/shared'
+import { ApId, ProjectId, isNil } from '@activepieces/shared'
 import { Queue, Worker, Job } from 'bullmq'
 import { createRedisClient } from '../../database/redis-connection'
 import { QueueMode, SystemProp, logger, system } from 'server-shared'
 
-type SystemJobData = {
-    name: string
-    data: Record<string, never>
+type SystemJobName =
+    | 'hard-delete-project'
+    | 'project-usage-report'
+    | 'usage-report'
+
+type BaseSystemJobData<Name extends SystemJobName, Data extends Record<string, unknown>> = {
+    name: Name
+    data: Data
 }
+
+type HardDeleteProjectSystemJobData = BaseSystemJobData<'hard-delete-project', {
+    projectId: ProjectId
+}>
+
+type ProjectUsageReportSystemJobData = BaseSystemJobData<'project-usage-report', Record<string, never>>
+type UsageReportSystemJobData = BaseSystemJobData<'usage-report', Record<string, never>>
+
+type SystemJobData =
+    | HardDeleteProjectSystemJobData
+    | ProjectUsageReportSystemJobData
+    | UsageReportSystemJobData
 
 const useRedis = system.get(SystemProp.QUEUE_MODE) === QueueMode.REDIS
 
