@@ -306,7 +306,7 @@ class ActivepiecesEmbedded {
   private _removeTrailingSlashes(str: string) {
     return str.endsWith('/') ? str.slice(0, -1) : str;
   }
-
+ /**Adds a grace period before executing the method depending on the condition */
   private _addGracePeriodBeforeMethod( 
     { method, 
       condition,
