@@ -177,7 +177,7 @@ class ActivepiecesEmbedded {
       }
     );
     return iframe;
-  };
+  }
 
   private _createIframe({ src }: { src: string }) {
     const iframe = document.createElement('iframe');
