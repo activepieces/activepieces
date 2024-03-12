@@ -449,10 +449,9 @@ describe('Project API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
             const responseBody = response?.json()
-
-            expect(responseBody.id).toBe(mockProject.id)
-            expect(responseBody.displayName).toBe(request.displayName)
-            expect(responseBody.notifyStatus).toBe(request.notifyStatus)
+            expect(responseBody?.code).toBe('ENTITY_NOT_FOUND')
+            expect(responseBody?.params?.entityId).toBe(mockProject.id)
+            expect(responseBody?.params?.entityType).toBe('project')
         })
     })
 
