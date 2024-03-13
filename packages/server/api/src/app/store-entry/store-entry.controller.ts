@@ -1,7 +1,7 @@
 import { FastifyRequest } from 'fastify'
 import { storeEntryService } from './store-entry.service'
 import {
-    DeletStoreEntryRequest,
+    DeleteStoreEntryRequest,
     GetStoreEntryRequest,
     PrincipalType,
     PutStoreEntryRequest,
@@ -62,12 +62,12 @@ export const storeEntryController: FastifyPluginAsyncTypebox = async (
         '/',
         {
             schema: {
-                querystring: DeletStoreEntryRequest,
+                querystring: DeleteStoreEntryRequest,
             },
         },
         async (
             request: FastifyRequest<{
-                Querystring: DeletStoreEntryRequest
+                Querystring: DeleteStoreEntryRequest
             }>,
             reply,
         ) => {
