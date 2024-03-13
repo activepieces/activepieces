@@ -6,37 +6,24 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/community/odoo",
         "tsConfig": "packages/pieces/community/odoo/tsconfig.lib.json",
         "packageJson": "packages/pieces/community/odoo/package.json",
         "main": "packages/pieces/community/odoo/src/index.ts",
-        "assets": [
-          "packages/pieces/community/odoo/*.md"
-        ],
+        "assets": ["packages/pieces/community/odoo/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-odoo {args.ver} {args.tag}",
-      "dependsOn": [
-        "build"
-      ]
+      "dependsOn": ["build"]
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
-      "options": {
-        "lintFilePatterns": [
-          "packages/pieces/community/odoo/**/*.ts"
-        ]
-      }
+      "outputs": ["{options.outputFile}"]
     }
   },
   "tags": []

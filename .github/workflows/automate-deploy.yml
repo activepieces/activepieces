@@ -3,10 +3,11 @@ name: Automate Deploy
 on:
   workflow_dispatch:
   pull_request:
-      types: [closed]
-      branches:
-        - main
-  
+    types: [closed]
+    branches:
+      - main
+    merged: true
+
 jobs:
   Release:
     if: contains(github.event.pull_request.labels.*.name, 'auto-deploy') || github.event_name == 'workflow_dispatch'

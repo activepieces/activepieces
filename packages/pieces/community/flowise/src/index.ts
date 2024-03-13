@@ -78,11 +78,13 @@ export const flowisePredict = createAction({
 
 export const flowise = createPiece({
   displayName: 'Flowise',
+  description: 'No-Code AI workflow builder',
+
   logoUrl: 'https://cdn.activepieces.com/pieces/flowise.png',
   auth: flowiseAuth,
   minimumSupportedRelease: '0.9.0',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
-  authors: [],
+  authors: ["aasimsani","kishanprmr","MoShizzle","abuaboud"],
   actions: [
     flowisePredict,
     createCustomApiCallAction({

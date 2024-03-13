@@ -1,6 +1,9 @@
-
-import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework";
-import Odoo from "./commom/index";
+import {
+  createPiece,
+  PieceAuth,
+  Property,
+} from '@activepieces/pieces-framework';
+import Odoo from './commom/index';
 import actions from './lib/actions';
 
 export const odooAuth = PieceAuth.CustomAuth({
@@ -23,8 +26,8 @@ export const odooAuth = PieceAuth.CustomAuth({
     api_key: PieceAuth.SecretText({
       displayName: 'Odoo API Key',
       description: 'Enter the API Key',
-      required: true
-    })
+      required: true,
+    }),
   },
   // Optional Validation
   validate: async ({ auth }) => {
@@ -36,7 +39,7 @@ export const odooAuth = PieceAuth.CustomAuth({
       db: database,
       username: username,
       password: api_key,
-    })
+    });
 
     try {
       await odoo.connect();
@@ -52,15 +55,16 @@ export const odooAuth = PieceAuth.CustomAuth({
       };
     }
   },
-  required: true
-})
+  required: true,
+});
 
 export const odoo = createPiece({
-  displayName: "Odoo",
+  displayName: 'Odoo',
+  description: 'Open source all-in-one management software',
   auth: odooAuth,
   minimumSupportedRelease: '0.9.0',
-  logoUrl: "https://cdn.activepieces.com/pieces/odoo.png",
-  authors: ['MarioMeyer'],
+  logoUrl: 'https://cdn.activepieces.com/pieces/odoo.png',
+  authors: ["mariomeyer","kishanprmr","abuaboud"],
   actions,
   triggers: [],
 });

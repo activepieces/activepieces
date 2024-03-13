@@ -7,6 +7,14 @@ export enum ProjectOperationType {
     DELETE_FLOW = 'DELETE_FLOW',
 }
 
+export const GitProjectMappingState = Type.Object({
+    flows: Type.Record(Type.String(), Type.Object({
+        sourceId: Type.String(),
+    })),
+})
+
+export type GitProjectMappingState = Static<typeof GitProjectMappingState>
+
 export const GitRepo = Type.Object({
     ...BaseModelSchema,
     remoteUrl: Type.String(),
@@ -14,6 +22,7 @@ export const GitRepo = Type.Object({
     projectId: Type.String(),
     sshPrivateKey: Type.String(),
     slug: Type.String(),
+    mapping: Type.Optional(GitProjectMappingState),
 })
 
 export type GitRepo = Static<typeof GitRepo>

@@ -33,10 +33,12 @@ export const invoiceninjaAuth = PieceAuth.CustomAuth({
 
 export const invoiceninja = createPiece({
   displayName: 'Invoice Ninja',
+  description: 'Free open-source invoicing tool',
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/invoiceninja.png',
   categories: [PieceCategory.ACCOUNTING],
-  authors: ['buttonsbond'],
+  authors: ["buttonsbond","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   auth: invoiceninjaAuth,
   actions: [
     createTask,

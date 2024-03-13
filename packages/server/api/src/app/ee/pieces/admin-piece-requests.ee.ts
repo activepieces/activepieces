@@ -39,6 +39,7 @@ export const CreatePieceRequest = {
             description: Type.Optional(Type.String()),
             version: ExactVersionType,
             auth: Type.Optional(Type.Any()),
+            authors: Type.Array(Type.String()),
             categories: Type.Optional(Type.Array(Type.Enum(PieceCategory))),
             minimumSupportedRelease: ExactVersionType,
             maximumSupportedRelease: ExactVersionType,

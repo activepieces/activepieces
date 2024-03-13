@@ -20,10 +20,13 @@ export const stabilityAiAuth = PieceAuth.CustomAuth({
 
 export const stabilityAi = createPiece({
   displayName: 'Stability AI',
+  description:
+    'Generative AI video model based on the image model Stable Diffusion.',
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/stability-ai.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
-  authors: ['Willianwg', 'AbdulTheActivepiecer'],
+  authors: ["Willianwg","camilou","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   auth: stabilityAiAuth,
   actions: [
     textToImage,

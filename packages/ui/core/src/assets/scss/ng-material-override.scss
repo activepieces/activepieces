@@ -1,6 +1,5 @@
 @use "@angular/material" as mat;
 @use "material-theme-helper.scss";
-@import "@angular/material/theming";
 @include mat.core();
 $ap-typography: mat.define-typography-config(
   $font-family: $font-family,
@@ -758,4 +757,7 @@ app-platform-settings {
 app-templates-dialog
 {
   mat-tab-header{ display: none !important; }
+}
+.ap-opacity-100 * {
+  opacity: 1 !important;
 }

@@ -1,0 +1,63 @@
+---
+title: "Embed Builder"
+description: ""
+---
+
+To embed Activepieces within your own web app, follow these steps:
+
+
+
+## Step 1: Generate a JWT token
+
+Follow the instructions in the [generate jwt](./generate-jwt) page
+
+## Step 2: Configure SDK
+
+Adding the embedding sdk script will initialize an object in your window `activepieces`, it has a method `configure`, which you should call after the container has been rendered.
+<Tip>
+The following scripts shouldn't contain async or defer attributes.
+</Tip>
+
+```html
+<script src="https://cdn.activepieces.com/sdk/embed/0.2.1.js">
+</script>
+<script>
+activepieces.configure(
+ {
+    prefix: "/";
+    instanceUrl:"http://your-instance-url.com",
+    jwtToken:"GENERATED_JWT_TOKEN",
+    embedding: {
+      containerId: "container",
+      builder:{
+        disableNavigation:false
+      },
+      dashboard: {
+        hideSidebar:true
+      },
+      hideFolders:true
+    },   
+ }
+)
+</script>
+```
+
+
+
+**Configure Parameters:**
+
+| Parameter Name |  Required |  Type | Description |
+| --- | --- | --- | --- |
+| containerId | ❌ | string | The html element's id that is going to be containing Activepieces's iframe. |
+| jwtToken | ✅  |  string | The jwt token you generated to authenticate your users to Activepieces. |
+| instanceUrl| ✅ |  string | The url of the instance hosting Activepieces, could be https://cloud.activepieces.com if you are a cloud user. |
+| prefix | ❌ | string | Some customers have an embedding prefix, like this `<embedding_url_prefix>/<Activepieces_url>`. For example if the prefix is `/automations` and the Activepieces url is `/flows` the full url would be `/automations/flows`. |
+| hideSidebar | ❌ | boolean | Controls the visibility of the sidebar in the dashboard, by default it is false. |
+| disableNavigation | ❌ |  boolean | Hides the folder name and back button in the builder, by default it is false. |
+| hideFolders | ❌ | boolean | Hides all things related to folders in both the flows table and builder by default it is false. |
+
+<Info>
+The way navigation works is that the iframe loading Activepieces, will read the browser URL, remove the `prefix`, and use what's left of the route to navigate within Activepieces.
+
+For example, if you set `automation` as the prefix and visit `/automation/connections`, SDK will open `/connections` in Activepieces.
+</Info>

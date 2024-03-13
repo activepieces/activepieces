@@ -1,11 +1,11 @@
 {
   "name": "@activepieces/ee-embed-sdk",
-  "version": "0.0.1",
+  "version": "0.2.1",
   "type": "commonjs",
   "main": "./src/index.js",
   "typings": "./src/index.d.ts",
   "dependencies": {
-    "@nx/webpack": "17.0.2",
+    "@nx/webpack": "18.0.7",
     "tslib": "2.6.2"
   }
 }

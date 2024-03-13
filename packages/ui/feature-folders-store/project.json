@@ -24,14 +24,7 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"],
-      "options": {
-        "lintFilePatterns": [
-          "packages/ui/feature-folders-store/**/*.ts",
-          "packages/ui/feature-folders-store/**/*.html",
-          "packages/ui/feature-folders-store/package.json"
-        ]
-      }
+      "outputs": ["{options.outputFile}"]
     }
   }
 }

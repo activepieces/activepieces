@@ -6,37 +6,24 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/community/whatsable",
         "tsConfig": "packages/pieces/community/whatsable/tsconfig.lib.json",
         "packageJson": "packages/pieces/community/whatsable/package.json",
         "main": "packages/pieces/community/whatsable/src/index.ts",
-        "assets": [
-          "packages/pieces/community/whatsable/*.md"
-        ],
+        "assets": ["packages/pieces/community/whatsable/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-whatsable {args.ver} {args.tag}",
-      "dependsOn": [
-        "build"
-      ]
+      "dependsOn": ["build"]
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
-      "options": {
-        "lintFilePatterns": [
-          "packages/pieces/community/whatsable/**/*.ts"
-        ]
-      }
+      "outputs": ["{options.outputFile}"]
     }
   },
   "tags": []

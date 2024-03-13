@@ -187,10 +187,11 @@ export const amazonS3Auth = PieceAuth.CustomAuth({
 
 export const amazonS3 = createPiece({
   displayName: 'Amazon S3',
+  description: 'Scalable storage in the cloud',
 
   logoUrl: 'https://cdn.activepieces.com/pieces/amazon-s3.png',
   minimumSupportedRelease: '0.5.0',
-  authors: ['Willianwg', 'MoShizzle'],
+  authors: ["Willianwg","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   categories: [PieceCategory.DEVELOPER_TOOLS],
   auth: amazonS3Auth,
   actions: [amazons3UploadFile, readFile],

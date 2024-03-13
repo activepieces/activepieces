@@ -14,7 +14,7 @@ export const engineInstaller = {
         logger.debug({ path }, '[engineInstaller#install]')
 
         await copyFile(engineExecutablePath, `${path}/main.js`)
-        await copyFile(`${engineExecutablePath}.map`, `${path}/main.js.map`)
+await copyFile(`${engineExecutablePath}.map`, `${path}/main.js.map`)
     },
 }
 

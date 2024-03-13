@@ -100,6 +100,7 @@ export type PropertyContext = {
     id: ProjectId;
     externalId: () => Promise<string | undefined>;
   };
+  searchValue?: string;
 };
 
 export type ServerContext = {

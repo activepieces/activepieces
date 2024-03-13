@@ -15,7 +15,8 @@ export enum SuggestionType {
 }
 export enum PieceSortBy {
     NAME = 'NAME',
-    DATE = 'DATE',
+    UPDATED = 'UPDATED',
+    CREATED = 'CREATED',
 }
 
 export enum PieceOrderBy {
@@ -67,6 +68,7 @@ export const PieceOptionRequest = Type.Object({
     flowId: Type.String(),
     flowVersionId: Type.String(),
     input: Type.Any({}),
+    searchValue: Type.Optional(Type.String()),
 })
 
 export type PieceOptionRequest = Static<typeof PieceOptionRequest>

@@ -265,7 +265,9 @@ Property.Dropdown({
     description: 'Select an option',
     required: true,
     refreshers: ['auth'],
-    options: async ({auth}) => {
+    refreshOnSearch: false,
+    options: async ({auth}, {searchValue}) => {
+        // Search value only works when refreshOnSearch is true
         if (!auth) {
             return {
                 disabled: true

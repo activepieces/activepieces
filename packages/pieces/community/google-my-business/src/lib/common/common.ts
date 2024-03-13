@@ -66,6 +66,7 @@ export const googleBussinessCommon = {
       }>({
         url: `https://mybusinessbusinessinformation.googleapis.com/v1/${account}/locations`,
         queryParams: {
+          pageSize: '100',
           read_mask: 'title,name',
         },
         method: HttpMethod.GET,

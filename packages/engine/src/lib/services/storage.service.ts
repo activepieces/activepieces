@@ -19,7 +19,8 @@ export const createStorageService = ({ workerToken }: { workerToken: string }) =
                 return null
             }
 
-            throw new Error('Failed to fetch store entry')
+            const body = await response.text()
+            throw new Error('Failed to fetch store entry ' + response.status + ' ' + body)
         },
         async put(request: PutStoreEntryRequest): Promise<StoreEntry | null> {
             const response = await fetch(`${EngineConstants.API_URL}v1/store-entries`, {

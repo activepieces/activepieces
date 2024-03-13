@@ -14,7 +14,7 @@ export const schedule = createPiece({
   categories: [PieceCategory.CORE],
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.5.0',
-  authors: ['abuaboud', 'AbdulTheActivePiecer'],
+  authors: ["kishanprmr","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   actions: [],
   triggers: [
     everyXMinutesTrigger,

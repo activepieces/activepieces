@@ -8,7 +8,7 @@ export const webhook = createPiece({
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.20.3',
   logoUrl: "https://cdn.activepieces.com/pieces/webhook.svg",
-  authors: [],
+  authors: ["abuaboud"],
   actions: [],
   triggers: [catchRequest],
 });

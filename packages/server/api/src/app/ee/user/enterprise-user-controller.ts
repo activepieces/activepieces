@@ -14,9 +14,7 @@ import { enterpriseUserService } from './enterprise-user-service'
 import { StatusCodes } from 'http-status-codes'
 import { UpdateUserRequestBody } from '@activepieces/ee-shared'
 
-export const enterpriseUserController: FastifyPluginAsyncTypebox = async (
-    app,
-) => {
+export const enterpriseUserController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListUsersRequest, async (req) => {
         const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
@@ -35,6 +33,18 @@ export const enterpriseUserController: FastifyPluginAsyncTypebox = async (
             platformId,
             status: req.body.status,
         })
+    })
+
+    app.delete('/:id', DeleteUserRequest, async (req, res) => {
+        const platformId = req.principal.platform.id
+        assertNotNullOrUndefined(platformId, 'platformId')
+
+        await enterpriseUserService.delete({
+            id: req.params.id,
+            platformId,
+        })
+
+        return res.status(StatusCodes.NO_CONTENT).send()
     })
 }
 
@@ -59,6 +69,18 @@ const UpdateUserRequest = {
         response: {
             [StatusCodes.OK]: UserResponse,
         },
+    },
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        scope: EndpointScope.PLATFORM,
+    },
+}
+
+const DeleteUserRequest = {
+    schema: {
+        params: Type.Object({
+            id: ApId,
+        }),
     },
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],

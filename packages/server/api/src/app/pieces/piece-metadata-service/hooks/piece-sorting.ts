@@ -23,8 +23,11 @@ const sortPieces = (
         case PieceSortBy.NAME: {
             return sortByName(pieces)
         }
-        case PieceSortBy.DATE: {
-            return sortByDate(pieces)
+        case PieceSortBy.UPDATED: {
+            return sortByUpdated(pieces)
+        }
+        case PieceSortBy.CREATED: {
+            return sortByCreated(pieces)
         }
     }
 }
@@ -44,8 +47,14 @@ const sortByName = (pieces: PieceMetadataSchema[]): PieceMetadataSchema[] => {
     )
 }
 
-const sortByDate = (pieces: PieceMetadataSchema[]): PieceMetadataSchema[] => {
+const sortByCreated = (pieces: PieceMetadataSchema[]): PieceMetadataSchema[] => {
     return pieces.sort(
         (a, b) => dayjs(a.created).unix() - dayjs(b.created).unix(),
+    )
+}
+
+const sortByUpdated = (pieces: PieceMetadataSchema[]): PieceMetadataSchema[] => {
+    return pieces.sort(
+        (a, b) => dayjs(a.updated).unix() - dayjs(b.updated).unix(),
     )
 }

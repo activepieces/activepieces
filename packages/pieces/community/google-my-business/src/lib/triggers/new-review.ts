@@ -8,7 +8,6 @@ import {
 import {
   createTrigger,
   OAuth2PropertyValue,
-  PieceAuth,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
