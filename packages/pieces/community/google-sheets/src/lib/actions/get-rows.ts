@@ -14,7 +14,7 @@ import {
 import { isNil } from '@activepieces/shared';
 
 async function getRows(
-  store: Store,
+  store: Store<StoreScope>,
   accessToken: string,
   spreadsheetId: string,
   sheetId: number,
