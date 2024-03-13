@@ -20,17 +20,66 @@ import {
 	ListPipelineStagesResponse,
 	ListPropertiesResponse,
 	PropertyResponse,
+	SearchDealsResponse,
 } from '../common/models';
 
-export const createDealAction = createAction({
+export const updateDealAction = createAction({
 	auth: hubspotAuth,
-	name: 'create_deal',
-	displayName: 'Create Deal',
-	description: 'Creates a new deal in hubspot.',
+	name: 'update_deal',
+	displayName: 'Update Deal',
+	description: 'Updates an existing deal in hubspot.',
 	props: {
+		dealId: Property.Dropdown({
+			displayName: 'Deal ID',
+			refreshers: [],
+			required: true,
+			options: async ({ auth }) => {
+				if (!auth) {
+					return {
+						disabled: true,
+						placeholder: 'Please connect your account first.',
+						options: [],
+					};
+				}
+				const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
+				const deals: { label: string; value: string }[] = [];
+				let after;
+				do {
+					const request: HttpRequest = {
+						method: HttpMethod.GET,
+						url: 'https://api.hubapi.com/crm/v3/objects/deals',
+						authentication: {
+							type: AuthenticationType.BEARER_TOKEN,
+							token: authValue.access_token,
+						},
+						queryParams: after
+							? {
+									limit: '100',
+									after: after,
+							  }
+							: { limit: '100' },
+					};
+					const response = await httpClient.sendRequest<SearchDealsResponse>(request);
+					deals.push(
+						...response.body.results.map((deal) => {
+							return {
+								label: deal.properties['dealname'],
+								value: deal.id,
+							};
+						}),
+					);
+					after = response.body.paging?.next.after;
+				} while (after !== undefined);
+
+				return {
+					disabled: false,
+					options: deals,
+				};
+			},
+		}),
 		dealname: Property.ShortText({
 			displayName: 'Deal Name',
-			required: true,
+			required: false,
 		}),
 		pipelineId: Property.Dropdown({
 			displayName: 'Deal Pipeline',
@@ -229,6 +278,7 @@ export const createDealAction = createAction({
 		}),
 	},
 	async run(context) {
+		const dealId = context.propsValue.dealId;
 		const additionalFields = context.propsValue.additionalFields;
 		const properties: DynamicPropsValue = {};
 		Object.entries(additionalFields).forEach(([key, value]) => {
@@ -239,8 +289,8 @@ export const createDealAction = createAction({
 			}
 		});
 		const request: HttpRequest = {
-			method: HttpMethod.POST,
-			url: 'https://api.hubapi.com/crm/v3/objects/deals',
+			method: HttpMethod.PATCH,
+			url: `https://api.hubapi.com/crm/v3/objects/deals/${dealId}`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
 				token: context.auth.access_token,

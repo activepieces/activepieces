@@ -104,11 +104,30 @@ export type DealPipelineResponse = {
 export type ListDealPipelinesResponse = {
 	results: Array<DealPipelineResponse>;
 };
-
+export type ListPipelineStagesResponse = {
+	results: Array<DealStageResponse>;
+};
 export type ListOwnersResponse = {
 	results: Array<OwnerResponse>;
 };
 
 export type ListPropertiesResponse = {
 	results: Array<PropertyResponse>;
+};
+
+export type SearchDealsResponse = {
+	total: number;
+	results: Array<{
+		id: string;
+		createdAt: string;
+		updatedAt: string;
+		archived: boolean;
+		properties: Record<string, any>;
+	}>;
+	paging?: {
+		next: {
+			link: string;
+			after: string;
+		};
+	};
 };
