@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, UntypedFormControl } from '@angular/forms';
 import {
+  PropertyType,
   StaticDropdownProperty,
   StaticMultiSelectDropdownProperty,
 } from '@activepieces/pieces-framework';
@@ -30,6 +31,7 @@ export class StaticDropdownControlComponent {
     | StaticDropdownProperty<unknown, boolean>
     | StaticMultiSelectDropdownProperty<unknown, boolean>;
   searchControl = new FormControl('', { nonNullable: true });
+  readonly PropertyType = PropertyType;
   dropdownCompareWithFunction(opt: unknown, formControlValue: string) {
     return formControlValue !== undefined && deepEqual(opt, formControlValue);
   }
