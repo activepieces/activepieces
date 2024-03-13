@@ -42,10 +42,4 @@ export class ActionOrTriggerDropdownComponent {
     })
   );
   readonly TriggerStrategy = TriggerStrategy;
-  dropdownCompareFn(
-    item: ActionBase | TriggerBase,
-    selected: string | undefined
-  ) {
-    return item.name === selected;
-  }
 }

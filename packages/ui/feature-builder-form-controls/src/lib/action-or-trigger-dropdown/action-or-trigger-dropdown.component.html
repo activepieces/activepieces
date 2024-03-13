@@ -1,7 +1,7 @@
 <mat-form-field class="ap-w-full" appearance="outline">
     <mat-label i18n> Trigger </mat-label>
     <mat-select placeholder="Select a Trigger" i18n-placeholder [formControl]="dropdownFormControl"
-      [compareWith]="dropdownCompareFn">
+      >
       @for(opt of items; track opt.name) {
         <mat-option *ngFor="let opt of items" [value]="opt.name">
           <div class="ap-flex ap-items-center ap-gap-[2px]">
