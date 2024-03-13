@@ -6,7 +6,6 @@ import {
     flowHelper,
     FlowVersionId,
     ProjectId,
-    UserId,
 } from '@activepieces/shared'
 import { engineHelper } from '../../helper/engine-helper'
 import { flowVersionService } from '../flow-version/flow-version.service'
@@ -17,7 +16,7 @@ export const stepRunService = {
         projectId,
         flowVersionId,
         stepName,
-    }: CreateParams): Promise<StepRunResponse> {
+    }: CreateParams): Promise<Omit<StepRunResponse, 'id'>> {
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
         const step = flowHelper.getStep(flowVersion, stepName)
 
@@ -48,7 +47,6 @@ export const stepRunService = {
 }
 
 type CreateParams = {
-    userId: UserId
     projectId: ProjectId
     flowVersionId: FlowVersionId
     stepName: string
