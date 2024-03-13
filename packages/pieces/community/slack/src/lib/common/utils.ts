@@ -13,6 +13,7 @@ export const slackSendMessage = async ({
   username,
   profilePicture,
   blocks,
+  threadTs,
   token,
   file,
 }: SlackSendMessageParams) => {
@@ -24,6 +25,7 @@ export const slackSendMessage = async ({
     formData.append('file', new Blob([file.data]));
     formData.append('channels', conversationId);
     formData.append('initial_comment', text);
+    if (threadTs) formData.append('thread_ts', threadTs);
 
     request = {
       url: `https://slack.com/api/files.upload`,
@@ -47,6 +49,7 @@ export const slackSendMessage = async ({
     if (username) body['username'] = username;
     if (profilePicture) body['icon_url'] = profilePicture;
     if (blocks) body['blocks'] = blocks;
+    if (threadTs) body['thread_ts'] = threadTs;
 
     request = {
       method: HttpMethod.POST,
@@ -80,4 +83,5 @@ type SlackSendMessageParams = {
   blocks?: unknown[] | Record<string, any>;
   text: string;
   file?: ApFile;
+  threadTs?: string;
 };
