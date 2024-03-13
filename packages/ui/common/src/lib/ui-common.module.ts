@@ -73,6 +73,7 @@ import { ImportFlowDialogComponent } from './components/dialogs/import-flow-dial
 import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { LetterIconComponent } from './components/letter-icon/letter-icon.component';
 import { MatListModule } from '@angular/material/list';
+import { MatPseudoCheckboxModule } from '@angular/material/core';
 
 const exportedImports = [
   CommonModule,
@@ -102,6 +103,7 @@ const exportedImports = [
   ScrollingModule,
   MonacoEditorModule,
   MatListModule,
+  MatPseudoCheckboxModule,
 ];
 const exportedDeclarations = [
   UploadFileControlComponent,
