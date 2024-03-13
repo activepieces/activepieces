@@ -33,6 +33,7 @@
         "@typescript-eslint/key-spacing": "error",
         "@typescript-eslint/object-curly-spacing": ["error", "always"],
         "@typescript-eslint/space-before-blocks": "error",
+        "@typescript-eslint/no-non-null-assertion": "warn",
         "@typescript-eslint/member-delimiter-style": [
           "error",
           {

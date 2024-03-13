@@ -1,8 +1,10 @@
 import { isNil, isString } from './utils'
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function deleteProperties(obj: Record<string, unknown>, props: string[]) {
     const copy = { ...obj }
     for (const prop of props) {
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
         delete copy[prop]
     }
     return copy
@@ -24,6 +26,7 @@ export function deleteProps<T extends Record<string, unknown>, K extends keyof T
 ): Omit<T, K> {
     const newObj = { ...obj }
     for (const p of prop) {
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
         delete newObj[p]
     }
     return newObj

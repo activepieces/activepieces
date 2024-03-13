@@ -24,9 +24,11 @@ function setApInWindow() {
   window.ap = apSdk;
 }
 
+// eslint-disable-next-line no-undef
 ap = {};
 const methodNames = ['init', 'connect', 'disconnect', 'isConnected'];
 for (const method of methodNames) {
+  // eslint-disable-next-line no-undef
   ap[method] = (...args) => {
     return new Promise((resolve, reject) => {
       loadSdkPromise.then(

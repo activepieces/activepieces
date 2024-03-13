@@ -17,7 +17,8 @@
         "webpackConfig": "packages/engine/webpack.config.js",
         "isolatedConfig": true,
         "babelUpwardRootMode": true,
-        "statsJson": false
+        "statsJson": false,
+        "sourceMap": true
       },
       "configurations": {
         "production": {
@@ -54,7 +55,6 @@
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
         "jestConfig": "packages/engine/jest.config.ts",
-        "passWithNoTests": true,
         "silent": true
       }
     }
