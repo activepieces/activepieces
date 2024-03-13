@@ -23,14 +23,20 @@ export class FlowExecutorContext {
     tags: readonly string[]
     steps: Readonly<Record<string, StepOutput>>
     currentState: Record<string, unknown>
-    /**
-     * Execution duration in milliseconds
-     */
-    duration: number
     pauseRequestId: string
     verdict: ExecutionVerdict
     verdictResponse: VerdictResponse | undefined
     currentPath: StepExecutionPath
+
+    /**
+     * Execution time in milliseconds
+     */
+    duration: number
+
+    /**
+     * Indicates whether flow run can be retried when execution fails
+     */
+    retryable?: boolean
 
     constructor(copyFrom?: FlowExecutorContext) {
         this.tasks = copyFrom?.tasks ?? 0
@@ -42,12 +48,13 @@ export class FlowExecutorContext {
         this.verdict = copyFrom?.verdict ?? ExecutionVerdict.RUNNING
         this.verdictResponse = copyFrom?.verdictResponse ?? undefined
         this.currentPath = copyFrom?.currentPath ?? StepExecutionPath.empty()
+        this.retryable = copyFrom?.retryable
     }
-
 
     static empty(): FlowExecutorContext {
         return new FlowExecutorContext()
     }
+
     public setPauseRequestId(pauseRequestId: string): FlowExecutorContext {
         return new FlowExecutorContext({
             ...this,
@@ -157,11 +164,18 @@ export class FlowExecutorContext {
         })
     }
 
-    public setVerdict(verdict: ExecutionVerdict, response: VerdictResponse | undefined): FlowExecutorContext {
+    public setVerdict(verdict: ExecutionVerdict, response?: VerdictResponse): FlowExecutorContext {
         return new FlowExecutorContext({
             ...this,
             verdict,
             verdictResponse: response,
+        })
+    }
+
+    public setRetryable(retryable: boolean): FlowExecutorContext {
+        return new FlowExecutorContext({
+            ...this,
+            retryable,
         })
     }
 

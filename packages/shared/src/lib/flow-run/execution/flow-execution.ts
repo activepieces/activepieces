@@ -43,7 +43,7 @@ export const StopResponse = Type.Object({
 
 export type StopResponse = Static<typeof StopResponse>
 
-const BaseExecutiionResponse = {
+const BaseExecutionResponse = {
     ...ExecutionState,
     duration: Type.Number(),
     tasks: Type.Number(),
@@ -53,24 +53,29 @@ const BaseExecutiionResponse = {
         message: Type.String(),
     })),
     stopResponse: Type.Optional(StopResponse),
+
+    /**
+     * Indicates whether flow run can be retried when execution fails
+     */
+    retryable: Type.Optional(Type.Boolean()),
 }
 
 export const FlowRunResponse = Type.Union([
     Type.Object({
+        ...BaseExecutionResponse,
         status: Type.Literal(FlowRunStatus.PAUSED),
-        ...BaseExecutiionResponse,
         pauseMetadata: Type.Optional(PauseMetadata),
     }),
     Type.Object({
-        status: Type.Union([Type.Literal(FlowRunStatus.FAILED), 
-            Type.Literal(FlowRunStatus.SUCCEEDED), 
+        ...BaseExecutionResponse,
+        status: Type.Union([Type.Literal(FlowRunStatus.FAILED),
+            Type.Literal(FlowRunStatus.SUCCEEDED),
             Type.Literal(FlowRunStatus.RUNNING),
             Type.Literal(FlowRunStatus.QUOTA_EXCEEDED),
             Type.Literal(FlowRunStatus.TIMEOUT),
             Type.Literal(FlowRunStatus.INTERNAL_ERROR),
             Type.Literal(FlowRunStatus.STOPPED),
         ]),
-        ...BaseExecutiionResponse,
     }),
 ])
 export type FlowRunResponse = Static<typeof FlowRunResponse> & ExecutionState
