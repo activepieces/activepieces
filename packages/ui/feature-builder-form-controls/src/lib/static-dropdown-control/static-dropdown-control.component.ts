@@ -1,0 +1,36 @@
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormControl, UntypedFormControl } from '@angular/forms';
+import {
+  StaticDropdownProperty,
+  StaticMultiSelectDropdownProperty,
+} from '@activepieces/pieces-framework';
+import { UiCommonModule } from '@activepieces/ui/common';
+import { DynamicInputToggleComponent } from '../dynamic-input-toggle/dynamic-input-toggle.component';
+import deepEqual from 'deep-equal';
+import { DropdownSearchControlComponent } from '../dropdown-search-control/dropdown-search-control.component';
+import { DropdownSelectedValuesPipe } from '../pipes/dropdown-selected-values.pipe';
+
+@Component({
+  selector: 'app-static-dropdown-control',
+  standalone: true,
+  imports: [
+    CommonModule,
+    UiCommonModule,
+    DynamicInputToggleComponent,
+    DropdownSearchControlComponent,
+    DropdownSelectedValuesPipe,
+  ],
+  templateUrl: './static-dropdown-control.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class StaticDropdownControlComponent {
+  @Input({ required: true }) formControl: UntypedFormControl;
+  @Input({ required: true }) property:
+    | StaticDropdownProperty<unknown, boolean>
+    | StaticMultiSelectDropdownProperty<unknown, boolean>;
+  searchControl = new FormControl('', { nonNullable: true });
+  dropdownCompareWithFunction(opt: unknown, formControlValue: string) {
+    return formControlValue !== undefined && deepEqual(opt, formControlValue);
+  }
+}
