@@ -185,6 +185,7 @@ export class FlowExecutorContext {
             tasks: this.tasks,
             tags: [...this.tags],
             steps: await loggingUtils.trimExecution(this.steps),
+            retryable: this.retryable,
         }
         switch (this.verdict) {
             case ExecutionVerdict.FAILED:
