@@ -3,7 +3,8 @@ import { logger } from 'server-shared'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowResponseWatcher } from '../flows/flow-run/flow-response-watcher'
 import { stepRunService } from '../flows/step-run/step-run-service'
-import { StepRunResponse } from '@activepieces/shared'
+import { CreateStepRunRequestBody, StepRunResponse, TestFlowRunRequestBody } from '@activepieces/shared'
+import { accessTokenManager } from '../authentication/lib/access-token-manager'
 
 export const websocketService = {
     init(socket: Socket): void {
@@ -11,10 +12,10 @@ export const websocketService = {
     },
 
     registerEventListeners(socket: Socket): void {
-        socket.on('testFlowRun', async (data) => {
-            logger.debug({ data }, '[Socket#testFlowRun]')
+        socket.on('testFlowRun', async (data: TestFlowRunRequestBody) => {
+            const principal = await accessTokenManager.extractPrincipal(socket.handshake.auth.token)
             const flowRun = await flowRunService.test({
-                projectId: data.projectId,
+                projectId: principal.projectId,
                 flowVersionId: data.flowVersionId,
             })
             socket.emit('flowRunStarted', flowRun)
@@ -22,22 +23,23 @@ export const websocketService = {
             await flowResponseWatcher.listen(flowRun.id, false)
             socket.emit('flowRunFinished', flowRun)
         })
-        
-        socket.on("testStepRun", async (data) => {
-            logger.debug({ data }, "[Socket#testStepRun]");
+
+        socket.on('testStepRun', async (data: CreateStepRunRequestBody) => {
+            const principal = await accessTokenManager.extractPrincipal(socket.handshake.auth.token)
+            logger.debug({ data }, '[Socket#testStepRun]')
             const stepRun = await stepRunService.create({
-                projectId: data.projectId,
+                projectId: principal.projectId,
                 flowVersionId: data.flowVersionId,
                 stepName: data.stepName,
-            });
+            })
             const response: StepRunResponse = {
                 id: data.id,
                 success: stepRun.success,
                 output: stepRun.output,
                 standardError: stepRun.standardError,
                 standardOutput: stepRun.standardOutput,
-            };
-            socket.emit("stepRunFinished", response);
+            }
+            socket.emit('stepRunFinished', response)
         })
     },
 }

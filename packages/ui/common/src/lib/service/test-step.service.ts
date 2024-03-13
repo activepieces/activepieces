@@ -1,7 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Subject, filter, take } from 'rxjs';
-import { StepRunResponse, SeekPage, TriggerEvent, CreateStepRunRequestBody, apId } from '@activepieces/shared';
+import {
+  StepRunResponse,
+  SeekPage,
+  TriggerEvent,
+  CreateStepRunRequestBody,
+  apId,
+} from '@activepieces/shared';
 import { environment } from '../environments/environment';
 import { WebSocketService } from './websocket.service';
 
@@ -13,7 +19,10 @@ export class TestStepService {
   testingStepSectionIsRendered$: BehaviorSubject<boolean> = new BehaviorSubject(
     false
   );
-  constructor(private http: HttpClient, private websocketService: WebSocketService) { }
+  constructor(
+    private http: HttpClient,
+    private websocketService: WebSocketService
+  ) {}
   getTriggerEventsResults(flowId: string) {
     return this.http.get<SeekPage<TriggerEvent>>(
       environment.apiUrl + '/trigger-events',
@@ -45,10 +54,13 @@ export class TestStepService {
     this.websocketService.socket.emit('testStepRun', {
       ...req,
       id,
-    })
-    return this.websocketService.socket.fromEvent<StepRunResponse>('stepRunFinished').pipe(
-      filter((response) => response.id === id),
-      take(1));
+    });
+    return this.websocketService.socket
+      .fromEvent<StepRunResponse>('stepRunFinished')
+      .pipe(
+        filter((response) => response.id === id),
+        take(1)
+      );
   }
 
   startPieceWebhookSimulation(flowId: string) {
