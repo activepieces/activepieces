@@ -11,6 +11,8 @@ import { newDealAdded } from './lib/triggers/new-deal-added';
 import { newTaskAdded } from './lib/triggers/new-task-added';
 import { newTicketAdded } from './lib/triggers/new-ticket-added';
 import { createDealAction } from './lib/actions/create-deal';
+import { updateDealAction } from './lib/actions/update-deal';
+import { dealStageUpdatedTrigger } from './lib/triggers/deal-stage-updated';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -27,8 +29,6 @@ export const hubspotAuth = PieceAuth.OAuth2({
 		'crm.objects.deals.read',
 		'crm.objects.deals.write',
 		'tickets',
-		'crm.schemas.deals.read',
-		'crm.schemas.deals.write',
 	],
 });
 
@@ -47,6 +47,7 @@ export const hubspot = createPiece({
 		hubSpotListsAddContactAction,
 		hubSpotGetOwnerByEmailAction,
 		createDealAction,
+		updateDealAction,
 		createCustomApiCallAction({
 			baseUrl: () => 'https://api.hubapi.com',
 			auth: hubspotAuth,
@@ -55,5 +56,12 @@ export const hubspot = createPiece({
 			}),
 		}),
 	],
-	triggers: [newTaskAdded, newCompanyAdded, newContactAdded, newDealAdded, newTicketAdded],
+	triggers: [
+		newTaskAdded,
+		newCompanyAdded,
+		newContactAdded,
+		newDealAdded,
+		newTicketAdded,
+		dealStageUpdatedTrigger,
+	],
 });
