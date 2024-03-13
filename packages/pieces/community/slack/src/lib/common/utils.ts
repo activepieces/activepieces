@@ -64,6 +64,10 @@ export const slackSendMessage = async ({
     response = await httpClient.sendRequest(request);
   }
 
+  if (!response.body.ok) {
+      throw new Error(response.body.error);
+  }
+
   return {
     success: true,
     request_body: request.body,

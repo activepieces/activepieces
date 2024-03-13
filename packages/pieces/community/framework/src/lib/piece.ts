@@ -25,7 +25,7 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
     public readonly auth?: PieceAuth,
     public readonly minimumSupportedRelease?: string,
     public readonly maximumSupportedRelease?: string,
-    public readonly description: string = '',
+    public readonly description = '',
   ) {
     actions.forEach((action) => (this._actions[action.name] = action));
     triggers.forEach((trigger) => (this._triggers[trigger.name] = trigger));

@@ -6,7 +6,7 @@
       <ng-container *ngTemplateOutlet="btnContent"></ng-container>
     </button>
     <button [class]="btnSizeClass" [type]="type" [class.ap-w-full]="fullWidthOfContainer" *ngSwitchCase="'basic'"
-      [class.inside-hover-item]="buttonIsInsideAutocomplete" mat-button [color]="btnColor"
+      disableRipple="true" [class.inside-hover-item]="buttonIsInsideAutocomplete" mat-button [color]="btnColor"
       [disabled]="disabled ? true : false" (click)="click()" [tabIndex]="buttonIsInsideAutocomplete? -1 : 0">
       <ng-container *ngTemplateOutlet="btnContent"></ng-container>
     </button>
@@ -16,7 +16,7 @@
       <ng-container *ngTemplateOutlet="btnContent"></ng-container>
     </button>
     <button [type]="type" [class]="btnSizeClass" [class.ap-w-full]="fullWidthOfContainer" *ngSwitchCase="'stroked'"
-      mat-stroked-button [color]="btnColor" [disabled]="disabled ? true : false" (click)="click()"
+      disableRipple="true" mat-stroked-button [color]="btnColor" [disabled]="disabled ? true : false" (click)="click()"
       [tabIndex]="buttonIsInsideAutocomplete? -1 : 0">
       <ng-container *ngTemplateOutlet="btnContent"></ng-container>
     </button>

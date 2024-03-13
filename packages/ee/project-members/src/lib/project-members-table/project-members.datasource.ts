@@ -33,7 +33,7 @@ export class ProjectMembersTableDataSource extends DataSource<ProjectMember> {
     private authenticationService: AuthenticationService,
     private projectMemberService: ProjectMemberService,
     private refresh$: Observable<boolean>,
-    private fakeData: boolean = false,
+    private fakeData = false,
     private paginator: ApPaginatorComponent,
     private queryParams$: Observable<Params>
   ) {

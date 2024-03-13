@@ -17,7 +17,7 @@ export const slackSendMessageAction = createAction({
     channel: slackChannel,
     threadTs: Property.ShortText({
       displayName: 'Thread ts',
-      description: 'Provide another message\'s ts value to make this message a reply. Avoid using a reply\'s ts value; use its parent instead.',
+      description: 'Provide the ts (timestamp) value of the **parent** message to make this message a reply. Do not use the ts value of the reply itself; use its parent instead. For example `1710304378.475129`.',
       required: false,
     }),
     text: Property.LongText({

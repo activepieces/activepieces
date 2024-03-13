@@ -25,17 +25,13 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"],
-      "options": {
-        "lintFilePatterns": ["packages/pieces/community/framework/**/*.ts"]
-      }
+      "outputs": ["{options.outputFile}"]
     },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "packages/pieces/community/framework/jest.config.ts",
-        "passWithNoTests": true
+        "jestConfig": "packages/pieces/community/framework/jest.config.ts"
       }
     }
   },

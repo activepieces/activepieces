@@ -65,7 +65,8 @@ class ActivepiecesEmbedded {
   _handleClientNavigation?: (data: { route: string }) => void;
   _parentOrigin = window.location.origin;
   _connectionsIframe: HTMLIFrameElement | null = null;
-
+  readonly MAX_CONTAINER_CHECK_COUNT = 100;
+  readonly HUNDRED_MILLISECONDS = 100;
   configure({
     prefix,
     jwtToken,
@@ -99,8 +100,7 @@ class ActivepiecesEmbedded {
         jwtToken
       });
     }
-    this._initializeConnectionsIframe({ jwtToken })
-
+    this._initializeConnectionsIframe({ jwtToken });
   }
 
 
@@ -109,31 +109,40 @@ class ActivepiecesEmbedded {
       containerSelector: string,
       jwtToken: string
     }) => {
-    const MAX_CONTAINER_CHECK_COUNT = 100;
-    const containerCheckCount = 0;
-    const containerChecker = setInterval(() => {
-      if (containerCheckCount >= MAX_CONTAINER_CHECK_COUNT) {
-        clearInterval(containerChecker);
-        console.error('Activepieces: container not found');
-        return;
-      }
-
-      const iframeContainer = document.querySelector(containerSelector);
-      if (iframeContainer) {
-        const iframeWindow = this.connectoToEmbed({ jwtToken, iframeContainer }).contentWindow;
-        this._checkForVendorRouteChanges(iframeWindow);
-        this._checkForClientRouteChanges(iframeWindow);
-        clearInterval(containerChecker);
-      }
-    }, 100);
+      this._addGracePeriodBeforeMethod({
+        condition: () => {
+          return !!document.querySelector(containerSelector);
+        },
+        method: () => {
+          const iframeContainer = document.querySelector(containerSelector);
+          if(iframeContainer)
+          {
+            const iframeWindow = this.connectoToEmbed({ jwtToken, iframeContainer }).contentWindow;
+            this._checkForVendorRouteChanges(iframeWindow);
+            this._checkForClientRouteChanges(iframeWindow);
+          }
+        },
+        errorMessage: 'container not found'
+      })
 
   };
 
+
   private _initializeConnectionsIframe = ({ jwtToken }: { jwtToken: string }) => {
-    this._connectionsIframe = this.connectoToEmbed({ jwtToken, iframeContainer: document.body, callbackAfterAuthentication: () => { this._connectionsIframeInitialized = true } });
-    const connectionsIframeStyle = ['display:none', 'position:fixed', 'top:0', 'left:0', 'width:100%', 'height:100%', 'border:none'].join(';');
-    this._connectionsIframe.style.cssText = connectionsIframeStyle;
-    this._checkIfNewConnectionDialogClosed();
+
+   return this._addGracePeriodBeforeMethod({
+      condition: ()=>{
+        return !!document.body;
+      },
+      method:()=>{
+      this._connectionsIframe = this.connectoToEmbed({ jwtToken, iframeContainer: document.body, callbackAfterAuthentication: () => { this._connectionsIframeInitialized = true } });
+      const connectionsIframeStyle = ['display:none', 'position:fixed', 'top:0', 'left:0', 'width:100%', 'height:100%', 'border:none'].join(';');
+      this._connectionsIframe.style.cssText = connectionsIframeStyle;
+      this._checkIfNewConnectionDialogClosed();
+      },
+      errorMessage:'document body not found while trying to add connections iframe'
+    });
+
   }
 
 
@@ -177,7 +186,7 @@ class ActivepiecesEmbedded {
       }
     );
     return iframe;
-  };
+  }
 
   private _createIframe({ src }: { src: string }) {
     const iframe = document.createElement('iframe');
@@ -187,33 +196,30 @@ class ActivepiecesEmbedded {
 
 
   async connect({ pieceName }: { pieceName: string }) {
-    if (!this._connectionsIframe || !this._doesFrameHaveWindow(this._connectionsIframe)) {
-      console.error('Activepieces: connections iframe not found, please make sure you enabled embedded dialiogs in the configure method');
-      return;
-    }
-    if (!this._connectionsIframeInitialized) {
-      //wait for the connections iframe to be initialized
-      await new Promise((resolve) => {
-        const interval = setInterval(() => {
-          if (this._connectionsIframeInitialized) {
-            clearInterval(interval);
-            resolve(null);
-          }
-        }, 300);
-      });
-    }
-    const apEvent: ActivepiecesVendorRouteChanged = {
-      type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
-      data: {
-        //added date so angular queryparams will be updated and open the dialog, because if you try to create two connections with the same piece, the second one will not open the dialog
-        vendorRoute: `/embed/connections?${NEW_CONNECTION_QUERY_PARAMS.name}=${pieceName}&date=${Date.now()}`
-      },
-    };
-    this._connectionsIframe.contentWindow.postMessage(apEvent, '*');
-    this._connectionsIframe.style.display = 'block';
-    return new Promise<ActivepiecesNewConnectionDialogClosed['data']>((resolve) => {
-      this._resolveNewConnectionDialogClosed = resolve;
+
+    return this._addGracePeriodBeforeMethod({
+      errorMessage:'connections iframe not initialized',
+      condition:()=>this._connectionsIframeInitialized,
+      method:()=>{
+        if (!this._connectionsIframe || !this._doesFrameHaveWindow(this._connectionsIframe)) {
+          console.error('Activepieces: connections iframe not found, please make sure you enabled embedded dialiogs in the configure method');
+          return;
+        }
+        const apEvent: ActivepiecesVendorRouteChanged = {
+          type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
+          data: {
+            //added date so angular queryparams will be updated and open the dialog, because if you try to create two connections with the same piece, the second one will not open the dialog
+            vendorRoute: `/embed/connections?${NEW_CONNECTION_QUERY_PARAMS.name}=${pieceName}&date=${Date.now()}`
+          },
+        };
+        this._connectionsIframe.contentWindow.postMessage(apEvent, '*');
+        this._connectionsIframe.style.display = 'block';
+        return new Promise<ActivepiecesNewConnectionDialogClosed['data']>((resolve) => {
+          this._resolveNewConnectionDialogClosed = resolve;
+        });
+      }
     });
+      
   }
 
 
@@ -300,7 +306,42 @@ class ActivepiecesEmbedded {
   private _removeTrailingSlashes(str: string) {
     return str.endsWith('/') ? str.slice(0, -1) : str;
   }
-
+ /**Adds a grace period before executing the method depending on the condition */
+  private _addGracePeriodBeforeMethod( 
+    { method, 
+      condition,
+      errorMessage } :
+    { method:()=>void, 
+      condition: ()=>boolean,
+     /**Error message to show when grace period passes */
+     errorMessage:string }
+    )
+  {
+    return new Promise((resolve, reject) => {
+      let checkCounter= 0;
+      if(condition())
+      {
+        resolve(method());
+        return;
+      }
+     const checker= setInterval(()=>{
+        if(checkCounter>=this.MAX_CONTAINER_CHECK_COUNT)
+        {
+          console.error(`Activepieces: ${errorMessage}`);
+          reject(`Activepieces: ${errorMessage}`);
+          return;
+        }
+        checkCounter++;
+        if(condition())
+        {
+          console
+          clearInterval(checker);
+          resolve(method());
+        }
+      }, this.HUNDRED_MILLISECONDS);
+    },);
+   
+  }
 
 }
 
