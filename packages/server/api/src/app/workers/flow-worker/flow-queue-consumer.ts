@@ -27,6 +27,7 @@ import { redisQueueManager } from './queues/redis/redis-queue'
 import { QueueMode, SystemProp, enrichErrorContext, exceptionHandler, logger, system } from 'server-shared'
 import { flowService } from '../../flows/flow/flow.service'
 import { triggerHooks } from '../../flows/trigger'
+import { dedupeService } from '../../flows/trigger/trigger-deduple.service'
 
 const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
 
@@ -204,7 +205,12 @@ const consumePieceTrigger = async (data: RepeatingJobData): Promise<void> => {
         `[flowQueueConsumer#consumePieceTrigger] payloads.length=${payloads.length}`,
     )
 
-    const createFlowRuns = payloads.map((payload) =>
+    const filterPayloads = await dedupeService.filterUniquePayloads(
+        data.flowVersionId,
+        payloads,
+        RunEnvironment.PRODUCTION,
+    )
+    const createFlowRuns = filterPayloads.map((payload) =>
         flowRunService.start({
             environment: RunEnvironment.PRODUCTION,
             flowVersionId: data.flowVersionId,
