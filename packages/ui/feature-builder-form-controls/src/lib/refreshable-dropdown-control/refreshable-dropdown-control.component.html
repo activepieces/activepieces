@@ -17,6 +17,14 @@
     </mat-select-trigger>
 
     <app-dropdown-search-control [searchControl]="searchControl"></app-dropdown-search-control>
+    @if((options$ | async) === null || ( options$ | async) === undefined)
+    {
+    <mat-option class="ap-opacity-100" [disabled]="true">
+      <div class="ap-flex ap-items-center ap-justify-center">
+        <ap-loading-icon> </ap-loading-icon>
+      </div>
+    </mat-option>
+    }
 
     @if(options$ | async; as state )
     {
