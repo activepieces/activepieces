@@ -11,6 +11,7 @@ import { DynamicInputToggleComponent } from '../dynamic-input-toggle/dynamic-inp
 import deepEqual from 'deep-equal';
 import { DropdownSearchControlComponent } from '../dropdown-search-control/dropdown-search-control.component';
 import { DropdownSelectedValuesPipe } from '../pipes/dropdown-selected-values.pipe';
+import { DropdownLabelsJoiner } from '../pipes/dropdown-labels-joiner.pipe';
 
 @Component({
   selector: 'app-static-dropdown-control',
@@ -21,6 +22,7 @@ import { DropdownSelectedValuesPipe } from '../pipes/dropdown-selected-values.pi
     DynamicInputToggleComponent,
     DropdownSearchControlComponent,
     DropdownSelectedValuesPipe,
+    DropdownLabelsJoiner,
   ],
   templateUrl: './static-dropdown-control.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
