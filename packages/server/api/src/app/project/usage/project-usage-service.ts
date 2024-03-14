@@ -1,7 +1,7 @@
 import { ApEnvironment, ProjectUsage, isNil } from '@activepieces/shared'
 import { projectMemberService } from '../../ee/project-members/project-member.service'
 import { apDayjs } from '../../helper/dayjs-helper'
-import { createRedisClient } from '../../database/redis-connection'
+import { createRedisClient, getRedisConnection } from '../../database/redis-connection'
 import { Redis } from 'ioredis'
 import { projectService } from '../project-service'
 import { SystemProp, system } from 'server-shared'
@@ -31,18 +31,6 @@ function getCurrentingStartPeriod(datetime: string): string {
 function getCurrentingEndPeriod(datetime: string): string {
     return apDayjs(getCurrentingStartPeriod(datetime)).add(30, 'days').toISOString()
 }
-
-const getRedisConnection = (() => {
-    let redis: Redis | null = null
-
-    return (): Redis => {
-        if (!isNil(redis)) {
-            return redis
-        }
-        redis = createRedisClient()
-        return redis
-    }
-})()
 
 async function increaseTasks(projectId: string, incrementBy: number): Promise<number> {
     const project = await projectService.getOneOrThrow(projectId)
