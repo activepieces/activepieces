@@ -47,7 +47,7 @@ import { BuilderAutocompleteDropdownHandlerComponent } from '../interpolating-te
           <ngx-monaco-editor
             (onInit)="onInit($event)"
             class="!ap-h-full !ap-w-full"
-            [formControl]="formControl"
+            [formControl]="passedFormControl"
             (click)="handler.showMentionsDropdown()"
             [options]="codeEditorOptions"
           ></ngx-monaco-editor>
@@ -60,9 +60,9 @@ import { BuilderAutocompleteDropdownHandlerComponent } from '../interpolating-te
         >
         </app-builder-autocomplete-dropdown-handler>
       </div>
-      <div *ngIf="formControl.invalid" class="ap-py-2">
+      <div *ngIf="passedFormControl.invalid" class="ap-py-2">
         <p
-          *ngIf="formControl.hasError('required'); else invalidJson"
+          *ngIf="passedFormControl.hasError('required'); else invalidJson"
           class="ap-text-danger ap-typography-caption"
         >
           {{ property.displayName }} is required
@@ -77,7 +77,7 @@ import { BuilderAutocompleteDropdownHandlerComponent } from '../interpolating-te
   `,
 })
 export class DynamicInputToggleComponent {
-  @Input() formControl: FormControl<string>;
+  @Input() passedFormControl: FormControl<string>;
   @Input() property: DynamicProperties<boolean>;
   jsonMonacoEditor: any;
   codeEditorOptions = {
@@ -93,8 +93,8 @@ export class DynamicInputToggleComponent {
   constructor(private codeService: CodeService) {}
   beautify() {
     try {
-      this.formControl.setValue(
-        this.codeService.beautifyJson(JSON.parse(this.formControl.value))
+      this.passedFormControl.setValue(
+        this.codeService.beautifyJson(JSON.parse(this.passedFormControl.value))
       );
     } catch {
       //ignore

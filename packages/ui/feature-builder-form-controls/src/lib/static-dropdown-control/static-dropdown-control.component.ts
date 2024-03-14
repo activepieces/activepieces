@@ -28,7 +28,7 @@ import { DropdownLabelsJoiner } from '../pipes/dropdown-labels-joiner.pipe';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StaticDropdownControlComponent {
-  @Input({ required: true }) formControl: UntypedFormControl;
+  @Input({ required: true }) passedFormControl: UntypedFormControl;
   @Input({ required: true }) property:
     | StaticDropdownProperty<unknown, boolean>
     | StaticMultiSelectDropdownProperty<unknown, boolean>;

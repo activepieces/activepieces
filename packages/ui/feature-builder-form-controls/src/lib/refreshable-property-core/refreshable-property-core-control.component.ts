@@ -27,7 +27,7 @@ import {
   template: ``,
 })
 export class RefreshablePropertyCoreControlComponent {
-  @Input({ required: true }) formControl: UntypedFormControl;
+  @Input({ required: true }) passedFormControl: UntypedFormControl;
   @Input({ required: true }) property:
     | DropdownProperty<unknown, boolean>
     | MultiSelectDropdownProperty<unknown, boolean>;

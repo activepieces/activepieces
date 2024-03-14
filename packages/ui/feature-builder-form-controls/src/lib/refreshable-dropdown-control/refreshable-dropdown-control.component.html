@@ -3,14 +3,14 @@
     property.displayName
     }}</mat-label>
 
-  <mat-select #matSelect [matTooltip]="property.description || ''" [formControl]="formControl"
+  <mat-select #matSelect [matTooltip]="property.description || ''" [formControl]="passedFormControl"
     (closed)="searchControl.setValue('')" [compareWith]="dropdownCompareWithFunction"
     [multiple]="property.type === PropertyType.MULTI_SELECT_DROPDOWN">
 
 
     <mat-select-trigger>
       @if(options$ | async; as state ){
-      @if(((state.options| dropdownSelectedValues:formControl)|async); as selectedOptions){
+      @if(((state.options| dropdownSelectedValues:passedFormControl)|async); as selectedOptions){
       {{selectedOptions | dropdownLabelsJoiner}}
       }
       }
@@ -38,10 +38,10 @@
       [class.ap-h-[100px]]="options.length === 2 " [class.ap-h-[150px]]="options.length === 3 "
       [class.ap-h-[195px]]="options.length >= 4 ">
       <mat-option *cdkVirtualFor="let opt of options" [value]="opt.value"
-        [class.mdc-list-item--selected]="opt.value === formControl.value">
+        [class.mdc-list-item--selected]="opt.value === passedFormControl.value">
         <div class="ap-w-full ap-flex ap-justify-between ap-items-center">
           {{opt.label}}
-          <mat-pseudo-checkbox *ngIf="(opt.value === formControl.value)" state="checked" aria-hidden="true"
+          <mat-pseudo-checkbox *ngIf="(opt.value === passedFormControl.value)" state="checked" aria-hidden="true"
             appearance="minimal"
             class="mat-pseudo-checkbox virtual-scroll-check-mark mat-mdc-option-pseudo-checkbox mat-pseudo-checkbox-checked mat-pseudo-checkbox-minimal"></mat-pseudo-checkbox>
         </div>
@@ -50,7 +50,7 @@
     }
 
     }
-    @for(item of ((state.options | dropdownSelectedValues:formControl)|async); track item)
+    @for(item of ((state.options | dropdownSelectedValues:passedFormControl)|async); track item)
     {
     <mat-option class="!ap-hidden" [value]="item.value">
       {{item.label}}

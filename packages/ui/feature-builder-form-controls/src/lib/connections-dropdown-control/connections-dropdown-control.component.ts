@@ -32,7 +32,7 @@ import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections
         apTrackHover
       >
         <mat-label> Connection </mat-label>
-        <mat-select [formControl]="formControl">
+        <mat-select [formControl]="passedFormControl">
           @for( opt of options; track opt.value){
           <mat-option [value]="opt.value">
             {{ opt.label }}
@@ -61,13 +61,13 @@ import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections
               class="ap-flex ap-gap-[6px] connections-dropdown-container ap-pr-1 ap-items-center"
             >
               <div class="ap-w-full ap-truncate">
-                @if((options | dropdownSelectedValues: formControl | async); as
-                selectedValues){
+                @if((options | dropdownSelectedValues: passedFormControl |
+                async); as selectedValues){
                 {{ selectedValues[0].label }}
                 }
               </div>
               <div>
-                @if(formControl.value) {
+                @if(passedFormControl.value) {
                 <app-add-edit-connection-button
                   (click)="$event.stopPropagation()"
                   btnSize="extraSmall"
@@ -77,10 +77,12 @@ import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections
                   [pieceVersion]="pieceMetaData.version"
                   [propertyKey]="''"
                   [pieceDisplayName]="pieceMetaData.displayName"
-                  [selectedConnectionInterpolatedString]="formControl.value"
+                  [selectedConnectionInterpolatedString]="
+                    passedFormControl.value
+                  "
                   [triggerName]="''"
                   (connectionPropertyValueChanged)="
-                    formControl.setValue($event.value)
+                    passedFormControl.setValue($event.value)
                   "
                 >
                   <div class="ap-px-2" i18n>Reconnect</div>
@@ -102,14 +104,16 @@ import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections
         [propertyKey]="''"
         [triggerName]="''"
         [pieceDisplayName]="pieceMetaData.displayName"
-        (connectionPropertyValueChanged)="formControl.setValue($event.value)"
+        (connectionPropertyValueChanged)="
+          passedFormControl.setValue($event.value)
+        "
       >
       </app-add-edit-connection-button>
     </div>
   `,
 })
 export class ConnectionsDropdownControlComponent {
-  @Input({ required: true }) formControl: FormControl<string>;
+  @Input({ required: true }) passedFormControl: FormControl<string>;
   @Input({ required: true })
   options: DropdownOption<`{{connections['${string}']}}`>[];
   @Input({ required: true }) property: PieceAuthProperty;

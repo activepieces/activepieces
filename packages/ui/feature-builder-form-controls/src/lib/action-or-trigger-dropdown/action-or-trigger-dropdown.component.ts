@@ -26,13 +26,13 @@ import { tap } from 'rxjs';
 export class ActionOrTriggerDropdownComponent {
   @Input({ required: true }) items: (ActionBase | TriggerBase)[] = [];
   @Output() valueChange = new EventEmitter<ActionBase | TriggerBase>();
-  @Input() formControl = new FormControl('', {
+  @Input() passedFormControl = new FormControl('', {
     nonNullable: true,
     validators: Validators.required,
   });
   readonly TriggerStrategy = TriggerStrategy;
 
-  dropdownValueChanged$ = this.formControl.valueChanges.pipe(
+  dropdownValueChanged$ = this.passedFormControl.valueChanges.pipe(
     tap((name) => {
       const item = this.items.find((i) => i.name === name);
       if (item) {

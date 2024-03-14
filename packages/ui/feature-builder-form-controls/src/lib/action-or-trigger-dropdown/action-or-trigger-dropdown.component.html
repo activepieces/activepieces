@@ -1,6 +1,6 @@
 <mat-form-field class="ap-w-full" appearance="outline">
   <mat-label i18n> Trigger </mat-label>
-  <mat-select placeholder="Select a Trigger" i18n-placeholder [formControl]="formControl">
+  <mat-select placeholder="Select a Trigger" i18n-placeholder [formControl]="passedFormControl">
     @for(opt of items; track opt.name) {
     <mat-option *ngFor="let opt of items" [value]="opt.name">
       <div class="ap-flex ap-items-center ap-gap-[2px]">
@@ -40,7 +40,7 @@
       No options available
     </mat-option>
   </mat-select>
-  <mat-error *ngIf="formControl.invalid" i18n>
+  <mat-error *ngIf="passedFormControl.invalid" i18n>
     @if(items.length === 0)
     {
     No options available
