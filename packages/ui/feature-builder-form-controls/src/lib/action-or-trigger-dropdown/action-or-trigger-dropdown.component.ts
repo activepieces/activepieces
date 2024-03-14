@@ -25,15 +25,14 @@ import { tap } from 'rxjs';
 })
 export class ActionOrTriggerDropdownComponent {
   @Input({ required: true }) items: (ActionBase | TriggerBase)[] = [];
-  @Input() set value(value: string | undefined) {
-    this.dropdownFormControl.setValue(value || '');
-  }
   @Output() valueChange = new EventEmitter<ActionBase | TriggerBase>();
-  dropdownFormControl = new FormControl('', {
+  @Input() formControl = new FormControl('', {
     nonNullable: true,
     validators: Validators.required,
   });
-  dropdownValueChanged$ = this.dropdownFormControl.valueChanges.pipe(
+  readonly TriggerStrategy = TriggerStrategy;
+
+  dropdownValueChanged$ = this.formControl.valueChanges.pipe(
     tap((name) => {
       const item = this.items.find((i) => i.name === name);
       if (item) {
@@ -41,5 +40,4 @@ export class ActionOrTriggerDropdownComponent {
       }
     })
   );
-  readonly TriggerStrategy = TriggerStrategy;
 }
