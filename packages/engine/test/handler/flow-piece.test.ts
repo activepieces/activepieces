@@ -31,28 +31,27 @@ describe('pieceExecutor', () => {
                     'url': 'https://cloud.activepieces.com/api/v1/asd',
                     'method': 'GET',
                     'headers': {},
-                    'body_type': 'none', 
-                    'body': {}, 
+                    'body_type': 'none',
+                    'body': {},
                     'queryParams': {},
                 },
             }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
         })
+
+        const expectedError = {
+            response: {
+                status: 404,
+                body: {
+                    statusCode: 404,
+                    error: 'Not Found',
+                    message: 'Route not found',
+                },
+            },
+            request: {},
+        }
+
         expect(result.verdict).toBe(ExecutionVerdict.FAILED)
         expect(result.steps.send_http.status).toBe('FAILED')
-        expect(result.steps.send_http.errorMessage).toEqual({
-            request: {
-                
-            },
-            response: {
-                'body': {
-                    'error': 'Not Found',
-                    'message': 'Route not found',
-                    'statusCode': 404,
-                },
-                status: 404,
-            },
-        })
+        expect(result.steps.send_http.errorMessage).toEqual(JSON.stringify(expectedError))
     })
-
-
 })
