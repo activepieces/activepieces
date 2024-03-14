@@ -218,10 +218,6 @@ export const flowRunService = {
         synchronousHandlerId,
         hookType,
     }: StartParams): Promise<FlowRun> {
-        logger.info(
-            `[flowRunService#start] flowRunId=${flowRunId} executionType=${executionType}`,
-        )
-
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
 
         const flow = await flowService.getOneOrThrow({
@@ -355,6 +351,8 @@ type GetOrCreateParams = {
     flowVersionId: FlowVersionId
     flowDisplayName: string
     environment: RunEnvironment
+    isNewRun?: boolean
+    flowRunId?: FlowRunId
 }
 
 type ListParams = {

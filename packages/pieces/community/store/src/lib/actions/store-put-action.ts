@@ -41,6 +41,10 @@ export const storagePutAction = createAction({
             label: 'Flow',
             value: StoreScope.FLOW,
           },
+          {
+            label: 'Run',
+            value: StoreScope.RUN,
+          },
         ],
       },
       defaultValue: StoreScope.PROJECT,

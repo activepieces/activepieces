@@ -7,6 +7,7 @@ import {
   PieceAuthProperty,
   PiecePropValueSchema,
   Store,
+  StoreScope,
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
@@ -227,7 +228,7 @@ const polling: Polling<
   items: async ({
     propsValue,
   }: {
-    store: Store;
+    store: Store<StoreScope>;
     propsValue: { rss_feed_url: string };
   }) => {
     const items = await getRssItems(propsValue.rss_feed_url);
