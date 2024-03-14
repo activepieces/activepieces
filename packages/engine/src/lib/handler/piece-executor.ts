@@ -1,7 +1,7 @@
 import { AUTHENTICATION_PROPERTY_NAME, GenericStepOutput, ActionType, PieceAction, StepOutputStatus, assertNotNullOrUndefined, isNil, ExecutionType, PauseType, FlowRunStatus } from '@activepieces/shared'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
-import { ActionContext, ConnectionsManager, PauseHook, PauseHookParams, PiecePropertyMap, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
+import { ActionContext, StoreScope, ConnectionsManager, PauseHook, PauseHookParams, PiecePropertyMap, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
 import { createContextStore } from '../services/storage.service'
 import { createFilesService } from '../services/files.service'
 import { createConnectionService } from '../services/connections.service'
@@ -69,10 +69,12 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         const context: ActionContext = {
             executionType: isPaused ? ExecutionType.RESUME : ExecutionType.BEGIN,
             resumePayload: constants.resumePayload!,
-            store: createContextStore({
+            store: createContextStore<StoreScope>({
                 prefix: '',
                 flowId: constants.flowId,
                 workerToken: constants.workerToken,
+                defaultScope: StoreScope.PROJECT,
+                runId: constants.flowRunId,
             }),
             auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
             files: createFilesService({

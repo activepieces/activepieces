@@ -1,7 +1,7 @@
 import { URL } from 'node:url'
 import { Store, StoreScope } from '@activepieces/pieces-framework'
-import { DeleteStoreEntryRequest, FlowId, PutStoreEntryRequest, StoreEntry } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
+import { DeletStoreEntryRequest, FlowId, FlowRunId, PutStoreEntryRequest, StoreEntry } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FetchError, StorageError } from '../helper/execution-errors'
 
@@ -94,25 +94,41 @@ export const createStorageService = ({ workerToken }: CreateStorageServiceParams
     }
 }
 
-export function createContextStore({ prefix, flowId, workerToken }: { prefix: string, flowId: FlowId, workerToken: string }): Store {
+export function createContextStore<
+    SCOPE extends StoreScope | Omit<StoreScope, 'RUN'>,
+>({
+    prefix,
+    flowId,
+    workerToken,
+    runId,
+    defaultScope,
+}: {
+    prefix: string
+    flowId: FlowId
+    workerToken: string
+    defaultScope: SCOPE
+    runId: SCOPE extends StoreScope.RUN ? FlowRunId : undefined
+}): Store<SCOPE> {
     return {
-        async put<T>(key: string, value: T, scope = StoreScope.FLOW): Promise<T> {
-            const modifiedKey = createKey(prefix, scope, flowId, key)
+        async put<T>(key: string, value: T, scope = defaultScope): Promise<T> {
+            const modifiedKey = createKey(prefix, scope, flowId, key, runId)
             await createStorageService({ workerToken }).put({
                 key: modifiedKey,
                 value,
             })
             return value
         },
-        async delete(key: string, scope = StoreScope.FLOW): Promise<void> {
-            const modifiedKey = createKey(prefix, scope, flowId, key)
+        async delete(key: string, scope = defaultScope as SCOPE): Promise<void> {
+            const modifiedKey = createKey(prefix, scope, flowId, key, runId)
             await createStorageService({ workerToken }).delete({
                 key: modifiedKey,
             })
         },
-        async get<T>(key: string, scope = StoreScope.FLOW): Promise<T | null> {
-            const modifiedKey = createKey(prefix, scope, flowId, key)
-            const storeEntry = await createStorageService({ workerToken }).get(modifiedKey)
+        async get<T>(key: string, scope = defaultScope): Promise<T | null> {
+            const modifiedKey = createKey(prefix, scope, flowId, key, runId)
+            const storeEntry = await createStorageService({ workerToken }).get(
+                modifiedKey,
+            )
             if (storeEntry === null) {
                 return null
             }
@@ -121,12 +137,20 @@ export function createContextStore({ prefix, flowId, workerToken }: { prefix: st
     }
 }
 
-function createKey(prefix: string, scope: StoreScope, flowId: FlowId, key: string): string {
+function createKey(
+    prefix: string,
+    scope: StoreScope | Omit<StoreScope, 'RUN'>,
+    flowId: FlowId,
+    key: string,
+    runId?: FlowRunId,
+): string {
     switch (scope) {
-        case StoreScope.PROJECT:
-            return prefix + key
+        case StoreScope.RUN:
+            return prefix + 'run_' + runId + '/' + key
         case StoreScope.FLOW:
             return prefix + 'flow_' + flowId + '/' + key
+        default:
+            return prefix + key
     }
 }
 

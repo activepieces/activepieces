@@ -94,6 +94,7 @@ export const webhookService = {
             )
             return []
         }
+
         const flowVersion = await flowVersionService.getOneOrThrow(
             flow.publishedVersionId,
         )
