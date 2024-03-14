@@ -14,7 +14,7 @@ export async function runWithExponentialBackoff<T extends CodeAction | PieceActi
     const retryEnabled = action.settings.errorHandlingOptions?.retryOnFailure?.value
 
     if (
-        resultExecutionState.verdict === ExecutionVerdict.FAILED &&
+        executionFailedWithRetryableError(resultExecutionState) &&
         attemptCount < constants.retryConstants.maxAttempts &&
         retryEnabled &&
         !constants.testSingleStepMode
@@ -59,6 +59,11 @@ export const handleExecutionError = (error: unknown): ErrorHandlingResponse => {
 const logError = (error: unknown): void => {
     const serializedError = JSON.stringify(error, Object.getOwnPropertyNames(error))
     console.error(serializedError)
+}
+
+const executionFailedWithRetryableError = (flowExecutorContext: FlowExecutorContext): boolean => {
+    return flowExecutorContext.verdict === ExecutionVerdict.FAILED &&
+        [true, undefined].includes(flowExecutorContext.retryable)
 }
 
 type Request<T extends CodeAction | PieceAction> = {
