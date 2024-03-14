@@ -12,7 +12,7 @@ import {
   PropertyType,
   ShortTextProperty,
 } from '@activepieces/pieces-framework';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import { BuilderAutocompleteDropdownHandlerComponent } from '../interpolating-text-form-control/builder-autocomplete-dropdown-handler/builder-autocomplete-dropdown-handler.component';
 
 @Component({
@@ -88,7 +88,7 @@ export class TextControlComponent {
     | ShortTextProperty<boolean>
     | FileProperty<boolean>
     | DateTimeProperty<boolean>;
-  @Input({ required: true }) passedFormControl: FormControl<string>;
+  @Input({ required: true }) passedFormControl: UntypedFormControl;
   readonly PropertyType = PropertyType;
   async addMention(
     textControl: InterpolatingTextFormControlComponent,
