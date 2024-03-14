@@ -12,7 +12,7 @@ import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections
 
 //TODO: check add-edit-connection-button and remove unnecessary properties and ask mo about triggerName
 @Component({
-  selector: 'app-dropdown-search-control',
+  selector: 'app-connections-dropdown-control',
   standalone: true,
   imports: [
     CommonModule,
