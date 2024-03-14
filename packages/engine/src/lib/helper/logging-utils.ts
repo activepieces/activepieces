@@ -21,6 +21,8 @@ async function trimStepOutput(stepOutput: StepOutput, mode: 'trim' | 'empty'): P
     const modified: StepOutput = JSON.parse(JSON.stringify(stepOutput))
     modified.input = await trimOrEmpty(mode, modified.input)
     switch (modified.type) {
+        case ActionType.CODE:
+        case ActionType.PIECE:
         case ActionType.BRANCH:
         case TriggerType.EMPTY:
         case TriggerType.PIECE:
@@ -31,6 +33,7 @@ async function trimStepOutput(stepOutput: StepOutput, mode: 'trim' | 'empty'): P
         case ActionType.LOOP_ON_ITEMS: {
             const loopItem = modified.output
             if (loopItem) {
+                loopItem.iterations = await Promise.all(loopItem.iterations.map((iteration) => loggingUtils.trimExecution(iteration)))
                 loopItem.iterations = await trimIterations(loopItem.iterations, mode)
                 loopItem.item = await applyFunctionToValues(loopItem.item, trim)
             }
@@ -120,4 +123,84 @@ const isObject = (obj: unknown): obj is Record<string, unknown> => {
 
 const bySizeDesc = (a: [string, unknown], b: [string, unknown]): number => {
     return sizeof(b[1]) - sizeof(a[1])
+}
+
+function trimJson(json: any){
+    type Node = {
+        size: number,
+        index: number,
+        parentNodeId: number,
+        numberOfChildren: number,
+        truncate: boolean
+    }
+    
+    const nodes: Node[] = []
+    const leaves: Node[] = []
+    const MAX_SIZE = 200
+    const TRUNCATION_TEXT_PLACEHOLDER = '(truncated)'
+    let totalJsonSize = JSON.stringify(json).length
+    
+    function jsonToNodes(curNode: unknown, curNodeId: number) {
+        if(curNode !== null && typeof curNode == "object" ) {
+            Object.entries(curNode).forEach(([childKey, childValue]) => {
+                nodes.push({
+                    size: JSON.stringify(childValue).length,
+                    index: nodes.length,
+                    parentNodeId: curNodeId,
+                    numberOfChildren: Object.entries(childValue).length,
+                    truncate: false
+                })
+                jsonToNodes(childValue, nodes.length - 1)
+            });
+        }
+        else {
+            leaves.push(nodes[nodes.length - 1])
+        }
+    }
+    
+    nodes.push({
+        size: JSON.stringify(json).length,
+        index: 0,
+        parentNodeId : -1,
+        numberOfChildren: Object.entries(json).length,
+        truncate: false 
+    })
+    
+    jsonToNodes(json, 0)
+    
+    leaves.sort((a, b) => a.size - b.size)
+    
+    while(leaves.length > 0 && totalJsonSize > MAX_SIZE){
+        const curNode = leaves.pop()
+        if(!curNode)continue;
+        const idx = curNode.index
+        
+        totalJsonSize += -curNode.size + TRUNCATION_TEXT_PLACEHOLDER.length
+        
+        nodes[idx].truncate = true
+        
+        if(curNode.parentNodeId >= 0){
+            nodes[curNode.parentNodeId].numberOfChildren--
+            if(nodes[curNode.parentNodeId].numberOfChildren == 0){
+                leaves.push(nodes[curNode.parentNodeId])
+            }
+        }
+        
+        leaves.sort((a, b) => a.size - b.size)
+    }
+    
+    let cnt = 0
+    
+    function convertToJson (curNode: any) {
+        if(curNode !== null && typeof curNode == "object" ) {
+            Object.entries(curNode).forEach(([childKey, childValue]) => {
+                cnt++;
+                let curCnt = cnt
+                convertToJson(childValue)
+                if(nodes[curCnt].truncate){
+                    curNode[childKey] = TRUNCATION_TEXT_PLACEHOLDER
+                }
+            });
+        }
+    }
 }
