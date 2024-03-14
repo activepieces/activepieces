@@ -1,8 +1,7 @@
-import { ApEnvironment, ProjectUsage, isNil } from '@activepieces/shared'
+import { ApEnvironment, ProjectUsage } from '@activepieces/shared'
 import { projectMemberService } from '../../ee/project-members/project-member.service'
 import { apDayjs } from '../../helper/dayjs-helper'
-import { createRedisClient, getRedisConnection } from '../../database/redis-connection'
-import { Redis } from 'ioredis'
+import { getRedisConnection } from '../../database/redis-connection'
 import { projectService } from '../project-service'
 import { SystemProp, system } from 'server-shared'
 
