@@ -71,7 +71,7 @@ export async function refreshSessionToken(
 async function storeSessionToken(
   sessionToken: string,
   encryptionKey: string,
-  store: Store
+  store: Store<StoreScope>
 ) {
   return store.put(
     SESSION_TOKEN_KEY,
@@ -89,7 +89,7 @@ export async function queryApiAndHandleRefresh(
     body?: object;
   },
   auth: StaticPropsValue<CustomAuthProps>,
-  store: Store
+  store: Store<StoreScope>
 ) {
   const { baseUrl, encryptionKey } = auth;
   let sessionToken;
