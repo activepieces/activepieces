@@ -1,4 +1,4 @@
-import { ApId, PlatformId, isNil } from '@activepieces/shared'
+import { ApId, FlowStatus, PlatformId, isNil } from '@activepieces/shared'
 import { ProjectEntity } from './project-entity'
 import {
     ActivepiecesError,
@@ -13,6 +13,7 @@ import { EntityManager, IsNull } from 'typeorm'
 import { projectSideEffects } from './project-side-effects'
 import { transaction } from '../core/db/transaction'
 import { repoFactory } from '../core/db/repo-factory'
+import { flowService } from '../flows/flow/flow.service'
 
 const repo = repoFactory(ProjectEntity)
 
@@ -101,8 +102,13 @@ export const projectService = {
         })
     },
 
-    async delete({ id, platformId }: DeleteParams): Promise<void> {
+    async softDelete({ id, platformId }: DeleteParams): Promise<void> {
         await transaction(async (entityManager) => {
+            await assertAllProjectFlowsAreDisabled({
+                projectId: id,
+                entityManager,
+            })
+
             await softDeleteOrThrow({
                 id,
                 platformId,
@@ -115,6 +121,25 @@ export const projectService = {
             })
         })
     },
+}
+
+const assertAllProjectFlowsAreDisabled = async (params: AssertAllProjectFlowsAreDisabledParams): Promise<void> => {
+    const { projectId, entityManager } = params
+
+    const projectHasEnabledFlows = await flowService.existsByProjectAndStatus({
+        projectId,
+        status: FlowStatus.ENABLED,
+        entityManager,
+    })
+
+    if (projectHasEnabledFlows) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: 'project has enabled flows',
+            },
+        })
+    }
 }
 
 const softDeleteOrThrow = async ({ id, platformId, entityManager }: SoftDeleteOrThrowParams): Promise<void> => {
@@ -158,6 +183,11 @@ type DeleteParams = {
 }
 
 type SoftDeleteOrThrowParams = DeleteParams & {
+    entityManager: EntityManager
+}
+
+type AssertAllProjectFlowsAreDisabledParams = {
+    projectId: ProjectId
     entityManager: EntityManager
 }
 

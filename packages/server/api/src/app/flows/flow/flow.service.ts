@@ -396,16 +396,12 @@ export const flowService = {
         })
     },
 
-    async disableAllForProject({ projectId, entityManager }: DisableAllForProjectParams): Promise<void> {
-        const enabledFlowIds = await getEnabledFlowIdsForProject({
-            projectId,
-            entityManager,
-        })
+    async existsByProjectAndStatus(params: ExistsByProjectAndStatusParams): Promise<boolean> {
+        const { projectId, status, entityManager } = params
 
-        await batchDisableFlows({
-            flowIds: enabledFlowIds,
+        return flowRepo(entityManager).existsBy({
             projectId,
-            entityManager,
+            status,
         })
     },
 }
@@ -441,33 +437,6 @@ const assertFlowIsNotNull: <T extends Flow>(
         throw new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,
             params: {},
-        })
-    }
-}
-
-const getEnabledFlowIdsForProject = async (params: GetEnabledFlowIdsForProjectParams): Promise<FlowId[]> => {
-    const { projectId, entityManager } = params
-
-    const flows = await flowRepo(entityManager).find({
-        where: {
-            projectId,
-            status: FlowStatus.ENABLED,
-        },
-        select: {
-            id: true,
-        },
-    })
-
-    return flows.map((flow) => flow.id)
-}
-
-const batchDisableFlows = async ({ flowIds, projectId, entityManager }: BatchDisableFlowsParams): Promise<void> => {
-    for (const flowId of flowIds) {
-        await flowService.updateStatus({
-            id: flowId,
-            projectId,
-            newStatus: FlowStatus.DISABLED,
-            entityManager,
         })
     }
 }
@@ -542,18 +511,8 @@ type LockFlowVersionIfNotLockedParams = {
     entityManager: EntityManager
 }
 
-type DisableAllForProjectParams = {
+type ExistsByProjectAndStatusParams = {
     projectId: ProjectId
-    entityManager: EntityManager
-}
-
-type GetEnabledFlowIdsForProjectParams = {
-    projectId: ProjectId
-    entityManager: EntityManager
-}
-
-type BatchDisableFlowsParams = {
-    flowIds: FlowId[]
-    projectId: ProjectId
+    status: FlowStatus
     entityManager: EntityManager
 }
