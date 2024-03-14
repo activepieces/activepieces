@@ -49,7 +49,7 @@ async function sendProjectRecords(timestamp: number): Promise<void> {
     assertNotNullOrUndefined(stripe, 'Stripe is not configured')
     for (const { projectId } of projectIds) {
         const projectBilling = await projectBillingService.getOrCreateForProject(projectId)
-        if (isNil(projectBilling.stripeSubscriptionId) || projectBilling.status !== ApSubscriptionStatus.ACTIVE) {
+        if (isNil(projectBilling.stripeSubscriptionId) || projectBilling.subscriptionStatus !== ApSubscriptionStatus.ACTIVE) {
             continue
         }
         const subscription: Stripe.Subscription = await stripe.subscriptions.retrieve(projectBilling.stripeSubscriptionId)
