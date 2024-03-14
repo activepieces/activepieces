@@ -10,7 +10,7 @@ import { DynamicProperties } from '@activepieces/pieces-framework';
 import { BuilderAutocompleteDropdownHandlerComponent } from '../interpolating-text-form-control/builder-autocomplete-dropdown-handler/builder-autocomplete-dropdown-handler.component';
 
 @Component({
-  selector: 'app-dynamic-input-toggle-control',
+  selector: 'app-json-control',
   standalone: true,
   imports: [
     CommonModule,
@@ -76,7 +76,7 @@ import { BuilderAutocompleteDropdownHandlerComponent } from '../interpolating-te
     </ng-template>
   `,
 })
-export class DynamicInputToggleComponent {
+export class JsonControlComponent {
   @Input() passedFormControl: FormControl<string>;
   @Input() property: DynamicProperties<boolean>;
   jsonMonacoEditor: any;
