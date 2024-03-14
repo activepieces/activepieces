@@ -10,6 +10,7 @@ import {
 import { DropdownSelectedValuesPipe } from '../pipes/dropdown-selected-values.pipe';
 import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections';
 
+//TODO: check add-edit-connection-button and remove unnecessary properties and ask mo about triggerName
 @Component({
   selector: 'app-dropdown-search-control',
   standalone: true,
@@ -78,6 +79,9 @@ import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections
                   [pieceDisplayName]="pieceMetaData.displayName"
                   [selectedConnectionInterpolatedString]="formControl.value"
                   [triggerName]="''"
+                  (connectionPropertyValueChanged)="
+                    formControl.setValue($event.value)
+                  "
                 >
                   <div class="ap-px-2" i18n>Reconnect</div>
                 </app-add-edit-connection-button>
@@ -98,6 +102,7 @@ import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections
         [propertyKey]="''"
         [triggerName]="''"
         [pieceDisplayName]="pieceMetaData.displayName"
+        (connectionPropertyValueChanged)="formControl.setValue($event.value)"
       >
       </app-add-edit-connection-button>
     </div>
