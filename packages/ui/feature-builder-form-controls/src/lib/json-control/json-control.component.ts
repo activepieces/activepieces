@@ -6,7 +6,7 @@ import {
 } from '@activepieces/ui/common';
 import { CodeService } from '@activepieces/ui/feature-builder-store';
 import { FormControl } from '@angular/forms';
-import { DynamicProperties } from '@activepieces/pieces-framework';
+import { JsonProperty } from '@activepieces/pieces-framework';
 import { BuilderAutocompleteDropdownHandlerComponent } from '../interpolating-text-form-control/builder-autocomplete-dropdown-handler/builder-autocomplete-dropdown-handler.component';
 
 @Component({
@@ -78,7 +78,7 @@ import { BuilderAutocompleteDropdownHandlerComponent } from '../interpolating-te
 })
 export class JsonControlComponent {
   @Input() passedFormControl: FormControl<string>;
-  @Input() property: DynamicProperties<boolean>;
+  @Input() property: JsonProperty<boolean>;
   jsonMonacoEditor: any;
   codeEditorOptions = {
     minimap: { enabled: false },
