@@ -229,13 +229,11 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             input,
         )
 
-
-
-        if (result.status === FlowRunStatus.FAILED && result.retryable) {
+        if (result.status === FlowRunStatus.INTERNAL_ERROR) {
             const retryError = new ActivepiecesError({
                 code: ErrorCode.ENGINE_OPERATION_FAILURE,
                 params: {
-                    message: result.error?.message ?? 'retryable error',
+                    message: result.error?.message ?? 'internal error',
                 },
             })
 

@@ -10,12 +10,14 @@ export enum ExecutionVerdict {
     FAILED = 'FAILED',
 }
 
-type VerdictResponse = {
+export type VerdictResponse = {
     reason: FlowRunStatus.PAUSED
     pauseMetadata: PauseMetadata
 } | {
     reason: FlowRunStatus.STOPPED
     stopResponse: StopResponse
+} | {
+    reason: FlowRunStatus.INTERNAL_ERROR
 }
 
 export class FlowExecutorContext {
@@ -33,11 +35,6 @@ export class FlowExecutorContext {
      */
     duration: number
 
-    /**
-     * Indicates whether flow run can be retried when execution fails
-     */
-    retryable?: boolean
-
     constructor(copyFrom?: FlowExecutorContext) {
         this.tasks = copyFrom?.tasks ?? 0
         this.tags = copyFrom?.tags ?? []
@@ -48,7 +45,6 @@ export class FlowExecutorContext {
         this.verdict = copyFrom?.verdict ?? ExecutionVerdict.RUNNING
         this.verdictResponse = copyFrom?.verdictResponse ?? undefined
         this.currentPath = copyFrom?.currentPath ?? StepExecutionPath.empty()
-        this.retryable = copyFrom?.retryable
     }
 
     static empty(): FlowExecutorContext {
@@ -185,14 +181,21 @@ export class FlowExecutorContext {
             tasks: this.tasks,
             tags: [...this.tags],
             steps: await loggingUtils.trimExecution(this.steps),
-            retryable: this.retryable,
         }
         switch (this.verdict) {
-            case ExecutionVerdict.FAILED:
+            case ExecutionVerdict.FAILED: {
+                const verdictResponse = this.verdictResponse
+                if (verdictResponse?.reason === FlowRunStatus.INTERNAL_ERROR) {
+                    return {
+                        ...baseExecutionOutput,
+                        status: FlowRunStatus.INTERNAL_ERROR,
+                    }
+                }
                 return {
                     ...baseExecutionOutput,
                     status: FlowRunStatus.FAILED,
                 }
+            }
             case ExecutionVerdict.PAUSED: {
                 const verdictResponse = this.verdictResponse
                 if (verdictResponse?.reason !== FlowRunStatus.PAUSED) {

@@ -1,7 +1,7 @@
-import { CodeAction, PieceAction } from '@activepieces/shared'
-import { ExecutionVerdict, FlowExecutorContext } from '../handler/context/flow-execution-context'
+import { CodeAction, FlowRunStatus, PieceAction } from '@activepieces/shared'
+import { ExecutionVerdict, FlowExecutorContext, VerdictResponse } from '../handler/context/flow-execution-context'
 import { EngineConstants } from '../handler/context/engine-constants'
-import { RetryableError } from './execution-errors'
+import { EngineError } from './execution-errors'
 
 export async function runWithExponentialBackoff<T extends CodeAction | PieceAction>(
     executionState: FlowExecutorContext,
@@ -52,7 +52,9 @@ export const handleExecutionError = (error: unknown): ErrorHandlingResponse => {
 
     return {
         message: error instanceof Error ? error.message : JSON.stringify(error),
-        retryable: error instanceof RetryableError,
+        verdictResponse: error instanceof EngineError ? {
+            reason: FlowRunStatus.INTERNAL_ERROR,
+        } : undefined,
     }
 }
 
@@ -62,8 +64,7 @@ const logError = (error: unknown): void => {
 }
 
 const executionFailedWithRetryableError = (flowExecutorContext: FlowExecutorContext): boolean => {
-    return flowExecutorContext.verdict === ExecutionVerdict.FAILED &&
-        [true, undefined].includes(flowExecutorContext.retryable)
+    return flowExecutorContext.verdict === ExecutionVerdict.FAILED
 }
 
 type Request<T extends CodeAction | PieceAction> = {
@@ -76,5 +77,5 @@ type RequestFunction<T extends CodeAction | PieceAction> = (request: Request<T>)
 
 type ErrorHandlingResponse = {
     message: string
-    retryable: boolean
+    verdictResponse: VerdictResponse | undefined
 }

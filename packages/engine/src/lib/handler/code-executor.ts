@@ -57,7 +57,6 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
 
         return executionState
             .upsertStep(action.name, failedStepOutput)
-            .setVerdict(ExecutionVerdict.FAILED)
-            .setRetryable(handledError.retryable)
+            .setVerdict(ExecutionVerdict.FAILED, handledError.verdictResponse)
     }
 }

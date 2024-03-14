@@ -53,11 +53,6 @@ const BaseExecutionResponse = {
         message: Type.String(),
     })),
     stopResponse: Type.Optional(StopResponse),
-
-    /**
-     * Indicates whether flow run can be retried when execution fails
-     */
-    retryable: Type.Optional(Type.Boolean()),
 }
 
 export const FlowRunResponse = Type.Union([
