@@ -15,12 +15,14 @@ import {
 } from '@activepieces/ui/common';
 import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
 import { mentionsListId } from '../builder-autocomplete-mentions-dropdown/builder-autocomplete-mentions-dropdown.component';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-builder-autocomplete-dropdown-handler',
   templateUrl: './builder-autocomplete-dropdown-handler.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
+  imports: [CommonModule],
 })
 export class BuilderAutocompleteDropdownHandlerComponent {
   static nextId = 0;

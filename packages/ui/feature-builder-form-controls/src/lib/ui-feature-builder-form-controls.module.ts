@@ -77,7 +77,10 @@ const exportedDeclarations = [
     DropdownPropertyInitialValuePipe,
     isDropdownItemSelectedPipe,
   ],
-  exports: [...exportedDeclarations],
+  exports: [
+    ...exportedDeclarations,
+    BuilderAutocompleteDropdownHandlerComponent,
+  ],
 })
 export class UiFeatureBuilderFormControlsModule {
   constructor() {
