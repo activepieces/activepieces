@@ -24,7 +24,7 @@ import {
 } from '@angular/forms';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MatFormFieldControl } from '@angular/material/form-field';
-import { QuillEditorComponent, QuillModules } from 'ngx-quill';
+import { QuillEditorComponent, QuillModule, QuillModules } from 'ngx-quill';
 import { firstValueFrom, Observable, skip, Subject, take, tap } from 'rxjs';
 import {
   CustomErrorMatcher,
@@ -46,7 +46,9 @@ import {
 import {
   InsertMentionOperation,
   MentionListItem,
+  UiCommonModule,
 } from '@activepieces/ui/common';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-interpolating-text-form-control',
@@ -62,6 +64,8 @@ import {
       useClass: CustomErrorMatcher,
     },
   ],
+  standalone: true,
+  imports: [UiCommonModule, CommonModule, QuillModule],
 })
 export class InterpolatingTextFormControlComponent
   extends QuillMaterialBase

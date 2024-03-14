@@ -24,7 +24,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { AuthConfigsPipe } from './pipes/auth-configs.pipe';
 import { PiecePropertiesFormComponent } from './piece-properties-form/piece-properties-form.component';
 import { MatTreeModule } from '@angular/material/tree';
-import { QuillModule } from 'ngx-quill';
+
 import { BuilderAutocompleteDropdownHandlerComponent } from './interpolating-text-form-control/builder-autocomplete-dropdown-handler/builder-autocomplete-dropdown-handler.component';
 import { AutocompleteDropdownSizesButtonsComponent } from './interpolating-text-form-control/mentions-list/autocomplete-dropdown-sizes-buttons/autocomplete-dropdown-sizes-buttons.component';
 import { MarkdownModule } from 'ngx-markdown';
@@ -40,7 +40,6 @@ const exportedDeclarations = [
   BranchConditionsGroupFormControlComponent,
   CodeArtifactFormControlComponent,
   DictionaryFormControlComponent,
-  InterpolatingTextFormControlComponent,
   PiecePropertiesFormComponent,
   BuilderAutocompleteMentionsDropdownComponent,
   ActionErrorHandlingFormControlComponent,
@@ -56,8 +55,8 @@ const exportedDeclarations = [
     UiFeatureConnectionsModule,
     UiFeaturePiecesModule,
     MatTreeModule,
-    QuillModule.forRoot({}),
     MarkdownModule,
+    InterpolatingTextFormControlComponent,
   ],
   declarations: [
     ...exportedDeclarations,
@@ -80,6 +79,7 @@ const exportedDeclarations = [
   exports: [
     ...exportedDeclarations,
     BuilderAutocompleteDropdownHandlerComponent,
+    InterpolatingTextFormControlComponent,
   ],
 })
 export class UiFeatureBuilderFormControlsModule {
