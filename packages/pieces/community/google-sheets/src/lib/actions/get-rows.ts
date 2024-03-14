@@ -15,7 +15,7 @@ import { isNil } from '@activepieces/shared';
 import { HttpError } from '@activepieces/pieces-common';
 
 async function getRows(
-  store: Store,
+  store: Store<StoreScope>,
   accessToken: string,
   spreadsheetId: string,
   sheetId: number,
