@@ -43,7 +43,6 @@ const exportedDeclarations = [
   InterpolatingTextFormControlComponent,
   PiecePropertiesFormComponent,
   BuilderAutocompleteMentionsDropdownComponent,
-  BuilderAutocompleteDropdownHandlerComponent,
   ActionErrorHandlingFormControlComponent,
 ];
 @NgModule({
@@ -51,7 +50,7 @@ const exportedDeclarations = [
     CommonModule,
     UiCommonModule,
     CodemirrorModule,
-
+    BuilderAutocompleteDropdownHandlerComponent,
     ReactiveFormsModule,
     FormsModule,
     UiFeatureConnectionsModule,

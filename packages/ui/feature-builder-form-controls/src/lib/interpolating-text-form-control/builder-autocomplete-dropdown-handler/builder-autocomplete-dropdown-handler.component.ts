@@ -20,6 +20,7 @@ import { mentionsListId } from '../builder-autocomplete-mentions-dropdown/builde
   selector: 'app-builder-autocomplete-dropdown-handler',
   templateUrl: './builder-autocomplete-dropdown-handler.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: true,
 })
 export class BuilderAutocompleteDropdownHandlerComponent {
   static nextId = 0;
