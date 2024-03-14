@@ -136,15 +136,13 @@ function trimJson(json: any){
     
     const nodes: Node[] = []
     const leaves: Node[] = []
-    const MAX_SIZE = 200
-    const TRUNCATION_TEXT_PLACEHOLDER = '(truncated)'
-    let totalJsonSize = JSON.stringify(json).length
+    let totalJsonSize = sizeof(json)
     
     function jsonToNodes(curNode: unknown, curNodeId: number) {
         if(curNode !== null && typeof curNode == "object" ) {
             Object.entries(curNode).forEach(([childKey, childValue]) => {
                 nodes.push({
-                    size: JSON.stringify(childValue).length,
+                    size: sizeof(childValue),
                     index: nodes.length,
                     parentNodeId: curNodeId,
                     numberOfChildren: Object.entries(childValue).length,
@@ -159,7 +157,7 @@ function trimJson(json: any){
     }
     
     nodes.push({
-        size: JSON.stringify(json).length,
+        size: sizeof(json),
         index: 0,
         parentNodeId : -1,
         numberOfChildren: Object.entries(json).length,
@@ -170,7 +168,7 @@ function trimJson(json: any){
     
     leaves.sort((a, b) => a.size - b.size)
     
-    while(leaves.length > 0 && totalJsonSize > MAX_SIZE){
+    while(leaves.length > 0 && totalJsonSize > MAX_SINGLE_SIZE_FOR_SINGLE_ENTRY){
         const curNode = leaves.pop()
         if(!curNode)continue;
         const idx = curNode.index
