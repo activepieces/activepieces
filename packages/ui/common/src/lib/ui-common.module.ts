@@ -74,6 +74,7 @@ import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { LetterIconComponent } from './components/letter-icon/letter-icon.component';
 import { MatListModule } from '@angular/material/list';
 import { MatPseudoCheckboxModule } from '@angular/material/core';
+import { ControlDescriptionComponent } from './components/control-description/control-description.component';
 
 const exportedImports = [
   CommonModule,
@@ -104,6 +105,8 @@ const exportedImports = [
   MonacoEditorModule,
   MatListModule,
   MatPseudoCheckboxModule,
+  CheckOverflowDirective,
+  ControlDescriptionComponent,
 ];
 const exportedDeclarations = [
   UploadFileControlComponent,
@@ -135,7 +138,6 @@ const exportedDeclarations = [
   UserAvatarComponent,
   TrackHoverDirective,
   DragDropDirective,
-  CheckOverflowDirective,
   PageTitleComponent,
   PoweredByActivepiecesComponent,
   ImgFallbackDirective,
