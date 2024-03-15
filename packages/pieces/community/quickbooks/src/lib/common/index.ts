@@ -3,7 +3,7 @@ import { QuickBooksAPIClient } from './client';
 import { quickBooksAuth } from '../../';
 
 export const quickBooksCommon = {
-	customerId: (required = false, displayName: string, description: string = '') =>
+	customerId: (required = false, displayName: string, description = '') =>
 		Property.Dropdown({
 			displayName,
 			description,
@@ -39,7 +39,7 @@ export const quickBooksCommon = {
 				};
 			},
 		}),
-	itemId: (required = false, displayName: string, description: string = '') =>
+	itemId: (required = false, displayName: string, description = '') =>
 		Property.Dropdown({
 			displayName,
 			description,
@@ -75,7 +75,7 @@ export const quickBooksCommon = {
 				};
 			},
 		}),
-	paymentMethodId: (required = false, displayName: string, description: string = '') =>
+	paymentMethodId: (required = false, displayName: string, description = '') =>
 		Property.Dropdown({
 			displayName,
 			description,
@@ -111,7 +111,7 @@ export const quickBooksCommon = {
 				};
 			},
 		}),
-	termId: (required = false, displayName: string, description: string = '') =>
+	termId: (required = false, displayName: string, description = '') =>
 		Property.Dropdown({
 			displayName,
 			description,
@@ -147,7 +147,7 @@ export const quickBooksCommon = {
 				};
 			},
 		}),
-	companyCurrencyId: (required = false, displayName: string, description: string = '') =>
+	companyCurrencyId: (required = false, displayName: string, description = '') =>
 		Property.Dropdown({
 			displayName,
 			description,
@@ -183,7 +183,7 @@ export const quickBooksCommon = {
 				};
 			},
 		}),
-	classId: (required = false, displayName: string, description: string = '') =>
+	classId: (required = false, displayName: string, description = '') =>
 		Property.Dropdown({
 			displayName,
 			description,
@@ -219,7 +219,7 @@ export const quickBooksCommon = {
 				};
 			},
 		}),
-	taxCodeId: (required = false, displayName: string, description: string = '') =>
+	taxCodeId: (required = false, displayName: string, description = '') =>
 		Property.Dropdown({
 			displayName,
 			description,
