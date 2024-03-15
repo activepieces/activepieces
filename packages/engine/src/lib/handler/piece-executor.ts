@@ -69,12 +69,10 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         const context: ActionContext = {
             executionType: isPaused ? ExecutionType.RESUME : ExecutionType.BEGIN,
             resumePayload: constants.resumePayload!,
-            store: createContextStore<StoreScope>({
+            store: createContextStore({
                 prefix: '',
                 flowId: constants.flowId,
                 workerToken: constants.workerToken,
-                defaultScope: StoreScope.PROJECT,
-                runId: constants.flowRunId,
             }),
             auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
             files: createFilesService({
