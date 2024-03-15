@@ -64,7 +64,7 @@ export class QuickBooksAPIClient {
 
 		const request: HttpRequest = {
 			method: method,
-			url: `https://sandbox-quickbooks.api.intuit.com/v3/company/${this.companyId}` + path,
+			url: `https://quickbooks.api.intuit.com/v3/company/${this.companyId}` + path,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
 				token: this.accessToken,
