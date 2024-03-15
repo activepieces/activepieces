@@ -1,4 +1,5 @@
 import { StepOutput } from '@activepieces/shared'
+import PriorityQueue from 'priority-queue-typescript'
 
 const TRUNCATION_TEXT_PLACEHOLDER = '(truncated)'
 const MAX_SINGLE_SIZE_FOR_SINGLE_ENTRY = 1024 * 1024
@@ -22,7 +23,10 @@ export const loggingUtils = {
 
 function trimJson(json: any) {
     const nodes: Node[] = []
-    const leaves: Node[] = []
+    const leaves = new PriorityQueue<Node>(
+        undefined,
+        (a: Node, b: Node) => b.size - a.size
+    )
 
     let totalJsonSize = JSON.stringify(json).length
 
@@ -36,13 +40,11 @@ function trimJson(json: any) {
 
     jsonToNodes(json, 0, nodes, leaves)
 
-    leaves.sort((a, b) => a.size - b.size)
-
-    while (leaves.length > 0 && totalJsonSize > MAX_SINGLE_SIZE_FOR_SINGLE_ENTRY) {
-        const curNode = leaves.pop()
+    while (leaves.size() > 0 && totalJsonSize > MAX_SINGLE_SIZE_FOR_SINGLE_ENTRY) {
+        const curNode = leaves.poll()
         if (!curNode) continue;
         const idx = curNode.index
-
+        console.log(curNode.size)
         totalJsonSize += -curNode.size + TRUNCATION_TEXT_PLACEHOLDER.length
 
         nodes[idx].truncate = true
@@ -50,18 +52,17 @@ function trimJson(json: any) {
         if (curNode.parentNodeId >= 0) {
             nodes[curNode.parentNodeId].numberOfChildren--
             if (nodes[curNode.parentNodeId].numberOfChildren == 0) {
-                leaves.push(nodes[curNode.parentNodeId])
+                leaves.add(nodes[curNode.parentNodeId])
             }
         }
 
-        leaves.sort((a, b) => a.size - b.size)
     }
 
     convertToJson(json, nodes)
     return json
 }
 
-function jsonToNodes(curNode: unknown, curNodeId: number, nodes: Node[], leaves: Node[]) {
+function jsonToNodes(curNode: unknown, curNodeId: number, nodes: Node[], leaves: PriorityQueue<Node>) {
     if (isObject(curNode)) {
         Object.entries(curNode).forEach(([childKey, childValue]) => {
             nodes.push({
@@ -75,7 +76,7 @@ function jsonToNodes(curNode: unknown, curNodeId: number, nodes: Node[], leaves:
         });
     }
     else {
-        leaves.push(nodes[nodes.length - 1])
+        leaves.add(nodes[nodes.length - 1])
     }
 }
 
