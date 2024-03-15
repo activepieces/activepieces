@@ -1,8 +1,15 @@
 import { StepOutput } from '@activepieces/shared'
-import sizeof from 'object-sizeof'
 
 const TRUNCATION_TEXT_PLACEHOLDER = '(truncated)'
 const MAX_SINGLE_SIZE_FOR_SINGLE_ENTRY = 1024 * 1024
+
+type Node = {
+    size: number,
+    index: number,
+    parentNodeId: number,
+    numberOfChildren: number,
+    truncate: boolean
+}
 
 export const loggingUtils = {
     async trimExecution(steps: Record<string, StepOutput>): Promise<Record<string, StepOutput>> {
@@ -13,83 +20,79 @@ export const loggingUtils = {
     },
 }
 
-function trimJson(json: any){
-    type Node = {
-        size: number,
-        index: number,
-        parentNodeId: number,
-        numberOfChildren: number,
-        truncate: boolean
-    }
-    
+function trimJson(json: any) {
     const nodes: Node[] = []
     const leaves: Node[] = []
-    let totalJsonSize = sizeof(json)
-    
-    function jsonToNodes(curNode: unknown, curNodeId: number) {
-        if(curNode !== null && typeof curNode == "object" ) {
-            Object.entries(curNode).forEach(([childKey, childValue]) => {
-                nodes.push({
-                    size: sizeof(childValue),
-                    index: nodes.length,
-                    parentNodeId: curNodeId,
-                    numberOfChildren: Object.entries(childValue).length,
-                    truncate: false
-                })
-                jsonToNodes(childValue, nodes.length - 1)
-            });
-        }
-        else {
-            leaves.push(nodes[nodes.length - 1])
-        }
-    }
-    
+
+    let totalJsonSize = JSON.stringify(json).length
+
     nodes.push({
-        size: sizeof(json),
+        size: JSON.stringify(json).length,
         index: 0,
-        parentNodeId : -1,
+        parentNodeId: -1,
         numberOfChildren: Object.entries(json).length,
-        truncate: false 
+        truncate: false
     })
-    
-    jsonToNodes(json, 0)
-    
+
+    jsonToNodes(json, 0, nodes, leaves)
+
     leaves.sort((a, b) => a.size - b.size)
-    
-    while(leaves.length > 0 && totalJsonSize > MAX_SINGLE_SIZE_FOR_SINGLE_ENTRY){
+
+    while (leaves.length > 0 && totalJsonSize > MAX_SINGLE_SIZE_FOR_SINGLE_ENTRY) {
         const curNode = leaves.pop()
-        if(!curNode)continue;
+        if (!curNode) continue;
         const idx = curNode.index
-        
+
         totalJsonSize += -curNode.size + TRUNCATION_TEXT_PLACEHOLDER.length
-        
+
         nodes[idx].truncate = true
-        
-        if(curNode.parentNodeId >= 0){
+
+        if (curNode.parentNodeId >= 0) {
             nodes[curNode.parentNodeId].numberOfChildren--
-            if(nodes[curNode.parentNodeId].numberOfChildren == 0){
+            if (nodes[curNode.parentNodeId].numberOfChildren == 0) {
                 leaves.push(nodes[curNode.parentNodeId])
             }
         }
-        
+
         leaves.sort((a, b) => a.size - b.size)
     }
-    
-    let cnt = 0
-    
-    function convertToJson (curNode: any) {
-        if(curNode !== null && typeof curNode == "object" ) {
-            Object.entries(curNode).forEach(([childKey, childValue]) => {
-                cnt++;
-                let curCnt = cnt
-                convertToJson(childValue)
-                if(nodes[curCnt].truncate){
-                    curNode[childKey] = TRUNCATION_TEXT_PLACEHOLDER
-                }
-            });
-        }
-    }
 
-    convertToJson(json)
+    convertToJson(json, nodes)
     return json
+}
+
+function jsonToNodes(curNode: unknown, curNodeId: number, nodes: Node[], leaves: Node[]) {
+    if (isObject(curNode)) {
+        Object.entries(curNode).forEach(([childKey, childValue]) => {
+            nodes.push({
+                size: JSON.stringify(childValue).length,
+                index: nodes.length,
+                parentNodeId: curNodeId,
+                numberOfChildren: Object.entries(childValue).length,
+                truncate: false
+            })
+            jsonToNodes(childValue, nodes.length - 1, nodes, leaves)
+        });
+    }
+    else {
+        leaves.push(nodes[nodes.length - 1])
+    }
+}
+
+function convertToJson(curNode: any, nodes: Node[], nodeNum: { value: number } = { value: 0 }) {
+    if (isObject(curNode)) {
+        Object.entries(curNode).forEach(([childKey, childValue]) => {
+            nodeNum.value++;
+            let curNodeNum = nodeNum.value
+            convertToJson(childValue, nodes, nodeNum)
+            if (nodes[curNodeNum].truncate) {
+                const curNodeObj = curNode as { [key: string]: any };
+                curNodeObj[childKey] = TRUNCATION_TEXT_PLACEHOLDER
+            }
+        });
+    }
+}
+
+const isObject = (value: any): value is object => {
+    return value !== null && typeof value === 'object';
 }
