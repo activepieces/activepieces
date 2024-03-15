@@ -1,7 +1,7 @@
 import { AUTHENTICATION_PROPERTY_NAME, GenericStepOutput, ActionType, PieceAction, StepOutputStatus, assertNotNullOrUndefined, isNil, ExecutionType, PauseType, FlowRunStatus } from '@activepieces/shared'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
-import { ActionContext, StoreScope, ConnectionsManager, PauseHook, PauseHookParams, PiecePropertyMap, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
+import { ActionContext, ConnectionsManager, PauseHook, PauseHookParams, PiecePropertyMap, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
 import { createContextStore } from '../services/storage.service'
 import { createFilesService } from '../services/files.service'
 import { createConnectionService } from '../services/connections.service'
