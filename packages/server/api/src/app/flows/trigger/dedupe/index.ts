@@ -38,7 +38,7 @@ function removeDedupeKey(payload: unknown): unknown {
     if (isNil(dedupeKeyValue)) {
         return payload
     }
-    return { ...(payload as Record<string, unknown>), [DEDUPE_KEY_PROPERTY]: null }
+    return { ...(payload as Record<string, unknown>), [DEDUPE_KEY_PROPERTY]: undefined }
 }
 
 function extractDedupeKey(payload: unknown): unknown {
