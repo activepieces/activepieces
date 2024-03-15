@@ -49,9 +49,12 @@ export const airtableAuth = PieceAuth.SecretText({
 
 export const airtable = createPiece({
   displayName: 'Airtable',
+  description:
+    'Low‒code platform to build apps.',
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/airtable.png',
-  authors: ['AbdulTheActivePiecer', 'kanarelo', 'TaskMagicKyle'],
+  authors: ["kanarelo","TaskMagicKyle","Salem-Alaa","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   categories: [PieceCategory.PRODUCTIVITY],
   auth: airtableAuth,
   actions: [

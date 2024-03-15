@@ -4,6 +4,8 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { createConversation } from './lib/actions/create-conversation';
+import { replyToConversation } from './lib/actions/reply-to-conversation';
+import { upsertDocument } from './lib/actions/upsert-document';
 
 export const dustAuth = PieceAuth.CustomAuth({
   description: 'Dust authentication requires an API key.',
@@ -28,10 +30,11 @@ export type DustAuthType = {
 
 export const dust = createPiece({
   displayName: 'Dust',
+  description: 'Secure messaging and collaboration',
   auth: dustAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/dust.png',
-  authors: ['AdamSelene'],
-  actions: [createConversation],
+  authors: ['AdamSelene', 'abuaboud'],
+  actions: [createConversation, replyToConversation, upsertDocument],
   triggers: [],
 });

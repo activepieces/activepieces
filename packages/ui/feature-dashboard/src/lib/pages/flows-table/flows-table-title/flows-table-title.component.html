@@ -3,7 +3,13 @@
         <div class="ap-flex-grow ap-typography-headline-6 ap-flex ap-gap-2 ap-items-center"><svg-icon
                 src="assets/img/custom/all-flows.svg" class="ap-h-[15px] ap-w-[15px] ap-fill-bleached-gray"
                 [applyClass]="true"></svg-icon>
-            <span i18n>All flows</span>
+
+                <span i18n *ngIf="(hideFoldersList$ | async) === false || (hideFoldersList$ | async) === undefined">
+                  All flows
+                </span>
+            <span i18n *ngIf="hideFoldersList$ | async">
+               Flows
+            </span>
         </div>
 
     </ng-container>

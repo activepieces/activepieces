@@ -49,7 +49,7 @@ async function sendProjectRecords(timestamp: number): Promise<void> {
     assertNotNullOrUndefined(stripe, 'Stripe is not configured')
     for (const { projectId } of projectIds) {
         const projectBilling = await projectBillingService.getOrCreateForProject(projectId)
-        if (isNil(projectBilling.stripeSubscriptionId)) {
+        if (isNil(projectBilling.stripeSubscriptionId) || projectBilling.subscriptionStatus !== ApSubscriptionStatus.ACTIVE) {
             continue
         }
         const subscription: Stripe.Subscription = await stripe.subscriptions.retrieve(projectBilling.stripeSubscriptionId)
@@ -131,9 +131,9 @@ const projectBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
                 )
                 const subscription = webhook.data.object as Stripe.Subscription
                 if (!stripeHelper.isPriceForTasks(subscription)) {
-                    return await reply.status(StatusCodes.NO_CONTENT).send({
-                        message: 'Not a price for tasks',
-                    })
+                    return {
+                        message: 'Subscription does not have a price for tasks',
+                    }
                 }
                 const projectBilling = await projectBillingService.updateSubscriptionIdByCustomerId(subscription)
                 if (subscription.status === ApSubscriptionStatus.CANCELED) {

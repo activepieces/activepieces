@@ -270,21 +270,18 @@
       "group": "Embedding",
       "pages": [
         {
-          "group": "Embed Builder",
+          "group": "Configuration",
           "icon": "code",
           "pages": [
-            "embedding/embed-builder/generate-jwt",
-            "embedding/embed-builder/embed-iframe"
+            "embedding/configuration/generate-jwt",
+            "embedding/configuration/initialize-embed"
           ]
         },
         {
-          "group": "Connection Cards",
+          "group": "Connections",
           "icon": "cards-blank",
           "pages": [
-            "embedding/connection-cards/overview",
-            "embedding/connection-cards/user-authentication",
-            "embedding/connection-cards/frontend-sdk",
-            "embedding/connection-cards/user-flows"
+            "embedding/connections/create-connection"
           ]
         }
       ]
@@ -360,12 +357,38 @@
   ],
   "analytics": {
     "posthog": {
-      "apiKey": "phc_TXdpocbYTeZVm5VJmMzHTMrCofBQu3e0kN7HGMNGTVW"
+      "apiKey": "phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh"
     }
   },
   "footerSocials": {
     "website": "https://www.activepieces.com",
     "github": "https://github.com/activepieces/activepieces",
     "discord": "https://discord.gg/2jUXBKDdP8"
-  }
+  },
+  "redirects": [
+    {
+      "source": "/embedding/connection-cards/overview",
+      "destination": "/embedding/connections/create-connection"
+    },
+    {
+      "source": "/embedding/connection-cards/user-authentication",
+      "destination": "/embedding/configuration/generate-jwt"
+    },
+    {
+      "source": "/embedding/connection-cards/frontend-sdk",
+      "destination": "/embedding/configuration/initialize-embed"
+    },
+    {
+      "source": "/embedding/connection-cards/user-flows",
+      "destination": "/embedding/configuration/generate-jwt"
+    },
+    {
+      "source": "/embedding/embed-builder/generate-jwt",
+      "destination": "/embedding/configuration/generate-jwt"
+    },
+    {
+      "source":"/embedding/embed-builder/embed-iframe",
+      "destination":"/embedding/configuration/initialize-embed"
+    }
+  ]
 }

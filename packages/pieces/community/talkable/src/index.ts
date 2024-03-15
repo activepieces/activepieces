@@ -46,11 +46,13 @@ export const talkableAuth = PieceAuth.CustomAuth({
 
 export const talkable = createPiece({
   displayName: 'Talkable',
+  description: 'Referral marketing programs that drive revenue',
+
   auth: talkableAuth,
   minimumSupportedRelease: '0.7.1',
   logoUrl:
     'https://www.talkable.com/wp-content/uploads/2021/12/talkable-favicon.svg',
-  authors: ['vitalini'],
+  authors: ["Vitalini","kishanprmr","MoShizzle","abuaboud"],
   categories: [PieceCategory.MARKETING],
   actions: [
     findPerson,

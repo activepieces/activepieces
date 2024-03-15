@@ -5,9 +5,10 @@ import { delayUntilAction } from './lib/actions/delay-untill-action';
 
 export const delay = createPiece({
   displayName: 'Delay',
+  description: 'Use it to delay the execution of the next action',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/delay.png',
-  authors: ['abuaboud', 'nileshtrivedi'],
+  authors: ["Nilesh","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   categories: [PieceCategory.CORE],
   auth: PieceAuth.None(),
   actions: [

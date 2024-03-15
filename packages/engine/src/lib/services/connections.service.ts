@@ -1,7 +1,7 @@
 import { StatusCodes } from 'http-status-codes'
-import { AppConnection, AppConnectionType, CloudOAuth2ConnectionValue, BasicAuthConnectionValue, OAuth2ConnectionValueWithApp, isNil } from '@activepieces/shared'
+import { AppConnection, AppConnectionType, CloudOAuth2ConnectionValue, BasicAuthConnectionValue, OAuth2ConnectionValueWithApp } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
-import { ConnectionLoadingFailureError, ConnectionNotFoundError } from '../helper/execution-errors'
+import { ConnectionLoadingError, ConnectionNotFoundError, ExecutionError, FetchError } from '../helper/execution-errors'
 
 export const createConnectionService = ({ projectId, workerToken }: CreateConnectionServiceParams): ConnectionService => {
     return {
@@ -17,45 +17,39 @@ export const createConnectionService = ({ projectId, workerToken }: CreateConnec
                 })
 
                 if (!response.ok) {
-                    return handleErrors({
-                        httpStatus: response.status,
+                    return handleResponseError({
                         connectionName,
-                        url,
+                        httpStatus: response.status,
                     })
                 }
 
-                const connection: AppConnection | null = await response.json()
-
-                if (isNil(connection)) {
-                    return handleNotFoundError(connectionName)
-                }
-
+                const connection = await response.json()
                 return getConnectionValue(connection)
             }
             catch (e) {
-                if (e instanceof ConnectionNotFoundError) {
+                if (e instanceof ExecutionError) {
                     throw e
                 }
 
-                return handleErrors({
-                    connectionName,
+                return handleFetchError({
                     url,
+                    cause: e,
                 })
             }
         },
     }
 }
 
-const handleErrors = ({ httpStatus, connectionName, url }: HandleErrorsParams): never => {
+const handleResponseError = ({ connectionName, httpStatus }: HandleResponseErrorParams): never => {
     if (httpStatus === StatusCodes.NOT_FOUND.valueOf()) {
-        handleNotFoundError(connectionName)
+        throw new ConnectionNotFoundError(connectionName)
     }
 
-    throw new ConnectionLoadingFailureError(connectionName, url)
+    throw new ConnectionLoadingError(connectionName)
 }
 
-const handleNotFoundError = (connectionName: string): never => {
-    throw new ConnectionNotFoundError(connectionName)
+const handleFetchError = ({ url, cause }: HandleFetchErrorParams): never => {
+    throw new FetchError(url, cause)
 }
 
 const getConnectionValue = (connection: AppConnection): ConnectionValue => {
@@ -72,11 +66,11 @@ const getConnectionValue = (connection: AppConnection): ConnectionValue => {
 }
 
 type ConnectionValue =
- | OAuth2ConnectionValueWithApp
- | CloudOAuth2ConnectionValue
- | BasicAuthConnectionValue
- | Record<string, unknown>
- | string
+    | OAuth2ConnectionValueWithApp
+    | CloudOAuth2ConnectionValue
+    | BasicAuthConnectionValue
+    | Record<string, unknown>
+    | string
 
 type ConnectionService = {
     obtain(connectionName: string): Promise<ConnectionValue>
@@ -87,8 +81,12 @@ type CreateConnectionServiceParams = {
     workerToken: string
 }
 
-type HandleErrorsParams = {
-    httpStatus?: number
+type HandleResponseErrorParams = {
     connectionName: string
+    httpStatus: number
+}
+
+type HandleFetchErrorParams = {
     url: string
+    cause: unknown
 }

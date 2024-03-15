@@ -1,13 +1,8 @@
-import {
-    SigningKey,
-    SigningKeyId,
-    AddSigningKeyResponse,
-} from '@activepieces/ee-shared'
+import { SigningKey, SigningKeyId, AddSigningKeyResponse } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     ErrorCode,
     SeekPage,
-    UserId,
     apId,
     isNil,
     PlatformId,
@@ -19,17 +14,12 @@ import { SigningKeyEntity } from './signing-key-entity'
 const repo = databaseConnection.getRepository<SigningKey>(SigningKeyEntity)
 
 export const signingKeyService = {
-    async add({
-        userId,
-        platformId,
-        displayName,
-    }: AddParams): Promise<AddSigningKeyResponse> {
+    async add({ platformId, displayName }: AddParams): Promise<AddSigningKeyResponse> {
         const generatedSigningKey = await signingKeyGenerator.generate()
 
         const newSigningKey: NewSigningKey = {
             id: apId(),
             platformId,
-            generatedBy: userId,
             publicKey: generatedSigningKey.publicKey,
             algorithm: generatedSigningKey.algorithm,
             displayName,
@@ -82,7 +72,6 @@ export const signingKeyService = {
 }
 
 type AddParams = {
-    userId: UserId
     platformId: PlatformId
     displayName: string
 }

@@ -1,10 +1,10 @@
 import {
   createAction,
   Property,
-  StoreScope,
   Validators,
 } from '@activepieces/pieces-framework';
 import deepEqual from 'deep-equal';
+import { common, getScopeAndKey } from './common';
 
 export const storageAddtoList = createAction({
   name: 'add_to_list',
@@ -32,39 +32,23 @@ export const storageAddtoList = createAction({
       displayName: 'Ignore if value exists',
       required: false,
     }),
-    store_scope: Property.StaticDropdown({
-      displayName: 'Store Scope',
-      description: 'The storage scope of the value.',
-      required: true,
-      options: {
-        options: [
-          {
-            label: 'Project',
-            value: StoreScope.PROJECT,
-          },
-          {
-            label: 'Flow',
-            value: StoreScope.FLOW,
-          },
-        ],
-      },
-      defaultValue: StoreScope.PROJECT,
-    }),
+    store_scope: common.store_scope
   },
   async run(context) {
-    let items =
-      (await context.store.get<unknown[]>(
-        context.propsValue['key'],
-        context.propsValue.store_scope
-      )) ?? [];
+    const { key, scope } = getScopeAndKey({
+      runId: context.run.id,
+      key: context.propsValue['key'],
+      scope: context.propsValue.store_scope,
+    });
+    let items =  (await context.store.get<unknown[]>(key,scope)) ?? [];
     try {
-      if(typeof items === 'string') {
+      if (typeof items === 'string') {
         items = JSON.parse(items)
       }
       if (!Array.isArray(items)) {
         throw new Error(`Key ${context.propsValue['key']} is not an array`);
       }
-    } catch(err) {
+    } catch (err) {
       throw new Error(`Key ${context.propsValue['key']} is not an array`);
     }
     if (context.propsValue['ignore_if_exists']) {
@@ -75,10 +59,10 @@ export const storageAddtoList = createAction({
       }
     }
     items.push(context.propsValue['value']);
-    return await context.store.put(
-      context.propsValue['key'],
+    return context.store.put(
+      key,
       items,
-      context.propsValue.store_scope
+      scope
     );
   },
 });

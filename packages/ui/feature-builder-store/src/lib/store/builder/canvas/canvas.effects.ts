@@ -10,6 +10,7 @@ import { LeftSideBarType, RightSideBarType } from '../../../model';
 import { RunDetailsService } from '../../../service/run-details.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FlowsActions } from '../../flow';
+import { FlowRunStatus } from '@activepieces/shared';
 
 @Injectable()
 export class CanvasEffects {
@@ -110,7 +111,7 @@ export class CanvasEffects {
     return this.actions$.pipe(
       ofType(canvasActions.setRun),
       switchMap(({ run }) => {
-        if (run.status !== 'RUNNING') {
+        if (run.status !== FlowRunStatus.RUNNING) {
           return of(canvasActions.selectStepByName({ stepName: 'trigger' }));
         }
         return EMPTY;

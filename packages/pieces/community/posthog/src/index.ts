@@ -16,6 +16,8 @@ export const posthogAuth = PieceAuth.SecretText({
 
 export const posthog = createPiece({
   displayName: 'PostHog',
+  description: 'Open-source product analytics',
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/posthog.png',
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
@@ -31,6 +33,6 @@ export const posthog = createPiece({
       }),
     }),
   ],
-  authors: ['kanarelo'],
+  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   triggers: [],
 });

@@ -25,6 +25,15 @@ To use the dev container for the Activepieces project, follow these steps:
 4. Run `npm start`.
 5. The backend will run at `localhost:3000` and the frontend will run at `localhost:4200`.
 
+<Note>
+  By default, the development setup only builds specific pieces.Open the file
+  `packages/server/api/.env` and add comma-separated list of pieces to make
+  available.
+
+For more details, check out the [Piece Development](/developers/development-setup/getting-started) section.
+
+</Note>
+
 The login credentials are:  
 Email: `dev@ap.com`
 Password: `12345678`
@@ -42,7 +51,7 @@ One of the best trouble shoot after an error occur is to reset the dev container
 
 1. Exit the dev container
 2. Run the following
-    ```sh
-    sh tools/reset-dev.sh
-    ```
+   ```sh
+   sh tools/reset-dev.sh
+   ```
 3. Rebuild the dev container from above steps

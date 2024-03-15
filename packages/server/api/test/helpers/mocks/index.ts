@@ -44,6 +44,7 @@ import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oaut
 import { encryptString } from '../../../src/app/helper/encryption'
 import dayjs from 'dayjs'
 import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
+import { databaseConnection } from '../../../src/app/database/database-connection'
 
 export const CLOUD_PLATFORM_ID = 'cloud-id'
 
@@ -266,7 +267,6 @@ export const createMockSigningKey = (
         displayName: signingKey?.displayName ?? faker.lorem.word(),
         platformId: signingKey?.platformId ?? apId(),
         publicKey: signingKey?.publicKey ?? MOCK_SIGNING_KEY_PUBLIC_KEY,
-        generatedBy: signingKey?.generatedBy ?? apId(),
         algorithm: signingKey?.algorithm ?? KeyAlgorithm.RSA,
     }
 }
@@ -301,6 +301,7 @@ export const createMockPieceMetadata = (
         projectId: pieceMetadata?.projectId,
         directoryPath: pieceMetadata?.directoryPath,
         auth: pieceMetadata?.auth,
+        authors: pieceMetadata?.authors ?? [],
         platformId: pieceMetadata?.platformId,
         version: pieceMetadata?.version ?? faker.system.semver(),
         minimumSupportedRelease: pieceMetadata?.minimumSupportedRelease ?? '0.0.0',
@@ -432,6 +433,31 @@ export const createMockActivity = (activity?: Partial<Activity>): Activity => {
     }
 }
 
+export const mockBasicSetup = async (): Promise<MockBasicSetup> => {
+    const mockOwner = createMockUser()
+    await databaseConnection.getRepository('user').save(mockOwner)
+
+    const mockPlatform = createMockPlatform({
+        ownerId: mockOwner.id,
+    })
+    await databaseConnection.getRepository('platform').save(mockPlatform)
+
+    mockOwner.platformId = mockPlatform.id
+    await databaseConnection.getRepository('user').save(mockOwner)
+
+    const mockProject = createMockProject({
+        ownerId: mockOwner.id,
+        platformId: mockPlatform.id,
+    })
+    await databaseConnection.getRepository('project').save(mockProject)
+
+    return {
+        mockOwner,
+        mockPlatform,
+        mockProject,
+    }
+}
+
 type CreateMockPlatformWithOwnerParams = {
     platform?: Partial<Omit<Platform, 'ownerId'>>
     owner?: Partial<Omit<User, 'platformId'>>
@@ -448,4 +474,10 @@ type SetupMockApiKeyServiceAccountParams = CreateMockPlatformWithOwnerParams & {
 
 type SetupMockApiKeyServiceAccountReturn = CreateMockPlatformWithOwnerReturn & {
     mockApiKey: ApiKey & { value: string }
+}
+
+type MockBasicSetup = {
+    mockOwner: User
+    mockPlatform: Platform
+    mockProject: Project
 }

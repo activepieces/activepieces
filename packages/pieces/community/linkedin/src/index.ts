@@ -1,4 +1,8 @@
-import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import {
+  OAuth2PropertyValue,
+  PieceAuth,
+  createPiece,
+} from '@activepieces/pieces-framework';
 
 import { PieceCategory } from '@activepieces/shared';
 import { createCompanyUpdate } from './lib/actions/create-company-update';
@@ -22,21 +26,27 @@ export const linkedinAuth = PieceAuth.OAuth2({
 
 export const linkedin = createPiece({
   displayName: 'LinkedIn',
+  description: 'Connect and network with professionals',
+
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/linkedin.png',
   categories: [PieceCategory.MARKETING],
-  authors: ['MoShizzle'],
+  authors: ["aasimsani","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: linkedinAuth,
-  actions: [createShareUpdate, createCompanyUpdate, createCustomApiCallAction({
-    auth: linkedinAuth,
-    baseUrl: () => {
-      return linkedinCommon.baseUrl;
-    },
-    authMapping: (auth) => {
-      return {
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
-      };
-    },
-  }),],
+  actions: [
+    createShareUpdate,
+    createCompanyUpdate,
+    createCustomApiCallAction({
+      auth: linkedinAuth,
+      baseUrl: () => {
+        return linkedinCommon.baseUrl;
+      },
+      authMapping: (auth) => {
+        return {
+          Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        };
+      },
+    }),
+  ],
   triggers: [],
 });

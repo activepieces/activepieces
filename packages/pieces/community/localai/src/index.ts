@@ -24,7 +24,8 @@ export const localaiAuth = PieceAuth.CustomAuth({
 });
 export const openai = createPiece({
   displayName: 'LocalAI',
-  description: 'Use LocalAi to generate text',
+  description:
+    'The free, Self-hosted, community-driven and local-first. Drop-in replacement for OpenAI running on consumer-grade hardware. No GPU required.',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/localai.jpeg',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
@@ -41,6 +42,6 @@ export const openai = createPiece({
       }),
     }),
   ],
-  authors: ['hboujrida'],
+  authors: ["hkboujrida","kishanprmr","MoShizzle","abuaboud"],
   triggers: [],
 });

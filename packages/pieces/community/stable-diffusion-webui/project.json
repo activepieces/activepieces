@@ -6,37 +6,24 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/community/stable-diffusion-webui",
         "tsConfig": "packages/pieces/community/stable-diffusion-webui/tsconfig.lib.json",
         "packageJson": "packages/pieces/community/stable-diffusion-webui/package.json",
         "main": "packages/pieces/community/stable-diffusion-webui/src/index.ts",
-        "assets": [
-          "packages/pieces/community/stable-diffusion-webui/*.md"
-        ],
+        "assets": ["packages/pieces/community/stable-diffusion-webui/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-stable-diffusion-webui {args.ver} {args.tag}",
-      "dependsOn": [
-        "build"
-      ]
+      "dependsOn": ["build"]
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
-      "options": {
-        "lintFilePatterns": [
-          "packages/pieces/community/stable-diffusion-webui/**/*.ts"
-        ]
-      }
+      "outputs": ["{options.outputFile}"]
     }
   },
   "tags": []

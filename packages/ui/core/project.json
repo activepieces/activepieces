@@ -6,10 +6,8 @@
   "prefix": "app",
   "targets": {
     "build": {
-      "executor": "@nx/angular:webpack-browser",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "executor": "@nx/angular:browser-esbuild",
+      "outputs": ["{options.outputPath}"],
       "options": {
         "statsJson": false,
         "outputPath": "dist/packages/ui/core",
@@ -94,29 +92,25 @@
           "extractLicenses": false,
           "sourceMap": true,
           "namedChunks": true,
-          "localize": [
-            "en"
-          ]
+          "localize": ["en"]
         },
         "fr": {
-          "localize": [
-            "fr"
-          ]
+          "localize": ["fr"]
         }
       },
       "defaultConfiguration": "production"
     },
     "serve": {
-      "executor": "@nx/angular:webpack-dev-server",
+      "executor": "@nx/angular:dev-server",
       "configurations": {
         "production": {
-          "browserTarget": "ui-core:build:production"
+          "buildTarget": "ui-core:build:production"
         },
         "development": {
-          "browserTarget": "ui-core:build:development"
+          "buildTarget": "ui-core:build:development"
         },
         "fr": {
-          "browserTarget": "ui-core:build:development,fr"
+          "buildTarget": "ui-core:build:development,fr"
         }
       },
       "defaultConfiguration": "development",
@@ -128,31 +122,20 @@
     "extract-i18n": {
       "executor": "@angular-devkit/build-angular:extract-i18n",
       "options": {
-        "browserTarget": "ui-core:build",
-        "outputPath": "packages/ui/core/src/locale"
+        "outputPath": "packages/ui/core/src/locale",
+        "buildTarget": "ui-core:build"
       }
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
-      "options": {
-        "lintFilePatterns": [
-          "packages/ui/core/**/*.ts",
-          "packages/ui/core/**/*.html"
-        ]
-      }
+      "outputs": ["{options.outputFile}"]
     },
     "test": {
       "executor": "@angular-devkit/build-angular:karma",
       "options": {
         "tsConfig": "packages/ui/core/tsconfig.spec.json",
         "karmaConfig": "packages/ui/core/karma.conf.js",
-        "polyfills": [
-          "zone.js",
-          "zone.js/testing"
-        ],
+        "polyfills": ["zone.js", "zone.js/testing"],
         "styles": [],
         "scripts": [],
         "assets": []

@@ -20,11 +20,13 @@ export const boxAuth = PieceAuth.OAuth2({
 
 export const box = createPiece({
   displayName: 'Box',
+  description: 'Secure content management and collaboration',
+
   auth: boxAuth,
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/box.png',
   categories: [PieceCategory.CONTENT_AND_FILES],
-  authors: ['kanarelo', 'MoShizzle'],
+  authors: ["kishanprmr","MoShizzle","abuaboud"],
   actions: [
     createCustomApiCallAction({
       baseUrl: () => common.baseUrl,

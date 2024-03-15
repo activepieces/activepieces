@@ -47,11 +47,13 @@ export const ghostAuth = PieceAuth.CustomAuth({
 
 export const ghostcms = createPiece({
   displayName: 'GhostCMS',
+  description: 'Publishing platform for professional bloggers',
+
   auth: ghostAuth,
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/ghostcms.png',
   categories: [PieceCategory.MARKETING],
-  authors: ['MoShizzle'],
+  authors: ["kishanprmr","MoShizzle","abuaboud"],
   actions: [
     createMember,
     updateMember,

@@ -5,6 +5,8 @@ import { InputPropertyMap } from '../property';
 import { PieceAuthProperty } from '../property/authentication';
 import { TriggerTestStrategy } from '@activepieces/shared';
 
+export const DEDUPE_KEY_PROPERTY = '_dedupe_key'
+
 export enum TriggerStrategy {
   POLLING = 'POLLING',
   WEBHOOK = 'WEBHOOK',

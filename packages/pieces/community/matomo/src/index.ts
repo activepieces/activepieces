@@ -6,11 +6,13 @@ import { matomoAuth } from './lib/auth';
 
 export const matomo = createPiece({
   displayName: 'Matomo',
+  description: 'Open source alternative to Google Analytics',
+
   auth: matomoAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/matomo.png',
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
-  authors: ['joeworkman'],
+  authors: ["joeworkman","kishanprmr","MoShizzle","abuaboud"],
   actions: [
     addAnnotationAction,
     createCustomApiCallAction({

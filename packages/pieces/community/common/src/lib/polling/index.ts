@@ -1,4 +1,4 @@
-import { Store } from '@activepieces/pieces-framework';
+import { Store, StoreScope } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
 
 interface TimebasedPolling<AuthValue, PropsValue> {

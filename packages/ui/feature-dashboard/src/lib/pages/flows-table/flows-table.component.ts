@@ -1,6 +1,14 @@
 import { Component, Inject, LOCALE_ID, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { map, Observable, shareReplay, startWith, Subject, tap } from 'rxjs';
+import {
+  map,
+  Observable,
+  shareReplay,
+  startWith,
+  Subject,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { FlowsTableDataSource } from './flows-table.datasource';
 import { MatDialog } from '@angular/material/dialog';
 import {
@@ -9,10 +17,10 @@ import {
   FolderId,
   FlowOperationType,
 } from '@activepieces/shared';
-
 import {
   ApPaginatorComponent,
   AuthenticationService,
+  EmbeddingService,
   FoldersService,
   NavigationService,
   downloadFlow,
@@ -32,7 +40,6 @@ import {
   MoveFlowToFolderDialogComponent,
   MoveFlowToFolderDialogData,
 } from '@activepieces/ui/feature-folders-store';
-
 import {
   RenameFlowDialogComponent,
   RenameFlowDialogData,
@@ -65,6 +72,8 @@ export class FlowsTableComponent implements OnInit {
   duplicateFlow$?: Observable<void>;
   downloadTemplate$?: Observable<void>;
   renameFlow$?: Observable<boolean>;
+  hideFolders$ = this.embeddingService.getHideFolders$();
+
   constructor(
     private activatedRoute: ActivatedRoute,
     private dialogService: MatDialog,
@@ -73,6 +82,7 @@ export class FlowsTableComponent implements OnInit {
     private store: Store,
     private authenticationService: AuthenticationService,
     private navigationService: NavigationService,
+    private embeddingService: EmbeddingService,
     @Inject(LOCALE_ID) public locale: string
   ) {
     this.showAllFlows$ = this.listenToShowAllFolders();
@@ -81,20 +91,27 @@ export class FlowsTableComponent implements OnInit {
 
   private listenToShowAllFolders() {
     return this.store.select(FoldersSelectors.selectDisplayAllFlows).pipe(
-      tap((displayAllFlows) => {
-        this.hideOrShowFolderColumn(displayAllFlows);
+      switchMap((displayAllFlows) => {
+        return this.hideFolders$.pipe(
+          map((hideFoldersList) => {
+            return displayAllFlows && !hideFoldersList;
+          })
+        );
+      }),
+      tap((showFoldersColumn) => {
+        this.toggleFoldersColumn(showFoldersColumn);
       }),
       shareReplay(1)
     );
   }
 
-  private hideOrShowFolderColumn(displayAllFlows: boolean) {
+  private toggleFoldersColumn(showFoldersColumn: boolean) {
     const folderColumnIndex = this.displayedColumns.findIndex(
       (c) => c === 'folderName'
     );
-    if (displayAllFlows && folderColumnIndex == -1) {
+    if (showFoldersColumn && folderColumnIndex == -1) {
       this.displayedColumns.splice(2, 0, 'folderName');
-    } else if (!displayAllFlows && folderColumnIndex !== -1) {
+    } else if (!showFoldersColumn && folderColumnIndex !== -1) {
       this.displayedColumns.splice(folderColumnIndex, 1);
     }
   }

@@ -166,7 +166,7 @@ export const flowRunService = {
             })
         }
         const pauseMetadata = flowRunToResume.pauseMetadata
-        const matchRequestId = pauseMetadata?.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId
+        const matchRequestId = isNil(pauseMetadata) || (pauseMetadata.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId)
         if (matchRequestId) {
             await flowRunService.start({
                 payload: resumePayload,
@@ -218,10 +218,6 @@ export const flowRunService = {
         synchronousHandlerId,
         hookType,
     }: StartParams): Promise<FlowRun> {
-        logger.info(
-            `[flowRunService#start] flowRunId=${flowRunId} executionType=${executionType}`,
-        )
-
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
 
         const flow = await flowService.getOneOrThrow({

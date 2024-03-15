@@ -117,6 +117,7 @@ const execute = async (): Promise<void> => {
                         projectId: input.projectId,
                         workerToken: input.workerToken,
                     }),
+                    searchValue: input.searchValue,
                     constants: EngineConstants.fromExecutePropertyInput(input),
                 })
                 await writeOutput({

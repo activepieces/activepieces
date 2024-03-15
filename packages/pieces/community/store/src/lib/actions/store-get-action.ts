@@ -4,6 +4,7 @@ import {
   StoreScope,
   Validators,
 } from '@activepieces/pieces-framework';
+import { getScopeAndKey, PieceStoreScope } from './common';
 
 export const storageGetAction = createAction({
   name: 'get',
@@ -35,21 +36,29 @@ export const storageGetAction = createAction({
         options: [
           {
             label: 'Project',
-            value: StoreScope.PROJECT,
+            value: PieceStoreScope.PROJECT,
           },
           {
             label: 'Flow',
-            value: StoreScope.FLOW,
+            value: PieceStoreScope.FLOW,
+          },
+          {
+            label: 'Run',
+            value: PieceStoreScope.RUN,
           },
         ],
       },
       defaultValue: StoreScope.PROJECT,
     }),
   },
-  async run({ store, propsValue }) {
+  async run(context) {
+    const { key, scope } = getScopeAndKey({
+      runId: context.run.id,
+      key: context.propsValue['key'],
+      scope: context.propsValue.store_scope,
+    });
     return (
-      (await store.get(propsValue['key'], propsValue.store_scope)) ??
-      propsValue['defaultValue']
+      (await context.store.get(key, scope)) ?? context.propsValue['defaultValue']
     );
   },
 });

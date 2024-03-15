@@ -30,7 +30,9 @@ export const googleCalendar = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/google-calendar.png',
   categories: [PieceCategory.PRODUCTIVITY],
   displayName: 'Google Calendar',
-  authors: ['osamahaikal', 'bibhuty-did-this', 'MoShizzle', 'PFernandez98'],
+  description: 'Get organized and stay on schedule',
+
+  authors: ["OsamaHaikal","bibhuty-did-this","Vitalini","pfernandez98","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: googleCalendarAuth,
   actions: [
     createQuickCalendarEvent,

@@ -1,9 +1,9 @@
 {
   "name": "@activepieces/piece-saastic",
-  "version": "0.0.4",
+  "version": "0.0.6",
   "dependencies": {
-    "@activepieces/pieces-framework": "latest",
-    "@activepieces/pieces-common": "latest",
+    "@activepieces/pieces-framework": "0.7.24",
+    "@activepieces/pieces-common": "0.2.9",
     "tslib": "^2.6.2",
     "@activepieces/shared": "*"
   }

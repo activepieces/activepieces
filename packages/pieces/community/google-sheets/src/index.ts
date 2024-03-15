@@ -13,7 +13,6 @@ import { getRowsAction } from './lib/actions/get-rows';
 import { insertRowAction } from './lib/actions/insert-row.action';
 import { updateRowAction } from './lib/actions/update-row';
 import { googleSheetsCommon } from './lib/common/common';
-import { readNewRows } from './lib/triggers/new-row-added';
 import { newRowAddedTrigger } from './lib/triggers/new-row-added-webhook';
 
 export const googleSheetsAuth = PieceAuth.OAuth2({
@@ -33,12 +32,15 @@ export const googleSheets = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/google-sheets.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: [
-    'abuaboud',
-    'AbdulTheActivepiecer',
-    'Shay Punter',
+    'ShayPunter',
+    'Ozak93',
     'Abdallah-Alwarawreh',
     'Salem-Alaa',
     'kishanprmr',
+    'MoShizzle',
+    'AbdulTheActivePiecer',
+    'khaledmashaly',
+    'abuaboud',
   ],
   actions: [
     insertRowAction,
@@ -61,6 +63,7 @@ export const googleSheets = createPiece({
     }),
   ],
   displayName: 'Google Sheets',
-  triggers: [readNewRows, newRowAddedTrigger],
+  description: 'Create, edit, and collaborate on spreadsheets online',
+  triggers: [newRowAddedTrigger],
   auth: googleSheetsAuth,
 });

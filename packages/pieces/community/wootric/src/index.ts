@@ -16,10 +16,12 @@ export const wootricAuth = PieceAuth.OAuth2({
 
 export const wootric = createPiece({
   displayName: 'Wootric',
+  description: 'Measure and boost customer happiness',
+
   auth: wootricAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: WOOTRIC_IMAGE_URL,
-  authors: [],
+  authors: ["abuaboud"],
   actions: [createWootricSurvey],
   triggers: [],
 });

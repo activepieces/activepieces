@@ -33,7 +33,9 @@ export const googleContacts = createPiece({
     }),
   ],
   displayName: 'Google Contacts',
-  authors: ['abuaboud', 'abdallah-alwarawreh'],
+  description: 'Stay connected and organized',
+
+  authors: ["Abdallah-Alwarawreh","Salem-Alaa","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   triggers: [googleContactNewOrUpdatedContact],
   auth: googleContactsAuth,
 });

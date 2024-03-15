@@ -11,11 +11,13 @@ export const lineAuth2 = PieceAuth.SecretText({
 
 export const line = createPiece({
   displayName: 'Line Bot',
+  description: 'Build chatbots for LINE',
+
   auth: lineAuth2,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/line.png',
   categories: [PieceCategory.COMMUNICATION],
-  authors: ['abuaboud'],
+  authors: ["kishanprmr","MoShizzle","abuaboud"],
   actions: [
     pushMessage,
     createCustomApiCallAction({

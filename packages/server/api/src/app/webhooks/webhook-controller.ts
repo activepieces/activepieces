@@ -55,7 +55,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
                 await reply.status(StatusCodes.NOT_FOUND).send()
                 return
             }
-            const response = await flowResponseWatcher.listen(run.id)
+            const response = await flowResponseWatcher.listen(run.id, true)
             await reply
                 .status(response.status)
                 .headers(response.headers)

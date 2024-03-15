@@ -38,11 +38,12 @@ export const discourseAuth = PieceAuth.CustomAuth({
 
 export const discourse = createPiece({
   displayName: 'Discourse',
+  description: 'Modern open source forum software',
   auth: discourseAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/discourse.png',
   categories: [PieceCategory.COMMUNICATION],
-  authors: ['pfernandez98'],
+  authors: ["pfernandez98","kishanprmr","MoShizzle","abuaboud"],
   actions: [
     createPost,
     createTopic,

@@ -5,14 +5,17 @@ import { getMetaData } from './lib/actions/get-metadata.action';
 import { cropImage } from './lib/actions/crop-image.action';
 import { rotateImage } from './lib/actions/rotate-image.action';
 import { resizeImage } from './lib/actions/resize-Image.action';
+import { compressImage } from './lib/actions/compress-image.actions';
 
 export const imageHelper = createPiece({
   displayName: 'Image Helper',
+  description: 'Tools for image manipulations',
+
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/image-helper.png',
-  authors: ['PFernandez98', 'AbdullahBitar'],
+  authors: ["AbdullahBitar","kishanprmr","abuaboud"],
   categories: [PieceCategory.CORE],
-  actions: [imageToBase64, getMetaData, cropImage, rotateImage, resizeImage],
+  actions: [imageToBase64, getMetaData, cropImage, rotateImage, resizeImage, compressImage],
   triggers: [],
 });

@@ -1,4 +1,4 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
+import { ApplicationEventName, SigningKey } from '@activepieces/ee-shared'
 import { AppConnection, FlowOperationRequest, Folder, PopulatedFlow } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 
@@ -31,10 +31,10 @@ export type CreateAuditEventParam =
       | ApplicationEventName.RESET_PASSWORD
       | ApplicationEventName.VERIFIED_EMAIL
       userId: string
-  } 
+  }
   | {
-      action: 
-      | ApplicationEventName.SIGNED_UP_USING_EMAIL 
+      action:
+      | ApplicationEventName.SIGNED_UP_USING_EMAIL
       | ApplicationEventName.SIGNED_UP_USING_MANAGED_AUTH
       | ApplicationEventName.SIGNED_UP_USING_SSO
       userId: string
@@ -48,6 +48,10 @@ export type CreateAuditEventParam =
       flow: PopulatedFlow
       request: FlowOperationRequest
       userId: string
+  } | {
+      action: ApplicationEventName.CREATED_SIGNING_KEY
+      userId: string
+      signingKey: SigningKey
   }
 
 let hooks: ApplicationEventHooks = {

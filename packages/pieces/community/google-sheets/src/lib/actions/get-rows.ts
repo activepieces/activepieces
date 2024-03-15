@@ -12,6 +12,7 @@ import {
   googleSheetsCommon,
 } from '../common/common';
 import { isNil } from '@activepieces/shared';
+import { HttpError } from '@activepieces/pieces-common';
 
 async function getRows(
   store: Store,
@@ -95,25 +96,41 @@ export const getRowsAction = createAction({
     }),
   },
   async run({ store, auth, propsValue }) {
-    return await getRows(
-      store,
-      auth['access_token'],
-      propsValue['spreadsheet_id'],
-      propsValue['sheet_id'],
-      propsValue['memKey'],
-      propsValue['groupSize'],
-      false
-    );
+    try {
+      return await getRows(
+        store,
+        auth['access_token'],
+        propsValue['spreadsheet_id'],
+        propsValue['sheet_id'],
+        propsValue['memKey'],
+        propsValue['groupSize'],
+        false
+      );
+    } catch (error) {
+      if (error instanceof HttpError) {
+        const errorBody = error.response.body as any;
+        throw new Error(errorBody['error']['message']);
+      }
+      throw error;
+    }
   },
   async test({ store, auth, propsValue }) {
-    return await getRows(
-      store,
-      auth['access_token'],
-      propsValue['spreadsheet_id'],
-      propsValue['sheet_id'],
-      propsValue['memKey'],
-      propsValue['groupSize'],
-      true
-    );
+    try {
+      return await getRows(
+        store,
+        auth['access_token'],
+        propsValue['spreadsheet_id'],
+        propsValue['sheet_id'],
+        propsValue['memKey'],
+        propsValue['groupSize'],
+        true
+      );
+    } catch (error) {
+      if (error instanceof HttpError) {
+        const errorBody = error.response.body as any;
+        throw new Error(errorBody['error']['message']);
+      }
+      throw error;
+    }
   },
 });
