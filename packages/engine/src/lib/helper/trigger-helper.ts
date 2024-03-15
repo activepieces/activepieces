@@ -46,12 +46,10 @@ export const triggerHelper = {
         const prefix = (params.hookType === TriggerHookType.TEST) ? 'test' : ''
         let scheduleOptions: ScheduleOptions | undefined = undefined
         const context = {
-            store: createContextStore<Omit<StoreScope, 'RUN'>>({
+            store: createContextStore({
                 prefix,
                 flowId: params.flowVersion.flowId,
                 workerToken: params.workerToken,
-                defaultScope: StoreScope.PROJECT,
-                runId: undefined,
             }),
             app: {
                 createListeners({ events, identifierKey, identifierValue }: Listener): void {

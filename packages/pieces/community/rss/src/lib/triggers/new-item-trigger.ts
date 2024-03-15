@@ -228,7 +228,7 @@ const polling: Polling<
   items: async ({
     propsValue,
   }: {
-    store: Store<StoreScope>;
+    store: Store;
     propsValue: { rss_feed_url: string };
   }) => {
     const items = await getRssItems(propsValue.rss_feed_url);
