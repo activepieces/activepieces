@@ -44,7 +44,7 @@ function trimJson(json: any) {
         const curNode = leaves.poll()
         if (!curNode) continue;
         const idx = curNode.index
-        console.log(curNode.size)
+        
         totalJsonSize += -curNode.size + TRUNCATION_TEXT_PLACEHOLDER.length
 
         nodes[idx].truncate = true
