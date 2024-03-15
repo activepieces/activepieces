@@ -351,8 +351,6 @@ type GetOrCreateParams = {
     flowVersionId: FlowVersionId
     flowDisplayName: string
     environment: RunEnvironment
-    isNewRun?: boolean
-    flowRunId?: FlowRunId
 }
 
 type ListParams = {

@@ -13,7 +13,6 @@ import { getRowsAction } from './lib/actions/get-rows';
 import { insertRowAction } from './lib/actions/insert-row.action';
 import { updateRowAction } from './lib/actions/update-row';
 import { googleSheetsCommon } from './lib/common/common';
-import { readNewRows } from './lib/triggers/new-row-added';
 import { newRowAddedTrigger } from './lib/triggers/new-row-added-webhook';
 
 export const googleSheetsAuth = PieceAuth.OAuth2({
@@ -32,7 +31,17 @@ export const googleSheets = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-sheets.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ["ShayPunter","Ozak93","Abdallah-Alwarawreh","Salem-Alaa","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
+  authors: [
+    'ShayPunter',
+    'Ozak93',
+    'Abdallah-Alwarawreh',
+    'Salem-Alaa',
+    'kishanprmr',
+    'MoShizzle',
+    'AbdulTheActivePiecer',
+    'khaledmashaly',
+    'abuaboud',
+  ],
   actions: [
     insertRowAction,
     deleteRowAction,
@@ -55,6 +64,6 @@ export const googleSheets = createPiece({
   ],
   displayName: 'Google Sheets',
   description: 'Create, edit, and collaborate on spreadsheets online',
-  triggers: [readNewRows, newRowAddedTrigger],
+  triggers: [newRowAddedTrigger],
   auth: googleSheetsAuth,
 });
