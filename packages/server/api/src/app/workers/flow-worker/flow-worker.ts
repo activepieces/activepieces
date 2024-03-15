@@ -229,6 +229,17 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             input,
         )
 
+        if (result.status === FlowRunStatus.INTERNAL_ERROR) {
+            const retryError = new ActivepiecesError({
+                code: ErrorCode.ENGINE_OPERATION_FAILURE,
+                params: {
+                    message: result.error?.message ?? 'internal error',
+                },
+            })
+
+            throwErrorToRetry(retryError, jobData.runId)
+        }
+
         if (
             jobData.synchronousHandlerId &&
             jobData.hookType === HookType.BEFORE_LOG

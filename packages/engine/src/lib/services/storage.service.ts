@@ -1,92 +1,118 @@
+import { URL } from 'node:url'
 import { Store, StoreScope } from '@activepieces/pieces-framework'
-import { DeletStoreEntryRequest, FlowId, FlowRunId, PutStoreEntryRequest, StoreEntry } from '@activepieces/shared'
+import { StatusCodes } from 'http-status-codes'
+import { DeleteStoreEntryRequest, FlowId, PutStoreEntryRequest, StoreEntry } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
+import { FetchError, StorageError } from '../helper/execution-errors'
 
-export const createStorageService = ({ workerToken }: { workerToken: string }) => {
+export const createStorageService = ({ workerToken }: CreateStorageServiceParams): StorageService => {
     return {
         async get(key: string): Promise<StoreEntry | null> {
-            const response = await fetch(`${EngineConstants.API_URL}v1/store-entries?key=${encodeURIComponent(key)}`, {
-                headers: {
-                    Authorization: 'Bearer ' + workerToken,
-                },
-            })
+            const url = buildUrl(key)
 
-            if (response.ok) {
-                return (await response.json()) ?? null
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        Authorization: `Bearer ${workerToken}`,
+                    },
+                })
+
+                if (!response.ok) {
+                    return await handleResponseError({
+                        key,
+                        response,
+                    })
+                }
+
+                return await response.json()
             }
+            catch (e) {
+                return handleFetchError({
+                    url,
+                    cause: e,
+                })
+            }
+        },
 
-            if (response.status === 404) {
+        async put(request: PutStoreEntryRequest): Promise<StoreEntry | null> {
+            const url = buildUrl()
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${workerToken}`,
+                    },
+                    body: JSON.stringify(request),
+                })
+
+                if (!response.ok) {
+                    return await handleResponseError({
+                        key: request.key,
+                        response,
+                    })
+                }
+
+                return await response.json()
+            }
+            catch (e) {
+                return handleFetchError({
+                    url,
+                    cause: e,
+                })
+            }
+        },
+
+        async delete(request: DeleteStoreEntryRequest): Promise<null> {
+            const url = buildUrl(request.key)
+
+            try {
+                const response = await fetch(url, {
+                    method: 'DELETE',
+                    headers: {
+                        Authorization: `Bearer ${workerToken}`,
+                    },
+                })
+
+                if (!response.ok) {
+                    await handleResponseError({
+                        key: request.key,
+                        response,
+                    })
+                }
+
                 return null
             }
-
-            const body = await response.text()
-            throw new Error('Failed to fetch store entry ' + response.status + ' ' + body)
-        },
-        async put(request: PutStoreEntryRequest): Promise<StoreEntry | null> {
-            const response = await fetch(`${EngineConstants.API_URL}v1/store-entries`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: 'Bearer ' + workerToken,
-                },
-                body: JSON.stringify(request),
-            })
-            if (!response.ok) {
-                throw new Error(JSON.stringify(await response.json()))
+            catch (e) {
+                return handleFetchError({
+                    url,
+                    cause: e,
+                })
             }
-            return (await response.json()) ?? null
-        },
-        async delete(request: DeletStoreEntryRequest): Promise<StoreEntry | null> {
-            const response = await fetch(`${EngineConstants.API_URL}v1/store-entries?key=${encodeURIComponent(request.key)}`, {
-                method: 'DELETE',
-                headers: {
-                    Authorization: 'Bearer ' + workerToken,
-                },
-            })
-            if (!response.ok) {
-                throw new Error('Failed to delete store entry')
-            }
-            await response.text()
-            return null
         },
     }
 }
 
-export function createContextStore<
-    SCOPE extends StoreScope | Omit<StoreScope, 'RUN'>,
->({
-    prefix,
-    flowId,
-    workerToken,
-    runId,
-    defaultScope,
-}: {
-    prefix: string
-    flowId: FlowId
-    workerToken: string
-    defaultScope: SCOPE
-    runId: SCOPE extends StoreScope.RUN ? FlowRunId : undefined
-}): Store<SCOPE> {
+export function createContextStore({ prefix, flowId, workerToken }: { prefix: string, flowId: FlowId, workerToken: string }): Store {
     return {
-        async put<T>(key: string, value: T, scope = defaultScope): Promise<T> {
-            const modifiedKey = createKey(prefix, scope, flowId, key, runId)
+        async put<T>(key: string, value: T, scope = StoreScope.FLOW): Promise<T> {
+            const modifiedKey = createKey(prefix, scope, flowId, key)
             await createStorageService({ workerToken }).put({
                 key: modifiedKey,
                 value,
             })
             return value
         },
-        async delete(key: string, scope = defaultScope as SCOPE): Promise<void> {
-            const modifiedKey = createKey(prefix, scope, flowId, key, runId)
+        async delete(key: string, scope = StoreScope.FLOW): Promise<void> {
+            const modifiedKey = createKey(prefix, scope, flowId, key)
             await createStorageService({ workerToken }).delete({
                 key: modifiedKey,
             })
         },
-        async get<T>(key: string, scope = defaultScope): Promise<T | null> {
-            const modifiedKey = createKey(prefix, scope, flowId, key, runId)
-            const storeEntry = await createStorageService({ workerToken }).get(
-                modifiedKey,
-            )
+        async get<T>(key: string, scope = StoreScope.FLOW): Promise<T | null> {
+            const modifiedKey = createKey(prefix, scope, flowId, key)
+            const storeEntry = await createStorageService({ workerToken }).get(modifiedKey)
             if (storeEntry === null) {
                 return null
             }
@@ -95,19 +121,54 @@ export function createContextStore<
     }
 }
 
-function createKey(
-    prefix: string,
-    scope: StoreScope | Omit<StoreScope, 'RUN'>,
-    flowId: FlowId,
-    key: string,
-    runId?: FlowRunId,
-): string {
+function createKey(prefix: string, scope: StoreScope, flowId: FlowId, key: string): string {
     switch (scope) {
-        case StoreScope.RUN:
-            return prefix + 'run_' + runId + '/' + key
+        case StoreScope.PROJECT:
+            return prefix + key
         case StoreScope.FLOW:
             return prefix + 'flow_' + flowId + '/' + key
-        default:
-            return prefix + key
     }
+}
+
+const buildUrl = (key?: string): URL => {
+    const url = new URL(`${EngineConstants.API_URL}v1/store-entries`)
+
+    if (key) {
+        url.searchParams.set('key', key)
+    }
+
+    return url
+}
+
+const handleResponseError = async ({ key, response }: HandleResponseErrorParams): Promise<null> => {
+    if (response.status === StatusCodes.NOT_FOUND.valueOf()) {
+        return null
+    }
+
+    const cause = await response.text()
+    throw new StorageError(key, cause)
+}
+
+const handleFetchError = ({ url, cause }: HandleFetchErrorParams): never => {
+    throw new FetchError(url.toString(), cause)
+}
+
+type CreateStorageServiceParams = {
+    workerToken: string
+}
+
+type StorageService = {
+    get(key: string): Promise<StoreEntry | null>
+    put(request: PutStoreEntryRequest): Promise<StoreEntry | null>
+    delete(request: DeleteStoreEntryRequest): Promise<null>
+}
+
+type HandleResponseErrorParams = {
+    key: string
+    response: Response
+}
+
+type HandleFetchErrorParams = {
+    url: URL
+    cause: unknown
 }

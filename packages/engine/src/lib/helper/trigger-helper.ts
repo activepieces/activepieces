@@ -2,7 +2,7 @@ import { AUTHENTICATION_PROPERTY_NAME, ApEdition, EventPayload, ExecuteTriggerOp
 import { createContextStore } from '../services/storage.service'
 import { variableService } from '../services/variable-service'
 import { isValidCron } from 'cron-validator'
-import { PiecePropertyMap, StaticPropsValue, StoreScope, TriggerStrategy } from '@activepieces/pieces-framework'
+import { PiecePropertyMap, StaticPropsValue, TriggerStrategy } from '@activepieces/pieces-framework'
 import { createFilesService } from '../services/files.service'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { pieceLoader } from './piece-loader'
@@ -46,12 +46,10 @@ export const triggerHelper = {
         const prefix = (params.hookType === TriggerHookType.TEST) ? 'test' : ''
         let scheduleOptions: ScheduleOptions | undefined = undefined
         const context = {
-            store: createContextStore<Omit<StoreScope, 'RUN'>>({
+            store: createContextStore({
                 prefix,
                 flowId: params.flowVersion.flowId,
                 workerToken: params.workerToken,
-                defaultScope: StoreScope.PROJECT,
-                runId: undefined,
             }),
             app: {
                 createListeners({ events, identifierKey, identifierValue }: Listener): void {

@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/shared'
 import Redis, { RedisOptions } from 'ioredis'
 import { system, SystemProp } from 'server-shared'
 
@@ -41,3 +42,15 @@ type CreateRedisClientParams = {
     connectTimeout?: number
     maxRetriesPerRequest?: number
 }
+
+export const getRedisConnection = (() => {
+    let redis: Redis | null = null
+
+    return (): Redis => {
+        if (!isNil(redis)) {
+            return redis
+        }
+        redis = createRedisClient()
+        return redis
+    }
+})()

@@ -1,4 +1,5 @@
 import {
+  DEDUPE_KEY_PROPERTY,
   PiecePropValueSchema,
   Property,
   TriggerStrategy,
@@ -9,15 +10,16 @@ import { OAuth2Client } from 'googleapis-common';
 import { googleSheetsAuth } from '../..';
 import { columnToLabel, googleSheetsCommon } from '../common/common';
 import { nanoid } from 'nanoid';
+import crypto from 'crypto';
 
 export const newRowAddedTrigger = createTrigger({
   auth: googleSheetsAuth,
   name: 'googlesheets_new_row_added',
-  displayName: 'New Row Added (Instant)',
+  displayName: 'New Row Added',
   description: 'Triggers when a new row is added to bottom of a spreadsheet.',
   props: {
     info: Property.MarkDown({
-      value: 'This trigger is in beta mode, Please report any issues.'
+      value: 'Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.'
     }),
     spreadsheet_id: googleSheetsCommon.spreadsheet_id,
     sheet_id: googleSheetsCommon.sheet_id,
@@ -115,7 +117,12 @@ export const newRowAddedTrigger = createTrigger({
       newRowValues,
       oldRowCount
     );
-    return transformedRowValues;
+    return transformedRowValues.map((row) => {
+      return {
+        ...row,
+        [DEDUPE_KEY_PROPERTY]: hashObject(row),
+      };
+    })
   },
   async onRenew(context) {
     // get current channel ID & resource ID
@@ -274,4 +281,10 @@ interface WebhookInformation {
   resourceId?: string | null;
   resourceUri?: string | null;
   expiration?: string | null;
+}
+
+function hashObject(obj: Record<string, unknown>): string {
+  const hash = crypto.createHash('sha256');
+  hash.update(JSON.stringify(obj));
+  return hash.digest('hex');
 }

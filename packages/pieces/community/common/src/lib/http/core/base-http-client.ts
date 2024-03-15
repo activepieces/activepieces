@@ -25,14 +25,14 @@ export abstract class BaseHttpClient implements HttpClient {
     request: HttpRequest<RequestBody>
   ): {
     urlWithoutQueryParams: string;
-    queryParams: Record<string, string>;
+    queryParams: URLSearchParams;
   } {
     const url = new URL(`${this.baseUrl}${request.url}`);
     const urlWithoutQueryParams = `${url.origin}${url.pathname}`;
-    const queryParams: Record<string, string> = {};
+    const queryParams = new URLSearchParams();
     // Extract query parameters
     url.searchParams.forEach((value, key) => {
-      queryParams[key] = value;
+      queryParams.append(key, value);
     });
     return {
       urlWithoutQueryParams,
