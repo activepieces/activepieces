@@ -1,4 +1,4 @@
-import { ActionType, FlowRunResponse, FlowRunStatus, LoopStepOutput, PauseMetadata, StepOutput, StepOutputStatus, StopResponse, assertEqual, isNil } from '@activepieces/shared'
+import { ActionType, FlowError, FlowRunResponse, FlowRunStatus, LoopStepOutput, PauseMetadata, StepOutput, StepOutputStatus, StopResponse, assertEqual, isNil, spreadIfDefined } from '@activepieces/shared'
 import { StepExecutionPath } from './step-execution-path'
 import { loggingUtils } from '../../helper/logging-utils'
 import { nanoid } from 'nanoid'
@@ -29,6 +29,7 @@ export class FlowExecutorContext {
     verdict: ExecutionVerdict
     verdictResponse: VerdictResponse | undefined
     currentPath: StepExecutionPath
+    error?: FlowError
 
     /**
      * Execution time in milliseconds
@@ -44,6 +45,7 @@ export class FlowExecutorContext {
         this.currentState = copyFrom?.currentState ?? {}
         this.verdict = copyFrom?.verdict ?? ExecutionVerdict.RUNNING
         this.verdictResponse = copyFrom?.verdictResponse ?? undefined
+        this.error = copyFrom?.error ?? undefined
         this.currentPath = copyFrom?.currentPath ?? StepExecutionPath.empty()
     }
 
@@ -117,6 +119,11 @@ export class FlowExecutorContext {
         const targetMap = getStateAtPath({ currentPath: this.currentPath, steps })
         targetMap[stepName] = stepOutput
 
+        const error = stepOutput.status === StepOutputStatus.FAILED ? {
+            stepName,
+            message: stepOutput.errorMessage,
+        } : this.error
+
         return new FlowExecutorContext({
             ...this,
             tasks: this.tasks,
@@ -124,6 +131,7 @@ export class FlowExecutorContext {
                 ...this.currentState,
                 [stepName]: stepOutput.output,
             },
+            ...spreadIfDefined('error', error),
             steps,
         })
     }
@@ -188,11 +196,13 @@ export class FlowExecutorContext {
                 if (verdictResponse?.reason === FlowRunStatus.INTERNAL_ERROR) {
                     return {
                         ...baseExecutionOutput,
+                        error: this.error,
                         status: FlowRunStatus.INTERNAL_ERROR,
                     }
                 }
                 return {
                     ...baseExecutionOutput,
+                    error: this.error,
                     status: FlowRunStatus.FAILED,
                 }
             }
