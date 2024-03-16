@@ -34,6 +34,14 @@ import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
 import { DropdownPropertyInitialValuePipe } from './pipes/dropdown-initial-value.pipe';
 import { isDropdownItemSelectedPipe } from './pipes/is-selected.pipe';
 import { ActionErrorHandlingFormControlComponent } from './action-error-handling-form-control/action-error-handling-form-control.component';
+import { NewPiecePropertiesFormComponent } from './new-piece-properties-form/piece-properties-form.component';
+import { JsonControlComponent } from './json-control/json-control.component';
+import { StaticDropdownControlComponent } from './static-dropdown-control/static-dropdown-control.component';
+import { RefreshableDropdownControlComponent } from './refreshable-dropdown-control/refreshable-dropdown-control.component';
+import { CheckboxControlComponent } from './checkbox-control/checkbox-control.component';
+import { TextControlComponent } from './text-control/text-control.component';
+import { AbstractFormControlCasterPipe } from './pipes/abstract-form-control-caster.pipe';
+import { ConnectionsDropdownControlComponent } from './connections-dropdown-control/connections-dropdown-control.component';
 const exportedDeclarations = [
   ArrayFormControlComponent,
   BranchConditionFormControlComponent,
@@ -43,6 +51,7 @@ const exportedDeclarations = [
   PiecePropertiesFormComponent,
   BuilderAutocompleteMentionsDropdownComponent,
   ActionErrorHandlingFormControlComponent,
+  NewPiecePropertiesFormComponent,
 ];
 @NgModule({
   imports: [
@@ -57,6 +66,13 @@ const exportedDeclarations = [
     MatTreeModule,
     MarkdownModule,
     InterpolatingTextFormControlComponent,
+    JsonControlComponent,
+    StaticDropdownControlComponent,
+    RefreshableDropdownControlComponent,
+    CheckboxControlComponent,
+    TextControlComponent,
+    AbstractFormControlCasterPipe,
+    ConnectionsDropdownControlComponent,
   ],
   declarations: [
     ...exportedDeclarations,
