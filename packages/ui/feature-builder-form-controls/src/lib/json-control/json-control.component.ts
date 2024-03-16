@@ -60,19 +60,6 @@ import { BuilderAutocompleteDropdownHandlerComponent } from '../interpolating-te
         >
         </app-builder-autocomplete-dropdown-handler>
       </div>
-      <div *ngIf="passedFormControl.invalid" class="ap-py-2">
-        <p
-          *ngIf="passedFormControl.hasError('required'); else invalidJson"
-          class="ap-text-danger ap-typography-caption"
-        >
-          {{ property.displayName }} is required
-        </p>
-        <ng-template #invalidJson>
-          <p class="ap-text-danger ap-typography-caption">
-            {{ property.displayName }} is not a valid JSON object.
-          </p>
-        </ng-template>
-      </div>
     </ng-template>
   `,
 })

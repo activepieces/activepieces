@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import {
   DropdownOption,
+  PieceProperty,
   PiecePropertyMap,
   PropertyType,
 } from '@activepieces/pieces-framework';
@@ -105,8 +106,19 @@ export class NewPiecePropertiesFormComponent implements OnInit {
     return form;
   }
 
-  toggleCustomizedInput(property: Property, value: boolean) {
-    this.customizedInputs[property.name] = value;
+  toggleCustomizedInput(property: PieceProperty, propertyName:string, value: boolean) {
+    this.customizedInputs[propertyName] = value;
+    if( property.type === PropertyType.JSON)
+    {
+      if(value){
+      this.form.controls[propertyName].removeValidators(jsonValidator)}
+      else
+      {
+        this.form.controls[propertyName].addValidators(jsonValidator);
+      }
+    }
+    this.form.controls[propertyName].setValue('',{emitEvent:false});
+    this.form.controls[propertyName].updateValueAndValidity({emitEvent:false});
   }
   private createListener() {
     return this.form.valueChanges.pipe(

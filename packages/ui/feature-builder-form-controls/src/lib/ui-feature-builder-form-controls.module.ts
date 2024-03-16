@@ -43,6 +43,7 @@ import { TextControlComponent } from './text-control/text-control.component';
 import { AbstractFormControlCasterPipe } from './pipes/abstract-form-control-caster.pipe';
 import { ConnectionsDropdownControlComponent } from './connections-dropdown-control/connections-dropdown-control.component';
 import { ReplaceMarkdownConstsPipe } from './pipes/replace-markdown-consts.pipe';
+import { ExtractControlErrorMessage } from './pipes/extract-error-message-from-form-control.component';
 const exportedDeclarations = [
   ArrayFormControlComponent,
   BranchConditionFormControlComponent,
@@ -74,7 +75,8 @@ const exportedDeclarations = [
     TextControlComponent,
     AbstractFormControlCasterPipe,
     ConnectionsDropdownControlComponent,
-    ReplaceMarkdownConstsPipe
+    ReplaceMarkdownConstsPipe,
+    ExtractControlErrorMessage
   ],
   declarations: [
     ...exportedDeclarations,

@@ -59,6 +59,13 @@
     }
     }
 
+    @if(property.value.type !== PropertyType.MARKDOWN)
+    {
+        <ap-control-description [errorMessage]="(form.controls[property.key] | abstractFormControlCaster | extractControlErrorMessage:property.value.displayName | async) || ''" [passedFormControl]="form.controls[property.key] | abstractFormControlCaster" [description]="property.value.description || ''" >
+
+        </ap-control-description>
+    }
+
     }
 
 
