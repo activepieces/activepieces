@@ -42,6 +42,7 @@ import { CheckboxControlComponent } from './checkbox-control/checkbox-control.co
 import { TextControlComponent } from './text-control/text-control.component';
 import { AbstractFormControlCasterPipe } from './pipes/abstract-form-control-caster.pipe';
 import { ConnectionsDropdownControlComponent } from './connections-dropdown-control/connections-dropdown-control.component';
+import { ReplaceMarkdownConstsPipe } from './pipes/replace-markdown-consts.pipe';
 const exportedDeclarations = [
   ArrayFormControlComponent,
   BranchConditionFormControlComponent,
@@ -73,6 +74,7 @@ const exportedDeclarations = [
     TextControlComponent,
     AbstractFormControlCasterPipe,
     ConnectionsDropdownControlComponent,
+    ReplaceMarkdownConstsPipe
   ],
   declarations: [
     ...exportedDeclarations,
