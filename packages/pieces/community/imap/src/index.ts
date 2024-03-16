@@ -72,7 +72,7 @@ export const imapAuth = PieceAuth.CustomAuth({
 
 export const imapPiece = createPiece({
   displayName: 'IMAP',
-  description: 'Receive new emaiil trigger',
+  description: 'Receive new email trigger',
 
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/imap.png',
