@@ -40,6 +40,8 @@ export class NewPiecePropertiesFormComponent implements OnInit {
   @Input({ required: true }) pieceMetaData: PieceMetadataModelSummary;
   @Input({ required: true }) stepName: string;
   @Input({ required: true }) flow: Pick<PopulatedFlow, 'id' | 'version'>;
+  @Input({required : true}) webhookPrefix:string;
+  @Input({required : true}) formPieceTriggerPrefix:string;
   @Input({ required: true }) stepSettings:
     | PieceActionSettings
     | PieceTriggerSettings;
