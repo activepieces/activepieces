@@ -13,13 +13,13 @@ import {
   TriggerBase,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { isTriggerGuardPipe } from '../pipes/is-trigger-guard.pipe';
+import { IsTriggerGuardPipe } from '../pipes/is-trigger-guard.pipe';
 import { tap } from 'rxjs';
 
 @Component({
   selector: 'app-action-or-trigger-dropdown',
   standalone: true,
-  imports: [CommonModule, UiCommonModule, isTriggerGuardPipe],
+  imports: [CommonModule, UiCommonModule, IsTriggerGuardPipe],
   templateUrl: './action-or-trigger-dropdown.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
 import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework';
 import { UiCommonModule } from '@activepieces/ui/common';
 import { DynamicInputToggleComponent } from '../dynamic-input-toggle/dynamic-input-toggle.component';

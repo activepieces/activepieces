@@ -6,7 +6,7 @@ import { Pipe, PipeTransform } from '@angular/core';
   standalone: true,
   pure: true,
 })
-export class isTriggerGuardPipe implements PipeTransform {
+export class IsTriggerGuardPipe implements PipeTransform {
   transform(value: ActionBase | TriggerBase): value is TriggerBase {
     return (value as TriggerBase).type !== undefined;
   }
