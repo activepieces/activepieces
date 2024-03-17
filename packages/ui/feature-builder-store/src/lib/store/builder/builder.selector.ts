@@ -131,6 +131,21 @@ export const selectCurrentStep = createSelector(selectCanvasState, (state) => {
   return step;
 });
 
+const selectCurrentPieceStepTriggerOrActionName = createSelector(
+  selectCurrentStep,
+  (step) => {
+    const triggerOrActionName =
+      step?.type === ActionType.PIECE
+        ? step.settings.actionName
+        : step?.type === TriggerType.PIECE
+        ? step.settings.triggerName
+        : undefined;
+    return {
+      triggerOrActionname: triggerOrActionName,
+      stepName: step?.name,
+    };
+  }
+);
 const selectCurrentStepSettings = createSelector(
   selectCurrentStep,
   (selectedStep) => {
@@ -573,4 +588,5 @@ export const BuilderSelectors = {
   selectViewedVersionHistoricalStatus,
   selectDraftVersion,
   selectShowIncompleteStepsWidget,
+  selectCurrentPieceStepTriggerOrActionName,
 };

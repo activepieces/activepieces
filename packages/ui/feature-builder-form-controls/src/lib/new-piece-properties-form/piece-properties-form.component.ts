@@ -3,8 +3,10 @@ import {
   Component,
   EventEmitter,
   Input,
+  OnChanges,
   OnInit,
   Output,
+  SimpleChanges,
 } from '@angular/core';
 import {
   DropdownOption,
@@ -26,13 +28,14 @@ import {
 } from '@angular/forms';
 import { Observable, tap } from 'rxjs';
 import { ValidatorFn } from '@angular/forms';
+import deepEqual from 'deep-equal';
 
 @Component({
   selector: 'app-new-piece-properties-form',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './piece-properties-form.component.html',
 })
-export class NewPiecePropertiesFormComponent implements OnInit {
+export class NewPiecePropertiesFormComponent implements OnInit, OnChanges {
   @Input({ required: true }) pieceMetaData: PieceMetadataModel;
   @Input({ required: true }) stepName: string;
   @Input({ required: true }) flow: Pick<PopulatedFlow, 'id' | 'version'>;
@@ -54,6 +57,18 @@ export class NewPiecePropertiesFormComponent implements OnInit {
   form: UntypedFormGroup = this.fb.group({});
   listener$?: Observable<unknown>;
   constructor(private fb: FormBuilder) {}
+  ngOnChanges(changes: SimpleChanges): void {
+    const properties = changes['propertiesMap'];
+    const stepName = changes['stepName'];
+    if (
+      properties?.firstChange ||
+      stepName?.firstChange ||
+      !deepEqual(properties?.currentValue, properties?.previousValue) ||
+      stepName?.currentValue !== stepName?.previousValue
+    ) {
+      this.initializeForm();
+    }
+  }
   ngOnInit(): void {
     this.initializeForm();
   }

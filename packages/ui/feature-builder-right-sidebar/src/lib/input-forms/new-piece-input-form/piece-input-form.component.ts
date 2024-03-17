@@ -14,6 +14,7 @@ import { BuilderSelectors, Step } from '@activepieces/ui/feature-builder-store';
 import {
   Observable,
   combineLatest,
+  distinctUntilChanged,
   map,
   of,
   shareReplay,
@@ -62,12 +63,12 @@ import { FormControl, Validators } from '@angular/forms';
     >
       <ap-loading-icon> </ap-loading-icon>
     </div>
-    }
+    } @if(listenToStep$ | async){}
   `,
 })
 export class NewPieceInputFormComponent {
   triggersOrActionsControl: FormControl<string>;
-
+  listenToStep$?: Observable<Step | undefined>;
   deps$: Observable<{
     currentStep: Step | undefined;
     triggersOrActions: (TriggerBase | ActionBase)[];
@@ -89,21 +90,7 @@ export class NewPieceInputFormComponent {
       validators: Validators.required,
     });
     this.deps$ = combineLatest({
-      currentStep: this.store.select(BuilderSelectors.selectCurrentStep).pipe(
-        tap((step) => {
-          if (step) {
-            if (step.type === ActionType.PIECE) {
-              this.triggersOrActionsControl.setValue(
-                step.settings.actionName || ''
-              );
-            } else if (step.type === TriggerType.PIECE) {
-              this.triggersOrActionsControl.setValue(
-                step.settings.triggerName || ''
-              );
-            }
-          }
-        })
-      ),
+      currentStep: this.store.select(BuilderSelectors.selectCurrentStep),
       triggersOrActions: this.getTriggersOrActions(),
       selectedTriggerOrAction: this.getSelectedTriggerOrAction(),
       pieceMetaData: this.getPieceMetaData(),
@@ -113,6 +100,7 @@ export class NewPieceInputFormComponent {
       allConnectionsForPiece: this.getAllConnectionsForPiece(),
     });
   }
+
   getTriggersOrActions() {
     const currentStep$ = this.store.select(BuilderSelectors.selectCurrentStep);
     return currentStep$.pipe(
@@ -140,9 +128,22 @@ export class NewPieceInputFormComponent {
   }
   getSelectedTriggerOrAction() {
     const deps$ = {
-      selectedTriggerOrActionName:
-        this.triggersOrActionsControl.valueChanges.pipe(
-          startWith(this.triggersOrActionsControl.value)
+      selectedTriggerOrActionName: this.store
+        .select(BuilderSelectors.selectCurrentPieceStepTriggerOrActionName)
+        .pipe(
+          distinctUntilChanged(
+            (curr, prev) => curr?.stepName === prev?.stepName
+          ),
+          tap((step) => {
+            this.triggersOrActionsControl.setValue(
+              step.triggerOrActionname || ''
+            );
+          }),
+          switchMap((step) => {
+            return this.triggersOrActionsControl.valueChanges.pipe(
+              startWith(step.triggerOrActionname || '')
+            );
+          })
         ),
       triggersOrActions: this.getTriggersOrActions(),
       pieceMetaData: this.getPieceMetaData(),
@@ -188,7 +189,6 @@ export class NewPieceInputFormComponent {
     return currentStep$.pipe(
       switchMap((step) => {
         if (!step) {
-          console.error('step is undefined');
           return of(undefined);
         }
         if (step.type === ActionType.PIECE || step.type === TriggerType.PIECE) {

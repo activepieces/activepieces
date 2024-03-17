@@ -14,17 +14,25 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { IsTriggerGuardPipe } from '../pipes/is-trigger-guard.pipe';
+import { DropdownSelectedValuesPipe } from '../pipes/dropdown-selected-values.pipe';
 
 @Component({
   selector: 'app-action-or-trigger-dropdown',
   standalone: true,
-  imports: [CommonModule, UiCommonModule, IsTriggerGuardPipe],
+  imports: [
+    CommonModule,
+    UiCommonModule,
+    IsTriggerGuardPipe,
+    DropdownSelectedValuesPipe,
+  ],
   templateUrl: './action-or-trigger-dropdown.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ActionOrTriggerDropdownComponent {
   @Input({ required: true }) items: (ActionBase | TriggerBase)[] = [];
-  @Output() valueChange = new EventEmitter<ActionBase | TriggerBase>();
+  @Output() newActionOrTriggerSelected = new EventEmitter<
+    ActionBase | TriggerBase
+  >();
   @Input({ required: true }) passedFormControl = new FormControl('', {
     nonNullable: true,
     validators: Validators.required,

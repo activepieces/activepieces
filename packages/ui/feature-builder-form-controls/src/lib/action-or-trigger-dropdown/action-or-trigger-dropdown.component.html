@@ -8,7 +8,7 @@
     }  </mat-label>
   <mat-select placeholder="Select a Trigger" i18n-placeholder [formControl]="passedFormControl">
     @for(opt of items; track opt.name) {
-    <mat-option #option  [value]="opt.name">
+    <mat-option #option  [value]="opt.name" (click)="newActionOrTriggerSelected.emit(opt)">
       <div class="ap-flex ap-items-center ap-gap-[2px]">
         <div>
           <div>{{opt.displayName}}</div>
