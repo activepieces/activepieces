@@ -3,14 +3,19 @@
     property of sortedPropertiesByRequired | objectToArray;
     track property.key
   ) {
-    <div class="ap-flex ap-justify-end ap-px-1 ap-mb-1">
-      <app-dynamic-input-toggle-control
-        [selected]="!!customizedInputs[property.key]"
-        (valueChanged)="
-          toggleCustomizedInput(property.value, property.key + '', $event)
-        "
-      ></app-dynamic-input-toggle-control>
-    </div>
+    @if (
+      property.value
+        | shouldShwoDynamicInputToggleAboveInput: stepName === 'trigger'
+    ) {
+      <div class="ap-flex ap-justify-end ap-px-1 ap-mb-1">
+        <app-dynamic-input-toggle-control
+          [selected]="!!customizedInputs[property.key]"
+          (valueChanged)="
+            toggleCustomizedInput(property.value, property.key + '', $event)
+          "
+        ></app-dynamic-input-toggle-control>
+      </div>
+    }
 
     @if (customizedInputs[property.key]) {
       <app-text-control

@@ -46,6 +46,7 @@ import { ReplaceMarkdownConstsPipe } from './pipes/replace-markdown-consts.pipe'
 import { ExtractControlErrorMessage } from './pipes/extract-error-message-from-form-control.component';
 import { ActionOrTriggerDropdownComponent } from './action-or-trigger-dropdown/action-or-trigger-dropdown.component';
 import { DynamicInputToggleComponent } from './dynamic-input-toggle/dynamic-input-toggle.component';
+import { ShouldShwoDynamicInputToggleAboveInputPipe } from './pipes/should-show-dynamic-input-toggle-above-input.pipe';
 const exportedDeclarations = [
   ArrayFormControlComponent,
   BranchConditionFormControlComponent,
@@ -81,6 +82,7 @@ const exportedDeclarations = [
     ExtractControlErrorMessage,
     ActionOrTriggerDropdownComponent,
     DynamicInputToggleComponent,
+    ShouldShwoDynamicInputToggleAboveInputPipe,
   ],
   declarations: [
     ...exportedDeclarations,
