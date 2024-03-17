@@ -20,7 +20,7 @@ import { UiCommonModule } from '@activepieces/ui/common';
       apTrackHover
       [class.!ap-opacity-100]="hoverTracker.isHovered"
       #hoverTracker="hoverTrackerDirective"
-      [class.ap-opacity-40]="selected"
+      [class.ap-opacity-40]="!selected"
       src="assets/img/custom/variable.svg"
       matTooltip="Dynamic Value"
       (click)="toggle()"
