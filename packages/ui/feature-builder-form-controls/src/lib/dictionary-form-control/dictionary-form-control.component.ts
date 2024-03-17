@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
 import {
   ControlValueAccessor,
   UntypedFormArray,
@@ -27,6 +27,7 @@ import { BuilderAutocompleteDropdownHandlerComponent } from '../interpolating-te
 export class DictionaryFormControlComponent
   implements ControlValueAccessor, OnInit
 {
+  @Input() propertyDisplayName = '';
   form!: UntypedFormGroup;
   disabled = false;
   valueChanges$: Observable<void>;
@@ -44,7 +45,7 @@ export class DictionaryFormControlComponent
     this.valueChanges$ = this.form.valueChanges.pipe(
       tap(() => {
         this.dictionaryControlValueChanged();
-      })
+      }),
     );
   }
   ngOnInit(): void {
@@ -80,7 +81,7 @@ export class DictionaryFormControlComponent
 
   addPair(
     pair: { key: string; value: unknown },
-    triggerChangeDetection = true
+    triggerChangeDetection = true,
   ) {
     const pairGroup = this.fb.group({
       key: new UntypedFormControl(pair.key),
@@ -123,13 +124,13 @@ export class DictionaryFormControlComponent
   }
   async addMention(
     textControl: InterpolatingTextFormControlComponent,
-    mention: InsertMentionOperation
+    mention: InsertMentionOperation,
   ) {
     await textControl.addMention(mention);
   }
   showMenu(
     $event: MouseEvent | boolean,
-    mentionsDropdown: BuilderAutocompleteDropdownHandlerComponent
+    mentionsDropdown: BuilderAutocompleteDropdownHandlerComponent,
   ) {
     //if it is boolean it means that the invocation of this function was from editorfocused
     if (typeof $event !== 'boolean') {
