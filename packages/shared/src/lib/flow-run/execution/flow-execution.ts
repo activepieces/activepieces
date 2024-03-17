@@ -43,15 +43,19 @@ export const StopResponse = Type.Object({
 
 export type StopResponse = Static<typeof StopResponse>
 
+export const FlowError = Type.Object({
+    stepName: Type.String(),
+    message: Type.String(),
+})
+
+export type FlowError = Static<typeof FlowError>
+
 const BaseExecutionResponse = {
     ...ExecutionState,
     duration: Type.Number(),
     tasks: Type.Number(),
     tags: Type.Optional(Type.Array(Type.String())),
-    error: Type.Optional(Type.Object({
-        stepName: Type.String(),
-        message: Type.String(),
-    })),
+    error: Type.Optional(FlowError),
     stopResponse: Type.Optional(StopResponse),
 }
 

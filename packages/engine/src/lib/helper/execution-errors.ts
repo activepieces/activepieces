@@ -21,6 +21,12 @@ export class ConnectionLoadingError extends EngineError {
     }
 }
 
+export class ConnectionExpiredError extends UserError {
+    constructor(connectionName: string, cause?: unknown) {
+        super('ConnectionExpired', `connection (${connectionName}) expired, reconnect again`, cause)
+    }
+}
+
 export class StorageError extends EngineError {
     constructor(key: string, cause?: unknown) {
         super('StorageError', `Failed to read/write key (${key})`, cause)

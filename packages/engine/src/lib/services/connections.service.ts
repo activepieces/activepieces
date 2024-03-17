@@ -1,7 +1,7 @@
 import { StatusCodes } from 'http-status-codes'
-import { AppConnection, AppConnectionType, CloudOAuth2ConnectionValue, BasicAuthConnectionValue, OAuth2ConnectionValueWithApp } from '@activepieces/shared'
+import { AppConnection, AppConnectionType, CloudOAuth2ConnectionValue, BasicAuthConnectionValue, OAuth2ConnectionValueWithApp, AppConnectionStatus } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
-import { ConnectionLoadingError, ConnectionNotFoundError, ExecutionError, FetchError } from '../helper/execution-errors'
+import { ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, ExecutionError, FetchError } from '../helper/execution-errors'
 
 export const createConnectionService = ({ projectId, workerToken }: CreateConnectionServiceParams): ConnectionService => {
     return {
@@ -22,8 +22,10 @@ export const createConnectionService = ({ projectId, workerToken }: CreateConnec
                         httpStatus: response.status,
                     })
                 }
-
-                const connection = await response.json()
+                const connection: AppConnection = await response.json()
+                if (connection.status === AppConnectionStatus.ERROR) {
+                    throw new ConnectionExpiredError(connectionName)
+                }
                 return getConnectionValue(connection)
             }
             catch (e) {
