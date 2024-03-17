@@ -33,6 +33,7 @@ import {
 import { appConnectionsHooks } from './app-connection-hooks'
 import { oauth2Util } from './oauth2/oauth2-util'
 import { oauth2Handler } from './oauth2'
+import dayjs from 'dayjs'
 
 const repo = databaseConnection.getRepository(AppConnectionEntity)
 
@@ -90,7 +91,6 @@ export const appConnectionService = {
         }
 
         const appConnection = decryptConnection(encryptedAppConnection)
-
         if (!needRefresh(appConnection)) {
             return appConnection
         }
@@ -154,7 +154,7 @@ export const appConnectionService = {
 
         data.forEach((encryptedConnection) => {
             const apConnection: AppConnection =
-        decryptConnection(encryptedConnection)
+                decryptConnection(encryptedConnection)
             promises.push(
                 new Promise((resolve) => {
                     return resolve(apConnection)
@@ -355,10 +355,11 @@ async function lockAndRefreshConnection({
     }
     catch (e) {
         exceptionHandler.handle(e)
-        if (!isNil(appConnection)) {
+        if (!isNil(appConnection) && oauth2Util.isUserError(e)) {
             appConnection.status = AppConnectionStatus.ERROR
             await repo.update(appConnection.id, {
                 status: appConnection.status,
+                updated: dayjs().toISOString(),
             })
         }
     }
@@ -369,6 +370,9 @@ async function lockAndRefreshConnection({
 }
 
 function needRefresh(connection: AppConnection): boolean {
+    if (connection.status === AppConnectionStatus.ERROR) {
+        return false
+    }
     switch (connection.value.type) {
         case AppConnectionType.PLATFORM_OAUTH2:
         case AppConnectionType.CLOUD_OAUTH2:
