@@ -57,8 +57,10 @@ export const pollingHelper = {
   ): Promise<unknown[]> {
     switch (polling.strategy) {
       case DedupeStrategy.TIMEBASED: {
-        const lastEpochMilliSeconds =
-          (await store.get<number>('lastPoll')) ?? 0;
+        const lastEpochMilliSeconds = (await store.get<number>('lastPoll'));
+        if (isNil(lastEpochMilliSeconds)) {
+          throw new Error("lastPoll doesn't exist in the store.");
+        }
         const items = await polling.items({
           store,
           auth,
