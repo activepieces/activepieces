@@ -38,6 +38,7 @@ import deepEqual from 'deep-equal';
 export class NewPiecePropertiesFormComponent implements OnInit, OnChanges {
   @Input({ required: true }) pieceMetaData: PieceMetadataModel;
   @Input({ required: true }) actionOrTriggerName: string;
+  @Input({ required: true }) stepName: string;
   @Input({ required: true }) flow: Pick<PopulatedFlow, 'id' | 'version'>;
   @Input({ required: true }) webhookPrefix: string;
   @Input({ required: true }) formPieceTriggerPrefix: string;

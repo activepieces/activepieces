@@ -53,6 +53,7 @@ import { FormControl, Validators } from '@angular/forms';
         deps.currentStep && deps.selectedTriggerOrAction && deps.pieceMetaData
       ) {
         <app-new-piece-properties-form
+          [stepName]="deps.currentStep.name"
           [actionOrTriggerName]="
             deps.currentStep.settings.triggerName ||
             deps.currentStep.settings.actionName

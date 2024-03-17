@@ -12,61 +12,137 @@
       ></app-dynamic-input-toggle-control>
     </div>
 
-    @if (
-      customizedInputs[property.key] ||
-      property.value.type === PropertyType.SHORT_TEXT ||
-      property.value.type === PropertyType.LONG_TEXT ||
-      property.value.type === PropertyType.DATE_TIME ||
-      property.value.type === PropertyType.FILE ||
-      property.value.type === PropertyType.NUMBER
-    ) {
+    @if (customizedInputs[property.key]) {
       <app-text-control
         [passedFormControl]="
           form.controls[property.key] | abstractFormControlCaster
         "
         [property]="property.value"
       ></app-text-control>
-    } @else if (
-      property.value.type === PropertyType.STATIC_DROPDOWN ||
-      property.value.type === PropertyType.STATIC_MULTI_SELECT_DROPDOWN
-    ) {
-      <app-static-dropdown-control
-        [passedFormControl]="
-          form.controls[property.key] | abstractFormControlCaster
-        "
-        [property]="property.value"
-      ></app-static-dropdown-control>
-    } @else if (
-      property.value.type === PropertyType.DROPDOWN ||
-      property.value.type === PropertyType.MULTI_SELECT_DROPDOWN
-    ) {
-      <app-refreshable-dropdown-control
-        [passedFormControl]="
-          form.controls[property.key] | abstractFormControlCaster
-        "
-        [flow]="flow"
-        [parentFormGroup]="form"
-        [actionOrTriggerName]="actionOrTriggerName"
-        [pieceMetaData]="pieceMetaData"
-        [propertyName]="property.key + ''"
-        [property]="property.value"
-      ></app-refreshable-dropdown-control>
-    } @else if (
-      property.value.type === PropertyType.OAUTH2 ||
-      property.value.type === PropertyType.SECRET_TEXT ||
-      property.value.type === PropertyType.BASIC_AUTH ||
-      property.value.type === PropertyType.CUSTOM_AUTH
-    ) {
-      <app-connections-dropdown-control
-        [passedFormControl]="
-          form.controls[property.key] | abstractFormControlCaster
-        "
-        [options]="allConnectionsForPiece"
-        [pieceMetaData]="pieceMetaData"
-        [property]="property.value"
-      ></app-connections-dropdown-control>
     } @else {
       @switch (property.value.type) {
+        @case (PropertyType.OAUTH2) {
+          <app-connections-dropdown-control
+            [passedFormControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [options]="allConnectionsForPiece"
+            [pieceMetaData]="pieceMetaData"
+            [property]="property.value"
+          ></app-connections-dropdown-control>
+        }
+        @case (PropertyType.SECRET_TEXT) {
+          <app-connections-dropdown-control
+            [passedFormControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [options]="allConnectionsForPiece"
+            [pieceMetaData]="pieceMetaData"
+            [property]="property.value"
+          ></app-connections-dropdown-control>
+        }
+        @case (PropertyType.BASIC_AUTH) {
+          <app-connections-dropdown-control
+            [passedFormControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [options]="allConnectionsForPiece"
+            [pieceMetaData]="pieceMetaData"
+            [property]="property.value"
+          ></app-connections-dropdown-control>
+        }
+        @case (PropertyType.CUSTOM_AUTH) {
+          <app-connections-dropdown-control
+            [passedFormControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [options]="allConnectionsForPiece"
+            [pieceMetaData]="pieceMetaData"
+            [property]="property.value"
+          ></app-connections-dropdown-control>
+        }
+        @case (PropertyType.SHORT_TEXT) {
+          <app-text-control
+            [passedFormControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [property]="property.value"
+          ></app-text-control>
+        }
+        @case (PropertyType.LONG_TEXT) {
+          <app-text-control
+            [passedFormControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [property]="property.value"
+          ></app-text-control>
+        }
+        @case (PropertyType.DATE_TIME) {
+          <app-text-control
+            [passedFormControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [property]="property.value"
+          ></app-text-control>
+        }
+        @case (PropertyType.FILE) {
+          <app-text-control
+            [passedFormControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [property]="property.value"
+          ></app-text-control>
+        }
+        @case (PropertyType.NUMBER) {
+          <app-text-control
+            [passedFormControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [property]="property.value"
+          ></app-text-control>
+        }
+        @case (PropertyType.STATIC_DROPDOWN) {
+          <app-static-dropdown-control
+            [passedFormControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [property]="property.value"
+          ></app-static-dropdown-control>
+        }
+        @case (PropertyType.STATIC_MULTI_SELECT_DROPDOWN) {
+          <app-static-dropdown-control
+            [passedFormControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [property]="property.value"
+          ></app-static-dropdown-control>
+        }
+        @case (PropertyType.DROPDOWN) {
+          <app-refreshable-dropdown-control
+            [passedFormControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [flow]="flow"
+            [parentFormGroup]="form"
+            [actionOrTriggerName]="actionOrTriggerName"
+            [pieceMetaData]="pieceMetaData"
+            [propertyName]="property.key + ''"
+            [property]="property.value"
+          ></app-refreshable-dropdown-control>
+        }
+        @case (PropertyType.MULTI_SELECT_DROPDOWN) {
+          <app-refreshable-dropdown-control
+            [passedFormControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [flow]="flow"
+            [parentFormGroup]="form"
+            [actionOrTriggerName]="actionOrTriggerName"
+            [pieceMetaData]="pieceMetaData"
+            [propertyName]="property.key + ''"
+            [property]="property.value"
+          ></app-refreshable-dropdown-control>
+        }
         @case (PropertyType.CHECKBOX) {
           <app-checkbox-control
             [passedFormControl]="
@@ -99,8 +175,8 @@
         }
         @case (PropertyType.ARRAY) {
           <!-- <app-array-form-control [property]="property.value" [prefix]="">
-
-                </app-array-form-control> -->
+      
+                      </app-array-form-control> -->
         }
         @case (PropertyType.OBJECT) {
           <app-dictonary-form-control
