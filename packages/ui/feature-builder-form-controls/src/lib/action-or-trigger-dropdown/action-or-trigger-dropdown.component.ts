@@ -14,7 +14,6 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { IsTriggerGuardPipe } from '../pipes/is-trigger-guard.pipe';
-import { tap } from 'rxjs';
 
 @Component({
   selector: 'app-action-or-trigger-dropdown',
@@ -26,18 +25,9 @@ import { tap } from 'rxjs';
 export class ActionOrTriggerDropdownComponent {
   @Input({ required: true }) items: (ActionBase | TriggerBase)[] = [];
   @Output() valueChange = new EventEmitter<ActionBase | TriggerBase>();
-  @Input() passedFormControl = new FormControl('', {
+  @Input({ required: true }) passedFormControl = new FormControl('', {
     nonNullable: true,
     validators: Validators.required,
   });
   readonly TriggerStrategy = TriggerStrategy;
-
-  dropdownValueChanged$ = this.passedFormControl.valueChanges.pipe(
-    tap((name) => {
-      const item = this.items.find((i) => i.name === name);
-      if (item) {
-        this.valueChange.emit(item);
-      }
-    })
-  );
 }
