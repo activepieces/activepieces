@@ -33,10 +33,10 @@ import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections
       >
         <mat-label> Connection </mat-label>
         <mat-select [formControl]="passedFormControl">
-          @for( opt of options; track opt.value){
-          <mat-option [value]="opt.value">
-            {{ opt.label }}
-          </mat-option>
+          @for (opt of options; track opt.value) {
+            <mat-option [value]="opt.value">
+              {{ opt.label }}
+            </mat-option>
           }
 
           <mat-option
@@ -61,32 +61,34 @@ import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections
               class="ap-flex ap-gap-[6px] connections-dropdown-container ap-pr-1 ap-items-center"
             >
               <div class="ap-w-full ap-truncate">
-                @if((options | dropdownSelectedValues: passedFormControl |
-                async); as selectedValues){
-                {{ selectedValues[0].label }}
+                @if (
+                  options | dropdownSelectedValues: passedFormControl | async;
+                  as selectedValues
+                ) {
+                  {{ selectedValues[0].label }}
                 }
               </div>
               <div>
-                @if(passedFormControl.value) {
-                <app-add-edit-connection-button
-                  (click)="$event.stopPropagation()"
-                  btnSize="extraSmall"
-                  [isEditConnectionButton]="true"
-                  [authProperty]="property"
-                  [pieceName]="pieceMetaData.name"
-                  [pieceVersion]="pieceMetaData.version"
-                  [propertyKey]="''"
-                  [pieceDisplayName]="pieceMetaData.displayName"
-                  [selectedConnectionInterpolatedString]="
-                    passedFormControl.value
-                  "
-                  [triggerName]="''"
-                  (connectionPropertyValueChanged)="
-                    passedFormControl.setValue($event.value)
-                  "
-                >
-                  <div class="ap-px-2" i18n>Reconnect</div>
-                </app-add-edit-connection-button>
+                @if (passedFormControl.value) {
+                  <app-add-edit-connection-button
+                    (click)="$event.stopPropagation()"
+                    btnSize="extraSmall"
+                    [isEditConnectionButton]="true"
+                    [authProperty]="property"
+                    [pieceName]="pieceMetaData.name"
+                    [pieceVersion]="pieceMetaData.version"
+                    [propertyKey]="''"
+                    [pieceDisplayName]="pieceMetaData.displayName"
+                    [selectedConnectionInterpolatedString]="
+                      passedFormControl.value
+                    "
+                    [triggerName]="''"
+                    (connectionPropertyValueChanged)="
+                      passedFormControl.setValue($event.value)
+                    "
+                  >
+                    <div class="ap-px-2" i18n>Reconnect</div>
+                  </app-add-edit-connection-button>
                 }
               </div>
             </div>

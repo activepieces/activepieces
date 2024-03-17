@@ -37,7 +37,7 @@ import deepEqual from 'deep-equal';
 })
 export class NewPiecePropertiesFormComponent implements OnInit, OnChanges {
   @Input({ required: true }) pieceMetaData: PieceMetadataModel;
-  @Input({ required: true }) stepName: string;
+  @Input({ required: true }) actionOrTriggerName: string;
   @Input({ required: true }) flow: Pick<PopulatedFlow, 'id' | 'version'>;
   @Input({ required: true }) webhookPrefix: string;
   @Input({ required: true }) formPieceTriggerPrefix: string;
@@ -47,15 +47,16 @@ export class NewPiecePropertiesFormComponent implements OnInit, OnChanges {
     | PieceTriggerSettings;
   @Input({ required: true })
   allConnectionsForPiece: DropdownOption<`{{connections['${string}']}}`>[];
-  @Output() formValueChange = new EventEmitter<
-    PieceActionSettings | PieceTriggerSettings
-  >();
+  @Output() formValueChange = new EventEmitter<{
+    stepSettings: PieceActionSettings | PieceTriggerSettings;
+    valid: boolean;
+  }>();
   readonly PropertyType = PropertyType;
   //TODO: Ask why this is unknown in shared and not boolean
   customizedInputs: Record<string, unknown> = {};
   sortedPropertiesByRequired: PiecePropertyMap;
   form: UntypedFormGroup = this.fb.group({});
-  listener$?: Observable<unknown>;
+  emitNewChanges$?: Observable<unknown>;
   constructor(private fb: FormBuilder) {}
   ngOnChanges(changes: SimpleChanges): void {
     const properties = changes['propertiesMap'];
@@ -78,7 +79,7 @@ export class NewPiecePropertiesFormComponent implements OnInit, OnChanges {
     this.form = this.buildForm();
     this.customizedInputs =
       this.stepSettings.inputUiInfo.customizedInputs || {};
-    this.listener$ = this.createListener();
+    this.emitNewChanges$ = this.createChangesListener();
   }
 
   private sortPropertiesByRequired() {
@@ -124,9 +125,12 @@ export class NewPiecePropertiesFormComponent implements OnInit, OnChanges {
   toggleCustomizedInput(
     property: PieceProperty,
     propertyName: string,
-    value: boolean
+    value: boolean,
   ) {
-    this.customizedInputs[propertyName] = value;
+    this.customizedInputs = {
+      ...this.customizedInputs,
+      [propertyName]: value,
+    };
     if (property.type === PropertyType.JSON) {
       if (value) {
         this.form.controls[propertyName].removeValidators(jsonValidator);
@@ -139,18 +143,21 @@ export class NewPiecePropertiesFormComponent implements OnInit, OnChanges {
       emitEvent: false,
     });
   }
-  private createListener() {
+  private createChangesListener() {
     return this.form.valueChanges.pipe(
       tap((res) => {
         this.formValueChange.emit({
-          ...this.stepSettings,
-          input: res,
-          inputUiInfo: {
-            ...this.stepSettings.inputUiInfo,
-            customizedInputs: this.customizedInputs,
+          stepSettings: {
+            ...this.stepSettings,
+            input: res,
+            inputUiInfo: {
+              ...this.stepSettings.inputUiInfo,
+              customizedInputs: this.customizedInputs,
+            },
           },
+          valid: this.form.valid,
         });
-      })
+      }),
     );
   }
 }
