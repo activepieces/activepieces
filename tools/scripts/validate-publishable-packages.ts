@@ -1,11 +1,11 @@
-import { findAllPieces } from './utils/piece-script-utils';
+import {findAllPiecesDirectoryInSource } from './utils/piece-script-utils';
 import { packagePrePublishChecks } from './utils/package-pre-publish-checks';
 
 const main = async () => {
-  const piecesMetadata = await findAllPieces()
+  const piecesMetadata = await findAllPiecesDirectoryInSource()
 
   const packages = [
-    ...piecesMetadata.map(p => p.directoryPath!),
+    ...piecesMetadata,
     'packages/pieces/community/framework',
     'packages/shared',
     'packages/pieces/community/common',
