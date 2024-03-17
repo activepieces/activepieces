@@ -1,8 +1,14 @@
 <mat-form-field class="ap-w-full" appearance="outline">
-  <mat-label i18n> Trigger </mat-label>
+  <mat-label i18n> @if(items[0] | isTriggerGuard)
+    {
+   Trigger
+    }
+    @else() {
+    Action
+    }  </mat-label>
   <mat-select placeholder="Select a Trigger" i18n-placeholder [formControl]="passedFormControl">
     @for(opt of items; track opt.name) {
-    <mat-option *ngFor="let opt of items" [value]="opt.name">
+    <mat-option #option  [value]="opt.name">
       <div class="ap-flex ap-items-center ap-gap-[2px]">
         <div>
           <div>{{opt.displayName}}</div>
@@ -45,14 +51,12 @@
     {
     No options available
     }
-    @else {
-    @if(items[0] | isTriggerGuard)
-    {
-    Please select a trigger
-    }
-    @else {
-    Please select an action
-    }
-    }
+    @else if(items[0] | isTriggerGuard)
+      {
+      Please select a trigger
+      }
+      @else() {
+      Please select an action
+      }
   </mat-error>
 </mat-form-field>
