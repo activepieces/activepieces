@@ -58,7 +58,9 @@ export class NewPiecePropertiesFormComponent implements OnInit, OnChanges {
   sortedPropertiesByRequired: PiecePropertyMap;
   form: UntypedFormGroup = this.fb.group({});
   emitNewChanges$?: Observable<unknown>;
-  constructor(private fb: FormBuilder) {}
+  constructor(private fb: FormBuilder) {
+    this.emitNewChanges$ = this.createChangesListener();
+  }
   ngOnChanges(changes: SimpleChanges): void {
     const properties = changes['propertiesMap'];
     const stepName = changes['stepName'];
@@ -71,16 +73,13 @@ export class NewPiecePropertiesFormComponent implements OnInit, OnChanges {
       this.initializeForm();
     }
   }
-  ngOnInit(): void {
-    this.initializeForm();
-  }
+  ngOnInit(): void {}
 
   private initializeForm() {
     this.sortPropertiesByRequired();
-    this.form = this.buildForm();
+    this.buildForm();
     this.customizedInputs =
       this.stepSettings.inputUiInfo.customizedInputs || {};
-    this.emitNewChanges$ = this.createChangesListener();
   }
 
   private sortPropertiesByRequired() {
@@ -100,11 +99,19 @@ export class NewPiecePropertiesFormComponent implements OnInit, OnChanges {
   }
 
   private buildForm() {
-    const form = this.fb.group({});
+    this.removeAllFormControls();
+    this.createFormControlsWithTheirValidators();
+    this.form.markAllAsTouched();
+  }
+
+  private createFormControlsWithTheirValidators() {
     Object.entries(this.propertiesMap).forEach(([propertyName, property]) => {
       const value = this.stepSettings.input[propertyName];
       const validators: ValidatorFn[] = [];
-      if (this.propertiesMap[propertyName].required) {
+      if (
+        this.propertiesMap[propertyName].required &&
+        this.propertiesMap[propertyName].type !== PropertyType.OBJECT
+      ) {
         validators.push(Validators.required);
       }
       if (
@@ -114,13 +121,22 @@ export class NewPiecePropertiesFormComponent implements OnInit, OnChanges {
       ) {
         validators.push(jsonValidator);
       }
-
-      const ctrl = new FormControl(value, {
-        validators: validators,
-      });
-      form.addControl(propertyName, ctrl);
+      const ctrl = new FormControl(
+        value === '' || value === null || value === undefined
+          ? undefined
+          : value,
+        {
+          validators: validators,
+        },
+      );
+      this.form.addControl(propertyName, ctrl, { emitEvent: false });
     });
-    return form;
+  }
+
+  private removeAllFormControls() {
+    Object.keys(this.form.controls).forEach((ctrlName) => {
+      this.form.removeControl(ctrlName, { emitEvent: false });
+    });
   }
 
   toggleCustomizedInput(

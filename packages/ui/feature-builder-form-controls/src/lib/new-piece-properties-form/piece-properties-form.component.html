@@ -4,8 +4,9 @@
     track property.key
   ) {
     @if (
-      property.value
-        | shouldShwoDynamicInputToggleAboveInput: stepName === 'trigger'
+      (property.value
+        | shouldShwoDynamicInputToggleAboveInput: stepName === 'trigger') ||
+      customizedInputs[property.key]
     ) {
       <div class="ap-flex ap-justify-end ap-px-1 ap-mb-1">
         <app-dynamic-input-toggle-control
@@ -188,7 +189,21 @@
             [formControl]="
               form.controls[property.key] | abstractFormControlCaster
             "
-          ></app-dictonary-form-control>
+            [propertyDisplayName]="property.value.displayName"
+          >
+            <div class="ap-px-1">
+              <app-dynamic-input-toggle-control
+                [selected]="!!customizedInputs[property.key]"
+                (valueChanged)="
+                  toggleCustomizedInput(
+                    property.value,
+                    property.key + '',
+                    $event
+                  )
+                "
+              ></app-dynamic-input-toggle-control>
+            </div>
+          </app-dictonary-form-control>
         }
       }
     }
