@@ -20,6 +20,7 @@ import {
   shareReplay,
   startWith,
   switchMap,
+  tap,
 } from 'rxjs';
 
 @Component({
@@ -33,31 +34,35 @@ export class RefreshablePropertyCoreControlComponent {
     | MultiSelectDropdownProperty<unknown, boolean>;
   @Input({ required: true }) parentFormGroup: UntypedFormGroup;
   @Input({ required: true }) pieceMetaData: PieceMetadataModel;
-  @Input({ required: true }) stepName: string;
+  @Input({ required: true }) actionOrTriggerName: string;
   @Input({ required: true }) propertyName: string;
   @Input({ required: true }) flow: Pick<PopulatedFlow, 'id' | 'version'>;
 
   constructor(
     private piecetaDataService: PieceMetadataService,
-    private searchRefresher$?: Observable<string>
+    private searchRefresher$?: Observable<string>,
   ) {}
 
   protected createRefreshers<
-    T extends DropdownState<unknown> | PiecePropertyMap
+    T extends DropdownState<unknown> | PiecePropertyMap,
   >() {
     const auth$ = this.getAuthRefresher();
-
     const refreshers$: Record<
       string,
       Observable<unknown>
     > = this.getPropertyRefreshers();
 
     const search$ = this.getSerchRefresher();
-
     const singleTimeRefresher$ = of('singleTimeRefresher');
     return combineLatest({
-      auth: auth$,
-      refreshers: combineLatest({ ...refreshers$ }),
+      refreshers: combineLatest({
+        [AUTHENTICATION_PROPERTY_NAME]: auth$,
+        ...refreshers$,
+      }).pipe(
+        tap(() => {
+          this.passedFormControl.setValue(undefined);
+        }),
+      ),
       search: search$,
       singleTimeRefresher: singleTimeRefresher$,
     }).pipe(
@@ -65,17 +70,19 @@ export class RefreshablePropertyCoreControlComponent {
         return this.piecetaDataService.getPieceActionConfigOptions<T>({
           flowId: this.flow.id,
           flowVersionId: this.flow.version.id,
-          input: res.refreshers,
+          input: {
+            ...res.refreshers,
+          },
           packageType: this.pieceMetaData.packageType,
           pieceName: this.pieceMetaData.name,
           pieceType: this.pieceMetaData.pieceType,
           pieceVersion: this.pieceMetaData.version,
           propertyName: this.propertyName,
-          stepName: this.stepName,
+          stepName: this.actionOrTriggerName,
           searchValue: res.search,
         });
       }),
-      shareReplay(1)
+      shareReplay(1),
     );
   }
 
@@ -99,7 +106,7 @@ export class RefreshablePropertyCoreControlComponent {
             };
           } else {
             console.error(
-              `Refreshable dropdown control: ${this.property.displayName} has a refresher ${refresherName} that does not exist in the form group`
+              `Refreshable dropdown control: ${this.property.displayName} has a refresher ${refresherName} that does not exist in the form group`,
             );
             return null;
           }
@@ -113,12 +120,11 @@ export class RefreshablePropertyCoreControlComponent {
 
   private getAuthRefresher() {
     const authControler = this.parentFormGroup.get(
-      AUTHENTICATION_PROPERTY_NAME
+      AUTHENTICATION_PROPERTY_NAME,
     );
     const auth$ =
-      authControler
-        ?.get(AUTHENTICATION_PROPERTY_NAME)
-        ?.valueChanges.pipe(startWith(authControler.value)) ?? of(undefined);
+      authControler?.valueChanges.pipe(startWith(authControler.value)) ??
+      of(undefined);
     return auth$;
   }
 }
