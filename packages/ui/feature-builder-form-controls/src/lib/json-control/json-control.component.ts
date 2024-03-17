@@ -19,48 +19,46 @@ import { BuilderAutocompleteDropdownHandlerComponent } from '../interpolating-te
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <ng-template #jsonInputTemplate>
-      <div
-        #interpolatingTextControlContainer
-        #hoverContainer="hoverTrackerDirective"
-        apTrackHover
-        (click)="$event.stopImmediatePropagation()"
-      >
-        <div class="ap-py-2 ap-px-4 ap-flex bar-containing-beautify-button">
-          <div class="ap-flex-grow">
-            <span class="ap-text-white ap-flex ap-gap-2 ap-items-center">
-              {{ property.displayName }}
-            </span>
-          </div>
-          <div>
-            <svg-icon
-              src="/assets/img/custom/beautify.svg"
-              [svgStyle]="{ width: '16px', height: '16px' }"
-              (click)="beautify()"
-              matTooltip="beautify"
-              class="ap-cursor-pointer"
-            >
-            </svg-icon>
-          </div>
+    <div
+      #interpolatingTextControlContainer
+      #hoverContainer="hoverTrackerDirective"
+      apTrackHover
+      (click)="$event.stopImmediatePropagation()"
+    >
+      <div class="ap-py-2 ap-px-4 ap-flex bar-containing-beautify-button">
+        <div class="ap-flex-grow">
+          <span class="ap-text-white ap-flex ap-gap-2 ap-items-center">
+            {{ property.displayName }}
+          </span>
         </div>
-        <div class="ap-h-[300px]">
-          <ngx-monaco-editor
-            (onInit)="onInit($event)"
-            class="!ap-h-full !ap-w-full"
-            [formControl]="passedFormControl"
-            (click)="handler.showMentionsDropdown()"
-            [options]="codeEditorOptions"
-          ></ngx-monaco-editor>
+        <div>
+          <svg-icon
+            src="/assets/img/custom/beautify.svg"
+            [svgStyle]="{ width: '16px', height: '16px' }"
+            (click)="beautify()"
+            matTooltip="beautify"
+            class="ap-cursor-pointer"
+          >
+          </svg-icon>
         </div>
-
-        <app-builder-autocomplete-dropdown-handler
-          #handler
-          [container]="interpolatingTextControlContainer"
-          (mentionEmitted)="addMentionToJsonControl($event)"
-        >
-        </app-builder-autocomplete-dropdown-handler>
       </div>
-    </ng-template>
+      <div class="ap-h-[300px]">
+        <ngx-monaco-editor
+          (onInit)="onInit($event)"
+          class="!ap-h-full !ap-w-full"
+          [formControl]="passedFormControl"
+          (click)="handler.showMentionsDropdown()"
+          [options]="codeEditorOptions"
+        ></ngx-monaco-editor>
+      </div>
+
+      <app-builder-autocomplete-dropdown-handler
+        #handler
+        [container]="interpolatingTextControlContainer"
+        (mentionEmitted)="addMentionToJsonControl($event)"
+      >
+      </app-builder-autocomplete-dropdown-handler>
+    </div>
   `,
 })
 export class JsonControlComponent {
