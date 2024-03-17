@@ -4,12 +4,12 @@
   appearance="outline"
 >
   <mat-label>
-    {{
-      (options$ | async) === undefined || (options$ | async) === null
-        ? 'Loading...'
-        : property.displayName
-    }}</mat-label
-  >
+    @if (loading$ | async) {
+      Loading...
+    } @else {
+      {{ property.displayName }}
+    }
+  </mat-label>
 
   <mat-select
     #matSelect
@@ -20,12 +20,14 @@
     [multiple]="property.type === PropertyType.MULTI_SELECT_DROPDOWN"
   >
     <mat-select-trigger>
-      @if (options$ | async; as state) {
-        @if (
-          state.options | dropdownSelectedValues: passedFormControl | async;
-          as selectedOptions
-        ) {
-          {{ selectedOptions | dropdownLabelsJoiner }}
+      @if ((loading$ | async) === false) {
+        @if (options$ | async; as state) {
+          @if (
+            state.options | dropdownSelectedValues: passedFormControl | async;
+            as selectedOptions
+          ) {
+            {{ selectedOptions | dropdownLabelsJoiner }}
+          }
         }
       }
     </mat-select-trigger>
@@ -33,67 +35,77 @@
     <app-dropdown-search-control
       [searchControl]="searchControl"
     ></app-dropdown-search-control>
-    @if ((options$ | async) === null || (options$ | async) === undefined) {
+    @if (loading$ | async) {
       <mat-option class="ap-opacity-100" [disabled]="true">
         <div class="ap-flex ap-items-center ap-justify-center">
           <ap-loading-icon> </ap-loading-icon>
         </div>
       </mat-option>
-    }
-
-    @if (options$ | async; as state) {
-      @if (
-        state.options
-          | dropdownSearch
-            : searchControl
-            : property.type === PropertyType.DROPDOWN &&
-                property.refreshOnSearch
-          | async;
-        as options
-      ) {
-        @if (matSelect.panelOpen) {
-          <cdk-virtual-scroll-viewport
-            [itemSize]="48"
-            minBufferPx="200"
-            maxBufferPx="400"
-            class="ap-max-h-[195px] thin-scrollbars ap-overflow-y-auto"
-            [class.ap-h-[50px]]="options.length === 1"
-            [class.ap-h-[100px]]="options.length === 2"
-            [class.ap-h-[150px]]="options.length === 3"
-            [class.ap-h-[195px]]="options.length >= 4"
-          >
-            <mat-option
-              *cdkVirtualFor="let opt of options"
-              [value]="opt.value"
-              [class.mdc-list-item--selected]="
-                opt.value === passedFormControl.value
-              "
+    } @else {
+      @if (options$ | async; as state) {
+        @if (
+          state.options
+            | dropdownSearch
+              : searchControl
+              : property.type === PropertyType.DROPDOWN &&
+                  property.refreshOnSearch
+            | async;
+          as options
+        ) {
+          @if (matSelect.panelOpen) {
+            @if (state.disabled) {
+              <mat-option [disabled]="true">
+                {{ state.placeholder || 'No options available' }}
+              </mat-option>
+            }
+            <cdk-virtual-scroll-viewport
+              [itemSize]="48"
+              minBufferPx="200"
+              maxBufferPx="400"
+              class="ap-max-h-[195px] thin-scrollbars ap-overflow-y-auto"
+              [class.ap-h-[50px]]="options.length === 1"
+              [class.ap-h-[100px]]="options.length === 2"
+              [class.ap-h-[150px]]="options.length === 3"
+              [class.ap-h-[195px]]="options.length >= 4"
             >
-              <div class="ap-w-full ap-flex ap-justify-between ap-items-center">
-                {{ opt.label }}
-                <mat-pseudo-checkbox
-                  *ngIf="opt.value === passedFormControl.value"
-                  state="checked"
-                  aria-hidden="true"
-                  appearance="minimal"
-                  class="mat-pseudo-checkbox virtual-scroll-check-mark mat-mdc-option-pseudo-checkbox mat-pseudo-checkbox-checked mat-pseudo-checkbox-minimal"
-                ></mat-pseudo-checkbox>
-              </div>
-            </mat-option>
-          </cdk-virtual-scroll-viewport>
+              <mat-option
+                *cdkVirtualFor="let opt of options"
+                [value]="opt.value"
+                [class.mdc-list-item--selected]="
+                  opt.value === passedFormControl.value
+                "
+              >
+                <div
+                  class="ap-w-full ap-flex ap-justify-between ap-items-center"
+                >
+                  {{ opt.label }}
+                  <mat-pseudo-checkbox
+                    *ngIf="opt.value === passedFormControl.value"
+                    state="checked"
+                    aria-hidden="true"
+                    appearance="minimal"
+                    class="mat-pseudo-checkbox virtual-scroll-check-mark mat-mdc-option-pseudo-checkbox mat-pseudo-checkbox-checked mat-pseudo-checkbox-minimal"
+                  ></mat-pseudo-checkbox>
+                </div>
+              </mat-option>
+            </cdk-virtual-scroll-viewport>
+          }
+        }
+        <!-- Needed to make dropdown openable -->
+        @for (
+          item of state.options
+            | dropdownSelectedValues: passedFormControl
+            | async;
+          track item
+        ) {
+          <mat-option class="!ap-hidden" [value]="item.value">
+            {{ item.label }}
+          </mat-option>
         }
       }
-      @for (
-        item of state.options
-          | dropdownSelectedValues: passedFormControl
-          | async;
-        track item
-      ) {
-        <mat-option class="!ap-hidden" [value]="item.value">
-          {{ item.label }}
-        </mat-option>
-      }
     }
+
+    @if (options$ | async) {}
 
     <!-- need at least 1 pre-existing option to open the select -->
     <mat-option class="!ap-hidden"></mat-option>

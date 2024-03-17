@@ -14,6 +14,7 @@ import {
   PopulatedFlow,
 } from '@activepieces/shared';
 import {
+  BehaviorSubject,
   Observable,
   combineLatest,
   of,
@@ -37,7 +38,7 @@ export class RefreshablePropertyCoreControlComponent {
   @Input({ required: true }) actionOrTriggerName: string;
   @Input({ required: true }) propertyName: string;
   @Input({ required: true }) flow: Pick<PopulatedFlow, 'id' | 'version'>;
-
+  loading$ = new BehaviorSubject<boolean>(true);
   constructor(
     private piecetaDataService: PieceMetadataService,
     private searchRefresher$?: Observable<string>,
@@ -61,26 +62,33 @@ export class RefreshablePropertyCoreControlComponent {
       }).pipe(
         tap(() => {
           this.passedFormControl.setValue(undefined);
+          this.loading$.next(true);
         }),
       ),
       search: search$,
       singleTimeRefresher: singleTimeRefresher$,
     }).pipe(
       switchMap((res) => {
-        return this.piecetaDataService.getPieceActionConfigOptions<T>({
-          flowId: this.flow.id,
-          flowVersionId: this.flow.version.id,
-          input: {
-            ...res.refreshers,
-          },
-          packageType: this.pieceMetaData.packageType,
-          pieceName: this.pieceMetaData.name,
-          pieceType: this.pieceMetaData.pieceType,
-          pieceVersion: this.pieceMetaData.version,
-          propertyName: this.propertyName,
-          stepName: this.actionOrTriggerName,
-          searchValue: res.search,
-        });
+        return this.piecetaDataService
+          .getPieceActionConfigOptions<T>({
+            flowId: this.flow.id,
+            flowVersionId: this.flow.version.id,
+            input: {
+              ...res.refreshers,
+            },
+            packageType: this.pieceMetaData.packageType,
+            pieceName: this.pieceMetaData.name,
+            pieceType: this.pieceMetaData.pieceType,
+            pieceVersion: this.pieceMetaData.version,
+            propertyName: this.propertyName,
+            stepName: this.actionOrTriggerName,
+            searchValue: res.search,
+          })
+          .pipe(
+            tap(() => {
+              this.loading$.next(false);
+            }),
+          );
       }),
       shareReplay(1),
     );
