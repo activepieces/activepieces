@@ -1,4 +1,4 @@
-import { ApId, FlowStatus, PlatformId, isNil } from '@activepieces/shared'
+import { ApId, isNil } from '@activepieces/shared'
 import { ProjectEntity } from './project-entity'
 import {
     ActivepiecesError,
@@ -9,11 +9,8 @@ import {
     ProjectId,
     UserId,
 } from '@activepieces/shared'
-import { EntityManager, IsNull } from 'typeorm'
-import { projectSideEffects } from './project-side-effects'
-import { transaction } from '../core/db/transaction'
+import { IsNull } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
-import { flowService } from '../flows/flow/flow.service'
 
 const repo = repoFactory(ProjectEntity)
 
@@ -101,63 +98,6 @@ export const projectService = {
             deleted: IsNull(),
         })
     },
-
-    async softDelete({ id, platformId }: DeleteParams): Promise<void> {
-        await transaction(async (entityManager) => {
-            await assertAllProjectFlowsAreDisabled({
-                projectId: id,
-                entityManager,
-            })
-
-            await softDeleteOrThrow({
-                id,
-                platformId,
-                entityManager,
-            })
-
-            await projectSideEffects.onSoftDelete({
-                id,
-                entityManager,
-            })
-        })
-    },
-}
-
-const assertAllProjectFlowsAreDisabled = async (params: AssertAllProjectFlowsAreDisabledParams): Promise<void> => {
-    const { projectId, entityManager } = params
-
-    const projectHasEnabledFlows = await flowService.existsByProjectAndStatus({
-        projectId,
-        status: FlowStatus.ENABLED,
-        entityManager,
-    })
-
-    if (projectHasEnabledFlows) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: 'project has enabled flows',
-            },
-        })
-    }
-}
-
-const softDeleteOrThrow = async ({ id, platformId, entityManager }: SoftDeleteOrThrowParams): Promise<void> => {
-    const deleteResult = await repo(entityManager).softDelete({
-        id,
-        platformId,
-        deleted: IsNull(),
-    })
-
-    if (deleteResult.affected !== 1) {
-        throw new ActivepiecesError({
-            code: ErrorCode.ENTITY_NOT_FOUND,
-            params: {
-                entityId: id,
-                entityType: 'project',
-            },
-        })
-    }
 }
 
 type CreateParams = {
@@ -175,20 +115,6 @@ type GetByPlatformIdAndExternalIdParams = {
 type AddProjectToPlatformParams = {
     projectId: ProjectId
     platformId: ApId
-}
-
-type DeleteParams = {
-    id: ProjectId
-    platformId: PlatformId
-}
-
-type SoftDeleteOrThrowParams = DeleteParams & {
-    entityManager: EntityManager
-}
-
-type AssertAllProjectFlowsAreDisabledParams = {
-    projectId: ProjectId
-    entityManager: EntityManager
 }
 
 type NewProject = Omit<Project, 'created' | 'updated' | 'deleted'>

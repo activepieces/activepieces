@@ -1,4 +1,4 @@
-import { ApId, ProjectId, isNil } from '@activepieces/shared'
+import { ProjectId, isNil } from '@activepieces/shared'
 import { Queue, Worker, Job, JobsOptions } from 'bullmq'
 import { createRedisClient } from '../../database/redis-connection'
 import { QueueMode, SystemProp, logger, system } from 'server-shared'
@@ -8,10 +8,10 @@ const FIFTEEN_MINUTES = 15 * 60 * 1000
 const SYSTEM_JOB_QUEUE = 'system-job-queue'
 
 const QueueModeIsNotRedis = system.get(SystemProp.QUEUE_MODE) !== QueueMode.REDIS
-const jobHandlers = new Map<string, SystemJobHandler>()
+const jobHandlers = new Map<SystemJobName, SystemJobHandler>()
 
-let systemJobsQueue: Queue<SystemJobData, unknown>
-let systemJobWorker: Worker<SystemJobData, unknown>
+let systemJobsQueue: Queue<SystemJobData, unknown, SystemJobName>
+let systemJobWorker: Worker<SystemJobData, unknown, SystemJobName>
 
 export const redisSystemJob = {
     async init(): Promise<void> {
@@ -19,7 +19,7 @@ export const redisSystemJob = {
             return
         }
 
-        systemJobsQueue = new Queue<SystemJobData, unknown, ApId>(
+        systemJobsQueue = new Queue(
             SYSTEM_JOB_QUEUE,
             {
                 connection: createRedisClient(),
@@ -33,7 +33,7 @@ export const redisSystemJob = {
             },
         )
 
-        systemJobWorker = new Worker<SystemJobData, unknown, ApId>(
+        systemJobWorker = new Worker(
             SYSTEM_JOB_QUEUE,
             async (job) => {
                 logger.debug({ name: 'RedisSystemJob#systemJobWorker' }, `Executing job (${job.name})`)
@@ -53,7 +53,7 @@ export const redisSystemJob = {
         ])
     },
 
-    async upsertJob({ job, schedule, handler }: UpsertJobParams): Promise<void> {
+    async upsertJob<T extends SystemJobName>({ job, schedule, handler }: UpsertJobParams<T>): Promise<void> {
         if (QueueModeIsNotRedis) {
             return
         }
@@ -83,9 +83,9 @@ export const redisSystemJob = {
     },
 }
 
-const addJobToQueue = async ({ job, schedule }: AddJobToQueueParams): Promise<void> => {
+const addJobToQueue = async <T extends SystemJobName>({ job, schedule }: AddJobToQueueParams<T>): Promise<void> => {
     const jobOptions = configureJobOptions(schedule)
-    await systemJobsQueue.add(job.name, job, jobOptions)
+    await systemJobsQueue.add(job.name, job.data, jobOptions)
 }
 
 const configureJobOptions = (schedule: JobSchedule): JobsOptions => {
@@ -108,12 +108,12 @@ const configureJobOptions = (schedule: JobSchedule): JobsOptions => {
     }
 }
 
-const setJobHandler = ({ name, handler }: SetJobHandlerParams): void => {
+const setJobHandler = <T extends SystemJobName>({ name, handler }: SetJobHandlerParams<T>): void => {
     jobHandlers.set(name, handler)
 }
 
 const getJobHandlerOrThrow = (name: string): SystemJobHandler => {
-    const jobHandler = jobHandlers.get(name)
+    const jobHandler = jobHandlers.get(name as SystemJobName)
 
     if (isNil(jobHandler)) {
         throw new Error(`No handler for job ${name}`)
@@ -127,9 +127,9 @@ const jobNotInQueue = async (name: SystemJobName): Promise<boolean> => {
     return isNil(job)
 }
 
-const getJobByName = async (name: SystemJobName): Promise<Job<SystemJobData, unknown> | undefined> => {
+const getJobByName = async <T extends SystemJobName>(name: T): Promise<SystemJob<T> | undefined> => {
     const allSystemJobs = await systemJobsQueue.getJobs()
-    return allSystemJobs.find(job => job.data.name === name)
+    return allSystemJobs.find(job => job.name === name) as SystemJob<T> | undefined
 }
 
 type SystemJobName =
@@ -137,24 +137,25 @@ type SystemJobName =
     | 'project-usage-report'
     | 'usage-report'
 
-type BaseSystemJobData<Name extends SystemJobName, Data extends Record<string, unknown>> = {
-    name: Name
-    data: Data
+type HardDeleteProjectSystemJobData = {
+    projectId: ProjectId
 }
 
-type HardDeleteProjectSystemJobData = BaseSystemJobData<'hard-delete-project', {
-    projectId: ProjectId
-}>
+type ProjectUsageReportSystemJobData = Record<string, never>
+type UsageReportSystemJobData = Record<string, never>
 
-type ProjectUsageReportSystemJobData = BaseSystemJobData<'project-usage-report', Record<string, never>>
-type UsageReportSystemJobData = BaseSystemJobData<'usage-report', Record<string, never>>
+type SystemJobData<T extends SystemJobName = SystemJobName> =
+    T extends 'hard-delete-project' ? HardDeleteProjectSystemJobData :
+        T extends 'project-usage-report' ? ProjectUsageReportSystemJobData :
+            T extends 'usage-report' ? UsageReportSystemJobData :
+                never
 
-type SystemJobData =
-    | HardDeleteProjectSystemJobData
-    | ProjectUsageReportSystemJobData
-    | UsageReportSystemJobData
+type SystemJobDefinition<T extends SystemJobName> = {
+    name: T
+    data: SystemJobData<T>
+}
 
-type SystemJobHandler = (data: Job<SystemJobData, unknown>) => Promise<void>
+type SystemJobHandler<T extends SystemJobName = SystemJobName> = (data: Job<SystemJobData<T>, unknown>) => Promise<void>
 
 type OneTimeJobSchedule = {
     type: 'one-time'
@@ -170,18 +171,20 @@ type JobSchedule =
     | OneTimeJobSchedule
     | RepeatedJobSchedule
 
-type AddJobToQueueParams = {
-    job: SystemJobData
+export type SystemJob<T extends SystemJobName> = Job<SystemJobData<T>, unknown>
+
+type AddJobToQueueParams<T extends SystemJobName> = {
+    job: SystemJobDefinition<T>
     schedule: JobSchedule
 }
 
-type UpsertJobParams = {
-    job: SystemJobData
+type UpsertJobParams<T extends SystemJobName> = {
+    job: SystemJobDefinition<T>
     schedule: JobSchedule
-    handler: SystemJobHandler
+    handler: SystemJobHandler<T>
 }
 
-type SetJobHandlerParams = {
-    name: SystemJobName
-    handler: SystemJobHandler
+type SetJobHandlerParams<T extends SystemJobName> = {
+    name: T
+    handler: SystemJobHandler<T>
 }
