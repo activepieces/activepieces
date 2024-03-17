@@ -44,6 +44,8 @@ import { AbstractFormControlCasterPipe } from './pipes/abstract-form-control-cas
 import { ConnectionsDropdownControlComponent } from './connections-dropdown-control/connections-dropdown-control.component';
 import { ReplaceMarkdownConstsPipe } from './pipes/replace-markdown-consts.pipe';
 import { ExtractControlErrorMessage } from './pipes/extract-error-message-from-form-control.component';
+import { ActionOrTriggerDropdownComponent } from './action-or-trigger-dropdown/action-or-trigger-dropdown.component';
+import { DynamicInputToggleComponent } from './dynamic-input-toggle/dynamic-input-toggle.component';
 const exportedDeclarations = [
   ArrayFormControlComponent,
   BranchConditionFormControlComponent,
@@ -76,7 +78,9 @@ const exportedDeclarations = [
     AbstractFormControlCasterPipe,
     ConnectionsDropdownControlComponent,
     ReplaceMarkdownConstsPipe,
-    ExtractControlErrorMessage
+    ExtractControlErrorMessage,
+    ActionOrTriggerDropdownComponent,
+    DynamicInputToggleComponent,
   ],
   declarations: [
     ...exportedDeclarations,
@@ -100,6 +104,7 @@ const exportedDeclarations = [
     ...exportedDeclarations,
     BuilderAutocompleteDropdownHandlerComponent,
     InterpolatingTextFormControlComponent,
+    ActionOrTriggerDropdownComponent,
   ],
 })
 export class UiFeatureBuilderFormControlsModule {

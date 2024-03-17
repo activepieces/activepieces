@@ -19,6 +19,7 @@ import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-bui
 import { CodeWriterDialogComponent } from './input-forms/code-step-input-form/code-writer-dialog/code-writer-dialog.component';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatChipsModule } from '@angular/material/chips';
+import { NewPieceInputFormComponent } from './input-forms/new-piece-input-form/piece-input-form.component';
 @NgModule({
   imports: [
     CommonModule,
@@ -28,6 +29,7 @@ import { MatChipsModule } from '@angular/material/chips';
     UiFeatureBuilderTestStepsModule,
     MatStepperModule,
     MatChipsModule,
+    NewPieceInputFormComponent,
   ],
   declarations: [
     EditStepFormContainerComponent,

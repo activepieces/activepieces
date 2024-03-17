@@ -12,10 +12,7 @@ import {
   PiecePropertyMap,
   PropertyType,
 } from '@activepieces/pieces-framework';
-import {
-  PieceMetadataModelSummary,
-  jsonValidator,
-} from '@activepieces/ui/common';
+import { PieceMetadataModel, jsonValidator } from '@activepieces/ui/common';
 import {
   PieceActionSettings,
   PieceTriggerSettings,
@@ -27,7 +24,6 @@ import {
   UntypedFormGroup,
   Validators,
 } from '@angular/forms';
-import { Property } from 'posthog-js';
 import { Observable, tap } from 'rxjs';
 import { ValidatorFn } from '@angular/forms';
 
@@ -37,12 +33,12 @@ import { ValidatorFn } from '@angular/forms';
   templateUrl: './piece-properties-form.component.html',
 })
 export class NewPiecePropertiesFormComponent implements OnInit {
-  @Input({ required: true }) propertiesMap: PiecePropertyMap;
-  @Input({ required: true }) pieceMetaData: PieceMetadataModelSummary;
+  @Input({ required: true }) pieceMetaData: PieceMetadataModel;
   @Input({ required: true }) stepName: string;
   @Input({ required: true }) flow: Pick<PopulatedFlow, 'id' | 'version'>;
-  @Input({required : true}) webhookPrefix:string;
-  @Input({required : true}) formPieceTriggerPrefix:string;
+  @Input({ required: true }) webhookPrefix: string;
+  @Input({ required: true }) formPieceTriggerPrefix: string;
+  @Input({ required: true }) propertiesMap: PiecePropertyMap;
   @Input({ required: true }) stepSettings:
     | PieceActionSettings
     | PieceTriggerSettings;
@@ -58,7 +54,11 @@ export class NewPiecePropertiesFormComponent implements OnInit {
   form: UntypedFormGroup = this.fb.group({});
   listener$?: Observable<unknown>;
   constructor(private fb: FormBuilder) {}
-  ngOnInit() {
+  ngOnInit(): void {
+    this.initializeForm();
+  }
+
+  private initializeForm() {
     this.sortPropertiesByRequired();
     this.form = this.buildForm();
     this.customizedInputs =
@@ -106,19 +106,23 @@ export class NewPiecePropertiesFormComponent implements OnInit {
     return form;
   }
 
-  toggleCustomizedInput(property: PieceProperty, propertyName:string, value: boolean) {
+  toggleCustomizedInput(
+    property: PieceProperty,
+    propertyName: string,
+    value: boolean
+  ) {
     this.customizedInputs[propertyName] = value;
-    if( property.type === PropertyType.JSON)
-    {
-      if(value){
-      this.form.controls[propertyName].removeValidators(jsonValidator)}
-      else
-      {
+    if (property.type === PropertyType.JSON) {
+      if (value) {
+        this.form.controls[propertyName].removeValidators(jsonValidator);
+      } else {
         this.form.controls[propertyName].addValidators(jsonValidator);
       }
     }
-    this.form.controls[propertyName].setValue('',{emitEvent:false});
-    this.form.controls[propertyName].updateValueAndValidity({emitEvent:false});
+    this.form.controls[propertyName].setValue('', { emitEvent: false });
+    this.form.controls[propertyName].updateValueAndValidity({
+      emitEvent: false,
+    });
   }
   private createListener() {
     return this.form.valueChanges.pipe(
