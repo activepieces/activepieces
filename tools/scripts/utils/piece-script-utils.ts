@@ -56,13 +56,6 @@ export async function findPiece(pieceName: string): Promise<PieceMetadata | null
     return pieces.find((p) => p.name === pieceName) ?? null
 }
 
-
-export function getSourceDirectory(directoryPath: string): string {
-    const normalizedPath = normalize(directoryPath);
-    const sourceDirectory = normalizedPath.replace(join('dist', ''), '');
-    return sourceDirectory;
-}
-
 export async function findAllPiecesDirectoryInSource(): Promise<string[]> {
     const piecesPath = resolve(cwd(), 'packages', 'pieces')
     const paths = await traverseFolder(piecesPath)
