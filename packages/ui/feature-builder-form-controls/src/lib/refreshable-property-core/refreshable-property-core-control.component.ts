@@ -12,11 +12,13 @@ import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 import {
   AUTHENTICATION_PROPERTY_NAME,
   PopulatedFlow,
+  spreadIfDefined,
 } from '@activepieces/shared';
 import {
   BehaviorSubject,
   Observable,
   combineLatest,
+  merge,
   of,
   shareReplay,
   startWith,
@@ -39,6 +41,7 @@ export class RefreshablePropertyCoreControlComponent {
   @Input({ required: true }) propertyName: string;
   @Input({ required: true }) flow: Pick<PopulatedFlow, 'id' | 'version'>;
   loading$ = new BehaviorSubject<boolean>(true);
+  resetValueOnRefresherChange$?: Observable<unknown>;
   constructor(
     private piecetaDataService: PieceMetadataService,
     private searchRefresher$?: Observable<string>,
@@ -47,25 +50,23 @@ export class RefreshablePropertyCoreControlComponent {
   protected createRefreshers<
     T extends DropdownState<unknown> | PiecePropertyMap,
   >() {
-    const auth$ = this.getAuthRefresher();
-    const refreshers$: Record<
-      string,
-      Observable<unknown>
-    > = this.getPropertyRefreshers();
+    const refreshers$ = combineLatest(this.getPropertyRefreshers(true)).pipe(
+      startWith(this.parentFormGroup.value),
+    );
 
-    const search$ = this.getSerchRefresher();
+    this.resetValueOnRefresherChange$ = merge(
+      ...Object.values(this.getPropertyRefreshers(false)),
+    ).pipe(
+      tap(() => {
+        this.passedFormControl.setValue(undefined);
+        this.loading$.next(true);
+      }),
+    );
+    const search$ = this.getSearchRefresher();
     const singleTimeRefresher$ = of('singleTimeRefresher');
     return combineLatest({
-      refreshers: combineLatest({
-        [AUTHENTICATION_PROPERTY_NAME]: auth$,
-        ...refreshers$,
-      }).pipe(
-        tap(() => {
-          this.passedFormControl.setValue(undefined);
-          this.loading$.next(true);
-        }),
-      ),
-      search: search$,
+      refreshers: refreshers$,
+      search: search$.pipe(startWith('')),
       singleTimeRefresher: singleTimeRefresher$,
     }).pipe(
       switchMap((res) => {
@@ -94,7 +95,7 @@ export class RefreshablePropertyCoreControlComponent {
     );
   }
 
-  private getSerchRefresher() {
+  private getSearchRefresher() {
     return this.property.type === PropertyType.DROPDOWN &&
       this.property.refreshOnSearch &&
       this.searchRefresher$
@@ -102,15 +103,19 @@ export class RefreshablePropertyCoreControlComponent {
       : of('');
   }
 
-  private getPropertyRefreshers(): Record<string, Observable<unknown>> {
-    return (
+  private getPropertyRefreshers(
+    startWithInitialValue: boolean,
+  ): Record<string, Observable<unknown>> {
+    const refreshers =
       this.property.refreshers
         .map((refresherName) => {
           const control = this.parentFormGroup.get(refresherName);
-          const refresh$ = control?.valueChanges.pipe(startWith(control.value));
+          const refresh$ = control?.valueChanges;
           if (refresh$) {
             return {
-              [refresherName]: refresh$,
+              [refresherName]: startWithInitialValue
+                ? refresh$.pipe(startWith(control.value))
+                : refresh$,
             };
           } else {
             console.error(
@@ -122,17 +127,22 @@ export class RefreshablePropertyCoreControlComponent {
         .filter((refresher$) => refresher$ !== null)
         .reduce((acc, curr) => {
           return { ...acc, ...curr };
-        }, {}) ?? {}
-    );
-  }
-
-  private getAuthRefresher() {
-    const authControler = this.parentFormGroup.get(
+        }, {}) ?? {};
+    const authRefresher = this.parentFormGroup.get(
       AUTHENTICATION_PROPERTY_NAME,
-    );
-    const auth$ =
-      authControler?.valueChanges.pipe(startWith(authControler.value)) ??
-      of(undefined);
-    return auth$;
+    )?.valueChanges;
+    return {
+      ...refreshers,
+      ...spreadIfDefined(
+        AUTHENTICATION_PROPERTY_NAME,
+        startWithInitialValue
+          ? authRefresher?.pipe(
+              startWith(
+                this.parentFormGroup.get(AUTHENTICATION_PROPERTY_NAME)?.value,
+              ),
+            )
+          : authRefresher,
+      ),
+    };
   }
 }
