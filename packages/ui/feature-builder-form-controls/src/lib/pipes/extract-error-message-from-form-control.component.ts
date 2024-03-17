@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { Observable, map } from 'rxjs';
+import { Observable, map, startWith, tap } from 'rxjs';
 
 @Pipe({
   name: 'extractControlErrorMessage',
@@ -8,16 +8,18 @@ import { Observable, map } from 'rxjs';
   standalone: true,
 })
 export class ExtractControlErrorMessage implements PipeTransform {
-  transform(value: FormControl, propertyName: string): Observable<string> {
-    return value.valueChanges.pipe(
+  transform(ctrl: FormControl, propertyName: string): Observable<string> {
+    return ctrl.valueChanges.pipe(
+      startWith(ctrl.value),
       map(() => {
-        if (value.invalid && value.hasError('required')) {
+        if (ctrl.invalid && ctrl.hasError('required')) {
           return `${propertyName} is required`;
-        } else if (value.invalid) {
+        } else if (ctrl.invalid) {
           return `${propertyName} is invalid`;
         }
         return '';
-      })
+      }),
+      tap(console.log),
     );
   }
 }
