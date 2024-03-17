@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { PieceMetadataModelSummary } from '@activepieces/ui/common';
+import { PieceMetadataModel } from '@activepieces/ui/common';
 import {
   DropdownProperty,
   DropdownState,
@@ -32,7 +32,7 @@ export class RefreshablePropertyCoreControlComponent {
     | DropdownProperty<unknown, boolean>
     | MultiSelectDropdownProperty<unknown, boolean>;
   @Input({ required: true }) parentFormGroup: UntypedFormGroup;
-  @Input({ required: true }) pieceMetaData: PieceMetadataModelSummary;
+  @Input({ required: true }) pieceMetaData: PieceMetadataModel;
   @Input({ required: true }) stepName: string;
   @Input({ required: true }) propertyName: string;
   @Input({ required: true }) flow: Pick<PopulatedFlow, 'id' | 'version'>;
