@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { UiCommonModule } from '@activepieces/ui/common';
-import { FormControl } from '@angular/forms';
 import {
-  DropdownOption,
-  PieceAuthProperty,
-  PieceMetadataSummary,
-} from '@activepieces/pieces-framework';
+  PieceConnectionDropdownItem,
+  PieceMetadataModel,
+  UiCommonModule,
+} from '@activepieces/ui/common';
+import { FormControl } from '@angular/forms';
+import { PieceAuthProperty } from '@activepieces/pieces-framework';
 import { DropdownSelectedValuesPipe } from '../pipes/dropdown-selected-values.pipe';
 import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections';
 
@@ -115,7 +115,7 @@ import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections
 export class ConnectionsDropdownControlComponent {
   @Input({ required: true }) passedFormControl: FormControl<string>;
   @Input({ required: true })
-  options: DropdownOption<`{{connections['${string}']}}`>[];
+  options: PieceConnectionDropdownItem[];
   @Input({ required: true }) property: PieceAuthProperty;
-  @Input({ required: true }) pieceMetaData: PieceMetadataSummary;
+  @Input({ required: true }) pieceMetaData: PieceMetadataModel;
 }
