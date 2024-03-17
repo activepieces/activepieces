@@ -82,8 +82,10 @@ One possible solution for this is using a service like ngrok ([https://ngrok.com
 
 ### Setting Piece Source
 
-To activate the piece source feature, which tracks version metadata for pieces, please provide a value for the `AP_PIECES_SOURCE` environment variable based on the following options:
+These are the different options for the `AP_PIECES_SOURCE` environment variable:
 
-1. `FILE` : Recommended for local development, loads pieces directly from local files. For production, consider other options.
-2. `DB` : Selecting this option will store pieces metadata, including pieces in **My Pieces**, into a database.
-3. `CLOUD_AND_DB`: This option synchronizes your pieces metadata with the latest cloud pieces and stores it into a database. For self-hosted versions, this option will automatically load the latest pieces into your system.
+1. `FILE`: **Only for Local Development**, this option loads pieces directly from local files. For Production, please consider using other options, as this one only supports a single version per piece.
+
+2. `DB`: This option will only load pieces that are manually installed in the database from "My Pieces" or the Admin Console in the EE Edition. Pieces are loaded from npm, which provides multiple versions per piece, making it suitable for production.
+
+3. `CLOUD_AND_DB`: (Default) This option loads piece metadata from the cloud endpoint (https://cloud.activepieces.com/api/v1/pieces) and `DB`. Pieces are loaded from npm, which offers multiple versions per piece, making it suitable for production.
