@@ -25,7 +25,6 @@ import semver from 'semver';
 import { AuthenticationService, FlagService, environment } from '@activepieces/ui/common';
 import { FlowItemDetails } from '@activepieces/ui/common';
 import {
-  ActionBase,
   DropdownState,
   PiecePropertyMap,
   TriggerBase,
@@ -250,23 +249,7 @@ export class PieceMetadataService {
   }
 
   
-  getPieceActions(
-    pieceName: string,
-    pieceVersion?: string
-  ): Observable<ActionBase[]> {
-    return this.getPieceMetadata(pieceName, pieceVersion).pipe(map(data=>{
-      return Object.values(data.actions);
-    }))
-  } 
 
-  getPieceTriggers(
-    pieceName: string,
-    pieceVersion?: string
-  ): Observable<TriggerBase[]> {
-    return this.getPieceMetadata(pieceName, pieceVersion).pipe(map(data=>{
-      return Object.values(data.triggers);
-    }))
-  } 
   getPieceActionConfigOptions<
     T extends DropdownState<unknown> | PiecePropertyMap
   >(req: PieceOptionRequest) {
