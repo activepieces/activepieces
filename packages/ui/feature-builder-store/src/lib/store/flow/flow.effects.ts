@@ -81,6 +81,54 @@ export class FlowsEffects {
     );
   });
 
+  newTriggerOrActionSelected$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(FlowsActions.newTriggerOrActionSelected),
+      concatLatestFrom(() =>
+        this.store.select(BuilderSelectors.selectCurrentStep)
+      ),
+      switchMap(([{ displayName, name }, step]) => {
+        if (step) {
+          if (step.type === TriggerType.PIECE) {
+            return of(
+              FlowsActions.updateTrigger({
+                operation: {
+                  ...step,
+                  displayName,
+                  settings: {
+                    ...step.settings,
+                    triggerName: name,
+                    input: {},
+                    inputUiInfo: {
+                      customizedInputs: {},
+                    },
+                  },
+                },
+              })
+            );
+          } else if (step.type === ActionType.PIECE) {
+            return of(
+              FlowsActions.updateAction({
+                operation: {
+                  ...step,
+                  displayName,
+                  settings: {
+                    ...step.settings,
+                    actionName: name,
+                    input: {},
+                    inputUiInfo: {
+                      customizedInputs: {},
+                    },
+                  },
+                },
+              })
+            );
+          }
+        }
+        return EMPTY;
+      })
+    );
+  });
   replaceTrigger$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(FlowsActions.updateTrigger),
