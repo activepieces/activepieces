@@ -254,6 +254,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/AdamSelene"><img src="https://avatars.githubusercontent.com/u/79495?v=4?s=100" width="100px;" alt="Olivier Sambourg"/><br /><sub><b>Olivier Sambourg</b></sub></a><br /><a href="#plugin-AdamSelene" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Verlich"><img src="https://avatars.githubusercontent.com/u/30838131?v=4?s=100" width="100px;" alt="Ahmad(Ed)"/><br /><sub><b>Ahmad(Ed)</b></sub></a><br /><a href="#plugin-Verlich" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/leenmashni"><img src="https://avatars.githubusercontent.com/u/102361544?v=4?s=100" width="100px;" alt="leenmashni"/><br /><sub><b>leenmashni</b></sub></a><br /><a href="#plugin-leenmashni" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/AliasKingsWorth"><img src="https://avatars.githubusercontent.com/u/47811610?v=4?s=100" width="100px;" alt="M Abdul Rauf"/><br /><sub><b>M Abdul Rauf</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=AliasKingsWorth" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
