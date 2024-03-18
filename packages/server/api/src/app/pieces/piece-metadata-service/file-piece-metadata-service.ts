@@ -91,10 +91,11 @@ async function loadPieceFromFolder(
             pieceVersion,
         })
         return {
-            directoryPath: folderPath,
             ...piece.metadata(),
             name: pieceName,
             version: pieceVersion,
+            authors: piece.authors,
+            directoryPath: folderPath,
         }
     }
     catch (ex) {
