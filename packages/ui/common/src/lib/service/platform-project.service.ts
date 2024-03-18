@@ -63,4 +63,10 @@ export class PlatformProjectService {
         map(() => void 0)
       );
   }
+
+  delete(projectId: ProjectId): Observable<void> {
+    return this.http.delete<void>(
+      `${environment.apiUrl}/projects/${projectId}`
+    );
+  }
 }
