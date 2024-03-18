@@ -36,6 +36,9 @@ import {
     RunEnvironment,
     Platform,
     FilteredPieceBehavior,
+    File,
+    FileCompression,
+    FileType,
 } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
@@ -458,6 +461,19 @@ export const mockBasicSetup = async (params?: MockBasicSetupParams): Promise<Moc
         mockOwner,
         mockPlatform,
         mockProject,
+    }
+}
+
+export const createMockFile = (file?: Partial<File>): File => {
+    return {
+        id: file?.id ?? apId(),
+        created: file?.created ?? faker.date.recent().toISOString(),
+        updated: file?.updated ?? faker.date.recent().toISOString(),
+        platformId: file?.platformId ?? apId(),
+        projectId: file?.projectId ?? apId(),
+        compression: file?.compression ?? faker.helpers.enumValue(FileCompression),
+        data: file?.data ?? Buffer.from(faker.lorem.paragraphs()),
+        type: file?.type ?? faker.helpers.enumValue(FileType),
     }
 }
 
