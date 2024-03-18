@@ -9,7 +9,6 @@ export * from './lib/branch-conditions-group-form-control/branch-conditions-grou
 export * from './lib/code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component';
 export * from './lib/code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component';
 export * from './lib/code-artifact-form-control/code-artifact-form-control.component';
-export * from './lib/piece-properties-form/piece-properties-form.component';
 export * from './lib/dictionary-form-control/dictionary-form-control.component';
 export * from './lib/interpolating-text-form-control/fixed-selection-mention';
 export * from './lib/interpolating-text-form-control/builder-autocomplete-mentions-dropdown/builder-autocomplete-mentions-dropdown.component';

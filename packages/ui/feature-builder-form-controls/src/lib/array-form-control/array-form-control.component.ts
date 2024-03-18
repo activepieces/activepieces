@@ -17,9 +17,9 @@ import {
 } from '@angular/forms';
 import { map, Observable, tap } from 'rxjs';
 import { InterpolatingTextFormControlComponent } from '../interpolating-text-form-control/interpolating-text-form-control.component';
-import { InsertMentionOperation } from '@activepieces/ui/common';
+import { InsertMentionOperation, PieceMetadataModel } from '@activepieces/ui/common';
 import { ArrayProperty } from '@activepieces/pieces-framework';
-import { createConfigsFormControls } from '../shared';
+import { PopulatedFlow } from '@activepieces/shared';
 
 @Component({
   selector: 'app-array-form-control',
@@ -41,14 +41,21 @@ import { createConfigsFormControls } from '../shared';
 })
 export class ArrayFormControlComponent implements ControlValueAccessor {
   formArray: FormArray<FormControl<string> | UntypedFormGroup>;
-  @Input({ required: true }) formFieldsTemplate: TemplateRef<unknown>;
-  @Input({ required: true }) property: ArrayProperty<true>;
-  @Input({ required: true }) prefix: string;
+
+  @Input({ required: true }) property: ArrayProperty<boolean>;
   @Input() dynamicInputTemplate: TemplateRef<unknown>;
   @ViewChild('textControl') firstInput: InterpolatingTextFormControlComponent;
   removeItemTooltip = $localize`Remove item`;
   updateValueOnChange$: Observable<void> = new Observable<void>();
-
+  @Input({ required: true }) pieceMetaData: PieceMetadataModel;
+  @Input({ required: true }) flow: Pick<PopulatedFlow, 'id' | 'version'>;
+  @Input({ required: true }) webhookPrefix: string;
+  @Input({ required: true }) formPieceTriggerPrefix: string;
+  @Input({ required: true }) input: Record<string, any> = {};
+  @Input({ required: true }) customizedInputs: Record<
+    string,
+    boolean | Record<string, boolean>
+  > = {};
   createForm(propertiesValues: Record<string, unknown> | string) {
     const properties = this.property.properties;
     if (
@@ -56,16 +63,8 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
       properties &&
       Object.keys(properties).length > 0
     ) {
-      const controls = createConfigsFormControls(
-        properties,
-        propertiesValues,
-        this.fb
-      );
-
       this.formArray.push(
-        this.fb.group({
-          ...controls,
-        })
+        this.fb.group({})
       );
     } else if (typeof propertiesValues === 'string') {
       this.formArray.push(

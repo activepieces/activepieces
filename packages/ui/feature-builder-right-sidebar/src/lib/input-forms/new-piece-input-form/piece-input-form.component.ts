@@ -33,7 +33,7 @@ import {
   spreadIfDefined,
 } from '@activepieces/shared';
 import { ActionBase, TriggerBase } from '@activepieces/pieces-framework';
-import { FormControl, Validators } from '@angular/forms';
+import { FormControl, UntypedFormBuilder, Validators } from '@angular/forms';
 
 @Component({
   selector: 'app-new-piece-input-form',
@@ -56,6 +56,7 @@ import { FormControl, Validators } from '@angular/forms';
             deps.currentStep.settings.triggerName ||
             deps.currentStep.settings.actionName
           "
+          [form]="form"
           [allConnectionsForPiece]="deps.allConnectionsForPiece"
           [pieceMetaData]="deps.pieceMetaData"
           [input]="deps.currentStep.settings.input"
@@ -94,16 +95,18 @@ export class NewPieceInputFormComponent {
     currentFlow: PopulatedFlow;
     allConnectionsForPiece: PieceConnectionDropdownItem[];
   }>;
-
+  form = this.fb.group({});
   constructor(
     private store: Store,
     private pieceMetaDataService: PieceMetadataService,
     private flagService: FlagService,
+    private fb: UntypedFormBuilder,
   ) {
     this.triggersOrActionsControl = new FormControl<string>('', {
       nonNullable: true,
       validators: Validators.required,
     });
+    this.triggersOrActionsControl.markAllAsTouched();
     this.deps$ = combineLatest({
       currentStep: this.store.select(BuilderSelectors.selectCurrentStep),
       triggersOrActions: this.getTriggersOrActions(),

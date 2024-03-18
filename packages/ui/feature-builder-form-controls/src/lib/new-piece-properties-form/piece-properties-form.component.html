@@ -194,17 +194,38 @@
             [propertiesMap]="propertiesMap"
             [input]="input[property.key]"
             [customizedInputs]="
-              customizedInputs[property.key] === true ||
-              customizedInputs[property.key] === false
-                ? customizedInputs
-                : {}
+              customizedInputs[property.key] | customizedInputsCaster
             "
           ></app-dynamic-property-control>
         }
         @case (PropertyType.ARRAY) {
-          <!-- <app-array-form-control [property]="property.value" [prefix]="">
-      
-                      </app-array-form-control> -->
+          <app-array-form-control
+            [property]="property.value"
+            [pieceMetaData]="pieceMetaData"
+            [flow]="flow"
+            [webhookPrefix]="webhookPrefix"
+            [formPieceTriggerPrefix]="formPieceTriggerPrefix"
+            [customizedInputs]="
+              customizedInputs[property.key] | customizedInputsCaster
+            "
+            [input]="input[property.key]"
+            [formControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+          >
+            <div class="ap-px-1">
+              <app-dynamic-input-toggle-control
+                [selected]="!!customizedInputs[property.key]"
+                (valueChanged)="
+                  toggleCustomizedInput(
+                    property.value,
+                    property.key + '',
+                    $event
+                  )
+                "
+              ></app-dynamic-input-toggle-control>
+            </div>
+          </app-array-form-control>
         }
         @case (PropertyType.OBJECT) {
           <app-dictonary-form-control

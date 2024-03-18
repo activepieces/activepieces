@@ -120,6 +120,9 @@ export class NewPiecePropertiesFormComponent
     this.form.controls[propertyName].updateValueAndValidity({
       emitEvent: false,
     });
+    setTimeout(()=>{
+      this.form.markAllAsTouched();
+    })
   }
   private createChangesListener() {
     return this.form.valueChanges.pipe(

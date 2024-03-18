@@ -7,8 +7,6 @@ import { StepNameEditorComponent } from './edit-step-sidebar/step-name-editor/st
 import { BranchStepInputFormComponent } from './input-forms/branch-step-input-form/branch-step-input-form.component';
 import { CodeStepInputFormComponent } from './input-forms/code-step-input-form/code-step-input-form.component';
 import { LoopStepInputFormComponent } from './input-forms/loop-step-input-form/loop-step-input-form.component';
-import { PieceActionInputFormComponent } from './input-forms/piece-input-forms/piece-action-input-form/piece-action-input-form.component';
-import { PieceTriggerInputFormComponent } from './input-forms/piece-input-forms/piece-trigger-input-form/piece-trigger-input-form.component';
 import { StepTypeListComponent } from './step-type-sidebar/step-type-list/step-type-list.component';
 import { StepTypeSidebarComponent } from './step-type-sidebar/step-type-sidebar.component';
 import { StepTypeItemComponent } from './step-type-sidebar/step-type-item/step-type-item.component';
@@ -37,8 +35,6 @@ import { NewPieceInputFormComponent } from './input-forms/new-piece-input-form/p
     BranchStepInputFormComponent,
     CodeStepInputFormComponent,
     LoopStepInputFormComponent,
-    PieceActionInputFormComponent,
-    PieceTriggerInputFormComponent,
     StepTypeListComponent,
     StepTypeSidebarComponent,
     StepTypeItemComponent,
