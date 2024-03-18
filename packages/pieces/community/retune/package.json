@@ -2,9 +2,9 @@
   "name": "@activepieces/piece-retune",
   "version": "0.0.5",
   "dependencies": {
-    "@activepieces/pieces-common": "0.2.9",
-    "@activepieces/pieces-framework": "0.7.24",
-    "@activepieces/shared": "0.10.93",
+    "@activepieces/pieces-common": "0.2.12",
+    "@activepieces/pieces-framework": "0.7.25",
+    "@activepieces/shared": "0.10.97",
     "tslib": "2.6.2"
   }
 }

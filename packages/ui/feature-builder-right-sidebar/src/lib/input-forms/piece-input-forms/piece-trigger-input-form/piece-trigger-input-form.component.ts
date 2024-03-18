@@ -33,10 +33,7 @@ import {
 import { PiecePropertiesFormValue } from '@activepieces/ui/feature-builder-form-controls';
 import { PieceTriggerInputFormSchema } from '../../input-forms-schema';
 import { PiecePropertyMap } from '@activepieces/pieces-framework';
-import {
-  CORE_SCHEDULE,
-  PieceMetadataService,
-} from '@activepieces/ui/feature-pieces';
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 
 declare type TriggerDropdownOption = {
   label: {
@@ -77,7 +74,6 @@ const PIECE_PROPERTIES_FORM_CONTROL_NAME = 'configs';
 export class PieceTriggerInputFormComponent {
   readonly TRIGGER_FORM_CONTROL_NAME = TRIGGER_FORM_CONTROL_NAME;
   readonly CONFIGS_FORM_CONTROL_NAME = PIECE_PROPERTIES_FORM_CONTROL_NAME;
-  CORE_SCHEDULE = CORE_SCHEDULE;
   pieceTriggerInputForm: UntypedFormGroup;
   initialSetup$: Observable<TriggerDropdownOption[]>;
   packageType: PackageType;
@@ -104,7 +100,7 @@ export class PieceTriggerInputFormComponent {
 
   constructor(
     private fb: UntypedFormBuilder,
-    private actionMetaDataService: PieceMetadataService,
+    private pieceService: PieceMetadataService,
     private cd: ChangeDetectorRef,
     private store: Store
   ) {
@@ -144,10 +140,7 @@ export class PieceTriggerInputFormComponent {
   }
 
   fetchTriggers(pieceName: string, pieceVersion: string) {
-    const piece$ = this.actionMetaDataService.getPieceMetadata(
-      pieceName,
-      pieceVersion
-    );
+    const piece$ = this.pieceService.getPieceMetadata(pieceName, pieceVersion);
 
     this.triggers$ = piece$.pipe(
       map((pieceMetadata) => {

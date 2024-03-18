@@ -30,10 +30,7 @@ import {
   FlowBuilderService,
 } from '@activepieces/ui/common';
 import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/common';
-import {
-  CORE_SCHEDULE,
-  PieceMetadataService,
-} from '@activepieces/ui/feature-pieces';
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 
 @Component({
   selector: 'app-flow-right-sidebar',
@@ -133,16 +130,6 @@ export class FlowRightSidebarComponent implements OnInit {
     this.currentStep$ = this.store
       .select(BuilderSelectors.selectCurrentStep)
       .pipe(
-        switchMap((step) => {
-          if (
-            step &&
-            step.type === TriggerType.PIECE &&
-            step.settings.pieceName === CORE_SCHEDULE
-          ) {
-            return of(null);
-          }
-          return of(step);
-        }),
         tap(() => {
           setTimeout(() => {
             this.builderAutocompleteMentionsDropdownService.editStepSection =
@@ -172,10 +159,16 @@ export class FlowRightSidebarComponent implements OnInit {
                 res.pieceName,
                 res.version
               ),
-              this.pieceMetadaService.getLatestVersion(res.pieceName),
+              this.pieceMetadaService.getPieceMetadata(
+                res.pieceName,
+                undefined
+              ),
             ]).pipe(
               map(([pieceManifest, latestVersion]) => {
-                if (pieceManifest && pieceManifest.version === latestVersion) {
+                if (
+                  pieceManifest &&
+                  pieceManifest.version === latestVersion.version
+                ) {
                   return {
                     version: pieceManifest.version,
                     latest: true,
@@ -197,6 +190,7 @@ export class FlowRightSidebarComponent implements OnInit {
         })
       );
   }
+
   get sidebarType() {
     return RightSideBarType;
   }
