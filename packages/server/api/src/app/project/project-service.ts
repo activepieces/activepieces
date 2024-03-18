@@ -1,5 +1,4 @@
 import { ApId, isNil } from '@activepieces/shared'
-import { databaseConnection } from '../database/database-connection'
 import { ProjectEntity } from './project-entity'
 import {
     ActivepiecesError,
@@ -10,8 +9,10 @@ import {
     ProjectId,
     UserId,
 } from '@activepieces/shared'
+import { IsNull } from 'typeorm'
+import { repoFactory } from '../core/db/repo-factory'
 
-const projectRepo = databaseConnection.getRepository<Project>(ProjectEntity)
+const repo = repoFactory(ProjectEntity)
 
 export const projectService = {
     async create(params: CreateParams): Promise<Project> {
@@ -21,21 +22,22 @@ export const projectService = {
             notifyStatus: NotificationStatus.ALWAYS,
         }
 
-        return projectRepo.save(newProject)
+        return repo().save(newProject)
     },
 
     async getOne(projectId: ProjectId | undefined): Promise<Project | null> {
         if (isNil(projectId)) {
             return null
         }
-        return projectRepo.findOneBy({
+
+        return repo().findOneBy({
             id: projectId,
+            deleted: IsNull(),
         })
     },
+
     async getOneOrThrow(projectId: ProjectId): Promise<Project> {
-        const project = await projectRepo.findOneBy({
-            id: projectId,
-        })
+        const project = await this.getOne(projectId)
 
         if (isNil(project)) {
             throw new ActivepiecesError({
@@ -49,33 +51,51 @@ export const projectService = {
 
         return project
     },
+
     async getUserProject(ownerId: UserId): Promise<Project | null> {
-        return projectRepo.findOneBy({
+        return repo().findOneBy({
             ownerId,
-        })
-    },
-    async getUserProjectOrThrow(ownerId: UserId): Promise<Project> {
-        return projectRepo.findOneByOrFail({
-            ownerId,
+            deleted: IsNull(),
         })
     },
 
-    async addProjectToPlatform({
-        projectId,
-        platformId,
-    }: AddProjectToPlatformParams): Promise<void> {
-        await projectRepo.update(projectId, {
+    async getUserProjectOrThrow(ownerId: UserId): Promise<Project> {
+        const project = await this.getUserProject(ownerId)
+
+        if (isNil(project)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'project',
+                    message: `userId=${ownerId}`,
+                },
+            })
+        }
+
+        return project
+    },
+
+    async addProjectToPlatform({ projectId, platformId }: AddProjectToPlatformParams): Promise<void> {
+        const query = {
+            id: projectId,
+            deleted: IsNull(),
+        }
+
+        const update = {
             platformId,
-        })
+        }
+
+        await repo().update(query, update)
     },
 
     async getByPlatformIdAndExternalId({
         platformId,
         externalId,
     }: GetByPlatformIdAndExternalIdParams): Promise<Project | null> {
-        return projectRepo.findOneBy({
+        return repo().findOneBy({
             platformId,
             externalId,
+            deleted: IsNull(),
         })
     },
 }
@@ -97,4 +117,4 @@ type AddProjectToPlatformParams = {
     platformId: ApId
 }
 
-type NewProject = Omit<Project, 'created' | 'updated'>
+type NewProject = Omit<Project, 'created' | 'updated' | 'deleted'>

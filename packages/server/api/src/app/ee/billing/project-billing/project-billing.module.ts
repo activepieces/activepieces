@@ -23,10 +23,17 @@ const EVERY_4_HOURS = '59 */4 * * *'
 
 export const projectBillingModule: FastifyPluginAsyncTypebox = async (app) => {
     await redisSystemJob.upsertJob({
-        name: 'project-usage-report',
-        data: {},
-    }, EVERY_4_HOURS, async (job) => {
-        await sendProjectRecords(job.timestamp)
+        job: {
+            name: 'project-usage-report',
+            data: {},
+        },
+        schedule: {
+            type: 'repeated',
+            cron: EVERY_4_HOURS,
+        },
+        async handler(job) {
+            await sendProjectRecords(job.timestamp)
+        },
     })
     await app.register(projectBillingController, { prefix: '/v1/project-billing' })
 }

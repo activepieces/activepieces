@@ -16,25 +16,31 @@ const platformRepo = databaseConnection.getRepository(PlatformEntity)
 
 export const usageTrackerModule: FastifyPluginAsyncTypebox = async () => {
     await redisSystemJob.upsertJob({
-        name: 'usage-report',
-        data: {},
-    }, '*/59 23 * * *', async (job) => {
-        const startOfDay = dayjs(job.timestamp).startOf('day').toISOString()
-        const endOfDay = dayjs(job.timestamp).endOf('day').toISOString()
-        const platforms = await platformRepo.find()
-        const reports = []
-        for (const platform of platforms) {
-            if (flagService.isCloudPlatform(platform.id)) {
-                continue
+        job: {
+            name: 'usage-report',
+            data: {},
+        },
+        schedule: {
+            type: 'repeated',
+            cron: '*/59 23 * * *',
+        },
+        async handler(job) {
+            const startOfDay = dayjs(job.timestamp).startOf('day').toISOString()
+            const endOfDay = dayjs(job.timestamp).endOf('day').toISOString()
+            const platforms = await platformRepo.find()
+            const reports = []
+            for (const platform of platforms) {
+                if (flagService.isCloudPlatform(platform.id)) {
+                    continue
+                }
+                const report = await constructUsageReport(platform, startOfDay, endOfDay)
+                reports.push(report)
             }
-            const report = await constructUsageReport(platform, startOfDay, endOfDay)
-            reports.push(report)
-        }
-        await sendUsageReport(reports)
+            await sendUsageReport(reports)
 
+        },
     })
 }
-
 
 async function sendUsageReport(reports: UsageReport[]): Promise<void> {
     await fetch('https://cloud.activepieces.com/api/v1/webhooks/ophE6T5QJBe7O3QT0sjvn', {

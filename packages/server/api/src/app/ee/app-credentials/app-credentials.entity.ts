@@ -28,6 +28,7 @@ export const AppCredentialEntity = new EntitySchema<AppCredentialSchema>({
         project: {
             type: 'many-to-one',
             target: 'project',
+            onDelete: 'CASCADE',
             joinColumn: true,
             inverseSide: 'appCredentials',
         },
