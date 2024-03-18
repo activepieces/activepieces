@@ -13,8 +13,8 @@ import {
   TriggerBase,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { IsTriggerGuardPipe } from '../pipes/is-trigger-guard.pipe';
-import { DropdownSelectedValuesPipe } from '../pipes/dropdown-selected-values.pipe';
+import { IsTriggerGuardPipe } from '../../pipes/is-trigger-guard.pipe';
+import { DropdownSelectedValuesPipe } from '../../pipes/dropdown-selected-values.pipe';
 
 @Component({
   selector: 'app-action-or-trigger-dropdown',

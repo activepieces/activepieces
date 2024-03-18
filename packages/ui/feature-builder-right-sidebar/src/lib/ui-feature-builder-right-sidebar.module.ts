@@ -12,12 +12,12 @@ import { StepTypeSidebarComponent } from './step-type-sidebar/step-type-sidebar.
 import { StepTypeItemComponent } from './step-type-sidebar/step-type-item/step-type-item.component';
 import { MatTabsModule } from '@angular/material/tabs';
 import { FlowRightSidebarComponent } from './flow-right-sidebar.component';
-import { NewEditPieceSidebarComponent } from './edit-step-sidebar/edit-step-sidebar.component';
+import { EditStepSidebarComponent } from './edit-step-sidebar/edit-step-sidebar.component';
 import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-builder-form-controls';
 import { CodeWriterDialogComponent } from './input-forms/code-step-input-form/code-writer-dialog/code-writer-dialog.component';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatChipsModule } from '@angular/material/chips';
-import { NewPieceInputFormComponent } from './input-forms/new-piece-input-form/piece-input-form.component';
+import { PieceInputFormComponent } from './input-forms/piece-input-form/piece-input-form.component';
 @NgModule({
   imports: [
     CommonModule,
@@ -27,7 +27,7 @@ import { NewPieceInputFormComponent } from './input-forms/new-piece-input-form/p
     UiFeatureBuilderTestStepsModule,
     MatStepperModule,
     MatChipsModule,
-    NewPieceInputFormComponent,
+    PieceInputFormComponent,
   ],
   declarations: [
     EditStepFormContainerComponent,
@@ -39,7 +39,7 @@ import { NewPieceInputFormComponent } from './input-forms/new-piece-input-form/p
     StepTypeSidebarComponent,
     StepTypeItemComponent,
     FlowRightSidebarComponent,
-    NewEditPieceSidebarComponent,
+    EditStepSidebarComponent,
     CodeWriterDialogComponent,
   ],
   exports: [FlowRightSidebarComponent],

@@ -10,8 +10,8 @@ import { UiCommonModule } from '@activepieces/ui/common';
 import { DynamicInputToggleComponent } from '../dynamic-input-toggle/dynamic-input-toggle.component';
 import deepEqual from 'deep-equal';
 import { DropdownSearchControlComponent } from '../dropdown-search-control/dropdown-search-control.component';
-import { DropdownSelectedValuesPipe } from '../pipes/dropdown-selected-values.pipe';
-import { DropdownLabelsJoiner } from '../pipes/dropdown-labels-joiner.pipe';
+import { DropdownSelectedValuesPipe } from '../../pipes/dropdown-selected-values.pipe';
+import { DropdownLabelsJoiner } from '../../pipes/dropdown-labels-joiner.pipe';
 
 @Component({
   selector: 'app-static-dropdown-control',

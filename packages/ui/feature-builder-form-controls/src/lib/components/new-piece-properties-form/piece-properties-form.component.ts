@@ -22,11 +22,11 @@ import { PopulatedFlow } from '@activepieces/shared';
 import { createFormControlsWithTheirValidators } from './properties-controls-helper';
 
 @Component({
-  selector: 'app-new-piece-properties-form',
+  selector: 'app-piece-properties-form',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './piece-properties-form.component.html',
 })
-export class NewPiecePropertiesFormComponent
+export class PiecePropertiesFormComponent
   implements OnInit, OnChanges
 {
   @Input({ required: true }) pieceMetaData: PieceMetadataModel;

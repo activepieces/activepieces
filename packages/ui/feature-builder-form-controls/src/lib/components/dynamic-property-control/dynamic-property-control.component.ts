@@ -11,7 +11,7 @@ import { UntypedFormGroup } from '@angular/forms';
   @if((loading$ | async) === false)
   { @if(properties$ | async; as props){
 
-    <app-new-piece-properties-form
+    <app-piece-properties-form
           [stepName]="stepName"
           actionOrTriggerName=""
           [form]="passedFormControl"
@@ -23,7 +23,7 @@ import { UntypedFormGroup } from '@angular/forms';
           [webhookPrefix]="webhookPrefix"
           [formPieceTriggerPrefix]="formPieceTriggerPrefix"
           [propertiesMap]="props"
-        ></app-new-piece-properties-form>
+        ></app-piece-properties-form>
   }
   }
   @else(){

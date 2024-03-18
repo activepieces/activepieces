@@ -40,7 +40,7 @@
         <mat-card-content>
           <div class="ap-flex ap-flex-col ap-gap-3">
             @if (property.properties) {
-              <app-new-piece-properties-form
+              <app-piece-properties-form
                 [stepName]="''"
                 actionOrTriggerName=""
                 [form]="objectControl | formGroupCaster"
@@ -52,7 +52,7 @@
                 [webhookPrefix]="webhookPrefix"
                 [formPieceTriggerPrefix]="formPieceTriggerPrefix"
                 [propertiesMap]="property.properties"
-              ></app-new-piece-properties-form>
+              ></app-piece-properties-form>
             }
           </div>
         </mat-card-content>

@@ -7,7 +7,7 @@ import {
 } from '@activepieces/ui/common';
 import { FormControl } from '@angular/forms';
 import { PieceAuthProperty } from '@activepieces/pieces-framework';
-import { DropdownSelectedValuesPipe } from '../pipes/dropdown-selected-values.pipe';
+import { DropdownSelectedValuesPipe } from '../../pipes/dropdown-selected-values.pipe';
 import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections';
 
 //TODO: check add-edit-connection-button and remove unnecessary properties and ask mo about triggerName

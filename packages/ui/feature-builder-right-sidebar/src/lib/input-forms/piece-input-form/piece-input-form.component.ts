@@ -36,7 +36,7 @@ import { ActionBase, TriggerBase } from '@activepieces/pieces-framework';
 import { FormControl, UntypedFormBuilder, Validators } from '@angular/forms';
 
 @Component({
-  selector: 'app-new-piece-input-form',
+  selector: 'app-piece-input-form',
   standalone: true,
   imports: [CommonModule, UiCommonModule, UiFeatureBuilderFormControlsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -50,7 +50,7 @@ import { FormControl, UntypedFormBuilder, Validators } from '@angular/forms';
       @if (
         deps.currentStep && deps.selectedTriggerOrAction && deps.pieceMetaData
       ) {
-        <app-new-piece-properties-form
+        <app-piece-properties-form
           [stepName]="deps.currentStep.name"
           [actionOrTriggerName]="
             deps.currentStep.settings.triggerName ||
@@ -70,7 +70,7 @@ import { FormControl, UntypedFormBuilder, Validators } from '@angular/forms';
           (formValueChange)="
             piecePropertiesFormValueChanged($event, deps.currentStep)
           "
-        ></app-new-piece-properties-form>
+        ></app-piece-properties-form>
       }
     } @else {
       <div
@@ -82,7 +82,7 @@ import { FormControl, UntypedFormBuilder, Validators } from '@angular/forms';
     @if (renameStepBasedOnSelectedTriggerOrAction$ | async) {}
   `,
 })
-export class NewPieceInputFormComponent {
+export class PieceInputFormComponent {
   triggersOrActionsControl: FormControl<string>;
   renameStepBasedOnSelectedTriggerOrAction$?: Observable<unknown>;
   deps$: Observable<{

@@ -23,7 +23,7 @@ import { FlowItemDetails } from '@activepieces/ui/common';
   templateUrl: './edit-step-sidebar.component.html',
   styleUrls: ['./edit-step-sidebar.component.css'],
 })
-export class NewEditPieceSidebarComponent implements OnInit {
+export class EditStepSidebarComponent implements OnInit {
   constructor(private store: Store, private cd: ChangeDetectorRef) {}
   displayNameChanged$: BehaviorSubject<string> = new BehaviorSubject('Step');
   selectedStepAndFlowId$: Observable<{

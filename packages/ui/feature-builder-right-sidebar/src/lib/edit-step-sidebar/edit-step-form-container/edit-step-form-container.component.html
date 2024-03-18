@@ -21,10 +21,10 @@
         formControlName="settings"
       >
       </app-code-step-input-form>
-      <app-new-piece-input-form *ngSwitchCase="ActionType.PIECE">
-      </app-new-piece-input-form>
-      <app-new-piece-input-form *ngSwitchCase="TriggerType.PIECE">
-      </app-new-piece-input-form>
+      <app-piece-input-form *ngSwitchCase="ActionType.PIECE">
+      </app-piece-input-form>
+      <app-piece-input-form *ngSwitchCase="TriggerType.PIECE">
+      </app-piece-input-form>
 
       <app-branch-step-input-form
         *ngSwitchCase="ActionType.BRANCH"
