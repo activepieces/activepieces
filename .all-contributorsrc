@@ -715,7 +715,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/10012140?v=4",
       "profile": "https://github.com/yann120",
       "contributions": [
-        "plugin"
+        "plugin",
+        "bug"
       ]
     },
     {
@@ -862,6 +863,15 @@
       "profile": "https://github.com/leenmashni",
       "contributions": [
         "plugin"
+      ]
+    },
+    {
+      "login": "AliasKingsWorth",
+      "name": "M Abdul Rauf",
+      "avatar_url": "https://avatars.githubusercontent.com/u/47811610?v=4",
+      "profile": "https://github.com/AliasKingsWorth",
+      "contributions": [
+        "doc"
       ]
     }
   ],

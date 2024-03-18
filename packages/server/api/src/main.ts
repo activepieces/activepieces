@@ -22,8 +22,8 @@ const start = async (app: FastifyInstance): Promise<void> => {
 /_/    \\_\\  \\_____|    |_|    |_____|     \\/     |______| |_|      |_____| |______|  \\_____| |______| |_____/
 
 The application started on ${system.get(
-        SystemProp.FRONTEND_URL,
-    )}, as specified by the AP_FRONTEND_URL variables.
+            SystemProp.FRONTEND_URL,
+        )}, as specified by the AP_FRONTEND_URL variables.
     `)
 
         const environemnt = system.get(SystemProp.ENVIRONMENT)
@@ -92,4 +92,7 @@ const main = async (): Promise<void> => {
     await start(app)
 }
 
-main().catch((e) => logger.error(e, '[Main#main]'))
+main().catch((e) => {
+    logger.error(e, '[Main#main]');
+    process.exit(1);
+});
