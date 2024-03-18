@@ -4,8 +4,6 @@ import { jsonValidator } from "@activepieces/ui/common";
 import { isNil } from "../../../../../shared/src";
 
 export const createFormControlsWithTheirValidators = (fb:UntypedFormBuilder,propertiesMap: PiecePropertyMap,form:FormGroup,input:Record<string,any>,customizedInputs:Record<string,boolean | Record<string,boolean>>) => {
-    console.log('form',Object.isExtensible(form))
-    console.log('controls',Object.isExtensible(form.controls));
     removeAllFormControls(form);
     Object.entries(propertiesMap).forEach(([propertyName, property]) => {1
       if(propertiesMap[propertyName].type === PropertyType.MARKDOWN)
@@ -15,7 +13,6 @@ export const createFormControlsWithTheirValidators = (fb:UntypedFormBuilder,prop
       const value = input[propertyName];
       const validators: ValidatorFn[] = getPropertyValidators(property, customizedInputs, propertyName);
       const ctrl = createControl(fb,property, value, validators);
-    
       form.addControl(propertyName, ctrl, { emitEvent: false });
     });
   }
