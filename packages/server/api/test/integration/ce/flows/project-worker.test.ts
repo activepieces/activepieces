@@ -50,8 +50,6 @@ describe('Project Worker API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
-
-            expect(Object.keys(responseBody)).toHaveLength(8)
             expect(responseBody?.id).toBe(mockProject.id)
         })
     })

@@ -8,7 +8,7 @@ import {
     TriggerEvent,
     User,
 } from '@activepieces/shared'
-import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
+import { ApIdSchema, BaseColumnSchemaPart, TIMESTAMP_COLUMN_TYPE } from '../database/database-common'
 
 type ProjectSchema = Project & {
     owner: User
@@ -24,6 +24,11 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
     name: 'project',
     columns: {
         ...BaseColumnSchemaPart,
+        deleted: {
+            type: TIMESTAMP_COLUMN_TYPE,
+            deleteDate: true,
+            nullable: true,
+        },
         ownerId: ApIdSchema,
         displayName: {
             type: String,

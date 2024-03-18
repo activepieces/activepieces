@@ -40,11 +40,25 @@
                     <th mat-header-cell *matHeaderCellDef>
                     </th>
                     <td mat-cell *matCellDef="let project">
-                        <div class="ap-float-right ap-w-[7.3125rem] ap-text-center">
-                            <ap-icon-button (click)="$event.stopPropagation();updateProject(project)"
-                                tooltipText="Edit project" iconFilename="pencil-underline.svg" [width]="20"
+                        <div class="ap-w-[7.3125rem]  ap-float-right ap-flex ap-gap-2 ap-justify-center">
+                            <ap-icon-button
+                                (click)="$event.stopPropagation();updateProject(project)"
+                                tooltipText="Edit project"
+                                iconFilename="pencil-underline.svg"
+                                [width]="20"
                                 [buttonDisabled]="isDemo"
-                                [height]="20" [height]="16"></ap-icon-button>
+                                [height]="16"
+                            ></ap-icon-button>
+
+                            <ap-icon-button
+                                (click)="$event.stopPropagation();deleteProject(project)"
+                                [buttonDisabled]="disableDeleteProject()"
+                                iconFilename="trash.svg"
+                                tooltipText="Delete project"
+                                [width]="20"
+                                [height]="16"
+                                color="warn"
+                            ></ap-icon-button>
                         </div>
                     </td>
                 </ng-container>
@@ -80,3 +94,4 @@
 <ng-container *ngIf="createProject$ | async"></ng-container>
 <ng-container *ngIf="updateProject$ | async"></ng-container>
 <ng-container *ngIf="switchProject$ | async"></ng-container>
+<ng-container *ngIf="deleteProject$ | async"></ng-container>

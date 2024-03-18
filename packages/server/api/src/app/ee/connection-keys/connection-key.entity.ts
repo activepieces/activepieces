@@ -31,6 +31,7 @@ export const ConnectionKeyEntity = new EntitySchema<ConnectionKeySchema>({
         project: {
             type: 'many-to-one',
             target: 'project',
+            onDelete: 'CASCADE',
             joinColumn: true,
             inverseSide: 'connectionKeys',
         },
