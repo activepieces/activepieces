@@ -49,6 +49,7 @@ import { DynamicInputToggleComponent } from './dynamic-input-toggle/dynamic-inpu
 import { ShouldShwoDynamicInputToggleAboveInputPipe } from './pipes/should-show-dynamic-input-toggle-above-input.pipe';
 import { DynamicPropertyControl } from './dynamic-property-control/dynamic-property-control.component';
 import { FormGroupCasterPipe } from './pipes/form-group-caster.pipe';
+import { CustomizedInputsCasterPipe } from './pipes/customized-input-caster.pipe';
 const exportedDeclarations = [
   ArrayFormControlComponent,
   BranchConditionFormControlComponent,
@@ -86,7 +87,8 @@ const exportedDeclarations = [
     ActionOrTriggerDropdownComponent,
     DynamicInputToggleComponent,
     ShouldShwoDynamicInputToggleAboveInputPipe,
-    FormGroupCasterPipe
+    FormGroupCasterPipe,
+    CustomizedInputsCasterPipe
   ],
   declarations: [
     ...exportedDeclarations,
