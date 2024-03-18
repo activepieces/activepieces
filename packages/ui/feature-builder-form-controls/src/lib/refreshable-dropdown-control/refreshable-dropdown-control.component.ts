@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { DropdownState, PropertyType } from '@activepieces/pieces-framework';
@@ -10,7 +10,7 @@ import { DropdownSelectedValuesPipe } from '../pipes/dropdown-selected-values.pi
 import { Observable, startWith } from 'rxjs';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 import { DropdownLabelsJoiner } from '../pipes/dropdown-labels-joiner.pipe';
-import { FormControl } from '@angular/forms';
+import { FormControl, UntypedFormControl } from '@angular/forms';
 import { RefreshablePropertyCoreControlComponent } from '../refreshable-property-core/refreshable-property-core-control.component';
 @Component({
   selector: 'app-refreshable-dropdown-control',
@@ -30,6 +30,7 @@ export class RefreshableDropdownControlComponent
   extends RefreshablePropertyCoreControlComponent
   implements OnInit
 {
+  @Input({ required: true }) passedFormControl: UntypedFormControl;
   searchControl: FormControl<string>;
   options$?: Observable<DropdownState<unknown>>;
   readonly PropertyType = PropertyType;
@@ -43,5 +44,9 @@ export class RefreshableDropdownControlComponent
   }
   dropdownCompareWithFunction(opt: unknown, formControlValue: string) {
     return formControlValue !== undefined && deepEqual(opt, formControlValue);
+  }
+  override refreshersChanged()
+  {
+    this.passedFormControl.setValue(undefined);
   }
 }

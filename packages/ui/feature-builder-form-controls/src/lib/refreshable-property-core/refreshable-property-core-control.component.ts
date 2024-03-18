@@ -3,11 +3,12 @@ import { PieceMetadataModel } from '@activepieces/ui/common';
 import {
   DropdownProperty,
   DropdownState,
+  DynamicProperties,
   MultiSelectDropdownProperty,
   PiecePropertyMap,
   PropertyType,
 } from '@activepieces/pieces-framework';
-import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
+import {  UntypedFormGroup } from '@angular/forms';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 import {
   AUTHENTICATION_PROPERTY_NAME,
@@ -31,10 +32,11 @@ import {
   template: ``,
 })
 export class RefreshablePropertyCoreControlComponent {
-  @Input({ required: true }) passedFormControl: UntypedFormControl;
+
   @Input({ required: true }) property:
     | DropdownProperty<unknown, boolean>
-    | MultiSelectDropdownProperty<unknown, boolean>;
+    | MultiSelectDropdownProperty<unknown, boolean>
+    | DynamicProperties<boolean>
   @Input({ required: true }) parentFormGroup: UntypedFormGroup;
   @Input({ required: true }) pieceMetaData: PieceMetadataModel;
   @Input({ required: true }) actionOrTriggerName: string;
@@ -58,7 +60,7 @@ export class RefreshablePropertyCoreControlComponent {
       ...Object.values(this.getPropertyRefreshers(false)),
     ).pipe(
       tap(() => {
-        this.passedFormControl.setValue(undefined);
+        this.refreshersChanged();
         this.loading$.next(true);
       }),
     );
@@ -144,5 +146,10 @@ export class RefreshablePropertyCoreControlComponent {
           : authRefresher,
       ),
     };
+  }
+
+  protected refreshersChanged()
+  {
+    console.error("refreshersChanged not implemented")
   }
 }

@@ -179,6 +179,28 @@
             </ap-markdown>
           }
         }
+        @case (PropertyType.DYNAMIC) {
+          <app-dynamic-property-control
+            [passedFormControl]="form.controls[property.key] | formGroupCaster"
+            [parentFormGroup]="form"
+            [pieceMetaData]="pieceMetaData"
+            [actionOrTriggerName]="actionOrTriggerName"
+            [propertyName]="property.key + ''"
+            [flow]="flow"
+            [stepName]="stepName"
+            [webhookPrefix]="webhookPrefix"
+            [formPieceTriggerPrefix]="formPieceTriggerPrefix"
+            [property]="property.value"
+            [propertiesMap]="propertiesMap"
+            [input]="input[property.key]"
+            [customizedInputs]="
+              customizedInputs[property.key] === true ||
+              customizedInputs[property.key] === false
+                ? customizedInputs
+                : {}
+            "
+          ></app-dynamic-property-control>
+        }
         @case (PropertyType.ARRAY) {
           <!-- <app-array-form-control [property]="property.value" [prefix]="">
       
@@ -208,7 +230,10 @@
       }
     }
 
-    @if (property.value.type !== PropertyType.MARKDOWN) {
+    @if (
+      property.value.type !== PropertyType.MARKDOWN &&
+      property.value.type !== PropertyType.DYNAMIC
+    ) {
       <ap-control-description
         [errorMessage]="
           (form.controls[property.key]

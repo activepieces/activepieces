@@ -43,10 +43,12 @@ import { TextControlComponent } from './text-control/text-control.component';
 import { AbstractFormControlCasterPipe } from './pipes/abstract-form-control-caster.pipe';
 import { ConnectionsDropdownControlComponent } from './connections-dropdown-control/connections-dropdown-control.component';
 import { ReplaceMarkdownConstsPipe } from './pipes/replace-markdown-consts.pipe';
-import { ExtractControlErrorMessage } from './pipes/extract-error-message-from-form-control.component';
+import { ExtractControlErrorMessagePipe } from './pipes/extract-error-message-from-form-control.pipe';
 import { ActionOrTriggerDropdownComponent } from './action-or-trigger-dropdown/action-or-trigger-dropdown.component';
 import { DynamicInputToggleComponent } from './dynamic-input-toggle/dynamic-input-toggle.component';
 import { ShouldShwoDynamicInputToggleAboveInputPipe } from './pipes/should-show-dynamic-input-toggle-above-input.pipe';
+import { DynamicPropertyControl } from './dynamic-property-control/dynamic-property-control.component';
+import { FormGroupCasterPipe } from './pipes/form-group-caster.pipe';
 const exportedDeclarations = [
   ArrayFormControlComponent,
   BranchConditionFormControlComponent,
@@ -57,6 +59,7 @@ const exportedDeclarations = [
   BuilderAutocompleteMentionsDropdownComponent,
   ActionErrorHandlingFormControlComponent,
   NewPiecePropertiesFormComponent,
+  DynamicPropertyControl
 ];
 @NgModule({
   imports: [
@@ -79,10 +82,11 @@ const exportedDeclarations = [
     AbstractFormControlCasterPipe,
     ConnectionsDropdownControlComponent,
     ReplaceMarkdownConstsPipe,
-    ExtractControlErrorMessage,
+    ExtractControlErrorMessagePipe,
     ActionOrTriggerDropdownComponent,
     DynamicInputToggleComponent,
     ShouldShwoDynamicInputToggleAboveInputPipe,
+    FormGroupCasterPipe
   ],
   declarations: [
     ...exportedDeclarations,

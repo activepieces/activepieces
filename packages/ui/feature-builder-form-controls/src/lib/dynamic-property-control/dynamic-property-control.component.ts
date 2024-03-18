@@ -1,38 +1,65 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
 import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework';
-import { UiCommonModule } from '@activepieces/ui/common';
-import { DynamicInputToggleComponent } from '../dynamic-input-toggle/dynamic-input-toggle.component';
-import { DropdownSearchControlComponent } from '../dropdown-search-control/dropdown-search-control.component';
-import { DropdownSelectedValuesPipe } from '../pipes/dropdown-selected-values.pipe';
 import { Observable } from 'rxjs';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
-import { DropdownLabelsJoiner } from '../pipes/dropdown-labels-joiner.pipe';
 import { RefreshablePropertyCoreControlComponent } from '../refreshable-property-core/refreshable-property-core-control.component';
+import { UntypedFormGroup } from '@angular/forms';
 @Component({
   selector: 'app-dynamic-property-control',
-  standalone: true,
-  imports: [
-    CommonModule,
-    UiCommonModule,
-    DynamicInputToggleComponent,
-    DropdownSearchControlComponent,
-    DropdownSelectedValuesPipe,
-    DropdownLabelsJoiner,
-  ],
-  template: ``,
+  template: `
+  
+  @if((loading$ | async) === false)
+  { @if(properties$ | async; as props){
+
+    <app-new-piece-properties-form
+          [stepName]="stepName"
+          actionOrTriggerName=""
+          [form]="passedFormControl"
+          [allConnectionsForPiece]="[]"
+          [pieceMetaData]="pieceMetaData"
+          [input]="input"
+          [customizedInputs]="customizedInputs || {}"
+          [flow]="flow"
+          [webhookPrefix]="webhookPrefix"
+          [formPieceTriggerPrefix]="formPieceTriggerPrefix"
+          [propertiesMap]="props"
+        ></app-new-piece-properties-form>
+  }
+  }
+  @else(){
+    <div class="ap-flex ap-flex-grow ap-justify-center ap-items-center ap-h-[250px]">
+          <ap-loading-icon> </ap-loading-icon>
+    </div>
+  }
+  @if(properties$ | async){}
+  @if(resetValueOnRefresherChange$ | async){}
+  `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RefreshableDropdownControlComponent
+export class DynamicPropertyControl
   extends RefreshablePropertyCoreControlComponent
   implements OnInit
 {
+  @Input({ required:true }) passedFormControl: UntypedFormGroup;
+  @Input({ required: true }) stepName: string;
+  @Input({ required: true }) webhookPrefix: string;
+  @Input({ required: true }) formPieceTriggerPrefix: string;
+  @Input({ required: true }) propertiesMap: PiecePropertyMap;
+  @Input({ required: true }) input: Record<string, any> = {};
+  @Input({ required: true }) customizedInputs: Record<
+    string,
+    boolean | Record<string, boolean>
+  > = {};
   properties$?: Observable<PiecePropertyMap>;
+
   readonly PropertyType = PropertyType;
   constructor(piecetaDataService: PieceMetadataService) {
     super(piecetaDataService);
   }
   ngOnInit() {
-    this.properties$ = this.createRefreshers();
+    this.properties$ = this.createRefreshers<PiecePropertyMap>();
+  }
+  override refreshersChanged() {
+    this.passedFormControl.setValue({});
   }
 }

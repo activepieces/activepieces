@@ -1,13 +1,13 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { Observable, map, startWith, tap } from 'rxjs';
+import { Observable, map, startWith } from 'rxjs';
 
 @Pipe({
   name: 'extractControlErrorMessage',
   pure: true,
   standalone: true,
 })
-export class ExtractControlErrorMessage implements PipeTransform {
+export class ExtractControlErrorMessagePipe implements PipeTransform {
   transform(ctrl: FormControl, propertyName: string): Observable<string> {
     return ctrl.valueChanges.pipe(
       startWith(ctrl.value),
@@ -19,7 +19,6 @@ export class ExtractControlErrorMessage implements PipeTransform {
         }
         return '';
       }),
-      tap(console.log),
     );
   }
 }
