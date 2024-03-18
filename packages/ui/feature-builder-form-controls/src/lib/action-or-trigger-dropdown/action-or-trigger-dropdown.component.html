@@ -1,4 +1,8 @@
-<mat-form-field class="ap-w-full" appearance="outline">
+<mat-form-field
+  class="ap-w-full"
+  appearance="outline"
+  subscriptSizing="dynamic"
+>
   <mat-label i18n>
     @if (items[0] | isTriggerGuard) {
       Trigger
@@ -66,13 +70,15 @@
       No options available
     </mat-option>
   </mat-select>
-  <mat-error *ngIf="passedFormControl.invalid" i18n>
-    @if (items.length === 0) {
-      No options available
-    } @else if (items[0] | isTriggerGuard) {
-      Please select a trigger
-    } @else {
-      Please select an action
-    }
-  </mat-error>
 </mat-form-field>
+<ap-control-description
+  [errorMessage]="
+    items.length === 0
+      ? noOptionsError
+      : (items[0] | isTriggerGuard)
+        ? selectTriggerError
+        : selectActionError
+  "
+  [passedFormControl]="passedFormControl"
+  description=""
+></ap-control-description>

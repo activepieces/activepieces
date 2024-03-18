@@ -6,7 +6,7 @@ import {
   Output,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { UiCommonModule } from '@activepieces/ui/common';
+import {  UiCommonModule } from '@activepieces/ui/common';
 import { FormControl, Validators } from '@angular/forms';
 import {
   ActionBase,
@@ -38,4 +38,7 @@ export class ActionOrTriggerDropdownComponent {
     validators: Validators.required,
   });
   readonly TriggerStrategy = TriggerStrategy;
+  readonly noOptionsError = $localize`No options available`;
+  readonly selectTriggerError = $localize`Please select a trigger`;
+  readonly selectActionError = $localize`Please select an action`;
 }
