@@ -15,11 +15,7 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 import { PieceMetadataModel, jsonValidator } from '@activepieces/ui/common';
-import {
-  PieceActionSettings,
-  PieceTriggerSettings,
-  PopulatedFlow,
-} from '@activepieces/shared';
+import { PopulatedFlow } from '@activepieces/shared';
 import {
   FormBuilder,
   FormControl,
@@ -43,18 +39,20 @@ export class NewPiecePropertiesFormComponent implements OnInit, OnChanges {
   @Input({ required: true }) webhookPrefix: string;
   @Input({ required: true }) formPieceTriggerPrefix: string;
   @Input({ required: true }) propertiesMap: PiecePropertyMap;
-  @Input({ required: true }) stepSettings:
-    | PieceActionSettings
-    | PieceTriggerSettings;
+  @Input({ required: true }) input: Record<string, any> = {};
+  @Input({ required: true }) customizedInputs: Record<
+    string,
+    boolean | Record<string, boolean>
+  > = {};
   @Input({ required: true })
   allConnectionsForPiece: DropdownOption<`{{connections['${string}']}}`>[];
+
   @Output() formValueChange = new EventEmitter<{
-    stepSettings: PieceActionSettings | PieceTriggerSettings;
+    input: Record<string, any>;
+    customizedInputs: Record<string, boolean | Record<string, boolean>>;
     valid: boolean;
   }>();
   readonly PropertyType = PropertyType;
-  //TODO: Ask why this is unknown in shared and not boolean
-  customizedInputs: Record<string, unknown> = {};
   sortedPropertiesByRequired: PiecePropertyMap;
   form: UntypedFormGroup = this.fb.group({});
   emitNewChanges$?: Observable<unknown>;
@@ -78,8 +76,6 @@ export class NewPiecePropertiesFormComponent implements OnInit, OnChanges {
   private initializeForm() {
     this.sortPropertiesByRequired();
     this.buildForm();
-    this.customizedInputs =
-      this.stepSettings.inputUiInfo.customizedInputs || {};
   }
 
   private sortPropertiesByRequired() {
@@ -106,7 +102,7 @@ export class NewPiecePropertiesFormComponent implements OnInit, OnChanges {
 
   private createFormControlsWithTheirValidators() {
     Object.entries(this.propertiesMap).forEach(([propertyName, property]) => {
-      const value = this.stepSettings.input[propertyName];
+      const value = this.input[propertyName];
       const validators: ValidatorFn[] = [];
       if (
         this.propertiesMap[propertyName].required &&
@@ -116,8 +112,7 @@ export class NewPiecePropertiesFormComponent implements OnInit, OnChanges {
       }
       if (
         property.type === PropertyType.JSON &&
-        (!this.stepSettings.inputUiInfo.customizedInputs ||
-          !this.stepSettings.inputUiInfo.customizedInputs[propertyName])
+        !this.customizedInputs[propertyName]
       ) {
         validators.push(jsonValidator);
       }
@@ -164,14 +159,8 @@ export class NewPiecePropertiesFormComponent implements OnInit, OnChanges {
     return this.form.valueChanges.pipe(
       tap((res) => {
         this.formValueChange.emit({
-          stepSettings: {
-            ...this.stepSettings,
-            input: res,
-            inputUiInfo: {
-              ...this.stepSettings.inputUiInfo,
-              customizedInputs: this.customizedInputs,
-            },
-          },
+          input: res,
+          customizedInputs: this.customizedInputs,
           valid: this.form.valid,
         });
       }),

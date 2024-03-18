@@ -77,5 +77,5 @@ export class ControlDescriptionComponent {
   errorMessageClosingTag = '</span>';
   @Input({ required: true }) errorMessage = '';
   @Input({ required: true }) description = '';
-  @Input({ required: true }) passedFormControl: AbstractControl;
+  @Input() passedFormControl?: AbstractControl;
 }

@@ -28,8 +28,6 @@ import {
 import {
   AUTHENTICATION_PROPERTY_NAME,
   ActionType,
-  PieceActionSettings,
-  PieceTriggerSettings,
   PopulatedFlow,
   TriggerType,
   spreadIfDefined,
@@ -60,17 +58,16 @@ import { FormControl, Validators } from '@angular/forms';
           "
           [allConnectionsForPiece]="deps.allConnectionsForPiece"
           [pieceMetaData]="deps.pieceMetaData"
-          [stepSettings]="deps.currentStep.settings"
+          [input]="deps.currentStep.settings.input"
+          [customizedInputs]="
+            deps.currentStep.settings.inputUiInfo.customizedInputs || {}
+          "
           [flow]="deps.currentFlow"
           [webhookPrefix]="deps.webhookPrefix"
           [formPieceTriggerPrefix]="deps.formPieceTriggerPrefix"
           [propertiesMap]="deps.selectedTriggerOrAction.props"
           (formValueChange)="
-            piecePropertiesFormValueChanged(
-              $event.stepSettings,
-              $event.valid,
-              deps.currentStep
-            )
+            piecePropertiesFormValueChanged($event, deps.currentStep)
           "
         ></app-new-piece-properties-form>
       }
@@ -241,20 +238,27 @@ export class NewPieceInputFormComponent {
   }
 
   piecePropertiesFormValueChanged(
-    settings: PieceActionSettings | PieceTriggerSettings,
-    valid: boolean,
+    result: {
+      input: Record<string, unknown>;
+      customizedInputs: Record<string, boolean | Record<string, boolean>>;
+      valid: boolean;
+    },
     step: Step,
   ) {
-    if (
-      this.isTriggerSettingsGuard(settings) &&
-      step.type === TriggerType.PIECE
-    ) {
+    if (step.type === TriggerType.PIECE) {
       this.store.dispatch(
         FlowsActions.updateTrigger({
           operation: {
             ...step,
-            settings,
-            valid,
+            settings: {
+              ...step.settings,
+              input: result.input,
+              inputUiInfo: {
+                ...step.settings.inputUiInfo,
+                customizedInputs: result.customizedInputs,
+              },
+            },
+            valid: result.valid,
           },
         }),
       );
@@ -263,17 +267,19 @@ export class NewPieceInputFormComponent {
         FlowsActions.updateAction({
           operation: {
             ...step,
-            settings,
-            valid,
+            settings: {
+              ...step.settings,
+              input: result.input,
+              inputUiInfo: {
+                ...step.settings.inputUiInfo,
+                customizedInputs: result.customizedInputs,
+              },
+            },
+            valid: result.valid,
           },
         }),
       );
     }
-  }
-  private isTriggerSettingsGuard(
-    settings: PieceActionSettings | PieceTriggerSettings,
-  ): settings is PieceTriggerSettings {
-    return (settings as PieceTriggerSettings).triggerName !== undefined;
   }
 
   renameStepBasedOnSelectedTriggerOrAction() {
