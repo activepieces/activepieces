@@ -15,23 +15,20 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 import { PieceMetadataModel, jsonValidator } from '@activepieces/ui/common';
-import { PopulatedFlow } from '@activepieces/shared';
-import {
-  FormBuilder,
-  FormControl,
-  UntypedFormGroup,
-  Validators,
-} from '@angular/forms';
+import {  UntypedFormBuilder, UntypedFormGroup  } from '@angular/forms';
 import { Observable, tap } from 'rxjs';
-import { ValidatorFn } from '@angular/forms';
 import deepEqual from 'deep-equal';
+import { PopulatedFlow } from '@activepieces/shared';
+import { createFormControlsWithTheirValidators } from './properties-controls-helper';
 
 @Component({
   selector: 'app-new-piece-properties-form',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './piece-properties-form.component.html',
 })
-export class NewPiecePropertiesFormComponent implements OnInit, OnChanges {
+export class NewPiecePropertiesFormComponent
+  implements OnInit, OnChanges
+{
   @Input({ required: true }) pieceMetaData: PieceMetadataModel;
   @Input({ required: true }) actionOrTriggerName: string;
   @Input({ required: true }) stepName: string;
@@ -46,7 +43,7 @@ export class NewPiecePropertiesFormComponent implements OnInit, OnChanges {
   > = {};
   @Input({ required: true })
   allConnectionsForPiece: DropdownOption<`{{connections['${string}']}}`>[];
-
+  @Input({ required: true }) form: UntypedFormGroup;
   @Output() formValueChange = new EventEmitter<{
     input: Record<string, any>;
     customizedInputs: Record<string, boolean | Record<string, boolean>>;
@@ -54,9 +51,9 @@ export class NewPiecePropertiesFormComponent implements OnInit, OnChanges {
   }>();
   readonly PropertyType = PropertyType;
   sortedPropertiesByRequired: PiecePropertyMap;
-  form: UntypedFormGroup = this.fb.group({});
   emitNewChanges$?: Observable<unknown>;
-  constructor(private fb: FormBuilder) {
+  constructor(private fb:UntypedFormBuilder){}
+  ngOnInit(): void {
     this.emitNewChanges$ = this.createChangesListener();
   }
   ngOnChanges(changes: SimpleChanges): void {
@@ -71,7 +68,6 @@ export class NewPiecePropertiesFormComponent implements OnInit, OnChanges {
       this.initializeForm();
     }
   }
-  ngOnInit(): void {}
 
   private initializeForm() {
     this.sortPropertiesByRequired();
@@ -95,44 +91,14 @@ export class NewPiecePropertiesFormComponent implements OnInit, OnChanges {
   }
 
   private buildForm() {
-    this.removeAllFormControls();
     this.createFormControlsWithTheirValidators();
     this.form.markAllAsTouched();
   }
 
   private createFormControlsWithTheirValidators() {
-    Object.entries(this.propertiesMap).forEach(([propertyName, property]) => {
-      const value = this.input[propertyName];
-      const validators: ValidatorFn[] = [];
-      if (
-        this.propertiesMap[propertyName].required &&
-        this.propertiesMap[propertyName].type !== PropertyType.OBJECT
-      ) {
-        validators.push(Validators.required);
-      }
-      if (
-        property.type === PropertyType.JSON &&
-        !this.customizedInputs[propertyName]
-      ) {
-        validators.push(jsonValidator);
-      }
-      const ctrl = new FormControl(
-        value === '' || value === null || value === undefined
-          ? undefined
-          : value,
-        {
-          validators: validators,
-        },
-      );
-      this.form.addControl(propertyName, ctrl, { emitEvent: false });
-    });
+    createFormControlsWithTheirValidators(this.fb,this.propertiesMap,this.form,this.input,this.customizedInputs)
   }
 
-  private removeAllFormControls() {
-    Object.keys(this.form.controls).forEach((ctrlName) => {
-      this.form.removeControl(ctrlName, { emitEvent: false });
-    });
-  }
 
   toggleCustomizedInput(
     property: PieceProperty,
