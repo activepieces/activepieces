@@ -44,7 +44,7 @@ export const flowModule: FastifyPluginAsyncTypebox = async (app) => {
                 standardError: stepRun.standardError,
                 standardOutput: stepRun.standardOutput,
             }
-            socket.emit(WebsocketClientEvent.TEST_FLOW_RUN_FINSIHED, response)
+            socket.emit(WebsocketClientEvent.TEST_STEP_FINISHED, response)
         }
     })
 

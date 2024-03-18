@@ -14,7 +14,7 @@ import { Observable, take } from 'rxjs';
 export class CodeWriterService {
   constructor(private websocketService: WebSocketService) {}
 
-  prompt(request: GenerateCodeRequest): Observable<{ result: string }> {
+  prompt(request: GenerateCodeRequest): Observable<GenerateCodeResponse> {
     this.websocketService.socket.emit(
       WebsocketServerEvent.GENERATE_CODE,
       request
