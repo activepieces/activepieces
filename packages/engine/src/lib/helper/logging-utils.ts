@@ -1,4 +1,4 @@
-import { StepOutput } from '@activepieces/shared'
+import { StepOutput, isNil, isObject } from '@activepieces/shared'
 import PriorityQueue from 'priority-queue-typescript'
 import sizeof from 'object-sizeof'
 
@@ -6,104 +6,108 @@ const TRUNCATION_TEXT_PLACEHOLDER = '(truncated)'
 const MAX_SIZE_FOR_ALL_ENTRIES = 1024 * 1024
 const SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER = sizeof(TRUNCATION_TEXT_PLACEHOLDER)
 
-type Node = {
-    size: number,
-    index: number,
-    parentNodeIndex: number,
-    numberOfChildren: number,
-    truncate: boolean
-}
-
 export const loggingUtils = {
     async trimExecution(steps: Record<string, StepOutput>): Promise<Record<string, StepOutput>> {
-        const clonedSteps = { ...steps }
-        return trimJson(JSON.parse(JSON.stringify(clonedSteps)))
+        const totalJsonSize = sizeof(steps)
+        if (!jsonExceedMaxSize(totalJsonSize)) {
+            return steps
+        }
+        return removeLeavesInTopologicalOrder(JSON.parse(JSON.stringify(steps)))
     },
 }
 
-function trimJson(json: Record<string, any>) {
-    const nodes: Node[] = []
+function removeLeavesInTopologicalOrder(json: Record<string, unknown>): Record<string, StepOutput> {
+    const nodes: Node[] = traverseJsonAndConvertToNodes(json)
     const leaves = new PriorityQueue<Node>(
         undefined,
-        (a: Node, b: Node) => b.size - a.size
+        (a: Node, b: Node) => b.size - a.size,
     )
-
+    nodes.filter((node) => node.numberOfChildren === 0).forEach((node) => leaves.add(node))
     let totalJsonSize = sizeof(json)
-
-    nodes.push({
-        size: sizeof(json),
-        index: 0,
-        parentNodeIndex: -1,
-        numberOfChildren: Object.entries(json).length,
-        truncate: false
-    })
-
-    jsonToNodes(json, nodes, leaves)
 
     while (!leaves.empty() && jsonExceedMaxSize(totalJsonSize)) {
         const curNode = leaves.poll()
-        if (curNode){
-            const curNodeIndex = curNode.index
-        
+        if (curNode) {
             totalJsonSize += SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER - curNode.size
-
-            nodes[curNodeIndex].truncate = true
-
-            if (curNode.parentNodeIndex >= 0) {
-                nodes[curNode.parentNodeIndex].numberOfChildren--
-                if (nodes[curNode.parentNodeIndex].numberOfChildren == 0) {
-                    leaves.add(nodes[curNode.parentNodeIndex])
+            nodes[curNode.dfsOrder.index].truncate = true
+            const parentIndex = curNode.dfsOrder.parentIndex
+            if (!isNil(parentIndex)) {
+                nodes[parentIndex].numberOfChildren--
+                if (nodes[parentIndex].numberOfChildren == 0) {
+                    leaves.add(nodes[parentIndex])
                 }
             }
         }
     }
-
-    convertToJson(json, nodes)
-    
-    return json
+    return truncateTrimmedNodes(json, nodes) as Record<string, StepOutput>
 }
 
-function jsonToNodes(curNode: Record<string, any>, nodes: Node[], leaves: PriorityQueue<Node>) {
-    let curNodeId: number = nodes.length - 1
+function truncateTrimmedNodes(curNode: unknown, nodes: Node[], currentDfsOrder: { index: number } = { index: -1 }) {
+    currentDfsOrder.index++
+    const truncated = nodes[currentDfsOrder.index].truncate
+    let newValue
     if (isObject(curNode)) {
-        Object.entries(curNode).forEach(([childKey, childValue]) => {
-            nodes[curNodeId].size += SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER - sizeof(childValue)
-
-            nodes.push({
-                size: sizeof(childValue),
-                index: nodes.length,
-                parentNodeIndex: curNodeId,
-                numberOfChildren: Object.entries(childValue).length,
-                truncate: false
-            })
-
-            jsonToNodes(childValue, nodes, leaves)
-        });
+        newValue = {}
+        Object.keys(curNode).forEach((key) => {
+            curNode[key] = truncateTrimmedNodes(curNode[key], nodes, currentDfsOrder)
+        })
+        newValue = curNode
+    }
+    else if (Array.isArray(curNode)) {
+        newValue = []
+        curNode.forEach((value, _index) => {
+            newValue.push(truncateTrimmedNodes(value, nodes, currentDfsOrder))
+        })
     }
     else {
-        leaves.add(nodes[curNodeId])
+        newValue = curNode
     }
+    if (truncated) {
+        return TRUNCATION_TEXT_PLACEHOLDER
+    }
+    return newValue
 }
 
-function convertToJson(curNode: Record<string, any>, nodes: Node[], nodeIndex: { value: number } = { value: 0 }) {
+function traverseJsonAndConvertToNodes(curNode: unknown, parentIndex: number | null = null, currentDfsOrder: { index: number } = { index: -1 }) {
+    currentDfsOrder.index++
+    const children = findChildren(curNode)
+    const nodes = [{
+        size: sizeof(curNode),
+        dfsOrder: {
+            index: currentDfsOrder.index,
+            parentIndex,
+        },
+        numberOfChildren: children.length,
+        truncate: false,
+    }]
+    const newParentIndex = currentDfsOrder.index
+    children.forEach((childValue) => {
+        nodes[0].size += SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER - sizeof(childValue)
+        nodes.push(...traverseJsonAndConvertToNodes(childValue, newParentIndex, currentDfsOrder))
+    })
+    return nodes
+}
+
+function findChildren(curNode: unknown): unknown[] {
     if (isObject(curNode)) {
-        Object.entries(curNode).forEach(([childKey, childValue]) => {
-            nodeIndex.value++;
-            let curNodeIndex = nodeIndex.value
-
-            convertToJson(childValue, nodes, nodeIndex)
-
-            if (nodes[curNodeIndex].truncate) {
-                curNode[childKey] = TRUNCATION_TEXT_PLACEHOLDER
-            }
-        });
+        return Object.values(curNode)
     }
-}
-
-const isObject = (value: any): value is object => {
-    return value !== null && typeof value === 'object';
+    if (Array.isArray(curNode)) {
+        return curNode
+    }
+    return []
 }
 
 const jsonExceedMaxSize = (jsonSize: number): boolean => {
     return jsonSize > MAX_SIZE_FOR_ALL_ENTRIES
+}
+
+type Node = {
+    size: number
+    dfsOrder: {
+        index: number
+        parentIndex: number | null
+    }
+    numberOfChildren: number
+    truncate: boolean
 }
