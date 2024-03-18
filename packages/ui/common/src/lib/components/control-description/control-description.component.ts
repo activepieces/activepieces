@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import {  Component, Input } from '@angular/core';
 import { AbstractControl } from '@angular/forms';
 import {
   BOTTOM_MARGIN_FOR_DESCRIPTION_IN_PIECE_PROPERTIES_FORM,
@@ -12,6 +12,13 @@ import { CheckOverflowDirective } from '../../directives';
   standalone: true,
   imports: [CommonModule, MarkdownModule, CheckOverflowDirective],
   template: `
+  @if( !(description ||  (passedFormControl.touched && passedFormControl.invalid)))
+  {
+    <div
+      [style.height]="MIN_SPACING_BETWEEN_INPUTS"
+    ></div>
+  }
+  @else() {
     <div
       class="ap-flex ap-justify-between ap-markdown "
       [style.marginBottom]="
@@ -19,7 +26,7 @@ import { CheckOverflowDirective } from '../../directives';
       "
       *ngIf="
         description ||
-        (passedFormControl?.touched && passedFormControl?.invalid)
+        (passedFormControl.touched && passedFormControl.invalid)
       "
     >
       <div
@@ -28,13 +35,14 @@ import { CheckOverflowDirective } from '../../directives';
         [class.ap-h-[24px]]="!isExpanded"
       >
         <div
-          class="ap-typography-caption "
+          class="ap-typography-caption"
           apCheckOverflow
           (isOverflowed)="isOverFlown = $event"
         >
+           
           <markdown
             [data]="
-              passedFormControl?.touched && passedFormControl?.invalid
+              passedFormControl.touched && passedFormControl.invalid
                 ? errorMessageOpeningTag +
                   errorMessage +
                   errorMessageClosingTag +
@@ -56,15 +64,12 @@ import { CheckOverflowDirective } from '../../directives';
         </button>
       </div>
     </div>
-    <div
-      *ngIf="
-        !description &&
-        (!passedFormControl?.touched || !passedFormControl?.invalid)
-      "
-      [style.height]="MIN_SPACING_BETWEEN_INPUTS"
-    ></div>
+  }
+  
+
+
+
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ControlDescriptionComponent {
   readonly BOTTOM_MARGIN_FOR_DESCRIPTION_IN_PIECE_PROPERTIES_FORM =
@@ -77,5 +82,5 @@ export class ControlDescriptionComponent {
   errorMessageClosingTag = '</span>';
   @Input({ required: true }) errorMessage = '';
   @Input({ required: true }) description = '';
-  @Input() passedFormControl?: AbstractControl;
+  @Input({ required: true }) passedFormControl: AbstractControl;
 }
