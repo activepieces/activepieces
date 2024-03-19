@@ -34,7 +34,7 @@ export class PieceMetadataService {
 
     private EMPTY_TRIGGER_ITEM_DETAILS = {
         type: TriggerType.EMPTY,
-        name: 'Trigger',
+        name: 'Empty Trigger',
         description: 'Choose a trigger',
         logoUrl: '/assets/img/custom/piece/empty-trigger.svg',
     }
