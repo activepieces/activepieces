@@ -44,7 +44,7 @@ export const ActivityEntity = new EntitySchema<ActivitySchema>({
             target: 'project',
             cascade: true,
             onUpdate: 'RESTRICT',
-            onDelete: 'RESTRICT',
+            onDelete: 'CASCADE',
             joinColumn: {
                 name: 'projectId',
                 foreignKeyConstraintName: 'fk_activity_project_id',
