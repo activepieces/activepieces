@@ -31,7 +31,7 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
     triggers.forEach((trigger) => (this._triggers[trigger.name] = trigger));
   }
 
-  metadata(): Omit<PieceMetadata, 'name' | 'version'> {
+  metadata(): BackwardCompatiblePieceMetadata {
     return {
       displayName: this.displayName,
       logoUrl: this.logoUrl,
@@ -105,3 +105,7 @@ type PieceEventProcessors = {
     appWebhookUrl: string;
   }) => boolean;
 };
+
+type BackwardCompatiblePieceMetadata = Omit<PieceMetadata, 'name' | 'version' | 'authors'> & {
+  authors?: PieceMetadata['authors']
+}

@@ -11,7 +11,7 @@ import {
 } from '@activepieces/shared'
 import { userService } from '../../user/user-service'
 import {
-    DEFAULT_PLATFOR_LIMIT,
+    DEFAULT_PLATFORM_LIMIT,
     ProjectMemberStatus,
 } from '@activepieces/ee-shared'
 import { platformService } from '../../platform/platform.service'
@@ -130,7 +130,7 @@ const getOrCreateProject = async ({
         externalId: externalProjectId,
     })
 
-    await projectLimitsService.upsert(DEFAULT_PLATFOR_LIMIT, project.id)
+    await projectLimitsService.upsert(DEFAULT_PLATFORM_LIMIT, project.id)
 
     return project
 }

@@ -37,6 +37,7 @@ export type ProjectPlan = Static<typeof ProjectPlan>
 
 export const Project = Type.Object({
     ...BaseModelSchema,
+    deleted: Type.Union([Type.String(), Type.Null()]),
     ownerId: Type.String(),
     displayName: Type.String(),
     notifyStatus: Type.Enum(NotificationStatus),

@@ -15,22 +15,22 @@ import { slackSendMessageAction } from './lib/actions/send-message-action';
 import { newMessage } from './lib/triggers/new-message';
 import { newReactionAdded } from './lib/triggers/new-reaction-added';
 import { uploadFile } from './lib/actions/upload-file';
+import { searchMessages } from './lib/actions/search-messages';
 
 export const slackAuth = PieceAuth.OAuth2({
   description: '',
-  authUrl: 'https://slack.com/oauth/authorize',
-  tokenUrl: 'https://slack.com/api/oauth.access',
+  authUrl: 'https://slack.com/oauth/v2/authorize?user_scope=search:read',
+  tokenUrl: 'https://slack.com/api/oauth.v2.access',
   required: true,
   scope: [
     'channels:read',
-    'channels:write',
     'channels:history',
-    'chat:write:bot',
+    'chat:write',
     'groups:read',
     'reactions:read',
     'mpim:read',
     'users:read',
-    'files:write:user',
+    'files:write',
     'files:read',
   ],
 });
@@ -69,7 +69,16 @@ export const slack = createPiece({
       return signature === computedSignature;
     },
   },
-  authors: ["rita-gorokhod","AdamSelene","Abdallah-Alwarawreh","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
+  authors: [
+    'rita-gorokhod',
+    'AdamSelene',
+    'Abdallah-Alwarawreh',
+    'kishanprmr',
+    'MoShizzle',
+    'AbdulTheActivePiecer',
+    'khaledmashaly',
+    'abuaboud',
+  ],
   actions: [
     slackSendDirectMessageAction,
     slackSendMessageAction,
@@ -78,6 +87,7 @@ export const slack = createPiece({
     requestActionDirectMessageAction,
     requestActionMessageAction,
     uploadFile,
+    searchMessages,
     createCustomApiCallAction({
       baseUrl: () => {
         return 'https://slack.com/api';
