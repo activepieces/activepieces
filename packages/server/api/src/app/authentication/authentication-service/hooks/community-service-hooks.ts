@@ -1,8 +1,7 @@
-import { ApFlagId, PlatformRole, PrincipalType, Project, ProjectMemberRole, User } from '@activepieces/shared'
+import { PlatformRole, PrincipalType, Project, ProjectMemberRole, User } from '@activepieces/shared'
 import { projectService } from '../../../project/project-service'
 import { AuthenticationServiceHooks } from './authentication-service-hooks'
 import { accessTokenManager } from '../../lib/access-token-manager'
-import { flagService } from '../../../flags/flag.service'
 import { userService } from '../../../user/user-service'
 import { platformService } from '../../../platform/platform.service'
 
@@ -16,10 +15,6 @@ export const communityAuthenticationServiceHooks: AuthenticationServiceHooks = {
         // Empty
     },
     async postSignUp({ user }) {
-        const platformCreated = await flagService.getOne(ApFlagId.PLATFORM_CREATED)
-        if (platformCreated?.value) {
-            return getProjectAndToken(user)
-        }
         const platform = await platformService.create({
             ownerId: user.id,
             name: DEFAULT_PLATFORM_NAME,
@@ -32,10 +27,6 @@ export const communityAuthenticationServiceHooks: AuthenticationServiceHooks = {
         })
         await userService.updatePlatformId({ id: user.id, platformId: platform.id })
 
-        await flagService.save({
-            id: ApFlagId.PLATFORM_CREATED,
-            value: true,
-        })
         return getProjectAndToken(user)
     },
 
