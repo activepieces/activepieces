@@ -7,6 +7,7 @@ import {
   ValidationInputType,
 } from './types';
 import { formatErrorMessage } from './utils';
+import { ApFile } from '../property';
 
 class Validators {
   static pattern(
@@ -267,9 +268,9 @@ class Validators {
   static image: TypedValidatorFn<ValidationInputType.FILE> = {
     type: ValidationInputType.FILE,
     fn: (property, processedValue, userInput) => {
-      const regex = /\.(jpg|svg|jpeg|png|bmp|gif|webp)$/i;
-
-      return regex.test((processedValue as File).name)
+      const allowedType = ['jpg', 'png', 'gif', 'webp', 'flif', 'cr2', 'tif', 'bmp', 'jxr', 'psd', 'ico', 'bpg', 'jp2', 'jpm', 'jpx', 'heic', 'cur', 'dcm', 'avif'];
+      const ext = (processedValue as ApFile).extension;
+      return allowedType.includes(ext ?? '')
         ? null
         : formatErrorMessage(ErrorMessages.IMAGE, { property: property });
     },
@@ -387,4 +388,3 @@ class Validators {
 }
 
 export { ErrorMessages, ValidationErrors, Validators, formatErrorMessage };
-

@@ -126,6 +126,7 @@ export const pieceHelper = {
             ...piece.metadata(),
             name: pieceName,
             version: pieceVersion,
+            authors: piece.authors,
         }
     },
 }

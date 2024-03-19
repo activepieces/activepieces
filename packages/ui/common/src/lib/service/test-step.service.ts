@@ -7,6 +7,8 @@ import {
   TriggerEvent,
   CreateStepRunRequestBody,
   apId,
+  WebsocketClientEvent,
+  WebsocketServerEvent,
 } from '@activepieces/shared';
 import { environment } from '../environments/environment';
 import { WebSocketService } from './websocket.service';
@@ -51,12 +53,12 @@ export class TestStepService {
   }
   testPieceOrCodeStep(req: Omit<CreateStepRunRequestBody, 'id'>) {
     const id = apId();
-    this.websocketService.socket.emit('testStepRun', {
+    this.websocketService.socket.emit(WebsocketServerEvent.TEST_STEP_RUN, {
       ...req,
       id,
     });
     return this.websocketService.socket
-      .fromEvent<StepRunResponse>('stepRunFinished')
+      .fromEvent<StepRunResponse>(WebsocketClientEvent.TEST_STEP_FINISHED)
       .pipe(
         filter((response) => response.id === id),
         take(1)

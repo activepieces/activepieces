@@ -9,6 +9,7 @@ import {
     PrivatePiecePackage,
     PublicPiecePackage,
     SuggestionType,
+    assertNotNullOrUndefined,
 } from '@activepieces/shared'
 import { PieceMetadataModel, PieceMetadataModelSummary, PieceMetadataSchema } from '../piece-metadata-entity'
 
@@ -53,13 +54,16 @@ export const getPiecePackage = async (
 
 export function toPieceMetadataModelSummary<T extends PieceMetadataSchema | PieceMetadataModel>(
     pieceMetadataEntityList: T[],
+    originalMetadataList: T[],
     suggestionType?: SuggestionType,
 ): PieceMetadataModelSummary[] {
     return pieceMetadataEntityList.map((pieceMetadataEntity) => {
+        const originalMetadata = originalMetadataList.find((p) => p.name === pieceMetadataEntity.name)
+        assertNotNullOrUndefined(originalMetadata, `Original metadata not found for ${pieceMetadataEntity.name}`)
         return {
             ...pieceMetadataEntity,
-            actions: Object.keys(pieceMetadataEntity.actions).length,
-            triggers: Object.keys(pieceMetadataEntity.triggers).length,
+            actions: Object.keys(originalMetadata.actions).length,
+            triggers: Object.keys(originalMetadata.triggers).length,
             suggestedActions: suggestionType === SuggestionType.ACTION || suggestionType === SuggestionType.ACTION_AND_TRIGGER ?
                 Object.values(pieceMetadataEntity.actions) : undefined,
             suggestedTriggers: suggestionType === SuggestionType.TRIGGER  || suggestionType === SuggestionType.ACTION_AND_TRIGGER ?
