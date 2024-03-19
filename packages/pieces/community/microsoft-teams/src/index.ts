@@ -1,0 +1,31 @@
+import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
+import { createChannelAction } from './lib/actions/create-channel';
+import { sendChannelMessageAction } from './lib/actions/send-channel-message';
+
+export const microsoftTeamsAuth = PieceAuth.OAuth2({
+	required: true,
+	scope: [
+		'openid',
+		'email',
+		'profile',
+		'offline_access',
+		'Channel.Create',
+		'Channel.ReadBasic.All',
+		'ChannelMessage.Send',
+		'Team.ReadBasic.All',
+	],
+	authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+	tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+});
+
+export const microsoftTeams = createPiece({
+	displayName: 'Microsoft Teams',
+	auth: microsoftTeamsAuth,
+	minimumSupportedRelease: '0.20.0',
+	logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-teams.png',
+	categories: [PieceCategory.BUSINESS_INTELLIGENCE, PieceCategory.COMMUNICATION],
+	authors: ['kishanprmr'],
+	actions: [createChannelAction, sendChannelMessageAction],
+	triggers: [],
+});
