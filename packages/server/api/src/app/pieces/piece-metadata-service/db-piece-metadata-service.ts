@@ -33,7 +33,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                 version: 'DESC',
             } as const
 
-            const pieceMetadataEntityList = await repo()
+            const originalPieceMetadataEntityList = await repo()
                 .createQueryBuilder()
                 .where([
                     {
@@ -61,12 +61,12 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                 .orderBy(order)
                 .getMany()
 
-            const pieces = await hooks.get().filterPieces({
+            const filteredPieces = await hooks.get().filterPieces({
                 ...params,
-                pieces: pieceMetadataEntityList,
+                pieces: originalPieceMetadataEntityList,
                 suggestionType: params.suggestionType,
             })
-            return toPieceMetadataModelSummary(pieces, params.suggestionType)
+            return toPieceMetadataModelSummary(filteredPieces, originalPieceMetadataEntityList, params.suggestionType)
         },
 
         async getOrThrow({

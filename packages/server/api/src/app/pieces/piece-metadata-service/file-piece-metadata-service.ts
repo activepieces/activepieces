@@ -107,29 +107,29 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
     return {
         async list(params): Promise<PieceMetadataModelSummary[]> {
             const { projectId } = params
-            const piecesMetadata = await loadPiecesMetadata()
+            const originalPiecesMetadata = (await loadPiecesMetadata()).map((p) => {
+                return {
+                    id: nanoid(),
+                    ...p,
+                    pieceType: PieceType.OFFICIAL,
+                    packageType: PackageType.REGISTRY,
+                    created: new Date().toISOString(),
+                    updated: new Date().toISOString(),
+                }
+            })
 
             const pieces = await pieceMetadataServiceHooks.get().filterPieces({
                 ...params,
-                pieces: piecesMetadata.map((p) => {
-                    return {
-                        id: nanoid(),
-                        ...p,
-                        pieceType: PieceType.OFFICIAL,
-                        packageType: PackageType.REGISTRY,
-                        created: new Date().toISOString(),
-                        updated: new Date().toISOString(),
-                    }
-                }),
+                pieces: originalPiecesMetadata,
                 suggestionType: params.suggestionType,
             })
-            const mappedToModel = pieces.map((p) =>
+            const filteredPieces = pieces.map((p) =>
                 toPieceMetadataModel({
                     pieceMetadata: p,
                     projectId,
                 }),
             )
-            return toPieceMetadataModelSummary(mappedToModel, params.suggestionType)
+            return toPieceMetadataModelSummary(filteredPieces, originalPiecesMetadata, params.suggestionType)
 
         },
 
