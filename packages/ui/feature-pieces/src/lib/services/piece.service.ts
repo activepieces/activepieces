@@ -87,11 +87,11 @@ export class PieceMetadataService {
     }
 
     private hasTriggers(piece: PieceMetadataModelSummary): boolean {
-        return piece.triggers >= 0;
+        return piece.triggers > 0;
     }
 
     private hasActions(piece: PieceMetadataModelSummary): boolean {
-        return piece.actions >= 0;
+        return piece.actions > 0;
     }
 
     private convertToFlowItemDetails(piece: PieceMetadataModelSummary | PieceMetadataModel, type: TriggerType | ActionType): FlowItemDetails {
