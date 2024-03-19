@@ -35,12 +35,16 @@ export const CloudPieceMetadataService = (): PieceMetadataService => {
             searchQuery,
             categories,
             sortBy,
+            suggestionType,
             orderBy,
         }): Promise<PieceMetadataModelSummary[]> {
             const queryParams = new URLSearchParams()
             queryParams.append('release', release)
             if (searchQuery) {
                 queryParams.append('searchQuery', searchQuery)
+            }
+            if (suggestionType) {
+                queryParams.append('suggestionType', suggestionType)
             }
             if (categories) {
                 for (const category of categories) {

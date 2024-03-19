@@ -3,11 +3,11 @@ import {
   Observable,
   BehaviorSubject,
   tap,
-  shareReplay,
   switchMap,
   map,
   combineLatest,
   of,
+  shareReplay,
 } from 'rxjs';
 import {
   OAuth2AppsService,
@@ -35,11 +35,9 @@ export class PiecesTableDataSource extends DataSource<ManagedPieceMetadataModelS
     private withoutOAuth2Cred: boolean
   ) {
     super();
-    this.pieces$ = this.piecesService
-      .getPiecesManifestFromServer({
-        includeHidden: true,
-      })
-      .pipe(shareReplay(1));
+    this.pieces$ = this.piecesService.listPieces({
+      includeHidden: true,
+    }).pipe(shareReplay(1));
   }
 
   /**

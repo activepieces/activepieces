@@ -2,7 +2,7 @@ import { DataSource } from '@angular/cdk/collections';
 import { Observable, BehaviorSubject, tap, switchMap, delay } from 'rxjs';
 import { PieceMetadataSummary } from '@activepieces/pieces-framework';
 import { combineLatest } from 'rxjs';
-import { PieceMetadataService } from '../services/piece-meta.service';
+import { PieceMetadataService } from '../services/piece.service';
 
 /**
  * Data source for the LogsTable view. This class should
@@ -30,7 +30,7 @@ export class CommunityPiecesDataSource extends DataSource<PieceMetadataSummary> 
       tap(() => {
         this.isLoading$.next(true);
       }),
-      switchMap(() => this.pieceMetadataService.getCommunityPieces()),
+      switchMap(() => this.pieceMetadataService.listInstalledPieces()),
       delay(100),
       tap((pieces) => {
         this.data = pieces;

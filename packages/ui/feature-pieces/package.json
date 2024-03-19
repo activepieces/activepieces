@@ -10,8 +10,7 @@
     "@activepieces/pieces-framework": "*",
     "@angular/cdk": "17.1.2",
     "@angular/forms": "17.1.3",
-    "@activepieces/shared": "*",
-    "semver": "7.6.0"
+    "@activepieces/shared": "*"
   },
   "dependencies": {},
   "sideEffects": false
