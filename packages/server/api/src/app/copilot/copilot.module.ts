@@ -1,6 +1,17 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { copilotController } from './copilot.controller'
+import { websocketService } from '../websockets/websockets.service'
+import { GenerateCodeRequest, GenerateCodeResponse, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
+import { copilotService } from './copilot.service'
 
-export const copilotModule: FastifyPluginAsyncTypebox = async (app) => {
-    await app.register(copilotController, { prefix: '/v1/copilot' })
+export const copilotModule: FastifyPluginAsyncTypebox = async () => {
+    websocketService.addListener(WebsocketServerEvent.GENERATE_CODE, (socket) => {
+        return async (data: GenerateCodeRequest) => {
+            const { prompt } = data
+            const result = await copilotService.generateCode({ prompt })
+            const response: GenerateCodeResponse = {
+                result,
+            }
+            socket.emit(WebsocketClientEvent.GENERATE_CODE_FINISHED, response)
+        }
+    })
 }
