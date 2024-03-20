@@ -1,7 +1,7 @@
 import { DropdownOption, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
-import { Team, Channel } from '@microsoft/microsoft-graph-types';
+import { Team, Channel, Chat, ConversationMember } from '@microsoft/microsoft-graph-types';
 import { microsoftTeamsAuth } from '../../';
 
 export const microsoftTeamsCommon = {
@@ -26,7 +26,8 @@ export const microsoftTeamsCommon = {
 			});
 			const options: DropdownOption<string>[] = [];
 
-			// https://learn.microsoft.com/en-us/graph/sdks/paging?view=graph-rest-1.0&tabs=typescript#manually-requesting-subsequent-pages
+			// Pagination : https://learn.microsoft.com/en-us/graph/sdks/paging?view=graph-rest-1.0&tabs=typescript#manually-requesting-subsequent-pages
+			// List Joined Channels : https://learn.microsoft.com/en-us/graph/api/user-list-joinedteams?view=graph-rest-1.0&tabs=http
 			let response: PageCollection = await client.api('/me/joinedTeams').get();
 			while (response.value.length > 0) {
 				for (const team of response.value as Team[]) {
@@ -65,7 +66,8 @@ export const microsoftTeamsCommon = {
 			});
 			const options: DropdownOption<string>[] = [];
 
-			// https://learn.microsoft.com/en-us/graph/sdks/paging?view=graph-rest-1.0&tabs=typescript#manually-requesting-subsequent-pages
+			// Pagination : https://learn.microsoft.com/en-us/graph/sdks/paging?view=graph-rest-1.0&tabs=typescript#manually-requesting-subsequent-pages
+			// List Channels : https://learn.microsoft.com/en-us/graph/api/channel-list?view=graph-rest-1.0&tabs=http
 			let response: PageCollection = await client.api(`/teams/${teamId}/channels`).get();
 			while (response.value.length > 0) {
 				for (const channel of response.value as Channel[]) {
@@ -83,4 +85,60 @@ export const microsoftTeamsCommon = {
 			};
 		},
 	}),
+	chatId: Property.Dropdown({
+		displayName: 'Chat ID',
+		refreshers: [],
+		required: true,
+		options: async ({ auth }) => {
+			if (!auth) {
+				return {
+					disabled: true,
+					placeholder: 'Please connect your account first and select team.',
+					options: [],
+				};
+			}
+			const authValue = auth as PiecePropValueSchema<typeof microsoftTeamsAuth>;
+
+			const client = Client.initWithMiddleware({
+				authProvider: {
+					getAccessToken: () => Promise.resolve(authValue.access_token),
+				},
+			});
+			const options: DropdownOption<string>[] = [];
+
+			// Pagination : https://learn.microsoft.com/en-us/graph/sdks/paging?view=graph-rest-1.0&tabs=typescript#manually-requesting-subsequent-pages
+			// List Chats : https://learn.microsoft.com/en-us/graph/api/chat-list?view=graph-rest-1.0&tabs=http
+			let response: PageCollection = await client.api('/chats').expand('members').get();
+			while (response.value.length > 0) {
+				for (const chat of response.value as Chat[]) {
+					const chatName =
+						chat.topic ??
+						chat.members
+							?.filter((member: ConversationMember) => member.displayName)
+							.map((member: ConversationMember) => member.displayName)
+							.join(',');
+					options.push({
+						label: `(${CHAT_TYPE[chat.chatType!]} Chat) ${chatName || '(no title)'}`,
+						value: chat.id!,
+					});
+				}
+				if (response['@odata.nextLink']) {
+					response = await client.api(response['@odata.nextLink']).get();
+				} else {
+					break;
+				}
+			}
+			return {
+				disabled: false,
+				options: options,
+			};
+		},
+	}),
+};
+
+const CHAT_TYPE = {
+	oneOnOne: '1 : 1',
+	group: 'Group',
+	meeting: 'Metting',
+	unknownFutureValue: 'Unknown',
 };

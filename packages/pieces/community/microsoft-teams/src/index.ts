@@ -3,6 +3,7 @@ import { PieceCategory } from '@activepieces/shared';
 import { createChannelAction } from './lib/actions/create-channel';
 import { sendChannelMessageAction } from './lib/actions/send-channel-message';
 import { Client } from '@microsoft/microsoft-graph-client';
+import { sendChatMessageAction } from './lib/actions/send-chat-message';
 
 export const microsoftTeamsAuth = PieceAuth.OAuth2({
 	required: true,
@@ -15,6 +16,7 @@ export const microsoftTeamsAuth = PieceAuth.OAuth2({
 		'Channel.ReadBasic.All',
 		'ChannelMessage.Send',
 		'Team.ReadBasic.All',
+		'Chat.ReadWrite',
 	],
 	authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
 	tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
@@ -41,6 +43,6 @@ export const microsoftTeams = createPiece({
 	logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-teams.png',
 	categories: [PieceCategory.BUSINESS_INTELLIGENCE, PieceCategory.COMMUNICATION],
 	authors: ['kishanprmr'],
-	actions: [createChannelAction, sendChannelMessageAction],
+	actions: [createChannelAction, sendChannelMessageAction, sendChatMessageAction],
 	triggers: [],
 });
