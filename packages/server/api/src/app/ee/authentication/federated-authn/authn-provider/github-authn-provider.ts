@@ -138,9 +138,9 @@ const getGitHubUserEmail = async (
             params: null,
         })
     }
-    const emails: { primary: boolean, email: string }[] = await response.json()
+    const emails: { primary: boolean, email: string, verified: boolean }[] = await response.json()
 
-    const email = emails.find((email) => email.primary)?.email
+    const email = emails.find((email) => email.primary && email.verified)?.email
     if (!email) {
         throw new Error('Can\'t find email for the github account')
     }

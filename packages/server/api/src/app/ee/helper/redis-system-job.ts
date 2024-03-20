@@ -13,8 +13,6 @@ const jobHandlers = new Map<SystemJobName, SystemJobHandler>()
 let systemJobsQueue: Queue<SystemJobData, unknown, SystemJobName>
 let systemJobWorker: Worker<SystemJobData, unknown, SystemJobName>
 
-export const EVERY_4_HOURS = '59 */4 * * *'
-
 export const redisSystemJob = {
     async init(): Promise<void> {
         if (QueueModeIsNotRedis) {

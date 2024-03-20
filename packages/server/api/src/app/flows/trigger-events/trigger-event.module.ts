@@ -5,7 +5,8 @@ import {
 } from '@activepieces/shared'
 import { triggerEventService } from './trigger-event.service'
 import { flowService } from '../flow/flow.service'
-import { EVERY_4_HOURS, redisSystemJob } from '../../ee/helper/redis-system-job'
+import { redisSystemJob } from '../../ee/helper/redis-system-job'
+import { SystemProp, system } from 'server-shared'
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -18,7 +19,7 @@ export const triggerEventModule: FastifyPluginAsyncTypebox = async (app) => {
         },
         schedule: {
             type: 'repeated',
-            cron: EVERY_4_HOURS,
+            cron: `0 * */${system.getNumber(SystemProp.EXECUTION_DATA_RETENTION_DAYS)} * *`,
         },
         async handler() {
             await triggerEventService.deleteEventsOlderThanFourteenDay()
