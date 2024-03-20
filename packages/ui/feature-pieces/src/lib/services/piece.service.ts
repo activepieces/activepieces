@@ -168,14 +168,16 @@ export class PieceMetadataService {
     }
 
     getPieceMetadata(name: string, version: string | undefined): Observable<PieceMetadataModel> {
-        if (!this.cachedPieceMetadata[name]) {
-            this.cachedPieceMetadata[name] = this.http.get<PieceMetadataModel>(`${environment.apiUrl}/pieces/${name}`, {
+        const cacheKey = `${name}_${version||'_latest'}`;
+
+        if (!this.cachedPieceMetadata[cacheKey]) {
+            this.cachedPieceMetadata[cacheKey] = this.http.get<PieceMetadataModel>(`${environment.apiUrl}/pieces/${name}`, {
                 params: {
                     ...spreadIfDefined('version', version)
                 }
             }).pipe(shareReplay(1));
         }
-        return this.cachedPieceMetadata[name];
+        return this.cachedPieceMetadata[cacheKey];
     }
 
     getPieceActionConfigOptions<T extends DropdownState<unknown> | PiecePropertyMap>(req: PieceOptionRequest) {
