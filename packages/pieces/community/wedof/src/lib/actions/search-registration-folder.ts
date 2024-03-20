@@ -1,6 +1,6 @@
 import {httpClient, HttpMethod, QueryParams} from '@activepieces/pieces-common';
 import {wedofAuth} from '../..';
-import {createAction, DynamicProperties, DynamicPropsValue, Property,} from '@activepieces/pieces-framework';
+import {createAction, DynamicPropsValue, Property,} from '@activepieces/pieces-framework';
 import {wedofCommon} from '../common/wedof';
 import dayjs from "dayjs";
 
