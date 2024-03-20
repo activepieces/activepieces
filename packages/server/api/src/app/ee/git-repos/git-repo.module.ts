@@ -159,7 +159,7 @@ const ConfigureRepoRequestSchema = {
 
 const ListRepoRequestSchema = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
     },
     schema: {
         querystring: Type.Object({
