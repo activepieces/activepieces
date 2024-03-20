@@ -19,7 +19,6 @@ import {
   BehaviorSubject,
   Observable,
   combineLatest,
-  map,
   merge,
   of,
   shareReplay,
@@ -55,24 +54,30 @@ export class RefreshablePropertyCoreControlComponent {
   protected createRefreshers<
     T extends DropdownState<unknown> | PiecePropertyMap,
   >() {
-    const refreshers$ = combineLatest(this.getPropertyRefreshers(true)).pipe(
-      startWith(this.parentFormGroup.value),
-    );
-
-    this.resetValueOnRefresherChange$ = merge(
-      ...Object.values(this.getPropertyRefreshers(false))
-    ).pipe(
-      tap(() => {
-        this.refreshersChanged();
+    this.resetValueOnRefresherChange$ = this.stepChanged$.pipe(
+      tap(()=>{
         this.loading$.next(true);
       }),
-    );
+      switchMap(()=>{
+      return merge(
+        ...Object.values(this.getPropertyRefreshers(false))
+      ).pipe(
+        tap(() => {
+          this.refreshersChanged();
+          this.loading$.next(true);
+        }),
+      );
+    }));
+
     const search$ = this.getSearchRefresher();
     const singleTimeRefresher$ = of('singleTimeRefresher');
     return combineLatest({
-      refreshers: merge(refreshers$,
-      this.stepChanged$.pipe(tap(()=>this.loading$.next(true))
-      ,map(()=>this.parentFormGroup.value))),
+      refreshers: this.stepChanged$.pipe(switchMap(()=>{
+        return combineLatest(this.getPropertyRefreshers(true)).pipe(
+          startWith(this.parentFormGroup.value),
+        );
+      }))
+      ,
       search: search$.pipe(startWith('')),
       singleTimeRefresher: singleTimeRefresher$,
     }).pipe(
