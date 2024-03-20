@@ -1,7 +1,8 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth, PiecePropValueSchema } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { createChannelAction } from './lib/actions/create-channel';
 import { sendChannelMessageAction } from './lib/actions/send-channel-message';
+import { Client } from '@microsoft/microsoft-graph-client';
 
 export const microsoftTeamsAuth = PieceAuth.OAuth2({
 	required: true,
@@ -17,6 +18,20 @@ export const microsoftTeamsAuth = PieceAuth.OAuth2({
 	],
 	authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
 	tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+	validate: async ({ auth }) => {
+		try {
+			const authValue = auth as PiecePropValueSchema<typeof microsoftTeamsAuth>;
+			const client = Client.initWithMiddleware({
+				authProvider: {
+					getAccessToken: () => Promise.resolve(authValue.access_token),
+				},
+			});
+			await client.api('/me').get();
+			return { valid: true };
+		} catch (error) {
+			return { valid: false, error: 'Invalid Credentials.' };
+		}
+	},
 });
 
 export const microsoftTeams = createPiece({
