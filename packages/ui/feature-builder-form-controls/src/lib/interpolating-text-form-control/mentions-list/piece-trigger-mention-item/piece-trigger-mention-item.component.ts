@@ -16,16 +16,9 @@ import {
   traverseStepOutputAndReturnMentionTree,
 } from '../../utils';
 import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
-import {
-  BuilderSelectors,
-  Step,
-  canvasActions,
-} from '@activepieces/ui/feature-builder-store';
+import { Step, canvasActions } from '@activepieces/ui/feature-builder-store';
 import { FlowItemDetails, MentionListItem } from '@activepieces/ui/common';
-import {
-  PieceMetadataService,
-  CORE_SCHEDULE,
-} from '@activepieces/ui/feature-pieces';
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 @Component({
   selector: 'app-piece-trigger-mention-item',
   templateUrl: './piece-trigger-mention-item.component.html',
@@ -34,7 +27,6 @@ import {
 export class PieceTriggerMentionItemComponent implements OnInit {
   FIRST_LEVEL_PADDING_IN_MENTIONS_LIST = FIRST_LEVEL_PADDING_IN_MENTIONS_LIST;
   TriggerType = TriggerType;
-  CORE_SCHEDULE = CORE_SCHEDULE;
   expandSample = false;
   search$: Observable<string>;
   @Input()
@@ -58,10 +50,9 @@ export class PieceTriggerMentionItemComponent implements OnInit {
   }>;
   fetching$: Subject<boolean> = new Subject();
   isPollingTrigger$: Observable<boolean>;
-  isScheduleTrigger$: Observable<boolean>;
   constructor(
     private store: Store,
-    private actionMetaDataService: PieceMetadataService,
+    private pieceService: PieceMetadataService,
     private mentionsTreeCache: MentionsTreeCacheService
   ) {}
   ngOnInit(): void {
@@ -70,9 +61,6 @@ export class PieceTriggerMentionItemComponent implements OnInit {
       tap((res) => {
         this.expandSample = !!res;
       })
-    );
-    this.isScheduleTrigger$ = this.store.select(
-      BuilderSelectors.selectIsSchduleTrigger
     );
     this.isPollingTrigger$ = this.checkIfItIsPollingTrigger();
     if (cachedResult) {
@@ -102,8 +90,8 @@ export class PieceTriggerMentionItemComponent implements OnInit {
         })
       );
     }
-    this.flowItemDetails$ = this.store.select(
-      BuilderSelectors.selectFlowItemDetails(this._stepMention.step)
+    this.flowItemDetails$ = this.pieceService.getStepDetails(
+      this._stepMention.step
     );
   }
   getChachedData() {
@@ -123,21 +111,17 @@ export class PieceTriggerMentionItemComponent implements OnInit {
   }
 
   checkIfItIsPollingTrigger() {
-    return this.actionMetaDataService
+    return this.pieceService
       .getPieceMetadata(
         this._stepMention.step.settings.pieceName,
         this._stepMention.step.settings.pieceVersion
       )
       .pipe(
         map((res) => {
-          if (res) {
-            return (
-              res.triggers[this._stepMention.step.settings.triggerName]
-                ?.type === TriggerStrategy.POLLING &&
-              this._stepMention.step.settings.pieceName !== CORE_SCHEDULE
-            );
-          }
-          return false;
+          return (
+            res.triggers[this._stepMention.step.settings.triggerName]?.type ===
+            TriggerStrategy.POLLING
+          );
         })
       );
   }

@@ -17,8 +17,8 @@ import { PieceMetadataSummary } from '@activepieces/pieces-framework';
 import { CommunityPiecesDataSource } from './community-pieces-table.datasource';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { InstallCommunityPieceModalComponent } from '../install-community-piece/install-community-piece-modal.component';
-import { PieceMetadataService } from '../services/piece-meta.service';
 import { PieceScope } from '@activepieces/shared';
+import { PieceMetadataService } from '../services/piece.service';
 
 @Component({
   templateUrl: './community-pieces-table.component.html',

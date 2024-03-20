@@ -45,7 +45,6 @@ import {
   BuilderSelectors,
   ConnectionDropdownItem,
   FlowsActions,
-  FlowItemsDetailsState,
 } from '@activepieces/ui/feature-builder-store';
 import {
   ErrorHandlingOptionsParam,
@@ -122,7 +121,6 @@ export class PieceActionInputFormComponent
   valueChanges$: Observable<void>;
   actionDropdownValueChanged$: Observable<ActionDropdownOptionValue>;
   allAuthConfigs$: Observable<ConnectionDropdownItem[]>;
-  flowItemDetails$: Observable<FlowItemsDetailsState>;
   hideContinueOnFailure = false;
   hideRetryOnFailure = false;
   isOverflown = isOverflown;
@@ -138,9 +136,6 @@ export class PieceActionInputFormComponent
     private cd: ChangeDetectorRef,
     private store: Store
   ) {
-    this.flowItemDetails$ = this.store.select(
-      BuilderSelectors.selectAllFlowItemsDetails
-    );
     this.buildForm();
     this.actionDropdownValueChanged$ = this.pieceActionForm
       .get(ACTION_FORM_CONTROL_NAME)!

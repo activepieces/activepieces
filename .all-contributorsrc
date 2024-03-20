@@ -873,6 +873,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "vbarrier",
+      "name": "Vincent Barrier",
+      "avatar_url": "https://avatars.githubusercontent.com/u/446808?v=4",
+      "profile": "https://github.com/vbarrier",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

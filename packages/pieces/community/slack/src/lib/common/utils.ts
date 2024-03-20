@@ -65,7 +65,17 @@ export const slackSendMessage = async ({
   }
 
   if (!response.body.ok) {
-      throw new Error(response.body.error);
+    switch (response.body.error) {
+      case 'not_in_channel':
+        throw new Error(JSON.stringify({
+          message: 'The bot is not in the channel',
+          code: 'not_in_channel',
+          action: 'Invite the bot from the channel settings'
+        }));
+      default: {
+        throw new Error(response.body.error);
+      }
+    }
   }
 
   return {

@@ -10,7 +10,6 @@ import {
 import { ActivatedRoute } from '@angular/router';
 import {
   BuilderSelectors,
-  FlowItemDetailsActions,
 } from '@activepieces/ui/feature-builder-store';
 import { Store } from '@ngrx/store';
 import {
@@ -147,7 +146,6 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.websocketService.connect()
-    this.store.dispatch(FlowItemDetailsActions.loadFlowItemsDetails());
   }
 
   public get rightSideBarType() {

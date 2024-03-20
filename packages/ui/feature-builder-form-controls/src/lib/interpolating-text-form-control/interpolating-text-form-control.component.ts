@@ -25,9 +25,18 @@ import {
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MatFormFieldControl } from '@angular/material/form-field';
 import { QuillEditorComponent, QuillModules } from 'ngx-quill';
-import { firstValueFrom, Observable, skip, Subject, take, tap } from 'rxjs';
+import {
+  firstValueFrom,
+  Observable,
+  skip,
+  Subject,
+  switchMap,
+  take,
+  tap,
+} from 'rxjs';
 import {
   CustomErrorMatcher,
+  enrichMentionDropdownWithIcons,
   fixSelection,
   fromOpsToText,
   fromTextToOps,
@@ -47,6 +56,7 @@ import {
   InsertMentionOperation,
   MentionListItem,
 } from '@activepieces/ui/common';
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 
 @Component({
   selector: 'app-interpolating-text-form-control',
@@ -125,7 +135,12 @@ export class InterpolatingTextFormControlComponent
         const stepsMetaData = await firstValueFrom(
           this.store
             .select(BuilderSelectors.selectAllStepsForMentionsDropdown)
-            .pipe(take(1))
+            .pipe(
+              take(1),
+              switchMap((steps) =>
+                enrichMentionDropdownWithIcons(steps, this.pieceService)
+              )
+            )
         );
         if (typeof this._value === 'string')
           this.editorFormControl.setValue(
@@ -161,6 +176,7 @@ export class InterpolatingTextFormControlComponent
     @Optional() _parentFormGroup: FormGroupDirective,
     @Optional() @Self() ngControl: NgControl,
     private store: Store,
+    private pieceService: PieceMetadataService,
     private cd: ChangeDetectorRef
   ) {
     super(_defaultErrorStateMatcher, _parentForm, _parentFormGroup, ngControl);
@@ -171,9 +187,13 @@ export class InterpolatingTextFormControlComponent
       { ops: [] },
       { nonNullable: true }
     );
-    this.stepsMetaData$ = this.store.select(
-      BuilderSelectors.selectAllStepsForMentionsDropdown
-    );
+    this.stepsMetaData$ = this.store
+      .select(BuilderSelectors.selectAllStepsForMentionsDropdown)
+      .pipe(
+        switchMap((steps) =>
+          enrichMentionDropdownWithIcons(steps, this.pieceService)
+        )
+      );
   }
 
   ngOnInit(): void {
@@ -274,7 +294,12 @@ export class InterpolatingTextFormControlComponent
     const stepsMetaData = await firstValueFrom(
       this.store
         .select(BuilderSelectors.selectAllStepsForMentionsDropdown)
-        .pipe(take(1))
+        .pipe(
+          take(1),
+          switchMap((steps) =>
+            enrichMentionDropdownWithIcons(steps, this.pieceService)
+          )
+        )
     );
     if (value && typeof value === 'string') {
       const parsedTextToOps = fromTextToOps(value, stepsMetaData);
