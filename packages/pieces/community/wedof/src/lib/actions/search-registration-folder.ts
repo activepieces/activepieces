@@ -22,7 +22,6 @@ export const searchRegistrationFolder = createAction({
             required: true,
             refreshers: ['period'],
             props: async ({period}) => {
-                console.log(period);
                 const _period = period as unknown as string;
                 const props: DynamicPropsValue = {};
                 if (_period === 'custom') {
