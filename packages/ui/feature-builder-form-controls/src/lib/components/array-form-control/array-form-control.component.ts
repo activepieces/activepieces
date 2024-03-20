@@ -41,18 +41,16 @@ import { PopulatedFlow } from '@activepieces/shared';
 })
 export class ArrayFormControlComponent implements ControlValueAccessor {
   formArray: FormArray<FormControl<string> | UntypedFormGroup>;
-
   @Input({ required: true }) property: ArrayProperty<boolean>;
   @Input() dynamicInputTemplate: TemplateRef<unknown>;
   @ViewChild('textControl') firstInput: InterpolatingTextFormControlComponent;
-  removeItemTooltip = $localize`Remove item`;
-  updateValueOnChange$: Observable<void> = new Observable<void>();
   @Input({ required: true }) pieceMetaData: PieceMetadataModel;
   @Input({ required: true }) flow: Pick<PopulatedFlow, 'id' | 'version'>;
   @Input({ required: true }) webhookPrefix: string;
   @Input({ required: true }) formPieceTriggerPrefix: string;
   @Input({ required: true }) input: Record<string, any> = {};
-
+  removeItemTooltip = $localize`Remove item`;
+  updateValueOnChange$: Observable<void> = new Observable<void>();
   createForm(propertiesValues: Record<string, unknown> | string) {
     const properties = this.property.properties;
     if (

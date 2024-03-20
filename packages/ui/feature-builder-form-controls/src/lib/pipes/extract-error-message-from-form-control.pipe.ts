@@ -1,6 +1,7 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { Observable, map, startWith } from 'rxjs';
+import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
 
 @Pipe({
   name: 'extractControlErrorMessage',
@@ -8,14 +9,18 @@ import { Observable, map, startWith } from 'rxjs';
   standalone: true,
 })
 export class ExtractControlErrorMessagePipe implements PipeTransform {
-  transform(ctrl: FormControl, propertyName: string): Observable<string> {
+  transform(ctrl: FormControl, property: PieceProperty,isDynamicInput:boolean): Observable<string> {
     return ctrl.valueChanges.pipe(
       startWith(ctrl.value),
       map(() => {
+        if(property.type === PropertyType.ARRAY && property.properties !== undefined && !isDynamicInput)
+        {
+          return '';
+        }
         if (ctrl.invalid && ctrl.hasError('required')) {
-          return `${propertyName} is required`;
+          return `${property.displayName} is required`;
         } else if (ctrl.invalid) {
-          return `${propertyName} is invalid`;
+          return `${property.displayName} is invalid`;
         }
         return '';
       }),

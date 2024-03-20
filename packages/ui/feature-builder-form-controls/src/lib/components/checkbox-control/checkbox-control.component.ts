@@ -10,7 +10,7 @@ import { CheckboxProperty } from '@activepieces/pieces-framework';
   imports: [CommonModule, UiCommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="ap-flex  ap-mr-[5px] ap-items-center ap-gap-2 ">
+    <div class="ap-flex ap-items-center ap-gap-2 ">
       <div
         apTrackHover
         #slider="hoverTrackerDirective"

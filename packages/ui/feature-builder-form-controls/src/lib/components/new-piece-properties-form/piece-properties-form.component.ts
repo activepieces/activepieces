@@ -74,7 +74,6 @@ export class PiecePropertiesFormComponent
       this.initializeForm();
       if(stepName?.currentValue !== stepName?.previousValue)
       {
-        debugger;
         this.stepChanged$.next(stepName.currentValue);
       }
     }
@@ -134,7 +133,7 @@ export class PiecePropertiesFormComponent
     });
     setTimeout(()=>{
       this.form.markAllAsTouched();
-    })
+    });
   }
   private createChangesListener() {
     return this.form.valueChanges.pipe(

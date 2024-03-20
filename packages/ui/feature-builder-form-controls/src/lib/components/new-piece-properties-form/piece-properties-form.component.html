@@ -153,7 +153,10 @@
               form.controls[property.key] | abstractFormControlCaster
             "
             [property]="property.value"
-          ></app-checkbox-control>
+          >
+          <ng-container *ngTemplateOutlet="dynamicInputToggleTemplate;context:{$implicit:property}">
+          </ng-container>
+        </app-checkbox-control>
         }
         @case (PropertyType.JSON) {
           <app-json-control
@@ -206,7 +209,7 @@
             [flow]="flow"
             [webhookPrefix]="webhookPrefix"
             [formPieceTriggerPrefix]="formPieceTriggerPrefix"
-            [input]="input[property.key]"
+            [input]="input[property.key] || []"
             [formControl]="
               form.controls[property.key] | abstractFormControlCaster
             "
@@ -235,10 +238,10 @@
     ) {
       <ap-control-description
         [errorMessage]="
-          (form.controls[property.key]
+          ((form.controls[property.key]
             | abstractFormControlCaster
-            | extractControlErrorMessage: property.value.displayName
-            | async) || ''
+            | extractControlErrorMessage: property.value : customizedInputs[property.key]
+            | async) || '')
         "
         [passedFormControl]="
           form.controls[property.key] | abstractFormControlCaster
