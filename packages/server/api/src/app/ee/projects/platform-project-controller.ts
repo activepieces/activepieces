@@ -22,6 +22,8 @@ import { platformService } from '../../platform/platform.service'
 import { projectLimitsService } from '../project-plan/project-plan.service'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 
+const DEFAULT_LIMIT_SIZE = 50
+
 export const platformProjectController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', CreateProjectRequest, async (request, reply) => {
         const platformId = request.principal.platform.id
@@ -47,6 +49,8 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
             platformId,
             externalId: request.query.externalId,
             ownerId: undefined,
+            cursorRequest: request.query.cursor ?? null,
+            limit: request.query.limit ?? DEFAULT_LIMIT_SIZE,
         })
     })
 
@@ -123,6 +127,8 @@ const ListProjectRequestForApiKey = {
         },
         querystring: Type.Object({
             externalId: Type.Optional(Type.String()),
+            limit: Type.Optional(Type.Number({})),
+            cursor: Type.Optional(Type.String({})),
         }),
         tags: ['projects'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],

@@ -24,6 +24,8 @@ export const usersProjectController: FastifyPluginCallbackTypebox = (
         return platformProjectService.getAll({
             ownerId: request.principal.id,
             platformId: request.query.platformId,
+            cursorRequest: null,
+            limit: 50,
         })
     })
 
@@ -33,6 +35,8 @@ export const usersProjectController: FastifyPluginCallbackTypebox = (
         async (request) => {
             const allProjects = await platformProjectService.getAll({
                 ownerId: request.principal.id,
+                cursorRequest: null,
+                limit: 50,
             })
             const project = allProjects.data.find(
                 (project) => project.id === request.params.projectId,
