@@ -4,6 +4,8 @@ import { jsonValidator } from "@activepieces/ui/common";
 import { isNil } from "../../../../../../shared/src";
 
 export const createFormControlsWithTheirValidators = (fb:UntypedFormBuilder,propertiesMap: PiecePropertyMap,form:FormGroup,input:Record<string,any>,customizedInputs:Record<string,boolean | Record<string,boolean>>) => {
+    //Angular forms get enabled after adding controls automatically: https://github.com/angular/angular/issues/23236
+    const isFormDisabled = form.disabled;
     removeAllFormControls(form);
     Object.entries(propertiesMap).forEach(([propertyName, property]) => {1
       if(propertiesMap[propertyName].type === PropertyType.MARKDOWN)
@@ -15,6 +17,9 @@ export const createFormControlsWithTheirValidators = (fb:UntypedFormBuilder,prop
       const ctrl = createControl(fb, property, value, validators);
       form.addControl(propertyName, ctrl, { emitEvent: false });
     });
+    if (isFormDisabled) {
+      form.disable({ emitEvent: false });
+    }   
   }
 
   const removeAllFormControls = (form:UntypedFormGroup)=> {

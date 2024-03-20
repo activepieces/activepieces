@@ -70,7 +70,7 @@ import { FormControl, UntypedFormBuilder, Validators } from '@angular/forms';
           (formValueChange)="
             piecePropertiesFormValueChanged($event, deps.currentStep)
           "
-          [hideCustomizedInputs]="false"
+          [hideCustomizedInputs]="(isFormReadOnly$ | async | defaultTrue)"
         ></app-piece-properties-form>
       }
     } @else {
@@ -97,12 +97,24 @@ export class PieceInputFormComponent {
     allConnectionsForPiece: PieceConnectionDropdownItem[];
   }>;
   form = this.fb.group({});
+  isFormReadOnly$: Observable<boolean>;
   constructor(
     private store: Store,
     private pieceMetaDataService: PieceMetadataService,
     private flagService: FlagService,
     private fb: UntypedFormBuilder,
   ) {
+    this.isFormReadOnly$ = this.store.select(BuilderSelectors.selectReadOnly).pipe(
+      tap((res)=>{
+        if(res)
+        {
+          this.form.disable();
+        }
+        else
+        {
+          this.form.enable();
+        }
+    }));
     this.triggersOrActionsControl = new FormControl<string>('', {
       nonNullable: true,
       validators: Validators.required,
@@ -217,7 +229,6 @@ export class PieceInputFormComponent {
             step.settings.pieceVersion,
           );
         }
-        console.error('step type is not piece');
         return of(undefined);
       }),
     );
