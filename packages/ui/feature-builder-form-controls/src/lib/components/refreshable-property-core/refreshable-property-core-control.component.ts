@@ -19,6 +19,7 @@ import {
   BehaviorSubject,
   Observable,
   combineLatest,
+  map,
   merge,
   of,
   shareReplay,
@@ -44,10 +45,12 @@ export class RefreshablePropertyCoreControlComponent {
   @Input({ required: true }) flow: Pick<PopulatedFlow, 'id' | 'version'>;
   loading$ = new BehaviorSubject<boolean>(true);
   resetValueOnRefresherChange$?: Observable<unknown>;
+  @Input({ required: true }) stepChanged$: Observable<string>;
   constructor(
     private piecetaDataService: PieceMetadataService,
     private searchRefresher$?: Observable<string>,
-  ) {}
+  ) {
+  }
 
   protected createRefreshers<
     T extends DropdownState<unknown> | PiecePropertyMap,
@@ -57,7 +60,7 @@ export class RefreshablePropertyCoreControlComponent {
     );
 
     this.resetValueOnRefresherChange$ = merge(
-      ...Object.values(this.getPropertyRefreshers(false)),
+      ...Object.values(this.getPropertyRefreshers(false))
     ).pipe(
       tap(() => {
         this.refreshersChanged();
@@ -67,7 +70,9 @@ export class RefreshablePropertyCoreControlComponent {
     const search$ = this.getSearchRefresher();
     const singleTimeRefresher$ = of('singleTimeRefresher');
     return combineLatest({
-      refreshers: refreshers$,
+      refreshers: merge(refreshers$,
+      this.stepChanged$.pipe(tap(()=>this.loading$.next(true))
+      ,map(()=>this.parentFormGroup.value))),
       search: search$.pipe(startWith('')),
       singleTimeRefresher: singleTimeRefresher$,
     }).pipe(

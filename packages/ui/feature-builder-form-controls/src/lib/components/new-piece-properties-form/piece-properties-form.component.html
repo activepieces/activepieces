@@ -5,20 +5,16 @@
   ) {
     @if (
       (property.value
-        | shouldShwoDynamicInputToggleAboveInput: stepName === 'trigger') ||
-      customizedInputs[property.key]
+        | shouldShwoDynamicInputToggleAboveInput: stepName === 'trigger')
+        || (customizedInputs[property.key] === true && property.value.type !== PropertyType.DYNAMIC)
     ) {
-      <div class="ap-flex ap-justify-end ap-px-1 ap-mb-1">
-        <app-dynamic-input-toggle-control
-          [selected]="!!customizedInputs[property.key]"
-          (valueChanged)="
-            toggleCustomizedInput(property.value, property.key + '', $event)
-          "
-        ></app-dynamic-input-toggle-control>
+      <div class="ap-flex ap-justify-end" [class.ap-mb-1]="!hideCustomizedInputs">
+        <ng-container *ngTemplateOutlet="dynamicInputToggleTemplate;context:{$implicit:property}">
+        </ng-container>
       </div>
     }
 
-    @if (customizedInputs[property.key]) {
+    @if (customizedInputs[property.key] && property.value.type !== PropertyType.DYNAMIC) {
       <app-text-control
         [passedFormControl]="
           form.controls[property.key] | abstractFormControlCaster
@@ -134,6 +130,7 @@
             [pieceMetaData]="pieceMetaData"
             [propertyName]="property.key + ''"
             [property]="property.value"
+            [stepChanged$]="stepChanged$.asObservable()"
           ></app-refreshable-dropdown-control>
         }
         @case (PropertyType.MULTI_SELECT_DROPDOWN) {
@@ -147,6 +144,7 @@
             [pieceMetaData]="pieceMetaData"
             [propertyName]="property.key + ''"
             [property]="property.value"
+            [stepChanged$]="stepChanged$.asObservable()"
           ></app-refreshable-dropdown-control>
         }
         @case (PropertyType.CHECKBOX) {
@@ -192,10 +190,13 @@
             [formPieceTriggerPrefix]="formPieceTriggerPrefix"
             [property]="property.value"
             [propertiesMap]="propertiesMap"
-            [input]="input[property.key]"
+            [input]="input[property.key] || {}"
             [customizedInputs]="
-              customizedInputs[property.key] | customizedInputsCaster
+              customizedInputs
             "
+            [hideCustomizedInputs]="hideCustomizedInputs"
+            (customizedInputsChanged)="dynamicPropertyCustomizedInputsChangedHanlder($event)"
+            [stepChanged$]="stepChanged$.asObservable()"
           ></app-dynamic-property-control>
         }
         @case (PropertyType.ARRAY) {
@@ -205,26 +206,13 @@
             [flow]="flow"
             [webhookPrefix]="webhookPrefix"
             [formPieceTriggerPrefix]="formPieceTriggerPrefix"
-            [customizedInputs]="
-              customizedInputs[property.key] | customizedInputsCaster
-            "
             [input]="input[property.key]"
             [formControl]="
               form.controls[property.key] | abstractFormControlCaster
             "
           >
-            <div class="ap-px-1">
-              <app-dynamic-input-toggle-control
-                [selected]="!!customizedInputs[property.key]"
-                (valueChanged)="
-                  toggleCustomizedInput(
-                    property.value,
-                    property.key + '',
-                    $event
-                  )
-                "
-              ></app-dynamic-input-toggle-control>
-            </div>
+            <ng-container *ngTemplateOutlet="dynamicInputToggleTemplate;context:{$implicit:property}">
+            </ng-container>
           </app-array-form-control>
         }
         @case (PropertyType.OBJECT) {
@@ -234,18 +222,8 @@
             "
             [propertyDisplayName]="property.value.displayName"
           >
-            <div class="ap-px-1">
-              <app-dynamic-input-toggle-control
-                [selected]="!!customizedInputs[property.key]"
-                (valueChanged)="
-                  toggleCustomizedInput(
-                    property.value,
-                    property.key + '',
-                    $event
-                  )
-                "
-              ></app-dynamic-input-toggle-control>
-            </div>
+            <ng-container *ngTemplateOutlet="dynamicInputToggleTemplate;context:{$implicit:property}">
+            </ng-container>
           </app-dictonary-form-control>
         }
       }
@@ -273,3 +251,22 @@
 </form>
 
 @if (emitNewChanges$ | async) {}
+
+<ng-template #dynamicInputToggleTemplate let-property>
+ @if(!hideCustomizedInputs)
+ {
+  <div class="ap-px-1">
+    <app-dynamic-input-toggle-control
+    [selected]="!!customizedInputs[property.key]"
+    (valueChanged)="
+      toggleCustomizedInput(
+        property.value,
+        property.key + '',
+        $event
+      )
+    "
+  ></app-dynamic-input-toggle-control>
+  </div>
+  
+ }
+</ng-template>

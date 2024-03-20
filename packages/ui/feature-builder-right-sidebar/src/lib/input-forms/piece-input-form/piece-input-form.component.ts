@@ -70,6 +70,7 @@ import { FormControl, UntypedFormBuilder, Validators } from '@angular/forms';
           (formValueChange)="
             piecePropertiesFormValueChanged($event, deps.currentStep)
           "
+          [hideCustomizedInputs]="false"
         ></app-piece-properties-form>
       }
     } @else {

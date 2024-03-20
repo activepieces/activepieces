@@ -16,7 +16,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceMetadataModel, jsonValidator } from '@activepieces/ui/common';
 import {  UntypedFormBuilder, UntypedFormGroup  } from '@angular/forms';
-import { Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
 import deepEqual from 'deep-equal';
 import { PopulatedFlow } from '@activepieces/shared';
 import { createFormControlsWithTheirValidators } from './properties-controls-helper';
@@ -39,11 +39,16 @@ export class PiecePropertiesFormComponent
   @Input({ required: true }) input: Record<string, any> = {};
   @Input({ required: true }) customizedInputs: Record<
     string,
-    boolean | Record<string, boolean>
+    boolean
   > = {};
   @Input({ required: true })
   allConnectionsForPiece: DropdownOption<`{{connections['${string}']}}`>[];
   @Input({ required: true }) form: UntypedFormGroup;
+  @Input({ required:true }) hideCustomizedInputs = false
+  @Output() customizedInputsChanged = new EventEmitter<{
+    propertyName:string;
+    value: boolean
+  }>();
   @Output() formValueChange = new EventEmitter<{
     input: Record<string, any>;
     customizedInputs: Record<string, boolean | Record<string, boolean>>;
@@ -52,6 +57,7 @@ export class PiecePropertiesFormComponent
   readonly PropertyType = PropertyType;
   sortedPropertiesByRequired: PiecePropertyMap;
   emitNewChanges$?: Observable<unknown>;
+  stepChanged$ = new BehaviorSubject('');
   constructor(private fb:UntypedFormBuilder){}
   ngOnInit(): void {
     this.emitNewChanges$ = this.createChangesListener();
@@ -66,6 +72,11 @@ export class PiecePropertiesFormComponent
       stepName?.currentValue !== stepName?.previousValue
     ) {
       this.initializeForm();
+      if(stepName?.currentValue !== stepName?.previousValue)
+      {
+        debugger;
+        this.stepChanged$.next(stepName.currentValue);
+      }
     }
   }
 
@@ -116,6 +127,7 @@ export class PiecePropertiesFormComponent
         this.form.controls[propertyName].addValidators(jsonValidator);
       }
     }
+    this.customizedInputsChanged.emit({propertyName,value});
     this.form.controls[propertyName].setValue('', { emitEvent: false });
     this.form.controls[propertyName].updateValueAndValidity({
       emitEvent: false,
@@ -134,5 +146,9 @@ export class PiecePropertiesFormComponent
         });
       }),
     );
+  }
+
+  dynamicPropertyCustomizedInputsChangedHanlder(event:{ value: boolean,propertyName:string }){
+    this.customizedInputs= { ...this.customizedInputs, [event.propertyName]: event.value };
   }
 }

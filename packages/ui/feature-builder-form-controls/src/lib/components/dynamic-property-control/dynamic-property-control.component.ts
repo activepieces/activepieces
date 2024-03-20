@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework';
 import { Observable } from 'rxjs';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
@@ -7,7 +7,6 @@ import { UntypedFormGroup } from '@angular/forms';
 @Component({
   selector: 'app-dynamic-property-control',
   template: `
-  
   @if((loading$ | async) === false)
   { @if(properties$ | async; as props){
 
@@ -23,6 +22,8 @@ import { UntypedFormGroup } from '@angular/forms';
           [webhookPrefix]="webhookPrefix"
           [formPieceTriggerPrefix]="formPieceTriggerPrefix"
           [propertiesMap]="props"
+          (customizedInputsChanged)="customizedInputsChangedHanlder($event)"
+          [hideCustomizedInputs]="hideCustomizedInputs"
         ></app-piece-properties-form>
   }
   }
@@ -48,10 +49,11 @@ export class DynamicPropertyControl
   @Input({ required: true }) input: Record<string, any> = {};
   @Input({ required: true }) customizedInputs: Record<
     string,
-    boolean | Record<string, boolean>
+    boolean
   > = {};
+  @Input({ required: true }) hideCustomizedInputs = false;
   properties$?: Observable<PiecePropertyMap>;
-
+  @Output() customizedInputsChanged = new EventEmitter<{propertyName:string; value:boolean}>();
   readonly PropertyType = PropertyType;
   constructor(piecetaDataService: PieceMetadataService) {
     super(piecetaDataService);
@@ -60,6 +62,15 @@ export class DynamicPropertyControl
     this.properties$ = this.createRefreshers<PiecePropertyMap>();
   }
   override refreshersChanged() {
+    //if emit event is true each control removal will result in a save request
+    Object.keys(this.passedFormControl.controls).forEach((ctrlName) => {
+      this.passedFormControl.removeControl(ctrlName,{emitEvent:false});
+    });
     this.passedFormControl.setValue({});
   }
+
+  customizedInputsChangedHanlder(newValue:{propertyName:string; value:boolean}){
+    this.customizedInputsChanged.emit(newValue);
+  }
+ 
 }

@@ -52,10 +52,7 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
   @Input({ required: true }) webhookPrefix: string;
   @Input({ required: true }) formPieceTriggerPrefix: string;
   @Input({ required: true }) input: Record<string, any> = {};
-  @Input({ required: true }) customizedInputs: Record<
-    string,
-    boolean | Record<string, boolean>
-  > = {};
+
   createForm(propertiesValues: Record<string, unknown> | string) {
     const properties = this.property.properties;
     if (

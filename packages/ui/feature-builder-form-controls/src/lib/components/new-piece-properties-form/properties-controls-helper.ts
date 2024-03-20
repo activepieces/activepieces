@@ -12,7 +12,7 @@ export const createFormControlsWithTheirValidators = (fb:UntypedFormBuilder,prop
       }
       const value = input[propertyName];
       const validators: ValidatorFn[] = getPropertyValidators(property, customizedInputs, propertyName);
-      const ctrl = createControl(fb,property, value, validators);
+      const ctrl = createControl(fb, property, value, validators);
       form.addControl(propertyName, ctrl, { emitEvent: false });
     });
   }
@@ -66,7 +66,7 @@ export const createFormControlsWithTheirValidators = (fb:UntypedFormBuilder,prop
 function createControl(fb:UntypedFormBuilder,property: PieceProperty, value: any, validators: ValidatorFn[]) {
     if(property.type === PropertyType.DYNAMIC)
     {
-        return fb.group(isNil(value)? {} : value);
+        return fb.group({});
     }
     return new FormControl(
         getControlValue(property, value),
