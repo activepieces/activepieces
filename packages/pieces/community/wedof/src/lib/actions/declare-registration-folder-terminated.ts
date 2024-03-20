@@ -1,7 +1,7 @@
 import {HttpMethod, httpClient} from '@activepieces/pieces-common';
 import {wedofAuth} from '../..';
 import {
-    createAction, DropdownOption, DropdownState,
+    createAction,
     Property,
 } from '@activepieces/pieces-framework';
 import {wedofCommon} from '../common/wedof';
@@ -29,7 +29,7 @@ export const declareRegistrationFolderTerminated = createAction({
             required: true,
             refreshers: ['auth'],
             refreshOnSearch: false,
-            options: async ({auth}, {searchValue}) => {
+            options: async ({auth}) => {
                 if (!auth) {
                     return {
                         disabled: true,

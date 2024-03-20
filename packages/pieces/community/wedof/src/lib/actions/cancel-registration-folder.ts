@@ -23,7 +23,7 @@ export const cancelRegistrationFolder = createAction({
             required: true,
             refreshers: ['auth'],
             refreshOnSearch: false,
-            options: async ({auth}, {searchValue}) => {
+            options: async ({auth}) => {
                 if (!auth) {
                     return {
                         disabled: true,

@@ -1,7 +1,6 @@
 import {wedofAuth} from '../..';
 import {
     createTrigger,
-    Property,
     TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import {httpClient, HttpMethod} from '@activepieces/pieces-common';

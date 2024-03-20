@@ -1,6 +1,6 @@
 import {httpClient, HttpMethod, QueryParams} from '@activepieces/pieces-common';
 import {wedofAuth} from '../..';
-import {createAction, Property,} from '@activepieces/pieces-framework';
+import {createAction, DynamicProperties, DynamicPropsValue, Property,} from '@activepieces/pieces-framework';
 import {wedofCommon} from '../common/wedof';
 import dayjs from "dayjs";
 
@@ -21,34 +21,28 @@ export const searchRegistrationFolder = createAction({
             displayName: '',
             required: true,
             refreshers: ['period'],
-            props: async (propsValue) => {
+            props: async ({auth, propsValue}) => {
                 const {period} = propsValue as unknown as {
                     period: string;
                 };
+                const props: DynamicPropsValue = {};
                 if (period === 'custom') {
-                    return {
-                        since: Property.DateTime({
-                            displayName: '(Période) Entre le',
-                            description: 'Date au format YYYY-MM-DD',
-                            required: true,
-                        }),
-                        until: Property.DateTime({
-                            displayName: "(Période) et jusqu'au",
-                            description: 'Date au format YYYY-MM-DD',
-                            required: true
-                        }),
-                    };
+                    props["since"] = Property.DateTime({
+                        displayName: '(Période) Entre le',
+                        description: 'Date au format YYYY-MM-DD',
+                        required: true,
+                    });
+                    props["until"] = Property.DateTime({
+                        displayName: "(Période) et jusqu'au",
+                        description: 'Date au format YYYY-MM-DD',
+                        required: true
+                    });
                 } else if (['next', 'future', 'tomorrow'].some(v => period.toLowerCase().includes(v))) {
-                    return {
-                        filterOnStateDate: wedofCommon.filterOnStateDateFuture
-                    };
+                    props["filterOnStateDate"] = wedofCommon.filterOnStateDateFuture;
                 } else if (period) {
-                    return {
-                        filterOnStateDate: wedofCommon.filterOnStateDate
-                    };
-                } else {
-                    return {} as any;
+                    props["filterOnStateDate"] = wedofCommon.filterOnStateDate;
                 }
+                return props;
             }
         }),
         type: wedofCommon.type,
@@ -92,7 +86,7 @@ export const searchRegistrationFolder = createAction({
             filterOnStateDate: context.propsValue.periodForm['filterOnStateDate'] ?? null,
             proposalCode: context.propsValue.proposalCode ?? null,
         };
-        let queryParams: QueryParams = {};
+        const queryParams: QueryParams = {};
         Object.keys(params).forEach(value => {
             const key = value as keyof typeof params;
             if (params[key] != null && params[key] != undefined) {
