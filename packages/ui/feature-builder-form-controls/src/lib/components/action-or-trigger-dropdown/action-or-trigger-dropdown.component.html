@@ -15,6 +15,10 @@
     i18n-placeholder
     [formControl]="passedFormControl"
   >
+
+  <mat-select-trigger>
+    {{ (passedFormControl.value | selectedTirggerOrAction:items) }}
+  </mat-select-trigger>
     @for (opt of items; track opt.name) {
       <mat-option
         #option

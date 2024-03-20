@@ -88,7 +88,7 @@ export class PieceInputFormComponent {
   renameStepBasedOnSelectedTriggerOrAction$?: Observable<unknown>;
   deps$: Observable<{
     currentStep: Step | undefined;
-    triggersOrActions: (TriggerBase | ActionBase)[];
+    triggersOrActions: (TriggerBase[] | ActionBase[]);
     selectedTriggerOrAction: TriggerBase | ActionBase | undefined;
     pieceMetaData: PieceMetadataModel | undefined;
     webhookPrefix: string;

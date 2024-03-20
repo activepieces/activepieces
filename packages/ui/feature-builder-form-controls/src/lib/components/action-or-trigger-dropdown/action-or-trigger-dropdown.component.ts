@@ -15,6 +15,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { IsTriggerGuardPipe } from '../../pipes/is-trigger-guard.pipe';
 import { DropdownSelectedValuesPipe } from '../../pipes/dropdown-selected-values.pipe';
+import { selectedTirggerOrActionPipe } from '../../pipes/selected-action-or-trigger.pipe';
 
 @Component({
   selector: 'app-action-or-trigger-dropdown',
@@ -24,12 +25,13 @@ import { DropdownSelectedValuesPipe } from '../../pipes/dropdown-selected-values
     UiCommonModule,
     IsTriggerGuardPipe,
     DropdownSelectedValuesPipe,
+    selectedTirggerOrActionPipe
   ],
   templateUrl: './action-or-trigger-dropdown.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ActionOrTriggerDropdownComponent {
-  @Input({ required: true }) items: (ActionBase | TriggerBase)[] = [];
+  @Input({ required: true }) items: (ActionBase[] | TriggerBase[]) = [];
   @Output() newActionOrTriggerSelected = new EventEmitter<
     ActionBase | TriggerBase
   >();
@@ -37,6 +39,7 @@ export class ActionOrTriggerDropdownComponent {
     nonNullable: true,
     validators: Validators.required,
   });
+
   readonly TriggerStrategy = TriggerStrategy;
   readonly noOptionsError = $localize`No options available`;
   readonly selectTriggerError = $localize`Please select a trigger`;
