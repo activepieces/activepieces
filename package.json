@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
   "version": "0.21.0",
-  "rcVersion": "0.22.0-rc.1",
+  "rcVersion": "0.22.0-rc.2",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve ui-core",
@@ -153,6 +153,7 @@
     "pino-loki": "2.1.3",
     "posthog-js": "1.83.0",
     "posthog-node": "3.1.3",
+    "priority-queue-typescript": "1.0.1",
     "prismjs": "1.29.0",
     "product-fruits": "1.0.23",
     "promise-mysql": "5.2.0",
