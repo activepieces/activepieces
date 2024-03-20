@@ -18,15 +18,14 @@ export const searchRegistrationFolder = createAction({
         period: wedofCommon.period,
         periodForm: Property.DynamicProperties({
             description: '',
-            displayName: '',
+            displayName: 'ez',
             required: true,
             refreshers: ['period'],
-            props: async ({auth, propsValue}) => {
-                const {period} = propsValue as unknown as {
-                    period: string;
-                };
+            props: async ({period}) => {
+                console.log(period);
+                const _period = period as unknown as string;
                 const props: DynamicPropsValue = {};
-                if (period === 'custom') {
+                if (_period === 'custom') {
                     props["since"] = Property.DateTime({
                         displayName: '(Période) Entre le',
                         description: 'Date au format YYYY-MM-DD',
@@ -37,9 +36,9 @@ export const searchRegistrationFolder = createAction({
                         description: 'Date au format YYYY-MM-DD',
                         required: true
                     });
-                } else if (['next', 'future', 'tomorrow'].some(v => period.toLowerCase().includes(v))) {
+                } else if (['next', 'future', 'tomorrow'].some(v => _period.toLowerCase().includes(v))) {
                     props["filterOnStateDate"] = wedofCommon.filterOnStateDateFuture;
-                } else if (period) {
+                } else if (_period) {
                     props["filterOnStateDate"] = wedofCommon.filterOnStateDate;
                 }
                 return props;
