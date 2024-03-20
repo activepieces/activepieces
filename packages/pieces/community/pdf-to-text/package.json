@@ -1,0 +1,9 @@
+{
+  "name": "@activepieces/piece-pdf-to-text",
+  "version": "0.0.1",
+  "dependencies": {
+    "@activepieces/pieces-framework": "*",
+    "tslib": "2.6.2",
+    "@activepieces/shared": "*"
+  }
+}

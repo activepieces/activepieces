@@ -1,0 +1,24 @@
+{
+  "name": "pieces-pdf-to-text",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/pdf-to-text/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/pdf-to-text",
+        "tsConfig": "packages/pieces/community/pdf-to-text/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/pdf-to-text/package.json",
+        "main": "packages/pieces/community/pdf-to-text/src/index.ts",
+        "assets": ["packages/pieces/community/pdf-to-text/*.md"]
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-pdf-to-text {args.ver} {args.tag}",
+      "dependsOn": ["build"]
+    }
+  },
+  "tags": []
+}
