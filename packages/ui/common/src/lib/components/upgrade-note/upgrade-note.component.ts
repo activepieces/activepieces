@@ -6,7 +6,7 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UpgradeNoteComponent {
-  @Input() pricingUrl = 'https://www.activepieces.com/pricing';
+  @Input() pricingUrl = 'https://www.activepieces.com/sales';
   @Input() docsLink = '';
   @Input({ required: true }) featureNote = '';
   openPricing() {

@@ -1,29 +1,21 @@
 <!-- BG color is inlined because we don't want it affected by whitelabelling -->
-<div apCard
-    class="ap-typography-body-1 ap-max-w-[900px] ap-p-5  ap-min-h-[150px] ap-bg-[#6e41e2]  ap-gap-4 ap-text-white ap-flex ap-justify-center ap-flex-col ap-relative ap-mb-8 !ap-border-primary-light">
+<div
+    class="ap-mt-10 ap-mx-auto ap-typography-body-1 ap-max-w-[900px] ap-text-center ap-p-5 ap-min-h-[150px] ap-gap-4 ap-text-gray-800 ap-flex ap-justify-center ap-flex-col ap-relative ap-mb-8">
     <div class="ap-typography-headline-5 ap-mt-1 ">
-        <b>Premium Feature</b>
+        <b>Unlock Projects</b>
     </div>
-    <div class="ap-typography-body-1  ap-text-white ap-max-w-[485px] ap-flex ap-flex-col ap-gap-4">
+    <div class="ap-typography-body-1 ap-mx-auto ap-text-gray-800 ap-max-w-[485px] ap-flex ap-flex-col ap-gap-4">
         {{featureNote}}
-        <div class="ap-flex ap-gap-3 ap-items-center ap-h-[3rem]">
-            <ap-button *ngIf="pricingUrl" (buttonClicked)="openPricing()" [fullWidthOfContainer]="true" btnColor="white"
-                btnSize="medium">
+        <div class="ap-flex ap-justify-center ap-gap-3 ap-items-center ap-h-[3rem]">
+            <ap-button *ngIf="pricingUrl" (buttonClicked)="openPricing()" [fullWidthOfContainer]="true" btnColor="primary"
+                btnSize="large">
                 <div
-                    class="ap-flex  ap-text-body-2 !ap-font-semibold ap-w-[400px] ap-items-center ap-justify-center ap-gap-1">
-                    <svg-icon class="ap-fill-body ap-w-[16px] ap-h-[16px]" [applyClass]="true"
-                        src="assets/img/custom/upgrade.svg">
-                    </svg-icon>
-                    Upgrade
+                    class="ap-text-body-2 !ap-font-semibold ap-items-center ap-justify-center">
+                    Request 7-Day Trial
                 </div>
             </ap-button>
-            <ap-icon-button *ngIf="docsLink" [height]="24" [width]="24" iconFilename="info.svg" i18n-tooltipText
-                tooltipText="Learn more" (buttonClicked)="openDocs()">
-            </ap-icon-button>
         </div>
     </div>
 
-    <img src="assets/img/custom/locked-feature.png"
-        class="ap-w-[250px] ap-object-contain ap-absolute ap-right-[50px] ap-bottom-0">
-
+    <video autoplay="" loop="" muted="" playsinline="" class="ap-mt-8 ap-max-w-[1280px] ap-w-full ap-rounded-xl"><source src="https://www.activepieces.com/videos/hero-video.mp4" type="video/mp4"></video>
 </div>
