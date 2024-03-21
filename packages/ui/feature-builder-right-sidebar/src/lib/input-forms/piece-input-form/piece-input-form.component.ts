@@ -72,6 +72,15 @@ import { FormControl, UntypedFormBuilder, Validators } from '@angular/forms';
           "
           [hideCustomizedInputs]="(isFormReadOnly$ | async | defaultTrue)"
         ></app-piece-properties-form>
+
+       @if(deps.currentStep.type === ActionType.PIECE)
+       {
+        <app-action-error-handling-form-control [formControl]="actionErrorHandlingFormControl" [hideContinueOnFailure]="deps.selectedTriggerOrAction.errorHandlingOptions?.continueOnFailure?.hide || false"
+          [hideRetryOnFailure]="deps.selectedTriggerOrAction.errorHandlingOptions?.retryOnFailure?.hide || false"
+          ></app-action-error-handling-form-control>
+       }
+      
+      
       }
     } @else {
       <div
@@ -96,8 +105,10 @@ export class PieceInputFormComponent {
     currentFlow: PopulatedFlow;
     allConnectionsForPiece: PieceConnectionDropdownItem[];
   }>;
+  actionErrorHandlingFormControl = new FormControl({});
   form = this.fb.group({});
   isFormReadOnly$: Observable<boolean>;
+  readonly ActionType = ActionType;
   constructor(
     private store: Store,
     private pieceMetaDataService: PieceMetadataService,
@@ -129,7 +140,12 @@ export class PieceInputFormComponent {
       formPieceTriggerPrefix: this.flagService.getFormUrlPrefix(),
       currentFlow: this.store.select(BuilderSelectors.selectCurrentFlow),
       allConnectionsForPiece: this.getAllConnectionsForPiece(),
-    });
+    }).pipe(tap((res=>{
+        if(res.currentStep?.type === ActionType.PIECE)
+        {
+          this.actionErrorHandlingFormControl.setValue(res.currentStep.settings.errorHandlingOptions || {});
+        }
+    })));
     this.renameStepBasedOnSelectedTriggerOrAction$ =
       this.renameStepBasedOnSelectedTriggerOrAction();
   }
@@ -288,6 +304,10 @@ export class PieceInputFormComponent {
               inputUiInfo: {
                 ...step.settings.inputUiInfo,
                 customizedInputs: result.customizedInputs,
+              },
+              errorHandlingOptions: 
+              {
+                ...this.actionErrorHandlingFormControl.value,
               },
             },
             valid: result.valid,
