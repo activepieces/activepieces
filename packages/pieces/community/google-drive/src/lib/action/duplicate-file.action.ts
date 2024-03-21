@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { googleDriveAuth } from '../../index';
+import { common } from '../common';
 
 export const duplicateFileAction = createAction({
   displayName: 'Duplicate File',
@@ -24,6 +25,7 @@ export const duplicateFileAction = createAction({
       description: 'The ID of the folder where the file will be duplicated',
       required: true,
     }),
+    include_team_drives: common.properties.include_team_drives,
   },
   async run(context) {
     const authClient = new OAuth2Client();
@@ -39,6 +41,7 @@ export const duplicateFileAction = createAction({
       fileId,
       auth: authClient,
       requestBody: { name: nameForNewFile, parents: [parentFolderId] },
+      supportsAllDrives: context.propsValue.include_team_drives,
     });
 
     if (response.status !== 200) {
