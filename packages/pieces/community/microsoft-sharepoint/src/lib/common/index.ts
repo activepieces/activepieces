@@ -1,7 +1,7 @@
 import { microsoftSharePointAuth } from '../../';
 import { DropdownOption, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
-import { Site, Drive } from '@microsoft/microsoft-graph-types';
+import { Site, Drive, List } from '@microsoft/microsoft-graph-types';
 
 export const microsoftSharePointCommon = {
 	siteId: Property.Dropdown({
@@ -82,6 +82,51 @@ export const microsoftSharePointCommon = {
 			while (response.value.length > 0) {
 				for (const drive of response.value as Drive[]) {
 					options.push({ label: drive.name!, value: drive.id! });
+				}
+				if (response['@odata.nextLink']) {
+					response = await client.api(response['@odata.nextLink']).get();
+				} else {
+					break;
+				}
+			}
+
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	}),
+	listId: Property.Dropdown({
+		displayName: 'List ID',
+		required: true,
+		refreshers: ['siteId'],
+		options: async ({ auth, siteId }) => {
+			if (!auth || !siteId) {
+				return {
+					disabled: true,
+					placeholder: 'Please connect your account first and select site.',
+					options: [],
+				};
+			}
+
+			const authValue = auth as PiecePropValueSchema<typeof microsoftSharePointAuth>;
+
+			const client = Client.initWithMiddleware({
+				authProvider: {
+					getAccessToken: () => Promise.resolve(authValue.access_token),
+				},
+			});
+
+			const options: DropdownOption<string>[] = [];
+
+			let response: PageCollection = await client
+				.api(`/sites/${siteId}/lists`)
+				.select('displayName,id')
+				.get();
+
+			while (response.value.length > 0) {
+				for (const list of response.value as List[]) {
+					options.push({ label: list.displayName!, value: list.id! });
 				}
 				if (response['@odata.nextLink']) {
 					response = await client.api(response['@odata.nextLink']).get();
