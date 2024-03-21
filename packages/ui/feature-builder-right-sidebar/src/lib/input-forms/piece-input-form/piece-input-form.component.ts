@@ -119,11 +119,15 @@ export class PieceInputFormComponent {
       tap((res)=>{
         if(res)
         {
-          this.form.disable();
+          this.form.disable({emitEvent:false});
+          this.actionErrorHandlingFormControl.disable({emitEvent:false});
+          this.triggersOrActionsControl.disable({emitEvent:false});
         }
         else
         {
-          this.form.enable();
+          this.form.enable({emitEvent:false});
+          this.actionErrorHandlingFormControl.enable({emitEvent:false});
+          this.triggersOrActionsControl.enable({emitEvent:false});
         }
     }));
     this.triggersOrActionsControl = new FormControl<string>('', {
@@ -294,6 +298,7 @@ export class PieceInputFormComponent {
         }),
       );
     } else if (step.type === ActionType.PIECE) {
+
       this.store.dispatch(
         FlowsActions.updateAction({
           operation: {

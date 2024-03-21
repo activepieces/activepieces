@@ -35,6 +35,6 @@ export class StaticDropdownControlComponent {
   searchControl = new FormControl('', { nonNullable: true });
   readonly PropertyType = PropertyType;
   dropdownCompareWithFunction(opt: unknown, formControlValue: string) {
-    return formControlValue !== undefined && deepEqual(opt, formControlValue);
+    return formControlValue !== undefined && deepEqual(opt, formControlValue,{ strict: true });
   }
 }

@@ -131,7 +131,6 @@ export class TemplateAppsDropdownComponent implements ControlValueAccessor {
               CORE_PIECES_ACTIONS_NAMES.find((n) => p.name === n) ||
               CORE_PIECES_TRIGGERS.find((n) => p.name === n)
             ) {
-              console.log(p.name);
               return {
                 ...p,
                 logoUrl: corePieceIconUrl(p.name),

@@ -25,6 +25,7 @@ import {
   startWith,
   switchMap,
   tap,
+  debounceTime
 } from 'rxjs';
 
 @Component({
@@ -68,16 +69,16 @@ export class RefreshablePropertyCoreControlComponent {
         }),
       );
     }));
-
+    const refreshers$: Observable<any> = this.stepChanged$.pipe(switchMap(()=>{
+      return combineLatest(this.getPropertyRefreshers(true)).pipe(
+        startWith(this.parentFormGroup.value),
+        debounceTime(300)
+      );
+    }))
     const search$ = this.getSearchRefresher();
     const singleTimeRefresher$ = of('singleTimeRefresher');
     return combineLatest({
-      refreshers: this.stepChanged$.pipe(switchMap(()=>{
-        return combineLatest(this.getPropertyRefreshers(true)).pipe(
-          startWith(this.parentFormGroup.value),
-        );
-      }))
-      ,
+      refreshers: refreshers$,
       search: search$.pipe(startWith('')),
       singleTimeRefresher: singleTimeRefresher$,
     }).pipe(
@@ -163,3 +164,5 @@ export class RefreshablePropertyCoreControlComponent {
     console.error("refreshersChanged not implemented")
   }
 }
+
+

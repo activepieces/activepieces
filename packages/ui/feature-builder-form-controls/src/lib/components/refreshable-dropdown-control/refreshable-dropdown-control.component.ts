@@ -43,7 +43,7 @@ export class RefreshableDropdownControlComponent
     this.options$ = this.createRefreshers();
   }
   dropdownCompareWithFunction(opt: unknown, formControlValue: string) {
-    return formControlValue !== undefined && deepEqual(opt, formControlValue);
+    return formControlValue !== undefined && deepEqual(opt, formControlValue, { strict: true });
   }
   override refreshersChanged()
   {

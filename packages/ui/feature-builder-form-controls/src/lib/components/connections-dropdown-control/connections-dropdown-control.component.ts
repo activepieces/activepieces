@@ -69,7 +69,7 @@ import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections
                 }
               </div>
               <div>
-                @if (passedFormControl.value) {
+                @if (passedFormControl.value && passedFormControl.enabled) {
                   <app-add-edit-connection-button
                     (click)="$event.stopPropagation()"
                     btnSize="extraSmall"

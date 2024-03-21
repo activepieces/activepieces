@@ -76,7 +76,6 @@ export class StepMentionsTreeComponent implements OnInit {
           const childrenCount = this.calculateChildren(
             this.stepOutputObjectChildNodes
           );
-          console.log(this.stepOutputObjectChildNodes);
           if (childrenCount <= MAX_ARRAY_LENGTH_BEFORE_SLICING) {
             this.treeControl.expandAll();
           }
