@@ -90,6 +90,7 @@ export async function getConversationContent(
     await new Promise((f) => setTimeout(f, 10000));
 
     conversation = await getConversation(conversationId);
+    console.log('STATUS', conversation.body);
     retries += 1;
   }
 
