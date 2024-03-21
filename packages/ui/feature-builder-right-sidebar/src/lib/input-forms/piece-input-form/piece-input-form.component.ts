@@ -30,6 +30,7 @@ import {
   ActionType,
   PopulatedFlow,
   TriggerType,
+  isNil,
   spreadIfDefined,
 } from '@activepieces/shared';
 import { ActionBase, TriggerBase } from '@activepieces/pieces-framework';
@@ -280,6 +281,7 @@ export class PieceInputFormComponent {
     },
     step: Step,
   ) {
+    debugger;
     if (step.type === TriggerType.PIECE) {
       this.store.dispatch(
         FlowsActions.updateTrigger({
@@ -287,7 +289,7 @@ export class PieceInputFormComponent {
             ...step,
             settings: {
               ...step.settings,
-              input: result.input,
+              input: this.removeEmptyValuesFromInput(result.input),
               inputUiInfo: {
                 ...step.settings.inputUiInfo,
                 customizedInputs: result.customizedInputs,
@@ -298,14 +300,14 @@ export class PieceInputFormComponent {
         }),
       );
     } else if (step.type === ActionType.PIECE) {
-
+    
       this.store.dispatch(
         FlowsActions.updateAction({
           operation: {
             ...step,
             settings: {
               ...step.settings,
-              input: result.input,
+              input: this.removeEmptyValuesFromInput(result.input),
               inputUiInfo: {
                 ...step.settings.inputUiInfo,
                 customizedInputs: result.customizedInputs,
@@ -341,5 +343,30 @@ export class PieceInputFormComponent {
         }
       }),
     );
+  }
+
+
+  removeEmptyValuesFromInput(input:Record<string,unknown>) : Record<string,unknown>
+  {
+    const cleanedInput:Record<string,unknown> = {};
+    Object.keys(input).forEach((key)=>{
+      if(!isNil(input[key]) && input[key] !== '' && typeof input[key] !== 'object')
+      {
+        cleanedInput[key] = input[key];
+      }
+      else if(typeof input[key] === 'object' && !Array.isArray(input[key]))
+      {
+        const cleanedObject = this.removeEmptyValuesFromInput(input[key] as Record<string,unknown>);
+        if(Object.keys(cleanedObject).length > 0)
+        {
+          cleanedInput[key] = cleanedObject;
+        }
+      }
+      else 
+      {
+        cleanedInput[key] = input[key];
+      }
+    });
+    return cleanedInput;
   }
 }
