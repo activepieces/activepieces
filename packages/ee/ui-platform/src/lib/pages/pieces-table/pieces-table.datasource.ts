@@ -35,9 +35,11 @@ export class PiecesTableDataSource extends DataSource<ManagedPieceMetadataModelS
     private withoutOAuth2Cred: boolean
   ) {
     super();
-    this.pieces$ = this.piecesService.listPieces({
-      includeHidden: true,
-    }).pipe(shareReplay(1));
+    this.pieces$ = this.piecesService
+      .listPieces({
+        includeHidden: true,
+      })
+      .pipe(shareReplay(1));
   }
 
   /**
