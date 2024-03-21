@@ -5,11 +5,26 @@ import {
 } from '@activepieces/shared'
 import { triggerEventService } from './trigger-event.service'
 import { flowService } from '../flow/flow.service'
+import { redisSystemJob } from '../../ee/helper/redis-system-job'
+import { SystemProp, system } from 'server-shared'
 
 const DEFAULT_PAGE_SIZE = 10
 
 export const triggerEventModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(triggerEventController, { prefix: '/v1/trigger-events' })
+    await redisSystemJob.upsertJob({
+        job: {
+            name: 'trigger-data-cleaner',
+            data: {},
+        },
+        schedule: {
+            type: 'repeated',
+            cron: `0 * */${system.getNumber(SystemProp.EXECUTION_DATA_RETENTION_DAYS)} * *`,
+        },
+        async handler() {
+            await triggerEventService.deleteEventsOlderThanFourteenDay()
+        },
+    })
 }
 
 const triggerEventController: FastifyPluginAsyncTypebox = async (fastify) => {
