@@ -87,8 +87,11 @@ export class FlowsEffects {
       concatLatestFrom(() =>
         this.store.select(BuilderSelectors.selectCurrentStep)
       ),
-      switchMap(([{ displayName, name }, step]) => {
+      switchMap(([{ displayName, name,properties }, step]) => {
         if (step) {
+          const valid = Object.keys(properties).reduce((acc, key) => {
+            return acc && !properties[key]?.required;
+          },true);
           if (step.type === TriggerType.PIECE) {
             return of(
               FlowsActions.updateTrigger({
@@ -103,6 +106,7 @@ export class FlowsEffects {
                       customizedInputs: {},
                     },
                   },
+                  valid:valid,
                 },
               })
             );
@@ -120,6 +124,7 @@ export class FlowsEffects {
                       customizedInputs: {},
                     },
                   },
+                  valid:valid,
                 },
               })
             );

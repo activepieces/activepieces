@@ -24,6 +24,7 @@ import {
   startWith,
   switchMap,
   tap,
+  take
 } from 'rxjs';
 import {
   AUTHENTICATION_PROPERTY_NAME,
@@ -328,16 +329,23 @@ export class PieceInputFormComponent {
     return combineLatest({
       triggersOrActions: this.getTriggersOrActions(),
       triggerOrActionName: this.triggersOrActionsControl.valueChanges,
+      pieceMetaData: this.getPieceMetaData().pipe(take(1)),
     }).pipe(
-      tap(({ triggersOrActions, triggerOrActionName }) => {
+      tap(({ triggersOrActions, triggerOrActionName, pieceMetaData }) => {
         const selectedTriggerOrAction = triggersOrActions.find(
           (x) => x.name === triggerOrActionName,
         );
         if (selectedTriggerOrAction) {
+          console.log(selectedTriggerOrAction.props);
           this.store.dispatch(
             FlowsActions.newTriggerOrActionSelected({
               displayName: selectedTriggerOrAction.displayName,
               name: selectedTriggerOrAction.name,
+              properties: {...selectedTriggerOrAction.props ,
+                   ...spreadIfDefined(
+                AUTHENTICATION_PROPERTY_NAME,
+                pieceMetaData?.auth,
+              ),},
             }),
           );
         }
