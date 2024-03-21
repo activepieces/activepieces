@@ -14,7 +14,7 @@
       </div>
     
       <div *ngIf="currentStepPieceVersion$ | async as result"
-        class="ap-bg-white ap-body-2 !ap-text-description ap-w-full ap-px-4 ap-py-1 ap-z-40 ap-flex "
+        class="ap-bg-white ap-body-2  ap-items-center ap-gap-1 !ap-text-description ap-w-full ap-px-4 ap-py-1 ap-z-40 ap-flex "
         >
 
         <ng-container *ngIf="showDocs$ | async; else showLink">
@@ -23,7 +23,7 @@
             [matTooltip]="result.tooltipText">
             <div *ngIf="!result.latest"
               class="ap-rounded-full ap-border ap-border-warn ap-bg-warn ap-h-[8px] ap-w-[8px]">
-            </div> v{{result.version}}
+            </div> v {{result.version}}
           </a>
         </ng-container>
         <ng-template #showLink>

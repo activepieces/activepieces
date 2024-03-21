@@ -40,6 +40,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
   [SystemProp.CONFIG_PATH]: path.join(os.homedir(), '.activepieces'),
   [SystemProp.DB_TYPE]: DatabaseType.POSTGRES,
   [SystemProp.EDITION]: 'ce',
+  [SystemProp.EXECUTION_DATA_RETENTION_DAYS]: '14',
   [SystemProp.COPILOT_INSTANCE_TYPE]: CopilotInstanceTypes.OPENAI,
   [SystemProp.AZURE_OPENAI_API_VERSION]:  '2023-06-01-preview',
   [SystemProp.ENGINE_EXECUTABLE_PATH]: 'dist/packages/engine/main.js',

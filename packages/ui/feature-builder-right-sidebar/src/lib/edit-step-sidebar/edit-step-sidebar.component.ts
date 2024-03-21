@@ -17,6 +17,7 @@ import {
   canvasActions,
 } from '@activepieces/ui/feature-builder-store';
 import { FlowItemDetails } from '@activepieces/ui/common';
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 
 @Component({
   selector: 'app-edit-step-sidebar',
@@ -24,7 +25,11 @@ import { FlowItemDetails } from '@activepieces/ui/common';
   styleUrls: ['./edit-step-sidebar.component.css'],
 })
 export class NewEditPieceSidebarComponent implements OnInit {
-  constructor(private store: Store, private cd: ChangeDetectorRef) {}
+  constructor(
+    private store: Store,
+    private cd: ChangeDetectorRef,
+    private pieceService: PieceMetadataService
+  ) {}
   displayNameChanged$: BehaviorSubject<string> = new BehaviorSubject('Step');
   selectedStepAndFlowId$: Observable<{
     step: Step | null | undefined;
@@ -46,8 +51,8 @@ export class NewEditPieceSidebarComponent implements OnInit {
       tap((result) => {
         if (result.step) {
           this.displayNameChanged$.next(result.step.displayName);
-          this.selectedFlowItemDetails$ = this.store.select(
-            BuilderSelectors.selectFlowItemDetails(result.step)
+          this.selectedFlowItemDetails$ = this.pieceService.getStepDetails(
+            result.step
           );
           this.cd.markForCheck();
         } else {

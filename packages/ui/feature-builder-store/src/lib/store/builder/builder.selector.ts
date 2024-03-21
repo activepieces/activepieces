@@ -10,19 +10,12 @@ import {
   flowHelper,
 } from '@activepieces/shared';
 import { ViewModeEnum } from '../../model/enums/view-mode.enum';
-import { FlowItemsDetailsState } from '../../model/flow-items-details-state.model';
 import { ActionType, TriggerType } from '@activepieces/shared';
 import { Step, StepWithIndex } from '../../model/step';
 import { FlowStructureUtil } from '../../utils/flowStructureUtil';
 import { BuilderSavingStatusEnum, CanvasState } from '../../model';
-import { FlowItemDetails, MentionListItem } from '@activepieces/ui/common';
+import { MentionListItem } from '@activepieces/ui/common';
 import { StepRunResult } from '../../utils/stepRunResult';
-import {
-  CORE_PIECES_ACTIONS_NAMES,
-  CORE_PIECES_TRIGGERS,
-  CORE_SCHEDULE,
-  corePieceIconUrl,
-} from '@activepieces/ui/feature-pieces';
 
 export const BUILDER_STATE_NAME = 'builderState';
 
@@ -298,106 +291,13 @@ export const selectCurrentRightSideBarType = createSelector(
   }
 );
 
-export const selectAllFlowItemsDetails = createSelector(
-  selectGlobalBuilderState,
-  (state: GlobalBuilderState) => {
-    return state?.flowItemsDetailsState;
-  }
-);
-export const selectAllFlowItemsDetailsLoadedState = createSelector(
-  selectAllFlowItemsDetails,
-  (state: FlowItemsDetailsState) => {
-    return state.loaded;
-  }
-);
-
-export const selectCoreFlowItemsDetails = createSelector(
-  selectAllFlowItemsDetails,
-  (state: FlowItemsDetailsState) => {
-    return state.coreFlowItemsDetails;
-  }
-);
-const selectMissingStepRecommendedFlowItemsDetails = createSelector(
-  selectCoreFlowItemsDetails,
-  (core: FlowItemDetails[]) => {
-    const recommendations = core.filter(
-      (f) =>
-        (f.type === ActionType.PIECE &&
-          f.extra?.pieceName === '@activepieces/piece-http') ||
-        f.type === ActionType.CODE
-    );
-    return recommendations;
-  }
-);
-
-export const selectFlowItemDetailsForCoreTriggers = createSelector(
-  selectAllFlowItemsDetails,
-  (state: FlowItemsDetailsState) => {
-    return state.coreTriggerFlowItemsDetails.filter(
-      (details) => details.type !== TriggerType.EMPTY
-    );
-  }
-);
-export const selectFlowItemDetailsForCustomPiecesActions = createSelector(
-  selectAllFlowItemsDetails,
-  (state: FlowItemsDetailsState) => {
-    return state.customPiecesActionsFlowItemDetails;
-  }
-);
-export const selectFlowItemDetailsForCustomPiecesTriggers = createSelector(
-  selectAllFlowItemsDetails,
-  (state: FlowItemsDetailsState) => {
-    return state.customPiecesTriggersFlowItemDetails;
-  }
-);
-
-export const selectFlowItemDetails = (flowItem: Step) =>
-  createSelector(selectAllFlowItemsDetails, (state: FlowItemsDetailsState) => {
-    if (flowItem.type === ActionType.PIECE) {
-      if (
-        CORE_PIECES_ACTIONS_NAMES.find((n) => n === flowItem.settings.pieceName)
-      ) {
-        return state.coreFlowItemsDetails.find(
-          (c) => c.extra?.pieceName === flowItem.settings.pieceName
-        );
-      }
-      return state.customPiecesActionsFlowItemDetails.find(
-        (f) => f.extra?.pieceName === flowItem.settings.pieceName
-      );
-    }
-    if (flowItem.type === TriggerType.PIECE) {
-      if (CORE_PIECES_TRIGGERS.find((n) => n === flowItem.settings.pieceName)) {
-        return state.coreTriggerFlowItemsDetails.find(
-          (c) => c.extra?.pieceName === flowItem.settings.pieceName
-        );
-      }
-      return state.customPiecesTriggersFlowItemDetails.find(
-        (f) => f.extra?.pieceName === flowItem.settings.pieceName
-      );
-    }
-
-    //Core items might contain remote flows so always have them at the end
-    const coreItemDetials = state.coreFlowItemsDetails.find(
-      (c) => c.type === flowItem.type
-    );
-
-    if (coreItemDetials) return coreItemDetials;
-    const triggerItemDetails = state.coreTriggerFlowItemsDetails.find(
-      (t) => t.type === flowItem.type
-    );
-
-    return triggerItemDetails;
-  });
-
 const selectAllStepsForMentionsDropdown = createSelector(
   selectCurrentStep,
   selectViewedVersion,
-  selectAllFlowItemsDetails,
   (
     currentStep,
-    flowVersion,
-    flowItemDetails
-  ): (MentionListItem & { step: StepWithIndex })[] => {
+    flowVersion
+  ): (Omit<MentionListItem, 'logoUrl'> & { step: StepWithIndex })[] => {
     if (!currentStep || !flowVersion || !flowVersion.trigger) {
       return [];
     }
@@ -410,7 +310,6 @@ const selectAllStepsForMentionsDropdown = createSelector(
         label: s.displayName,
         value: `{{${s.name}}}`,
         step: s,
-        logoUrl: findStepLogoUrlForMentions(s, flowItemDetails),
       };
     });
   }
@@ -424,44 +323,7 @@ const selectStepIndex = (stepName: string) => {
 const selectStepValidity = createSelector(selectCurrentStep, (step) => {
   return step?.valid || false;
 });
-function findStepLogoUrlForMentions(
-  step: Step,
-  flowItemsDetailsState: FlowItemsDetailsState
-) {
-  switch (step.type) {
-    case ActionType.PIECE:
-      if (
-        CORE_PIECES_ACTIONS_NAMES.find((n) => n === step.settings.pieceName)
-      ) {
-        return corePieceIconUrl(step.settings.pieceName);
-      }
-      return flowItemsDetailsState.customPiecesActionsFlowItemDetails.find(
-        (i) => i.extra?.pieceName === step.settings.pieceName
-      )?.logoUrl;
-    case TriggerType.PIECE:
-      if (CORE_PIECES_TRIGGERS.find((n) => n === step.settings.pieceName)) {
-        return corePieceIconUrl(step.settings.pieceName);
-      }
-      return flowItemsDetailsState.customPiecesTriggersFlowItemDetails.find(
-        (i) => i.extra?.pieceName === step.settings.pieceName
-      )?.logoUrl;
-    case TriggerType.EMPTY:
-      return 'assets/img/custom/piece/emptyTrigger.png';
-    case ActionType.BRANCH:
-      return 'assets/img/custom/piece/branch_mention.png';
-    case ActionType.LOOP_ON_ITEMS:
-      return 'assets/img/custom/piece/loop_mention.png';
-    case ActionType.CODE:
-      return 'assets/img/custom/piece/code_mention.png';
-  }
-}
 
-const selectIsSchduleTrigger = createSelector(selectCurrentFlow, (flow) => {
-  if (flow?.version?.trigger.type === TriggerType.PIECE) {
-    return flow.version.trigger.settings.pieceName === CORE_SCHEDULE;
-  }
-  return false;
-});
 const selectCurrentStepPieceVersionAndName = createSelector(
   selectCurrentStep,
   (s) => {
@@ -474,34 +336,12 @@ const selectCurrentStepPieceVersionAndName = createSelector(
     return undefined;
   }
 );
-const selectStepLogoUrl = (stepName: string) => {
-  return createSelector(
-    selectCurrentFlow,
-    selectAllFlowItemsDetails,
-    (flow, flowItemsDetails) => {
-      const step = flowHelper
-        .getAllSteps(flow?.version?.trigger)
-        .find((s: Step) => s.name === stepName);
-      if (!step) {
-        throw new Error(`Couldn't find the step ${stepName}`);
-      }
-      const logoUrl = findStepLogoUrlForMentions(step, flowItemsDetails);
-      return logoUrl;
-    }
-  );
-};
+
 const selectLastClickedAddBtnId = createSelector(selectCanvasState, (state) => {
   return state.clickedAddBtnId;
 });
 
 const selectFlowTriggerIsTested = createSelector(selectCurrentFlow, (flow) => {
-  if (
-    (flow.version.trigger.type === TriggerType.PIECE &&
-      flow.version.trigger.settings.pieceName === CORE_SCHEDULE) ||
-    flow.version.trigger.settings.pieceName === 'schedule'
-  ) {
-    return true;
-  }
   switch (flow.version.trigger.type) {
     case TriggerType.EMPTY:
       return false;
@@ -538,28 +378,18 @@ export const BuilderSelectors = {
   selectCurrentFlowRunStatus,
   selectCurrentStepDisplayName,
   selectIsInDebugMode,
-  selectAllFlowItemsDetails,
-  selectFlowItemDetails,
-  selectAllFlowItemsDetailsLoadedState,
-  selectCoreFlowItemsDetails,
-  selectFlowItemDetailsForCoreTriggers,
   selectCurrentFlowValidity,
-  selectFlowItemDetailsForCustomPiecesActions,
-  selectFlowItemDetailsForCustomPiecesTriggers,
   selectAllStepsForMentionsDropdown,
-  selectStepLogoUrl,
   selectCurrentStepSettings,
   selectTriggerSelectedSampleData,
   selectStepValidity,
   selectDraftVersionId,
   selectViewedVersion,
-  selectIsSchduleTrigger,
   selectCurrentStepPieceVersionAndName,
   /**If string is empty will return the string equivalent of a space */
   selectStepTestSampleData,
   selectLastTestDate,
   selectNumberOfInvalidSteps,
-  selectMissingStepRecommendedFlowItemsDetails,
   selectStepTestSampleDataStringified,
   selectIsCurrentVersionPublished,
   selectPublishedFlowVersion,

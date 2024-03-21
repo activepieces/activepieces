@@ -5,12 +5,13 @@ import {
   NgForm,
 } from '@angular/forms';
 import { ErrorStateMatcher, mixinErrorState } from '@angular/material/core';
-import { Subject } from 'rxjs';
+import { Subject, forkJoin, map } from 'rxjs';
 import { Step, StepWithIndex } from '@activepieces/ui/feature-builder-store';
 import {
   InsertMentionOperation,
   MentionListItem,
 } from '@activepieces/ui/common';
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 
 export const customCodeMentionDisplayName = 'Custom Code';
 export const keysWithinPath = (path: string) => {
@@ -82,6 +83,23 @@ export class CustomErrorMatcher implements ErrorStateMatcher {
   isErrorState(control: FormControl): boolean {
     return control.touched && control.invalid;
   }
+}
+
+export function enrichMentionDropdownWithIcons(
+  steps: (Omit<MentionListItem, 'logoUrl'> & { step: StepWithIndex })[],
+  pieceService: PieceMetadataService
+) {
+  const icons = steps.map((step) => pieceService.getIconUrlForStep(step.step));
+  return forkJoin(icons).pipe(
+    map((urls) => {
+      return steps.map((step, index) => {
+        return {
+          ...step,
+          logoUrl: urls[index],
+        };
+      });
+    })
+  );
 }
 
 export function fromTextToOps(
