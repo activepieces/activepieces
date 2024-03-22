@@ -11,7 +11,6 @@ import { FormControl } from '@angular/forms';
   template: `
     <mat-form-field
       subscriptSizing="dynamic"
-      subscriptSizing="dynamic"
       appearance="fill"
       (click)="$event.stopPropagation()"
       class="ap-w-full "
