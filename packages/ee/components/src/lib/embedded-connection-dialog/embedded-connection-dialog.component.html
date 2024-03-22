@@ -1,7 +1,7 @@
 <div class="ap-hidden">
     <app-add-edit-connection-button *ngIf="openNewConnectionsDialog$ | async as newConnectionPiece " #connectionButton
         btnSize="extraSmall" [isEditConnectionButton]="false" [authProperty]="newConnectionPiece.auth!"
-        [pieceName]="newConnectionPiece.name" [pieceVersion]="newConnectionPiece.version" [propertyKey]="''"
+        [pieceName]="newConnectionPiece.name" [pieceVersion]="newConnectionPiece.version"
         [pieceDisplayName]="newConnectionPiece.displayName" (newConnection)="hideConnectionIframe($event)"
         (newConnectionDialogClosed)="hideConnectionIframe()"></app-add-edit-connection-button>
 </div>
