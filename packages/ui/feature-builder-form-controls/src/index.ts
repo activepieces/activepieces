@@ -15,3 +15,4 @@ export * from './lib/components/action-error-handling-form-control/action-error-
 export * from './lib/components/new-piece-properties-form/piece-properties-form.component';
 export * from './lib/components/action-or-trigger-dropdown/action-or-trigger-dropdown.component';
 import '@angular/localize/init';
+export * from './lib/components/dynamic-property-control/dynamic-property-control.component';
