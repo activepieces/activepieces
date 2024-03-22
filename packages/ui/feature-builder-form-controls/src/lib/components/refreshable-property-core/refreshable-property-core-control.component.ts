@@ -8,7 +8,7 @@ import {
   PiecePropertyMap,
   PropertyType,
 } from '@activepieces/pieces-framework';
-import {  UntypedFormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 import {
   AUTHENTICATION_PROPERTY_NAME,
@@ -25,7 +25,7 @@ import {
   startWith,
   switchMap,
   tap,
-  debounceTime
+  debounceTime,
 } from 'rxjs';
 
 @Component({
@@ -33,11 +33,10 @@ import {
   template: ``,
 })
 export class RefreshablePropertyCoreControlComponent {
-
   @Input({ required: true }) property:
     | DropdownProperty<unknown, boolean>
     | MultiSelectDropdownProperty<unknown, boolean>
-    | DynamicProperties<boolean>
+    | DynamicProperties<boolean>;
   @Input({ required: true }) parentFormGroup: UntypedFormGroup;
   @Input({ required: true }) pieceMetaData: PieceMetadataModel;
   @Input({ required: true }) actionOrTriggerName: string;
@@ -48,33 +47,34 @@ export class RefreshablePropertyCoreControlComponent {
   @Input({ required: true }) stepChanged$: Observable<string>;
   constructor(
     private piecetaDataService: PieceMetadataService,
-    private searchRefresher$?: Observable<string>,
-  ) {
-  }
+    private searchRefresher$?: Observable<string>
+  ) {}
 
   protected createRefreshers<
-    T extends DropdownState<unknown> | PiecePropertyMap,
+    T extends DropdownState<unknown> | PiecePropertyMap
   >() {
     this.resetValueOnRefresherChange$ = this.stepChanged$.pipe(
-      tap(()=>{
+      tap(() => {
         this.loading$.next(true);
       }),
-      switchMap(()=>{
-      return merge(
-        ...Object.values(this.getPropertyRefreshers(false))
-      ).pipe(
-        tap(() => {
-          this.refreshersChanged();
-          this.loading$.next(true);
-        }),
-      );
-    }));
-    const refreshers$: Observable<any> = this.stepChanged$.pipe(switchMap(()=>{
-      return combineLatest(this.getPropertyRefreshers(true)).pipe(
-        startWith(this.parentFormGroup.value),
-        debounceTime(300)
-      );
-    }))
+      switchMap(() => {
+        return merge(...Object.values(this.getPropertyRefreshers(false))).pipe(
+          tap(() => {
+            this.refreshersChanged();
+            this.loading$.next(true);
+          })
+        );
+      })
+    );
+    const refreshers$: Observable<any> = this.stepChanged$.pipe(
+      switchMap(() => {
+        debugger;
+        return combineLatest(this.getPropertyRefreshers(true)).pipe(
+          startWith(this.parentFormGroup.value),
+          debounceTime(300)
+        );
+      })
+    );
     const search$ = this.getSearchRefresher();
     const singleTimeRefresher$ = of('singleTimeRefresher');
     return combineLatest({
@@ -101,10 +101,10 @@ export class RefreshablePropertyCoreControlComponent {
           .pipe(
             tap(() => {
               this.loading$.next(false);
-            }),
+            })
           );
       }),
-      shareReplay(1),
+      shareReplay(1)
     );
   }
 
@@ -117,7 +117,7 @@ export class RefreshablePropertyCoreControlComponent {
   }
 
   private getPropertyRefreshers(
-    startWithInitialValue: boolean,
+    startWithInitialValue: boolean
   ): Record<string, Observable<unknown>> {
     const refreshers =
       this.property.refreshers
@@ -131,8 +131,9 @@ export class RefreshablePropertyCoreControlComponent {
                 : refresh$,
             };
           } else {
-            console.error(
-              `Refreshable dropdown control: ${this.property.displayName} has a refresher ${refresherName} that does not exist in the form group`,
+            //this could happen when stepChanged$ emits before the inputs properties are changed
+            console.warn(
+              `Refreshable dropdown control: ${this.property.displayName} has a refresher ${refresherName} that does not exist in the form group`
             );
             return null;
           }
@@ -142,7 +143,7 @@ export class RefreshablePropertyCoreControlComponent {
           return { ...acc, ...curr };
         }, {}) ?? {};
     const authRefresher = this.parentFormGroup.get(
-      AUTHENTICATION_PROPERTY_NAME,
+      AUTHENTICATION_PROPERTY_NAME
     )?.valueChanges;
     return {
       ...refreshers,
@@ -151,18 +152,15 @@ export class RefreshablePropertyCoreControlComponent {
         startWithInitialValue
           ? authRefresher?.pipe(
               startWith(
-                this.parentFormGroup.get(AUTHENTICATION_PROPERTY_NAME)?.value,
-              ),
+                this.parentFormGroup.get(AUTHENTICATION_PROPERTY_NAME)?.value
+              )
             )
-          : authRefresher,
+          : authRefresher
       ),
     };
   }
 
-  protected refreshersChanged()
-  {
-    console.error("refreshersChanged not implemented")
+  protected refreshersChanged() {
+    console.error('refreshersChanged not implemented');
   }
 }
-
-

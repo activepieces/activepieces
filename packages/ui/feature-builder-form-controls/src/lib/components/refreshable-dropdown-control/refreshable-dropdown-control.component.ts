@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Input,
+  OnInit,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { DropdownState, PropertyType } from '@activepieces/pieces-framework';
@@ -40,13 +45,17 @@ export class RefreshableDropdownControlComponent
     this.searchControl = searchControl;
   }
   ngOnInit() {
+    debugger;
+    console.log(this.property);
     this.options$ = this.createRefreshers();
   }
   dropdownCompareWithFunction(opt: unknown, formControlValue: string) {
-    return formControlValue !== undefined && deepEqual(opt, formControlValue, { strict: true });
+    return (
+      formControlValue !== undefined &&
+      deepEqual(opt, formControlValue, { strict: true })
+    );
   }
-  override refreshersChanged()
-  {
+  override refreshersChanged() {
     this.passedFormControl.setValue(undefined);
   }
 }
