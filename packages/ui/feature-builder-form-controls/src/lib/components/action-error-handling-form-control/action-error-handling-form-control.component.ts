@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+} from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -31,6 +37,7 @@ export class ActionErrorHandlingFormControlComponent
   }>;
   @Input() hideContinueOnFailure = false;
   @Input() hideRetryOnFailure = false;
+  @Output() valueChanged = new EventEmitter<ActionErrorHandlingOptions>();
   valueChanges$: Observable<void>;
   onChange: (val: unknown) => void = () => {
     //ignore
@@ -50,18 +57,22 @@ export class ActionErrorHandlingFormControlComponent
     });
     this.valueChanges$ = this.errorHandlingOptionsForm.valueChanges.pipe(
       tap((val) => {
-        this.onChange({
-          continueOnFailure: this.hideContinueOnFailure
-            ? undefined
-            : {
-                value: val.continueOnFailure,
-              },
-          retryOnFailure: this.hideRetryOnFailure
-            ? undefined
-            : {
-                value: val.retryOnFailure,
-              },
-        });
+        const result: ActionErrorHandlingOptions = {
+          continueOnFailure:
+            this.hideContinueOnFailure || val.continueOnFailure === undefined
+              ? undefined
+              : {
+                  value: val.continueOnFailure,
+                },
+          retryOnFailure:
+            this.hideRetryOnFailure || val.retryOnFailure === undefined
+              ? undefined
+              : {
+                  value: val.retryOnFailure,
+                },
+        };
+        this.valueChanged.emit(result);
+        this.onChange(result);
       }),
       map(() => {
         return void 0;

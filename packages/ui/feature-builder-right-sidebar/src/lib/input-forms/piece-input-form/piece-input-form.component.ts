@@ -28,6 +28,7 @@ import {
 } from 'rxjs';
 import {
   AUTHENTICATION_PROPERTY_NAME,
+  ActionErrorHandlingOptions,
   ActionType,
   PopulatedFlow,
   TriggerType,
@@ -87,6 +88,9 @@ import { FormControl, UntypedFormBuilder, Validators } from '@angular/forms';
         deps.selectedTriggerOrAction.errorHandlingOptions?.retryOnFailure
           ?.hide || false
       "
+      (valueChanged)="
+        actionErrorHandlingFormControlValueChanged(deps.currentStep, $event)
+      "
     ></app-action-error-handling-form-control>
     } } } @else {
     <div
@@ -110,7 +114,8 @@ export class PieceInputFormComponent {
     currentFlow: PopulatedFlow;
     allConnectionsForPiece: PieceConnectionDropdownItem[];
   }>;
-  actionErrorHandlingFormControl = new FormControl({});
+  actionErrorHandlingFormControl: FormControl<ActionErrorHandlingOptions> =
+    new FormControl({}, { nonNullable: true });
   form = this.fb.group({});
   isFormReadOnly$: Observable<boolean>;
   readonly ActionType = ActionType;
@@ -139,6 +144,7 @@ export class PieceInputFormComponent {
       nonNullable: true,
       validators: Validators.required,
     });
+
     this.triggersOrActionsControl.markAllAsTouched();
     this.deps$ = combineLatest({
       currentStep: this.store.select(BuilderSelectors.selectCurrentStep),
@@ -317,9 +323,6 @@ export class PieceInputFormComponent {
                 ...step.settings.inputUiInfo,
                 customizedInputs: result.customizedInputs,
               },
-              errorHandlingOptions: {
-                ...this.actionErrorHandlingFormControl.value,
-              },
             },
             valid: result.valid,
           },
@@ -381,5 +384,24 @@ export class PieceInputFormComponent {
       }
     });
     return cleanedInput;
+  }
+
+  actionErrorHandlingFormControlValueChanged(
+    step: Step,
+    res: ActionErrorHandlingOptions
+  ) {
+    if (step.type === ActionType.PIECE) {
+      this.store.dispatch(
+        FlowsActions.updateAction({
+          operation: {
+            ...step,
+            settings: {
+              ...step.settings,
+              errorHandlingOptions: res,
+            },
+          },
+        })
+      );
+    }
   }
 }
