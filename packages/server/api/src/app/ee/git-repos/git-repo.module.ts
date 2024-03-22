@@ -20,7 +20,6 @@ export const gitRepoModule: FastifyPluginAsync = async (app) => {
     await app.register(gitRepoController, { prefix: '/v1/git-repos' })
 }
 
-
 export const gitRepoController: FastifyPluginCallbackTypebox = (
     app,
     _options,
@@ -133,13 +132,13 @@ const PushRepoRequestSchema = {
     },
     schema: {
         description:
-            'Push all changes from the project and overwrite any conflicting changes in the git repository.',
+            'Push single flow to the git repository',
         body: PushGitRepoRequest,
         params: Type.Object({
             id: Type.String(),
         }),
         response: {
-            [StatusCodes.OK]: ProjectSyncPlan,
+            [StatusCodes.OK]: Type.Void(),
         },
     },
 }

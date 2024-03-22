@@ -7,6 +7,11 @@ export enum ProjectOperationType {
     DELETE_FLOW = 'DELETE_FLOW',
 }
 
+export enum GitBranchType {
+    PRODUCTION = 'PRODUCTION',
+    DEVELOPMENT = 'DEVELOPMENT',
+}
+
 export const GitProjectMappingState = Type.Object({
     flows: Type.Record(Type.String(), Type.Object({
         sourceId: Type.String(),
@@ -19,6 +24,7 @@ export const GitRepo = Type.Object({
     ...BaseModelSchema,
     remoteUrl: Type.String(),
     branch: Type.String(),
+    branchType: Type.Enum(GitBranchType),
     projectId: Type.String(),
     sshPrivateKey: Type.String(),
     slug: Type.String(),
@@ -33,8 +39,7 @@ export type GitRepoWithoutSensitiveData = Static<typeof GitRepoWithoutSensitiveD
 
 export const PushGitRepoRequest = Type.Object({
     commitMessage: Type.String(),
-    flowId: Type.String(),
-    dryRun: Type.Optional(Type.Boolean()),
+    flowId: Type.String()
 })
 
 export type PushGitRepoRequest = Static<typeof PushGitRepoRequest>
@@ -67,14 +72,38 @@ export const ProjectSyncError = Type.Object({
 })
 export type ProjectSyncError = Static<typeof ProjectSyncError>
 
-export const ProjectSyncPlan = Type.Object({
-    operations: Type.Array(Type.Object({
-        type: Type.Enum(ProjectOperationType),
+export const ProjectSyncPlanOperation = Type.Union([
+    Type.Object({
+        type: Type.Literal(ProjectOperationType.CREATE_FLOW),
         flow: Type.Object({
             id: Type.String(),
             displayName: Type.String(),
         }),
-    })),
+    }),
+    Type.Object({
+        type: Type.Literal(ProjectOperationType.UPDATE_FLOW),
+        flow: Type.Object({
+            id: Type.String(),
+            displayName: Type.String(),
+        }),
+        targetFlow: Type.Object({
+            id: Type.String(),
+            displayName: Type.String(),
+        }),
+    }),
+    Type.Object({
+        type: Type.Literal(ProjectOperationType.DELETE_FLOW),
+        flow: Type.Object({
+            id: Type.String(),
+            displayName: Type.String(),
+        }),
+    }),
+])
+
+export type ProjectSyncPlanOperation = Static<typeof ProjectSyncPlanOperation>
+
+export const ProjectSyncPlan = Type.Object({
+    operations: Type.Array(ProjectSyncPlanOperation),
     errors: Type.Array(ProjectSyncError),
 })
 

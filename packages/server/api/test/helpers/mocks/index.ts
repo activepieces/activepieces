@@ -14,6 +14,7 @@ import {
     ApplicationEvent,
     ApplicationEventName,
     Activity,
+    GitBranchType,
 } from '@activepieces/ee-shared'
 import {
     UserStatus,
@@ -124,6 +125,7 @@ export const createMockProject = (project?: Partial<Project>): Project => {
 export const createMockGitRepo = (gitRepo?: Partial<GitRepo>): GitRepo => {
     return {
         id: gitRepo?.id ?? apId(),
+        branchType: faker.helpers.enumValue(GitBranchType),
         created: gitRepo?.created ?? faker.date.recent().toISOString(),
         updated: gitRepo?.updated ?? faker.date.recent().toISOString(),
         projectId: gitRepo?.projectId ?? apId(),
