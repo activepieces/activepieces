@@ -1,4 +1,8 @@
-import { ActionBase, TriggerBase } from '@activepieces/pieces-framework';
+import {
+  ActionBase,
+  TriggerBase,
+  TriggerStrategy,
+} from '@activepieces/pieces-framework';
 import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
@@ -8,6 +12,10 @@ import { Pipe, PipeTransform } from '@angular/core';
 })
 export class IsTriggerGuardPipe implements PipeTransform {
   transform(value: ActionBase | TriggerBase): value is TriggerBase {
-    return (value as TriggerBase).type !== undefined;
+    return (
+      (value as TriggerBase).type === TriggerStrategy.APP_WEBHOOK ||
+      (value as TriggerBase).type === TriggerStrategy.POLLING ||
+      (value as TriggerBase).type === TriggerStrategy.WEBHOOK
+    );
   }
 }
