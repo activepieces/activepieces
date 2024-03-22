@@ -7,6 +7,7 @@ import {
   PieceAuthProperty,
   PiecePropValueSchema,
   Store,
+  StoreScope,
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';

@@ -119,8 +119,8 @@ export const flowService = {
         return paginationHelper.createPage(populatedFlows, paginationResult.cursor)
     },
 
-    async getOne({ id, projectId }: GetOneParams): Promise<Flow | null> {
-        return flowRepo().findOneBy({
+    async getOne({ id, projectId, entityManager }: GetOneParams): Promise<Flow | null> {
+        return flowRepo(entityManager).findOneBy({
             id,
             projectId,
         })
@@ -137,8 +137,9 @@ export const flowService = {
         projectId,
         versionId,
         removeSecrets = false,
+        entityManager,
     }: GetOnePopulatedParams): Promise<PopulatedFlow | null> {
-        const flow = await flowRepo().findOneBy({
+        const flow = await flowRepo(entityManager).findOneBy({
             id,
             projectId,
         })
@@ -151,6 +152,7 @@ export const flowService = {
             flowId: id,
             versionId,
             removeSecrets,
+            entityManager,
         })
 
         return {
@@ -164,12 +166,14 @@ export const flowService = {
         projectId,
         versionId,
         removeSecrets = false,
+        entityManager,
     }: GetOnePopulatedParams): Promise<PopulatedFlow> {
         const flow = await this.getOnePopulated({
             id,
             projectId,
             versionId,
             removeSecrets,
+            entityManager,
         })
         assertFlowIsNotNull(flow)
         return flow
@@ -260,24 +264,31 @@ export const flowService = {
         id,
         projectId,
         newStatus,
+        entityManager,
     }: UpdateStatusParams): Promise<PopulatedFlow> {
-        const flowToUpdate = await this.getOneOrThrow({ id, projectId })
+        const flowToUpdate = await this.getOneOrThrow({
+            id,
+            projectId,
+            entityManager,
+        })
 
         if (flowToUpdate.status !== newStatus) {
             const { scheduleOptions } = await hooks.preUpdateStatus({
                 flowToUpdate,
                 newStatus,
+                entityManager,
             })
 
             flowToUpdate.status = newStatus
             flowToUpdate.schedule = scheduleOptions
 
-            await flowRepo().save(flowToUpdate)
+            await flowRepo(entityManager).save(flowToUpdate)
         }
 
         return this.getOnePopulatedOrThrow({
             id,
             projectId,
+            entityManager,
         })
     },
 
@@ -384,6 +395,15 @@ export const flowService = {
             projectId,
         })
     },
+
+    async existsByProjectAndStatus(params: ExistsByProjectAndStatusParams): Promise<boolean> {
+        const { projectId, status, entityManager } = params
+
+        return flowRepo(entityManager).existsBy({
+            projectId,
+            status,
+        })
+    },
 }
 
 const lockFlowVersionIfNotLocked = async ({
@@ -437,6 +457,7 @@ type ListParams = {
 type GetOneParams = {
     id: FlowId
     projectId: ProjectId
+    entityManager?: EntityManager
 }
 
 type GetOnePopulatedParams = GetOneParams & {
@@ -467,6 +488,7 @@ type UpdateStatusParams = {
     id: FlowId
     projectId: ProjectId
     newStatus: FlowStatus
+    entityManager?: EntityManager
 }
 
 type UpdatePublishedVersionIdParams = {
@@ -486,5 +508,11 @@ type LockFlowVersionIfNotLockedParams = {
     flowVersion: FlowVersion
     userId: UserId
     projectId: ProjectId
+    entityManager: EntityManager
+}
+
+type ExistsByProjectAndStatusParams = {
+    projectId: ProjectId
+    status: FlowStatus
     entityManager: EntityManager
 }

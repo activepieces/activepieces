@@ -1,4 +1,4 @@
-import { ActionType, FlowRunResponse, FlowRunStatus, LoopStepOutput, PauseMetadata, StepOutput, StepOutputStatus, StopResponse, assertEqual, isNil } from '@activepieces/shared'
+import { ActionType, FlowError, FlowRunResponse, FlowRunStatus, LoopStepOutput, PauseMetadata, StepOutput, StepOutputStatus, StopResponse, assertEqual, isNil, spreadIfDefined } from '@activepieces/shared'
 import { StepExecutionPath } from './step-execution-path'
 import { loggingUtils } from '../../helper/logging-utils'
 import { nanoid } from 'nanoid'
@@ -10,12 +10,14 @@ export enum ExecutionVerdict {
     FAILED = 'FAILED',
 }
 
-type VerdictResponse = {
+export type VerdictResponse = {
     reason: FlowRunStatus.PAUSED
     pauseMetadata: PauseMetadata
 } | {
     reason: FlowRunStatus.STOPPED
     stopResponse: StopResponse
+} | {
+    reason: FlowRunStatus.INTERNAL_ERROR
 }
 
 export class FlowExecutorContext {
@@ -23,14 +25,16 @@ export class FlowExecutorContext {
     tags: readonly string[]
     steps: Readonly<Record<string, StepOutput>>
     currentState: Record<string, unknown>
-    /**
-     * Execution duration in milliseconds
-     */
-    duration: number
     pauseRequestId: string
     verdict: ExecutionVerdict
     verdictResponse: VerdictResponse | undefined
     currentPath: StepExecutionPath
+    error?: FlowError
+
+    /**
+     * Execution time in milliseconds
+     */
+    duration: number
 
     constructor(copyFrom?: FlowExecutorContext) {
         this.tasks = copyFrom?.tasks ?? 0
@@ -41,13 +45,14 @@ export class FlowExecutorContext {
         this.currentState = copyFrom?.currentState ?? {}
         this.verdict = copyFrom?.verdict ?? ExecutionVerdict.RUNNING
         this.verdictResponse = copyFrom?.verdictResponse ?? undefined
+        this.error = copyFrom?.error ?? undefined
         this.currentPath = copyFrom?.currentPath ?? StepExecutionPath.empty()
     }
-
 
     static empty(): FlowExecutorContext {
         return new FlowExecutorContext()
     }
+
     public setPauseRequestId(pauseRequestId: string): FlowExecutorContext {
         return new FlowExecutorContext({
             ...this,
@@ -114,6 +119,11 @@ export class FlowExecutorContext {
         const targetMap = getStateAtPath({ currentPath: this.currentPath, steps })
         targetMap[stepName] = stepOutput
 
+        const error = stepOutput.status === StepOutputStatus.FAILED ? {
+            stepName,
+            message: stepOutput.errorMessage,
+        } : this.error
+
         return new FlowExecutorContext({
             ...this,
             tasks: this.tasks,
@@ -121,6 +131,7 @@ export class FlowExecutorContext {
                 ...this.currentState,
                 [stepName]: stepOutput.output,
             },
+            ...spreadIfDefined('error', error),
             steps,
         })
     }
@@ -157,11 +168,18 @@ export class FlowExecutorContext {
         })
     }
 
-    public setVerdict(verdict: ExecutionVerdict, response: VerdictResponse | undefined): FlowExecutorContext {
+    public setVerdict(verdict: ExecutionVerdict, response?: VerdictResponse): FlowExecutorContext {
         return new FlowExecutorContext({
             ...this,
             verdict,
             verdictResponse: response,
+        })
+    }
+
+    public setRetryable(retryable: boolean): FlowExecutorContext {
+        return new FlowExecutorContext({
+            ...this,
+            retryable,
         })
     }
 
@@ -173,11 +191,21 @@ export class FlowExecutorContext {
             steps: await loggingUtils.trimExecution(this.steps),
         }
         switch (this.verdict) {
-            case ExecutionVerdict.FAILED:
+            case ExecutionVerdict.FAILED: {
+                const verdictResponse = this.verdictResponse
+                if (verdictResponse?.reason === FlowRunStatus.INTERNAL_ERROR) {
+                    return {
+                        ...baseExecutionOutput,
+                        error: this.error,
+                        status: FlowRunStatus.INTERNAL_ERROR,
+                    }
+                }
                 return {
                     ...baseExecutionOutput,
+                    error: this.error,
                     status: FlowRunStatus.FAILED,
                 }
+            }
             case ExecutionVerdict.PAUSED: {
                 const verdictResponse = this.verdictResponse
                 if (verdictResponse?.reason !== FlowRunStatus.PAUSED) {

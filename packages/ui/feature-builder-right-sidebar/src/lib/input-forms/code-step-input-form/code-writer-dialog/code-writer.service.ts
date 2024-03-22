@@ -1,20 +1,28 @@
-import { environment } from '@activepieces/ui/common';
-import { HttpClient } from '@angular/common/http';
+import {
+  GenerateCodeRequest,
+  WebsocketClientEvent,
+  WebsocketServerEvent,
+  GenerateCodeResponse,
+} from '@activepieces/shared';
+import { WebSocketService } from '@activepieces/ui/common';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, take } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CodeWriterService {
-  constructor(private http: HttpClient) {}
+  constructor(private websocketService: WebSocketService) {}
 
-  prompt(prompt: string): Observable<{ result: string }> {
-    return this.http.post<{ result: string }>(
-      environment.apiUrl + `/copilot/code`,
-      {
-        prompt: prompt,
-      }
+  prompt(request: GenerateCodeRequest): Observable<GenerateCodeResponse> {
+    this.websocketService.socket.emit(
+      WebsocketServerEvent.GENERATE_CODE,
+      request
     );
+    return this.websocketService.socket
+      .fromEvent<GenerateCodeResponse>(
+        WebsocketClientEvent.GENERATE_CODE_FINISHED
+      )
+      .pipe(take(1));
   }
 }

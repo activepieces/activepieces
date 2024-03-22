@@ -13,6 +13,8 @@ import {
   FlowRun,
   PopulatedFlow,
   TriggerType,
+  WebsocketClientEvent,
+  WebsocketServerEvent,
 } from '@activepieces/shared';
 import {
   BuilderSelectors,
@@ -82,13 +84,13 @@ export class TestFlowWidgetComponent implements OnInit {
   }
 
   executeTest(flow: PopulatedFlow) {
-    this.websockService.socket.emit('testFlowRun', {
+    this.websockService.socket.emit(WebsocketServerEvent.TEST_FLOW_RUN, {
       flowVersionId: flow.version.id,
       projectId: flow.projectId,
     });
 
     this.executeTest$ = this.websockService.socket
-      .fromEvent<FlowRun>('flowRunStarted')
+      .fromEvent<FlowRun>(WebsocketClientEvent.TEST_FLOW_RUN_STARTED)
       .pipe(
         take(1),
         tap((flowRun) => {
@@ -110,7 +112,7 @@ export class TestFlowWidgetComponent implements OnInit {
       );
 
     this.testResult$ = this.websockService.socket
-      .fromEvent<FlowRun>('flowRunFinished')
+      .fromEvent<FlowRun>(WebsocketClientEvent.TEST_FLOW_RUN_FINSIHED)
       .pipe(
         switchMap((flowRun) => {
           return this.instanceRunService.get(flowRun.id);

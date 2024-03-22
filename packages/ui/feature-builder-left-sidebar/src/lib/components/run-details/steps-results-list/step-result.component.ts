@@ -7,7 +7,7 @@ import {
   StepRunResult,
   canvasActions,
 } from '@activepieces/ui/feature-builder-store';
-import { map, Observable, startWith, tap } from 'rxjs';
+import { map, Observable, startWith, switchMap, tap } from 'rxjs';
 import { RunDetailsService } from '../iteration-details.service';
 import {
   ActionType,
@@ -15,7 +15,10 @@ import {
   LoopStepResult,
   StepOutput,
   StepOutputStatus,
+  assertNotNullOrUndefined,
+  flowHelper,
 } from '@activepieces/shared';
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 import { fadeInAnimation } from '@activepieces/ui/common';
 
 @Component({
@@ -28,6 +31,22 @@ export class StepResultComponent implements OnInit {
   @Input({ required: true }) stepResult: StepRunResult;
   @Input({ required: true }) set selectedStepName(stepName: string | null) {
     this._selectedStepName = stepName;
+    this.stepLogoUrl$ = this.store
+      .select(BuilderSelectors.selectCurrentFlow)
+      .pipe(
+        switchMap((flow) => {
+          const step = flowHelper.getStep(
+            flow.version,
+            this.stepResult.stepName
+          );
+          assertNotNullOrUndefined(step, 'step');
+          return this.pieceMetadataService.getStepDetails(step).pipe(
+            map((stepDetails) => {
+              return stepDetails.logoUrl;
+            })
+          );
+        })
+      );
 
     if (this._selectedStepName === this.stepResult.stepName) {
       this.runDetailsService.hideAllIterationsInput$.next(true);
@@ -51,6 +70,7 @@ export class StepResultComponent implements OnInit {
   StepOutputStatus = StepOutputStatus;
   constructor(
     private store: Store,
+    private pieceMetadataService: PieceMetadataService,
     private runDetailsService: RunDetailsService
   ) {
     this.hideIterationInput$ =
@@ -63,9 +83,6 @@ export class StepResultComponent implements OnInit {
 
   ngOnInit(): void {
     this.nestingLevelPadding = `${this.nestingLevel * 25}px`;
-    this.stepLogoUrl$ = this.store.select(
-      BuilderSelectors.selectStepLogoUrl(this.stepResult.stepName)
-    );
 
     if (this.stepResult.output?.type === ActionType.LOOP_ON_ITEMS) {
       this.isLoopStep = true;

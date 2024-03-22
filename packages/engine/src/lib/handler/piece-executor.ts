@@ -7,8 +7,7 @@ import { createFilesService } from '../services/files.service'
 import { createConnectionService } from '../services/connections.service'
 import { EngineConstants } from './context/engine-constants'
 import { pieceLoader } from '../helper/piece-loader'
-import { utils } from '../utils'
-import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
+import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
 import { URL } from 'url'
 
 type HookResponse = { stopResponse: StopHookParams | undefined, pauseResponse: PauseHookParams | undefined, tags: string[], stopped: boolean, paused: boolean }
@@ -113,7 +112,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         const runMethodToExecute = (constants.testSingleStepMode && !isNil(pieceAction.test)) ? pieceAction.test : pieceAction.run
         const output = await runMethodToExecute(context)
         const newExecutionContext = executionState.addTags(hookResponse.tags)
-        
+
         if (hookResponse.stopped) {
             assertNotNullOrUndefined(hookResponse.stopResponse, 'stopResponse')
             return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).setVerdict(ExecutionVerdict.SUCCEEDED, {
@@ -133,13 +132,15 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).increaseTask().setVerdict(ExecutionVerdict.RUNNING, undefined)
     }
     catch (e) {
-        const errorMessage = await utils.tryParseJson((e as Error).message)
-        console.error(errorMessage)
+        const handledError = handleExecutionError(e)
+
+        const failedStepOutput = stepOutput
+            .setStatus(StepOutputStatus.FAILED)
+            .setErrorMessage(handledError.message)
 
         return executionState
-            .upsertStep(action.name, stepOutput.setStatus(StepOutputStatus.FAILED).setErrorMessage(errorMessage))
-            .setVerdict(ExecutionVerdict.FAILED, undefined)
-
+            .upsertStep(action.name, failedStepOutput)
+            .setVerdict(ExecutionVerdict.FAILED, handledError.verdictResponse)
     }
 }
 

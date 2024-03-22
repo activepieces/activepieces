@@ -72,7 +72,7 @@ export class EditStepFormContainerComponent {
     private store: Store,
     private snackbar: MatSnackBar,
     private flagService: FlagService,
-    private actionMetaService: PieceMetadataService,
+    private pieceService: PieceMetadataService,
     private builderService: FlowBuilderService
   ) {
     this.webhookUrl$ = forkJoin({
@@ -101,8 +101,8 @@ export class EditStepFormContainerComponent {
 
   updateFormValue(stepSelected: Step) {
     const settingsControl = this.stepForm.controls.settings;
-    this.setInitialFormValue$ = this.store
-      .select(BuilderSelectors.selectFlowItemDetails(stepSelected))
+    this.setInitialFormValue$ = this.pieceService
+      .getStepDetails(stepSelected)
       .pipe(
         take(1),
         tap((res) => {
@@ -134,7 +134,7 @@ export class EditStepFormContainerComponent {
             }),
             switchMap((res) => {
               if (res?.type === TriggerType.PIECE) {
-                return this.actionMetaService
+                return this.pieceService
                   .getPieceMetadata(
                     res.settings.pieceName,
                     res.settings.pieceVersion

@@ -2,7 +2,7 @@ import { ActionType, CodeAction, GenericStepOutput, StepOutputStatus } from '@ac
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
 import { EngineConstants } from './context/engine-constants'
-import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
+import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { CodeModule } from '../core/code/code-sandbox-common'
 
@@ -49,9 +49,14 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
         return executionState.upsertStep(action.name, stepOutput.setOutput(output)).increaseTask()
     }
     catch (e) {
-        console.error(e)
+        const handledError = handleExecutionError(e)
+
+        const failedStepOutput = stepOutput
+            .setStatus(StepOutputStatus.FAILED)
+            .setErrorMessage(handledError.message)
+
         return executionState
-            .upsertStep(action.name, stepOutput.setStatus(StepOutputStatus.FAILED).setErrorMessage((e as Error).message))
-            .setVerdict(ExecutionVerdict.FAILED, undefined)
+            .upsertStep(action.name, failedStepOutput)
+            .setVerdict(ExecutionVerdict.FAILED, handledError.verdictResponse)
     }
 }

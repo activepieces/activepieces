@@ -1,7 +1,6 @@
 <button mat-menu-item apTrackHover #hoverTracker="hoverTrackerDirective" class="!ap-px-5"
-  (click)="_stepMention.step.settings.pieceName !== CORE_SCHEDULE? expandSample? expandSample=false : expandSample=true :mentionClicked.emit(_stepMention) ">
+  (click)="expandSample? expandSample=false : expandSample=true  ">
   <div class="ap-flex ap-items-center">
-
 
     <app-generic-step-mention-item [stepIndex]="stepIndex" [stepMention]="_stepMention"></app-generic-step-mention-item>
     <div class="ap-flex-grow"></div>
@@ -11,8 +10,7 @@
     </ap-button>
 
     <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]"
-      [svgIcon]="expandSample ? 'custom_expand_less' : 'custom_expand_more'"
-      *ngIf="(isScheduleTrigger$ | async) === false || (isScheduleTrigger$ | async) === undefined">
+      [svgIcon]="expandSample ? 'custom_expand_less' : 'custom_expand_more'">
     </mat-icon>
   </div>
 
@@ -33,8 +31,8 @@
     <ng-container *ngIf="result.value !==undefined && expandSample">
       <button apTrackHover #resultNodeHoverTracker="hoverTrackerDirective" class="!ap-pl-0" mat-menu-item
         (click)="mentionClicked.emit(_stepMention)">
-        <span class=" ap-flex-grow ap-transition-all"
-          [style.padding-left]="FIRST_LEVEL_PADDING_IN_MENTIONS_LIST+ 'px'" i18n>result:
+        <span class=" ap-flex-grow ap-transition-all" [style.padding-left]="FIRST_LEVEL_PADDING_IN_MENTIONS_LIST+ 'px'"
+          i18n>result:
           <span class="ap-transition-all ap-text-primary" [matTooltip]="'' + result.value || ''">{{result.value}}
           </span></span>
         <ap-button *ngIf="resultNodeHoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button"
@@ -46,7 +44,7 @@
     </ng-container>
 
   </ng-container>
-  <ng-container *ngIf="!(sampleData$) && _stepMention.step.settings.pieceName !== CORE_SCHEDULE">
+  <ng-container *ngIf="!(sampleData$)">
     <div class="ap-my-3 ap-px-2">
       <div class="ap-typography-body-1 ap-text-center ap-mb-1">
         {{

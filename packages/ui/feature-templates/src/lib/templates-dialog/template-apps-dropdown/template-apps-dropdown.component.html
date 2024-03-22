@@ -14,7 +14,10 @@
             [style.height]="'calc(100% - '+ searchField.elementRef.nativeElement.clientHeight + 'px '+ '- 0.5rem '+ ')'">
             <mat-option *ngFor="let piece of (filteredBySearchPieces$ | async)" [value]="piece.name">
                 <div class="ap-flex ap-gap-2.5 ap-items-center">
-                    <ap-piece-icon-container [url]="piece.logoUrl"></ap-piece-icon-container>
+                    <div class="ap-min-w-[36px]">
+                        <ap-piece-icon-container [url]="piece.logoUrl"></ap-piece-icon-container>
+
+                    </div>
                     <div class="ap-typography-body-2">
                         {{ piece.displayName }}
                     </div>

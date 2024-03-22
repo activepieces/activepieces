@@ -1,32 +1,32 @@
 <div class="ap-flex-col">
   <ap-sidebar-header (closeClicked)="closeSidebar()" [title]="sideBarDisplayName"></ap-sidebar-header>
 
-  <ng-container *ngIf="flowItemDetailsLoaded$ | async; else loading">
-    <mat-form-field (click)="$event.stopPropagation();" class="ap-w-full ap-px-5">
-      <mat-icon matPrefix color="placeholder-icon" svgIcon="search"></mat-icon>
-      <input #searchInput [formControl]="searchFormControl" matInput placeholder="Search" i18n-placeholder autocomplete="off">
-    </mat-form-field>
-    <mat-tab-group (selectedTabChange)="searchFormControl.setValue(searchFormControl.value)" #tabGroup animationDuration="0ms" >
-      <mat-tab  *ngFor="let tab of tabsAndTheirLists; let i = index">
-        <ng-template mat-tab-label>
-          <div class="category-label" [class.category-label-active]="tabGroup.selectedIndex === i">
-            {{ tab.displayName }}
-          </div>
-        </ng-template>
-        <ng-template matTabContent>
-          <ng-container *ngIf="tab.list$ | async as list; else loading">
+  <mat-form-field (click)="$event.stopPropagation();" class="ap-w-full ap-px-5">
+    <mat-icon matPrefix color="placeholder-icon" svgIcon="search"></mat-icon>
+    <input #searchInput [formControl]="searchFormControl" matInput placeholder="Search" i18n-placeholder
+      autocomplete="off">
+  </mat-form-field>
+  <mat-tab-group (selectedTabChange)="searchFormControl.setValue(searchFormControl.value)" #tabGroup
+    animationDuration="0ms">
+    <mat-tab *ngFor="let tab of tabsAndTheirLists; let i = index">
+      <ng-template mat-tab-label>
+        <div class="category-label" [class.category-label-active]="tabGroup.selectedIndex === i">
+          {{ tab.displayName }}
+        </div>
+      </ng-template>
+      <ng-template matTabContent>
+        <ng-container *ngIf="tab.list$ | async as list; else loading">
 
-            <ng-container
-              *ngIf="(loading$| async) === false || (loading$ | async)===undefined || (loading$ | async)===null ; else loading">
-              <app-step-type-list [typesList]="list" (typeSelected)="onTypeSelected($event)"
-                [showRequestPieceButton]="showRequestPiece$ | async" [emptyListText]="tab.emptyListText">
-              </app-step-type-list>
-            </ng-container>
+          <ng-container
+            *ngIf="(loading$| async) === false || (loading$ | async)===undefined || (loading$ | async)===null ; else loading">
+            <app-step-type-list [typesList]="list" (typeSelected)="onTypeSelected($event)"
+              [showRequestPieceButton]="showRequestPiece$ | async" [emptyListText]="tab.emptyListText">
+            </app-step-type-list>
           </ng-container>
-        </ng-template>
-      </mat-tab>
-    </mat-tab-group>
-  </ng-container>
+        </ng-container>
+      </ng-template>
+    </mat-tab>
+  </mat-tab-group>
 
   <ng-template #loading>
     <div class="loading-container-for-flow-items-list ap-justify-center ap-items-center ap-flex">

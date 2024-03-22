@@ -2,8 +2,8 @@
   "name": "@activepieces/piece-convertkit",
   "version": "0.1.3",
   "dependencies": {
-    "@activepieces/pieces-framework": "0.7.24",
-    "@activepieces/pieces-common": "0.2.9",
+    "@activepieces/pieces-framework": "0.7.25",
+    "@activepieces/pieces-common": "0.2.12",
     "tslib": "^2.6.2",
     "@activepieces/shared": "*"
   }

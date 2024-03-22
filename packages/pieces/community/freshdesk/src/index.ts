@@ -8,6 +8,8 @@ import { PieceCategory } from '@activepieces/shared';
 import { getContactFromID } from './lib/actions/get-contact-from-id';
 import { getTicketStatus } from './lib/actions/get-ticket-status';
 import { getTickets } from './lib/actions/get-tickets';
+import { getContacts } from './lib/actions/get-contacts';
+import { getAllTicketsByStatus } from './lib/actions/get-all-tickets-by-status';
 
 export const freshdeskAuth = PieceAuth.CustomAuth({
   props: {
@@ -38,6 +40,8 @@ export const freshdesk = createPiece({
     getTickets,
     getContactFromID,
     getTicketStatus,
+    getContacts,
+    getAllTicketsByStatus,
     createCustomApiCallAction({
       baseUrl: (auth) => (auth as { base_url: string }).base_url,
       auth: freshdeskAuth,

@@ -77,42 +77,48 @@ export class CodeWriterDialogComponent {
       if (this.promptForm.controls.passExistingCode.value || reprompt) {
         prompt = this.data.existingCode + '\n' + prompt;
       }
-      this.promptOperation$ = this.codeWriterService.prompt(prompt).pipe(
-        tap((response) => {
-          this.promptForm.enable();
-          this.promptForm.controls.prompt.removeValidators(Validators.required);
-          this.promptForm.controls.prompt.setValue('');
-          try {
-            const result: {
-              code: string;
-              inputs: {
-                key: string;
-                value: unknown;
-              }[];
-              packages: string[];
-            } = JSON.parse(response.result);
-            this.receivedCode$.next(
-              result.code.replace(/\*\*\*NEW_LINE\*\*\*/g, '\n')
+      this.promptOperation$ = this.codeWriterService
+        .prompt({
+          prompt,
+        })
+        .pipe(
+          tap((response) => {
+            this.promptForm.enable();
+            this.promptForm.controls.prompt.removeValidators(
+              Validators.required
             );
-            this.receivedInputs = result.inputs;
-            this.receivedPackages = result.packages;
-            this.receivedPackages.forEach((pkg) => {
-              this.lookForNpmPackage(pkg);
-            });
-            if (this.stepper.selected) {
-              this.stepper.selected.completed = true;
-              this.stepper.next();
+            this.promptForm.controls.prompt.setValue('');
+            try {
+              const result: {
+                code: string;
+                inputs: {
+                  key: string;
+                  value: unknown;
+                }[];
+                packages: string[];
+              } = JSON.parse(response.result);
+              this.receivedCode$.next(
+                result.code.replace(/\*\*\*NEW_LINE\*\*\*/g, '\n')
+              );
+              this.receivedInputs = result.inputs;
+              this.receivedPackages = result.packages;
+              this.receivedPackages.forEach((pkg) => {
+                this.lookForNpmPackage(pkg);
+              });
+              if (this.stepper.selected) {
+                this.stepper.selected.completed = true;
+                this.stepper.next();
+              }
+              this.prisimFix = !this.prisimFix;
+              this.highlightPrism();
+            } catch (e) {
+              console.error('Copilot response not valid JSON.');
+              console.error((e as Error).message);
             }
-            this.prisimFix = !this.prisimFix;
-            this.highlightPrism();
-          } catch (e) {
-            console.error('Copilot response not valid JSON.');
-            console.error((e as Error).message);
-          }
-          this.loading$.next(false);
-        }),
-        map(() => void 0)
-      );
+            this.loading$.next(false);
+          }),
+          map(() => void 0)
+        );
     }
   }
 

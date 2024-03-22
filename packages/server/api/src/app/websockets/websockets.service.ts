@@ -1,24 +1,18 @@
 import { Socket } from 'socket.io'
-import { logger } from 'server-shared'
-import { flowRunService } from '../flows/flow-run/flow-run-service'
-import { flowResponseWatcher } from '../flows/flow-run/flow-response-watcher'
+import { WebsocketServerEvent } from '@activepieces/shared'
+
+export type WebsocketListener<T> = (socket: Socket) => (data: T) => Promise<void>
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const listener: Record<string, WebsocketListener<any>> = {}
 
 export const websocketService = {
     init(socket: Socket): void {
-        this.registerEventListeners(socket)
+        for (const [event, listner] of Object.entries(listener)) {
+            socket.on(event, listner(socket))
+        }
     },
-
-    registerEventListeners(socket: Socket): void {
-        socket.on('testFlowRun', async (data) => {
-            logger.debug({ data }, '[Socket#testFlowRun]')
-            const flowRun = await flowRunService.test({
-                projectId: data.projectId,
-                flowVersionId: data.flowVersionId,
-            })
-            socket.emit('flowRunStarted', flowRun)
-
-            await flowResponseWatcher.listen(flowRun.id, false)
-            socket.emit('flowRunFinished', flowRun)
-        })
+    addListener<T>(event: WebsocketServerEvent, listner: WebsocketListener<T>): void {
+        listener[event] = listner
     },
 }

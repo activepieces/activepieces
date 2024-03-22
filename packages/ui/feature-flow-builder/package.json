@@ -13,7 +13,7 @@
     "@angular/material": "17.1.2",
     "@angular/cdk": "17.1.2",
     "@activepieces/ui/feature-builder-left-sidebar": "0.0.1",
-    "@activepieces/shared": "0.10.93",
+    "@activepieces/shared": "0.10.97",
     "@activepieces/ui-canvas-utils": "0.0.1",
     "@ctrl/ngx-codemirror": "5.1.1",
     "angular-svg-icon": "15.0.0",

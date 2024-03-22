@@ -20,6 +20,7 @@ import { webhookSimulationService } from './webhook-simulation/webhook-simulatio
 import { WebhookResponse } from '@activepieces/pieces-framework'
 import { flowService } from '../flows/flow/flow.service'
 import { triggerHooks } from '../flows/trigger'
+import { dedupeService } from '../flows/trigger/dedupe'
 
 export const webhookService = {
     async handshake({
@@ -94,6 +95,7 @@ export const webhookService = {
             )
             return []
         }
+
         const flowVersion = await flowVersionService.getOneOrThrow(
             flow.publishedVersionId,
         )
@@ -119,7 +121,12 @@ export const webhookService = {
                 )
         })
 
-        const createFlowRuns = payloads.map((payload) =>
+        const filterPayloads = await dedupeService.filterUniquePayloads(
+            flowVersion.id,
+            payloads,
+        )
+    
+        const createFlowRuns = filterPayloads.map((payload) =>
             flowRunService.start({
                 environment: RunEnvironment.PRODUCTION,
                 flowVersionId: flowVersion.id,

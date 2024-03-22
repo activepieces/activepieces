@@ -25,9 +25,18 @@ import {
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MatFormFieldControl } from '@angular/material/form-field';
 import { QuillEditorComponent, QuillModule, QuillModules } from 'ngx-quill';
-import { firstValueFrom, Observable, skip, Subject, take, tap } from 'rxjs';
+import {
+  firstValueFrom,
+  Observable,
+  skip,
+  Subject,
+  switchMap,
+  take,
+  tap,
+} from 'rxjs';
 import {
   CustomErrorMatcher,
+  enrichMentionDropdownWithIcons,
   fixSelection,
   fromOpsToText,
   fromTextToOps,
@@ -49,6 +58,7 @@ import {
   UiCommonModule,
 } from '@activepieces/ui/common';
 import { CommonModule } from '@angular/common';
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 
 @Component({
   selector: 'app-interpolating-text-form-control',
@@ -94,7 +104,7 @@ export class InterpolatingTextFormControlComponent
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         renderList: unknown,
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        mentionChar: unknown,
+        mentionChar: unknown
       ) {
         return;
       },
@@ -129,11 +139,16 @@ export class InterpolatingTextFormControlComponent
         const stepsMetaData = await firstValueFrom(
           this.store
             .select(BuilderSelectors.selectAllStepsForMentionsDropdown)
-            .pipe(take(1)),
+            .pipe(
+              take(1),
+              switchMap((steps) =>
+                enrichMentionDropdownWithIcons(steps, this.pieceService)
+              )
+            )
         );
         if (typeof this._value === 'string')
           this.editorFormControl.setValue(
-            fromTextToOps(this._value, stepsMetaData),
+            fromTextToOps(this._value, stepsMetaData)
           );
       }
       this.stateChanges.next();
@@ -165,7 +180,8 @@ export class InterpolatingTextFormControlComponent
     @Optional() _parentFormGroup: FormGroupDirective,
     @Optional() @Self() ngControl: NgControl,
     private store: Store,
-    private cd: ChangeDetectorRef,
+    private pieceService: PieceMetadataService,
+    private cd: ChangeDetectorRef
   ) {
     super(_defaultErrorStateMatcher, _parentForm, _parentFormGroup, ngControl);
     if (this.ngControl != null) {
@@ -173,11 +189,15 @@ export class InterpolatingTextFormControlComponent
     }
     this.editorFormControl = new FormControl<QuillEditorOperationsObject>(
       { ops: [] },
-      { nonNullable: true },
+      { nonNullable: true }
     );
-    this.stepsMetaData$ = this.store.select(
-      BuilderSelectors.selectAllStepsForMentionsDropdown,
-    );
+    this.stepsMetaData$ = this.store
+      .select(BuilderSelectors.selectAllStepsForMentionsDropdown)
+      .pipe(
+        switchMap((steps) =>
+          enrichMentionDropdownWithIcons(steps, this.pieceService)
+        )
+      );
   }
 
   ngOnInit(): void {
@@ -196,19 +216,19 @@ export class InterpolatingTextFormControlComponent
               if (lastOp.insert.endsWith('\n')) {
                 lastOp.insert = lastOp.insert.slice(
                   0,
-                  lastOp.insert.length - 1,
+                  lastOp.insert.length - 1
                 );
               }
             }
             val.ops.push(lastOp);
           }
           this.hasMention = val.ops.some(
-            (o) => typeof o.insert === 'object' && o.insert.apMention,
+            (o) => typeof o.insert === 'object' && o.insert.apMention
           );
           this._value = fromOpsToText(val);
           this.onChange(this._value);
         }
-      }),
+      })
     );
   }
 
@@ -232,7 +252,7 @@ export class InterpolatingTextFormControlComponent
         });
         delta.ops = cleanedOps;
         return delta;
-      },
+      }
     );
   }
 
@@ -278,12 +298,17 @@ export class InterpolatingTextFormControlComponent
     const stepsMetaData = await firstValueFrom(
       this.store
         .select(BuilderSelectors.selectAllStepsForMentionsDropdown)
-        .pipe(take(1)),
+        .pipe(
+          take(1),
+          switchMap((steps) =>
+            enrichMentionDropdownWithIcons(steps, this.pieceService)
+          )
+        )
     );
     if (value !== null && typeof value === 'string') {
       const parsedTextToOps = fromTextToOps(value, stepsMetaData);
       this.hasMention = parsedTextToOps.ops.some(
-        (o) => typeof o.insert === 'object' && o.insert.apMention,
+        (o) => typeof o.insert === 'object' && o.insert.apMention
       );
       this.editorFormControl.setValue(parsedTextToOps, { emitEvent: false });
     }
@@ -366,16 +391,16 @@ export class InterpolatingTextFormControlComponent
       const itemPathWithoutInterpolationDenotation =
         mentionOp.insert.apMention.serverValue.slice(
           2,
-          mentionOp.insert.apMention.serverValue.length - 2,
+          mentionOp.insert.apMention.serverValue.length - 2
         );
       const keys = keysWithinPath(itemPathWithoutInterpolationDenotation);
       const stepName = keys[0];
       const stepMetaData = allStepsMetaData.find(
-        (s) => s.step.name === stepName,
+        (s) => s.step.name === stepName
       );
 
       const indexInDfsTraversal = await firstValueFrom(
-        this.store.select(BuilderSelectors.selectStepIndex(stepName)),
+        this.store.select(BuilderSelectors.selectStepIndex(stepName))
       );
       if (indexInDfsTraversal > 0) {
         mentionOp.insert.apMention.value = `${indexInDfsTraversal}. ${mentionOp.insert.apMention.value}`;

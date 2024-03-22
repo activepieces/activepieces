@@ -715,7 +715,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/10012140?v=4",
       "profile": "https://github.com/yann120",
       "contributions": [
-        "plugin"
+        "plugin",
+        "bug"
       ]
     },
     {
@@ -860,6 +861,24 @@
       "name": "leenmashni",
       "avatar_url": "https://avatars.githubusercontent.com/u/102361544?v=4",
       "profile": "https://github.com/leenmashni",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "AliasKingsWorth",
+      "name": "M Abdul Rauf",
+      "avatar_url": "https://avatars.githubusercontent.com/u/47811610?v=4",
+      "profile": "https://github.com/AliasKingsWorth",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "vbarrier",
+      "name": "Vincent Barrier",
+      "avatar_url": "https://avatars.githubusercontent.com/u/446808?v=4",
+      "profile": "https://github.com/vbarrier",
       "contributions": [
         "plugin"
       ]

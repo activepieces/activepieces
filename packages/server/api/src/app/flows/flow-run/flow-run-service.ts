@@ -218,10 +218,6 @@ export const flowRunService = {
         synchronousHandlerId,
         hookType,
     }: StartParams): Promise<FlowRun> {
-        logger.info(
-            `[flowRunService#start] flowRunId=${flowRunId} executionType=${executionType}`,
-        )
-
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
 
         const flow = await flowService.getOneOrThrow({

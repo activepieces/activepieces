@@ -6,12 +6,12 @@ type RetryConstants = {
     retryExponential: number
     retryInterval: number
 }
+
 const DEFAULT_RETRY_CONSTANTS: RetryConstants = {
-    maxAttempts: 1,
+    maxAttempts: 4,
     retryExponential: 6,
     retryInterval: 1000,
 }
-
 
 export class EngineConstants {
     public static readonly API_URL = 'http://127.0.0.1:3000/'
