@@ -68,7 +68,6 @@ export class RefreshablePropertyCoreControlComponent {
     );
     const refreshers$: Observable<any> = this.stepChanged$.pipe(
       switchMap(() => {
-        debugger;
         return combineLatest(this.getPropertyRefreshers(true)).pipe(
           startWith(this.parentFormGroup.value),
           debounceTime(300)

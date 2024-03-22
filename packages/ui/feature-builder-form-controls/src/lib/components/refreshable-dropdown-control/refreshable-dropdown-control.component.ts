@@ -45,8 +45,6 @@ export class RefreshableDropdownControlComponent
     this.searchControl = searchControl;
   }
   ngOnInit() {
-    debugger;
-    console.log(this.property);
     this.options$ = this.createRefreshers();
   }
   dropdownCompareWithFunction(opt: unknown, formControlValue: string) {
