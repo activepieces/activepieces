@@ -1,5 +1,4 @@
 import { Pipe, PipeTransform } from '@angular/core';
-//TODO: ask about imports from @activepieces/pieces-framework in ui
 import { DropdownOption } from '@activepieces/pieces-framework';
 
 @Pipe({
