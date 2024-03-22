@@ -1,12 +1,10 @@
 {
-  "extends": ["../.eslintrc.json"],
+  "extends": ["../.eslintrc.json", "../../../.eslintrc.base.json"],
   "overrides": [
     {
       "files": ["*.ts"],
       "parserOptions": {
-        "project": [
-          "packages/ee/project-members/tsconfig.*?.json"
-        ]
+        "project": ["packages/ee/project-members/tsconfig.*?.json"]
       }
     }
   ]

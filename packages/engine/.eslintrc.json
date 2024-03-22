@@ -1,17 +1,10 @@
 {
-  "extends": [
-    "../server/api/.eslintrc.json"
-  ],
+  "extends": ["../server/api/.eslintrc.json", "../../.eslintrc.base.json"],
   "overrides": [
     {
-      "files": [
-        "*.ts",
-        "*.js"
-      ],
+      "files": ["*.ts", "*.js"],
       "parserOptions": {
-        "project": [
-          "packages/engine/tsconfig.*?.json"
-        ]
+        "project": ["packages/engine/tsconfig.*?.json"]
       },
       "rules": {
         "no-console": "off"

@@ -188,6 +188,9 @@
       "@activepieces/piece-gcloud-pubsub": [
         "packages/pieces/community/gcloud-pubsub/src/index.ts"
       ],
+      "@activepieces/piece-gelato": [
+        "packages/pieces/community/gelato/src/index.ts"
+      ],
       "@activepieces/piece-generatebanners": [
         "packages/pieces/community/generatebanners/src/index.ts"
       ],

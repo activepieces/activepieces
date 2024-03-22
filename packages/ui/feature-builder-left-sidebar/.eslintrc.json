@@ -1,5 +1,8 @@
 {
-  "extends": ["../../../packages/ui/.eslintrc.json"],
+  "extends": [
+    "../../../packages/ui/.eslintrc.json",
+    "../../../.eslintrc.base.json"
+  ],
   "overrides": [
     {
       "files": ["*.ts"],
