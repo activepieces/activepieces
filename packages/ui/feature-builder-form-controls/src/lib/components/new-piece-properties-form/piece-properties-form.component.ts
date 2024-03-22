@@ -83,7 +83,7 @@ export class PiecePropertiesFormComponent implements OnInit, OnChanges {
     const requiredProperties: PiecePropertyMap = {};
     const optionalProperties: PiecePropertyMap = {};
     Object.entries(this.propertiesMap).forEach(([key, value]) => {
-      if (value.required) {
+      if (value.required || value.type === PropertyType.MARKDOWN) {
         requiredProperties[key] = value;
       } else {
         optionalProperties[key] = value;
