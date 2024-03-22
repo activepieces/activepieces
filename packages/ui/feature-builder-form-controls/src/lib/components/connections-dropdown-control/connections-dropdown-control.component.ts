@@ -79,7 +79,7 @@ import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections
                   [selectedConnectionInterpolatedString]="
                     passedFormControl.value
                   "
-                  [triggerName]="''"
+                  [triggerName]="triggerName || ''"
                   (connectionPropertyValueChanged)="
                     passedFormControl.setValue($event.value)
                   "
@@ -100,7 +100,7 @@ import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections
         [authProperty]="property"
         [pieceName]="pieceMetaData.name"
         [pieceVersion]="pieceMetaData.version"
-        [triggerName]="''"
+        [triggerName]="triggerName || ''"
         [pieceDisplayName]="pieceMetaData.displayName"
         (connectionPropertyValueChanged)="
           passedFormControl.setValue($event.value)
@@ -116,4 +116,5 @@ export class ConnectionsDropdownControlComponent {
   options: PieceConnectionDropdownItem[];
   @Input({ required: true }) property: PieceAuthProperty;
   @Input({ required: true }) pieceMetaData: PieceMetadataModel;
+  @Input() triggerName?: string;
 }

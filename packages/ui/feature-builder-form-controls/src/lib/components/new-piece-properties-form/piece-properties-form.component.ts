@@ -44,6 +44,7 @@ export class PiecePropertiesFormComponent implements OnInit, OnChanges {
     propertyName: string;
     value: boolean;
   }>();
+  @Input() triggerName?: string;
   @Output() formValueChange = new EventEmitter<{
     input: Record<string, any>;
     customizedInputs: Record<string, boolean | Record<string, boolean>>;

@@ -24,6 +24,7 @@
     } @else {
       @switch (property.value.type) {
         @case (PropertyType.OAUTH2) {
+
           <app-connections-dropdown-control
             [passedFormControl]="
               form.controls[property.key] | abstractFormControlCaster
@@ -31,7 +32,10 @@
             [options]="allConnectionsForPiece"
             [pieceMetaData]="pieceMetaData"
             [property]="property.value"
-          ></app-connections-dropdown-control>
+            [triggerName]="triggerName"
+          >
+    
+        </app-connections-dropdown-control>
         }
         @case (PropertyType.SECRET_TEXT) {
           <app-connections-dropdown-control

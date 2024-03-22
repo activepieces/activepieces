@@ -44,6 +44,7 @@ import { FormControl, UntypedFormBuilder, Validators } from '@angular/forms';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (deps$ | async; as deps) {
+
     <app-action-or-trigger-dropdown
       [items]="deps.triggersOrActions"
       [passedFormControl]="triggersOrActionsControl"
@@ -71,6 +72,7 @@ import { FormControl, UntypedFormBuilder, Validators } from '@angular/forms';
       (formValueChange)="
         piecePropertiesFormValueChanged($event, deps.currentStep)
       "
+      [triggerName]="deps.currentStep.settings.triggerName"
       [hideCustomizedInputs]="isFormReadOnly$ | async | defaultTrue"
     ></app-piece-properties-form>
 
