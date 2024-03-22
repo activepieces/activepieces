@@ -28,7 +28,6 @@ import { QuillEditorComponent, QuillModule, QuillModules } from 'ngx-quill';
 import {
   firstValueFrom,
   Observable,
-  skip,
   Subject,
   switchMap,
   take,
@@ -166,6 +165,8 @@ export class InterpolatingTextFormControlComponent
   @Input()
   disabled = false;
   controlType = 'custom-form-field';
+  /**silent emittions don't work with ngx-quill for some silly reason, so I need o add this and remove it later when I refactor this component */
+  ignoreEmittion = false;
   @HostBinding('attr.aria-describedby') describedBy = '';
   protected _required: boolean | undefined;
   onChange: (val: unknown) => void = () => {
@@ -203,8 +204,11 @@ export class InterpolatingTextFormControlComponent
   ngOnInit(): void {
     this._readOnly = this.onlyAllowOneMentionToBeAdded;
     this.valueChanges$ = this.editorFormControl.valueChanges.pipe(
-      skip(1),
       tap((val: QuillEditorOperationsObject) => {
+        if (this.ignoreEmittion) {
+          this.ignoreEmittion = false;
+          return;
+        }
         if (val.ops.length === 1 && val.ops[0].insert === '\n') {
           this._value = '';
           this.onChange('');
@@ -310,6 +314,7 @@ export class InterpolatingTextFormControlComponent
       this.hasMention = parsedTextToOps.ops.some(
         (o) => typeof o.insert === 'object' && o.insert.apMention
       );
+      this.ignoreEmittion = true;
       this.editorFormControl.setValue(parsedTextToOps, { emitEvent: false });
     }
   }
