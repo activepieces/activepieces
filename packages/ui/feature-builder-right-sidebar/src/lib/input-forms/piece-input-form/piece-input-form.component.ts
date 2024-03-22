@@ -24,7 +24,7 @@ import {
   startWith,
   switchMap,
   tap,
-  take
+  take,
 } from 'rxjs';
 import {
   AUTHENTICATION_PROPERTY_NAME,
@@ -44,54 +44,55 @@ import { FormControl, UntypedFormBuilder, Validators } from '@angular/forms';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (deps$ | async; as deps) {
-      <app-action-or-trigger-dropdown
-        [items]="deps.triggersOrActions"
-        [passedFormControl]="triggersOrActionsControl"
-      >
-      </app-action-or-trigger-dropdown>
-      @if (
-        deps.currentStep && deps.selectedTriggerOrAction && deps.pieceMetaData
-      ) {
-        <app-piece-properties-form
-          [stepName]="deps.currentStep.name"
-          [actionOrTriggerName]="
-            deps.currentStep.settings.triggerName ||
-            deps.currentStep.settings.actionName
-          "
-          [form]="form"
-          [allConnectionsForPiece]="deps.allConnectionsForPiece"
-          [pieceMetaData]="deps.pieceMetaData"
-          [input]="deps.currentStep.settings.input"
-          [customizedInputs]="
-            deps.currentStep.settings.inputUiInfo.customizedInputs || {}
-          "
-          [flow]="deps.currentFlow"
-          [webhookPrefix]="deps.webhookPrefix"
-          [formPieceTriggerPrefix]="deps.formPieceTriggerPrefix"
-          [propertiesMap]="deps.selectedTriggerOrAction.props"
-          (formValueChange)="
-            piecePropertiesFormValueChanged($event, deps.currentStep)
-          "
-          [hideCustomizedInputs]="(isFormReadOnly$ | async | defaultTrue)"
-        ></app-piece-properties-form>
+    <app-action-or-trigger-dropdown
+      [items]="deps.triggersOrActions"
+      [passedFormControl]="triggersOrActionsControl"
+    >
+    </app-action-or-trigger-dropdown>
+    @if ( deps.currentStep && deps.selectedTriggerOrAction && deps.pieceMetaData
+    ) {
+    <app-piece-properties-form
+      [stepName]="deps.currentStep.name"
+      [actionOrTriggerName]="
+        deps.currentStep.settings.triggerName ||
+        deps.currentStep.settings.actionName
+      "
+      [form]="form"
+      [allConnectionsForPiece]="deps.allConnectionsForPiece"
+      [pieceMetaData]="deps.pieceMetaData"
+      [input]="deps.currentStep.settings.input"
+      [customizedInputs]="
+        deps.currentStep.settings.inputUiInfo.customizedInputs || {}
+      "
+      [flow]="deps.currentFlow"
+      [webhookPrefix]="deps.webhookPrefix"
+      [formPieceTriggerPrefix]="deps.formPieceTriggerPrefix"
+      [propertiesMap]="deps.selectedTriggerOrAction.props"
+      (formValueChange)="
+        piecePropertiesFormValueChanged($event, deps.currentStep)
+      "
+      [hideCustomizedInputs]="isFormReadOnly$ | async | defaultTrue"
+    ></app-piece-properties-form>
 
-       @if(deps.currentStep.type === ActionType.PIECE)
-       {
-        <app-action-error-handling-form-control [formControl]="actionErrorHandlingFormControl" [hideContinueOnFailure]="deps.selectedTriggerOrAction.errorHandlingOptions?.continueOnFailure?.hide || false"
-          [hideRetryOnFailure]="deps.selectedTriggerOrAction.errorHandlingOptions?.retryOnFailure?.hide || false"
-          ></app-action-error-handling-form-control>
-       }
-      
-      
-      }
-    } @else {
-      <div
-        class="ap-flex ap-flex-grow ap-justify-center ap-items-center ap-h-[250px]"
-      >
-        <ap-loading-icon> </ap-loading-icon>
-      </div>
-    }
-    @if (renameStepBasedOnSelectedTriggerOrAction$ | async) {}
+    @if(deps.currentStep.type === ActionType.PIECE) {
+    <app-action-error-handling-form-control
+      [formControl]="actionErrorHandlingFormControl"
+      [hideContinueOnFailure]="
+        deps.selectedTriggerOrAction.errorHandlingOptions?.continueOnFailure
+          ?.hide || false
+      "
+      [hideRetryOnFailure]="
+        deps.selectedTriggerOrAction.errorHandlingOptions?.retryOnFailure
+          ?.hide || false
+      "
+    ></app-action-error-handling-form-control>
+    } } } @else {
+    <div
+      class="ap-flex ap-flex-grow ap-justify-center ap-items-center ap-h-[250px]"
+    >
+      <ap-loading-icon> </ap-loading-icon>
+    </div>
+    } @if (renameStepBasedOnSelectedTriggerOrAction$ | async) {}
   `,
 })
 export class PieceInputFormComponent {
@@ -99,7 +100,7 @@ export class PieceInputFormComponent {
   renameStepBasedOnSelectedTriggerOrAction$?: Observable<unknown>;
   deps$: Observable<{
     currentStep: Step | undefined;
-    triggersOrActions: (TriggerBase[] | ActionBase[]);
+    triggersOrActions: TriggerBase[] | ActionBase[];
     selectedTriggerOrAction: TriggerBase | ActionBase | undefined;
     pieceMetaData: PieceMetadataModel | undefined;
     webhookPrefix: string;
@@ -115,23 +116,23 @@ export class PieceInputFormComponent {
     private store: Store,
     private pieceMetaDataService: PieceMetadataService,
     private flagService: FlagService,
-    private fb: UntypedFormBuilder,
+    private fb: UntypedFormBuilder
   ) {
-    this.isFormReadOnly$ = this.store.select(BuilderSelectors.selectReadOnly).pipe(
-      tap((res)=>{
-        if(res)
-        {
-          this.form.disable({emitEvent:false});
-          this.actionErrorHandlingFormControl.disable({emitEvent:false});
-          this.triggersOrActionsControl.disable({emitEvent:false});
-        }
-        else
-        {
-          this.form.enable({emitEvent:false});
-          this.actionErrorHandlingFormControl.enable({emitEvent:false});
-          this.triggersOrActionsControl.enable({emitEvent:false});
-        }
-    }));
+    this.isFormReadOnly$ = this.store
+      .select(BuilderSelectors.selectReadOnly)
+      .pipe(
+        tap((res) => {
+          if (res) {
+            this.form.disable({ emitEvent: false });
+            this.actionErrorHandlingFormControl.disable({ emitEvent: false });
+            this.triggersOrActionsControl.disable({ emitEvent: false });
+          } else {
+            this.form.enable({ emitEvent: false });
+            this.actionErrorHandlingFormControl.enable({ emitEvent: false });
+            this.triggersOrActionsControl.enable({ emitEvent: false });
+          }
+        })
+      );
     this.triggersOrActionsControl = new FormControl<string>('', {
       nonNullable: true,
       validators: Validators.required,
@@ -146,12 +147,15 @@ export class PieceInputFormComponent {
       formPieceTriggerPrefix: this.flagService.getFormUrlPrefix(),
       currentFlow: this.store.select(BuilderSelectors.selectCurrentFlow),
       allConnectionsForPiece: this.getAllConnectionsForPiece(),
-    }).pipe(tap((res=>{
-        if(res.currentStep?.type === ActionType.PIECE)
-        {
-          this.actionErrorHandlingFormControl.setValue(res.currentStep.settings.errorHandlingOptions || {});
+    }).pipe(
+      tap((res) => {
+        if (res.currentStep?.type === ActionType.PIECE) {
+          this.actionErrorHandlingFormControl.setValue(
+            res.currentStep.settings.errorHandlingOptions || {}
+          );
         }
-    })));
+      })
+    );
     this.renameStepBasedOnSelectedTriggerOrAction$ =
       this.renameStepBasedOnSelectedTriggerOrAction();
   }
@@ -172,11 +176,11 @@ export class PieceInputFormComponent {
           .pipe(
             map((res) => {
               return Object.values(
-                step.type === ActionType.PIECE ? res.actions : res.triggers,
+                step.type === ActionType.PIECE ? res.actions : res.triggers
               );
-            }),
+            })
           );
-      }),
+      })
     );
   }
   getSelectedTriggerOrAction() {
@@ -185,19 +189,19 @@ export class PieceInputFormComponent {
         .select(BuilderSelectors.selectCurrentPieceStepTriggerOrActionName)
         .pipe(
           distinctUntilChanged(
-            (curr, prev) => curr?.stepName === prev?.stepName,
+            (curr, prev) => curr?.stepName === prev?.stepName
           ),
           tap((step) => {
             this.triggersOrActionsControl.setValue(
               step.triggerOrActionname || '',
-              { emitEvent: false },
+              { emitEvent: false }
             );
           }),
           switchMap((step) => {
             return this.triggersOrActionsControl.valueChanges.pipe(
-              startWith(step.triggerOrActionname || ''),
+              startWith(step.triggerOrActionname || '')
             );
-          }),
+          })
         ),
       triggersOrActions: this.getTriggersOrActions(),
       pieceMetaData: this.getPieceMetaData(),
@@ -205,16 +209,16 @@ export class PieceInputFormComponent {
     return combineLatest(deps$).pipe(
       map((res) => {
         const triggerOrAction = res.triggersOrActions.find(
-          (v) => v.name === res.selectedTriggerOrActionName,
+          (v) => v.name === res.selectedTriggerOrActionName
         );
         if (triggerOrAction) {
           return addPieceAuthenticationPropertyToTriggerOrActionProperties(
             triggerOrAction,
-            res,
+            res
           );
         }
         return undefined;
-      }),
+      })
     );
 
     function addPieceAuthenticationPropertyToTriggerOrActionProperties(
@@ -223,14 +227,14 @@ export class PieceInputFormComponent {
         selectedTriggerOrActionName: string;
         triggersOrActions: ActionBase[] | TriggerBase[];
         pieceMetaData: PieceMetadataModel | undefined;
-      },
+      }
     ) {
       const selected = {
         ...triggerOrAction,
         props: {
           ...spreadIfDefined(
             AUTHENTICATION_PROPERTY_NAME,
-            res.pieceMetaData?.auth,
+            res.pieceMetaData?.auth
           ),
           ...triggerOrAction.props,
         },
@@ -248,11 +252,11 @@ export class PieceInputFormComponent {
         if (step.type === ActionType.PIECE || step.type === TriggerType.PIECE) {
           return this.pieceMetaDataService.getPieceMetadata(
             step.settings.pieceName,
-            step.settings.pieceVersion,
+            step.settings.pieceVersion
           );
         }
         return of(undefined);
-      }),
+      })
     );
   }
 
@@ -267,10 +271,10 @@ export class PieceInputFormComponent {
           return of([]);
         return this.store.select(
           appConnectionsSelectors.selectAllConnectionsForPiece(
-            step.settings.pieceName,
-          ),
+            step.settings.pieceName
+          )
         );
-      }),
+      })
     );
   }
 
@@ -280,9 +284,8 @@ export class PieceInputFormComponent {
       customizedInputs: Record<string, boolean | Record<string, boolean>>;
       valid: boolean;
     },
-    step: Step,
+    step: Step
   ) {
-    debugger;
     if (step.type === TriggerType.PIECE) {
       this.store.dispatch(
         FlowsActions.updateTrigger({
@@ -298,10 +301,9 @@ export class PieceInputFormComponent {
             },
             valid: result.valid,
           },
-        }),
+        })
       );
     } else if (step.type === ActionType.PIECE) {
-    
       this.store.dispatch(
         FlowsActions.updateAction({
           operation: {
@@ -313,14 +315,13 @@ export class PieceInputFormComponent {
                 ...step.settings.inputUiInfo,
                 customizedInputs: result.customizedInputs,
               },
-              errorHandlingOptions: 
-              {
+              errorHandlingOptions: {
                 ...this.actionErrorHandlingFormControl.value,
               },
             },
             valid: result.valid,
           },
-        }),
+        })
       );
     }
   }
@@ -333,7 +334,7 @@ export class PieceInputFormComponent {
     }).pipe(
       tap(({ triggersOrActions, triggerOrActionName, pieceMetaData }) => {
         const selectedTriggerOrAction = triggersOrActions.find(
-          (x) => x.name === triggerOrActionName,
+          (x) => x.name === triggerOrActionName
         );
         if (selectedTriggerOrAction) {
           console.log(selectedTriggerOrAction.props);
@@ -341,37 +342,39 @@ export class PieceInputFormComponent {
             FlowsActions.newTriggerOrActionSelected({
               displayName: selectedTriggerOrAction.displayName,
               name: selectedTriggerOrAction.name,
-              properties: {...selectedTriggerOrAction.props ,
-                   ...spreadIfDefined(
-                AUTHENTICATION_PROPERTY_NAME,
-                pieceMetaData?.auth,
-              ),},
-            }),
+              properties: {
+                ...selectedTriggerOrAction.props,
+                ...spreadIfDefined(
+                  AUTHENTICATION_PROPERTY_NAME,
+                  pieceMetaData?.auth
+                ),
+              },
+            })
           );
         }
-      }),
+      })
     );
   }
 
-
-  removeEmptyValuesFromInput(input:Record<string,unknown>) : Record<string,unknown>
-  {
-    const cleanedInput:Record<string,unknown> = {};
-    Object.keys(input).forEach((key)=>{
-      if(!isNil(input[key]) && input[key] !== '' && typeof input[key] !== 'object')
-      {
+  removeEmptyValuesFromInput(
+    input: Record<string, unknown>
+  ): Record<string, unknown> {
+    const cleanedInput: Record<string, unknown> = {};
+    Object.keys(input).forEach((key) => {
+      if (
+        !isNil(input[key]) &&
+        input[key] !== '' &&
+        typeof input[key] !== 'object'
+      ) {
         cleanedInput[key] = input[key];
-      }
-      else if(typeof input[key] === 'object' && !Array.isArray(input[key]))
-      {
-        const cleanedObject = this.removeEmptyValuesFromInput(input[key] as Record<string,unknown>);
-        if(Object.keys(cleanedObject).length > 0)
-        {
+      } else if (typeof input[key] === 'object' && !Array.isArray(input[key])) {
+        const cleanedObject = this.removeEmptyValuesFromInput(
+          input[key] as Record<string, unknown>
+        );
+        if (Object.keys(cleanedObject).length > 0) {
           cleanedInput[key] = cleanedObject;
         }
-      }
-      else 
-      {
+      } else {
         cleanedInput[key] = input[key];
       }
     });

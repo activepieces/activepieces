@@ -11,11 +11,12 @@ import { Pipe, PipeTransform } from '@angular/core';
   pure: true,
 })
 export class IsTriggerGuardPipe implements PipeTransform {
-  transform(value: ActionBase | TriggerBase): value is TriggerBase {
+  transform(value: ActionBase | TriggerBase | undefined): value is TriggerBase {
     return (
-      (value as TriggerBase).type === TriggerStrategy.APP_WEBHOOK ||
-      (value as TriggerBase).type === TriggerStrategy.POLLING ||
-      (value as TriggerBase).type === TriggerStrategy.WEBHOOK
+      !!value &&
+      ((value as TriggerBase).type === TriggerStrategy.APP_WEBHOOK ||
+        (value as TriggerBase).type === TriggerStrategy.POLLING ||
+        (value as TriggerBase).type === TriggerStrategy.WEBHOOK)
     );
   }
 }
