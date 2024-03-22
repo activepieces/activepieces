@@ -193,13 +193,13 @@ export const projectMemberService = {
         platformId: null | string
     }): Promise<ProjectMemberSchema[]> {
         return repo()
-        .createQueryBuilder('pm')
-        .innerJoinAndSelect('pm.project', 'project')
-        .where('pm.email = :email', { email })
-        .andWhere('pm.status = :status', { status: ProjectMemberStatus.ACTIVE })
-        .andWhere(platformId ? 'pm."platformId" = :platformId' : 'pm."platformId" IS NULL', { platformId })
-        .andWhere('project.deleted IS NULL')
-        .getMany();
+            .createQueryBuilder('pm')
+            .innerJoinAndSelect('pm.project', 'project')
+            .where('pm.email = :email', { email })
+            .andWhere('pm.status = :status', { status: ProjectMemberStatus.ACTIVE })
+            .andWhere(platformId ? 'pm."platformId" = :platformId' : 'pm."platformId" IS NULL', { platformId })
+            .andWhere('project.deleted IS NULL')
+            .getMany()
     },
     async delete(
         projectId: ProjectId,
