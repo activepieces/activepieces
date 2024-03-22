@@ -56,7 +56,7 @@ const exportedDeclarations = [
   BuilderAutocompleteMentionsDropdownComponent,
   ActionErrorHandlingFormControlComponent,
   PiecePropertiesFormComponent,
-  DynamicPropertyControlComponent
+  DynamicPropertyControlComponent,
 ];
 @NgModule({
   imports: [
@@ -83,7 +83,7 @@ const exportedDeclarations = [
     ActionOrTriggerDropdownComponent,
     DynamicInputToggleComponent,
     ShouldShwoDynamicInputToggleAboveInputPipe,
-    FormGroupCasterPipe  
+    FormGroupCasterPipe,
   ],
   declarations: [
     ...exportedDeclarations,

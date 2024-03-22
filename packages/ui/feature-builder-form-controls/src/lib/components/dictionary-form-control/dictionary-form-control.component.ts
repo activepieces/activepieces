@@ -45,7 +45,7 @@ export class DictionaryFormControlComponent
     this.valueChanges$ = this.form.valueChanges.pipe(
       tap(() => {
         this.dictionaryControlValueChanged();
-      }),
+      })
     );
   }
   ngOnInit(): void {
@@ -81,7 +81,7 @@ export class DictionaryFormControlComponent
 
   addPair(
     pair: { key: string; value: unknown },
-    triggerChangeDetection = true,
+    triggerChangeDetection = true
   ) {
     const pairGroup = this.fb.group({
       key: new UntypedFormControl(pair.key),
@@ -124,13 +124,13 @@ export class DictionaryFormControlComponent
   }
   async addMention(
     textControl: InterpolatingTextFormControlComponent,
-    mention: InsertMentionOperation,
+    mention: InsertMentionOperation
   ) {
     await textControl.addMention(mention);
   }
   showMenu(
     $event: MouseEvent | boolean,
-    mentionsDropdown: BuilderAutocompleteDropdownHandlerComponent,
+    mentionsDropdown: BuilderAutocompleteDropdownHandlerComponent
   ) {
     //if it is boolean it means that the invocation of this function was from editorfocused
     if (typeof $event !== 'boolean') {

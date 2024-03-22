@@ -79,7 +79,7 @@ export class JsonControlComponent {
   beautify() {
     try {
       this.passedFormControl.setValue(
-        this.codeService.beautifyJson(JSON.parse(this.passedFormControl.value)),
+        this.codeService.beautifyJson(JSON.parse(this.passedFormControl.value))
       );
     } catch {
       //ignore

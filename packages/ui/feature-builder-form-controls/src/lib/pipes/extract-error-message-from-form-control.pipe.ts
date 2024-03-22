@@ -9,12 +9,19 @@ import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
   standalone: true,
 })
 export class ExtractControlErrorMessagePipe implements PipeTransform {
-  transform(ctrl: FormControl, property: PieceProperty,isDynamicInput:boolean): Observable<string> {
+  transform(
+    ctrl: FormControl,
+    property: PieceProperty,
+    isDynamicInput: boolean
+  ): Observable<string> {
     return ctrl.valueChanges.pipe(
       startWith(ctrl.value),
       map(() => {
-        if(property.type === PropertyType.ARRAY && property.properties !== undefined && !isDynamicInput)
-        {
+        if (
+          property.type === PropertyType.ARRAY &&
+          property.properties !== undefined &&
+          !isDynamicInput
+        ) {
           return '';
         }
         if (ctrl.invalid && ctrl.hasError('required')) {
@@ -23,7 +30,7 @@ export class ExtractControlErrorMessagePipe implements PipeTransform {
           return `${property.displayName} is invalid`;
         }
         return '';
-      }),
+      })
     );
   }
 }

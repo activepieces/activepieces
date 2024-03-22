@@ -6,7 +6,7 @@ import {
   Output,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {  UiCommonModule } from '@activepieces/ui/common';
+import { UiCommonModule } from '@activepieces/ui/common';
 import { FormControl, Validators } from '@angular/forms';
 import {
   ActionBase,
@@ -25,13 +25,13 @@ import { selectedTirggerOrActionPipe } from '../../pipes/selected-action-or-trig
     UiCommonModule,
     IsTriggerGuardPipe,
     DropdownSelectedValuesPipe,
-    selectedTirggerOrActionPipe
+    selectedTirggerOrActionPipe,
   ],
   templateUrl: './action-or-trigger-dropdown.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ActionOrTriggerDropdownComponent {
-  @Input({ required: true }) items: (ActionBase[] | TriggerBase[]) = [];
+  @Input({ required: true }) items: ActionBase[] | TriggerBase[] = [];
   @Output() newActionOrTriggerSelected = new EventEmitter<
     ActionBase | TriggerBase
   >();

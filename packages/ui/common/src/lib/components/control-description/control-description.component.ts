@@ -1,4 +1,4 @@
-import {  Component, Input } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { AbstractControl } from '@angular/forms';
 import {
   BOTTOM_MARGIN_FOR_DESCRIPTION_IN_PIECE_PROPERTIES_FORM,
@@ -12,21 +12,17 @@ import { CheckOverflowDirective } from '../../directives';
   standalone: true,
   imports: [CommonModule, MarkdownModule, CheckOverflowDirective],
   template: `
-  @if( !(description ||  (passedFormControl.touched && passedFormControl.invalid)))
-  {
-    <div
-      [style.height]="MIN_SPACING_BETWEEN_INPUTS"
-    ></div>
-  }
-  @else() {
+    @if( !(description || (passedFormControl.touched &&
+    passedFormControl.invalid))) {
+    <div [style.height]="MIN_SPACING_BETWEEN_INPUTS"></div>
+    } @else() {
     <div
       class="ap-flex ap-justify-between ap-markdown "
       [style.marginBottom]="
         BOTTOM_MARGIN_FOR_DESCRIPTION_IN_PIECE_PROPERTIES_FORM
       "
       *ngIf="
-        description ||
-        (passedFormControl.touched && passedFormControl.invalid)
+        description || (passedFormControl.touched && passedFormControl.invalid)
       "
     >
       <div
@@ -39,7 +35,6 @@ import { CheckOverflowDirective } from '../../directives';
           apCheckOverflow
           (isOverflowed)="isOverFlown = $event"
         >
-           
           <markdown
             [data]="
               passedFormControl.touched && passedFormControl.invalid
@@ -64,11 +59,7 @@ import { CheckOverflowDirective } from '../../directives';
         </button>
       </div>
     </div>
-  }
-  
-
-
-
+    }
   `,
 })
 export class ControlDescriptionComponent {

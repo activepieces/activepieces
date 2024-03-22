@@ -17,7 +17,10 @@ import {
 } from '@angular/forms';
 import { map, Observable, tap } from 'rxjs';
 import { InterpolatingTextFormControlComponent } from '../interpolating-text-form-control/interpolating-text-form-control.component';
-import { InsertMentionOperation, PieceMetadataModel } from '@activepieces/ui/common';
+import {
+  InsertMentionOperation,
+  PieceMetadataModel,
+} from '@activepieces/ui/common';
 import { ArrayProperty } from '@activepieces/pieces-framework';
 import { PopulatedFlow } from '@activepieces/shared';
 
@@ -58,9 +61,7 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
       properties &&
       Object.keys(properties).length > 0
     ) {
-      this.formArray.push(
-        this.fb.group({})
-      );
+      this.formArray.push(this.fb.group({}));
     } else if (typeof propertiesValues === 'string') {
       this.formArray.push(
         new FormControl<string>(propertiesValues, { nonNullable: true })

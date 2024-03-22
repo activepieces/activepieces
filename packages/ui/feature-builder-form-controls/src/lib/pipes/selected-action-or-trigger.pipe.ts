@@ -7,7 +7,10 @@ import { Pipe, PipeTransform } from '@angular/core';
   pure: true,
 })
 export class selectedTirggerOrActionPipe implements PipeTransform {
-  transform(value:string, items: (ActionBase[] | TriggerBase[])): (string | undefined) {
-    return items.find(i => i.name === value)?.displayName;
+  transform(
+    value: string,
+    items: ActionBase[] | TriggerBase[]
+  ): string | undefined {
+    return items.find((i) => i.name === value)?.displayName;
   }
 }
