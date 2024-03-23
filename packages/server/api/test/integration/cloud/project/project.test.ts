@@ -523,7 +523,7 @@ describe('Project API', () => {
             expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
             const responseBody = response?.json()
             expect(responseBody?.code).toBe('VALIDATION')
-            expect(responseBody?.params?.message).toBe('project has enabled flows')
+            expect(responseBody?.params?.message).toBe('PROJECT_HAS_ENABLED_FLOWS')
         })
 
         it('Fails if project to delete is the active project', async () => {

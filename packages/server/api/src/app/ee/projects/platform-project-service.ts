@@ -190,7 +190,7 @@ const assertAllProjectFlowsAreDisabled = async (params: AssertAllProjectFlowsAre
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
             params: {
-                message: 'project has enabled flows',
+                message: 'PROJECT_HAS_ENABLED_FLOWS',
             },
         })
     }
