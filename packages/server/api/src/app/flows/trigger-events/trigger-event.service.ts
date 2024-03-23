@@ -23,8 +23,10 @@ import { webhookService } from '../../webhooks/webhook-service'
 import { flowService } from '../flow/flow.service'
 import { TriggerEventEntity } from './trigger-event.entity'
 import { stepFileService } from '../step-file/step-file.service'
+import dayjs from 'dayjs'
+import { LessThan } from 'typeorm'
 
-const triggerEventRepo = databaseConnection.getRepository(TriggerEventEntity)
+export const triggerEventRepo = databaseConnection.getRepository(TriggerEventEntity)
 
 export const triggerEventService = {
     async saveEvent({
@@ -135,6 +137,12 @@ export const triggerEventService = {
         })
         const { data, cursor: newCursor } = await paginator.paginate(query)
         return paginationHelper.createPage<TriggerEvent>(data, newCursor)
+    },
+    async deleteEventsOlderThanFourteenDay(): Promise<void> {
+        const fourteenDayAgo = dayjs().subtract(14, 'day').toDate()
+        await triggerEventRepo.delete({
+            created: LessThan(fourteenDayAgo.toISOString()),
+        })
     },
 }
 

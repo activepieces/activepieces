@@ -136,6 +136,7 @@ type SystemJobName =
     | 'hard-delete-project'
     | 'project-usage-report'
     | 'usage-report'
+    | 'trigger-data-cleaner'
 
 type HardDeleteProjectSystemJobData = {
     projectId: ProjectId
@@ -148,7 +149,8 @@ type SystemJobData<T extends SystemJobName = SystemJobName> =
     T extends 'hard-delete-project' ? HardDeleteProjectSystemJobData :
         T extends 'project-usage-report' ? ProjectUsageReportSystemJobData :
             T extends 'usage-report' ? UsageReportSystemJobData :
-                never
+                T extends 'trigger-data-cleaner' ? Record<string, never> :
+                    never
 
 type SystemJobDefinition<T extends SystemJobName> = {
     name: T

@@ -192,11 +192,14 @@ export const projectMemberService = {
         email: string
         platformId: null | string
     }): Promise<ProjectMemberSchema[]> {
-        return repo().findBy({
-            email,
-            status: ProjectMemberStatus.ACTIVE,
-            platformId: isNil(platformId) ? IsNull() : platformId,
-        })
+        return repo()
+            .createQueryBuilder('pm')
+            .innerJoinAndSelect('pm.project', 'project')
+            .where('pm.email = :email', { email })
+            .andWhere('pm.status = :status', { status: ProjectMemberStatus.ACTIVE })
+            .andWhere(platformId ? 'pm."platformId" = :platformId' : 'pm."platformId" IS NULL', { platformId })
+            .andWhere('project.deleted IS NULL')
+            .getMany()
     },
     async delete(
         projectId: ProjectId,
@@ -224,10 +227,10 @@ async function getByInvitationTokenOrThrow(
     invitationToken: string,
 ): Promise<ProjectMember> {
     const { id: projectMemberId } =
-    await jwtUtils.decodeAndVerify<ProjectMemberToken>({
-        jwt: invitationToken,
-        key: await jwtUtils.getJwtSecret(),
-    })
+        await jwtUtils.decodeAndVerify<ProjectMemberToken>({
+            jwt: invitationToken,
+            key: await jwtUtils.getJwtSecret(),
+        })
     return getOrThrow(projectMemberId)
 }
 

@@ -24,7 +24,7 @@ const Trigger = Type.Composite([
     Type.Omit(Action, ['requireAuth']),
     Type.Object({
         handshakeConfiguration: WebhookHandshakeConfiguration,
-        sampleData: Type.Unknown(),
+        sampleData: Type.Optional(Type.Unknown()),
         type: Type.Enum(TriggerStrategy),
         testStrategy: Type.Enum(TriggerTestStrategy),
     }),
