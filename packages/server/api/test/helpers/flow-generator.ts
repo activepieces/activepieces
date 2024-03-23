@@ -11,7 +11,7 @@ export const flowGenerator = {
         const result = {
             version: {
                 ...version,
-                trigger: randmoizeTriggerMetadata(version.trigger),
+                trigger: randomizeTriggerMetadata(version.trigger),
                 flowId,
             },
             schedule: null,
@@ -36,7 +36,7 @@ const flowVersionGenerator = {
             updatedBy: apId(),
             valid: true,
             trigger: {
-                ...randmoizeTriggerMetadata(generateTrigger()),
+                ...randomizeTriggerMetadata(generateTrigger()),
                 nextAction: generateAction(),
             },
             state: FlowVersionState.DRAFT,
@@ -44,7 +44,7 @@ const flowVersionGenerator = {
     },
 }
 
-function randmoizeTriggerMetadata(trigger: Trigger): Trigger {
+function randomizeTriggerMetadata(trigger: Trigger): Trigger {
     return {
         ...trigger,
         settings: {

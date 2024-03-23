@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { Observable, Subject, catchError, startWith, tap } from 'rxjs';
+import { Observable, Subject, startWith, tap } from 'rxjs';
 import { ProjectsDataSource } from './projects-table.datasource';
 import { Project, ProjectWithLimits } from '@activepieces/shared';
 import { MatDialog } from '@angular/material/dialog';
@@ -13,14 +13,13 @@ import {
   AuthenticationService,
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
-  GenericSnackbarTemplateComponent,
   PlatformProjectService,
   ProjectActions,
   featureDisabledTooltip,
 } from '@activepieces/ui/common';
 import { ActivatedRoute } from '@angular/router';
 import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { HttpErrorResponse } from '@angular/common/http';
 import { StatusCodes } from 'http-status-codes';
 
 @Component({
@@ -54,8 +53,7 @@ export class ProjectsTableComponent {
     private matDialog: MatDialog,
     private authenticationService: AuthenticationService,
     private store: Store,
-    private route: ActivatedRoute,
-    private snackBar: MatSnackBar
+    private route: ActivatedRoute
   ) {
     this.isDemo = this.route.snapshot.data[PLATFORM_DEMO_RESOLVER_KEY];
     this.dataSource = new ProjectsDataSource(
@@ -109,22 +107,6 @@ export class ProjectsTableComponent {
     const deleteProject$ = this.projectsService.delete(project.id).pipe(
       tap(() => {
         this.refreshTable$.next(true);
-        this.snackBar.openFromComponent(GenericSnackbarTemplateComponent, {
-          data: `<b>${project.displayName}</b> ${$localize`deleted`} `,
-        });
-      }),
-      catchError((e) => {
-        if (
-          e.status === StatusCodes.CONFLICT &&
-          e.error?.type === 'VALIDATION' &&
-          e.error?.message === 'project has enabled flows'
-        ) {
-          this.snackBar.openFromComponent(GenericSnackbarTemplateComponent, {
-            data: $localize`<b>${project.displayName}</b> has enabled flows. Please disable them first.`,
-          });
-        }
-
-        throw e;
       })
     );
 
@@ -132,6 +114,18 @@ export class ProjectsTableComponent {
       deleteEntity$: deleteProject$,
       entityName: `project (${project.displayName})`,
       note: $localize`Are you sure you want to <b> delete project (${project.displayName}) </b>?`,
+      errorMessageBuilder(error) {
+        if (
+          error instanceof HttpErrorResponse &&
+          error.status === StatusCodes.CONFLICT &&
+          error.error?.type === 'VALIDATION' &&
+          error.error?.message === 'project has enabled flows'
+        ) {
+          return `<b>${project.displayName}</b> has enabled flows. Please disable them first.`;
+        }
+
+        return undefined;
+      },
     };
 
     this.deleteProject$ = this.matDialog
