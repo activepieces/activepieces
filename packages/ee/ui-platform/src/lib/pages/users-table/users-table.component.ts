@@ -39,7 +39,6 @@ export class UsersTableComponent {
     'action',
   ];
   isDemo = false;
-  upgradeNote = $localize`View users in your platform and manage their status.`;
   constructor(
     private platformService: PlatformService,
     private snackBar: MatSnackBar,

@@ -32,7 +32,8 @@ export class SyncProjectComponent {
   currentProject$: Observable<Project>;
   openPullDialog$: Observable<void>;
   pullDialogLoading$ = new BehaviorSubject<boolean>(false);
-  upgradeNote = $localize`Create external backups, environments, and maintain a version history all through your own managed Git repos.`;
+  upgradeNoteTitle = $localize`Unlock Git Sync`;
+  upgradeNote = $localize`Streamline your team's workflow for a seamless experience to build and deploy flows across your environments`;
   configureButtonTooltip = $localize`Upgrade to enable`;
   constructor(
     private matDialog: MatDialog,

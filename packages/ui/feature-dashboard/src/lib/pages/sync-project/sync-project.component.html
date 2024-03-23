@@ -3,17 +3,19 @@
         <ap-page-title title="Project Settings" i18n-title>
         </ap-page-title>
 
+        <ng-container *ngIf="showUpgrade">
+            <div class="ap-mb-4 ">
+                <ap-upgrade-note [featureNoteTitle]="upgradeNoteTitle" [featureNote]="upgradeNote"
+                    docsLink="https://www.activepieces.com/docs/operations/git-sync"></ap-upgrade-note>
+            </div>
+        </ng-container>
+
         <ap-page-title title="Git Sync" i18n-title>
             <div underTitle class="ap-text-description ap-typography-body-2 ap ap-mt-2" i18n>
                 Streamline environments management by integrating with Git repos.
             </div>
         </ap-page-title>
-        <ng-container *ngIf="showUpgrade">
-            <div class="ap-mb-4 ">
-                <ap-upgrade-note [featureNote]="upgradeNote"
-                    docsLink="https://www.activepieces.com/docs/operations/git-sync"></ap-upgrade-note>
-            </div>
-        </ng-container>
+        
         <div apCard
             class=" ap-w-[700px] ap-flex ap-items-center ap-justify-between ap-flex-col md:ap-flex-row ap-gap-4  ap-mb-8">
             <ng-container *ngIf="(currentRepo$ | async) === null || (currentRepo$ | async) === undefined ">

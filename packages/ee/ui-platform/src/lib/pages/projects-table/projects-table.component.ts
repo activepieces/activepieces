@@ -37,7 +37,8 @@ export class ProjectsTableComponent {
     'externalId',
     'action',
   ];
-  upgradeNote = $localize`Orchestrate your automation teams across projects with their own flows and connections. Stay in control by setting task and user quotas per project.`;
+  upgradeNoteTitle = $localize`Unlock Projects`;
+  upgradeNote = $localize`Orchestrate your automation teams across projects with their own flows, connections and usage quotas`;
   refreshTable$: Subject<boolean> = new Subject();
   dataSource: ProjectsDataSource;
   loading = true;

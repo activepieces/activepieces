@@ -1,8 +1,8 @@
 <div class="ap-h-full ap-pt-2 ">
-    <div class="ap-flex ap-max-w-[56.25rem] ap-flex-col ap-gap-4 ">
-        <div class="ap-mb-2 " *ngIf="!(platform$ | async)?.ssoEnabled || isDemo">
-            <ap-upgrade-note [featureNote]="upgradeNote" docsLink="https://www.activepieces.com/docs/security/sso#supported-sso-providers"></ap-upgrade-note>
-        </div>
+    <ap-upgrade-note *ngIf="!(platform$ | async)?.ssoEnabled || isDemo" class="ap-mb-2"
+        [featureNoteTitle]="upgradeNoteTitle" [featureNote]="upgradeNote" docsLink="https://www.activepieces.com/docs/security/sso#supported-sso-providers"></ap-upgrade-note>
+
+    <div class="ap-flex ap-max-w-[56.25rem] ap-flex-col ap-gap-4" *ngIf="(platform$ | async)?.ssoEnabled && !isDemo">
         <app-allowed-email-domains-list [platform]="(platform$ | async) || undefined" [isDemo]="false"
             (platformUpdated)="platformUpdated($event)"></app-allowed-email-domains-list>
         <app-configure-confederated-authn-card [isDemo]="false" [platform]="(platform$ | async) || undefined"
@@ -15,6 +15,5 @@
             (platformUpdated)="platformUpdated($event)"></app-configure-allowing-email-logins-card>
     </div>
 </div>
-
 
 <ng-container *ngIf="addDomain$ | async"></ng-container>

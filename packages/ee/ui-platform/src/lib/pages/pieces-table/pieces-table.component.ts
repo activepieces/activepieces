@@ -45,7 +45,8 @@ import { PieceScope } from '@activepieces/shared';
 export class PiecesTableComponent implements OnInit {
   displayedColumns = ['displayName', 'packageName', 'version', 'action'];
   title = $localize`Pieces`;
-  upgradeNote = $localize`Add pieces to your platform, configure them and manage their visibility to users.`;
+  upgradeNoteTitle = $localize`Control Pieces`;
+  upgradeNote = $localize`Show the pieces that matter most to your users and hide the ones that you don't like`;
   saving$?: Observable<void>;
   platform$?: BehaviorSubject<Platform>;
   readonly pieceShownText = $localize`is now available to users`;

@@ -8,7 +8,9 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 export class UpgradeNoteComponent {
   @Input() pricingUrl = 'https://www.activepieces.com/sales';
   @Input() docsLink = '';
+  @Input({ required: true }) featureNoteTitle = '';
   @Input({ required: true }) featureNote = '';
+  @Input() videoUrl = '';
   openPricing() {
     window.open(this.pricingUrl, '_blank', 'noopener noreferrer');
   }
