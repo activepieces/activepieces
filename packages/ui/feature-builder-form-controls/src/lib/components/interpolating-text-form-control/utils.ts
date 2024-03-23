@@ -5,7 +5,7 @@ import {
   NgForm,
 } from '@angular/forms';
 import { ErrorStateMatcher, mixinErrorState } from '@angular/material/core';
-import { Subject, forkJoin, map } from 'rxjs';
+import { Subject, forkJoin, map, of } from 'rxjs';
 import { Step, StepWithIndex } from '@activepieces/ui/feature-builder-store';
 import {
   InsertMentionOperation,
@@ -89,6 +89,9 @@ export function enrichMentionDropdownWithIcons(
   steps: (Omit<MentionListItem, 'logoUrl'> & { step: StepWithIndex })[],
   pieceService: PieceMetadataService
 ) {
+  if (steps.length === 0) {
+    return of([]);
+  }
   const icons = steps.map((step) => pieceService.getIconUrlForStep(step.step));
   return forkJoin(icons).pipe(
     map((urls) => {

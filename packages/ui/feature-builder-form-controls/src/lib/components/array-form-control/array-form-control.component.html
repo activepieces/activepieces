@@ -47,6 +47,7 @@
                 [propertiesMap]="property.properties"
                 [customizedInputs]="{}"
                 [hideCustomizedInputs]="true"
+                [stepMetaDataForMentions]="stepMetaDataForMentions"
               ></app-piece-properties-form>
           </div>
         </mat-card-content>
@@ -95,6 +96,7 @@
               [formControl]="getFormControlAtIndex($index)"
               placeholder="Value"
               (click)="formArray.enabled ? handler.showMentionsDropdown() : null"
+              [stepMetaDataForMentions]="stepMetaDataForMentions"
             ></app-interpolating-text-form-control>
   
             <app-builder-autocomplete-dropdown-handler

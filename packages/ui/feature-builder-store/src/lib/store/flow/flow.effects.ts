@@ -92,6 +92,11 @@ export class FlowsEffects {
           const valid = Object.keys(properties).reduce((acc, key) => {
             return acc && !properties[key]?.required;
           }, true);
+          const defaultValues = Object.keys(properties).reduce((acc, key) => {
+            acc[key] = properties[key]?.defaultValue;
+            return acc;
+          }, {} as Record<string, unknown>);
+          console.log(defaultValues);
           if (step.type === TriggerType.PIECE) {
             return of(
               FlowsActions.updateTrigger({
@@ -101,7 +106,7 @@ export class FlowsEffects {
                   settings: {
                     ...step.settings,
                     triggerName: name,
-                    input: {},
+                    input: defaultValues,
                     inputUiInfo: {
                       customizedInputs: {},
                     },
@@ -119,7 +124,7 @@ export class FlowsEffects {
                   settings: {
                     ...step.settings,
                     actionName: name,
-                    input: {},
+                    input: defaultValues,
                     inputUiInfo: {
                       customizedInputs: {},
                     },

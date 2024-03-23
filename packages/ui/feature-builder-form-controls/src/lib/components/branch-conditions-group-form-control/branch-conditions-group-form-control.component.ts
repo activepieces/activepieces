@@ -11,6 +11,7 @@ import {
 import { map, Observable, tap } from 'rxjs';
 import { BranchCondition } from '@activepieces/shared';
 import { branchConditionValidator } from '@activepieces/ui/common';
+import { ControlThatUsesMentionsCoreComponent } from '../control-that-uses-mentions-core/control-that-uses-mentions-core.component';
 
 @Component({
   selector: 'app-branch-conditions-group-form-control',
@@ -29,6 +30,7 @@ import { branchConditionValidator } from '@activepieces/ui/common';
   ],
 })
 export class BranchConditionsGroupFormControlComponent
+  extends ControlThatUsesMentionsCoreComponent
   implements ControlValueAccessor
 {
   @Input() isFirstConditionGroup = true;
@@ -46,6 +48,7 @@ export class BranchConditionsGroupFormControlComponent
   };
 
   constructor(private fb: FormBuilder) {
+    super();
     const emptyConditionsList: FormControl<BranchCondition>[] = [];
     this.conditionsForm = this.fb.group({
       conditions: this.fb.array(emptyConditionsList),

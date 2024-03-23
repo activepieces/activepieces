@@ -14,17 +14,19 @@ import {
   BuilderSelectors,
   FlowsActions,
   Step,
+  StepMetaDataForMentions,
 } from '@activepieces/ui/feature-builder-store';
 import {
   Observable,
   combineLatest,
   distinctUntilChanged,
+  forkJoin,
   map,
   of,
   startWith,
   switchMap,
-  tap,
   take,
+  tap,
 } from 'rxjs';
 import {
   AUTHENTICATION_PROPERTY_NAME,
@@ -37,6 +39,7 @@ import {
 } from '@activepieces/shared';
 import { ActionBase, TriggerBase } from '@activepieces/pieces-framework';
 import { FormControl, UntypedFormBuilder, Validators } from '@angular/forms';
+import { InputFormCore } from '../input-form-core';
 
 @Component({
   selector: 'app-piece-input-form',
@@ -75,6 +78,7 @@ import { FormControl, UntypedFormBuilder, Validators } from '@angular/forms';
       "
       [triggerName]="deps.currentStep.settings.triggerName"
       [hideCustomizedInputs]="isFormReadOnly$ | async | defaultTrue"
+      [stepMetaDataForMentions]="deps.stepMetaDataForMentions"
     ></app-piece-properties-form>
 
     @if(deps.currentStep.type === ActionType.PIECE) {
@@ -101,7 +105,7 @@ import { FormControl, UntypedFormBuilder, Validators } from '@angular/forms';
     } @if (renameStepBasedOnSelectedTriggerOrAction$ | async) {}
   `,
 })
-export class PieceInputFormComponent {
+export class PieceInputFormComponent extends InputFormCore {
   triggersOrActionsControl: FormControl<string>;
   renameStepBasedOnSelectedTriggerOrAction$?: Observable<unknown>;
   deps$: Observable<{
@@ -113,6 +117,7 @@ export class PieceInputFormComponent {
     formPieceTriggerPrefix: string;
     currentFlow: PopulatedFlow;
     allConnectionsForPiece: PieceConnectionDropdownItem[];
+    stepMetaDataForMentions: StepMetaDataForMentions[];
   }>;
   actionErrorHandlingFormControl: FormControl<ActionErrorHandlingOptions> =
     new FormControl({}, { nonNullable: true });
@@ -120,11 +125,13 @@ export class PieceInputFormComponent {
   isFormReadOnly$: Observable<boolean>;
   readonly ActionType = ActionType;
   constructor(
-    private store: Store,
+    store: Store,
+    pieceService: PieceMetadataService,
     private pieceMetaDataService: PieceMetadataService,
     private flagService: FlagService,
     private fb: UntypedFormBuilder
   ) {
+    super(store, pieceService);
     this.isFormReadOnly$ = this.store
       .select(BuilderSelectors.selectReadOnly)
       .pipe(
@@ -155,6 +162,7 @@ export class PieceInputFormComponent {
       formPieceTriggerPrefix: this.flagService.getFormUrlPrefix(),
       currentFlow: this.store.select(BuilderSelectors.selectCurrentFlow),
       allConnectionsForPiece: this.getAllConnectionsForPiece(),
+      stepMetaDataForMentions: this.stepMetaDataForMentions$,
     }).pipe(
       tap((res) => {
         if (res.currentStep?.type === ActionType.PIECE) {
@@ -332,11 +340,21 @@ export class PieceInputFormComponent {
   }
 
   renameStepBasedOnSelectedTriggerOrAction() {
-    return combineLatest({
-      triggersOrActions: this.getTriggersOrActions(),
-      triggerOrActionName: this.triggersOrActionsControl.valueChanges,
-      pieceMetaData: this.getPieceMetaData().pipe(take(1)),
-    }).pipe(
+    return this.triggersOrActionsControl.valueChanges.pipe(
+      switchMap((res) => {
+        const deps = {
+          triggersOrActions: this.getTriggersOrActions().pipe(take(1)),
+          pieceMetaData: this.getPieceMetaData().pipe(take(1)),
+        };
+        return forkJoin(deps).pipe(
+          map((deps) => {
+            return {
+              triggerOrActionName: res,
+              ...deps,
+            };
+          })
+        );
+      }),
       tap(({ triggersOrActions, triggerOrActionName, pieceMetaData }) => {
         const selectedTriggerOrAction = triggersOrActions.find(
           (x) => x.name === triggerOrActionName

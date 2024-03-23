@@ -8,6 +8,7 @@ import { InterpolatingTextFormControlComponent } from '../interpolating-text-for
 import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
 import { UntypedFormControl } from '@angular/forms';
 import { BuilderAutocompleteDropdownHandlerComponent } from '../interpolating-text-form-control/builder-autocomplete-dropdown-handler/builder-autocomplete-dropdown-handler.component';
+import { EnrichedStepMetaDataForMentions } from '@activepieces/ui/feature-builder-store';
 
 @Component({
   selector: 'app-text-control',
@@ -64,6 +65,7 @@ import { BuilderAutocompleteDropdownHandlerComponent } from '../interpolating-te
           [formControl]="passedFormControl"
           [attr.name]="property.displayName"
           (editorFocused)="handler.showMentionsDropdown()"
+          [stepMetaDataForMentions]="stepMetaDataForMentions"
         ></app-interpolating-text-form-control>
       </mat-form-field>
 
@@ -79,6 +81,8 @@ import { BuilderAutocompleteDropdownHandlerComponent } from '../interpolating-te
 export class TextControlComponent {
   @Input({ required: true }) property: PieceProperty;
   @Input({ required: true }) passedFormControl: UntypedFormControl;
+  @Input({ required: true })
+  stepMetaDataForMentions: EnrichedStepMetaDataForMentions[] = [];
   readonly PropertyType = PropertyType;
   async addMention(
     textControl: InterpolatingTextFormControlComponent,

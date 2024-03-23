@@ -3,6 +3,7 @@
     <mat-form-field class="ap-w-full" appearance="outline" (click)="handler.showMentionsDropdown()" #inputContainer>
       <mat-label i18n>Items</mat-label>
       <app-interpolating-text-form-control #ItemsTextControl formControlName="items"
+        [stepMetaDataForMentions]="(stepMetaDataForMentions$ | async) ||  []"
         [onlyAllowOneMentionToBeAdded]="true"></app-interpolating-text-form-control>
       <mat-error *ngIf="loopStepForm.controls.items.invalid" i18n>
         Items are required.

@@ -5,6 +5,7 @@
                 *ngFor="let con of conditionsForm.controls.conditions.controls;let idx=index; let isLast = last">
                 <app-branch-condition [formControl]="con"
                     [isLastAndOnlyCondition]="conditionsForm.controls.conditions.controls.length === 1"
+                    [stepMetaDataForMentions]="stepMetaDataForMentions"
                     (removeCondition)="removeCondition(idx)" [isInLastAndOnlyGroup]="isInLastAndOnlyGroup">
                 </app-branch-condition>
                 <ng-container *ngIf="!isLast">

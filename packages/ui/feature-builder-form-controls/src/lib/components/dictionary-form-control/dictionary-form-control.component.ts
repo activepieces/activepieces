@@ -11,6 +11,7 @@ import { Observable, tap } from 'rxjs';
 import { InterpolatingTextFormControlComponent } from '../interpolating-text-form-control/interpolating-text-form-control.component';
 import { InsertMentionOperation } from '@activepieces/ui/common';
 import { BuilderAutocompleteDropdownHandlerComponent } from '../interpolating-text-form-control/builder-autocomplete-dropdown-handler/builder-autocomplete-dropdown-handler.component';
+import { ControlThatUsesMentionsCoreComponent } from '../control-that-uses-mentions-core/control-that-uses-mentions-core.component';
 
 @Component({
   selector: 'app-dictonary-form-control',
@@ -25,6 +26,7 @@ import { BuilderAutocompleteDropdownHandlerComponent } from '../interpolating-te
   ],
 })
 export class DictionaryFormControlComponent
+  extends ControlThatUsesMentionsCoreComponent
   implements ControlValueAccessor, OnInit
 {
   @Input() propertyDisplayName = '';
@@ -41,6 +43,7 @@ export class DictionaryFormControlComponent
   };
 
   constructor(private fb: UntypedFormBuilder) {
+    super();
     this.form = this.fb.group({ pairs: this.fb.array([]) });
     this.valueChanges$ = this.form.valueChanges.pipe(
       tap(() => {

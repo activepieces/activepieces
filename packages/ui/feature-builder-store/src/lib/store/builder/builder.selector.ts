@@ -11,10 +11,9 @@ import {
 } from '@activepieces/shared';
 import { ViewModeEnum } from '../../model/enums/view-mode.enum';
 import { ActionType, TriggerType } from '@activepieces/shared';
-import { Step, StepWithIndex } from '../../model/step';
+import { Step, StepMetaDataForMentions } from '../../model/step';
 import { FlowStructureUtil } from '../../utils/flowStructureUtil';
 import { BuilderSavingStatusEnum, CanvasState } from '../../model';
-import { MentionListItem } from '@activepieces/ui/common';
 import { StepRunResult } from '../../utils/stepRunResult';
 
 export const BUILDER_STATE_NAME = 'builderState';
@@ -309,10 +308,7 @@ export const selectCurrentRightSideBarType = createSelector(
 const selectAllStepsForMentionsDropdown = createSelector(
   selectCurrentStep,
   selectViewedVersion,
-  (
-    currentStep,
-    flowVersion
-  ): (Omit<MentionListItem, 'logoUrl'> & { step: StepWithIndex })[] => {
+  (currentStep, flowVersion): StepMetaDataForMentions[] => {
     if (!currentStep || !flowVersion || !flowVersion.trigger) {
       return [];
     }

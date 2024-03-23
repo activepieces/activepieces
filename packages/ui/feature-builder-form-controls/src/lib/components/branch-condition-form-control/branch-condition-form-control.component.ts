@@ -18,6 +18,7 @@ import {
 import { InterpolatingTextFormControlComponent } from '../interpolating-text-form-control/interpolating-text-form-control.component';
 import { DropdownOption } from '@activepieces/pieces-framework';
 import { InsertMentionOperation } from '@activepieces/ui/common';
+import { ControlThatUsesMentionsCoreComponent } from '../control-that-uses-mentions-core/control-that-uses-mentions-core.component';
 interface BranchForm {
   firstValue: FormControl<string | null>;
   operator: FormControl<BranchOperator | null>;
@@ -43,6 +44,7 @@ interface BranchForm {
   ],
 })
 export class BranchConditionFormControlComponent
+  extends ControlThatUsesMentionsCoreComponent
   implements ControlValueAccessor
 {
   @Output() removeCondition = new EventEmitter();
@@ -59,6 +61,7 @@ export class BranchConditionFormControlComponent
   };
 
   constructor(private fb: FormBuilder) {
+    super();
     const operatorControl: FormControl<BranchOperator | null> = new FormControl(
       null,
       {

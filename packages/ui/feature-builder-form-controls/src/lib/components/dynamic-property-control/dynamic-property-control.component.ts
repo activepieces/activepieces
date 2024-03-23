@@ -11,6 +11,7 @@ import { Observable } from 'rxjs';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 import { RefreshablePropertyCoreControlComponent } from '../refreshable-property-core/refreshable-property-core-control.component';
 import { UntypedFormGroup } from '@angular/forms';
+import { StepMetaDataForMentions } from '@activepieces/ui/feature-builder-store';
 @Component({
   selector: 'app-dynamic-property-control',
   template: `
@@ -30,6 +31,7 @@ import { UntypedFormGroup } from '@angular/forms';
       [propertiesMap]="props"
       (customizedInputsChanged)="customizedInputsChangedHanlder($event)"
       [hideCustomizedInputs]="hideCustomizedInputs"
+      [stepMetaDataForMentions]="stepMetaDataForMentions"
     ></app-piece-properties-form>
     } } @else(){
     <div
@@ -58,6 +60,8 @@ export class DynamicPropertyControlComponent
     propertyName: string;
     value: boolean;
   }>();
+  @Input({ required: true })
+  stepMetaDataForMentions: StepMetaDataForMentions[] = [];
   readonly PropertyType = PropertyType;
   constructor(piecetaDataService: PieceMetadataService) {
     super(piecetaDataService);

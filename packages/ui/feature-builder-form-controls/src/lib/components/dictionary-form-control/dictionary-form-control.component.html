@@ -78,6 +78,7 @@
           placeholder="Value"
           (click)="pairs.enabled ? showMenu($event, handler) : null"
           (editorFocused)="showMenu($event, handler)"
+          [stepMetaDataForMentions]="stepMetaDataForMentions"
         ></app-interpolating-text-form-control>
 
         <app-builder-autocomplete-dropdown-handler

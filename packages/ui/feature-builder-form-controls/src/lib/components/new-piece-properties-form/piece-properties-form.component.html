@@ -20,6 +20,7 @@
           form.controls[property.key] | abstractFormControlCaster
         "
         [property]="property.value"
+        [stepMetaDataForMentions]="stepMetaDataForMentions"
       ></app-text-control>
     } @else {
       @switch (property.value.type) {
@@ -73,6 +74,7 @@
               form.controls[property.key] | abstractFormControlCaster
             "
             [property]="property.value"
+            [stepMetaDataForMentions]="stepMetaDataForMentions"
           ></app-text-control>
         }
         @case (PropertyType.LONG_TEXT) {
@@ -81,6 +83,7 @@
               form.controls[property.key] | abstractFormControlCaster
             "
             [property]="property.value"
+            [stepMetaDataForMentions]="stepMetaDataForMentions"
           ></app-text-control>
         }
         @case (PropertyType.DATE_TIME) {
@@ -89,6 +92,7 @@
               form.controls[property.key] | abstractFormControlCaster
             "
             [property]="property.value"
+            [stepMetaDataForMentions]="stepMetaDataForMentions"
           ></app-text-control>
         }
         @case (PropertyType.FILE) {
@@ -97,6 +101,7 @@
               form.controls[property.key] | abstractFormControlCaster
             "
             [property]="property.value"
+            [stepMetaDataForMentions]="stepMetaDataForMentions"
           ></app-text-control>
         }
         @case (PropertyType.NUMBER) {
@@ -105,6 +110,7 @@
               form.controls[property.key] | abstractFormControlCaster
             "
             [property]="property.value"
+            [stepMetaDataForMentions]="stepMetaDataForMentions"
           ></app-text-control>
         }
         @case (PropertyType.STATIC_DROPDOWN) {
@@ -201,6 +207,7 @@
             [customizedInputs]="
               customizedInputs
             "
+            [stepMetaDataForMentions]="stepMetaDataForMentions"
             [hideCustomizedInputs]="hideCustomizedInputs"
             (customizedInputsChanged)="dynamicPropertyCustomizedInputsChangedHanlder($event)"
             [stepChanged$]="stepChanged$.asObservable()"
@@ -217,6 +224,7 @@
             [formControl]="
               form.controls[property.key] | abstractFormControlCaster
             "
+            [stepMetaDataForMentions]="stepMetaDataForMentions"
           >
             <ng-container *ngTemplateOutlet="dynamicInputToggleTemplate;context:{$implicit:property}">
             </ng-container>
@@ -228,6 +236,7 @@
               form.controls[property.key] | abstractFormControlCaster
             "
             [propertyDisplayName]="property.value.displayName"
+            [stepMetaDataForMentions]="stepMetaDataForMentions"
           >
             <ng-container *ngTemplateOutlet="dynamicInputToggleTemplate;context:{$implicit:property}">
             </ng-container>

@@ -15,6 +15,9 @@ import {
   BranchCondition,
 } from '@activepieces/shared';
 import { branchConditionGroupValidator } from '@activepieces/ui/common';
+import { InputFormCore } from '../input-form-core';
+import { Store } from '@ngrx/store';
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 type BranchActionSettingsWithoutInputUiInfo = Omit<
   BranchActionSettings,
   'inputUiInfo'
@@ -36,7 +39,10 @@ type BranchActionSettingsWithoutInputUiInfo = Omit<
     },
   ],
 })
-export class BranchStepInputFormComponent implements ControlValueAccessor {
+export class BranchStepInputFormComponent
+  extends InputFormCore
+  implements ControlValueAccessor
+{
   form: FormGroup<{
     conditionsGroups: FormArray<FormControl<BranchCondition[]>>;
   }>;
@@ -45,7 +51,12 @@ export class BranchStepInputFormComponent implements ControlValueAccessor {
     //ignored
   };
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    store: Store,
+    pieceService: PieceMetadataService,
+    private fb: FormBuilder
+  ) {
+    super(store, pieceService);
     const emptyConditionsGroupList: FormControl<BranchCondition[]>[] = [];
     this.form = this.fb.group({
       conditionsGroups: this.fb.array(emptyConditionsGroupList),

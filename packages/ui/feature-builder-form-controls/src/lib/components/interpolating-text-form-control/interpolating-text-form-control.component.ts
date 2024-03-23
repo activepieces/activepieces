@@ -49,11 +49,10 @@ import 'quill-mention';
 import { Store } from '@ngrx/store';
 import {
   BuilderSelectors,
-  StepWithIndex,
+  EnrichedStepMetaDataForMentions,
 } from '@activepieces/ui/feature-builder-store';
 import {
   InsertMentionOperation,
-  MentionListItem,
   UiCommonModule,
 } from '@activepieces/ui/common';
 import { CommonModule } from '@angular/common';
@@ -89,6 +88,8 @@ export class InterpolatingTextFormControlComponent
   @Input() insideMatField = true;
   @Input() onlyAllowOneMentionToBeAdded = false;
   @Output() editorFocused: EventEmitter<boolean> = new EventEmitter();
+  @Input({ required: true })
+  stepMetaDataForMentions: EnrichedStepMetaDataForMentions[] = [];
   private _readOnly = false;
   private _placeholder = '';
   focused = false;
@@ -119,17 +120,11 @@ export class InterpolatingTextFormControlComponent
   editorFormControl: FormControl<QuillEditorOperationsObject>;
   valueChanges$!: Observable<unknown>;
   private _value = '';
-  stepsMetaData$: Observable<
-    (MentionListItem & {
-      step: StepWithIndex;
-    })[]
-  >;
   autofilled?: boolean | undefined = false;
   userAriaDescribedBy?: string | undefined;
   override stateChanges = new Subject<void>();
   @ViewChild(QuillEditorComponent, { static: true })
   editor!: QuillEditorComponent;
-
   @Input()
   set value(value: string) {
     this._value = value;
@@ -192,13 +187,6 @@ export class InterpolatingTextFormControlComponent
       { ops: [] },
       { nonNullable: true }
     );
-    this.stepsMetaData$ = this.store
-      .select(BuilderSelectors.selectAllStepsForMentionsDropdown)
-      .pipe(
-        switchMap((steps) =>
-          enrichMentionDropdownWithIcons(steps, this.pieceService)
-        )
-      );
   }
 
   ngOnInit(): void {
@@ -209,6 +197,7 @@ export class InterpolatingTextFormControlComponent
           this.ignoreEmittion = false;
           return;
         }
+
         if (val.ops.length === 1 && val.ops[0].insert === '\n') {
           this._value = '';
           this.onChange('');
@@ -299,18 +288,11 @@ export class InterpolatingTextFormControlComponent
 
   async writeValue(value: string) {
     this._value = value;
-    const stepsMetaData = await firstValueFrom(
-      this.store
-        .select(BuilderSelectors.selectAllStepsForMentionsDropdown)
-        .pipe(
-          take(1),
-          switchMap((steps) =>
-            enrichMentionDropdownWithIcons(steps, this.pieceService)
-          )
-        )
-    );
     if (value !== null && typeof value === 'string') {
-      const parsedTextToOps = fromTextToOps(value, stepsMetaData);
+      const parsedTextToOps = fromTextToOps(
+        value,
+        this.stepMetaDataForMentions
+      );
       this.hasMention = parsedTextToOps.ops.some(
         (o) => typeof o.insert === 'object' && o.insert.apMention
       );
@@ -392,7 +374,6 @@ export class InterpolatingTextFormControlComponent
     this.cd.markForCheck();
 
     setTimeout(async () => {
-      const allStepsMetaData = await firstValueFrom(this.stepsMetaData$);
       const itemPathWithoutInterpolationDenotation =
         mentionOp.insert.apMention.serverValue.slice(
           2,
@@ -400,7 +381,7 @@ export class InterpolatingTextFormControlComponent
         );
       const keys = keysWithinPath(itemPathWithoutInterpolationDenotation);
       const stepName = keys[0];
-      const stepMetaData = allStepsMetaData.find(
+      const stepMetaData = this.stepMetaDataForMentions.find(
         (s) => s.step.name === stepName
       );
 

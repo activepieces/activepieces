@@ -23,6 +23,7 @@ import {
 } from '@activepieces/ui/common';
 import { ArrayProperty } from '@activepieces/pieces-framework';
 import { PopulatedFlow } from '@activepieces/shared';
+import { ControlThatUsesMentionsCoreComponent } from '../control-that-uses-mentions-core/control-that-uses-mentions-core.component';
 
 @Component({
   selector: 'app-array-form-control',
@@ -42,7 +43,10 @@ import { PopulatedFlow } from '@activepieces/shared';
     },
   ],
 })
-export class ArrayFormControlComponent implements ControlValueAccessor {
+export class ArrayFormControlComponent
+  extends ControlThatUsesMentionsCoreComponent
+  implements ControlValueAccessor
+{
   formArray: FormArray<FormControl<string> | UntypedFormGroup>;
   @Input({ required: true }) property: ArrayProperty<boolean>;
   @Input() dynamicInputTemplate: TemplateRef<unknown>;
@@ -52,6 +56,7 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
   @Input({ required: true }) webhookPrefix: string;
   @Input({ required: true }) formPieceTriggerPrefix: string;
   @Input({ required: true }) input: Record<string, any> = {};
+
   removeItemTooltip = $localize`Remove item`;
   updateValueOnChange$: Observable<void> = new Observable<void>();
   createForm(propertiesValues: Record<string, unknown> | string) {
@@ -77,6 +82,7 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
   };
 
   constructor(private fb: FormBuilder, private cd: ChangeDetectorRef) {
+    super();
     this.formArray = this.fb.array([]) as FormArray<
       FormControl<string> | UntypedFormGroup
     >;

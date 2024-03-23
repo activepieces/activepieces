@@ -46,9 +46,9 @@ import { BuilderAutocompleteDropdownHandlerComponent } from '../interpolating-te
         <ngx-monaco-editor
           (onInit)="onInit($event)"
           class="!ap-h-full !ap-w-full"
-          [formControl]="passedFormControl"
           (click)="handler.showMentionsDropdown()"
           [options]="codeEditorOptions"
+          [formControl]="passedFormControl"
         ></ngx-monaco-editor>
       </div>
 
@@ -75,7 +75,9 @@ export class JsonControlComponent {
     formatOnPaste: false,
     formatOnType: false,
   };
+
   constructor(private codeService: CodeService) {}
+
   beautify() {
     try {
       this.passedFormControl.setValue(

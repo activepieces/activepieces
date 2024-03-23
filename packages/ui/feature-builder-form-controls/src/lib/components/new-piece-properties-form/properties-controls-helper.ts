@@ -50,6 +50,7 @@ const removeAllFormControls = (form: UntypedFormGroup) => {
 };
 const getControlValue = (property: PieceProperty, value: unknown) => {
   if (isNil(value)) {
+    //used for default values for dynamic property inputs like in custom api calls
     return parseControlValue(property, property.defaultValue);
   }
   return parseControlValue(property, value);
@@ -62,7 +63,11 @@ const parseControlValue = (property: PieceProperty, value: unknown) => {
     case PropertyType.NUMBER:
     case PropertyType.DATE_TIME:
     case PropertyType.FILE:
-      return isNil(value) ? '' : value;
+      return isNil(value)
+        ? ''
+        : typeof value === 'string'
+        ? value
+        : JSON.stringify(value);
     case PropertyType.ARRAY:
       return isNil(value) ? [] : value;
     case PropertyType.OBJECT:

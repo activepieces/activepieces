@@ -16,17 +16,21 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceMetadataModel, jsonValidator } from '@activepieces/ui/common';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, distinctUntilChanged, tap } from 'rxjs';
 import deepEqual from 'deep-equal';
 import { PopulatedFlow } from '@activepieces/shared';
 import { createFormControlsWithTheirValidators } from './properties-controls-helper';
+import { ControlThatUsesMentionsCoreComponent } from '../control-that-uses-mentions-core/control-that-uses-mentions-core.component';
 
 @Component({
   selector: 'app-piece-properties-form',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './piece-properties-form.component.html',
 })
-export class PiecePropertiesFormComponent implements OnInit, OnChanges {
+export class PiecePropertiesFormComponent
+  extends ControlThatUsesMentionsCoreComponent
+  implements OnInit, OnChanges
+{
   @Input({ required: true }) pieceMetaData: PieceMetadataModel;
   @Input({ required: true }) actionOrTriggerName: string;
   @Input({ required: true }) stepName: string;
@@ -40,6 +44,7 @@ export class PiecePropertiesFormComponent implements OnInit, OnChanges {
   allConnectionsForPiece: DropdownOption<`{{connections['${string}']}}`>[];
   @Input({ required: true }) form: UntypedFormGroup;
   @Input({ required: true }) hideCustomizedInputs = false;
+
   @Output() customizedInputsChanged = new EventEmitter<{
     propertyName: string;
     value: boolean;
@@ -54,7 +59,9 @@ export class PiecePropertiesFormComponent implements OnInit, OnChanges {
   sortedPropertiesByRequired: PiecePropertyMap;
   emitNewChanges$?: Observable<unknown>;
   stepChanged$ = new BehaviorSubject('');
-  constructor(private fb: UntypedFormBuilder) {}
+  constructor(private fb: UntypedFormBuilder) {
+    super();
+  }
   ngOnInit(): void {
     this.emitNewChanges$ = this.createChangesListener();
   }
@@ -133,6 +140,10 @@ export class PiecePropertiesFormComponent implements OnInit, OnChanges {
   }
   private createChangesListener() {
     return this.form.valueChanges.pipe(
+      //need this because monaco json control emits initial value as a new value which causes a step with a json control to save automatically
+      distinctUntilChanged((prev, curr) =>
+        deepEqual(prev, curr, { strict: true })
+      ),
       tap((res) => {
         this.formValueChange.emit({
           input: res,

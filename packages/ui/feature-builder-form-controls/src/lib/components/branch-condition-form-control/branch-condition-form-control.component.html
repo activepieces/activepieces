@@ -4,6 +4,7 @@
         <mat-form-field class="ap-w-full" appearance="outline" (click)="firstHandler.showMentionsDropdown()">
             <mat-label i18n>{{(showSecondValue)? 'First':''}} Value</mat-label>
             <app-interpolating-text-form-control #firstValueTextControl [formControl]="form.controls.firstValue"
+                [stepMetaDataForMentions]="stepMetaDataForMentions"
                 (editorFocused)="firstHandler.showMentionsDropdown()"
                 [attr.name]="'firstValue'"></app-interpolating-text-form-control>
             <mat-error *ngIf="form.controls.firstValue.invalid" i18n>
@@ -47,6 +48,7 @@
                 <mat-label i18n>Second Value</mat-label>
                 <app-interpolating-text-form-control #secondValueTextControl [formControl]="form.controls.secondValue"
                     [attr.name]="'secondValue'"
+                    [stepMetaDataForMentions]="stepMetaDataForMentions"
                     (editorFocused)="secondHandler.showMentionsDropdown()"></app-interpolating-text-form-control>
                 <mat-error *ngIf="form.controls.secondValue.invalid" i18n>
                     Second value is required
