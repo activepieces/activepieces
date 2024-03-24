@@ -2,9 +2,11 @@
   [class.ap-pl-3]="(showNavigation$ | async )=== false" [style.height]="FLOW_BUILDER_HEADER_HEIGHT">
   <div
     class="ap-absolute ap-w-full ap-h-full ap-left-0 ap-top-0 ap-flex ap-items-center ap-justify-center ap-p-3 ap-pointer-events-none">
+    @if((hideLogo$ | async) === false) {
     <div class="ap-h-[30px]">
       <img [src]=" (fullLogo$| async) ||'assets/img/custom/logo/full-logo.svg'" class="ap-max-w-full ap-h-full">
     </div>
+    }
   </div>
 
   <div class="ap-text-center ap-flex ap-items-center ap-justify-center"></div>
