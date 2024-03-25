@@ -579,6 +579,12 @@
           "projectId": {
             "type": "string"
           },
+          "authors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "platformId": {
             "type": "string"
           },
@@ -3841,6 +3847,7 @@
           "displayName",
           "logoUrl",
           "description",
+          "authors",
           "version",
           "actions",
           "triggers"
@@ -3864,11 +3871,49 @@
           "branch": {
             "type": "string"
           },
+          "branchType": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "PRODUCTION"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "DEVELOPMENT"
+                ]
+              }
+            ]
+          },
           "projectId": {
             "type": "string"
           },
           "slug": {
             "type": "string"
+          },
+          "mapping": {
+            "type": "object",
+            "properties": {
+              "flows": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "sourceId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "sourceId"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "flows"
+            ]
           }
         },
         "required": [
@@ -3877,6 +3922,7 @@
           "updated",
           "remoteUrl",
           "branch",
+          "branchType",
           "projectId",
           "slug"
         ]
@@ -4007,56 +4053,6 @@
                         },
                         "trigger": {
                           "anyOf": [
-                            {
-                              "type": "object",
-                              "properties": {
-                                "name": {
-                                  "type": "string"
-                                },
-                                "valid": {
-                                  "type": "boolean"
-                                },
-                                "displayName": {
-                                  "type": "string"
-                                },
-                                "nextAction": {},
-                                "type": {
-                                  "type": "string",
-                                  "enum": [
-                                    "WEBHOOK"
-                                  ]
-                                },
-                                "settings": {
-                                  "type": "object",
-                                  "properties": {
-                                    "inputUiInfo": {
-                                      "additionalProperties": true,
-                                      "type": "object",
-                                      "properties": {
-                                        "currentSelectedData": {},
-                                        "customizedInputs": {
-                                          "type": "object",
-                                          "additionalProperties": {}
-                                        },
-                                        "lastTestDate": {
-                                          "type": "string"
-                                        }
-                                      }
-                                    }
-                                  },
-                                  "required": [
-                                    "inputUiInfo"
-                                  ]
-                                }
-                              },
-                              "required": [
-                                "name",
-                                "valid",
-                                "displayName",
-                                "type",
-                                "settings"
-                              ]
-                            },
                             {
                               "type": "object",
                               "properties": {
@@ -4397,56 +4393,6 @@
                               },
                               "trigger": {
                                 "anyOf": [
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "name": {
-                                        "type": "string"
-                                      },
-                                      "valid": {
-                                        "type": "boolean"
-                                      },
-                                      "displayName": {
-                                        "type": "string"
-                                      },
-                                      "nextAction": {},
-                                      "type": {
-                                        "type": "string",
-                                        "enum": [
-                                          "WEBHOOK"
-                                        ]
-                                      },
-                                      "settings": {
-                                        "type": "object",
-                                        "properties": {
-                                          "inputUiInfo": {
-                                            "additionalProperties": true,
-                                            "type": "object",
-                                            "properties": {
-                                              "currentSelectedData": {},
-                                              "customizedInputs": {
-                                                "type": "object",
-                                                "additionalProperties": {}
-                                              },
-                                              "lastTestDate": {
-                                                "type": "string"
-                                              }
-                                            }
-                                          }
-                                        },
-                                        "required": [
-                                          "inputUiInfo"
-                                        ]
-                                      }
-                                    },
-                                    "required": [
-                                      "name",
-                                      "valid",
-                                      "displayName",
-                                      "type",
-                                      "settings"
-                                    ]
-                                  },
                                   {
                                     "type": "object",
                                     "properties": {
@@ -4842,56 +4788,6 @@
                           },
                           "trigger": {
                             "anyOf": [
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "name": {
-                                    "type": "string"
-                                  },
-                                  "valid": {
-                                    "type": "boolean"
-                                  },
-                                  "displayName": {
-                                    "type": "string"
-                                  },
-                                  "nextAction": {},
-                                  "type": {
-                                    "type": "string",
-                                    "enum": [
-                                      "WEBHOOK"
-                                    ]
-                                  },
-                                  "settings": {
-                                    "type": "object",
-                                    "properties": {
-                                      "inputUiInfo": {
-                                        "additionalProperties": true,
-                                        "type": "object",
-                                        "properties": {
-                                          "currentSelectedData": {},
-                                          "customizedInputs": {
-                                            "type": "object",
-                                            "additionalProperties": {}
-                                          },
-                                          "lastTestDate": {
-                                            "type": "string"
-                                          }
-                                        }
-                                      }
-                                    },
-                                    "required": [
-                                      "inputUiInfo"
-                                    ]
-                                  }
-                                },
-                                "required": [
-                                  "name",
-                                  "valid",
-                                  "displayName",
-                                  "type",
-                                  "settings"
-                                ]
-                              },
                               {
                                 "type": "object",
                                 "properties": {
@@ -6277,56 +6173,6 @@
                               "type",
                               "settings"
                             ]
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "name": {
-                                "type": "string"
-                              },
-                              "valid": {
-                                "type": "boolean"
-                              },
-                              "displayName": {
-                                "type": "string"
-                              },
-                              "nextAction": {},
-                              "type": {
-                                "type": "string",
-                                "enum": [
-                                  "WEBHOOK"
-                                ]
-                              },
-                              "settings": {
-                                "type": "object",
-                                "properties": {
-                                  "inputUiInfo": {
-                                    "additionalProperties": true,
-                                    "type": "object",
-                                    "properties": {
-                                      "currentSelectedData": {},
-                                      "customizedInputs": {
-                                        "type": "object",
-                                        "additionalProperties": {}
-                                      },
-                                      "lastTestDate": {
-                                        "type": "string"
-                                      }
-                                    }
-                                  }
-                                },
-                                "required": [
-                                  "inputUiInfo"
-                                ]
-                              }
-                            },
-                            "required": [
-                              "name",
-                              "valid",
-                              "displayName",
-                              "type",
-                              "settings"
-                            ]
                           }
                         ]
                       }
@@ -6531,56 +6377,6 @@
                         },
                         "trigger": {
                           "anyOf": [
-                            {
-                              "type": "object",
-                              "properties": {
-                                "name": {
-                                  "type": "string"
-                                },
-                                "valid": {
-                                  "type": "boolean"
-                                },
-                                "displayName": {
-                                  "type": "string"
-                                },
-                                "nextAction": {},
-                                "type": {
-                                  "type": "string",
-                                  "enum": [
-                                    "WEBHOOK"
-                                  ]
-                                },
-                                "settings": {
-                                  "type": "object",
-                                  "properties": {
-                                    "inputUiInfo": {
-                                      "additionalProperties": true,
-                                      "type": "object",
-                                      "properties": {
-                                        "currentSelectedData": {},
-                                        "customizedInputs": {
-                                          "type": "object",
-                                          "additionalProperties": {}
-                                        },
-                                        "lastTestDate": {
-                                          "type": "string"
-                                        }
-                                      }
-                                    }
-                                  },
-                                  "required": [
-                                    "inputUiInfo"
-                                  ]
-                                }
-                              },
-                              "required": [
-                                "name",
-                                "valid",
-                                "displayName",
-                                "type",
-                                "settings"
-                              ]
-                            },
                             {
                               "type": "object",
                               "properties": {
@@ -8053,6 +7849,22 @@
             "in": "query",
             "name": "externalId",
             "required": false
+          },
+          {
+            "schema": {
+              "type": "number"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false
           }
         ],
         "security": [
@@ -8424,6 +8236,31 @@
                 }
               }
             }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "projects"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
           }
         }
       }
