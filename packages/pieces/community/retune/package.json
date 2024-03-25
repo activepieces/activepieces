@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-retune",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "dependencies": {
     "@activepieces/pieces-common": "0.2.12",
     "@activepieces/pieces-framework": "0.7.27",
