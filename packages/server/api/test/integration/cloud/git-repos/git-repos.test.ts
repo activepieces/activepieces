@@ -260,7 +260,7 @@ const mockEnvironment = async () => {
     const mockUser = createMockUser()
     await databaseConnection.getRepository('user').save(mockUser)
 
-    const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id })
+    const mockPlatform = createMockPlatform({ gitSyncEnabled: true, id: mockPlatformId, ownerId: mockUser.id })
     await databaseConnection.getRepository('platform').save(mockPlatform)
 
     mockUser.platformId = mockPlatform.id
