@@ -7,6 +7,7 @@ import {
     createMockProject,
     createMockApiKey,
     mockBasicSetup,
+    createMockFlow,
 } from '../../../helpers/mocks'
 import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
@@ -18,6 +19,7 @@ import {
     Platform,
     User,
     apId,
+    FlowStatus,
 } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import {
@@ -458,6 +460,74 @@ describe('Project API', () => {
     describe('Delete Project endpoint', () => {
         it('Soft deletes project by id', async () => {
             // arrange
+            const { mockOwner, mockPlatform, mockProject } = await mockBasicSetup()
+
+            const mockProjectToDelete = createMockProject({ ownerId: mockOwner.id, platformId: mockPlatform.id })
+            await databaseConnection.getRepository('project').save([mockProjectToDelete])
+
+            const mockToken = await generateMockToken({
+                id: mockOwner.id,
+                type: PrincipalType.USER,
+                projectId: mockProject.id,
+                platform: {
+                    id: mockProject.platformId,
+                    role: PlatformRole.OWNER,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/v1/projects/${mockProjectToDelete.id}`,
+                headers: {
+                    authorization: `Bearer ${mockToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+            const deletedProject = await databaseConnection.getRepository('project').findOneBy({ id: mockProjectToDelete.id })
+            expect(deletedProject?.deleted).not.toBeNull()
+        })
+
+        it('Fails if project has enabled flows', async () => {
+            // arrange
+            const { mockOwner, mockPlatform, mockProject } = await mockBasicSetup()
+
+            const mockProjectToDelete = createMockProject({ ownerId: mockOwner.id, platformId: mockPlatform.id })
+            await databaseConnection.getRepository('project').save([mockProjectToDelete])
+
+            const enabledFlow = createMockFlow({ projectId: mockProjectToDelete.id, status: FlowStatus.ENABLED })
+            await databaseConnection.getRepository('flow').save([enabledFlow])
+
+            const mockToken = await generateMockToken({
+                id: mockOwner.id,
+                type: PrincipalType.USER,
+                projectId: mockProject.id,
+                platform: {
+                    id: mockProject.platformId,
+                    role: PlatformRole.OWNER,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/v1/projects/${mockProjectToDelete.id}`,
+                headers: {
+                    authorization: `Bearer ${mockToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+            const responseBody = response?.json()
+            expect(responseBody?.code).toBe('VALIDATION')
+            expect(responseBody?.params?.message).toBe('PROJECT_HAS_ENABLED_FLOWS')
+        })
+
+        it('Fails if project to delete is the active project', async () => {
+            // arrange
             const { mockOwner, mockProject } = await mockBasicSetup()
 
             const mockToken = await generateMockToken({
@@ -480,9 +550,10 @@ describe('Project API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
-            const deletedProject = await databaseConnection.getRepository('project').findOneBy({ id: mockProject.id })
-            expect(deletedProject?.deleted).not.toBeNull()
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+            const responseBody = response?.json()
+            expect(responseBody?.code).toBe('VALIDATION')
+            expect(responseBody?.params?.message).toBe('ACTIVE_PROJECT')
         })
 
         it('Requires user to be platform owner', async () => {
@@ -514,9 +585,12 @@ describe('Project API', () => {
             expect(responseBody?.code).toBe('AUTHORIZATION')
         })
 
-        it('Deletes projects in current platform only', async () => {
+        it('Fails if project to delete is not in current platform', async () => {
             // arrange
-            const { mockOwner, mockProject } = await mockBasicSetup()
+            const { mockOwner, mockPlatform, mockProject } = await mockBasicSetup()
+
+            const mockProjectToDelete = createMockProject({ ownerId: mockOwner.id, platformId: mockPlatform.id })
+            await databaseConnection.getRepository('project').save([mockProjectToDelete])
 
             const randomPlatformId = apId()
 
@@ -533,7 +607,7 @@ describe('Project API', () => {
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/projects/${mockProject.id}`,
+                url: `/v1/projects/${mockProjectToDelete.id}`,
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -543,17 +617,20 @@ describe('Project API', () => {
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
             const responseBody = response?.json()
             expect(responseBody?.code).toBe('ENTITY_NOT_FOUND')
-            expect(responseBody?.params?.entityId).toBe(mockProject.id)
+            expect(responseBody?.params?.entityId).toBe(mockProjectToDelete.id)
             expect(responseBody?.params?.entityType).toBe('project')
         })
 
         it('Fails if project is already deleted', async () => {
             // arrange
-            const { mockOwner, mockProject } = await mockBasicSetup({
-                project: {
-                    deleted: new Date().toISOString(),
-                },
+            const { mockOwner, mockPlatform, mockProject } = await mockBasicSetup()
+
+            const alreadyDeletedProject = createMockProject({
+                ownerId: mockOwner.id,
+                platformId: mockPlatform.id,
+                deleted: new Date().toISOString(),
             })
+            await databaseConnection.getRepository('project').save([alreadyDeletedProject])
 
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
@@ -568,7 +645,7 @@ describe('Project API', () => {
             // act
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/projects/${mockProject.id}`,
+                url: `/v1/projects/${alreadyDeletedProject.id}`,
                 headers: {
                     authorization: `Bearer ${mockToken}`,
                 },
@@ -578,7 +655,7 @@ describe('Project API', () => {
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
             const responseBody = response?.json()
             expect(responseBody?.code).toBe('ENTITY_NOT_FOUND')
-            expect(responseBody?.params?.entityId).toBe(mockProject.id)
+            expect(responseBody?.params?.entityId).toBe(alreadyDeletedProject.id)
             expect(responseBody?.params?.entityType).toBe('project')
         })
     })
