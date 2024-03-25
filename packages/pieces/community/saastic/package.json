@@ -2,7 +2,7 @@
   "name": "@activepieces/piece-saastic",
   "version": "0.0.7",
   "dependencies": {
-    "@activepieces/pieces-framework": "0.7.27",
+    "@activepieces/pieces-framework": "0.7.28",
     "@activepieces/pieces-common": "0.2.12",
     "tslib": "^2.6.2",
     "@activepieces/shared": "*"

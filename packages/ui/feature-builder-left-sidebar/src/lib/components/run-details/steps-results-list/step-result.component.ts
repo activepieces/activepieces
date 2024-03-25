@@ -98,7 +98,6 @@ export class StepResultComponent implements OnInit {
       this.iteration$ = this.iterationIndexControl.valueChanges.pipe(
         startWith(startingIndex),
         tap((newIndex: number | null) => {
-          console.log(newIndex);
           this.setInputMinWidth(newIndex);
         }),
         map((newIndex: number | null) => {

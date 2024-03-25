@@ -761,3 +761,6 @@ app-templates-dialog
 .ap-opacity-100 * {
   opacity: 1 !important;
 }
+.connections-dropdown-container {
+  max-height: var(--mat-form-field-container-text-line-height)
+}

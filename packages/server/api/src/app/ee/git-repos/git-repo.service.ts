@@ -36,6 +36,7 @@ export const gitRepoService = {
                 projectId: request.projectId,
                 sshPrivateKey: request.sshPrivateKey,
                 branch: request.branch,
+                branchType: request.branchType,
                 remoteUrl: request.remoteUrl,
                 slug: request.slug,
             },
