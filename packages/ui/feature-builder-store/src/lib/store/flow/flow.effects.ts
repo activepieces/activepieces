@@ -31,6 +31,7 @@ import {
   flowHelper,
   FlowVersionState,
   FlowStatus,
+  isNil,
 } from '@activepieces/shared';
 import { RightSideBarType } from '../../model/enums/right-side-bar-type.enum';
 import { LeftSideBarType } from '../../model/enums/left-side-bar-type.enum';
@@ -90,14 +91,22 @@ export class FlowsEffects {
       switchMap(([{ displayName, name, properties }, step]) => {
         if (step) {
           const valid = Object.keys(properties).reduce((acc, key) => {
-            return acc && !properties[key]?.required;
+            return (
+              acc &&
+              (!properties[key]?.required ||
+                !isNil(properties[key]?.defaultValue))
+            );
           }, true);
           const defaultValues = Object.keys(properties).reduce((acc, key) => {
             acc[key] = properties[key]?.defaultValue;
             return acc;
           }, {} as Record<string, unknown>);
-          console.log(defaultValues);
           if (step.type === TriggerType.PIECE) {
+            // TODO fix this for piece schedule
+            const sampleData =
+              step.settings.pieceName === '@activepieces/piece-schedule'
+                ? {}
+                : undefined;
             return of(
               FlowsActions.updateTrigger({
                 operation: {
@@ -108,6 +117,7 @@ export class FlowsEffects {
                     triggerName: name,
                     input: defaultValues,
                     inputUiInfo: {
+                      currentSelectedData: sampleData,
                       customizedInputs: {},
                     },
                   },
@@ -145,7 +155,7 @@ export class FlowsEffects {
       concatLatestFrom(() =>
         this.store.select(BuilderSelectors.selectCurrentFlow)
       ),
-      switchMap(([action, flow]) => {
+      switchMap(([_, flow]) => {
         return of(
           canvasActions.selectStepByName({
             stepName: flow.version.trigger.name,
