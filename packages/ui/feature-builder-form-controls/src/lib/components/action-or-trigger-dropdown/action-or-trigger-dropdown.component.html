@@ -11,7 +11,7 @@
     }
   </mat-label>
   <mat-select
-    placeholder="Select a Trigger"
+    [placeholder]="items.length > 0 && (items[0] | isTriggerGuard)? 'Select a Trigger':  items.length> 0? 'Select an Action': 'No options available'"
     i18n-placeholder
     [formControl]="passedFormControl"
   >
