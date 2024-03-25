@@ -2,7 +2,6 @@ import { createAction, props } from '@ngrx/store';
 import {
   NotificationStatus,
   Platform,
-  Project,
   ProjectWithLimits,
 } from '@activepieces/shared';
 
@@ -37,11 +36,11 @@ export const updateLimits = createAction(
 export const clearProjects = createAction(ProjectActionType.CLEAR_PROJECTS);
 export const updateProject = createAction(
   ProjectActionType.UPDATE_PROJECT,
-  props<{ project: Project }>()
+  props<{ project: ProjectWithLimits }>()
 );
 export const addProject = createAction(
   ProjectActionType.ADD_PROJECT,
-  props<{ project: Project }>()
+  props<{ project: ProjectWithLimits }>()
 );
 export const ProjectActions = {
   setProjects,

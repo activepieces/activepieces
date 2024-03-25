@@ -10,7 +10,7 @@ import {
   UiCommonModule,
 } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
-import { Project } from '@activepieces/shared';
+import { ProjectWithLimits } from '@activepieces/shared';
 import { SyncProjectService } from '../../services/sync-project.service';
 import { ConfigureRepoDialogComponent } from '../dialogs/configure-repo-dialog/configure-repo-dialog.component';
 import { PullFromGitDialogComponent, PullFromGitDialogData } from '../dialogs/pull-from-git-dialog/pull-from-git-dialog.component';
@@ -35,7 +35,7 @@ export class SyncProjectComponent {
   currentRepo$ = new BehaviorSubject<null | GitRepo | undefined>(null);
   showUpgrade = false;
   disconnect$?: Observable<void>;
-  currentProject$: Observable<Project>;
+  currentProject$: Observable<ProjectWithLimits>;
   openPullDialog$: Observable<void> | undefined;
   pullDialogLoading$ = new BehaviorSubject<boolean>(false);
   upgradeNote = $localize`Create external backups, environments, and maintain a version history all through your own managed Git repos.`;
