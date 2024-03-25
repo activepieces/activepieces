@@ -122,6 +122,7 @@ import { AddAuthorsToPieces1710098373707 } from './migration/postgres/1710098373
 import { AddDeletedToProjectPostgres1710243591721 } from './migration/postgres/1710243591721-add-deleted-to-project-postgres'
 import { CascadeProjectDeleteAppCredentialsAndConnectionKey1710720610669 } from './migration/postgres/1710720610669-cascade-project-delete-app-credentials-and-connection-key'
 import { CascadeProjectDeleteToActivity1710720610670 } from './migration/postgres/1710720610670-cascade-project-delete-activity'
+import { AddBranchTypeToGit1711073772867 } from './migration/postgres/1711073772867-AddBranchTypeToGit'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -258,6 +259,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddMappingStateToGit1709753080714,
                 CascadeProjectDeleteAppCredentialsAndConnectionKey1710720610669,
                 CascadeProjectDeleteToActivity1710720610670,
+                AddBranchTypeToGit1711073772867,
             )
             break
         case ApEdition.ENTERPRISE:
@@ -309,6 +311,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 MoveGeneratedByFromSigningKeyToAuditEventPostgres1709669091258,
                 AddMappingStateToGit1709753080714,
                 CascadeProjectDeleteToActivity1710720610670,
+                AddBranchTypeToGit1711073772867,
             )
             break
         case ApEdition.COMMUNITY:

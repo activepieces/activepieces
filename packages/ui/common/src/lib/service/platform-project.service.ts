@@ -1,7 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
-import { ProjectId, ProjectWithLimits, SeekPage } from '@activepieces/shared';
+import {
+  ListProjectRequestForUserQueryParams,
+  ProjectId,
+  ProjectWithLimits,
+  SeekPage,
+} from '@activepieces/shared';
 import {
   CreatePlatformProjectRequest,
   UpdateProjectPlatformRequest,
@@ -31,16 +36,15 @@ export class PlatformProjectService {
     );
   }
 
-  list(platformId?: string): Observable<ProjectWithLimits[]> {
-    const params: Record<string, string> = platformId ? { platformId } : {};
-    return this.http
-      .get<SeekPage<ProjectWithLimits>>(
-        environment.apiUrl + `/users/projects`,
-        {
-          params,
-        }
-      )
-      .pipe(map((res) => res.data));
+  list(
+    request: ListProjectRequestForUserQueryParams
+  ): Observable<SeekPage<ProjectWithLimits>> {
+    return this.http.get<SeekPage<ProjectWithLimits>>(
+      environment.apiUrl + `/users/projects`,
+      {
+        params: request,
+      }
+    );
   }
 
   switchProject(projectId: string, redirectHome?: boolean): Observable<void> {

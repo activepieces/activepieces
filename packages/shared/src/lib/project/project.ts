@@ -2,6 +2,13 @@ import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
 import { Static, Type } from '@sinclair/typebox'
 
+export const ListProjectRequestForUserQueryParams = Type.Object({
+    cursor: Type.Optional(Type.String()),
+    limit: Type.Optional(Type.Number()),
+})
+
+export type ListProjectRequestForUserQueryParams = Static<typeof ListProjectRequestForUserQueryParams>
+
 export type ProjectId = ApId
 
 export enum NotificationStatus {
@@ -37,7 +44,7 @@ export type ProjectPlan = Static<typeof ProjectPlan>
 
 export const Project = Type.Object({
     ...BaseModelSchema,
-    deleted: Type.Union([Type.String(), Type.Null()]),
+    deleted: Nullable(Type.String()),
     ownerId: Type.String(),
     displayName: Type.String(),
     notifyStatus: Type.Enum(NotificationStatus),
@@ -48,7 +55,7 @@ export const Project = Type.Object({
 export type Project = Static<typeof Project>
 
 export const ProjectWithLimits = Type.Composite([
-    Project,
+    Type.Omit(Project, ['deleted']),
     Type.Object({
         usage: ProjectUsage,
         plan: ProjectPlan,

@@ -21,10 +21,10 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
-import { ProjectService } from '../service/project.service';
 import { StatusCodes } from 'http-status-codes';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ProjectWithLimits, isNil } from '@activepieces/shared';
+import { PlatformProjectService } from '../service/platform-project.service';
 
 @Injectable({
   providedIn: 'root',
@@ -35,7 +35,7 @@ export class UserLoggedIn {
     private router: Router,
     private redirectService: RedirectService,
     private store: Store,
-    private projectService: ProjectService,
+    private projectService: PlatformProjectService,
     private platformService: PlatformService,
     private snackBar: MatSnackBar,
     private authenticationService: AuthenticationService,
@@ -71,7 +71,7 @@ export class UserLoggedIn {
           return of(true);
         }
         const observables = {
-          projects: this.projectService.list(),
+          projects: this.projectService.list({}),
           connections: this.connectionsService.list({
             limit: 999999,
             projectId: this.auth.getProjectId(),
@@ -79,14 +79,16 @@ export class UserLoggedIn {
         };
         return forkJoin(observables).pipe(
           tap(({ projects }) => {
-            if (!projects || projects.length === 0) {
+            if (!projects.data || projects.data.length === 0) {
               console.error('No projects are assigned to the current user');
               this.auth.logout();
             }
           }),
           switchMap(({ projects, connections }) => {
             const platformId =
-              projects.length > 0 ? projects[0].platformId : undefined;
+              projects.data.length > 0
+                ? projects.data[0].platformId
+                : undefined;
             const currentProjectId = this.auth.getProjectId();
             this.store.dispatch(
               appConnectionsActions.loadInitial({
@@ -97,14 +99,14 @@ export class UserLoggedIn {
             if (platformId) {
               return this.loadPlatformAndProjects({
                 platformId,
-                projects,
+                projects: projects.data,
                 currentProjectId,
               });
             }
             this.store.dispatch(
               ProjectActions.setProjects({
-                projects,
-                selectedIndex: projects.findIndex(
+                projects: projects.data,
+                selectedIndex: projects.data.findIndex(
                   (p) => p.id === currentProjectId
                 ),
                 platform: undefined,
