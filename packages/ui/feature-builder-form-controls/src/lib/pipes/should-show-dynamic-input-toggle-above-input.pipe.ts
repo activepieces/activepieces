@@ -15,6 +15,7 @@ export class ShouldShwoDynamicInputToggleAboveInputPipe
       PropertyType.DROPDOWN,
       PropertyType.STATIC_MULTI_SELECT_DROPDOWN,
       PropertyType.MULTI_SELECT_DROPDOWN,
+      PropertyType.JSON,
     ];
     if (allowedTypes.includes(property.type)) {
       return true;
