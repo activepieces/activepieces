@@ -302,40 +302,42 @@ export class PieceInputFormComponent extends InputFormCore {
     },
     step: Step
   ) {
-    if (step.type === TriggerType.PIECE) {
-      this.store.dispatch(
-        FlowsActions.updateTrigger({
-          operation: {
-            ...step,
-            settings: {
-              ...step.settings,
-              input: this.removeEmptyValuesFromInput(result.input),
-              inputUiInfo: {
-                ...step.settings.inputUiInfo,
-                customizedInputs: result.customizedInputs,
+    if (this.form.enabled) {
+      if (step.type === TriggerType.PIECE) {
+        this.store.dispatch(
+          FlowsActions.updateTrigger({
+            operation: {
+              ...step,
+              settings: {
+                ...step.settings,
+                input: this.removeEmptyValuesFromInput(result.input),
+                inputUiInfo: {
+                  ...step.settings.inputUiInfo,
+                  customizedInputs: result.customizedInputs,
+                },
               },
+              valid: result.valid,
             },
-            valid: result.valid,
-          },
-        })
-      );
-    } else if (step.type === ActionType.PIECE) {
-      this.store.dispatch(
-        FlowsActions.updateAction({
-          operation: {
-            ...step,
-            settings: {
-              ...step.settings,
-              input: this.removeEmptyValuesFromInput(result.input),
-              inputUiInfo: {
-                ...step.settings.inputUiInfo,
-                customizedInputs: result.customizedInputs,
+          })
+        );
+      } else if (step.type === ActionType.PIECE) {
+        this.store.dispatch(
+          FlowsActions.updateAction({
+            operation: {
+              ...step,
+              settings: {
+                ...step.settings,
+                input: this.removeEmptyValuesFromInput(result.input),
+                inputUiInfo: {
+                  ...step.settings.inputUiInfo,
+                  customizedInputs: result.customizedInputs,
+                },
               },
+              valid: result.valid,
             },
-            valid: result.valid,
-          },
-        })
-      );
+          })
+        );
+      }
     }
   }
 
@@ -385,9 +387,10 @@ export class PieceInputFormComponent extends InputFormCore {
     const cleanedInput: Record<string, unknown> = {};
     Object.keys(input).forEach((key) => {
       if (
-        !isNil(input[key]) &&
-        input[key] !== '' &&
-        typeof input[key] !== 'object'
+        (!isNil(input[key]) &&
+          input[key] !== '' &&
+          typeof input[key] !== 'object') ||
+        Array.isArray(input[key])
       ) {
         cleanedInput[key] = input[key];
       } else if (typeof input[key] === 'object' && !Array.isArray(input[key])) {
