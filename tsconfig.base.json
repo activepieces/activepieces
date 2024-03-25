@@ -522,6 +522,9 @@
       "@activepieces/piece-webhook": [
         "packages/pieces/community/webhook/src/index.ts"
       ],
+      "@activepieces/piece-wedof": [
+        "packages/pieces/community/wedof/src/index.ts"
+      ],
       "@activepieces/piece-whatsable": [
         "packages/pieces/community/whatsable/src/index.ts"
       ],
