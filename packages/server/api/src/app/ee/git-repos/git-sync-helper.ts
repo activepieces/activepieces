@@ -4,7 +4,7 @@ import path from 'path'
 import { projectService } from '../../project/project-service'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowService } from '../../flows/flow/flow.service'
-import { ProjectMappingState } from './operations/sync-operations'
+import { ProjectMappingState } from './project-diff/project-mapping-state'
 import { ProjectSyncError } from '@activepieces/ee-shared'
 
 
@@ -37,9 +37,7 @@ async function getMappingStateFromGit(
     }
 }
 
-async function getStateFromGit(
-    flowPath: string,
-): Promise<PopulatedFlow[]> {
+async function getStateFromGit(flowPath: string): Promise<PopulatedFlow[]> {
     const flowFiles = await fs.readdir(flowPath)
     const parsedFlows = []
     for (const file of flowFiles) {
@@ -52,7 +50,7 @@ async function getStateFromGit(
 }
 
 async function createFlowInProject(flow: PopulatedFlow, projectId: string): Promise<PopulatedFlow> {
-    return flowService.create({
+    const createdFlow = await flowService.create({
         projectId,
         request: {
             displayName: flow.version.displayName,
@@ -60,14 +58,15 @@ async function createFlowInProject(flow: PopulatedFlow, projectId: string): Prom
             projectId,
         },
     })
+    return updateFlowInProject(createdFlow.id, flow, projectId)
 }
 
-async function updateFlowInProject(flowId: string, flow: PopulatedFlow,
+async function updateFlowInProject(targetFlowId: string, flow: PopulatedFlow,
     projectId: string,
 ): Promise<PopulatedFlow> {
     const project = await projectService.getOneOrThrow(projectId)
     return flowService.update({
-        id: flowId,
+        id: targetFlowId,
         projectId,
         lock: true,
         userId: project.ownerId,
@@ -114,19 +113,9 @@ async function republishFlow(flowId: string, projectId: string): Promise<Project
     }
 
 }
-
 async function upsertFlowToGit(flow: Flow, flowFolderPath: string): Promise<void> {
     const flowJsonPath = path.join(flowFolderPath, `${flow.id}.json`)
     await fs.writeFile(flowJsonPath, JSON.stringify(flow, null, 2))
-}
-
-async function saveStateToGit(
-    stateFolderPath: string,
-    projectId: string,
-    mappingState: ProjectMappingState,
-): Promise<void> {
-    const statePath = path.join(stateFolderPath, projectId + '.json')
-    await fs.writeFile(statePath, JSON.stringify(mappingState, null, 2))
 }
 
 async function deleteFlowFromGit(flowId: string, flowFolderPath: string): Promise<void> {
@@ -152,12 +141,6 @@ export const gitSyncHelper = {
     createFlowInProject,
     updateFlowInProject,
     republishFlow,
-    saveStateToGit,
-}
-
-type DeleteFlowFromGitOperation = {
-    type: 'delete_flow_from_git'
-    flowId: string
 }
 
 type DeleteFlowFromProjectOperation = {
@@ -170,13 +153,7 @@ type UpsertFlowIntoProjectOperation = {
     flow: PopulatedFlow
 }
 
-type UpsertFlowOperation = {
-    type: 'upsert_flow_into_git'
-    flow: PopulatedFlow
-}
 
 export type FlowSyncOperation =
-    | DeleteFlowFromGitOperation
     | UpsertFlowIntoProjectOperation
     | DeleteFlowFromProjectOperation
-    | UpsertFlowOperation

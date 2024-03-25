@@ -18,9 +18,11 @@ import { PlansPageComponent } from '@activepieces/ee-billing-ui';
 import { ProjectMembersTableComponent } from '@activepieces/ee/project-members';
 import { CommunityPiecesTableComponent } from '@activepieces/ui/feature-pieces';
 import { ApFlagId, ProjectMemberRole } from '@activepieces/shared';
-import { SyncProjectComponent } from './pages/sync-project/sync-project.component';
-import { RepoResolver } from './resolvers/repo.resolver';
 import { ActivityTableComponent } from './pages/activity-table/activity-table.component';
+import {
+  RepoResolver,
+  SyncProjectComponent,
+} from '@activepieces/ui-feature-git-sync';
 
 export const DashboardLayoutRouting: Routes = [
   {

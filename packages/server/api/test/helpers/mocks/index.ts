@@ -14,6 +14,7 @@ import {
     ApplicationEvent,
     ApplicationEventName,
     Activity,
+    GitBranchType,
 } from '@activepieces/ee-shared'
 import {
     UserStatus,
@@ -36,6 +37,9 @@ import {
     RunEnvironment,
     Platform,
     FilteredPieceBehavior,
+    File,
+    FileCompression,
+    FileType,
 } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
@@ -108,6 +112,7 @@ export const createMockProject = (project?: Partial<Project>): Project => {
         id: project?.id ?? apId(),
         created: project?.created ?? faker.date.recent().toISOString(),
         updated: project?.updated ?? faker.date.recent().toISOString(),
+        deleted: project?.deleted ?? null,
         ownerId: project?.ownerId ?? apId(),
         displayName: project?.displayName ?? faker.lorem.word(),
         notifyStatus:
@@ -120,6 +125,7 @@ export const createMockProject = (project?: Partial<Project>): Project => {
 export const createMockGitRepo = (gitRepo?: Partial<GitRepo>): GitRepo => {
     return {
         id: gitRepo?.id ?? apId(),
+        branchType: faker.helpers.enumValue(GitBranchType),
         created: gitRepo?.created ?? faker.date.recent().toISOString(),
         updated: gitRepo?.updated ?? faker.date.recent().toISOString(),
         projectId: gitRepo?.projectId ?? apId(),
@@ -433,11 +439,12 @@ export const createMockActivity = (activity?: Partial<Activity>): Activity => {
     }
 }
 
-export const mockBasicSetup = async (): Promise<MockBasicSetup> => {
-    const mockOwner = createMockUser()
+export const mockBasicSetup = async (params?: MockBasicSetupParams): Promise<MockBasicSetup> => {
+    const mockOwner = createMockUser(params?.user)
     await databaseConnection.getRepository('user').save(mockOwner)
 
     const mockPlatform = createMockPlatform({
+        ...params?.platform,
         ownerId: mockOwner.id,
     })
     await databaseConnection.getRepository('platform').save(mockPlatform)
@@ -446,6 +453,7 @@ export const mockBasicSetup = async (): Promise<MockBasicSetup> => {
     await databaseConnection.getRepository('user').save(mockOwner)
 
     const mockProject = createMockProject({
+        ...params?.project,
         ownerId: mockOwner.id,
         platformId: mockPlatform.id,
     })
@@ -455,6 +463,19 @@ export const mockBasicSetup = async (): Promise<MockBasicSetup> => {
         mockOwner,
         mockPlatform,
         mockProject,
+    }
+}
+
+export const createMockFile = (file?: Partial<File>): File => {
+    return {
+        id: file?.id ?? apId(),
+        created: file?.created ?? faker.date.recent().toISOString(),
+        updated: file?.updated ?? faker.date.recent().toISOString(),
+        platformId: file?.platformId ?? apId(),
+        projectId: file?.projectId ?? apId(),
+        compression: file?.compression ?? faker.helpers.enumValue(FileCompression),
+        data: file?.data ?? Buffer.from(faker.lorem.paragraphs()),
+        type: file?.type ?? faker.helpers.enumValue(FileType),
     }
 }
 
@@ -480,4 +501,10 @@ type MockBasicSetup = {
     mockOwner: User
     mockPlatform: Platform
     mockProject: Project
+}
+
+type MockBasicSetupParams = {
+    user?: Partial<User>
+    platform?: Partial<Platform>
+    project?: Partial<Project>
 }

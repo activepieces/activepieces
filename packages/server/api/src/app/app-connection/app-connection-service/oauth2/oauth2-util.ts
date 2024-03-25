@@ -8,10 +8,12 @@ import {
     deleteProps,
 } from '@activepieces/shared'
 import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
+import { isAxiosError } from 'axios'
 
 export const oauth2Util = {
     formatOAuth2Response,
     isExpired,
+    isUserError,
     getOAuth2TokenUrl,
 }
 
@@ -20,7 +22,7 @@ function isExpired(connection: BaseOAuth2ConnectionValue): boolean {
     const grantType = connection.grant_type ?? OAuth2GrantType.AUTHORIZATION_CODE
     if (
         grantType === OAuth2GrantType.AUTHORIZATION_CODE &&
-    !connection.refresh_token
+        !connection.refresh_token
     ) {
         return false
     }
@@ -92,4 +94,23 @@ function formatOAuth2Response(
         'token_type',
     ])
     return formattedResponse
+}
+
+function isUserError(e: unknown): boolean {
+    if (isAxiosError(e)) {
+        const error = e.response?.data.error
+        switch (error) {
+            case 'invalid_grant':
+                return true
+            case 'invalid_request':
+            case 'invalid_client':
+            case 'invalid_scope':
+            case 'unauthorized_client':
+            case 'unsupported_grant_type':
+            default:
+                return false
+        }
+    }
+    return false
+
 }

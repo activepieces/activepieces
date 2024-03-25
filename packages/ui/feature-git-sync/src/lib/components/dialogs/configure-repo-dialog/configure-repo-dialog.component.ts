@@ -1,16 +1,15 @@
 import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef, MatDialogContent, MatDialogActions, MatDialogClose } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { GitRepo } from '@activepieces/ee-shared';
 import { ProjectSelectors } from '@activepieces/ui/common';
-import {
-  FormBuilder,
-  FormControl,
-  FormGroup,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Observable, switchMap, tap } from 'rxjs';
 import { SyncProjectService } from '../../../services/sync-project.service';
+import { AsyncPipe } from '@angular/common';
+import { MatInput } from '@angular/material/input';
+import { MatFormField, MatLabel, MatError, MatHint } from '@angular/material/form-field';
+import { UiCommonModule } from '@activepieces/ui/common';
 
 type ConfigureRepoDialogData = {
   repo?: GitRepo;
@@ -22,9 +21,23 @@ type ConfigreRepoDialogForm = {
   sshPrivateKey: FormControl<string>;
 };
 @Component({
-  selector: 'app-configure-repo-dialog',
-  templateUrl: './configure-repo-dialog.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-configure-repo-dialog',
+    templateUrl: './configure-repo-dialog.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: true,
+    imports: [
+        UiCommonModule,
+        MatDialogContent,
+        ReactiveFormsModule,
+        MatFormField,
+        MatLabel,
+        MatInput,
+        MatError,
+        MatHint,
+        MatDialogActions,
+        MatDialogClose,
+        AsyncPipe,
+    ],
 })
 export class ConfigureRepoDialogComponent {
   title = $localize`Configure Repo`;
@@ -74,7 +87,7 @@ export class ConfigureRepoDialogComponent {
         .pipe(
           switchMap((project) => {
             return this.syncProjectService
-              .configureRepo({
+              .configure({
                 ...this.configureRepoForm.getRawValue(),
                 projectId: project.id,
               })

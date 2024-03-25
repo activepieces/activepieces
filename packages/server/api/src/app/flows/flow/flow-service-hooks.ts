@@ -10,11 +10,13 @@ import {
 } from '@activepieces/shared'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { triggerHooks } from '../trigger'
+import { EntityManager } from 'typeorm'
 
 export const flowServiceHooks = {
     async preUpdateStatus({
         flowToUpdate,
         newStatus,
+        entityManager,
     }: PreUpdateStatusParams): Promise<PreUpdateReturn> {
         assertNotNullOrUndefined(
             flowToUpdate.publishedVersionId,
@@ -25,6 +27,7 @@ export const flowServiceHooks = {
             {
                 flowId: flowToUpdate.id,
                 versionId: flowToUpdate.publishedVersionId,
+                entityManager,
             },
         )
 
@@ -132,6 +135,7 @@ type PreUpdateParams = {
 
 type PreUpdateStatusParams = PreUpdateParams & {
     newStatus: FlowStatus
+    entityManager: EntityManager | undefined
 }
 
 type PreUpdatePublishedVersionIdParams = PreUpdateParams & {

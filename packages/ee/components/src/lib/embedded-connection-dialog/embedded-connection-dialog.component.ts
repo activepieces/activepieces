@@ -41,22 +41,24 @@ export class EmbeddedConnectionDialogComponent {
           this.hideConnectionIframe();
           return of(void 0);
         }
-        return this.pieceMetadataService.getPieceMetadata(pieceName).pipe(
-          tap(() => {
-            setTimeout(() => {
-              this.createConnectionButton.buttonClicked();
-              this.isDialogOpen = true;
-            });
-          }),
-          catchError((err) => {
-            console.error(
-              `Activepieces: Failed to fetch piece metadata for ${pieceName}`,
-              err
-            );
-            this.hideConnectionIframe();
-            return of(void 0);
-          })
-        );
+        return this.pieceMetadataService
+          .getPieceMetadata(pieceName, undefined)
+          .pipe(
+            tap(() => {
+              setTimeout(() => {
+                this.createConnectionButton.buttonClicked();
+                this.isDialogOpen = true;
+              });
+            }),
+            catchError((err) => {
+              console.error(
+                `Activepieces: Failed to fetch piece metadata for ${pieceName}`,
+                err
+              );
+              this.hideConnectionIframe();
+              return of(void 0);
+            })
+          );
       })
     );
   }

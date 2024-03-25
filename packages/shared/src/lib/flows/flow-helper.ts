@@ -21,6 +21,7 @@ import { FlowVersion, FlowVersionState } from './flow-version'
 import { ActivepiecesError, ErrorCode } from '../common/activepieces-error'
 import semver from 'semver'
 import { applyFunctionToValuesSync, isNil, isString } from '../common'
+import { DEFAULT_SAMPLE_DATA_SETTINGS } from './sample-data'
 
 type Step = Action | Trigger
 
@@ -707,6 +708,17 @@ function removeAnySubsequentAction(action: Action): Action {
     return clonedAction
 }
 
+function normalize(flowVersion: FlowVersion): FlowVersion {
+    return transferFlow(
+        flowVersion,
+        (step) => {
+            const clonedStep: Step = JSON.parse(JSON.stringify(step))
+            clonedStep.settings.inputUiInfo = DEFAULT_SAMPLE_DATA_SETTINGS
+            return upgradePiece(clonedStep, clonedStep.name)
+        },
+    )
+}
+
 function upgradePiece(step: Step, stepName: string): Step {
     if (step.name !== stepName) {
         return step
@@ -813,9 +825,11 @@ function replaceOldStepNameWithNewOne({ input, oldStepName, newStepName }: { inp
     })
 }
 
-function doesActionHaveChildren(action: Action): action is (LoopOnItemsAction | BranchAction) {
-    const actionTypesWithChildren = [ActionType.BRANCH, ActionType.LOOP_ON_ITEMS]
-    return actionTypesWithChildren.includes(action.type)
+function doesActionHaveChildren(action: Action | Trigger): action is (LoopOnItemsAction | BranchAction) {
+    if (action.type === ActionType.BRANCH || action.type === ActionType.LOOP_ON_ITEMS) {
+        return true
+    }
+    return false
 }
 
 
@@ -970,6 +984,7 @@ export const flowHelper = {
     getUsedPieces,
     getImportOperations,
     getAllSubFlowSteps,
+    normalize,
     getStepFromSubFlow,
     isChildOf,
     transferFlowAsync,

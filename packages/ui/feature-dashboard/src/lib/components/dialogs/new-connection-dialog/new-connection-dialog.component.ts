@@ -31,7 +31,7 @@ export class NewConnectionDialogComponent {
         this.loading$.next(true);
       }),
       switchMap((searchQuery) => {
-        return this.piecesService.getPiecesManifestFromServer({
+        return this.piecesService.listPieces({
           includeHidden: false,
           searchQuery,
         });
