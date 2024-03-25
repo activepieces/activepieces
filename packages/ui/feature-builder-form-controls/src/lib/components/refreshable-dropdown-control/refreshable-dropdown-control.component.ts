@@ -14,7 +14,7 @@ import { DropdownSearchControlComponent } from '../dropdown-search-control/dropd
 import { DropdownSelectedValuesPipe } from '../../pipes/dropdown-selected-values.pipe';
 import { Observable, startWith } from 'rxjs';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
-import { DropdownLabelsJoiner } from '../../pipes/dropdown-labels-joiner.pipe';
+import { DropdownLabelsJoinerPipe } from '../../pipes/dropdown-labels-joiner.pipe';
 import { FormControl, UntypedFormControl } from '@angular/forms';
 import { RefreshablePropertyCoreControlComponent } from '../refreshable-property-core/refreshable-property-core-control.component';
 @Component({
@@ -26,7 +26,7 @@ import { RefreshablePropertyCoreControlComponent } from '../refreshable-property
     DynamicInputToggleComponent,
     DropdownSearchControlComponent,
     DropdownSelectedValuesPipe,
-    DropdownLabelsJoiner,
+    DropdownLabelsJoinerPipe,
   ],
   templateUrl: './refreshable-dropdown-control.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -21,7 +21,6 @@ import { PieceTriggerMentionItemComponent } from './components/interpolating-tex
 import { StepMentionsTreeComponent } from './components/interpolating-text-form-control/mentions-list/step-mentions-tree/step-mentions-tree.component';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { AuthConfigsPipe } from './pipes/auth-configs.pipe';
 import { MatTreeModule } from '@angular/material/tree';
 import { BuilderAutocompleteDropdownHandlerComponent } from './components/interpolating-text-form-control/builder-autocomplete-dropdown-handler/builder-autocomplete-dropdown-handler.component';
 import { AutocompleteDropdownSizesButtonsComponent } from './components/interpolating-text-form-control/mentions-list/autocomplete-dropdown-sizes-buttons/autocomplete-dropdown-sizes-buttons.component';
@@ -97,7 +96,6 @@ const exportedDeclarations = [
     MentionListItemTemplateComponent,
     PieceTriggerMentionItemComponent,
     StepMentionsTreeComponent,
-    AuthConfigsPipe,
     AutocompleteDropdownSizesButtonsComponent,
     SelectedAuthConfigsPipe,
     DropdownPropertyInitialValuePipe,

@@ -8,6 +8,7 @@ import { CodeService } from '@activepieces/ui/feature-builder-store';
 import { FormControl } from '@angular/forms';
 import { JsonProperty } from '@activepieces/pieces-framework';
 import { BuilderAutocompleteDropdownHandlerComponent } from '../interpolating-text-form-control/builder-autocomplete-dropdown-handler/builder-autocomplete-dropdown-handler.component';
+import { IsJsonControllerDisabledPipe } from '../../pipes/is-json-control-disabled.pipe';
 
 @Component({
   selector: 'app-json-control',
@@ -16,6 +17,7 @@ import { BuilderAutocompleteDropdownHandlerComponent } from '../interpolating-te
     CommonModule,
     UiCommonModule,
     BuilderAutocompleteDropdownHandlerComponent,
+    IsJsonControllerDisabledPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -47,7 +49,7 @@ import { BuilderAutocompleteDropdownHandlerComponent } from '../interpolating-te
           (onInit)="onInit($event)"
           class="!ap-h-full !ap-w-full"
           (click)="handler.showMentionsDropdown()"
-          [options]="codeEditorOptions"
+          [options]="passedFormControl | isJsonControlDisabled"
           [formControl]="passedFormControl"
         ></ngx-monaco-editor>
       </div>
@@ -65,17 +67,6 @@ export class JsonControlComponent {
   @Input() passedFormControl: FormControl<string>;
   @Input() property: JsonProperty<boolean>;
   jsonMonacoEditor: any;
-  codeEditorOptions = {
-    minimap: { enabled: false },
-    theme: 'cobalt2',
-    language: 'json',
-    readOnly: false,
-    automaticLayout: true,
-    contextmenu: false,
-    formatOnPaste: false,
-    formatOnType: false,
-  };
-
   constructor(private codeService: CodeService) {}
 
   beautify() {
