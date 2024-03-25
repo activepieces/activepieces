@@ -6,6 +6,7 @@ import {
 import { createConversation } from './lib/actions/create-conversation';
 import { replyToConversation } from './lib/actions/reply-to-conversation';
 import { upsertDocument } from './lib/actions/upsert-document';
+import { addFragmentToConversation } from './lib/actions/add-fragment-to-conversation';
 
 export const dustAuth = PieceAuth.CustomAuth({
   description: 'Dust authentication requires an API key.',
@@ -35,6 +36,11 @@ export const dust = createPiece({
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/dust.png',
   authors: ['AdamSelene', 'abuaboud'],
-  actions: [createConversation, replyToConversation, upsertDocument],
+  actions: [
+    createConversation,
+    replyToConversation,
+    addFragmentToConversation,
+    upsertDocument,
+  ],
   triggers: [],
 });
