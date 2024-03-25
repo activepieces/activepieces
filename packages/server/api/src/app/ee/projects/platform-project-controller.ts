@@ -3,6 +3,7 @@ import {
     EndpointScope,
     ErrorCode,
     PlatformRole,
+    Principal,
     PrincipalType,
     ProjectWithLimits,
     SERVICE_KEY_SECURITY_OPENAPI,
@@ -73,6 +74,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
 
     app.delete('/:id', DeleteProjectRequest, async (req, res) => {
         await platformMustBeOwnedByCurrentUser.call(app, req, res)
+        assertProjectToDeleteIsNotPrincipalProject(req.principal, req.params.id)
 
         await platformProjectService.softDelete({
             id: req.params.id,
@@ -81,6 +83,17 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
 
         return res.status(StatusCodes.NO_CONTENT).send()
     })
+}
+
+const assertProjectToDeleteIsNotPrincipalProject = (principal: Principal, projectId: string): void => {
+    if (principal.projectId === projectId) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: 'ACTIVE_PROJECT',
+            },
+        })
+    }
 }
 
 const UpdateProjectRequest = {

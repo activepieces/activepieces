@@ -18,6 +18,7 @@ import {
   Observable,
   shareReplay,
   startWith,
+  switchMap,
   take,
   tap,
 } from 'rxjs';
@@ -32,6 +33,8 @@ import {
   InsertMentionOperation,
   MentionListItem,
 } from '@activepieces/ui/common';
+import { enrichMentionDropdownWithIcons } from '../utils';
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 
 @Component({
   selector: 'app-mentions-list',
@@ -58,6 +61,7 @@ export class MentionsListComponent implements OnInit, AfterViewInit {
   constructor(
     private store: Store,
     private mentionsTreeCache: MentionsTreeCacheService,
+    private pieceService: PieceMetadataService,
     public builderAutocompleteService: BuilderAutocompleteMentionsDropdownService
   ) {
     this.mentionsTreeCache.listSearchBarObs$ =
@@ -69,7 +73,12 @@ export class MentionsListComponent implements OnInit, AfterViewInit {
     this.stepsMentions$ = combineLatest({
       steps: this.store
         .select(BuilderSelectors.selectAllStepsForMentionsDropdown)
-        .pipe(take(1)),
+        .pipe(
+          take(1),
+          switchMap((steps) =>
+            enrichMentionDropdownWithIcons(steps, this.pieceService)
+          )
+        ),
       search: this.mentionsTreeCache.listSearchBarObs$,
     }).pipe(
       map((res) => {

@@ -75,19 +75,21 @@
         class="ap-object-contain ap-left-0 ap-right-0  ap-static" @fadeIn [src]="stepIconUrl" />
     </ng-container>
     <div class="ap-absolute -ap-bottom-[32px] ap-flex ap-items-center ap-content-center ap-gap-1">
-      <ng-container *ngFor="let url$ of childStepsIconsUrls | keyvalue; let idx=index; let isLast=last;">
-        <div class="ap-rounded-lg ap-border ap-h-[27px] ap-w-[27px] ap-p-1 ap-border-solid ap-border ap-bg-white"
-          *ngIf="idx<=1">
-          <img class="ap-object-contain ap-h-[17px] ap-w-[17px] !ap-static" @fadeIn [src]="url$.value | async" />
-        </div>
-        <ng-container *ngIf="idx> 1 && isLast">
-          <div
-            class="ap-rounded-lg ap-h-[27px] ap-w-[27px] ap-border ap-p-1 ap-border-solid ap-border ap-bg-white ap-flex ap-items-center ap-justify-center  ap-description ">
-            <div class="ap-mb-[7px]"> ...</div>
+      @if(childStepsIconsUrls$ | async; as logos){
+        <ng-container *ngFor="let url of logos; let idx=index; let isLast=last;">
+          <div class="ap-rounded-lg ap-border ap-h-[27px] ap-w-[27px] ap-p-1 ap-border-solid ap-border ap-bg-white"
+            *ngIf="idx<=1">
+            <img class="ap-object-contain ap-h-[17px] ap-w-[17px] !ap-static" @fadeIn [src]="url" />
           </div>
-        </ng-container>
+          <ng-container *ngIf="idx> 1 && isLast">
+            <div
+              class="ap-rounded-lg ap-h-[27px] ap-w-[27px] ap-border ap-p-1 ap-border-solid ap-border ap-bg-white ap-flex ap-items-center ap-justify-center  ap-description ">
+              <div class="ap-mb-[7px]"> ...</div>
+            </div>
+          </ng-container>
+        </ng-container>        
+      }
 
-      </ng-container>
     </div>
   </div>
 </ng-template>

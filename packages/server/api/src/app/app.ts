@@ -227,6 +227,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     app.addHook('preHandler', securityHandlerChain)
     app.addHook('preHandler', rbacMiddleware)
     app.setErrorHandler(errorHandler)
+    await redisSystemJob.init()
     await app.register(fileModule)
     await app.register(flagModule)
     await app.register(storeEntryModule)
@@ -305,7 +306,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
             await app.register(activityModule)
-            await redisSystemJob.init()
             await app.register(projectBillingModule)
             await app.register(usageTrackerModule)
             await app.register(adminPlatformPieceModule)
@@ -340,7 +340,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
             await app.register(activityModule)
-            await redisSystemJob.init()
             await app.register(usageTrackerModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,

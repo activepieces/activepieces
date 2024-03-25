@@ -813,9 +813,11 @@ function replaceOldStepNameWithNewOne({ input, oldStepName, newStepName }: { inp
     })
 }
 
-function doesActionHaveChildren(action: Action): action is (LoopOnItemsAction | BranchAction) {
-    const actionTypesWithChildren = [ActionType.BRANCH, ActionType.LOOP_ON_ITEMS]
-    return actionTypesWithChildren.includes(action.type)
+function doesActionHaveChildren(action: Action | Trigger): action is (LoopOnItemsAction | BranchAction) {
+    if (action.type === ActionType.BRANCH || action.type === ActionType.LOOP_ON_ITEMS) {
+        return true
+    }
+    return false
 }
 
 

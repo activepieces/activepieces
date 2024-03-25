@@ -26,7 +26,7 @@ export const tallyFormsNewSubmission = createTrigger({
     }),
   },
   type: TriggerStrategy.WEBHOOK,
-  sampleData: {},
+  sampleData: undefined,
   async onEnable(context) {
     // Empty
   },
@@ -34,9 +34,6 @@ export const tallyFormsNewSubmission = createTrigger({
     // Empty
   },
   async run(context) {
-    return [context.payload];
-  },
-  async test(context) {
-    return [context.payload];
+    return [context.payload.body];
   },
 });
