@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/community/microsoft-excel-365/package.json",
         "main": "packages/pieces/community/microsoft-excel-365/src/index.ts",
         "assets": ["packages/pieces/community/microsoft-excel-365/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "publish": {
