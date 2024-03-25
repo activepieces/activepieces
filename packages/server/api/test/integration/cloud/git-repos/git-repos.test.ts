@@ -9,6 +9,7 @@ import {
     createMockProject,
     createMockGitRepo,
     createMockPlatform,
+    createMockApiKey,
 } from '../../../helpers/mocks'
 import { generateMockToken } from '../../../helpers/auth'
 
@@ -152,6 +153,62 @@ describe('Git API', () => {
     })
 
     describe('List API', () => {
+        it('should list return forbidden when api request wrong project', async () => {
+            const { mockPlatform, mockProject, mockApiKey, mockUser } = await mockEnvironment()
+            const { mockProject: mockProject3 } = await mockEnvironment()
+
+            const mockProject2 = createMockProject({ platformId: mockPlatform.id, ownerId: mockUser.id })
+            await databaseConnection
+                .getRepository('project')
+                .save([mockProject2])
+
+            const mockGitRepo = createMockGitRepo({ projectId: mockProject.id })
+            const mockGitRepo2 = createMockGitRepo({ projectId: mockProject2.id })
+            await databaseConnection
+                .getRepository('git_repo')
+                .save([mockGitRepo, mockGitRepo2])
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/v1/git-repos?projectId=' + mockProject3.id,
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+        it('should list return forbidden when user request wrong project', async () => {
+            const { mockPlatform, mockProject, mockUser } = await mockEnvironment()
+            const { mockProject: mockProject3 } = await mockEnvironment()
+
+            const mockProject2 = createMockProject({ platformId: mockPlatform.id, ownerId: mockUser.id })
+            await databaseConnection
+                .getRepository('project')
+                .save([mockProject2])
+
+            const mockGitRepo = createMockGitRepo({ projectId: mockProject.id })
+            const mockGitRepo2 = createMockGitRepo({ projectId: mockProject2.id })
+            await databaseConnection
+                .getRepository('git_repo')
+                .save([mockGitRepo, mockGitRepo2])
+
+            const token = await generateMockToken({
+                id: mockUser.id,
+                projectId: mockProject.id,
+                type: PrincipalType.USER,
+            })
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/v1/git-repos?projectId=' + mockProject3.id,
+                headers: {
+                    authorization: `Bearer ${token}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
         it('should list a git repo', async () => {
             const { mockPlatform, mockProject, mockUser } = await mockEnvironment()
 
@@ -209,12 +266,16 @@ const mockEnvironment = async () => {
     mockUser.platformId = mockPlatform.id
     await databaseConnection.getRepository('user').update(mockUser.id, { platformId: mockPlatform.id })
 
+    const mockApiKey = createMockApiKey({ platformId: mockPlatform.id })
+    await databaseConnection.getRepository('api_key').save(mockApiKey)
+
     const mockProject = createMockProject({ platformId: mockPlatform.id, ownerId: mockUser.id })
     await databaseConnection.getRepository('project').save(mockProject)
 
     return {
         mockPlatform,
         mockUser,
+        mockApiKey,
         mockProject,
     }
 }

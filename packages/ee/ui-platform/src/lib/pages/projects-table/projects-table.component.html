@@ -51,7 +51,7 @@
                             ></ap-icon-button>
 
                             <ap-icon-button
-                                (click)="$event.stopPropagation();deleteProject(project)"
+                                (click)="deleteProject($event, project)"
                                 [buttonDisabled]="disableDeleteProject()"
                                 iconFilename="trash.svg"
                                 tooltipText="Delete project"
@@ -85,7 +85,7 @@
 
             <ng-container *ngIf="isDemo">
                 <div class="ap-flex ap-items-center ap-justify-center ap-h-full ap-h-[500px] ap-py-8" i18n>
-                    Projects and their usage are only availables for platform admins
+                    Projects and their usage are only available for platform admins
                 </div>
             </ng-container>
         </div>

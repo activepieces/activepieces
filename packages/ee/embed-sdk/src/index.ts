@@ -46,6 +46,7 @@ export interface ActivepiecesVendorInit {
     prefix: string;
     initialRoute: string;
     hideSidebar: boolean;
+    hideLogoInBuilder?: boolean;
     disableNavigationInBuilder: boolean;
     hideFolders?: boolean;
   };
@@ -58,6 +59,7 @@ class ActivepiecesEmbedded {
   _instanceUrl = '';
   _hideSidebar = false;
   _hideFolders = false;
+  _hideLogoInBuilder = false;
   _disableNavigationInBuilder = true;
   _connectionsIframeInitialized = false;
   _resolveNewConnectionDialogClosed?: (result: ActivepiecesNewConnectionDialogClosed['data']) => void;
@@ -80,6 +82,7 @@ class ActivepiecesEmbedded {
       containerId?: string,
       builder?: {
         disableNavigation: boolean
+        hideLogo?: boolean;
       },
       dashboard?: {
         hideSidebar?: boolean;
@@ -94,6 +97,7 @@ class ActivepiecesEmbedded {
     this._instanceUrl = this._removeTrailingSlashes(instanceUrl);
     this._disableNavigationInBuilder = embedding?.builder?.disableNavigation ?? false;
     this._hideFolders = embedding?.hideFolders ?? false;
+    this._hideLogoInBuilder = embedding?.builder?.hideLogo ?? false;
     if (embedding?.containerId) {
       this._initializeBuilderAndDashboardIframe({
         containerSelector: `#${embedding.containerId}`,

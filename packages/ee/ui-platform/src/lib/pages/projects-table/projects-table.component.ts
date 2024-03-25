@@ -103,7 +103,9 @@ export class ProjectsTableComponent {
       );
   }
 
-  deleteProject(project: Project) {
+  deleteProject(event: Event, project: Project) {
+    event.stopPropagation();
+
     const deleteProject$ = this.projectsService.delete(project.id).pipe(
       tap(() => {
         this.refreshTable$.next(true);
@@ -114,18 +116,7 @@ export class ProjectsTableComponent {
       deleteEntity$: deleteProject$,
       entityName: `project (${project.displayName})`,
       note: $localize`Are you sure you want to <b> delete project (${project.displayName}) </b>?`,
-      errorMessageBuilder(error) {
-        if (
-          error instanceof HttpErrorResponse &&
-          error.status === StatusCodes.CONFLICT &&
-          error.error?.type === 'VALIDATION' &&
-          error.error?.message === 'project has enabled flows'
-        ) {
-          return `<b>${project.displayName}</b> has enabled flows. Please disable them first.`;
-        }
-
-        return undefined;
-      },
+      errorMessageBuilder: this.errorHandler(project),
     };
 
     this.deleteProject$ = this.matDialog
@@ -136,6 +127,32 @@ export class ProjectsTableComponent {
   }
 
   disableDeleteProject() {
-    return this.isDemo || this.dataSource.data.length < 2;
+    const isTheOnlyProjectInPlatform = this.dataSource.data.length < 2;
+    return isTheOnlyProjectInPlatform || this.isDemo;
+  }
+
+  private errorHandler(
+    project: Project
+  ): (error: unknown) => string | undefined {
+    return (error) => {
+      if (this.isValidationError(error)) {
+        switch (error.error?.params?.message) {
+          case 'PROJECT_HAS_ENABLED_FLOWS':
+            return `<b>project (${project.displayName})</b> has enabled flows. Please disable them first.`;
+          case 'ACTIVE_PROJECT':
+            return `<b>project (${project.displayName})</b> is active. Please switch to another project first.`;
+        }
+      }
+
+      return undefined;
+    };
+  }
+
+  private isValidationError(error: unknown): error is HttpErrorResponse {
+    return (
+      error instanceof HttpErrorResponse &&
+      error.status === StatusCodes.CONFLICT &&
+      error.error?.code === 'VALIDATION'
+    );
   }
 }

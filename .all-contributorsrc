@@ -882,6 +882,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "jmgb27",
+      "name": "John",
+      "avatar_url": "https://avatars.githubusercontent.com/u/65794951?v=4",
+      "profile": "http://johnmark.dev",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"
