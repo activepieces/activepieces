@@ -44,7 +44,7 @@ export type ProjectPlan = Static<typeof ProjectPlan>
 
 export const Project = Type.Object({
     ...BaseModelSchema,
-    deleted: Type.Union([Type.String(), Type.Null()]),
+    deleted: Nullable(Type.String()),
     ownerId: Type.String(),
     displayName: Type.String(),
     notifyStatus: Type.Enum(NotificationStatus),
@@ -55,7 +55,7 @@ export const Project = Type.Object({
 export type Project = Static<typeof Project>
 
 export const ProjectWithLimits = Type.Composite([
-    Project,
+    Type.Omit(Project, ['deleted']),
     Type.Object({
         usage: ProjectUsage,
         plan: ProjectPlan,
