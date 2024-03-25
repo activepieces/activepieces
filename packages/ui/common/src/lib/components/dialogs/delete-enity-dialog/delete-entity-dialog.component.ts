@@ -47,9 +47,11 @@ export class DeleteEntityDialogComponent {
   submit() {
     if (this.confirmationForm.valid && !this.deleteOperation$) {
       this.deleteOperation$ = this.data.deleteEntity$.pipe(
-        tap(() => this.success()),
+        tap(() => {
+          this.success();
+          this.dialogRef.close(true);
+        }),
         catchError((error) => this.handleError(error)),
-        tap(() => this.close()),
         map(() => undefined)
       );
     }
@@ -57,26 +59,19 @@ export class DeleteEntityDialogComponent {
 
   success() {
     const successMessage = `Success! <b>${this.data.entityName}</b> has been deleted`;
-
     this.snackbar.openFromComponent(GenericSnackbarTemplateComponent, {
       data: successMessage,
     });
   }
 
-  close() {
-    this.dialogRef.close();
-  }
-
   handleError(e: unknown) {
     const errorMessage =
       this.data.errorMessageBuilder?.(e) ?? this.DEFAULT_ERROR_MESSAGE;
-
     this.snackbar.openFromComponent(GenericSnackbarTemplateComponent, {
       data: errorMessage,
       panelClass: 'error',
       duration: this.TEN_SECONDS,
     });
-
     console.error(e);
     return of(e);
   }
