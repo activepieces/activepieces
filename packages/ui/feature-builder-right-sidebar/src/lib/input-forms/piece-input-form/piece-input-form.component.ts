@@ -397,8 +397,6 @@ export class PieceInputFormComponent extends InputFormCore {
         if (Object.keys(cleanedObject).length > 0) {
           cleanedInput[key] = cleanedObject;
         }
-      } else {
-        cleanedInput[key] = input[key];
       }
     });
     return cleanedInput;
