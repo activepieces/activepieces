@@ -3,8 +3,6 @@
 </ap-dialog-title-template>
 <mat-dialog-content>
   <div class="md:ap-min-w-[500px]">
-
-
     <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="configureRepoForm" (submit)="submit()">
       <mat-form-field class="ap-w-full" appearance="outline">
         <mat-label i18n>Remote URL</mat-label>
@@ -12,8 +10,8 @@
           placeholder="git@your-repo.com" />
         @if (configureRepoForm.controls.remoteUrl.invalid) {
           <mat-error i18n>
-                    Remote URL is required
-                </mat-error>
+            Remote URL is required
+          </mat-error>
         }
       </mat-form-field>
       <mat-form-field class="ap-w-full" appearance="outline">
@@ -22,11 +20,11 @@
           placeholder="slug" />
         @if (configureRepoForm.controls.slug.invalid) {
           <mat-error i18n>
-                    Folder name is required
-                </mat-error>
+            Folder name is required
+          </mat-error>
         }
         <mat-hint>
-          Folder name is the name of the folder where the project will stored or fetched.
+          Folder name is the name of the folder where the project will be stored or fetched.
         </mat-hint>
       </mat-form-field>
 
@@ -36,11 +34,19 @@
           placeholder="staging" />
         @if (configureRepoForm.controls.branch.invalid) {
           <mat-error i18n>
-                    Branch is required
-                </mat-error>
+            Branch is required
+          </mat-error>
         }
       </mat-form-field>
 
+      <mat-form-field class="ap-w-full" appearance="outline">
+        <mat-label i18n>Branch Type</mat-label>
+        <mat-select [formControl]="configureRepoForm.controls.branchType">
+          <mat-option [value]="GitBranchType.PRODUCTION">Production</mat-option>
+          <mat-option [value]="GitBranchType.DEVELOPMENT">Development</mat-option>
+        </mat-select>
+      </mat-form-field>
+      
       <mat-form-field class="ap-w-full" appearance="outline">
         <mat-label i18n>Private SSH Key</mat-label>
         <textarea cdkFocusInitial rows="4" [formControl]="configureRepoForm.controls.sshPrivateKey"
