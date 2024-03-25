@@ -46,7 +46,8 @@ export class AuditEventTableComponent
   refresh$: Subject<boolean> = new Subject();
   dialogClosed$?: Observable<unknown>;
   featureDisabledTooltip = featureDisabledTooltip;
-  upgradeNote = $localize`Monitor and track events happening in your platform to users, flows, folders and connections.`;
+  upgradeNoteTitle = $localize`Unlock Audit Logs`;
+  upgradeNote = $localize`Comply with internal and external security policies by tracking activities done within your account`;
   constructor(
     private auditEventService: AuditEventService,
     private activatedRoute: ActivatedRoute

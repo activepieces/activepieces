@@ -45,7 +45,8 @@ export class ProjectsTableComponent implements OnInit {
     'externalId',
     'action',
   ];
-  upgradeNote = $localize`Create new projects and set limits on tasks and users for each project.`;
+  upgradeNoteTitle = $localize`Unlock Projects`;
+  upgradeNote = $localize`Orchestrate your automation teams across projects with their own flows, connections and usage quotas`;
   refreshTable$: Subject<boolean> = new Subject();
   dataSource: ProjectsDataSource;
   loading = true;
