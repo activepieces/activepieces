@@ -60,6 +60,7 @@ export const ConfigureRepoRequest = Type.Object({
         pattern: '^git@',
     }),
     branch: Type.String(),
+    branchType: Type.Enum(GitBranchType),
     sshPrivateKey: Type.String(),
     slug: Type.String(),
 })
