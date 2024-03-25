@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { dustAuth } from '../..';
-import { DUST_BASE_URL, getConversationContent } from '../common';
+import { DUST_BASE_URL } from '../common';
 import {
   httpClient,
   HttpMethod,
