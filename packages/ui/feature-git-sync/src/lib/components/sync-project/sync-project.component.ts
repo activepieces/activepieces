@@ -2,26 +2,32 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { BehaviorSubject, Observable, map, tap } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { GitRepo, ProjectOperationType } from '@activepieces/ee-shared';
+import { GitRepo } from '@activepieces/ee-shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   GenericSnackbarTemplateComponent,
   ProjectSelectors,
+  UiCommonModule,
 } from '@activepieces/ui/common';
-import { RepoResolverData } from '../../resolvers/repo.resolver';
 import { Store } from '@ngrx/store';
 import { Project } from '@activepieces/shared';
-import {
-  ConfigureRepoDialogComponent,
-  PullFromGitDialogComponent,
-  PullFromGitDialogData,
-  SyncProjectService,
-} from '@activepieces/ui-feature-git-sync';
+import { SyncProjectService } from '../../services/sync-project.service';
+import { ConfigureRepoDialogComponent } from '../dialogs/configure-repo-dialog/configure-repo-dialog.component';
+import { PullFromGitDialogComponent, PullFromGitDialogData } from '../dialogs/pull-from-git-dialog/pull-from-git-dialog.component';
+import { RepoResolverData } from '../../resolver/repo.resolver';
+import { AsyncPipe } from '@angular/common';
 
 @Component({
   selector: 'app-sync-project',
   templateUrl: './sync-project.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: true,
+  imports: [
+    ConfigureRepoDialogComponent,
+    PullFromGitDialogComponent,
+    AsyncPipe,
+    UiCommonModule
+  ],
 })
 export class SyncProjectComponent {
   displayedColumns = ['remoteUrl', 'branch', 'updated', 'action'];
@@ -30,7 +36,7 @@ export class SyncProjectComponent {
   showUpgrade = false;
   disconnect$?: Observable<void>;
   currentProject$: Observable<Project>;
-  openPullDialog$: Observable<void>;
+  openPullDialog$: Observable<void> | undefined;
   pullDialogLoading$ = new BehaviorSubject<boolean>(false);
   upgradeNote = $localize`Create external backups, environments, and maintain a version history all through your own managed Git repos.`;
   configureButtonTooltip = $localize`Upgrade to enable`;
@@ -90,22 +96,18 @@ export class SyncProjectComponent {
       this.pullDialogLoading$.next(true);
       this.openPullDialog$ = this.syncProjectService
         .pull(repoId, {
-          dryRun: false,
+          dryRun: true,
         })
         .pipe(
           tap((plan) => {
+            if (plan.operations.length === 0) {
+              this.snackbar.open($localize`No changes to pull`);
+              this.pullDialogLoading$.next(false);
+              return;
+            }
             this.pullDialogLoading$.next(false);
             const data: PullFromGitDialogData = {
-              operations: plan.operations.map((op) => {
-                switch (op.type) {
-                  case ProjectOperationType.CREATE_FLOW:
-                    return $localize`Create flow ${op.flow.displayName}`;
-                  case ProjectOperationType.UPDATE_FLOW:
-                    return $localize`Update flow ${op.flow.displayName}`;
-                  case ProjectOperationType.DELETE_FLOW:
-                    return $localize`Delete flow ${op.flow.displayName}`;
-                }
-              }),
+              operations: plan.operations,
               repoId: repoId,
             };
             this.matDialog

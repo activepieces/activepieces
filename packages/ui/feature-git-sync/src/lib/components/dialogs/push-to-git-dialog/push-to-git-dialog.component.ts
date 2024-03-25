@@ -1,10 +1,14 @@
 import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
-import { FormControl, Validators } from '@angular/forms';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
+import { MAT_DIALOG_DATA, MatDialogRef, MatDialogContent, MatDialogActions, MatDialogClose } from '@angular/material/dialog';
 import { BehaviorSubject, Observable, catchError, of, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { PopulatedFlow } from '@activepieces/shared';
 import { SyncProjectService } from '../../../services/sync-project.service';
+import { AsyncPipe } from '@angular/common';
+import { MatInput } from '@angular/material/input';
+import { MatFormField, MatLabel, MatError } from '@angular/material/form-field';
+import { UiCommonModule } from '@activepieces/ui/common';
 
 export type PushToGitDialogData = {
   projectName: string;
@@ -13,9 +17,22 @@ export type PushToGitDialogData = {
 };
 
 @Component({
-  selector: 'app-push-dialog',
-  templateUrl: './push-to-git-dialog.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-push-dialog',
+    templateUrl: './push-to-git-dialog.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: true,
+    imports: [
+        UiCommonModule,
+        MatDialogContent,
+        ReactiveFormsModule,
+        MatFormField,
+        MatLabel,
+        MatInput,
+        MatError,
+        MatDialogActions,
+        MatDialogClose,
+        AsyncPipe,
+    ],
 })
 export class PushToGitDialogComponent {
   commitMsgFormControl = new FormControl('', {

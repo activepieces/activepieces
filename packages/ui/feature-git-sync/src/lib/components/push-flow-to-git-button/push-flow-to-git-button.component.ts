@@ -1,21 +1,29 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { ApFlagId, PopulatedFlow } from '@activepieces/shared';
+import { PopulatedFlow } from '@activepieces/shared';
 import {
   PushToGitDialogComponent,
   PushToGitDialogData,
 } from '../dialogs/push-to-git-dialog/push-to-git-dialog.component';
-import { Observable, map, of, shareReplay, switchMap, take, tap } from 'rxjs';
+import { Observable, map, switchMap, tap } from 'rxjs';
 import { GitRepo } from '@activepieces/ee-shared';
 import { Store } from '@ngrx/store';
-import { FlagService, ProjectSelectors, flowActionsUiInfo } from '@activepieces/ui/common';
 import { SyncProjectService } from '../../services/sync-project.service';
-import { ConfigureRepoDialogComponent } from '../dialogs/configure-repo-dialog/configure-repo-dialog.component';
+import { ProjectSelectors, flowActionsUiInfo } from '@activepieces/ui/common';
+import { AsyncPipe } from '@angular/common';
+import { AngularSvgIconModule } from 'angular-svg-icon';
+import { MatMenuItem } from '@angular/material/menu';
 
 @Component({
-  selector: 'app-push-flow-to-git-button',
-  templateUrl: './push-flow-to-git-button.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-push-flow-to-git-button',
+    templateUrl: './push-flow-to-git-button.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: true,
+    imports: [
+        MatMenuItem,
+        AngularSvgIconModule,
+        AsyncPipe,
+    ],
 })
 export class PushFlowToGitButtonComponent {
   readonly flowActionsUiInfo = flowActionsUiInfo;
@@ -23,7 +31,6 @@ export class PushFlowToGitButtonComponent {
   @Input({ required: true }) flow!: PopulatedFlow;
 
   
-  gitRepo$: Observable<GitRepo | null>;
   openPushDialog$?: Observable<void>;
   openConfigureRepoDialog$?: Observable<GitRepo | null> ;
   show$: Observable<boolean>;
@@ -31,10 +38,8 @@ export class PushFlowToGitButtonComponent {
     private dialogService: MatDialog,
     private store: Store,
     private gitRepoService: SyncProjectService,
-    private flagService: FlagService
   ) {
-    this.show$ = this.flagService.isFlagEnabled(ApFlagId.SHOW_GIT_SYNC);
-    this.gitRepo$ = this.getGitRepo();
+    this.show$ = this.gitRepoService.isDevelopment()
   }
 
   openPushDialog(): void {
@@ -42,7 +47,7 @@ export class PushFlowToGitButtonComponent {
       .select(ProjectSelectors.selectCurrentProject)
       .pipe(
         switchMap((project) => {
-          return this.gitRepo$.pipe(
+          return this.gitRepoService.get().pipe(
             tap((repo) => {
               const data: PushToGitDialogData = {
                 flow: this.flow,
@@ -59,36 +64,5 @@ export class PushFlowToGitButtonComponent {
       );
   }
 
-  openConfigureRepoDialog() {
-   this.openConfigureRepoDialog$ = this.dialogService
-      .open(ConfigureRepoDialogComponent)
-      .afterClosed().pipe(tap(res=>{
-        this.gitRepo$ = of(res);
-        if(res)
-        {
-          this.openPushDialog();
-         }
-      })
-      );
-  }
-  getGitRepo(){
-    return this.store.select(ProjectSelectors.selectPlatform).pipe(
-      take(1),
-      switchMap((platform) => {
-        if (!platform || !platform.gitSyncEnabled) {
-          return of(null);
-        }
-        // TODO optmize this as it should run only once accross the flow table
-        return this.gitRepoService.list().pipe(
-          map((repos) => {
-            if (repos.length === 0) {
-              throw new Error('No git repo found');
-            }
-            return repos[0];
-          }),
-        );
-      }),
-      shareReplay(1)
-    );
-  }
+
 }

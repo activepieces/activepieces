@@ -19,7 +19,6 @@ export * from './lib/guards';
 export * from './lib/service';
 export * from './lib/utils/locales';
 export * from './lib/service/platform-project.service';
-export * from './lib/service/project.service';
 export * from './lib/guards/show-based-on-flag.guard';
 export * from './lib/components/upgrade-note/upgrade-note.component';
 import '@angular/localize/init';
