@@ -18,6 +18,9 @@ import {
 import { fadeInUp400ms, InsertMentionOperation } from '@activepieces/ui/common';
 import { InterpolatingTextFormControlComponent } from '@activepieces/ui/feature-builder-form-controls';
 import { LoopStepInputFormSchema } from '../input-forms-schema';
+import { InputFormCore } from '../input-form-core';
+import { Store } from '@ngrx/store';
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 
 @Component({
   selector: 'app-loop-step-input-form',
@@ -36,7 +39,10 @@ import { LoopStepInputFormSchema } from '../input-forms-schema';
   ],
   animations: [fadeInUp400ms],
 })
-export class LoopStepInputFormComponent implements ControlValueAccessor {
+export class LoopStepInputFormComponent
+  extends InputFormCore
+  implements ControlValueAccessor
+{
   @Input({ required: true }) step!: LoopOnItemsAction;
   loopStepForm: FormGroup<{ items: FormControl<string> }>;
   updateComponentValue$: Observable<any>;
@@ -50,7 +56,12 @@ export class LoopStepInputFormComponent implements ControlValueAccessor {
     //ignore
   };
 
-  constructor(private formBuilder: FormBuilder) {
+  constructor(
+    store: Store,
+    pieceService: PieceMetadataService,
+    private formBuilder: FormBuilder
+  ) {
+    super(store, pieceService);
     this.loopStepForm = this.formBuilder.group({
       items: new FormControl('', {
         nonNullable: true,

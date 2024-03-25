@@ -5,7 +5,7 @@ import {
   BuilderSelectors,
   LeftSideBarType,
 } from '@activepieces/ui/feature-builder-store';
-import { PopulatedFlow, Project } from '@activepieces/shared';
+import { PopulatedFlow, ProjectWithLimits } from '@activepieces/shared';
 import { ProjectSelectors } from '@activepieces/ui/common';
 
 @Component({
@@ -15,7 +15,7 @@ import { ProjectSelectors } from '@activepieces/ui/common';
 export class FlowLeftSidebarComponent implements OnInit {
   leftSideBar$: Observable<LeftSideBarType>;
   flow$: Observable<PopulatedFlow>;
-  project$: Observable<Project>;
+  project$: Observable<ProjectWithLimits>;
   constructor(private store: Store) {
     this.flow$ = this.store.select(BuilderSelectors.selectCurrentFlow);
     this.project$ = this.store.select(ProjectSelectors.selectCurrentProject);

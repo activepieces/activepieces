@@ -3,8 +3,10 @@ import { selectCommonState } from '../common.selector';
 import { CommonStateModel } from '../common-state.model';
 import { AppConnectionsState } from './app-connections-state.model';
 import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
-import { ConnectionDropdownItem } from './connections-dropdown-item';
-import { MentionListItem } from '../../models/mention-list-item';
+import {
+  ConnectionDropdownItem,
+  PieceConnectionDropdownItem,
+} from './connections-dropdown-item';
 
 const selectConnectionsState = createSelector(
   selectCommonState,
@@ -37,53 +39,25 @@ const selectAppConnectionsDropdownOptions = createSelector(
   }
 );
 
-const selectAppConnectionsDropdownOptionsWithIds = createSelector(
-  selectAllAppConnections,
-  (connections: AppConnectionWithoutSensitiveData[]) => {
-    return [...connections].map((c) => {
-      const result: ConnectionDropdownItem = {
-        label: { pieceName: c.pieceName, name: c.name },
-        value: c.id,
-      };
-      return result;
-    });
-  }
-);
-
-const selectAppConnectionsDropdownOptionsForAppWithIds = (appName: string) => {
-  return createSelector(
-    selectAppConnectionsDropdownOptionsWithIds,
-    (connections) => {
-      return connections
-        .filter((opt) => opt.label.pieceName === appName)
+const selectAllConnectionsForPiece = (pieceName: string) =>
+  createSelector(
+    selectAllAppConnections,
+    (connections: AppConnectionWithoutSensitiveData[]) => {
+      return [...connections]
+        .filter((c) => c.pieceName === pieceName)
         .map((c) => {
-          const result: ConnectionDropdownItem = {
-            label: { pieceName: c.label.pieceName, name: c.label.name },
-            value: c.value,
+          const result: PieceConnectionDropdownItem = {
+            label: c.name,
+            value: `{{connections['${c.name}']}}`,
           };
           return result;
         });
     }
   );
-};
-const selectAppConnectionsForMentionsDropdown = createSelector(
-  selectAllAppConnections,
-  (connections: AppConnectionWithoutSensitiveData[]) => {
-    return [...connections].map((c) => {
-      const result: MentionListItem = {
-        label: c.name,
-        value: `{{connections['${c.name}']}}`,
-      };
-      return result;
-    });
-  }
-);
 
 export const appConnectionsSelectors = {
   selectAllAppConnections,
   selectConnection,
   selectAppConnectionsDropdownOptions,
-  selectAppConnectionsDropdownOptionsWithIds,
-  selectAppConnectionsDropdownOptionsForAppWithIds,
-  selectAppConnectionsForMentionsDropdown,
+  selectAllConnectionsForPiece,
 };

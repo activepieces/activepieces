@@ -1,7 +1,11 @@
-<div
+@if(
+    pieceMetadata$ |
+    async; as pieceMetaData
+){
+    <div
     class="ap-rounded-full ap-border ap-border-solid ap-border-outline ap-inline-flex ap-gap-1 ap-typography-caption ap-text-body ap-p-2 ap-items-center">
-    <img [src]="(pieceMetadata$ | async)?.logoUrl" class="ap-h-[21px] ap-w-[21px]"> {{(pieceMetadata$ |
-    async)?.displayName}} <svg-icon [applyClass]="true" class="ap-w-[10px] ap-h-[10px] ap-cursor-pointer"
+    <img [src]="(pieceMetadata$ | async)?.logoUrl" class="ap-h-[21px] ap-w-[21px] ap-object-contain"> {{pieceMetaData.displayName}} <svg-icon [applyClass]="true" class="ap-w-[10px] ap-h-[10px] ap-cursor-pointer"
         matTooltip="Remove" (click)="removePiece.emit()" src="assets/img/custom/close.svg">
     </svg-icon>
 </div>
+}

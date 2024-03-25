@@ -16,6 +16,7 @@ import { newMessage } from './lib/triggers/new-message';
 import { newReactionAdded } from './lib/triggers/new-reaction-added';
 import { uploadFile } from './lib/actions/upload-file';
 import { searchMessages } from './lib/actions/search-messages';
+import { updateMessage } from './lib/actions/update-message';
 
 export const slackAuth = PieceAuth.OAuth2({
   description: '',
@@ -88,6 +89,7 @@ export const slack = createPiece({
     requestActionMessageAction,
     uploadFile,
     searchMessages,
+    updateMessage,
     createCustomApiCallAction({
       baseUrl: () => {
         return 'https://slack.com/api';

@@ -35,7 +35,7 @@ export { BasicAuthProperty } from './authentication/basic-auth-prop';
 export { SecretTextProperty } from './authentication/secret-text-property'
 export { CustomAuthProperty } from './authentication/custom-auth-prop';
 
-
+export { JsonProperty } from './input/json-property'
 export const PieceProperty = Type.Union([InputProperty, PieceAuthProperty])
 export type PieceProperty = InputProperty | PieceAuthProperty;
 

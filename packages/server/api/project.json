@@ -47,6 +47,16 @@
         "lintFilePatterns": ["packages/server/api/**/*.ts"]
       }
     },
+    "test-unit": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "packages/server/api/jest.config.ts",
+        "passWithNoTests": false,
+        "bail": true,
+        "testPathPattern": ["packages/server/api/test/unit"]
+      }
+    },
     "test-ce": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],

@@ -8,9 +8,9 @@ import { EMPTY, Observable, map, switchMap, take, tap } from 'rxjs';
 import {
   PopulatedFlow,
   FolderDto,
-  Project,
   FlowOperationType,
   TelemetryEventName,
+  ProjectWithLimits,
 } from '@activepieces/shared';
 import { FoldersSelectors } from '@activepieces/ui/feature-folders-store';
 import { Store } from '@ngrx/store';
@@ -46,7 +46,7 @@ export class FlowsTableTitleComponent {
   currentFolder$: Observable<FolderDto | undefined>;
   createFlow$?: Observable<PopulatedFlow>;
   showAllFlows$: Observable<boolean>;
-  currentProject$: Observable<Project>;
+  currentProject$: Observable<ProjectWithLimits>;
   openTemplatesDialog$?: Observable<void>;
   readonly flowActionsUiInfo = flowActionsUiInfo;
   hideFoldersList$ = this.embeddingService.getHideFolders$();

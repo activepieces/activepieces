@@ -1,0 +1,33 @@
+{
+  "name": "pieces-wedof",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/wedof/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/wedof",
+        "tsConfig": "packages/pieces/community/wedof/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/wedof/package.json",
+        "main": "packages/pieces/community/wedof/src/index.ts",
+        "assets": ["packages/pieces/community/wedof/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-wedof {args.ver} {args.tag}",
+      "dependsOn": ["build"]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/community/wedof/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}
