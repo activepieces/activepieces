@@ -168,7 +168,7 @@ describe('Project API', () => {
     })
 
     describe('List Projects by user', () => {
-        it('it should list owned projects', async () => {
+        it('it should list owned projects in platform', async () => {
             const mockUser = createMockUser()
             const mockUser2 = createMockUser()
             await databaseConnection
@@ -203,6 +203,10 @@ describe('Project API', () => {
                 type: PrincipalType.USER,
                 id: mockUser.id,
                 projectId: mockProject2.id,
+                platform: {
+                    id: mockPlatform2.id,
+                    role: PlatformRole.OWNER,
+                },
             })
 
             const response = await app?.inject({
@@ -216,9 +220,8 @@ describe('Project API', () => {
             // assert
             const responseBody = response?.json()
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(responseBody.data.length).toBe(2)
-            expect(responseBody.data[0].id).toEqual(mockProject.id)
-            expect(responseBody.data[1].id).toEqual(mockProject2.id)
+            expect(responseBody.data.length).toBe(1)
+            expect(responseBody.data[0].id).toEqual(mockProject2.id)
         })
     })
 

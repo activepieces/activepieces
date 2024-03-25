@@ -2,6 +2,13 @@ import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
 import { Static, Type } from '@sinclair/typebox'
 
+export const ListProjectRequestForUserQueryParams = Type.Object({
+    cursor: Type.Optional(Type.String()),
+    limit: Type.Optional(Type.Number()),
+})
+
+export type ListProjectRequestForUserQueryParams = Static<typeof ListProjectRequestForUserQueryParams>
+
 export type ProjectId = ApId
 
 export enum NotificationStatus {
