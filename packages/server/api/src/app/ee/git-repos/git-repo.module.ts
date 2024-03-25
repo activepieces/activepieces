@@ -3,7 +3,7 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { gitRepoService } from './git-repo.service'
-import { PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, SeekPage } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, SeekPage } from '@activepieces/shared'
 import {
     ConfigureRepoRequest,
     GitRepoWithoutSensitiveData,
@@ -20,7 +20,6 @@ export const gitRepoModule: FastifyPluginAsync = async (app) => {
     await app.register(gitRepoController, { prefix: '/v1/git-repos' })
 }
 
-
 export const gitRepoController: FastifyPluginCallbackTypebox = (
     app,
     _options,
@@ -28,8 +27,9 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (
 ): void => {
 
     app.post('/pull', PullRepoFromProjectRequestSchema, async (request) => {
-        const gitRepo = await gitRepoService.getOneByProjectOrThrow({ projectId: request.body.projectId })
+        await assertFeatureEnabled(request.principal.platform.id)
         const platform = await platformService.getOneOrThrow(request.principal.platform.id)
+        const gitRepo = await gitRepoService.getOneByProjectOrThrow({ projectId: request.body.projectId })
         const userId = platform.ownerId
         await gitRepoService.pull({
             gitRepo,
@@ -39,16 +39,19 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (
     })
 
     app.post('/', ConfigureRepoRequestSchema, async (request, reply) => {
+        await assertFeatureEnabled(request.principal.platform.id)
         await reply
             .status(StatusCodes.CREATED)
             .send(await gitRepoService.upsert(request.body))
     })
 
     app.get('/', ListRepoRequestSchema, async (request) => {
+        await assertFeatureEnabled(request.principal.platform.id)
         return gitRepoService.list(request.query)
     })
 
     app.post('/:id/push', PushRepoRequestSchema, async (request) => {
+        await assertFeatureEnabled(request.principal.platform.id)
         return gitRepoService.push({
             id: request.params.id,
             userId: request.principal.id,
@@ -57,6 +60,7 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (
     })
 
     app.post('/:id/pull', PullRepoRequestSchema, async (request) => {
+        await assertFeatureEnabled(request.principal.platform.id)
         const gitRepo = await gitRepoService.getOrThrow({
             id: request.params.id,
         })
@@ -68,6 +72,7 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (
     })
 
     app.delete('/:id', DeleteRepoRequestSchema, async (request, reply) => {
+        await assertFeatureEnabled(request.principal.platform.id)
         await gitRepoService.delete({
             id: request.params.id,
             projectId: request.principal.projectId,
@@ -133,13 +138,13 @@ const PushRepoRequestSchema = {
     },
     schema: {
         description:
-            'Push all changes from the project and overwrite any conflicting changes in the git repository.',
+            'Push single flow to the git repository',
         body: PushGitRepoRequest,
         params: Type.Object({
             id: Type.String(),
         }),
         response: {
-            [StatusCodes.OK]: ProjectSyncPlan,
+            [StatusCodes.OK]: Type.Void(),
         },
     },
 }
@@ -169,4 +174,17 @@ const ListRepoRequestSchema = {
             [StatusCodes.OK]: SeekPage(GitRepoWithoutSensitiveData),
         },
     },
+}
+
+async function assertFeatureEnabled(platformId: string): Promise<void> {
+    const platform = await platformService.getOneOrThrow(platformId)
+
+    if (!platform.gitSyncEnabled) {
+        throw new ActivepiecesError({
+            code: ErrorCode.FEATURE_DISABLED,
+            params: {
+                message: 'Git repo addon feature is disabled',
+            },
+        })
+    }
 }
