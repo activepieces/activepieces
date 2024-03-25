@@ -9,6 +9,7 @@ import {
 
 @Directive({
   selector: '[apCheckOverflow]',
+  standalone: true,
 })
 export class CheckOverflowDirective implements AfterViewInit, OnDestroy {
   @Output() isOverflowed = new EventEmitter<boolean>();

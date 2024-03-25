@@ -1,6 +1,6 @@
 <div class="edit-step-accordion-container ap-flex ap-flex-col">
   <form class="ap-w-full" [formGroup]="stepForm">
-    <div class="ap-px-4  ap-py-2 expansion-panel-body">
+    <div class="ap-px-4 ap-py-2 expansion-panel-body">
       <ng-container *ngTemplateOutlet="inputFormSelection"></ng-container>
     </div>
   </form>
@@ -8,21 +8,30 @@
 <ng-container *ngIf="readOnly$ | async"></ng-container>
 <ng-template #inputFormSelection>
   <div [formGroup]="stepForm">
-    <app-loop-step-input-form *ngIf="_selectedStep.type === ActionType.LOOP_ON_ITEMS" [step]="_selectedStep"
-      formControlName="settings">
+    <app-loop-step-input-form
+      *ngIf="_selectedStep.type === ActionType.LOOP_ON_ITEMS"
+      [step]="_selectedStep"
+      formControlName="settings"
+    >
     </app-loop-step-input-form>
 
     <ng-container [ngSwitch]="_selectedStep.type">
-      <app-code-step-input-form *ngSwitchCase="ActionType.CODE" formControlName="settings">
+      <app-code-step-input-form
+        *ngSwitchCase="ActionType.CODE"
+        formControlName="settings"
+      >
       </app-code-step-input-form>
-      <app-piece-action-input-form *ngSwitchCase="ActionType.PIECE" formControlName="settings">
-      </app-piece-action-input-form>
-      <app-piece-trigger-input-form *ngSwitchCase="TriggerType.PIECE" formControlName="settings">
-      </app-piece-trigger-input-form>
-      <app-branch-step-input-form *ngSwitchCase="ActionType.BRANCH" formControlName="settings">
+      <app-piece-input-form *ngSwitchCase="ActionType.PIECE">
+      </app-piece-input-form>
+      <app-piece-input-form *ngSwitchCase="TriggerType.PIECE">
+      </app-piece-input-form>
+
+      <app-branch-step-input-form
+        *ngSwitchCase="ActionType.BRANCH"
+        formControlName="settings"
+      >
       </app-branch-step-input-form>
     </ng-container>
-
   </div>
 </ng-template>
 
