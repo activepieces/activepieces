@@ -4,6 +4,7 @@ export type EmbeddingState = {
   isEmbedded: boolean;
   hideSideNav: boolean;
   prefix: string;
+  hideLogoInBuilder: boolean;
   disableNavigationInBuilder: boolean;
   hideFolders: boolean;
 };
@@ -16,6 +17,7 @@ export class EmbeddingService {
     this.embeddingStateSubject = new BehaviorSubject<EmbeddingState>({
       isEmbedded: false,
       hideSideNav: false,
+      hideLogoInBuilder: false,
       prefix: '',
       disableNavigationInBuilder: false,
       hideFolders: false,
@@ -36,6 +38,11 @@ export class EmbeddingService {
   getShowNavigationInBuilder$() {
     return this.getState$().pipe(map((res) => !res.disableNavigationInBuilder));
   }
+
+  getHideLogoInBuilder$() {
+    return this.getState$().pipe(map((res) => res.hideLogoInBuilder));
+  }
+
   getHideFolders$() {
     return this.getState$().pipe(map((res) => res.hideFolders));
   }

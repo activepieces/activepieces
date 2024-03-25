@@ -1,4 +1,3 @@
-import { ProjectOperationType } from '@activepieces/ee-shared'
 import { PopulatedFlow, isNil } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 
@@ -66,20 +65,3 @@ export const ProjectState = Type.Object({
 
 export type ProjectState = Static<typeof ProjectState>
 
-export const ProjectOperation = Type.Union([
-    Type.Object({
-        type: Type.Literal(ProjectOperationType.UPDATE_FLOW),
-        flow: PopulatedFlow,
-        targetFlow: PopulatedFlow,
-    }),
-    Type.Object({
-        type: Type.Literal(ProjectOperationType.CREATE_FLOW),
-        flow: PopulatedFlow,
-    }),
-    Type.Object({
-        type: Type.Literal(ProjectOperationType.DELETE_FLOW),
-        flow: PopulatedFlow,
-    }),
-])
-
-export type ProjectOperation = Static<typeof ProjectOperation>

@@ -13,8 +13,9 @@ import { matchesString } from '../../../validators';
 
 export interface DeleteEntityDialogData {
   entityName: string;
-  deleteEntity$: Observable<unknown>;
   note: string;
+  deleteEntity$: Observable<unknown>;
+  errorMessageBuilder?: (e: unknown) => string | undefined;
 }
 
 @Component({
@@ -22,8 +23,12 @@ export interface DeleteEntityDialogData {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DeleteEntityDialogComponent {
+  private TEN_SECONDS = 10000;
+  private DEFAULT_ERROR_MESSAGE = `<b>${this.data.entityName}</b> deletion failed, please check the console`;
+
   confirmationForm: FormGroup<{ confirmation: FormControl<string> }>;
   deleteOperation$: Observable<void>;
+
   constructor(
     private formBuilder: FormBuilder,
     private snackbar: MatSnackBar,
@@ -38,31 +43,41 @@ export class DeleteEntityDialogComponent {
       }),
     });
   }
+
   submit() {
     if (this.confirmationForm.valid && !this.deleteOperation$) {
       this.deleteOperation$ = this.data.deleteEntity$.pipe(
-        catchError((err) => {
-          this.snackbar.open(
-            'An error occurred while deleting, please check your console',
-            '',
-            {
-              duration: undefined,
-              panelClass: 'error',
-            }
-          );
-          console.error(err);
-          return of(err);
-        }),
-        map(() => {
-          return void 0;
-        }),
-        tap(() => {
-          this.dialogRef.close(true);
-          this.snackbar.openFromComponent(GenericSnackbarTemplateComponent, {
-            data: `<b> ${this.data.entityName}</b> Deleted`,
-          });
-        })
+        tap(() => this.success()),
+        catchError((error) => this.handleError(error)),
+        tap(() => this.close()),
+        map(() => undefined)
       );
     }
+  }
+
+  success() {
+    const successMessage = `Success! <b>${this.data.entityName}</b> has been deleted`;
+
+    this.snackbar.openFromComponent(GenericSnackbarTemplateComponent, {
+      data: successMessage,
+    });
+  }
+
+  close() {
+    this.dialogRef.close();
+  }
+
+  handleError(e: unknown) {
+    const errorMessage =
+      this.data.errorMessageBuilder?.(e) ?? this.DEFAULT_ERROR_MESSAGE;
+
+    this.snackbar.openFromComponent(GenericSnackbarTemplateComponent, {
+      data: errorMessage,
+      panelClass: 'error',
+      duration: this.TEN_SECONDS,
+    });
+
+    console.error(e);
+    return of(e);
   }
 }

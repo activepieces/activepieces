@@ -7,7 +7,7 @@ import {
   PlatformService,
 } from '@activepieces/ui/common';
 import { ApEdition } from '@activepieces/shared';
-import { SyncProjectService } from '@activepieces/ui-feature-git-sync';
+import { SyncProjectService } from '../services/sync-project.service';
 
 export type RepoResolverData = {
   repo?: GitRepo;
@@ -31,12 +31,13 @@ export class RepoResolver {
       this.authenticationService.getPlatformId()
     ).pipe(
       switchMap((gitSyncLocked) => {
+        console.log(gitSyncLocked);
         if (!gitSyncLocked) {
-          return this.syncProjectService.list().pipe(
+          return this.syncProjectService.get().pipe(
             map((res) => {
               return {
                 showUpgrade: false,
-                repo: res[0],
+                repo: res,
               };
             })
           );
