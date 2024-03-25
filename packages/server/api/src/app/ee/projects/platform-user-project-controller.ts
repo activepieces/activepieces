@@ -1,6 +1,7 @@
 import {
     ActivepiecesError,
     ErrorCode,
+    ListProjectRequestForUserQueryParams,
     PlatformRole,
     PrincipalType,
     ProjectWithLimits,
@@ -23,7 +24,9 @@ export const usersProjectController: FastifyPluginCallbackTypebox = (
     fastify.get('/', ListProjectRequestForUser, async (request) => {
         return platformProjectService.getAll({
             ownerId: request.principal.id,
-            platformId: request.query.platformId,
+            platformId: request.principal.platform.id,
+            cursorRequest: request.query.cursor ?? null,
+            limit: request.query.limit ?? 10,
         })
     })
 
@@ -33,6 +36,8 @@ export const usersProjectController: FastifyPluginCallbackTypebox = (
         async (request) => {
             const allProjects = await platformProjectService.getAll({
                 ownerId: request.principal.id,
+                cursorRequest: null,
+                limit: 50,
             })
             const project = allProjects.data.find(
                 (project) => project.id === request.params.projectId,
@@ -87,8 +92,6 @@ const ListProjectRequestForUser = {
         response: {
             [StatusCodes.OK]: SeekPage(ProjectWithLimits),
         },
-        querystring: Type.Object({
-            platformId: Type.Optional(Type.String()),
-        }),
+        querystring: ListProjectRequestForUserQueryParams,
     },
 }
