@@ -24,7 +24,7 @@ import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
   templateUrl: './edit-step-sidebar.component.html',
   styleUrls: ['./edit-step-sidebar.component.css'],
 })
-export class NewEditPieceSidebarComponent implements OnInit {
+export class EditStepSidebarComponent implements OnInit {
   constructor(
     private store: Store,
     private cd: ChangeDetectorRef,

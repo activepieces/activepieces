@@ -81,6 +81,64 @@ export class FlowsEffects {
     );
   });
 
+  newTriggerOrActionSelected$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(FlowsActions.newTriggerOrActionSelected),
+      concatLatestFrom(() =>
+        this.store.select(BuilderSelectors.selectCurrentStep)
+      ),
+      switchMap(([{ displayName, name, properties }, step]) => {
+        if (step) {
+          const valid = Object.keys(properties).reduce((acc, key) => {
+            return acc && !properties[key]?.required;
+          }, true);
+          const defaultValues = Object.keys(properties).reduce((acc, key) => {
+            acc[key] = properties[key]?.defaultValue;
+            return acc;
+          }, {} as Record<string, unknown>);
+          console.log(defaultValues);
+          if (step.type === TriggerType.PIECE) {
+            return of(
+              FlowsActions.updateTrigger({
+                operation: {
+                  ...step,
+                  displayName,
+                  settings: {
+                    ...step.settings,
+                    triggerName: name,
+                    input: defaultValues,
+                    inputUiInfo: {
+                      customizedInputs: {},
+                    },
+                  },
+                  valid: valid,
+                },
+              })
+            );
+          } else if (step.type === ActionType.PIECE) {
+            return of(
+              FlowsActions.updateAction({
+                operation: {
+                  ...step,
+                  displayName,
+                  settings: {
+                    ...step.settings,
+                    actionName: name,
+                    input: defaultValues,
+                    inputUiInfo: {
+                      customizedInputs: {},
+                    },
+                  },
+                  valid: valid,
+                },
+              })
+            );
+          }
+        }
+        return EMPTY;
+      })
+    );
+  });
   replaceTrigger$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(FlowsActions.updateTrigger),

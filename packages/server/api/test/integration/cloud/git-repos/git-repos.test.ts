@@ -3,7 +3,7 @@ import { setupApp } from '../../../../src/app/app'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { faker } from '@faker-js/faker'
-import { PrincipalType, apId } from '@activepieces/shared'
+import { PlatformRole, PrincipalType, apId } from '@activepieces/shared'
 import {
     createMockUser,
     createMockProject,
@@ -12,6 +12,7 @@ import {
     createMockApiKey,
 } from '../../../helpers/mocks'
 import { generateMockToken } from '../../../helpers/auth'
+import { GitBranchType } from '@activepieces/ee-shared'
 
 let app: FastifyInstance | null = null
 
@@ -41,6 +42,7 @@ describe('Git API', () => {
                 remoteUrl: `git@${faker.internet.url()}`,
                 sshPrivateKey: faker.hacker.noun(),
                 branch: 'main',
+                branchType: GitBranchType.PRODUCTION,
                 slug: 'test-slug',
             }
 
@@ -70,12 +72,17 @@ describe('Git API', () => {
                 remoteUrl: `git@${faker.internet.url()}`,
                 sshPrivateKey: faker.hacker.noun(),
                 branch: 'main',
+                branchType: GitBranchType.PRODUCTION,
                 slug: 'test-slug',
             }
             const token = await generateMockToken({
                 id: mockUser.id,
                 projectId: mockProject.id,
                 type: PrincipalType.USER,
+                platform: {
+                    id: mockProject.platformId,
+                    role: PlatformRole.OWNER,
+                },
             })
 
             const response = await app?.inject({
@@ -86,9 +93,8 @@ describe('Git API', () => {
                     authorization: `Bearer ${token}`,
                 },
             })
-
-            expect(response?.statusCode).toBe(StatusCodes.CREATED)
             const responseBody = response?.json()
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
             expect(responseBody.sshPrivateKey).toBeUndefined()
             expect(responseBody.remoteUrl).toBe(request.remoteUrl)
             expect(responseBody.branch).toBe(request.branch)
@@ -111,6 +117,10 @@ describe('Git API', () => {
                 id: mockUser.id,
                 projectId: mockProject.id,
                 type: PrincipalType.USER,
+                platform: {
+                    id: mockProject.platformId,
+                    role: PlatformRole.OWNER,
+                },
             })
 
             const response = await app?.inject({
@@ -227,6 +237,10 @@ describe('Git API', () => {
                 id: mockUser.id,
                 projectId: mockProject.id,
                 type: PrincipalType.USER,
+                platform: {
+                    id: mockProject.platformId,
+                    role: PlatformRole.OWNER,
+                },
             })
 
             const response = await app?.inject({
@@ -260,7 +274,10 @@ const mockEnvironment = async () => {
     const mockUser = createMockUser()
     await databaseConnection.getRepository('user').save(mockUser)
 
-    const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id })
+    const mockPlatform = createMockPlatform({
+        id: mockPlatformId, ownerId: mockUser.id,
+        gitSyncEnabled: true,
+    })
     await databaseConnection.getRepository('platform').save(mockPlatform)
 
     mockUser.platformId = mockPlatform.id

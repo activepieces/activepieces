@@ -6,7 +6,7 @@
         <ap-markdown [data]="markdown" [smallText]="true">
         </ap-markdown>
       </div>
-      <app-dictonary-form-control [formControl]="codeStepForm.controls.input"></app-dictonary-form-control>
+      <app-dictonary-form-control [formControl]="codeStepForm.controls.input" [stepMetaDataForMentions]="(stepMetaDataForMentions$ | async )|| []"></app-dictonary-form-control>
     </div>
     <div>
       <div class="ap-mb-2 ap-flex ap-justify-between ap-items-center">

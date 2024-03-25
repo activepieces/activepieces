@@ -21,6 +21,9 @@ import {
   codeGeneratorTooltip,
   disabledCodeGeneratorTooltip,
 } from '@activepieces/ui/common';
+import { InputFormCore } from '../input-form-core';
+import { Store } from '@ngrx/store';
+import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 
 @Component({
   selector: 'app-code-step-input-form',
@@ -33,7 +36,10 @@ import {
     },
   ],
 })
-export class CodeStepInputFormComponent implements ControlValueAccessor {
+export class CodeStepInputFormComponent
+  extends InputFormCore
+  implements ControlValueAccessor
+{
   codeStepForm: FormGroup<{
     input: FormControl<Record<string, unknown>>;
     sourceCode: FormControl<SourceCode>;
@@ -65,10 +71,13 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
   };
 
   constructor(
+    store: Store,
+    pieceService: PieceMetadataService,
     private formBuilder: FormBuilder,
     private dialogService: MatDialog,
     private flagService: FlagService
   ) {
+    super(store, pieceService);
     this.generateCodeEnabled$ = this.flagService.isFlagEnabled(
       ApFlagId.COPILOT_ENABLED
     );

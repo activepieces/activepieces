@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Actions, concatLatestFrom, createEffect, ofType } from '@ngrx/effects';
-import { filter, map, switchMap, tap } from 'rxjs';
+import { delay, filter, map, switchMap, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { BuilderActions } from '../builder.action';
 import { canvasActions } from './canvas.action';
@@ -118,12 +118,17 @@ export class CanvasEffects {
       })
     );
   });
-
+  /**clears the selected step then selects the trigger, you need to clear the step otherwise the use could be seeing a trigger from the previous run version */
   selectTriggerOnViewingRun$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(canvasActions.viewRun),
       switchMap(() => {
-        return of(canvasActions.selectStepByName({ stepName: 'trigger' }));
+        return of(canvasActions.deselectStep()).pipe(
+          delay(200),
+          switchMap(() => {
+            return of(canvasActions.selectStepByName({ stepName: 'trigger' }));
+          })
+        );
       })
     );
   });
