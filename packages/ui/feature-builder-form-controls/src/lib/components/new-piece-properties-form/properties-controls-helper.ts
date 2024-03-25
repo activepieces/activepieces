@@ -88,7 +88,9 @@ const parseControlValue = (property: PieceProperty, value: unknown) => {
     //json value is returned as either an object or string from the server
     case PropertyType.JSON:
       return isNil(value)
-        ? '{}'
+        ? property.required
+          ? '{}'
+          : ''
         : typeof value === 'string'
         ? value
         : JSON.stringify(value);
