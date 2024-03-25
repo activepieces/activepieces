@@ -33,12 +33,6 @@ import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections
       >
         <mat-label> Connection </mat-label>
         <mat-select [formControl]="passedFormControl">
-          @for (opt of options; track opt.value) {
-          <mat-option [value]="opt.value">
-            {{ opt.label }}
-          </mat-option>
-          }
-
           <mat-option
             (click)="addConnectionBtn.buttonClicked()"
             class="add-auth"
@@ -56,6 +50,13 @@ import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections
               </div>
             </div>
           </mat-option>
+          @for (opt of options; track opt.value) {
+
+          <mat-option [value]="opt.value">
+            {{ opt.label }}
+          </mat-option>
+          }
+
           <mat-select-trigger>
             <div
               class="ap-flex ap-gap-[6px] connections-dropdown-container ap-pr-1 ap-items-center"
