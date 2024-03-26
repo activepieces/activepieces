@@ -12,7 +12,7 @@
                 </ap-button>
             </div>
 
-            <div class="ap-min-h-[70%]">
+            <div class="ap-min-h-[70%]" *ngIf="dataSource">
                 <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Projects table">
 
                     <ng-container matColumnDef="displayName">
@@ -81,6 +81,9 @@
                         Projects and their usage are only availables for platform admins
                     </div>
                 </ng-container>
+                <div class="ap-flex ap-justify-end">
+                    <ap-paginator> </ap-paginator>
+                </div>
             </div>
         </div>
     </div>
