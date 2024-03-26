@@ -45,7 +45,6 @@ export const duplicateFileAction = createAction({
     });
 
     if (response.status !== 200) {
-      console.error(response);
       throw new Error('Error duplicating file');
     }
 
