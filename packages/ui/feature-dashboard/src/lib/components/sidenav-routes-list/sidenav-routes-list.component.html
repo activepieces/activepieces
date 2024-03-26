@@ -7,7 +7,7 @@
 
   <ng-container *ngFor="let r of (sideNavRoutes$ | async)">
     <div *ngIf="r.showInSideNav$ | async"
-      class="ap-w-full ap-flex-col ap-flex ap-border-transparent ap-justify-center ap-items-center ap-cursor-pointer ap-px-3"
+      class="ap-w-full ap-flex-col ap-flex ap-border-transparent ap-justify-center ap-items-center ap-cursor-pointer"
       [routerLink]="['/' + r.route]">
       <div
         routerLinkActive="ap-bg-primary-light   ap-transition ap-ease-out ap-rounded-[8px] hover:!ap-bg-primary-light !ap-fill-primary "
@@ -25,7 +25,7 @@
 
       </div>
 
-      <div class="ap-font-medium ap-text-[10px]">
+      <div class="ap-font-medium ap-text-[10px] ap-text-center">
         {{ r.caption }}
       </div>
 
@@ -37,22 +37,22 @@
   <app-billing-sidenav-item *ngIf="showBilling$ | async"></app-billing-sidenav-item>
   <div *ngIf="showSupport$ | async" (click)="openSupport()" matTooltip="Ask the Community" i18n-matTooltip
     matTooltipPosition="right"
-    class="ap-w-full ap-flex-col ap-flex ap-border-transparent ap-justify-center ap-items-center ap-cursor-pointer ap-px-3 ap-mb-3">
+    class="ap-w-full ap-flex-col ap-flex ap-border-transparent ap-justify-center ap-items-center ap-cursor-pointer ap-mb-3">
     <div class="ap-p-3">
       <svg-icon [class]="'ap-fill-title'" [svgStyle]="{ width: '21px', height: '21px' }"
         src="assets/img/custom/support.svg" [applyClass]="true">
       </svg-icon>
     </div>
-    <div class="ap-font-medium ap-text-[10px]" i18n>Support</div>
+    <div class="ap-font-medium ap-text-[10px] ap-text-center" i18n>Support</div>
   </div>
   <div *ngIf="showDocs$ | async" (click)="openDocs()" matTooltip="Documentation" i18n-matTooltip
     [matTooltipPosition]="'right'"
-    class="ap-w-full ap-flex-col ap-flex ap-border-transparent ap-justify-center ap-items-center ap-cursor-pointer ap-px-3">
+    class="ap-w-full ap-flex-col ap-flex ap-border-transparent ap-justify-center ap-items-center ap-cursor-pointer">
     <div class="ap-p-3">
       <svg-icon [class]="'ap-fill-title'" [svgStyle]="{ width: '21px', height: '21px' }"
         src="assets/img/custom/dashboard/documentation.svg" [applyClass]="true">
       </svg-icon>
     </div>
-    <div class="ap-font-medium ap-text-[10px]" i18n>Docs</div>
+    <div class="ap-font-medium ap-text-[10px] ap-text-center" i18n>Docs</div>
   </div>
 </div>
