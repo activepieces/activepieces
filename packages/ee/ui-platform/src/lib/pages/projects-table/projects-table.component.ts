@@ -48,7 +48,7 @@ export class ProjectsTableComponent implements OnInit {
   upgradeNoteTitle = $localize`Unlock Projects`;
   upgradeNote = $localize`Orchestrate your automation teams across projects with their own flows, connections and usage quotas`;
   refreshTable$: Subject<boolean> = new Subject();
-  dataSource: ProjectsDataSource;
+  dataSource: ProjectsDataSource | undefined;
   loading = true;
   switchProject$: Observable<void> | undefined;
   createProject$: Observable<ProjectWithLimits | undefined> | undefined;
@@ -65,17 +65,10 @@ export class ProjectsTableComponent implements OnInit {
     private activatedRoute: ActivatedRoute,
     private store: Store,
     private route: ActivatedRoute
-  ) {
-    this.isDemo = this.route.snapshot.data[PLATFORM_DEMO_RESOLVER_KEY];
-    this.dataSource = new ProjectsDataSource(
-      this.projectsService,
-      this.refreshTable$.asObservable().pipe(startWith(true)),
-      this.paginator,
-      this.activatedRoute.queryParams,
-      this.isDemo
-    );
-  }
+  ) {}
+
   ngOnInit(): void {
+    this.isDemo = this.route.snapshot.data[PLATFORM_DEMO_RESOLVER_KEY];
     this.dataSource = new ProjectsDataSource(
       this.projectsService,
       this.refreshTable$.asObservable().pipe(startWith(true)),

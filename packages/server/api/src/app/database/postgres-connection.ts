@@ -123,6 +123,7 @@ import { AddDeletedToProjectPostgres1710243591721 } from './migration/postgres/1
 import { CascadeProjectDeleteAppCredentialsAndConnectionKey1710720610669 } from './migration/postgres/1710720610669-cascade-project-delete-app-credentials-and-connection-key'
 import { CascadeProjectDeleteToActivity1710720610670 } from './migration/postgres/1710720610670-cascade-project-delete-activity'
 import { AddBranchTypeToGit1711073772867 } from './migration/postgres/1711073772867-AddBranchTypeToGit'
+import { MigrateInputUiInfo1711411372480 } from './migration/postgres/1711411372480-migrateInputUiInfo'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -199,6 +200,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         MigrateWebhook1709581196563,
         AddAuthorsToPieces1710098373707,
         AddDeletedToProjectPostgres1710243591721,
+        MigrateInputUiInfo1711411372480,
     ]
 
     const edition = getEdition()

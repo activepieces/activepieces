@@ -49,6 +49,7 @@ export class ProjectsDataSource extends DataSource<Project> {
         })
       ),
       tap((page) => {
+        console.log(page);
         this.data = page.data;
         this.paginator.setNextAndPrevious(page.next, page.previous);
         this.isLoading$.next(false);
