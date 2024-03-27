@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { jiraCloudAuth } from '../../auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { sendJiraRequest } from '../common';
+import { getIssueIdDropdown, getProjectIdDropdown } from '../common/props';
 
 export const addCommentToIssueAction = createAction({
 	auth: jiraCloudAuth,
@@ -9,10 +10,8 @@ export const addCommentToIssueAction = createAction({
 	displayName: 'Add Issue Comment',
 	description: 'Adds a comment to an issue.',
 	props: {
-		issueId: Property.ShortText({
-			displayName: 'Issue ID or Key',
-			required: true,
-		}),
+		projectId: getProjectIdDropdown(),
+		issueId: getIssueIdDropdown({ refreshers: ['projectId'] }),
 		comment: Property.LongText({
 			displayName: 'Comment Body',
 			required: true,

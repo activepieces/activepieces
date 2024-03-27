@@ -12,6 +12,8 @@ import { addAttachmentToIssueAction } from './lib/actions/add-attachment-to-issu
 import { listIssueCommentsAction } from './lib/actions/list-isssue-comments';
 import { updateIssueCommentAction } from './lib/actions/update-issue-comment';
 import { deleteIssueCommentAction } from './lib/actions/delete-issue-comment';
+import { updateIssueAction } from './lib/actions/update-issue';
+import { assignIssueAction } from './lib/actions/assign-issue';
 
 export const jiraCloud = createPiece({
 	displayName: 'Jira Cloud',
@@ -24,7 +26,9 @@ export const jiraCloud = createPiece({
 	authors: ['kishanprmr', 'MoShizzle', 'abuaboud'],
 	actions: [
 		createIssue,
+		updateIssueAction,
 		searchIssues,
+		assignIssueAction,
 		addAttachmentToIssueAction,
 		addCommentToIssueAction,
 		updateIssueCommentAction,

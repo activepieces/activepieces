@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { jiraCloudAuth } from '../../auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { sendJiraRequest } from '../common';
+import { getProjectIdDropdown, getIssueIdDropdown } from '../common/props';
 
 export const listIssueCommentsAction = createAction({
 	auth: jiraCloudAuth,
@@ -9,10 +10,8 @@ export const listIssueCommentsAction = createAction({
 	displayName: 'List Issue Comments',
 	description: 'Returns all comments for an issue.',
 	props: {
-		issueId: Property.ShortText({
-			displayName: 'Issue ID or Key',
-			required: true,
-		}),
+		projectId: getProjectIdDropdown(),
+		issueId: getIssueIdDropdown({ refreshers: ['projectId'] }),
 		orderBy: Property.StaticDropdown({
 			displayName: 'Order By',
 			required: true,
@@ -48,6 +47,7 @@ export const listIssueCommentsAction = createAction({
 			queryParams: {
 				orderBy: orderBy,
 				maxResults: limit.toString(),
+				expand: 'renderedBody',
 			},
 		});
 		return response.body;

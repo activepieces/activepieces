@@ -2,6 +2,7 @@ import { createAction, PiecePropValueSchema, Property } from '@activepieces/piec
 import { jiraCloudAuth } from '../../auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { sendJiraRequest } from '../common';
+import { getIssueIdDropdown, getProjectIdDropdown } from '../common/props';
 
 export const updateIssueCommentAction = createAction({
 	auth: jiraCloudAuth,
@@ -9,10 +10,8 @@ export const updateIssueCommentAction = createAction({
 	displayName: 'Update Issue Comment',
 	description: 'Updates a comment to a specific issue.',
 	props: {
-		issueId: Property.ShortText({
-			displayName: 'Issue ID or Key',
-			required: true,
-		}),
+		projectId: getProjectIdDropdown(),
+		issueId: getIssueIdDropdown({ refreshers: ['projectId'] }),
 		commentId: Property.Dropdown({
 			displayName: 'Comment ID',
 			refreshers: ['issueId'],
@@ -34,8 +33,6 @@ export const updateIssueCommentAction = createAction({
 						expand: 'renderedBody',
 					},
 				});
-				console.log('COMMENTS');
-				console.log(response.body);
 
 				return {
 					disabled: false,

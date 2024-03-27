@@ -2,6 +2,7 @@ import { createAction, PiecePropValueSchema, Property } from '@activepieces/piec
 import { jiraCloudAuth } from '../../auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { sendJiraRequest } from '../common';
+import { getIssueIdDropdown, getProjectIdDropdown } from '../common/props';
 
 export const deleteIssueCommentAction = createAction({
 	auth: jiraCloudAuth,
@@ -9,10 +10,8 @@ export const deleteIssueCommentAction = createAction({
 	displayName: 'Delete Issue Comment',
 	description: 'Deletes a comment on a specific issue.',
 	props: {
-		issueId: Property.ShortText({
-			displayName: 'Issue ID or Key',
-			required: true,
-		}),
+		projectId: getProjectIdDropdown(),
+		issueId: getIssueIdDropdown({ refreshers: ['projectId'] }),
 		commentId: Property.Dropdown({
 			displayName: 'Comment ID',
 			refreshers: ['issueId'],

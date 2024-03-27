@@ -1,7 +1,12 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { JiraAuth, jiraCloudAuth } from '../../auth';
-import { getIssueTypeIdDropdown, getProjectIdDropdown, getUsersDropdown } from '../common/props';
-import { createJiraIssue, getPriorities } from '../common';
+import {
+	getIssueIdDropdown,
+	getIssueTypeIdDropdown,
+	getProjectIdDropdown,
+	getUsersDropdown,
+} from '../common/props';
+import { getPriorities, updateJiraIssue } from '../common';
 
 export const updateIssueAction = createAction({
 	name: 'update_issue',
@@ -10,10 +15,11 @@ export const updateIssueAction = createAction({
 	auth: jiraCloudAuth,
 	props: {
 		projectId: getProjectIdDropdown(),
-		issueTypeId: getIssueTypeIdDropdown({ refreshers: ['projectId'] }),
+		issueId: getIssueIdDropdown({ refreshers: ['projectId'] }),
+		issueTypeId: getIssueTypeIdDropdown({ refreshers: ['projectId'], required: false }),
 		summary: Property.ShortText({
 			displayName: 'Summary',
-			required: true,
+			required: false,
 		}),
 		description: Property.LongText({
 			displayName: 'Description',
@@ -53,12 +59,12 @@ export const updateIssueAction = createAction({
 		}),
 	},
 	run: async ({ auth, propsValue }) => {
-		const { projectId, issueTypeId, assignee, summary, description, priority, parentKey } =
+		const { issueId, issueTypeId, assignee, summary, description, priority, parentKey } =
 			propsValue;
 
-		return await createJiraIssue({
+		return await updateJiraIssue({
 			auth,
-			projectId: projectId as string,
+			issueId,
 			summary,
 			issueTypeId,
 			assignee,
