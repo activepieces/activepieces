@@ -6,9 +6,6 @@
     </mat-tab>
     <mat-tab [label]="accountManagementEmailTabTitle" *ngIf="!isDemo">
         <app-smtp-settings [platform]="platform" [isDemo]="isDemo"></app-smtp-settings></mat-tab>
-    <mat-tab [label]="privacyAndTermsTabTitle" *ngIf="!isDemo">
-        <app-terms-and-services-settings [platform]="platform" [isDemo]="isDemo"></app-terms-and-services-settings>
-    </mat-tab>
     <mat-tab [label]="customDomainTabTitle" *ngIf="!isDemo">
         <app-custom-domain-table [platform]="platform" [isDemo]="isDemo"></app-custom-domain-table>
     </mat-tab>
