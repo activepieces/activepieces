@@ -900,6 +900,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "nyamkamunhjin",
+      "name": "MJ",
+      "avatar_url": "https://avatars.githubusercontent.com/u/44439626?v=4",
+      "profile": "https://www.linkedin.com/in/nyamkamunhjin/",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

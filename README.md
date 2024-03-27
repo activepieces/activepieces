@@ -259,6 +259,9 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="http://johnmark.dev"><img src="https://avatars.githubusercontent.com/u/65794951?v=4?s=100" width="100px;" alt="John"/><br /><sub><b>John</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=jmgb27" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://joost.blog/"><img src="https://avatars.githubusercontent.com/u/487629?v=4?s=100" width="100px;" alt="Joost de Valk"/><br /><sub><b>Joost de Valk</b></sub></a><br /><a href="#plugin-jdevalk" title="Plugin/utility libraries">🔌</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.linkedin.com/in/nyamkamunhjin/"><img src="https://avatars.githubusercontent.com/u/44439626?v=4?s=100" width="100px;" alt="MJ"/><br /><sub><b>MJ</b></sub></a><br /><a href="#plugin-nyamkamunhjin" title="Plugin/utility libraries">🔌</a></td>
+    </tr>
   </tbody>
 </table>
 
