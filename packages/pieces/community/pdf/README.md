@@ -1,7 +1,7 @@
-# pieces-PDF
+# pieces-pdf
 
 This library was generated with [Nx](https://nx.dev).
 
 ## Building
 
-Run `nx build pieces-PDF` to build the library.
+Run `nx build pieces-pdf` to build the library.
