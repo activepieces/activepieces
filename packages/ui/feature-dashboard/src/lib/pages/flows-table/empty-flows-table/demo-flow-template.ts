@@ -59,12 +59,12 @@ export const demoTemplate: FlowVersionTemplate = {
     type: TriggerType.PIECE,
     settings: {
       pieceName: '@activepieces/piece-schedule',
-      pieceVersion: '~0.1.2',
+      pieceVersion: '~0.1.5',
       pieceType: PieceType.OFFICIAL,
       packageType: PackageType.REGISTRY,
       triggerName: 'every_x_minutes',
       input: {
-        minutes: '1',
+        minutes: 1,
       },
       inputUiInfo: {},
     },
