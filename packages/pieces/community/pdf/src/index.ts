@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { parsePdf } from './lib/actions/parse-pdf';
+import { extractText } from './lib/actions/extract-text';
 
 export const PDF = createPiece({
   displayName: 'PDF',
@@ -7,6 +7,6 @@ export const PDF = createPiece({
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/pdf.svg',
   authors: ['nyamkamunhjin', 'abuaboud'],
-  actions: [parsePdf],
+  actions: [extractText],
   triggers: [],
 });
