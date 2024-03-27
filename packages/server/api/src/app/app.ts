@@ -105,6 +105,7 @@ import { platformModule } from './platform/platform.module'
 import { gitRepoModule } from './ee/git-repos/git-repo.module'
 import { formModule } from './flows/flow/form/form.module'
 import { adminPlatformPieceModule } from './ee/platform/admin-platform.controller'
+import { pieceSyncService } from './pieces/piece-sync-service'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -246,6 +247,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(copilotModule)
     await app.register(platformModule)
     await app.register(formModule)
+    await pieceSyncService.setup()
 
     await setupBullMQBoard(app)
 
@@ -357,6 +359,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(projectModule)
             await app.register(communityPiecesModule)
             await app.register(communityFlowTemplateModule)
+            await pieceSyncService.sync()
             break
     }
 

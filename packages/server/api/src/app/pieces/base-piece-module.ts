@@ -9,6 +9,7 @@ import {
     GetPieceRequestQuery,
     GetPieceRequestWithScopeParams,
     ListPiecesRequestQuery,
+    ListVersionRequestQuery,
     PieceCategory,
     PieceOptionRequest,
     PrincipalType,
@@ -25,12 +26,60 @@ import {
     PieceMetadataModelSummary,
 } from './piece-metadata-entity'
 import { flowService } from '../flows/flow/flow.service'
+import { pieceSyncService } from './piece-sync-service'
 
 export const pieceModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(basePiecesController, { prefix: '/v1/pieces' })
 }
 
 const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
+
+    app.get('/:scope/:name/versions', {
+        config: {
+            allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        },
+        schema: {
+            params: Type.Object({
+                name: Type.String(),
+                scope: Type.String(),
+            }),
+            querystring: ListVersionRequestQuery,
+        },
+    }, async (req): Promise<string[]> => {
+        const decodedName = decodeURIComponent(req.params.name)
+        const decodedScope = decodeURIComponent(req.params.scope)
+        return pieceMetadataService.getVersions({
+            name: `${decodedScope}/${decodedName}`,
+            projectId: req.principal.projectId,
+            release: req.query.release,
+            edition: req.query.edition ?? ApEdition.COMMUNITY,
+            platformId: req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id,
+        })
+    })
+
+
+    app.get('/:name/versions', {
+        config: {
+            allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        },
+        schema: {
+            params: Type.Object({
+                name: Type.String(),
+            }),
+            querystring: ListVersionRequestQuery,
+        },
+    }, async (req): Promise<string[]> => {
+        const { name } = req.params
+        const decodedName = decodeURIComponent(name)
+        return pieceMetadataService.getVersions({
+            name: decodedName,
+            projectId: req.principal.projectId,
+            release: req.query.release,
+            edition: req.query.edition ?? ApEdition.COMMUNITY,
+            platformId: req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id,
+        })
+    })
+
     app.get(
         '/categories',
         {
@@ -97,9 +146,9 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             const decodedName = decodeURIComponent(name)
             return pieceMetadataService.getOrThrow({
                 projectId:
-          req.principal.type === PrincipalType.UNKNOWN
-              ? undefined
-              : req.principal.projectId,
+                    req.principal.type === PrincipalType.UNKNOWN
+                        ? undefined
+                        : req.principal.projectId,
                 name: `${decodeScope}/${decodedName}`,
                 version,
             })
@@ -124,12 +173,24 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             const decodedName = decodeURIComponent(name)
             return pieceMetadataService.getOrThrow({
                 projectId:
-          req.principal.type === PrincipalType.UNKNOWN
-              ? undefined
-              : req.principal.projectId,
+                    req.principal.type === PrincipalType.UNKNOWN
+                        ? undefined
+                        : req.principal.projectId,
                 name: decodedName,
                 version,
             })
+        },
+    )
+
+    app.post(
+        '/sync',
+        {
+            config: {
+                allowedPrincipals: [PrincipalType.USER],
+            },
+        },
+        async (): Promise<void> => {
+            await pieceSyncService.sync()
         },
     )
 

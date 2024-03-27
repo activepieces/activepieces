@@ -35,6 +35,52 @@ afterAll(async () => {
 })
 
 describe('Piece Metadata API', () => {
+    describe('List Piece Versions endpoint', () => {
+        it('Should return versions in sorted order for a piece', async () => {
+            // arrange
+            const mockPieceMetadata1 = createMockPieceMetadata({
+                name: '@ap/a',
+                version: '0.0.1',
+                pieceType: PieceType.OFFICIAL,
+            })
+            await databaseConnection
+                .getRepository('piece_metadata')
+                .save(mockPieceMetadata1)
+
+            const mockPieceMetadata2 = createMockPieceMetadata({
+                name: '@ap/a',
+                version: '0.0.2',
+                pieceType: PieceType.OFFICIAL,
+            })
+            await databaseConnection
+                .getRepository('piece_metadata')
+                .save(mockPieceMetadata2)
+                    
+            const testToken = await generateMockToken({
+                type: PrincipalType.UNKNOWN,
+                id: apId(),
+                projectId: apId(),
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/v1/pieces/@ap/a/versions?release=1.1.1',
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            // assert
+            const responseBody = response?.json()
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(responseBody).toHaveLength(2)
+            expect(responseBody?.[0]).toBe('0.0.1')
+            expect(responseBody?.[1]).toBe('0.0.2')
+        })
+    })
+    
     describe('Get Piece metadata', () => {
         it('Should return metadata when authenticated', async () => {
             // arrange

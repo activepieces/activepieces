@@ -132,7 +132,11 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
             return toPieceMetadataModelSummary(filteredPieces, originalPiecesMetadata, params.suggestionType)
 
         },
-
+        async getVersions(params): Promise<string[]> {
+            const piecesMetadata = await loadPiecesMetadata()
+            const pieceMetadata = piecesMetadata.find((p) => p.name === params.name)
+            return pieceMetadata?.version ? [pieceMetadata.version] : []
+        },
         async getOrThrow({
             name,
             version,

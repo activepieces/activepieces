@@ -68,7 +68,41 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
             })
             return toPieceMetadataModelSummary(filteredPieces, originalPieceMetadataEntityList, params.suggestionType)
         },
-
+        async getVersions({ name, projectId, release, platformId }): Promise<string[]> {
+            const piecesMetadata = await repo()
+                .createQueryBuilder()
+                .where([
+                    {
+                        minimumSupportedRelease: LessThanOrEqual(release),
+                        maximumSupportedRelease: MoreThanOrEqual(release),
+                        projectId: Equal(projectId),
+                        name: Equal(name),
+                        pieceType: Equal(PieceType.CUSTOM),
+                    },
+                    {
+                        minimumSupportedRelease: LessThanOrEqual(release),
+                        maximumSupportedRelease: MoreThanOrEqual(release),
+                        platformId: Equal(platformId),
+                        projectId: IsNull(),
+                        name: Equal(name),
+                        pieceType: Equal(PieceType.CUSTOM),
+                    },
+                    {
+                        minimumSupportedRelease: LessThanOrEqual(release),
+                        maximumSupportedRelease: MoreThanOrEqual(release),
+                        projectId: IsNull(),
+                        platformId: IsNull(),
+                        name: Equal(name),
+                        pieceType: Equal(PieceType.OFFICIAL),
+                    },
+                ])
+                .orderBy({
+                    created: 'ASC',
+                })
+                .getMany()
+            
+            return piecesMetadata.map((pieceMetadata) => pieceMetadata.version)
+        },
         async getOrThrow({
             name,
             version,
@@ -101,7 +135,6 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
 
             return toPieceMetadataModel(pieceMetadataEntity)
         },
-
         async create({
             pieceMetadata,
             projectId,

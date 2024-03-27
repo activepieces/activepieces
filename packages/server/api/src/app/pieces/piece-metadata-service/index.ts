@@ -2,7 +2,6 @@ import { PiecesSource, SystemProp, system } from 'server-shared'
 import { PieceMetadataService } from './piece-metadata-service'
 import { FilePieceMetadataService } from './file-piece-metadata-service'
 import { DbPieceMetadataService } from './db-piece-metadata-service'
-import { AggregatedPieceMetadataService } from './aggregated-metadata-service'
 import {
     PackageType,
     PiecePackage,
@@ -17,11 +16,10 @@ const initPieceMetadataService = (): PieceMetadataService => {
     const source = system.getOrThrow<PiecesSource>(SystemProp.PIECES_SOURCE)
     switch (source) {
         case PiecesSource.DB:
+        case PiecesSource.CLOUD_AND_DB:
             return DbPieceMetadataService()
         case PiecesSource.FILE:
             return FilePieceMetadataService()
-        case PiecesSource.CLOUD_AND_DB:
-            return AggregatedPieceMetadataService()
     }
 }
 
