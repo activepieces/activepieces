@@ -3,7 +3,7 @@ import {
   PiecePropValueSchema,
   Property,
 } from '@activepieces/pieces-framework';
-import { wordpressCommon, WordpressMedia } from '../common';
+import { wordpressCommon, WordPressMedia } from '../common';
 import {
   httpClient,
   HttpMethod,
@@ -12,10 +12,10 @@ import {
 import FormData from 'form-data';
 import { wordpressAuth } from '../..';
 
-export const getWordpressPost = createAction({
+export const getWordPressPost = createAction({
   auth: wordpressAuth,
   name: 'get_post',
-  description: 'Get a post from Wordpress',
+  description: 'Get a post from WordPress',
   displayName: 'Get Post Details',
   props: {
     id: Property.Number({

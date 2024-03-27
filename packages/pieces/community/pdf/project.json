@@ -1,0 +1,26 @@
+{
+  "name": "pieces-pdf",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/pdf/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/pdf",
+        "tsConfig": "packages/pieces/community/pdf/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/pdf/package.json",
+        "main": "packages/pieces/community/pdf/src/index.ts",
+        "assets": ["packages/pieces/community/pdf/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    }
+  },
+  "tags": []
+}

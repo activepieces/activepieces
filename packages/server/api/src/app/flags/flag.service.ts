@@ -232,7 +232,7 @@ export const flagService = {
         hostname: string | undefined,
     ): string {
         const isCustomerPlatform =
-      platformId && !flagService.isCloudPlatform(platformId)
+            platformId && !flagService.isCloudPlatform(platformId)
         if (isCustomerPlatform) {
             return `https://${hostname}/redirect`
         }
@@ -268,11 +268,11 @@ export const flagService = {
 }
 
 export type FlagType =
-  | BaseFlagStructure<ApFlagId.FRONTEND_URL, string>
-  | BaseFlagStructure<ApFlagId.PLATFORM_CREATED, boolean>
-  | BaseFlagStructure<ApFlagId.TELEMETRY_ENABLED, boolean>
-  | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
-  | BaseFlagStructure<ApFlagId.WEBHOOK_URL_PREFIX, string>
+    | BaseFlagStructure<ApFlagId.FRONTEND_URL, string>
+    | BaseFlagStructure<ApFlagId.PLATFORM_CREATED, boolean>
+    | BaseFlagStructure<ApFlagId.TELEMETRY_ENABLED, boolean>
+    | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
+    | BaseFlagStructure<ApFlagId.WEBHOOK_URL_PREFIX, string>
 
 type BaseFlagStructure<K extends ApFlagId, V> = {
     id: K
