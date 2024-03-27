@@ -65,7 +65,7 @@ describe('Piece Metadata API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces/@ap/a/versions?release=1.1.1',
+                url: '/v1/pieces/versions?release=1.1.1&name=@ap/a',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -75,9 +75,10 @@ describe('Piece Metadata API', () => {
             const responseBody = response?.json()
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(responseBody).toHaveLength(2)
-            expect(responseBody?.[0]).toBe('0.0.1')
-            expect(responseBody?.[1]).toBe('0.0.2')
+            const keys = Object.keys(responseBody)
+            expect(keys).toHaveLength(2)
+            expect(keys[0]).toBe('0.0.1')
+            expect(keys[1]).toBe('0.0.2')
         })
     })
     

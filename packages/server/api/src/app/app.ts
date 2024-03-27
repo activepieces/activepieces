@@ -97,7 +97,6 @@ import { auditEventModule } from './ee/audit-logs/audit-event-module'
 import { ExecutionMode, QueueMode, SystemProp, system } from 'server-shared'
 import { loadEncryptionKey } from './helper/encryption'
 import { activityModule } from './ee/activity/activity-module'
-import { redisSystemJob } from './ee/helper/redis-system-job'
 import { usageTrackerModule } from './ee/usage-tracker/usage-tracker-module'
 import { projectBillingModule } from './ee/billing/project-billing/project-billing.module'
 import { appSumoModule } from './ee/billing/appsumo/appsumo.module'
@@ -106,6 +105,7 @@ import { gitRepoModule } from './ee/git-repos/git-repo.module'
 import { formModule } from './flows/flow/form/form.module'
 import { adminPlatformPieceModule } from './ee/platform/admin-platform.controller'
 import { pieceSyncService } from './pieces/piece-sync-service'
+import { systemJobsSchedule } from './helper/system-jobs'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -228,7 +228,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     app.addHook('preHandler', securityHandlerChain)
     app.addHook('preHandler', rbacMiddleware)
     app.setErrorHandler(errorHandler)
-    await redisSystemJob.init()
+    await systemJobsSchedule.init()
     await app.register(fileModule)
     await app.register(flagModule)
     await app.register(storeEntryModule)
@@ -365,7 +365,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
 
     app.addHook('onClose', async () => {
         await flowQueueConsumer.close()
-        await redisSystemJob.close()
+        await systemJobsSchedule.close()
         await flowResponseWatcher.shutdown()
     })
 
