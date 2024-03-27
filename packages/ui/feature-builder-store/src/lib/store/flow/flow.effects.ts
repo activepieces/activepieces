@@ -42,6 +42,7 @@ import {
   environment,
   FlowBuilderService,
   appConnectionsActions,
+  getPropertyInitialValue,
 } from '@activepieces/ui/common';
 import { canvasActions } from '../builder/canvas/canvas.action';
 import { ViewModeActions } from '../builder/viewmode/view-mode.action';
@@ -90,17 +91,16 @@ export class FlowsEffects {
       ),
       switchMap(([{ displayName, name, properties }, step]) => {
         if (step) {
-          const valid = Object.keys(properties).reduce((acc, key) => {
-            return (
-              acc &&
-              (!properties[key]?.required ||
-                !isNil(properties[key]?.defaultValue))
-            );
-          }, true);
-          const defaultValues = Object.keys(properties).reduce((acc, key) => {
-            acc[key] = properties[key]?.defaultValue;
+          const initialValues = Object.keys(properties).reduce((acc, key) => {
+            acc[key] = getPropertyInitialValue(properties[key], undefined);
             return acc;
           }, {} as Record<string, unknown>);
+          const valid = Object.keys(properties).reduce((acc, key) => {
+            return (
+              acc && (!properties[key]?.required || !isNil(initialValues[key]))
+            );
+          }, true);
+
           if (step.type === TriggerType.PIECE) {
             // TODO fix this for piece schedule
             const sampleData =
@@ -115,7 +115,7 @@ export class FlowsEffects {
                   settings: {
                     ...step.settings,
                     triggerName: name,
-                    input: defaultValues,
+                    input: initialValues,
                     inputUiInfo: {
                       currentSelectedData: sampleData,
                       customizedInputs: {},
@@ -134,7 +134,7 @@ export class FlowsEffects {
                   settings: {
                     ...step.settings,
                     actionName: name,
-                    input: defaultValues,
+                    input: initialValues,
                     inputUiInfo: {
                       customizedInputs: {},
                     },
