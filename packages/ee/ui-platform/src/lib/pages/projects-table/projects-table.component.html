@@ -12,8 +12,9 @@
                 </ap-button>
             </div>
 
-            <div class="ap-min-h-[70%]" *ngIf="dataSource">
-                <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Projects table">
+            <div class="ap-min-h-[70%]" >
+                
+                <table *ngIf="dataSource" mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Projects table">
 
                     <ng-container matColumnDef="displayName">
                         <th mat-header-cell *matHeaderCellDef>Name</th>
@@ -61,14 +62,14 @@
                         *matRowDef="let row; columns: displayedColumns">
                     </tr>
                 </table>
-                <ng-container *ngIf="(dataSource.isLoading$ | async) === true && !isDemo">
+                <ng-container *ngIf="dataSource && (dataSource.isLoading$ | async) === true && !isDemo">
                     <div class="ap-flex ap-items-center ap-justify-center ap-flex-grow ap-h-[500px]">
                         <ap-loading-icon height="50px" width="51px" [outlineLoader]="true" [whiteLoader]="false">
                         </ap-loading-icon>
                     </div>
                 </ng-container>
                 <ng-container *ngIf="
-                dataSource.data.length === 0 &&
+                dataSource && dataSource.data.length === 0 &&
                 (dataSource.isLoading$ | async) === false
             ">
                     <div class="ap-flex ap-items-center ap-justify-center ap-h-full ap-h-[500px] ap-py-8" i18n>
@@ -81,7 +82,8 @@
                         Projects and their usage are only availables for platform admins
                     </div>
                 </ng-container>
-                <div class="ap-flex ap-justify-end">
+
+                <div class="ap-flex ap-justify-end ap-py-2">
                     <ap-paginator> </ap-paginator>
                 </div>
             </div>
