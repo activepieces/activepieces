@@ -11,8 +11,10 @@ import {
   PiecePropertyMap,
   PropertyType,
 } from '@activepieces/pieces-framework';
-import { jsonValidator } from '@activepieces/ui/common';
-import { isNil } from '@activepieces/shared';
+import {
+  getPropertyInitialValue,
+  jsonValidator,
+} from '@activepieces/ui/common';
 
 export const createFormControlsWithTheirValidators = (
   fb: UntypedFormBuilder,
@@ -48,54 +50,6 @@ const removeAllFormControls = (form: UntypedFormGroup) => {
     form.removeControl(ctrlName, { emitEvent: false });
   });
 };
-const getControlValue = (property: PieceProperty, value: unknown) => {
-  if (isNil(value)) {
-    //used for default values for dynamic property inputs like in custom api calls
-    return parseControlValue(property, property.defaultValue);
-  }
-  return parseControlValue(property, value);
-};
-
-const parseControlValue = (property: PieceProperty, value: unknown) => {
-  switch (property.type) {
-    case PropertyType.SHORT_TEXT:
-    case PropertyType.LONG_TEXT:
-    case PropertyType.NUMBER:
-    case PropertyType.DATE_TIME:
-    case PropertyType.FILE:
-      return isNil(value)
-        ? ''
-        : typeof value === 'string'
-        ? value
-        : JSON.stringify(value);
-    case PropertyType.ARRAY:
-      return isNil(value) ? [] : value;
-    case PropertyType.OBJECT:
-    case PropertyType.DYNAMIC:
-      return isNil(value) ? {} : value;
-    case PropertyType.CHECKBOX:
-      return isNil(value) ? false : value;
-    case PropertyType.BASIC_AUTH:
-    case PropertyType.CUSTOM_AUTH:
-    case PropertyType.OAUTH2:
-    case PropertyType.SECRET_TEXT:
-    case PropertyType.MARKDOWN:
-    case PropertyType.DROPDOWN:
-    case PropertyType.STATIC_DROPDOWN:
-    case PropertyType.MULTI_SELECT_DROPDOWN:
-    case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
-      return isNil(value) ? '' : value;
-    //json value is returned as either an object or string from the server
-    case PropertyType.JSON:
-      return isNil(value)
-        ? property.required
-          ? '{}'
-          : ''
-        : typeof value === 'string'
-        ? value
-        : JSON.stringify(value);
-  }
-};
 
 function createControl(
   fb: UntypedFormBuilder,
@@ -106,7 +60,7 @@ function createControl(
   if (property.type === PropertyType.DYNAMIC) {
     return fb.group({});
   }
-  return new FormControl(getControlValue(property, value), {
+  return new FormControl(getPropertyInitialValue(property, value), {
     validators: validators,
   });
 }
