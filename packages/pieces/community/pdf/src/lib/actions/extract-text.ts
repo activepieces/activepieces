@@ -1,11 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { readPdfText } from 'pdf-text-reader';
 
-export const parsePdf = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
-  name: 'prasePdf',
-  displayName: 'Parse text',
-  description: 'Parses texts from PDF file or url',
+export const extractText = createAction({
+  name: 'extractText',
+  displayName: 'Extract Text',
+  description: 'Extract text from PDF file or url',
   props: {
     file: Property.File({
       displayName: 'PDF File or URL',

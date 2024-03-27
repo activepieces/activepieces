@@ -12,12 +12,14 @@
         "tsConfig": "packages/pieces/community/pdf/tsconfig.lib.json",
         "packageJson": "packages/pieces/community/pdf/package.json",
         "main": "packages/pieces/community/pdf/src/index.ts",
-        "assets": ["packages/pieces/community/pdf/*.md"]
+        "assets": ["packages/pieces/community/pdf/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
-    "publish": {
-      "command": "node tools/scripts/publish.mjs pieces-PDF {args.ver} {args.tag}",
-      "dependsOn": ["build"]
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
     }
   },
   "tags": []
