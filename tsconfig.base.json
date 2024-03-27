@@ -329,6 +329,12 @@
       "@activepieces/piece-microsoft-onedrive": [
         "packages/pieces/community/microsoft-onedrive/src/index.ts"
       ],
+      "@activepieces/piece-microsoft-teams": [
+        "packages/pieces/community/microsoft-teams/src/index.ts"
+      ],
+      "@activepieces/piece-microsoft-sharepoint": [
+        "packages/pieces/community/microsoft-sharepoint/src/index.ts"
+      ],
       "@activepieces/piece-mindee": [
         "packages/pieces/community/mindee/src/index.ts"
       ],
@@ -524,6 +530,9 @@
       ],
       "@activepieces/piece-webhook": [
         "packages/pieces/community/webhook/src/index.ts"
+      ],
+      "@activepieces/piece-wedof": [
+        "packages/pieces/community/wedof/src/index.ts"
       ],
       "@activepieces/piece-whatsable": [
         "packages/pieces/community/whatsable/src/index.ts"

@@ -59,7 +59,6 @@ export class CustomAuthConnectionDialogComponent {
     const props: Record<string, FormControl> = {};
     Object.entries(this.dialogData.pieceAuthProperty.props).forEach(
       ([propName, prop]) => {
-        console.log(prop.required);
         if (prop.required) {
           props[propName] = new FormControl(
             prop.defaultValue ?? '',

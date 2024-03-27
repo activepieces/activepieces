@@ -71,7 +71,7 @@ export class SidenavRoutesListComponent implements OnInit {
       caption: $localize`Users`,
       route: 'platform/users',
       showInSideNav$: of(true),
-      showLock$: this.demoPlatform$,
+      showLock$: of(false),
     },
 
     {

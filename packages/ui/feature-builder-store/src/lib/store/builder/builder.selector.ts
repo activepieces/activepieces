@@ -11,10 +11,9 @@ import {
 } from '@activepieces/shared';
 import { ViewModeEnum } from '../../model/enums/view-mode.enum';
 import { ActionType, TriggerType } from '@activepieces/shared';
-import { Step, StepWithIndex } from '../../model/step';
+import { Step, StepMetaDataForMentions } from '../../model/step';
 import { FlowStructureUtil } from '../../utils/flowStructureUtil';
 import { BuilderSavingStatusEnum, CanvasState } from '../../model';
-import { MentionListItem } from '@activepieces/ui/common';
 import { StepRunResult } from '../../utils/stepRunResult';
 
 export const BUILDER_STATE_NAME = 'builderState';
@@ -124,6 +123,21 @@ export const selectCurrentStep = createSelector(selectCanvasState, (state) => {
   return step;
 });
 
+const selectCurrentPieceStepTriggerOrActionName = createSelector(
+  selectCurrentStep,
+  (step) => {
+    const triggerOrActionName =
+      step?.type === ActionType.PIECE
+        ? step.settings.actionName
+        : step?.type === TriggerType.PIECE
+        ? step.settings.triggerName
+        : undefined;
+    return {
+      triggerOrActionname: triggerOrActionName,
+      stepName: step?.name,
+    };
+  }
+);
 const selectCurrentStepSettings = createSelector(
   selectCurrentStep,
   (selectedStep) => {
@@ -294,10 +308,7 @@ export const selectCurrentRightSideBarType = createSelector(
 const selectAllStepsForMentionsDropdown = createSelector(
   selectCurrentStep,
   selectViewedVersion,
-  (
-    currentStep,
-    flowVersion
-  ): (Omit<MentionListItem, 'logoUrl'> & { step: StepWithIndex })[] => {
+  (currentStep, flowVersion): StepMetaDataForMentions[] => {
     if (!currentStep || !flowVersion || !flowVersion.trigger) {
       return [];
     }
@@ -403,4 +414,5 @@ export const BuilderSelectors = {
   selectViewedVersionHistoricalStatus,
   selectDraftVersion,
   selectShowIncompleteStepsWidget,
+  selectCurrentPieceStepTriggerOrActionName,
 };

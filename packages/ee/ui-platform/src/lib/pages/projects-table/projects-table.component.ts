@@ -1,10 +1,10 @@
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
-  OnInit,
   ViewChild,
 } from '@angular/core';
-import { Observable, Subject, startWith, tap } from 'rxjs';
+import { Observable, Subject, tap } from 'rxjs';
 import { ProjectsDataSource } from './projects-table.datasource';
 import { Project, ProjectWithLimits } from '@activepieces/shared';
 import { MatDialog } from '@angular/material/dialog';
@@ -33,8 +33,8 @@ import { StatusCodes } from 'http-status-codes';
   templateUrl: './projects-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ProjectsTableComponent implements OnInit {
-  @ViewChild(ApPaginatorComponent, { static: true })
+export class ProjectsTableComponent implements AfterViewInit {
+  @ViewChild(ApPaginatorComponent, { static: false })
   paginator!: ApPaginatorComponent;
 
   displayedColumns = [
@@ -45,9 +45,10 @@ export class ProjectsTableComponent implements OnInit {
     'externalId',
     'action',
   ];
-  upgradeNote = $localize`Create new projects and set limits on tasks and users for each project.`;
+  upgradeNoteTitle = $localize`Unlock Projects`;
+  upgradeNote = $localize`Orchestrate your automation teams across projects with their own flows, connections and usage quotas`;
   refreshTable$: Subject<boolean> = new Subject();
-  dataSource: ProjectsDataSource;
+  dataSource: ProjectsDataSource | undefined;
   loading = true;
   switchProject$: Observable<void> | undefined;
   createProject$: Observable<ProjectWithLimits | undefined> | undefined;
@@ -68,20 +69,16 @@ export class ProjectsTableComponent implements OnInit {
     this.isDemo = this.route.snapshot.data[PLATFORM_DEMO_RESOLVER_KEY];
     this.dataSource = new ProjectsDataSource(
       this.projectsService,
-      this.refreshTable$.asObservable().pipe(startWith(true)),
-      this.paginator,
+      this.refreshTable$.asObservable(),
       this.activatedRoute.queryParams,
       this.isDemo
     );
   }
-  ngOnInit(): void {
-    this.dataSource = new ProjectsDataSource(
-      this.projectsService,
-      this.refreshTable$.asObservable().pipe(startWith(true)),
-      this.paginator,
-      this.activatedRoute.queryParams,
-      this.isDemo
-    );
+  ngAfterViewInit(): void {
+    if (this.dataSource) {
+      this.dataSource.paginator = this.paginator;
+      this.refreshTable$.next(true);
+    }
   }
 
   createProject() {

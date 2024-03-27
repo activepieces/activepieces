@@ -5,7 +5,8 @@
             <app-branch-conditions-group-form-control (createNewConditionGroup)="addNewConditionGroup()"
                 (removeConditionGroup)="removeConditionGroup(idx)" [formControl]="cg" [isFirstConditionGroup]="isFirst"
                 [isLastConditionGroup]="isLast"
-                [isInLastAndOnlyGroup]="form.controls.conditionsGroups.controls.length === 1">
+                [isInLastAndOnlyGroup]="form.controls.conditionsGroups.controls.length === 1" 
+                [stepMetaDataForMentions]="(stepMetaDataForMentions$ | async) || []">
             </app-branch-conditions-group-form-control>
             <ng-container *ngIf="!isLast">
                 <div class="or-separator ap-font-semibold ap-mb-3 ap-mt-3" i18n>

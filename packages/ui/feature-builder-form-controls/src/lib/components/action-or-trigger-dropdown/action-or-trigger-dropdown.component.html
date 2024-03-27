@@ -1,0 +1,88 @@
+<mat-form-field
+  class="ap-w-full"
+  appearance="outline"
+  subscriptSizing="dynamic"
+>
+  <mat-label i18n>
+    @if (items[0] | isTriggerGuard) {
+      Trigger
+    } @else {
+      Action
+    }
+  </mat-label>
+  <mat-select
+    [placeholder]="items.length > 0 && (items[0] | isTriggerGuard)? 'Select a Trigger':  items.length> 0? 'Select an Action': 'No options available'"
+    i18n-placeholder
+    [formControl]="passedFormControl"
+  >
+
+  <mat-select-trigger>
+    {{ (passedFormControl.value | selectedTirggerOrAction:items) }}
+  </mat-select-trigger>
+    @for (opt of items; track opt.name) {
+      <mat-option
+        #option
+        [value]="opt.name"
+        (click)="newActionOrTriggerSelected.emit(opt)"
+      >
+        <div class="ap-flex ap-items-center ap-gap-[2px]">
+          <div>
+            <div>{{ opt.displayName }}</div>
+            <div class="ap-typography-caption ap-text-description">
+              {{ opt.description }}
+            </div>
+          </div>
+
+          <div class="ap-flex-grow"></div>
+          @if (opt | isTriggerGuard) {
+            @if (
+              opt.type === TriggerStrategy.APP_WEBHOOK ||
+              opt.type === TriggerStrategy.WEBHOOK
+            ) {
+              <div
+                matTooltip="Instantly triggered once change occurs"
+                i18n-matTooltip
+                class="ap-rounded-full ap-drop-shadow-md ap-min-h-[30px] ap-min-w-[30px] ap-flex ap-items-center ap-justify-center"
+              >
+                <svg-icon
+                  src="assets/img/custom/triggers/instant.svg"
+                  class="ap-w-[25px] ap-h-[25px] ap-fill-body"
+                  [applyClass]="true"
+                >
+                </svg-icon>
+              </div>
+            } @else {
+              <div
+                matTooltip="Checks for changes periodically, based on your plan"
+                i18n-matTooltip
+                class="ap-rounded-full ap-drop-shadow-md ap-min-h-[30px] ap-justify-center ap-min-w-[30px] ap-flex ap-items-center"
+              >
+                <svg-icon
+                  src="assets/img/custom/triggers/periodic.svg"
+                  class="ap-w-[25px] ap-h-[25px] ap-fill-body"
+                  [applyClass]="true"
+                >
+                </svg-icon>
+              </div>
+            }
+          }
+        </div>
+      </mat-option>
+    }
+
+    <mat-option [disabled]="true" *ngIf="items.length === 0" i18n>
+      No options available
+    </mat-option>
+  </mat-select>
+</mat-form-field>
+<ap-control-description
+  [errorMessage]="
+    items.length === 0
+      ? noOptionsError
+      : (items[0] | isTriggerGuard)
+        ? selectTriggerError
+        : selectActionError
+  "
+  [passedFormControl]="passedFormControl"
+  description=""
+></ap-control-description>

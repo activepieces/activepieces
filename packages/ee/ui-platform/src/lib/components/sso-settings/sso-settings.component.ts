@@ -19,7 +19,8 @@ export class SsoSettingsComponent
   addDomain$?: Observable<string>;
   removeDomain$?: Observable<void>;
   FederatedAuthnProviderEnum = FederatedAuthnProviderEnum;
-  upgradeNote = $localize`Enable single sign-on (SSO) for your platform to allow users to sign in using their existing credentials from a third-party identity provider.`;
+  upgradeNoteTitle = $localize`Enable Single Sign On`;
+  upgradeNote = $localize`Let your users sign in with your current SSO provider or give them self serve sign up access`;
   ngOnInit(): void {
     if (this.platform) {
       this.platform$ = new BehaviorSubject(this.platform);

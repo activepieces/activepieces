@@ -24,6 +24,7 @@ export class TermsAndServicesSettingsComponent
   termsAndServicesForm: FormGroup<TermsAndServicesForm>;
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   saving$?: Observable<void>;
+  upgradeNoteTitle = $localize`Unlock Custom Links`;
   upgradeNote = $localize`Configure your platform's terms of service and privacy policy shown in the sign up page.`;
   featureDisabledTooltip = featureDisabledTooltip;
   constructor(

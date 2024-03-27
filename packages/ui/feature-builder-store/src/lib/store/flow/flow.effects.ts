@@ -31,6 +31,7 @@ import {
   flowHelper,
   FlowVersionState,
   FlowStatus,
+  isNil,
 } from '@activepieces/shared';
 import { RightSideBarType } from '../../model/enums/right-side-bar-type.enum';
 import { LeftSideBarType } from '../../model/enums/left-side-bar-type.enum';
@@ -81,13 +82,80 @@ export class FlowsEffects {
     );
   });
 
+  newTriggerOrActionSelected$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(FlowsActions.newTriggerOrActionSelected),
+      concatLatestFrom(() =>
+        this.store.select(BuilderSelectors.selectCurrentStep)
+      ),
+      switchMap(([{ displayName, name, properties }, step]) => {
+        if (step) {
+          const valid = Object.keys(properties).reduce((acc, key) => {
+            return (
+              acc &&
+              (!properties[key]?.required ||
+                !isNil(properties[key]?.defaultValue))
+            );
+          }, true);
+          const defaultValues = Object.keys(properties).reduce((acc, key) => {
+            acc[key] = properties[key]?.defaultValue;
+            return acc;
+          }, {} as Record<string, unknown>);
+          if (step.type === TriggerType.PIECE) {
+            // TODO fix this for piece schedule
+            const sampleData =
+              step.settings.pieceName === '@activepieces/piece-schedule'
+                ? {}
+                : undefined;
+            return of(
+              FlowsActions.updateTrigger({
+                operation: {
+                  ...step,
+                  displayName,
+                  settings: {
+                    ...step.settings,
+                    triggerName: name,
+                    input: defaultValues,
+                    inputUiInfo: {
+                      currentSelectedData: sampleData,
+                      customizedInputs: {},
+                    },
+                  },
+                  valid: valid,
+                },
+              })
+            );
+          } else if (step.type === ActionType.PIECE) {
+            return of(
+              FlowsActions.updateAction({
+                operation: {
+                  ...step,
+                  displayName,
+                  settings: {
+                    ...step.settings,
+                    actionName: name,
+                    input: defaultValues,
+                    inputUiInfo: {
+                      customizedInputs: {},
+                    },
+                  },
+                  valid: valid,
+                },
+              })
+            );
+          }
+        }
+        return EMPTY;
+      })
+    );
+  });
   replaceTrigger$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(FlowsActions.updateTrigger),
       concatLatestFrom(() =>
         this.store.select(BuilderSelectors.selectCurrentFlow)
       ),
-      switchMap(([action, flow]) => {
+      switchMap(([_, flow]) => {
         return of(
           canvasActions.selectStepByName({
             stepName: flow.version.trigger.name,

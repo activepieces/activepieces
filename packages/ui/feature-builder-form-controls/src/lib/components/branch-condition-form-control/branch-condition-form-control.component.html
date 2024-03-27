@@ -1,0 +1,73 @@
+<div [formGroup]="form" class="ap-flex ap-flex-col ap-gap-2 ap-rounded">
+
+    <div #interpolatingTextControlContainer>
+        <mat-form-field class="ap-w-full" appearance="outline" (click)="firstHandler.showMentionsDropdown()">
+            <mat-label i18n>{{(showSecondValue)? 'First':''}} Value</mat-label>
+            <app-interpolating-text-form-control #firstValueTextControl [formControl]="form.controls.firstValue"
+                [stepMetaDataForMentions]="stepMetaDataForMentions"
+                (editorFocused)="firstHandler.showMentionsDropdown()"
+                [attr.name]="'firstValue'"></app-interpolating-text-form-control>
+            <mat-error *ngIf="form.controls.firstValue.invalid" i18n>
+                First value is required
+            </mat-error>
+        </mat-form-field>
+
+        <app-builder-autocomplete-dropdown-handler #firstHandler [container]="interpolatingTextControlContainer"
+            (mentionEmitted)="addMention(firstValueTextControl,$event)">
+        </app-builder-autocomplete-dropdown-handler>
+
+
+    </div>
+
+
+
+    <div class="ap-relative" apTrackHover #valueInput="hoverTrackerDirective">
+        <ap-icon-button *ngIf="form.enabled && !(isLastAndOnlyCondition && isInLastAndOnlyGroup)" [width]="9"
+            [height]="9" iconFilename="delete.svg"
+            [tooltipText]=" !deleteButton.isHovered && !valueInput.isHovered ?'' :'Remove Condition'"
+            class="delete-btn ap-z-40" [class.opacity-0]="!deleteButton.isHovered  && !valueInput.isHovered"
+            (buttonClicked)="removeConditionButtonClicked()" apTrackHover
+            #deleteButton="hoverTrackerDirective"></ap-icon-button>
+
+        <mat-form-field class="ap-w-full" appearance="outline">
+            <mat-label i18n> Condition</mat-label>
+            <mat-select [formControl]="form.controls.operator">
+                <mat-option *ngFor="let opt of conditionsDropdownOptions" [value]="opt.value">
+                    {{opt.label}}
+                </mat-option>
+            </mat-select>
+            <mat-error *ngIf="form.controls.operator.invalid" i18n>
+                Condition is required
+            </mat-error>
+        </mat-form-field>
+    </div>
+
+    <ng-container *ngIf="showSecondValue">
+        <div #secondInputContainer>
+            <mat-form-field class="ap-w-full" appearance="outline" (click)="secondHandler.showMentionsDropdown()">
+                <mat-label i18n>Second Value</mat-label>
+                <app-interpolating-text-form-control #secondValueTextControl [formControl]="form.controls.secondValue"
+                    [attr.name]="'secondValue'"
+                    [stepMetaDataForMentions]="stepMetaDataForMentions"
+                    (editorFocused)="secondHandler.showMentionsDropdown()"></app-interpolating-text-form-control>
+                <mat-error *ngIf="form.controls.secondValue.invalid" i18n>
+                    Second value is required
+                </mat-error>
+            </mat-form-field>
+
+            <app-builder-autocomplete-dropdown-handler #secondHandler [container]="secondInputContainer"
+                (mentionEmitted)="addMention(secondValueTextControl,$event)">
+            </app-builder-autocomplete-dropdown-handler>
+        </div>
+
+    </ng-container>
+
+    <ng-container *ngIf="showCaseSensitive">
+        <mat-slide-toggle color="primary" formControlName="caseSensitive" i18n>
+            Case sensitive
+        </mat-slide-toggle>
+    </ng-container>
+
+</div>
+<ng-container *ngIf="operatorChanged$| async"></ng-container>
+<ng-container *ngIf="valueChanges$ | async"></ng-container>
