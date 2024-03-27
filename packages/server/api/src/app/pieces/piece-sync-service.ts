@@ -1,4 +1,4 @@
-import { PackageType, PieceSyncMode, PieceType } from '@activepieces/shared'
+import { ListVersionsResponse, PackageType, PieceSyncMode, PieceType } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 import { PieceMetadataEntity, PieceMetadataModel, PieceMetadataModelSummary } from './piece-metadata-entity'
 import { pieceMetadataService } from './piece-metadata-service'
@@ -52,7 +52,7 @@ export const pieceSyncService = {
 
 async function syncPiece(name: string): Promise<void> {
     const versions = await getVersions({ name })
-    for (const version of versions) {
+    for (const version of Object.keys(versions.versions)) {
         const currentVersionSynced = await existsInDatabase({ name, version })
         if (!currentVersionSynced) {
             const piece = await getOrThrow({ name, version })
@@ -75,13 +75,14 @@ async function existsInDatabase({ name, version }: { name: string, version: stri
     })
 }
 
-async function getVersions({ name }: { name: string }): Promise<string[]> {
+async function getVersions({ name }: { name: string }): Promise<ListVersionsResponse> {
     const queryParams = new URLSearchParams()
     queryParams.append('edition', getEdition())
     queryParams.append('release', await flagService.getCurrentRelease())
-    const url = `${CLOUD_API_URL}/${name}/versions?${queryParams.toString()}`
+    queryParams.append('name', name)
+    const url = `${CLOUD_API_URL}/versions?${queryParams.toString()}`
     const response = await fetch(url)
-    return parseAndVerify<string[]>(Type.Array(Type.String()), (await response.json()))
+    return parseAndVerify<ListVersionsResponse>(ListVersionsResponse, (await response.json()))
 }
 
 async function getOrThrow({ name, version }: { name: string, version: string }): Promise<PieceMetadataModel> {

@@ -1,6 +1,7 @@
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import {
     ApEdition,
+    ListVersionsResponse,
     PackageType,
     PieceCategory,
     PieceOrderBy,
@@ -67,7 +68,7 @@ type GetExactPieceVersionParams = {
 export type PieceMetadataService = {
     list(params: ListParams): Promise<PieceMetadataModelSummary[]>
     getOrThrow(params: GetOrThrowParams): Promise<PieceMetadataModel>
-    getVersions(params: ListVersionsParams): Promise<string[]>
+    getVersions(params: ListVersionsParams): Promise<ListVersionsResponse>
     create(params: CreateParams): Promise<PieceMetadataModel>
     delete(params: DeleteParams): Promise<void>
     getExactPieceVersion(params: GetExactPieceVersionParams): Promise<string>

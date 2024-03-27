@@ -14,7 +14,7 @@ import {
     PieceMetadataSchema,
 } from '../piece-metadata-entity'
 import { PieceMetadataService } from './piece-metadata-service'
-import { EXACT_VERSION_PATTERN, PieceType, isNil } from '@activepieces/shared'
+import { EXACT_VERSION_PATTERN, ListVersionsResponse, PieceType, isNil } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode, apId } from '@activepieces/shared'
 import * as semver from 'semver'
 import { pieceMetadataServiceHooks as hooks } from './hooks'
@@ -68,7 +68,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
             })
             return toPieceMetadataModelSummary(filteredPieces, originalPieceMetadataEntityList, params.suggestionType)
         },
-        async getVersions({ name, projectId, release, platformId }): Promise<string[]> {
+        async getVersions({ name, projectId, release, platformId }): Promise<ListVersionsResponse> {
             const piecesMetadata = await repo()
                 .createQueryBuilder()
                 .where([
@@ -100,8 +100,11 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                     created: 'ASC',
                 })
                 .getMany()
-            
-            return piecesMetadata.map((pieceMetadata) => pieceMetadata.version)
+            return piecesMetadata.reduce((record, pieceMetadata) => {
+                record[pieceMetadata.version] = {}
+                return record
+            }, {} as ListVersionsResponse)
+
         },
         async getOrThrow({
             name,
