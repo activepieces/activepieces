@@ -891,6 +891,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "jdevalk",
+      "name": "Joost de Valk",
+      "avatar_url": "https://avatars.githubusercontent.com/u/487629?v=4",
+      "profile": "https://joost.blog/",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
