@@ -32,6 +32,24 @@ export const sendEmail = createAction({
       displayName: 'Subject',
       required: true,
     }),
+    body_type: Property.StaticDropdown({
+      displayName: 'Body Type',
+      required: true,
+      defaultValue: 'plain_text',
+      options: {
+        disabled: false,
+        options: [
+          {
+            label: 'plain text',
+            value: 'plain_text',
+          },
+          {
+            label: 'html',
+            value: 'html',
+          },
+        ],
+      },
+    }),
     body: Property.LongText({
       displayName: 'Body',
       required: true,
@@ -46,7 +64,8 @@ export const sendEmail = createAction({
       inReplyTo: propsValue.replyTo,
       bcc: propsValue.bcc?.join(','),
       subject: propsValue.subject,
-      text: propsValue.body,
+      text: propsValue.body_type === 'plain_text' ? propsValue.body : undefined,
+      html: propsValue.body_type === 'html' ? propsValue.body : undefined,
     });
 
     return info;
