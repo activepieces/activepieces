@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { mysqlCommon, mysqlConnect } from '../common';
+import { mysqlCommon, mysqlConnect, warningMarkdown } from '../common';
 import { mysqlAuth } from '../..';
 
 export default createAction({
@@ -8,6 +8,7 @@ export default createAction({
   displayName: 'Execute Query',
   description: 'Executes a query on the mysql database and returns the results',
   props: {
+    markdown: warningMarkdown,
     timezone: mysqlCommon.timezone,
     query: Property.ShortText({
       displayName: 'Query',
@@ -16,7 +17,7 @@ export default createAction({
     }),
     args: Property.Array({
       displayName: 'Arguments',
-      description: 'Can inserted in the query string using ?',
+      description: 'Arguments to use in the query, if any. Should be in the same order as the ? in the query string..',
       required: false,
     }),
   },
