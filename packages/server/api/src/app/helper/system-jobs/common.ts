@@ -6,6 +6,7 @@ export type SystemJobName =
     | 'hard-delete-project'
     | 'project-usage-report'
     | 'usage-report'
+    | 'pieces-sync'
     | 'trigger-data-cleaner'
 
 type HardDeleteProjectSystemJobData = {
@@ -20,7 +21,8 @@ export type SystemJobData<T extends SystemJobName = SystemJobName> =
         T extends 'project-usage-report' ? ProjectUsageReportSystemJobData :
             T extends 'usage-report' ? UsageReportSystemJobData :
                 T extends 'trigger-data-cleaner' ? Record<string, never> :
-                    never
+                    T extends 'pieces-sync' ? Record<string, never> :
+                        never
 
 export type SystemJobDefinition<T extends SystemJobName> = {
     name: T
