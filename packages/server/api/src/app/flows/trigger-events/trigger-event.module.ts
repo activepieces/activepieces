@@ -5,14 +5,14 @@ import {
 } from '@activepieces/shared'
 import { triggerEventService } from './trigger-event.service'
 import { flowService } from '../flow/flow.service'
-import { redisSystemJob } from '../../ee/helper/redis-system-job'
 import { SystemProp, system } from 'server-shared'
+import { systemJobsSchedule } from '../../helper/system-jobs'
 
 const DEFAULT_PAGE_SIZE = 10
 
 export const triggerEventModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(triggerEventController, { prefix: '/v1/trigger-events' })
-    await redisSystemJob.upsertJob({
+    await systemJobsSchedule.upsertJob({
         job: {
             name: 'trigger-data-cleaner',
             data: {},

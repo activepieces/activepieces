@@ -6,7 +6,6 @@ import { FastifyRequest } from 'fastify'
 import { exceptionHandler, logger } from 'server-shared'
 import { StatusCodes } from 'http-status-codes'
 import Stripe from 'stripe'
-import { redisSystemJob } from '../../helper/redis-system-job'
 import dayjs from 'dayjs'
 import { databaseConnection } from '../../../database/database-connection'
 import { FlowRunEntity } from '../../../flows/flow-run/flow-run-entity'
@@ -15,6 +14,7 @@ import { projectLimitsService } from '../../project-plan/project-plan.service'
 import { ApSubscriptionStatus, DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
 import { projectUsageService } from '../../../project/usage/project-usage-service'
 import { projectService } from '../../../project/project-service'
+import { systemJobsSchedule } from '../../../helper/system-jobs'
 
 const flowRunRepo =
     databaseConnection.getRepository<FlowRun>(FlowRunEntity)
@@ -22,7 +22,7 @@ const flowRunRepo =
 const EVERY_4_HOURS = '59 */4 * * *'
 
 export const projectBillingModule: FastifyPluginAsyncTypebox = async (app) => {
-    await redisSystemJob.upsertJob({
+    await systemJobsSchedule.upsertJob({
         job: {
             name: 'project-usage-report',
             data: {},

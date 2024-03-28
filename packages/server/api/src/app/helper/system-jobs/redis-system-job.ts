@@ -1,24 +1,20 @@
-import { ProjectId, isNil } from '@activepieces/shared'
+import { isNil } from '@activepieces/shared'
 import { Queue, Worker, Job, JobsOptions } from 'bullmq'
 import { createRedisClient } from '../../database/redis-connection'
-import { QueueMode, SystemProp, logger, system } from 'server-shared'
-import dayjs, { Dayjs } from 'dayjs'
+import { logger } from 'server-shared'
+import dayjs from 'dayjs'
+import { JobSchedule, SystemJobData, SystemJobDefinition, SystemJobHandler, SystemJobName, SystemJobSchedule } from './common'
 
 const FIFTEEN_MINUTES = 15 * 60 * 1000
 const SYSTEM_JOB_QUEUE = 'system-job-queue'
 
-const QueueModeIsNotRedis = system.get(SystemProp.QUEUE_MODE) !== QueueMode.REDIS
 const jobHandlers = new Map<SystemJobName, SystemJobHandler>()
 
 let systemJobsQueue: Queue<SystemJobData, unknown, SystemJobName>
 let systemJobWorker: Worker<SystemJobData, unknown, SystemJobName>
 
-export const redisSystemJob = {
+export const redisSystemJobSchedulerService: SystemJobSchedule = {
     async init(): Promise<void> {
-        if (QueueModeIsNotRedis) {
-            return
-        }
-
         systemJobsQueue = new Queue(
             SYSTEM_JOB_QUEUE,
             {
@@ -39,7 +35,7 @@ export const redisSystemJob = {
                 logger.debug({ name: 'RedisSystemJob#systemJobWorker' }, `Executing job (${job.name})`)
 
                 const jobHandler = getJobHandlerOrThrow(job.name)
-                await jobHandler(job)
+                await jobHandler(job.data)
             },
             {
                 connection: createRedisClient(),
@@ -53,11 +49,7 @@ export const redisSystemJob = {
         ])
     },
 
-    async upsertJob<T extends SystemJobName>({ job, schedule, handler }: UpsertJobParams<T>): Promise<void> {
-        if (QueueModeIsNotRedis) {
-            return
-        }
-
+    async upsertJob({ job, schedule, handler }): Promise<void> {
         if (await jobNotInQueue(job.name)) {
             await addJobToQueue({
                 job,
@@ -112,6 +104,7 @@ const setJobHandler = <T extends SystemJobName>({ name, handler }: SetJobHandler
     jobHandlers.set(name, handler)
 }
 
+
 const getJobHandlerOrThrow = (name: string): SystemJobHandler => {
     const jobHandler = jobHandlers.get(name as SystemJobName)
 
@@ -132,58 +125,11 @@ const getJobByName = async <T extends SystemJobName>(name: T): Promise<SystemJob
     return allSystemJobs.find(job => job.name === name) as SystemJob<T> | undefined
 }
 
-type SystemJobName =
-    | 'hard-delete-project'
-    | 'project-usage-report'
-    | 'usage-report'
-    | 'trigger-data-cleaner'
-
-type HardDeleteProjectSystemJobData = {
-    projectId: ProjectId
-}
-
-type ProjectUsageReportSystemJobData = Record<string, never>
-type UsageReportSystemJobData = Record<string, never>
-
-type SystemJobData<T extends SystemJobName = SystemJobName> =
-    T extends 'hard-delete-project' ? HardDeleteProjectSystemJobData :
-        T extends 'project-usage-report' ? ProjectUsageReportSystemJobData :
-            T extends 'usage-report' ? UsageReportSystemJobData :
-                T extends 'trigger-data-cleaner' ? Record<string, never> :
-                    never
-
-type SystemJobDefinition<T extends SystemJobName> = {
-    name: T
-    data: SystemJobData<T>
-}
-
-type SystemJobHandler<T extends SystemJobName = SystemJobName> = (data: Job<SystemJobData<T>, unknown>) => Promise<void>
-
-type OneTimeJobSchedule = {
-    type: 'one-time'
-    date: Dayjs
-}
-
-type RepeatedJobSchedule = {
-    type: 'repeated'
-    cron: string
-}
-
-type JobSchedule =
-    | OneTimeJobSchedule
-    | RepeatedJobSchedule
-
-export type SystemJob<T extends SystemJobName> = Job<SystemJobData<T>, unknown>
+type SystemJob<T extends SystemJobName> = Job<SystemJobData<T>, unknown>
 
 type AddJobToQueueParams<T extends SystemJobName> = {
     job: SystemJobDefinition<T>
     schedule: JobSchedule
-}
-
-type UpsertJobParams<T extends SystemJobName> = {
-    job: SystemJobDefinition<T>
-    schedule: JobSchedule
-    handler: SystemJobHandler<T>
 }
 
 type SetJobHandlerParams<T extends SystemJobName> = {

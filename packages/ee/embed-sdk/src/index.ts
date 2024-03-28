@@ -178,7 +178,8 @@ class ActivepiecesEmbedded {
                   initialRoute: this._initialRoute,
                   hideSidebar: this._hideSidebar,
                   disableNavigationInBuilder: this._disableNavigationInBuilder,
-                  hideFolders: this._hideFolders
+                  hideFolders: this._hideFolders,
+                  hideLogoInBuilder: this._hideLogoInBuilder
                 },
               };
               iframeWindow.postMessage(apEvent, '*');

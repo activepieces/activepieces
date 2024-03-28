@@ -6,16 +6,16 @@ import { databaseConnection } from '../../database/database-connection'
 import { UserEntity } from '../../user/user-entity'
 import { Between, Equal } from 'typeorm'
 import { ProjectEntity } from '../../project/project-entity'
-import { redisSystemJob } from '../helper/redis-system-job'
 import { PlatformEntity } from '../../platform/platform.entity'
 import { Platform } from '@activepieces/shared'
+import { systemJobsSchedule } from '../../helper/system-jobs'
 
 const userRepo = databaseConnection.getRepository(UserEntity)
 const projectRepo = databaseConnection.getRepository(ProjectEntity)
 const platformRepo = databaseConnection.getRepository(PlatformEntity)
 
 export const usageTrackerModule: FastifyPluginAsyncTypebox = async () => {
-    await redisSystemJob.upsertJob({
+    await systemJobsSchedule.upsertJob({
         job: {
             name: 'usage-report',
             data: {},

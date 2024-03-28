@@ -35,6 +35,53 @@ afterAll(async () => {
 })
 
 describe('Piece Metadata API', () => {
+    describe('List Piece Versions endpoint', () => {
+        it('Should return versions in sorted order for a piece', async () => {
+            // arrange
+            const mockPieceMetadata1 = createMockPieceMetadata({
+                name: '@ap/a',
+                version: '0.0.1',
+                pieceType: PieceType.OFFICIAL,
+            })
+            await databaseConnection
+                .getRepository('piece_metadata')
+                .save(mockPieceMetadata1)
+
+            const mockPieceMetadata2 = createMockPieceMetadata({
+                name: '@ap/a',
+                version: '0.0.2',
+                pieceType: PieceType.OFFICIAL,
+            })
+            await databaseConnection
+                .getRepository('piece_metadata')
+                .save(mockPieceMetadata2)
+                    
+            const testToken = await generateMockToken({
+                type: PrincipalType.UNKNOWN,
+                id: apId(),
+                projectId: apId(),
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/v1/pieces/versions?release=1.1.1&name=@ap/a',
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            // assert
+            const responseBody = response?.json()
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const keys = Object.keys(responseBody)
+            expect(keys).toHaveLength(2)
+            expect(keys[0]).toBe('0.0.1')
+            expect(keys[1]).toBe('0.0.2')
+        })
+    })
+    
     describe('Get Piece metadata', () => {
         it('Should return metadata when authenticated', async () => {
             // arrange
@@ -223,7 +270,7 @@ describe('Piece Metadata API', () => {
             expect(responseBody?.[1].id).toBe(mockPieceMetadataB.id)
             expect(responseBody?.[2].id).toBe(mockPieceMetadataD.id)
         })
-
+        
         it('Should list project pieces', async () => {
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save([mockUser])
@@ -295,6 +342,52 @@ describe('Piece Metadata API', () => {
             expect(responseBody).toHaveLength(2)
             expect(responseBody?.[0].id).toBe(mockPieceMetadataA.id)
             expect(responseBody?.[1].id).toBe(mockPieceMetadataB.id)
+        })
+
+        it('Should list latest version by piece name', async () => {
+            // arrange
+            const mockPieceMetadataA = createMockPieceMetadata({
+                name: 'a',
+                pieceType: PieceType.OFFICIAL,
+                displayName: 'a',
+                version: '0.31.0',
+            })
+            const mockPieceMetadataB = createMockPieceMetadata({
+                name: 'a',
+                pieceType: PieceType.OFFICIAL,
+                displayName: 'a',
+                version: '1.0.0',
+            })
+            await databaseConnection
+                .getRepository('piece_metadata')
+                .save([mockPieceMetadataA, mockPieceMetadataB])
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.UNKNOWN,
+                id: apId(),
+                projectId: apId(),
+                platform: {
+                    id: apId(),
+                    role: PlatformRole.MEMBER,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/v1/pieces?release=1.1.1',
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            // assert
+            const responseBody = response?.json()
+            logger.error(responseBody)
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(responseBody).toHaveLength(1)
+            expect(responseBody?.[0].id).toBe(mockPieceMetadataB.id)
         })
 
         it('Sorts by piece name', async () => {
@@ -393,7 +486,7 @@ describe('Piece Metadata API', () => {
             expect(responseBody).toHaveLength(1)
             expect(responseBody?.[0].id).toBe(mockPieceMetadataA.id)
         })
-
+        
         it('Blocks filtered pieces if platform filter is set to "BLOCKED"', async () => {
             // arrange
             const mockUser = createMockUser()
@@ -444,6 +537,6 @@ describe('Piece Metadata API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(responseBody).toHaveLength(1)
             expect(responseBody?.[0].id).toBe(mockPieceMetadataB.id)
-        })
+        }) 
     })
 })

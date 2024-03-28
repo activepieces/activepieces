@@ -36,6 +36,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.PIECES_SYNC_MODE,
+                value: system.get(SystemProp.PIECES_SYNC_MODE),
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.SHOW_PLATFORM_DEMO,
                 value: [ApEdition.CLOUD, ApEdition.COMMUNITY].includes(getEdition()),
                 created,

@@ -4,6 +4,9 @@ import {
   MonoTypeOperatorFunction,
   Observable,
   Subject,
+  catchError,
+  map,
+  of,
   startWith,
   switchMap,
   tap,
@@ -11,11 +14,12 @@ import {
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
+  FlagService,
   OAuth2AppsService,
   PlatformService,
   featureDisabledTooltip,
 } from '@activepieces/ui/common';
-import { Platform } from '@activepieces/shared';
+import { ApFlagId, PieceSyncMode, Platform } from '@activepieces/shared';
 import { ActivatedRoute } from '@angular/router';
 import {
   ManagedPieceMetadataModelSummary,
@@ -56,11 +60,16 @@ export class PiecesTableComponent implements OnInit {
   readonly addPieceCredentialsTooltip = $localize`Add your own OAuth2 app`;
   readonly updatePieceCredentialsTooltip = $localize`Update your own OAuth2 app`;
   readonly deletePieceCredentialsTooltip = $localize`Delete your own OAuth2 app`;
+  readonly syncPiecesTooltipText = $localize`Sync pieces metadata from the cloud`;
+
   readonly OAUTH2 = PropertyType.OAUTH2;
   searchFormControl = new FormControl('', { nonNullable: true });
   dataSource!: PiecesTableDataSource;
   refresh$: Subject<true> = new Subject();
   dialogClosed$?: Observable<boolean>;
+  showSync$?: Observable<boolean>;
+  syncPieces$?: Observable<void>;
+  syncPiecesLoading$: BehaviorSubject<boolean> = new BehaviorSubject(false);
   addPackageDialogClosed$!: Observable<Record<string, string> | null>;
   cloudAuthToggleFormControl = new FormControl(false, { nonNullable: true });
   toggelCloudOAuth2$?: Observable<void>;
@@ -72,6 +81,7 @@ export class PiecesTableComponent implements OnInit {
     private platformService: PlatformService,
     private matSnackbar: MatSnackBar,
     private matDialog: MatDialog,
+    private flagService: FlagService,
     private oauth2AppsService: OAuth2AppsService
   ) {}
   ngOnInit(): void {
@@ -82,7 +92,13 @@ export class PiecesTableComponent implements OnInit {
       this.platform$ = new BehaviorSubject(platform);
     }
     this.toggelCloudOAuth2$ = this.getCloudOAuth2ToggleListener();
-
+    this.showSync$ = this.flagService
+      .getStringFlag(ApFlagId.PIECES_SYNC_MODE)
+      .pipe(
+        map((flag) => {
+          return flag === PieceSyncMode.OFFICIAL_AUTO;
+        })
+      );
     this.dataSource = new PiecesTableDataSource(
       this.piecesService,
       this.searchFormControl.valueChanges.pipe(startWith('')),
@@ -97,6 +113,23 @@ export class PiecesTableComponent implements OnInit {
         this.platform$.value.cloudAuthEnabled
       );
     }
+  }
+
+  sync() {
+    this.syncPiecesLoading$.next(true);
+    this.syncPieces$ = this.piecesService.syncFromCloud().pipe(
+      tap(() => {
+        this.matSnackbar.open($localize`Pieces synced successfully`);
+        this.refresh$.next(true);
+        this.syncPiecesLoading$.next(false);
+      }),
+      catchError((error) => {
+        this.matSnackbar.open($localize`Failed to sync pieces`);
+        console.error(error);
+        this.syncPiecesLoading$.next(false);
+        return of(undefined);
+      })
+    );
   }
 
   getCloudOAuth2ToggleListener() {

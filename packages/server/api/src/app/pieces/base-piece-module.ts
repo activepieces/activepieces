@@ -9,6 +9,8 @@ import {
     GetPieceRequestQuery,
     GetPieceRequestWithScopeParams,
     ListPiecesRequestQuery,
+    ListVersionRequestQuery,
+    ListVersionsResponse,
     PieceCategory,
     PieceOptionRequest,
     PrincipalType,
@@ -25,22 +27,27 @@ import {
     PieceMetadataModelSummary,
 } from './piece-metadata-entity'
 import { flowService } from '../flows/flow/flow.service'
+import { pieceSyncService } from './piece-sync-service'
 
 export const pieceModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(basePiecesController, { prefix: '/v1/pieces' })
 }
 
 const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
+
+    app.get('/versions', ListVersionsRequest, async (req): Promise<ListVersionsResponse> => {
+        return pieceMetadataService.getVersions({
+            name: req.query.name,
+            projectId: req.principal.projectId,
+            release: req.query.release,
+            edition: req.query.edition ?? ApEdition.COMMUNITY,
+            platformId: req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id,
+        })
+    })
+
     app.get(
         '/categories',
-        {
-            config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
-            },
-            schema: {
-                querystring: ListPiecesRequestQuery,
-            },
-        },
+        ListCategoriesRequest,
         async (): Promise<PieceCategory[]> => {
             return Object.values(PieceCategory)
         },
@@ -48,15 +55,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get(
         '/',
-        {
-            config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
-            },
-            schema: {
-                querystring: ListPiecesRequestQuery,
-
-            },
-        },
+        ListPiecesRequest,
         async (req): Promise<PieceMetadataModelSummary[]> => {
             const latestRelease = await flagService.getCurrentRelease()
             const release = req.query.release ?? latestRelease
@@ -80,15 +79,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get(
         '/:scope/:name',
-        {
-            config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
-            },
-            schema: {
-                params: GetPieceRequestWithScopeParams,
-                querystring: GetPieceRequestQuery,
-            },
-        },
+        GetPieceParamsWithScopeRequest,
         async (req): Promise<PieceMetadata> => {
             const { name, scope } = req.params
             const { version } = req.query
@@ -97,9 +88,9 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             const decodedName = decodeURIComponent(name)
             return pieceMetadataService.getOrThrow({
                 projectId:
-          req.principal.type === PrincipalType.UNKNOWN
-              ? undefined
-              : req.principal.projectId,
+                    req.principal.type === PrincipalType.UNKNOWN
+                        ? undefined
+                        : req.principal.projectId,
                 name: `${decodeScope}/${decodedName}`,
                 version,
             })
@@ -108,15 +99,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get(
         '/:name',
-        {
-            config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
-            },
-            schema: {
-                params: GetPieceRequestParams,
-                querystring: GetPieceRequestQuery,
-            },
-        },
+        GetPieceParamsRequest,
         async (req): Promise<PieceMetadataModel> => {
             const { name } = req.params
             const { version } = req.query
@@ -124,9 +107,9 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             const decodedName = decodeURIComponent(name)
             return pieceMetadataService.getOrThrow({
                 projectId:
-          req.principal.type === PrincipalType.UNKNOWN
-              ? undefined
-              : req.principal.projectId,
+                    req.principal.type === PrincipalType.UNKNOWN
+                        ? undefined
+                        : req.principal.projectId,
                 name: decodedName,
                 version,
             })
@@ -134,12 +117,16 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
     )
 
     app.post(
-        '/options',
-        {
-            schema: {
-                body: PieceOptionRequest,
-            },
+        '/sync',
+        SyncPiecesRequest,
+        async (): Promise<void> => {
+            await pieceSyncService.sync()
         },
+    )
+
+    app.post(
+        '/options',
+        OptionsPieceRequest,
         async (req) => {
             const {
                 packageType,
@@ -178,20 +165,77 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         },
     )
 
-    app.delete(
-        '/:id',
-        {
-            schema: {
-                params: Type.Object({
-                    id: Type.String(),
-                }),
-            },
-        },
-        async (req): Promise<void> => {
-            return pieceMetadataService.delete({
-                projectId: req.principal.projectId,
-                id: req.params.id,
-            })
-        },
+    app.delete('/:id', DeletePieceRequest, async (req): Promise<void> => {
+        return pieceMetadataService.delete({
+            projectId: req.principal.projectId,
+            id: req.params.id,
+        })
+    },
     )
+}
+
+const ListPiecesRequest =   {
+    config: {
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+    },
+    schema: {
+        querystring: ListPiecesRequestQuery,
+
+    },
+}
+const GetPieceParamsRequest =  {
+    config: {
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+    },
+    schema: {
+        params: GetPieceRequestParams,
+        querystring: GetPieceRequestQuery,
+    },
+}
+
+const GetPieceParamsWithScopeRequest =  {
+    config: {
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+    },
+    schema: {
+        params: GetPieceRequestWithScopeParams,
+        querystring: GetPieceRequestQuery,
+    },
+}
+
+const ListCategoriesRequest = {
+    config: {
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+    },
+    schema: {
+        querystring: ListPiecesRequestQuery,
+    },
+}
+
+const OptionsPieceRequest = {
+    schema: {
+        body: PieceOptionRequest,
+    },
+}
+const DeletePieceRequest = {
+    schema: {
+        params: Type.Object({
+            id: Type.String(),
+        }),
+    },
+}
+
+const ListVersionsRequest = {
+    config: {
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+    },
+    schema: {
+        querystring: ListVersionRequestQuery,
+    },
+}
+
+const SyncPiecesRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+    },
 }

@@ -2,6 +2,7 @@ import {
   ActivepiecesError,
   CodeSandboxType,
   ErrorCode,
+  PieceSyncMode,
   isNil,
 } from '@activepieces/shared';
 import path from 'path';
@@ -15,6 +16,9 @@ export enum CopilotInstanceTypes {
 }
 
 export enum PiecesSource {
+  /**
+   * @deprecated Use `DB`, as `CLOUD_AND_DB` is no longer supported.
+   */
   CLOUD_AND_DB = 'CLOUD_AND_DB',
   DB = 'DB',
   FILE = 'FILE',
@@ -41,6 +45,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
   [SystemProp.DB_TYPE]: DatabaseType.POSTGRES,
   [SystemProp.EDITION]: 'ce',
   [SystemProp.EXECUTION_DATA_RETENTION_DAYS]: '14',
+  [SystemProp.PIECES_SYNC_MODE]: PieceSyncMode.OFFICIAL_AUTO,
   [SystemProp.COPILOT_INSTANCE_TYPE]: CopilotInstanceTypes.OPENAI,
   [SystemProp.AZURE_OPENAI_API_VERSION]:  '2023-06-01-preview',
   [SystemProp.ENGINE_EXECUTABLE_PATH]: 'dist/packages/engine/main.js',
