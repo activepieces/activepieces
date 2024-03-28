@@ -115,11 +115,11 @@ export const gmailSendEmailAction = createAction({
 
     if (attachment) {
       const lookupResult = mime.lookup(
-        attachment?.extension ? attachment?.extension : ''
+        attachment.extension ? attachment.extension : ''
       );
       const attachmentOption: Attachment[] = [
         {
-          filename: attachment?.filename,
+          filename: configValue.propsValue.attachment_name ?? attachment.filename ,
           content: attachment?.base64,
           contentType: lookupResult ? lookupResult : undefined,
           encoding: 'base64',
