@@ -100,6 +100,9 @@
       "@activepieces/piece-clarifai": [
         "packages/pieces/community/clarifai/src/index.ts"
       ],
+      "@activepieces/piece-claude": [
+        "packages/pieces/community/claude/src/index.ts"
+      ],
       "@activepieces/piece-clearout": [
         "packages/pieces/community/clearout/src/index.ts"
       ],
@@ -329,11 +332,11 @@
       "@activepieces/piece-microsoft-onedrive": [
         "packages/pieces/community/microsoft-onedrive/src/index.ts"
       ],
-      "@activepieces/piece-microsoft-teams": [
-        "packages/pieces/community/microsoft-teams/src/index.ts"
-      ],
       "@activepieces/piece-microsoft-sharepoint": [
         "packages/pieces/community/microsoft-sharepoint/src/index.ts"
+      ],
+      "@activepieces/piece-microsoft-teams": [
+        "packages/pieces/community/microsoft-teams/src/index.ts"
       ],
       "@activepieces/piece-mindee": [
         "packages/pieces/community/mindee/src/index.ts"
