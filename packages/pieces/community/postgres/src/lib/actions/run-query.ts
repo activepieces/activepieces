@@ -8,6 +8,11 @@ export const runQuery = createAction({
   displayName: 'Run Query',
   description: 'Run Query',
   props: {
+    markdown: Property.MarkDown({
+      value: `
+      **DO NOT** insert dynamic input directly into the query string. Instead, use $1, $2, $3 and add them in args for parameterized queries to prevent **SQL injection.**`
+    }),
+    
     query: Property.ShortText({
       displayName: 'Query',
       description: 'Please use $1, $2, etc. for parameterized queries to avoid SQL injection.',

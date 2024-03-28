@@ -380,6 +380,7 @@
       "@activepieces/piece-pastefy": [
         "packages/pieces/community/pastefy/src/index.ts"
       ],
+      "@activepieces/piece-pdf": ["packages/pieces/community/pdf/src/index.ts"],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/community/pipedrive/src/index.ts"
       ],

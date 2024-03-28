@@ -5,6 +5,14 @@ import {
 } from '@activepieces/pieces-framework';
 import { Connection, createConnection } from 'promise-mysql';
 import { mysqlAuth } from '../..';
+import sqlstring from 'sqlstring';
+
+export const warningMarkdown = Property.MarkDown({
+  value: `
+  **DO NOT** use dynamic input directly in the query string or column names.
+  \n
+  Use **?** in the query and dynamic values in args/values for parameterized queries to prevent **SQL injection**.`
+});
 
 export async function mysqlConnect(
   auth: PiecePropValueSchema<typeof mysqlAuth>,
@@ -29,12 +37,11 @@ export async function mysqlGetTableNames(conn: Connection): Promise<string[]> {
 export const mysqlCommon = {
   timezone: Property.ShortText({
     displayName: 'Timezone',
-    description: 'Timezone for the mysql server to use',
+    description: 'Timezone for the MySQL server to use',
     required: false,
   }),
   table: (required = true) =>
     Property.Dropdown({
-      description: 'The name of the table',
       displayName: 'Table',
       required,
       refreshers: [],
@@ -42,7 +49,7 @@ export const mysqlCommon = {
         if (!auth) {
           return {
             disabled: true,
-            placeholder: 'connect to your database first',
+            placeholder: 'Connect to your database first',
             options: [],
           };
         }
@@ -65,13 +72,10 @@ export const mysqlCommon = {
     }),
 };
 
-export function isSpecialColumn(name: string): boolean {
-  return name == '*' || name.includes(' ') || name.includes('(');
-}
 
-export function sanitizeColumnName(name: string): string {
-  if (isSpecialColumn(name)) {
+export function sanitizeColumnName(name: string | undefined): string {
+  if ( name == '*') {
     return name;
   }
-  return '`' + name + '`';
+  return sqlstring.escapeId(name);
 }

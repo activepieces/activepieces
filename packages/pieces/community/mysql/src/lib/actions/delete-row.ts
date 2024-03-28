@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { mysqlCommon, mysqlConnect, sanitizeColumnName } from '../common';
+import { mysqlCommon, mysqlConnect, sanitizeColumnName, warningMarkdown } from '../common';
 import { mysqlAuth } from '../..';
+import sqlstring from 'sqlstring';
 
 export default createAction({
   auth: mysqlAuth,
@@ -8,6 +9,7 @@ export default createAction({
   displayName: 'Delete Row',
   description: 'Deletes one or more rows from a table',
   props: {
+    markdown: warningMarkdown,
     timezone: mysqlCommon.timezone,
     table: mysqlCommon.table(),
     search_column: Property.ShortText({
@@ -20,18 +22,18 @@ export default createAction({
     }),
   },
   async run(context) {
-    const qs =
-      'DELETE FROM `' +
-      context.propsValue.table +
-      '` WHERE ' +
-      sanitizeColumnName(context.propsValue.search_column) +
-      '=?;';
-    const conn = await mysqlConnect(context.auth, context.propsValue);
+    const tableName = sanitizeColumnName(context.propsValue.table);
+    const searchColumn = sanitizeColumnName(context.propsValue.search_column);
+    const searchValue = context.propsValue.search_value;
+
+    const queryString = `DELETE FROM \`${tableName}\` WHERE ${searchColumn}=?;`;
+
+    const connection = await mysqlConnect(context.auth, context.propsValue);
     try {
-      const result = await conn.query(qs, [context.propsValue.search_value]);
+      const result = await connection.query(queryString, [searchValue]);
       return result;
     } finally {
-      await conn.end();
+      await connection.end();
     }
   },
 });
