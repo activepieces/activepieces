@@ -1,4 +1,9 @@
-import { createPiece, Piece, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { createRecordAction } from './lib/actions/create-record';
+import { deleteRecordAction } from './lib/actions/delete-record';
+import { updateRecordAction } from './lib/actions/update-record';
+import { getRecordAction } from './lib/actions/get-record';
+import { searchRecordsAction } from './lib/actions/search-records';
 
 export const nocodbAuth = PieceAuth.CustomAuth({
 	description: `
@@ -25,7 +30,13 @@ export const nocodb = createPiece({
 	auth: nocodbAuth,
 	minimumSupportedRelease: '0.20.0',
 	logoUrl: 'https://cdn.activepieces.com/pieces/nocodb.png',
-	authors: [],
-	actions: [],
+	authors: ['kishanprmr'],
+	actions: [
+		createRecordAction,
+		deleteRecordAction,
+		updateRecordAction,
+		getRecordAction,
+		searchRecordsAction,
+	],
 	triggers: [],
 });
