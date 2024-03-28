@@ -359,7 +359,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(projectModule)
             await app.register(communityPiecesModule)
             await app.register(communityFlowTemplateModule)
-            await pieceSyncService.sync()
             break
     }
 

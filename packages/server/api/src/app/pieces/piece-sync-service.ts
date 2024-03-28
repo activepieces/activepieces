@@ -7,12 +7,11 @@ import { SystemProp, logger, system } from 'server-shared'
 import dayjs from 'dayjs'
 import { getEdition } from '../helper/secret-helper'
 import { flagService } from '../flags/flag.service'
+import { systemJobsSchedule } from '../helper/system-jobs'
 import { parseAndVerify } from '../helper/json-validator'
-import { Type } from '@sinclair/typebox'
 
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 const piecesRepo = repoFactory(PieceMetadataEntity)
-const ONE_HOUR_IN_MS = 60 * 60 * 1000
 const syncMode = system.get<PieceSyncMode>(SystemProp.PIECES_SYNC_MODE)
 export const pieceSyncService = {
     async setup(): Promise<void> {
@@ -20,9 +19,20 @@ export const pieceSyncService = {
             logger.info('Piece sync service is disabled')
             return
         }
-
-        this.sync().catch((error) => logger.error({ error }, 'Error syncing pieces'))
-        setInterval(() => this.sync(), ONE_HOUR_IN_MS)
+        await pieceSyncService.sync()
+        await systemJobsSchedule.upsertJob({
+            job: {
+                name: 'pieces-sync',
+                data: {},
+            },
+            schedule: {
+                type: 'repeated',
+                cron: '0 */1 * * *',
+            },
+            async handler() {
+                await pieceSyncService.sync()
+            },
+        })
     },
     async sync(): Promise<void> {
         if (syncMode !== PieceSyncMode.OFFICIAL_AUTO) {
@@ -32,17 +42,15 @@ export const pieceSyncService = {
         try {
             logger.info({ time: dayjs().toISOString() }, 'Syncing pieces')
             const pieces = await listPieces()
+            const promises: Promise<void>[] = []
+
             for (const summary of pieces) {
-                try {
-                    const lastVersionSynced = await existsInDatabase({ name: summary.name, version: summary.version })
-                    if (!lastVersionSynced) {
-                        await syncPiece(summary.name)
-                    }
-                }
-                catch (error) {
-                    logger.error({ error, name: summary.name }, 'Error syncing piece')
+                const lastVersionSynced = await existsInDatabase({ name: summary.name, version: summary.version })
+                if (!lastVersionSynced) {
+                    promises.push(syncPiece(summary.name))
                 }
             }
+            await Promise.all(promises)
         }
         catch (error) {
             logger.error({ error }, 'Error syncing pieces')
@@ -51,18 +59,23 @@ export const pieceSyncService = {
 }
 
 async function syncPiece(name: string): Promise<void> {
-    const versions = await getVersions({ name })
-    for (const version of Object.keys(versions.versions)) {
-        const currentVersionSynced = await existsInDatabase({ name, version })
-        if (!currentVersionSynced) {
-            const piece = await getOrThrow({ name, version })
-            logger.info({ name, version }, 'Syncing piece')
-            await pieceMetadataService.create({
-                pieceMetadata: piece,
-                packageType: piece.packageType,
-                pieceType: piece.pieceType,
-            })
+    try {
+        const versions = await getVersions({ name })
+        for (const version of Object.keys(versions)) {
+            const currentVersionSynced = await existsInDatabase({ name, version })
+            if (!currentVersionSynced) {
+                const piece = await getOrThrow({ name, version })
+                logger.info({ name, version }, 'Syncing piece')
+                await pieceMetadataService.create({
+                    pieceMetadata: piece,
+                    packageType: piece.packageType,
+                    pieceType: piece.pieceType,
+                })
+            }
         }
+    }
+    catch (error) {
+        logger.error({ error }, 'Error syncing piece')
     }
 
 }
@@ -89,7 +102,7 @@ async function getOrThrow({ name, version }: { name: string, version: string }):
     const response = await fetch(
         `${CLOUD_API_URL}/${name}${version ? '?version=' + version : ''}`,
     )
-    return parseAndVerify<PieceMetadataModel>(PieceMetadataModel, await response.json())
+    return response.json()
 }
 
 async function listPieces(): Promise<PieceMetadataModelSummary[]> {
@@ -105,5 +118,5 @@ async function listPieces(): Promise<PieceMetadataModelSummary[]> {
     if (response.status !== StatusCodes.OK.valueOf()) {
         throw new Error(await response.text())
     }
-    return parseAndVerify<PieceMetadataModelSummary[]>(Type.Array(PieceMetadataModelSummary), await response.json())
+    return response.json()
 }
