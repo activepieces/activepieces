@@ -4,47 +4,47 @@ import { ProjectOperationType } from '@activepieces/ee-shared'
 import { Static, Type } from '@sinclair/typebox'
 
 export const projectDiffService = {
-    diff({ fromFlows, destinationFlows, mapping }: DiffParams): ProjectOperation[] {
-        const createFlowOperation = findFlowsToCreate({ fromFlows, destinationFlows, mapping })
-        const deleteFlowOperation = findFlowsToDelete({ fromFlows, destinationFlows, mapping })
-        const updateFlowOperations = findFlowsToUpdate({ fromFlows, destinationFlows, mapping })
+    diff({ gitFiles: fromFlows, destinationFlows, mapping }: DiffParams): ProjectOperation[] {
+        const createFlowOperation = findFlowsToCreate({ gitFiles: fromFlows, destinationFlows, mapping })
+        const deleteFlowOperation = findFlowsToDelete({ gitFiles: fromFlows, destinationFlows, mapping })
+        const updateFlowOperations = findFlowsToUpdate({ gitFiles: fromFlows, destinationFlows, mapping })
         return [...deleteFlowOperation, ...createFlowOperation, ...updateFlowOperations]
     },
 }
 
-function findFlowsToCreate({ fromFlows, destinationFlows, mapping }: DiffParams): ProjectOperation[] {
-    return fromFlows.filter((f) => {
-        const targetId = mapping.findTargetId(f.id)
+function findFlowsToCreate({ gitFiles, destinationFlows, mapping }: DiffParams): ProjectOperation[] {
+    return gitFiles.filter((gitFile) => {
+        const targetId = mapping.findTargetId(gitFile.baseFilename)
         return isNil(targetId) || isNil(destinationFlows.find((fl) => fl.id === targetId))
-    }).map((f) => ({
+    }).map((gitFile) => ({
         type: ProjectOperationType.CREATE_FLOW,
-        flow: f,
+        gitFile,
     }))
 }
-function findFlowsToDelete({ fromFlows, destinationFlows, mapping }: DiffParams): ProjectOperation[] {
+function findFlowsToDelete({ gitFiles, destinationFlows, mapping }: DiffParams): ProjectOperation[] {
     return destinationFlows.filter((f) => {
         const sourceId = mapping.findSourceId(f.id)
-        return isNil(sourceId) || isNil(fromFlows.find((fl) => fl.id === sourceId))
-    }).map((f) => ({
+        return isNil(sourceId) || isNil(gitFiles.find((gitFlow) => gitFlow.baseFilename === sourceId))
+    }).map((projectFlow) => ({
         type: ProjectOperationType.DELETE_FLOW,
-        flow: f,
+        projectFlow,
     }))
 }
 
-function findFlowsToUpdate({ fromFlows, destinationFlows, mapping }: DiffParams): ProjectOperation[] {
-    return fromFlows.filter((f) => {
-        const targetId = mapping.findTargetId(f.id)
+function findFlowsToUpdate({ gitFiles, destinationFlows, mapping }: DiffParams): ProjectOperation[] {
+    return gitFiles.filter((gitFile) => {
+        const targetId = mapping.findTargetId(gitFile.baseFilename)
         return !isNil(targetId) && !isNil(destinationFlows.find((fl) => fl.id === targetId))
-    }).map((f) => {
-        const destFlowId = mapping.findTargetId(f.id)
-        const targetFlow = destinationFlows.find((fl) => fl.id === destFlowId)!
-        assertNotNullOrUndefined(targetFlow, `Could not find target flow for source flow ${f.id}`)
+    }).map((gitFile) => {
+        const destFlowId = mapping.findTargetId(gitFile.baseFilename)
+        const projectFlow = destinationFlows.find((fl) => fl.id === destFlowId)!
+        assertNotNullOrUndefined(projectFlow, `Could not find target flow for source flow ${gitFile.baseFilename}`)
         return {
             type: ProjectOperationType.UPDATE_FLOW,
-            flow: f,
-            targetFlow,
+            gitFile,
+            projectFlow,
         }
-    }).filter((op) => isFlowChanged(op.flow, op.targetFlow))
+    }).filter((op) => isFlowChanged(op.gitFile.flow, op.projectFlow))
 }
 
 function isFlowChanged(fromFlow: PopulatedFlow, targetFlow: PopulatedFlow): boolean {
@@ -55,24 +55,30 @@ function isFlowChanged(fromFlow: PopulatedFlow, targetFlow: PopulatedFlow): bool
 
 
 type DiffParams = {
-    fromFlows: PopulatedFlow[]
+    gitFiles: GitFile[]
     destinationFlows: PopulatedFlow[]
     mapping: ProjectMappingState
 }
 
+export const GitFile = Type.Object({
+    flow: PopulatedFlow,
+    baseFilename: Type.String(),
+})
+export type GitFile = Static<typeof GitFile>
+
 export const ProjectOperation = Type.Union([
     Type.Object({
         type: Type.Literal(ProjectOperationType.UPDATE_FLOW),
-        flow: PopulatedFlow,
-        targetFlow: PopulatedFlow,
+        gitFile: GitFile,
+        projectFlow: PopulatedFlow,
     }),
     Type.Object({
         type: Type.Literal(ProjectOperationType.CREATE_FLOW),
-        flow: PopulatedFlow,
+        gitFile: GitFile,
     }),
     Type.Object({
         type: Type.Literal(ProjectOperationType.DELETE_FLOW),
-        flow: PopulatedFlow,
+        projectFlow: PopulatedFlow,
     }),
 ])
 

@@ -168,7 +168,7 @@ export class PieceMetadataService {
     }
 
     getPieceMetadata(name: string, version: string | undefined): Observable<PieceMetadataModel> {
-        const cacheKey = `${name}_${version||'_latest'}`;
+        const cacheKey = `${name}_${version || '_latest'}`;
 
         if (!this.cachedPieceMetadata[cacheKey]) {
             this.cachedPieceMetadata[cacheKey] = this.http.get<PieceMetadataModel>(`${environment.apiUrl}/pieces/${name}`, {
@@ -219,6 +219,10 @@ export class PieceMetadataService {
         return this.http.post<PieceMetadataModel>(`${environment.apiUrl}/pieces`,
             formData
         );
+    }
+
+    syncFromCloud() {
+        return this.http.post<void>(`${environment.apiUrl}/pieces/sync`, {});
     }
 
     delete(id: string) {
