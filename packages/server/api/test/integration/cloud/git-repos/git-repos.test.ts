@@ -3,14 +3,16 @@ import { setupApp } from '../../../../src/app/app'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { faker } from '@faker-js/faker'
-import { PrincipalType, apId } from '@activepieces/shared'
+import { PlatformRole, PrincipalType, apId } from '@activepieces/shared'
 import {
     createMockUser,
     createMockProject,
     createMockGitRepo,
     createMockPlatform,
+    createMockApiKey,
 } from '../../../helpers/mocks'
 import { generateMockToken } from '../../../helpers/auth'
+import { GitBranchType } from '@activepieces/ee-shared'
 
 let app: FastifyInstance | null = null
 
@@ -40,6 +42,7 @@ describe('Git API', () => {
                 remoteUrl: `git@${faker.internet.url()}`,
                 sshPrivateKey: faker.hacker.noun(),
                 branch: 'main',
+                branchType: GitBranchType.PRODUCTION,
                 slug: 'test-slug',
             }
 
@@ -69,12 +72,17 @@ describe('Git API', () => {
                 remoteUrl: `git@${faker.internet.url()}`,
                 sshPrivateKey: faker.hacker.noun(),
                 branch: 'main',
+                branchType: GitBranchType.PRODUCTION,
                 slug: 'test-slug',
             }
             const token = await generateMockToken({
                 id: mockUser.id,
                 projectId: mockProject.id,
                 type: PrincipalType.USER,
+                platform: {
+                    id: mockProject.platformId,
+                    role: PlatformRole.OWNER,
+                },
             })
 
             const response = await app?.inject({
@@ -85,9 +93,8 @@ describe('Git API', () => {
                     authorization: `Bearer ${token}`,
                 },
             })
-
-            expect(response?.statusCode).toBe(StatusCodes.CREATED)
             const responseBody = response?.json()
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
             expect(responseBody.sshPrivateKey).toBeUndefined()
             expect(responseBody.remoteUrl).toBe(request.remoteUrl)
             expect(responseBody.branch).toBe(request.branch)
@@ -110,6 +117,10 @@ describe('Git API', () => {
                 id: mockUser.id,
                 projectId: mockProject.id,
                 type: PrincipalType.USER,
+                platform: {
+                    id: mockProject.platformId,
+                    role: PlatformRole.OWNER,
+                },
             })
 
             const response = await app?.inject({
@@ -152,6 +163,62 @@ describe('Git API', () => {
     })
 
     describe('List API', () => {
+        it('should list return forbidden when api request wrong project', async () => {
+            const { mockPlatform, mockProject, mockApiKey, mockUser } = await mockEnvironment()
+            const { mockProject: mockProject3 } = await mockEnvironment()
+
+            const mockProject2 = createMockProject({ platformId: mockPlatform.id, ownerId: mockUser.id })
+            await databaseConnection
+                .getRepository('project')
+                .save([mockProject2])
+
+            const mockGitRepo = createMockGitRepo({ projectId: mockProject.id })
+            const mockGitRepo2 = createMockGitRepo({ projectId: mockProject2.id })
+            await databaseConnection
+                .getRepository('git_repo')
+                .save([mockGitRepo, mockGitRepo2])
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/v1/git-repos?projectId=' + mockProject3.id,
+                headers: {
+                    authorization: `Bearer ${mockApiKey.value}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+        it('should list return forbidden when user request wrong project', async () => {
+            const { mockPlatform, mockProject, mockUser } = await mockEnvironment()
+            const { mockProject: mockProject3 } = await mockEnvironment()
+
+            const mockProject2 = createMockProject({ platformId: mockPlatform.id, ownerId: mockUser.id })
+            await databaseConnection
+                .getRepository('project')
+                .save([mockProject2])
+
+            const mockGitRepo = createMockGitRepo({ projectId: mockProject.id })
+            const mockGitRepo2 = createMockGitRepo({ projectId: mockProject2.id })
+            await databaseConnection
+                .getRepository('git_repo')
+                .save([mockGitRepo, mockGitRepo2])
+
+            const token = await generateMockToken({
+                id: mockUser.id,
+                projectId: mockProject.id,
+                type: PrincipalType.USER,
+            })
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/v1/git-repos?projectId=' + mockProject3.id,
+                headers: {
+                    authorization: `Bearer ${token}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
         it('should list a git repo', async () => {
             const { mockPlatform, mockProject, mockUser } = await mockEnvironment()
 
@@ -170,6 +237,10 @@ describe('Git API', () => {
                 id: mockUser.id,
                 projectId: mockProject.id,
                 type: PrincipalType.USER,
+                platform: {
+                    id: mockProject.platformId,
+                    role: PlatformRole.OWNER,
+                },
             })
 
             const response = await app?.inject({
@@ -203,11 +274,17 @@ const mockEnvironment = async () => {
     const mockUser = createMockUser()
     await databaseConnection.getRepository('user').save(mockUser)
 
-    const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id })
+    const mockPlatform = createMockPlatform({
+        id: mockPlatformId, ownerId: mockUser.id,
+        gitSyncEnabled: true,
+    })
     await databaseConnection.getRepository('platform').save(mockPlatform)
 
     mockUser.platformId = mockPlatform.id
     await databaseConnection.getRepository('user').update(mockUser.id, { platformId: mockPlatform.id })
+
+    const mockApiKey = createMockApiKey({ platformId: mockPlatform.id })
+    await databaseConnection.getRepository('api_key').save(mockApiKey)
 
     const mockProject = createMockProject({ platformId: mockPlatform.id, ownerId: mockUser.id })
     await databaseConnection.getRepository('project').save(mockProject)
@@ -215,6 +292,7 @@ const mockEnvironment = async () => {
     return {
         mockPlatform,
         mockUser,
+        mockApiKey,
         mockProject,
     }
 }

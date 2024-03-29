@@ -71,8 +71,6 @@ export class AddEditConnectionButtonComponent {
     | SecretTextProperty<boolean>
     | BasicAuthProperty;
   @Input()
-  propertyKey: string;
-  @Input()
   selectedConnectionInterpolatedString: string;
   @Input({ required: true })
   pieceName: string;
@@ -85,7 +83,6 @@ export class AddEditConnectionButtonComponent {
   @Input({ required: true }) pieceDisplayName: string;
   @Output()
   connectionPropertyValueChanged: EventEmitter<{
-    propertyKey: string;
     value: `{{connections['${string}']}}`;
   }> = new EventEmitter();
   @Output()
@@ -165,7 +162,6 @@ export class AddEditConnectionButtonComponent {
   private emitNewConnection(result: AppConnection) {
     const authConfigOptionValue: `{{connections['${string}']}}` = `{{connections['${result.name}']}}`;
     this.connectionPropertyValueChanged.emit({
-      propertyKey: this.propertyKey,
       value: authConfigOptionValue,
     });
     this.newConnection.emit({

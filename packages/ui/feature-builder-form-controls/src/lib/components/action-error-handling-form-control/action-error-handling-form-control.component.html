@@ -1,0 +1,26 @@
+<form [formGroup]="errorHandlingOptionsForm">
+  <div class="ap-flex ap-flex-col">
+    @if(!hideContinueOnFailure)
+    {
+      <div   class="ap-flex ap-flex-col" >
+        <mat-slide-toggle [formControl]="errorHandlingOptionsForm.controls.continueOnFailure" color="primary"
+          class="ap-flex-grow-1" i18n>Continue on Failure</mat-slide-toggle>
+        <ap-control-description i18n-description description="Enable this option to skip this step and continue the flow normally if it fails." errorMessage="" [passedFormControl]="errorHandlingOptionsForm.controls.continueOnFailure">
+        </ap-control-description>
+      </div>
+    }
+  
+    @if(!hideRetryOnFailure)
+    {
+      <div aclass="ap-flex ap-flex-col ap-align-center"
+      >
+      <mat-slide-toggle [formControl]="errorHandlingOptionsForm.controls.retryOnFailure" color="primary"
+        class="ap-flex-grow-1" i18n>Auto Retry on Failure</mat-slide-toggle>
+        <ap-control-description i18n-description description="Automatically retry up to four attempts when failed." errorMessage="" [passedFormControl]="errorHandlingOptionsForm.controls.retryOnFailure">
+        </ap-control-description>
+    </div>
+    }
+  
+  </div>
+</form>
+@if(valueChanges$ | async){}

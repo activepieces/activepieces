@@ -10,7 +10,7 @@ import {
 import { Observable, forkJoin, map, of } from 'rxjs';
 import { ApFlagId, ProjectMemberRole, supportUrl } from '@activepieces/shared';
 import { DashboardService, FlagService } from '@activepieces/ui/common';
-import { isGitSyncLocked } from '../../resolvers/repo.resolver';
+import { isGitSyncLocked } from '@activepieces/ui-feature-git-sync';
 
 type SideNavRoute = {
   icon: string;

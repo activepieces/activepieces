@@ -1,20 +1,39 @@
 import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef, MatDialogContent, MatDialogActions, MatDialogClose } from '@angular/material/dialog';
 import { BehaviorSubject, Observable, catchError, map, of, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { SyncProjectService } from '../../../services/sync-project.service';
+import { ProjectOperationType, ProjectSyncPlanOperation } from '@activepieces/ee-shared';
+import { AsyncPipe } from '@angular/common';
+import { MatIcon } from '@angular/material/icon';
+import { MatList, MatListItem, MatListItemIcon, MatListItemTitle } from '@angular/material/list';
+import { UiCommonModule } from '@activepieces/ui/common';
 
 export type PullFromGitDialogData = {
-  operations: string[]
+  operations: ProjectSyncPlanOperation[]
   repoId: string;
 };
 
 @Component({
-  selector: 'app-pull-from-git-dialog',
-  templateUrl: './pull-from-git-dialog.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-pull-from-git-dialog',
+    templateUrl: './pull-from-git-dialog.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: true,
+    imports: [
+        UiCommonModule,
+        MatDialogContent,
+        MatList,
+        MatListItem,
+        MatIcon,
+        MatListItemIcon,
+        MatListItemTitle,
+        MatDialogActions,
+        MatDialogClose,
+        AsyncPipe,
+    ],
 })
 export class PullFromGitDialogComponent {
+  ProjectOperationType = ProjectOperationType
   loading$ = new BehaviorSubject<boolean>(false);
   pull$?: Observable<void>;
   constructor(
@@ -59,4 +78,5 @@ export class PullFromGitDialogComponent {
       );
     }
   }
+  
 }

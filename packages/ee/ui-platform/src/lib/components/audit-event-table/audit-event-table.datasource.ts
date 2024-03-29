@@ -51,7 +51,7 @@ export class AuditEventDataSource extends DataSource<ApplicationEvent> {
       tap(() => {
         this.isLoading$.next(true);
       }),
-      switchMap(([refresh, isEnabled, queryParams]) => {
+      switchMap(([_refresh, isEnabled, queryParams]) => {
         if (!isEnabled) {
           return of({
             data: [],

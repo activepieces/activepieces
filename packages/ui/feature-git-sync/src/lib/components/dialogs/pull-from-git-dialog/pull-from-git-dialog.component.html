@@ -1,38 +1,54 @@
-<ap-dialog-title-template i18n>
-    Pull from Repo
-</ap-dialog-title-template>
+<div class="md:ap-max-w-[600px]">
+  <ap-dialog-title-template i18n>Review Changes
+    </ap-dialog-title-template>
+</div>
 
 <mat-dialog-content>
-    <div class="md:ap-min-w-[500px] ap-max-w-[750px]">
+  <div class="md:ap-max-w-[600px]">
+    <div class="ap-typography-body-1">These are the changes that will be pulled from the repository:</div>
+    <mat-list>
+      @for (operation of this.data.operations; track operation) {
 
-        <ap-warning-box>
-            <div class="ap-flex ap-items-center ap-gap-2 ap-ml-[-3px] ">
-                <svg-icon [svgStyle]="{ width: '20px', height: '20px' }" src="assets/img/custom/warn.svg">
-                </svg-icon> <span i18n>Warning</span>
-            </div>
-            <div i18n >
-                These are the changes that will be pulled from the repository:
-                <div  class="ap-mt-4" >
+        @switch (operation.type) {
+          @case (ProjectOperationType.CREATE_FLOW) {
+            <mat-list-item>
+              <mat-icon matListItemIcon class="!ap-text-success">add</mat-icon>
+              <h3 matListItemTitle class="!ap-text-success">Create "{{operation.flow.displayName}}" Flow</h3>
+            </mat-list-item>
+          }
+          @case (ProjectOperationType.UPDATE_FLOW) {
+            <mat-list-item>
+              <mat-icon matListItemIcon class="!ap-text-warn-dark">upgrade</mat-icon>
+              <h3 matListItemTitle class="!ap-text-warn-dark">Update "{{operation.targetFlow.displayName}}" Flow</h3>
+            </mat-list-item>
 
-                    <div *ngFor="let op of this.data.operations; let i = index">
-                        {{i + 1}}. {{op}}
-                    </div>
-                </div>
-            </div>
-        </ap-warning-box>
-    </div>
+          }
+          @case (ProjectOperationType.DELETE_FLOW) {
+            <mat-list-item>
+              <mat-icon matListItemIcon class="!ap-text-danger">remove</mat-icon>
+              <h3 matListItemTitle class="!ap-text-danger">Delete "{{operation.flow.displayName}}" Flow</h3>
+            </mat-list-item>
+          }
+        }
+
+
+        }@empty {
+      }
+    </mat-list>
+  </div>
 
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-    <div class="ap-flex ap-gap-2.5">
-        <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" i18n>
+  <div class="ap-flex ap-gap-2.5">
+    <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" i18n>
             Cancel
         </ap-button>
-        <ap-button btnSize="default" type="submit" (click)="submit();" btnColor="primary" i18n
-            [loading]="(loading$ | async) || false">
+    <ap-button btnSize="default" type="submit" (click)="submit();" btnColor="primary" i18n
+      [loading]="(loading$ | async) || false">
             Confirm
         </ap-button>
-    </div>
+  </div>
 </mat-dialog-actions>
-<ng-container *ngIf="pull$ | async"></ng-container>
+@if (pull$ | async) {
+}

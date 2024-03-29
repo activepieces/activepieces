@@ -16,14 +16,12 @@ import { RenameFolderDialogComponent } from './components/dialogs/rename-folder-
 import { EeBillingUiModule } from '@activepieces/ee-billing-ui';
 import { UiFeatureTemplatesModule } from '@activepieces/ui/feature-templates';
 import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
-import { SyncProjectComponent } from './pages/sync-project/sync-project.component';
 import { ProjectSwitcherComponent } from './components/project-switcher/project-switcher.component';
 import { TriggerTooltipPipe } from './pipes/trigger-tooltip.pipe';
 import { TriggerIconPipe } from './pipes/trigger-icon.pipe';
 import { FlowStatusPipe } from './pipes/flow-status-tooltip.pipe';
 import { EeComponentsModule } from '@activepieces/ee-components';
 import { RenameFlowDialogComponent } from './components/dialogs/rename-flow-dialog/rename-flow-dialog.component';
-import { UiFeatureGitSyncModule } from '@activepieces/ui-feature-git-sync';
 import { UiFeatureFoldersStoreModule } from '@activepieces/ui/feature-folders-store';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
@@ -32,6 +30,10 @@ import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections
 import { ActivityTableComponent } from './pages/activity-table/activity-table.component';
 import { ContactSalesComponent } from './components/contact-sales/contact-sales.component';
 import { FormsModule } from '@angular/forms';
+import {
+  PushFlowToGitButtonComponent,
+  SyncProjectComponent,
+} from '@activepieces/ui-feature-git-sync';
 
 @NgModule({
   imports: [
@@ -46,11 +48,12 @@ import { FormsModule } from '@angular/forms';
     TriggerIconPipe,
     FlowStatusPipe,
     EeComponentsModule,
-    UiFeatureGitSyncModule,
+    PushFlowToGitButtonComponent,
     MatDatepickerModule,
     MatNativeDateModule,
     UiFeatureConnectionsModule,
     FormsModule,
+    SyncProjectComponent,
   ],
   declarations: [
     DashboardContainerComponent,
@@ -63,7 +66,6 @@ import { FormsModule } from '@angular/forms';
     FoldersListComponent,
     NewFolderDialogComponent,
     RenameFolderDialogComponent,
-    SyncProjectComponent,
     ProjectSwitcherComponent,
     RenameFlowDialogComponent,
     NewConnectionDialogComponent,

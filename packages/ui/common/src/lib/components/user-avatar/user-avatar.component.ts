@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../service/authentication.service';
-import { ApFlagId, Project } from '@activepieces/shared';
+import { ApFlagId, ProjectWithLimits } from '@activepieces/shared';
 import { Observable, map } from 'rxjs';
 import { FlagService } from '../../service/flag.service';
 import { Store } from '@ngrx/store';
@@ -20,8 +20,8 @@ import { PlatformProjectService } from '../../service/platform-project.service';
 export class UserAvatarComponent implements OnInit {
   showAvatarOuterCircle = false;
   currentUserEmail = '';
-  projects$: Observable<Project[]>;
-  selectedProject$: Observable<Project | undefined>;
+  projects$: Observable<ProjectWithLimits[]>;
+  selectedProject$: Observable<ProjectWithLimits | undefined>;
   switchProject$: Observable<void>;
   overflownProjectsNames: Record<string, string> = {};
   billingEnabled$: Observable<boolean>;

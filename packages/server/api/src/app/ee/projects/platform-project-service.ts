@@ -12,6 +12,7 @@ import {
     ActivepiecesError,
     ErrorCode,
     FlowStatus,
+    Cursor,
 } from '@activepieces/shared'
 import { EntityManager, Equal, In, IsNull } from 'typeorm'
 import {
@@ -35,6 +36,7 @@ import { transaction } from '../../core/db/transaction'
 import { flowService } from '../../flows/flow/flow.service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { platformProjectSideEffects } from './platform-project-side-effects'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
 
 const projectRepo = repoFactory(ProjectEntity)
 const projectMemberRepo = repoFactory(ProjectMemberEntity)
@@ -44,13 +46,27 @@ export const platformProjectService = {
         ownerId,
         platformId,
         externalId,
+        cursorRequest,
+        limit,
     }: {
         ownerId: UserId | undefined
         platformId?: PlatformId
         externalId?: string
+        cursorRequest: Cursor | null
+        limit: number
     }): Promise<SeekPage<ProjectWithLimits>> {
+        const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
+        const paginator = buildPaginator({
+            entity: ProjectEntity,
+            query: {
+                limit,
+                order: 'ASC',
+                afterCursor: decodedCursor.nextCursor,
+                beforeCursor: decodedCursor.previousCursor,
+            },
+        })
         const filters = await createFilters(ownerId, platformId, externalId)
-        const projectPlans = await projectRepo()
+        const queryBuilder = projectRepo()
             .createQueryBuilder('project')
             .leftJoinAndMapOne(
                 'project.plan',
@@ -59,38 +75,48 @@ export const platformProjectService = {
                 'project.id = "project_plan"."projectId"',
             )
             .where(filters)
-            // TODO add pagination
-            .limit(50)
-            .getMany()
+        const { data, cursor } = await paginator.paginate(queryBuilder)
         const projects: ProjectWithLimits[] = await Promise.all(
-            projectPlans.map(enrichWithUsageAndPlan),
+            data.map(enrichWithUsageAndPlan),
         )
-        return paginationHelper.createPage<ProjectWithLimits>(
-            projects,
-            null,
-        )
+        return paginationHelper.createPage<ProjectWithLimits>(projects, cursor)
     },
 
-    async update({ projectId, request }: UpdateParams): Promise<ProjectWithLimits> {
-        await projectRepo().update({
-            id: projectId,
-            deleted: IsNull(),
-        }, {
-            displayName: request.displayName,
-            notifyStatus: request.notifyStatus,
-        })
+    async update({
+        projectId,
+        request,
+    }: UpdateParams): Promise<ProjectWithLimits> {
+        await projectRepo().update(
+            {
+                id: projectId,
+                deleted: IsNull(),
+            },
+            {
+                displayName: request.displayName,
+                notifyStatus: request.notifyStatus,
+            },
+        )
         if (!isNil(request.plan)) {
             const isCloud = getEdition() === ApEdition.CLOUD
-            const isSubscribed = isCloud ? (await projectBillingService.getOrCreateForProject(projectId)).subscriptionStatus === ApSubscriptionStatus.ACTIVE : false
+            const isSubscribed = isCloud
+                ? (await projectBillingService.getOrCreateForProject(projectId))
+                    .subscriptionStatus === ApSubscriptionStatus.ACTIVE
+                : false
             const project = await projectService.getOneOrThrow(projectId)
-            const isCloudProject = project.platformId && flagService.isCloudPlatform(project.platformId)
+            const isCloudProject =
+        project.platformId && flagService.isCloudPlatform(project.platformId)
 
             if (isSubscribed || !isCloudProject) {
-                const newTasks = isCloudProject ? request.plan.tasks : Math.min(request.plan.tasks, MAXIMUM_ALLOWED_TASKS)
-                await projectLimitsService.upsert({
-                    ...spreadIfDefined('teamMembers', request.plan.teamMembers),
-                    tasks: newTasks,
-                }, projectId)
+                const newTasks = isCloudProject
+                    ? request.plan.tasks
+                    : Math.min(request.plan.tasks, MAXIMUM_ALLOWED_TASKS)
+                await projectLimitsService.upsert(
+                    {
+                        ...spreadIfDefined('teamMembers', request.plan.teamMembers),
+                        tasks: newTasks,
+                    },
+                    projectId,
+                )
             }
         }
         return this.getWithPlanAndUsageOrThrow(projectId)
@@ -172,12 +198,20 @@ async function enrichWithUsageAndPlan(
 ): Promise<ProjectWithLimits> {
     return {
         ...project,
-        plan: await projectLimitsService.getOrCreateDefaultPlan(project.id, DEFAULT_FREE_PLAN_LIMIT),
-        usage: await projectUsageService.getUsageForBillingPeriod(project.id, projectUsageService.getCurrentingStartPeriod(project.created)),
+        plan: await projectLimitsService.getOrCreateDefaultPlan(
+            project.id,
+            DEFAULT_FREE_PLAN_LIMIT,
+        ),
+        usage: await projectUsageService.getUsageForBillingPeriod(
+            project.id,
+            projectUsageService.getCurrentingStartPeriod(project.created),
+        ),
     }
 }
 
-const assertAllProjectFlowsAreDisabled = async (params: AssertAllProjectFlowsAreDisabledParams): Promise<void> => {
+const assertAllProjectFlowsAreDisabled = async (
+    params: AssertAllProjectFlowsAreDisabledParams,
+): Promise<void> => {
     const { projectId, entityManager } = params
 
     const projectHasEnabledFlows = await flowService.existsByProjectAndStatus({
@@ -190,13 +224,17 @@ const assertAllProjectFlowsAreDisabled = async (params: AssertAllProjectFlowsAre
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
             params: {
-                message: 'project has enabled flows',
+                message: 'PROJECT_HAS_ENABLED_FLOWS',
             },
         })
     }
 }
 
-const softDeleteOrThrow = async ({ id, platformId, entityManager }: SoftDeleteOrThrowParams): Promise<void> => {
+const softDeleteOrThrow = async ({
+    id,
+    platformId,
+    entityManager,
+}: SoftDeleteOrThrowParams): Promise<void> => {
     const deleteResult = await projectRepo(entityManager).softDelete({
         id,
         platformId,

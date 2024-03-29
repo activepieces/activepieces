@@ -5,7 +5,7 @@ import {
   ProjectSelectors,
 } from '@activepieces/ui/common';
 import { Observable, switchMap, map } from 'rxjs';
-import { ApFlagId, Project } from '@activepieces/shared';
+import { ApFlagId, ProjectWithLimits } from '@activepieces/shared';
 import { Store } from '@ngrx/store';
 
 @Component({
@@ -14,9 +14,9 @@ import { Store } from '@ngrx/store';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProjectSwitcherComponent {
-  currentProject$: Observable<Project>;
+  currentProject$: Observable<ProjectWithLimits>;
   areProjectsEnabled$: Observable<boolean>;
-  projects$: Observable<Project[]>;
+  projects$: Observable<ProjectWithLimits[]>;
   switchProject$?: Observable<void>;
   constructor(
     private store: Store,

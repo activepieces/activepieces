@@ -1,0 +1,31 @@
+<form [formGroup]="conditionsForm">
+    <div class="ap-flex ap-flex-col ap-gap-2">
+        <ng-container formArrayName="conditions">
+            <ng-container
+                *ngFor="let con of conditionsForm.controls.conditions.controls;let idx=index; let isLast = last">
+                <app-branch-condition [formControl]="con"
+                    [isLastAndOnlyCondition]="conditionsForm.controls.conditions.controls.length === 1"
+                    [stepMetaDataForMentions]="stepMetaDataForMentions"
+                    (removeCondition)="removeCondition(idx)" [isInLastAndOnlyGroup]="isInLastAndOnlyGroup">
+                </app-branch-condition>
+                <ng-container *ngIf="!isLast">
+                    <div class="ap-text-center  ap-mt-2 ap-mb-2 ap-min-h-[21px]" i18n>
+                        And
+                    </div>
+                </ng-container>
+            </ng-container>
+        </ng-container>
+
+    </div>
+
+    <div class="ap-flex ap-gap-1 ap-mt-2 ap-justify-center" *ngIf="conditionsForm.enabled">
+        <ap-button btnColor="basic" btnSize="medium" btnStyle="basic" (buttonClicked)="andButtonPressed()" i18n>
+            + And
+        </ap-button>
+        <ap-button btnColor="basic" btnSize="medium" btnStyle="basic" *ngIf="isLastConditionGroup"
+            (buttonClicked)="orButtonPressed()" i18n>
+            + Or
+        </ap-button>
+    </div>
+</form>
+<ng-container *ngIf="valueChanges$ | async"></ng-container>

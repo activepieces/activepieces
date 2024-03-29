@@ -1,72 +1,87 @@
 <ap-dialog-title-template>
-    {{title}}
+  {{title}}
 </ap-dialog-title-template>
 <mat-dialog-content>
-    <div class="md:ap-min-w-[500px]">
+  <div class="md:ap-min-w-[500px]">
+    <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="configureRepoForm" (submit)="submit()">
+      <mat-form-field class="ap-w-full" appearance="outline">
+        <mat-label i18n>Remote URL</mat-label>
+        <input cdkFocusInitial [formControl]="configureRepoForm.controls.remoteUrl" matInput type="text"
+          placeholder="git@your-repo.com" />
+        @if (configureRepoForm.controls.remoteUrl.invalid) {
+          <mat-error i18n>
+            Remote URL is required
+          </mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field class="ap-w-full" appearance="outline">
+        <mat-label i18n>Folder Name</mat-label>
+        <input cdkFocusInitial [formControl]="configureRepoForm.controls.slug" matInput type="text"
+          placeholder="slug" />
+        @if (configureRepoForm.controls.slug.invalid) {
+          <mat-error i18n>
+            Folder name is required
+          </mat-error>
+        }
+        <mat-hint>
+          Folder name is the name of the folder where the project will be stored or fetched.
+        </mat-hint>
+      </mat-form-field>
 
+      <mat-form-field class="ap-w-full" appearance="outline">
+        <mat-label i18n>Branch Name</mat-label>
+        <input cdkFocusInitial [formControl]="configureRepoForm.controls.branch" matInput type="text"
+          placeholder="staging" />
+        @if (configureRepoForm.controls.branch.invalid) {
+          <mat-error i18n>
+            Branch is required
+          </mat-error>
+        }
+      </mat-form-field>
 
-        <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="configureRepoForm" (submit)="submit()">
-            <mat-form-field class="ap-w-full" appearance="outline">
-                <mat-label i18n>Remote URL</mat-label>
-                <input cdkFocusInitial [formControl]="configureRepoForm.controls.remoteUrl" matInput type="text"
-                    placeholder="git@your-repo.com" />
-                <mat-error *ngIf="configureRepoForm.controls.remoteUrl.invalid" i18n>
-                    Remote URL is required
-                </mat-error>
-            </mat-form-field>
-            <mat-form-field class="ap-w-full" appearance="outline">
-                <mat-label i18n>Folder Name</mat-label>
-                <input cdkFocusInitial [formControl]="configureRepoForm.controls.slug" matInput type="text"
-                    placeholder="slug" />
-                <mat-error *ngIf="configureRepoForm.controls.slug.invalid" i18n>
-                    Folder name is required
-                </mat-error>
-                <mat-hint>
-                    Folder name is the name of the folder where the project will stored or fetched.
-                </mat-hint>
-            </mat-form-field>
-          
-            <mat-form-field class="ap-w-full" appearance="outline">
-                <mat-label i18n>Branch Name</mat-label>
-                <input cdkFocusInitial [formControl]="configureRepoForm.controls.branch" matInput type="text"
-                    placeholder="staging" />
-                <mat-error *ngIf="configureRepoForm.controls.branch.invalid" i18n>
-                    Branch is required
-                </mat-error>
-            </mat-form-field>
-
-            <mat-form-field class="ap-w-full" appearance="outline">
-                <mat-label i18n>Private SSH Key</mat-label>
-                <textarea cdkFocusInitial rows="4" [formControl]="configureRepoForm.controls.sshPrivateKey"
-                    matInput></textarea>
-                <mat-error
-                    *ngIf="configureRepoForm.controls.sshPrivateKey.invalid && configureRepoForm.controls.sshPrivateKey.hasError('pattern')"
-                    i18n>
+      <mat-form-field class="ap-w-full" appearance="outline">
+        <mat-label i18n>Branch Type</mat-label>
+        <mat-select [formControl]="configureRepoForm.controls.branchType">
+          <mat-option [value]="GitBranchType.PRODUCTION">Production</mat-option>
+          <mat-option [value]="GitBranchType.DEVELOPMENT">Development</mat-option>
+        </mat-select>
+      </mat-form-field>
+      
+      <mat-form-field class="ap-w-full" appearance="outline">
+        <mat-label i18n>Private SSH Key</mat-label>
+        <textarea cdkFocusInitial rows="4" [formControl]="configureRepoForm.controls.sshPrivateKey"
+        matInput></textarea>
+        @if (configureRepoForm.controls.sshPrivateKey.invalid && configureRepoForm.controls.sshPrivateKey.hasError('pattern')) {
+          <mat-error
+            i18n>
                     Invalid private key format. Please check your private key and make sure it ends with new line and
                     try again.
                 </mat-error>
-                <mat-error
-                    *ngIf="configureRepoForm.controls.sshPrivateKey.invalid && configureRepoForm.controls.sshPrivateKey.hasError('required')"
-                    i18n>
+        }
+        @if (configureRepoForm.controls.sshPrivateKey.invalid && configureRepoForm.controls.sshPrivateKey.hasError('required')) {
+          <mat-error
+            i18n>
                     Private SSH key is required
                 </mat-error>
-            </mat-form-field>
+        }
+      </mat-form-field>
 
-        </form>
-    </div>
+    </form>
+  </div>
 
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-    <div class="ap-flex ap-gap-2.5">
-        <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" i18n>
+  <div class="ap-flex ap-gap-2.5">
+    <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" i18n>
             Cancel
         </ap-button>
-        <ap-button btnSize="default" type="submit" (click)="submit();" btnColor="primary" i18n
-            [loading]="!!configreRepo$">
+    <ap-button btnSize="default" type="submit" (click)="submit();" btnColor="primary" i18n
+      [loading]="!!configreRepo$">
             Confirm
         </ap-button>
-    </div>
+  </div>
 </mat-dialog-actions>
 
-<ng-container *ngIf="configreRepo$ | async"></ng-container>
+@if (configreRepo$ | async) {
+}

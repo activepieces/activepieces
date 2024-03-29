@@ -1,0 +1,288 @@
+<form [formGroup]="form" class="ap-flex ap-flex-col">
+  @for (
+    property of sortedPropertiesByRequired | objectToArray;
+    track property.key
+  ) {
+    @if (
+      (property.value
+        | shouldShwoDynamicInputToggleAboveInput: stepName === 'trigger')
+        || (customizedInputs[property.key] === true && property.value.type !== PropertyType.DYNAMIC)
+    ) {
+      <div class="ap-flex ap-justify-end" [class.ap-mb-1]="!hideCustomizedInputs">
+        <ng-container *ngTemplateOutlet="dynamicInputToggleTemplate;context:{$implicit:property}">
+        </ng-container>
+      </div>
+    }
+
+    @if (customizedInputs[property.key] && property.value.type !== PropertyType.DYNAMIC) {
+      <app-text-control
+        [passedFormControl]="
+          form.controls[property.key] | abstractFormControlCaster
+        "
+        [property]="property.value"
+        [stepMetaDataForMentions]="stepMetaDataForMentions"
+      ></app-text-control>
+    } @else {
+      @switch (property.value.type) {
+        @case (PropertyType.OAUTH2) {
+
+          <app-connections-dropdown-control
+            [passedFormControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [options]="allConnectionsForPiece"
+            [pieceMetaData]="pieceMetaData"
+            [property]="property.value"
+            [triggerName]="triggerName"
+          >
+    
+        </app-connections-dropdown-control>
+        }
+        @case (PropertyType.SECRET_TEXT) {
+          <app-connections-dropdown-control
+            [passedFormControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [options]="allConnectionsForPiece"
+            [pieceMetaData]="pieceMetaData"
+            [property]="property.value"
+          ></app-connections-dropdown-control>
+        }
+        @case (PropertyType.BASIC_AUTH) {
+          <app-connections-dropdown-control
+            [passedFormControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [options]="allConnectionsForPiece"
+            [pieceMetaData]="pieceMetaData"
+            [property]="property.value"
+          ></app-connections-dropdown-control>
+        }
+        @case (PropertyType.CUSTOM_AUTH) {
+          <app-connections-dropdown-control
+            [passedFormControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [options]="allConnectionsForPiece"
+            [pieceMetaData]="pieceMetaData"
+            [property]="property.value"
+          ></app-connections-dropdown-control>
+        }
+        @case (PropertyType.SHORT_TEXT) {
+          <app-text-control
+            [passedFormControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [property]="property.value"
+            [stepMetaDataForMentions]="stepMetaDataForMentions"
+          ></app-text-control>
+        }
+        @case (PropertyType.LONG_TEXT) {
+          <app-text-control
+            [passedFormControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [property]="property.value"
+            [stepMetaDataForMentions]="stepMetaDataForMentions"
+          ></app-text-control>
+        }
+        @case (PropertyType.DATE_TIME) {
+          <app-text-control
+            [passedFormControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [property]="property.value"
+            [stepMetaDataForMentions]="stepMetaDataForMentions"
+          ></app-text-control>
+        }
+        @case (PropertyType.FILE) {
+          <app-text-control
+            [passedFormControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [property]="property.value"
+            [stepMetaDataForMentions]="stepMetaDataForMentions"
+          ></app-text-control>
+        }
+        @case (PropertyType.NUMBER) {
+          <app-text-control
+            [passedFormControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [property]="property.value"
+            [stepMetaDataForMentions]="stepMetaDataForMentions"
+          ></app-text-control>
+        }
+        @case (PropertyType.STATIC_DROPDOWN) {
+          <app-static-dropdown-control
+            [passedFormControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [property]="property.value"
+          ></app-static-dropdown-control>
+        }
+        @case (PropertyType.STATIC_MULTI_SELECT_DROPDOWN) {
+          <app-static-dropdown-control
+            [passedFormControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [property]="property.value"
+          ></app-static-dropdown-control>
+        }
+        @case (PropertyType.DROPDOWN) {
+          <app-refreshable-dropdown-control
+            [passedFormControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [flow]="flow"
+            [parentFormGroup]="form"
+            [actionOrTriggerName]="actionOrTriggerName"
+            [pieceMetaData]="pieceMetaData"
+            [propertyName]="property.key + ''"
+            [property]="property.value"
+            [stepChanged$]="stepChanged$.asObservable()"
+          ></app-refreshable-dropdown-control>
+        }
+        @case (PropertyType.MULTI_SELECT_DROPDOWN) {
+          <app-refreshable-dropdown-control
+            [passedFormControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [flow]="flow"
+            [parentFormGroup]="form"
+            [actionOrTriggerName]="actionOrTriggerName"
+            [pieceMetaData]="pieceMetaData"
+            [propertyName]="property.key + ''"
+            [property]="property.value"
+            [stepChanged$]="stepChanged$.asObservable()"
+          ></app-refreshable-dropdown-control>
+        }
+        @case (PropertyType.CHECKBOX) {
+          <app-checkbox-control
+            [passedFormControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [property]="property.value"
+          >
+          <ng-container *ngTemplateOutlet="dynamicInputToggleTemplate;context:{$implicit:property}">
+          </ng-container>
+        </app-checkbox-control>
+        }
+        @case (PropertyType.JSON) {
+          <app-json-control
+            [passedFormControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [property]="property.value"
+          ></app-json-control>
+        }
+        @case (PropertyType.MARKDOWN) {
+          @if (property.value.description) {
+            <ap-markdown
+              [data]="
+                property.value.description
+                  | replaceMarkdownConsts
+                    : flow.id
+                    : webhookPrefix
+                    : formPieceTriggerPrefix
+              "
+            >
+            </ap-markdown>
+          }
+        }
+        @case (PropertyType.DYNAMIC) {
+          <app-dynamic-property-control
+            [passedFormControl]="form.controls[property.key] | formGroupCaster"
+            [parentFormGroup]="form"
+            [pieceMetaData]="pieceMetaData"
+            [actionOrTriggerName]="actionOrTriggerName"
+            [propertyName]="property.key + ''"
+            [flow]="flow"
+            [stepName]="stepName"
+            [webhookPrefix]="webhookPrefix"
+            [formPieceTriggerPrefix]="formPieceTriggerPrefix"
+            [property]="property.value"
+            [propertiesMap]="propertiesMap"
+            [input]="input[property.key] || {}"
+            [customizedInputs]="
+              customizedInputs
+            "
+            [stepMetaDataForMentions]="stepMetaDataForMentions"
+            [hideCustomizedInputs]="hideCustomizedInputs"
+            (customizedInputsChanged)="dynamicPropertyCustomizedInputsChangedHanlder($event)"
+            [stepChanged$]="stepChanged$.asObservable()"
+          ></app-dynamic-property-control>
+        }
+        @case (PropertyType.ARRAY) {
+          <app-array-form-control
+            [property]="property.value"
+            [pieceMetaData]="pieceMetaData"
+            [flow]="flow"
+            [webhookPrefix]="webhookPrefix"
+            [formPieceTriggerPrefix]="formPieceTriggerPrefix"
+            [input]="input[property.key] || []"
+            [formControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [stepMetaDataForMentions]="stepMetaDataForMentions"
+          >
+            <ng-container *ngTemplateOutlet="dynamicInputToggleTemplate;context:{$implicit:property}">
+            </ng-container>
+          </app-array-form-control>
+        }
+        @case (PropertyType.OBJECT) {
+          <app-dictonary-form-control
+            [formControl]="
+              form.controls[property.key] | abstractFormControlCaster
+            "
+            [propertyDisplayName]="property.value.displayName"
+            [stepMetaDataForMentions]="stepMetaDataForMentions"
+          >
+            <ng-container *ngTemplateOutlet="dynamicInputToggleTemplate;context:{$implicit:property}">
+            </ng-container>
+          </app-dictonary-form-control>
+        }
+      }
+    }
+
+    @if (
+      property.value.type !== PropertyType.MARKDOWN &&
+      property.value.type !== PropertyType.DYNAMIC
+    ) {
+      <ap-control-description
+        [errorMessage]="
+          ((form.controls[property.key]
+            | abstractFormControlCaster
+            | extractControlErrorMessage: property.value : customizedInputs[property.key]
+            | async) || '')
+        "
+        [passedFormControl]="
+          form.controls[property.key] | abstractFormControlCaster
+        "
+        [description]="property.value.description || ''"
+      >
+      </ap-control-description>
+    }
+  }
+</form>
+
+@if (emitNewChanges$ | async) {}
+
+<ng-template #dynamicInputToggleTemplate let-property>
+ @if(!hideCustomizedInputs)
+ {
+  <div class="ap-px-1">
+    <app-dynamic-input-toggle-control
+    [selected]="!!customizedInputs[property.key]"
+    (valueChanged)="
+      toggleCustomizedInput(
+        property.value,
+        property.key + '',
+        $event
+      )
+    "
+  ></app-dynamic-input-toggle-control>
+  </div>
+  
+ }
+</ng-template>

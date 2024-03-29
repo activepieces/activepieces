@@ -14,6 +14,7 @@ import {
   FlowStatus,
   ApId,
 } from '@activepieces/shared';
+import { PiecePropertyMap } from '@activepieces/pieces-framework';
 
 export enum FlowsActionType {
   // Flow Version Modifying Action
@@ -38,11 +39,16 @@ export enum FlowsActionType {
   DISABLE_INSTANCE = '[FLOWS] DISABLE_FLOW',
   ENABLE_INSTANCE = `[FLOWS] ENABLE_FLOW`,
   UPDATE_INSTANCE_STATUS_SUCCESS = `[FLOWS] UPDATE_STATUS_SUCCESS`,
+  NEW_TRIGGER_OR_ACTION_SELECTED = `[FLOWS] NEW_TRIGGER_OR_ACTION_SELECTED`,
 }
 
 const updateTrigger = createAction(
   FlowsActionType.UPDATE_TRIGGER,
   props<{ operation: UpdateTriggerRequest }>()
+);
+const newTriggerOrActionSelected = createAction(
+  FlowsActionType.NEW_TRIGGER_OR_ACTION_SELECTED,
+  props<{ displayName: string; name: string; properties: PiecePropertyMap }>()
 );
 const moveAction = createAction(
   FlowsActionType.MOVE_ACTION,
@@ -158,6 +164,7 @@ export const FlowsActions = {
   enableFlow,
   disableFlow,
   updateStatusSuccess,
+  newTriggerOrActionSelected,
 };
 
 export const SingleFlowModifyingState = [

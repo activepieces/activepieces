@@ -1,0 +1,110 @@
+<div
+  class="ap-flex ap-gap-2 ap-items-center ap-justify-between ap-mb-2"
+  *ngIf="propertyDisplayName"
+>
+  <div class="ap-cursor-pointer" (click)="focusFirstKeyInput()">
+    {{ propertyDisplayName }}
+  </div>
+  <ng-content></ng-content>
+</div>
+<div [formGroup]="form" class="ap-flex ap-flex-col">
+  <ng-container
+    *ngFor="
+      let pair of pairs.controls;
+      let idx = index;
+      let isLast = last;
+      let isFirst = first
+    "
+  >
+    <div
+      class="ap-flex"
+      *ngIf="!(isLast && disabled && idx > 0)"
+      [formGroup]="getPair(idx)"
+    >
+      <div class="delete-btn-container">
+        <ap-icon-button
+          [width]="9"
+          [height]="9"
+          iconFilename="delete.svg"
+          *ngIf="pairs.enabled"
+          [tooltipText]="
+            !deleteButton.isHovered &&
+            !keyInput.isHovered &&
+            !valueInput.isHovered
+              ? ''
+              : 'Remove Item'
+          "
+          class="delete-btn ap-z-40"
+          [class.opacity-0]="
+            !deleteButton.isHovered &&
+            !keyInput.isHovered &&
+            !valueInput.isHovered
+          "
+          apTrackHover
+          #deleteButton="hoverTrackerDirective"
+          (click)="removePair(idx)"
+        ></ap-icon-button>
+      </div>
+
+      <input
+        #key
+        id="key"
+        name="key"
+        class="form-control !ap-leading-[1.9rem] key-control ap-max-w-[50%]"
+        [class.first]="isFirst && pairs.controls.length > 1"
+        [class.last]="isLast && pairs.controls.length > 1"
+        [class.only-one]="pairs.controls.length === 1"
+        formControlName="key"
+        type="text"
+        (keyup)="dictionaryControlValueChanged()"
+        placeholder="Key"
+        apTrackHover
+        #keyInput="hoverTrackerDirective"
+      />
+
+      <div
+        class="form-control value-control ap-max-w-[50%]"
+        [class.first]="isFirst && pairs.controls.length > 1"
+        [class.last]="isLast && pairs.controls.length > 1"
+        [class.only-one]="pairs.controls.length === 1"
+        apTrackHover
+        #interpolatingTextControlContainer
+        #valueInput="hoverTrackerDirective"
+      >
+        <app-interpolating-text-form-control
+          #textControl
+          [insideMatField]="false"
+          formControlName="value"
+          placeholder="Value"
+          (click)="pairs.enabled ? showMenu($event, handler) : null"
+          (editorFocused)="showMenu($event, handler)"
+          [stepMetaDataForMentions]="stepMetaDataForMentions"
+        ></app-interpolating-text-form-control>
+
+        <app-builder-autocomplete-dropdown-handler
+          #handler
+          [container]="interpolatingTextControlContainer"
+          (mentionEmitted)="addMention(textControl, $event)"
+        >
+        </app-builder-autocomplete-dropdown-handler>
+      </div>
+    </div>
+  </ng-container>
+  <div class="ap-flex">
+    <ap-button
+      btnColor="primary"
+      btnStyle="basic"
+      *ngIf="form.enabled"
+      (buttonClicked)="addNewPair()"
+      type="button"
+      class="add-btn"
+      btnSize="medium"
+      i18n
+    >
+      + Add Item
+    </ap-button>
+    <div class="ap-flex-grow" #spacer></div>
+  </div>
+</div>
+
+<ng-container *ngIf="valueChanges$ | async"></ng-container>
