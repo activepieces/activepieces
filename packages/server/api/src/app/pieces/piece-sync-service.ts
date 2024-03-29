@@ -60,12 +60,12 @@ export const pieceSyncService = {
 
 async function syncPiece(name: string): Promise<void> {
     try {
+        logger.info({ name }, 'Syncing piece metadata into database')
         const versions = await getVersions({ name })
         for (const version of Object.keys(versions)) {
             const currentVersionSynced = await existsInDatabase({ name, version })
             if (!currentVersionSynced) {
                 const piece = await getOrThrow({ name, version })
-                logger.info({ name, version }, 'Syncing piece')
                 await pieceMetadataService.create({
                     pieceMetadata: piece,
                     packageType: piece.packageType,
@@ -75,7 +75,7 @@ async function syncPiece(name: string): Promise<void> {
         }
     }
     catch (error) {
-        logger.error({ error }, 'Error syncing piece')
+        logger.error({ error }, 'Error syncing piece, please upgrade the activepieces to latest version')
     }
 
 }
