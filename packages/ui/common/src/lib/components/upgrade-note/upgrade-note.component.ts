@@ -1,4 +1,8 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import {
+  ContactSalesService,
+  FeatureKey,
+} from '../../service/contact-sales.service';
 
 @Component({
   selector: 'ap-upgrade-note',
@@ -11,10 +15,19 @@ export class UpgradeNoteComponent {
   @Input({ required: true }) featureNoteTitle = '';
   @Input({ required: true }) featureNote = '';
   @Input() videoUrl = '';
+  @Input() featureKey: FeatureKey;
+
+  constructor(private contactSalesService: ContactSalesService) {}
+
   openPricing() {
-    window.open(this.pricingUrl, '_blank', 'noopener noreferrer');
+    this.openContactSales();
   }
+
   openDocs() {
     window.open(this.docsLink, '_blank', 'noopener noreferrer');
+  }
+
+  openContactSales(): void {
+    this.contactSalesService.open([this.featureKey]);
   }
 }

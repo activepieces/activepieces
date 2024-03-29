@@ -30,6 +30,8 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { NewConnectionDialogComponent } from './components/dialogs/new-connection-dialog/new-connection-dialog.component';
 import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections';
 import { ActivityTableComponent } from './pages/activity-table/activity-table.component';
+import { ContactSalesComponent } from './components/contact-sales/contact-sales.component';
+import { FormsModule } from '@angular/forms';
 
 @NgModule({
   imports: [
@@ -48,6 +50,7 @@ import { ActivityTableComponent } from './pages/activity-table/activity-table.co
     MatDatepickerModule,
     MatNativeDateModule,
     UiFeatureConnectionsModule,
+    FormsModule,
   ],
   declarations: [
     DashboardContainerComponent,
@@ -65,6 +68,7 @@ import { ActivityTableComponent } from './pages/activity-table/activity-table.co
     RenameFlowDialogComponent,
     NewConnectionDialogComponent,
     ActivityTableComponent,
+    ContactSalesComponent,
   ],
 })
 export class UiFeatureDashboardModule {}

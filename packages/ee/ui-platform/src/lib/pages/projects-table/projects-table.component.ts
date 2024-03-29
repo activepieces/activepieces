@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import { Observable, Subject, startWith, tap } from 'rxjs';
 import { ProjectsDataSource } from './projects-table.datasource';
 import { Project, ProjectWithLimits } from '@activepieces/shared';
@@ -21,6 +21,7 @@ import { ActivatedRoute } from '@angular/router';
 import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
 import { HttpErrorResponse } from '@angular/common/http';
 import { StatusCodes } from 'http-status-codes';
+import { MatSidenav } from '@angular/material/sidenav';
 
 @Component({
   selector: 'app-projects-table',
@@ -28,6 +29,8 @@ import { StatusCodes } from 'http-status-codes';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProjectsTableComponent {
+  @ViewChild('sidenav') sidenav!: MatSidenav;
+
   displayedColumns = [
     'displayName',
     'created',
@@ -138,5 +141,9 @@ export class ProjectsTableComponent {
 
   disableDeleteProject() {
     return this.isDemo || this.dataSource.data.length < 2;
+  }
+
+  toggleSidenav() {
+    this.sidenav.toggle();
   }
 }

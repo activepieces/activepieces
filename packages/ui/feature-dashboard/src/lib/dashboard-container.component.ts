@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import {
   AuthenticationService,
   EmbeddingService,
   showPlatformDashboard$,
+  ContactSalesService,
 } from '@activepieces/ui/common';
 import {
   DashboardService,
@@ -13,6 +14,7 @@ import { Observable, combineLatest, map } from 'rxjs';
 import { ApFlagId, Project } from '@activepieces/shared';
 
 import { Router } from '@angular/router';
+import { MatSidenav } from '@angular/material/sidenav';
 
 @Component({
   templateUrl: './dashboard-container.component.html',
@@ -28,12 +30,17 @@ export class DashboardContainerComponent {
   showPoweredByAp$: Observable<boolean>;
   showPlatform$: Observable<boolean>;
   showAdminConsoleLock$: Observable<boolean>;
+  @ViewChild('contactSalesSlideout') contactSalesSlideout: MatSidenav;
+
+  contactSalesState$: Observable<boolean>;
+
   constructor(
     private flagService: FlagService,
     private embeddedService: EmbeddingService,
     private dashboardService: DashboardService,
     private authenticationService: AuthenticationService,
-    public router: Router
+    public router: Router,
+    private contactSalesService: ContactSalesService
   ) {
     this.showPlatform$ = showPlatformDashboard$(
       this.authenticationService,
@@ -58,6 +65,8 @@ export class DashboardContainerComponent {
     this.showAdminConsoleLock$ = this.flagService.isFlagEnabled(
       ApFlagId.SHOW_PLATFORM_DEMO
     );
+
+    this.contactSalesState$ = this.contactSalesService.contactSalesState$;
   }
 
   navigateToAdminConsole() {
@@ -66,5 +75,9 @@ export class DashboardContainerComponent {
 
   navigateToProjectDashboard() {
     this.router.navigate(['/']);
+  }
+
+  closeContactSalesSlideout() {
+    this.contactSalesService.close();
   }
 }
