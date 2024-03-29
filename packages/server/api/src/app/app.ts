@@ -106,6 +106,7 @@ import { formModule } from './flows/flow/form/form.module'
 import { adminPlatformPieceModule } from './ee/platform/admin-platform.controller'
 import { pieceSyncService } from './pieces/piece-sync-service'
 import { systemJobsSchedule } from './helper/system-jobs'
+import { analyticsModule } from './ee/analytics/analytics-module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -311,6 +312,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(projectBillingModule)
             await app.register(usageTrackerModule)
             await app.register(adminPlatformPieceModule)
+            await app.register(analyticsModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
@@ -343,6 +345,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(auditEventModule)
             await app.register(activityModule)
             await app.register(usageTrackerModule)
+            await app.register(analyticsModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
