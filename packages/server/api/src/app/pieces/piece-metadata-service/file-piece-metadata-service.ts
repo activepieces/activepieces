@@ -12,6 +12,7 @@ import {
     ProjectId,
     extractPieceFromModule,
     isNil,
+    ListVersionsResponse,
 } from '@activepieces/shared'
 import { PieceMetadataService } from './piece-metadata-service'
 import importFresh from 'import-fresh'
@@ -132,7 +133,11 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
             return toPieceMetadataModelSummary(filteredPieces, originalPiecesMetadata, params.suggestionType)
 
         },
-
+        async getVersions(params): Promise<ListVersionsResponse> {
+            const piecesMetadata = await loadPiecesMetadata()
+            const pieceMetadata = piecesMetadata.find((p) => p.name === params.name)
+            return pieceMetadata?.version ? { [pieceMetadata.version]: {} } : {}
+        },
         async getOrThrow({
             name,
             version,

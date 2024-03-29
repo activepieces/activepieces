@@ -51,10 +51,20 @@ export const ListPiecesRequestQuery = Type.Object({
 
 export type ListPiecesRequestQuery = Static<typeof ListPiecesRequestQuery>
 
+export const ListVersionRequestQuery = Type.Object({
+    release: ExactVersionType,
+    name: Type.String(),
+    edition: Type.Optional(Type.Enum(ApEdition)),
+})
+
+export type ListVersionRequestQuery = Static<typeof ListVersionRequestQuery>
 
 export const GetPieceRequestQuery = Type.Object({
     version: Type.Optional(VersionType),
 })
+
+export const ListVersionsResponse = Type.Record(ExactVersionType, Type.Object({}))
+export type ListVersionsResponse = Static<typeof ListVersionsResponse>
 
 export type GetPieceRequestQuery = Static<typeof GetPieceRequestQuery>
 
