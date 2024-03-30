@@ -22,6 +22,7 @@ import { Static, Type } from '@sinclair/typebox'
 
 
 const PiecePackageMetadata = Type.Object({
+    projectUsage: Type.Number(),
     pieceType: Type.Enum(PieceType),
     packageType: Type.Enum(PackageType),
     archiveId: Type.Optional(Type.String()),
@@ -67,6 +68,11 @@ export const PieceMetadataEntity =
           logoUrl: {
               type: String,
               nullable: false,
+          },
+          projectUsage: {
+              type: Number,
+              nullable: false,
+              default: 0,
           },
           description: {
               type: String,

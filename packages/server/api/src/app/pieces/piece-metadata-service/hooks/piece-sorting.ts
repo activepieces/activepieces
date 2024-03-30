@@ -20,6 +20,9 @@ const sortPieces = (
 ): PieceMetadataSchema[] => {
     const sortByDefault = sortBy ?? PieceSortBy.NAME
     switch (sortByDefault) {
+        case PieceSortBy.POPULARITY: {
+            return sortByPopularity(pieces)
+        }
         case PieceSortBy.NAME: {
             return sortByName(pieces)
         }
@@ -40,6 +43,13 @@ const reverseIfDesc = (
     }
     return pieces.reverse()
 }
+
+const sortByPopularity = (pieces: PieceMetadataSchema[]): PieceMetadataSchema[] => {
+    return pieces.sort((a, b) =>
+        a.projectUsage - b.projectUsage,
+    )
+}
+
 
 const sortByName = (pieces: PieceMetadataSchema[]): PieceMetadataSchema[] => {
     return pieces.sort((a, b) =>

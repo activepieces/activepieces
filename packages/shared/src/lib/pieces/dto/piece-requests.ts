@@ -17,6 +17,7 @@ export enum PieceSortBy {
     NAME = 'NAME',
     UPDATED = 'UPDATED',
     CREATED = 'CREATED',
+    POPULARITY = 'POPULARITY',
 }
 
 export enum PieceOrderBy {

@@ -24,8 +24,14 @@ export const FastDbPieceMetadataService = (): PieceMetadataService => {
             const uniquePieces = new Set<string>(originalPieces.map((piece) => piece.name))
             const latestVersionOfEachPiece = Array.from(uniquePieces).map((name) => {
                 const result = originalPieces.find((piece) => piece.name === name)
+                const usageCount = originalPieces.filter((piece) => piece.name === name).reduce((acc, piece) => {
+                    return acc + piece.projectUsage
+                }, 0)
                 assertNotNullOrUndefined(result, 'piece_metadata_not_found')
-                return result
+                return {
+                    ...result,
+                    projectUsage: usageCount,
+                }
             })
             const filteredPieces = await pieceMetadataServiceHooks.get().filterPieces({
                 ...params,
@@ -84,7 +90,11 @@ export const FastDbPieceMetadataService = (): PieceMetadataService => {
                 projectId: projectId ?? undefined,
             })
         },
-
+        async updateUsage({ id, usage }): Promise<void> {
+            await repo().update(id, {
+                projectUsage: usage,
+            })
+        },
         async getExactPieceVersion({ name, version, projectId }): Promise<string> {
             const isExactVersion = EXACT_VERSION_PATTERN.test(version)
 

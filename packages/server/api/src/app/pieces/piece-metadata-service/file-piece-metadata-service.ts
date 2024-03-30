@@ -19,6 +19,7 @@ import importFresh from 'import-fresh'
 import {
     PieceMetadataModel,
     PieceMetadataModelSummary,
+    PieceMetadataSchema,
 } from '../piece-metadata-entity'
 import { pieceMetadataServiceHooks } from './hooks'
 import { nanoid } from 'nanoid'
@@ -108,10 +109,11 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
     return {
         async list(params): Promise<PieceMetadataModelSummary[]> {
             const { projectId } = params
-            const originalPiecesMetadata = (await loadPiecesMetadata()).map((p) => {
+            const originalPiecesMetadata: PieceMetadataSchema[] = (await loadPiecesMetadata()).map((p) => {
                 return {
                     id: nanoid(),
                     ...p,
+                    projectUsage: 0,
                     pieceType: PieceType.OFFICIAL,
                     packageType: PackageType.REGISTRY,
                     created: new Date().toISOString(),
@@ -132,6 +134,9 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
             )
             return toPieceMetadataModelSummary(filteredPieces, originalPiecesMetadata, params.suggestionType)
 
+        },
+        async updateUsage() {
+            throw new Error('Updating pieces is not supported in development mode')
         },
         async getVersions(params): Promise<ListVersionsResponse> {
             const piecesMetadata = await loadPiecesMetadata()
@@ -199,6 +204,7 @@ const toPieceMetadataModel = ({
         logoUrl: pieceMetadata.logoUrl,
         version: pieceMetadata.version,
         auth: pieceMetadata.auth,
+        projectUsage: 0,
         minimumSupportedRelease: pieceMetadata.minimumSupportedRelease,
         maximumSupportedRelease: pieceMetadata.maximumSupportedRelease,
         actions: pieceMetadata.actions,
