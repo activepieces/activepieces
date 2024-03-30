@@ -59,6 +59,11 @@ type CreateParams = {
     archiveId?: string
 }
 
+type UpdateUsage = {
+    id: string
+    usage: number
+}
+
 type GetExactPieceVersionParams = {
     name: string
     version: string
@@ -71,5 +76,6 @@ export type PieceMetadataService = {
     getVersions(params: ListVersionsParams): Promise<ListVersionsResponse>
     create(params: CreateParams): Promise<PieceMetadataModel>
     delete(params: DeleteParams): Promise<void>
+    updateUsage(params: UpdateUsage): Promise<void>
     getExactPieceVersion(params: GetExactPieceVersionParams): Promise<string>
 }
