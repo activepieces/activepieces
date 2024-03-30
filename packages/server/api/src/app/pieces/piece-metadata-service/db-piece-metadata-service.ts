@@ -91,8 +91,13 @@ export const FastDbPieceMetadataService = (): PieceMetadataService => {
             })
         },
         async updateUsage({ id, usage }): Promise<void> {
+            const existingMetadata = await repo().findOneByOrFail({
+                id,
+            })
             await repo().update(id, {
                 projectUsage: usage,
+                updated: existingMetadata.updated,
+                created: existingMetadata.created,
             })
         },
         async getExactPieceVersion({ name, version, projectId }): Promise<string> {
