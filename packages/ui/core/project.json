@@ -7,15 +7,8 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:browser-esbuild",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
-        "plugins": [
-          {
-            "path": "packages/ui/core/esbuild-plugin.js"
-          }
-        ],
         "statsJson": false,
         "outputPath": "dist/packages/ui/core",
         "index": "packages/ui/core/src/index.html",
@@ -59,7 +52,6 @@
           "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.css"
         ],
         "scripts": [
-          "node_modules/monaco-yaml/yaml.worker.js",
           "node_modules/marked/marked.min.js",
           "node_modules/prismjs/prism.js",
           "node_modules/prismjs/plugins/command-line/prism-command-line.js",
@@ -77,7 +69,7 @@
             {
               "type": "initial",
               "maximumWarning": "5mb",
-              "maximumError": "7mb"
+              "maximumError": "5mb"
             },
             {
               "type": "anyComponentStyle",
@@ -100,14 +92,10 @@
           "extractLicenses": false,
           "sourceMap": true,
           "namedChunks": true,
-          "localize": [
-            "en"
-          ]
+          "localize": ["en"]
         },
         "fr": {
-          "localize": [
-            "fr"
-          ]
+          "localize": ["fr"]
         }
       },
       "defaultConfiguration": "production"
@@ -140,19 +128,14 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": [
-        "{options.outputFile}"
-      ]
+      "outputs": ["{options.outputFile}"]
     },
     "test": {
       "executor": "@angular-devkit/build-angular:karma",
       "options": {
         "tsConfig": "packages/ui/core/tsconfig.spec.json",
         "karmaConfig": "packages/ui/core/karma.conf.js",
-        "polyfills": [
-          "zone.js",
-          "zone.js/testing"
-        ],
+        "polyfills": ["zone.js", "zone.js/testing"],
         "styles": [],
         "scripts": [],
         "assets": []

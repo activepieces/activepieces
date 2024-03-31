@@ -119,7 +119,6 @@
     "jimp": "0.22.10",
     "jsdom": "23.0.1",
     "jshint": "2.13.6",
-    "json-to-pretty-yaml": "1.2.2",
     "json2xml": "0.1.3",
     "jsonlint-mod": "1.7.6",
     "jsonrepair": "3.2.0",
@@ -134,7 +133,6 @@
     "mime": "4.0.1",
     "mime-types": "2.1.35",
     "monaco-editor": "0.34.1",
-    "monaco-yaml": "5.1.1",
     "monday-sdk-js": "0.5.2",
     "mustache": "4.2.0",
     "nanoid": "3.3.6",
@@ -191,7 +189,6 @@
     "url": "0.11.3",
     "xml2js": "0.6.2",
     "xmlrpc": "1.3.2",
-    "yaml": "2.4.1",
     "zone.js": "0.14.4"
   },
   "devDependencies": {

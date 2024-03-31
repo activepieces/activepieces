@@ -5,7 +5,10 @@
     max-height: calc(100% - 200px);
 }
 
-
+.bottom-resizer-section {
+    max-height: 200px;
+    min-height: 200px;
+}
 
 .resizer-area {
     height: calc(100% - 245px);

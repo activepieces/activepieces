@@ -48,19 +48,6 @@ export const flowActionsUiInfo = {
   iconSizeTailWind: 'ap-w-[20px] ap-h-[20px]',
 };
 
-export const downloadYaml = (val: string, fileName: string) => {
-  const blob = new Blob([val], {
-    type: 'application/yaml',
-  });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `${fileName}.yaml`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-};
 export const downloadJson = (obj: any, fileName: string) => {
   const blob = new Blob([JSON.stringify(obj, null, 2)], {
     type: 'application/json',
@@ -83,13 +70,6 @@ export const jsonEditorOptionsMonaco = {
   minimap: { enabled: false },
   theme: 'apTheme',
   language: 'json',
-  readOnly: true,
-  automaticLayout: true,
-};
-export const yamlEditorOptionsMonaco = {
-  minimap: { enabled: false },
-  theme: 'apTheme',
-  language: 'yaml',
   readOnly: true,
   automaticLayout: true,
 };

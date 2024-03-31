@@ -1,4 +1,4 @@
-<div class="ap-px-4  ap-py-3 ap-h-full">
+<div class="ap-px-4  ap-py-3">
     <div class="ap-typography-body-1 !ap-font-semibold" i18n>
         Generate Sample Data
     </div>
@@ -51,37 +51,30 @@
 
 
 <ng-template #resultTemplate let-res="res">
-    <div class="ap-flex ap-flex-col ">
-        <div class="ap-flex ap-items-center">
-            <div class="ap-min-h-[48px] ap-gap-2  ap-flex ap-items-center">
-                <svg-icon
-                    [src]="res.success?'assets/img/custom/success-step-result.svg':'assets/img/custom/failure-step-result.svg'"
-                    [svgStyle]="{ width: '21px', height: '20px' }" matTooltip="Step succeeded"></svg-icon>
-                <ng-container *ngIf="res.success; else testingFailed">
-                    <span i18n>Tested Successfully</span>
-                </ng-container>
-                <ng-template #testingFailed>
-                    <span i18n>Testing Failed</span>
-                </ng-template>
-            </div>
-            <div class="ap-flex-grow">
-            </div>
-            <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium"
-                [tooltipText]="(currentStepValidity$ | async) === false ? 'Please fix the step inputs first' :
-                 (isSaving$ | async) === false? 'Test step to generate sample data to use in the next steps' : savingMessage"
-                [disabled]="(currentStepValidity$ | async) === false || (isSaving$ | async) === true"
-                (buttonClicked)="testStep()" i18n>Retest</ap-button>
+    <div class="ap-flex ap-items-center">
+        <div class="ap-min-h-[48px] ap-gap-2  ap-flex ap-items-center">
+            <svg-icon
+                [src]="res.success?'assets/img/custom/success-step-result.svg':'assets/img/custom/failure-step-result.svg'"
+                [svgStyle]="{ width: '21px', height: '20px' }" matTooltip="Step succeeded"></svg-icon>
+            <ng-container *ngIf="res.success; else testingFailed">
+                <span i18n>Tested Successfully</span>
+            </ng-container>
+            <ng-template #testingFailed>
+                <span i18n>Testing Failed</span>
+            </ng-template>
         </div>
-        <div *ngIf="res.date" class="ap-typography-body-2 ap-text-body ap--mt-2 ap-mb-4 ap-pl-0.5">
-            {{ res.date | timeago:true}}
+        <div class="ap-flex-grow">
         </div>
-    
-            <ap-yaml-viewer title="Output" [content]="res.output"></ap-yaml-viewer>
-      
+        <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium"
+            [tooltipText]="(currentStepValidity$ | async) === false ? 'Please fix the step inputs first' :
+             (isSaving$ | async) === false? 'Test step to generate sample data to use in the next steps' : savingMessage"
+            [disabled]="(currentStepValidity$ | async) === false || (isSaving$ | async) === true"
+            (buttonClicked)="testStep()" i18n>Retest</ap-button>
     </div>
-   
-   
-    
+    <div *ngIf="res.date" class="ap-typography-body-2 ap-text-body ap--mt-2 ap-mb-4 ap-pl-0.5">
+        {{ res.date | timeago:true}}
+    </div>
+    <ap-json-viewer class="json-viewer" title="Output" [maxHeight]="400" [content]="res.output"></ap-json-viewer>
 
 </ng-template>
 

@@ -1,0 +1,23 @@
+@import '../../../../../core/src/assets/scss/variables';
+
+.code-container{
+  background: #FFFFFF;
+  box-shadow: inset 0px 0px 0px 1px $dividers;
+  border-radius: 4px;
+}
+
+.code-area{
+  background: $white;
+  border: 1px solid $dividers;
+  box-sizing: border-box;
+  border-radius: 0px 0px 4px 4px;
+}
+
+.code-header{
+  padding: 0.625rem 1rem;
+}
+
+.wrap-text {
+  white-space: pre-wrap;
+  word-wrap: normal;
+}
