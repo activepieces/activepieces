@@ -56,7 +56,7 @@ const parseControlValue = (property: PieceProperty, value: unknown) => {
     case PropertyType.DATE_TIME:
     case PropertyType.FILE:
       return isNil(value)
-        ? ''
+        ? undefined
         : typeof value === 'string'
         ? value
         : JSON.stringify(value);
@@ -77,7 +77,7 @@ const parseControlValue = (property: PieceProperty, value: unknown) => {
     case PropertyType.STATIC_DROPDOWN:
     case PropertyType.MULTI_SELECT_DROPDOWN:
     case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
-      return isNil(value) ? '' : value;
+      return isNil(value) ? undefined : value;
     //json value is returned as either an object or string from the server
     case PropertyType.JSON:
       return isNil(value)
