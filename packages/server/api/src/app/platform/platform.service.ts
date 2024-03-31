@@ -98,8 +98,6 @@ export const platformService = {
             ...spreadIfDefined('smtpPassword', params.smtpPassword),
             ...spreadIfDefined('smtpSenderEmail', params.smtpSenderEmail),
             ...spreadIfDefined('smtpUseSSL', params.smtpUseSSL),
-            ...spreadIfDefined('privacyPolicyUrl', params.privacyPolicyUrl),
-            ...spreadIfDefined('termsOfServiceUrl', params.termsOfServiceUrl),
             ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
             ...spreadIfDefined('defaultLocale', params.defaultLocale),
             ...spreadIfDefined('showPoweredBy', params.showPoweredBy),

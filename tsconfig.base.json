@@ -329,11 +329,11 @@
       "@activepieces/piece-microsoft-onedrive": [
         "packages/pieces/community/microsoft-onedrive/src/index.ts"
       ],
-      "@activepieces/piece-microsoft-teams": [
-        "packages/pieces/community/microsoft-teams/src/index.ts"
-      ],
       "@activepieces/piece-microsoft-sharepoint": [
         "packages/pieces/community/microsoft-sharepoint/src/index.ts"
+      ],
+      "@activepieces/piece-microsoft-teams": [
+        "packages/pieces/community/microsoft-teams/src/index.ts"
       ],
       "@activepieces/piece-mindee": [
         "packages/pieces/community/mindee/src/index.ts"
@@ -352,6 +352,9 @@
       ],
       "@activepieces/piece-nifty": [
         "packages/pieces/community/nifty/src/index.ts"
+      ],
+      "@activepieces/piece-nocodb": [
+        "packages/pieces/community/nocodb/src/index.ts"
       ],
       "@activepieces/piece-notion": [
         "packages/pieces/community/notion/src/index.ts"
@@ -377,6 +380,7 @@
       "@activepieces/piece-pastefy": [
         "packages/pieces/community/pastefy/src/index.ts"
       ],
+      "@activepieces/piece-pdf": ["packages/pieces/community/pdf/src/index.ts"],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/community/pipedrive/src/index.ts"
       ],

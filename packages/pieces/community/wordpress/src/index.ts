@@ -11,9 +11,9 @@ import {
   createPiece,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-import { createWordpressPage } from './lib/actions/create-page.action';
-import { createWordpressPost } from './lib/actions/create-post.action';
-import { getWordpressPost } from './lib/actions/get-post.action';
+import { createWordPressPage } from './lib/actions/create-page.action';
+import { createWordPressPost } from './lib/actions/create-post.action';
+import { getWordPressPost } from './lib/actions/get-post.action';
 import { wordpressCommon } from './lib/common';
 import { wordpressNewPost } from './lib/trigger/new-post.trigger';
 
@@ -21,7 +21,7 @@ const markdownPropertyDescription = `
 **Enable Basic Authentication:**
 
 1. Download the plugin from: https://github.com/WP-API/Basic-Auth (Click on Code -> Download Zip)
-2. Log in to your Wordpress dashboard.
+2. Log in to your WordPress dashboard.
 3. Go to "Plugins" and click "Add New."
 4. Choose "Upload Plugin" and select the downloaded file.
 5. Install and activate the plugin.
@@ -95,7 +95,7 @@ export const wordpressAuth = PieceAuth.CustomAuth({
 });
 
 export const wordpress = createPiece({
-  displayName: 'Wordpress',
+  displayName: 'WordPress',
   description: 'Open-source website creation software',
 
   minimumSupportedRelease: '0.5.0',
@@ -104,9 +104,9 @@ export const wordpress = createPiece({
   auth: wordpressAuth,
   authors: ["pfernandez98","Salem-Alaa","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   actions: [
-    createWordpressPost,
-    createWordpressPage,
-    getWordpressPost,
+    createWordPressPost,
+    createWordPressPage,
+    getWordPressPost,
     createCustomApiCallAction({
       baseUrl: (auth) =>
         (auth as { website_url: string }).website_url.trim() + '/wp-json/wp/v2',

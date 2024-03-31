@@ -6,7 +6,7 @@ import {
   HttpRequest,
 } from '@activepieces/pieces-common';
 import { wordpressAuth } from '../..';
-export type WordpressMedia = { id: string; title: { rendered: string } };
+export type WordPressMedia = { id: string; title: { rendered: string } };
 
 const PAGE_HEADER = 'x-wp-totalpages';
 
@@ -104,7 +104,7 @@ export const wordpressCommon = {
         password: params.password,
       },
     };
-    const response = await httpClient.sendRequest<WordpressMedia[]>(request);
+    const response = await httpClient.sendRequest<WordPressMedia[]>(request);
     return {
       media: response.body,
       totalPages:

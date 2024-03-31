@@ -22,20 +22,24 @@ import { Static, Type } from '@sinclair/typebox'
 
 
 const PiecePackageMetadata = Type.Object({
-    projectId: Type.Optional(Type.String()),
+    projectUsage: Type.Number(),
     pieceType: Type.Enum(PieceType),
     packageType: Type.Enum(PackageType),
     archiveId: Type.Optional(Type.String()),
 })
 type PiecePackageMetadata = Static<typeof PiecePackageMetadata>
 
+export const PieceMetadataModel = Type.Composite([
+    PieceMetadata,
+    PiecePackageMetadata,
+])
 export type PieceMetadataModel = PieceMetadata & PiecePackageMetadata
 
-export const PieceMetadataModelSummary = Type.Union([
+export const PieceMetadataModelSummary = Type.Composite([
     PieceMetadataSummary,
     PiecePackageMetadata,
 ])
-export type PieceMetadataModelSummary = Static<typeof PieceMetadataModelSummary>
+export type PieceMetadataModelSummary = PieceMetadataSummary & PiecePackageMetadata
 
 export type PieceMetadataSchema = BaseModel<ApId> & PieceMetadataModel
 
@@ -64,6 +68,11 @@ export const PieceMetadataEntity =
           logoUrl: {
               type: String,
               nullable: false,
+          },
+          projectUsage: {
+              type: Number,
+              nullable: false,
+              default: 0,
           },
           description: {
               type: String,

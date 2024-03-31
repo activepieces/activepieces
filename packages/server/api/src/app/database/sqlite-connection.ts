@@ -38,6 +38,7 @@ import { AddPlatformForeignKeyToProjectSqlite1709566629593 } from './migration/s
 import { AddAuthorsToPieces1710098009544 } from './migration/sqlite/1710098009544-AddAuthorsToPieces'
 import { AddDeletedToProjectSqlite1710248182409 } from './migration/sqlite/1710248182409-add-deleted-to-project-sqlite'
 import { AddMissingInputUiInfoSqlite1711412511624 } from './migration/sqlite/1711412511624-AddMissingInputUiInfoSqlite'
+import { AddProjectUsageColumnToPieceSqlite1711768479150 } from './migration/sqlite/1711768479150-AddProjectUsageColumnToPieceSqlite'
 
 
 const getSqliteDatabaseFilePath = (): string => {
@@ -94,6 +95,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddAuthorsToPieces1710098009544,
         AddDeletedToProjectSqlite1710248182409,
         AddMissingInputUiInfoSqlite1711412511624,
+        AddProjectUsageColumnToPieceSqlite1711768479150,
     ]
     const edition = getEdition()
     if (edition !== ApEdition.COMMUNITY) {

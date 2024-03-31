@@ -18,10 +18,10 @@ import { Params } from '@angular/router';
 export class ProjectsDataSource extends DataSource<Project> {
   data: Project[] = [];
   isLoading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
+  paginator: ApPaginatorComponent | undefined;
   constructor(
     private projectService: PlatformProjectService,
     private refresh$: Observable<boolean>,
-    private paginator: ApPaginatorComponent,
     private queryParams$: Observable<Params>,
     private isDemo: boolean
   ) {
@@ -49,9 +49,8 @@ export class ProjectsDataSource extends DataSource<Project> {
         })
       ),
       tap((page) => {
-        console.log(page);
         this.data = page.data;
-        this.paginator.setNextAndPrevious(page.next, page.previous);
+        this.paginator!.setNextAndPrevious(page.next, page.previous);
         this.isLoading$.next(false);
       }),
       map((page) => page.data)

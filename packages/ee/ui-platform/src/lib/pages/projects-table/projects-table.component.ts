@@ -1,10 +1,10 @@
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
-  OnInit,
   ViewChild,
 } from '@angular/core';
-import { Observable, Subject, startWith, tap } from 'rxjs';
+import { Observable, Subject, tap } from 'rxjs';
 import { ProjectsDataSource } from './projects-table.datasource';
 import { Project, ProjectWithLimits } from '@activepieces/shared';
 import { MatDialog } from '@angular/material/dialog';
@@ -33,8 +33,8 @@ import { StatusCodes } from 'http-status-codes';
   templateUrl: './projects-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ProjectsTableComponent implements OnInit {
-  @ViewChild(ApPaginatorComponent, { static: true })
+export class ProjectsTableComponent implements AfterViewInit {
+  @ViewChild(ApPaginatorComponent, { static: false })
   paginator!: ApPaginatorComponent;
 
   displayedColumns = [
@@ -65,17 +65,20 @@ export class ProjectsTableComponent implements OnInit {
     private activatedRoute: ActivatedRoute,
     private store: Store,
     private route: ActivatedRoute
-  ) {}
-
-  ngOnInit(): void {
+  ) {
     this.isDemo = this.route.snapshot.data[PLATFORM_DEMO_RESOLVER_KEY];
     this.dataSource = new ProjectsDataSource(
       this.projectsService,
-      this.refreshTable$.asObservable().pipe(startWith(true)),
-      this.paginator,
+      this.refreshTable$.asObservable(),
       this.activatedRoute.queryParams,
       this.isDemo
     );
+  }
+  ngAfterViewInit(): void {
+    if (this.dataSource) {
+      this.dataSource.paginator = this.paginator;
+      this.refreshTable$.next(true);
+    }
   }
 
   createProject() {

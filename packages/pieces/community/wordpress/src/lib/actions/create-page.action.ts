@@ -8,10 +8,10 @@ import {
 } from '@activepieces/pieces-common';
 import { wordpressAuth } from '../..';
 
-export const createWordpressPage = createAction({
+export const createWordPressPage = createAction({
   auth: wordpressAuth,
   name: 'create_page',
-  description: 'Create new page on Wordpress',
+  description: 'Create new page on WordPress',
   displayName: 'Create Page',
   props: {
     title: Property.ShortText({
