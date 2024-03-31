@@ -18,7 +18,7 @@ export const apMonacoTheme = {
       foreground: '#770088',
       token: 'keyword',
     },
-    { token: 'type', foreground: '#b70000' },
+    { token: 'type', foreground: '#000000' },
     {
       foreground: '#0055AA',
       token: 'keyword.operator',
