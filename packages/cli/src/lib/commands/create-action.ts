@@ -1,12 +1,14 @@
 import { writeFile } from 'node:fs/promises';
+import { execSync } from 'node:child_process';
 import chalk from 'chalk';
 import { Command } from 'commander';
 import inquirer from 'inquirer';
 import { displayNameToCamelCase, findPieceSourceDirectory, displayNameToKebabCase } from '../utils/piece-utils';
 import { checkIfFileExists, makeFolderRecursive } from '../utils/files';
 import { join } from 'node:path';
+import { GeneratedAction, generateAction } from '../utils/generate-action';
 
-function createActionTemplate(displayName: string, description: string) {
+function createActionTemplate({ displayName, description, generatedAction }: CreateActionTemplateParams) {
   const camelCase = displayNameToCamelCase(displayName)
   const actionTemplate = `import { createAction, Property } from '@activepieces/pieces-framework';
 
@@ -15,10 +17,8 @@ export const ${camelCase} = createAction({
   name: '${camelCase}',
   displayName: '${displayName}',
   description: '${description}',
-  props: {},
-  async run() {
-    // Action logic here
-  },
+  props: ${generatedAction.props},
+  ${generatedAction.run},
 });
 `;
 
@@ -38,9 +38,17 @@ const checkIfActionExists = async (actionPath: string) => {
     process.exit(1);
   }
 }
-const createAction = async (pieceName: string, displayActionName: string, actionDescription: string) => {
-  const actionTemplate = createActionTemplate(displayActionName, actionDescription)
-  const actionName = displayNameToKebabCase(displayActionName)
+
+const createAction = async ({ pieceName, actionDisplayName, actionDescription, apiEndpoint }: CreateActionParams) => {
+  const generatedAction = await generateAction(apiEndpoint)
+
+  const actionTemplate = createActionTemplate({
+    displayName: actionDisplayName,
+    description: actionDescription,
+    generatedAction
+  })
+
+  const actionName = displayNameToKebabCase(actionDisplayName)
   const path = await findPieceSourceDirectory(pieceName);
   await checkIfPieceExists(pieceName);
   console.log(chalk.blue(`Piece path: ${path}`))
@@ -51,6 +59,7 @@ const createAction = async (pieceName: string, displayActionName: string, action
 
   await makeFolderRecursive(actionsFolder);
   await writeFile(actionPath, actionTemplate);
+  execSync(`nx format --files ${actionPath}`)
   console.log(chalk.yellow('✨'), `Action ${actionPath} created`);
 };
 
@@ -67,16 +76,34 @@ export const createActionCommand = new Command('create')
       },
       {
         type: 'input',
-        name: 'actionName',
+        name: 'actionDisplayName',
         message: 'Enter the action display name',
       },
       {
         type: 'input',
         name: 'actionDescription',
         message: 'Enter the action description',
+      },
+      {
+        type: 'input',
+        name: 'apiEndpoint',
+        message: 'Enter the name of the API endpoint to generate starter code. e.g. Slack API post message endpoint',
       }
     ];
 
-    const answers = await inquirer.prompt(questions);
-    createAction(answers.pieceName, answers.actionName, answers.actionDescription);
+    const answers = await inquirer.prompt(questions)
+    createAction(answers)
   });
+
+type CreateActionParams = {
+  pieceName: string;
+  actionDisplayName: string;
+  actionDescription: string;
+  apiEndpoint: string;
+}
+
+type CreateActionTemplateParams = {
+  displayName: string
+  description: string
+  generatedAction: GeneratedAction
+}

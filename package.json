@@ -50,6 +50,7 @@
     "@fortawesome/angular-fontawesome": "0.12.1",
     "@fortawesome/fontawesome-svg-core": "6.4.2",
     "@fortawesome/free-solid-svg-icons": "6.4.2",
+    "@langchain/openai": "0.0.25",
     "@linear/sdk": "7.0.1",
     "@mailchimp/mailchimp_marketing": "3.0.80",
     "@mailerlite/mailerlite-nodejs": "1.1.0",
@@ -126,7 +127,7 @@
     "jszip": "3.10.1",
     "jwks-rsa": "3.1.0",
     "kl-angular-mentions": "1.2.3",
-    "langchain": "0.0.156",
+    "langchain": "0.0.207",
     "lottie-web": "5.12.2",
     "mailparser": "3.6.7",
     "marked": "4.3.0",
@@ -226,6 +227,7 @@
     "@types/deep-equal": "1.0.1",
     "@types/feedparser": "2.2.5",
     "@types/imap": "0.8.37",
+    "@types/inquirer": "9.0.7",
     "@types/is-base64": "1.1.1",
     "@types/jest": "29.4.4",
     "@types/json2xml": "0.1.1",
@@ -294,6 +296,9 @@
     "webpack": "5.90.1",
     "webpack-cli": "5.1.4",
     "webpack-ignore-dynamic-require": "1.0.0"
+  },
+  "overrides": {
+    "@langchain/core": "0.1.50"
   },
   "nx": {
     "includedScripts": []
