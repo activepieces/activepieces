@@ -46,6 +46,16 @@
             "glob": "**/*",
             "input": "node_modules/monaco-editor",
             "output": "/assets/monaco/"
+          },
+          {
+            "glob": "**/*",
+            "input": "node_modules/monaco-editor",
+            "output": "/assets/monaco-editor/"
+          },
+          {
+            "glob": "**/*",
+            "input": "node_modules/monaco-yaml",
+            "output": "/assets/monaco-yaml/"
           }
         ],
         "styles": [
@@ -59,7 +69,6 @@
           "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.css"
         ],
         "scripts": [
-          "node_modules/monaco-yaml/yaml.worker.js",
           "node_modules/marked/marked.min.js",
           "node_modules/prismjs/prism.js",
           "node_modules/prismjs/plugins/command-line/prism-command-line.js",
@@ -77,7 +86,7 @@
             {
               "type": "initial",
               "maximumWarning": "5mb",
-              "maximumError": "7mb"
+              "maximumError": "15mb"
             },
             {
               "type": "anyComponentStyle",

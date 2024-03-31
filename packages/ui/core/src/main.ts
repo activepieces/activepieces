@@ -22,59 +22,34 @@ import 'prismjs/components/prism-csharp';
 import 'prismjs/components/prism-cpp';
 import 'prismjs/components/prism-python';
 import 'prismjs/components/prism-json';
-
+import * as editorWorkerService from 'monaco-editor/esm/vs/editor/editor.worker';
+import * as stylesWorkerService from 'monaco-editor/esm/vs/language/css/css.worker';
+import * as htmlWorkerService from 'monaco-editor/esm/vs/language/html/html.worker';
+import * as jsonWorkerService from 'monaco-editor/esm/vs/language/json/json.worker';
+import * as tsWorkerService from 'monaco-editor/esm/vs/language/typescript/ts.worker';
+import * as yamlWorkerService from 'monaco-yaml/yaml.worker';
 configureMonacoYaml(monaco, {});
 
 window.MonacoEnvironment = {
   getWorker(moduleId, label) {
     switch (label) {
       case 'editorWorkerService':
-        return new Worker(
-          new URL(
-            '../../../../node_modules/monaco-editor/esm/vs/editor/editor.worker',
-            import.meta.url
-          )
-        );
+        return new Worker(editorWorkerService);
       case 'css':
       case 'less':
       case 'scss':
-        return new Worker(
-          new URL(
-            '../../../../node_modules/monaco-editor/esm/vs/language/css/css.worker',
-            import.meta.url
-          )
-        );
+        return new Worker(stylesWorkerService);
       case 'handlebars':
       case 'html':
       case 'razor':
-        return new Worker(
-          new URL(
-            '../../../../node_modules/monaco-editor/esm/vs/language/html/html.worker',
-            import.meta.url
-          )
-        );
+        return new Worker(htmlWorkerService);
       case 'json':
-        return new Worker(
-          new URL(
-            '../../../../node_modules/monaco-editor/esm/vs/language/json/json.worker',
-            import.meta.url
-          )
-        );
+        return new Worker(jsonWorkerService);
       case 'javascript':
       case 'typescript':
-        return new Worker(
-          new URL(
-            '../../../../node_modules/monaco-editor/esm/vs/language/typescript/ts.worker',
-            import.meta.url
-          )
-        );
+        return new Worker(tsWorkerService);
       case 'yaml':
-        return new Worker(
-          new URL(
-            '../../../../node_modules/monaco-yaml/yaml.worker',
-            import.meta.url
-          )
-        );
+        return new Worker(yamlWorkerService);
       default:
         throw new Error(`Unknown label ${label}`);
     }
