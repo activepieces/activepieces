@@ -1,0 +1,24 @@
+name: Playwright Tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    
+    - name: Install dependencies
+      run: npm install
+
+    - name: Install playwright
+      run: npx playwright install
+
+    - name: Run Playwright tests
+      run: npx nx test-local tests-e2e
