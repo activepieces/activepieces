@@ -67,11 +67,12 @@ const parseControlValue = (property: PieceProperty, value: unknown) => {
       return isNil(value) ? {} : value;
     case PropertyType.CHECKBOX:
       return isNil(value) ? false : value;
+    case PropertyType.MARKDOWN:
+      return undefined;
     case PropertyType.BASIC_AUTH:
     case PropertyType.CUSTOM_AUTH:
     case PropertyType.OAUTH2:
     case PropertyType.SECRET_TEXT:
-    case PropertyType.MARKDOWN:
     case PropertyType.DROPDOWN:
     case PropertyType.STATIC_DROPDOWN:
     case PropertyType.MULTI_SELECT_DROPDOWN:
