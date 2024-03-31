@@ -559,7 +559,7 @@ function buildSchema(props: PiecePropertyMap): TSchema {
         switch (property.type) {
             case PropertyType.MARKDOWN:
                 propsSchema[name] = Type.Optional(
-                    Type.Union([Type.Null(), Type.Undefined(), Type.Never()]),
+                    Type.Union([Type.Null(), Type.Undefined(), Type.Never(), Type.Unknown()]),
                 )
                 break
             case PropertyType.DATE_TIME:
