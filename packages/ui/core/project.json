@@ -7,8 +7,15 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:browser-esbuild",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
+        "plugins": [
+          {
+            "path": "packages/ui/core/esbuild-plugin.js"
+          }
+        ],
         "statsJson": false,
         "outputPath": "dist/packages/ui/core",
         "index": "packages/ui/core/src/index.html",
@@ -42,7 +49,6 @@
           }
         ],
         "styles": [
-          "node_modules/monaco-editor/esm/vs/base/browser/ui/codicons/codicon/codicon.css",
           "./node_modules/codemirror/addon/lint/lint.css",
           "./node_modules/codemirror/lib/codemirror.css",
           "./node_modules/codemirror/theme/lucario.css",
@@ -71,7 +77,7 @@
             {
               "type": "initial",
               "maximumWarning": "5mb",
-              "maximumError": "5mb"
+              "maximumError": "7mb"
             },
             {
               "type": "anyComponentStyle",
@@ -94,10 +100,14 @@
           "extractLicenses": false,
           "sourceMap": true,
           "namedChunks": true,
-          "localize": ["en"]
+          "localize": [
+            "en"
+          ]
         },
         "fr": {
-          "localize": ["fr"]
+          "localize": [
+            "fr"
+          ]
         }
       },
       "defaultConfiguration": "production"
@@ -130,14 +140,19 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "outputs": [
+        "{options.outputFile}"
+      ]
     },
     "test": {
       "executor": "@angular-devkit/build-angular:karma",
       "options": {
         "tsConfig": "packages/ui/core/tsconfig.spec.json",
         "karmaConfig": "packages/ui/core/karma.conf.js",
-        "polyfills": ["zone.js", "zone.js/testing"],
+        "polyfills": [
+          "zone.js",
+          "zone.js/testing"
+        ],
         "styles": [],
         "scripts": [],
         "assets": []
