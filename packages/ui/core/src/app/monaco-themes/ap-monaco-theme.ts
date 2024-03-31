@@ -3,31 +3,32 @@ export const apMonacoTheme = {
   inherit: true,
   rules: [
     {
-      background: 'FFFFFF',
+      background: '#FFFFFF',
       token: '',
     },
     {
-      foreground: 'c41a16',
+      foreground: '#c41a16',
       token: 'string',
     },
     {
-      foreground: '1c00cf',
+      foreground: '#1c00cf',
       token: 'constant.numeric',
     },
     {
-      foreground: '770088',
+      foreground: '#770088',
       token: 'keyword',
     },
+    { token: 'type', foreground: '#b70000' },
     {
       foreground: '#0055AA',
       token: 'keyword.operator',
     },
     {
-      foreground: '770088',
+      foreground: '#770088',
       token: 'constant.language',
     },
     {
-      foreground: '990000',
+      foreground: '#990000',
       token: 'support.class.exception',
     },
     {
@@ -43,11 +44,11 @@ export const apMonacoTheme = {
       token: 'variable.parameter',
     },
     {
-      foreground: '007400',
+      foreground: '#007400',
       token: 'comment',
     },
     {
-      foreground: 'ff0000',
+      foreground: '#ff0000',
       token: 'invalid',
     },
     {
@@ -60,7 +61,7 @@ export const apMonacoTheme = {
       token: 'text source',
     },
     {
-      foreground: '770088',
+      foreground: '#770088',
       token: 'meta.tag',
     },
     {
@@ -73,7 +74,7 @@ export const apMonacoTheme = {
       token: 'support',
     },
     {
-      foreground: '770088',
+      foreground: '#770088',
       token: 'storage',
     },
     {
@@ -86,24 +87,26 @@ export const apMonacoTheme = {
       token: 'entity.name.function.frame',
     },
     {
-      foreground: '333333',
+      foreground: '#333333',
       token: 'meta.tag.preprocessor.xml',
     },
     {
-      foreground: '994500',
+      foreground: '#994500',
       fontStyle: 'italic',
       token: 'entity.other.attribute-name',
     },
     {
-      foreground: '881280',
+      foreground: '#881280',
       token: 'entity.name.tag',
     },
     {
       foreground: '881280',
       token: 'entity.name.tag',
     },
-    { token: 'string.key.json', foreground: 'C08B30' },
-    { token: 'string.value.json', foreground: '22A2C9' },
+    { token: 'string.key.json', foreground: '#C08B30' },
+    { token: 'string.value.json', foreground: '#22A2C9' },
+    { token: 'string.key.yaml', foreground: '#22A209' },
+    { token: 'string.value.yam', foreground: '#C08B30' },
   ],
   colors: {
     'editor.foreground': '#0055AA',
