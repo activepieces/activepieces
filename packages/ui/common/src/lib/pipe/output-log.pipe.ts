@@ -28,7 +28,6 @@ export function outputLog(value: any, truncate = true): string {
         : result;
   }
   const escaped = escapeHtmlTags(result);
-  console.log(escaped);
   return escaped;
 }
 
