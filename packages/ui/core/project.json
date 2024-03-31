@@ -42,6 +42,7 @@
           }
         ],
         "styles": [
+          "node_modules/monaco-editor/esm/vs/base/browser/ui/codicons/codicon/codicon.css",
           "./node_modules/codemirror/addon/lint/lint.css",
           "./node_modules/codemirror/lib/codemirror.css",
           "./node_modules/codemirror/theme/lucario.css",
@@ -52,6 +53,7 @@
           "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.css"
         ],
         "scripts": [
+          "node_modules/monaco-yaml/yaml.worker.js",
           "node_modules/marked/marked.min.js",
           "node_modules/prismjs/prism.js",
           "node_modules/prismjs/plugins/command-line/prism-command-line.js",
