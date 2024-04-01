@@ -1,4 +1,3 @@
-@import '../../../../../core/src/assets/scss/horizontal-sidebar-separator.scss';
 
 .loading-icon {
   position: absolute;
@@ -16,6 +15,30 @@
 
 
 .run-details-body {
-  height: calc(100% - $sideBarTitleSize);
+  height: calc(100% - 60px);
   position: relative;
+}
+
+
+
+
+.top-resizer-section {
+  min-height: 55px;
+  height: calc(50% - 29px);
+  max-height: calc(100% - 150px);
+}
+
+.bottom-resizer-section {
+  margin-top: 10px;
+  min-height: 190px;
+  max-height: calc(50% + 11px);
+  height: calc(100% - 100px);
+}
+
+.resizer-area {
+  position: absolute;
+  height: calc(100% - 252px);
+  top: 52px;
+  width: 100%;
+  pointer-events: none;
 }
