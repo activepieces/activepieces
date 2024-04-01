@@ -26,4 +26,5 @@ export * from './lib/pipe/comma-seperated.pipe';
 export * from './lib/utils/consts';
 export * from './lib/components/is-feature-enabled-base/is-feature-enabled-base.component';
 export * from './lib/models/mention-list-item';
+export * from './lib/service/contact-sales.service';
 export * from './lib/components/control-description/control-description.component';

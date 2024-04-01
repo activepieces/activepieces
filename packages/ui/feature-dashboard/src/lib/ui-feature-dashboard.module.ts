@@ -28,6 +28,8 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { NewConnectionDialogComponent } from './components/dialogs/new-connection-dialog/new-connection-dialog.component';
 import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections';
 import { ActivityTableComponent } from './pages/activity-table/activity-table.component';
+import { ContactSalesComponent } from './components/contact-sales/contact-sales.component';
+import { FormsModule } from '@angular/forms';
 import {
   PushFlowToGitButtonComponent,
   SyncProjectComponent,
@@ -50,6 +52,7 @@ import {
     MatDatepickerModule,
     MatNativeDateModule,
     UiFeatureConnectionsModule,
+    FormsModule,
     SyncProjectComponent,
   ],
   declarations: [
@@ -67,6 +70,7 @@ import {
     RenameFlowDialogComponent,
     NewConnectionDialogComponent,
     ActivityTableComponent,
+    ContactSalesComponent,
   ],
 })
 export class UiFeatureDashboardModule {}

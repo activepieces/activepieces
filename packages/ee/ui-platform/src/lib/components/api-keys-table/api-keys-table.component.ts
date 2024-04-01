@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Observable, Subject, tap, startWith } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
+
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
@@ -26,8 +27,8 @@ export class ApiKeysTableComponent
   refresh$: Subject<boolean> = new Subject();
   dialogClosed$?: Observable<unknown>;
   featureDisabledTooltip = featureDisabledTooltip;
-  upgradeNoteTitle = $localize`Access Full API`;
-  upgradeNote = $localize`Manage your automation orchestration programatically using our simple REST API`;
+  upgradeNoteTitle = $localize`Enable API Access`;
+  upgradeNote = $localize`Create and manage API keys to access Activepieces APIs.`;
   constructor(
     private matDialog: MatDialog,
     private apiKeysService: ApiKeysService
