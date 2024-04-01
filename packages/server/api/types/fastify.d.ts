@@ -16,6 +16,7 @@ declare module 'fastify' {
     export interface FastifyContextConfig {
         allowedPrincipals?: PrincipalType[]
         rawBody?: boolean
+        skipAuth?: boolean
         scope?: EndpointScope
         permission?: Permission
     }
