@@ -71,12 +71,13 @@ export class ImportFlowDialogComponent {
           projectId: this.data.projectId,
         }).pipe(
           switchMap((flow) => this.importFlow(flow.id, template, false)),
-          catchError((err) => {            
+          catchError((err) => {
+            console.error(err);
             this.snackBar.open($localize`The uploaded template is invalid`);
-            this.loading = false;            
+            this.loading = false;
             return of(void 0);
-          })          
-          );
+          })
+        );
       }
       this.cd.markForCheck();
     };
