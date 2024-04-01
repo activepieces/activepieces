@@ -24,6 +24,10 @@ const AUTHZ_HANDLERS = [
 export const securityHandlerChain = async (
     request: FastifyRequest,
 ): Promise<void> => {
+    const skipAuth = request.routeConfig.skipAuth
+    if (skipAuth) {
+        return
+    }
     await executeAuthnHandlers(request)
     await executeAuthzHandlers(request)
 }
@@ -35,7 +39,6 @@ export const securityHandlerChain = async (
 const executeAuthnHandlers = async (request: FastifyRequest): Promise<void> => {
     for (const handler of AUTHN_HANDLERS) {
         await handler.handle(request)
-
         const principalPopulated = checkWhetherPrincipalIsPopulated(request)
         if (principalPopulated) {
             return

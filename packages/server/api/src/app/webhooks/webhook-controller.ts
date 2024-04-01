@@ -27,6 +27,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
         {
             config: {
                 allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                skipAuth: true,
             },
             schema: {
                 params: WebhookUrlParams,
@@ -68,6 +69,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
         {
             config: {
                 allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                skipAuth: true,
             },
             schema: {
                 params: WebhookUrlParams,
@@ -90,6 +92,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
         {
             config: {
                 allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                skipAuth: true,
             },
             schema: {
                 querystring: WebhookUrlParams,
@@ -115,6 +118,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
         {
             config: {
                 allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                skipAuth: true,
             },
             schema: {
                 params: WebhookUrlParams,
