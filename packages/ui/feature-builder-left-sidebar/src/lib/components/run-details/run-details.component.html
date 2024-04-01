@@ -6,7 +6,9 @@
     <ng-container *ngIf="logs.runResults.length> 0; else loading">
       <div class="run-details-body">
         <div class="resizer-area" #resizerArea>
-          <ap-horizontal-sidebar-separator [resizerArea]="resizerArea" (resizerDragged)="
+          <ap-horizontal-sidebar-separator 
+          topStyle="calc(50% + 48px)"
+          [resizerArea]="resizerArea" (resizerDragged)="
                 resizerDragged(
                   $event
                 )
