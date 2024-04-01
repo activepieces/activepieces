@@ -910,6 +910,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "shravankshenoy",
+      "name": "ShravanShenoy",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29670290?v=4",
+      "profile": "https://github.com/shravankshenoy",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"
