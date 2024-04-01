@@ -84,6 +84,7 @@ ngx-monaco-editor {
   overflow: visible;
   .editor-container
   {
+    height: 100% !important;
     border-bottom-right-radius: 5px;
     border-bottom-left-radius: 5px;
     overflow: hidden;
@@ -100,7 +101,6 @@ ngx-monaco-editor {
 }
 
 .bar-containing-beautify-button {
-  background-color: #193549;
   border-top-left-radius: 5px;
   border-top-right-radius: 5px;
   margin-bottom: -3px;

@@ -27,13 +27,11 @@ import { IsJsonControllerDisabledPipe } from '../../pipes/is-json-control-disabl
       apTrackHover
       (click)="$event.stopImmediatePropagation()"
     >
-      <div class="ap-py-2 ap-px-4 ap-flex bar-containing-beautify-button">
-        <div class="ap-flex-grow">
-          <span class="ap-text-white ap-flex ap-gap-2 ap-items-center">
-            {{ property.displayName }}
-          </span>
-        </div>
-        <div>
+      <div class="ap-rounded-lg ap-border ap-border-solid ap-border-dividers">
+        <div
+          class="ap-px-4 ap-py-3 ap-items-center ap-justify-between ap-flex ap-border-solid ap-border-b ap-border-dividers"
+        >
+          {{ property.displayName }}
           <svg-icon
             src="/assets/img/custom/beautify.svg"
             [svgStyle]="{ width: '16px', height: '16px' }"
@@ -43,15 +41,16 @@ import { IsJsonControllerDisabledPipe } from '../../pipes/is-json-control-disabl
           >
           </svg-icon>
         </div>
-      </div>
-      <div class="ap-h-[300px]">
-        <ngx-monaco-editor
-          (onInit)="onInit($event)"
-          class="!ap-h-full !ap-w-full"
-          (click)="handler.showMentionsDropdown()"
-          [options]="passedFormControl | isJsonControlDisabled"
-          [formControl]="passedFormControl"
-        ></ngx-monaco-editor>
+
+        <div class="ap-h-[300px]">
+          <ngx-monaco-editor
+            (onInit)="onInit($event)"
+            class="!ap-h-full !ap-w-full"
+            (click)="handler.showMentionsDropdown()"
+            [options]="passedFormControl | isJsonControlDisabled"
+            [formControl]="passedFormControl"
+          ></ngx-monaco-editor>
+        </div>
       </div>
 
       <app-builder-autocomplete-dropdown-handler
