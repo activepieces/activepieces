@@ -52,7 +52,8 @@ export const FastDbPieceMetadataService = (): PieceMetadataService => {
 
             const originalPieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({ projectId, platformId, release: undefined })
             const piece = originalPieces.find((piece) => {
-                return piece.name === name && (isNil(versionToSearch) || semVer.compare(piece.version, versionToSearch) <= 0)
+                const strictyLessThan = (isNil(versionToSearch) || semVer.compare(piece.version, versionToSearch) < 0)
+                return piece.name === name && strictyLessThan
             })
             if (isNil(piece)) {
                 throw new ActivepiecesError({
