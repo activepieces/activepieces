@@ -1,25 +1,23 @@
 @import 'variables.scss';
 
-$sideBarTitleSize: 72px;
-$minHeightOfSections: 55px;
-.top-resizer-section {
-  min-height: $minHeightOfSections;
-  height: calc(50% - 29px);
-  max-height: calc(100% - $minHeightOfSections);
 
+.top-resizer-section {
+  min-height: 305px;
+  height: calc(50% - 29px);
+  max-height: calc(100% - 150px);
 }
 
 .bottom-resizer-section {
   margin-top: 10px;
-  min-height: $minHeightOfSections;
+  min-height: 190px;
   max-height: calc(50% + 11px);
   height: calc(100% - 100px);
 }
 
 .resizer-area {
   position: absolute;
-  height: calc(100% - 110px);
-  top: $minHeightOfSections;
+  height: calc(100% - 485px);
+  top: 300px;
   width: 100%;
   pointer-events: none;
 }
