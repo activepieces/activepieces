@@ -1,13 +1,5 @@
 import { DataSource } from '@angular/cdk/collections';
-import {
-  Observable,
-  BehaviorSubject,
-  tap,
-  switchMap,
-  map,
-  of,
-  delay,
-} from 'rxjs';
+import { Observable, BehaviorSubject, tap, switchMap, map } from 'rxjs';
 import { combineLatest } from 'rxjs';
 import { AuditEventService } from '../../service/audit-event-service';
 import { ApplicationEvent } from '@activepieces/ee-shared';
@@ -30,7 +22,6 @@ export class AuditEventDataSource extends DataSource<ApplicationEvent> {
     private refresh$: Observable<boolean>,
     private auditEventService: AuditEventService,
     private paginator: ApPaginatorComponent,
-    private isEnabled$: Observable<boolean>,
     private queryParams$: Observable<Params>
   ) {
     super();
@@ -43,22 +34,11 @@ export class AuditEventDataSource extends DataSource<ApplicationEvent> {
    */
 
   connect(): Observable<ApplicationEvent[]> {
-    return combineLatest([
-      this.refresh$,
-      this.isEnabled$,
-      this.queryParams$,
-    ]).pipe(
+    return combineLatest([this.refresh$, this.queryParams$]).pipe(
       tap(() => {
         this.isLoading$.next(true);
       }),
-      switchMap(([_refresh, isEnabled, queryParams]) => {
-        if (!isEnabled) {
-          return of({
-            data: [],
-            next: null,
-            previous: null,
-          }).pipe(delay(100));
-        }
+      switchMap(([_refresh, queryParams]) => {
         return this.auditEventService.list({
           cursor: queryParams[CURSOR_QUERY_PARAM] ?? null,
           limit: queryParams[LIMIT_QUERY_PARAM] ?? 10,
