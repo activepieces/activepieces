@@ -5,7 +5,6 @@ import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpClientModule } from '@angular/common/http';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { FormsModule } from '@angular/forms';
 import {
   ProjectEffects,
   UiCommonModule,
@@ -105,7 +104,6 @@ export function playerFactory() {
     LottieCacheModule.forRoot(),
     EeComponentsModule,
     MonacoEditorModule.forRoot(monacoConfig),
-    FormsModule,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   exports: [],

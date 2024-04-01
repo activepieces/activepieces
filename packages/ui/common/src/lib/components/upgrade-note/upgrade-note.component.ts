@@ -12,7 +12,6 @@ import { fadeIn400ms } from '../../animation/fade-in.animations';
   animations: [fadeIn400ms],
 })
 export class UpgradeNoteComponent {
-  @Input() pricingUrl = 'https://www.activepieces.com/sales';
   @Input() docsLink = '';
   @Input({ required: true }) featureNoteTitle = '';
   @Input({ required: true }) featureNote = '';
@@ -22,9 +21,6 @@ export class UpgradeNoteComponent {
   constructor(private contactSalesService: ContactSalesService) {}
 
   @Input() insideTab = false;
-  openPricing() {
-    this.openContactSales();
-  }
 
   openDocs() {
     window.open(this.docsLink, '_blank', 'noopener noreferrer');

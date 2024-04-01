@@ -1,20 +1,25 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Output,
+} from '@angular/core';
 import {
   AuthenticationService,
   ContactSalesService,
 } from '@activepieces/ui/common';
-import { Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { tap, map, catchError } from 'rxjs/operators';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-contact-sales',
   templateUrl: './contact-sales.component.html',
-  styleUrl: './contact-sales.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ContactSalesComponent {
   sendRequest$: Observable<void> | undefined;
-  isPending = false;
+  pending$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
   @Output() cancel = new EventEmitter<void>();
 
@@ -33,11 +38,11 @@ export class ContactSalesComponent {
   }
 
   submitForm() {
-    if (!this.isPending) {
-      this.isPending = true;
+    if (!this.pending$.value) {
+      this.pending$.next(true);
       this.sendRequest$ = this.contactSalesService.sendRequest().pipe(
         tap((response) => {
-          this.isPending = false;
+          this.pending$.next(false);
           if (!response.status || response.status === 'success') {
             this.snackbar.open(
               "We'll get in touch soon! Your request has been sent.",
@@ -59,7 +64,7 @@ export class ContactSalesComponent {
         }),
         map(() => void 0),
         catchError(() => {
-          this.isPending = false;
+          this.pending$.next(false);
           this.snackbar.open(
             'Failed to send request due to a network or server error.',
             '',

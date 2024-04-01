@@ -10,7 +10,6 @@ import {
 import { HttpClient } from '@angular/common/http';
 import { FlagService } from './flag.service';
 import { AuthenticationService } from './authentication.service';
-import { ApFlagId } from '@activepieces/shared';
 
 export type FeatureKey =
   | 'PROJECTS'
@@ -104,16 +103,9 @@ export class ContactSalesService {
     return this.flagService.getAllFlags().pipe(
       take(1),
       switchMap((flags) => {
-        const requestData = { ...this._contactData.value };
-
-        // IMPORTANT: remove the !
-        if (!flags[ApFlagId.TELEMETRY_ENABLED]) {
-          requestData.flags = flags;
-        }
-
         return this.http.post<{ status: string; message?: string }>(
           'https://sales.activepieces.com/submit-inapp-contact-form',
-          requestData
+          { ...this._contactData.value, flags }
         );
       })
     );
