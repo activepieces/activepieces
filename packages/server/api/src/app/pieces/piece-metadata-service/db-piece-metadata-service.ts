@@ -52,7 +52,7 @@ export const FastDbPieceMetadataService = (): PieceMetadataService => {
 
             const originalPieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({ projectId, platformId, release: undefined })
             const piece = originalPieces.find((piece) => {
-                const strictyLessThan = (isNil(versionToSearch) || semVer.compare(piece.version, versionToSearch) < 0)
+                const strictyLessThan = (isNil(versionToSearch) || semVer.compare(piece.version, versionToSearch) <= 0)
                 return piece.name === name && strictyLessThan
             })
             if (isNil(piece)) {
@@ -178,8 +178,20 @@ const findNextExcludedVersion = (version: string | undefined): string | undefine
     if (version?.startsWith('~')) {
         return increaseMinorVersion(version.substring(1))
     }
-    return version
+    if (isNil(version)) {
+        return undefined
+    }
+    return increasePatchVersion(version)
 }
+
+const increasePatchVersion = (version: string): string => {
+    const incrementedVersion = semVer.inc(version, 'patch')
+    if (isNil(incrementedVersion)) {
+        throw new Error(`Failed to increase patch version ${version}`)
+    }
+    return incrementedVersion
+}
+
 
 const increaseMinorVersion = (version: string): string => {
     const incrementedVersion = semVer.inc(version, 'minor')

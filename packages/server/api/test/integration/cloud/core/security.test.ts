@@ -55,6 +55,7 @@ describe('API Security', () => {
 
                 // assert
                 await expect(result).resolves.toBeUndefined()
+                expect(mockRequest.principal.type).toEqual(PrincipalType.UNKNOWN)
             }
         })
 
