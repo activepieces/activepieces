@@ -6,6 +6,7 @@ import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowService } from '../../flows/flow/flow.service'
 import { ProjectMappingState } from './project-diff/project-mapping-state'
 import { ProjectSyncError } from '@activepieces/ee-shared'
+import { GitFile } from './project-diff/project-diff.service'
 
 
 async function getStateFromDB(projectId: string): Promise<PopulatedFlow[]> {
@@ -27,7 +28,7 @@ async function getMappingStateFromGit(
     stateFolderPath: string,
     projectId: string,
 ): Promise<ProjectMappingState> {
-    const _statePath = path.join(stateFolderPath, projectId + '.json')    
+    const _statePath = path.join(stateFolderPath, projectId + '.json')
     try {
         const state = await fs.readFile(_statePath, 'utf-8')
         return new ProjectMappingState(JSON.parse(state))
@@ -37,14 +38,18 @@ async function getMappingStateFromGit(
     }
 }
 
-async function getStateFromGit(flowPath: string): Promise<PopulatedFlow[]> {
+async function getStateFromGit(flowPath: string): Promise<GitFile[]> {
     const flowFiles = await fs.readdir(flowPath)
-    const parsedFlows = []
+    const parsedFlows: GitFile[] = []
     for (const file of flowFiles) {
+        // Extract base file name
         const flow: PopulatedFlow = JSON.parse(
             await fs.readFile(path.join(flowPath, file), 'utf-8'),
         )
-        parsedFlows.push(flow)
+        parsedFlows.push({
+            flow,
+            baseFilename: path.basename(file, '.json'),
+        })
     }
     return parsedFlows
 }
@@ -80,7 +85,7 @@ async function updateFlowInProject(targetFlowId: string, flow: PopulatedFlow,
     })
 }
 
-async function republishFlow(flowId: string, projectId: string): Promise<ProjectSyncError |  null> {
+async function republishFlow(flowId: string, projectId: string): Promise<ProjectSyncError | null> {
     const project = await projectService.getOneOrThrow(projectId)
     const flow = await flowService.getOnePopulated({ id: flowId, projectId })
     if (!flow) {
@@ -113,8 +118,8 @@ async function republishFlow(flowId: string, projectId: string): Promise<Project
     }
 
 }
-async function upsertFlowToGit(flow: Flow, flowFolderPath: string): Promise<void> {
-    const flowJsonPath = path.join(flowFolderPath, `${flow.id}.json`)
+async function upsertFlowToGit(fileName: string, flow: Flow, flowFolderPath: string): Promise<void> {
+    const flowJsonPath = path.join(flowFolderPath, `${fileName}.json`)
     await fs.writeFile(flowJsonPath, JSON.stringify(flow, null, 2))
 }
 

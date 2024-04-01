@@ -1,26 +1,38 @@
 <ap-upgrade-note [featureNoteTitle]="upgradeNoteTitle" [featureNote]="upgradeNote"
 videoUrl="https://cdn.activepieces.com/videos/showcase/pieces.mp4" *ngIf="isDemo" featureKey="PIECES"></ap-upgrade-note>
 
+
 <div *ngIf="!isDemo">
     <ap-page-title [title]="title">
-        <ap-button [disabled]="isDemo" [tooltipText]="isDemo? featDisabledTooltipText: ''" actionButton btnColor="primary"
-            btnSize='medium' (click)="installPiece()" i18n>
+        <ap-button [disabled]="isDemo" [tooltipText]="isDemo? featDisabledTooltipText: ''" actionButton
+            btnColor="primary" btnSize='medium' (click)="installPiece()" i18n>
             + Add Piece
         </ap-button>
     </ap-page-title>
 
-    <div class="ap-mb-4  ap-flex ap-items-center ap-gap-2 ap-justify-between">
+    <div class="ap-mb-4 ap-flex ap-items-center ap-gap-2 ap-justify-between">
 
         <mat-form-field (click)="$event.stopPropagation();" appearance="outline" subscriptSizing="dynamic">
             <mat-icon class="ap-ml-2.5" matPrefix svgIcon="search"></mat-icon>
             <input [formControl]="searchFormControl" id="searchInput" matInput placeholder="Search" autocomplete="off">
         </mat-form-field>
 
+        <div class="ap-flex-grow">
+
+        </div>
         <mat-slide-toggle color="primary" [formControl]="cloudAuthToggleFormControl" i18n i18n-matTooltip
             labelPosition="before"
             matTooltip="For pieces that use OAuth2 and don't have your own app credentials assigned to them, they will use Activepieces' apps">
             Use Activepieces' OAuth2 apps for pieces that aren't configured
         </mat-slide-toggle>
+        @if(showSync$ | async){
+        <ap-icon-button actionButton [tooltipText]="syncPiecesTooltipText"
+            [buttonDisabled]="syncPiecesLoading$ | async | defaultFalse" iconFilename="sync.svg" color="primary"
+            (buttonClicked)="sync()"  [width]="28" [height]="28" i18n>
+            Sync Pieces
+        </ap-icon-button>
+        }
+
     </div>
 
 
@@ -97,7 +109,8 @@ videoUrl="https://cdn.activepieces.com/videos/showcase/pieces.mp4" *ngIf="isDemo
 
                         <ap-icon-button *ngIf="piece.oauth2AppCredentialsId  && piece.auth?.type === OAUTH2 "
                             [buttonDisabled]="true" [tooltipText]="updatePieceCredentialsTooltip"
-                            iconFilename="piece_credentials.svg" [width]="20" [height]="20" extraClasses="ap-fill-primary">
+                            iconFilename="piece_credentials.svg" [width]="20" [height]="20"
+                            extraClasses="ap-fill-primary">
                         </ap-icon-button>
 
                         <ap-icon-button *ngIf="piece.auth?.type === OAUTH2 && !piece.oauth2AppCredentialsId "
@@ -115,7 +128,8 @@ videoUrl="https://cdn.activepieces.com/videos/showcase/pieces.mp4" *ngIf="isDemo
             </ng-container>
 
             <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-            <tr mat-row [class.ap-hidden]="dataSource.isLoading$ | async" *matRowDef="let row; columns: displayedColumns">
+            <tr mat-row [class.ap-hidden]="dataSource.isLoading$ | async"
+                *matRowDef="let row; columns: displayedColumns">
             </tr>
         </table>
         <ng-container *ngIf="(dataSource.isLoading$ | async) === true">
@@ -138,4 +152,5 @@ videoUrl="https://cdn.activepieces.com/videos/showcase/pieces.mp4" *ngIf="isDemo
     <ng-container *ngIf="toggelCloudOAuth2$ | async"> </ng-container>
     <ng-container *ngIf="dialogClosed$ | async"></ng-container>
     <ng-container *ngIf="addPackageDialogClosed$ | async"></ng-container>
+    <ng-container *ngIf="syncPieces$ | async"></ng-container>
 </div>

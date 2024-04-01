@@ -7,8 +7,15 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:browser-esbuild",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
+        "plugins": [
+          {
+            "path": "packages/ui/core/esbuild-plugin.js"
+          }
+        ],
         "statsJson": false,
         "outputPath": "dist/packages/ui/core",
         "index": "packages/ui/core/src/index.html",
@@ -39,6 +46,16 @@
             "glob": "**/*",
             "input": "node_modules/monaco-editor",
             "output": "/assets/monaco/"
+          },
+          {
+            "glob": "**/*",
+            "input": "node_modules/monaco-editor",
+            "output": "/assets/monaco-editor/"
+          },
+          {
+            "glob": "**/*",
+            "input": "node_modules/monaco-yaml",
+            "output": "/assets/monaco-yaml/"
           }
         ],
         "styles": [
@@ -69,7 +86,7 @@
             {
               "type": "initial",
               "maximumWarning": "5mb",
-              "maximumError": "5mb"
+              "maximumError": "15mb"
             },
             {
               "type": "anyComponentStyle",
@@ -92,10 +109,14 @@
           "extractLicenses": false,
           "sourceMap": true,
           "namedChunks": true,
-          "localize": ["en"]
+          "localize": [
+            "en"
+          ]
         },
         "fr": {
-          "localize": ["fr"]
+          "localize": [
+            "fr"
+          ]
         }
       },
       "defaultConfiguration": "production"
@@ -128,14 +149,19 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "outputs": [
+        "{options.outputFile}"
+      ]
     },
     "test": {
       "executor": "@angular-devkit/build-angular:karma",
       "options": {
         "tsConfig": "packages/ui/core/tsconfig.spec.json",
         "karmaConfig": "packages/ui/core/karma.conf.js",
-        "polyfills": ["zone.js", "zone.js/testing"],
+        "polyfills": [
+          "zone.js",
+          "zone.js/testing"
+        ],
         "styles": [],
         "scripts": [],
         "assets": []

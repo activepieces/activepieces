@@ -23,6 +23,7 @@ export const GitRepoEntity = new EntitySchema<GitRepoSchema>({
         branchType: {
             type: String,
             nullable: false,
+            default: 'DEVELOPMENT',
         },
         sshPrivateKey: {
             type: String,

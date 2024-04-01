@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { mysqlCommon, mysqlConnect, isSpecialColumn } from '../common';
+import { mysqlCommon, mysqlConnect, sanitizeColumnName, warningMarkdown } from '../common';
 import { mysqlAuth } from '../..';
 
 export default createAction({
@@ -8,6 +8,7 @@ export default createAction({
   displayName: 'Find Rows',
   description: 'Reads rows from a table',
   props: {
+    markdown: warningMarkdown,
     timezone: mysqlCommon.timezone,
     table: mysqlCommon.table(),
     condition: Property.ShortText({
@@ -29,17 +30,13 @@ export default createAction({
   async run(context) {
     const columns = (context.propsValue.columns as string[]) || ['*'];
     const qsColumns = columns
-      .map((c) => (isSpecialColumn(c) ? c : '`' + c + '`'))
+      .map((c) => sanitizeColumnName(c))
       .join(',');
-    const qs =
-      'SELECT ' +
-      qsColumns +
-      ' FROM `' +
-      context.propsValue.table +
-      '` WHERE ' +
-      context.propsValue.condition +
-      ';';
+
+    const qs = `SELECT ${qsColumns} FROM \`${sanitizeColumnName(context.propsValue.table)}\` WHERE ${context.propsValue.condition};`;
+
     const conn = await mysqlConnect(context.auth, context.propsValue);
+
     try {
       const results = await conn.query(qs, context.propsValue.args);
       return { results };

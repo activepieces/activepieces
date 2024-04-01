@@ -298,6 +298,7 @@ export const createMockPieceMetadata = (
 ): Omit<PieceMetadataSchema, 'project'> => {
     return {
         id: pieceMetadata?.id ?? apId(),
+        projectUsage: 0,
         created: pieceMetadata?.created ?? faker.date.recent().toISOString(),
         updated: pieceMetadata?.updated ?? faker.date.recent().toISOString(),
         name: pieceMetadata?.name ?? faker.lorem.word(),

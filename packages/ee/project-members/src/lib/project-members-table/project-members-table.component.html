@@ -5,7 +5,7 @@
       <ap-upgrade-note [featureNoteTitle]="upgradeNoteTitle" [featureNote]="upgradeNote" ></ap-upgrade-note>
     </div>
   }
-  @else {
+  @else if(dataSource) {
     <div class="ap-h-full">
       <ap-page-title [title]="title"></ap-page-title>
     
@@ -62,11 +62,11 @@
           </div>
         </ng-container>
       </div>
-      <div class="ap-flex ap-justify-end ap-py-2">
-        <ap-paginator> </ap-paginator>
-      </div>
     </div>
   }
+  <div class="ap-flex ap-justify-end ap-py-2" [class.ap-hidden]="!isFeatureEnabled">
+    <ap-paginator> </ap-paginator>
+  </div>
  
  
 </div>

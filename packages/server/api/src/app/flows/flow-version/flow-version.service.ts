@@ -294,9 +294,9 @@ async function removeSecretsFromFlow(
     )
     const steps = flowHelper.getAllSteps(flowVersionWithArtifacts.trigger)
     for (const step of steps) {
-    /*
-        Remove Sample Data & connections
-        */
+        /*
+            Remove Sample Data & connections
+            */
         step.settings.inputUiInfo = DEFAULT_SAMPLE_DATA_SETTINGS
         step.settings.input = replaceConnections(step.settings.input)
     }
@@ -413,9 +413,9 @@ async function prepareRequest(
                     )
                     if (
                         previousStep !== undefined &&
-            previousStep.type === ActionType.PIECE &&
-            clonedRequest.request.settings.pieceName !==
-              previousStep.settings.pieceName
+                        previousStep.type === ActionType.PIECE &&
+                        clonedRequest.request.settings.pieceName !==
+                        previousStep.settings.pieceName
                     ) {
                         await stepFileService.deleteAll({
                             projectId,
@@ -437,7 +437,7 @@ async function prepareRequest(
             )
             if (
                 previousStep !== undefined &&
-        previousStep.type === ActionType.PIECE
+                previousStep.type === ActionType.PIECE
             ) {
                 await stepFileService.deleteAll({
                     projectId,
@@ -476,9 +476,9 @@ async function validateAction({
 }): Promise<boolean> {
     if (
         isNil(settings.pieceName) ||
-    isNil(settings.pieceVersion) ||
-    isNil(settings.actionName) ||
-    isNil(settings.input)
+        isNil(settings.pieceVersion) ||
+        isNil(settings.actionName) ||
+        isNil(settings.input)
     ) {
         return false
     }
@@ -512,9 +512,9 @@ async function validateTrigger({
 }): Promise<boolean> {
     if (
         isNil(settings.pieceName) ||
-    isNil(settings.pieceVersion) ||
-    isNil(settings.triggerName) ||
-    isNil(settings.input)
+        isNil(settings.pieceVersion) ||
+        isNil(settings.triggerName) ||
+        isNil(settings.input)
     ) {
         return false
     }
@@ -559,7 +559,7 @@ function buildSchema(props: PiecePropertyMap): TSchema {
         switch (property.type) {
             case PropertyType.MARKDOWN:
                 propsSchema[name] = Type.Optional(
-                    Type.Union([Type.Null(), Type.Undefined(), Type.Never()]),
+                    Type.Union([Type.Null(), Type.Undefined(), Type.Never(), Type.Unknown()]),
                 )
                 break
             case PropertyType.DATE_TIME:

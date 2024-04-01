@@ -59,8 +59,6 @@ describe('Platform API', () => {
                 smtpPassword: 'updated smtp password',
                 smtpSenderEmail: 'updated smtp sender email',
                 smtpUseSSL: true,
-                privacyPolicyUrl: 'updated privacy policy url',
-                termsOfServiceUrl: 'updated terms of service url',
                 cloudAuthEnabled: false,
                 emailAuthEnabled: false,
                 defaultLocale: LocalesEnum.ENGLISH,
@@ -107,10 +105,6 @@ describe('Platform API', () => {
             expect(responseBody.federatedAuthProviders).toStrictEqual({})
             expect(responseBody.smtpSenderEmail).toBe('updated smtp sender email')
             expect(responseBody.smtpUseSSL).toBe(true)
-            expect(responseBody.privacyPolicyUrl).toBe('updated privacy policy url')
-            expect(responseBody.termsOfServiceUrl).toBe(
-                'updated terms of service url',
-            )
             expect(responseBody.cloudAuthEnabled).toBe(false)
             expect(responseBody.embeddingEnabled).toBe(true)
             expect(responseBody.defaultLocale).toBe(LocalesEnum.ENGLISH)

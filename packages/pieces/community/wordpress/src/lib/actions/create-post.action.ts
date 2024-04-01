@@ -3,7 +3,7 @@ import {
   PiecePropValueSchema,
   Property,
 } from '@activepieces/pieces-framework';
-import { wordpressCommon, WordpressMedia } from '../common';
+import { wordpressCommon, WordPressMedia } from '../common';
 import {
   httpClient,
   HttpMethod,
@@ -12,10 +12,10 @@ import {
 import FormData from 'form-data';
 import { wordpressAuth } from '../..';
 
-export const createWordpressPost = createAction({
+export const createWordPressPost = createAction({
   auth: wordpressAuth,
   name: 'create_post',
-  description: 'Create new post on Wordpress',
+  description: 'Create new post on WordPress',
   displayName: 'Create Post',
   props: {
     title: Property.ShortText({
@@ -192,7 +192,7 @@ export const createWordpressPost = createAction({
           password: connection.password,
           page: pageCursor,
         };
-        const result: WordpressMedia[] = [];
+        const result: WordPressMedia[] = [];
         let media = await wordpressCommon.getMedia(getMediaParams);
         if (media.totalPages === 0) {
           result.push(...media.media);

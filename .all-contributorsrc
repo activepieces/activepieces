@@ -779,7 +779,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/51771021?v=4",
       "profile": "http://dennisrongo.com",
       "contributions": [
-        "bug"
+        "bug",
+        "plugin"
       ]
     },
     {
@@ -890,6 +891,24 @@
       "profile": "http://johnmark.dev",
       "contributions": [
         "code"
+      ]
+    },
+    {
+      "login": "jdevalk",
+      "name": "Joost de Valk",
+      "avatar_url": "https://avatars.githubusercontent.com/u/487629?v=4",
+      "profile": "https://joost.blog/",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "nyamkamunhjin",
+      "name": "MJ",
+      "avatar_url": "https://avatars.githubusercontent.com/u/44439626?v=4",
+      "profile": "https://www.linkedin.com/in/nyamkamunhjin/",
+      "contributions": [
+        "plugin"
       ]
     }
   ],

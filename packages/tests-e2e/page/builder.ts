@@ -13,12 +13,12 @@ const property = {
 
 export const builder = {
     async selectInitalTrigger(page: Page, params: { piece: string, trigger: string }) {
-        await page.getByText('Choose a trigger', { exact: true }).click();
+        await page.getByText('Select Trigger', { exact: true }).click();
         await page.getByPlaceholder('Search').click();
         await page.getByPlaceholder('Search').fill(params.piece);
         await page.getByAltText(params.piece).click();
 
-        await page.getByText('Select a Trigger').click();
+        await page.locator('mat-form-field div').filter({ hasText: 'Trigger Select a Trigger' }).first().click();
         await page.getByText(params.trigger, { exact: true }).click();
         await page.waitForTimeout(5000);
     },
@@ -28,7 +28,7 @@ export const builder = {
         await page.getByPlaceholder('Search').fill(params.piece);
         await page.getByText(params.piece).click();
 
-        await page.getByText('Select an action').click();
+        await page.getByText('Select an Action', { exact: true }).click();
         await page.getByText(params.action, { exact: true }).click();
     },
     async testFlowAndWaitForSuccess(page: Page) {

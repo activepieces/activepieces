@@ -362,7 +362,6 @@ export class PieceInputFormComponent extends InputFormCore {
           (x) => x.name === triggerOrActionName
         );
         if (selectedTriggerOrAction) {
-          console.log(selectedTriggerOrAction.props);
           this.store.dispatch(
             FlowsActions.newTriggerOrActionSelected({
               displayName: selectedTriggerOrAction.displayName,
@@ -393,13 +392,12 @@ export class PieceInputFormComponent extends InputFormCore {
         Array.isArray(input[key])
       ) {
         cleanedInput[key] = input[key];
-      } else if (typeof input[key] === 'object' && !Array.isArray(input[key])) {
+      } else if (typeof input[key] === 'object' && !isNil(input[key])) {
+        //typeof null === 'object' so we need to check if it is null
         const cleanedObject = this.removeEmptyValuesFromInput(
           input[key] as Record<string, unknown>
         );
-        if (Object.keys(cleanedObject).length > 0) {
-          cleanedInput[key] = cleanedObject;
-        }
+        cleanedInput[key] = cleanedObject;
       }
     });
     return cleanedInput;
