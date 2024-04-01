@@ -3,6 +3,7 @@ import { databaseConnection } from '../../../../src/app/database/database-connec
 import { setupApp } from '../../../../src/app/app'
 import { securityHandlerChain } from '../../../../src/app/core/security/security-handler-chain'
 import {
+    ALL_PRINCIPAL_TYPES,
     ActivepiecesError,
     EndpointScope,
     ErrorCode,
@@ -47,7 +48,11 @@ describe('API Security', () => {
                     routerPath: route,
                     routeConfig: {
                         skipAuth: true,
+                        allowedPrincipals: ALL_PRINCIPAL_TYPES,
                     },
+                    headers: {
+
+                    }
                 } as unknown as FastifyRequest
 
                 // act
