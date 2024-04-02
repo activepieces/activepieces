@@ -1,5 +1,5 @@
   <div >
-    <div class="ap-rounded-lg ap-border ap-border-solid ap-border-dividers " #container>
+    <div class="ap-rounded-lg ap-border ap-border-solid ap-border-dividers " >
       <div class="ap-px-4 ap-py-3 ap-flex ap-border-solid ap-border-b ap-border-dividers" >
         <div class="ap-flex-grow">
           <span class="ap-typography-subtitle-2" >{{title}}</span>
@@ -14,10 +14,12 @@
     
         </div>
       </div>
- 
-          <ngx-monaco-editor class="!ap-w-full !ap-h-full" [options]="yamlEditorOptionsMonaco" 
-          [formControl]="yamlFormControl" (onInit)="resizeEditorToContent($event,container)"
-           ></ngx-monaco-editor>
+          <div  [style.height]="containerHeight + 'px'">
+            <ngx-monaco-editor class="!ap-w-full !ap-h-full " [options]="yamlEditorOptionsMonaco" 
+            [formControl]="yamlFormControl" (onInit)="resizeEditorToContent($event)"
+             ></ngx-monaco-editor>
+          </div>
+     
    
     </div>
   

@@ -44,7 +44,6 @@ export class PiecePropertiesFormComponent
   allConnectionsForPiece: DropdownOption<`{{connections['${string}']}}`>[];
   @Input({ required: true }) form: UntypedFormGroup;
   @Input({ required: true }) hideCustomizedInputs = false;
-
   @Output() customizedInputsChanged = new EventEmitter<{
     propertyName: string;
     value: boolean;
