@@ -27,12 +27,8 @@ export function outputLog(value: any, truncate = true): string {
         ? result.substring(0, 8092) + ' (truncated)'
         : result;
   }
-  const escaped = escapeHtmlTags(result);
-  return escaped;
-}
 
-function escapeHtmlTags(str: string) {
-  return str.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return result;
 }
 
 function repr(obj: unknown): string {
