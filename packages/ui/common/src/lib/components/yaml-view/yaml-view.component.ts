@@ -64,7 +64,6 @@ export class YamlViewComponent {
   resizeEditorToContent(editor: any) {
     this.editor = editor;
     const contentHeight = editor.getContentHeight();
-    console.log('contentHeight', contentHeight);
     this.containerHeight = Math.min(contentHeight, this.containerMaxHeight);
     this.cd.markForCheck();
   }
