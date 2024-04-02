@@ -52,7 +52,7 @@ describe('API Security', () => {
                     },
                     headers: {
 
-                    }
+                    },
                 } as unknown as FastifyRequest
 
                 // act

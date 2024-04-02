@@ -180,14 +180,14 @@ const findNextExcludedVersion = (version: string | undefined): { baseVersion: st
         const baseVersion = version.substring(1)
         return {
             baseVersion,
-            nextExcludedVersion: increaseMajorVersion(baseVersion)
+            nextExcludedVersion: increaseMajorVersion(baseVersion),
         }
     }
     if (version?.startsWith('~')) {
         const baseVersion = version.substring(1)
         return {
             baseVersion,
-            nextExcludedVersion: increaseMinorVersion(baseVersion)
+            nextExcludedVersion: increaseMinorVersion(baseVersion),
         }
     }
     if (isNil(version)) {
@@ -195,7 +195,7 @@ const findNextExcludedVersion = (version: string | undefined): { baseVersion: st
     }
     return {
         baseVersion: version,
-        nextExcludedVersion: increasePatchVersion(version)
+        nextExcludedVersion: increasePatchVersion(version),
     }
 }
 
