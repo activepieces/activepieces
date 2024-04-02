@@ -1,5 +1,6 @@
 import {
   PiecePropValueSchema,
+  Property,
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
@@ -12,6 +13,7 @@ import {
 import dayjs from 'dayjs';
 import { googleDriveAuth } from '../..';
 import { common } from '../common';
+import { downloadFileFromDrive } from '../common/get-file-content';
 
 const polling: Polling<
   PiecePropValueSchema<typeof googleDriveAuth>,
@@ -40,6 +42,12 @@ export const newFile = createTrigger({
   props: {
     parentFolder: common.properties.parentFolder,
     include_team_drives: common.properties.include_team_drives,
+    getFileContent: Property.Checkbox({
+      displayName: 'Get files content',
+      description: 'Check this box to get files content',
+      required: false,
+      defaultValue: false
+    }),
   },
   type: TriggerStrategy.POLLING,
   onEnable: async (context) => {
@@ -57,18 +65,48 @@ export const newFile = createTrigger({
     });
   },
   run: async (context) => {
-    return await pollingHelper.poll(polling, {
+    const newFiles = await pollingHelper.poll(polling, {
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
     });
+
+    if(context.propsValue.getFileContent){
+      const newFilesObj = JSON.parse(JSON.stringify(newFiles))
+
+      const fileContentPromises: Promise<string>[] = []
+      for (const file of newFilesObj) {
+        fileContentPromises.push(downloadFileFromDrive(context.auth, context.files, file["id"], file["name"]));
+      }
+      
+      const filesContent = await Promise.all(fileContentPromises)
+      return filesContent
+    }
+    else{
+      return newFiles
+    }    
   },
   test: async (context) => {
-    return await pollingHelper.test(polling, {
+    const newFiles = await pollingHelper.test(polling, {
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
     });
+
+    if(context.propsValue.getFileContent){
+      const newFilesObj = JSON.parse(JSON.stringify(newFiles))
+
+      const fileContentPromises: Promise<string>[] = []
+      for (const file of newFilesObj) {
+        fileContentPromises.push(downloadFileFromDrive(context.auth, context.files, file["id"], file["name"]));
+      }
+      
+      const filesContent = await Promise.all(fileContentPromises)
+      return filesContent
+    }
+    else{
+      return newFiles
+    }    
   },
 
   sampleData: {
