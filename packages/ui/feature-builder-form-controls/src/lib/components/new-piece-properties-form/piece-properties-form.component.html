@@ -259,7 +259,7 @@
         [passedFormControl]="
           form.controls[property.key] | abstractFormControlCaster
         "
-        [description]="property.value.description || ''"
+        [description]="(property.value | isAuthProperty)? '' : property.value.description || ''"
       >
       </ap-control-description>
     }
