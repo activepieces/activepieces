@@ -14,6 +14,242 @@ Semantic versioning is a standardized way of versioning software projects. It us
 
 Here's the revised text with improved grammar and spelling:
 
+### 02/04/2024
+
+**✨ Exciting New Features**
+
+* feat: support authentication in webhooks  (#4289) @pfernandez98
+* feat: use YAML instead of JSON when showing steps output (#4301) @AbdulTheActivePiecer
+* feat: improve speed in piece search by storing pieces metadata locally (#4285) @abuaboud
+* feat: delete project from the admin console (#4146) @khaledmashaly
+* fix: test step no longer timeout after 30 seconds (#4164) @abuaboud
+
+**🧩 Pieces**
+
+* feat: support authentication in webhooks  (#4289) @pfernandez98
+* feat(nocodb): all table record actions (#4300) @kishanprmr
+* fix(gmail): use attachment name when it is available  (#4296) @AbdulTheActivePiecer
+* fix(mysql/postgres): add markdown warning how to prevent sql injections (#4297) @abuaboud
+* feat(pdf): parse text (#4227) @nyamkamunhjin
+* feat(WordPress): rename piece to WordPress, with a capital P (#4283) @jdevalk
+* feat(jira-cloud): update issue, assign issue, issue attachment and issue comment actions (#4282) @kishanprmr
+* feat(smtp): add html message body option (#4281) @kishanprmr
+* feat(microsoft-teams): create channel, send chat message and send channel message action (#4214) @kishanprmr
+* feat(microsoft-sharepoint): create folder, create list and all list item actions (#4240) @kishanprmr
+* feat(slack): add action to update message (#4245) @AdamSelene
+* feat(file-helper): create file from text action (#4243) @AdamSelene
+* feat(wedof):  11 actions / 8 triggers (#4207) @vbarrier
+* fix(freshdesk): updated JSON structure for get all tickets action (#4221) @buttonsbond
+* chore(slack): enrich not_in_channel error message (#4219) @abuaboud
+* feat(slack): add search message action (#4210) @AdamSelene
+* feat(slack): upgrade to new OAuth flow (#4208) @AdamSelene
+* feat(freshdesk): Get Contacts and Get all Tickets by Status actions (#4194) @buttonsbond
+* fix(google-sheets): fix duplicated runs for new row instant (#4172) @abuaboud
+* feat: support run scope for storage piece / framework (#4099) @wise-introvert
+* fix(google-sheets): improve error message (#4174) @kishanprmr
+* feat(hubspot): create deal, update deal action and deal stage updated trigger (#4170) @kishanprmr
+* fix(slack): properly propagate Slack API errors (#4161) @AdamSelene
+
+**🛠️ Piece Framework**
+
+* fix: framework piece metadata backward compatibility (#4202) @khaledmashaly
+* fix: throw error if polling key is not found (#4188) @abuaboud
+* fix(piece-framework): axios http client to support array query parameter multiple times (#4177) @MarceloRGonc
+* feat: support run scope for storage piece / framework (#4099) @wise-introvert
+
+**🐞 Bug Fixes**
+
+* fix: stop escaping html in steps outputs  (#4338) @AbdulTheActivePiecer
+* fix: include old git state after pulling (#4336) @abuaboud
+* fix: only show connection description inside new/edit connection dialogs (#4335) @AbdulTheActivePiecer
+* fix: show all items in fulls creen mode in data to insert popover (#4337) @AbdulTheActivePiecer
+* fix: browser running out of memory when viewing a large step output (#4329) @AbdulTheActivePiecer
+* feat: add request trial form (#4309) @abuaboud
+* fix: initially on adding a step, steps were being perceived as valid when they were not (#4317) @AbdulTheActivePiecer
+* fix: markdown validation (#4315) @abuaboud
+* fix: markdown validation (#4314) @abuaboud
+* fix(git): use filename as unique id for flows in repo (#4306) @abuaboud
+* fix: project members table wasn't loading (#4305) @AbdulTheActivePiecer
+* fix: steps being shown as invalid when they are not after refreshing the browser (#4287) @AbdulTheActivePiecer
+* fix: add missing inputUiInfo for all triggers (#4276) @abuaboud
+* feat: prevent deletion of current project (#4251) @khaledmashaly
+* fix: error handling for delete entity dialog (#4246) @khaledmashaly
+* fix: list only non deleted projects (#4248) @abuaboud
+* fix: caching piece versions in front end  (#4233) @AbdulTheActivePiecer
+* fix: trimming large payload of jsons (#4178) @AbdullahBitar
+* fix(tally): test sample data is no longer returns empty object (#4220) @abuaboud
+* fix: cascade migration (#4218) @abuaboud
+* fix: move ask ai to websocket to avoid http timeout (#4209) @abuaboud
+* fix: display # of actions / triggers (#4212) @abuaboud
+* fix: framework piece metadata backward compatibility (#4202) @khaledmashaly
+* fix: increase plugin timeout (#4197) @abuaboud
+* fix: stop retry for failed connections (#4196) @abuaboud
+* fix: connection expired should be user error (#4186) @abuaboud
+* revert: run scope for the storage in framework (#4181) @abuaboud
+* fix: engine errors should be internal error (#4171) @khaledmashaly
+
+**🎨 Enhancements & Polish**
+
+* feat: increase sidenav caption width (#4279) @takaram
+* feat: display error invalid template (#4325) @shravankshenoy
+* feat: add request trial form (#4309) @abuaboud
+* feat: sort pieces by popularity (#4310) @abuaboud
+* feat: add video showcase for projects / appearance / templates  (#4257) @abuaboud
+* feat: add branch type to git configuration (#4268) @abuaboud
+* feat(git-sync): disable push button on production / skip unchanged flows (#4250) @abuaboud
+* feat: add paginator for projects in admin console (#4265) @abuaboud
+* feat: removed id from runs list (#4247) @jmgb27
+* feat: ability to hide logo (#4256) @abuaboud
+* fix: engine errors should be internal error (#4171) @khaledmashaly
+
+**📚 Documentation**
+
+* docs: add shravankshenoy as a contributor for code (#4326) @allcontributors
+* docs: add dennisrongo as a contributor for plugin (#4304) @allcontributors
+* docs: add nyamkamunhjin as a contributor for plugin (#4294) @allcontributors
+* docs: add jdevalk as a contributor for plugin (#4292) @allcontributors
+* chore: update openapi spec (#4266) @abuaboud
+* docs: add jmgb27 as a contributor for code (#4263) @allcontributors
+* docs: add vbarrier as a contributor for plugin (#4224) @allcontributors
+* docs: pieces metadata source env variable options description (#4185) @kishanprmr
+* docs: update initialize-embed.mdx (#4184) @AliasKingsWorth
+* style: IMAP piece : Correct typo (#4187) @yann120
+* docs: add yann120 as a contributor for bug (#4189) @allcontributors
+* docs: Include instructions for setting up piece sources variable in development environment (#4176) @kishanprmr
+
+**🧹 Maintenance & Dev Experience**
+
+* fix(cli): fix create piece lint option error (#4334) @kishanprmr
+* feat: simple in-memory piece cache (#4298) @abuaboud
+* refactor: system jobs (#4290) @abuaboud
+* refactor: delete terms & privacy urls customization (#4291) @abuaboud
+* chore(deps): bump katex from 0.16.9 to 0.16.10 (#4273) @dependabot
+* test: add list git repos with api key / user (#4264) @abuaboud
+* chore(deps-dev): bump webpack-dev-middleware from 5.3.3 to 5.3.4 (#4241) @dependabot
+* chore: clean up and add 14 days retention for trigger events (#4225) @abuaboud
+* refactor: delete unused flow items details and fix search experience (#4211) @abuaboud
+* test: e2e execution flow test (#4199) @abuaboud
+* chore: remove one click do setup (#4217) @abuaboud
+* chore(deps): bump follow-redirects from 1.15.5 to 1.15.6 (#4179) @dependabot
+
+**Thanks ❤️**
+@AbdulTheActivePiecer, @AbdullahBitar, @AdamSelene, @AliasKingsWorth, @MarceloRGonc, @abuaboud, @allcontributors, @allcontributors[bot], @ashrafsamhouri, @buttonsbond, @dependabot, @dependabot[bot], @jdevalk, @jmgb27, @khaledmashaly, @kishanprmr, @nyamkamunhjin, @pfernandez98, @shravankshenoy, @takaram, @vbarrier, @wise-introvert, @yann120 and Mohammad AbuAboud
+
+
+### 13/3/2024
+
+**✨ Exciting New Features**
+
+* feat: add descriptions and authors for all pieces to display them on the website (#4145) @abuaboud
+* feat: ability to embed connections dialog through javascript sdk (#4115) @AbdulTheActivePiecer
+* feat: ability to delete users from admin console (#4092) @khaledmashaly
+* feat: info icon to show descriptions in template viewer  (#4070) @AbdulTheActivePiecer
+* feat(paid): customer portal for agency plan (#4016) @AbdulTheActivePiecer
+* feat(cloud): switch plans to pay as you go on cloud (#4013) @abuaboud
+* feat: add new connections from the connection table in dashboard (#3991) @AbdulTheActivePiecer
+
+**🧩 Pieces**
+
+* fix(google-my-business): show all locations instead of 10 (#4157) @abuaboud
+* feat(image-helper): added compress image action (#4152) @AbdullahBitar
+* feat(json): convert json to text / convert text to json (#4083) @leenmashni
+* fix(slack): iterate all pages of slack channels / users (#4123) @kishanprmr
+* feat(dust): add action for upserting a document into a database (#4121) @AdamSelene
+* fix(google-calendar): Resolve issue with multiple payloads for recurring events (#4098) @kishanprmr
+* feat(mailerlite): custom fields for subscribers action ,find subscriber,add/remove subscriber from group action (#4097) @kishanprmr
+* chore: improve activity piece properties descriptions and displayed names (#4094) @AbdulTheActivePiecer
+* feat(stable-diffusion-web-ui): text to image action (#4058) @AdamSelene
+* feat(activecampaign): account ,conatct actions and 9 triggers (#4049) @kishanprmr
+* feat(afforai): ask chatbot action (#4036) @kishanprmr
+* fix(smtp): preset ports as dropdown (#4038) @kishanprmr
+* feat(acumbamail): create/delete list, add/update/delete/search subscriber and duplicate template actions (#4027) @kishanprmr
+* fix(quikzu): fix trigger payload (#4028) @kishanprmr
+* fix(http): add failsafe option back (#4017) @abuaboud
+* feat(ghl): rewrote the piece for the new api (#4011) @MoShizzle
+* feat(microsoft-dynamics): create / update / get / delete record (only at enterprise edition) (#4005) @abuaboud
+* fix(gmail): resolve issue with BCC emails not being sent (#3992) @kishanprmr
+
+**🐞 Bug Fixes**
+
+* fix(embed-sdk): add grace period before adding embedded dialogs  (#4162) @AbdulTheActivePiecer
+* fix: no longer internal error status on runs with large payloads (#4159) @abuaboud
+* fix: test flow stuck on running status (#4154) @abuaboud
+* fix: pieces author migration on sqlite (#4150) @abuaboud
+* fix: rerun run (#4129) @abuaboud
+* fix: static dropdowns were not opening inside list inputs (#4128) @AbdulTheActivePiecer
+* fix(git-sync): move mapping state to db (#4117) @abuaboud
+* fix: re-enable demo flow tour for cloud (#4093) @AbdulTheActivePiecer
+* fix: fallback to full search for removing job key (#4087) @abuaboud
+* fix: increase update flow timeout to 30 seconds (#4063) @abuaboud
+* revert: revert order by status on flow (#4037) @abuaboud
+* fix: center logo in builder header and align dynamic inputs icon correctly (#4029) @AbdulTheActivePiecer
+* fix: persist plan on registration (#4025) @abuaboud
+* fix: use redis for task limit (#4024) @abuaboud
+* fix: opening new connection (#4021) @abuaboud
+* fix: update project billing with limits (#4018) @abuaboud
+* fix: retry internal server (#4001) @abuaboud
+
+**🎨 Enhancements & Polish**
+
+* feat(iframe): retry if failed to find container  (#4153) @AbdulTheActivePiecer
+* feat: enabled dynamic inputs for triggers (#4151) @AbdulTheActivePiecer
+* fix: add author to piece (#4141) @abuaboud
+* feat: add property to hide folders in embedding sdk (#4122) @AbdulTheActivePiecer
+* feat: allow using azure openai with the copilot (#4127) @MoShizzle
+* feat: support pagination in dynamic dropdown (#4116) @abuaboud
+* chore: change code piece icon (#4118) @abuaboud
+* chore: show templates dialog after clicking "Build Flow" in "Create Your First Flow" screen (#4095) @AbdulTheActivePiecer
+* chore: improve activity piece properties descriptions and displayed names (#4094) @AbdulTheActivePiecer
+* feat(forms): make forms publicly accessible (#4073) @MoShizzle
+* feat: move templates dialog to dashboard (#4069) @AbdulTheActivePiecer
+* chore: add text wrap to test output window and format thrown error message (#4061) @bigfluffycookie
+* feat(git-sync): add dryrun + support publishing flow (#4064) @abuaboud
+* feat: use `slug` instead of `projectId` for git sync (#4056) @khaledmashaly
+* feat: redesign upgrade note (#4048) @AbdulTheActivePiecer
+* chore: select first invalid step on viewing flow, and select trigger on viewing run (#4010) @AbdulTheActivePiecer
+* fix: limit step execution duration to 1 decimal number (#4009) @AbdulTheActivePiecer
+* chore: improve spacing between inputs in forms (#4008) @AbdulTheActivePiecer
+* feat: sort flows by enabled first (#4003) @abuaboud
+* feat(audit-log): track sign up events (#4000) @abuaboud
+* fix: make step title sticky in edit step form (#3994) @AbdulTheActivePiecer
+* fix: stop flows filter in runs table from flickering (#3993) @AbdulTheActivePiecer
+* fix: stop array label from overflowing in readonly mode (#3995) @AbdulTheActivePiecer
+
+**📚 Documentation**
+
+* feat: add new documentation for connections in embedded SDK (#4140) @AbdulTheActivePiecer
+* docs: add leenmashni as a contributor for plugin (#4143) @allcontributors
+* docs: update codespace documentation (#4065) @ShahedAlMashni
+* docs: customer portal feature (#4040) @AbdulTheActivePiecer
+
+**🧹 Maintenance & Dev Experience**
+
+* chore: upgrade nx to 18 and angular to 17 (#4130) @abuaboud
+* fix: include authors from previous paths in pieces (#4147) @abuaboud
+* feat: expose authors in piece (#4138) @abuaboud
+* chore(deps): bump jose from 4.15.4 to 4.15.5 (#4131) @dependabot
+* chore: filter noisy errors (#4086) @abuaboud
+* refactor: move webhook into pieces (#4085) @abuaboud
+* chore: revert removing foreign key for `project.platformId` (#4082) @khaledmashaly
+* refactor: remove ExecutionOutput (#4079) @abuaboud
+* fix: remove unused index (#4078) @abuaboud
+* chore: fix all principal types variable typo (#4074) @khaledmashaly
+* refactor: move permission config to route level (#4071) @khaledmashaly
+* refactor(api): rbac authz logic (#4045) @khaledmashaly
+* refactor: create default platform for each project (#4044) @abuaboud
+* refactor: send emails in production only (#4042) @khaledmashaly
+* chore: upgrade bullmq from 5.1.2 to 5.3.3 (#4022) @abuaboud
+* chore(license): track project / user usage daily (#3998) @abuaboud
+
+**🖥️ API Changes**
+
+* feat(api): sort pieces by create date (#4156) @abuaboud
+* feat: use `slug` instead of `projectId` for git sync (#4056) @khaledmashaly
+
+**Thanks ❤️**
+@AbdulTheActivePiecer, @AbdullahBitar, @AdamSelene, @MoShizzle, @ShahedAlMashni, @abuaboud, @allcontributors, @allcontributors[bot], @bigfluffycookie, @dependabot, @dependabot[bot], @khaledmashaly, @kishanprmr, @leenmashni, @snyk-bot and Mohammad AbuAboud
+
+
 ### 22/2/2024
 
 **✨ Exciting New Features**
