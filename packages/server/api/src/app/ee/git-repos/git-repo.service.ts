@@ -106,7 +106,7 @@ export const gitRepoService = {
         if (dryRun) {
             return toResponse(operations)
         }
-        let newMappState: ProjectMappingState = ProjectMappingState.empty()
+        let newMappState: ProjectMappingState = mappingState
         const publishJobs: Promise<ProjectSyncError | null>[] = []
         for (const operation of operations) {
             switch (operation.type) {
@@ -131,6 +131,7 @@ export const gitRepoService = {
                 }
                 case ProjectOperationType.DELETE_FLOW:
                     await gitSyncHelper.deleteFlowFromProject(operation.projectFlow.id, gitRepo.projectId)
+                    newMappState = newMappState.deleteFlow(operation.projectFlow.id)
                     break
             }
         }
