@@ -1,7 +1,7 @@
 FROM node:18.19-bullseye-slim AS base
 
 # Increase Node.js memory limit
-ENV NODE_OPTIONS="--max-old-space-size=8192"
+ENV NODE_OPTIONS="--max-old-space-size=16384"
 
 # Use a cache mount for apt to speed up the process
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
