@@ -49,11 +49,6 @@
           },
           {
             "glob": "**/*",
-            "input": "node_modules/monaco-editor",
-            "output": "/assets/monaco-editor/"
-          },
-          {
-            "glob": "**/*",
             "input": "node_modules/monaco-yaml",
             "output": "/assets/monaco-yaml/"
           }

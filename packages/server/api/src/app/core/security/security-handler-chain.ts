@@ -24,10 +24,6 @@ const AUTHZ_HANDLERS = [
 export const securityHandlerChain = async (
     request: FastifyRequest,
 ): Promise<void> => {
-    const skipAuth = request.routeConfig.skipAuth
-    if (skipAuth) {
-        return
-    }
     await executeAuthnHandlers(request)
     await executeAuthzHandlers(request)
 }

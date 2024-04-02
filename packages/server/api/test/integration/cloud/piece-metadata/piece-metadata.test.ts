@@ -343,6 +343,89 @@ describe('Piece Metadata API', () => {
             expect(responseBody?.[0].id).toBe(mockPieceMetadataA.id)
             expect(responseBody?.[1].id).toBe(mockPieceMetadataB.id)
         })
+        it('Should list correct version by piece name', async () => {
+            // arrange
+            const mockPieceMetadataA = createMockPieceMetadata({
+                name: 'a',
+                pieceType: PieceType.OFFICIAL,
+                displayName: 'a',
+                version: '0.0.1',
+            })
+            const mockPieceMetadataB = createMockPieceMetadata({
+                name: 'a',
+                pieceType: PieceType.OFFICIAL,
+                displayName: 'a',
+                version: '0.0.2',
+            })
+            const mockPieceMetadataC = createMockPieceMetadata({
+                name: 'a',
+                pieceType: PieceType.OFFICIAL,
+                displayName: 'a',
+                version: '0.1.0',
+            })
+            const mockPieceMetadataD = createMockPieceMetadata({
+                name: 'a',
+                pieceType: PieceType.OFFICIAL,
+                displayName: 'a',
+                version: '0.1.1',
+            })
+            await databaseConnection
+                .getRepository('piece_metadata')
+                .save([mockPieceMetadataA, mockPieceMetadataB, mockPieceMetadataC, mockPieceMetadataD])
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.UNKNOWN,
+                id: apId(),
+                projectId: apId(),
+                platform: {
+                    id: apId(),
+                    role: PlatformRole.MEMBER,
+                },
+            })
+
+            // act
+            const exactVersionResponse = await app?.inject({
+                method: 'GET',
+                url: '/v1/pieces/a?version=0.0.1',
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+            const exactVersionResponseBody = exactVersionResponse?.json()
+            expect(exactVersionResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(exactVersionResponseBody?.id).toBe(mockPieceMetadataA.id)
+
+            const telda2VersionResponse = await app?.inject({
+                method: 'GET',
+                url: '/v1/pieces/a?version=~0.0.2',
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+            const teldaVersion2ResponseBody = telda2VersionResponse?.json()
+            expect(telda2VersionResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(teldaVersion2ResponseBody?.id).toBe(mockPieceMetadataB.id)
+
+            const teldaVersionResponse = await app?.inject({
+                method: 'GET',
+                url: '/v1/pieces/a?version=~0.0.1',
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+            const teldaVersionResponseBody = teldaVersionResponse?.json()
+            expect(teldaVersionResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(teldaVersionResponseBody?.id).toBe(mockPieceMetadataB.id)
+
+            const notFoundVersionResponse = await app?.inject({
+                method: 'GET',
+                url: '/v1/pieces/a?version=~0.1.2',
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+            expect(notFoundVersionResponse?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
 
         it('Should list latest version by piece name', async () => {
             // arrange
