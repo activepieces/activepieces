@@ -1,8 +1,8 @@
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   Input,
-  Renderer2,
 } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { YamlViewDialogComponent } from './yaml-view-dialog/yaml-view-dialog.component';
@@ -26,17 +26,26 @@ export class YamlViewComponent {
   _content = '';
   containerWidthChange$?: Observable<number>;
   readonly containerMaxHeight = 600;
+  containerHeight = 0;
   @Input() isInput = false;
   @Input() title: string;
   @Input() set content(value: unknown) {
-    this._content = outputLog(value, false);
-    this.yamlFormControl.setValue(this._content || '');
+    const formattedOutput = outputLog(value, false);
+    if (formattedOutput !== this._content) {
+      this._content = formattedOutput;
+      this.yamlFormControl.setValue(this._content || '');
+      if (this.editor) {
+        setTimeout(() => {
+          this.resizeEditorToContent(this.editor);
+        });
+      }
+    }
   }
-
+  editor?: unknown;
   constructor(
     private dialogService: MatDialog,
     private snackbar: MatSnackBar,
-    private renderer: Renderer2
+    private cd: ChangeDetectorRef
   ) {}
 
   openModal() {
@@ -52,12 +61,10 @@ export class YamlViewComponent {
   downloadContent() {
     downloadYaml(this._content, this.title);
   }
-  resizeEditorToContent(editor: any, container: HTMLElement) {
+  resizeEditorToContent(editor: any) {
+    this.editor = editor;
     const contentHeight = editor.getContentHeight();
-    this.renderer.setStyle(
-      container,
-      'height',
-      Math.min(contentHeight, this.containerMaxHeight) + 'px'
-    );
+    this.containerHeight = Math.min(contentHeight, this.containerMaxHeight);
+    this.cd.markForCheck();
   }
 }
