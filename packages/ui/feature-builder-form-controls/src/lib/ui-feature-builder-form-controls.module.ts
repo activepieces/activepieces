@@ -46,6 +46,7 @@ import { DynamicInputToggleComponent } from './components/dynamic-input-toggle/d
 import { ShouldShwoDynamicInputToggleAboveInputPipe } from './pipes/should-show-dynamic-input-toggle-above-input.pipe';
 import { DynamicPropertyControlComponent } from './components/dynamic-property-control/dynamic-property-control.component';
 import { FormGroupCasterPipe } from './pipes/form-group-caster.pipe';
+import { IsAuthPropertyPipe } from './pipes/is-auth-property.pipe';
 const exportedDeclarations = [
   ArrayFormControlComponent,
   BranchConditionFormControlComponent,
@@ -83,6 +84,7 @@ const exportedDeclarations = [
     DynamicInputToggleComponent,
     ShouldShwoDynamicInputToggleAboveInputPipe,
     FormGroupCasterPipe,
+    IsAuthPropertyPipe,
   ],
   declarations: [
     ...exportedDeclarations,
