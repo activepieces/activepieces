@@ -4,9 +4,10 @@ import { PieceMetadataModel } from '../piece-metadata-entity'
 import { pieceMetadataService } from '../piece-metadata-service'
 import { pieceServiceHooks } from './piece-service-hooks'
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { logger, ExecutionMode, SystemProp, system } from '@activepieces/server-shared'
+import { ExecutionMode, logger, system, SystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
+    AddPieceRequestBody,
     ApEdition,
     EngineResponseStatus,
     ErrorCode,
@@ -14,7 +15,6 @@ import {
     PiecePackage,
     PieceScope,
     PieceType,
-    AddPieceRequestBody,
 } from '@activepieces/shared'
 
 export const pieceService = {

@@ -7,8 +7,8 @@ import {
     FlowVersionId,
     ProjectId,
     SeekPage,
-    WebhookSimulation,
-    TriggerTestStrategy } from '@activepieces/shared'
+    TriggerTestStrategy,
+    WebhookSimulation } from '@activepieces/shared'
 
 export const testTriggerService = {
     async test(params: TestParams): Promise<unknown> {

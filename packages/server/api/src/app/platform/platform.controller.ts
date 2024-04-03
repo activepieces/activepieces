@@ -6,10 +6,10 @@ import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { platformService } from './platform.service'
 import {
+    ApId,
+    assertEqual,
     Platform,
-    PlatformWithoutSensitiveData,
-    UpdatePlatformRequestBody,
-    ApId, Principal, assertEqual } from '@activepieces/shared'
+    PlatformWithoutSensitiveData, Principal, UpdatePlatformRequestBody } from '@activepieces/shared'
 
 export const platformController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/:id', UpdatePlatformRequest, async (req, res) => {

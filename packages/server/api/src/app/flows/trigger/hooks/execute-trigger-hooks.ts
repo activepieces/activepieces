@@ -4,11 +4,11 @@ import { getPieceTrigger } from './trigger-utils'
 import { logger } from '@activepieces/server-shared'
 import {
     FlowVersion,
+    isNil,
     ProjectId,
     TriggerHookType,
     TriggerPayload,
     TriggerType,
-    isNil,
 } from '@activepieces/shared'
 
 export async function executeTrigger(

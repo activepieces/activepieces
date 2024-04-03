@@ -4,7 +4,7 @@ import nodemailer, { Transporter } from 'nodemailer'
 import { defaultTheme } from '../../../../flags/theme'
 import { platformService } from '../../../../platform/platform.service'
 import { EmailSender, EmailTemplateData } from './email-sender'
-import { SystemProp, system } from '@activepieces/server-shared'
+import { system, SystemProp } from '@activepieces/server-shared'
 import { Platform } from '@activepieces/shared'
 
 /**

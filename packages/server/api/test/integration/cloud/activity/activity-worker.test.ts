@@ -3,8 +3,8 @@ import { StatusCodes } from 'http-status-codes'
 import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
-import { createMockUser, createMockPlatform, createMockProject, createMockActivity } from '../../../helpers/mocks'
-import { PrincipalType, apId } from '@activepieces/shared'
+import { createMockActivity, createMockPlatform, createMockProject, createMockUser } from '../../../helpers/mocks'
+import { apId, PrincipalType } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 

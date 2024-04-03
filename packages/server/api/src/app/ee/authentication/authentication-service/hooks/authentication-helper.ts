@@ -10,15 +10,15 @@ import {
     ProjectMemberStatus,
 } from '@activepieces/ee-shared'
 import {
+    ActivepiecesError,
+    ApEdition,
+    ErrorCode,
+    isNil,
+    PlatformRole,
     PrincipalType,
     Project,
-    isNil,
-    User,
-    ActivepiecesError,
-    ErrorCode,
-    ApEdition,
-    PlatformRole,
     ProjectMemberRole,
+    User,
 } from '@activepieces/shared'
 
 async function getProjectForUserOrThrow(user: User): Promise<Project> {

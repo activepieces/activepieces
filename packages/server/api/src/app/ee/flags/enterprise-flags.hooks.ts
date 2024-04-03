@@ -3,7 +3,7 @@ import { FlagsServiceHooks } from '../../flags/flags.hooks'
 import { resolvePlatformIdForRequest } from '../../platform/platform-utils'
 import { platformService } from '../../platform/platform.service'
 import { apperanceHelper } from '../helper/apperance-helper'
-import { ApFlagId, ThirdPartyAuthnProviderEnum, isNil } from '@activepieces/shared'
+import { ApFlagId, isNil, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
 
 export const enterpriseFlagsHooks: FlagsServiceHooks = {
     async modify({ flags, request }) {

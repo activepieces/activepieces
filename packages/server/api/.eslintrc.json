@@ -109,7 +109,22 @@
             }
           }
         ],
-        "import/no-duplicates": "error"
+        "import/no-duplicates": "error",
+        "sort-imports": [
+          "error",
+          {
+            "ignoreCase": true,
+            "ignoreDeclarationSort": true,
+            "ignoreMemberSort": false,
+            "memberSyntaxSortOrder": [
+              "none",
+              "all",
+              "multiple",
+              "single"
+            ],
+            "allowSeparatedGroups": false
+          }
+        ]
       }
     }
   ],

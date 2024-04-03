@@ -1,9 +1,9 @@
 import dayjs from 'dayjs'
 import { databaseConnection } from '../../database/database-connection'
 import { ProjectPlanEntity } from './project-plan.entity'
-import { FlowPlanLimits, DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
+import { DEFAULT_FREE_PLAN_LIMIT, FlowPlanLimits } from '@activepieces/ee-shared'
 import {
-    ProjectPlan, apId,
+    apId, ProjectPlan,
 } from '@activepieces/shared'
 
 const projectPlanRepo =

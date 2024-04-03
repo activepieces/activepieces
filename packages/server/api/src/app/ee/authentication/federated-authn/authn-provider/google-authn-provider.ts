@@ -1,12 +1,12 @@
 import jwksClient from 'jwks-rsa'
 import { authenticationService } from '../../../../authentication/authentication-service'
 import { flagService } from '../../../../flags/flag.service'
-import { jwtUtils, JwtSignAlgorithm } from '../../../../helper/jwt-utils'
+import { JwtSignAlgorithm, jwtUtils } from '../../../../helper/jwt-utils'
 import { AuthnProvider } from './authn-provider'
 import {
+    assertNotNullOrUndefined,
     AuthenticationResponse,
     Platform,
-    assertNotNullOrUndefined,
 } from '@activepieces/shared'
 
 const JWKS_URI = 'https://www.googleapis.com/oauth2/v3/certs'

@@ -18,7 +18,7 @@ import {
     ApiKeyResponseWithValue,
     ProjectMemberStatus,
 } from '@activepieces/ee-shared'
-import { Platform, PlatformRole, Project, User, PrincipalType, ProjectMemberRole } from '@activepieces/shared'
+import { Platform, PlatformRole, PrincipalType, Project, ProjectMemberRole, User } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 

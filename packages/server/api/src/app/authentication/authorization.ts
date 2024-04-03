@@ -3,8 +3,8 @@ import { logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
-    PrincipalType,
     isObject,
+    PrincipalType,
 } from '@activepieces/shared'
 
 // TODO REMOVE

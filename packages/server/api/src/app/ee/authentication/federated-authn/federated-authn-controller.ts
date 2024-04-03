@@ -9,10 +9,10 @@ import {
     ApplicationEventName,
 } from '@activepieces/ee-shared'
 import {
-    ClaimTokenRequest,
-    ThirdPartyAuthnProviderEnum,
     ALL_PRINCIPAL_TYPES,
     assertNotNullOrUndefined,
+    ClaimTokenRequest,
+    ThirdPartyAuthnProviderEnum,
 } from '@activepieces/shared'
 
 export const federatedAuthnController: FastifyPluginAsyncTypebox = async (

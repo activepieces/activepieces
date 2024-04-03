@@ -4,7 +4,7 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { ActivityEntity } from './activity-entity'
 import { Activity, ActivityId, AddActivityRequestBody, ListActivityParams } from '@activepieces/ee-shared'
-import { ProjectId, SeekPage, apId, spreadIfDefined } from '@activepieces/shared'
+import { apId, ProjectId, SeekPage, spreadIfDefined } from '@activepieces/shared'
 
 const repo = databaseConnection.getRepository(ActivityEntity)
 

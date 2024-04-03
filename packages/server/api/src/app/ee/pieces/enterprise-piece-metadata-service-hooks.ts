@@ -1,7 +1,7 @@
 import { PieceMetadataSchema } from '../../pieces/piece-metadata-entity'
 import {
-    PieceMetadataServiceHooks,
     defaultPieceHooks,
+    PieceMetadataServiceHooks,
 } from '../../pieces/piece-metadata-service/hooks'
 import { platformService } from '../../platform/platform.service'
 import { FilteredPieceBehavior, isNil } from '@activepieces/shared'

@@ -8,10 +8,10 @@ import { Provider } from './authentication-service/hooks/authentication-service-
 import { ApplicationEventName } from '@activepieces/ee-shared'
 import { system, SystemProp } from '@activepieces/server-shared'
 import {
-    ApEdition,
-    SignUpRequest,
-    SignInRequest,
     ALL_PRINCIPAL_TYPES,
+    ApEdition,
+    SignInRequest,
+    SignUpRequest,
 } from '@activepieces/shared'
 
 const edition = getEdition()

@@ -4,8 +4,8 @@ import {
     AppConnection,
     Flow,
     Folder,
-    Project,
     Platform,
+    Project,
     TriggerEvent,
     User,
 } from '@activepieces/shared'

@@ -3,9 +3,9 @@ import { TriggerBase } from '@activepieces/pieces-framework'
 import {
     ActivepiecesError,
     ErrorCode,
+    isNil,
     PieceTrigger,
     ProjectId,
-    isNil,
 } from '@activepieces/shared'
 
 export async function getPieceTrigger({

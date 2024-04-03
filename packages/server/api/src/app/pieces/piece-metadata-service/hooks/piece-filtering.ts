@@ -2,7 +2,7 @@ import Fuse from 'fuse.js'
 import { platformService } from '../../../platform/platform.service'
 import { PieceMetadataSchema } from '../../piece-metadata-entity'
 import { ActionBase, TriggerBase } from '@activepieces/pieces-framework'
-import { PieceCategory, PlatformId, SuggestionType, isNil } from '@activepieces/shared'
+import { isNil, PieceCategory, PlatformId, SuggestionType } from '@activepieces/shared'
 
 
 const pieceFilterKeys = [{

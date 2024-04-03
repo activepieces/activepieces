@@ -1,7 +1,7 @@
 import {
     FastifyPluginAsyncTypebox,
-    Type,
-    FastifyPluginCallbackTypebox } from '@fastify/type-provider-typebox'
+    FastifyPluginCallbackTypebox,
+    Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { pieceService } from '../../pieces/piece-service'
 import {

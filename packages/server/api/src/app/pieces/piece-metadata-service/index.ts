@@ -2,14 +2,14 @@ import { PieceMetadataModel, PieceMetadataModelSummary, PieceMetadataSchema } fr
 import { FastDbPieceMetadataService } from './db-piece-metadata-service'
 import { FilePieceMetadataService } from './file-piece-metadata-service'
 import { PieceMetadataService } from './piece-metadata-service'
-import { PiecesSource, SystemProp, system } from '@activepieces/server-shared'
+import { PiecesSource, system, SystemProp } from '@activepieces/server-shared'
 import {
+    assertNotNullOrUndefined,
     PackageType,
     PiecePackage,
     PrivatePiecePackage,
     PublicPiecePackage,
     SuggestionType,
-    assertNotNullOrUndefined,
 } from '@activepieces/shared'
 
 const initPieceMetadataService = (): PieceMetadataService => {

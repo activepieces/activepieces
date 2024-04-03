@@ -1,4 +1,4 @@
-import { SystemProp, system } from '@activepieces/server-shared'
+import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition, FlowVersion, isNil } from '@activepieces/shared'
 
 let webhookSecrets: Record<string, { webhookSecret: string }> | undefined =

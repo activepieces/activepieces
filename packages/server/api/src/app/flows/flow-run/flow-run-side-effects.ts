@@ -14,8 +14,8 @@ import {
     ErrorCode,
     ExecutionType,
     FlowRun,
-    PauseType,
-    isNil } from '@activepieces/shared'
+    isNil,
+    PauseType } from '@activepieces/shared'
 
 type StartParams = {
     flowRun: FlowRun

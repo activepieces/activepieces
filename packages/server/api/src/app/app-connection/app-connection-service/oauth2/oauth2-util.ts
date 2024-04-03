@@ -3,11 +3,11 @@ import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
 import { PropertyType } from '@activepieces/pieces-framework'
 import {
     ActivepiecesError,
+    assertNotNullOrUndefined,
     BaseOAuth2ConnectionValue,
+    deleteProps,
     ErrorCode,
     OAuth2GrantType,
-    assertNotNullOrUndefined,
-    deleteProps,
 } from '@activepieces/shared'
 
 export const oauth2Util = {

@@ -14,7 +14,7 @@ import {
     PullGitRepoRequest,
     PushGitRepoRequest,
 } from '@activepieces/ee-shared'
-import { ActivepiecesError, ErrorCode, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, SeekPage } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 
 export const gitRepoModule: FastifyPluginAsync = async (app) => {
     await app.register(gitRepoController, { prefix: '/v1/git-repos' })

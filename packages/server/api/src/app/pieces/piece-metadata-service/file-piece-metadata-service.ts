@@ -1,5 +1,5 @@
 import { readdir, stat } from 'node:fs/promises'
-import { resolve, join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { cwd } from 'node:process'
 import importFresh from 'import-fresh'
 import { nanoid } from 'nanoid'
@@ -17,14 +17,14 @@ import { exceptionHandler, logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
-    EXACT_VERSION_PATTERN,
     ErrorCode,
-    PackageType,
-    PieceType,
-    ProjectId,
+    EXACT_VERSION_PATTERN,
     extractPieceFromModule,
     isNil,
     ListVersionsResponse,
+    PackageType,
+    PieceType,
+    ProjectId,
 } from '@activepieces/shared'
 
 const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {

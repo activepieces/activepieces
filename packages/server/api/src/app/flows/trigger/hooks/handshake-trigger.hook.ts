@@ -7,11 +7,11 @@ import {
 } from '@activepieces/pieces-framework'
 import {
     FlowVersion,
+    isNil,
     ProjectId,
     TriggerHookType,
     TriggerPayload,
     TriggerType,
-    isNil,
 } from '@activepieces/shared'
 
 export async function tryHandshake(

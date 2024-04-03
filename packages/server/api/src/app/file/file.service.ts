@@ -9,8 +9,8 @@ import {
     FileCompression,
     FileId,
     FileType,
-    ProjectId,
-    isNil } from '@activepieces/shared'
+    isNil,
+    ProjectId } from '@activepieces/shared'
 
 type SaveParams = {
     fileId?: FileId | undefined

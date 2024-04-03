@@ -39,7 +39,7 @@ import { UserEntity } from '../user/user-entity'
 import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
-import { DatabaseType, SystemProp, system } from '@activepieces/server-shared'
+import { DatabaseType, system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
 
 const databaseType = system.get(SystemProp.DB_TYPE)

@@ -1,5 +1,5 @@
 import { EntitySchema } from 'typeorm'
-import { JSONB_COLUMN_TYPE, BaseColumnSchemaPart } from '../../database/database-common'
+import { BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../../database/database-common'
 import { ApplicationEvent } from '@activepieces/ee-shared'
 import { Platform } from '@activepieces/shared'
 

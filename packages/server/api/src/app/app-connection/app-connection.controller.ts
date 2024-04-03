@@ -13,8 +13,8 @@ import {
     ListAppConnectionsRequestQuery,
     Permission,
     PrincipalType,
-    SERVICE_KEY_SECURITY_OPENAPI,
     SeekPage,
+    SERVICE_KEY_SECURITY_OPENAPI,
     UpsertAppConnectionRequestBody,
 } from '@activepieces/shared'
 

@@ -6,10 +6,10 @@ import { databaseConnection } from '../../../../src/app/database/database-connec
 import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
 import { generateMockExternalToken } from '../../../helpers/auth'
 import {
-    createMockUser,
     createMockPlatform,
-    createMockSigningKey,
     createMockProject,
+    createMockSigningKey,
+    createMockUser,
 } from '../../../helpers/mocks'
 import { apId } from '@activepieces/shared'
 

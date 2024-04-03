@@ -5,9 +5,9 @@ import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
 import {
-    createMockUser,
     createMockPlatform,
     createMockSigningKey,
+    createMockUser,
 } from '../../../helpers/mocks'
 import { PlatformRole, PrincipalType } from '@activepieces/shared'
 

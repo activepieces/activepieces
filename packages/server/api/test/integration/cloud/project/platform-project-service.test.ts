@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify'
 import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { platformProjectService } from '../../../../src/app/ee/projects/platform-project-service'
-import { mockBasicSetup, createMockFlow, createMockFlowVersion, createMockFlowRun, createMockPieceMetadata, createMockFile } from '../../../helpers/mocks'
+import { createMockFile, createMockFlow, createMockFlowRun, createMockFlowVersion, createMockPieceMetadata, mockBasicSetup } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 

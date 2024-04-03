@@ -7,7 +7,7 @@ import { systemJobsSchedule } from '../../helper/system-jobs'
 import { PlatformEntity } from '../../platform/platform.entity'
 import { ProjectEntity } from '../../project/project-entity'
 import { UserEntity } from '../../user/user-entity'
-import { SystemProp, system } from '@activepieces/server-shared'
+import { system, SystemProp } from '@activepieces/server-shared'
 import { Platform } from '@activepieces/shared'
 
 const userRepo = databaseConnection.getRepository(UserEntity)

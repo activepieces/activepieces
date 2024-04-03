@@ -11,7 +11,7 @@ import {
     OAuthApp,
     UpsertOAuth2AppRequest,
 } from '@activepieces/ee-shared'
-import { SeekPage, assertNotNullOrUndefined } from '@activepieces/shared'
+import { assertNotNullOrUndefined, SeekPage } from '@activepieces/shared'
 
 export const oauthAppModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(readOauthAppModule)

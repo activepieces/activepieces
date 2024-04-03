@@ -1,5 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { PopulatedFlow, isNil } from '@activepieces/shared'
+import { isNil, PopulatedFlow } from '@activepieces/shared'
 
 export class ProjectMappingState {
     flows: Record<string, {

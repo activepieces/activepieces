@@ -5,15 +5,15 @@ import { projectService } from '../../project/project-service'
 import { gitHelper } from './git-helper'
 import { GitRepoEntity } from './git-repo.entity'
 import { gitSyncHelper } from './git-sync-helper'
-import { ProjectOperation, projectDiffService } from './project-diff/project-diff.service'
+import { projectDiffService, ProjectOperation } from './project-diff/project-diff.service'
 import { ProjectMappingState } from './project-diff/project-mapping-state'
 import {
     ConfigureRepoRequest,
     GitRepo,
+    ProjectOperationType,
     ProjectSyncError,
-    ProjectSyncPlanOperation,
-    PushGitRepoRequest,
-    ProjectSyncPlan, ProjectOperationType } from '@activepieces/ee-shared'
+    ProjectSyncPlan,
+    ProjectSyncPlanOperation, PushGitRepoRequest } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     apId,

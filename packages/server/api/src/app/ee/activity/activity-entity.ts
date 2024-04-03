@@ -1,6 +1,6 @@
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
-import { ACTIVITY_EVENT_LENGTH, ACTIVITY_MESSAGE_LENGTH, ACTIVITY_STATUS_LENGTH, Activity } from '@activepieces/ee-shared'
+import { Activity, ACTIVITY_EVENT_LENGTH, ACTIVITY_MESSAGE_LENGTH, ACTIVITY_STATUS_LENGTH } from '@activepieces/ee-shared'
 import { Project } from '@activepieces/shared'
 
 type ActivitySchema = Activity & {

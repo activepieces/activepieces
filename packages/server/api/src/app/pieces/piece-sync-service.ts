@@ -7,7 +7,7 @@ import { getEdition } from '../helper/secret-helper'
 import { systemJobsSchedule } from '../helper/system-jobs'
 import { PieceMetadataEntity, PieceMetadataModel, PieceMetadataModelSummary } from './piece-metadata-entity'
 import { pieceMetadataService } from './piece-metadata-service'
-import { SystemProp, logger, system } from '@activepieces/server-shared'
+import { logger, system, SystemProp } from '@activepieces/server-shared'
 import { ListVersionsResponse, PackageType, PieceSyncMode, PieceType } from '@activepieces/shared'
 
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'

@@ -12,15 +12,15 @@ import {
 } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
+    assertNotNullOrUndefined,
     EndpointScope,
     ErrorCode,
     PlatformRole,
     Principal,
     PrincipalType,
     ProjectWithLimits,
-    SERVICE_KEY_SECURITY_OPENAPI,
     SeekPage,
-    assertNotNullOrUndefined,
+    SERVICE_KEY_SECURITY_OPENAPI,
 } from '@activepieces/shared'
 
 const DEFAULT_LIMIT_SIZE = 50

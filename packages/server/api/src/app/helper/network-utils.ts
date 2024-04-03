@@ -1,6 +1,6 @@
 import dns from 'node:dns/promises'
 import { FastifyRequest } from 'fastify'
-import { SystemProp, system } from '@activepieces/server-shared'
+import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEnvironment } from '@activepieces/shared'
 
 const GOOGLE_DNS = '216.239.32.10'

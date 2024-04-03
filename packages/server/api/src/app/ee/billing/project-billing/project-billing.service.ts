@@ -7,7 +7,7 @@ import { ProjectBillingEntity } from './project-billing.entity'
 import { stripeHelper } from './stripe-helper'
 import { ApSubscriptionStatus, DEFAULT_FREE_PLAN_LIMIT, ProjectBilling } from '@activepieces/ee-shared'
 import { logger } from '@activepieces/server-shared'
-import { User, apId, isNil } from '@activepieces/shared'
+import { apId, isNil, User } from '@activepieces/shared'
 
 const projectBillingRepo =
     databaseConnection.getRepository<ProjectBilling>(ProjectBillingEntity)

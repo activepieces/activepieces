@@ -2,7 +2,7 @@ import dayjs from 'dayjs'
 import { flowQueueConsumer } from '../../flow-queue-consumer'
 import { OneTimeJobData, ScheduledJobData } from '../../job-data'
 import { inMemoryQueueManager } from './memory-queue'
-import { SystemProp, system, logger } from '@activepieces/server-shared'
+import { logger, system, SystemProp } from '@activepieces/server-shared'
 
 class Semaphore {
     private maxConcurrent: number

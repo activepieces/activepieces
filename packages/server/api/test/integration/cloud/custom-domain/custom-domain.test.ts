@@ -5,12 +5,12 @@ import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
 import {
-    createMockUser,
-    createMockPlatform,
     createMockCustomDomain,
+    createMockPlatform,
+    createMockUser,
 } from '../../../helpers/mocks'
 import { AddDomainRequest, CustomDomainStatus } from '@activepieces/ee-shared'
-import { PlatformRole, PrincipalType, apId } from '@activepieces/shared'
+import { apId, PlatformRole, PrincipalType } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 

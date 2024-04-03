@@ -6,19 +6,19 @@ import { userService } from '../../user/user-service'
 import { passwordHasher } from '../lib/password-hasher'
 import { authenticationServiceHooks as hooks } from './hooks'
 import { Provider } from './hooks/authentication-service-hooks'
-import { logger, SystemProp, system } from '@activepieces/server-shared'
+import { logger, system, SystemProp } from '@activepieces/server-shared'
 import {
-    AuthenticationResponse,
-    UserStatus,
     ActivepiecesError,
+    ApEnvironment,
+    ApFlagId,
+    AuthenticationResponse,
     ErrorCode,
     isNil,
-    User,
-    ApFlagId,
     Project,
     TelemetryEventName,
+    User,
     UserId,
-    ApEnvironment,
+    UserStatus,
 } from '@activepieces/shared'
 
 const SIGN_UP_ENABLED = system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false

@@ -1,12 +1,12 @@
 import { Static, Type } from '@sinclair/typebox'
 import { EntitySchema } from 'typeorm'
 import {
-    ARRAY_COLUMN_TYPE,
     ApIdSchema,
+    ARRAY_COLUMN_TYPE,
     BaseColumnSchemaPart,
     COLLATION,
-    JSON_COLUMN_TYPE,
     isPostgres,
+    JSON_COLUMN_TYPE,
 } from '../database/database-common'
 import {
     PieceMetadata,

@@ -2,12 +2,12 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import { fileService } from '../../../file/file.service'
 import { PACKAGE_ARCHIVE_PATH, PieceManager } from './piece-manager'
-import { packageManager, fileExists } from '@activepieces/server-shared'
+import { fileExists, packageManager } from '@activepieces/server-shared'
 import {
+    getPackageArchivePathForPiece,
     PackageType,
     PiecePackage,
     PrivatePiecePackage,
-    getPackageArchivePathForPiece,
 } from '@activepieces/shared'
 
 export class RegistryPieceManager extends PieceManager {

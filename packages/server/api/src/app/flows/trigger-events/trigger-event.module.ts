@@ -2,7 +2,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { systemJobsSchedule } from '../../helper/system-jobs'
 import { flowService } from '../flow/flow.service'
 import { triggerEventService } from './trigger-event.service'
-import { SystemProp, system } from '@activepieces/server-shared'
+import { system, SystemProp } from '@activepieces/server-shared'
 import {
     ListTriggerEventsRequest,
     TestPollingTriggerRequest,

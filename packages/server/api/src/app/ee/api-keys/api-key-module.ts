@@ -7,9 +7,9 @@ import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authoriza
 import { apiKeyService } from './api-key-service'
 import {
     ApiKeyResponseWithoutValue,
-    CreateApiKeyRequest,
-    ApiKeyResponseWithValue } from '@activepieces/ee-shared'
-import { ApId, SeekPage, assertNotNullOrUndefined } from '@activepieces/shared'
+    ApiKeyResponseWithValue,
+    CreateApiKeyRequest } from '@activepieces/ee-shared'
+import { ApId, assertNotNullOrUndefined, SeekPage } from '@activepieces/shared'
 
 export const apiKeyModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preHandler', platformMustBeOwnedByCurrentUser)

@@ -7,22 +7,22 @@ import { userService } from '../../user/user-service'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import { projectMemberService } from './project-member.service'
 import {
-    ListProjectMembersRequestQuery,
     AcceptProjectResponse,
     AddProjectMemberRequestBody,
+    ListProjectMembersRequestQuery,
     ProjectMember,
     ProjectMemberStatus,
 } from '@activepieces/ee-shared'
 import { logger } from '@activepieces/server-shared'
 import {
-    ALL_PRINCIPAL_TYPES,
     ActivepiecesError,
+    ALL_PRINCIPAL_TYPES,
+    assertNotNullOrUndefined,
     ErrorCode,
+    isNil,
     Permission,
     PrincipalType,
     SERVICE_KEY_SECURITY_OPENAPI,
-    assertNotNullOrUndefined,
-    isNil,
 } from '@activepieces/shared'
 
 const DEFAULT_LIMIT_SIZE = 10

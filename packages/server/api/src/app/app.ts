@@ -89,11 +89,11 @@ import { flowWorkerHooks } from './workers/flow-worker/flow-worker-hooks'
 import { flowWorkerModule } from './workers/flow-worker/flow-worker-module'
 import { setupBullMQBoard } from './workers/flow-worker/queues/redis/redis-queue'
 import {
-    ProjectMember,
     GitRepoWithoutSensitiveData,
+    ProjectMember,
 } from '@activepieces/ee-shared'
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { logger, initilizeSentry, ExecutionMode, QueueMode, SystemProp, system } from '@activepieces/server-shared'
+import { ExecutionMode, initilizeSentry, logger, QueueMode, system, SystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,

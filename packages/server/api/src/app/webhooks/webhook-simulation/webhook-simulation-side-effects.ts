@@ -6,9 +6,9 @@ import {
     ErrorCode,
     FlowId,
     FlowVersionId,
+    isNil,
     PopulatedFlow,
-    ProjectId,
-    isNil } from '@activepieces/shared'
+    ProjectId } from '@activepieces/shared'
 
 type BaseParams = {
     projectId: ProjectId

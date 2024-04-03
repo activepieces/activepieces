@@ -7,11 +7,11 @@ import { enterpriseUserService } from './enterprise-user-service'
 import { UpdateUserRequestBody } from '@activepieces/ee-shared'
 import {
     ApId,
+    assertNotNullOrUndefined,
     EndpointScope,
     PrincipalType,
     SeekPage,
     UserResponse,
-    assertNotNullOrUndefined,
 } from '@activepieces/shared'
 
 export const enterpriseUserController: FastifyPluginAsyncTypebox = async (app) => {

@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import { PieceMetadataSchema } from '../../piece-metadata-entity'
-import { PieceSortBy, PieceOrderBy } from '@activepieces/shared'
+import { PieceOrderBy, PieceSortBy } from '@activepieces/shared'
 
 export const sortAndOrderPieces = (
     sortBy: PieceSortBy | undefined,

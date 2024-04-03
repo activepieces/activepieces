@@ -9,7 +9,7 @@ import {
     OtpState,
     OtpType,
 } from '@activepieces/ee-shared'
-import { PlatformId, User, UserId, apId } from '@activepieces/shared'
+import { apId, PlatformId, User, UserId } from '@activepieces/shared'
 
 const THIRTY_MINUTES = 30 * 60 * 1000
 

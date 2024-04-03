@@ -3,11 +3,11 @@ import { flagService } from '../../../../flags/flag.service'
 import { AuthnProvider } from './authn-provider'
 import {
     ActivepiecesError,
+    assertNotNullOrUndefined,
     AuthenticationResponse,
     ErrorCode,
-    Platform,
-    assertNotNullOrUndefined,
     isNil,
+    Platform,
 } from '@activepieces/shared'
 
 function getClientIdAndSecret(platform: Platform): {

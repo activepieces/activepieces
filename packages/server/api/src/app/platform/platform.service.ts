@@ -3,18 +3,18 @@ import { defaultTheme } from '../flags/theme'
 import { userService } from '../user/user-service'
 import { PlatformEntity } from './platform.entity'
 import {
+    ActivepiecesError,
+    apId,
+    ErrorCode,
     FilteredPieceBehavior,
+
+    isNil,
+    LocalesEnum,
     Platform,
     PlatformId,
+    spreadIfDefined,
     UpdatePlatformRequestBody,
-
-    ActivepiecesError,
-    ErrorCode,
-    LocalesEnum,
-    UserId,
-    apId,
-    isNil,
-    spreadIfDefined } from '@activepieces/shared'
+    UserId } from '@activepieces/shared'
 
 const repo = databaseConnection.getRepository<Platform>(PlatformEntity)
 

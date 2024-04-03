@@ -5,12 +5,12 @@ import { projectService } from '../../../project/project-service'
 import { projectUsageService } from '../../../project/usage/project-usage-service'
 import { projectBillingService } from './project-billing.service'
 import { getTasksPriceId } from '@activepieces/ee-shared'
-import { SystemProp, system, exceptionHandler } from '@activepieces/server-shared'
+import { exceptionHandler, system, SystemProp } from '@activepieces/server-shared'
 import {
     ApEdition,
+    assertNotNullOrUndefined,
     ProjectId,
     UserMeta,
-    assertNotNullOrUndefined,
 } from '@activepieces/shared'
 
 export const stripeWebhookSecret = system.get(

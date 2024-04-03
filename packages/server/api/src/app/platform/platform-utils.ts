@@ -2,7 +2,7 @@ import { FastifyRequest } from 'fastify'
 import { customDomainService } from '../ee/custom-domains/custom-domain.service'
 import { getEdition } from '../helper/secret-helper'
 import { platformService } from './platform.service'
-import { SystemProp, system } from '@activepieces/server-shared'
+import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition, Principal, PrincipalType } from '@activepieces/shared'
 
 const edition = getEdition()

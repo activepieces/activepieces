@@ -2,9 +2,9 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { eventsHooks } from '../../../helper/application-events'
 import { enterpriseLocalAuthnService } from './enterprise-local-authn-service'
 import {
+    ApplicationEventName,
     ResetPasswordRequestBody,
-    VerifyEmailRequestBody,
-    ApplicationEventName } from '@activepieces/ee-shared'
+    VerifyEmailRequestBody } from '@activepieces/ee-shared'
 import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
 
 export const enterpriseLocalAuthnController: FastifyPluginAsyncTypebox = async (

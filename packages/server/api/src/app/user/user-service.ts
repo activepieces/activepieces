@@ -4,15 +4,15 @@ import { passwordHasher } from '../authentication/lib/password-hasher'
 import { databaseConnection } from '../database/database-connection'
 import { UserEntity } from './user-entity'
 import {
+    ActivepiecesError,
     apId,
+    ErrorCode,
+    isNil,
     SignUpRequest,
     User,
     UserId,
     UserMeta,
     UserStatus,
-    isNil,
-    ActivepiecesError,
-    ErrorCode,
 } from '@activepieces/shared'
 
 const userRepo = databaseConnection.getRepository(UserEntity)

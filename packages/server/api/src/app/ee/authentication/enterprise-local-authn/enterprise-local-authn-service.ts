@@ -5,7 +5,7 @@ import {
     ResetPasswordRequestBody,
     VerifyEmailRequestBody,
 } from '@activepieces/ee-shared'
-import { UserId, ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, UserId } from '@activepieces/shared'
 
 export const enterpriseLocalAuthnService = {
     async verifyEmail({ userId, otp }: VerifyEmailRequestBody): Promise<void> {

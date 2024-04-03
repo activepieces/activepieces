@@ -10,12 +10,12 @@ import { ReferralEntity } from './referral.entity'
 import { DEFAULT_FREE_PLAN_LIMIT, Referral } from '@activepieces/ee-shared'
 import { logger } from '@activepieces/server-shared'
 import {
+    apId,
     Cursor,
+    isNil,
     SeekPage,
     TelemetryEventName,
     UserId,
-    apId,
-    isNil,
 } from '@activepieces/shared'
 
 const referralRepo = databaseConnection.getRepository(ReferralEntity)

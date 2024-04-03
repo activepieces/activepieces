@@ -11,9 +11,9 @@ import { oauthAppService } from '../oauth-apps/oauth-app.service'
 import { PropertyType } from '@activepieces/pieces-framework'
 import {
     AppConnectionType,
-    PlatformOAuth2ConnectionValue,
     assertNotNullOrUndefined,
     isNil,
+    PlatformOAuth2ConnectionValue,
 } from '@activepieces/shared'
 
 export const platformOAuth2Service: OAuth2Service<PlatformOAuth2ConnectionValue> =

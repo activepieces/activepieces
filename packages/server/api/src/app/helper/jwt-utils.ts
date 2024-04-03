@@ -6,7 +6,7 @@ import jwtLibrary, {
     VerifyOptions,
 } from 'jsonwebtoken'
 import { localFileStore } from './store'
-import { QueueMode, SystemProp, system } from '@activepieces/server-shared'
+import { QueueMode, system, SystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,

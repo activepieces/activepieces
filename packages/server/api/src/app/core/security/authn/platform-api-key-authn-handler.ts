@@ -14,13 +14,13 @@ import {
     ActivepiecesError,
     EndpointScope,
     ErrorCode,
+    isNil,
+    isObject,
     PlatformRole,
     Principal,
     PrincipalType,
     Project,
     ProjectId,
-    isNil,
-    isObject,
 } from '@activepieces/shared'
 
 export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {

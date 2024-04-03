@@ -4,7 +4,7 @@ import { createRedisClient } from '../../../../database/redis-connection'
 import { flowQueueConsumer } from '../../flow-queue-consumer'
 import { OneTimeJobData, ScheduledJobData } from '../../job-data'
 import { ONE_TIME_JOB_QUEUE, SCHEDULED_JOB_QUEUE } from './redis-queue'
-import { SystemProp, system } from '@activepieces/server-shared'
+import { system, SystemProp } from '@activepieces/server-shared'
 import { ApId } from '@activepieces/shared'
 
 let redisScheduledJobConsumer: Worker<ScheduledJobData, unknown>

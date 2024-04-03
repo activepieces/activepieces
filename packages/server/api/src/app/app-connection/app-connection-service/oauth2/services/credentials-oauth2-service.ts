@@ -12,9 +12,9 @@ import {
     AppConnectionType,
     BaseOAuth2ConnectionValue,
     ErrorCode,
+    isNil,
     OAuth2ConnectionValueWithApp,
     OAuth2GrantType,
-    isNil,
 } from '@activepieces/shared'
 
 export const credentialsOauth2Service: OAuth2Service<OAuth2ConnectionValueWithApp> =

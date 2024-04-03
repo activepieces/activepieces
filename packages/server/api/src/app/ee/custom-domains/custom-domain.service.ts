@@ -7,7 +7,7 @@ import {
     CustomDomainStatus,
     ListCustomDomainsRequest,
 } from '@activepieces/ee-shared'
-import { SeekPage, apId } from '@activepieces/shared'
+import { apId, SeekPage } from '@activepieces/shared'
 
 const customDomainRepo =
   databaseConnection.getRepository<CustomDomain>(CustomDomainEntity)

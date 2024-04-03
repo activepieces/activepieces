@@ -1,6 +1,6 @@
 import * as crypto from 'crypto'
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger, SystemProp, system } from '@activepieces/server-shared'
+import { logger, system, SystemProp } from '@activepieces/server-shared'
 
 type AppConnectionValue = {
     type: string

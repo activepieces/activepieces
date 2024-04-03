@@ -1,7 +1,7 @@
 import { Static, Type } from '@sinclair/typebox'
 import { ProjectMappingState } from './project-mapping-state'
 import { ProjectOperationType } from '@activepieces/ee-shared'
-import { PopulatedFlow, assertNotNullOrUndefined, flowHelper, isNil } from '@activepieces/shared'
+import { assertNotNullOrUndefined, flowHelper, isNil, PopulatedFlow } from '@activepieces/shared'
 
 export const projectDiffService = {
     diff({ gitFiles: fromFlows, destinationFlows, mapping }: DiffParams): ProjectOperation[] {

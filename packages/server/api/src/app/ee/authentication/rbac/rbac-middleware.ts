@@ -6,11 +6,11 @@ import {
     ActivepiecesError,
     ApEdition,
     ErrorCode,
+    isNil,
     Permission,
     Principal,
     PrincipalType,
     ProjectMemberRole,
-    isNil,
 } from '@activepieces/shared'
 
 const EDITION_IS_COMMUNITY = getEdition() === ApEdition.COMMUNITY

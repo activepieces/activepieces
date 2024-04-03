@@ -7,8 +7,8 @@ import {
     FileCompression,
     FileId,
     FileType,
-    PieceType,
     isNil,
+    PieceType,
 } from '@activepieces/shared'
 
 export const platformPieceServiceHooks: PieceServiceHooks = {

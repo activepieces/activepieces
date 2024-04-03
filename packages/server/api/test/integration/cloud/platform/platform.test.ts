@@ -3,14 +3,14 @@ import { StatusCodes } from 'http-status-codes'
 import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
-import { createMockUser, createMockPlatform } from '../../../helpers/mocks'
+import { createMockPlatform, createMockUser } from '../../../helpers/mocks'
 import {
+    apId,
+    FilteredPieceBehavior,
     LocalesEnum,
     PlatformRole,
-    PrincipalType,
-    apId,
 
-    FilteredPieceBehavior,
+    PrincipalType,
     UpdatePlatformRequestBody } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null

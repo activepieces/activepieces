@@ -2,10 +2,10 @@ import { jwtUtils } from '../../../helper/jwt-utils'
 import { getEdition } from '../../../helper/secret-helper'
 import { projectService } from '../../../project/project-service'
 import { platformDomainHelper } from '../platform-domain-helper'
-import { EmailTemplateData, emailSender } from './email-sender/email-sender'
+import { emailSender, EmailTemplateData } from './email-sender/email-sender'
 import { OtpType } from '@activepieces/ee-shared'
 import { logger } from '@activepieces/server-shared'
-import { ApEdition, User, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { ApEdition, assertNotNullOrUndefined, isNil, User } from '@activepieces/shared'
 
 const EDITION = getEdition()
 

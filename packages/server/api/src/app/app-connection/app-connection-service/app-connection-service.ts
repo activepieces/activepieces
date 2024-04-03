@@ -17,8 +17,7 @@ import { appConnectionsHooks } from './app-connection-hooks'
 import { oauth2Handler } from './oauth2'
 import { oauth2Util } from './oauth2/oauth2-util'
 import { exceptionHandler, logger } from '@activepieces/server-shared'
-import { isNil,
-    ActivepiecesError,
+import { ActivepiecesError,
     apId,
     AppConnection,
     AppConnectionId,
@@ -28,6 +27,7 @@ import { isNil,
     Cursor,
     EngineResponseStatus,
     ErrorCode,
+    isNil,
     OAuth2GrantType,
     ProjectId,
     SeekPage,

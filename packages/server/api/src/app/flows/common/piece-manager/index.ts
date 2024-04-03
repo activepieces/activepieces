@@ -1,7 +1,7 @@
 import { LocalPieceManager } from './local-piece-manager'
 import { PieceManager } from './piece-manager'
 import { RegistryPieceManager } from './registry-piece-manager'
-import { PiecesSource, SystemProp, system } from '@activepieces/server-shared'
+import { PiecesSource, system, SystemProp } from '@activepieces/server-shared'
 
 const source = system.getOrThrow<PiecesSource>(SystemProp.PIECES_SOURCE)
 
