@@ -1,4 +1,4 @@
-import { Type, Static, TSchema } from '@sinclair/typebox'
+import { Static, TSchema, Type } from '@sinclair/typebox'
 
 export type BaseModel<T> = {
     id: T

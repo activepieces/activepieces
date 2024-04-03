@@ -1,8 +1,8 @@
+import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema } from '../common/base-model'
 import { ApId } from '../common/id-generator'
-import { FileType } from './file-type'
 import { FileCompression } from './file-compression'
-import { Static, Type } from '@sinclair/typebox'
+import { FileType } from './file-type'
 
 export type FileId = ApId
 

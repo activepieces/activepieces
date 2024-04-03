@@ -1,6 +1,6 @@
-import { TriggerType } from '../../flows/triggers/trigger'
-import { ActionType } from '../../flows/actions/action'
 import { isNil } from '../../common'
+import { ActionType } from '../../flows/actions/action'
+import { TriggerType } from '../../flows/triggers/trigger'
 
 export enum StepOutputStatus {
     FAILED = 'FAILED',

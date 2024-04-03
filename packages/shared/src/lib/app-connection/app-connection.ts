@@ -1,8 +1,8 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModel, BaseModelSchema } from '../common/base-model'
-import { OAuth2AuthorizationMethod } from './oauth2-authorization-method'
 import { ApId } from '../common/id-generator'
 import { OAuth2GrantType } from './dto/upsert-app-connection-request'
+import { OAuth2AuthorizationMethod } from './oauth2-authorization-method'
 
 export type AppConnectionId = string
 
