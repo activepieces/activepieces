@@ -39,6 +39,7 @@ import {
   imports: [
     CommonModule,
     UiCommonModule,
+    SidenavRoutesListComponent,
     EeBillingUiModule,
     RouterModule.forChild(DashboardLayoutRouting),
     UiFeatureFoldersStoreModule,
@@ -57,7 +58,6 @@ import {
   ],
   declarations: [
     DashboardContainerComponent,
-    SidenavRoutesListComponent,
     RunsTableComponent,
     FlowsTableComponent,
     EmptyFlowsTableComponent,
