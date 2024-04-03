@@ -1,11 +1,19 @@
+import { databaseConnection } from '../../database/database-connection'
+import { flowService } from '../../flows/flow/flow.service'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { projectService } from '../../project/project-service'
+import { gitHelper } from './git-helper'
 import { GitRepoEntity } from './git-repo.entity'
+import { gitSyncHelper } from './git-sync-helper'
+import { projectDiffService, ProjectOperation } from './project-diff/project-diff.service'
+import { ProjectMappingState } from './project-diff/project-mapping-state'
 import {
     ConfigureRepoRequest,
     GitRepo,
+    ProjectOperationType,
     ProjectSyncError,
-    ProjectSyncPlanOperation,
-    PushGitRepoRequest,
-} from '@activepieces/ee-shared'
+    ProjectSyncPlan,
+    ProjectSyncPlanOperation, PushGitRepoRequest } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     apId,
@@ -14,15 +22,6 @@ import {
     isNil,
     SeekPage,
 } from '@activepieces/shared'
-import { databaseConnection } from '../../database/database-connection'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { gitSyncHelper } from './git-sync-helper'
-import { projectService } from '../../project/project-service'
-import { ProjectOperation, projectDiffService } from './project-diff/project-diff.service'
-import { ProjectMappingState } from './project-diff/project-mapping-state'
-import { gitHelper } from './git-helper'
-import { ProjectSyncPlan, ProjectOperationType } from '@activepieces/ee-shared'
-import { flowService } from '../../flows/flow/flow.service'
 
 const repo = databaseConnection.getRepository(GitRepoEntity)
 
@@ -96,11 +95,14 @@ export const gitRepoService = {
         const project = await projectService.getOneOrThrow(gitRepo.projectId)
         const { flowFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
         const gitProjectState = await gitSyncHelper.getStateFromGit(flowFolderPath)
-        const mappingState = gitRepo.mapping ? new ProjectMappingState(gitRepo.mapping) : ProjectMappingState.empty()
         const dbProjectState = await gitSyncHelper.getStateFromDB(project.id)
+        const mappingState = (gitRepo.mapping ? new ProjectMappingState(gitRepo.mapping) : ProjectMappingState.empty()).clean({
+            gitFiles: gitProjectState,
+            projectFlows: dbProjectState,
+        })
         const operations = projectDiffService.diff({
             gitFiles: gitProjectState,
-            destinationFlows: dbProjectState,
+            projectFlows: dbProjectState,
             mapping: mappingState,
         })
         if (dryRun) {

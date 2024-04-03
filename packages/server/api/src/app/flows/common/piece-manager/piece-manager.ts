@@ -1,12 +1,12 @@
 import { resolve } from 'node:path'
+import { enrichErrorContext, PackageInfo, system, SystemProp } from '@activepieces/server-shared'
 import {
-    PackageType,
-    PiecePackage,
     getPackageAliasForPiece,
     getPackageArchivePathForPiece,
     isEmpty,
+    PackageType,
+    PiecePackage,
 } from '@activepieces/shared'
-import { PackageInfo, SystemProp, enrichErrorContext, system } from 'server-shared'
 
 export const PACKAGE_ARCHIVE_PATH = resolve(
     system.getOrThrow(SystemProp.PACKAGE_ARCHIVE_PATH),

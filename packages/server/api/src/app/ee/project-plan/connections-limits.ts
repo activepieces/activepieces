@@ -1,6 +1,6 @@
-import { ActivepiecesError, ErrorCode, ProjectId } from '@activepieces/shared'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { projectLimitsService } from './project-plan.service'
+import { ActivepiecesError, ErrorCode, ProjectId } from '@activepieces/shared'
 
 async function limitConnections({
     projectId,

@@ -1,10 +1,10 @@
+import { onRequestAsyncHookHandler } from 'fastify'
 import {
     ActivepiecesError,
     ErrorCode,
-    PlatformRole,
     isNil,
+    PlatformRole,
 } from '@activepieces/shared'
-import { onRequestAsyncHookHandler } from 'fastify'
 
 const USER_NOT_ALLOWED_TO_PERFORM_OPERATION_ERROR = new ActivepiecesError({
     code: ErrorCode.AUTHORIZATION,

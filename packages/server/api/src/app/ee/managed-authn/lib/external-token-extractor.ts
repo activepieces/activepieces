@@ -1,8 +1,8 @@
-import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/shared'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
 import { signingKeyService } from '../../signing-key/signing-key-service'
-import { logger } from 'server-shared'
 import { SigningKey, SigningKeyId } from '@activepieces/ee-shared'
+import { logger } from '@activepieces/server-shared'
+import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/shared'
 
 const ALGORITHM = JwtSignAlgorithm.RS256
 

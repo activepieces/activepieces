@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 export class PieceMetadata1685537054805 implements MigrationInterface {
     name = 'PieceMetadata1685537054805'

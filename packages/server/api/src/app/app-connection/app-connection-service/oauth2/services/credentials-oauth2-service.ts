@@ -1,21 +1,21 @@
-import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
-import {
-    ActivepiecesError,
-    AppConnectionType,
-    BaseOAuth2ConnectionValue,
-    ErrorCode,
-    OAuth2ConnectionValueWithApp,
-    OAuth2GrantType,
-    isNil,
-} from '@activepieces/shared'
 import axios from 'axios'
-import { oauth2Util } from '../oauth2-util'
-import { logger } from 'server-shared'
 import {
     ClaimOAuth2Request,
     OAuth2Service,
     RefreshOAuth2Request,
 } from '../oauth2-service'
+import { oauth2Util } from '../oauth2-util'
+import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
+import { logger } from '@activepieces/server-shared'
+import {
+    ActivepiecesError,
+    AppConnectionType,
+    BaseOAuth2ConnectionValue,
+    ErrorCode,
+    isNil,
+    OAuth2ConnectionValueWithApp,
+    OAuth2GrantType,
+} from '@activepieces/shared'
 
 export const credentialsOauth2Service: OAuth2Service<OAuth2ConnectionValueWithApp> =
   {

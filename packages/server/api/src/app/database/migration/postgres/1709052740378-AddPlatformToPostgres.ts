@@ -1,6 +1,6 @@
-import { apId } from '@activepieces/shared'
-import { logger } from 'server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { logger } from '@activepieces/server-shared'
+import { apId } from '@activepieces/shared'
 
 export class AddPlatformToPostgres1709052740378 implements MigrationInterface {
     name = 'AddPlatformToPostgres1709052740378'
@@ -76,22 +76,22 @@ async function migrateProjects(queryRunner: QueryRunner) {
         const ownerId = project.ownerId
         const platformId = apId()
         await queryRunner.query(
-            `INSERT INTO "platform" 
-            ("id", "created", "updated", "ownerId", "name", "primaryColor", 
-            "logoIconUrl", "fullLogoUrl", "favIconUrl", "filteredPieceNames", 
-            "filteredPieceBehavior", "smtpHost", "smtpPort", "smtpUser", 
-            "smtpPassword", "smtpSenderEmail", "smtpUseSSL", "privacyPolicyUrl", 
-            "termsOfServiceUrl", "showPoweredBy", "cloudAuthEnabled", 
-            "defaultLocale", "embeddingEnabled", "gitSyncEnabled", 
-            "allowedAuthDomains", "enforceAllowedAuthDomains", "ssoEnabled", 
-            "federatedAuthProviders", "emailAuthEnabled", "auditLogEnabled", 
+            `INSERT INTO "platform"
+            ("id", "created", "updated", "ownerId", "name", "primaryColor",
+            "logoIconUrl", "fullLogoUrl", "favIconUrl", "filteredPieceNames",
+            "filteredPieceBehavior", "smtpHost", "smtpPort", "smtpUser",
+            "smtpPassword", "smtpSenderEmail", "smtpUseSSL", "privacyPolicyUrl",
+            "termsOfServiceUrl", "showPoweredBy", "cloudAuthEnabled",
+            "defaultLocale", "embeddingEnabled", "gitSyncEnabled",
+            "allowedAuthDomains", "enforceAllowedAuthDomains", "ssoEnabled",
+            "federatedAuthProviders", "emailAuthEnabled", "auditLogEnabled",
             "showActivityLog")
-            VALUES 
-            ($1, current_timestamp, current_timestamp, $2, 'Activepieces', 
-            '#6e41e2', 'https://cdn.activepieces.com/brand/logo.svg', 
-            'https://cdn.activepieces.com/brand/full-logo.png', 
-            'https://cdn.activepieces.com/brand/favicon.ico', '{}', 
-            'BLOCKED', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
+            VALUES
+            ($1, current_timestamp, current_timestamp, $2, 'Activepieces',
+            '#6e41e2', 'https://cdn.activepieces.com/brand/logo.svg',
+            'https://cdn.activepieces.com/brand/full-logo.png',
+            'https://cdn.activepieces.com/brand/favicon.ico', '{}',
+            'BLOCKED', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
             'f', 't', 'en', 'f', 'f', '{}', 'f', 'f', '{}', 'f', 'f', 'f');`,
             [platformId, ownerId],
         )

@@ -1,19 +1,19 @@
+import axios from 'axios'
+
+import { getEdition } from '../../../../helper/secret-helper'
+import {
+    ClaimOAuth2Request,
+    OAuth2Service,
+    RefreshOAuth2Request,
+} from '../oauth2-service'
+import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
+import { logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     AppConnectionType,
     CloudOAuth2ConnectionValue,
     ErrorCode,
 } from '@activepieces/shared'
-import axios from 'axios'
-import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
-
-import {
-    ClaimOAuth2Request,
-    OAuth2Service,
-    RefreshOAuth2Request,
-} from '../oauth2-service'
-import { getEdition } from '../../../../helper/secret-helper'
-import { logger } from 'server-shared'
 
 export const cloudOAuth2Service: OAuth2Service<CloudOAuth2ConnectionValue> = {
     refresh,

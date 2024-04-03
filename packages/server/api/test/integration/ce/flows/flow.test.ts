@@ -1,15 +1,15 @@
-import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { FastifyInstance } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
 import { setupApp } from '../../../../src/app/app'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
 import {
-    createMockUser,
-    createMockProject,
     createMockFlow,
     createMockFlowVersion,
     createMockPlatform,
+    createMockProject,
+    createMockUser,
 } from '../../../helpers/mocks'
-import { StatusCodes } from 'http-status-codes'
-import { FastifyInstance } from 'fastify'
 import {
     FlowOperationType,
     FlowStatus,

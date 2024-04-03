@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 import { apId } from '@activepieces/shared'
 
 export class MoveGeneratedByFromSigningKeyToAuditEventPostgres1709669091258 implements MigrationInterface {

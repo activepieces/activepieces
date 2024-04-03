@@ -2,17 +2,17 @@ import {
     FastifyPluginAsyncTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
+import { StatusCodes } from 'http-status-codes'
+import { eventsHooks } from '../../helper/application-events'
+import { signingKeyService } from './signing-key-service'
+import { AddSigningKeyRequestBody, ApplicationEventName } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     ApId,
-    ErrorCode,
     assertNotNullOrUndefined,
+    ErrorCode,
     isNil,
 } from '@activepieces/shared'
-import { signingKeyService } from './signing-key-service'
-import { StatusCodes } from 'http-status-codes'
-import { AddSigningKeyRequestBody, ApplicationEventName } from '@activepieces/ee-shared'
-import { eventsHooks } from '../../helper/application-events'
 
 export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', AddSigningKeyRequest, async (req, res) => {

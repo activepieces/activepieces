@@ -1,22 +1,22 @@
 import {
+    FastifyPluginCallbackTypebox,
+    Type,
+} from '@fastify/type-provider-typebox'
+import { StatusCodes } from 'http-status-codes'
+import { eventsHooks } from '../helper/application-events'
+import { appConnectionService } from './app-connection-service/app-connection-service'
+import { ApplicationEventName } from '@activepieces/ee-shared'
+import {
     ApId,
     AppConnection,
     AppConnectionWithoutSensitiveData,
     ListAppConnectionsRequestQuery,
     Permission,
     PrincipalType,
-    SERVICE_KEY_SECURITY_OPENAPI,
     SeekPage,
+    SERVICE_KEY_SECURITY_OPENAPI,
     UpsertAppConnectionRequestBody,
 } from '@activepieces/shared'
-import {
-    FastifyPluginCallbackTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
-import { StatusCodes } from 'http-status-codes'
-import { appConnectionService } from './app-connection-service/app-connection-service'
-import { eventsHooks } from '../helper/application-events'
-import { ApplicationEventName } from '@activepieces/ee-shared'
 
 export const appConnectionController: FastifyPluginCallbackTypebox = (
     app,

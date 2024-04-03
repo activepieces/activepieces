@@ -1,9 +1,9 @@
 import { EntitySchema } from 'typeorm'
-import { Flow, Folder as Folder, Project } from '@activepieces/shared'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
 } from '../../database/database-common'
+import { Flow, Folder as Folder, Project } from '@activepieces/shared'
 
 export type FolderSchema = {
     flows: Flow[]

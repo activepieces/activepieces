@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import { SystemProp, system } from 'server-shared'
+import { system, SystemProp } from '@activepieces/server-shared'
 
 export const localFileStore = {
     async save(key: string, value: string): Promise<void> {

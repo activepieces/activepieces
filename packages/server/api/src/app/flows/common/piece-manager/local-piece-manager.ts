@@ -1,8 +1,8 @@
-import { resolve, join, sep } from 'node:path'
-import { writeFile, readFile } from 'node:fs/promises'
-import { logger, packageManager } from 'server-shared'
-import { PieceManager } from './piece-manager'
+import { readFile, writeFile } from 'node:fs/promises'
+import { join, resolve, sep } from 'node:path'
 import { FilePieceMetadataService } from '../../../pieces/piece-metadata-service/file-piece-metadata-service'
+import { PieceManager } from './piece-manager'
+import { logger, packageManager } from '@activepieces/server-shared'
 import { PiecePackage } from '@activepieces/shared'
 
 const pieceMetadataService = FilePieceMetadataService()

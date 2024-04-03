@@ -1,8 +1,8 @@
 import {
-    Repository,
     EntityManager,
-    ObjectLiteral,
     EntitySchema,
+    ObjectLiteral,
+    Repository,
 } from 'typeorm'
 import { databaseConnection } from '../../database/database-connection'
 

@@ -1,4 +1,4 @@
-import { Type, Static } from '@sinclair/typebox'
+import { Static, Type } from '@sinclair/typebox'
 
 import { PackageType, PieceType, VersionType } from '../../pieces'
 import { SampleDataSettingsObject } from '../sample-data'

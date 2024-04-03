@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/node'
 import { logger } from './logger'
-import { SystemProp } from './system/system-prop'
 import { system } from './system/system'
+import { SystemProp } from './system/system-prop'
 
 const sentryDsn = system.get(SystemProp.SENTRY_DSN)
 
@@ -12,14 +12,14 @@ export const initilizeSentry = () => {
             dsn: sentryDsn,
             beforeSend: (event) => {
                 if (event?.exception?.values?.[0].type === 'AxiosError') {
-                    return null;
+                    return null
                 }
                 const value = event?.exception?.values?.[0]?.value
                 if (value && ['EXECUTION_TIMEOUT', 'ENTITY_NOT_FOUND'].includes(value)) {
-                    return null;
+                    return null
                 }
                 return event
-            }
+            },
         })
     }
 }

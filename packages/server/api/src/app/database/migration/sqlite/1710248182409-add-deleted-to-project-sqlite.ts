@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 export class AddDeletedToProjectSqlite1710248182409 implements MigrationInterface {
     name = 'AddDeletedToProjectSqlite1710248182409'

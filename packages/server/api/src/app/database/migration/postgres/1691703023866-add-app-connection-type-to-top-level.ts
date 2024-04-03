@@ -1,7 +1,6 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from 'server-shared'
 import * as crypto from 'crypto'
-import { SystemProp, system } from 'server-shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
+import { logger, system, SystemProp } from '@activepieces/server-shared'
 
 type AppConnectionValue = {
     type: string

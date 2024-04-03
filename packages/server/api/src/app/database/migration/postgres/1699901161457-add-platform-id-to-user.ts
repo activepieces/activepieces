@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 export class AddPlatformIdToUser1699901161457 implements MigrationInterface {
     name = 'AddPlatformIdToUser1699901161457'

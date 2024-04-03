@@ -1,11 +1,11 @@
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { eventsHooks } from '../../helper/application-events'
+import { managedAuthnService } from './managed-authn-service'
+import { ApplicationEventName, ManagedAuthnRequestBody } from '@activepieces/ee-shared'
 import {
     ALL_PRINCIPAL_TYPES,
     AuthenticationResponse,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { managedAuthnService } from './managed-authn-service'
-import { ApplicationEventName, ManagedAuthnRequestBody } from '@activepieces/ee-shared'
-import { eventsHooks } from '../../helper/application-events'
 
 export const managedAuthnController: FastifyPluginAsyncTypebox = async (
     app,

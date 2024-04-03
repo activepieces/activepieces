@@ -1,10 +1,10 @@
-import { databaseConnection } from './app/database/database-connection'
-import { ApEnvironment } from '@activepieces/shared'
-import { seedDevData } from './app/database/seeds/dev-seeds'
-import { setupApp } from './app/app'
 import { FastifyInstance } from 'fastify'
+import { setupApp } from './app/app'
+import { databaseConnection } from './app/database/database-connection'
+import { seedDevData } from './app/database/seeds/dev-seeds'
 import { enforceLimits } from './app/ee/helper/license-validator'
-import { SystemProp, logger, system } from 'server-shared'
+import { logger, system, SystemProp } from '@activepieces/server-shared'
+import { ApEnvironment } from '@activepieces/shared'
 
 const start = async (app: FastifyInstance): Promise<void> => {
     try {

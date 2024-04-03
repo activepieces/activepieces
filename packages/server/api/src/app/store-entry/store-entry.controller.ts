@@ -1,4 +1,6 @@
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
 import { storeEntryService } from './store-entry.service'
 import {
     DeleteStoreEntryRequest,
@@ -6,8 +8,6 @@ import {
     PrincipalType,
     PutStoreEntryRequest,
 } from '@activepieces/shared'
-import { StatusCodes } from 'http-status-codes'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 
 export const storeEntryController: FastifyPluginAsyncTypebox = async (
     fastify,

@@ -1,4 +1,8 @@
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
+import { connectionKeyService } from './connection-key.service'
 import {
     ConnectionKeyId,
     GetOrDeleteConnectionFromTokenRequest,
@@ -6,10 +10,6 @@ import {
     UpsertConnectionFromToken,
     UpsertSigningKeyConnection,
 } from '@activepieces/ee-shared'
-import { connectionKeyService } from './connection-key.service'
-import { StatusCodes } from 'http-status-codes'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
 
 export const connectionKeyModule: FastifyPluginAsyncTypebox = async (app) => {

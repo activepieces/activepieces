@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 const FLOW_VERSION_TABLE = 'flow_version'
 const PIECE_TYPE = 'PIECE'

@@ -3,15 +3,15 @@ import {
     Static,
     Type,
 } from '@fastify/type-provider-typebox'
+import { StatusCodes } from 'http-status-codes'
+import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import { oauthAppService } from './oauth-app.service'
 import {
     ListOAuth2AppRequest,
     OAuthApp,
     UpsertOAuth2AppRequest,
 } from '@activepieces/ee-shared'
-import { SeekPage, assertNotNullOrUndefined } from '@activepieces/shared'
-import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
-import { StatusCodes } from 'http-status-codes'
+import { assertNotNullOrUndefined, SeekPage } from '@activepieces/shared'
 
 export const oauthAppModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(readOauthAppModule)

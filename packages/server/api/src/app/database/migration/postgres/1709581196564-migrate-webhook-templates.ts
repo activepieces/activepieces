@@ -1,5 +1,5 @@
-import { logger } from 'server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { logger } from '@activepieces/server-shared'
 
 export class MigrateWebhookTemplate1709581196564 implements MigrationInterface {
     name = 'MigrateWebhookTemplate1709581196564'

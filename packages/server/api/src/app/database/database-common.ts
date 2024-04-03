@@ -1,5 +1,5 @@
 import { EntitySchemaColumnOptions } from 'typeorm'
-import { DatabaseType, SystemProp, system } from 'server-shared'
+import { DatabaseType, system, SystemProp } from '@activepieces/server-shared'
 
 const databaseType = system.get(SystemProp.DB_TYPE)
 

@@ -1,29 +1,28 @@
 import crypto from 'crypto'
 import jsonwebtoken from 'jsonwebtoken'
+import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
+import { databaseConnection } from '../../database/database-connection'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { appCredentialService } from '../app-credentials/app-credentials.service'
 import { ConnectionKeyEntity } from './connection-key.entity'
 import {
-    SeekPage,
-    AppConnection,
-    ActivepiecesError,
-    ErrorCode,
-    AppConnectionType,
-} from '@activepieces/shared'
-import {
+    AppCredentialType,
     ConnectionKey,
     ConnectionKeyId,
-    UpsertSigningKeyConnection,
     GetOrDeleteConnectionFromTokenRequest,
-    UpsertConnectionFromToken,
-    AppCredentialType,
     UpsertApiKeyConnectionFromToken,
+    UpsertConnectionFromToken,
     UpsertOAuth2ConnectionFromToken,
+    UpsertSigningKeyConnection,
 } from '@activepieces/ee-shared'
-import { appCredentialService } from '../app-credentials/app-credentials.service'
-import { ProjectId, Cursor, apId } from '@activepieces/shared'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { buildPaginator } from '../../helper/pagination/build-paginator'
-import { databaseConnection } from '../../database/database-connection'
-import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
+import { ActivepiecesError, apId, AppConnection,
+    AppConnectionType,
+    Cursor,
+    ErrorCode,
+    ProjectId,
+    SeekPage,
+} from '@activepieces/shared'
 
 const connectonKeyRepo = databaseConnection.getRepository(ConnectionKeyEntity)
 

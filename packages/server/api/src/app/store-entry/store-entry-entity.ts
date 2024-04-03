@@ -4,8 +4,7 @@ import {
     BaseColumnSchemaPart,
     JSONB_COLUMN_TYPE,
 } from '../database/database-common'
-import { StoreEntry } from '@activepieces/shared'
-import { STORE_KEY_MAX_LENGTH } from '@activepieces/shared'
+import { STORE_KEY_MAX_LENGTH, StoreEntry } from '@activepieces/shared'
 
 type StoreEntrySchema = StoreEntry
 

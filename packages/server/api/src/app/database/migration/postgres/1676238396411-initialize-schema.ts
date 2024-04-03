@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 export class initializeSchema1676238396411 implements MigrationInterface {
     name = 'initializeSchema1676238396411'

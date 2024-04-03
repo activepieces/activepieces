@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 export class FileTypeCompression1694695212159 implements MigrationInterface {
     name = 'FileTypeCompression1694695212159'

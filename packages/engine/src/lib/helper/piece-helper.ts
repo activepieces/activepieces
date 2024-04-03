@@ -9,18 +9,18 @@ import {
     StaticPropsValue,
 } from '@activepieces/pieces-framework'
 import {
-    ExecuteValidateAuthOperation,
-    ExecuteValidateAuthResponse,
     BasicAuthConnectionValue,
-    SecretTextConnectionValue,
     CustomAuthConnectionValue,
     ExecuteExtractPieceMetadata,
     ExecutePropsOptions,
+    ExecuteValidateAuthOperation,
+    ExecuteValidateAuthResponse,
+    SecretTextConnectionValue,
 } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
-import { pieceLoader } from './piece-loader'
 import { variableService } from '../services/variable-service'
+import { pieceLoader } from './piece-loader'
 
 export const pieceHelper = {
     async executeProps({ params, piecesSource, executionState, constants, searchValue }: { searchValue?: string, executionState: FlowExecutorContext, params: ExecutePropsOptions, piecesSource: string, constants: EngineConstants }) {

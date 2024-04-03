@@ -1,4 +1,4 @@
-import { ExecutionMode, SystemProp, system } from 'server-shared'
+import { ExecutionMode, system, SystemProp } from '@activepieces/server-shared'
 import { FileSandbox } from './file-sandbox'
 import { IsolateSandbox } from './isolate-sandbox'
 

@@ -1,9 +1,9 @@
 import dayjs from 'dayjs'
-import { ProjectId } from '@activepieces/shared'
-import { logger } from 'server-shared'
-import { platformProjectService } from './platform-project-service'
 import { systemJobsSchedule } from '../../helper/system-jobs'
 import { SystemJobData } from '../../helper/system-jobs/common'
+import { platformProjectService } from './platform-project-service'
+import { logger } from '@activepieces/server-shared'
+import { ProjectId } from '@activepieces/shared'
 
 export const platformProjectSideEffects = {
     async onSoftDelete({ id }: OnSoftDeleteParams): Promise<void> {

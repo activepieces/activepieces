@@ -1,17 +1,17 @@
 import {
-    AddDomainRequest,
-    ListCustomDomainsRequest,
-} from '@activepieces/ee-shared'
-import {
     FastifyPluginAsyncTypebox,
     Static,
     Type,
 } from '@fastify/type-provider-typebox'
-import { customDomainService } from './custom-domain.service'
 import { HttpStatusCode } from 'axios'
-import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
-import { assertNotNullOrUndefined } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
+import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
+import { customDomainService } from './custom-domain.service'
+import {
+    AddDomainRequest,
+    ListCustomDomainsRequest,
+} from '@activepieces/ee-shared'
+import { assertNotNullOrUndefined } from '@activepieces/shared'
 
 const GetOneRequest = Type.Object({
     id: Type.String(),

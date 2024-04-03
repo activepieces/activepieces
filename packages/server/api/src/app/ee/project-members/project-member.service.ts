@@ -1,39 +1,39 @@
+import dayjs from 'dayjs'
+import { EntityManager, IsNull } from 'typeorm'
+import { accessTokenManager } from '../../authentication/lib/access-token-manager'
+import { repoFactory } from '../../core/db/repo-factory'
+import { jwtUtils } from '../../helper/jwt-utils'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { getEdition } from '../../helper/secret-helper'
+import { projectService } from '../../project/project-service'
+import { userService } from '../../user/user-service'
+import { emailService } from '../helper/email/email-service'
+import { projectMembersLimit } from '../project-plan/members-limit'
 import {
     ProjectMemberEntity,
     ProjectMemberSchema,
 } from './project-member.entity'
-import { userService } from '../../user/user-service'
+import {
+    AddProjectMemberRequestBody,
+    ProjectMember,
+    ProjectMemberId,
+    ProjectMemberStatus,
+} from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     ApEdition,
+    apId,
     Cursor,
     ErrorCode,
+    isNil,
     PlatformId,
     Principal,
     ProjectId,
     ProjectMemberRole,
     SeekPage,
     UserId,
-    apId,
-    isNil,
 } from '@activepieces/shared'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import {
-    ProjectMember,
-    ProjectMemberId,
-    ProjectMemberStatus,
-    AddProjectMemberRequestBody,
-} from '@activepieces/ee-shared'
-import { buildPaginator } from '../../helper/pagination/build-paginator'
-import { projectService } from '../../project/project-service'
-import { emailService } from '../helper/email/email-service'
-import dayjs from 'dayjs'
-import { accessTokenManager } from '../../authentication/lib/access-token-manager'
-import { getEdition } from '../../helper/secret-helper'
-import { EntityManager, IsNull } from 'typeorm'
-import { jwtUtils } from '../../helper/jwt-utils'
-import { projectMembersLimit } from '../project-plan/members-limit'
-import { repoFactory } from '../../core/db/repo-factory'
 
 const repo = repoFactory(ProjectMemberEntity)
 

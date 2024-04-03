@@ -1,6 +1,6 @@
-import { StepOutput, isNil, isObject } from '@activepieces/shared'
-import PriorityQueue from 'priority-queue-typescript'
+import { isNil, isObject, StepOutput } from '@activepieces/shared'
 import sizeof from 'object-sizeof'
+import PriorityQueue from 'priority-queue-typescript'
 
 const TRUNCATION_TEXT_PLACEHOLDER = '(truncated)'
 const MAX_SIZE_FOR_ALL_ENTRIES = 1024 * 1024

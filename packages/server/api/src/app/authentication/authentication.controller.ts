@@ -1,18 +1,18 @@
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { RateLimitOptions } from '@fastify/rate-limit'
-import { authenticationService } from './authentication-service'
-import { resolvePlatformIdForRequest } from '../platform/platform-utils'
-import { getEdition } from '../helper/secret-helper'
-import {
-    ApEdition,
-    SignUpRequest,
-    SignInRequest,
-    ALL_PRINCIPAL_TYPES,
-} from '@activepieces/shared'
-import { system, SystemProp } from 'server-shared'
-import { Provider } from './authentication-service/hooks/authentication-service-hooks'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { eventsHooks } from '../helper/application-events'
+import { getEdition } from '../helper/secret-helper'
+import { resolvePlatformIdForRequest } from '../platform/platform-utils'
+import { authenticationService } from './authentication-service'
+import { Provider } from './authentication-service/hooks/authentication-service-hooks'
 import { ApplicationEventName } from '@activepieces/ee-shared'
+import { system, SystemProp } from '@activepieces/server-shared'
+import {
+    ALL_PRINCIPAL_TYPES,
+    ApEdition,
+    SignInRequest,
+    SignUpRequest,
+} from '@activepieces/shared'
 
 const edition = getEdition()
 

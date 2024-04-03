@@ -1,9 +1,9 @@
-import { storeEntryController } from './store-entry.controller'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import {
     allowWorkersOnly,
     entitiesMustBeOwnedByCurrentProject,
 } from '../authentication/authorization'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { storeEntryController } from './store-entry.controller'
 
 export const storeEntryModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)

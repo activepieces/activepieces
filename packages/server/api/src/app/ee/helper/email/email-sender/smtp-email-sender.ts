@@ -1,11 +1,11 @@
 import { readFile } from 'node:fs/promises'
 import Mustache from 'mustache'
 import nodemailer, { Transporter } from 'nodemailer'
-import { Platform } from '@activepieces/shared'
-import { SystemProp, system } from 'server-shared'
-import { EmailSender, EmailTemplateData } from './email-sender'
 import { defaultTheme } from '../../../../flags/theme'
 import { platformService } from '../../../../platform/platform.service'
+import { EmailSender, EmailTemplateData } from './email-sender'
+import { system, SystemProp } from '@activepieces/server-shared'
+import { Platform } from '@activepieces/shared'
 
 /**
  * Sends emails using SMTP

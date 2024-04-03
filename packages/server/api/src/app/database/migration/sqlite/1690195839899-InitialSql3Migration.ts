@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 export class InitialSql3Migration1690195839899 implements MigrationInterface {
     name = 'InitialSql3Migration1690195839899'
