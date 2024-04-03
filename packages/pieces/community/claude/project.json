@@ -1,5 +1,5 @@
 {
-  "name": "piece-claude",
+  "name": "pieces-claude",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/pieces/community/claude/src",
   "projectType": "library",
@@ -12,12 +12,18 @@
         "tsConfig": "packages/pieces/community/claude/tsconfig.lib.json",
         "packageJson": "packages/pieces/community/claude/package.json",
         "main": "packages/pieces/community/claude/src/index.ts",
-        "assets": ["packages/pieces/community/claude/*.md"]
+        "assets": ["packages/pieces/community/claude/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-claude {args.ver} {args.tag}",
       "dependsOn": ["build"]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
     }
   },
   "tags": []
