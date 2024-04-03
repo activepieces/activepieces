@@ -42,7 +42,7 @@ import { SandBoxCacheType } from '../sandbox/provisioner/sandbox-cache-key'
 import { flowWorkerHooks } from './flow-worker-hooks'
 import { flowResponseWatcher } from '../../flows/flow-run/flow-response-watcher'
 import { getPiecePackage } from '../../pieces/piece-metadata-service'
-import { exceptionHandler, logger } from 'server-shared'
+import { exceptionHandler, logger } from '@activepieces/server-shared'
 import { logSerializer } from 'server-worker'
 
 type FinishExecutionParams = {

@@ -1,4 +1,4 @@
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 import { acquireLock } from '../../helper/lock'
 import { AppConnectionHooks } from '../../app-connection/app-connection-service/app-connection-hooks'
 import { connectionsLimits } from '../project-plan/connections-limits'

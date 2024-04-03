@@ -24,7 +24,7 @@ import { consumeJobsInMemory } from './queues/memory/memory-consumer'
 import { inMemoryQueueManager } from './queues/memory/memory-queue'
 import { redisConsumer } from './queues/redis/redis-consumer'
 import { redisQueueManager } from './queues/redis/redis-queue'
-import { QueueMode, SystemProp, enrichErrorContext, exceptionHandler, logger, system } from 'server-shared'
+import { QueueMode, SystemProp, enrichErrorContext, exceptionHandler, logger, system } from '@activepieces/server-shared'
 import { flowService } from '../../flows/flow/flow.service'
 import { triggerHooks } from '../../flows/trigger'
 import { dedupeService } from '../../flows/trigger/dedupe'
@@ -140,7 +140,7 @@ const consumeRepeatingJob = async (data: RepeatingJobData): Promise<void> => {
             flow.status !== FlowStatus.ENABLED ||
             flow.publishedVersionId !== data.flowVersionId
         ) {
-            
+
 
             const flowVersion = await flowVersionService.getOne(data.flowVersionId)
             if (isNil(flowVersion)) {

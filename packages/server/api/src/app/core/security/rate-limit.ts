@@ -3,7 +3,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import FastifyPlugin from 'fastify-plugin'
 import { Redis } from 'ioredis'
 import { createRedisClient } from '../../database/redis-connection'
-import { QueueMode, SystemProp, system } from 'server-shared'
+import { QueueMode, SystemProp, system } from '@activepieces/server-shared'
 import { extractClientRealIp } from '../../helper/network-utils'
 
 const API_RATE_LIMIT_AUTHN_ENABLED = system.getBoolean(

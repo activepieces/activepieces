@@ -1,5 +1,5 @@
 import { DataSource, MigrationInterface } from 'typeorm'
-import { system, SystemProp } from 'server-shared'
+import { system, SystemProp } from '@activepieces/server-shared'
 import { TlsOptions } from 'node:tls'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'

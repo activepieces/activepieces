@@ -9,7 +9,7 @@ import {
 } from '@activepieces/shared'
 import { flowService } from '../flow/flow.service'
 import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 export const testTriggerService = {
     async test(params: TestParams): Promise<unknown> {

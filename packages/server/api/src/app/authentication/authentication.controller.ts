@@ -9,7 +9,7 @@ import {
     SignInRequest,
     ALL_PRINCIPAL_TYPES,
 } from '@activepieces/shared'
-import { system, SystemProp } from 'server-shared'
+import { system, SystemProp } from '@activepieces/server-shared'
 import { Provider } from './authentication-service/hooks/authentication-service-hooks'
 import { eventsHooks } from '../helper/application-events'
 import { ApplicationEventName } from '@activepieces/ee-shared'

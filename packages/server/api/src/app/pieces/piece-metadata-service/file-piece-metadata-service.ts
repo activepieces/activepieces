@@ -23,7 +23,7 @@ import {
 } from '../piece-metadata-entity'
 import { pieceMetadataServiceHooks } from './hooks'
 import { nanoid } from 'nanoid'
-import { exceptionHandler, logger } from 'server-shared'
+import { exceptionHandler, logger } from '@activepieces/server-shared'
 import { toPieceMetadataModelSummary } from '.'
 import { getEdition } from '../../helper/secret-helper'
 

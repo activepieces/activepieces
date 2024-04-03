@@ -23,7 +23,7 @@ import { userService } from '../../user/user-service'
 import { projectService } from '../../project/project-service'
 import { FastifyRequest } from 'fastify'
 import { extractClientRealIp } from '../../helper/network-utils'
-import { rejectedPromiseHandler } from 'server-shared'
+import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import { platformService } from '../../platform/platform.service'
 import { getEdition } from '../../helper/secret-helper'
 

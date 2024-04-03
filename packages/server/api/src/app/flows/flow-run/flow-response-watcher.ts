@@ -7,7 +7,7 @@ import {
 } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 import { pubSub } from '../../helper/pubsub'
-import { SystemProp, system } from 'server-shared'
+import { SystemProp, system } from '@activepieces/server-shared'
 
 const listeners = new Map<string, (flowResponse: FlowResponse) => void>()
 
@@ -70,7 +70,7 @@ export const flowResponseWatcher = {
                 listeners.set(flowRunId, responseHandler)
             }
         })
-    },    
+    },
     async publish(
         flowRunId: string,
         handlerId: string,

@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { decryptObject, encryptObject } from '../../../helper/encryption'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 export class encryptCredentials1676505294811 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {

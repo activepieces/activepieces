@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 export class addEventRouting1678382946390 implements MigrationInterface {
     name = 'addEventRouting1678382946390'

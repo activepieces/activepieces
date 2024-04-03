@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 export class AddPlatformForeignKeyToProjectPostgres1709566642531 implements MigrationInterface {
     name = 'AddPlatformForeignKeyToProjectPostgres1709566642531'

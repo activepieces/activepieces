@@ -18,7 +18,7 @@ import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity
 import { ReferralEntity } from '../ee/referrals/referral.entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
-import { DatabaseType, SystemProp, system } from 'server-shared'
+import { DatabaseType, SystemProp, system } from '@activepieces/server-shared'
 import {
     ArrayContains,
     EntitySchema,

@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 export class CascadeProjectDeleteToActivity1710720610670 implements MigrationInterface {
     name = 'CascadeProjectDeleteToActivity1710720610670'

@@ -33,7 +33,7 @@ import { Order } from '../../helper/pagination/paginator'
 import { telemetry } from '../../helper/telemetry.utils'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 import { flowService } from '../flow/flow.service'
 import { flowRunHooks } from './flow-run-hooks'
 import { flowResponseWatcher } from './flow-response-watcher'
@@ -325,7 +325,7 @@ export const flowRunService = {
                 fileId: flowRun.logsFileId,
                 projectId: flowRun.projectId,
             })
-        
+
             const serializedExecutionOutput = logFile.data.toString('utf-8')
             const executionOutput: ExecutioOutputFile = JSON.parse(
                 serializedExecutionOutput,

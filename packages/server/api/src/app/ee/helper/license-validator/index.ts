@@ -3,9 +3,9 @@ import { LiceneseStatus, LicenseValidator } from './license-validator'
 import { noOpLicenseValidator } from './no-op-license-validator'
 import { networkLicenseValidator } from './network-license-validator'
 import { ApEdition } from '@activepieces/shared'
-import { SystemProp, system } from 'server-shared'
+import { SystemProp, system } from '@activepieces/server-shared'
 import { platformService } from '../../../platform/platform.service'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 const variant: Record<ApEnvironment, LicenseValidator> = {
     [ApEnvironment.PRODUCTION]: networkLicenseValidator,

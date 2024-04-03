@@ -6,7 +6,7 @@ import {
     WhereExpressionBuilder,
 } from 'typeorm'
 import { atob, btoa, decodeByType, encodeByType } from './pagination-utils'
-import { DatabaseType, SystemProp, system } from 'server-shared'
+import { DatabaseType, SystemProp, system } from '@activepieces/server-shared'
 
 export enum Order {
     ASC = 'ASC',

@@ -15,7 +15,7 @@ import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { getServerUrl } from '../helper/network-utils'
 import { triggerEventService } from '../flows/trigger-events/trigger-event.service'
 import { isNil } from '@activepieces/shared'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
 import { WebhookResponse } from '@activepieces/pieces-framework'
 import { flowService } from '../flows/flow/flow.service'
@@ -125,7 +125,7 @@ export const webhookService = {
             flowVersion.id,
             payloads,
         )
-    
+
         const createFlowRuns = filterPayloads.map((payload) =>
             flowRunService.start({
                 environment: RunEnvironment.PRODUCTION,

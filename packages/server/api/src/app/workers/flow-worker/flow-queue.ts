@@ -1,4 +1,4 @@
-import { QueueMode, SystemProp, system } from 'server-shared'
+import { QueueMode, SystemProp, system } from '@activepieces/server-shared'
 import { inMemoryQueueManager } from './queues/memory/memory-queue'
 import { redisQueueManager } from './queues/redis/redis-queue'
 

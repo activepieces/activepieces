@@ -9,7 +9,7 @@ import { flowResponseWatcher } from './flow-run/flow-response-watcher'
 import { flowRunService } from './flow-run/flow-run-service'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import { stepRunService } from './step-run/step-run-service'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 export const flowModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(flowVersionController, { prefix: '/v1/flows' })

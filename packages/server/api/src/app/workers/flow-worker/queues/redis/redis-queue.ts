@@ -2,7 +2,7 @@ import { DefaultJobOptions, Queue } from 'bullmq'
 import { ApEdition, ApEnvironment, ApId } from '@activepieces/shared'
 import { createRedisClient } from '../../../../database/redis-connection'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { exceptionHandler, logger } from 'server-shared'
+import { exceptionHandler, logger } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import {
     OneTimeJobData,
@@ -23,7 +23,7 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter'
 import { FastifyAdapter } from '@bull-board/fastify'
 import { FastifyInstance } from 'fastify'
 import basicAuth from '@fastify/basic-auth'
-import { SystemProp, system } from 'server-shared'
+import { SystemProp, system } from '@activepieces/server-shared'
 import { getEdition } from '../../../../helper/secret-helper'
 import { flowRepo } from '../../../../flows/flow/flow.repo'
 

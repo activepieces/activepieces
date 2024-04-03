@@ -16,7 +16,7 @@ import {
     PrincipalType,
     apId,
 } from '@activepieces/shared'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 let app: FastifyInstance | null = null
 
@@ -55,7 +55,7 @@ describe('Piece Metadata API', () => {
             await databaseConnection
                 .getRepository('piece_metadata')
                 .save(mockPieceMetadata2)
-                    
+
             const testToken = await generateMockToken({
                 type: PrincipalType.UNKNOWN,
                 id: apId(),
@@ -81,7 +81,7 @@ describe('Piece Metadata API', () => {
             expect(keys[1]).toBe('0.0.2')
         })
     })
-    
+
     describe('Get Piece metadata', () => {
         it('Should return metadata when authenticated', async () => {
             // arrange
@@ -270,7 +270,7 @@ describe('Piece Metadata API', () => {
             expect(responseBody?.[1].id).toBe(mockPieceMetadataB.id)
             expect(responseBody?.[2].id).toBe(mockPieceMetadataD.id)
         })
-        
+
         it('Should list project pieces', async () => {
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save([mockUser])
@@ -569,7 +569,7 @@ describe('Piece Metadata API', () => {
             expect(responseBody).toHaveLength(1)
             expect(responseBody?.[0].id).toBe(mockPieceMetadataA.id)
         })
-        
+
         it('Blocks filtered pieces if platform filter is set to "BLOCKED"', async () => {
             // arrange
             const mockUser = createMockUser()
@@ -620,6 +620,6 @@ describe('Piece Metadata API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(responseBody).toHaveLength(1)
             expect(responseBody?.[0].id).toBe(mockPieceMetadataB.id)
-        }) 
+        })
     })
 })

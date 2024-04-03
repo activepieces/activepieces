@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 export class AddSlugToGitRepo1709151540095 implements MigrationInterface {
     name = 'AddSlugToGitRepo1709151540095'

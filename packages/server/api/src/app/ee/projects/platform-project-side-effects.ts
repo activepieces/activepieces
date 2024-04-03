@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import { ProjectId } from '@activepieces/shared'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 import { platformProjectService } from './platform-project-service'
 import { systemJobsSchedule } from '../../helper/system-jobs'
 import { SystemJobData } from '../../helper/system-jobs/common'

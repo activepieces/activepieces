@@ -10,7 +10,7 @@ import {
     RepeatingJobAddParams,
 } from '../queue'
 import cronParser from 'cron-parser'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 import {
     DelayPauseMetadata,
     Flow,

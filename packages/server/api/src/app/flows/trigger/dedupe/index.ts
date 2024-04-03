@@ -1,6 +1,6 @@
 
 import { isNil } from '@activepieces/shared'
-import { QueueMode, SystemProp, system } from 'server-shared'
+import { QueueMode, SystemProp, system } from '@activepieces/server-shared'
 import { DEDUPE_KEY_PROPERTY } from '@activepieces/pieces-framework'
 import { getRedisConnection } from '../../../database/redis-connection'
 

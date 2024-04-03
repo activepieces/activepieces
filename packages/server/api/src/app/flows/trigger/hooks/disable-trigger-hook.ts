@@ -19,7 +19,7 @@ import {
 } from '@activepieces/pieces-framework'
 import { appEventRoutingService } from '../../../app-event-routing/app-event-routing.service'
 import { flowQueue } from '../../../workers/flow-worker/flow-queue'
-import { exceptionHandler } from 'server-shared'
+import { exceptionHandler } from '@activepieces/server-shared'
 
 export const disablePieceTrigger = async (
     params: DisableParams,

@@ -22,7 +22,7 @@ import {
     AppConnectionSchema,
 } from '../app-connection.entity'
 import { decryptObject, encryptObject } from '../../helper/encryption'
-import { exceptionHandler, logger } from 'server-shared'
+import { exceptionHandler, logger } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { engineHelper } from '../../helper/engine-helper'
 import { acquireLock } from '../../helper/lock'

@@ -13,7 +13,7 @@ import {
     RefreshOAuth2Request,
 } from '../oauth2-service'
 import { getEdition } from '../../../../helper/secret-helper'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 export const cloudOAuth2Service: OAuth2Service<CloudOAuth2ConnectionValue> = {
     refresh,

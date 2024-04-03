@@ -2,7 +2,7 @@ import RedLock from 'redlock'
 import { Redis } from 'ioredis'
 import { createRedisClient } from '../database/redis-connection'
 import { Mutex } from 'async-mutex'
-import { QueueMode, SystemProp, exceptionHandler, system } from 'server-shared'
+import { QueueMode, SystemProp, exceptionHandler, system } from '@activepieces/server-shared'
 
 let redLock: RedLock
 let redisConnection: Redis

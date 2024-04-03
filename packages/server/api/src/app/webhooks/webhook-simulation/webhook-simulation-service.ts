@@ -11,7 +11,7 @@ import { acquireLock, ApLock } from '../../helper/lock'
 import { databaseConnection } from '../../database/database-connection'
 import { WebhookSimulationEntity } from './webhook-simulation-entity'
 import { webhookSideEffects } from './webhook-simulation-side-effects'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 type BaseParams = {
     flowId: FlowId

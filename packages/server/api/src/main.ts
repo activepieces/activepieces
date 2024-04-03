@@ -4,7 +4,7 @@ import { seedDevData } from './app/database/seeds/dev-seeds'
 import { setupApp } from './app/app'
 import { FastifyInstance } from 'fastify'
 import { enforceLimits } from './app/ee/helper/license-validator'
-import { SystemProp, logger, system } from 'server-shared'
+import { SystemProp, logger, system } from '@activepieces/server-shared'
 
 const start = async (app: FastifyInstance): Promise<void> => {
     try {

@@ -1,4 +1,4 @@
-import { PiecesSource, SystemProp, system } from 'server-shared'
+import { PiecesSource, SystemProp, system } from '@activepieces/server-shared'
 import { PieceMetadataService } from './piece-metadata-service'
 import { FilePieceMetadataService } from './file-piece-metadata-service'
 import {

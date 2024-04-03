@@ -9,7 +9,7 @@ import {
     TriggerType,
     isNil,
 } from '@activepieces/shared'
-import { SystemProp, system } from 'server-shared'
+import { SystemProp, system } from '@activepieces/server-shared'
 import { getEdition } from '../../../helper/secret-helper'
 import {
     LATEST_JOB_DATA_SCHEMA_VERSION,

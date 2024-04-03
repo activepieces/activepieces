@@ -7,8 +7,8 @@ import {
     ExecuteSandboxResult,
     SandboxCtorParams,
 } from './abstract-sandbox'
-import { logger } from 'server-shared'
-import { SystemProp, system } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
+import { SystemProp, system } from '@activepieces/server-shared'
 import { EngineResponseStatus } from '@activepieces/shared'
 
 export class FileSandbox extends AbstractSandbox {

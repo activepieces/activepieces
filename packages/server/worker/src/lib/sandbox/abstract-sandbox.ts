@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import process from 'node:process'
-import { logger, SystemProp, fileExists, system } from 'server-shared'
+import { logger, SystemProp, fileExists, system } from '@activepieces/server-shared'
 import { EngineResponse, EngineResponseStatus } from '@activepieces/shared'
 
 export abstract class AbstractSandbox {

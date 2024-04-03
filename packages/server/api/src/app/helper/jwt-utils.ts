@@ -10,7 +10,7 @@ import jwtLibrary, {
     VerifyOptions,
 } from 'jsonwebtoken'
 import { localFileStore } from './store'
-import { QueueMode, SystemProp, system } from 'server-shared'
+import { QueueMode, SystemProp, system } from '@activepieces/server-shared'
 import { promisify } from 'util'
 import { randomBytes } from 'crypto'
 

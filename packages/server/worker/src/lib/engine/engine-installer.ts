@@ -1,6 +1,6 @@
 import { copyFile } from 'node:fs/promises'
-import { SystemProp, system } from 'server-shared'
-import { logger } from 'server-shared'
+import { SystemProp, system } from '@activepieces/server-shared'
+import { logger } from '@activepieces/server-shared'
 
 const engineExecutablePath = system.getOrThrow(
     SystemProp.ENGINE_EXECUTABLE_PATH,

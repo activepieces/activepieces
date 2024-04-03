@@ -1,5 +1,5 @@
 import Stripe from 'stripe'
-import { SystemProp, system, exceptionHandler } from 'server-shared'
+import { SystemProp, system, exceptionHandler } from '@activepieces/server-shared'
 import {
     ApEdition,
     ProjectId,

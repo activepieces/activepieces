@@ -10,7 +10,7 @@ import {
 } from '@activepieces/shared'
 import axios from 'axios'
 import { oauth2Util } from '../oauth2-util'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 import {
     ClaimOAuth2Request,
     OAuth2Service,

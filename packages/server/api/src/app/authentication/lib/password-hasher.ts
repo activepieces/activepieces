@@ -1,7 +1,7 @@
 import { assertNotNullOrUndefined } from '@activepieces/shared'
 import bcrypt from 'bcrypt'
 import { FirebaseScrypt } from 'firebase-scrypt'
-import { SystemProp, system } from 'server-shared'
+import { SystemProp, system } from '@activepieces/server-shared'
 
 const SALT_ROUNDS = 10
 const SCRYPT_SEPERATOR = '~'

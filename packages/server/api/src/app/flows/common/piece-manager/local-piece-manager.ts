@@ -1,6 +1,6 @@
 import { resolve, join, sep } from 'node:path'
 import { writeFile, readFile } from 'node:fs/promises'
-import { logger, packageManager } from 'server-shared'
+import { logger, packageManager } from '@activepieces/server-shared'
 import { PieceManager } from './piece-manager'
 import { FilePieceMetadataService } from '../../../pieces/piece-metadata-service/file-piece-metadata-service'
 import { PiecePackage } from '@activepieces/shared'

@@ -7,7 +7,7 @@ import {
 import { getEdition } from '../../helper/secret-helper'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { FlowWorkerHooks } from '../../workers/flow-worker/flow-worker-hooks'
-import { exceptionHandler } from 'server-shared'
+import { exceptionHandler } from '@activepieces/server-shared'
 import { tasksLimit } from '../project-plan/tasks-limit'
 
 export const platformWorkerHooks: FlowWorkerHooks = {
