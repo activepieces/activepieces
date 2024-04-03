@@ -1,7 +1,7 @@
+import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
 import { FlowVersion } from './flow-version'
-import { Type, Static } from '@sinclair/typebox'
 
 export type FlowId = ApId
 

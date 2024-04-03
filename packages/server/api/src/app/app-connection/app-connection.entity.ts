@@ -1,8 +1,3 @@
-import {
-    AppConnection,
-    AppConnectionStatus,
-    Project,
-} from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
@@ -10,6 +5,11 @@ import {
     JSONB_COLUMN_TYPE,
 } from '../database/database-common'
 import { EncryptedObject } from '../helper/encryption'
+import {
+    AppConnection,
+    AppConnectionStatus,
+    Project,
+} from '@activepieces/shared'
 
 export type AppConnectionSchema = Omit<AppConnection, 'value'> & {
     project: Project

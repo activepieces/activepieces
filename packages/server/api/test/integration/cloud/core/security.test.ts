@@ -1,24 +1,24 @@
 import { FastifyInstance, FastifyRequest } from 'fastify'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupApp } from '../../../../src/app/app'
 import { securityHandlerChain } from '../../../../src/app/core/security/security-handler-chain'
-import {
-    ALL_PRINCIPAL_TYPES,
-    ActivepiecesError,
-    EndpointScope,
-    ErrorCode,
-    PlatformRole,
-    Principal,
-    PrincipalType,
-    apId,
-} from '@activepieces/shared'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockFlow,
     createMockPlatformWithOwner,
     createMockProject,
     setupMockApiKeyServiceAccount,
 } from '../../../helpers/mocks'
-import { generateMockToken } from '../../../helpers/auth'
+import {
+    ActivepiecesError,
+    ALL_PRINCIPAL_TYPES,
+    apId,
+    EndpointScope,
+    ErrorCode,
+    PlatformRole,
+    Principal,
+    PrincipalType,
+} from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 

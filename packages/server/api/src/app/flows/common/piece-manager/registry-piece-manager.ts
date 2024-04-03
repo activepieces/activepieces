@@ -1,14 +1,14 @@
+import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
+import { fileService } from '../../../file/file.service'
+import { PACKAGE_ARCHIVE_PATH, PieceManager } from './piece-manager'
+import { fileExists, packageManager } from '@activepieces/server-shared'
 import {
+    getPackageArchivePathForPiece,
     PackageType,
     PiecePackage,
     PrivatePiecePackage,
-    getPackageArchivePathForPiece,
 } from '@activepieces/shared'
-import { PACKAGE_ARCHIVE_PATH, PieceManager } from './piece-manager'
-import { fileService } from '../../../file/file.service'
-import { mkdir, writeFile } from 'node:fs/promises'
-import { packageManager, fileExists } from '@activepieces/server-shared'
 
 export class RegistryPieceManager extends PieceManager {
     protected override async installDependencies({

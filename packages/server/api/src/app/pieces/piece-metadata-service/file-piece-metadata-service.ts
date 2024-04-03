@@ -1,31 +1,31 @@
 import { readdir, stat } from 'node:fs/promises'
-import { resolve, join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { cwd } from 'node:process'
-import { Piece, PieceMetadata } from '@activepieces/pieces-framework'
-import {
-    ActivepiecesError,
-    ApEdition,
-    EXACT_VERSION_PATTERN,
-    ErrorCode,
-    PackageType,
-    PieceType,
-    ProjectId,
-    extractPieceFromModule,
-    isNil,
-    ListVersionsResponse,
-} from '@activepieces/shared'
-import { PieceMetadataService } from './piece-metadata-service'
 import importFresh from 'import-fresh'
+import { nanoid } from 'nanoid'
+import { getEdition } from '../../helper/secret-helper'
 import {
     PieceMetadataModel,
     PieceMetadataModelSummary,
     PieceMetadataSchema,
 } from '../piece-metadata-entity'
 import { pieceMetadataServiceHooks } from './hooks'
-import { nanoid } from 'nanoid'
-import { exceptionHandler, logger } from '@activepieces/server-shared'
+import { PieceMetadataService } from './piece-metadata-service'
 import { toPieceMetadataModelSummary } from '.'
-import { getEdition } from '../../helper/secret-helper'
+import { Piece, PieceMetadata } from '@activepieces/pieces-framework'
+import { exceptionHandler, logger } from '@activepieces/server-shared'
+import {
+    ActivepiecesError,
+    ApEdition,
+    ErrorCode,
+    EXACT_VERSION_PATTERN,
+    extractPieceFromModule,
+    isNil,
+    ListVersionsResponse,
+    PackageType,
+    PieceType,
+    ProjectId,
+} from '@activepieces/shared'
 
 const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
     const pieces = await findAllPieces()

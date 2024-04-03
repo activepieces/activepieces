@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyRequest } from 'fastify'
-import { FileId } from '@activepieces/shared'
-import { fileService } from './file.service'
 import { StatusCodes } from 'http-status-codes'
+import { fileService } from './file.service'
+import { FileId } from '@activepieces/shared'
 
 export const fileController = async (fastify: FastifyInstance) => {
     fastify.get(

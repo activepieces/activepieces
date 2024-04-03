@@ -1,27 +1,27 @@
 import { FastifyRequest } from 'fastify'
+import { nanoid } from 'nanoid'
+import { AppConnectionEntity } from '../../../app-connection/app-connection.entity'
+import { extractResourceName } from '../../../authentication/authorization'
+import { databaseConnection } from '../../../database/database-connection'
+import { apiKeyService } from '../../../ee/api-keys/api-key-service'
+import { ProjectMemberEntity } from '../../../ee/project-members/project-member.entity'
+import { FlowEntity } from '../../../flows/flow/flow.entity'
+import { projectService } from '../../../project/project-service'
+import { requestUtils } from '../../request/request-utils'
 import { BaseSecurityHandler } from '../security-handler'
+import { ApiKey } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     EndpointScope,
     ErrorCode,
+    isNil,
+    isObject,
     PlatformRole,
     Principal,
     PrincipalType,
     Project,
     ProjectId,
-    isNil,
-    isObject,
 } from '@activepieces/shared'
-import { apiKeyService } from '../../../ee/api-keys/api-key-service'
-import { nanoid } from 'nanoid'
-import { ApiKey } from '@activepieces/ee-shared'
-import { projectService } from '../../../project/project-service'
-import { AppConnectionEntity } from '../../../app-connection/app-connection.entity'
-import { extractResourceName } from '../../../authentication/authorization'
-import { databaseConnection } from '../../../database/database-connection'
-import { ProjectMemberEntity } from '../../../ee/project-members/project-member.entity'
-import { FlowEntity } from '../../../flows/flow/flow.entity'
-import { requestUtils } from '../../request/request-utils'
 
 export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
     private static readonly HEADER_NAME = 'authorization'

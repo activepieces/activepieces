@@ -1,6 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
-import { FlowVersion } from '../flow-version'
 import { BaseModelSchema } from '../../common'
+import { FlowVersion } from '../flow-version'
 export const FlowVersionTemplate = Type.Omit(
     FlowVersion,
     ['id', 'created', 'updated', 'flowId', 'state', 'updatedBy'],

@@ -1,7 +1,11 @@
+import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
+import { emailService } from '../../../../src/app/ee/helper/email/email-service'
+import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockApiKey,
     createMockPlatform,
@@ -9,17 +13,12 @@ import {
     createMockProjectMember,
     createMockUser,
 } from '../../../helpers/mocks'
-import { generateMockToken } from '../../../helpers/auth'
-import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
-import { emailService } from '../../../../src/app/ee/helper/email/email-service'
-import { faker } from '@faker-js/faker'
-import { Platform, PlatformRole, Project, User } from '@activepieces/shared'
-import { PrincipalType, ProjectMemberRole } from '@activepieces/shared'
 import {
     AddProjectMemberRequestBody,
     ApiKeyResponseWithValue,
     ProjectMemberStatus,
 } from '@activepieces/ee-shared'
+import { Platform, PlatformRole, PrincipalType, Project, ProjectMemberRole, User } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 

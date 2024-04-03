@@ -1,11 +1,11 @@
 import { AuthenticationServiceHooks } from '../../../../authentication/authentication-service/hooks/authentication-service-hooks'
 import { flagService } from '../../../../flags/flag.service'
-import { ApFlagId } from '@activepieces/shared'
 import { platformService } from '../../../../platform/platform.service'
-import { userService } from '../../../../user/user-service'
-import { authenticationHelper } from './authentication-helper'
 import { projectService } from '../../../../project/project-service'
+import { userService } from '../../../../user/user-service'
 import { enforceLimits } from '../../../helper/license-validator'
+import { authenticationHelper } from './authentication-helper'
+import { ApFlagId } from '@activepieces/shared'
 
 const DEFAULT_PLATFORM_NAME = 'platform'
 

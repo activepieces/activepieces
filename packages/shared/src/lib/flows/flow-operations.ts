@@ -1,10 +1,10 @@
+import { Static, Type } from '@sinclair/typebox'
 import { Nullable } from '../common'
 import {
-    CodeActionSchema, BranchActionSchema, LoopOnItemsActionSchema, PieceActionSchema, Action,
+    Action, BranchActionSchema, CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema,
 } from './actions/action'
 import { FlowStatus } from './flow'
 import { EmptyTrigger, PieceTrigger } from './triggers/trigger'
-import { Static, Type } from '@sinclair/typebox'
 
 
 export enum FlowOperationType {

@@ -1,10 +1,10 @@
 import { EntitySchema } from 'typeorm'
-import { Flow, Project, TriggerEvent } from '@activepieces/shared'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
     JSONB_COLUMN_TYPE,
 } from '../../database/database-common'
+import { Flow, Project, TriggerEvent } from '@activepieces/shared'
 
 type TriggerEventSchema = {
     flow: Flow

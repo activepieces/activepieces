@@ -1,9 +1,9 @@
-import { PlatformRole, PrincipalType, Project, ProjectMemberRole, User } from '@activepieces/shared'
-import { projectService } from '../../../project/project-service'
-import { AuthenticationServiceHooks } from './authentication-service-hooks'
-import { accessTokenManager } from '../../lib/access-token-manager'
-import { userService } from '../../../user/user-service'
 import { platformService } from '../../../platform/platform.service'
+import { projectService } from '../../../project/project-service'
+import { userService } from '../../../user/user-service'
+import { accessTokenManager } from '../../lib/access-token-manager'
+import { AuthenticationServiceHooks } from './authentication-service-hooks'
+import { PlatformRole, PrincipalType, Project, ProjectMemberRole, User } from '@activepieces/shared'
 
 const DEFAULT_PLATFORM_NAME = 'platform'
 

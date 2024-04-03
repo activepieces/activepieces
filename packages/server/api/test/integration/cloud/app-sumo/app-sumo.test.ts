@@ -1,7 +1,7 @@
-import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { setupApp } from '../../../../src/app/app'
-import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { setupApp } from '../../../../src/app/app'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
 
 let app: FastifyInstance | null = null
 

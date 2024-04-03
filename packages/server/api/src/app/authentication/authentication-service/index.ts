@@ -1,26 +1,25 @@
 import { QueryFailedError } from 'typeorm'
-import {
-    AuthenticationResponse,
-    UserStatus,
-    ActivepiecesError,
-    ErrorCode,
-    isNil,
-    User,
-    ApFlagId,
-    Project,
-    TelemetryEventName,
-    UserId,
-    ApEnvironment,
-} from '@activepieces/shared'
+import { flagService } from '../../flags/flag.service'
+import { generateRandomPassword } from '../../helper/crypto'
+import { telemetry } from '../../helper/telemetry.utils'
 import { userService } from '../../user/user-service'
 import { passwordHasher } from '../lib/password-hasher'
 import { authenticationServiceHooks as hooks } from './hooks'
-import { generateRandomPassword } from '../../helper/crypto'
-import { flagService } from '../../flags/flag.service'
-import { SystemProp, system } from '@activepieces/server-shared'
-import { logger } from '@activepieces/server-shared'
-import { telemetry } from '../../helper/telemetry.utils'
 import { Provider } from './hooks/authentication-service-hooks'
+import { logger, system, SystemProp } from '@activepieces/server-shared'
+import {
+    ActivepiecesError,
+    ApEnvironment,
+    ApFlagId,
+    AuthenticationResponse,
+    ErrorCode,
+    isNil,
+    Project,
+    TelemetryEventName,
+    User,
+    UserId,
+    UserStatus,
+} from '@activepieces/shared'
 
 const SIGN_UP_ENABLED = system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
 

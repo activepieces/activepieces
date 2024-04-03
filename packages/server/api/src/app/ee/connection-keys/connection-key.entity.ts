@@ -1,11 +1,11 @@
 import { EntitySchema } from 'typeorm'
-import { ConnectionKey } from '@activepieces/ee-shared'
-import { Project } from '@activepieces/shared'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
     JSONB_COLUMN_TYPE,
 } from '../../database/database-common'
+import { ConnectionKey } from '@activepieces/ee-shared'
+import { Project } from '@activepieces/shared'
 
 export type ConnectionKeySchema = {
     project: Project

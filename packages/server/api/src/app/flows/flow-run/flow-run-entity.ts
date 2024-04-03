@@ -1,11 +1,11 @@
 import { EntitySchema } from 'typeorm'
 import {
-    ARRAY_COLUMN_TYPE,
     ApIdSchema,
+    ARRAY_COLUMN_TYPE,
     BaseColumnSchemaPart,
+    isPostgres,
     JSONB_COLUMN_TYPE,
     TIMESTAMP_COLUMN_TYPE,
-    isPostgres,
 } from '../../database/database-common'
 import {
     Flow,

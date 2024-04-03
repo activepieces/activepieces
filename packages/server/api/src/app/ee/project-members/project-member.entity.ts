@@ -1,9 +1,9 @@
 import { EntitySchema } from 'typeorm'
-import { ProjectMember } from '@activepieces/ee-shared'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
 } from '../../database/database-common'
+import { ProjectMember } from '@activepieces/ee-shared'
 import { Project, User } from '@activepieces/shared'
 
 export type ProjectMemberSchema = ProjectMember & {

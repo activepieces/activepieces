@@ -1,20 +1,20 @@
 import {
-    AppConnectionType,
-    PlatformOAuth2ConnectionValue,
-    assertNotNullOrUndefined,
-    isNil,
-} from '@activepieces/shared'
-import { PropertyType } from '@activepieces/pieces-framework'
-import { pieceMetadataService } from '../../pieces/piece-metadata-service'
-import { oauthAppService } from '../oauth-apps/oauth-app.service'
-import {
     ClaimOAuth2Request,
     OAuth2Service,
     RefreshOAuth2Request,
 } from '../../app-connection/app-connection-service/oauth2/oauth2-service'
 import { credentialsOauth2Service } from '../../app-connection/app-connection-service/oauth2/services/credentials-oauth2-service'
+import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectService } from '../../project/project-service'
 import { OAuthAppWithSecret } from '../oauth-apps/oauth-app.entity'
+import { oauthAppService } from '../oauth-apps/oauth-app.service'
+import { PropertyType } from '@activepieces/pieces-framework'
+import {
+    AppConnectionType,
+    assertNotNullOrUndefined,
+    isNil,
+    PlatformOAuth2ConnectionValue,
+} from '@activepieces/shared'
 
 export const platformOAuth2Service: OAuth2Service<PlatformOAuth2ConnectionValue> =
   {

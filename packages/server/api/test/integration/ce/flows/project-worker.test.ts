@@ -1,9 +1,9 @@
-import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { setupApp } from '../../../../src/app/app'
-import { generateMockToken } from '../../../helpers/auth'
-import { createMockUser, createMockProject, createMockPlatform } from '../../../helpers/mocks'
-import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { setupApp } from '../../../../src/app/app'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { generateMockToken } from '../../../helpers/auth'
+import { createMockPlatform, createMockProject, createMockUser } from '../../../helpers/mocks'
 import { PrincipalType } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null

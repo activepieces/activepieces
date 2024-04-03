@@ -1,11 +1,11 @@
-import { SigningKeyId } from '@activepieces/ee-shared'
-import { PlatformRole, Principal, PrincipalType, apId } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import jwt, { Algorithm, JwtPayload, SignOptions } from 'jsonwebtoken'
 import {
     ExternalPrincipal,
     ExternalTokenPayload,
 } from '../../src/app/ee/managed-authn/lib/external-token-extractor'
+import { SigningKeyId } from '@activepieces/ee-shared'
+import { apId, PlatformRole, Principal, PrincipalType } from '@activepieces/shared'
 
 const generateToken = ({
     payload,

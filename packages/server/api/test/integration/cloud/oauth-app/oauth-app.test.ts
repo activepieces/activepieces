@@ -1,16 +1,16 @@
-import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { faker } from '@faker-js/faker'
+import { FastifyInstance } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
 import { setupApp } from '../../../../src/app/app'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
 import {
-    createMockUser,
-    createMockPlatform,
     createMockOAuthApp,
+    createMockPlatform,
+    createMockUser,
 } from '../../../helpers/mocks'
-import { StatusCodes } from 'http-status-codes'
-import { FastifyInstance } from 'fastify'
-import { faker } from '@faker-js/faker'
 import { UpsertOAuth2AppRequest } from '@activepieces/ee-shared'
-import { PlatformRole, PrincipalType, apId } from '@activepieces/shared'
+import { apId, PlatformRole, PrincipalType } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 

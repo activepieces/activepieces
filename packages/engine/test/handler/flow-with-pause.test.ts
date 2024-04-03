@@ -1,8 +1,8 @@
 import { BranchOperator, LoopStepOutput } from '@activepieces/shared'
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
+import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { buildActionWithOneCondition, buildCodeAction, buildPieceAction, buildSimpleLoopAction, generateMockEngineConstants } from './test-helper'
-import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
 
 
 const simplePauseFlow = buildPieceAction({

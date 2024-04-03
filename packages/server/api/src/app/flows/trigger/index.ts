@@ -1,7 +1,7 @@
-import { enablePieceTrigger } from './hooks/enable-trigger-hook'
 import { disablePieceTrigger } from './hooks/disable-trigger-hook'
-import { tryHandshake } from './hooks/handshake-trigger.hook'
+import { enablePieceTrigger } from './hooks/enable-trigger-hook'
 import { executeTrigger } from './hooks/execute-trigger-hooks'
+import { tryHandshake } from './hooks/handshake-trigger.hook'
 import { renewWebhook } from './hooks/renew-trigger-hook'
 
 export const triggerHooks = {

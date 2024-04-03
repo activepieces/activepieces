@@ -1,5 +1,5 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { logger } from '@activepieces/server-shared'
 
 export class AddUniqueStoreConstraint1708521505204 implements MigrationInterface {
     name = 'AddUniqueStoreConstraint1708521505204'

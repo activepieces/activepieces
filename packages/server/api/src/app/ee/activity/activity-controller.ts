@@ -1,7 +1,7 @@
 import { FastifyPluginAsyncTypebox  } from '@fastify/type-provider-typebox'
-import { Permission, PrincipalType } from '@activepieces/shared'
 import { activityService } from './activity-service'
 import { ListActivityParams } from '@activepieces/ee-shared'
+import { Permission, PrincipalType } from '@activepieces/shared'
 
 export const activityController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListActivitiesRequest, async (req) => {
