@@ -8,7 +8,7 @@ import {
     PauseType,
 } from '@activepieces/shared'
 import { flowQueue } from '../../workers/flow-worker/flow-queue'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 import {
     LATEST_JOB_DATA_SCHEMA_VERSION,
     RepeatableJobType,

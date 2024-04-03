@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 export class AddTriggerTestStrategy1707087022764 implements MigrationInterface {
     name = 'AddTriggerTestStrategy1707087022764'

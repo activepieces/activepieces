@@ -5,7 +5,7 @@ import {
 } from '@activepieces/shared'
 import { triggerEventService } from './trigger-event.service'
 import { flowService } from '../flow/flow.service'
-import { SystemProp, system } from 'server-shared'
+import { SystemProp, system } from '@activepieces/server-shared'
 import { systemJobsSchedule } from '../../helper/system-jobs'
 
 const DEFAULT_PAGE_SIZE = 10

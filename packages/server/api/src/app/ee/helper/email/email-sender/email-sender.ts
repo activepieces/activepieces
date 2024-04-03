@@ -1,5 +1,5 @@
 import { ApEnvironment } from '@activepieces/shared'
-import { system, SystemProp } from 'server-shared'
+import { system, SystemProp } from '@activepieces/server-shared'
 import { logEmailSender } from './log-email-sender'
 import { smtpEmailSender } from './smtp-email-sender'
 

@@ -1,7 +1,7 @@
 import { isNil } from '@activepieces/shared'
 import { Queue, Worker, Job, JobsOptions } from 'bullmq'
 import { createRedisClient } from '../../database/redis-connection'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 import dayjs from 'dayjs'
 import { JobSchedule, SystemJobData, SystemJobDefinition, SystemJobHandler, SystemJobName, SystemJobSchedule } from './common'
 

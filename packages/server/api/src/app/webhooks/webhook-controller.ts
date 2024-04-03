@@ -18,7 +18,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { getEdition } from '../helper/secret-helper'
 import { flowResponseWatcher } from '../flows/flow-run/flow-response-watcher'
 import { flowService } from '../flows/flow/flow.service'
-import { exceptionHandler, logger } from 'server-shared'
+import { exceptionHandler, logger } from '@activepieces/server-shared'
 import { tasksLimit } from '../ee/project-plan/tasks-limit'
 
 export const webhookController: FastifyPluginAsyncTypebox = async (app) => {

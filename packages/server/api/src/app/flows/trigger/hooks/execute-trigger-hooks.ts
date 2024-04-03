@@ -7,7 +7,7 @@ import {
     isNil,
 } from '@activepieces/shared'
 import { getPieceTrigger } from './trigger-utils'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 import { engineHelper } from '../../../helper/engine-helper'
 import { webhookService } from '../../../webhooks/webhook-service'
 

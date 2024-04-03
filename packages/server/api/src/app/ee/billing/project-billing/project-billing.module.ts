@@ -3,7 +3,7 @@ import { TASKS_PAYG_PRICE_ID, stripeHelper, stripeWebhookSecret } from './stripe
 import { ALL_PRINCIPAL_TYPES, FlowRun, PrincipalType, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { projectBillingService } from './project-billing.service'
 import { FastifyRequest } from 'fastify'
-import { exceptionHandler, logger } from 'server-shared'
+import { exceptionHandler, logger } from '@activepieces/server-shared'
 import { StatusCodes } from 'http-status-codes'
 import Stripe from 'stripe'
 import dayjs from 'dayjs'

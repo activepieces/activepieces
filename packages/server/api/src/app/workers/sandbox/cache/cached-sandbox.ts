@@ -1,6 +1,6 @@
 import { mkdir, rm } from 'node:fs/promises'
 import { resolve } from 'node:path'
-import { logger, SystemProp, enrichErrorContext, packageManager, system } from 'server-shared'
+import { logger, SystemProp, enrichErrorContext, packageManager, system } from '@activepieces/server-shared'
 import { CachedSandboxState } from './cached-sandbox-state'
 import { pieceManager } from '../../../flows/common/piece-manager'
 import { engineInstaller, codeBuilder } from 'server-worker'

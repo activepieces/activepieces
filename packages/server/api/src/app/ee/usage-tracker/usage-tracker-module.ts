@@ -1,6 +1,6 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import dayjs from 'dayjs'
-import { SystemProp, system } from 'server-shared'
+import { SystemProp, system } from '@activepieces/server-shared'
 import { flagService } from '../../flags/flag.service'
 import { databaseConnection } from '../../database/database-connection'
 import { UserEntity } from '../../user/user-entity'

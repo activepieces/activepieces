@@ -1,4 +1,4 @@
-import { PiecesSource, SystemProp, system } from 'server-shared'
+import { PiecesSource, SystemProp, system } from '@activepieces/server-shared'
 import { PieceManager } from './piece-manager'
 import { LocalPieceManager } from './local-piece-manager'
 import { RegistryPieceManager } from './registry-piece-manager'

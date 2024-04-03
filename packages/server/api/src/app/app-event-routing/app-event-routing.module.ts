@@ -1,7 +1,7 @@
 import { FastifyRequest } from 'fastify'
 import { webhookService } from '../webhooks/webhook-service'
 import { appEventRoutingService } from './app-event-routing.service'
-import { logger, rejectedPromiseHandler } from 'server-shared'
+import { logger, rejectedPromiseHandler } from '@activepieces/server-shared'
 import { ALL_PRINCIPAL_TYPES, isNil } from '@activepieces/shared'
 import {
     ActivepiecesError,

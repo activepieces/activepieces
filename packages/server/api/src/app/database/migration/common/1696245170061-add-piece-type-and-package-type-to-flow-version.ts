@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 export class AddPieceTypeAndPackageTypeToFlowVersion1696245170061
 implements MigrationInterface {

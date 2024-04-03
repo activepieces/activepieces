@@ -8,7 +8,7 @@ import { userService } from '../../../../user/user-service'
 import { isNil } from '@activepieces/shared'
 import { flagService } from '../../../../../app/flags/flag.service'
 import { appsumoService } from '../../../billing/appsumo/appsumo.service'
-import { exceptionHandler, logger } from 'server-shared'
+import { exceptionHandler, logger } from '@activepieces/server-shared'
 
 export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
     async preSignIn({ email, platformId, provider }) {

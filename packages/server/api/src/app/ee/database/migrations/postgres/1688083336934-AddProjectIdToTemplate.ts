@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 export class AddProjectIdToTemplate1688083336934 implements MigrationInterface {
     name = 'AddProjectIdToTemplate1688083336934'

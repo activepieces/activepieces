@@ -1,7 +1,7 @@
 import { assertNotNullOrUndefined } from '@activepieces/shared'
-import { CopilotInstanceTypes, logger } from 'server-shared'
+import { CopilotInstanceTypes, logger } from '@activepieces/server-shared'
 import OpenAI from 'openai'
-import { system, SystemProp } from 'server-shared'
+import { system, SystemProp } from '@activepieces/server-shared'
 import {
     ChatCompletionMessageParam,
     ChatCompletionTool,

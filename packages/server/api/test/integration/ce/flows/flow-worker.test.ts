@@ -21,7 +21,7 @@ import {
     createMockUser,
 } from '../../../helpers/mocks'
 import { flowWorker } from '../../../../src/app/workers/flow-worker/flow-worker'
-import { fileCompressor } from 'server-shared'
+import { fileCompressor } from '@activepieces/server-shared'
 
 let app: FastifyInstance | null = null
 
@@ -45,7 +45,7 @@ describe('flow execution', () => {
 
         const mockProject = createMockProject({ ownerId: mockUser.id, platformId: mockPlatform.id })
         await databaseConnection.getRepository('project').save([mockProject])
-        
+
         const mockFlow = createMockFlow({
             projectId: mockProject.id,
             status: FlowStatus.ENABLED,

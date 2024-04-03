@@ -1,4 +1,4 @@
-import { SystemProp, system } from 'server-shared'
+import { SystemProp, system } from '@activepieces/server-shared'
 import { databaseConnection } from '../../../database/database-connection'
 import { AppSumoEntity, AppSumoPlan } from './appsumo.entity'
 import { userService } from '../../../user/user-service'

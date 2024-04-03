@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 export class AddUpdatedByInFlowVersion1689292797727
 implements MigrationInterface {

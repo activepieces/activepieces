@@ -1,6 +1,6 @@
 import { FastifyRequest } from 'fastify'
 import { BaseSecurityHandler } from '../security-handler'
-import { SystemProp, system } from 'server-shared'
+import { SystemProp, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,

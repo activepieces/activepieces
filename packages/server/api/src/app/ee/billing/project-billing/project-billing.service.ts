@@ -6,7 +6,7 @@ import { acquireLock } from '../../../helper/lock'
 import { stripeHelper } from './stripe-helper'
 import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 import Stripe from 'stripe'
 
 const projectBillingRepo =

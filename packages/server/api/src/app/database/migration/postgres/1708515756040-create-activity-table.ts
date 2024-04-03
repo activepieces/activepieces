@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 export class CreateActivityTable1708515756040 implements MigrationInterface {
     name = 'CreateActivityTable1708515756040'

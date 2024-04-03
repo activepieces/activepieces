@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 export class ProjectMemberRelations1694381968985 implements MigrationInterface {
     name = 'ProjectMemberRelations1694381968985'

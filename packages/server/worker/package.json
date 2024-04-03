@@ -4,7 +4,7 @@
   "dependencies": {
     "tslib": "^2.3.0",
     "@activepieces/shared": "*",
-    "server-shared": "*",
+    "@activepieces/server-shared": "*",
     "fs-extra": "11.2.0",
     "async-mutex": "0.4.0"
   },

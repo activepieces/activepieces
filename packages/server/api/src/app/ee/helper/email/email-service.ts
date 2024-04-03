@@ -1,6 +1,6 @@
 import { OtpType } from '@activepieces/ee-shared'
 import { ApEdition, User, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 import { getEdition } from '../../../helper/secret-helper'
 import { projectService } from '../../../project/project-service'
 import { platformDomainHelper } from '../platform-domain-helper'

@@ -1,4 +1,4 @@
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 import { EmailSender } from './email-sender'
 
 /**

@@ -11,8 +11,8 @@ import {
     EngineResponseStatus,
     assertNotNullOrUndefined,
 } from '@activepieces/shared'
-import { logger } from 'server-shared'
-import { PiecesSource, SystemProp, system } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
+import { PiecesSource, SystemProp, system } from '@activepieces/server-shared'
 
 const getIsolateExecutableName = (): string => {
     const defaultName = 'isolate'

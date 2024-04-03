@@ -8,7 +8,7 @@ import {
     ProjectId,
 } from '@activepieces/shared'
 import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
-import { exceptionHandler } from 'server-shared'
+import { exceptionHandler } from '@activepieces/server-shared'
 
 type OnApplyOperationParams = {
     projectId: ProjectId

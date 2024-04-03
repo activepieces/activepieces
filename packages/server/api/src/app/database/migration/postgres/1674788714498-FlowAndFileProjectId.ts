@@ -1,4 +1,4 @@
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class FlowAndFileProjectId1674788714498 implements MigrationInterface {

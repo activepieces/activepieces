@@ -1,4 +1,4 @@
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddPlatform1697717995884 implements MigrationInterface {

@@ -1,7 +1,7 @@
 import { FlowVersion, ProjectId, TriggerHookType } from '@activepieces/shared'
 import { engineHelper } from '../../../helper/engine-helper'
 import { webhookService } from '../../../webhooks/webhook-service'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 export async function renewWebhook(params: Params): Promise<void> {
     const { flowVersion, projectId, simulate } = params

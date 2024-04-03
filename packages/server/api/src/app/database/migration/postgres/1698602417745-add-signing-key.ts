@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 export class AddSigningKey1698602417745 implements MigrationInterface {
     name = 'AddSigningKey1698602417745'

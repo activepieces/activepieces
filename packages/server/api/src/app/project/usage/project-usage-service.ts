@@ -3,7 +3,7 @@ import { projectMemberService } from '../../ee/project-members/project-member.se
 import { apDayjs } from '../../helper/dayjs-helper'
 import { getRedisConnection } from '../../database/redis-connection'
 import { projectService } from '../project-service'
-import { SystemProp, system } from 'server-shared'
+import { SystemProp, system } from '@activepieces/server-shared'
 
 export const projectUsageService = {
     async getUsageForBillingPeriod(projectId: string, startBillingPeriod: string): Promise<ProjectUsage> {

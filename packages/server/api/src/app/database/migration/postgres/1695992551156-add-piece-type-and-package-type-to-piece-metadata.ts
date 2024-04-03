@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 export class AddPieceTypeAndPackageTypeToPieceMetadata1695992551156
 implements MigrationInterface {

@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 export class AddLengthLimitsToActivity1708529586342 implements MigrationInterface {
     name = 'AddLengthLimitsToActivity1708529586342'

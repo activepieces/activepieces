@@ -1,6 +1,6 @@
 import { Mutex } from 'async-mutex'
 import { isNil } from '@activepieces/shared'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 import { Sandbox } from '.'
 
 const SANDBOX_LIMIT = 1000

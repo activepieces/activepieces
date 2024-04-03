@@ -3,7 +3,7 @@ import { FastifyRequest } from 'fastify'
 import { customDomainService } from '../ee/custom-domains/custom-domain.service'
 import { getEdition } from '../helper/secret-helper'
 import { platformService } from './platform.service'
-import { SystemProp, system } from 'server-shared'
+import { SystemProp, system } from '@activepieces/server-shared'
 
 const edition = getEdition()
 

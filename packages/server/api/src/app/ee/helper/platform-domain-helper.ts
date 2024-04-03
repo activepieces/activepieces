@@ -1,4 +1,4 @@
-import { SystemProp, system } from 'server-shared'
+import { SystemProp, system } from '@activepieces/server-shared'
 import { customDomainService } from '../custom-domains/custom-domain.service'
 import { ApEnvironment } from '@activepieces/shared'
 

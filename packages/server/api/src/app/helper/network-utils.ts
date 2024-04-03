@@ -1,5 +1,5 @@
 import dns from 'node:dns/promises'
-import { SystemProp, system } from 'server-shared'
+import { SystemProp, system } from '@activepieces/server-shared'
 import { ApEnvironment } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 

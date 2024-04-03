@@ -4,8 +4,8 @@ import {
     AppEventRouting,
     AppEventRoutingEntity,
 } from './app-event-routing.entity'
-import { logger } from 'server-shared'
-import { system, SystemProp } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
+import { system, SystemProp } from '@activepieces/server-shared'
 
 const appEventRoutingRepo = databaseConnection.getRepository(
     AppEventRoutingEntity,

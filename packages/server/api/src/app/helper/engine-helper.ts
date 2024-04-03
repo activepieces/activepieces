@@ -37,7 +37,7 @@ import {
     DynamicPropsValue,
     PieceMetadata,
 } from '@activepieces/pieces-framework'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 import chalk from 'chalk'
 import { getEdition, getWebhookSecret } from './secret-helper'
 import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'

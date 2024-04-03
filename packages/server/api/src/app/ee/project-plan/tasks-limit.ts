@@ -7,7 +7,7 @@ import {
 } from '@activepieces/shared'
 
 import { projectLimitsService } from './project-plan.service'
-import { exceptionHandler } from 'server-shared'
+import { exceptionHandler } from '@activepieces/server-shared'
 import { getEdition } from '../../helper/secret-helper'
 import { projectUsageService } from '../../project/usage/project-usage-service'
 

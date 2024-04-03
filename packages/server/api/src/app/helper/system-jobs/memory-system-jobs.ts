@@ -1,4 +1,4 @@
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 import { SystemJobSchedule } from './common'
 import dayjs from 'dayjs'
 import cron from 'node-cron'

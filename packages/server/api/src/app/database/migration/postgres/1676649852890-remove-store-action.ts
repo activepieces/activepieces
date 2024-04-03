@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 export class removeStoreAction1676649852890 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {

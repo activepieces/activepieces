@@ -1,8 +1,8 @@
 import { Mutex } from 'async-mutex'
 import { CachedSandbox } from './cached-sandbox'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 import { ApEnvironment, isNil } from '@activepieces/shared'
-import { SystemProp, system } from 'server-shared'
+import { SystemProp, system } from '@activepieces/server-shared'
 import { ProvisionCacheInfo, SandBoxCacheType, extractProvisionCacheKey } from '../provisioner/sandbox-cache-key'
 
 const CACHED_SANDBOX_LIMIT = 1000

@@ -1,4 +1,4 @@
-import { QueueMode, SystemProp, system } from 'server-shared'
+import { QueueMode, SystemProp, system } from '@activepieces/server-shared'
 import { SystemJobSchedule } from './common'
 import { redisSystemJobSchedulerService } from './redis-system-job'
 import { memorySystemJobSchedulerService } from './memory-system-jobs'

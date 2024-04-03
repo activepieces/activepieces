@@ -3,7 +3,7 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { FlowVersionEntity } from '../../flows/flow-version/flow-version-entity'
 import { FlowEntity } from '../../flows/flow/flow.entity'
 import { systemJobsSchedule } from '../../helper/system-jobs'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 
 const flowRepo = repoFactory(FlowEntity)

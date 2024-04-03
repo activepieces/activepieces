@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 export class AddStateToOtp1701084418793 implements MigrationInterface {
     name = 'AddStateToOtp1701084418793'

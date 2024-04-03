@@ -14,7 +14,7 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { telemetry } from '../../helper/telemetry.utils'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 import { projectLimitsService } from '../project-plan/project-plan.service'
 import { projectBillingService } from '../billing/project-billing/project-billing.service'
 

@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from 'server-shared'
+import { logger } from '@activepieces/server-shared'
 
 export class AddUserEmailToReferral1709500213947 implements MigrationInterface {
     name = 'AddUserEmailToReferral1709500213947'
