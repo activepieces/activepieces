@@ -26,22 +26,19 @@ export const askClaude = createAction({
   displayName: 'Ask Claude',
   description: 'Ask Claude anything you want!',
   props: {
-    model: Property.Dropdown({
+    model: Property.StaticDropdown({
       displayName: 'Model',
       required: true,
       description:
         'The model which will generate the completion. Some models are suitable for natural language tasks, others specialize in code.',
-      refreshers: [],
       defaultValue: 'claude-3-haiku-20240307',
-      options: async () => {
-        return {
-          disabled: false,
-          options: [
-            { value: 'claude-3-haiku-20240307', label: 'Claude 3 Haiku' },
-            { value: 'claude-3-sonnet-20240229', label: 'Claude 3 Sonnet' },
-            { value: 'claude-3-opus-20240229', label: 'Claude 3 Opus' },
-          ],
-        };
+      options: {
+        disabled: false,
+        options: [
+          { value: 'claude-3-haiku-20240307', label: 'Claude 3 Haiku' },
+          { value: 'claude-3-sonnet-20240229', label: 'Claude 3 Sonnet' },
+          { value: 'claude-3-opus-20240229', label: 'Claude 3 Opus' },
+        ],
       },
     }),
     systemPrompt: Property.LongText({
