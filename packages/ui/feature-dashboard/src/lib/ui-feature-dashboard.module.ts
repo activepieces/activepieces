@@ -34,6 +34,7 @@ import {
   PushFlowToGitButtonComponent,
   SyncProjectComponent,
 } from '@activepieces/ui-feature-git-sync';
+import { RewardsDialogComponent } from './components/dialogs/rewards-dialog/rewards-dialog.component';
 
 @NgModule({
   imports: [
@@ -55,6 +56,7 @@ import {
     UiFeatureConnectionsModule,
     FormsModule,
     SyncProjectComponent,
+    RewardsDialogComponent
   ],
   declarations: [
     DashboardContainerComponent,
