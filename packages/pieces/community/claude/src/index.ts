@@ -2,6 +2,7 @@ import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { askClaude } from './lib/actions/send-prompt';
 import { baseUrl } from './lib/common/common';
+import { PieceCategory } from '@activepieces/shared';
 
 const markdownDescription = `
 Follow these instructions to get your Claude API Key:
@@ -22,6 +23,7 @@ export const claude = createPiece({
   auth: claudeAuth,
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/claude.png',
+  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ['dennisrongo'],
   actions: [
     askClaude,
