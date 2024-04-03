@@ -71,20 +71,29 @@ export const newFile = createTrigger({
       propsValue: context.propsValue,
     });
 
-    if(context.propsValue.getFileContent){
-      const newFilesObj = JSON.parse(JSON.stringify(newFiles))
+    const newFilesObj = JSON.parse(JSON.stringify(newFiles))
 
+    for (let i = 0; i < newFilesObj.length; i++) {
+      newFilesObj[i].link = ''
+    }
+
+    if (context.propsValue.getFileContent) {
       const fileContentPromises: Promise<string>[] = []
       for (const file of newFilesObj) {
         fileContentPromises.push(downloadFileFromDrive(context.auth, context.files, file["id"], file["name"]));
       }
-      
+
       const filesContent = await Promise.all(fileContentPromises)
-      return filesContent
+
+      for (let i = 0; i < newFilesObj.length; i++) {
+        newFilesObj[i].link = filesContent[i]
+      }
+
+      return newFilesObj
     }
-    else{
-      return newFiles
-    }    
+    else {
+      return newFilesObj
+    }
   },
   test: async (context) => {
     const newFiles = await pollingHelper.test(polling, {
@@ -93,20 +102,29 @@ export const newFile = createTrigger({
       propsValue: context.propsValue,
     });
 
-    if(context.propsValue.getFileContent){
-      const newFilesObj = JSON.parse(JSON.stringify(newFiles))
+    const newFilesObj = JSON.parse(JSON.stringify(newFiles))
 
+    for (let i = 0; i < newFilesObj.length; i++) {
+      newFilesObj[i].link = ''
+    }
+
+    if (context.propsValue.getFileContent) {
       const fileContentPromises: Promise<string>[] = []
       for (const file of newFilesObj) {
         fileContentPromises.push(downloadFileFromDrive(context.auth, context.files, file["id"], file["name"]));
       }
-      
+
       const filesContent = await Promise.all(fileContentPromises)
-      return filesContent
+
+      for (let i = 0; i < newFilesObj.length; i++) {
+        newFilesObj[i].link = filesContent[i]
+      }
+
+      return newFilesObj
     }
-    else{
-      return newFiles
-    }    
+    else {
+      return newFilesObj
+    }
   },
 
   sampleData: {
@@ -114,5 +132,6 @@ export const newFile = createTrigger({
     mimeType: 'image/jpeg',
     id: '1dpv4-sKJfKRwI9qx1vWqQhEGEn3EpbI5',
     name: 'sweep.jpg',
+    link: 'https://cloud.activepieces.com/api/v1/step-files/signed?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCYm0.Xyoy5nA-S70M9JpRnvadLxUm'
   },
 });
