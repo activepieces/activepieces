@@ -96,11 +96,14 @@ export const gitRepoService = {
         const project = await projectService.getOneOrThrow(gitRepo.projectId)
         const { flowFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
         const gitProjectState = await gitSyncHelper.getStateFromGit(flowFolderPath)
-        const mappingState = gitRepo.mapping ? new ProjectMappingState(gitRepo.mapping) : ProjectMappingState.empty()
         const dbProjectState = await gitSyncHelper.getStateFromDB(project.id)
+        const mappingState = (gitRepo.mapping ? new ProjectMappingState(gitRepo.mapping) : ProjectMappingState.empty()).clean({
+            gitFiles: gitProjectState,
+            projectFlows: dbProjectState,
+        })
         const operations = projectDiffService.diff({
             gitFiles: gitProjectState,
-            destinationFlows: dbProjectState,
+            projectFlows: dbProjectState,
             mapping: mappingState,
         })
         if (dryRun) {
