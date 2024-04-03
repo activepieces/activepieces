@@ -23,6 +23,8 @@ type ListParams = {
     includeHidden: boolean
     edition: ApEdition
     categories?: PieceCategory[]
+    includeTags?: boolean
+    tags?: string[]
     sortBy?: PieceSortBy
     orderBy?: PieceOrderBy
     searchQuery?: string

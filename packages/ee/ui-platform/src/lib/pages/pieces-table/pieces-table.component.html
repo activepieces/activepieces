@@ -1,13 +1,10 @@
 <ap-upgrade-note [featureNoteTitle]="upgradeNoteTitle" [featureNote]="upgradeNote"
-videoUrl="https://cdn.activepieces.com/videos/showcase/pieces.mp4" *ngIf="isDemo" featureKey="PIECES"></ap-upgrade-note>
+    videoUrl="https://cdn.activepieces.com/videos/showcase/pieces.mp4" *ngIf="isDemo"
+    featureKey="PIECES"></ap-upgrade-note>
 
 
 <div *ngIf="!isDemo">
     <ap-page-title [title]="title">
-        <ap-button [disabled]="isDemo" [tooltipText]="isDemo? featDisabledTooltipText: ''" actionButton
-            btnColor="primary" btnSize='medium' (click)="installPiece()" i18n>
-            + Add Piece
-        </ap-button>
     </ap-page-title>
 
     <div class="ap-mb-4 ap-flex ap-items-center ap-gap-2 ap-justify-between">
@@ -20,24 +17,57 @@ videoUrl="https://cdn.activepieces.com/videos/showcase/pieces.mp4" *ngIf="isDemo
         <div class="ap-flex-grow">
 
         </div>
-        <mat-slide-toggle color="primary" [formControl]="cloudAuthToggleFormControl" i18n i18n-matTooltip
-            labelPosition="before"
-            matTooltip="For pieces that use OAuth2 and don't have your own app credentials assigned to them, they will use Activepieces' apps">
-            Use Activepieces' OAuth2 apps for pieces that aren't configured
-        </mat-slide-toggle>
+
+        @if(isAnySelected$| async){
+            <ap-button [disabled]="isDemo" [tooltipText]="isDemo? featDisabledTooltipText: ''" actionButton
+            btnColor="primary" btnStyle="stroked" btnSize='medium'>
+            <div class="ap-flex ap-gap-2 ap-items-center" i18n> Apply to Projects </div>
+        </ap-button>
+        <ap-button [disabled]="isDemo"  [matMenuTriggerFor]="LabelMenu" [tooltipText]="isDemo? featDisabledTooltipText: ''" actionButton
+            btnColor="primary" btnStyle="stroked" btnSize='medium'>
+            <div class="ap-flex ap-gap-2 ap-items-center" i18n> Change Labels </div>
+        </ap-button>
+        <mat-menu #LabelMenu="matMenu" xPosition="before">
+            <div class="ap-p-2">
+                <mat-checkbox [color]="'primary'" (change)="selectAll($event)">
+                    Select All
+                </mat-checkbox>
+            </div>
+        </mat-menu>
+        } @else{
         @if(showSync$ | async){
+
         <ap-icon-button actionButton [tooltipText]="syncPiecesTooltipText"
             [buttonDisabled]="syncPiecesLoading$ | async | defaultFalse" iconFilename="sync.svg" color="primary"
-            (buttonClicked)="sync()"  [width]="28" [height]="28" i18n>
+            (buttonClicked)="sync()" [width]="28" [height]="28" i18n>
             Sync Pieces
         </ap-icon-button>
+
+        }
+        <ap-button [disabled]="isDemo" [tooltipText]="isDemo? featDisabledTooltipText: ''" actionButton
+            btnColor="primary" btnStyle="stroked" btnSize='medium' (click)="installPiece()" i18n>
+            Add Piece
+        </ap-button>
+
         }
 
     </div>
 
-
     <div class="ap-w-full">
         <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" i18n-aria-label aria-label="Pieces">
+            <ng-container matColumnDef="select">
+                <th mat-header-cell *matHeaderCellDef>
+                    <mat-checkbox [color]="'primary'" (change)="$event ? masterToggle() : null"
+                        [checked]="selection.hasValue() && isAllSelected()"
+                        [indeterminate]="selection.hasValue() && !isAllSelected()">
+                    </mat-checkbox>
+                </th>
+                <td mat-cell *matCellDef="let piece">
+                    <mat-checkbox [color]="'primary'" (click)="$event.stopPropagation()"
+                        (change)="$event ? selection.toggle(piece) : null" [checked]="selection.isSelected(piece)">
+                    </mat-checkbox>
+                </td>
+            </ng-container>
             <ng-container matColumnDef="displayName">
                 <th mat-header-cell *matHeaderCellDef i18n>Piece</th>
                 <td mat-cell *matCellDef="let piece">
@@ -55,6 +85,15 @@ videoUrl="https://cdn.activepieces.com/videos/showcase/pieces.mp4" *ngIf="isDemo
                 <th mat-header-cell *matHeaderCellDef i18n>Package Name</th>
                 <td mat-cell *matCellDef="let piece">
                     {{ piece.name }}
+                </td>
+            </ng-container>
+
+            <ng-container matColumnDef="tags">
+                <th mat-header-cell *matHeaderCellDef i18n>Tags</th>
+                <td mat-cell *matCellDef="let piece">
+                    @if (piece.tags) {
+                    <ap-chips-list [chips]="piece.tags"></ap-chips-list>
+                    }
                 </td>
             </ng-container>
 

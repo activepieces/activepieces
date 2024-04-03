@@ -21,6 +21,7 @@ import {
 } from '@activepieces/ui/common';
 import { ApFlagId, PieceSyncMode, Platform } from '@activepieces/shared';
 import { ActivatedRoute } from '@angular/router';
+import { SelectionModel } from '@angular/cdk/collections';
 import {
   ManagedPieceMetadataModelSummary,
   PiecesTableDataSource,
@@ -47,7 +48,7 @@ import { PieceScope } from '@activepieces/shared';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PiecesTableComponent implements OnInit {
-  displayedColumns = ['displayName', 'packageName', 'version', 'action'];
+  displayedColumns = ['select', 'displayName', 'packageName', 'version', 'tags', 'action'];
   title = $localize`Pieces`;
   upgradeNoteTitle = $localize`Control Pieces`;
   upgradeNote = $localize`Show the pieces that matter most to your users and hide the ones that you don't like`;
@@ -75,6 +76,11 @@ export class PiecesTableComponent implements OnInit {
   toggelCloudOAuth2$?: Observable<void>;
   featDisabledTooltipText = featureDisabledTooltip;
   isDemo = false;
+  selection = new SelectionModel<ManagedPieceMetadataModelSummary>(true, []);
+  isAnySelected$ = this.selection.changed.pipe(
+    map(() => this.selection.selected.length > 0)
+  );
+
   constructor(
     private piecesService: PieceMetadataService,
     private route: ActivatedRoute,
@@ -83,7 +89,7 @@ export class PiecesTableComponent implements OnInit {
     private matDialog: MatDialog,
     private flagService: FlagService,
     private oauth2AppsService: OAuth2AppsService
-  ) {}
+  ) { }
   ngOnInit(): void {
     const platform: Platform | undefined =
       this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
@@ -152,6 +158,19 @@ export class PiecesTableComponent implements OnInit {
     );
   }
 
+  isAllSelected() {
+    const numSelected = this.selection.selected.length;
+    const numRows = this.dataSource.data.length;
+    return numSelected === numRows;
+  }
+
+  masterToggle() {
+    this.isAllSelected() ?
+      this.selection.clear() :
+      this.dataSource.data.forEach(row => this.selection.select(row));
+  }
+
+
   togglePiece(piece: ManagedPieceMetadataModelSummary) {
     if (!this.platform$) return;
 
@@ -178,8 +197,7 @@ export class PiecesTableComponent implements OnInit {
 
     const finishedSavingPipe: MonoTypeOperatorFunction<void> = tap(() => {
       this.matSnackbar.open(
-        `${piece.displayName} ${
-          pieceIncluded ? this.pieceShownText : this.pieceHiddenText
+        `${piece.displayName} ${pieceIncluded ? this.pieceShownText : this.pieceHiddenText
         }`
       );
     });

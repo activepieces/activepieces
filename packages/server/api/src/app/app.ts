@@ -107,6 +107,7 @@ import { adminPlatformPieceModule } from './ee/platform/admin-platform.controlle
 import { pieceSyncService } from './pieces/piece-sync-service'
 import { systemJobsSchedule } from './helper/system-jobs'
 import { analyticsModule } from './ee/analytics/analytics-module'
+import { tagsModule } from './tags/tags-module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -248,6 +249,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(copilotModule)
     await app.register(platformModule)
     await app.register(formModule)
+    await app.register(tagsModule)
     await pieceSyncService.setup()
 
     await setupBullMQBoard(app)

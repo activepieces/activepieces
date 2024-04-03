@@ -23,6 +23,7 @@ import { Static, Type } from '@sinclair/typebox'
 
 const PiecePackageMetadata = Type.Object({
     projectUsage: Type.Number(),
+    tags: Type.Optional(Type.Array(Type.String())),
     pieceType: Type.Enum(PieceType),
     packageType: Type.Enum(PackageType),
     archiveId: Type.Optional(Type.String()),

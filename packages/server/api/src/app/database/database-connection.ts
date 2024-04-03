@@ -41,6 +41,8 @@ import { ProjectBillingEntity } from '../ee/billing/project-billing/project-bill
 import { ProjectPlanEntity } from '../ee/project-plan/project-plan.entity'
 import { AppSumoEntity } from '../ee/billing/appsumo/appsumo.entity'
 import { GitRepoEntity } from '../ee/git-repos/git-repo.entity'
+import { TagEntity } from '../tags/tag-entity'
+import { PieceTagEntity } from '../tags/tag-piece.entity'
 
 const databaseType = system.get(SystemProp.DB_TYPE)
 
@@ -64,6 +66,8 @@ function getEntities(): EntitySchema<unknown>[] {
         PieceMetadataEntity,
         StepFileEntity,
         PlatformEntity,
+        TagEntity,
+        PieceTagEntity,
     ]
 
     switch (edition) {

@@ -58,6 +58,7 @@ export class PieceMetadataService {
         return this.http.get<PieceMetadataModelSummary[]>(`${environment.apiUrl}/pieces`, {
             params: {
                 includeHidden: request.includeHidden ? 'true' : 'false',
+                ...spreadIfDefined('includeTags', request.includeTags),
                 ...spreadIfDefined('searchQuery', request.searchQuery),
                 ...spreadIfDefined('suggestionType', !isNil(request.searchQuery) && request.searchQuery.length > 3 ? request.suggestionType : undefined)
             }
