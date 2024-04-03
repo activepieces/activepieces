@@ -261,6 +261,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://www.linkedin.com/in/nyamkamunhjin/"><img src="https://avatars.githubusercontent.com/u/44439626?v=4?s=100" width="100px;" alt="MJ"/><br /><sub><b>MJ</b></sub></a><br /><a href="#plugin-nyamkamunhjin" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/shravankshenoy"><img src="https://avatars.githubusercontent.com/u/29670290?v=4?s=100" width="100px;" alt="ShravanShenoy"/><br /><sub><b>ShravanShenoy</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=shravankshenoy" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

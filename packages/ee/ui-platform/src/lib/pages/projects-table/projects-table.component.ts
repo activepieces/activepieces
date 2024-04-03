@@ -27,6 +27,7 @@ import { ActivatedRoute } from '@angular/router';
 import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
 import { HttpErrorResponse } from '@angular/common/http';
 import { StatusCodes } from 'http-status-codes';
+import { MatSidenav } from '@angular/material/sidenav';
 
 @Component({
   selector: 'app-projects-table',
@@ -36,6 +37,8 @@ import { StatusCodes } from 'http-status-codes';
 export class ProjectsTableComponent implements AfterViewInit {
   @ViewChild(ApPaginatorComponent, { static: false })
   paginator!: ApPaginatorComponent;
+
+  @ViewChild('sidenav') sidenav!: MatSidenav;
 
   displayedColumns = [
     'displayName',
@@ -173,5 +176,9 @@ export class ProjectsTableComponent implements AfterViewInit {
       error.status === StatusCodes.CONFLICT &&
       error.error?.code === 'VALIDATION'
     );
+  }
+
+  toggleSidenav() {
+    this.sidenav.toggle();
   }
 }

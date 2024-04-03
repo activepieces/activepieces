@@ -22,6 +22,14 @@ export class ProjectMappingState {
         })
     }
 
+    deleteFlow(targetId: string): ProjectMappingState {
+        const { [targetId]: _, ...rest } = this.flows
+        return new ProjectMappingState({
+            ...this,
+            flows: rest,
+        })
+    }
+
     reverse(): ProjectMappingState {
         const reversed: Record<string, { sourceId: string }> = {}
         for (const [targetflowId, state] of Object.entries(this.flows)) {

@@ -34,7 +34,8 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
       request.headers[PlatformApiKeyAuthnHandler.HEADER_NAME]?.startsWith(
           prefix,
       ) ?? false
-        return Promise.resolve(routeMatches)
+        const skipAuth = request.routeConfig.skipAuth
+        return Promise.resolve(routeMatches && !skipAuth)
     }
 
     protected async doHandle(request: FastifyRequest): Promise<void> {

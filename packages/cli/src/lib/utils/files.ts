@@ -1,4 +1,10 @@
-import { constants, readFile, access, writeFile, mkdir } from 'node:fs/promises';
+import {
+  constants,
+  readFile,
+  access,
+  writeFile,
+  mkdir,
+} from 'node:fs/promises';
 
 export type PackageJson = {
   name: string;
@@ -12,13 +18,15 @@ export type ProjectJson = {
     build?: {
       options?: {
         buildableProjectDepsInPackageJsonType?:
-        | 'peerDependencies'
-        | 'dependencies';
+          | 'peerDependencies'
+          | 'dependencies';
         updateBuildableProjectDepsInPackageJson: boolean;
       };
     };
     lint: {
-      options: {
+      executor: string;
+      outputs: string[];
+      options?: {
         lintFilePatterns: string[];
       };
     };
@@ -72,4 +80,4 @@ export const writeProjectJson = async (
 
 export const makeFolderRecursive = async (path: string): Promise<void> => {
   await mkdir(path, { recursive: true });
-}
+};

@@ -24,8 +24,14 @@ export const FastDbPieceMetadataService = (): PieceMetadataService => {
             const uniquePieces = new Set<string>(originalPieces.map((piece) => piece.name))
             const latestVersionOfEachPiece = Array.from(uniquePieces).map((name) => {
                 const result = originalPieces.find((piece) => piece.name === name)
+                const usageCount = originalPieces.filter((piece) => piece.name === name).reduce((acc, piece) => {
+                    return acc + piece.projectUsage
+                }, 0)
                 assertNotNullOrUndefined(result, 'piece_metadata_not_found')
-                return result
+                return {
+                    ...result,
+                    projectUsage: usageCount,
+                }
             })
             const filteredPieces = await pieceMetadataServiceHooks.get().filterPieces({
                 ...params,
@@ -46,7 +52,12 @@ export const FastDbPieceMetadataService = (): PieceMetadataService => {
 
             const originalPieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({ projectId, platformId, release: undefined })
             const piece = originalPieces.find((piece) => {
-                return piece.name === name && (isNil(versionToSearch) || semVer.compare(piece.version, versionToSearch) <= 0)
+
+                const strictyLessThan = (isNil(versionToSearch) || (
+                    semVer.compare(piece.version, versionToSearch.nextExcludedVersion) < 0
+                    && semVer.compare(piece.version, versionToSearch.baseVersion) >= 0
+                ))
+                return piece.name === name && strictyLessThan
             })
             if (isNil(piece)) {
                 throw new ActivepiecesError({
@@ -84,7 +95,16 @@ export const FastDbPieceMetadataService = (): PieceMetadataService => {
                 projectId: projectId ?? undefined,
             })
         },
-
+        async updateUsage({ id, usage }): Promise<void> {
+            const existingMetadata = await repo().findOneByOrFail({
+                id,
+            })
+            await repo().update(id, {
+                projectUsage: usage,
+                updated: existingMetadata.updated,
+                created: existingMetadata.created,
+            })
+        },
         async getExactPieceVersion({ name, version, projectId }): Promise<string> {
             const isExactVersion = EXACT_VERSION_PATTERN.test(version)
 
@@ -155,15 +175,38 @@ const findOldestCreataDate = async ({ name, projectId, platformId }: { name: str
     return piece?.created ?? dayjs().toISOString()
 }
 
-const findNextExcludedVersion = (version: string | undefined): string | undefined => {
+const findNextExcludedVersion = (version: string | undefined): { baseVersion: string, nextExcludedVersion: string } | undefined => {
     if (version?.startsWith('^')) {
-        return increaseMajorVersion(version.substring(1))
+        const baseVersion = version.substring(1)
+        return {
+            baseVersion,
+            nextExcludedVersion: increaseMajorVersion(baseVersion),
+        }
     }
     if (version?.startsWith('~')) {
-        return increaseMinorVersion(version.substring(1))
+        const baseVersion = version.substring(1)
+        return {
+            baseVersion,
+            nextExcludedVersion: increaseMinorVersion(baseVersion),
+        }
     }
-    return version
+    if (isNil(version)) {
+        return undefined
+    }
+    return {
+        baseVersion: version,
+        nextExcludedVersion: increasePatchVersion(version),
+    }
 }
+
+const increasePatchVersion = (version: string): string => {
+    const incrementedVersion = semVer.inc(version, 'patch')
+    if (isNil(incrementedVersion)) {
+        throw new Error(`Failed to increase patch version ${version}`)
+    }
+    return incrementedVersion
+}
+
 
 const increaseMinorVersion = (version: string): string => {
     const incrementedVersion = semVer.inc(version, 'minor')

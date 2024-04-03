@@ -245,7 +245,7 @@ export class FlowRightSidebarComponent implements OnInit {
     if (this.editStepSection && this.selectedStepResultContainer) {
       this.editStepSectionRect =
         this.editStepSection.nativeElement.getBoundingClientRect();
-      this.resizerDragged({ distance: { y: 99999999999, x: 0 } });
+      this.resizerDragged({ distance: { y: 99999, x: 0 } });
     }
   }
 }

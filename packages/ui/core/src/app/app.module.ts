@@ -29,7 +29,6 @@ import {
   NgxMonacoEditorConfig,
 } from 'ngx-monaco-editor-v2';
 import { apMonacoTheme } from './monaco-themes/ap-monaco-theme';
-import { cobalt2 } from './monaco-themes/cobalt-2-theme';
 import { EeComponentsModule } from '@activepieces/ee-components';
 import { UiFeatureAuthenticationModule } from '@activepieces/ui/feature-authentication';
 import { FormsComponent } from './modules/forms/forms.component';
@@ -41,7 +40,6 @@ const monacoConfig: NgxMonacoEditorConfig = {
   onMonacoLoad: () => {
     const monaco = (window as any).monaco;
     monaco.editor.defineTheme('apTheme', apMonacoTheme);
-    monaco.editor.defineTheme('cobalt2', cobalt2);
     const stopImportResolutionError = () => {
       monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
         diagnosticCodesToIgnore: [2792],

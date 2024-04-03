@@ -16,8 +16,9 @@ export class GlobalApiKeyAuthnHandler extends BaseSecurityHandler {
 
     protected canHandle(request: FastifyRequest): Promise<boolean> {
         const routeMatches =
-      request.headers[GlobalApiKeyAuthnHandler.HEADER_NAME] !== undefined
-        return Promise.resolve(routeMatches)
+            request.headers[GlobalApiKeyAuthnHandler.HEADER_NAME] !== undefined
+        const skipAuth = request.routeConfig.skipAuth
+        return Promise.resolve(routeMatches && !skipAuth)
     }
 
     protected doHandle(request: FastifyRequest): Promise<void> {

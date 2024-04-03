@@ -14,6 +14,7 @@ import {
 import { Observable, catchError, map, of, switchMap, tap } from 'rxjs';
 import { FlowService, TelemetryService } from '../../../service';
 import { Router } from '@angular/router';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 type ImportTemplateWithoutExistingFlowData = { projectId: string };
 type ImportFlowToOverwriteFlowData = { flowToOverwriteId: string };
@@ -38,6 +39,7 @@ export class ImportFlowDialogComponent {
     private flowService: FlowService,
     private telemetryService: TelemetryService,
     private router: Router,
+    private snackBar: MatSnackBar,
     @Inject(MAT_DIALOG_DATA)
     public data: ImporFlowDialogData,
     private cd: ChangeDetectorRef
@@ -67,7 +69,15 @@ export class ImportFlowDialogComponent {
         this.importFLow$ = this.createFlow({
           displayName: template.name,
           projectId: this.data.projectId,
-        }).pipe(switchMap((flow) => this.importFlow(flow.id, template, false)));
+        }).pipe(
+          switchMap((flow) => this.importFlow(flow.id, template, false)),
+          catchError((err) => {
+            console.error(err);
+            this.snackBar.open($localize`The uploaded template is invalid`);
+            this.loading = false;
+            return of(void 0);
+          })
+        );
       }
       this.cd.markForCheck();
     };

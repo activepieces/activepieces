@@ -392,7 +392,8 @@ export class PieceInputFormComponent extends InputFormCore {
         Array.isArray(input[key])
       ) {
         cleanedInput[key] = input[key];
-      } else if (typeof input[key] === 'object') {
+      } else if (typeof input[key] === 'object' && !isNil(input[key])) {
+        //typeof null === 'object' so we need to check if it is null
         const cleanedObject = this.removeEmptyValuesFromInput(
           input[key] as Record<string, unknown>
         );

@@ -1,6 +1,6 @@
 <div class="ap-h-full ap-pt-2 ">
     <ap-upgrade-note [insideTab]="true" *ngIf="!(platform$ | async)?.ssoEnabled || isDemo" class="ap-mb-2"
-        [featureNoteTitle]="upgradeNoteTitle" [featureNote]="upgradeNote" docsLink="https://www.activepieces.com/docs/security/sso#supported-sso-providers"></ap-upgrade-note>
+        [featureNoteTitle]="upgradeNoteTitle" [featureNote]="upgradeNote" docsLink="https://www.activepieces.com/docs/security/sso#supported-sso-providers" featureKey="SSO"></ap-upgrade-note>
 
     <div class="ap-flex ap-max-w-[56.25rem] ap-flex-col ap-gap-4" *ngIf="(platform$ | async)?.ssoEnabled && !isDemo">
         <app-allowed-email-domains-list [platform]="(platform$ | async) || undefined" [isDemo]="false"

@@ -57,6 +57,7 @@ import {
 } from '@activepieces/ui/common';
 import { CommonModule } from '@angular/common';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
+import { isNil } from '@activepieces/shared';
 
 @Component({
   selector: 'app-interpolating-text-form-control',
@@ -140,9 +141,14 @@ export class InterpolatingTextFormControlComponent
               )
             )
         );
-        if (typeof this._value === 'string')
+        if (
+          !isNil(value) &&
+          typeof this._value === 'string' &&
+          this._value.length > 0
+        )
           this.editorFormControl.setValue(
-            fromTextToOps(this._value, stepsMetaData)
+            fromTextToOps(this._value, stepsMetaData),
+            { emitEvent: false }
           );
       }
       this.stateChanges.next();
@@ -160,8 +166,8 @@ export class InterpolatingTextFormControlComponent
   @Input()
   disabled = false;
   controlType = 'custom-form-field';
-  /**silent emittions don't work with ngx-quill for some silly reason, so I need o add this and remove it later when I refactor this component */
-  ignoreEmittion = false;
+  /**Ngx-Quill emits onChange on initial rendering for some reason, so I need to add this and remove it later when I refactor this component */
+  ignoreEmission = true;
   @HostBinding('attr.aria-describedby') describedBy = '';
   protected _required: boolean | undefined;
   onChange: (val: unknown) => void = () => {
@@ -193,11 +199,10 @@ export class InterpolatingTextFormControlComponent
     this._readOnly = this.onlyAllowOneMentionToBeAdded;
     this.valueChanges$ = this.editorFormControl.valueChanges.pipe(
       tap((val: QuillEditorOperationsObject) => {
-        if (this.ignoreEmittion) {
-          this.ignoreEmittion = false;
+        if (this.ignoreEmission) {
+          this.ignoreEmission = false;
           return;
         }
-
         if (val.ops.length === 1 && val.ops[0].insert === '\n') {
           this._value = '';
           this.onChange('');
@@ -288,7 +293,8 @@ export class InterpolatingTextFormControlComponent
 
   async writeValue(value: string) {
     this._value = value;
-    if (value !== null && typeof value === 'string') {
+
+    if (!isNil(value) && typeof value === 'string' && value.length > 0) {
       const parsedTextToOps = fromTextToOps(
         value,
         this.stepMetaDataForMentions
@@ -296,8 +302,9 @@ export class InterpolatingTextFormControlComponent
       this.hasMention = parsedTextToOps.ops.some(
         (o) => typeof o.insert === 'object' && o.insert.apMention
       );
-      this.ignoreEmittion = true;
       this.editorFormControl.setValue(parsedTextToOps, { emitEvent: false });
+    } else {
+      this.editorFormControl.setValue({ ops: [] }, { emitEvent: false });
     }
   }
   registerOnChange(fn: (val: unknown) => void): void {

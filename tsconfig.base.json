@@ -356,6 +356,9 @@
       "@activepieces/piece-nifty": [
         "packages/pieces/community/nifty/src/index.ts"
       ],
+      "@activepieces/piece-nocodb": [
+        "packages/pieces/community/nocodb/src/index.ts"
+      ],
       "@activepieces/piece-notion": [
         "packages/pieces/community/notion/src/index.ts"
       ],
