@@ -2,6 +2,7 @@ import {
     Action,
     ActionType,
     BranchOperator,
+    flowHelper,
     FlowOperationRequest,
     FlowOperationType,
     FlowVersion,
@@ -11,7 +12,6 @@ import {
     StepLocationRelativeToParent,
     Trigger,
     TriggerType,
-    flowHelper,
 } from '../../src'
 
 const flowVersionWithBranching: FlowVersion = {

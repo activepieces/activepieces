@@ -2,8 +2,10 @@ import {
     FastifyPluginCallbackTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsync } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { platformService } from '../../platform/platform.service'
 import { gitRepoService } from './git-repo.service'
-import { ActivepiecesError, ErrorCode, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, SeekPage } from '@activepieces/shared'
 import {
     ConfigureRepoRequest,
     GitRepoWithoutSensitiveData,
@@ -12,9 +14,7 @@ import {
     PullGitRepoRequest,
     PushGitRepoRequest,
 } from '@activepieces/ee-shared'
-import { StatusCodes } from 'http-status-codes'
-import { FastifyPluginAsync } from 'fastify'
-import { platformService } from '../../platform/platform.service'
+import { ActivepiecesError, ErrorCode, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 
 export const gitRepoModule: FastifyPluginAsync = async (app) => {
     await app.register(gitRepoController, { prefix: '/v1/git-repos' })

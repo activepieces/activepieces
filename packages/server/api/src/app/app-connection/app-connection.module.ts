@@ -1,7 +1,7 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { appConnectionController } from './app-connection.controller'
-import { appConnectionWorkerController } from './app-connection-worker-controller'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
+import { appConnectionWorkerController } from './app-connection-worker-controller'
+import { appConnectionController } from './app-connection.controller'
 
 export const appConnectionModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)

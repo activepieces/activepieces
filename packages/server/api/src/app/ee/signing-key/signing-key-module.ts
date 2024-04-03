@@ -1,6 +1,6 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { signingKeyController } from './signing-key-controller'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
+import { signingKeyController } from './signing-key-controller'
 
 export const signingKeyModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preHandler', platformMustBeOwnedByCurrentUser)

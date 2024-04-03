@@ -1,13 +1,7 @@
-import {
-    AddActionRequest,
-    DeleteActionRequest,
-    FlowOperationType,
-    FlowOperationRequest,
-    UpdateActionRequest,
-    UpdateTriggerRequest,
-    StepLocationRelativeToParent,
-    MoveActionRequest,
-} from './flow-operations'
+import { TypeCompiler } from '@sinclair/typebox/compiler'
+import semver from 'semver'
+import { applyFunctionToValuesSync, isNil, isString } from '../common'
+import { ActivepiecesError, ErrorCode } from '../common/activepieces-error'
 import {
     Action,
     ActionType,
@@ -15,13 +9,19 @@ import {
     LoopOnItemsAction,
     SingleActionSchema,
 } from './actions/action'
-import { Trigger, TriggerType } from './triggers/trigger'
-import { TypeCompiler } from '@sinclair/typebox/compiler'
+import {
+    AddActionRequest,
+    DeleteActionRequest,
+    FlowOperationRequest,
+    FlowOperationType,
+    MoveActionRequest,
+    StepLocationRelativeToParent,
+    UpdateActionRequest,
+    UpdateTriggerRequest,
+} from './flow-operations'
 import { FlowVersion, FlowVersionState } from './flow-version'
-import { ActivepiecesError, ErrorCode } from '../common/activepieces-error'
-import semver from 'semver'
-import { applyFunctionToValuesSync, isNil, isString } from '../common'
 import { DEFAULT_SAMPLE_DATA_SETTINGS } from './sample-data'
+import { Trigger, TriggerType } from './triggers/trigger'
 
 type Step = Action | Trigger
 

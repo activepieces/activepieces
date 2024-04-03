@@ -1,27 +1,27 @@
+import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { StatusCodes } from 'http-status-codes'
+import { platformService } from '../../platform/platform.service'
+import { projectService } from '../../project/project-service'
+import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
+import { projectLimitsService } from '../project-plan/project-plan.service'
+import { platformProjectService } from './platform-project-service'
+import {
+    CreatePlatformProjectRequest,
+    DEFAULT_PLATFORM_LIMIT,
+    UpdateProjectPlatformRequest,
+} from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
+    assertNotNullOrUndefined,
     EndpointScope,
     ErrorCode,
     PlatformRole,
     Principal,
     PrincipalType,
     ProjectWithLimits,
-    SERVICE_KEY_SECURITY_OPENAPI,
     SeekPage,
-    assertNotNullOrUndefined,
+    SERVICE_KEY_SECURITY_OPENAPI,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { platformProjectService } from './platform-project-service'
-import { projectService } from '../../project/project-service'
-import {
-    CreatePlatformProjectRequest,
-    DEFAULT_PLATFORM_LIMIT,
-    UpdateProjectPlatformRequest,
-} from '@activepieces/ee-shared'
-import { StatusCodes } from 'http-status-codes'
-import { platformService } from '../../platform/platform.service'
-import { projectLimitsService } from '../project-plan/project-plan.service'
-import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 
 const DEFAULT_LIMIT_SIZE = 50
 

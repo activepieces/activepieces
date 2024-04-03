@@ -3,25 +3,51 @@
     "../../../.eslintrc.json",
     "plugin:@typescript-eslint/eslint-recommended",
     "plugin:@typescript-eslint/recommended",
-    "plugin:@typescript-eslint/strict"
+    "plugin:@typescript-eslint/strict",
+    "plugin:import/recommended"
   ],
-  "ignorePatterns": ["!**/*"],
+  "ignorePatterns": [
+    "!**/*"
+  ],
   "overrides": [
     {
-      "files": ["*.ts", "*.js"],
+      "files": [
+        "*.ts",
+        "*.js"
+      ],
       "parserOptions": {
-        "project": ["packages/server/api/tsconfig.*?.json"]
+        "project": [
+          "packages/server/api/tsconfig.*?.json"
+        ]
       },
       "rules": {
         "no-console": "error",
         "object-shorthand": "error",
         "@typescript-eslint/switch-exhaustiveness-check": "error",
-        "@typescript-eslint/brace-style": ["error", "stroustrup"],
-        "@typescript-eslint/comma-dangle": ["error", "always-multiline"],
-        "@typescript-eslint/indent": ["error", 4],
-        "@typescript-eslint/quotes": ["error", "single"],
-        "@typescript-eslint/semi": ["error", "never"],
-        "@typescript-eslint/consistent-type-definitions": ["error", "type"],
+        "@typescript-eslint/brace-style": [
+          "error",
+          "stroustrup"
+        ],
+        "@typescript-eslint/comma-dangle": [
+          "error",
+          "always-multiline"
+        ],
+        "@typescript-eslint/indent": [
+          "error",
+          4
+        ],
+        "@typescript-eslint/quotes": [
+          "error",
+          "single"
+        ],
+        "@typescript-eslint/semi": [
+          "error",
+          "never"
+        ],
+        "@typescript-eslint/consistent-type-definitions": [
+          "error",
+          "type"
+        ],
         "@typescript-eslint/no-explicit-any": "error",
         "@typescript-eslint/no-redundant-type-constituents": "error",
         "@typescript-eslint/await-thenable": "error",
@@ -31,7 +57,10 @@
         "@typescript-eslint/block-spacing": "error",
         "@typescript-eslint/func-call-spacing": "error",
         "@typescript-eslint/key-spacing": "error",
-        "@typescript-eslint/object-curly-spacing": ["error", "always"],
+        "@typescript-eslint/object-curly-spacing": [
+          "error",
+          "always"
+        ],
         "@typescript-eslint/space-before-blocks": "error",
         "@typescript-eslint/no-non-null-assertion": "warn",
         "@typescript-eslint/member-delimiter-style": [
@@ -67,9 +96,45 @@
         "@typescript-eslint/no-floating-promises": "error",
         "@typescript-eslint/no-misused-promises": "warn",
         "no-return-await": "off",
-        "@typescript-eslint/return-await": ["error", "in-try-catch"],
-        "default-case-last": "error"
+        "@typescript-eslint/return-await": [
+          "error",
+          "in-try-catch"
+        ],
+        "default-case-last": "error",
+        "import/order": [
+          "error",
+          {
+            "alphabetize": {
+              "order": "asc"
+            }
+          }
+        ],
+        "import/no-duplicates": "error",
+        "sort-imports": [
+          "error",
+          {
+            "ignoreCase": true,
+            "ignoreDeclarationSort": true,
+            "ignoreMemberSort": false,
+            "memberSyntaxSortOrder": [
+              "none",
+              "all",
+              "multiple",
+              "single"
+            ],
+            "allowSeparatedGroups": false
+          }
+        ]
       }
     }
-  ]
+  ],
+  "settings": {
+    "import/resolver": {
+      "typescript": {
+        "alwaysTryTypes": true,
+        "project": "**/tsconfig.*?.json"
+      },
+      "node": true
+    }
+  }
 }

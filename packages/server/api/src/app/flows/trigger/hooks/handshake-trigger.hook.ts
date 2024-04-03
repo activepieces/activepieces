@@ -1,18 +1,18 @@
-import {
-    FlowVersion,
-    ProjectId,
-    TriggerHookType,
-    TriggerPayload,
-    TriggerType,
-    isNil,
-} from '@activepieces/shared'
 import { engineHelper } from '../../../helper/engine-helper'
 import { webhookService } from '../../../webhooks/webhook-service'
+import { getPieceTrigger } from './trigger-utils'
 import {
     WebhookHandshakeStrategy,
     WebhookResponse,
 } from '@activepieces/pieces-framework'
-import { getPieceTrigger } from './trigger-utils'
+import {
+    FlowVersion,
+    isNil,
+    ProjectId,
+    TriggerHookType,
+    TriggerPayload,
+    TriggerType,
+} from '@activepieces/shared'
 
 export async function tryHandshake(
     params: ExecuteHandshakeParams,

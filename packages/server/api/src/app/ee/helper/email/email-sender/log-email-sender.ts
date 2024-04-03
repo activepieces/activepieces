@@ -1,5 +1,5 @@
-import { logger } from '@activepieces/server-shared'
 import { EmailSender } from './email-sender'
+import { logger } from '@activepieces/server-shared'
 
 /**
  * Logs sent emails to the console

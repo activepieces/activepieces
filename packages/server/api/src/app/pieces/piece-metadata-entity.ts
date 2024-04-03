@@ -1,4 +1,13 @@
+import { Static, Type } from '@sinclair/typebox'
 import { EntitySchema } from 'typeorm'
+import {
+    ApIdSchema,
+    ARRAY_COLUMN_TYPE,
+    BaseColumnSchemaPart,
+    COLLATION,
+    isPostgres,
+    JSON_COLUMN_TYPE,
+} from '../database/database-common'
 import {
     PieceMetadata,
     PieceMetadataSummary,
@@ -10,15 +19,6 @@ import {
     PieceType,
     Project,
 } from '@activepieces/shared'
-import {
-    ARRAY_COLUMN_TYPE,
-    ApIdSchema,
-    BaseColumnSchemaPart,
-    COLLATION,
-    JSON_COLUMN_TYPE,
-    isPostgres,
-} from '../database/database-common'
-import { Static, Type } from '@sinclair/typebox'
 
 
 const PiecePackageMetadata = Type.Object({

@@ -1,6 +1,6 @@
-import { PopulatedFlow, isNil } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { GitFile } from './project-diff.service'
+import { isNil, PopulatedFlow } from '@activepieces/shared'
 
 export class ProjectMappingState {
     flows: Record<string, {

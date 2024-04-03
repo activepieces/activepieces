@@ -1,11 +1,11 @@
+import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import {
-    createMockSignInRequest,
-    createMockSignUpRequest,
-} from '../../../helpers/mocks/authn'
+import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
+import { emailService } from '../../../../src/app/ee/helper/email/email-service'
+import { decodeToken } from '../../../helpers/auth'
 import {
     CLOUD_PLATFORM_ID,
     createMockCustomDomain,
@@ -15,22 +15,22 @@ import {
     createProjectMember,
 } from '../../../helpers/mocks'
 import {
-    ApFlagId,
-    User,
-    UserStatus,
-    apId,
-    ProjectMemberRole,
-    Platform,
-} from '@activepieces/shared'
-import { faker } from '@faker-js/faker'
-import { emailService } from '../../../../src/app/ee/helper/email/email-service'
-import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
+    createMockSignInRequest,
+    createMockSignUpRequest,
+} from '../../../helpers/mocks/authn'
 import {
     CustomDomain,
     OtpType,
     ProjectMemberStatus,
 } from '@activepieces/ee-shared'
-import { decodeToken } from '../../../helpers/auth'
+import {
+    ApFlagId,
+    apId,
+    Platform,
+    ProjectMemberRole,
+    User,
+    UserStatus,
+} from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 

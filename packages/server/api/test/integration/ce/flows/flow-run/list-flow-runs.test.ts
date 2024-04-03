@@ -1,7 +1,7 @@
-import { databaseConnection } from '../../../../../src/app/database/database-connection'
-import { setupApp } from '../../../../../src/app/app'
-import { generateMockToken } from '../../../../helpers/auth'
 import { FastifyInstance } from 'fastify'
+import { setupApp } from '../../../../../src/app/app'
+import { databaseConnection } from '../../../../../src/app/database/database-connection'
+import { generateMockToken } from '../../../../helpers/auth'
 import { PrincipalType } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null

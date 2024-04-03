@@ -1,6 +1,6 @@
 import { ApId } from '../../common/id-generator'
-import { PlatformRole, PrincipalType } from './principal-type'
 import { ProjectId } from '../../project/project'
+import { PlatformRole, PrincipalType } from './principal-type'
 
 export type Principal = {
     id: ApId

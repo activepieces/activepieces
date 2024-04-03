@@ -1,16 +1,16 @@
+import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { createMockSignUpRequest } from '../../../helpers/mocks/authn'
-import { faker } from '@faker-js/faker'
-import { emailService } from '../../../../src/app/ee/helper/email/email-service'
 import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
+import { emailService } from '../../../../src/app/ee/helper/email/email-service'
 import {
     createMockCustomDomain,
     createMockPlatform,
     createMockUser,
 } from '../../../../test/helpers/mocks'
+import { createMockSignUpRequest } from '../../../helpers/mocks/authn'
 
 let app: FastifyInstance | null = null
 

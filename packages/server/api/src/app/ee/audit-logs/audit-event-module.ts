@@ -1,13 +1,13 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { platformService } from '../../platform/platform.service'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
-import {
-    ActivepiecesError,
-    ErrorCode,
-    assertNotNullOrUndefined,
-} from '@activepieces/shared'
 import { auditLogService } from './audit-event-service'
 import { ListAuditEventsRequest } from '@activepieces/ee-shared'
-import { platformService } from '../../platform/platform.service'
+import {
+    ActivepiecesError,
+    assertNotNullOrUndefined,
+    ErrorCode,
+} from '@activepieces/shared'
 
 export const auditEventModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preHandler', platformMustBeOwnedByCurrentUser)

@@ -1,25 +1,25 @@
+import { Provider } from '../../../../authentication/authentication-service/hooks/authentication-service-hooks'
+import { accessTokenManager } from '../../../../authentication/lib/access-token-manager'
+import { flagService } from '../../../../flags/flag.service'
+import { getEdition } from '../../../../helper/secret-helper'
+import { platformService } from '../../../../platform/platform.service'
+import { projectService } from '../../../../project/project-service'
+import { userService } from '../../../../user/user-service'
+import { projectMemberService } from '../../../project-members/project-member.service'
 import {
     ProjectMemberStatus,
 } from '@activepieces/ee-shared'
 import {
+    ActivepiecesError,
+    ApEdition,
+    ErrorCode,
+    isNil,
+    PlatformRole,
     PrincipalType,
     Project,
-    isNil,
-    User,
-    ActivepiecesError,
-    ErrorCode,
-    ApEdition,
-    PlatformRole,
     ProjectMemberRole,
+    User,
 } from '@activepieces/shared'
-import { platformService } from '../../../../platform/platform.service'
-import { accessTokenManager } from '../../../../authentication/lib/access-token-manager'
-import { projectMemberService } from '../../../project-members/project-member.service'
-import { projectService } from '../../../../project/project-service'
-import { getEdition } from '../../../../helper/secret-helper'
-import { userService } from '../../../../user/user-service'
-import { flagService } from '../../../../flags/flag.service'
-import { Provider } from '../../../../authentication/authentication-service/hooks/authentication-service-hooks'
 
 async function getProjectForUserOrThrow(user: User): Promise<Project> {
     const invitedProject = await getProjectMemberOrThrow(user)

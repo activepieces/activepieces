@@ -1,8 +1,8 @@
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
-    BLOB_COLUMN_TYPE,
     BaseColumnSchemaPart,
+    BLOB_COLUMN_TYPE,
 } from '../database/database-common'
 import { File, FileCompression, FileType, Project } from '@activepieces/shared'
 

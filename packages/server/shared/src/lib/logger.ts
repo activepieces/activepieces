@@ -1,4 +1,4 @@
-import pino, { Logger, Level } from 'pino'
+import pino, { Level, Logger } from 'pino'
 import 'pino-loki'
 import { system } from './system/system'
 import { SystemProp } from './system/system-prop'

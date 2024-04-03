@@ -1,21 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import replaceAsync from 'string-replace-async'
+import {
+    ErrorMessages,
+    formatErrorMessage,
+    InputPropertyMap,
+    PieceAuthProperty,
+    PropertyType,
+} from '@activepieces/pieces-framework'
 import {
     AUTHENTICATION_PROPERTY_NAME,
     isNil,
     isString,
 } from '@activepieces/shared'
-import {
-    formatErrorMessage,
-    ErrorMessages,
-    InputPropertyMap,
-    PieceAuthProperty,
-    PropertyType,
-} from '@activepieces/pieces-framework'
-import { handleAPFile, isApFilePath } from './files.service'
+import replaceAsync from 'string-replace-async'
+import { initCodeSandbox } from '../core/code/code-sandbox'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createConnectionService } from './connections.service'
-import { initCodeSandbox } from '../core/code/code-sandbox'
+import { handleAPFile, isApFilePath } from './files.service'
 
 export class VariableService {
     private static readonly VARIABLE_PATTERN = RegExp('\\{\\{(.*?)\\}\\}', 'g')

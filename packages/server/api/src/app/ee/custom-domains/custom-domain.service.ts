@@ -1,13 +1,13 @@
+import { databaseConnection } from '../../database/database-connection'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { CustomDomainEntity } from './custom-domain.entity'
 import {
     CustomDomain,
     CustomDomainStatus,
     ListCustomDomainsRequest,
 } from '@activepieces/ee-shared'
-import { databaseConnection } from '../../database/database-connection'
-import { CustomDomainEntity } from './custom-domain.entity'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { buildPaginator } from '../../helper/pagination/build-paginator'
-import { SeekPage, apId } from '@activepieces/shared'
+import { apId, SeekPage } from '@activepieces/shared'
 
 const customDomainRepo =
   databaseConnection.getRepository<CustomDomain>(CustomDomainEntity)

@@ -1,6 +1,6 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { PrincipalType } from '@activepieces/shared'
 import { projectService } from './project-service'
+import { PrincipalType } from '@activepieces/shared'
 
 export const projectWorkerController: FastifyPluginAsyncTypebox = async (
     app,

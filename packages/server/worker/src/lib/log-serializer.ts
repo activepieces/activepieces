@@ -1,5 +1,5 @@
-import { FileCompression, ExecutioOutputFile } from '@activepieces/shared'
-import { logger, fileCompressor } from '@activepieces/server-shared'
+import { fileCompressor, logger } from '@activepieces/server-shared'
+import { ExecutioOutputFile, FileCompression } from '@activepieces/shared'
 
 export const logSerializer = {
     async serialize(log: ExecutioOutputFile): Promise<Buffer> {

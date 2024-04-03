@@ -1,3 +1,4 @@
+import { HookType } from '../../flows/flow-run/flow-run-service'
 import {
     ExecutionType,
     FlowId,
@@ -8,7 +9,6 @@ import {
     RunEnvironment,
     TriggerType,
 } from '@activepieces/shared'
-import { HookType } from '../../flows/flow-run/flow-run-service'
 
 export const LATEST_JOB_DATA_SCHEMA_VERSION = 4
 

@@ -1,6 +1,5 @@
 import { copyFile } from 'node:fs/promises'
-import { SystemProp, system } from '@activepieces/server-shared'
-import { logger } from '@activepieces/server-shared'
+import { logger, system, SystemProp } from '@activepieces/server-shared'
 
 const engineExecutablePath = system.getOrThrow(
     SystemProp.ENGINE_EXECUTABLE_PATH,
@@ -14,7 +13,7 @@ export const engineInstaller = {
         logger.debug({ path }, '[engineInstaller#install]')
 
         await copyFile(engineExecutablePath, `${path}/main.js`)
-await copyFile(`${engineExecutablePath}.map`, `${path}/main.js.map`)
+        await copyFile(`${engineExecutablePath}.map`, `${path}/main.js.map`)
     },
 }
 

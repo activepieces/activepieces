@@ -1,14 +1,14 @@
+import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { createMockPlatform, createMockProject, createMockUser } from '../../../helpers/mocks'
 import {
     createMockSignInRequest,
     createMockSignUpRequest,
 } from '../../../helpers/mocks/authn'
-import { createMockPlatform, createMockProject, createMockUser } from '../../../helpers/mocks'
 import { ApFlagId, UserStatus } from '@activepieces/shared'
-import { faker } from '@faker-js/faker'
 
 let app: FastifyInstance | null = null
 

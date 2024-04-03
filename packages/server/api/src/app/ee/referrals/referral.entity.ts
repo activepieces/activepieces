@@ -1,10 +1,10 @@
 import { EntitySchema } from 'typeorm'
-import { User } from '@activepieces/shared'
-import { Referral } from '@activepieces/ee-shared'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
 } from '../../database/database-common'
+import { Referral } from '@activepieces/ee-shared'
+import { User } from '@activepieces/shared'
 
 export type ReferralSchema = Referral & {
     referredUser: User

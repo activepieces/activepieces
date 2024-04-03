@@ -1,6 +1,6 @@
-import { apId } from '@activepieces/shared'
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { logger } from '@activepieces/server-shared'
+import { apId } from '@activepieces/shared'
 
 export class AddPlatformToPostgres1709052740378 implements MigrationInterface {
     name = 'AddPlatformToPostgres1709052740378'
