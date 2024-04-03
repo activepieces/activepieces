@@ -2,7 +2,7 @@ import { FilesService, OAuth2PropertyValue, OAuth2Props, Property, ShortTextProp
 import { extension } from 'mime-types';
 
 async function getMimeType(auth: OAuth2PropertyValue<OAuth2Props>, fileId: string): Promise<string> {
-    let mimeType = (
+    const mimeType = (
         await fetch(
             `https://www.googleapis.com/drive/v3/files/${fileId}?fields=mimeType`,
             {
@@ -16,7 +16,7 @@ async function getMimeType(auth: OAuth2PropertyValue<OAuth2Props>, fileId: strin
 }
 
 const googledlCall = async (url: string, auth: OAuth2PropertyValue<OAuth2Props>, fileId: string, files: FilesService, fileName: string | undefined) => {
-    let mimeType = await getMimeType(auth, fileId)
+    const mimeType = await getMimeType(auth, fileId)
 
     const download = await fetch(url, {
         headers: {
