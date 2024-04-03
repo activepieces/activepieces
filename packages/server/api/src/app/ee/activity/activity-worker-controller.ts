@@ -1,8 +1,8 @@
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { ApId, PrincipalType } from '@activepieces/shared'
+import { StatusCodes } from 'http-status-codes'
 import { activityService } from './activity-service'
 import { AddActivityRequestBody, UpdateActivityRequestBody } from '@activepieces/ee-shared'
-import { StatusCodes } from 'http-status-codes'
+import { ApId, PrincipalType } from '@activepieces/shared'
 
 export const activityWorkerController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', AddActivityRequest, async (req, res) => {

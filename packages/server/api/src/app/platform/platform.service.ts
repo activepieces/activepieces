@@ -1,22 +1,20 @@
-import {
-    ActivepiecesError,
-    ErrorCode,
-    LocalesEnum,
-    UserId,
-    apId,
-    isNil,
-    spreadIfDefined,
-} from '@activepieces/shared'
 import { databaseConnection } from '../database/database-connection'
+import { defaultTheme } from '../flags/theme'
+import { userService } from '../user/user-service'
 import { PlatformEntity } from './platform.entity'
 import {
     FilteredPieceBehavior,
     Platform,
     PlatformId,
     UpdatePlatformRequestBody,
-} from '@activepieces/shared'
-import { defaultTheme } from '../flags/theme'
-import { userService } from '../user/user-service'
+
+    ActivepiecesError,
+    ErrorCode,
+    LocalesEnum,
+    UserId,
+    apId,
+    isNil,
+    spreadIfDefined } from '@activepieces/shared'
 
 const repo = databaseConnection.getRepository<Platform>(PlatformEntity)
 

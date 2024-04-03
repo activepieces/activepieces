@@ -1,7 +1,7 @@
 import { createRedisClient } from '../../database/redis-connection'
-import { QueueMode, SystemProp, system } from '@activepieces/server-shared'
 import { memoryPubSub } from './memory-pubsub'
 import { redisPubSub } from './redis-pubsub'
+import { QueueMode, SystemProp, system } from '@activepieces/server-shared'
 
 const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
 

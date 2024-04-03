@@ -1,3 +1,11 @@
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { Type } from '@sinclair/typebox'
+import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { platformService } from '../../platform/platform.service'
+import { userService } from '../../user/user-service'
+import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
+import { projectMemberService } from './project-member.service'
 import {
     ListProjectMembersRequestQuery,
     AcceptProjectResponse,
@@ -5,6 +13,7 @@ import {
     ProjectMember,
     ProjectMemberStatus,
 } from '@activepieces/ee-shared'
+import { logger } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
     ActivepiecesError,
@@ -15,15 +24,6 @@ import {
     assertNotNullOrUndefined,
     isNil,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { Type } from '@sinclair/typebox'
-import { StatusCodes } from 'http-status-codes'
-import { logger } from '@activepieces/server-shared'
-import { userService } from '../../user/user-service'
-import { projectMemberService } from './project-member.service'
-import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
-import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
-import { platformService } from '../../platform/platform.service'
 
 const DEFAULT_LIMIT_SIZE = 10
 

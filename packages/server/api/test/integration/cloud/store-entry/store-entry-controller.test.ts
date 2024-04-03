@@ -1,9 +1,9 @@
-import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { FastifyInstance, LightMyRequestResponse } from 'fastify'
-import { apId, PrincipalType, User } from '@activepieces/shared'
+import { setupApp } from '../../../../src/app/app'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
 import { createMockUser } from '../../../helpers/mocks'
-import { setupApp } from '../../../../src/app/app'
+import { apId, PrincipalType, User } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 

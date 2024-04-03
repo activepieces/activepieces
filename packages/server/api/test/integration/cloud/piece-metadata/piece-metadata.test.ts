@@ -1,5 +1,7 @@
-import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { FastifyInstance } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
 import { setupApp } from '../../../../src/app/app'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockPieceMetadata,
@@ -7,8 +9,7 @@ import {
     createMockProject,
     createMockUser,
 } from '../../../helpers/mocks'
-import { StatusCodes } from 'http-status-codes'
-import { FastifyInstance } from 'fastify'
+import { logger } from '@activepieces/server-shared'
 import {
     FilteredPieceBehavior,
     PieceType,
@@ -16,7 +17,6 @@ import {
     PrincipalType,
     apId,
 } from '@activepieces/shared'
-import { logger } from '@activepieces/server-shared'
 
 let app: FastifyInstance | null = null
 

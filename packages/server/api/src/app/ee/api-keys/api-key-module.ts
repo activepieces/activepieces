@@ -2,15 +2,14 @@ import {
     FastifyPluginAsyncTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
+import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
-import { ApId, SeekPage, assertNotNullOrUndefined } from '@activepieces/shared'
 import { apiKeyService } from './api-key-service'
 import {
     ApiKeyResponseWithoutValue,
     CreateApiKeyRequest,
-} from '@activepieces/ee-shared'
-import { StatusCodes } from 'http-status-codes'
-import { ApiKeyResponseWithValue } from '@activepieces/ee-shared'
+    ApiKeyResponseWithValue } from '@activepieces/ee-shared'
+import { ApId, SeekPage, assertNotNullOrUndefined } from '@activepieces/shared'
 
 export const apiKeyModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preHandler', platformMustBeOwnedByCurrentUser)

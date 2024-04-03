@@ -1,4 +1,10 @@
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { Static, Type } from '@sinclair/typebox'
+import { StatusCodes } from 'http-status-codes'
+import { platformService } from '../../platform/platform.service'
 import { flowTemplateService } from './flow-template.service'
+import { CreateFlowTemplateRequest } from '@activepieces/ee-shared'
+import { SystemProp, system } from '@activepieces/server-shared'
 import {
     ListFlowTemplatesRequest,
     ALL_PRINCIPAL_TYPES,
@@ -9,12 +15,6 @@ import {
     assertNotNullOrUndefined,
     Principal,
 } from '@activepieces/shared'
-import { Static, Type } from '@sinclair/typebox'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { CreateFlowTemplateRequest } from '@activepieces/ee-shared'
-import { platformService } from '../../platform/platform.service'
-import { StatusCodes } from 'http-status-codes'
-import { SystemProp, system } from '@activepieces/server-shared'
 
 export const platformFlowTemplateModule: FastifyPluginAsyncTypebox = async (
     app,

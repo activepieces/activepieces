@@ -2,6 +2,19 @@ import {
     FastifyPluginAsyncTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
+import { flagService } from '../flags/flag.service'
+import { flowService } from '../flows/flow/flow.service'
+import { engineHelper } from '../helper/engine-helper'
+import {
+    PieceMetadataModel,
+    PieceMetadataModelSummary,
+} from './piece-metadata-entity'
+import {
+    getPiecePackage,
+    pieceMetadataService,
+} from './piece-metadata-service'
+import { pieceSyncService } from './piece-sync-service'
+import { PieceMetadata } from '@activepieces/pieces-framework'
 import {
     ALL_PRINCIPAL_TYPES,
     ApEdition,
@@ -15,19 +28,6 @@ import {
     PieceOptionRequest,
     PrincipalType,
 } from '@activepieces/shared'
-import { engineHelper } from '../helper/engine-helper'
-import {
-    getPiecePackage,
-    pieceMetadataService,
-} from './piece-metadata-service'
-import { PieceMetadata } from '@activepieces/pieces-framework'
-import { flagService } from '../flags/flag.service'
-import {
-    PieceMetadataModel,
-    PieceMetadataModelSummary,
-} from './piece-metadata-entity'
-import { flowService } from '../flows/flow/flow.service'
-import { pieceSyncService } from './piece-sync-service'
 
 export const pieceModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(basePiecesController, { prefix: '/v1/pieces' })

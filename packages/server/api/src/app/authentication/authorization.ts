@@ -1,11 +1,11 @@
+import { onRequestHookHandler, preSerializationHookHandler } from 'fastify'
+import { logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
     PrincipalType,
     isObject,
 } from '@activepieces/shared'
-import { onRequestHookHandler, preSerializationHookHandler } from 'fastify'
-import { logger } from '@activepieces/server-shared'
 
 // TODO REMOVE
 export const allowWorkersOnly: onRequestHookHandler = (request, _res, done) => {

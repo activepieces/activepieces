@@ -1,8 +1,8 @@
-import { PieceCategory, PlatformId, SuggestionType, isNil } from '@activepieces/shared'
-import { PieceMetadataSchema } from '../../piece-metadata-entity'
 import Fuse from 'fuse.js'
-import { ActionBase, TriggerBase } from '@activepieces/pieces-framework'
 import { platformService } from '../../../platform/platform.service'
+import { PieceMetadataSchema } from '../../piece-metadata-entity'
+import { ActionBase, TriggerBase } from '@activepieces/pieces-framework'
+import { PieceCategory, PlatformId, SuggestionType, isNil } from '@activepieces/shared'
 
 
 const pieceFilterKeys = [{

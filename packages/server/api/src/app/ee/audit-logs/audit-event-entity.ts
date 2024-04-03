@@ -1,7 +1,6 @@
 import { EntitySchema } from 'typeorm'
-import { JSONB_COLUMN_TYPE } from '../../database/database-common'
+import { JSONB_COLUMN_TYPE, BaseColumnSchemaPart } from '../../database/database-common'
 import { ApplicationEvent } from '@activepieces/ee-shared'
-import { BaseColumnSchemaPart } from '../../database/database-common'
 import { Platform } from '@activepieces/shared'
 
 type AuditEventSchema = ApplicationEvent & {

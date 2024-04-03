@@ -1,7 +1,19 @@
 import { readdir, stat } from 'node:fs/promises'
 import { resolve, join } from 'node:path'
 import { cwd } from 'node:process'
+import importFresh from 'import-fresh'
+import { nanoid } from 'nanoid'
+import { getEdition } from '../../helper/secret-helper'
+import {
+    PieceMetadataModel,
+    PieceMetadataModelSummary,
+    PieceMetadataSchema,
+} from '../piece-metadata-entity'
+import { pieceMetadataServiceHooks } from './hooks'
+import { PieceMetadataService } from './piece-metadata-service'
+import { toPieceMetadataModelSummary } from '.'
 import { Piece, PieceMetadata } from '@activepieces/pieces-framework'
+import { exceptionHandler, logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -14,18 +26,6 @@ import {
     isNil,
     ListVersionsResponse,
 } from '@activepieces/shared'
-import { PieceMetadataService } from './piece-metadata-service'
-import importFresh from 'import-fresh'
-import {
-    PieceMetadataModel,
-    PieceMetadataModelSummary,
-    PieceMetadataSchema,
-} from '../piece-metadata-entity'
-import { pieceMetadataServiceHooks } from './hooks'
-import { nanoid } from 'nanoid'
-import { exceptionHandler, logger } from '@activepieces/server-shared'
-import { toPieceMetadataModelSummary } from '.'
-import { getEdition } from '../../helper/secret-helper'
 
 const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
     const pieces = await findAllPieces()

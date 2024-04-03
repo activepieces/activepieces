@@ -1,3 +1,8 @@
+import { EntityManager } from 'typeorm'
+import { repoFactory } from '../../core/db/repo-factory'
+import { transaction } from '../../core/db/transaction'
+import { UserEntity } from '../../user/user-entity'
+import { projectMemberService } from '../project-members/project-member.service'
 import {
     ActivepiecesError,
     ErrorCode,
@@ -7,11 +12,6 @@ import {
     UserId,
     UserStatus,
 } from '@activepieces/shared'
-import { UserEntity } from '../../user/user-entity'
-import { repoFactory } from '../../core/db/repo-factory'
-import { EntityManager } from 'typeorm'
-import { transaction } from '../../core/db/transaction'
-import { projectMemberService } from '../project-members/project-member.service'
 
 const repo = repoFactory(UserEntity)
 

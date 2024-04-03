@@ -2,15 +2,14 @@ import {
     FastifyPluginAsyncTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
+import { StatusCodes } from 'http-status-codes'
+import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
+import { platformService } from './platform.service'
 import {
     Platform,
     PlatformWithoutSensitiveData,
     UpdatePlatformRequestBody,
-} from '@activepieces/shared'
-import { ApId, Principal, assertEqual } from '@activepieces/shared'
-import { platformService } from './platform.service'
-import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
-import { StatusCodes } from 'http-status-codes'
+    ApId, Principal, assertEqual } from '@activepieces/shared'
 
 export const platformController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/:id', UpdatePlatformRequest, async (req, res) => {

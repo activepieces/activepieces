@@ -1,12 +1,13 @@
+import { databaseConnection } from '../../database/database-connection'
+import { decryptString, encryptString } from '../../helper/encryption'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { OAuthAppEntity, OAuthAppWithSecret } from './oauth-app.entity'
 import {
     ListOAuth2AppRequest,
     OAuthApp,
     UpsertOAuth2AppRequest,
 } from '@activepieces/ee-shared'
-import { OAuthAppEntity, OAuthAppWithSecret } from './oauth-app.entity'
-import { databaseConnection } from '../../database/database-connection'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { buildPaginator } from '../../helper/pagination/build-paginator'
 import {
     ActivepiecesError,
     ErrorCode,
@@ -15,7 +16,6 @@ import {
     deleteProps,
     isNil,
 } from '@activepieces/shared'
-import { decryptString, encryptString } from '../../helper/encryption'
 
 const oauthRepo = databaseConnection.getRepository(OAuthAppEntity)
 

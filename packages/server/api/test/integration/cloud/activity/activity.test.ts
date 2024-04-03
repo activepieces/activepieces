@@ -1,10 +1,10 @@
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { PlatformRole, PrincipalType, ProjectMemberRole, apId } from '@activepieces/shared'
 import { setupApp } from '../../../../src/app/app'
-import { generateMockToken } from '../../../helpers/auth'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { generateMockToken } from '../../../helpers/auth'
 import { createMockUser, createMockPlatform, createMockProject, createMockActivity, createMockProjectMember } from '../../../helpers/mocks'
+import { PlatformRole, PrincipalType, ProjectMemberRole, apId } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 

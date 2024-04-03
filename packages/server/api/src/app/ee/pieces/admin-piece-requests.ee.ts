@@ -1,3 +1,4 @@
+import { Type } from '@fastify/type-provider-typebox'
 import {
     ErrorHandlingOptionsParam,
     TriggerStrategy,
@@ -9,7 +10,6 @@ import {
     PrincipalType,
     TriggerTestStrategy,
 } from '@activepieces/shared'
-import { Type } from '@fastify/type-provider-typebox'
 
 const Action = Type.Object({
     name: Type.String(),

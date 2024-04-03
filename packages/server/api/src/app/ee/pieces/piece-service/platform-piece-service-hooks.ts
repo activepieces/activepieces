@@ -1,3 +1,8 @@
+import { fileService } from '../../../file/file.service'
+import {
+    GetPieceArchivePackageParams,
+    PieceServiceHooks,
+} from '../../../pieces/piece-service/piece-service-hooks'
 import {
     FileCompression,
     FileId,
@@ -5,11 +10,6 @@ import {
     PieceType,
     isNil,
 } from '@activepieces/shared'
-import {
-    GetPieceArchivePackageParams,
-    PieceServiceHooks,
-} from '../../../pieces/piece-service/piece-service-hooks'
-import { fileService } from '../../../file/file.service'
 
 export const platformPieceServiceHooks: PieceServiceHooks = {
     async savePieceArchivePackage(params) {

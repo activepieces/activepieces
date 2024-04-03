@@ -1,7 +1,14 @@
 import { FastifyInstance, FastifyRequest } from 'fastify'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupApp } from '../../../../src/app/app'
 import { securityHandlerChain } from '../../../../src/app/core/security/security-handler-chain'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { generateMockToken } from '../../../helpers/auth'
+import {
+    createMockFlow,
+    createMockPlatformWithOwner,
+    createMockProject,
+    setupMockApiKeyServiceAccount,
+} from '../../../helpers/mocks'
 import {
     ALL_PRINCIPAL_TYPES,
     ActivepiecesError,
@@ -12,13 +19,6 @@ import {
     PrincipalType,
     apId,
 } from '@activepieces/shared'
-import {
-    createMockFlow,
-    createMockPlatformWithOwner,
-    createMockProject,
-    setupMockApiKeyServiceAccount,
-} from '../../../helpers/mocks'
-import { generateMockToken } from '../../../helpers/auth'
 
 let app: FastifyInstance | null = null
 

@@ -1,9 +1,8 @@
 import { PostHog } from 'posthog-node'
-import { SystemProp, system } from '@activepieces/server-shared'
-import { ProjectId, TelemetryEvent, User, UserId } from '@activepieces/shared'
 import { projectService } from '../project/project-service'
 import { getEdition } from './secret-helper'
-import { logger } from '@activepieces/server-shared'
+import { SystemProp, system, logger } from '@activepieces/server-shared'
+import { ProjectId, TelemetryEvent, User, UserId } from '@activepieces/shared'
 
 const telemetryEnabled = system.getBoolean(SystemProp.TELEMETRY_ENABLED)
 

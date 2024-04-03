@@ -1,4 +1,12 @@
 import { QueryFailedError } from 'typeorm'
+import { flagService } from '../../flags/flag.service'
+import { generateRandomPassword } from '../../helper/crypto'
+import { telemetry } from '../../helper/telemetry.utils'
+import { userService } from '../../user/user-service'
+import { passwordHasher } from '../lib/password-hasher'
+import { authenticationServiceHooks as hooks } from './hooks'
+import { Provider } from './hooks/authentication-service-hooks'
+import { logger, SystemProp, system } from '@activepieces/server-shared'
 import {
     AuthenticationResponse,
     UserStatus,
@@ -12,15 +20,6 @@ import {
     UserId,
     ApEnvironment,
 } from '@activepieces/shared'
-import { userService } from '../../user/user-service'
-import { passwordHasher } from '../lib/password-hasher'
-import { authenticationServiceHooks as hooks } from './hooks'
-import { generateRandomPassword } from '../../helper/crypto'
-import { flagService } from '../../flags/flag.service'
-import { SystemProp, system } from '@activepieces/server-shared'
-import { logger } from '@activepieces/server-shared'
-import { telemetry } from '../../helper/telemetry.utils'
-import { Provider } from './hooks/authentication-service-hooks'
 
 const SIGN_UP_ENABLED = system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
 

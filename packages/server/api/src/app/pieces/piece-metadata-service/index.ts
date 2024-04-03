@@ -1,6 +1,8 @@
-import { PiecesSource, SystemProp, system } from '@activepieces/server-shared'
-import { PieceMetadataService } from './piece-metadata-service'
+import { PieceMetadataModel, PieceMetadataModelSummary, PieceMetadataSchema } from '../piece-metadata-entity'
+import { FastDbPieceMetadataService } from './db-piece-metadata-service'
 import { FilePieceMetadataService } from './file-piece-metadata-service'
+import { PieceMetadataService } from './piece-metadata-service'
+import { PiecesSource, SystemProp, system } from '@activepieces/server-shared'
 import {
     PackageType,
     PiecePackage,
@@ -9,8 +11,6 @@ import {
     SuggestionType,
     assertNotNullOrUndefined,
 } from '@activepieces/shared'
-import { PieceMetadataModel, PieceMetadataModelSummary, PieceMetadataSchema } from '../piece-metadata-entity'
-import { FastDbPieceMetadataService } from './db-piece-metadata-service'
 
 const initPieceMetadataService = (): PieceMetadataService => {
     const source = system.getOrThrow<PiecesSource>(SystemProp.PIECES_SOURCE)

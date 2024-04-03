@@ -1,3 +1,8 @@
+import dayjs from 'dayjs'
+import { IsNull } from 'typeorm'
+import { passwordHasher } from '../authentication/lib/password-hasher'
+import { databaseConnection } from '../database/database-connection'
+import { UserEntity } from './user-entity'
 import {
     apId,
     SignUpRequest,
@@ -9,11 +14,6 @@ import {
     ActivepiecesError,
     ErrorCode,
 } from '@activepieces/shared'
-import { passwordHasher } from '../authentication/lib/password-hasher'
-import { databaseConnection } from '../database/database-connection'
-import { UserEntity } from './user-entity'
-import { IsNull } from 'typeorm'
-import dayjs from 'dayjs'
 
 const userRepo = databaseConnection.getRepository(UserEntity)
 

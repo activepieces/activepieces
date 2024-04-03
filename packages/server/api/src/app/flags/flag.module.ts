@@ -1,6 +1,6 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { flagService } from './flag.service'
 import { FastifyRequest } from 'fastify'
+import { flagService } from './flag.service'
 import { flagHooks } from './flags.hooks'
 import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
 

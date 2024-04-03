@@ -1,4 +1,7 @@
 import { FastifyRequest } from 'fastify'
+import { getEdition } from '../../../helper/secret-helper'
+import { projectMemberService } from '../../project-members/project-member.service'
+import { rolePermissions } from './access-control-list'
 import {
     ActivepiecesError,
     ApEdition,
@@ -9,9 +12,6 @@ import {
     ProjectMemberRole,
     isNil,
 } from '@activepieces/shared'
-import { projectMemberService } from '../../project-members/project-member.service'
-import { getEdition } from '../../../helper/secret-helper'
-import { rolePermissions } from './access-control-list'
 
 const EDITION_IS_COMMUNITY = getEdition() === ApEdition.COMMUNITY
 

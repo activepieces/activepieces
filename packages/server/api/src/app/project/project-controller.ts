@@ -1,6 +1,6 @@
-import { projectService } from './project-service'
 import { FastifyPluginCallbackTypebox } from '@fastify/type-provider-typebox'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
+import { projectService } from './project-service'
 
 export const projectController: FastifyPluginCallbackTypebox = (
     fastify,

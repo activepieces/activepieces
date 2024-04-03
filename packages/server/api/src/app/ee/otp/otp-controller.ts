@@ -1,8 +1,8 @@
-import { CreateOtpRequestBody } from '@activepieces/ee-shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { otpService } from './otp-service'
-import { resolvePlatformIdForRequest } from '../../platform/platform-utils'
 import { StatusCodes } from 'http-status-codes'
+import { resolvePlatformIdForRequest } from '../../platform/platform-utils'
+import { otpService } from './otp-service'
+import { CreateOtpRequestBody } from '@activepieces/ee-shared'
 import { ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined } from '@activepieces/shared'
 
 export const otpController: FastifyPluginAsyncTypebox = async (app) => {

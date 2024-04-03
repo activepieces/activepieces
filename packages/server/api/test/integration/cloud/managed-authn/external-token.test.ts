@@ -1,17 +1,17 @@
-import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { faker } from '@faker-js/faker'
+import { FastifyInstance } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
 import { setupApp } from '../../../../src/app/app'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
+import { generateMockExternalToken } from '../../../helpers/auth'
 import {
     createMockUser,
     createMockPlatform,
     createMockSigningKey,
     createMockProject,
 } from '../../../helpers/mocks'
-import { FastifyInstance } from 'fastify'
-import { StatusCodes } from 'http-status-codes'
-import { generateMockExternalToken } from '../../../helpers/auth'
 import { apId } from '@activepieces/shared'
-import { faker } from '@faker-js/faker'
-import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
 
 let app: FastifyInstance | null = null
 

@@ -1,7 +1,7 @@
 import { PieceMetadataSchema } from '../../piece-metadata-entity'
-import { PieceSortBy, PieceOrderBy, PieceCategory, SuggestionType, PlatformId } from '@activepieces/shared'
 import { filterPiecesBasedUser } from './piece-filtering'
 import { sortAndOrderPieces } from './piece-sorting'
+import { PieceSortBy, PieceOrderBy, PieceCategory, SuggestionType, PlatformId } from '@activepieces/shared'
 
 export const defaultPieceHooks: PieceMetadataServiceHooks = {
     async filterPieces(params) {

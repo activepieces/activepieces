@@ -1,3 +1,6 @@
+import { authenticationService } from '../../../../authentication/authentication-service'
+import { flagService } from '../../../../flags/flag.service'
+import { AuthnProvider } from './authn-provider'
 import {
     ActivepiecesError,
     AuthenticationResponse,
@@ -6,9 +9,6 @@ import {
     assertNotNullOrUndefined,
     isNil,
 } from '@activepieces/shared'
-import { AuthnProvider } from './authn-provider'
-import { authenticationService } from '../../../../authentication/authentication-service'
-import { flagService } from '../../../../flags/flag.service'
 
 function getClientIdAndSecret(platform: Platform): {
     clientId: string

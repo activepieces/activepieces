@@ -1,3 +1,11 @@
+import { faker } from '@faker-js/faker'
+import bcrypt from 'bcrypt'
+import dayjs from 'dayjs'
+import { databaseConnection } from '../../../src/app/database/database-connection'
+import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
+import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oauth-app.entity'
+import { encryptString } from '../../../src/app/helper/encryption'
+import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
 import {
     KeyAlgorithm,
     SigningKey,
@@ -41,14 +49,6 @@ import {
     FileCompression,
     FileType,
 } from '@activepieces/shared'
-import { faker } from '@faker-js/faker'
-import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
-import bcrypt from 'bcrypt'
-import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oauth-app.entity'
-import { encryptString } from '../../../src/app/helper/encryption'
-import dayjs from 'dayjs'
-import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
-import { databaseConnection } from '../../../src/app/database/database-connection'
 
 export const CLOUD_PLATFORM_ID = 'cloud-id'
 

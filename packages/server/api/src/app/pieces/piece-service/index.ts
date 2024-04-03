@@ -1,3 +1,10 @@
+import { engineHelper } from '../../helper/engine-helper'
+import { getEdition } from '../../helper/secret-helper'
+import { PieceMetadataModel } from '../piece-metadata-entity'
+import { pieceMetadataService } from '../piece-metadata-service'
+import { pieceServiceHooks } from './piece-service-hooks'
+import { PieceMetadata } from '@activepieces/pieces-framework'
+import { logger, ExecutionMode, SystemProp, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -9,14 +16,6 @@ import {
     PieceType,
     AddPieceRequestBody,
 } from '@activepieces/shared'
-import { engineHelper } from '../../helper/engine-helper'
-import { pieceMetadataService } from '../piece-metadata-service'
-import { PieceMetadataModel } from '../piece-metadata-entity'
-import { logger } from '@activepieces/server-shared'
-import { pieceServiceHooks } from './piece-service-hooks'
-import { ExecutionMode, SystemProp, system } from '@activepieces/server-shared'
-import { getEdition } from '../../helper/secret-helper'
-import { PieceMetadata } from '@activepieces/pieces-framework'
 
 export const pieceService = {
     async installPiece(

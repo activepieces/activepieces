@@ -1,7 +1,6 @@
 import axios from 'axios'
-import { logger } from '@activepieces/server-shared'
 import { LiceneseStatus, LicenseValidator } from './license-validator'
-import { SystemProp, system } from '@activepieces/server-shared'
+import { logger, SystemProp, system } from '@activepieces/server-shared'
 export const networkLicenseValidator: LicenseValidator = {
     async validate() {
         const license = obtainLicense()

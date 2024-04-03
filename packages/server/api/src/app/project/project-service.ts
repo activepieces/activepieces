@@ -1,6 +1,7 @@
-import { ApId, isNil } from '@activepieces/shared'
+import { IsNull } from 'typeorm'
+import { repoFactory } from '../core/db/repo-factory'
 import { ProjectEntity } from './project-entity'
-import {
+import { ApId, isNil,
     ActivepiecesError,
     apId,
     ErrorCode,
@@ -9,8 +10,6 @@ import {
     ProjectId,
     UserId,
 } from '@activepieces/shared'
-import { IsNull } from 'typeorm'
-import { repoFactory } from '../core/db/repo-factory'
 
 const repo = repoFactory(ProjectEntity)
 

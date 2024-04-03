@@ -262,6 +262,8 @@
     "esbuild": "0.19.5",
     "eslint": "8.48.0",
     "eslint-config-prettier": "9.0.0",
+    "eslint-import-resolver-typescript": "3.6.1",
+    "eslint-plugin-import": "2.29.1",
     "eslint-plugin-prettier": "4.2.1",
     "eslint-plugin-rxjs": "5.0.3",
     "eslint-plugin-rxjs-angular": "2.0.1",

@@ -1,3 +1,5 @@
+import { isAxiosError } from 'axios'
+import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
 import { PropertyType } from '@activepieces/pieces-framework'
 import {
     ActivepiecesError,
@@ -7,8 +9,6 @@ import {
     assertNotNullOrUndefined,
     deleteProps,
 } from '@activepieces/shared'
-import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
-import { isAxiosError } from 'axios'
 
 export const oauth2Util = {
     formatOAuth2Response,

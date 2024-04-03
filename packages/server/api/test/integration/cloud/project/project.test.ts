@@ -1,5 +1,9 @@
-import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { faker } from '@faker-js/faker'
+import { FastifyInstance } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
 import { setupApp } from '../../../../src/app/app'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
 import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockUser,
@@ -9,8 +13,10 @@ import {
     mockBasicSetup,
     createMockFlow,
 } from '../../../helpers/mocks'
-import { StatusCodes } from 'http-status-codes'
-import { FastifyInstance } from 'fastify'
+import {
+    ApiKeyResponseWithValue,
+    UpdateProjectPlatformRequest,
+} from '@activepieces/ee-shared'
 import {
     NotificationStatus,
     PlatformRole,
@@ -21,12 +27,6 @@ import {
     apId,
     FlowStatus,
 } from '@activepieces/shared'
-import { faker } from '@faker-js/faker'
-import {
-    ApiKeyResponseWithValue,
-    UpdateProjectPlatformRequest,
-} from '@activepieces/ee-shared'
-import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
 
 let app: FastifyInstance | null = null
 

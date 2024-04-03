@@ -1,9 +1,9 @@
-import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { setupApp } from '../../../../src/app/app'
+import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { faker } from '@faker-js/faker'
-import { PlatformRole, PrincipalType, apId } from '@activepieces/shared'
+import { setupApp } from '../../../../src/app/app'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockUser,
     createMockProject,
@@ -11,8 +11,8 @@ import {
     createMockPlatform,
     createMockApiKey,
 } from '../../../helpers/mocks'
-import { generateMockToken } from '../../../helpers/auth'
 import { GitBranchType } from '@activepieces/ee-shared'
+import { PlatformRole, PrincipalType, apId } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 

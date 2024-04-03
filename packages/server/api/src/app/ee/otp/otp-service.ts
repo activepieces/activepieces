@@ -1,15 +1,15 @@
+import dayjs from 'dayjs'
+import { databaseConnection } from '../../database/database-connection'
+import { userService } from '../../user/user-service'
+import { emailService } from '../helper/email/email-service'
+import { otpGenerator } from './lib/otp-generator'
+import { OtpEntity } from './otp-entity'
 import {
     OtpModel,
     OtpState,
     OtpType,
 } from '@activepieces/ee-shared'
 import { PlatformId, User, UserId, apId } from '@activepieces/shared'
-import { databaseConnection } from '../../database/database-connection'
-import { OtpEntity } from './otp-entity'
-import dayjs from 'dayjs'
-import { otpGenerator } from './lib/otp-generator'
-import { emailService } from '../helper/email/email-service'
-import { userService } from '../../user/user-service'
 
 const THIRTY_MINUTES = 30 * 60 * 1000
 
