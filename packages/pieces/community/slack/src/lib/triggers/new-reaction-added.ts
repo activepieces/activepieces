@@ -49,9 +49,11 @@ export const newReactionAdded = createTrigger({
   type: TriggerStrategy.APP_WEBHOOK,
   sampleData: sampleData,
   onEnable: async (context) => {
+    // Older OAuth2 has team_id, newer has team.id
+    const teamId = context.auth.data['team_id'] ?? context.auth.data['team']['id']
     await context.app.createListeners({
       events: ['reaction_added'],
-      identifierValue: context.auth.data['team_id'],
+      identifierValue: teamId,
     });
   },
   onDisable: async (context) => {
