@@ -22,6 +22,7 @@ import { PieceMetadataService } from '../services/piece.service';
 
 @Component({
   templateUrl: './community-pieces-table.component.html',
+  selector: 'ap-community-pieces-table',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CommunityPiecesTableComponent {

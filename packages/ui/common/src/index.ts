@@ -22,6 +22,7 @@ export * from './lib/service/platform-project.service';
 export * from './lib/guards/show-based-on-flag.guard';
 export * from './lib/components/upgrade-note/upgrade-note.component';
 import '@angular/localize/init';
+export * from './lib/guards/show-based-on-any-flag.guard';
 export * from './lib/pipe/comma-seperated.pipe';
 export * from './lib/utils/consts';
 export * from './lib/components/is-feature-enabled-base/is-feature-enabled-base.component';
