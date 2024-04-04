@@ -17,7 +17,7 @@ export const createDocumentBasedOnTemplate = createAction({
       required: true,
     }),
     values: Property.Object({
-      displayName: 'Varibles',
+      displayName: 'Variables',
       description: 'Dont include the "[[]]", only the key name and its value',
       required: true,
     }),

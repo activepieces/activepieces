@@ -45,7 +45,7 @@ interface UpgradeNotificationMetaDataInLocalStorage {
   ignoreNotification: boolean;
 }
 const upgradeNotificationMetadataKeyInLocalStorage =
-  'upgardeNotificationMetadata';
+  'upgradeNotificationMetadata';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -71,7 +71,7 @@ export class AppComponent implements OnInit {
   constructor(
     public dialog: MatDialog,
     private store: Store,
-    private apperanceService: AppearanceService,
+    private appearanceService: AppearanceService,
     private authenticationService: AuthenticationService,
     private flagService: FlagService,
     private router: Router,
@@ -90,7 +90,7 @@ export class AppComponent implements OnInit {
       })
     );
     this.registerMaterialIcons();
-    this.theme$ = this.apperanceService.setTheme().pipe(
+    this.theme$ = this.appearanceService.setTheme().pipe(
       tap(() => this.loadingTheme$.next(false)),
       map(() => void 0)
     );
@@ -98,7 +98,7 @@ export class AppComponent implements OnInit {
     this.routeLoader$ = this.createRouteListenerToToggleLoadingAndSetTitle();
     this.showUpgradeNotification$ =
       this.createListenerToToggleUpgradeNotification();
-    this.rediectToCorrectLocale();
+    this.redirectToCorrectLocale();
   }
 
   private registerMaterialIcons() {
@@ -189,7 +189,7 @@ export class AppComponent implements OnInit {
           }
           const { title } = route.snapshot.data;
           if (title) {
-            this.setTitle$ = this.apperanceService.setTitle(title);
+            this.setTitle$ = this.appearanceService.setTitle(title);
           }
           this.loading$.next(false);
         }
@@ -269,7 +269,7 @@ export class AppComponent implements OnInit {
       })
     );
   }
-  private rediectToCorrectLocale() {
+  private redirectToCorrectLocale() {
     if (environment.production) {
       //TODO: once we start having /en routes this logic should be altered to checking (if the localeFromBrowserUrl is undefined, switch to what is in localstorage)
       this.redirect$ = this.authenticationService.currentUserSubject.pipe(

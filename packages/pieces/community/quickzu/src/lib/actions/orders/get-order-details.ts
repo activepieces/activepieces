@@ -6,7 +6,7 @@ export const getOrderDetailsAction = createAction({
   auth: quickzuAuth,
   name: 'quickzu_get_order_details',
   displayName: 'Get Order Details',
-  description: 'Retrives order details from store.',
+  description: 'Retrieves order details from store.',
   props: {
     orderId: quickzuCommon.orderId(true),
   },

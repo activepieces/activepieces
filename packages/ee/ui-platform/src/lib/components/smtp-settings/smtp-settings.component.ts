@@ -101,7 +101,7 @@ export class SmtpSettingsComponent
           catchError((err) => {
             this.loading$.next(false);
             this.matSnackbar.open(
-              'Error occured while saving, please try again',
+              'Error occurred while saving, please try again',
               '',
               { panelClass: 'error' }
             );

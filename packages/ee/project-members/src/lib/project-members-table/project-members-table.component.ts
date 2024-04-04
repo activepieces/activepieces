@@ -85,7 +85,7 @@ export class ProjectMembersTableComponent
     this.projectOwnerId$ = this.store
       .select(ProjectSelectors.selectCurrentProjectOwnerId)
       .pipe(take(1));
-    // TODO OPTMIZE THIS and use role from centerlized place
+    // TODO OPTIMIZE THIS and use role from centerlized place
     this.isCurrentUserAdmin$ = forkJoin([
       this.projectMemberService.list({
         limit: 100,

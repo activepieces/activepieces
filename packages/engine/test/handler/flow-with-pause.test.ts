@@ -54,7 +54,7 @@ const pauseFlowWithLoopAndBranch = buildSimpleLoopAction({
 })
 describe('flow with pause', () => {
 
-    it('should pause and resume succesfully with loops and branch', async () => {
+    it('should pause and resume successfully with loops and branch', async () => {
         const pauseResult = await flowExecutor.execute({
             action: pauseFlowWithLoopAndBranch,
             executionState: FlowExecutorContext.empty().setPauseRequestId('requestId'),

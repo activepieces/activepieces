@@ -139,6 +139,6 @@ export const microsoftTeamsCommon = {
 const CHAT_TYPE = {
 	oneOnOne: '1 : 1',
 	group: 'Group',
-	meeting: 'Metting',
+	meeting: 'Meeting',
 	unknownFutureValue: 'Unknown',
 };

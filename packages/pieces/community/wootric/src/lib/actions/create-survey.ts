@@ -19,7 +19,7 @@ export const createWootricSurvey = createAction({
   props: {
     emails: Property.Array({
       displayName: 'Emails',
-      description: 'End user emails, where you want the survey to be recieved',
+      description: 'End user emails, where you want the survey to be received',
       required: true,
       defaultValue: [],
     }),

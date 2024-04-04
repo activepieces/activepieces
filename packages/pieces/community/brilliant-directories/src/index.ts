@@ -24,7 +24,7 @@ export const brilliantDirectoriesAuth = PieceAuth.CustomAuth({
     }),
     site_url: Property.ShortText({
       displayName: 'Instance Url',
-      description: 'The url of the brillant directories instance.',
+      description: 'The url of the brilliant directories instance.',
       required: true,
       defaultValue: 'https://yoursitehere.com/api',
     }),

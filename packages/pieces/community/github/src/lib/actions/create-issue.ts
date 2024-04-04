@@ -22,7 +22,7 @@ export const githubCreateIssueAction = createAction({
     }),
     description: Property.LongText({
       displayName: 'Description',
-      description: 'The discription of the issue',
+      description: 'The description of the issue',
       required: false,
     }),
     labels: githubCommon.labelDropDown(),

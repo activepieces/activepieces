@@ -5,7 +5,7 @@ import { SystemProp } from './system/system-prop'
 
 const sentryDsn = system.get(SystemProp.SENTRY_DSN)
 
-export const initilizeSentry = () => {
+export const initializeSentry = () => {
     if (sentryDsn) {
         logger.info('Initializing Sentry')
         Sentry.init({

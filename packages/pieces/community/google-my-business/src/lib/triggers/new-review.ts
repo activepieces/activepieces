@@ -11,7 +11,7 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { googleBussinessCommon } from '../common/common';
+import { googleBusinessCommon } from '../common/common';
 import { googleAuth } from '../..';
 
 export const newReview = createTrigger({
@@ -20,8 +20,8 @@ export const newReview = createTrigger({
   description: 'Triggers when there is new review',
   auth: googleAuth,
   props: {
-    account: googleBussinessCommon.account,
-    location: googleBussinessCommon.location,
+    account: googleBusinessCommon.account,
+    location: googleBusinessCommon.location,
   },
   sampleData: {},
   type: TriggerStrategy.POLLING,

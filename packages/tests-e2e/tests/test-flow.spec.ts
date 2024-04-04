@@ -13,7 +13,7 @@ test('Test Execute Flow', async ({ page }) => {
     password: globalConfig.password
   })
   await flows.newFlowFromScratch(page);
-  await builder.selectInitalTrigger(page, {
+  await builder.selectInitialTrigger(page, {
     piece: 'Schedule',
     trigger: 'Every Day'
   });

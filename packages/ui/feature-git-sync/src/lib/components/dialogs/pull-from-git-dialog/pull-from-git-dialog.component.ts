@@ -63,7 +63,7 @@ export class PullFromGitDialogComponent {
         catchError((err) => {
           console.error(err);
           this.snackbar.open(
-            $localize`Error occured, please check your console`,
+            $localize`Error occurred, please check your console`,
             '',
             {
               panelClass: 'error',

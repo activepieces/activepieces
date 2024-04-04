@@ -67,7 +67,7 @@ export const addSubscriberToSequence = createAction({
   },
 });
 
-export const listSupscriptionsToSequence = createAction({
+export const listSubscriptionsToSequence = createAction({
   auth: convertkitAuth,
   name: 'sequences_list_subscriptions_to_sequence',
   displayName: 'List Subscriptions To Sequence',

@@ -6,9 +6,9 @@ import {
 import { AuthenticationService, FlagService } from '../service';
 import { map } from 'rxjs';
 
-export const unexpectedErrorMessage = $localize`An unexpected error occured, please contact support`;
+export const unexpectedErrorMessage = $localize`An unexpected error occurred, please contact support`;
 export const codeGeneratorTooltip = $localize`Write code with assistance from AI`;
-export const disabledCodeGeneratorTooltip = $localize`Configure api key in the envrionment variables to generate code using AI`;
+export const disabledCodeGeneratorTooltip = $localize`Configure api key in the environment variables to generate code using AI`;
 
 export const flowActionsUiInfo = {
   duplicate: {

@@ -108,7 +108,7 @@ export const gitRepoService = {
         if (dryRun) {
             return toResponse(operations)
         }
-        let newMappState: ProjectMappingState = mappingState
+        let newMapState: ProjectMappingState = mappingState
         const publishJobs: Promise<ProjectSyncError | null>[] = []
         for (const operation of operations) {
             switch (operation.type) {
@@ -117,7 +117,7 @@ export const gitRepoService = {
                     if (flowUpdated.status === FlowStatus.ENABLED) {
                         publishJobs.push(gitSyncHelper.republishFlow(flowUpdated.id, gitRepo.projectId))
                     }
-                    newMappState = newMappState.mapFlow({
+                    newMapState = newMapState.mapFlow({
                         sourceId: operation.gitFile.baseFilename,
                         targetId: flowUpdated.id,
                     })
@@ -125,7 +125,7 @@ export const gitRepoService = {
                 }
                 case ProjectOperationType.CREATE_FLOW: {
                     const flowCreated = await gitSyncHelper.createFlowInProject(operation.gitFile.flow, gitRepo.projectId)
-                    newMappState = newMappState.mapFlow({
+                    newMapState = newMapState.mapFlow({
                         sourceId: operation.gitFile.baseFilename,
                         targetId: flowCreated.id,
                     })
@@ -133,11 +133,11 @@ export const gitRepoService = {
                 }
                 case ProjectOperationType.DELETE_FLOW:
                     await gitSyncHelper.deleteFlowFromProject(operation.projectFlow.id, gitRepo.projectId)
-                    newMappState = newMappState.deleteFlow(operation.projectFlow.id)
+                    newMapState = newMapState.deleteFlow(operation.projectFlow.id)
                     break
             }
         }
-        await repo.update({ id: gitRepo.id }, { mapping: newMappState })
+        await repo.update({ id: gitRepo.id }, { mapping: newMapState })
         const errors = (await Promise.all(publishJobs)).filter((f): f is ProjectSyncError => f !== null)
         return toResponse(operations, errors)
     },

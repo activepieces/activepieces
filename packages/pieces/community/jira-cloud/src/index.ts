@@ -9,7 +9,7 @@ import { newIssue } from './lib/triggers/new-issue';
 import { updatedIssue } from './lib/triggers/updated-issue';
 import { addCommentToIssueAction } from './lib/actions/add-comment-to-issue';
 import { addAttachmentToIssueAction } from './lib/actions/add-attachment-to-issue';
-import { listIssueCommentsAction } from './lib/actions/list-isssue-comments';
+import { listIssueCommentsAction } from './lib/actions/list-issue-comments';
 import { updateIssueCommentAction } from './lib/actions/update-issue-comment';
 import { deleteIssueCommentAction } from './lib/actions/delete-issue-comment';
 import { updateIssueAction } from './lib/actions/update-issue';

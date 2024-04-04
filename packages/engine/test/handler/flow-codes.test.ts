@@ -4,7 +4,7 @@ import { buildCodeAction, generateMockEngineConstants } from './test-helper'
 
 describe('codeExecutor', () => {
 
-    it('should execute code that echo paramters action successfully', async () => {
+    it('should execute code that echo parameters action successfully', async () => {
         const result = await codeExecutor.handle({
             action: buildCodeAction({
                 name: 'echo_step',

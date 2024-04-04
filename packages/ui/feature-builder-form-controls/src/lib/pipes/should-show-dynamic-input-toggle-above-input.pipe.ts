@@ -2,11 +2,11 @@ import { Pipe, PipeTransform } from '@angular/core';
 import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
 
 @Pipe({
-  name: 'shouldShwoDynamicInputToggleAboveInput',
+  name: 'shouldShowDynamicInputToggleAboveInput',
   pure: true,
   standalone: true,
 })
-export class ShouldShwoDynamicInputToggleAboveInputPipe
+export class ShouldShowDynamicInputToggleAboveInputPipe
   implements PipeTransform
 {
   transform(property: PieceProperty, isTrigger: boolean): boolean {

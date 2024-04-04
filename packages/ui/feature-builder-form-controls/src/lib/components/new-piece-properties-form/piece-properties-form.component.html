@@ -5,7 +5,7 @@
   ) {
     @if (
       (property.value
-        | shouldShwoDynamicInputToggleAboveInput: stepName === 'trigger')
+        | shouldShowDynamicInputToggleAboveInput: stepName === 'trigger')
         || (customizedInputs[property.key] === true && property.value.type !== PropertyType.DYNAMIC)
     ) {
       <div class="ap-flex ap-justify-end" [class.ap-mb-1]="!hideCustomizedInputs">
@@ -209,7 +209,7 @@
             "
             [stepMetaDataForMentions]="stepMetaDataForMentions"
             [hideCustomizedInputs]="hideCustomizedInputs"
-            (customizedInputsChanged)="dynamicPropertyCustomizedInputsChangedHanlder($event)"
+            (customizedInputsChanged)="dynamicPropertyCustomizedInputsChangedHandler($event)"
             [stepChanged$]="stepChanged$.asObservable()"
           ></app-dynamic-property-control>
         }
@@ -231,7 +231,7 @@
           </app-array-form-control>
         }
         @case (PropertyType.OBJECT) {
-          <app-dictonary-form-control
+          <app-dictionary-form-control
             [formControl]="
               form.controls[property.key] | abstractFormControlCaster
             "
@@ -240,7 +240,7 @@
           >
             <ng-container *ngTemplateOutlet="dynamicInputToggleTemplate;context:{$implicit:property}">
             </ng-container>
-          </app-dictonary-form-control>
+          </app-dictionary-form-control>
         }
       }
     }

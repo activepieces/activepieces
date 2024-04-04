@@ -60,7 +60,7 @@ export const createOrUpdateSubscriber = createAction({
 			displayName: 'Signup IP address',
 			required: false,
 		}),
-		optin_ip: Property.ShortText({
+		option_ip: Property.ShortText({
 			displayName: 'Opt-in IP address',
 			required: false,
 		}),
@@ -79,7 +79,7 @@ export const createOrUpdateSubscriber = createAction({
 				? dayjs(context.propsValue.opted_in_at).format('YYYY-MM-DD HH:mm:ss')
 				: undefined,
 			ip_address: context.propsValue.ip_address,
-			optin_ip: context.propsValue.optin_ip,
+			option_ip: context.propsValue.option_ip,
 		});
 		return response.data;
 	},
