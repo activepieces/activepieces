@@ -81,8 +81,13 @@ export class FlowItemContentComponent implements OnInit {
   TriggerType = TriggerType;
   ActionType = ActionType;
   stepIndex$: Observable<number>;
-  @Input() selected: boolean;
-  @Input() readOnly: boolean;
+  _selected = false;
+  @Input() set selected(val: boolean) {
+    if (val) {
+      this.broadcastStepOuput();
+    }
+    this._selected = val;
+  }
   @Input() set flowItem(newFlowItem: Step) {
     this._flowItem = newFlowItem;
     this.stepAppName$ = this.pieceService
@@ -165,10 +170,6 @@ export class FlowItemContentComponent implements OnInit {
         stepName: this._flowItem.name,
       })
     );
-    this.runDetailsService.currentStepResult$.next({
-      stepName: this._flowItem.name,
-      output: this.stepOutput,
-    });
   }
 
   childrenLogoUrls() {
@@ -185,5 +186,11 @@ export class FlowItemContentComponent implements OnInit {
       ).pipe(map((urls) => Array.from(new Set(urls))));
     }
     return of([]);
+  }
+  private broadcastStepOuput() {
+    this.runDetailsService.currentStepResult$.next({
+      stepName: this._flowItem.name,
+      output: this.stepOutput,
+    });
   }
 }
