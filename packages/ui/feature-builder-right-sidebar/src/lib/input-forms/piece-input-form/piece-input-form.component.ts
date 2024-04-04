@@ -359,7 +359,9 @@ export class PieceInputFormComponent extends InputFormCore {
     input: Record<string, unknown>,
     props: PiecePropertyMap
   ) {
-    const cleanedInput: Record<string, unknown> = {};
+    const cleanedInput: Record<string, unknown> = JSON.parse(
+      JSON.stringify(input)
+    );
     Object.keys(input).forEach((key) => {
       if (props[key].type === PropertyType.JSON) {
         cleanedInput[key] = this.parseJsonIfPossible(input[key]);
