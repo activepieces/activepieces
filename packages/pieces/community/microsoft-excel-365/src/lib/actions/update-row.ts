@@ -36,9 +36,17 @@ export const updateRowAction = createAction({
       ? [Object.values(propsValue['values'])]
       : Object.values(propsValue['values']);
 
+    const formattedValues = values.map((value) =>
+      value === '' ? null : value
+    );
     const requestBody = {
-      values: values,
+      values: formattedValues,
     };
+
+    console.log('VALUES');
+    console.log(propsValue.values);
+    console.log('FORMATTED VALUES');
+    console.log(formattedValues);
 
     const lastUsedColumn = excelCommon.numberToColumnName(
       Object.values(values[0]).length

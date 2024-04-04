@@ -45,10 +45,16 @@ export const appendRowAction = createAction({
 
     const url = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${rangeFrom}:${rangeTo}')`;
 
+    const formattedValues = values.map((value) =>
+      value === '' ? null : value
+    );
     const requestBody = {
-      values: values,
+      values: formattedValues,
     };
-
+    console.log('VALUES');
+    console.log(propsValue.values);
+    console.log('FORMATTED VALUES');
+    console.log(formattedValues);
     const request: HttpRequest = {
       method: HttpMethod.PATCH,
       url: url,

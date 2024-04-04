@@ -26,10 +26,10 @@ export const excelCommon = {
           {
             method: HttpMethod.GET,
             url: `${excelCommon.baseUrl}/items/root/search(q='.xlsx')`,
-            queryParams: {
-              filter:
-                "file ne null and file/mimeType eq 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'",
-            },
+            // queryParams: {
+            //   filter:
+            //     "file ne null and file/mimeType eq 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'",
+            // },
             authentication: {
               type: AuthenticationType.BEARER_TOKEN,
               token: authProp['access_token'],
