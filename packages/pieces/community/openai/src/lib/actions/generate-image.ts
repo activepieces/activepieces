@@ -99,7 +99,8 @@ export const generateImage = createAction({
   },
   async run({ auth, propsValue }) {
     const openai = new OpenAI({
-      apiKey: auth,
+      apiKey: auth.apiKey,
+      organization: auth.organizationId,
     });
 
     const { quality, resolution, model, prompt } = propsValue;

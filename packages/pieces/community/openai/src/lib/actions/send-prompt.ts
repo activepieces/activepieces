@@ -5,7 +5,7 @@ import {
   Validators,
 } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
-import { openaiAuth } from '../..';
+import { OpenAIAuth, openaiAuth } from '../..';
 import {
   calculateMessagesTokenSize,
   exceedsHistoryLimit,
@@ -36,7 +36,8 @@ export const askOpenAI = createAction({
         }
         try {
           const openai = new OpenAI({
-            apiKey: auth as string,
+            apiKey: (auth as OpenAIAuth).apiKey,
+            organization: (auth as OpenAIAuth).organizationId,
           });
           const response = await openai.models.list();
           // We need to get only LLM models
@@ -119,7 +120,8 @@ export const askOpenAI = createAction({
   },
   async run({ auth, propsValue, store }) {
     const openai = new OpenAI({
-      apiKey: auth,
+      apiKey: auth.apiKey,
+      organization: auth.organizationId,
     });
     const {
       model,
