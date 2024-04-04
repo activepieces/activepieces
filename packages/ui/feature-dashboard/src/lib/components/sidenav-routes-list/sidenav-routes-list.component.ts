@@ -5,12 +5,10 @@ import { FolderActions } from '@activepieces/ui/feature-folders-store';
 import {
   AuthenticationService,
   NavigationService,
-  PlatformService,
 } from '@activepieces/ui/common';
 import { Observable, forkJoin, map, of } from 'rxjs';
 import { ApFlagId, ProjectMemberRole, supportUrl } from '@activepieces/shared';
 import { DashboardService, FlagService } from '@activepieces/ui/common';
-import { isGitSyncLocked } from '@activepieces/ui-feature-git-sync';
 
 type SideNavRoute = {
   icon: string;
@@ -89,7 +87,6 @@ export class SidenavRoutesListComponent implements OnInit {
     private dashboardService: DashboardService,
     private navigationService: NavigationService,
     private authenticationService: AuthenticationService,
-    private platformService: PlatformService,
     private flagService: FlagService
   ) {
     this.logoUrl$ = this.flagServices
@@ -143,12 +140,13 @@ export class SidenavRoutesListComponent implements OnInit {
         icon: 'assets/img/custom/dashboard/settings.svg',
         caption: $localize`Settings`,
         route: 'settings',
-        showInSideNav$: this.flagServices.isFlagEnabled(ApFlagId.SHOW_GIT_SYNC),
-        showLock$: isGitSyncLocked(
-          this.flagServices,
-          this.platformService,
-          this.authenticationService.getPlatformId()
-        ),
+        showInSideNav$: forkJoin({
+          pieces: this.flagServices.isFlagEnabled(
+            ApFlagId.SHOW_COMMUNITY_PIECES
+          ),
+          gitSync: this.flagServices.isFlagEnabled(ApFlagId.SHOW_GIT_SYNC),
+        }).pipe(map((flags) => flags.pieces || flags.gitSync)),
+        showLock$: of(false),
       },
     ];
   }

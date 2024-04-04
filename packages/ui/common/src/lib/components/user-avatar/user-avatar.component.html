@@ -55,9 +55,6 @@
         </div>
 
     </div>
-    <div mat-menu-item (click)="goToDeveloperPage()" *ngIf="myPiecesEnabled$ | async">
-        <div i18n>My Pieces</div>
-    </div>
     <div mat-menu-item (click)="viewPlans()" *ngIf="billingEnabled$ | async" i18n>
         Subscription
     </div>
