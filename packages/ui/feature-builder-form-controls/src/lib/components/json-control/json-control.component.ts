@@ -63,15 +63,16 @@ import { IsJsonControllerDisabledPipe } from '../../pipes/is-json-control-disabl
   `,
 })
 export class JsonControlComponent {
-  @Input() passedFormControl: FormControl<string>;
-  @Input() property: JsonProperty<boolean>;
+  @Input({ required: true }) passedFormControl: FormControl<string>;
+  @Input({ required: true }) property: JsonProperty<boolean>;
   jsonMonacoEditor: any;
   constructor(private codeService: CodeService) {}
 
   beautify() {
     try {
       this.passedFormControl.setValue(
-        this.codeService.beautifyJson(JSON.parse(this.passedFormControl.value))
+        this.codeService.beautifyJson(JSON.parse(this.passedFormControl.value)),
+        { emitEvent: false }
       );
     } catch {
       //ignore
