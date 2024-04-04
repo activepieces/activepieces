@@ -6,6 +6,8 @@ import {
 } from '@activepieces/pieces-common';
 import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
+import { OAuth2Client } from 'googleapis-common';
+import { google } from 'googleapis';
 
 export const common = {
   properties: {
@@ -81,9 +83,15 @@ export const common = {
       parent?: string;
       createdTime?: string | number | Date;
       createdTimeOp?: string;
+      includeTeamDrive?: boolean;
     },
     order?: string
   ) {
+    const authClient = new OAuth2Client();
+    authClient.setCredentials(auth);
+
+    const drive = google.drive({ version: 'v3', auth: authClient });
+
     const q: string[] = [];
     if (search?.parent) q.push(`'${search.parent}' in parents`);
     if (search?.createdTime)
@@ -93,23 +101,15 @@ export const common = {
         ).format()}'`
       );
     q.push(`trashed = false`);
-    const response = await httpClient.sendRequest<{
-      files: { id: string; name: string }[];
-    }>({
-      method: HttpMethod.GET,
-      url: `https://www.googleapis.com/drive/v3/files`,
-      queryParams: {
-        q: q.join(' and '),
-        fields: 'files(id, name, mimeType, webViewLink, kind)',
-        orderBy: order ?? 'createdTime asc',
-      },
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth.access_token,
-      },
+    const response = await drive.files.list({
+      q: q.join(' and '),
+      fields: 'files(id, name, mimeType, webViewLink, kind)',
+      orderBy: order ?? 'createdTime asc',
+      supportsAllDrives: true,
+      includeItemsFromAllDrives: search?.includeTeamDrive,
     });
 
-    return response.body.files;
+    return response.data.files;
   },
 
   async getFolders(
