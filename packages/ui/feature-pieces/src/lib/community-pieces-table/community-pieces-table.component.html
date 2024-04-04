@@ -1,12 +1,7 @@
-<div class="ap-w-full ap-h-full ap-px-[30px] ap-pt-[50px]">
+<div class="ap-w-full ap-h-full ap-pt-[30px]">
   <div class="ap-h-full">
-    <ap-page-title title="My Pieces" i18n-title>
-      <p underTitle class="ap-text-description ap-typography-body-2 ap ap-mt-2" i18n>
-        This is where you can install pieces made by yourself or contributors.
-      </p>
-    </ap-page-title>
     <div class="ap-min-h-[70%]">
-      <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Runs" i18n-aria-label>
+      <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Pieces" i18n-aria-label>
         <ng-container matColumnDef="app">
           <th mat-header-cell *matHeaderCellDef i18n>App</th>
           <td mat-cell *matCellDef="let piece"><img appImgFallback="/assets/img/custom/generic_code.svg "
@@ -46,7 +41,7 @@
         </div>
       </ng-container>
       <ng-container *ngIf="dataSource.data.length===0 && (dataSource.isLoading$ | async) === false">
-        <div class="ap-flex ap-items-center ap-justify-center  ap-h-full ap-h-[500px]" i18n>
+        <div class="ap-flex ap-items-center ap-justify-center  ap-h-full ap-h-[500px] ap-mt-[30px]" i18n>
           No pieces installed
         </div>
       </ng-container>

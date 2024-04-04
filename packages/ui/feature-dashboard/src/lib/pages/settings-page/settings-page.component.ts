@@ -4,44 +4,51 @@ import {
   Component,
   ViewChild,
 } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { MatTabChangeEvent, MatTabGroup } from '@angular/material/tabs';
-import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
-import { Platform } from '@activepieces/shared';
-import { PLATFORM_RESOLVER_KEY } from '../../platform.resolver';
-import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
+import { ActivatedRoute, Router } from '@angular/router';
+import { UiCommonModule } from '@activepieces/ui/common';
+import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
+import { SyncProjectComponent } from '@activepieces/ui-feature-git-sync';
+import { ApFlagId } from '@activepieces/shared';
+
 @Component({
-  selector: 'app-platform-settings',
-  templateUrl: './platform-settings.component.html',
+  standalone: true,
+  imports: [
+    CommonModule,
+    UiCommonModule,
+    SyncProjectComponent,
+    UiFeaturePiecesModule,
+  ],
+  templateUrl: './settings-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PlatformSettingsComponent implements AfterViewInit {
+export class SettingsPageComponent implements AfterViewInit {
   @ViewChild('tabs') tabGroup?: MatTabGroup;
   title = $localize`Settings`;
   fragmentChanged$: Observable<string | null>;
-  readonly apiKeysTabTitle = $localize`API Keys`;
-  readonly signingKeysTabTitle = $localize`Signing Keys`;
-  readonly AuditLogTabTitle = $localize`Audit Log`;
-  readonly customDomainTabTitle = $localize`Custom Domains`;
-  readonly accountManagementEmailTabTitle = $localize`Mail Server`;
+  readonly gitSyncTableTitle = $localize`Git Sync`;
+  readonly piecesTable = $localize`Pieces`;
   readonly tabIndexFragmentMap = [
-    { fragmentName: 'SigningKeys', removeOnDemo: true },
-    { fragmentName: 'MailServer', removeOnDemo: true },
-    { fragmentName: 'CustomDomains', removeOnDemo: true },
-    { fragmentName: 'ApiKeys', removeOnDemo: false },
-    { fragmentName: 'SSO', removeOnDemo: false },
-    { fragmentName: 'AuditLog', removeOnDemo: false },
+    { fragmentName: 'Pieces' },
+    { fragmentName: 'GitSync' },
   ];
-  isDemo = false;
-  platform?: Platform;
+
   constructor(private router: Router, private route: ActivatedRoute) {
-    this.isDemo = this.route.snapshot.data[PLATFORM_DEMO_RESOLVER_KEY];
-    if (this.isDemo) {
+    const flags = this.route.snapshot.data['flags'];
+    if (flags[ApFlagId.SHOW_COMMUNITY_PIECES] === false) {
       this.tabIndexFragmentMap = this.tabIndexFragmentMap.filter(
-        (i) => !i.removeOnDemo
+        (i) => i.fragmentName !== 'Pieces'
       );
     }
-    this.platform = this.route.snapshot.data[PLATFORM_RESOLVER_KEY];
+    if (flags[ApFlagId.SHOW_GIT_SYNC] === false) {
+      this.tabIndexFragmentMap = this.tabIndexFragmentMap.filter(
+        (i) => i.fragmentName !== 'GitSync'
+      );
+    }
+
+    console.log(flags);
     this.fragmentChanged$ = this.route.fragment.pipe(
       tap((fragment) => {
         if (fragment === null) {
@@ -59,6 +66,13 @@ export class PlatformSettingsComponent implements AfterViewInit {
     } else {
       this.fragmentCheck(fragment);
     }
+  }
+
+  public showTab(fragment: string) {
+    return (
+      this.tabIndexFragmentMap.findIndex((i) => i.fragmentName === fragment) !==
+      -1
+    );
   }
 
   private fragmentCheck(fragment: string) {
