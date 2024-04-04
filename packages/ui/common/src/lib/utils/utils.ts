@@ -86,6 +86,6 @@ const parseControlValue = (property: PieceProperty, value: unknown) => {
           : ''
         : typeof value === 'string'
         ? value
-        : JSON.stringify(value);
+        : JSON.stringify(value, null, 2);
   }
 };
