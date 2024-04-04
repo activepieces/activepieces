@@ -80,7 +80,7 @@ export const newRowAddedTrigger = createTrigger({
 
     // fetch old row count for worksheet
     const oldRowCount = (await context.store.get(
-      `${context.propsValue.sheet_id}`
+      `${sheet_id}`
     )) as number;
 
     // fetch current row count for worksheet
@@ -98,7 +98,10 @@ export const newRowAddedTrigger = createTrigger({
 
     // if no new rows return
     if (oldRowCount >= currentRowCount) {
-      await context.store.put(`${sheet_id}`, currentRowCount);
+      if(oldRowCount > currentRowCount) {
+        // Some rows were deleted
+        await context.store.put(`${sheet_id}`, currentRowCount);
+      }
       return [];
     }
 
@@ -124,7 +127,7 @@ export const newRowAddedTrigger = createTrigger({
         ...row,
         [DEDUPE_KEY_PROPERTY]: hashObject(row),
       };
-    });
+    })
   },
   async onRenew(context) {
     // get current channel ID & resource ID
