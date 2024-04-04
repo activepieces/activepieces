@@ -125,6 +125,7 @@ import { CascadeProjectDeleteToActivity1710720610670 } from './migration/postgre
 import { AddBranchTypeToGit1711073772867 } from './migration/postgres/1711073772867-AddBranchTypeToGit'
 import { MigrateInputUiInfo1711411372480 } from './migration/postgres/1711411372480-migrateInputUiInfo'
 import { AddProjectUsageColumnToPiece1711768296861 } from './migration/postgres/1711768296861-AddProjectUsageColumnToPiece'
+import { AddPieceTags1712107871405 } from './migration/postgres/1712107871405-AddPieceTags'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -203,6 +204,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddDeletedToProjectPostgres1710243591721,
         MigrateInputUiInfo1711411372480,
         AddProjectUsageColumnToPiece1711768296861,
+        AddPieceTags1712107871405,
     ]
 
     const edition = getEdition()

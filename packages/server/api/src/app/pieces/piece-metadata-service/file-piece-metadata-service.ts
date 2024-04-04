@@ -1,7 +1,7 @@
 import { readdir, stat } from 'node:fs/promises'
 import { resolve, join } from 'node:path'
 import { cwd } from 'node:process'
-import { Piece, PieceMetadata } from '@activepieces/pieces-framework'
+import { Piece, PieceMetadata, PieceMetadataModelSummary, PieceMetadataModel } from '@activepieces/pieces-framework'
 import {
     ActivepiecesError,
     ApEdition,
@@ -17,8 +17,6 @@ import {
 import { PieceMetadataService } from './piece-metadata-service'
 import importFresh from 'import-fresh'
 import {
-    PieceMetadataModel,
-    PieceMetadataModelSummary,
     PieceMetadataSchema,
 } from '../piece-metadata-entity'
 import { pieceMetadataServiceHooks } from './hooks'

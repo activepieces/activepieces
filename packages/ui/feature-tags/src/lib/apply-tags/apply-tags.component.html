@@ -1,0 +1,22 @@
+<ap-button [matMenuTriggerFor]="LabelMenu" btnColor="basic" btnStyle="stroked" btnSize='medium'>
+    <div class="ap-flex ap-gap-2 ap-items-center" i18n> Apply tags </div>
+</ap-button>
+<mat-menu #LabelMenu="matMenu" xPosition="before" (close)="menuClosed()">
+    @for (tag of tags$ | async; track tag) {
+    <div mat-menu-item (click)="toggle(tag.name);$event.stopPropagation();">
+        <mat-checkbox [color]="'primary'" [checked]="tagSelection.isSelected(tag.name)"
+            [indeterminate]="isMixed(tag.name)">
+            {{tag.name}}
+        </mat-checkbox>
+    </div>
+    }
+    <button mat-menu-item>
+        <div class="ap-flex ap-gap-2 ap-items-center" (click)="createTag()">
+            <svg-icon class="ap-fill-body" [applyClass]="true" [svgStyle]="{ width: '14px', height: '14px' }"
+                src="assets/img/custom/add.svg"> </svg-icon>
+            Create Tag
+        </div>
+    </button>
+</mat-menu>
+
+@if(openDialog$ | async){}

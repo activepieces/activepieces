@@ -14,18 +14,18 @@ import {
     PieceCategory,
     PieceOptionRequest,
     PrincipalType,
+    isNil,
 } from '@activepieces/shared'
 import { engineHelper } from '../helper/engine-helper'
 import {
     getPiecePackage,
     pieceMetadataService,
 } from './piece-metadata-service'
-import { PieceMetadata } from '@activepieces/pieces-framework'
-import { flagService } from '../flags/flag.service'
 import {
-    PieceMetadataModel,
+    PieceMetadata, PieceMetadataModel,
     PieceMetadataModelSummary,
-} from './piece-metadata-entity'
+} from '@activepieces/pieces-framework'
+import { flagService } from '../flags/flag.service'
 import { flowService } from '../flows/flow/flow.service'
 import { pieceSyncService } from './piece-sync-service'
 
@@ -58,6 +58,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         ListPiecesRequest,
         async (req): Promise<PieceMetadataModelSummary[]> => {
             const latestRelease = await flagService.getCurrentRelease()
+            const includeTags = req.query.includeTags ?? !isNil(req.query.tags)
             const release = req.query.release ?? latestRelease
             const edition = req.query.edition ?? ApEdition.COMMUNITY
             const platformId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id
@@ -67,6 +68,8 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 projectId: req.principal.projectId,
                 platformId,
                 edition,
+                includeTags,
+                tags: req.query.tags,
                 categories: req.query.categories,
                 searchQuery: req.query.searchQuery,
                 sortBy: req.query.sortBy,
@@ -174,7 +177,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
     )
 }
 
-const ListPiecesRequest =   {
+const ListPiecesRequest = {
     config: {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
@@ -183,7 +186,7 @@ const ListPiecesRequest =   {
 
     },
 }
-const GetPieceParamsRequest =  {
+const GetPieceParamsRequest = {
     config: {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
@@ -193,7 +196,7 @@ const GetPieceParamsRequest =  {
     },
 }
 
-const GetPieceParamsWithScopeRequest =  {
+const GetPieceParamsWithScopeRequest = {
     config: {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },

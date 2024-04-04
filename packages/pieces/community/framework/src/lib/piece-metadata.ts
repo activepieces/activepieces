@@ -2,8 +2,8 @@ import { PiecePropertyMap } from "./property";
 import { WebhookRenewConfiguration, TriggerStrategy, WebhookHandshakeConfiguration } from "./trigger/trigger";
 import { ErrorHandlingOptionsParam } from "./action/action";
 import { PieceAuthProperty } from "./property/authentication";
-import { Type } from "@sinclair/typebox";
-import { PieceCategory, ProjectId, TriggerTestStrategy } from "@activepieces/shared";
+import { Static, Type } from "@sinclair/typebox";
+import { PackageType, PieceCategory, PieceType, ProjectId, TriggerTestStrategy } from "@activepieces/shared";
 
 export const PieceBase = Type.Object({
   id: Type.Optional(Type.String()),
@@ -109,3 +109,25 @@ export type PieceMetadataSummary = Omit<PieceMetadata, "actions" | "triggers"> &
   suggestedActions?: { name: string, displayName: string }[];
   suggestedTriggers?: { name: string, displayName: string }[];
 }
+
+
+const PiecePackageMetadata = Type.Object({
+  projectUsage: Type.Number(),
+  tags: Type.Optional(Type.Array(Type.String())),
+  pieceType: Type.Enum(PieceType),
+  packageType: Type.Enum(PackageType),
+  archiveId: Type.Optional(Type.String()),
+})
+type PiecePackageMetadata = Static<typeof PiecePackageMetadata>
+
+export const PieceMetadataModel = Type.Composite([
+  PieceMetadata,
+  PiecePackageMetadata,
+])
+export type PieceMetadataModel = PieceMetadata & PiecePackageMetadata
+
+export const PieceMetadataModelSummary = Type.Composite([
+  PieceMetadataSummary,
+  PiecePackageMetadata,
+])
+export type PieceMetadataModelSummary = PieceMetadataSummary & PiecePackageMetadata

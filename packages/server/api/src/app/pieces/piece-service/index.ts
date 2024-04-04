@@ -11,12 +11,11 @@ import {
 } from '@activepieces/shared'
 import { engineHelper } from '../../helper/engine-helper'
 import { pieceMetadataService } from '../piece-metadata-service'
-import { PieceMetadataModel } from '../piece-metadata-entity'
 import { logger } from 'server-shared'
 import { pieceServiceHooks } from './piece-service-hooks'
 import { ExecutionMode, SystemProp, system } from 'server-shared'
 import { getEdition } from '../../helper/secret-helper'
-import { PieceMetadata } from '@activepieces/pieces-framework'
+import { PieceMetadata, PieceMetadataModel} from '@activepieces/pieces-framework'
 
 export const pieceService = {
     async installPiece(

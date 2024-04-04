@@ -9,8 +9,9 @@ import {
     SuggestionType,
     assertNotNullOrUndefined,
 } from '@activepieces/shared'
-import { PieceMetadataModel, PieceMetadataModelSummary, PieceMetadataSchema } from '../piece-metadata-entity'
 import { FastDbPieceMetadataService } from './db-piece-metadata-service'
+import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
+import { PieceMetadataSchema } from '../piece-metadata-entity'
 
 const initPieceMetadataService = (): PieceMetadataService => {
     const source = system.getOrThrow<PiecesSource>(SystemProp.PIECES_SOURCE)

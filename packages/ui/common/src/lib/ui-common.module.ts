@@ -75,6 +75,8 @@ import { LetterIconComponent } from './components/letter-icon/letter-icon.compon
 import { MatListModule } from '@angular/material/list';
 import { MatPseudoCheckboxModule } from '@angular/material/core';
 import { ControlDescriptionComponent } from './components/control-description/control-description.component';
+import { MatChipsModule } from '@angular/material/chips';
+import { ApChipsListComponent } from './components/ap-chips-list/ap-chips-list.component';
 
 const exportedImports = [
   CommonModule,
@@ -84,6 +86,7 @@ const exportedImports = [
   ReactiveFormsModule,
   MatSelectModule,
   MatInputModule,
+  MatChipsModule,
   MatMenuModule,
   MatButtonModule,
   MatCardModule,
@@ -138,6 +141,7 @@ const exportedDeclarations = [
   UserAvatarComponent,
   TrackHoverDirective,
   DragDropDirective,
+  ApChipsListComponent,
   PageTitleComponent,
   PoweredByActivepiecesComponent,
   ImgFallbackDirective,
@@ -195,4 +199,4 @@ export function markedOptionsFactory(): MarkedOptions {
   declarations: [...exportedDeclarations, FileDroppedDirective],
   exports: [...exportedImports, ...exportedDeclarations, MarkdownModule],
 })
-export class UiCommonModule {}
+export class UiCommonModule { }

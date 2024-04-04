@@ -1,6 +1,5 @@
 import { ListVersionsResponse, PackageType, PieceSyncMode, PieceType } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
-import { PieceMetadataEntity, PieceMetadataModel, PieceMetadataModelSummary } from './piece-metadata-entity'
 import { pieceMetadataService } from './piece-metadata-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { SystemProp, logger, system } from 'server-shared'
@@ -9,6 +8,8 @@ import { getEdition } from '../helper/secret-helper'
 import { flagService } from '../flags/flag.service'
 import { systemJobsSchedule } from '../helper/system-jobs'
 import { parseAndVerify } from '../helper/json-validator'
+import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
+import { PieceMetadataEntity } from './piece-metadata-entity'
 
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 const piecesRepo = repoFactory(PieceMetadataEntity)

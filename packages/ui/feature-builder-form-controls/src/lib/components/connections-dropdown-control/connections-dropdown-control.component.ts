@@ -2,11 +2,10 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   PieceConnectionDropdownItem,
-  PieceMetadataModel,
   UiCommonModule,
 } from '@activepieces/ui/common';
 import { FormControl } from '@angular/forms';
-import { PieceAuthProperty } from '@activepieces/pieces-framework';
+import { PieceAuthProperty, PieceMetadataModel } from '@activepieces/pieces-framework';
 import { DropdownSelectedValuesPipe } from '../../pipes/dropdown-selected-values.pipe';
 import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections';
 
