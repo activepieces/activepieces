@@ -6,15 +6,16 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { projectService } from '../../project/project-service'
 import {
     PieceMetadataEntity,
-    PieceMetadataModel,
-    PieceMetadataModelSummary,
     PieceMetadataSchema,
 } from '../piece-metadata-entity'
 import { localPieceCache } from './helper/local-piece-cache'
-import { pieceMetadataServiceHooks } from './hooks'
-import { PieceMetadataService } from './piece-metadata-service'
+import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
 import { toPieceMetadataModelSummary } from '.'
-import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, EXACT_VERSION_PATTERN, isNil, ListVersionsResponse, PieceType } from '@activepieces/shared'
+import { pieceMetadataServiceHooks } from './hooks'
+import { tagService } from '../../tags/tag-service'
+import { PieceMetadataService } from './piece-metadata-service'
+import { ActivepiecesError, EXACT_VERSION_PATTERN, ErrorCode, ListVersionsResponse, PieceType, apId, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+
 const repo = repoFactory(PieceMetadataEntity)
 
 export const FastDbPieceMetadataService = (): PieceMetadataService => {
@@ -33,12 +34,13 @@ export const FastDbPieceMetadataService = (): PieceMetadataService => {
                     projectUsage: usageCount,
                 }
             })
+            const piecesWithTags = await enrichTags(params.platformId, latestVersionOfEachPiece, params.includeTags)
             const filteredPieces = await pieceMetadataServiceHooks.get().filterPieces({
                 ...params,
-                pieces: latestVersionOfEachPiece,
+                pieces: piecesWithTags,
                 suggestionType: params.suggestionType,
             })
-            return toPieceMetadataModelSummary(filteredPieces, latestVersionOfEachPiece, params.suggestionType)
+            return toPieceMetadataModelSummary(filteredPieces, piecesWithTags, params.suggestionType)
         },
         async getOrThrow({ projectId, version, name }): Promise<PieceMetadataModel> {
             let platformId: string | undefined = undefined
@@ -173,6 +175,19 @@ const findOldestCreataDate = async ({ name, projectId, platformId }: { name: str
         },
     })
     return piece?.created ?? dayjs().toISOString()
+}
+
+const enrichTags = async (platformId: string | undefined, pieces: PieceMetadataSchema[], includeTags: boolean | undefined): Promise<PieceMetadataSchema[]> => {
+    if (!includeTags || isNil(platformId)) {
+        return pieces
+    }
+    const tags = await tagService.getPieceTags(platformId)
+    return pieces.map((piece) => {
+        return {
+            ...piece,
+            tags: tags[piece.name] ?? [],
+        }
+    })
 }
 
 const findNextExcludedVersion = (version: string | undefined): { baseVersion: string, nextExcludedVersion: string } | undefined => {

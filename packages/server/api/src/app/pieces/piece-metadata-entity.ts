@@ -9,43 +9,18 @@ import {
     JSON_COLUMN_TYPE,
 } from '../database/database-common'
 import {
-    PieceMetadata,
-    PieceMetadataSummary,
-} from '@activepieces/pieces-framework'
-import {
     ApId,
     BaseModel,
-    PackageType,
-    PieceType,
     Project,
 } from '@activepieces/shared'
+import { PieceMetadataModel } from '@activepieces/pieces-framework'
 
-
-const PiecePackageMetadata = Type.Object({
-    projectUsage: Type.Number(),
-    pieceType: Type.Enum(PieceType),
-    packageType: Type.Enum(PackageType),
-    archiveId: Type.Optional(Type.String()),
-})
-type PiecePackageMetadata = Static<typeof PiecePackageMetadata>
-
-export const PieceMetadataModel = Type.Composite([
-    PieceMetadata,
-    PiecePackageMetadata,
-])
-export type PieceMetadataModel = PieceMetadata & PiecePackageMetadata
-
-export const PieceMetadataModelSummary = Type.Composite([
-    PieceMetadataSummary,
-    PiecePackageMetadata,
-])
-export type PieceMetadataModelSummary = PieceMetadataSummary & PiecePackageMetadata
-
-export type PieceMetadataSchema = BaseModel<ApId> & PieceMetadataModel
 
 type PieceMetadataSchemaWithRelations = PieceMetadataSchema & {
     project: Project
 }
+
+export type PieceMetadataSchema = BaseModel<ApId> & PieceMetadataModel
 
 export const PieceMetadataEntity =
   new EntitySchema<PieceMetadataSchemaWithRelations>({

@@ -105,6 +105,7 @@ import {
     FlowRun,
     ProjectWithLimits,
 } from '@activepieces/shared'
+import { tagsModule } from './tags/tags-module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -246,6 +247,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(copilotModule)
     await app.register(platformModule)
     await app.register(formModule)
+    await app.register(tagsModule)
     await pieceSyncService.setup()
 
     await setupBullMQBoard(app)

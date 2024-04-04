@@ -29,12 +29,14 @@ import { ConfigureConfederatedAuthnCardComponent } from './components/cards/conf
 import { EnableFederatedAuthnProviderDialogComponent } from './components/dialogs/enable-federated-authn-provider-dialog/enable-federated-authn-provider-dialog.component';
 import { ConfigureAllowingEmailLoginsCardComponent } from './components/cards/configure-allowing-email-logins-card/configure-allowing-email-logins-card.component';
 import { AuditEventTableComponent } from './components/audit-event-table/audit-event-table.component';
+import { ApplyTagsComponent } from 'ui-feature-tags';
 @NgModule({
   imports: [
     UiCommonModule,
     CommonModule,
     RouterModule.forChild(uiEePlatformRoutes),
     UiFeaturePiecesModule,
+    ApplyTagsComponent,
   ],
   declarations: [
     PlatformDashboardContainerComponent,

@@ -10,12 +10,10 @@ import { ActivityEntity } from '../ee/activity/activity-entity'
 import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
 import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entity'
 import { AuditEventEntity } from '../ee/audit-logs/audit-event-entity'
-import { AppSumoEntity } from '../ee/billing/appsumo/appsumo.entity'
 import { ProjectBillingEntity } from '../ee/billing/project-billing/project-billing.entity'
 import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
 import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
 import { FlowTemplateEntity } from '../ee/flow-template/flow-template.entity'
-import { GitRepoEntity } from '../ee/git-repos/git-repo.entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
 import { OtpEntity } from '../ee/otp/otp-entity'
 import { ProjectMemberEntity } from '../ee/project-members/project-member.entity'
@@ -41,6 +39,10 @@ import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
 import { DatabaseType, system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
+import { AppSumoEntity } from '../ee/billing/appsumo/appsumo.entity'
+import { GitRepoEntity } from '../ee/git-repos/git-repo.entity'
+import { TagEntity } from '../tags/tag-entity'
+import { PieceTagEntity } from '../tags/tag-piece.entity'
 
 const databaseType = system.get(SystemProp.DB_TYPE)
 
@@ -64,6 +66,8 @@ function getEntities(): EntitySchema<unknown>[] {
         PieceMetadataEntity,
         StepFileEntity,
         PlatformEntity,
+        TagEntity,
+        PieceTagEntity,
     ]
 
     switch (edition) {

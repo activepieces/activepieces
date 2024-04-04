@@ -1,6 +1,6 @@
 import { OperatorFunction, catchError, of } from 'rxjs';
-import { PieceMetadataModel } from '@activepieces/ui/common';
 import { AppConnectionType } from '@activepieces/shared';
+import { PieceMetadataModel } from '@activepieces/pieces-framework';
 
 export type PieceOAuth2DetailsMap = {
   [pieceName: string]: {

@@ -125,6 +125,7 @@ import { MigrateInputUiInfo1711411372480 } from './migration/postgres/1711411372
 import { AddProjectUsageColumnToPiece1711768296861 } from './migration/postgres/1711768296861-AddProjectUsageColumnToPiece'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
+import { AddPieceTags1712107871405 } from './migration/postgres/1712107871405-AddPieceTags'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -203,6 +204,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddDeletedToProjectPostgres1710243591721,
         MigrateInputUiInfo1711411372480,
         AddProjectUsageColumnToPiece1711768296861,
+        AddPieceTags1712107871405,
     ]
 
     const edition = getEdition()

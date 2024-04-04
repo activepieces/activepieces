@@ -1,9 +1,6 @@
-import { EntityManager } from 'typeorm'
-import {
+import { PieceMetadata, 
     PieceMetadataModel,
-    PieceMetadataModelSummary,
-} from '../piece-metadata-entity'
-import { PieceMetadata } from '@activepieces/pieces-framework'
+    PieceMetadataModelSummary } from '@activepieces/pieces-framework'
 import {
     ApEdition,
     ListVersionsResponse,
@@ -15,6 +12,7 @@ import {
     ProjectId,
     SuggestionType,
 } from '@activepieces/shared'
+import { EntityManager } from 'typeorm'
 
 type ListParams = {
     release: string
@@ -23,6 +21,8 @@ type ListParams = {
     includeHidden: boolean
     edition: ApEdition
     categories?: PieceCategory[]
+    includeTags?: boolean
+    tags?: string[]
     sortBy?: PieceSortBy
     orderBy?: PieceOrderBy
     searchQuery?: string

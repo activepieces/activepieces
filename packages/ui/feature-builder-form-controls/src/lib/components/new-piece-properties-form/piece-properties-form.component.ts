@@ -10,11 +10,12 @@ import {
 } from '@angular/core';
 import {
   DropdownOption,
+  PieceMetadataModel,
   PieceProperty,
   PiecePropertyMap,
   PropertyType,
 } from '@activepieces/pieces-framework';
-import { PieceMetadataModel, jsonValidator } from '@activepieces/ui/common';
+import { jsonValidator } from '@activepieces/ui/common';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { BehaviorSubject, Observable, distinctUntilChanged, tap } from 'rxjs';
 import deepEqual from 'deep-equal';

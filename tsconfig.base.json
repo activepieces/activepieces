@@ -629,7 +629,8 @@
       "ui-feature-flow-builder": [
         "packages/ui/feature-flow-builder/src/index.ts"
       ],
-      "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"]
+      "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"],
+      "ui-feature-tags": ["packages/ui/feature-tags/src/index.ts"]
     },
     "resolveJsonModule": true
   },

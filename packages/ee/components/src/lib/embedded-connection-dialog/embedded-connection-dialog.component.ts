@@ -13,7 +13,7 @@ import {
   NEW_CONNECTION_QUERY_PARAMS,
 } from '@activepieces/ee-embed-sdk';
 import { Observable, catchError, of, switchMap, tap } from 'rxjs';
-import { PieceMetadataModel } from '@activepieces/ui/common';
+import { PieceMetadataModel } from '@activepieces/pieces-framework';
 
 @Component({
   selector: 'ap-embedded-connection-dialog',

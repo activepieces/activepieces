@@ -19,9 +19,8 @@ import { map, Observable, tap } from 'rxjs';
 import { InterpolatingTextFormControlComponent } from '../interpolating-text-form-control/interpolating-text-form-control.component';
 import {
   InsertMentionOperation,
-  PieceMetadataModel,
 } from '@activepieces/ui/common';
-import { ArrayProperty } from '@activepieces/pieces-framework';
+import { ArrayProperty, PieceMetadataModel } from '@activepieces/pieces-framework';
 import { PopulatedFlow } from '@activepieces/shared';
 import { ControlThatUsesMentionsCoreComponent } from '../control-that-uses-mentions-core/control-that-uses-mentions-core.component';
 

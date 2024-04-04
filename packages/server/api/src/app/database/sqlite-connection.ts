@@ -39,6 +39,7 @@ import { AddMissingInputUiInfoSqlite1711412511624 } from './migration/sqlite/171
 import { AddProjectUsageColumnToPieceSqlite1711768479150 } from './migration/sqlite/1711768479150-AddProjectUsageColumnToPieceSqlite'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
+import { AddTagsToPiecesSqlite1712180673961 } from './migration/sqlite/1712180673961-AddTagsToPiecesSqlite'
 
 
 const getSqliteDatabaseFilePath = (): string => {
@@ -96,6 +97,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddDeletedToProjectSqlite1710248182409,
         AddMissingInputUiInfoSqlite1711412511624,
         AddProjectUsageColumnToPieceSqlite1711768479150,
+        AddTagsToPiecesSqlite1712180673961,
     ]
     const edition = getEdition()
     if (edition !== ApEdition.COMMUNITY) {

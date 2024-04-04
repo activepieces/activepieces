@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import {
   FlagService,
   PieceConnectionDropdownItem,
-  PieceMetadataModel,
   UiCommonModule,
   appConnectionsSelectors,
 } from '@activepieces/ui/common';
@@ -37,7 +36,7 @@ import {
   isNil,
   spreadIfDefined,
 } from '@activepieces/shared';
-import { ActionBase, TriggerBase } from '@activepieces/pieces-framework';
+import { ActionBase, PieceMetadataModel, TriggerBase } from '@activepieces/pieces-framework';
 import { FormControl, UntypedFormBuilder, Validators } from '@angular/forms';
 import { InputFormCore } from '../input-form-core';
 
