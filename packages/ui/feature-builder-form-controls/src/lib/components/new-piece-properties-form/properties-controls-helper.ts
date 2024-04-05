@@ -15,6 +15,7 @@ import {
   getPropertyInitialValue,
   jsonValidator,
 } from '@activepieces/ui/common';
+import { isNil } from '@activepieces/shared';
 
 export const createFormControlsWithTheirValidators = (
   fb: UntypedFormBuilder,
@@ -26,6 +27,7 @@ export const createFormControlsWithTheirValidators = (
   //Angular forms get enabled after adding controls automatically: https://github.com/angular/angular/issues/23236
   const isFormDisabled = form.disabled;
   removeAllFormControls(form);
+
   Object.entries(propertiesMap).forEach(([propertyName, property]) => {
     1;
     if (propertiesMap[propertyName].type === PropertyType.MARKDOWN) {
@@ -37,6 +39,7 @@ export const createFormControlsWithTheirValidators = (
       customizedInputs,
       propertyName
     );
+    
     const ctrl = createControl(fb, property, value, validators);
     form.addControl(propertyName, ctrl, { emitEvent: false });
   });
@@ -58,7 +61,13 @@ function createControl(
   validators: ValidatorFn[]
 ) {
   if (property.type === PropertyType.DYNAMIC) {
-    return fb.group({});
+    const fg = fb.group({});
+    if(!isNil(value) && typeof value === 'object') {
+      Object.entries(value).forEach(([nestedFormControlName, nestedFormControlValue]) => {
+        fg.addControl(nestedFormControlName, new FormControl(nestedFormControlValue),{emitEvent: false});
+      });
+    }
+    return fg;
   }
   return new FormControl(getPropertyInitialValue(property, value), {
     validators: validators,
