@@ -2,6 +2,7 @@ import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { textToSpeech } from './lib/actions/text-to-speech-action';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { ElevenLabsClient } from 'elevenlabs';
+import { PieceCategory } from '@activepieces/shared';
 
 const markdownDescription = `
 Follow these instructions to get your API Key:
@@ -39,6 +40,8 @@ export const elevenlabs = createPiece({
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/elevenlabs.png',
   authors: ['pfernandez98'],
+  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
+  description: 'AI Voice Generator & Text to Speech',
   actions: [
     textToSpeech,
     createCustomApiCallAction({
