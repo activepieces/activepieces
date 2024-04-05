@@ -26,6 +26,7 @@ export class YamlViewComponent {
   _content = '';
   containerWidthChange$?: Observable<number>;
   readonly containerMaxHeight = 600;
+  readonly containerMinHeight = 100;
   containerHeight = 0;
   @Input() isInput = false;
   @Input() title: string;
@@ -64,7 +65,10 @@ export class YamlViewComponent {
   resizeEditorToContent(editor: any) {
     this.editor = editor;
     const contentHeight = editor.getContentHeight();
-    this.containerHeight = Math.min(contentHeight, this.containerMaxHeight);
+    this.containerHeight = Math.max(
+      Math.min(contentHeight, this.containerMaxHeight),
+      this.containerMinHeight
+    );
     this.cd.markForCheck();
   }
 }

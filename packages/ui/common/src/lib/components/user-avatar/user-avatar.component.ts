@@ -82,10 +82,6 @@ export class UserAvatarComponent implements OnInit {
     return `${leftOffset}px`;
   }
 
-  goToDeveloperPage() {
-    this.router.navigate(['settings/my-pieces']);
-  }
-
   logout() {
     this.router.navigate(['sign-in']);
     this.authenticationService.logout();
@@ -97,10 +93,6 @@ export class UserAvatarComponent implements OnInit {
 
   switchProject(projectId: string) {
     this.switchProject$ = this.projectService.switchProject(projectId);
-  }
-
-  viewPlatformSettings() {
-    this.router.navigate(['/platform']);
   }
 
   get userFirstLetter() {

@@ -1,0 +1,20 @@
+<div class="ap-w-full  ap-px-[30px] ap-pt-[50px]">
+    <div class="ap-h-full">
+        <ap-page-title title="Settings" i18n-title></ap-page-title>
+        <mat-tab-group #tabs class="ap-gap-4 " dynamicHeight mat-stretch-tabs="false" mat-align-tabs="start"
+            animationDuration="0" (selectedTabChange)="tabChanged($event)">
+            @if (showTab('GitSync')) {
+            <mat-tab [label]="gitSyncTableTitle">
+                <app-sync-project></app-sync-project>
+            </mat-tab>
+            }
+            @if (showTab('Pieces')) {
+            <mat-tab [label]="piecesTable">
+                <ap-community-pieces-table></ap-community-pieces-table>
+            </mat-tab>
+            }
+
+        </mat-tab-group>
+    </div>
+</div>
+<ng-container *ngIf="fragmentChanged$ | async"></ng-container>

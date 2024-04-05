@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
   "version": "0.22.0",
-  "rcVersion": "0.23.0-rc.0",
+  "rcVersion": "0.23.0-rc.1",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve ui-core",
@@ -33,6 +33,7 @@
     "@angular/platform-browser": "17.1.3",
     "@angular/platform-browser-dynamic": "17.1.3",
     "@angular/router": "17.1.3",
+    "@anthropic-ai/sdk": "0.19.0",
     "@auth0/angular-jwt": "5.1.2",
     "@aws-sdk/client-s3": "3.398.0",
     "@azure/openai": "1.0.0-beta.11",
@@ -223,6 +224,7 @@
     "@schematics/angular": "17.1.4",
     "@swc-node/register": "1.8.0",
     "@swc/core": "~1.3.85",
+    "@swc/helpers": "~0.5.2",
     "@trumbitta/nx-plugin-unused-deps": "1.12.1",
     "@types/bcrypt": "5.0.0",
     "@types/crypto-js": "4.1.1",
