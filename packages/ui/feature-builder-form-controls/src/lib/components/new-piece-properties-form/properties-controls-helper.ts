@@ -39,9 +39,10 @@ export const createFormControlsWithTheirValidators = (
       customizedInputs,
       propertyName
     );
-    
+
     const ctrl = createControl(fb, property, value, validators);
-    form.addControl(propertyName, ctrl, { emitEvent: false });
+
+    form.addControl(propertyName, ctrl);
   });
   if (isFormDisabled) {
     form.disable({ emitEvent: false });
@@ -62,10 +63,16 @@ function createControl(
 ) {
   if (property.type === PropertyType.DYNAMIC) {
     const fg = fb.group({});
-    if(!isNil(value) && typeof value === 'object') {
-      Object.entries(value).forEach(([nestedFormControlName, nestedFormControlValue]) => {
-        fg.addControl(nestedFormControlName, new FormControl(nestedFormControlValue),{emitEvent: false});
-      });
+    if (!isNil(value) && typeof value === 'object') {
+      Object.entries(value).forEach(
+        ([nestedFormControlName, nestedFormControlValue]) => {
+          fg.addControl(
+            nestedFormControlName,
+            new FormControl(nestedFormControlValue),
+            { emitEvent: false }
+          );
+        }
+      );
     }
     return fg;
   }
