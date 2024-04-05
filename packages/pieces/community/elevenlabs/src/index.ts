@@ -1,6 +1,7 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { textToSpeech } from './lib/actions/text-to-speech-action';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { ElevenLabsClient } from 'elevenlabs';
 
 const markdownDescription = `
 Follow these instructions to get your API Key:
@@ -16,10 +17,21 @@ export const elevenlabsAuth = PieceAuth.SecretText({
   description: markdownDescription,
   displayName: 'API Key',
   required: true,
-  validate: async () => {
-    return {
-      valid: true,
-    };
+  validate: async ({ auth }) => {
+    try {
+      const elevenlabs = new ElevenLabsClient({
+        apiKey: `${auth}`,
+      });
+      await elevenlabs.user.get();
+      return {
+        valid: true,
+      };
+    } catch (error) {
+      return {
+        valid: false,
+        error: 'Invalid API Key.',
+      };
+    }
   },
 });
 
