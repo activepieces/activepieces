@@ -40,8 +40,9 @@
             </div>
 
         </div>
-        <div class="ap-h-full"
+        <div class="ap-h-full ap-relative"
             [class.ap-pt-7.5]="((isEmbedded$ | async) === undefined || (isEmbedded$ | async) === false)">
+         
             <router-outlet></router-outlet>
             <div *ngIf="showPoweredByAp$ | async" class="ap-h-[70px] ap-w-full" #paddingForStickyNote>
             </div>
@@ -60,3 +61,4 @@
         <ap-powered-by-activepieces></ap-powered-by-activepieces>
     </div>
 </div>
+

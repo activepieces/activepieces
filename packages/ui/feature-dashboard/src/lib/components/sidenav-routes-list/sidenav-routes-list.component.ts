@@ -39,13 +39,7 @@ export class SidenavRoutesListComponent implements OnInit {
   demoPlatform$: Observable<boolean> = this.flagService.isFlagEnabled(
     ApFlagId.SHOW_PLATFORM_DEMO
   );
-  readonly plansRoute: SideNavRoute = {
-    caption:'Plans',
-    icon:'assets/img/custom/dashboard/plans.svg',
-    route:'plans',
-    showInSideNav$: this.flagServices.isFlagEnabled(ApFlagId.SHOW_BILLING),
-    showLock$: of(false),
-  }
+
   readonly supportRoute: SideNavRoute = {
     caption:'Support',
     icon:'assets/img/custom/support.svg',

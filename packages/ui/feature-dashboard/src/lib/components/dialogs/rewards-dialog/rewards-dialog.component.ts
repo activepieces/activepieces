@@ -53,8 +53,6 @@ import { MatDialog } from '@angular/material/dialog';
             jobName:'Refer us to a friend using your referral link',
             tasksPerMonth:'500',
         },
-        
-
     ]
   }
   

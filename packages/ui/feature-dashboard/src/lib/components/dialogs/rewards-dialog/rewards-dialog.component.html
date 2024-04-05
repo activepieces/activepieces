@@ -1,12 +1,7 @@
-<ap-icon-button [width]="20" [height]="20"  iconFilename="rewards/rewards.svg" tooltipText="Rewards" i18n-tooltipText (buttonClicked)="matDialog.open(dialog)">
-
-</ap-icon-button>
-
-<ng-template #dialog>
-        <div class="ap-flex ap-items-center ap-gap-2 ap-p-5">
+    <div class="ap-flex ap-items-center ap-gap-2 ap-p-5">
             <svg-icon src="assets/img/custom/rewards/rewards.svg" class="ap-w-[25px] ap-h-[25px]"  [applyClass]="true"></svg-icon>
             Rewards
-        </div>
+     </div>
     <mat-dialog-content class="thin-scrollbars">
         <div
         class="ap-flex ap-flex-col ap-w-[calc(100vw-257px)] ap-max-w-[950px]">
@@ -34,5 +29,4 @@
             </ap-button>
         </div>
     </mat-dialog-actions>
-</ng-template>
 

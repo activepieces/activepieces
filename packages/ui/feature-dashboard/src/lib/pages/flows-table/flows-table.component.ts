@@ -44,6 +44,7 @@ import {
   RenameFlowDialogComponent,
   RenameFlowDialogData,
 } from '../../components/dialogs/rename-flow-dialog/rename-flow-dialog.component';
+import { RewardsDialogComponent } from '../../components/dialogs/rewards-dialog/rewards-dialog.component';
 
 @Component({
   templateUrl: './flows-table.component.html',
@@ -232,5 +233,8 @@ export class FlowsTableComponent implements OnInit {
           }
         })
       );
+  }
+  openRewardsDialog(){
+    this.dialogService.open(RewardsDialogComponent);
   }
 }
