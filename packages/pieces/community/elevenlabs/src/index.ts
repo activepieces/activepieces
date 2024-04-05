@@ -5,12 +5,10 @@ import { ElevenLabsClient } from 'elevenlabs';
 
 const markdownDescription = `
 Follow these instructions to get your API Key:
-1. Visit your Elevenlabs dashboard
-2. Once there, click on your account in the bottom left corner
-3. Press Profile + API Key
+1. Visit your Elevenlabs dashboard.
+2. Once there, click on your account in the bottom left corner.
+3. Press Profile + API Key.
 4. Copy the API Key.
-
-Please, take into consideration: We don't test your API Key validity. So make sure this is the correct one.
 `;
 
 export const elevenlabsAuth = PieceAuth.SecretText({
@@ -36,7 +34,7 @@ export const elevenlabsAuth = PieceAuth.SecretText({
 });
 
 export const elevenlabs = createPiece({
-  displayName: 'Elevenlabs',
+  displayName: 'ElevenLabs',
   auth: elevenlabsAuth,
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/elevenlabs.png',

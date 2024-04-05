@@ -6,7 +6,7 @@ import { ElevenLabsClient } from 'elevenlabs';
 export const textToSpeech = createAction({
   description: 'Convert text to speech using Elevenlabs',
   displayName: 'Text to Speech',
-  name: 'generate_image',
+  name: 'elevenlabs-text-to-speech',
   props: {
     voice: Property.Dropdown({
       displayName: 'Voice',
