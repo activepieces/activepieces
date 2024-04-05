@@ -1,8 +1,9 @@
+import { Static, Type } from '@sinclair/typebox'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
 import { signingKeyService } from '../../signing-key/signing-key-service'
 import { SigningKey, SigningKeyId } from '@activepieces/ee-shared'
 import { logger } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil, PiecesFilterType, ProjectMemberRole } from '@activepieces/shared'
 
 const ALGORITHM = JwtSignAlgorithm.RS256
 
@@ -31,6 +32,11 @@ export const externalTokenExtractor = {
                 externalEmail: payload.email,
                 externalFirstName: payload.firstName,
                 externalLastName: payload.lastName,
+                role: payload?.role ?? ProjectMemberRole.EDITOR,
+                pieces: {
+                    filterType: payload?.pieces?.filterType ?? PiecesFilterType.NONE,
+                    tags: payload?.pieces?.tags ?? [],
+                },
             }
         }
         catch (error) {
@@ -40,7 +46,7 @@ export const externalTokenExtractor = {
                 code: ErrorCode.INVALID_BEARER_TOKEN,
                 params: {
                     message:
-            error instanceof Error ? error.message : 'error decoding token',
+                        error instanceof Error ? error.message : 'error decoding token',
                 },
             })
         }
@@ -66,13 +72,29 @@ const getSigningKey = async ({
     return signingKey
 }
 
-export type ExternalTokenPayload = {
-    externalUserId: string
-    externalProjectId: string
-    email: string
-    firstName: string
-    lastName: string
+function externalTokenPayload() {
+    const v1 = Type.Object({
+        externalUserId: Type.String(),
+        externalProjectId: Type.String(),
+        email: Type.String(),
+        firstName: Type.String(),
+        lastName: Type.String(),
+    })
+    const v2 = Type.Composite([v1,
+        Type.Object({
+            role: Type.Optional(Type.Enum(ProjectMemberRole)),
+            pieces: Type.Optional(Type.Object({
+                filterType: Type.Enum(PiecesFilterType),
+                tags: Type.Optional(Type.Array(Type.String())),
+            })),
+        }),
+    ])
+    return v2
 }
+
+export const ExternalTokenPayload = externalTokenPayload()
+
+export type ExternalTokenPayload = Static<typeof ExternalTokenPayload>
 
 export type ExternalPrincipal = {
     platformId: string
@@ -81,6 +103,11 @@ export type ExternalPrincipal = {
     externalEmail: string
     externalFirstName: string
     externalLastName: string
+    role: ProjectMemberRole
+    pieces: {
+        filterType: PiecesFilterType
+        tags: string[]
+    }
 }
 
 type GetSigningKeyParams = {

@@ -5,6 +5,7 @@ import { databaseConnection } from '../../../../src/app/database/database-connec
 import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockPieceMetadata,
+    createMockPlan,
     createMockPlatform,
     createMockProject,
     createMockUser,
@@ -13,6 +14,7 @@ import { logger } from '@activepieces/server-shared'
 import {
     apId,
     FilteredPieceBehavior,
+    PiecesFilterType,
     PieceType,
     PlatformRole,
     PrincipalType,
@@ -103,11 +105,10 @@ describe('Piece Metadata API', () => {
             })
             await databaseConnection.getRepository('platform').save([mockPlatform])
 
-            const mockProject = createMockProject({
+            const mockProject = await createProjectAndPlan({
                 platformId: mockPlatform.id,
                 ownerId: mockUser.id,
             })
-            await databaseConnection.getRepository('project').save([mockProject])
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -196,17 +197,15 @@ describe('Piece Metadata API', () => {
             })
             await databaseConnection.getRepository('platform').save([mockPlatform])
 
-            const mockProject = createMockProject({
+            const mockProject = await createProjectAndPlan({
                 platformId: mockPlatform.id,
                 ownerId: mockUser.id,
             })
-            const mockProject2 = createMockProject({
+            const mockProject2 = await createProjectAndPlan({
                 platformId: mockPlatform.id,
                 ownerId: mockUser.id,
             })
-            await databaseConnection
-                .getRepository('project')
-                .save([mockProject, mockProject2])
+
 
             // arrange
             const mockPieceMetadataA = createMockPieceMetadata({
@@ -260,10 +259,8 @@ describe('Piece Metadata API', () => {
                     authorization: `Bearer ${testToken}`,
                 },
             })
-
             // assert
             const responseBody = response?.json()
-
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(responseBody).toHaveLength(3)
             expect(responseBody?.[0].id).toBe(mockPieceMetadataA.id)
@@ -282,17 +279,14 @@ describe('Piece Metadata API', () => {
             })
             await databaseConnection.getRepository('platform').save([mockPlatform])
 
-            const mockProject = createMockProject({
+            const mockProject = await createProjectAndPlan({
                 ownerId: mockUser.id,
                 platformId: mockPlatform.id,
             })
-            const mockProject2 = createMockProject({
+            const mockProject2 = await createProjectAndPlan({
                 ownerId: mockUser.id,
                 platformId: mockPlatform.id,
             })
-            await databaseConnection
-                .getRepository('project')
-                .save([mockProject, mockProject2])
 
             // arrange
             const mockPieceMetadataA = createMockPieceMetadata({
@@ -518,18 +512,25 @@ describe('Piece Metadata API', () => {
             expect(responseBody?.[1].id).toBe(mockPieceMetadataB.id)
         })
 
-        it('Allows filtered pieces if platform filter is set to "ALLOWED"', async () => {
+        it('Allows filtered pieces if project filter is set to "ALLOWED"', async () => {
             // arrange
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save([mockUser])
 
             const mockPlatform = createMockPlatform({
                 ownerId: mockUser.id,
-                filteredPieceNames: ['a'],
-                filteredPieceBehavior: FilteredPieceBehavior.ALLOWED,
+                filteredPieceNames: [],
+                filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
             })
 
             await databaseConnection.getRepository('platform').save([mockPlatform])
+
+            const mockProject = await createProjectAndPlan({
+                ownerId: mockUser.id,
+                platformId: mockPlatform.id,
+                piecesFilterType: PiecesFilterType.ALLOWED,
+                pieces: ['a'],
+            })
 
             const mockPieceMetadataA = createMockPieceMetadata({
                 name: 'a',
@@ -547,6 +548,65 @@ describe('Piece Metadata API', () => {
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
+                projectId: mockProject.id,
+                platform: {
+                    id: mockPlatform.id,
+                    role: PlatformRole.OWNER,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/v1/pieces?release=1.1.1',
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            // assert
+            const responseBody = response?.json()
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(responseBody).toHaveLength(1)
+            expect(responseBody?.[0].id).toBe(mockPieceMetadataA.id)
+        })
+
+        it('Allows filtered pieces if platform filter is set to "ALLOWED"', async () => {
+            // arrange
+            const mockUser = createMockUser()
+            await databaseConnection.getRepository('user').save([mockUser])
+
+            const mockPlatform = createMockPlatform({
+                ownerId: mockUser.id,
+                filteredPieceNames: ['a'],
+                filteredPieceBehavior: FilteredPieceBehavior.ALLOWED,
+            })
+
+            await databaseConnection.getRepository('platform').save([mockPlatform])
+
+            const mockProject = await createProjectAndPlan({
+                ownerId: mockUser.id,
+                platformId: mockPlatform.id,
+            })
+
+            const mockPieceMetadataA = createMockPieceMetadata({
+                name: 'a',
+                pieceType: PieceType.OFFICIAL,
+                displayName: 'a',
+            })
+            const mockPieceMetadataB = createMockPieceMetadata({
+                name: 'b',
+                pieceType: PieceType.OFFICIAL,
+                displayName: 'b',
+            })
+            await databaseConnection
+                .getRepository('piece_metadata')
+                .save([mockPieceMetadataA, mockPieceMetadataB])
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                projectId: mockProject.id,
                 platform: {
                     id: mockPlatform.id,
                     role: PlatformRole.OWNER,
@@ -583,6 +643,10 @@ describe('Piece Metadata API', () => {
 
             await databaseConnection.getRepository('platform').save([mockPlatform])
 
+            const mockProject = await createProjectAndPlan({
+                ownerId: mockUser.id,
+                platformId: mockPlatform.id,
+            })
             const mockPieceMetadataA = createMockPieceMetadata({
                 name: 'a',
                 pieceType: PieceType.OFFICIAL,
@@ -599,6 +663,7 @@ describe('Piece Metadata API', () => {
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
+                projectId: mockProject.id,
                 platform: {
                     id: mockPlatform.id,
                     role: PlatformRole.OWNER,
@@ -623,3 +688,29 @@ describe('Piece Metadata API', () => {
         })
     })
 })
+
+async function createProjectAndPlan({
+    platformId,
+    ownerId,
+    piecesFilterType,
+    pieces,
+}: {
+    platformId: string
+    ownerId: string
+    piecesFilterType?: PiecesFilterType
+    pieces?: string[]
+}) {
+    const project = createMockProject({
+        platformId,
+        ownerId,
+    })
+    await databaseConnection.getRepository('project').save([project])
+
+    const projectPlan = createMockPlan({
+        projectId: project.id,
+        piecesFilterType,
+        pieces,
+    })
+    await databaseConnection.getRepository('project_plan').save([projectPlan])
+    return project
+}

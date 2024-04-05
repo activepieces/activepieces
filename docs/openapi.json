@@ -163,21 +163,33 @@
               "projectId": {
                 "type": "string"
               },
-              "stripeCustomerId": {
-                "type": "string"
-              },
-              "stripeSubscriptionId": {
-                "type": "string",
-                "nullable": true
-              },
-              "subscriptionStartDatetime": {
-                "type": "string"
-              },
-              "flowPlanName": {
+              "name": {
                 "type": "string"
               },
               "minimumPollingInterval": {
                 "type": "number"
+              },
+              "piecesFilterType": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "NONE"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "ALLOWED"
+                    ]
+                  }
+                ]
+              },
+              "pieces": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               },
               "connections": {
                 "type": "number"
@@ -187,10 +199,6 @@
               },
               "tasks": {
                 "type": "number"
-              },
-              "tasksPerDay": {
-                "type": "number",
-                "nullable": true
               }
             },
             "required": [
@@ -198,10 +206,10 @@
               "created",
               "updated",
               "projectId",
-              "stripeCustomerId",
-              "subscriptionStartDatetime",
-              "flowPlanName",
+              "name",
               "minimumPollingInterval",
+              "piecesFilterType",
+              "pieces",
               "connections",
               "teamMembers",
               "tasks"
@@ -7775,21 +7783,33 @@
                         "projectId": {
                           "type": "string"
                         },
-                        "stripeCustomerId": {
-                          "type": "string"
-                        },
-                        "stripeSubscriptionId": {
-                          "type": "string",
-                          "nullable": true
-                        },
-                        "subscriptionStartDatetime": {
-                          "type": "string"
-                        },
-                        "flowPlanName": {
+                        "name": {
                           "type": "string"
                         },
                         "minimumPollingInterval": {
                           "type": "number"
+                        },
+                        "piecesFilterType": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "NONE"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "ALLOWED"
+                              ]
+                            }
+                          ]
+                        },
+                        "pieces": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
                         },
                         "connections": {
                           "type": "number"
@@ -7799,10 +7819,6 @@
                         },
                         "tasks": {
                           "type": "number"
-                        },
-                        "tasksPerDay": {
-                          "type": "number",
-                          "nullable": true
                         }
                       },
                       "required": [
@@ -7810,10 +7826,10 @@
                         "created",
                         "updated",
                         "projectId",
-                        "stripeCustomerId",
-                        "subscriptionStartDatetime",
-                        "flowPlanName",
+                        "name",
                         "minimumPollingInterval",
+                        "piecesFilterType",
+                        "pieces",
                         "connections",
                         "teamMembers",
                         "tasks"
@@ -7953,21 +7969,33 @@
                               "projectId": {
                                 "type": "string"
                               },
-                              "stripeCustomerId": {
-                                "type": "string"
-                              },
-                              "stripeSubscriptionId": {
-                                "type": "string",
-                                "nullable": true
-                              },
-                              "subscriptionStartDatetime": {
-                                "type": "string"
-                              },
-                              "flowPlanName": {
+                              "name": {
                                 "type": "string"
                               },
                               "minimumPollingInterval": {
                                 "type": "number"
+                              },
+                              "piecesFilterType": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "NONE"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "ALLOWED"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "pieces": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
                               },
                               "connections": {
                                 "type": "number"
@@ -7977,10 +8005,6 @@
                               },
                               "tasks": {
                                 "type": "number"
-                              },
-                              "tasksPerDay": {
-                                "type": "number",
-                                "nullable": true
                               }
                             },
                             "required": [
@@ -7988,10 +8012,10 @@
                               "created",
                               "updated",
                               "projectId",
-                              "stripeCustomerId",
-                              "subscriptionStartDatetime",
-                              "flowPlanName",
+                              "name",
                               "minimumPollingInterval",
+                              "piecesFilterType",
+                              "pieces",
                               "connections",
                               "teamMembers",
                               "tasks"
@@ -8177,21 +8201,33 @@
                         "projectId": {
                           "type": "string"
                         },
-                        "stripeCustomerId": {
-                          "type": "string"
-                        },
-                        "stripeSubscriptionId": {
-                          "type": "string",
-                          "nullable": true
-                        },
-                        "subscriptionStartDatetime": {
-                          "type": "string"
-                        },
-                        "flowPlanName": {
+                        "name": {
                           "type": "string"
                         },
                         "minimumPollingInterval": {
                           "type": "number"
+                        },
+                        "piecesFilterType": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "NONE"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "ALLOWED"
+                              ]
+                            }
+                          ]
+                        },
+                        "pieces": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
                         },
                         "connections": {
                           "type": "number"
@@ -8201,10 +8237,6 @@
                         },
                         "tasks": {
                           "type": "number"
-                        },
-                        "tasksPerDay": {
-                          "type": "number",
-                          "nullable": true
                         }
                       },
                       "required": [
@@ -8212,10 +8244,10 @@
                         "created",
                         "updated",
                         "projectId",
-                        "stripeCustomerId",
-                        "subscriptionStartDatetime",
-                        "flowPlanName",
+                        "name",
                         "minimumPollingInterval",
+                        "piecesFilterType",
+                        "pieces",
                         "connections",
                         "teamMembers",
                         "tasks"

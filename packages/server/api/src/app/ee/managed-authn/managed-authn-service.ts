@@ -1,6 +1,9 @@
 import { randomBytes as randomBytesCallback } from 'node:crypto'
 import { promisify } from 'node:util'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
+import { flagService } from '../../flags/flag.service'
+import { getEdition } from '../../helper/secret-helper'
+import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
@@ -13,11 +16,10 @@ import {
 } from '@activepieces/ee-shared'
 import {
     AuthenticationResponse,
+    PiecesFilterType,
     PlatformRole,
     PrincipalType,
     Project,
-    ProjectId,
-    ProjectMemberRole,
     User,
 } from '@activepieces/shared'
 
@@ -30,27 +32,56 @@ export const managedAuthnService = {
         )
         const user = await getOrCreateUser(externalPrincipal)
 
+        const project = await getOrCreateProject({
+            platformId: externalPrincipal.platformId,
+            externalProjectId: externalPrincipal.externalProjectId,
+        })
+
+        await updateProjectLimits(project.platformId, project.id, externalPrincipal.pieces.tags, externalPrincipal.pieces.filterType)
+
+        const projectMember = await projectMemberService.upsert({
+            projectId: project.id,
+            email: externalPrincipal.externalEmail,
+            role: externalPrincipal.role,
+            status: ProjectMemberStatus.ACTIVE,
+        })
+
+
         const token = await accessTokenManager.generateToken({
             id: user.id,
             type: PrincipalType.USER,
-            projectId: user.projectId,
+            projectId: project.id,
             platform: {
                 id: externalPrincipal.platformId,
                 role: PlatformRole.MEMBER,
             },
         })
-
-        const projectRole = await projectMemberService.getRole({
-            userId: user.id,
-            projectId: user.projectId,
-        })
-
         return {
             ...user,
             token,
-            projectRole,
+            projectId: project.id,
+            projectRole: projectMember.role,
         }
     },
+}
+
+const updateProjectLimits = async (
+    platformId: string,
+    projectId: string,
+    piecesTags: string[],
+    piecesFilterType: PiecesFilterType,
+): Promise<void> => {
+    const pieces = await getPiecesList({
+        platformId,
+        projectId,
+        piecesTags,
+        piecesFilterType,
+    })
+    await projectLimitsService.upsert({
+        ...DEFAULT_PLATFORM_LIMIT,
+        pieces,
+        piecesFilterType,
+    }, projectId)
 }
 
 const getOrCreateUser = async (
@@ -59,7 +90,6 @@ const getOrCreateUser = async (
     const {
         platformId,
         externalUserId,
-        externalProjectId,
         externalEmail,
         externalFirstName,
         externalLastName,
@@ -69,25 +99,9 @@ const getOrCreateUser = async (
         externalId: externalUserId,
     })
 
-    const project = await getOrCreateProject({
-        platformId,
-        externalProjectId,
-    })
-
-    await projectMemberService.upsert({
-        projectId: project.id,
-        email: params.externalEmail,
-        role: ProjectMemberRole.EDITOR,
-        status: ProjectMemberStatus.ACTIVE,
-    })
-
     if (existingUser) {
         const { password: _, ...user } = existingUser
-
-        return {
-            ...user,
-            projectId: project.id,
-        }
+        return user
     }
 
     const { password: _, ...newUser } = await userService.create({
@@ -101,11 +115,7 @@ const getOrCreateUser = async (
         externalId: externalUserId,
         platformId,
     })
-
-    return {
-        ...newUser,
-        projectId: project.id,
-    }
+    return newUser
 }
 
 const getOrCreateProject = async ({
@@ -130,9 +140,32 @@ const getOrCreateProject = async ({
         externalId: externalProjectId,
     })
 
-    await projectLimitsService.upsert(DEFAULT_PLATFORM_LIMIT, project.id)
-
     return project
+}
+
+const getPiecesList = async ({
+    platformId,
+    projectId,
+    piecesFilterType,
+}: UpdateProjectLimits): Promise<string[]> => {
+    switch (piecesFilterType) {
+        case PiecesFilterType.ALLOWED: {
+            // TODO: add tags to the list
+
+            throw new Error('Not implemented')
+            const pieces = await pieceMetadataService.list({
+                release: await flagService.getCurrentRelease(),
+                edition: await getEdition(),
+                platformId,
+                includeHidden: false,
+                projectId,
+            })
+            return pieces.map(piece => piece.name)
+        }
+        case PiecesFilterType.NONE: {
+            return []
+        }
+    }
 }
 
 const randomBytes = promisify(randomBytesCallback)
@@ -155,11 +188,16 @@ type GetOrCreateUserParams = {
     externalLastName: string
 }
 
-type GetOrCreateUserReturn = Omit<User, 'password'> & {
-    projectId: ProjectId
-}
+type GetOrCreateUserReturn = Omit<User, 'password'>
 
 type GetOrCreateProjectParams = {
     platformId: string
     externalProjectId: string
+}
+
+type UpdateProjectLimits = {
+    platformId: string
+    projectId: string
+    piecesTags: string[]
+    piecesFilterType: PiecesFilterType
 }
