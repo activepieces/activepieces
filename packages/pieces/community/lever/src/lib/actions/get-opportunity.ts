@@ -26,10 +26,11 @@ export const getOpportunity = createAction({
   async run({ auth, propsValue }) {
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `${LEVER_BASE_URL}/opportunities/${propsValue.opportunityId
-        }?${decodeURIComponent(
-          qs.stringify({ expand: propsValue.expand }, { arrayFormat: 'repeat' })
-        )}`,
+      url: `${LEVER_BASE_URL}/opportunities/${
+        propsValue.opportunityId
+      }?${decodeURIComponent(
+        qs.stringify({ expand: propsValue.expand }, { arrayFormat: 'repeat' })
+      )}`,
       authentication: {
         type: AuthenticationType.BASIC,
         username: auth.apiKey,
