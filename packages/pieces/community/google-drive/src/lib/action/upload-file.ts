@@ -49,7 +49,7 @@ export const googleDriveUploadFile = createAction({
 
     const result = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`,
+      url: `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true`,
       body: form,
       headers: {
         ...form.getHeaders(),
