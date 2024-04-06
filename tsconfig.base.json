@@ -155,6 +155,9 @@
       "@activepieces/piece-dropbox": [
         "packages/pieces/community/dropbox/src/index.ts"
       ],
+      "@activepieces/piece-elevenlabs": [
+        "packages/pieces/community/elevenlabs/src/index.ts"
+      ],
       "@activepieces/piece-facebook-leads": [
         "packages/pieces/community/facebook-leads/src/index.ts"
       ],
