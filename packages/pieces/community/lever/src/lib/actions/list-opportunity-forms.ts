@@ -5,10 +5,8 @@ import {
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import qs from 'qs';
 
 export const listOpportunityForms = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'listOpportunityForms',
   displayName: 'List opportunity forms',
   description:
