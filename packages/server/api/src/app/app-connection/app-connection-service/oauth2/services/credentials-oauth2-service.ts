@@ -18,10 +18,10 @@ import {
 } from '@activepieces/shared'
 
 export const credentialsOauth2Service: OAuth2Service<OAuth2ConnectionValueWithApp> =
-  {
-      refresh,
-      claim,
-  }
+{
+    refresh,
+    claim,
+}
 
 async function claim({
     request,
@@ -43,12 +43,17 @@ async function claim({
         if (request.codeVerifier) {
             body.code_verifier = request.codeVerifier
         }
+        if (request.props && grantType === OAuth2GrantType.CLIENT_CREDENTIALS) {
+            Object.entries(request.props).forEach(([key, value]) => {
+                body[key] = value
+            })
+        }
         const headers: Record<string, string> = {
             'content-type': 'application/x-www-form-urlencoded',
             accept: 'application/json',
         }
         const authorizationMethod =
-      request.authorizationMethod || OAuth2AuthorizationMethod.BODY
+            request.authorizationMethod || OAuth2AuthorizationMethod.BODY
         switch (authorizationMethod) {
             case OAuth2AuthorizationMethod.BODY:
                 body.client_id = request.clientId
@@ -100,7 +105,7 @@ async function refresh({
         return appConnection
     }
     const grantType =
-    connectionValue.grant_type ?? OAuth2GrantType.AUTHORIZATION_CODE
+        connectionValue.grant_type ?? OAuth2GrantType.AUTHORIZATION_CODE
     const body: Record<string, string> = {}
     switch (grantType) {
         case OAuth2GrantType.AUTHORIZATION_CODE: {
@@ -121,7 +126,7 @@ async function refresh({
         accept: 'application/json',
     }
     const authorizationMethod =
-    appConnection.authorization_method || OAuth2AuthorizationMethod.BODY
+        appConnection.authorization_method || OAuth2AuthorizationMethod.BODY
     switch (authorizationMethod) {
         case OAuth2AuthorizationMethod.BODY:
             body.client_id = appConnection.client_id
@@ -161,9 +166,9 @@ function mergeNonNull(
     oAuth2Response: BaseOAuth2ConnectionValue,
 ): OAuth2ConnectionValueWithApp {
     const formattedOAuth2Response: Partial<BaseOAuth2ConnectionValue> =
-    Object.fromEntries(
-        Object.entries(oAuth2Response).filter(([, value]) => !isNil(value)),
-    )
+        Object.fromEntries(
+            Object.entries(oAuth2Response).filter(([, value]) => !isNil(value)),
+        )
 
     return {
         ...appConnection,
