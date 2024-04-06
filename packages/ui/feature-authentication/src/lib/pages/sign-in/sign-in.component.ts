@@ -127,7 +127,9 @@ export class SignInComponent {
       })
       .pipe(
         tap(() => {
-          this.snackbar.open('Verfication email sent, please check your inbox');
+          this.snackbar.open(
+            'Verification email sent, please check your inbox'
+          );
           this.sendingVerificationEmail = false;
           this.showResendVerification = false;
         })

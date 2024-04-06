@@ -99,7 +99,7 @@ export enum EventType {
   purchaseCreate = 'purchase.purchase_create',
 }
 
-export type EventParamaterKey =
+export type EventParameterKey =
   | 'form_id'
   | 'sequence_id'
   | 'initiator_value'
@@ -107,7 +107,7 @@ export type EventParamaterKey =
   | 'tag_id';
 
 type EventMapped = {
-  [K in EventParamaterKey]?: string | number;
+  [K in EventParameterKey]?: string | number;
 };
 
 export type Event = EventMapped & {
@@ -124,7 +124,7 @@ export interface Webhook {
 export interface EventOption {
   label: string;
   value: EventType;
-  required_parameter: EventParamaterKey | null;
+  required_parameter: EventParameterKey | null;
   param_label: string | null;
   type: string | null;
 }

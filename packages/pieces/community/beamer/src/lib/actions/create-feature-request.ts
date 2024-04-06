@@ -78,7 +78,7 @@ export const createNewFeatureRequest = createAction({
             value: 'planned',
           },
           {
-            label: 'In Progess',
+            label: 'In Progress',
             value: 'in_progress',
           },
           {

@@ -14,7 +14,7 @@ import { UiCommonModule } from '@activepieces/ui/common';
 type ConfigureRepoDialogData = {
   repo?: GitRepo;
 };
-type ConfigreRepoDialogForm = {
+type ConfigureRepoDialogForm = {
   slug: FormControl<string>;
   remoteUrl: FormControl<string>;
   branch: FormControl<string>;
@@ -44,8 +44,8 @@ export class ConfigureRepoDialogComponent {
   GitBranchType = GitBranchType
   title = $localize`Configure Repo`;
   projectIds$ = this.store.select(ProjectSelectors.selectCurrentProject);
-  configureRepoForm: FormGroup<ConfigreRepoDialogForm>;
-  configreRepo$?: Observable<GitRepo>;
+  configureRepoForm: FormGroup<ConfigureRepoDialogForm>;
+  configureRepo$?: Observable<GitRepo>;
   constructor(
     private store: Store,
     private syncProjectService: SyncProjectService,
@@ -87,8 +87,8 @@ export class ConfigureRepoDialogComponent {
   }
   submit() {
     this.configureRepoForm.markAllAsTouched();
-    if (this.configureRepoForm.valid && !this.configreRepo$) {
-      this.configreRepo$ = this.store
+    if (this.configureRepoForm.valid && !this.configureRepo$) {
+      this.configureRepo$ = this.store
         .select(ProjectSelectors.selectCurrentProject)
         .pipe(
           switchMap((project) => {

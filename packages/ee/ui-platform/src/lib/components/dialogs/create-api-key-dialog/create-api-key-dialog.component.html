@@ -8,7 +8,7 @@
             <form [formGroup]="formGroup" (submit)="createKey()">
                 <mat-form-field class="ap-w-full">
                     <mat-label i18n>Name</mat-label>
-                    <input matInput i18n-placeholde placeholder="My Test"
+                    <input matInput i18n-placeholder placeholder="My Test"
                         [formControl]="formGroup.controls.displayName" />
                     <mat-error *ngIf="formGroup.controls.displayName.hasError('required')" i18n>Name is required
                     </mat-error>

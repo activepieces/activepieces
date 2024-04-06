@@ -13,7 +13,7 @@ import {
 } from '@angular/material/dialog';
 import { forkJoin, Observable, switchMap, take, tap } from 'rxjs';
 import { CodeArtifactForm } from '../code-artifact-form-control.component';
-import { SelectedFileInFullscreenCodeEditor } from '../selected-file-in-fullscreeen-code-editor.enum';
+import { SelectedFileInFullscreenCodeEditor } from '../selected-file-in-fullscreen-code-editor.enum';
 import { AddNpmPackageModalComponent } from './add-npm-package-modal/add-npm-package-modal.component';
 import { SelectedTabInFullscreenCodeEditor } from './selected-tab-in-fullscreen-code-editor.enum';
 import {
@@ -32,7 +32,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 
 type PackageName = string;
 type PackageVersion = string;
-interface PackagesMetada {
+interface PackagesMetadata {
   [key: PackageName]: PackageVersion;
 }
 
@@ -160,7 +160,7 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
       this.codeService.beautifyJson(packageDotJson)
     );
   }
-  getPackageDotJsonObject(): { dependencies: PackagesMetada } {
+  getPackageDotJsonObject(): { dependencies: PackagesMetadata } {
     const packageControlValue = this.codeFilesForm.controls.packageJson.value;
     try {
       const packageDotJson = JSON.parse(packageControlValue);

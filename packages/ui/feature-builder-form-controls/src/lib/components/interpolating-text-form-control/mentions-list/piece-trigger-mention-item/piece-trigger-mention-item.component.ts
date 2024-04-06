@@ -56,7 +56,7 @@ export class PieceTriggerMentionItemComponent implements OnInit {
     private mentionsTreeCache: MentionsTreeCacheService
   ) {}
   ngOnInit(): void {
-    const cachedResult: undefined | MentionTreeNode = this.getChachedData();
+    const cachedResult: undefined | MentionTreeNode = this.getCachedData();
     this.search$ = this.mentionsTreeCache.listSearchBarObs$.pipe(
       tap((res) => {
         this.expandSample = !!res;
@@ -94,7 +94,7 @@ export class PieceTriggerMentionItemComponent implements OnInit {
       this._stepMention.step
     );
   }
-  getChachedData() {
+  getCachedData() {
     const step = this._stepMention.step;
     let cachedResult: undefined | MentionTreeNode = undefined;
     if (

@@ -90,7 +90,7 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
     private snackbar: MatSnackBar,
     @Inject(MAT_DIALOG_DATA)
     public dialogData: OAuth2ConnectionDialogData
-  ) { }
+  ) {}
 
   ngOnInit(): void {
     this.hasCloudAuthCred$ = this.cloudAuthConfigsService
@@ -143,7 +143,10 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
     if (environment.production) {
       this.settingsForm.controls.redirect_url.disable();
     }
-    if (this.dialogData.pieceAuthProperty.grantType === OAuth2GrantType.CLIENT_CREDENTIALS) {
+    if (
+      this.dialogData.pieceAuthProperty.grantType ===
+      OAuth2GrantType.CLIENT_CREDENTIALS
+    ) {
       this.settingsForm.controls.redirect_url.disable();
       this.settingsForm.controls.value.disable();
     }
@@ -170,14 +173,18 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
       this.dialogData.pieceAuthProperty.scope!.join(' '),
       this.settingsForm.controls.props.value
     );
-    const isClientCredentails =  this.dialogData.pieceAuthProperty.grantType === OAuth2GrantType.CLIENT_CREDENTIALS;
+    const isClientCredentails =
+      this.dialogData.pieceAuthProperty.grantType ===
+      OAuth2GrantType.CLIENT_CREDENTIALS;
     const newConnection: UpsertOAuth2Request = {
       projectId: this.authenticatiionService.getProjectId(),
       name: connectionName,
       pieceName: this.dialogData.pieceName,
       type: AppConnectionType.OAUTH2,
       value: {
-        code: isClientCredentails ? '' : this.settingsForm.controls.value.value!.code,
+        code: isClientCredentails
+          ? ''
+          : this.settingsForm.controls.value.value!.code,
         code_challenge: this.settingsForm.controls.value.value?.code_challenge,
         type: AppConnectionType.OAUTH2,
         grant_type:

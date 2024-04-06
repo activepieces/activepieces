@@ -159,7 +159,7 @@ export const createSinglePurchase = createAction({
 
 export const createPurchases = createAction({
   auth: convertkitAuth,
-  name: 'purchases_create_multible_purchases',
+  name: 'purchases_create_multiple_purchases',
   displayName: 'Create Multiple Purchases',
   description: 'Creates multiple purchases',
   props: {

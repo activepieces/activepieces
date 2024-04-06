@@ -121,7 +121,7 @@ class ActivepiecesEmbedded {
           const iframeContainer = document.querySelector(containerSelector);
           if(iframeContainer)
           {
-            const iframeWindow = this.connectoToEmbed({ jwtToken, iframeContainer }).contentWindow;
+            const iframeWindow = this.connectToEmbed({ jwtToken, iframeContainer }).contentWindow;
             this._checkForVendorRouteChanges(iframeWindow);
             this._checkForClientRouteChanges(iframeWindow);
           }
@@ -139,7 +139,7 @@ class ActivepiecesEmbedded {
         return !!document.body;
       },
       method:()=>{
-      this._connectionsIframe = this.connectoToEmbed({ jwtToken, iframeContainer: document.body, callbackAfterAuthentication: () => { this._connectionsIframeInitialized = true } });
+      this._connectionsIframe = this.connectToEmbed({ jwtToken, iframeContainer: document.body, callbackAfterAuthentication: () => { this._connectionsIframeInitialized = true } });
       const connectionsIframeStyle = ['display:none', 'position:fixed', 'top:0', 'left:0', 'width:100%', 'height:100%', 'border:none'].join(';');
       this._connectionsIframe.style.cssText = connectionsIframeStyle;
       this._checkIfNewConnectionDialogClosed();
@@ -151,7 +151,7 @@ class ActivepiecesEmbedded {
 
 
 
-  private connectoToEmbed({ jwtToken, iframeContainer, callbackAfterAuthentication }: {
+  private connectToEmbed({ jwtToken, iframeContainer, callbackAfterAuthentication }: {
     jwtToken: string,
     iframeContainer: Element,
     callbackAfterAuthentication?: () => void

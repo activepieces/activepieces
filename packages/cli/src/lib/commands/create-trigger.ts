@@ -15,7 +15,7 @@ import { createTrigger, TriggerStrategy, PiecePropValueSchema  } from '@activepi
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 
-// replace auth with piece auth varible
+// replace auth with piece auth variable
 const polling: Polling< PiecePropValueSchema<typeof auth>, Record<string, never> > = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ propsValue, lastFetchEpochMS }) => {

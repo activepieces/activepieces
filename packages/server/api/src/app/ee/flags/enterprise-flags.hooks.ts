@@ -2,7 +2,7 @@ import { flagService } from '../../flags/flag.service'
 import { FlagsServiceHooks } from '../../flags/flags.hooks'
 import { resolvePlatformIdForRequest } from '../../platform/platform-utils'
 import { platformService } from '../../platform/platform.service'
-import { apperanceHelper } from '../helper/apperance-helper'
+import { appearanceHelper } from '../helper/apperance-helper'
 import { ApFlagId, isNil, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
 
 export const enterpriseFlagsHooks: FlagsServiceHooks = {
@@ -26,7 +26,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
         const isCustomerPlatform = !flagService.isCloudPlatform(platformId)
         if (isCustomerPlatform) {
             modifiedFlags[ApFlagId.SHOW_PLATFORM_DEMO] = false
-            modifiedFlags[ApFlagId.THEME] = await apperanceHelper.getTheme({
+            modifiedFlags[ApFlagId.THEME] = await appearanceHelper.getTheme({
                 platformId,
             })
             modifiedFlags[ApFlagId.SHOW_COMMUNITY] = false

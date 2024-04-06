@@ -92,7 +92,7 @@ describe('flow execution', () => {
                     },
                     nextAction: {
                         name: 'datamapper',
-                        diplayName: 'Datamapper',
+                        displayName: 'Datamapper',
                         type: ActionType.PIECE,
                         settings: {
                             inputUiInfo: {},

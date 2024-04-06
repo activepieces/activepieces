@@ -3,7 +3,7 @@ import { RunsTableComponent } from './pages/runs-table/runs-table.component';
 import { FlowsTableComponent } from './pages/flows-table/flows-table.component';
 import {
   ARE_THERE_FLOWS_FLAG,
-  AreThereFlowsResovler,
+  AreThereFlowsResolver,
 } from './resolvers/are-there-flows.resolver';
 import { ConnectionsTableComponent } from './pages/connections-table/connections-table.component';
 import { FoldersResolver } from '@activepieces/ui/feature-folders-store';
@@ -125,7 +125,7 @@ export const DashboardLayoutRouting: Routes = [
         pathMatch: 'full',
         component: FlowsTableComponent,
         resolve: {
-          [ARE_THERE_FLOWS_FLAG]: AreThereFlowsResovler,
+          [ARE_THERE_FLOWS_FLAG]: AreThereFlowsResolver,
           folders: FoldersResolver,
         },
         canActivate: [

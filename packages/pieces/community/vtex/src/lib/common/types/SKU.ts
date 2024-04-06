@@ -24,7 +24,7 @@ export type CreateSkuParams = {
   MeasurementUnit?: string;
   UnitMultiplier?: number;
   ModalType?: string;
-  KitItensSellApart?: boolean;
+  KitItemsSellApart?: boolean;
   Videos?: string[];
 };
 
