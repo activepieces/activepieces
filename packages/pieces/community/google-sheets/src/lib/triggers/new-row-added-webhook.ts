@@ -24,6 +24,7 @@ export const newRowAddedTrigger = createTrigger({
     }),
     spreadsheet_id: googleSheetsCommon.spreadsheet_id,
     sheet_id: googleSheetsCommon.sheet_id,
+    include_team_drives: googleSheetsCommon.include_team_drives,
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
@@ -127,7 +128,7 @@ export const newRowAddedTrigger = createTrigger({
         ...row,
         [DEDUPE_KEY_PROPERTY]: hashObject(row),
       };
-    })
+    });
   },
   async onRenew(context) {
     // get current channel ID & resource ID
@@ -179,6 +180,7 @@ export const newRowAddedTrigger = createTrigger({
 function isSyncMessage(headers: Record<string, string>) {
   return headers['x-goog-resource-state'] === 'sync';
 }
+
 function isChangeContentMessage(headers: Record<string, string>) {
   // https://developers.google.com/drive/api/guides/push#respond-to-notifications
   return (
@@ -210,6 +212,7 @@ async function createFileNotification(
     },
   });
 }
+
 async function deleteFileNotification(
   auth: PiecePropValueSchema<typeof googleSheetsAuth>,
   channelId: string,
@@ -268,6 +271,7 @@ async function getWorkSheetName(
   }
   return sheetName;
 }
+
 function transformWorkSheetValues(rowValues: any[][], oldRowCount: number) {
   const result = [];
   for (let i = 0; i < rowValues.length; i++) {
@@ -282,6 +286,7 @@ function transformWorkSheetValues(rowValues: any[][], oldRowCount: number) {
   }
   return result;
 }
+
 interface WebhookInformation {
   kind?: string | null;
   id?: string | null;
