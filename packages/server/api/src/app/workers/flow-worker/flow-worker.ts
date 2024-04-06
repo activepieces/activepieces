@@ -301,7 +301,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             await flowRunService.finish({
                 flowRunId: jobData.runId,
                 status: FlowRunStatus.TIMEOUT,
-                // TODO REVIST THIS
+                // TODO REVISIT THIS
                 tasks: 10,
                 logsFileId: null,
                 tags: [],

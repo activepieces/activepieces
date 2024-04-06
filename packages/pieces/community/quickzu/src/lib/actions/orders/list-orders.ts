@@ -6,7 +6,7 @@ export const listOrdersAction = createAction({
   auth: quickzuAuth,
   name: 'quickzu_list_orders',
   displayName: 'List Orders',
-  description: 'Retrives orders of store.',
+  description: 'Retrieves orders of store.',
   props: {
     page: Property.Number({
       displayName: 'Current page number',

@@ -7,7 +7,7 @@ import { flowVersionService } from '../flow-version/flow-version.service'
 import { flowService } from './flow.service'
 import { FlowVersionMetadata, ListFlowVersionRequest, SeekPage } from '@activepieces/shared'
 
-const DEFUALT_PAGE_SIZE = 10
+const DEFAULT_PAGE_SIZE = 10
 
 export const flowVersionController: FastifyPluginAsyncTypebox = async (
     fastify,
@@ -32,7 +32,7 @@ export const flowVersionController: FastifyPluginAsyncTypebox = async (
             })
             return flowVersionService.list({
                 flowId: flow.id,
-                limit: request.query.limit ?? DEFUALT_PAGE_SIZE,
+                limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
                 cursorRequest: request.query.cursor ?? null,
             })
         },

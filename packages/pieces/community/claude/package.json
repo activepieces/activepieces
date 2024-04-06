@@ -1,0 +1,12 @@
+{
+  "name": "@activepieces/piece-claude",
+  "version": "0.0.1",
+  "dependencies": {
+    "@activepieces/pieces-framework": "*",
+    "@activepieces/pieces-common": "*",
+    "@activepieces/shared": "*",
+    "@anthropic-ai/sdk": "0.19.0",
+    "mime-types": "2.1.35",
+    "tslib": "2.6.2"
+  }
+}

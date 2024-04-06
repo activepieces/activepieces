@@ -153,7 +153,7 @@ export class PiecePropertiesFormComponent
     );
   }
 
-  dynamicPropertyCustomizedInputsChangedHanlder(event: {
+  dynamicPropertyCustomizedInputsChangedHandler(event: {
     value: boolean;
     propertyName: string;
   }) {

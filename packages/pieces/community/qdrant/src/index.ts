@@ -28,8 +28,8 @@ Try to create your own qdrant instance using the [documentation guides](https://
 export const qdrantAuth = PieceAuth.CustomAuth({
   description: qdrantConnectionDescription,
   props: {
-    serverAdress: Property.ShortText({
-      displayName: 'Server Adress',
+    serverAddress: Property.ShortText({
+      displayName: 'Server Address',
       required: true,
       description: 'The url of the Qdrant instance.',
     }),

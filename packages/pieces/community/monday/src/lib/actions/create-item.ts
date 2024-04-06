@@ -64,7 +64,7 @@ export const createItemAction = createAction({
       boardId: board_id,
       groupId: group_id,
       columnValues: JSON.stringify(mondayColumnValues),
-      craeteLables: create_labels_if_missing ?? false,
+      craeteLabels: create_labels_if_missing ?? false,
     });
   },
 });

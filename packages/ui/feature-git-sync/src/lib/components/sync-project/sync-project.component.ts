@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { BehaviorSubject, Observable, map, tap } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
+import { BehaviorSubject, Observable, map, of, shareReplay, switchMap, tap } from 'rxjs';
 import { GitRepo } from '@activepieces/ee-shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
@@ -14,7 +13,6 @@ import { ProjectWithLimits } from '@activepieces/shared';
 import { SyncProjectService } from '../../services/sync-project.service';
 import { ConfigureRepoDialogComponent } from '../dialogs/configure-repo-dialog/configure-repo-dialog.component';
 import { PullFromGitDialogComponent, PullFromGitDialogData } from '../dialogs/pull-from-git-dialog/pull-from-git-dialog.component';
-import { RepoResolverData } from '../../resolver/repo.resolver';
 import { AsyncPipe } from '@angular/common';
 
 @Component({
@@ -32,18 +30,18 @@ import { AsyncPipe } from '@angular/common';
 export class SyncProjectComponent {
   displayedColumns = ['remoteUrl', 'branch', 'updated', 'action'];
   dialogOpened$?: Observable<null | GitRepo>;
-  currentRepo$ = new BehaviorSubject<null | GitRepo | undefined>(null);
-  showUpgrade = false;
+  currentRepo$: Observable<GitRepo | undefined>;
+  showUpgrade$: Observable<boolean>;
   disconnect$?: Observable<void>;
   currentProject$: Observable<ProjectWithLimits>;
   openPullDialog$: Observable<void> | undefined;
+  refresh$ = new BehaviorSubject<void>(undefined);
   pullDialogLoading$ = new BehaviorSubject<boolean>(false);
   upgradeNoteTitle = $localize`Unlock Git Sync`;
   upgradeNote = $localize`Streamline your team's workflow for a seamless experience to build and deploy flows across your environments`;
   configureButtonTooltip = $localize`Upgrade to enable`;
   constructor(
     private matDialog: MatDialog,
-    private activatedRoute: ActivatedRoute,
     private syncProjectService: SyncProjectService,
     private snackbar: MatSnackBar,
     private store: Store
@@ -51,14 +49,12 @@ export class SyncProjectComponent {
     this.currentProject$ = this.store.select(
       ProjectSelectors.selectCurrentProject
     );
-    const data = this.activatedRoute.snapshot.data as {
-      repo: RepoResolverData;
-    };
-    this.showUpgrade = data.repo.showUpgrade;
-    if (!this.showUpgrade) {
-      this.configureButtonTooltip = '';
-    }
-    this.currentRepo$.next(data.repo.repo);
+
+    this.showUpgrade$ = of(false)
+    this.currentRepo$ = this.refresh$.pipe(
+      switchMap(() => this.syncProjectService.get()),
+      shareReplay(1)
+    );
   }
   configureNewRepo() {
     this.dialogOpened$ = this.matDialog
@@ -67,39 +63,38 @@ export class SyncProjectComponent {
       .pipe(
         tap((res) => {
           if (res) {
-            this.currentRepo$.next(res);
+            this.refresh$.next();
           }
         })
       );
   }
 
   disconnect() {
-    if (this.currentRepo$.value) {
-      this.disconnect$ = this.syncProjectService
-        .disconnect(this.currentRepo$.value.id)
+    this.disconnect$ = this.currentRepo$.pipe(switchMap((repo) => {
+      const gitRepo = repo!;
+      return this.syncProjectService.disconnect(gitRepo.id)
         .pipe(
           tap(() => {
             this.snackbar.openFromComponent(GenericSnackbarTemplateComponent, {
-              data: $localize`Disconnected from  <b>${this.currentRepo$.value?.remoteUrl}</b>`,
+              data: $localize`Disconnected from  <b>${gitRepo.remoteUrl}</b>`,
             });
-            this.currentRepo$.next(null);
+            this.refresh$.next();
           })
-        );
-    }
+        )
+    }));
   }
 
   pull() {
-    const repoId = this.currentRepo$.value?.id;
-    if (repoId) {
-      if (this.pullDialogLoading$.value) {
-        return;
-      }
-      this.pullDialogLoading$.next(true);
-      this.openPullDialog$ = this.syncProjectService
-        .pull(repoId, {
+    if (this.pullDialogLoading$.value) {
+      return;
+    }
+    this.pullDialogLoading$.next(true);
+    this.openPullDialog$ = this.currentRepo$.pipe(
+      map((repo) => repo!.id),
+      switchMap((repoId) => {
+        return this.syncProjectService.pull(repoId, {
           dryRun: true,
-        })
-        .pipe(
+        }).pipe(
           tap((plan) => {
             if (plan.operations.length === 0) {
               this.snackbar.open($localize`No changes to pull`);
@@ -119,6 +114,8 @@ export class SyncProjectComponent {
           }),
           map(() => void 0)
         );
-    }
+      }),
+    )
+
   }
 }

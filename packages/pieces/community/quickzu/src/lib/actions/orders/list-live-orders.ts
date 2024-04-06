@@ -6,7 +6,7 @@ export const listLiveOrdersAction = createAction({
   auth: quickzuAuth,
   name: 'quickzu_list_live_orders',
   displayName: 'List Live Orders',
-  description: 'Retrives live orders of store.',
+  description: 'Retrieves live orders of store.',
   props: {
     limit: Property.Number({
       displayName:

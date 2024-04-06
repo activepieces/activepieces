@@ -20,5 +20,5 @@ export const enum BaserowFieldType {
   LOOKUP = 'lookup',
   MULTIPLE_COLLABORATORS = 'multiple_collaborators',
   UUID = 'uuid',
-  AUTO_NUBER = 'autonumber',
+  AUTO_NUMBER = 'autonumber',
 }

@@ -22,7 +22,7 @@ export const updateRowAction = createAction({
       required: true,
     }),
     first_row_headers: Property.Checkbox({
-      displayName: 'Are the First row Headers?',
+      displayName: 'Does the first row contain headers?',
       description: 'If the first row is headers',
       required: true,
       defaultValue: false,

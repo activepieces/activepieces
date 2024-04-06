@@ -93,14 +93,14 @@ export const githubNewRepoEvent = createTrigger({
     }
   },
   async run(context) {
-    if (isVerficationCall(context.payload.body as Record<string, unknown>)) {
+    if (isVerificationCall(context.payload.body as Record<string, unknown>)) {
       return [];
     }
     return [context.payload.body];
   },
 });
 
-function isVerficationCall(payload: Record<string, any>) {
+function isVerificationCall(payload: Record<string, any>) {
   return payload['zen'] !== undefined;
 }
 

@@ -317,7 +317,7 @@ export const airtableCommon = {
       apiKey: params.personalToken,
     });
     const airtable = new Airtable();
-    const currentTablleSnapshot = (
+    const currentTableSnapshot = (
       await airtable
         .base(params.baseId)
         .table(params.tableId)
@@ -329,7 +329,7 @@ export const airtableCommon = {
         (x, y) =>
           new Date(x.createdTime).getTime() - new Date(y.createdTime).getTime()
       );
-    return currentTablleSnapshot;
+    return currentTableSnapshot;
   },
 
   async fetchTableList({

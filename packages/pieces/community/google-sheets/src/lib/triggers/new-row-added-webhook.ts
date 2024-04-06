@@ -81,7 +81,7 @@ export const newRowAddedTrigger = createTrigger({
 
     // fetch old row count for worksheet
     const oldRowCount = (await context.store.get(
-      `${context.propsValue.sheet_id}`
+      `${sheet_id}`
     )) as number;
 
     // fetch current row count for worksheet
@@ -98,7 +98,11 @@ export const newRowAddedTrigger = createTrigger({
     const currentRowCount = currentRowValues.length;
 
     // if no new rows return
-    if (oldRowCount === currentRowCount) {
+    if (oldRowCount >= currentRowCount) {
+      if(oldRowCount > currentRowCount) {
+        // Some rows were deleted
+        await context.store.put(`${sheet_id}`, currentRowCount);
+      }
       return [];
     }
 

@@ -67,7 +67,7 @@ export const newOrUpdatedAccountTrigger = createTrigger({
 				'18': { id: '17', key: 'List box', value: ['Option 1', 'Option 2'] },
 				'19': { id: '18', key: 'Radio Buttons', value: 'Option 1' },
 				'20': { id: '19', key: 'Check Box', value: ['Option 1', 'Option 2'] },
-				'21': { id: '20', key: 'Hidden', value: 'Hideen' },
+				'21': { id: '20', key: 'Hidden', value: 'Hidden' },
 			},
 		},
 		updated_fields: ['name'],

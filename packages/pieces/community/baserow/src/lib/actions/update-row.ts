@@ -29,7 +29,7 @@ export const updateRowAction = createAction({
   },
   async run(context) {
     const { table_id, row_id } = context.propsValue;
-    const tableFiedlsInput = context.propsValue.table_fields!;
+    const tableFieldsInput = context.propsValue.table_fields!;
     const formattedTableFields: DynamicPropsValue = {};
 
     const client = makeClient(
@@ -43,18 +43,18 @@ export const updateRowAction = createAction({
       fieldIDTypeMap[column.name] = column.type;
     }
 
-    Object.keys(tableFiedlsInput).forEach((key) => {
+    Object.keys(tableFieldsInput).forEach((key) => {
       const fieldType: string = fieldIDTypeMap[key];
       if (fieldType === BaserowFieldType.LINK_TO_TABLE) {
-        formattedTableFields[key] = tableFiedlsInput[key].map((id: string) =>
+        formattedTableFields[key] = tableFieldsInput[key].map((id: string) =>
           parseInt(id, 10)
         );
       } else if (fieldType === BaserowFieldType.MULTIPLE_COLLABORATORS) {
-        formattedTableFields[key] = tableFiedlsInput[key].map((id: string) => ({
+        formattedTableFields[key] = tableFieldsInput[key].map((id: string) => ({
           id: parseInt(id, 10),
         }));
       } else {
-        formattedTableFields[key] = tableFiedlsInput[key];
+        formattedTableFields[key] = tableFieldsInput[key];
       }
     });
     return await client.updateRow(table_id, row_id, formattedTableFields);

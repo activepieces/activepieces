@@ -93,7 +93,7 @@ import {
     ProjectMember,
 } from '@activepieces/ee-shared'
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { ExecutionMode, initilizeSentry, logger, QueueMode, system, SystemProp } from '@activepieces/server-shared'
+import { ExecutionMode, initializeSentry, logger, QueueMode, system, SystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -323,7 +323,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             flagHooks.set(enterpriseFlagsHooks)
             authenticationServiceHooks.set(cloudAuthenticationServiceHooks)
             domainHelper.set(platformDomainHelper)
-            initilizeSentry()
+            initializeSentry()
             break
         case ApEdition.ENTERPRISE:
             await app.register(customDomainModule)

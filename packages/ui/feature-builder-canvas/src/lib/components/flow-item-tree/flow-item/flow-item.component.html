@@ -10,7 +10,6 @@
         [class.ap-cursor-default]="(anyStepIsDragged$|async)" (dragStart)="draggingStarted()">
         <div class="ap-z-50">
           <app-flow-item-content #ItemContent [flowItem]="_flowItemData.content!"
-            [readOnly]="readOnly$ | async | defaultTrue"
             [selected]="selected$ | async | defaultFalse"></app-flow-item-content>
         </div>
       </div>
@@ -33,7 +32,7 @@
     <div #flowItem class=" ap-relative ap-z-50" apTrackHover
     #itemContentHoverTracker="hoverTrackerDirective" >
       <div class="ap-cursor-pointer">
-        <app-flow-item-content #ItemContent [flowItem]="_flowItemData.content!" [readOnly]="readOnly$ | async | defaultTrue"
+        <app-flow-item-content #ItemContent [flowItem]="_flowItemData.content!" 
         [selected]="selected$ | async | defaultFalse"></app-flow-item-content>
       </div>
  

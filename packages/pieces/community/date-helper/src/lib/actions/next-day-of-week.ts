@@ -82,10 +82,10 @@ export const nextDayofWeek = createAction({
     const currentTime = context.propsValue.currentTime as boolean;
     let time = context.propsValue.time as string;
 
-    const nextOccurance = new Date();
+    const nextOccurrence = new Date();
 
     if (currentTime === true) {
-      time = `${nextOccurance.getHours()}:${nextOccurance.getMinutes()}`;
+      time = `${nextOccurrence.getHours()}:${nextOccurrence.getMinutes()}`;
     }
     const [hours, minutes] = time.split(':').map(Number);
 
@@ -112,26 +112,26 @@ export const nextDayofWeek = createAction({
     }
 
     // Set the time
-    nextOccurance.setHours(hours, minutes, 0, 0);
+    nextOccurrence.setHours(hours, minutes, 0, 0);
 
     // Calculate the day difference
-    let dayDiff = dayIndex - nextOccurance.getDay();
-    console.log('dayDiff:', dayDiff, nextOccurance, new Date());
+    let dayDiff = dayIndex - nextOccurrence.getDay();
+    console.log('dayDiff:', dayDiff, nextOccurrence, new Date());
     if (
       dayDiff < 0 ||
-      (dayDiff === 0 && nextOccurance.getTime() < new Date().getTime())
+      (dayDiff === 0 && nextOccurrence.getTime() < new Date().getTime())
     ) {
       // If it's a past day in the week or today but past time, move to next week
       dayDiff += 7;
     }
     // Set the date to the next occurrence of the given day
-    nextOccurance.setDate(nextOccurance.getDate() + dayDiff);
+    nextOccurrence.setDate(nextOccurrence.getDate() + dayDiff);
 
     // Set the time for the timezone
-    nextOccurance.setMinutes(
-      nextOccurance.getMinutes() + timeDiff('UTC', timeZone)
+    nextOccurrence.setMinutes(
+      nextOccurrence.getMinutes() + timeDiff('UTC', timeZone)
     );
 
-    return { result: createNewDate(nextOccurance, timeFormat) };
+    return { result: createNewDate(nextOccurrence, timeFormat) };
   },
 });

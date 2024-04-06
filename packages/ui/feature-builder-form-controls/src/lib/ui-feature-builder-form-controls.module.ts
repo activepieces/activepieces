@@ -43,7 +43,7 @@ import { ReplaceMarkdownConstsPipe } from './pipes/replace-markdown-consts.pipe'
 import { ExtractControlErrorMessagePipe } from './pipes/extract-error-message-from-form-control.pipe';
 import { ActionOrTriggerDropdownComponent } from './components/action-or-trigger-dropdown/action-or-trigger-dropdown.component';
 import { DynamicInputToggleComponent } from './components/dynamic-input-toggle/dynamic-input-toggle.component';
-import { ShouldShwoDynamicInputToggleAboveInputPipe } from './pipes/should-show-dynamic-input-toggle-above-input.pipe';
+import { ShouldShowDynamicInputToggleAboveInputPipe } from './pipes/should-show-dynamic-input-toggle-above-input.pipe';
 import { DynamicPropertyControlComponent } from './components/dynamic-property-control/dynamic-property-control.component';
 import { FormGroupCasterPipe } from './pipes/form-group-caster.pipe';
 import { IsAuthPropertyPipe } from './pipes/is-auth-property.pipe';
@@ -82,7 +82,7 @@ const exportedDeclarations = [
     ExtractControlErrorMessagePipe,
     ActionOrTriggerDropdownComponent,
     DynamicInputToggleComponent,
-    ShouldShwoDynamicInputToggleAboveInputPipe,
+    ShouldShowDynamicInputToggleAboveInputPipe,
     FormGroupCasterPipe,
     IsAuthPropertyPipe,
   ],

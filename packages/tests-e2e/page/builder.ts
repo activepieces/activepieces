@@ -12,7 +12,7 @@ const property = {
 }
 
 export const builder = {
-    async selectInitalTrigger(page: Page, params: { piece: string, trigger: string }) {
+    async selectInitialTrigger(page: Page, params: { piece: string, trigger: string }) {
         await page.getByText('Select Trigger', { exact: true }).click();
         await page.getByPlaceholder('Search').click();
         await page.getByPlaceholder('Search').fill(params.piece);

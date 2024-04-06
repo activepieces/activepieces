@@ -101,8 +101,8 @@ export const catchWebhook = createTrigger({
   async run(context) {
     const authenticationType = context.propsValue.authType;
     assertNotNullOrUndefined(authenticationType, 'Authentication type is required');
-    const verfied = verifyAuth(authenticationType, context.propsValue.authFields ?? {}, context.payload.headers);
-    if (!verfied) {
+    const verified = verifyAuth(authenticationType, context.propsValue.authFields ?? {}, context.payload.headers);
+    if (!verified) {
       return []
     }
     return [context.payload]

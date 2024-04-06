@@ -29,7 +29,7 @@ import { StepMetaDataForMentions } from '@activepieces/ui/feature-builder-store'
       [webhookPrefix]="webhookPrefix"
       [formPieceTriggerPrefix]="formPieceTriggerPrefix"
       [propertiesMap]="props"
-      (customizedInputsChanged)="customizedInputsChangedHanlder($event)"
+      (customizedInputsChanged)="customizedInputsChangedHandler($event)"
       [hideCustomizedInputs]="hideCustomizedInputs"
       [stepMetaDataForMentions]="stepMetaDataForMentions"
     ></app-piece-properties-form>
@@ -77,7 +77,7 @@ export class DynamicPropertyControlComponent
     this.passedFormControl.setValue({});
   }
 
-  customizedInputsChangedHanlder(newValue: {
+  customizedInputsChangedHandler(newValue: {
     propertyName: string;
     value: boolean;
   }) {

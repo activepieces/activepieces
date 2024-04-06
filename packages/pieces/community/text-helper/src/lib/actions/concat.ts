@@ -17,13 +17,13 @@ export const concat = createAction({
       displayName: 'Texts',
       required: true,
     }),
-    seperator: Property.ShortText({
-      displayName: 'Seperator',
-      description: 'The text that seperates the texts you want to concatenate',
+    separator: Property.ShortText({
+      displayName: 'Separator',
+      description: 'The text that separates the texts you want to concatenate',
       required: false,
     }),
   },
   run: async (ctx) => {
-    return ctx.propsValue.texts.join(ctx.propsValue.seperator ?? '');
+    return ctx.propsValue.texts.join(ctx.propsValue.separator ?? '');
   },
 });

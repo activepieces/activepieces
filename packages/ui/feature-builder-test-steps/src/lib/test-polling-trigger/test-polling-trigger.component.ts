@@ -33,7 +33,7 @@ export class TestPollingTriggerComponent extends TestStepCoreComponent {
   saveNewSelectedData$: Observable<void>;
   selectedDataControl: FormControl<unknown> = new FormControl();
   initialHistoricalData$: Observable<PollingHistoricalData[]>;
-  initaillySelectedSampleData$: Observable<unknown>;
+  initiallySelectedSampleData$: Observable<unknown>;
   testStep$: Observable<PollingHistoricalData[]>;
   loading = false;
   failed = false;
@@ -69,7 +69,7 @@ export class TestPollingTriggerComponent extends TestStepCoreComponent {
           );
         })
       );
-    this.initaillySelectedSampleData$ = this.store
+    this.initiallySelectedSampleData$ = this.store
       .select(BuilderSelectors.selectTriggerSelectedSampleData)
       .pipe(
         take(1),

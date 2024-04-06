@@ -6,7 +6,7 @@ export const adjustInventoryLevelAction = createAction({
   auth: shopifyAuth,
   name: 'adjust_inventory_level',
   displayName: 'Adjust Inventory Level',
-  description: `Ajust inventory level of an item at a location.`,
+  description: `Adjust inventory level of an item at a location.`,
   props: {
     id: Property.Number({
       displayName: 'Inventory Item',

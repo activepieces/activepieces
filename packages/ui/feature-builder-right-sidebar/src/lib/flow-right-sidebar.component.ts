@@ -72,7 +72,7 @@ export class FlowRightSidebarComponent implements OnInit {
     private testStepService: TestStepService,
     private renderer2: Renderer2,
     private flagService: FlagService,
-    private pieceMetadaService: PieceMetadataService,
+    private pieceMetadataService: PieceMetadataService,
     public builderService: FlowBuilderService,
     private builderAutocompleteMentionsDropdownService: BuilderAutocompleteMentionsDropdownService
   ) {}
@@ -109,7 +109,7 @@ export class FlowRightSidebarComponent implements OnInit {
     return this.currentStep$.pipe(
       switchMap((step) => {
         if (step && step.type === TriggerType.PIECE) {
-          return this.pieceMetadaService
+          return this.pieceMetadataService
             .getPieceMetadata(
               step.settings.pieceName,
               step.settings.pieceVersion
@@ -155,11 +155,11 @@ export class FlowRightSidebarComponent implements OnInit {
         switchMap((res) => {
           if (res) {
             return forkJoin([
-              this.pieceMetadaService.getPieceMetadata(
+              this.pieceMetadataService.getPieceMetadata(
                 res.pieceName,
                 res.version
               ),
-              this.pieceMetadaService.getPieceMetadata(
+              this.pieceMetadataService.getPieceMetadata(
                 res.pieceName,
                 undefined
               ),

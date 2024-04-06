@@ -142,10 +142,10 @@ export const triggerHelper = {
                     }
 
                     if (!params.appWebhookUrl) {
-                        throw new Error(`App webhook url is not avaiable for piece name ${pieceName}`)
+                        throw new Error(`App webhook url is not available for piece name ${pieceName}`)
                     }
                     if (!params.webhookSecret) {
-                        throw new Error(`Webhook secret is not avaiable for piece name ${pieceName}`)
+                        throw new Error(`Webhook secret is not available for piece name ${pieceName}`)
                     }
 
                     try {
