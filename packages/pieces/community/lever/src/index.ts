@@ -5,15 +5,15 @@ import { updateOpportunityStage } from './lib/actions/update-opportunity-stage';
 import { listOpportunityForms } from './lib/actions/list-opportunity-forms';
 
 export const LEVER_BASE_URL = 'https://api.lever.co/v1';
+
 export const leverAuth = PieceAuth.CustomAuth({
-  description: 'Lever authentication requires an API key.',
-  required: true,
   props: {
     apiKey: PieceAuth.SecretText({
       displayName: 'API key',
       required: true,
     }),
   },
+  required: true,
 });
 
 export type LeverAuth = {
@@ -35,7 +35,7 @@ export const lever = createPiece({
       },
       auth: leverAuth,
       authMapping: (auth) => {
-        const { apiKey } = auth as { apiKey: string };
+        const { apiKey } = auth as LeverAuth;
         return {
           Authorization:
             'Basic ' + Buffer.from(`${apiKey}:`).toString('base64'),
