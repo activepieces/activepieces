@@ -19,7 +19,8 @@ export const newRowAddedTrigger = createTrigger({
   description: 'Triggers when a new row is added to bottom of a spreadsheet.',
   props: {
     info: Property.MarkDown({
-      value: 'Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.'
+      value:
+        'Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.',
     }),
     spreadsheet_id: googleSheetsCommon.spreadsheet_id,
     sheet_id: googleSheetsCommon.sheet_id,
@@ -79,7 +80,7 @@ export const newRowAddedTrigger = createTrigger({
 
     // fetch old row count for worksheet
     const oldRowCount = (await context.store.get(
-      `${context.propsValue.sheet_id}`
+      `${sheet_id}`
     )) as number;
 
     // fetch current row count for worksheet
@@ -96,7 +97,11 @@ export const newRowAddedTrigger = createTrigger({
     const currentRowCount = currentRowValues.length;
 
     // if no new rows return
-    if (oldRowCount === currentRowCount) {
+    if (oldRowCount >= currentRowCount) {
+      if(oldRowCount > currentRowCount) {
+        // Some rows were deleted
+        await context.store.put(`${sheet_id}`, currentRowCount);
+      }
       return [];
     }
 
@@ -162,7 +167,9 @@ export const newRowAddedTrigger = createTrigger({
     );
 
     // transform row values
-    const transformedRowValues = transformWorkSheetValues(currentSheetValues, 0).slice(-5).reverse();
+    const transformedRowValues = transformWorkSheetValues(currentSheetValues, 0)
+      .slice(-5)
+      .reverse();
 
     return transformedRowValues;
   },
