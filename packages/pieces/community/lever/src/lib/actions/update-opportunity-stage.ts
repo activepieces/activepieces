@@ -7,7 +7,6 @@ import {
 import { LEVER_BASE_URL, LeverAuth, leverAuth } from '../..';
 
 export const updateOpportunityStage = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'updateOpportunityStage',
   displayName: 'Update opportunity stage',
   description: "Change an Opportunity's current stage",
