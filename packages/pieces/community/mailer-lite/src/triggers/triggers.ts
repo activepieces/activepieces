@@ -30,7 +30,7 @@ const subscriberSample = {
 		z_i_p: null,
 	},
 	opted_in_at: null,
-	option_ip: null,
+	optin_ip: null,
 };
 
 export const triggers = [
@@ -66,7 +66,7 @@ export const triggers = [
 			created_at: '2024-02-05 21:30:53',
 			updated_at: '2024-02-05 21:54:58',
 			opted_in_at: null,
-			option_ip: null,
+			optin_ip: null,
 			email_changed_at: null,
 		},
 	},
