@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { BehaviorSubject, Observable, map, shareReplay, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, Observable, map, of, shareReplay, switchMap, tap } from 'rxjs';
 import { GitRepo } from '@activepieces/ee-shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
@@ -33,7 +33,7 @@ export class SyncProjectComponent {
   displayedColumns = ['remoteUrl', 'branch', 'updated', 'action'];
   dialogOpened$?: Observable<null | GitRepo>;
   currentRepo$: Observable<GitRepo | undefined>;
-  showUpgrade$: Observable<boolean>;
+  showUpgrade$: Observable<boolean>= of(false);
   disconnect$?: Observable<void>;
   currentProject$: Observable<ProjectWithLimits>;
   openPullDialog$: Observable<void> | undefined;
