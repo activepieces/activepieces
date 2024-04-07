@@ -37,7 +37,7 @@ import {
   InstallCommunityPieceModalComponent,
   PieceMetadataService,
 } from '@activepieces/ui/feature-pieces';
-import { PLATFORM_RESOLVER_KEY } from '../../platform.resolver';
+import { PLATFORM_RESOLVER_KEY } from '@activepieces/ui/common';
 import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
 import { PieceScope } from '@activepieces/shared';
 
