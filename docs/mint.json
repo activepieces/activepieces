@@ -7,9 +7,9 @@
   },
   "favicon": "/favicon.svg",
   "colors": {
-    "primary": "#5155D7",
-    "dark": "#3033A6",
-    "light": "#6D72F6",
+    "primary": "#6e41e2",
+    "dark": "#6838e0",
+    "light": "#c5b3f3",
     "background": {
       "dark": "#121212"
     }
@@ -200,24 +200,27 @@
       ]
     },
     {
-      "group": "Tutorials",
+      "group": "Build a Piece",
       "pages": [
+        "developers/building-pieces/start-building",
         "developers/setup-fork",
         {
           "group": "Development Environment",
           "icon": "circle-2",
           "pages": [
             "developers/development-setup/getting-started",
-            "developers/development-setup/codespaces",
             "developers/development-setup/local",
-            "developers/development-setup/dev-container"
+            "developers/development-setup/dev-container",
+            "developers/development-setup/codespaces"
           ]
         },
+        "developers/building-pieces/piece-definition",
+        "developers/building-pieces/piece-authentication",
         "developers/building-pieces/create-action",
         "developers/building-pieces/create-trigger",
         {
           "group": "Sharing Pieces",
-          "icon": "circle-5",
+          "icon": "circle-7",
           "pages": [
             "developers/sharing-pieces/overview",
             "developers/sharing-pieces/contribute",
