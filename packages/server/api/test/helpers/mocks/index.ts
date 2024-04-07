@@ -39,10 +39,12 @@ import {
     FlowVersionState,
     NotificationStatus,
     PackageType,
+    PiecesFilterType,
     PieceType,
     Platform,
     Project,
     ProjectMemberRole,
+    ProjectPlan,
     RunEnvironment,
     TemplateType,
     TriggerType,
@@ -104,6 +106,22 @@ export const createMockTemplate = (
         id: template?.id ?? apId(),
         created: template?.created ?? faker.date.recent().toISOString(),
         updated: template?.updated ?? faker.date.recent().toISOString(),
+    }
+}
+
+export const createMockPlan = (plan?: Partial<ProjectPlan>): ProjectPlan => {
+    return {
+        id: plan?.id ?? apId(),
+        created: plan?.created ?? faker.date.recent().toISOString(),
+        updated: plan?.updated ?? faker.date.recent().toISOString(),
+        projectId: plan?.projectId ?? apId(),
+        name: plan?.name ?? faker.lorem.word(),
+        minimumPollingInterval: plan?.minimumPollingInterval ?? 0,
+        connections: plan?.connections ?? 0,
+        pieces: plan?.pieces ?? [],
+        piecesFilterType: plan?.piecesFilterType ?? PiecesFilterType.NONE,
+        teamMembers: plan?.teamMembers ?? 0,
+        tasks: plan?.tasks ?? 0,
     }
 }
 

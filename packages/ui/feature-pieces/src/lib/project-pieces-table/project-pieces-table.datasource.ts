@@ -1,15 +1,10 @@
 import { DataSource } from '@angular/cdk/collections';
-import { Observable, BehaviorSubject, tap, switchMap, delay } from 'rxjs';
+import { Observable, BehaviorSubject, tap, switchMap } from 'rxjs';
 import { PieceMetadataSummary } from '@activepieces/pieces-framework';
 import { combineLatest } from 'rxjs';
 import { PieceMetadataService } from '../services/piece.service';
 
-/**
- * Data source for the LogsTable view. This class should
- * encapsulate all logic for fetching and manipulating the displayed data
- * (including sorting, pagination, and filtering).
- */
-export class CommunityPiecesDataSource extends DataSource<PieceMetadataSummary> {
+export class ProjectPiecesDataSource extends DataSource<PieceMetadataSummary> {
   data: PieceMetadataSummary[] = [];
   isLoading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
   constructor(
@@ -30,8 +25,9 @@ export class CommunityPiecesDataSource extends DataSource<PieceMetadataSummary> 
       tap(() => {
         this.isLoading$.next(true);
       }),
-      switchMap(() => this.pieceMetadataService.listInstalledPieces()),
-      delay(100),
+      switchMap(() => this.pieceMetadataService.listPieces({
+        includeHidden: false,
+      })),
       tap((pieces) => {
         this.data = pieces;
         this.isLoading$.next(false);
