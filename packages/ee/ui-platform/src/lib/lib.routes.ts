@@ -1,6 +1,6 @@
 import { Route } from '@angular/router';
 import { PlatformDashboardContainerComponent } from './pages/platform-dashboard-container/platform-dashboard-container.component';
-import { PLATFORM_RESOLVER_KEY, platformResolver } from './platform.resolver';
+import { PLATFORM_RESOLVER_KEY, PlatformResolver }  from '@activepieces/ui/common';
 import { ProjectsTableComponent } from './pages/projects-table/projects-table.component';
 import { PlatformAppearanceComponent } from './pages/platform-appearance/platform-appearance.component';
 import { PlatformSettingsComponent } from './pages/platform-settings/platform-settings.component';
@@ -39,7 +39,7 @@ export const uiEePlatformRoutes: Route[] = [
           title: $localize`Appearance`,
         },
         resolve: {
-          [PLATFORM_RESOLVER_KEY]: platformResolver,
+          [PLATFORM_RESOLVER_KEY]: PlatformResolver,
           [PLATFORM_DEMO_RESOLVER_KEY]: isPlatformDemoResolver,
         },
       },
@@ -50,7 +50,7 @@ export const uiEePlatformRoutes: Route[] = [
           title: $localize`Pieces`,
         },
         resolve: {
-          [PLATFORM_RESOLVER_KEY]: platformResolver,
+          [PLATFORM_RESOLVER_KEY]: PlatformResolver,
           [PLATFORM_DEMO_RESOLVER_KEY]: isPlatformDemoResolver,
         },
       },
@@ -71,7 +71,7 @@ export const uiEePlatformRoutes: Route[] = [
           title: $localize`Settings`,
         },
         resolve: {
-          [PLATFORM_RESOLVER_KEY]: platformResolver,
+          [PLATFORM_RESOLVER_KEY]: PlatformResolver,
           [PLATFORM_DEMO_RESOLVER_KEY]: isPlatformDemoResolver,
         },
       },

@@ -1,5 +1,5 @@
 <div class="ap-w-full">
-    @if((showUpgrade$ | async ) === true)
+    @if(showUpgrade)
     {
             <ap-upgrade-note [insideTab]="true" [featureNoteTitle]="upgradeNoteTitle" [featureNote]="upgradeNote"
                 docsLink="https://www.activepieces.com/docs/operations/git-sync"></ap-upgrade-note>

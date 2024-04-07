@@ -1,21 +1,21 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { BehaviorSubject, Observable, map, of, shareReplay, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, Observable, map,  shareReplay, switchMap, tap } from 'rxjs';
 import { GitRepo } from '@activepieces/ee-shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
-  AuthenticationService,
   GenericSnackbarTemplateComponent,
-  PlatformService,
+  PLATFORM_RESOLVER_KEY,
   ProjectSelectors,
   UiCommonModule,
 } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
-import { ProjectWithLimits } from '@activepieces/shared';
+import { Platform, ProjectWithLimits } from '@activepieces/shared';
 import { SyncProjectService } from '../../services/sync-project.service';
 import { ConfigureRepoDialogComponent } from '../dialogs/configure-repo-dialog/configure-repo-dialog.component';
 import { PullFromGitDialogComponent, PullFromGitDialogData } from '../dialogs/pull-from-git-dialog/pull-from-git-dialog.component';
 import { AsyncPipe } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-sync-project',
@@ -33,7 +33,7 @@ export class SyncProjectComponent {
   displayedColumns = ['remoteUrl', 'branch', 'updated', 'action'];
   dialogOpened$?: Observable<null | GitRepo>;
   currentRepo$: Observable<GitRepo | undefined>;
-  showUpgrade$: Observable<boolean>= of(false);
+  showUpgrade = true;
   disconnect$?: Observable<void>;
   currentProject$: Observable<ProjectWithLimits>;
   openPullDialog$: Observable<void> | undefined;
@@ -46,18 +46,13 @@ export class SyncProjectComponent {
     private matDialog: MatDialog,
     private syncProjectService: SyncProjectService,
     private snackbar: MatSnackBar,
-    private platformService: PlatformService,
-    private authenticationService: AuthenticationService,
-    private store: Store
+    private store: Store,
+    private route:ActivatedRoute
   ) {
     this.currentProject$ = this.store.select(
       ProjectSelectors.selectCurrentProject
     );
-
-    this.showUpgrade$ = this.platformService.getPlatform(this.authenticationService.getPlatformId()!).pipe(
-      map((p) => {
-        return !p.gitSyncEnabled;
-      }))
+    this.showUpgrade = !(this.route.snapshot.data[PLATFORM_RESOLVER_KEY] as Platform).gitSyncEnabled;
     this.currentRepo$ = this.refresh$.pipe(
       switchMap(() => this.syncProjectService.get()),
       shareReplay(1)
