@@ -10,19 +10,16 @@ let cache: PieceMetadataSchema[] = []
 const repo = repoFactory(PieceMetadataEntity)
 const lock: Mutex = new Mutex()
 
-type State = {
-    recentUpdate: string | undefined
-    count: number
-}
 
 export const localPieceCache = {
     async getSortedbyNameAscThenVersionDesc(): Promise<PieceMetadataSchema[]> {
-        const newestState: State | undefined = await repo().createQueryBuilder().select('MAX(updated)', 'recentUpdate').addSelect('count(*)', 'count').getRawOne()
-        if (!requireUpdate(newestState)) {
+        const newestPiece = await repo().createQueryBuilder().select('MAX(updated)', 'mx').getRawOne()
+        const newestPieceDate = newestPiece?.mx
+        if (!requireUpdate(newestPieceDate)) {
             return cache
         }
         cache = await executeWithLock(async () => {
-            if (!requireUpdate(newestState)) {
+            if (!requireUpdate(newestPieceDate)) {
                 return cache
             }
             const result = await repo().find()
@@ -37,14 +34,14 @@ export const localPieceCache = {
     },
 }
 
-function requireUpdate(newestState: State | undefined): boolean {
-    if (isNil(newestState)) {
+function requireUpdate(newestPieceDate: string | undefined): boolean {
+    if (isNil(newestPieceDate)) {
         return false
     }
     const newestInCache = cache.reduce((acc, piece) => {
         return Math.max(dayjs(piece.updated).unix(), acc)
     }, 0)
-    return dayjs(newestState.recentUpdate).unix() !== newestInCache || newestState.count !== cache.length
+    return dayjs(newestPieceDate).unix() !== newestInCache
 }
 
 const executeWithLock = async <T>(methodToExecute: () => T): Promise<T> => {
