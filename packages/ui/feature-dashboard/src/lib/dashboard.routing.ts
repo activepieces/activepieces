@@ -105,7 +105,7 @@ export const DashboardLayoutRouting: Routes = [
         component: SettingsPageComponent,
         resolve: {
           [FLAGS_RESOLVE_DATA]: FlagsResolver,
-          [PLATFORM_RESOLVER_KEY]: PlatformResolver
+          [PLATFORM_RESOLVER_KEY]: PlatformResolver,
         },
         canActivate: [
           showBasedOnRoles([

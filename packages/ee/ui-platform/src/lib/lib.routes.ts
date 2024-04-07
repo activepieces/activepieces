@@ -1,6 +1,9 @@
 import { Route } from '@angular/router';
 import { PlatformDashboardContainerComponent } from './pages/platform-dashboard-container/platform-dashboard-container.component';
-import { PLATFORM_RESOLVER_KEY, PlatformResolver }  from '@activepieces/ui/common';
+import {
+  PLATFORM_RESOLVER_KEY,
+  PlatformResolver,
+} from '@activepieces/ui/common';
 import { ProjectsTableComponent } from './pages/projects-table/projects-table.component';
 import { PlatformAppearanceComponent } from './pages/platform-appearance/platform-appearance.component';
 import { PlatformSettingsComponent } from './pages/platform-settings/platform-settings.component';
