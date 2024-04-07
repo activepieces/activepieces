@@ -1,10 +1,12 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { BehaviorSubject, Observable, map, of, shareReplay, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, Observable, map, shareReplay, switchMap, tap } from 'rxjs';
 import { GitRepo } from '@activepieces/ee-shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
+  AuthenticationService,
   GenericSnackbarTemplateComponent,
+  PlatformService,
   ProjectSelectors,
   UiCommonModule,
 } from '@activepieces/ui/common';
@@ -44,13 +46,18 @@ export class SyncProjectComponent {
     private matDialog: MatDialog,
     private syncProjectService: SyncProjectService,
     private snackbar: MatSnackBar,
+    private platformService: PlatformService,
+    private authenticationService: AuthenticationService,
     private store: Store
   ) {
     this.currentProject$ = this.store.select(
       ProjectSelectors.selectCurrentProject
     );
 
-    this.showUpgrade$ = of(false)
+    this.showUpgrade$ = this.platformService.getPlatform(this.authenticationService.getPlatformId()!).pipe(
+      map((p) => {
+        return !p.gitSyncEnabled;
+      }))
     this.currentRepo$ = this.refresh$.pipe(
       switchMap(() => this.syncProjectService.get()),
       shareReplay(1)
@@ -116,6 +123,5 @@ export class SyncProjectComponent {
         );
       }),
     )
-
   }
 }
