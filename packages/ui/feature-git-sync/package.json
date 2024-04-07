@@ -11,7 +11,8 @@
     "@angular/forms": "17.1.3",
     "rxjs": "7.8.1",
     "@activepieces/shared": "*",
-    "angular-svg-icon": "15.0.0"
+    "angular-svg-icon": "15.0.0",
+    "@angular/router": "17.1.3"
   },
   "dependencies": {},
   "sideEffects": false
