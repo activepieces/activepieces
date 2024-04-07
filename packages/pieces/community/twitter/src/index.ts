@@ -8,7 +8,7 @@ import { TwitterApi } from 'twitter-api-v2';
 import { createTweet } from './lib/actions/create-tweet';
 
 const markdownDescription = `
-If you don't have the crednetials down below, please follow these steps to obtain the required credentials:
+If you don't have the credentials down below, please follow these steps to obtain the required credentials:
 
 1. Go to [https://developer.twitter.com/en/portal/projects-and-apps](https://developer.twitter.com/en/portal/projects-and-apps) and click on your app settings.
 

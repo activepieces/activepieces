@@ -30,7 +30,7 @@
 <ng-template #btnContent>
   <div [class.ap-opacity-0]="!loading" class="spinner-border loading-spinner-size-and-position"
     [class.dark-spinner]="darkLoadingSpinner" role="status"></div>
-  <div [class.ap-opacity-0]="loading">
+  <div [class.ap-opacity-0]="loading" class="ap-flex ap-justify-center ap-items-center ap-gap-2">
     <ng-content></ng-content>
   </div>
 </ng-template>

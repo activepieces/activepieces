@@ -40,7 +40,7 @@ export const postStatus = createAction({
     }),
     media: Property.File({
       displayName: 'Media URL or File',
-      description: 'The media attachement for your status',
+      description: 'The media attachment for your status',
       required: false,
     }),
   },

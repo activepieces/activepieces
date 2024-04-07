@@ -7,7 +7,7 @@ export const ARE_THERE_FLOWS_FLAG = 'areThererFlows';
 @Injectable({
   providedIn: 'root',
 })
-export class AreThereFlowsResovler {
+export class AreThereFlowsResolver {
   constructor(
     private flowService: FlowService,
     private authenticationService: AuthenticationService

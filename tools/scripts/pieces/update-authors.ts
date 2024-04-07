@@ -459,8 +459,8 @@ function loadSrcIndexFiles(directoryPath: string) {
                     throw new Error("Pattern 'authors: [...] not found in the file content. " + indexPath);
                 }
 
-                const modifedContent = fileContent.replace(/authors: \[(.*?)\]/, `authors: ${JSON.stringify(uniqueAuthors)}`);
-                fs.writeFileSync(indexPath, modifedContent, { encoding: 'utf-8' });
+                const modifiedContent = fileContent.replace(/authors: \[(.*?)\]/, `authors: ${JSON.stringify(uniqueAuthors)}`);
+                fs.writeFileSync(indexPath, modifiedContent, { encoding: 'utf-8' });
 
                 const packageJson = path.join(filePath, 'package.json');
                 const packageJsonContent = JSON.parse(fs.readFileSync(packageJson, { encoding: 'utf-8' }));
@@ -471,7 +471,7 @@ function loadSrcIndexFiles(directoryPath: string) {
     });
 }
 
-// Sort the offical team members last.
+// Sort the official team members last.
 const authorsOrder = ['Abdallah-Alwarawreh', 'Salem-Alaa', 'kishanprmr', 'MoShizzle', 'AbdulTheActivePiecer', 'khaledmashaly', 'abuaboud'].map(author => author.toLocaleLowerCase());
 
 function customSort(authors: string[]): string[] {

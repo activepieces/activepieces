@@ -1,8 +1,9 @@
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
+    ARRAY_COLUMN_TYPE,
     BaseColumnSchemaPart,
-    TIMESTAMP_COLUMN_TYPE,
+    isPostgres,
 } from '../../database/database-common'
 import { Project, ProjectPlan } from '@activepieces/shared'
 
@@ -15,16 +16,8 @@ export const ProjectPlanEntity = new EntitySchema<ProjectPlanSchema>({
     columns: {
         ...BaseColumnSchemaPart,
         projectId: ApIdSchema,
-        flowPlanName: {
+        name: {
             type: String,
-        },
-        stripeCustomerId: {
-            type: String,
-            nullable: true,
-        },
-        stripeSubscriptionId: {
-            type: String,
-            nullable: true,
         },
         minimumPollingInterval: {
             type: Number,
@@ -32,18 +25,19 @@ export const ProjectPlanEntity = new EntitySchema<ProjectPlanSchema>({
         connections: {
             type: Number,
         },
+        pieces: {
+            type: ARRAY_COLUMN_TYPE,
+            array: isPostgres(),
+            nullable: false,
+        },
+        piecesFilterType: {
+            type: String,
+        },
         teamMembers: {
             type: Number,
         },
         tasks: {
             type: Number,
-        },
-        tasksPerDay: {
-            type: Number,
-            nullable: true,
-        },
-        subscriptionStartDatetime: {
-            type: TIMESTAMP_COLUMN_TYPE,
         },
     },
     indices: [

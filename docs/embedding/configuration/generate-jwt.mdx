@@ -36,7 +36,8 @@ The signed tokens must include these claims in the payload:
     "externalProjectId": "user_project_id"
     "firstName": "John",
     "lastName": "Doe",
-    "email": "mo@activepieces.om",
+    "email": "john@example.com",
+    "role": "EDITOR",
 	// Expiry timestamp for token
 	"exp": 1856563200
 }
@@ -61,7 +62,8 @@ let token = jwt.sign(
     externalProjectId: "user_project_id",
     firstName: "John",
     lastName: "Doe",
-    email: "mo@activepieces.om",
+    role: "EDITOR",
+    email: "john@example.om",
     exp: currentTime + (24 * 60 * 60), // 1 day from now
   },
   process.env.ACTIVEPIECES_SIGNING_KEY,

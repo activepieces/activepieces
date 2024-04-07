@@ -99,6 +99,11 @@ For more details, check out the [Piece Development](../development-setup/getting
 
 Once you edit the environment variable, restart the backend. The piece will be rebuilt. After this process, you'll need to **refresh** the frontend to see the changes.
 
+<Tip>
+If the build fails, try debugging by running `npx nx run-many -t build --projects=gelato`.
+It will display any errors in your code.
+</Tip>
+
 To test the action, use the flow builder in Activepieces. It should function as shown in the screenshot.
 
 ![Gelato Action](/resources/screenshots/gelato-action.png)

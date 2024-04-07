@@ -106,7 +106,7 @@ interface UUIDField extends BaserowCommonField {
   type: BaserowFieldType.UUID;
 }
 interface AutoNumberField extends BaserowCommonField {
-  type: BaserowFieldType.AUTO_NUBER;
+  type: BaserowFieldType.AUTO_NUMBER;
 }
 interface MultipleCollaboratorsField extends BaserowCommonField {
   type: BaserowFieldType.MULTIPLE_COLLABORATORS;

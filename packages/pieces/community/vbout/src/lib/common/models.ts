@@ -16,7 +16,7 @@ export interface EmailListCreateRequest {
   reply_to?: string;
   fromemail?: string;
   from_name?: string;
-  doubleOptin?: string;
+  doubleOption?: string;
   notify?: string;
   notify_email?: string;
   success_email?: string;
@@ -34,12 +34,12 @@ export interface ContactList {
   reply_to: string;
   from_email: string;
   from_name: string;
-  confimation_email: string;
+  confirmation_email: string;
   success_email: string;
-  confimation_message: string;
+  confirmation_message: string;
   success_message: string;
   error_message: string;
-  doubleOptin: string;
+  doubleOption: string;
   notify_email: string;
   creation_date: string;
   fields: {

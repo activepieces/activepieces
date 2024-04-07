@@ -5,7 +5,7 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 
-export const googleBussinessCommon = {
+export const googleBusinessCommon = {
   account: Property.Dropdown({
     displayName: 'Account',
     required: true,

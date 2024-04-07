@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-convertkit",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "dependencies": {
     "@activepieces/pieces-framework": "0.7.28",
     "@activepieces/pieces-common": "0.2.12",

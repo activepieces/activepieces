@@ -77,6 +77,7 @@ export class PlatformSettingsComponent implements AfterViewInit {
       fragment: newFragment,
     });
   }
+
   tabChanged(event: MatTabChangeEvent) {
     if (event.index < 0 || event.index >= this.tabIndexFragmentMap.length)
       return;

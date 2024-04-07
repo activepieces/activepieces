@@ -10,7 +10,7 @@ export const addPointsToCollection = createAction({
   name: 'add_points_to_collection',
   displayName: 'Add points to collection',
   description:
-    'Instert a point (= embedding or vector + other infos) to a specific collection, if the collection does not exist it will be created',
+    'Insert a point (= embedding or vector + other infos) to a specific collection, if the collection does not exist it will be created',
   props: {
     collectionName,
     embeddings: Property.File({
@@ -45,7 +45,7 @@ export const addPointsToCollection = createAction({
     }),
     payload: Property.Json({
       displayName: 'Additional Payload',
-      description: 'The additional informations for the points',
+      description: 'The additional information for the points',
       required: false,
     }),
     storage: Property.StaticDropdown({
@@ -64,7 +64,7 @@ export const addPointsToCollection = createAction({
   run: async ({ auth, propsValue }) => {
     const client = new QdrantClient({
       apiKey: auth.key,
-      url: auth.serverAdress,
+      url: auth.serverAddress,
     });
 
     const embeddings = decodeEmbeddings(propsValue.embeddings.data);

@@ -11,7 +11,7 @@ export const unsubscribeMultipleAction = createAction({
   name: 'unsubscribe_multiple',
   auth: sendyAuth,
   displayName: 'Unsubscribe Multiple Lists',
-  description: 'Unsubscribe a subscriber from mulitple lists',
+  description: 'Unsubscribe a subscriber from multiple lists',
   props: {
     lists: Property.MultiSelectDropdown({
       displayName: 'Lists',

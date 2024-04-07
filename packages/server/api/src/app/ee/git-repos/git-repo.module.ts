@@ -10,7 +10,7 @@ import {
     ConfigureRepoRequest,
     GitRepoWithoutSensitiveData,
     ProjectSyncPlan,
-    PullGitRepoFromPojectRequest,
+    PullGitRepoFromProjectRequest,
     PullGitRepoRequest,
     PushGitRepoRequest,
 } from '@activepieces/ee-shared'
@@ -90,7 +90,7 @@ const PullRepoFromProjectRequestSchema = {
     schema: {
         description:
             'Pull all changes from the git repository and overwrite any conflicting changes in the project.',
-        body: PullGitRepoFromPojectRequest,
+        body: PullGitRepoFromProjectRequest,
         tags: ['git-repo'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         response: {

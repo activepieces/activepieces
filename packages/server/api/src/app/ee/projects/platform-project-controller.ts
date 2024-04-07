@@ -15,6 +15,7 @@ import {
     assertNotNullOrUndefined,
     EndpointScope,
     ErrorCode,
+    Permission,
     PlatformRole,
     Principal,
     PrincipalType,
@@ -58,7 +59,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
     app.post('/:id', UpdateProjectRequest, async (request) => {
         const project = await projectService.getOneOrThrow(request.params.id)
         const haveTokenForTheProject = request.principal.projectId === project.id
-        const ownThePlatform = request.principal.platform.role === PlatformRole.OWNER && request.principal.platform.id === project.platformId
+        const ownThePlatform = request.principal.platform.role === PlatformRole.OWNER && (request.principal.platform.id === project.platformId)
         if (!haveTokenForTheProject && !ownThePlatform) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
@@ -100,6 +101,7 @@ const UpdateProjectRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
         scope: EndpointScope.PLATFORM,
+        permission: Permission.WRITE_PROJECT_PLAN,
     },
     schema: {
         tags: ['projects'],

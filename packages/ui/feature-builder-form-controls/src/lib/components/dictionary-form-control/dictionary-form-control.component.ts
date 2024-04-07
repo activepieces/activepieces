@@ -14,7 +14,7 @@ import { BuilderAutocompleteDropdownHandlerComponent } from '../interpolating-te
 import { ControlThatUsesMentionsCoreComponent } from '../control-that-uses-mentions-core/control-that-uses-mentions-core.component';
 
 @Component({
-  selector: 'app-dictonary-form-control',
+  selector: 'app-dictionary-form-control',
   templateUrl: './dictionary-form-control.component.html',
   styleUrls: ['./dictionary-form-control.component.scss'],
   providers: [
@@ -115,15 +115,15 @@ export class DictionaryFormControlComponent
     }
   }
   formatControlValue() {
-    const dictonaryControlValue: { [key: string]: unknown } = {};
+    const dictionaryControlValue: { [key: string]: unknown } = {};
     this.pairs.controls.forEach((pairGroup) => {
       if (pairGroup.get('key')?.value && pairGroup.get('value')?.value) {
         const key = pairGroup.get('key')?.value;
         const value = pairGroup.get('value')?.value;
-        dictonaryControlValue[key] = value;
+        dictionaryControlValue[key] = value;
       }
     });
-    return dictonaryControlValue;
+    return dictionaryControlValue;
   }
   async addMention(
     textControl: InterpolatingTextFormControlComponent,

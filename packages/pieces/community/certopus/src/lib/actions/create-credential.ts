@@ -163,7 +163,7 @@ export const createCredential = createAction({
             if (field.key !== 'email') {
               const params = {
                 displayName: field.label,
-                description: `Eneter data for the ${field.label} field`,
+                description: `Enter data for the ${field.label} field`,
                 required: true,
               };
               fields[field.key] = Property.ShortText(params);

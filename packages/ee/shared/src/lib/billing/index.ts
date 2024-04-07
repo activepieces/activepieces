@@ -1,3 +1,5 @@
+import { PiecesFilterType } from '@activepieces/shared'
+
 export * from './project-stripe'
 
 
@@ -7,6 +9,8 @@ export type FlowPlanLimits = {
     minimumPollingInterval: number
     connections: number
     teamMembers: number
+    pieces: string[]
+    piecesFilterType: PiecesFilterType
 }
 
 export const MAXIMUM_ALLOWED_TASKS = 200000
@@ -16,6 +20,8 @@ export const DEFAULT_FREE_PLAN_LIMIT = {
     tasks: 1000,
     teamMembers: 1,
     connections: 200,
+    pieces: [],
+    piecesFilterType: PiecesFilterType.NONE,
     minimumPollingInterval: 5,
 }
 
@@ -24,6 +30,8 @@ export const DEFAULT_PLATFORM_LIMIT = {
     connections: 200,
     tasks: 50000,
     teamMembers: 5,
+    pieces: [],
+    piecesFilterType: PiecesFilterType.NONE,
     minimumPollingInterval: 1,
 }
 

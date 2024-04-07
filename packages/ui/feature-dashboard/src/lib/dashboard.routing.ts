@@ -3,7 +3,7 @@ import { RunsTableComponent } from './pages/runs-table/runs-table.component';
 import { FlowsTableComponent } from './pages/flows-table/flows-table.component';
 import {
   ARE_THERE_FLOWS_FLAG,
-  AreThereFlowsResovler,
+  AreThereFlowsResolver,
 } from './resolvers/are-there-flows.resolver';
 import { ConnectionsTableComponent } from './pages/connections-table/connections-table.component';
 import { FoldersResolver } from '@activepieces/ui/feature-folders-store';
@@ -16,13 +16,10 @@ import {
 } from '@activepieces/ui/common';
 import { PlansPageComponent } from '@activepieces/ee-billing-ui';
 import { ProjectMembersTableComponent } from '@activepieces/ee/project-members';
-import { CommunityPiecesTableComponent } from '@activepieces/ui/feature-pieces';
 import { ApFlagId, ProjectMemberRole } from '@activepieces/shared';
 import { ActivityTableComponent } from './pages/activity-table/activity-table.component';
-import {
-  RepoResolver,
-  SyncProjectComponent,
-} from '@activepieces/ui-feature-git-sync';
+import { SettingsPageComponent } from './pages/settings-page/settings-page.component';
+import { FLAGS_RESOLVE_DATA, FlagsResolver } from './resolvers/flags.resolver';
 
 export const DashboardLayoutRouting: Routes = [
   {
@@ -82,21 +79,6 @@ export const DashboardLayoutRouting: Routes = [
       },
       {
         data: {
-          title: $localize`My Pieces`,
-        },
-        path: 'settings/my-pieces',
-        canActivate: [
-          showBasedOnFlagGuard(ApFlagId.SHOW_COMMUNITY_PIECES),
-          showBasedOnRoles([
-            ProjectMemberRole.ADMIN,
-            ProjectMemberRole.EDITOR,
-            ProjectMemberRole.VIEWER,
-          ]),
-        ],
-        component: CommunityPiecesTableComponent,
-      },
-      {
-        data: {
           title: $localize`Activity`,
         },
         path: 'activity',
@@ -118,8 +100,10 @@ export const DashboardLayoutRouting: Routes = [
         },
         path: 'settings',
         pathMatch: 'full',
-        component: SyncProjectComponent,
-        resolve: { repo: RepoResolver },
+        component: SettingsPageComponent,
+        resolve: {
+          [FLAGS_RESOLVE_DATA]: FlagsResolver,
+        },
         canActivate: [
           showBasedOnRoles([
             ProjectMemberRole.ADMIN,
@@ -136,7 +120,7 @@ export const DashboardLayoutRouting: Routes = [
         pathMatch: 'full',
         component: FlowsTableComponent,
         resolve: {
-          [ARE_THERE_FLOWS_FLAG]: AreThereFlowsResovler,
+          [ARE_THERE_FLOWS_FLAG]: AreThereFlowsResolver,
           folders: FoldersResolver,
         },
         canActivate: [

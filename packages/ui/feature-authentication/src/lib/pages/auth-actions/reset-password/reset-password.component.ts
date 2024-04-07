@@ -23,7 +23,7 @@ export class ResetPasswordComponent {
   readonly resetPasswordTitle = $localize`Reset Password`;
   actionTitle = this.resetPasswordTitle;
   passwordResetActionError = '';
-  resetingPassword = false;
+  resettingPassword = false;
   resetPassword$?: Observable<void>;
   newPasswordControl = new FormControl<string>('', {
     nonNullable: true,
@@ -44,8 +44,8 @@ export class ResetPasswordComponent {
   ) {}
 
   handlePasswordReset() {
-    if (this.newPasswordControl.valid && !this.resetingPassword) {
-      this.resetingPassword = true;
+    if (this.newPasswordControl.valid && !this.resettingPassword) {
+      this.resettingPassword = true;
       const otp = this.activatedRoute.snapshot.queryParams['otpcode'];
       const userId = this.activatedRoute.snapshot.queryParams['userId'];
       this.resetPassword$ = this.authenticationService
@@ -58,7 +58,7 @@ export class ResetPasswordComponent {
           tap(() => this.router.navigate(['/sign-in'])),
           catchError((err) => {
             this.passwordResetActionError = $localize`Your password reset request has expired, please request a new one`;
-            this.resetingPassword = false;
+            this.resettingPassword = false;
             console.error(err);
             return of(void 0);
           })

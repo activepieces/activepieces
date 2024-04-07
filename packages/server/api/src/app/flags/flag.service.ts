@@ -78,8 +78,14 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.SHOW_COMMUNITY_PIECES,
+                id: ApFlagId.INSTALL_PROJECT_PIECES_ENABLED,
                 value: true,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.MANAGE_PROJECT_PIECES_ENABLED,
+                value: false,
                 created,
                 updated,
             },

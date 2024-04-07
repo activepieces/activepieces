@@ -11,7 +11,7 @@ export const collectionList = createAction({
   run: async ({ auth }) => {
     const client = new QdrantClient({
       apiKey: auth.key,
-      url: auth.serverAdress,
+      url: auth.serverAddress,
     });
     const collections = await client.getCollections();
     return collections;

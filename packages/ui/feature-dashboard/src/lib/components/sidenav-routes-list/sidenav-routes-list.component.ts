@@ -4,14 +4,14 @@ import { Store } from '@ngrx/store';
 import { FolderActions } from '@activepieces/ui/feature-folders-store';
 import {
   AuthenticationService,
+  EmbeddingService,
   NavigationService,
   PlatformService,
   UiCommonModule,
 } from '@activepieces/ui/common';
-import { Observable, forkJoin, map, of } from 'rxjs';
+import { Observable, forkJoin, map, of, take } from 'rxjs';
 import { ApFlagId, ProjectMemberRole, supportUrl } from '@activepieces/shared';
 import { DashboardService, FlagService } from '@activepieces/ui/common';
-import { isGitSyncLocked } from '@activepieces/ui-feature-git-sync';
 import { SidenavRouteItemComponent } from '../sidenav-route-item/sidenav-route-item.component';
 import { CommonModule } from '@angular/common';
 
@@ -113,8 +113,8 @@ export class SidenavRoutesListComponent implements OnInit {
     private flagServices: FlagService,
     private dashboardService: DashboardService,
     private navigationService: NavigationService,
+    private embeddingService: EmbeddingService,
     private authenticationService: AuthenticationService,
-    private platformService: PlatformService,
     private flagService: FlagService
   ) {
     this.logoUrl$ = this.flagServices
@@ -158,7 +158,10 @@ export class SidenavRoutesListComponent implements OnInit {
         icon: 'assets/img/custom/dashboard/members.svg',
         caption: $localize`Team`,
         route: 'team',
-        showInSideNav$: of(true),
+        showInSideNav$: this.embeddingService.getIsInEmbedding$().pipe(
+          take(1),
+          map((isInEmbedding) => !isInEmbedding)
+        ),
         showLock$: this.flagService
           .isFlagEnabled(ApFlagId.PROJECT_MEMBERS_ENABLED)
           .pipe(map((enabled) => !enabled)),
@@ -168,12 +171,11 @@ export class SidenavRoutesListComponent implements OnInit {
         icon: 'assets/img/custom/dashboard/settings.svg',
         caption: $localize`Settings`,
         route: 'settings',
-        showInSideNav$: this.flagServices.isFlagEnabled(ApFlagId.SHOW_GIT_SYNC),
-        showLock$: isGitSyncLocked(
-          this.flagServices,
-          this.platformService,
-          this.authenticationService.getPlatformId()
+        showInSideNav$: this.embeddingService.getIsInEmbedding$().pipe(
+          take(1),
+          map((isInEmbedding) => !isInEmbedding)
         ),
+        showLock$: of(false),
       },
     ];
   }
