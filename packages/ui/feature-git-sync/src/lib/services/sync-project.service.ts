@@ -1,9 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { environment } from '@activepieces/ui/common';
+import { PlatformService, environment } from '@activepieces/ui/common';
 import { ConfigureRepoRequest, GitBranchType, GitRepo, ProjectSyncPlan, PullGitRepoRequest } from '@activepieces/ee-shared';
 import { SeekPage, assertNotNullOrUndefined } from '@activepieces/shared';
-import { Observable, tap, map, shareReplay } from 'rxjs';
+import { Observable, tap, map, shareReplay, switchMap, of } from 'rxjs';
 import { AuthenticationService } from '@activepieces/ui/common';
 import { PushGitRepoRequest } from '@activepieces/ee-shared';
 @Injectable({
@@ -15,6 +15,7 @@ export class SyncProjectService {
 
   constructor(
     private http: HttpClient,
+    private platformService: PlatformService,
     private authenticationService: AuthenticationService
   ) {
     this.authenticationService.currentUserSubject.subscribe(() => this.cache$.clear());
@@ -30,13 +31,25 @@ export class SyncProjectService {
 
   get(): Observable<GitRepo | undefined> {
     const projectId = this.authenticationService.getProjectId();
+    const platformId = this.authenticationService.getPlatformId();
     assertNotNullOrUndefined(projectId, 'projectId');
+    assertNotNullOrUndefined(platformId, 'platformId');
     if (!this.cache$.has(projectId)) {
-      this.cache$.set(projectId, this.http.get<SeekPage<GitRepo>>(`${this.prefix}`, {
-        params: {
-          projectId
-        }
-      }).pipe(map(repos => repos.data.find(repo => repo.projectId === projectId), shareReplay(1))));
+      this.cache$.set(projectId, this.platformService.getPlatform(platformId).pipe(
+        switchMap(platform => {
+          if (!platform.gitSyncEnabled) {
+            return of(undefined);
+          }
+          return this.http.get<SeekPage<GitRepo>>(`${this.prefix}`, {
+            params: {
+              projectId
+            }
+          }).pipe(
+            map(repos => repos.data.find(repo => repo.projectId === projectId)),
+            shareReplay(1),
+          )
+        })
+      ));
     }
     return this.cache$.get(projectId)!;
   }

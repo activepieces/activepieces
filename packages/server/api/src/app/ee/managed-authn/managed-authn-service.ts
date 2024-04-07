@@ -1,9 +1,6 @@
 import { randomBytes as randomBytesCallback } from 'node:crypto'
 import { promisify } from 'node:util'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
-import { flagService } from '../../flags/flag.service'
-import { getEdition } from '../../helper/secret-helper'
-import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
@@ -144,23 +141,12 @@ const getOrCreateProject = async ({
 }
 
 const getPiecesList = async ({
-    platformId,
-    projectId,
     piecesFilterType,
 }: UpdateProjectLimits): Promise<string[]> => {
     switch (piecesFilterType) {
         case PiecesFilterType.ALLOWED: {
             // TODO: add tags to the list
-
             throw new Error('Not implemented')
-            const pieces = await pieceMetadataService.list({
-                release: await flagService.getCurrentRelease(),
-                edition: await getEdition(),
-                platformId,
-                includeHidden: false,
-                projectId,
-            })
-            return pieces.map(piece => piece.name)
         }
         case PiecesFilterType.NONE: {
             return []

@@ -92,7 +92,7 @@ export const FastDbPieceMetadataService = (): PieceMetadataService => {
             }
             await repo().delete({
                 id,
-                projectId: projectId ?? undefined,
+                projectId: projectId ?? IsNull(),
             })
         },
         async updateUsage({ id, usage }): Promise<void> {

@@ -1,9 +1,13 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { logger } from '@activepieces/server-shared'
 
 export class PiecesProjectLimits1712279318440 implements MigrationInterface {
     name = 'PiecesProjectLimits1712279318440'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        logger.info({
+            name: 'PiecesProjectLimits1712279318440' },
+        'up')
         await queryRunner.query(`
             ALTER TABLE "project_plan" RENAME COLUMN "flowPlanName" TO "name"
         `)

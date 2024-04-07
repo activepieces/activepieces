@@ -25,7 +25,6 @@ export class UserAvatarComponent implements OnInit {
   switchProject$: Observable<void>;
   overflownProjectsNames: Record<string, string> = {};
   billingEnabled$: Observable<boolean>;
-  myPiecesEnabled$: Observable<boolean>;
   projectEnabled$: Observable<boolean>;
   showPlatform$: Observable<boolean>;
   showCommunity$: Observable<boolean>;
@@ -48,9 +47,6 @@ export class UserAvatarComponent implements OnInit {
     );
     this.billingEnabled$ = this.flagService.isFlagEnabled(
       ApFlagId.SHOW_BILLING
-    );
-    this.myPiecesEnabled$ = this.flagService.isFlagEnabled(
-      ApFlagId.SHOW_COMMUNITY_PIECES
     );
     this.projectEnabled$ = this.flagService.isFlagEnabled(
       ApFlagId.PROJECT_MEMBERS_ENABLED

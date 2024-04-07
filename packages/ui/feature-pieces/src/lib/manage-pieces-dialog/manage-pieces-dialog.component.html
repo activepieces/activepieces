@@ -1,0 +1,44 @@
+<ap-dialog-title-template i18n>Manage Pieces</ap-dialog-title-template>
+
+<mat-dialog-content>
+  <form class="ap-flex ap-flex-col ap-gap-1 ap-mt-4 ap-min-w-[470px]" [formGroup]="form">
+    <mat-form-field class="ap-w-full ap-mb-2" appearance="outline">
+      <mat-label i18n>Pieces</mat-label>
+      <mat-select formControlName="pieces" multiple>
+        <mat-select-trigger>
+          {{ form.controls.pieces.value ? form.controls.pieces.value.length + ' selected' : 'Select pieces' }}
+        </mat-select-trigger>
+        <ap-dropdown-search-control [searchControl]="searchControl"></ap-dropdown-search-control>
+        @if(allPieces | async; as allPieces ){
+        <mat-option i18n selectAll [allValues]="allPieces">
+          All
+        </mat-option>
+        }
+        @for (piece of pieces$ | async; track piece) {
+        <mat-option [value]="piece.name">
+          {{ piece.displayName }}
+        </mat-option>
+        }
+      </mat-select>
+      <mat-error *ngIf="form.controls.pieces.invalid">
+        <ng-container *ngIf="form.controls.pieces.hasError('required')" i18n>
+          This is required
+        </ng-container>
+      </mat-error>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <div class="ap-flex ap-gap-2.5">
+    <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" i18n (buttonClicked)="cancel()">
+      Cancel
+    </ap-button>
+    <ap-button btnSize="default" type="submit" btnColor="primary" i18n [loading]="loading$ | async | defaultFalse"
+      (buttonClicked)="submit()">
+      Save
+    </ap-button>
+  </div>
+</mat-dialog-actions>
+
+<ng-container *ngIf="managePieces$ | async"></ng-container>

@@ -5,7 +5,7 @@ import {
     BaseColumnSchemaPart,
     isPostgres,
 } from '../../database/database-common'
-import { PiecesFilterType, Project, ProjectPlan } from '@activepieces/shared'
+import { Project, ProjectPlan } from '@activepieces/shared'
 
 export type ProjectPlanSchema = {
     project: Project

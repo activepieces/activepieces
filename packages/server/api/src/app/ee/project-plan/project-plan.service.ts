@@ -52,7 +52,7 @@ export const projectLimitsService = {
         return projectPlanRepo.findOneByOrFail({ projectId })
     },
     async getPiecesFilter(projectId: string): Promise<Pick<ProjectPlan, 'piecesFilterType' | 'pieces'>> {
-        const plan = await projectPlanRepo.createQueryBuilder().select(['piecesFilterType', 'pieces']).where('"projectId" = :projectId', { projectId }).getRawOne()
+        const plan = await projectPlanRepo.createQueryBuilder().select(['"piecesFilterType"', 'pieces']).where('"projectId" = :projectId', { projectId }).getRawOne()
         if (isNil(plan)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,

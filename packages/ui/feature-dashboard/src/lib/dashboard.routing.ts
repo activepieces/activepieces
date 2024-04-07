@@ -11,7 +11,6 @@ import { DashboardContainerComponent } from './dashboard-container.component';
 import {
   isFeatureFlagEnabledResolver,
   showBasedOnFlagGuard,
-  showBasedIfAnyOfFlag,
   showBasedOnRoles,
   showPlatformSettingsGuard,
 } from '@activepieces/ui/common';
@@ -106,10 +105,6 @@ export const DashboardLayoutRouting: Routes = [
           [FLAGS_RESOLVE_DATA]: FlagsResolver,
         },
         canActivate: [
-          showBasedIfAnyOfFlag([
-            ApFlagId.SHOW_GIT_SYNC,
-            ApFlagId.SHOW_COMMUNITY_PIECES,
-          ]),
           showBasedOnRoles([
             ProjectMemberRole.ADMIN,
             ProjectMemberRole.EDITOR,

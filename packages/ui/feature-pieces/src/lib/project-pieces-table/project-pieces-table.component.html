@@ -1,5 +1,28 @@
 <div class="ap-w-full ap-h-full ap-pt-[30px]">
   <div class="ap-h-full">
+    <div class="ap-flex ap-mb-4 ap-gap-4">
+      <div class="ap-flex-grow">
+      </div>
+      @if (installPieceEnabled$| async) {
+      <ap-button [disabled]="(isAdmin$ | async) === false"
+        [tooltipText]="(isAdmin$ | async) === false ? 'You don\'t have permission to add piece' : ''" btnColor="primary"
+        btnSize='medium' (click)="installPiece()" i18n>
+        <mat-icon fontIcon="add"></mat-icon>
+        <span>
+          Install Piece
+        </span>
+      </ap-button>
+      }
+      @if (managePiecesEnabled$| async) {
+      <ap-button [disabled]="(isAdmin$ | async) === false"
+        [tooltipText]="(isAdmin$ | async) === false ? 'You don\'t have permission to add piece' : ''" btnColor="primary"
+        btnSize='medium' (click)="managePieces()">
+        <span>
+          Manage Pieces
+        </span>
+      </ap-button>
+      }
+    </div>
     <div class="ap-min-h-[70%]">
       <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Pieces" i18n-aria-label>
         <ng-container matColumnDef="app">
@@ -8,27 +31,32 @@
               class="ap-w-[24px] ap-h-[24px] ap-object-contain" [matTooltip]="piece.appName" [src]="piece.logoUrl">
           </td>
         </ng-container>
+
+        <ng-container matColumnDef="displayName">
+          <th mat-header-cell *matHeaderCellDef i18n>Display Name</th>
+          <td mat-cell *matCellDef="let piece">{{ piece.displayName }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="action">
+          <th mat-header-cell *matHeaderCellDef>
+          </th>
+          <td mat-cell *matCellDef="let piece" class="!ap-text-center">
+            @if (isInstalledPiece(piece)) {
+            <ap-icon-button tooltipText="Delete Piece" iconFilename="trash.svg" color="warn" [width]="20" [height]="20"
+              (buttonClicked)="deleteMetadata(piece)"></ap-icon-button>
+            }
+          </td>
+        </ng-container>
+
+
         <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef i18n>Name</th>
+          <th mat-header-cell *matHeaderCellDef i18n>Package Name</th>
           <td mat-cell *matCellDef="let piece">{{ piece.name }}</td>
         </ng-container>
 
         <ng-container matColumnDef="version">
           <th mat-header-cell *matHeaderCellDef i18n>Version</th>
           <td mat-cell *matCellDef="let piece">{{ piece.version }}</td>
-        </ng-container>
-
-
-        <ng-container matColumnDef="action">
-          <th mat-header-cell *matHeaderCellDef class="!ap-text-center">
-            <ap-button btnColor="primary" btnSize='small' (click)="installPiece()" i18n>
-              Add Piece
-            </ap-button>
-          </th>
-          <td mat-cell *matCellDef="let piece" class="!ap-text-center">
-            <ap-icon-button tooltipText="Delete Piece" iconFilename="trash.svg" color="warn" [width]="20" [height]="20"
-              [height]="16" (buttonClicked)="deleteMetadata(piece)"></ap-icon-button>
-          </td>
         </ng-container>
 
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
@@ -49,5 +77,4 @@
 
   </div>
 </div>
-<ng-container *ngIf="addPackageDialogClosed$ | async"></ng-container>
-<ng-container *ngIf="deleteDialogClosed$ | async"></ng-container>
+<ng-container *ngIf="openDialog$ | async"></ng-container>
