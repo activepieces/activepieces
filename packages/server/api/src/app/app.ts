@@ -232,7 +232,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(flagModule)
     await app.register(storeEntryModule)
     await app.register(flowModule)
-    await app.register(flowWorkerModule)
     await app.register(pieceModule)
     await app.register(flowRunModule)
     await app.register(webhookModule)
@@ -247,7 +246,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(platformModule)
     await app.register(formModule)
     await pieceSyncService.setup()
-
+    await app.register(flowWorkerModule)
     await setupBullMQBoard(app)
 
     app.get(
