@@ -6,7 +6,6 @@ import {
   AuthenticationService,
   EmbeddingService,
   NavigationService,
-  PlatformService,
   UiCommonModule,
 } from '@activepieces/ui/common';
 import { Observable, forkJoin, map, of, take } from 'rxjs';
@@ -18,7 +17,7 @@ import { CommonModule } from '@angular/common';
 type SideNavRoute = {
   icon: string;
   caption: string;
-  route?: string;
+  route: string | undefined;
   effect?: () => void;
   showInSideNav$: Observable<boolean>;
   showLock$?: Observable<boolean>;
@@ -30,7 +29,7 @@ type SideNavRoute = {
   styleUrls: ['./sidenav-routes-list.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [SidenavRouteItemComponent, CommonModule,UiCommonModule]
+  imports: [SidenavRouteItemComponent, CommonModule, UiCommonModule],
 })
 export class SidenavRoutesListComponent implements OnInit {
   logoUrl$: Observable<string>;
@@ -41,27 +40,25 @@ export class SidenavRoutesListComponent implements OnInit {
   );
 
   readonly supportRoute: SideNavRoute = {
-    caption:'Support',
-    icon:'assets/img/custom/support.svg',
-    route:'',
-    showInSideNav$: this.flagServices.isFlagEnabled(
-      ApFlagId.SHOW_COMMUNITY
-    ),
+    caption: 'Support',
+    icon: 'assets/img/custom/support.svg',
+    route: undefined,
+    showInSideNav$: this.flagServices.isFlagEnabled(ApFlagId.SHOW_COMMUNITY),
     showLock$: of(false),
     effect: () => {
       this.openSupport();
-    }
-  }
+    },
+  };
   readonly docsRoute: SideNavRoute = {
-    caption:'Docs',
-    icon:'assets/img/custom/dashboard/documentation.svg',
-    route:'',
+    caption: 'Docs',
+    icon: 'assets/img/custom/dashboard/documentation.svg',
+    route: undefined,
     showInSideNav$: this.flagServices.isFlagEnabled(ApFlagId.SHOW_DOCS),
     showLock$: of(false),
     effect: () => {
       this.openDocs();
-    }
-  }
+    },
+  };
   platformDashboardRoutes: SideNavRoute[] = [
     {
       icon: 'assets/img/custom/dashboard/projects.svg',
