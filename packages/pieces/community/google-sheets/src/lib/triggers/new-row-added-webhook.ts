@@ -3,6 +3,7 @@ import {
   PiecePropValueSchema,
   Property,
   TriggerStrategy,
+  WebhookRenewStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { google } from 'googleapis';
@@ -11,6 +12,7 @@ import { googleSheetsAuth } from '../..';
 import { columnToLabel, googleSheetsCommon } from '../common/common';
 import { nanoid } from 'nanoid';
 import crypto from 'crypto';
+import dayjs from 'dayjs';
 
 export const newRowAddedTrigger = createTrigger({
   auth: googleSheetsAuth,
@@ -25,6 +27,10 @@ export const newRowAddedTrigger = createTrigger({
     spreadsheet_id: googleSheetsCommon.spreadsheet_id,
     sheet_id: googleSheetsCommon.sheet_id,
     include_team_drives: googleSheetsCommon.include_team_drives,
+  },
+  renewConfiguration: {
+    strategy: WebhookRenewStrategy.CRON,
+    cronExpression: '0 0 * * *',
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
@@ -131,6 +137,7 @@ export const newRowAddedTrigger = createTrigger({
     });
   },
   async onRenew(context) {
+    console.log("RENEWWWWWWWING");
     // get current channel ID & resource ID
     const webhook = await context.store.get<WebhookInformation>(
       `googlesheets_new_row_added`
@@ -207,6 +214,7 @@ async function createFileNotification(
     fileId: fileId,
     requestBody: {
       id: channelId,
+      expiration: (dayjs().add(6, 'day').unix() * 1000).toString(),
       type: 'web_hook',
       address: url,
     },

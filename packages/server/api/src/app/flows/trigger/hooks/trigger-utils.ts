@@ -21,15 +21,6 @@ export async function getPieceTrigger({
         version: trigger.settings.pieceVersion,
     })
 
-    if (isNil(piece)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.PIECE_NOT_FOUND,
-            params: {
-                pieceName: trigger.settings.pieceName,
-                pieceVersion: trigger.settings.pieceVersion,
-            },
-        })
-    }
     const pieceTrigger = piece.triggers[trigger.settings.triggerName]
     if (isNil(pieceTrigger)) {
         throw new ActivepiecesError({
