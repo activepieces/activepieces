@@ -155,6 +155,7 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
                     params: {
                         pieceName: name,
                         pieceVersion: version,
+                        message: 'Pieces is not found in file system',
                     },
                 })
             }
