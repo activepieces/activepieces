@@ -47,6 +47,7 @@ export const extractPieceFromModule = <T>(params: ExtractPieceFromModuleParams):
         params: {
             pieceName,
             pieceVersion,
+            message: 'Failed to extract piece from module.',
         },
     })
 }

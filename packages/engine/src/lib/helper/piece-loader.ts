@@ -25,6 +25,7 @@ const loadPieceOrThrow = async (
             params: {
                 pieceName,
                 pieceVersion,
+                message: 'Piece not found in the engine',
             },
         })
     }

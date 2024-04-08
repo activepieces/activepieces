@@ -137,6 +137,7 @@ export const newRowAddedTrigger = createTrigger({
     });
   },
   async onRenew(context) {
+    console.log("RENEWWWWWWWING");
     // get current channel ID & resource ID
     const webhook = await context.store.get<WebhookInformation>(
       `googlesheets_new_row_added`
@@ -213,7 +214,7 @@ async function createFileNotification(
     fileId: fileId,
     requestBody: {
       id: channelId,
-      expiration: dayjs().add(6, 'day').toISOString(),
+      expiration: (dayjs().add(6, 'day').unix() * 1000).toString(),
       type: 'web_hook',
       address: url,
     },
