@@ -28,10 +28,6 @@ export function playerFactory() {
     TasksProgressComponent,
     PlanNamePipe,
   ],
-  exports: [
-    PlansPageComponent,
-    TasksProgressComponent,
-    UpgradeDialogComponent,
-  ],
+  exports: [PlansPageComponent, TasksProgressComponent, UpgradeDialogComponent],
 })
 export class EeBillingUiModule {}

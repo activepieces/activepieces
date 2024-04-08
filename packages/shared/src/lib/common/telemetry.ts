@@ -67,8 +67,8 @@ type ReferralLinkCopied = {
 }
 
 type RewardInstructionsClicked = {
-    email:string
-    userId:string
+    email: string
+    userId: string
 }
 
 type Referral = {
@@ -119,7 +119,7 @@ export enum TelemetryEventName {
     REWARDS_BUTTON_CLICKED = 'rewards.button.clicked',
     PIECE_REWARD_INSTRUCTIONS_CLICKED = 'piece.reward.instructions.clicked',
     TEMPLATE_REWARD_INSTRUCTIONS_CLICKED = 'template.reward.instructions.clicked',
-    LINKED_IN_REWARD_CLICKED = 'linked.in.reward.clicked'
+    LINKED_IN_REWARD_CLICKED = 'linked.in.reward.clicked',
 }
 
 type BaseTelemetryEvent<T, P> = {
