@@ -157,7 +157,9 @@
 <ng-container *ngIf="renameFlow$ | async"></ng-container>
 
 <ng-template #rewards>
-  <div (click)="openRewardsDialog()"   class="ap-border ap-border-solid ap-border-dividers ap-top-[180px] ap-drop-shadow -ap-right-[85px] ap-transition-all ap-cursor-pointer hover:-ap-right-[14px] ap-py-2 ap-absolute ap-rounded-full ap-overflow-hidden ap-bg-white ap-px-4 ap-text-primary ap-flex ap-items-center ap-gap-2"> 
+  @if(showRewards$ | async)
+  {
+    <div (click)="openRewardsDialog()"   class="ap-border ap-border-solid ap-border-dividers ap-top-[180px] ap-drop-shadow -ap-right-[85px] ap-transition-all ap-cursor-pointer hover:-ap-right-[14px] ap-py-2 ap-absolute ap-rounded-full ap-overflow-hidden ap-bg-white ap-px-4 ap-text-primary ap-flex ap-items-center ap-gap-2"> 
       <div class="ap-relative">
           <div class="ap-p-0.5 ap-bg-[red] ap-rounded-full -ap-right-[2.5px] ap-top-0 ap-absolute">
           </div>
@@ -166,4 +168,5 @@
       </div>
       <div class="ap-typography-body-1">Rewards</div>
   </div>
+  }
 </ng-template>

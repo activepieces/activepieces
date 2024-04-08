@@ -16,13 +16,18 @@ import {
   FlowStatus,
   FolderId,
   FlowOperationType,
+  TelemetryEventName,
+  ApEdition,
 } from '@activepieces/shared';
 import {
   ApPaginatorComponent,
   AuthenticationService,
+  CLOUD_PLATFORM_ID,
   EmbeddingService,
+  FlagService,
   FoldersService,
   NavigationService,
+  TelemetryService,
   downloadFlow,
   flowActionsUiInfo,
 } from '@activepieces/ui/common';
@@ -74,7 +79,7 @@ export class FlowsTableComponent implements OnInit {
   downloadTemplate$?: Observable<void>;
   renameFlow$?: Observable<boolean>;
   hideFolders$ = this.embeddingService.getHideFolders$();
-
+  showRewards$: Observable<boolean>;
   constructor(
     private activatedRoute: ActivatedRoute,
     private dialogService: MatDialog,
@@ -84,10 +89,21 @@ export class FlowsTableComponent implements OnInit {
     private authenticationService: AuthenticationService,
     private navigationService: NavigationService,
     private embeddingService: EmbeddingService,
+    private telemetryService: TelemetryService,
+    private flagService: FlagService,
     @Inject(LOCALE_ID) public locale: string
   ) {
     this.showAllFlows$ = this.listenToShowAllFolders();
     this.folderId$ = this.store.select(FoldersSelectors.selectCurrentFolderId);
+    this.showRewards$ = this.flagService.getEdition().pipe(
+      map((ed) => {
+        return (
+          ed === ApEdition.COMMUNITY ||
+          (ed === ApEdition.CLOUD &&
+            this.authenticationService.getPlatformId() === CLOUD_PLATFORM_ID)
+        );
+      })
+    );
   }
 
   private listenToShowAllFolders() {
@@ -234,7 +250,14 @@ export class FlowsTableComponent implements OnInit {
         })
       );
   }
-  openRewardsDialog(){
+  openRewardsDialog() {
     this.dialogService.open(RewardsDialogComponent);
+    this.telemetryService.capture({
+      name: TelemetryEventName.REWARDS_BUTTON_CLICKED,
+      payload: {
+        email: this.authenticationService.currentUser.email,
+        userId: this.authenticationService.currentUser.id,
+      },
+    });
   }
 }
