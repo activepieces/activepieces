@@ -4,17 +4,17 @@ import semVer from 'semver'
 import { IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { projectService } from '../../project/project-service'
+import { pieceTagService } from '../../tags/pieces/piece-tag.service'
 import {
     PieceMetadataEntity,
     PieceMetadataSchema,
 } from '../piece-metadata-entity'
 import { localPieceCache } from './helper/local-piece-cache'
-import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { toPieceMetadataModelSummary } from '.'
 import { pieceMetadataServiceHooks } from './hooks'
-import { tagService } from '../../tags/tag-service'
 import { PieceMetadataService } from './piece-metadata-service'
-import { ActivepiecesError, EXACT_VERSION_PATTERN, ErrorCode, ListVersionsResponse, PieceType, apId, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { toPieceMetadataModelSummary } from '.'
+import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
+import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, EXACT_VERSION_PATTERN, isNil, ListVersionsResponse, PieceType } from '@activepieces/shared'
 
 const repo = repoFactory(PieceMetadataEntity)
 
@@ -181,7 +181,7 @@ const enrichTags = async (platformId: string | undefined, pieces: PieceMetadataS
     if (!includeTags || isNil(platformId)) {
         return pieces
     }
-    const tags = await tagService.getPieceTags(platformId)
+    const tags = await pieceTagService.findByPlatform(platformId)
     return pieces.map((piece) => {
         return {
             ...piece,

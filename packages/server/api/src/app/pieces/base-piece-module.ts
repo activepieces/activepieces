@@ -23,7 +23,6 @@ import {
     PieceCategory,
     PieceOptionRequest,
     PrincipalType,
-    isNil,
 } from '@activepieces/shared'
 
 export const pieceModule: FastifyPluginAsyncTypebox = async (app) => {
@@ -55,7 +54,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         ListPiecesRequest,
         async (req): Promise<PieceMetadataModelSummary[]> => {
             const latestRelease = await flagService.getCurrentRelease()
-            const includeTags = req.query.includeTags ?? !isNil(req.query.tags)
+            const includeTags = req.query.includeTags ?? false
             const release = req.query.release ?? latestRelease
             const edition = req.query.edition ?? ApEdition.COMMUNITY
             const platformId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id
@@ -67,7 +66,6 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 platformId,
                 edition,
                 includeTags,
-                tags: req.query.tags,
                 categories: req.query.categories,
                 searchQuery: req.query.searchQuery,
                 sortBy: req.query.sortBy,

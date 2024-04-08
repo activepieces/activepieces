@@ -32,5 +32,5 @@ export const TagEntity = new EntitySchema<TagEntitySchema>({
                 name: 'platformId',
             },
         },
-    }
+    },
 })

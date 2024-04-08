@@ -10,7 +10,7 @@ import {
 import { pieceMetadataServiceHooks } from './hooks'
 import { PieceMetadataService } from './piece-metadata-service'
 import { toPieceMetadataModelSummary } from '.'
-import { Piece, PieceMetadata, PieceMetadataModelSummary, PieceMetadataModel } from '@activepieces/pieces-framework'
+import { Piece, PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
 import { exceptionHandler, logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,

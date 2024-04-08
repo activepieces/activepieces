@@ -36,9 +36,9 @@ import {
   isNil,
   spreadIfDefined,
 } from '@activepieces/shared';
-import { ActionBase, PieceMetadataModel, TriggerBase } from '@activepieces/pieces-framework';
 import {
   ActionBase,
+  PieceMetadataModel,
   PiecePropertyMap,
   PropertyType,
   TriggerBase,

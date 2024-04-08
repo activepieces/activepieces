@@ -81,6 +81,7 @@ import { pieceSyncService } from './pieces/piece-sync-service'
 import { platformModule } from './platform/platform.module'
 import { projectModule } from './project/project-module'
 import { storeEntryModule } from './store-entry/store-entry.module'
+import { tagsModule } from './tags/tags-module'
 import { userModule } from './user/user.module'
 import { webhookModule } from './webhooks/webhook-module'
 import { websocketService } from './websockets/websockets.service'
@@ -105,7 +106,6 @@ import {
     FlowRun,
     ProjectWithLimits,
 } from '@activepieces/shared'
-import { tagsModule } from './tags/tags-module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({

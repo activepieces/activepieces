@@ -7,9 +7,9 @@ import { getEdition } from '../helper/secret-helper'
 import { systemJobsSchedule } from '../helper/system-jobs'
 import { PieceMetadataEntity } from './piece-metadata-entity'
 import { pieceMetadataService } from './piece-metadata-service'
+import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
 import { logger, system, SystemProp } from '@activepieces/server-shared'
 import { ListVersionsResponse, PackageType, PieceSyncMode, PieceType } from '@activepieces/shared'
-import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
 
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 const piecesRepo = repoFactory(PieceMetadataEntity)

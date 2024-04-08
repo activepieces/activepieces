@@ -199,4 +199,4 @@ export function markedOptionsFactory(): MarkedOptions {
   declarations: [...exportedDeclarations, FileDroppedDirective],
   exports: [...exportedImports, ...exportedDeclarations, MarkdownModule],
 })
-export class UiCommonModule { }
+export class UiCommonModule {}

@@ -19,9 +19,6 @@
     </div>
 
     @if(isAnyPieceSelected$| async){
-    <ap-button btnColor="basic" btnStyle="stroked" btnSize='medium'>
-        <div class="ap-flex ap-gap-2 ap-items-center" i18n> Add to projects </div>
-    </ap-button>
     <ap-apply-tags [tagSelection]="tagSelection" [mixedTags]="this.mixedTags" (applyTags)="updateTags($event)">
     </ap-apply-tags>
     } @else{
@@ -135,6 +132,8 @@
             </td>
         </ng-container>
 
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let piece; columns: displayedColumns;"></tr>
     </table>
     <ng-container *ngIf="(dataSource.isLoading$ | async) === true">
         <div class="ap-flex ap-items-center ap-justify-center ap-flex-grow ap-h-[500px]">
@@ -153,7 +152,7 @@
 </div>
 
 <ng-container *ngIf="saving$ | async"></ng-container>
-<ng-container *ngIf="toggelCloudOAuth2$ | async"> </ng-container>
+<ng-container *ngIf="toggleCloudOAuth2$ | async"> </ng-container>
 <ng-container *ngIf="dialogClosed$ | async"></ng-container>
 <ng-container *ngIf="addPackageDialogClosed$ | async"></ng-container>
 <ng-container *ngIf="syncPieces$ | async"></ng-container>

@@ -1,9 +1,9 @@
-import { PieceTag, Platform, Tag } from "@activepieces/shared";
-import { EntitySchema } from "typeorm";
-import { BaseColumnSchemaPart } from "../database/database-common";
+import { EntitySchema } from 'typeorm'
+import { BaseColumnSchemaPart } from '../../database/database-common'
+import { PieceTag, Platform, Tag } from '@activepieces/shared'
 
 type PieceTagSchema = PieceTag & {
-    tag: Tag,
+    tag: Tag
     platform: Platform
 }
 export const PieceTagEntity = new EntitySchema<PieceTagSchema>({

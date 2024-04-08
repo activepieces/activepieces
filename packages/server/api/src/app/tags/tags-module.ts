@@ -1,7 +1,8 @@
-import { UpsertTagRequest, EndpointScope, ListTagsRequest, PrincipalType, SeekPage, SetPieceTagsRequest, Tag, assertNotNullOrUndefined } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
+import { pieceTagService } from './pieces/piece-tag.service'
 import { tagService } from './tag-service'
+import { assertNotNullOrUndefined, EndpointScope, ListTagsRequest, PrincipalType, SeekPage, SetPieceTagsRequest, Tag, UpsertTagRequest } from '@activepieces/shared'
 
 
 export const tagsModule: FastifyPluginAsyncTypebox = async (app) => {
@@ -30,7 +31,7 @@ const tagsController: FastifyPluginAsyncTypebox = async (fastify) => {
 
     fastify.post('/pieces', setPiecesTagsParams, async (req, reply) => {
         const platformId = req.principal.platform.id
-        const pieces = req.body.piecesName.map(pieceName => tagService.setPieceTags(platformId, pieceName, req.body.tags))
+        const pieces = req.body.piecesName.map(pieceName => pieceTagService.set(platformId, pieceName, req.body.tags))
         await Promise.all(pieces)
         await reply.status(StatusCodes.CREATED).send({})
     })

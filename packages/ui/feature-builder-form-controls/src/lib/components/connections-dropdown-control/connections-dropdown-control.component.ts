@@ -5,7 +5,10 @@ import {
   UiCommonModule,
 } from '@activepieces/ui/common';
 import { FormControl } from '@angular/forms';
-import { PieceAuthProperty, PieceMetadataModel } from '@activepieces/pieces-framework';
+import {
+  PieceAuthProperty,
+  PieceMetadataModel,
+} from '@activepieces/pieces-framework';
 import { DropdownSelectedValuesPipe } from '../../pipes/dropdown-selected-values.pipe';
 import { UiFeatureConnectionsModule } from '@activepieces/ui/feature-connections';
 

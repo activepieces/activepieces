@@ -17,10 +17,11 @@ import {
 } from '@angular/forms';
 import { map, Observable, tap } from 'rxjs';
 import { InterpolatingTextFormControlComponent } from '../interpolating-text-form-control/interpolating-text-form-control.component';
+import { InsertMentionOperation } from '@activepieces/ui/common';
 import {
-  InsertMentionOperation,
-} from '@activepieces/ui/common';
-import { ArrayProperty, PieceMetadataModel } from '@activepieces/pieces-framework';
+  ArrayProperty,
+  PieceMetadataModel,
+} from '@activepieces/pieces-framework';
 import { PopulatedFlow } from '@activepieces/shared';
 import { ControlThatUsesMentionsCoreComponent } from '../control-that-uses-mentions-core/control-that-uses-mentions-core.component';
 
