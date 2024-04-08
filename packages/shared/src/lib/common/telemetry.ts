@@ -65,9 +65,10 @@ type UpgradePopup = {
 type ReferralLinkCopied = {
     userId: UserId
 }
+
 type RewardInstructionsClicked = {
-    email:string;
-    userId:string;
+    email:string
+    userId:string
 }
 
 type Referral = {
