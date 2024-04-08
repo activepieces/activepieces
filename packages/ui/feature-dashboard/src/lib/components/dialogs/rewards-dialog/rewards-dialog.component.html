@@ -1,0 +1,33 @@
+    <div class="ap-flex ap-items-center ap-gap-2 ap-p-5">
+            <svg-icon src="assets/img/custom/rewards/rewards.svg" class="ap-w-[25px] ap-h-[25px]"  [applyClass]="true"></svg-icon>
+            Rewards
+     </div>
+    <mat-dialog-content class="thin-scrollbars">
+        <div
+        class="ap-flex ap-flex-col ap-w-[calc(100vw-257px)] ap-max-w-[950px]">
+            <div class="ap-text-body ap-py-2">
+                Earn more monthly tasks on our cloud by helping us build our community and get more exposure 🚀
+            </div>
+            <div class="ap-mt-2">
+                <div class="ap-flex ap-flex-col  ap-divide-y-2 ap-divide-dividers">
+                 
+                    @for(item of rewards; track item.jobName){
+                        <div class="ap-py-4">
+                            <app-rewards-item [rewardItem]="item"></app-rewards-item>
+                        </div>
+                    }
+                </div>
+            </div>
+         
+        </div>
+    </mat-dialog-content>
+    
+    <mat-dialog-actions align="end">
+        <div class="ap-flex ap-gap-2.5">
+            <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" i18n>
+                Close
+            </ap-button>
+        </div>
+    </mat-dialog-actions>
+
+@if(referalItemClicked$ | async) {}

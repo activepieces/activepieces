@@ -31,7 +31,6 @@ export class DashboardContainerComponent {
   showPlatform$: Observable<boolean>;
   showAdminConsoleLock$: Observable<boolean>;
   @ViewChild('contactSalesSlideout') contactSalesSlideout: MatSidenav;
-
   contactSalesState$: Observable<boolean>;
 
   constructor(

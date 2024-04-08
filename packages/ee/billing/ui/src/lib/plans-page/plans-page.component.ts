@@ -3,17 +3,9 @@ import { Observable, map, tap } from 'rxjs';
 import {
   MAXIMUM_ALLOWED_TASKS,
   ProjectBillingRespone,
-  Referral,
 } from '@activepieces/ee-shared';
-import { ReferralService } from '../service/referral.service';
-import {
-  AuthenticationService,
-  ProjectActions,
-  ProjectSelectors,
-  TelemetryService,
-} from '@activepieces/ui/common';
-import { ProjectWithLimits, TelemetryEventName } from '@activepieces/shared';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { ProjectActions, ProjectSelectors } from '@activepieces/ui/common';
+import { ProjectWithLimits } from '@activepieces/shared';
 import { BillingService } from '../service/billing.service';
 import { Store } from '@ngrx/store';
 import {
@@ -37,8 +29,6 @@ export class PlansPageComponent implements OnInit {
   options = {
     path: '/assets/lottie/gift.json',
   };
-  referralUrl = 'https://cloud.activepieces.com/sign-up?referral=';
-  referrals$: Observable<Referral[]> | undefined;
   upgrade$: Observable<void> | undefined;
   upgradeLoading = false;
   manageLoading = false;
@@ -49,11 +39,7 @@ export class PlansPageComponent implements OnInit {
   openPortal$: Observable<void> | undefined;
   disableOrEnable$: Observable<void>;
   constructor(
-    private referralService: ReferralService,
-    private telemetryService: TelemetryService,
-    private authenticationService: AuthenticationService,
     private billingService: BillingService,
-    private matSnackbar: MatSnackBar,
     private fb: FormBuilder,
     private store: Store
   ) {
@@ -92,10 +78,6 @@ export class PlansPageComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.referralUrl = `https://cloud.activepieces.com/sign-up?referral=${this.authenticationService.currentUser.id}`;
-    this.referrals$ = this.referralService
-      .list({ limit: 100 })
-      .pipe(map((page) => page.data));
     this.addTallyScript();
   }
 
@@ -140,19 +122,5 @@ export class PlansPageComponent implements OnInit {
         },
       })
     );
-  }
-
-  trackClick() {
-    this.telemetryService.capture({
-      name: TelemetryEventName.REFERRAL_LINK_COPIED,
-      payload: {
-        userId: this.authenticationService.currentUser.id,
-      },
-    });
-  }
-  copyUrl() {
-    navigator.clipboard.writeText(this.referralUrl);
-    this.trackClick();
-    this.matSnackbar.open('Referral URL copied to your clipboard.');
   }
 }
