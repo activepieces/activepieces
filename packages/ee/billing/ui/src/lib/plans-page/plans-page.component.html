@@ -3,40 +3,7 @@
     <div class="ap-flex ap-flex ap-items-center ap-justify-center ap-container">
       <div
         class="ap-flex ap-flex-col ap-justify-center ap-items-start ap-container ap-ml-8 ap-mt-[70px] ap-p-2 lg:ap-p-8 ap-flex ap-w-full ng-star-inserted">
-        <!-- BG color is inlined because we don't want it affected by whitelabelling -->
-        <div
-          class="ap-bg-[#6e41e2] ap-justify-center md:ap-justify-between ap-text-white ap-flex ap-gap-10 ap-flex-wrap lg:ap-flex-nowrap ap-rounded ap-w-[100%]">
-          <div class="ap-py-6 lg:ap-py-12 ap-px-6 lg:ap-pl-12  lg:ap-pr-0 ">
-            <div class="ap-mb-5 ap-typography-headline-3 !ap-text-[2.375rem]">
-              Refer & Increase Your Tasks!
-            </div>
-            <div class="ap-typography-body-1">
-              Invite a friend or a colleague to Activepieces using your referral link,
-              <br> so you both get <b>500 extra tasks/month </b>
-              and remove daily limits.
-            </div>
-            <div class="ap-mt-11 ap-flex ap-gap-7 ap-flex-wrap lg:ap-flex-nowrap">
-              <ap-button btnColor="white" (buttonClicked)="copyUrl()">
-                <div
-                  class="ap-flex ap-text-body-2 !ap-font-semibold ap-w-[200px] md:ap-w-[400px] ap-items-center ap-justify-center ap-gap-2">
-                  <svg-icon class="ap-fill-body ap-w-[13px] ap-h-[12px]" [applyClass]="true"
-                    src="assets/img/custom/copy.svg">
-                  </svg-icon>
-                  Copy Link
-                </div>
-              </ap-button>
-              <div class="ap-flex ap-flex-col ap-gap-2 ap-typography-body-2 ap-justify-center">
-                <div class="ap-font-semibold" *ngIf="referrals$ | async as refs">
-                  {{ refs.length}}/5 users referred
-                </div>
-
-              </div>
-            </div>
-          </div>
-          <img src="assets/img/custom/referrals.png"
-            class="ap-w-[345.1px] ap-h-[203.7px] md:ap-w-[493px] md:ap-h-[291px] ap-mt-[22px] ap-mx-6 lg:ap-mr-12 lg:ap-ml-0">
-        </div>
-        <div class="ap-typography-headline-6 !ap-font-semibold ap-mb-5 ap-mt-5">
+        <div class="ap-typography-headline-6 !ap-font-semibold ap-my-5">
           Your Automation Plan
         </div>
         <div
