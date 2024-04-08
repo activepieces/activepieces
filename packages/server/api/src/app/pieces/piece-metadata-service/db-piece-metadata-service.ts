@@ -46,7 +46,7 @@ export const FastDbPieceMetadataService = (): PieceMetadataService => {
             let platformId: string | undefined = undefined
             if (!isNil(projectId)) {
                 // TODO: this might be database intensive, consider caching, passing platform id from caller cause major changes
-                // Don't use GetOneOrThrow Anonymouse Token generates random string for project id
+                // Don't use GetOneOrThrow Anonymous Token generates random string for project id
                 const project = await projectService.getOne(projectId)
                 platformId = project?.platformId
             }
@@ -55,11 +55,11 @@ export const FastDbPieceMetadataService = (): PieceMetadataService => {
             const originalPieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({ projectId, platformId, release: undefined })
             const piece = originalPieces.find((piece) => {
 
-                const strictyLessThan = (isNil(versionToSearch) || (
+                const strictlyLessThan = (isNil(versionToSearch) || (
                     semVer.compare(piece.version, versionToSearch.nextExcludedVersion) < 0
                     && semVer.compare(piece.version, versionToSearch.baseVersion) >= 0
                 ))
-                return piece.name === name && strictyLessThan
+                return piece.name === name && strictlyLessThan
             })
             if (isNil(piece)) {
                 throw new ActivepiecesError({
@@ -94,7 +94,7 @@ export const FastDbPieceMetadataService = (): PieceMetadataService => {
             }
             await repo().delete({
                 id,
-                projectId: projectId ?? undefined,
+                projectId: projectId ?? IsNull(),
             })
         },
         async updateUsage({ id, usage }): Promise<void> {

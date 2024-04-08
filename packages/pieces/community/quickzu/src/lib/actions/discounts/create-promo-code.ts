@@ -109,7 +109,7 @@ export const createPromoCodeAction = createAction({
       required: true,
     }),
     minimum_cart_value: Property.Number({
-      displayName: 'Minium Order Amount',
+      displayName: 'Minimum Order Amount',
       required: true,
     }),
     max_users_limit: Property.Number({

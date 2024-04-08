@@ -37,6 +37,12 @@ import {
   spreadIfDefined,
 } from '@activepieces/shared';
 import { ActionBase, PieceMetadataModel, TriggerBase } from '@activepieces/pieces-framework';
+import {
+  ActionBase,
+  PiecePropertyMap,
+  PropertyType,
+  TriggerBase,
+} from '@activepieces/pieces-framework';
 import { FormControl, UntypedFormBuilder, Validators } from '@angular/forms';
 import { InputFormCore } from '../input-form-core';
 
@@ -73,7 +79,11 @@ import { InputFormCore } from '../input-form-core';
       [formPieceTriggerPrefix]="deps.formPieceTriggerPrefix"
       [propertiesMap]="deps.selectedTriggerOrAction.props"
       (formValueChange)="
-        piecePropertiesFormValueChanged($event, deps.currentStep)
+        piecePropertiesFormValueChanged(
+          $event,
+          deps.currentStep,
+          deps.selectedTriggerOrAction.props
+        )
       "
       [triggerName]="deps.currentStep.settings.triggerName"
       [hideCustomizedInputs]="isFormReadOnly$ | async | defaultTrue"
@@ -299,8 +309,13 @@ export class PieceInputFormComponent extends InputFormCore {
       customizedInputs: Record<string, boolean | Record<string, boolean>>;
       valid: boolean;
     },
-    step: Step
+    step: Step,
+    props: PiecePropertyMap
   ) {
+    const cleanedInput = this.fixJsonValues(
+      this.removeEmptyValuesFromInput(result.input),
+      props
+    );
     if (this.form.enabled) {
       if (step.type === TriggerType.PIECE) {
         this.store.dispatch(
@@ -309,7 +324,7 @@ export class PieceInputFormComponent extends InputFormCore {
               ...step,
               settings: {
                 ...step.settings,
-                input: this.removeEmptyValuesFromInput(result.input),
+                input: cleanedInput,
                 inputUiInfo: {
                   ...step.settings.inputUiInfo,
                   customizedInputs: result.customizedInputs,
@@ -326,7 +341,7 @@ export class PieceInputFormComponent extends InputFormCore {
               ...step,
               settings: {
                 ...step.settings,
-                input: this.removeEmptyValuesFromInput(result.input),
+                input: cleanedInput,
                 inputUiInfo: {
                   ...step.settings.inputUiInfo,
                   customizedInputs: result.customizedInputs,
@@ -338,6 +353,21 @@ export class PieceInputFormComponent extends InputFormCore {
         );
       }
     }
+  }
+
+  private fixJsonValues(
+    input: Record<string, unknown>,
+    props: PiecePropertyMap
+  ) {
+    const cleanedInput: Record<string, unknown> = JSON.parse(
+      JSON.stringify(input)
+    );
+    Object.keys(input).forEach((key) => {
+      if (props[key].type === PropertyType.JSON) {
+        cleanedInput[key] = this.parseJsonIfPossible(input[key]);
+      }
+    });
+    return cleanedInput;
   }
 
   renameStepBasedOnSelectedTriggerOrAction() {
@@ -418,6 +448,17 @@ export class PieceInputFormComponent extends InputFormCore {
           },
         })
       );
+    }
+  }
+
+  private parseJsonIfPossible(value: unknown) {
+    if (typeof value !== 'string') {
+      return value;
+    }
+    try {
+      return JSON.parse(value);
+    } catch (e) {
+      return value;
     }
   }
 }

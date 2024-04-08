@@ -35,7 +35,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/versions', ListVersionsRequest, async (req): Promise<ListVersionsResponse> => {
         return pieceMetadataService.getVersions({
             name: req.query.name,
-            projectId: req.principal.projectId,
+            projectId: req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.projectId,
             release: req.query.release,
             edition: req.query.edition ?? ApEdition.COMMUNITY,
             platformId: req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id,
@@ -59,10 +59,11 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             const release = req.query.release ?? latestRelease
             const edition = req.query.edition ?? ApEdition.COMMUNITY
             const platformId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id
+            const projectId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.projectId
             const pieceMetadataSummary = await pieceMetadataService.list({
                 release,
                 includeHidden: req.query.includeHidden ?? false,
-                projectId: req.principal.projectId,
+                projectId,
                 platformId,
                 edition,
                 includeTags,
@@ -86,11 +87,9 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
 
             const decodeScope = decodeURIComponent(scope)
             const decodedName = decodeURIComponent(name)
+            const projectId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.projectId
             return pieceMetadataService.getOrThrow({
-                projectId:
-                    req.principal.type === PrincipalType.UNKNOWN
-                        ? undefined
-                        : req.principal.projectId,
+                projectId,
                 name: `${decodeScope}/${decodedName}`,
                 version,
             })
@@ -105,11 +104,9 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             const { version } = req.query
 
             const decodedName = decodeURIComponent(name)
+            const projectId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.projectId
             return pieceMetadataService.getOrThrow({
-                projectId:
-                    req.principal.type === PrincipalType.UNKNOWN
-                        ? undefined
-                        : req.principal.projectId,
+                projectId,
                 name: decodedName,
                 version,
             })

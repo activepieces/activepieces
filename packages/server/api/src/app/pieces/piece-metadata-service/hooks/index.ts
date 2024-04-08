@@ -42,6 +42,7 @@ export type FilterPiecesParams = {
     platformId?: PlatformId
     searchQuery?: string
     categories?: PieceCategory[]
+    projectId?: string
     sortBy?: PieceSortBy
     orderBy?: PieceOrderBy
     pieces: PieceMetadataSchema[]

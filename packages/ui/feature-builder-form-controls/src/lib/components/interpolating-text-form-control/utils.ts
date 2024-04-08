@@ -221,7 +221,7 @@ export function traverseStepOutputAndReturnMentionTree(
       propertyPath: path,
       key: lastKey,
       children: Object.keys(stepOutput).map((k) => {
-        const escpaedKey = k
+        const escapedKey = k
           .replaceAll(/\\/g, '\\')
           .replaceAll(/"/g, '\\"')
           .replaceAll(/'/g, "\\'")
@@ -229,7 +229,7 @@ export function traverseStepOutputAndReturnMentionTree(
           .replaceAll(/\r/g, '\\r')
           .replaceAll(/\t/g, '\\t')
           .replaceAll(/’/g, '\\’');
-        const newPath = `${path}['${escpaedKey}']`;
+        const newPath = `${path}['${escapedKey}']`;
         const newKey = k;
         return traverseStepOutputAndReturnMentionTree(
           (stepOutput as Record<string, unknown>)[k],

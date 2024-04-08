@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
   "version": "0.22.0",
-  "rcVersion": "0.23.0-rc.0",
+  "rcVersion": "0.23.0-rc.2",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve ui-core",
@@ -97,6 +97,7 @@
     "decompress": "4.2.1",
     "deep-equal": "2.2.2",
     "drip-nodejs": "3.1.1",
+    "elevenlabs": "0.2.2",
     "exifreader": "4.20.0",
     "fastify": "4.12.0",
     "fastify-favicon": "4.3.0",

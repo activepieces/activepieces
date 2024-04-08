@@ -11,7 +11,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { UiCommonModule } from '@activepieces/ui/common';
 import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
 import { SyncProjectComponent } from '@activepieces/ui-feature-git-sync';
-import { ApFlagId } from '@activepieces/shared';
 
 @Component({
   standalone: true,
@@ -36,19 +35,6 @@ export class SettingsPageComponent implements AfterViewInit {
   ];
 
   constructor(private router: Router, private route: ActivatedRoute) {
-    const flags = this.route.snapshot.data['flags'];
-    if (flags[ApFlagId.SHOW_COMMUNITY_PIECES] === false) {
-      this.tabIndexFragmentMap = this.tabIndexFragmentMap.filter(
-        (i) => i.fragmentName !== 'Pieces'
-      );
-    }
-    if (flags[ApFlagId.SHOW_GIT_SYNC] === false) {
-      this.tabIndexFragmentMap = this.tabIndexFragmentMap.filter(
-        (i) => i.fragmentName !== 'GitSync'
-      );
-    }
-
-    console.log(flags);
     this.fragmentChanged$ = this.route.fragment.pipe(
       tap((fragment) => {
         if (fragment === null) {
@@ -66,13 +52,6 @@ export class SettingsPageComponent implements AfterViewInit {
     } else {
       this.fragmentCheck(fragment);
     }
-  }
-
-  public showTab(fragment: string) {
-    return (
-      this.tabIndexFragmentMap.findIndex((i) => i.fragmentName === fragment) !==
-      -1
-    );
   }
 
   private fragmentCheck(fragment: string) {

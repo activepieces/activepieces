@@ -55,7 +55,7 @@ export const emailService = {
         assertNotNullOrUndefined(project, 'project')
 
         if (!isNil(project.platformId)) {
-            // Don't Inform the project users, as there should be a feature to manage billing by platform owners, If we send an emails to the project users It will confuse them since the email is not white labled.
+            // Don't Inform the project users, as there should be a feature to manage billing by platform owners, If we send an emails to the project users It will confuse them since the email is not white labeled.
             return
         }
 

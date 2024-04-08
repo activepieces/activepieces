@@ -9,7 +9,7 @@ export const getTaskAction = createAction({
   auth: flowluAuth,
   name: 'flowlu_get_task',
   displayName: 'Get Task',
-  description: 'Retrives an existing task.',
+  description: 'Retrieves an existing task.',
   props: {
     task_id: flowluCommon.task_id(true),
   },

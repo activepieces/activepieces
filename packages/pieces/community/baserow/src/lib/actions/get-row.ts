@@ -9,7 +9,7 @@ import { makeClient } from '../common';
 export const getRowAction = createAction({
   name: 'baserow_get_row',
   displayName: 'Get Row',
-  description: 'Fetchs a single table row.',
+  description: 'Fetches a single table row.',
   auth: baserowAuth,
   props: {
     table_id: Property.Number({

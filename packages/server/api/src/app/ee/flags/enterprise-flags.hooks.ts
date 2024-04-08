@@ -2,7 +2,7 @@ import { flagService } from '../../flags/flag.service'
 import { FlagsServiceHooks } from '../../flags/flags.hooks'
 import { resolvePlatformIdForRequest } from '../../platform/platform-utils'
 import { platformService } from '../../platform/platform.service'
-import { apperanceHelper } from '../helper/apperance-helper'
+import { appearanceHelper } from '../helper/apperance-helper'
 import { ApFlagId, isNil, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
 
 export const enterpriseFlagsHooks: FlagsServiceHooks = {
@@ -26,7 +26,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
         const isCustomerPlatform = !flagService.isCloudPlatform(platformId)
         if (isCustomerPlatform) {
             modifiedFlags[ApFlagId.SHOW_PLATFORM_DEMO] = false
-            modifiedFlags[ApFlagId.THEME] = await apperanceHelper.getTheme({
+            modifiedFlags[ApFlagId.THEME] = await appearanceHelper.getTheme({
                 platformId,
             })
             modifiedFlags[ApFlagId.SHOW_COMMUNITY] = false
@@ -34,7 +34,8 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             modifiedFlags[ApFlagId.SHOW_BILLING] = false
             modifiedFlags[ApFlagId.SHOW_COPILOT] = false
             modifiedFlags[ApFlagId.SHOW_BLOG_GUIDE] = false
-            modifiedFlags[ApFlagId.SHOW_COMMUNITY_PIECES] = false
+            modifiedFlags[ApFlagId.INSTALL_PROJECT_PIECES_ENABLED] = false
+            modifiedFlags[ApFlagId.MANAGE_PROJECT_PIECES_ENABLED] = true
             modifiedFlags[ApFlagId.SHOW_SIGN_UP_LINK] = false
             modifiedFlags[ApFlagId.SHOW_POWERED_BY_AP] = platform.showPoweredBy
             modifiedFlags[ApFlagId.CLOUD_AUTH_ENABLED] = platform.cloudAuthEnabled

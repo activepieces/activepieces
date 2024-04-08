@@ -12,7 +12,7 @@ import {
     ListFolderRequest,
 } from '@activepieces/shared'
 
-const DEFUALT_PAGE_SIZE = 10
+const DEFAULT_PAGE_SIZE = 10
 
 const FolderIdParam = Type.Object({
     folderId: Type.String(),
@@ -95,7 +95,7 @@ export const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
             return folderService.list({
                 projectId: request.principal.projectId,
                 cursorRequest: request.query.cursor ?? null,
-                limit: request.query.limit ?? DEFUALT_PAGE_SIZE,
+                limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
             })
         },
     )

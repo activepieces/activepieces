@@ -36,7 +36,7 @@ async function main() {
             );
             exec(`nx run-many -t build --projects=${piecePackageName} --skip-nx-cache`, (error, stdout, stderr) => {
               if (error || stderr) {
-                console.error(chalk.red.bold('Failed to run turbowatch...', error, stderr));
+                console.error(chalk.red.bold('Failed to run turbowatch...', stdout, stderr));
                 return;
               }
               // Print a fancy message to the console using chalk

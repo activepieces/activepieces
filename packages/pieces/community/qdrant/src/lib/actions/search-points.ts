@@ -36,7 +36,7 @@ export const searchPoints = createAction({
   run: async ({ auth, propsValue }) => {
     const client = new QdrantClient({
       apiKey: auth.key,
-      url: auth.serverAdress,
+      url: auth.serverAddress,
     });
     const { must, must_not } = propsValue;
 

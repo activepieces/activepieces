@@ -23,6 +23,8 @@ export * from './lib/components/upgrade-note/upgrade-note.component';
 import '@angular/localize/init';
 export * from './lib/guards/show-based-on-any-flag.guard';
 export * from './lib/components/ap-chips-list/ap-chips-list.component';
+export * from './lib/components/dropdown-search-control/dropdown-search-control.component';
+export * from './lib/directives/select-all.directive';
 export * from './lib/pipe/comma-seperated.pipe';
 export * from './lib/utils/consts';
 export * from './lib/components/is-feature-enabled-base/is-feature-enabled-base.component';

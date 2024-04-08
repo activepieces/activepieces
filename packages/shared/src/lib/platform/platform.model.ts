@@ -19,7 +19,13 @@ export const Platform = Type.Object({
     logoIconUrl: Type.String(),
     fullLogoUrl: Type.String(),
     favIconUrl: Type.String(),
+    /**
+    * @deprecated Use projects filter instead.
+    */
     filteredPieceNames: Type.Array(Type.String()),
+    /**
+    * @deprecated Use projects filter instead.
+    */
     filteredPieceBehavior: Type.Enum(FilteredPieceBehavior),
     smtpHost: Type.Optional(Type.String()),
     smtpPort: Type.Optional(Type.Number()),
@@ -47,6 +53,6 @@ export type Platform = Static<typeof Platform>
 
 export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
     federatedAuthProviders: FederatedAuthnProviderConfigWithoutSensitiveData,
-}), Type.Omit(Platform, ['smtpPassword', 'federatedAuthProviders'])] )
+}), Type.Omit(Platform, ['smtpPassword', 'federatedAuthProviders'])])
 
 export type PlatformWithoutSensitiveData = Static<typeof PlatformWithoutSensitiveData>

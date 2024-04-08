@@ -7,10 +7,12 @@ import {
 import { CommonModule } from '@angular/common';
 
 import { DropdownState, PropertyType } from '@activepieces/pieces-framework';
-import { UiCommonModule } from '@activepieces/ui/common';
+import {
+  DropdownSearchControlComponent,
+  UiCommonModule,
+} from '@activepieces/ui/common';
 import { DynamicInputToggleComponent } from '../dynamic-input-toggle/dynamic-input-toggle.component';
 import deepEqual from 'deep-equal';
-import { DropdownSearchControlComponent } from '../dropdown-search-control/dropdown-search-control.component';
 import { DropdownSelectedValuesPipe } from '../../pipes/dropdown-selected-values.pipe';
 import { Observable, startWith } from 'rxjs';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';

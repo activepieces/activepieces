@@ -187,7 +187,7 @@ const sampleData = {
       manual_payments: true,
       payment_inst_title: 'Pay Later',
       term_condition_text: 'Bhgghhhbsbsbbsbnzja bhbb',
-      condition_optin_enabled: true,
+      condition_option_enabled: true,
       invoice_footer_thankyou_msg: '',
     },
     text: "Hi, I'd like to place an order",

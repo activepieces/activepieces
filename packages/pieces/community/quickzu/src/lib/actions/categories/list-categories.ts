@@ -6,7 +6,7 @@ export const listCategoriesAction = createAction({
   auth: quickzuAuth,
   name: 'quickzu_list_categories',
   displayName: 'List Categories',
-  description: 'Retrives all categories from store.',
+  description: 'Retrieves all categories from store.',
   props: {
     term: Property.ShortText({
       displayName: 'Search Term',

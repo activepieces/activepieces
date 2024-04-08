@@ -135,9 +135,6 @@
             </td>
         </ng-container>
 
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row [class.ap-hidden]="dataSource.isLoading$ | async" *matRowDef="let row; columns: displayedColumns">
-        </tr>
     </table>
     <ng-container *ngIf="(dataSource.isLoading$ | async) === true">
         <div class="ap-flex ap-items-center ap-justify-center ap-flex-grow ap-h-[500px]">

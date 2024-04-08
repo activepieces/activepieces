@@ -65,12 +65,6 @@ export class PieceMetadataService {
         });
     }
 
-    listInstalledPieces(): Observable<PieceMetadataModelSummary[]> {
-        return this.listPieces({
-            includeHidden: false
-        }).pipe(map(pieces => pieces.filter(piece => !isNil(piece.projectId))))
-    }
-
     private listCorePieces(searchQuery: string | undefined, suggestionType: SuggestionType): Observable<PieceMetadataModelSummary[]> {
         return this.listPieces({
             includeHidden: false,

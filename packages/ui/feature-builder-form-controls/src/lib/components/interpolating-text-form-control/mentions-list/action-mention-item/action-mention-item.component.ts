@@ -44,7 +44,7 @@ export class ActionMentionItemComponent implements OnInit {
     private store: Store
   ) {}
   ngOnInit(): void {
-    const cacheResult = this.getChachedData();
+    const cacheResult = this.getCachedData();
     this.mentionsTreeCache.setStepMentionsTree(this.stepMention.step.name, {
       children: cacheResult?.children || [],
       value: cacheResult?.value,
@@ -81,7 +81,7 @@ export class ActionMentionItemComponent implements OnInit {
     this.mentionClicked.emit(mentionListItem);
   }
 
-  getChachedData() {
+  getCachedData() {
     const step = this.stepMention.step;
     let cachedResult: undefined | MentionTreeNode = undefined;
     if (

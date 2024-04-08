@@ -147,7 +147,7 @@ export const issuesEventTrigger = createTrigger({
   async run(context) {
     const { actiontype } = context.propsValue;
     if (
-      isVerficationCall(
+      isVerificationCall(
         context.payload.body as Record<string, unknown>,
         actiontype as string
       )
@@ -158,7 +158,7 @@ export const issuesEventTrigger = createTrigger({
   },
 });
 
-function isVerficationCall(payload: Record<string, any>, actiontype: string) {
+function isVerificationCall(payload: Record<string, any>, actiontype: string) {
   if (actiontype == 'all') {
     return true;
   }

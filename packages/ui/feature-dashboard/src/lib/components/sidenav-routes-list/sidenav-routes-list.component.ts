@@ -4,9 +4,10 @@ import { Store } from '@ngrx/store';
 import { FolderActions } from '@activepieces/ui/feature-folders-store';
 import {
   AuthenticationService,
+  EmbeddingService,
   NavigationService,
 } from '@activepieces/ui/common';
-import { Observable, forkJoin, map, of } from 'rxjs';
+import { Observable, forkJoin, map, of, take } from 'rxjs';
 import { ApFlagId, ProjectMemberRole, supportUrl } from '@activepieces/shared';
 import { DashboardService, FlagService } from '@activepieces/ui/common';
 
@@ -86,6 +87,7 @@ export class SidenavRoutesListComponent implements OnInit {
     private flagServices: FlagService,
     private dashboardService: DashboardService,
     private navigationService: NavigationService,
+    private embeddingService: EmbeddingService,
     private authenticationService: AuthenticationService,
     private flagService: FlagService
   ) {
@@ -130,7 +132,10 @@ export class SidenavRoutesListComponent implements OnInit {
         icon: 'assets/img/custom/dashboard/members.svg',
         caption: $localize`Team`,
         route: 'team',
-        showInSideNav$: of(true),
+        showInSideNav$: this.embeddingService.getIsInEmbedding$().pipe(
+          take(1),
+          map((isInEmbedding) => !isInEmbedding)
+        ),
         showLock$: this.flagService
           .isFlagEnabled(ApFlagId.PROJECT_MEMBERS_ENABLED)
           .pipe(map((enabled) => !enabled)),
@@ -140,12 +145,10 @@ export class SidenavRoutesListComponent implements OnInit {
         icon: 'assets/img/custom/dashboard/settings.svg',
         caption: $localize`Settings`,
         route: 'settings',
-        showInSideNav$: forkJoin({
-          pieces: this.flagServices.isFlagEnabled(
-            ApFlagId.SHOW_COMMUNITY_PIECES
-          ),
-          gitSync: this.flagServices.isFlagEnabled(ApFlagId.SHOW_GIT_SYNC),
-        }).pipe(map((flags) => flags.pieces || flags.gitSync)),
+        showInSideNav$: this.embeddingService.getIsInEmbedding$().pipe(
+          take(1),
+          map((isInEmbedding) => !isInEmbedding)
+        ),
         showLock$: of(false),
       },
     ];

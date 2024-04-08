@@ -104,7 +104,7 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
     this.settingsForm = this.fb.group({
       redirect_url: new FormControl(this.dialogData.redirectUrl, {
         nonNullable: true,
-        validators: [Validators.required],
+        validators: [],
       }),
       client_secret: new FormControl('', {
         nonNullable: true,
@@ -143,6 +143,13 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
     if (environment.production) {
       this.settingsForm.controls.redirect_url.disable();
     }
+    if (
+      this.dialogData.pieceAuthProperty.grantType ===
+      OAuth2GrantType.CLIENT_CREDENTIALS
+    ) {
+      this.settingsForm.controls.redirect_url.disable();
+      this.settingsForm.controls.value.disable();
+    }
     if (this.dialogData.connectionToUpdate) {
       this.settingsForm.controls.name.setValue(
         this.dialogData.connectionToUpdate.name
@@ -166,14 +173,19 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
       this.dialogData.pieceAuthProperty.scope!.join(' '),
       this.settingsForm.controls.props.value
     );
+    const isClientCredentails =
+      this.dialogData.pieceAuthProperty.grantType ===
+      OAuth2GrantType.CLIENT_CREDENTIALS;
     const newConnection: UpsertOAuth2Request = {
       projectId: this.authenticatiionService.getProjectId(),
       name: connectionName,
       pieceName: this.dialogData.pieceName,
       type: AppConnectionType.OAUTH2,
       value: {
-        code: this.settingsForm.controls.value.value!.code,
-        code_challenge: this.settingsForm.controls.value.value!.code_challenge,
+        code: isClientCredentails
+          ? ''
+          : this.settingsForm.controls.value.value!.code,
+        code_challenge: this.settingsForm.controls.value.value?.code_challenge,
         type: AppConnectionType.OAUTH2,
         grant_type:
           this.dialogData.pieceAuthProperty.grantType ??

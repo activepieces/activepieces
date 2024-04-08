@@ -137,7 +137,7 @@ export function validateFileControl(
             extension.toLocaleLowerCase()
         )
       ) {
-        return { invalidExtenstion: true };
+        return { invalidExtension: true };
       }
       if (file.size > fileSizeLimit) {
         return { sizeLimit: true };

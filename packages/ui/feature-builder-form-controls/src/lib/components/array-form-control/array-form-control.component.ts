@@ -92,7 +92,7 @@ export class ArrayFormControlComponent
       map(() => void 0)
     );
   }
-  /** type of value is string only when you swtich to customized inputs that happens because of change detection running before the form control is removed from template*/
+  /** type of value is string only when you switch to customized inputs that happens because of change detection running before the form control is removed from template*/
   writeValue(pvalue: Array<string | Record<string, unknown>> | null): void {
     const values: Array<string | Record<string, unknown>> = pvalue
       ? JSON.parse(JSON.stringify(pvalue))

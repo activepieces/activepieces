@@ -16,7 +16,7 @@ import {
 import { ActivatedRoute } from '@angular/router';
 import { localesMap } from '@activepieces/ui/common';
 import { spreadIfDefined, LocalesEnum } from '@activepieces/shared';
-import { PLATFORM_RESOLVER_KEY } from '../../platform.resolver';
+import { PLATFORM_RESOLVER_KEY } from '@activepieces/ui/common';
 import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
 
 interface AppearanceForm {
