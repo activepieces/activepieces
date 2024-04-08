@@ -17,12 +17,11 @@ import {
   FolderId,
   FlowOperationType,
   TelemetryEventName,
-  ApEdition,
+  ApFlagId,
 } from '@activepieces/shared';
 import {
   ApPaginatorComponent,
   AuthenticationService,
-  CLOUD_PLATFORM_ID,
   EmbeddingService,
   FlagService,
   FoldersService,
@@ -95,15 +94,7 @@ export class FlowsTableComponent implements OnInit {
   ) {
     this.showAllFlows$ = this.listenToShowAllFolders();
     this.folderId$ = this.store.select(FoldersSelectors.selectCurrentFolderId);
-    this.showRewards$ = this.flagService.getEdition().pipe(
-      map((ed) => {
-        return (
-          ed === ApEdition.COMMUNITY ||
-          (ed === ApEdition.CLOUD &&
-            this.authenticationService.getPlatformId() === CLOUD_PLATFORM_ID)
-        );
-      })
-    );
+    this.showRewards$ = this.flagService.isFlagEnabled(ApFlagId.SHOW_REWARDS);
   }
 
   private listenToShowAllFolders() {
