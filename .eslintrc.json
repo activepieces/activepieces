@@ -1,6 +1,6 @@
 {
   "root": true,
-  "ignorePatterns": ["**/*"],
+  "ignorePatterns": ["**/*", "deploy/**/*"],
   "plugins": ["@nx"],
   "overrides": [
     {
