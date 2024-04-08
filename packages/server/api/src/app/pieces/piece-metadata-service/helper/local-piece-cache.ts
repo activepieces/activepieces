@@ -4,6 +4,7 @@ import semVer from 'semver'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { PieceMetadataEntity, PieceMetadataSchema } from '../../piece-metadata-entity'
 import { isNil } from '@activepieces/shared'
+import { logger } from '@activepieces/server-shared'
 
 let cache: PieceMetadataSchema[] = []
 
@@ -12,19 +13,22 @@ const lock: Mutex = new Mutex()
 
 type State = {
     recentUpdate: string | undefined
-    count: number
+    count: string
 }
 
 export const localPieceCache = {
     async getSortedbyNameAscThenVersionDesc(): Promise<PieceMetadataSchema[]> {
-        const newestState: State | undefined = await repo().createQueryBuilder().select('MAX(updated)', 'recentUpdate').addSelect('count(*)', 'count').getRawOne()
-        if (!requireUpdate(newestState)) {
+        const updatedRequired = await requireUpdate()
+        if (!updatedRequired) {
             return cache
         }
+        logger.info({ time: dayjs().toISOString(), file: 'localPieceCache' }, 'Syncing pieces')
         cache = await executeWithLock(async () => {
-            if (!requireUpdate(newestState)) {
+            const updatedRequiredSecondCheck = await requireUpdate()
+            if (!updatedRequiredSecondCheck) {
                 return cache
             }
+            logger.info('Syncing pieces from database')
             const result = await repo().find()
             return result.sort((a, b) => {
                 if (a.name !== b.name) {
@@ -37,14 +41,15 @@ export const localPieceCache = {
     },
 }
 
-function requireUpdate(newestState: State | undefined): boolean {
+async function requireUpdate(): Promise<boolean> {
+    const newestState: State | undefined = await repo().createQueryBuilder().select('MAX(updated)', 'recentUpdate').addSelect('count(*)', 'count').getRawOne()
     if (isNil(newestState)) {
         return false
     }
     const newestInCache = cache.reduce((acc, piece) => {
         return Math.max(dayjs(piece.updated).unix(), acc)
     }, 0)
-    return dayjs(newestState.recentUpdate).unix() !== newestInCache || newestState.count !== cache.length
+    return dayjs(newestState.recentUpdate).unix() !== newestInCache || Number(newestState.count) !== cache.length
 }
 
 const executeWithLock = async <T>(methodToExecute: () => T): Promise<T> => {

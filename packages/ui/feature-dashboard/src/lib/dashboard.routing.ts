@@ -9,7 +9,9 @@ import { ConnectionsTableComponent } from './pages/connections-table/connections
 import { FoldersResolver } from '@activepieces/ui/feature-folders-store';
 import { DashboardContainerComponent } from './dashboard-container.component';
 import {
+  PLATFORM_RESOLVER_KEY,
   isFeatureFlagEnabledResolver,
+  PlatformResolver,
   showBasedOnFlagGuard,
   showBasedOnRoles,
   showPlatformSettingsGuard,
@@ -103,6 +105,7 @@ export const DashboardLayoutRouting: Routes = [
         component: SettingsPageComponent,
         resolve: {
           [FLAGS_RESOLVE_DATA]: FlagsResolver,
+          [PLATFORM_RESOLVER_KEY]: PlatformResolver,
         },
         canActivate: [
           showBasedOnRoles([

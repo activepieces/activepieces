@@ -164,6 +164,7 @@ ErrorCode.PIECE_NOT_FOUND,
 {
     pieceName: string
     pieceVersion: string | undefined
+    message: string
 }
 >
 

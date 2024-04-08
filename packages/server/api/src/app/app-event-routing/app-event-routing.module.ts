@@ -67,6 +67,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                     params: {
                         pieceName: pieceUrl,
                         pieceVersion: 'latest',
+                        message: 'Pieces is not found in app event routing',
                     },
                 })
             }

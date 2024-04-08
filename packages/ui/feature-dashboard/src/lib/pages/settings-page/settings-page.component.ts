@@ -54,13 +54,6 @@ export class SettingsPageComponent implements AfterViewInit {
     }
   }
 
-  public showTab(fragment: string) {
-    return (
-      this.tabIndexFragmentMap.findIndex((i) => i.fragmentName === fragment) !==
-      -1
-    );
-  }
-
   private fragmentCheck(fragment: string) {
     if (this.tabGroup) {
       const tabIndex = this.tabIndexFragmentMap.findIndex(

@@ -8,7 +8,7 @@ import { MatTabChangeEvent, MatTabGroup } from '@angular/material/tabs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { Platform } from '@activepieces/shared';
-import { PLATFORM_RESOLVER_KEY } from '../../platform.resolver';
+import { PLATFORM_RESOLVER_KEY } from '@activepieces/ui/common';
 import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
 @Component({
   selector: 'app-platform-settings',
