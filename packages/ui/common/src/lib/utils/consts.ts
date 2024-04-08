@@ -124,5 +124,3 @@ export const showPlatformDashboard$ = (
       )
     );
 };
-
-export const CLOUD_PLATFORM_ID = 'NgixMLyPUxy1ZgCcxw5cM';

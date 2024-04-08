@@ -56,7 +56,7 @@ import { RewardsDialogComponent } from './components/dialogs/rewards-dialog/rewa
     UiFeatureConnectionsModule,
     FormsModule,
     SyncProjectComponent,
-    RewardsDialogComponent
+    RewardsDialogComponent,
   ],
   declarations: [
     DashboardContainerComponent,
