@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MarkdownComponent } from './components/markdown/markdown.component';
 import { MarkdownModule, MarkedOptions, MarkedRenderer } from 'ngx-markdown';
 import { EditableTextComponent } from './components/editable-text/editable-text.component';
 import {
@@ -75,6 +74,7 @@ import { LetterIconComponent } from './components/letter-icon/letter-icon.compon
 import { MatListModule } from '@angular/material/list';
 import { MatPseudoCheckboxModule } from '@angular/material/core';
 import { ControlDescriptionComponent } from './components/control-description/control-description.component';
+import { ApMarkdownComponent } from './components';
 
 const exportedImports = [
   CommonModule,
@@ -111,7 +111,7 @@ const exportedImports = [
 const exportedDeclarations = [
   UploadFileControlComponent,
   ElementDirective,
-  MarkdownComponent,
+  ApMarkdownComponent,
   EditableTextComponent,
   ApButtonComponent,
   WarningBoxComponent,

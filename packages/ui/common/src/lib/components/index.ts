@@ -5,7 +5,7 @@ export * from './editable-text/editable-text.component';
 export * from './hotspot/hotspot.component';
 export * from './icon-button/icon-button.component';
 export * from './loading-icon/loading-icon.component';
-export * from './markdown/markdown.component';
+export * from './ap-markdown/ap-markdown.component';
 export * from './pagination/ap-paginator.component';
 export * from './status-icon/state-icon.component';
 export * from './warning-box/warning-box.component';
