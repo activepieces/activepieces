@@ -61,7 +61,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.SHOW_REWARDS,
-                value: false,
+                value: true,
                 created,
                 updated,
             },
