@@ -47,7 +47,7 @@ export interface ActivepiecesVendorInit {
     initialRoute: string;
     hideSidebar: boolean;
     hideLogoInBuilder?: boolean;
-    hideFlowActionsInBuilder?: boolean;
+    hideFlowNameInBuilder?: boolean;
     disableNavigationInBuilder: boolean;
     hideFolders?: boolean;
   };
@@ -61,7 +61,7 @@ class ActivepiecesEmbedded {
   _hideSidebar = false;
   _hideFolders = false;
   _hideLogoInBuilder = false;
-  _hideFlowActionsInBuilder = false;
+  _hideFlowNameInBuilder = false;
   _disableNavigationInBuilder = true;
   _connectionsIframeInitialized = false;
   _resolveNewConnectionDialogClosed?: (result: ActivepiecesNewConnectionDialogClosed['data']) => void;
@@ -85,7 +85,7 @@ class ActivepiecesEmbedded {
       builder?: {
         disableNavigation: boolean
         hideLogo?: boolean;
-        hideFlowActions?: boolean;
+        hideFlowName?: boolean;
       },
       dashboard?: {
         hideSidebar?: boolean;
@@ -101,7 +101,7 @@ class ActivepiecesEmbedded {
     this._disableNavigationInBuilder = embedding?.builder?.disableNavigation ?? false;
     this._hideFolders = embedding?.hideFolders ?? false;
     this._hideLogoInBuilder = embedding?.builder?.hideLogo ?? false;
-    this._hideFlowActionsInBuilder = embedding?.builder?.hideFlowActions ?? false;
+    this._hideFlowNameInBuilder = embedding?.builder?.hideFlowName ?? false;
     if (embedding?.containerId) {
       this._initializeBuilderAndDashboardIframe({
         containerSelector: `#${embedding.containerId}`,
@@ -183,7 +183,7 @@ class ActivepiecesEmbedded {
                   disableNavigationInBuilder: this._disableNavigationInBuilder,
                   hideFolders: this._hideFolders,
                   hideLogoInBuilder: this._hideLogoInBuilder,
-                  hideFlowActionsInBuilder: this._hideFlowActionsInBuilder
+                  hideFlowNameInBuilder: this._hideFlowNameInBuilder
                 },
               };
               iframeWindow.postMessage(apEvent, '*');

@@ -16,6 +16,7 @@
       <ap-icon-button *ngIf="showNavigation$ | async" [width]="20" [height]="20"
         iconUrl="assets/img/custom/dashboard/home.svg" tooltipText="Home" i18n-tooltipText
         (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)"></ap-icon-button>
+      @if ((hideFlowName$ | async) === false) {
       <div class="ap-flex-grow ap-flex ap-items-center ap-gap-2" #spacer>
         <ng-container *ngIf="(showNavigation$ | async) && (hideFolders$ | async) === false">
           <div class="ap-typography-body-1 ap-truncate ap-max-w-[150px] ap-cursor-pointer hover:ap-text-[#000000]"
@@ -32,13 +33,13 @@
           " [allowClick]="true" [cssClasses]="'ap-typography-body-1 !ap-font-semibold'"
           class="ap-text-title"></ap-editable-text>
       </div>
-      @if ((hideFlowActions$ | async) === false) {
+
       <div *ngIf="(isInReadOnlyMode$ | async) === false" class="ap-p-1 ap-cursor-pointer" [matMenuTriggerFor]="menu"
         xPosition="after">
         <svg-icon [svgStyle]="{ width: '18px', height: '18px' }" src="assets/img/custom/chevron.svg">
         </svg-icon>
       </div>
-      }
+
       <mat-menu #menu="matMenu">
         <button mat-menu-item (click)="editingFlowName = true">
           <div class="ap-flex ap-gap-3 ap-items-center">
@@ -92,6 +93,7 @@
           </button>
         </ng-container>
       </mat-menu>
+      }
     </div>
 
     <div class="ap-flex-grow"></div>
