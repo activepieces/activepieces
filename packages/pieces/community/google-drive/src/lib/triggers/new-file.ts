@@ -72,9 +72,7 @@ export const newFile = createTrigger({
       propsValue: context.propsValue,
     });
 
-    const newFilesObj = await handleFileContent(newFiles, context)
-
-    return newFilesObj
+    return await handleFileContent(newFiles, context)
   },
   test: async (context) => {
     const newFiles = await pollingHelper.test(polling, {
@@ -83,9 +81,7 @@ export const newFile = createTrigger({
       propsValue: context.propsValue,
     });
 
-    const newFilesObj = await handleFileContent(newFiles, context)
-
-    return newFilesObj
+    return await handleFileContent(newFiles, context)
   },
 
   sampleData: {
