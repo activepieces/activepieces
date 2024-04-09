@@ -8,6 +8,7 @@ import { ActivepiecesError, apId,
     NotificationStatus,
     Project,
     ProjectId,
+    spreadIfDefined,
     UserId,
 } from '@activepieces/shared'
 
@@ -33,6 +34,20 @@ export const projectService = {
             id: projectId,
             deleted: IsNull(),
         })
+    },
+
+    async update(projectId: ProjectId, request: UpdateParams): Promise<Project> {
+        await repo().update(
+            {
+                id: projectId,
+                deleted: IsNull(),
+            },
+            {
+                ...spreadIfDefined('displayName', request.displayName),
+                ...spreadIfDefined('notifyStatus', request.notifyStatus),
+            },
+        )
+        return this.getOneOrThrow(projectId)
     },
 
     async getOneOrThrow(projectId: ProjectId): Promise<Project> {
@@ -97,6 +112,11 @@ export const projectService = {
             deleted: IsNull(),
         })
     },
+}
+
+type UpdateParams = {
+    displayName?: string
+    notifyStatus?: NotificationStatus
 }
 
 type CreateParams = {

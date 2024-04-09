@@ -11,6 +11,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { UiCommonModule } from '@activepieces/ui/common';
 import { UiFeaturePiecesModule } from '@activepieces/ui/feature-pieces';
 import { SyncProjectComponent } from '@activepieces/ui-feature-git-sync';
+import { GeneralSettingsComponent } from '../../components/general-settings/general-settings.component';
 
 @Component({
   standalone: true,
@@ -19,6 +20,7 @@ import { SyncProjectComponent } from '@activepieces/ui-feature-git-sync';
     UiCommonModule,
     SyncProjectComponent,
     UiFeaturePiecesModule,
+    GeneralSettingsComponent,
   ],
   templateUrl: './settings-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -29,7 +31,9 @@ export class SettingsPageComponent implements AfterViewInit {
   fragmentChanged$: Observable<string | null>;
   readonly gitSyncTableTitle = $localize`Git Sync`;
   readonly piecesTable = $localize`Pieces`;
+  readonly generalSettingsTable = $localize`General`;
   readonly tabIndexFragmentMap = [
+    { fragmentName: 'General' },
     { fragmentName: 'Pieces' },
     { fragmentName: 'GitSync' },
   ];

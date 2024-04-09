@@ -66,4 +66,11 @@ export const ProjectWithLimits = Type.Composite([
 
 ])
 
+export const UpdateProjectRequestInCommunity = Type.Object({
+    notifyStatus: Type.Optional(Type.Enum(NotificationStatus)),
+    displayName: Type.Optional(Type.String()),
+})
+
+export type UpdateProjectRequestInCommunity = Static<typeof UpdateProjectRequestInCommunity>
+
 export type ProjectWithLimits = Static<typeof ProjectWithLimits>

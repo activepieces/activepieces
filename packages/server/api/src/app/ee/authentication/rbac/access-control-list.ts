@@ -9,7 +9,7 @@ export const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
         Permission.WRITE_FLOW,
         Permission.READ_PROJECT_MEMBER,
         Permission.WRITE_PROJECT_MEMBER,
-        Permission.WRITE_PROJECT_PLAN,
+        Permission.WRITE_RPOJECT,
     ],
     [ProjectMemberRole.EDITOR]: [
         Permission.READ_ACTIVITY,

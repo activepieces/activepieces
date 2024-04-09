@@ -35,6 +35,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             modifiedFlags[ApFlagId.SHOW_REWARDS] = false
             modifiedFlags[ApFlagId.SHOW_COPILOT] = false
             modifiedFlags[ApFlagId.SHOW_BLOG_GUIDE] = false
+            modifiedFlags[ApFlagId.PROJECT_LIMITS_ENABLED] = true
             modifiedFlags[ApFlagId.INSTALL_PROJECT_PIECES_ENABLED] = false
             modifiedFlags[ApFlagId.MANAGE_PROJECT_PIECES_ENABLED] = true
             modifiedFlags[ApFlagId.SHOW_SIGN_UP_LINK] = false

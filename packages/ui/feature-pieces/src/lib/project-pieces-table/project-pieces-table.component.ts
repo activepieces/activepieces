@@ -23,6 +23,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProjectPiecesTableComponent {
+  readonly permissionMessage = $localize` 'You don\'t have permissions to manage pieces'`;
   openDialog$!: Observable<Record<string, string> | null>;
   displayedColumns = ['app', 'displayName', 'name', 'version', 'action'];
   installPieceEnabled$: Observable<boolean>;

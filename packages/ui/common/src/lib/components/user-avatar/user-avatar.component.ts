@@ -88,7 +88,11 @@ export class UserAvatarComponent implements OnInit {
   }
 
   switchProject(projectId: string) {
-    this.switchProject$ = this.projectService.switchProject(projectId);
+    this.switchProject$ = this.projectService.switchProject({
+      projectId,
+      refresh: true,
+      redirectHome: false,
+    });
   }
 
   get userFirstLetter() {
