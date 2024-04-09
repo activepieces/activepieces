@@ -26,7 +26,7 @@ export default createAction({
     const searchColumn = sanitizeColumnName(context.propsValue.search_column);
     const searchValue = context.propsValue.search_value;
 
-    const queryString = `DELETE FROM \`${tableName}\` WHERE ${searchColumn}=?;`;
+    const queryString = `DELETE FROM ${tableName} WHERE ${searchColumn}=?;`;
 
     const connection = await mysqlConnect(context.auth, context.propsValue);
     try {

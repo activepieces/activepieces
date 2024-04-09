@@ -20,7 +20,7 @@ export default createAction({
     const fields = Object.keys(context.propsValue.values);
     const qsFields = fields.map((f) => sanitizeColumnName(f)).join(',');
     const qsValues = fields.map(() => '?').join(',');
-    const qs = `INSERT INTO \`${sanitizeColumnName(context.propsValue.table)}\` (${qsFields}) VALUES (${qsValues});`;
+    const qs = `INSERT INTO ${sanitizeColumnName(context.propsValue.table)} (${qsFields}) VALUES (${qsValues});`;
     const conn = await mysqlConnect(context.auth, context.propsValue);
     try {
       const values = fields.map((f) => context.propsValue.values[f]);
