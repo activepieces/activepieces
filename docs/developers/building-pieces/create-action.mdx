@@ -1,84 +1,8 @@
 ---
 title: 'Create Action'
-icon: 'circle-3'
+icon: 'circle-5'
 description: ''
 ---
-
-This tutorial will guide you through the process of creating a Gelato piece with an action that fetches random icecream flavor and trigger that fetches new icecream flavor created. It assumes that you are familiar with the following:
-
-- [Activepieces Repo Structure](../architecture/repo-structure)
-- [Activepieces Local development](../development-setup/local) Or [Github Codespaces](../development-setup/codespaces).
-- TypeScript syntax.
-
-## Piece Definition
-
-To get started, let's generate a new piece for Gelato
-
-```bash
-npm run cli pieces create
-```
-
-You will be asked three questions to define your new piece:
-
-1. `Piece Name`: Specify a name for your piece. This name uniquely identifies your piece within the ActivePieces ecosystem.
-2. `Package Name`: Optionally, you can enter a name for the npm package associated with your piece. If left blank, the default name will be used.
-3. `Piece Type`: Choose the piece type based on your intention. It can be either "custom" if it's a tailored solution for your needs, or "community" if it's designed to be shared and used by the broader community.
-
-**Example:**
-
-```bash
-npm run cli pieces create
-
-? Enter the piece name: gelato
-? Enter the package name: @activepieces/piece-gelato
-? Select the piece type: community
-```
-
-The piece will be generated at `packages/pieces/community/gelato/`,
-the `src/index.ts` file should contain the following code
-
-```ts
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-
-export const gelato = createPiece({
-  displayName: 'Gelato',
-  logoUrl: 'https://cdn.activepieces.com/pieces/gelato.png',
-  auth: PieceAuth.None(),
-  authors: [],
-  actions: [],
-  triggers: [],
-});
-```
-
-### Piece Authentication
-
-Now, let's establish authentication for this piece, which necessitates the inclusion of an API Key in the headers.
-
-Modify `src/index.ts` file to add authentication,
-
-```ts
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-
-export const gelatoAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  required: true,
-  description: 'Please use **test-key** as value for API Key',
-});
-
-export const gelato = createPiece({
-  displayName: 'Gelato',
-  logoUrl: 'https://cdn.activepieces.com/pieces/gelato.png',
-  auth: gelatoAuth,
-  authors: [],
-  actions: [],
-  triggers: [],
-});
-```
-
-<Note>
-  Use the value **test-key** as the API key when testing actions or triggers for
-  Gelato.
-</Note>
 
 ## Action Definition
 
@@ -174,6 +98,11 @@ By default, the development setup only builds specific components. Open the file
 For more details, check out the [Piece Development](../development-setup/getting-started) section.
 
 Once you edit the environment variable, restart the backend. The piece will be rebuilt. After this process, you'll need to **refresh** the frontend to see the changes.
+
+<Tip>
+If the build fails, try debugging by running `npx nx run-many -t build --projects=gelato`.
+It will display any errors in your code.
+</Tip>
 
 To test the action, use the flow builder in Activepieces. It should function as shown in the screenshot.
 

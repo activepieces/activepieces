@@ -1,7 +1,7 @@
 import { Property, Validators, createAction } from '@activepieces/pieces-framework';
 
 export const split = createAction({
-  description: 'Split a text by a delimeter',
+  description: 'Split a text by a delimiter',
   displayName: 'Split',
   name: 'split',
   errorHandlingOptions: {
@@ -17,12 +17,12 @@ export const split = createAction({
       displayName: 'Text',
       required: true,
     }),
-    delimeter: Property.ShortText({
-      displayName: 'Delimeter',
+    delimiter: Property.ShortText({
+      displayName: 'Delimiter',
       required: true,
     }),
   },
   run: async (ctx) => {
-    return ctx.propsValue.text.split(ctx.propsValue.delimeter);
+    return ctx.propsValue.text.split(ctx.propsValue.delimiter);
   },
 });

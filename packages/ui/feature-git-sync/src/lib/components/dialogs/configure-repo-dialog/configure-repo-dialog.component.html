@@ -77,11 +77,11 @@
             Cancel
         </ap-button>
     <ap-button btnSize="default" type="submit" (click)="submit();" btnColor="primary" i18n
-      [loading]="!!configreRepo$">
+      [loading]="!!configureRepo$">
             Confirm
         </ap-button>
   </div>
 </mat-dialog-actions>
 
-@if (configreRepo$ | async) {
+@if (configureRepo$ | async) {
 }

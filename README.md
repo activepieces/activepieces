@@ -89,7 +89,7 @@ Community templates provide inspiration and enable you to effortlessly build aut
 
 # License
 
-Activepieces' Community Edition is released as open source under the [MIT license](https://github.com/activepieces/activepieces/blob/main/LICENSE) and enterprise features are released under [Commerical License](https://github.com/activepieces/activepieces/blob/main/packages/ee/LICENSE)
+Activepieces' Community Edition is released as open source under the [MIT license](https://github.com/activepieces/activepieces/blob/main/LICENSE) and enterprise features are released under [Commercial License](https://github.com/activepieces/activepieces/blob/main/packages/ee/LICENSE)
 
 
 Read more about the feature comparison here https://www.activepieces.com/docs/about/editions
@@ -262,6 +262,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://www.linkedin.com/in/nyamkamunhjin/"><img src="https://avatars.githubusercontent.com/u/44439626?v=4?s=100" width="100px;" alt="MJ"/><br /><sub><b>MJ</b></sub></a><br /><a href="#plugin-nyamkamunhjin" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/shravankshenoy"><img src="https://avatars.githubusercontent.com/u/29670290?v=4?s=100" width="100px;" alt="ShravanShenoy"/><br /><sub><b>ShravanShenoy</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=shravankshenoy" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://jonkristian.no"><img src="https://avatars.githubusercontent.com/u/13219?v=4?s=100" width="100px;" alt="Jon Kristian"/><br /><sub><b>Jon Kristian</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=jonkristian" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>

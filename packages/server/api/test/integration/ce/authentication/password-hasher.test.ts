@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt'
 import { passwordHasher } from '../../../../src/app/authentication/lib/password-hasher'
 
-const SCRYPT_SEPERATOR = '~'
+const SCRYPT_SEPARATOR = '~'
 
 describe('Password Hasher', () => {
     const plainTextPassword = 'password123'
@@ -77,7 +77,7 @@ describe('Password Hasher', () => {
         it('should return true for identical scrypt passwords', async () => {
             const result = await passwordHasher.compare(
                 plainTextPassword,
-                `$scrypt$${hashedPassword}${SCRYPT_SEPERATOR}${salt}`,
+                `$scrypt$${hashedPassword}${SCRYPT_SEPARATOR}${salt}`,
             )
             expect(result).toBe(true)
         })
@@ -86,7 +86,7 @@ describe('Password Hasher', () => {
             const differentPassword = 'differentPassword'
             const result = await passwordHasher.compare(
                 differentPassword,
-                `$scrypt$${hashedPassword}${SCRYPT_SEPERATOR}${salt}`,
+                `$scrypt$${hashedPassword}${SCRYPT_SEPARATOR}${salt}`,
             )
             expect(result).toBe(false)
         })

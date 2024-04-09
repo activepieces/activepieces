@@ -748,7 +748,7 @@ function upgradePiece(step: Step, stepName: string): Step {
     return clonedStep
 }
 
-// TODO Remove this in 2024, these pieces didn't follow the standarad versioning where the minor version has to be increased when there is breaking change.
+// TODO Remove this in 2024, these pieces didn't follow the standard versioning where the minor version has to be increased when there is breaking change.
 function isLegacyApp({ pieceName, pieceVersion }: { pieceName: string, pieceVersion: string }) {
     let newVersion = pieceVersion
     if (newVersion.startsWith('^') || newVersion.startsWith('~')) {

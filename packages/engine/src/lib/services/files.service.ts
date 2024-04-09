@@ -73,8 +73,8 @@ async function readMemoryFile(absolutePath: string): Promise<ApFile> {
     try {
         const base64String = absolutePath.replace(MEMORY_PREFIX_URL, '')
         const { fileName, data } = JSON.parse(base64String)
-        const calcuatedExtension = fileName.includes('.') ? fileName.split('.').pop() : null
-        return new ApFile(fileName, Buffer.from(data, 'base64'), calcuatedExtension)
+        const calculatedExtension = fileName.includes('.') ? fileName.split('.').pop() : null
+        return new ApFile(fileName, Buffer.from(data, 'base64'), calculatedExtension)
     }
     catch (error) {
         throw new Error(`Error reading file: ${error}`)

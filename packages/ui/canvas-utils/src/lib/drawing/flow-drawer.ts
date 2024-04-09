@@ -188,7 +188,7 @@ export class FlowDrawer {
         ],
       });
     }
-    const currentPostionedStep = new PositionedStep({
+    const currentPositionedStep = new PositionedStep({
       x: 0,
       y: 0,
       content: step,
@@ -197,9 +197,9 @@ export class FlowDrawer {
       buttons: [],
       labels: [],
       svg: SvgDrawer.empty(),
-      steps: [currentPostionedStep],
+      steps: [currentPositionedStep],
     });
-    const centerBottomOfCurrentStep = currentPostionedStep.center('bottom');
+    const centerBottomOfCurrentStep = currentPositionedStep.center('bottom');
     let childHeight = 0;
     switch (step.type) {
       case ActionType.LOOP_ON_ITEMS: {

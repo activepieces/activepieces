@@ -11,6 +11,11 @@ export type ListProjectRequestForUserQueryParams = Static<typeof ListProjectRequ
 
 export type ProjectId = ApId
 
+export enum PiecesFilterType {
+    NONE = 'NONE',
+    ALLOWED = 'ALLOWED',
+}
+
 export enum NotificationStatus {
     NEVER = 'NEVER',
     ALWAYS = 'ALWAYS',
@@ -28,15 +33,13 @@ export type ProjectPlanId = string
 export const ProjectPlan = Type.Object({
     ...BaseModelSchema,
     projectId: Type.String(),
-    stripeCustomerId: Type.String(),
-    stripeSubscriptionId: Nullable(Type.String()),
-    subscriptionStartDatetime: Type.String(),
-    flowPlanName: Type.String(),
+    name: Type.String(),
     minimumPollingInterval: Type.Number(),
+    piecesFilterType: Type.Enum(PiecesFilterType),
+    pieces: Type.Array(Type.String()),
     connections: Type.Number(),
     teamMembers: Type.Number(),
     tasks: Type.Number(),
-    tasksPerDay: Nullable(Type.Number()),
 })
 
 export type ProjectPlan = Static<typeof ProjectPlan>
@@ -62,5 +65,12 @@ export const ProjectWithLimits = Type.Composite([
     }),
 
 ])
+
+export const UpdateProjectRequestInCommunity = Type.Object({
+    notifyStatus: Type.Optional(Type.Enum(NotificationStatus)),
+    displayName: Type.Optional(Type.String()),
+})
+
+export type UpdateProjectRequestInCommunity = Static<typeof UpdateProjectRequestInCommunity>
 
 export type ProjectWithLimits = Static<typeof ProjectWithLimits>

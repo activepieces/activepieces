@@ -45,9 +45,9 @@ import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
 import { otpModule } from './ee/otp/otp-module'
 import { adminPieceModule } from './ee/pieces/admin-piece-module'
-import { enterprisePieceMetadataServiceHooks } from './ee/pieces/enterprise-piece-metadata-service-hooks'
-import { platformPieceServiceHooks } from './ee/pieces/piece-service/platform-piece-service-hooks'
+import { enterprisePieceMetadataServiceHooks } from './ee/pieces/filters/enterprise-piece-metadata-service-hooks'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
+import { platformPieceServiceHooks } from './ee/pieces/service/platform-piece-service-hooks'
 import { adminPlatformPieceModule } from './ee/platform/admin-platform.controller'
 import { projectMemberModule } from './ee/project-members/project-member.module'
 import { platformProjectModule } from './ee/projects/platform-project-module'
@@ -93,7 +93,7 @@ import {
     ProjectMember,
 } from '@activepieces/ee-shared'
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { ExecutionMode, initilizeSentry, logger, QueueMode, system, SystemProp } from '@activepieces/server-shared'
+import { ExecutionMode, initializeSentry, logger, QueueMode, system, SystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -232,7 +232,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(flagModule)
     await app.register(storeEntryModule)
     await app.register(flowModule)
-    await app.register(flowWorkerModule)
     await app.register(pieceModule)
     await app.register(flowRunModule)
     await app.register(webhookModule)
@@ -247,7 +246,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(platformModule)
     await app.register(formModule)
     await pieceSyncService.setup()
-
+    await app.register(flowWorkerModule)
     await setupBullMQBoard(app)
 
     app.get(
@@ -323,7 +322,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             flagHooks.set(enterpriseFlagsHooks)
             authenticationServiceHooks.set(cloudAuthenticationServiceHooks)
             domainHelper.set(platformDomainHelper)
-            initilizeSentry()
+            initializeSentry()
             break
         case ApEdition.ENTERPRISE:
             await app.register(customDomainModule)

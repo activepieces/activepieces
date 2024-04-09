@@ -6,7 +6,7 @@ export const listProductsAction = createAction({
   auth: quickzuAuth,
   name: 'quickzu_list_products',
   displayName: 'List Products',
-  description: 'Retrives all or single product details from store.',
+  description: 'Retrieves all or single product details from store.',
   props: {
     term: Property.ShortText({
       displayName: 'Product name that need to be search.',

@@ -10,7 +10,7 @@ export  const generateImage = createAction({
         template_id: Property.Dropdown({
             displayName: 'Template',
             required: true,
-            description: 'Select your template. (If you want to use Template ID. Click on the "(x)" above this field. Template ID can be found by opening a template and goin to “Render”. Being there copy the template ID from the top right.)',
+            description: 'Select your template. (If you want to use Template ID. Click on the "(x)" above this field. Template ID can be found by opening a template and going to “Render”. Being there copy the template ID from the top right.)',
             refreshers: [],
             options: async ({ auth }) => {
                 if (!auth) {

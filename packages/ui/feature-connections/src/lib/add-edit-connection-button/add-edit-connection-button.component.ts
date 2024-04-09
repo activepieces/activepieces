@@ -117,7 +117,7 @@ export class AddEditConnectionButtonComponent {
       this.editConnection();
     } else {
       this.checkConnectionLimitThenOpenDialog$ =
-        this.openConnectionDialogAcordingToConnectionType().pipe(
+        this.openConnectionDialogAccordingToConnectionType().pipe(
           tap(() => {
             this.newConnectionDialogClosed.emit();
           })
@@ -126,7 +126,7 @@ export class AddEditConnectionButtonComponent {
     this.cd.markForCheck();
   }
 
-  private openConnectionDialogAcordingToConnectionType() {
+  private openConnectionDialogAccordingToConnectionType() {
     switch (this.authProperty.type) {
       case PropertyType.OAUTH2:
         return this.newOAuth2AuthenticationDialogProcess();

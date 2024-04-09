@@ -122,11 +122,11 @@ export const convertMondayColumnToActivepiecesProp = (column: MondayColumn) => {
         validators: [Validators.inRange(1, 5)],
       });
     case MondayColumnType.STATUS: {
-      const lables = JSON.parse(column.settings_str).labels;
+      const labels = JSON.parse(column.settings_str).labels;
       const options: { label: string; value: string }[] = [];
-      Object.keys(lables).forEach((key) => {
-        if (lables[key] !== '') {
-          options.push({ value: lables[key], label: lables[key] });
+      Object.keys(labels).forEach((key) => {
+        if (labels[key] !== '') {
+          options.push({ value: labels[key], label: labels[key] });
         }
       });
       return Property.StaticDropdown({

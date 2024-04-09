@@ -13,7 +13,7 @@ export const findListItemAction = createAction({
 		listId: microsoftSharePointCommon.listId,
 		searchValue: Property.ShortText({
 			displayName: 'Title',
-			description: 'Item title to serach',
+			description: 'Item title to search',
 			required: true,
 		}),
 	},

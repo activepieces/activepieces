@@ -43,7 +43,7 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
   selectedDataControl: FormControl<unknown> = new FormControl();
   saveNewSelectedData$: Observable<void>;
   initialHistoricalData$: Observable<TriggerHistoricalData[]>;
-  initaillySelectedSampleData$: Observable<unknown>;
+  initiallySelectedSampleData$: Observable<unknown>;
   stopSelectedDataControlListener$ = new Subject<boolean>();
   cancelTesting$ = new Subject<boolean>();
   saveAfterNewDataIsLoaded$: Observable<void>;
@@ -110,7 +110,7 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
         })
       );
 
-    this.initaillySelectedSampleData$ = this.store
+    this.initiallySelectedSampleData$ = this.store
       .select(BuilderSelectors.selectStepTestSampleData)
       .pipe(
         tap((res) => {

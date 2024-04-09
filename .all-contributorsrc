@@ -919,6 +919,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "jonkristian",
+      "name": "Jon Kristian",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13219?v=4",
+      "profile": "http://jonkristian.no",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "commitType": "docs"

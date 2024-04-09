@@ -6,7 +6,7 @@ export const getContactByEmailAction = createAction({
   auth: vboutAuth,
   name: 'vbout_get_contact_by_email',
   displayName: 'Get Contact by Email',
-  description: 'Retrives the contact by email.',
+  description: 'Retrieves the contact by email.',
   props: {
     listid: vboutCommon.listid(false),
     email: Property.ShortText({

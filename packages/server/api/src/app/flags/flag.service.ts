@@ -60,8 +60,20 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.SHOW_REWARDS,
+                value: true,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.CLOUD_AUTH_ENABLED,
                 value: system.getBoolean(SystemProp.CLOUD_AUTH_ENABLED) ?? true,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.PROJECT_LIMITS_ENABLED,
+                value: false,
                 created,
                 updated,
             },
@@ -78,8 +90,14 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.SHOW_COMMUNITY_PIECES,
+                id: ApFlagId.INSTALL_PROJECT_PIECES_ENABLED,
                 value: true,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.MANAGE_PROJECT_PIECES_ENABLED,
+                value: false,
                 created,
                 updated,
             },

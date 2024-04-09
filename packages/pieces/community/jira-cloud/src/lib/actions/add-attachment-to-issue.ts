@@ -8,7 +8,7 @@ import { getProjectIdDropdown, getIssueIdDropdown } from '../common/props';
 export const addAttachmentToIssueAction = createAction({
 	auth: jiraCloudAuth,
 	name: 'add_issue_attachment',
-	displayName: 'Add Attachement to Issue',
+	displayName: 'Add Attachment to Issue',
 	description: 'Adds an attachment to an issue.',
 	props: {
 		projectId: getProjectIdDropdown(),

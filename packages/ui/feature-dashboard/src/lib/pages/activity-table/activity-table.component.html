@@ -20,7 +20,7 @@
         <td mat-cell *matCellDef="let activity">{{ activity.status }}</td>
       </ng-container>
       <ng-container matColumnDef="created">
-        <th mat-header-cell *matHeaderCellDef i18n>Occured on</th>
+        <th mat-header-cell *matHeaderCellDef i18n>Occurred on</th>
         <td mat-cell *matCellDef="let activity">
           {{ activity.created | date: 'short' }}
         </td>

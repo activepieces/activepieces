@@ -4,15 +4,11 @@ import {
   Component,
   ViewChild,
 } from '@angular/core';
-import { Observable, Subject, tap } from 'rxjs';
+import { Observable, Subject, map, tap } from 'rxjs';
 import { ProjectsDataSource } from './projects-table.datasource';
 import { Project, ProjectWithLimits } from '@activepieces/shared';
 import { MatDialog } from '@angular/material/dialog';
 import { CreateProjectDialogComponent } from './create-project-dialog/create-project-dialog.component';
-import {
-  UpdateProjectDialogComponent,
-  UpdateProjectDialogData,
-} from './update-project-dialog/update-project-dialog.component';
 import { Store } from '@ngrx/store';
 import {
   ApPaginatorComponent,
@@ -98,28 +94,25 @@ export class ProjectsTableComponent implements AfterViewInit {
       );
   }
   openProject(project: Project) {
-    this.switchProject$ = this.projectsService.switchProject(project.id, true);
+    this.switchProject$ = this.projectsService.switchProject({
+      projectId: project.id,
+      refresh: true,
+      redirectHome: true,
+    });
   }
 
   updateProject(project: ProjectWithLimits) {
-    if (this.isDemo) {
-      return;
-    }
-    const data: UpdateProjectDialogData = { project };
-    this.updateProject$ = this.matDialog
-      .open(UpdateProjectDialogComponent, {
-        data,
+    this.updateProject$ = this.projectsService
+      .switchProject({
+        projectId: project.id,
+        refresh: false,
+        redirectHome: false,
       })
-      .afterClosed()
       .pipe(
-        tap((updatedProject) => {
-          if (updatedProject) {
-            this.refreshTable$.next(true);
-            this.store.dispatch(
-              ProjectActions.updateProject({ project: updatedProject })
-            );
-          }
-        })
+        tap(() => {
+          window.location.href = 'settings';
+        }),
+        map(() => project)
       );
   }
 

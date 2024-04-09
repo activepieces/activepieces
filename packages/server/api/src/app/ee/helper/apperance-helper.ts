@@ -17,7 +17,7 @@ const getPlatformByIdOrFallback = async (platformId: string | null) => {
     })
 }
 
-export const apperanceHelper = {
+export const appearanceHelper = {
     async getTheme({ platformId }: { platformId: string | null }) {
         return getPlatformByIdOrFallback(platformId)
     },

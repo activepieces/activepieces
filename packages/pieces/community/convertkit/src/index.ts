@@ -35,7 +35,7 @@ import {
 import {
   addSubscriberToSequence,
   listSequences,
-  listSupscriptionsToSequence,
+  listSubscriptionsToSequence,
 } from './lib/actions/sequences';
 
 import {
@@ -110,7 +110,7 @@ export const convertkit = createPiece({
     listFormSubscriptions,
     listSequences,
     addSubscriberToSequence,
-    listSupscriptionsToSequence,
+    listSubscriptionsToSequence,
     listTags,
     createTag,
     tagSubscriber,

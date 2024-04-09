@@ -86,34 +86,19 @@ export const platformProjectService = {
         projectId,
         request,
     }: UpdateParams): Promise<ProjectWithLimits> {
-        await projectRepo().update(
-            {
-                id: projectId,
-                deleted: IsNull(),
-            },
-            {
-                displayName: request.displayName,
-                notifyStatus: request.notifyStatus,
-            },
-        )
+        await projectService.update(projectId, request)
         if (!isNil(request.plan)) {
-            const isCloud = getEdition() === ApEdition.CLOUD
-            const isSubscribed = isCloud
-                ? (await projectBillingService.getOrCreateForProject(projectId))
-                    .subscriptionStatus === ApSubscriptionStatus.ACTIVE
-                : false
+            const isSubscribed = await isSubscribedInStripe(projectId)
             const project = await projectService.getOneOrThrow(projectId)
-            const isCloudProject =
-        project.platformId && flagService.isCloudPlatform(project.platformId)
-
-            if (isSubscribed || !isCloudProject) {
-                const newTasks = isCloudProject
-                    ? request.plan.tasks
-                    : Math.min(request.plan.tasks, MAXIMUM_ALLOWED_TASKS)
+            const isCustomerProject = isCustomerPlatform(project.platformId)
+            if (isSubscribed || isCustomerProject) {
+                const newTasks = getTasksLimit(isCustomerProject, request.plan.tasks)
                 await projectLimitsService.upsert(
                     {
                         ...spreadIfDefined('teamMembers', request.plan.teamMembers),
-                        tasks: newTasks,
+                        ...spreadIfDefined('pieces', request.plan.pieces),
+                        ...spreadIfDefined('piecesFilterType', request.plan.piecesFilterType),
+                        ...spreadIfDefined('tasks', newTasks),
                     },
                     projectId,
                 )
@@ -158,6 +143,24 @@ export const platformProjectService = {
     },
 }
 
+function getTasksLimit(isCustomerPlatform: boolean, limit: number | undefined) {
+    return isCustomerPlatform ? limit : Math.min(limit ?? MAXIMUM_ALLOWED_TASKS, MAXIMUM_ALLOWED_TASKS)
+}
+
+async function isSubscribedInStripe(projectId: ProjectId): Promise<boolean> {
+    const isCloud = getEdition() === ApEdition.CLOUD
+    if (!isCloud) {
+        return false
+    }
+    const status = await projectBillingService.getOrCreateForProject(projectId)
+    return status.subscriptionStatus === ApSubscriptionStatus.ACTIVE
+}
+function isCustomerPlatform(platformId: string | undefined): boolean {
+    if (isNil(platformId)) {
+        return true
+    }
+    return !flagService.isCloudPlatform(platformId)
+}
 async function createFilters(
     ownerId: UserId | undefined,
     platformId?: PlatformId,

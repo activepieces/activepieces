@@ -23,9 +23,9 @@
       }
     </mat-select-trigger>
 
-    <app-dropdown-search-control
+    <ap-dropdown-search-control
       [searchControl]="searchControl"
-    ></app-dropdown-search-control>
+    ></ap-dropdown-search-control>
 
     @if (
       property.options.options | dropdownSearch: searchControl | async;

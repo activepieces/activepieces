@@ -6,7 +6,7 @@ export const getEmailListAction = createAction({
   auth: vboutAuth,
   name: 'vbout_get_email_list',
   displayName: 'Get List Details with Custom Fields',
-  description: 'Retrives specific list details with custom fields.',
+  description: 'Retrieves specific list details with custom fields.',
   props: {
     listid: vboutCommon.listid(true),
   },

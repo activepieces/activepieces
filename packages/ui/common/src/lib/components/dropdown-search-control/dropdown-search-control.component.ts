@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { UiCommonModule } from '@activepieces/ui/common';
+import { UiCommonModule } from '../../ui-common.module';
 import { FormControl } from '@angular/forms';
 
 @Component({
-  selector: 'app-dropdown-search-control',
+  selector: 'ap-dropdown-search-control',
   standalone: true,
   imports: [CommonModule, UiCommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -30,18 +30,25 @@ The signed tokens must include these claims in the payload:
 
 ```json
 {
-	// Unique identification of your connection name.
-
-	"externalUserId": "user_id",
-    "externalProjectId": "user_project_id"
-    "firstName": "John",
-    "lastName": "Doe",
-    "email": "mo@activepieces.om",
-	// Expiry timestamp for token
+  "externalUserId": "user_id",
+  "externalProjectId": "user_project_id"
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john@example.com",
+  "role": "EDITOR",
 	"exp": 1856563200
 }
 ````
 
+| Claim             | Description                                     |
+|-------------------|-------------------------------------------------|
+| externalUserId    | Unique identification of the user in **your** software |
+| externalProjectId | Unique identification of the user's project in **your** software |
+| firstName         | First name of the user                           |
+| lastName          | Last name of the user                            |
+| email             | Email address of the user                        |
+| role              | Role of the user in the activepieces project (e.g., **EDITOR**, **VIEWER**)           |
+| exp               | Expiry timestamp for the token (Unix timestamp)  |
 
 
 You can use any JWT library to generate the token. Here is an example using the jsonwebtoken library in NodeJs:
@@ -61,7 +68,8 @@ let token = jwt.sign(
     externalProjectId: "user_project_id",
     firstName: "John",
     lastName: "Doe",
-    email: "mo@activepieces.om",
+    role: "EDITOR",
+    email: "john@example.om",
     exp: currentTime + (24 * 60 * 60), // 1 day from now
   },
   process.env.ACTIVEPIECES_SIGNING_KEY,

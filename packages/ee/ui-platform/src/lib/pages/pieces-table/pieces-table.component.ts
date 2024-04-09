@@ -37,7 +37,7 @@ import {
   InstallCommunityPieceModalComponent,
   PieceMetadataService,
 } from '@activepieces/ui/feature-pieces';
-import { PLATFORM_RESOLVER_KEY } from '../../platform.resolver';
+import { PLATFORM_RESOLVER_KEY } from '@activepieces/ui/common';
 import { PLATFORM_DEMO_RESOLVER_KEY } from '../../is-platform-demo.resolver';
 import { PieceScope } from '@activepieces/shared';
 
@@ -72,7 +72,7 @@ export class PiecesTableComponent implements OnInit {
   syncPiecesLoading$: BehaviorSubject<boolean> = new BehaviorSubject(false);
   addPackageDialogClosed$!: Observable<Record<string, string> | null>;
   cloudAuthToggleFormControl = new FormControl(false, { nonNullable: true });
-  toggelCloudOAuth2$?: Observable<void>;
+  toggleCloudOAuth2$?: Observable<void>;
   featDisabledTooltipText = featureDisabledTooltip;
   isDemo = false;
   constructor(
@@ -91,7 +91,7 @@ export class PiecesTableComponent implements OnInit {
     if (platform) {
       this.platform$ = new BehaviorSubject(platform);
     }
-    this.toggelCloudOAuth2$ = this.getCloudOAuth2ToggleListener();
+    this.toggleCloudOAuth2$ = this.getCloudOAuth2ToggleListener();
     this.showSync$ = this.flagService
       .getStringFlag(ApFlagId.PIECES_SYNC_MODE)
       .pipe(

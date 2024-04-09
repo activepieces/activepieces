@@ -3,6 +3,7 @@ import {
   PiecePropValueSchema,
   Property,
   TriggerStrategy,
+  WebhookRenewStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { google } from 'googleapis';
@@ -11,6 +12,7 @@ import { googleSheetsAuth } from '../..';
 import { columnToLabel, googleSheetsCommon } from '../common/common';
 import { nanoid } from 'nanoid';
 import crypto from 'crypto';
+import dayjs from 'dayjs';
 
 export const newRowAddedTrigger = createTrigger({
   auth: googleSheetsAuth,
@@ -19,10 +21,16 @@ export const newRowAddedTrigger = createTrigger({
   description: 'Triggers when a new row is added to bottom of a spreadsheet.',
   props: {
     info: Property.MarkDown({
-      value: 'Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.'
+      value:
+        'Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.',
     }),
     spreadsheet_id: googleSheetsCommon.spreadsheet_id,
     sheet_id: googleSheetsCommon.sheet_id,
+    include_team_drives: googleSheetsCommon.include_team_drives,
+  },
+  renewConfiguration: {
+    strategy: WebhookRenewStrategy.CRON,
+    cronExpression: '0 0 * * *',
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
@@ -79,7 +87,7 @@ export const newRowAddedTrigger = createTrigger({
 
     // fetch old row count for worksheet
     const oldRowCount = (await context.store.get(
-      `${context.propsValue.sheet_id}`
+      `${sheet_id}`
     )) as number;
 
     // fetch current row count for worksheet
@@ -96,7 +104,11 @@ export const newRowAddedTrigger = createTrigger({
     const currentRowCount = currentRowValues.length;
 
     // if no new rows return
-    if (oldRowCount === currentRowCount) {
+    if (oldRowCount >= currentRowCount) {
+      if(oldRowCount > currentRowCount) {
+        // Some rows were deleted
+        await context.store.put(`${sheet_id}`, currentRowCount);
+      }
       return [];
     }
 
@@ -122,7 +134,7 @@ export const newRowAddedTrigger = createTrigger({
         ...row,
         [DEDUPE_KEY_PROPERTY]: hashObject(row),
       };
-    })
+    });
   },
   async onRenew(context) {
     // get current channel ID & resource ID
@@ -162,7 +174,9 @@ export const newRowAddedTrigger = createTrigger({
     );
 
     // transform row values
-    const transformedRowValues = transformWorkSheetValues(currentSheetValues, 0).slice(-5).reverse();
+    const transformedRowValues = transformWorkSheetValues(currentSheetValues, 0)
+      .slice(-5)
+      .reverse();
 
     return transformedRowValues;
   },
@@ -172,6 +186,7 @@ export const newRowAddedTrigger = createTrigger({
 function isSyncMessage(headers: Record<string, string>) {
   return headers['x-goog-resource-state'] === 'sync';
 }
+
 function isChangeContentMessage(headers: Record<string, string>) {
   // https://developers.google.com/drive/api/guides/push#respond-to-notifications
   return (
@@ -198,11 +213,13 @@ async function createFileNotification(
     fileId: fileId,
     requestBody: {
       id: channelId,
+      expiration: (dayjs().add(6, 'day').unix() * 1000).toString(),
       type: 'web_hook',
       address: url,
     },
   });
 }
+
 async function deleteFileNotification(
   auth: PiecePropValueSchema<typeof googleSheetsAuth>,
   channelId: string,
@@ -261,6 +278,7 @@ async function getWorkSheetName(
   }
   return sheetName;
 }
+
 function transformWorkSheetValues(rowValues: any[][], oldRowCount: number) {
   const result = [];
   for (let i = 0; i < rowValues.length; i++) {
@@ -275,6 +293,7 @@ function transformWorkSheetValues(rowValues: any[][], oldRowCount: number) {
   }
   return result;
 }
+
 interface WebhookInformation {
   kind?: string | null;
   id?: string | null;

@@ -452,11 +452,11 @@ describe('Project API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
             const responseBody = response?.json()
-            expect(responseBody?.code).toBe('ENTITY_NOT_FOUND')
-            expect(responseBody?.params?.entityId).toBe(mockProject.id)
-            expect(responseBody?.params?.entityType).toBe('project')
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(responseBody?.code).toBe('AUTHORIZATION')
+            expect(responseBody?.params?.projectId).toBe(mockProject.id)
+            expect(responseBody?.params?.userId).toBe(mockOwner.id)
         })
     })
 

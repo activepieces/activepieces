@@ -7,8 +7,11 @@ import {
 import { assertNotNullOrUndefined } from '@activepieces/shared';
 
 const message = `
-Copy the following URL:
-**{{webhookUrl}}**
+URL:
+
+\`\`\`text
+{{webhookUrl}}
+\`\`\`
 
 If you are expecting a reply from this webhook, append **/sync** to the URL.
 
@@ -101,8 +104,8 @@ export const catchWebhook = createTrigger({
   async run(context) {
     const authenticationType = context.propsValue.authType;
     assertNotNullOrUndefined(authenticationType, 'Authentication type is required');
-    const verfied = verifyAuth(authenticationType, context.propsValue.authFields ?? {}, context.payload.headers);
-    if (!verfied) {
+    const verified = verifyAuth(authenticationType, context.propsValue.authFields ?? {}, context.payload.headers);
+    if (!verified) {
       return []
     }
     return [context.payload]

@@ -149,7 +149,7 @@ videoUrl="https://cdn.activepieces.com/videos/showcase/pieces.mp4" *ngIf="isDemo
     </div>
 
     <ng-container *ngIf="saving$ | async"></ng-container>
-    <ng-container *ngIf="toggelCloudOAuth2$ | async"> </ng-container>
+    <ng-container *ngIf="toggleCloudOAuth2$ | async"> </ng-container>
     <ng-container *ngIf="dialogClosed$ | async"></ng-container>
     <ng-container *ngIf="addPackageDialogClosed$ | async"></ng-container>
     <ng-container *ngIf="syncPieces$ | async"></ng-container>

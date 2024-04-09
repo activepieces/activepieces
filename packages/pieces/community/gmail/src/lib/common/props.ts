@@ -10,7 +10,7 @@ export const GmailProps = {
     defaultValue: '',
   }),
   to: Property.ShortText({
-    displayName: 'Email receipient',
+    displayName: 'Email recipient',
     description: 'The address receiving the new mail',
     required: false,
     defaultValue: '',

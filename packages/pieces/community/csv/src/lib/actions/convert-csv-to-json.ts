@@ -26,8 +26,8 @@ export const parseCSVTextAction = createAction({
       required: true,
     }),
     delimiter_type: Property.StaticDropdown({
-      displayName: 'Delimeter Type',
-      description: 'Will try to guess the delimeter',
+      displayName: 'Delimiter Type',
+      description: 'Will try to guess the delimiter',
       defaultValue: '',
       required: true,
       options: {
