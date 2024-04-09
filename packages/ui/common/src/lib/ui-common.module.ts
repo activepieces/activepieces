@@ -36,8 +36,8 @@ import { DefaultFalsePipe } from './pipe/default-false.pipe';
 import { DefaultTruePipe } from './pipe/default-true.pipe';
 import { CenterMatMenuDirective } from './directives/center-mat-menu.directive';
 import { SidebarHeaderComponent } from './components/sidebar-header/sidebar-header.component';
-import { YamlViewComponent } from './components/yaml-view/yaml-view.component';
-import { YamlViewDialogComponent } from './components/yaml-view/yaml-view-dialog/yaml-view-dialog.component';
+import { JsonViewComponent } from './components/json-view/json-view.component';
+import { JsonViewDialogComponent } from './components/json-view/json-view-dialog/json-view-dialog.component';
 import { HorizontalSidebarSeparatorComponent } from './components/horizontal-sidebar-separator/horizontal-sidebar-separator.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { TrackFocusDirective } from './directives/track-focus.directive';
@@ -128,8 +128,8 @@ const exportedDeclarations = [
   DefaultTruePipe,
   CenterMatMenuDirective,
   SidebarHeaderComponent,
-  YamlViewComponent,
-  YamlViewDialogComponent,
+  JsonViewComponent,
+  JsonViewDialogComponent,
   HorizontalSidebarSeparatorComponent,
   TrackFocusDirective,
   ObjectToArrayPipe,
