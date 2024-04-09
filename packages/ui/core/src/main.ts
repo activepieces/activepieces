@@ -1,7 +1,6 @@
 import { enableProdMode } from '@angular/core';
 import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
-import * as monaco from 'monaco-editor';
-import { configureMonacoYaml } from 'monaco-yaml';
+import * as _monaco from 'monaco-editor';
 import { AppModule } from './app/app.module';
 import { environment } from '@activepieces/ui/common';
 import 'codemirror/mode/htmlmixed/htmlmixed';
@@ -29,8 +28,6 @@ import * as stylesWorkerService from 'monaco-editor/esm/vs/language/css/css.work
 import * as htmlWorkerService from 'monaco-editor/esm/vs/language/html/html.worker';
 import * as jsonWorkerService from 'monaco-editor/esm/vs/language/json/json.worker';
 import * as tsWorkerService from 'monaco-editor/esm/vs/language/typescript/ts.worker';
-import * as yamlWorkerService from 'monaco-yaml/yaml.worker';
-configureMonacoYaml(monaco, {});
 
 window.MonacoEnvironment = {
   getWorker(moduleId, label) {
@@ -50,8 +47,6 @@ window.MonacoEnvironment = {
       case 'javascript':
       case 'typescript':
         return new Worker(tsWorkerService);
-      case 'yaml':
-        return new Worker(yamlWorkerService);
       default:
         throw new Error(`Unknown label ${label}`);
     }

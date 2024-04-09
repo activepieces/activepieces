@@ -15,8 +15,8 @@
         </div>
       </div>
           <div  [style.height]="containerHeight + 'px'">
-            <ngx-monaco-editor class="!ap-w-full !ap-h-full " [options]="yamlEditorOptionsMonaco" 
-            [formControl]="yamlFormControl" (onInit)="resizeEditorToContent($event)"
+            <ngx-monaco-editor class="!ap-w-full !ap-h-full " [options]="jsonEditorOptionsMonaco" 
+            [formControl]="jsonFormController" (onInit)="resizeEditorToContent($event)"
              ></ngx-monaco-editor>
           </div>
      
