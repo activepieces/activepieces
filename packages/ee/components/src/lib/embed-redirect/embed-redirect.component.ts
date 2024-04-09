@@ -66,6 +66,8 @@ export class EmbedRedirectComponent implements OnDestroy, OnInit {
         hideSideNav: event.data.data.hideSidebar,
         isEmbedded: true,
         hideLogoInBuilder: event.data.data.hideLogoInBuilder || false,
+        hideFlowActionsInBuilder:
+          event.data.data.hideFlowActionsInBuilder || false,
         prefix: event.data.data.prefix,
         disableNavigationInBuilder: event.data.data.disableNavigationInBuilder,
         hideFolders: event.data.data.hideFolders || false,
