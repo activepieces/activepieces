@@ -7,6 +7,7 @@ export type EmbeddingState = {
   hideLogoInBuilder: boolean;
   disableNavigationInBuilder: boolean;
   hideFolders: boolean;
+  hideFlowActionsInBuilder: boolean;
 };
 @Injectable({
   providedIn: 'root',
@@ -21,6 +22,7 @@ export class EmbeddingService {
       prefix: '',
       disableNavigationInBuilder: false,
       hideFolders: false,
+      hideFlowActionsInBuilder: false,
     });
   }
   getState() {
@@ -41,6 +43,10 @@ export class EmbeddingService {
 
   getHideLogoInBuilder$() {
     return this.getState$().pipe(map((res) => res.hideLogoInBuilder));
+  }
+
+  getHideFLowActionsInBuilder$() {
+    return this.getState$().pipe(map((res) => res.hideFlowActionsInBuilder));
   }
 
   getHideFolders$() {
