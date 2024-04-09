@@ -1,0 +1,38 @@
+<div class="ap-w-full ap-mt-8">
+    <div class="ap-h-full">
+        <div class="ap-w-[500px]">
+            <form [formGroup]="formGroup" class="ap-flex ap-flex-col ap-gap-4">
+                <mat-form-field class="ap-w-full">
+                    <mat-label>Project Name</mat-label>
+                    <input matInput placeholder="Awesome project" [formControl]="formGroup.controls.displayName" />
+                    <mat-error *ngIf="formGroup.controls.displayName.invalid">Name is required </mat-error>
+                </mat-form-field>
+                @if(projectLimitsEnabled){
+                <mat-form-field class="ap-w-full ap-mb-4">
+                    <mat-label>Tasks Limit</mat-label>
+                    <input matInput placeholder="1000" [formControl]="formGroup.controls.tasks!" />
+                    <mat-error *ngIf="formGroup.controls.tasks!.invalid">Tasks is required </mat-error>
+                    <mat-hint>The maximum number of tasks that can be run in a month.
+                        If you exceed the limit, the runs will fail.</mat-hint>
+                </mat-form-field>
+                <mat-form-field class="ap-w-full">
+                    <mat-label>Users Limit</mat-label>
+                    <input matInput placeholder="5" [formControl]="formGroup.controls.teamMembers!" />
+                    <mat-error *ngIf="formGroup.controls.teamMembers!.invalid">Team Members is required </mat-error>
+                </mat-form-field>
+                }
+            </form>
+        </div>
+        <div
+            class="ap-p-4  ap-flex ap-justify-end ap-items-center ap-gap-4 ap-w-full ap-border-t ap-border-solid ap-border-outline">
+            <ap-button btnStyle="flat" btnColor="primary" i18n (buttonClicked)="save()"
+                [disabled]="(canSave$ | async) === false"
+                [tooltipText]="(canSave$ | async) ? '' : permissionMessage"
+                [loading]="loading$ | async | defaultFalse">Save</ap-button>
+
+        </div>
+    </div>
+</div>
+
+@if (saving$ | async) {}
+@if (updateForm$ | async) {}

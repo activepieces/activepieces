@@ -1,6 +1,7 @@
 import { Action, createReducer, on } from '@ngrx/store';
 import { ProjectActions } from './project.action';
 import { ProjectsState } from './project-state.model';
+import { ProjectWithLimits } from '@activepieces/shared';
 
 const initialState: ProjectsState = {
   selectedIndex: 0,
@@ -61,9 +62,10 @@ const _projectReducer = createReducer(
     };
   }),
   on(ProjectActions.updateProject, (state, { project }): ProjectsState => {
-    const updatedProjects = [...JSON.parse(JSON.stringify(state.projects))];
+    const updatedProjects: ProjectWithLimits[] = JSON.parse(
+      JSON.stringify(state.projects)
+    );
     const index = updatedProjects.findIndex((p) => p.id === project.id);
-
     if (index < 0) {
       console.error("Project updated wasn't found in the list of projects");
     } else {
@@ -72,7 +74,7 @@ const _projectReducer = createReducer(
     return {
       platform: state.platform,
       projects: updatedProjects,
-      selectedIndex: state.selectedIndex,
+      selectedIndex: index,
     };
   }),
   on(ProjectActions.addProject, (state, { project }): ProjectsState => {

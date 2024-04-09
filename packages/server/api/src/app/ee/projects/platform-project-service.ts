@@ -86,16 +86,7 @@ export const platformProjectService = {
         projectId,
         request,
     }: UpdateParams): Promise<ProjectWithLimits> {
-        await projectRepo().update(
-            {
-                id: projectId,
-                deleted: IsNull(),
-            },
-            {
-                displayName: request.displayName,
-                notifyStatus: request.notifyStatus,
-            },
-        )
+        await projectService.update(projectId, request)
         if (!isNil(request.plan)) {
             const isSubscribed = await isSubscribedInStripe(projectId)
             const project = await projectService.getOneOrThrow(projectId)

@@ -47,7 +47,15 @@ export class PlatformProjectService {
     );
   }
 
-  switchProject(projectId: string, redirectHome?: boolean): Observable<void> {
+  switchProject({
+    refresh,
+    projectId,
+    redirectHome,
+  }: {
+    refresh: boolean;
+    projectId: ProjectId;
+    redirectHome: boolean;
+  }): Observable<void> {
     return this.http
       .post<{
         token: string;
@@ -60,9 +68,11 @@ export class PlatformProjectService {
           if (redirectHome) {
             this.router.navigate(['/flows']);
           }
-          setTimeout(() => {
-            window.location.reload();
-          }, 10);
+          if (refresh) {
+            setTimeout(() => {
+              window.location.reload();
+            }, 10);
+          }
         }),
         map(() => void 0)
       );

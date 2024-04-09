@@ -40,6 +40,10 @@ export class ProjectSwitcherComponent {
       );
   }
   switchProject(projectId: string) {
-    this.switchProject$ = this.projectService.switchProject(projectId);
+    this.switchProject$ = this.projectService.switchProject({
+      projectId,
+      redirectHome: true,
+      refresh: true,
+    });
   }
 }
