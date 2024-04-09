@@ -20,7 +20,14 @@ pre[class*='language-'] {
   hyphens: none;
   background: transparent;
   color: #5e6687;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
   border-radius: 0.25rem;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 pre[class*='language-']::-moz-selection,
@@ -42,7 +49,7 @@ code[class*='language-'] ::selection {
 /* Code blocks */
 
 pre[class*='language-'] {
-  padding: 1.25rem;
+  padding: 1rem;
   margin: 0;
   overflow: auto;
 }
@@ -172,12 +179,12 @@ pre > code.highlight {
   background: rgba(107, 115, 148, 0.2);
   background: -webkit-linear-gradient(
     left,
-    rgba(107, 115, 148, 0.2) 70%,
-    rgba(107, 115, 148, 0)
+      rgba(107, 115, 148, 0.2) 70%,
+      rgba(107, 115, 148, 0)
   );
   background: linear-gradient(
     to right,
-    rgba(107, 115, 148, 0.2) 70%,
-    rgba(107, 115, 148, 0)
+      rgba(107, 115, 148, 0.2) 70%,
+      rgba(107, 115, 148, 0)
   );
 }

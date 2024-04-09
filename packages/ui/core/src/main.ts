@@ -22,6 +22,8 @@ import 'prismjs/components/prism-csharp';
 import 'prismjs/components/prism-cpp';
 import 'prismjs/components/prism-python';
 import 'prismjs/components/prism-json';
+import 'prismjs/plugins/line-numbers/prism-line-numbers';
+
 import * as editorWorkerService from 'monaco-editor/esm/vs/editor/editor.worker';
 import * as stylesWorkerService from 'monaco-editor/esm/vs/language/css/css.worker';
 import * as htmlWorkerService from 'monaco-editor/esm/vs/language/html/html.worker';
