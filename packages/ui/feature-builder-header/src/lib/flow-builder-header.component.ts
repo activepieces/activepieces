@@ -60,7 +60,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
   showNavigation$: Observable<boolean>;
   goToFolder = $localize`Go to folder`;
   hideLogo$ = this.embeddingService.getHideLogoInBuilder$();
-  hideFlowActions$ = this.embeddingService.getHideFLowActionsInBuilder$();
+  hideFlowName$ = this.embeddingService.getHideFLowNameInBuilder$();
   hideFolders$ = this.embeddingService.getHideFolders$();
   constructor(
     public matDialog: MatDialog,
