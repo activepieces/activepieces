@@ -30,7 +30,7 @@ export const newRowAddedTrigger = createTrigger({
   },
   renewConfiguration: {
     strategy: WebhookRenewStrategy.CRON,
-    cronExpression: '0 0 * * *',
+    cronExpression: '0 */12 * * *',
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
