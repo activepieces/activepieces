@@ -7,11 +7,11 @@ import {
 import { discordAuth } from '../../index';
 import { discordCommon } from '../common';
 
-export const discordAddRoleToMember = createAction({
+export const discordBanGuildMember = createAction({
   auth: discordAuth,
   name: 'ban_guild_member',
-  description: 'Ban a guild member',
-  displayName: 'Ban a guild member',
+  description: 'Bans a guild member',
+  displayName: 'Ban guild member',
   props: {
     guild_id: discordCommon.guilds,
     user_id: Property.ShortText({
@@ -21,9 +21,9 @@ export const discordAddRoleToMember = createAction({
     }),
     ban_reason: Property.ShortText({
       displayName: 'Ban Reason',
-      description: 'The reason for the ban',
+      description: 'The reason for banning the member',
       required: false,
-    })
+    }),
   },
 
   async run(configValue) {
@@ -33,7 +33,10 @@ export const discordAddRoleToMember = createAction({
       headers: {
         authorization: `Bot ${configValue.auth}`,
         'Content-Type': 'application/json',
-        'X-Audit-Log-Reason': configValue.propsValue.ban_reason,
+        'X-Audit-Log-Reason': `${configValue.propsValue.ban_reason}`,
+      },
+      body: {
+        reason: `${configValue.propsValue.ban_reason}`,
       },
     };
 
