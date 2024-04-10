@@ -50,14 +50,22 @@ export const piecesAnalyticsService = {
                         }
                     })
                     for (const piece of pieces) {
-                        const pieceMetadata = await pieceMetadataService.getOrThrow({
-                            name: piece.name,
-                            version: piece.version,
-                            projectId: flow.projectId,
-                        })
-                        const pieceId = pieceMetadata.id!
-                        activeProjects[pieceId] = activeProjects[pieceId] || new Set()
-                        activeProjects[pieceId].add(flow.projectId)
+                        try {
+                            const pieceMetadata = await pieceMetadataService.getOrThrow({
+                                name: piece.name,
+                                version: piece.version,
+                                projectId: flow.projectId,
+                            })
+                            const pieceId = pieceMetadata.id!
+                            activeProjects[pieceId] = activeProjects[pieceId] || new Set()
+                            activeProjects[pieceId].add(flow.projectId)
+                        }
+                        catch (e) {
+                            logger.error({
+                                name: piece.name,
+                                version: piece.version,
+                            }, 'Piece not found in pieces analytics service')
+                        }
                     }
                 }
                 for (const id in activeProjects) {
