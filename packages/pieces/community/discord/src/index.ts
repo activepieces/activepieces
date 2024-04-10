@@ -56,6 +56,6 @@ export const discord = createPiece({
       },
     }),
   ],
-  authors: ["creed983","TaskMagicKyle","karimkhaleel","Abdallah-Alwarawreh","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
+  authors: ["creed983","TaskMagicKyle","karimkhaleel","Abdallah-Alwarawreh","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud", "tintinthedev"],
   triggers: [newMessage],
 });
