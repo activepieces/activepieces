@@ -8,7 +8,7 @@ import { BehaviorSubject, Observable, map, tap } from 'rxjs';
 import {
   AuthenticationService,
   DropdownSearchControlComponent,
-  PieceMetadataModelSummary, PlatformProjectService, SelectAllDirective, UiCommonModule,
+  PieceMetadataModelSummary, ProjectService, SelectAllDirective, UiCommonModule,
 } from '@activepieces/ui/common';
 import { CommonModule } from '@angular/common';
 import { PieceMetadataService } from '../services/piece.service';
@@ -40,7 +40,7 @@ export class ManagePiecesDialogComponent {
     private dialogRef: MatDialogRef<ManagePiecesDialogComponent>,
     private pieceMetadataService: PieceMetadataService,
     private matSnackbar: MatSnackBar,
-    private projectService: PlatformProjectService,
+    private projectService: ProjectService,
     private authenticationService: AuthenticationService
   ) {
     this.form = new FormGroup({

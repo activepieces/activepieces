@@ -15,19 +15,17 @@ import {
   switchMap,
   shareReplay,
   forkJoin,
-  take,
 } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { InviteProjectMemberDialogComponent } from '../dialogs/invite-project-member-dialog/invite-project-member.component';
 import { ProjectMemberStatus } from '@activepieces/ee-shared';
 import { BillingService, UpgradeDialogData } from '@activepieces/ee-billing-ui';
 import { UpgradeDialogComponent } from '@activepieces/ee-billing-ui';
-import { Store } from '@ngrx/store';
 import {
   ApPaginatorComponent,
   AuthenticationService,
   IsFeatureEnabledBaseComponent,
-  ProjectSelectors,
+  ProjectService,
 } from '@activepieces/ui/common';
 import { RolesDisplayNames } from '../utils';
 import { ActivatedRoute } from '@angular/router';
@@ -65,7 +63,7 @@ export class ProjectMembersTableComponent
   constructor(
     private matDialog: MatDialog,
     private billingService: BillingService,
-    private store: Store,
+    private projectService: ProjectService,
     private projectMemberService: ProjectMemberService,
     private authenticationService: AuthenticationService,
     activatedRoute: ActivatedRoute
@@ -82,9 +80,9 @@ export class ProjectMembersTableComponent
       this.activatedRoute.queryParams
     );
 
-    this.projectOwnerId$ = this.store
-      .select(ProjectSelectors.selectCurrentProjectOwnerId)
-      .pipe(take(1));
+    this.projectOwnerId$ = this.projectService.currentProject$.pipe(
+      map((project) => project!.ownerId)
+    );
     // TODO OPTIMIZE THIS and use role from centerlized place
     this.isCurrentUserAdmin$ = forkJoin([
       this.projectMemberService.list({

@@ -13,7 +13,6 @@ import {
   SeekPage,
 } from '@activepieces/shared';
 import {
-  AuthenticationService,
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
   PieceMetadataModelSummary,
@@ -21,7 +20,6 @@ import {
 import { ConnectionsTableDataSource } from './connections-table.datasource';
 import { ApPaginatorComponent } from '@activepieces/ui/common';
 import { AppConnectionsService } from '@activepieces/ui/common';
-import { Store } from '@ngrx/store';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 import { NewConnectionDialogComponent } from '../../components/dialogs/new-connection-dialog/new-connection-dialog.component';
 import { AddEditConnectionButtonComponent } from '@activepieces/ui/feature-connections';
@@ -46,9 +44,7 @@ export class ConnectionsTableComponent implements OnInit {
   readonly AppConnectionStatus = AppConnectionStatus;
   constructor(
     private activatedRoute: ActivatedRoute,
-    private store: Store,
     private pieceMetadataService: PieceMetadataService,
-    private authenticationService: AuthenticationService,
     private connectionService: AppConnectionsService,
     private dialogService: MatDialog
   ) {}
@@ -57,9 +53,7 @@ export class ConnectionsTableComponent implements OnInit {
     this.dataSource = new ConnectionsTableDataSource(
       this.activatedRoute.queryParams,
       this.paginator,
-      this.store,
       this.pieceMetadataService,
-      this.authenticationService,
       this.connectionService,
       this.connectionDeleted$.asObservable().pipe(startWith(true))
     );

@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot } from '@angular/router';
-import { Observable, forkJoin, map, of, switchMap,tap } from 'rxjs';
-
-import { AppConnectionsService, AuthenticationService, FlowService, FoldersService, connections$ } from '@activepieces/ui/common';
+import { Observable, forkJoin, map, of, switchMap, tap } from 'rxjs';
+import { AppConnectionsService, FlowService, FoldersService } from '@activepieces/ui/common';
 import { InstanceRunService } from '@activepieces/ui/common';
 import { PopulatedFlow, FlowRun, Folder } from '@activepieces/shared';
 import { Store } from '@ngrx/store';
@@ -23,23 +22,22 @@ export class GetInstanceRunResolver {
     private instanceRunService: InstanceRunService,
     private flowService: FlowService,
     private folderService: FoldersService,
-    private store:Store,
-    private snackbar:MatSnackBar,
-    private authenticationService:AuthenticationService,
-    private appConnectionsService:AppConnectionsService
-  ) {}
+    private store: Store,
+    private snackbar: MatSnackBar,
+    private appConnectionsService: AppConnectionsService
+  ) { }
 
   resolve(
     snapshot: ActivatedRouteSnapshot
   ): Observable<string> {
     const runId = snapshot.paramMap.get('runId') as string;
-    const connections = connections$(this.store,this.appConnectionsService,this.authenticationService);
+    const connections = this.appConnectionsService.getAll();
     const data$ = forkJoin({
-      run:this.instanceRunService.get(runId),
+      run: this.instanceRunService.get(runId),
       connections
     })
-    return  data$.pipe(
-      switchMap(({run, connections}) => {
+    return data$.pipe(
+      switchMap(({ run, connections }) => {
         return this.flowService.get(run.flowId, run.flowVersionId).pipe(
           switchMap((flow) => {
             if (!flow.folderId) {
@@ -51,12 +49,12 @@ export class GetInstanceRunResolver {
               })
             );
           }),
-          tap((res)=>{
+          tap((res) => {
             this.store.dispatch(
               BuilderActions.loadInitial({
                 flow: res.flow,
                 viewMode: ViewModeEnum.VIEW_INSTANCE_RUN,
-                run:res.run,
+                run: res.run,
                 appConnections: res.connections
               })
             );
@@ -64,7 +62,7 @@ export class GetInstanceRunResolver {
               duration: undefined,
             });
           }),
-          map((res)=>{
+          map((res) => {
             return res.flow.version.displayName;
           })
         );

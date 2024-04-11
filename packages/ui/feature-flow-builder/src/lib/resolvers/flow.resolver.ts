@@ -8,7 +8,7 @@ import {
   FlowVersion,
   AppConnectionWithoutSensitiveData,
 } from '@activepieces/shared';
-import { AppConnectionsService, AuthenticationService, FlowService, FoldersService, connections$ } from '@activepieces/ui/common';
+import { AppConnectionsService, FlowService, FoldersService} from '@activepieces/ui/common';
 import {
   BuilderActions,
   ViewModeEnum,
@@ -24,7 +24,6 @@ export class GetFlowResolver {
     private flowService: FlowService,
     private folderService: FoldersService,
     private store: Store,
-    private authenticationService: AuthenticationService,
     private appConnectionsService: AppConnectionsService
   ) {}
 
@@ -42,7 +41,7 @@ export class GetFlowResolver {
           publishedFlowVersion: of(undefined),
           folder: of(undefined),
           flow: of(flow),
-          connections: connections$(this.store, this.appConnectionsService, this.authenticationService)
+          connections: this.appConnectionsService.getAll()
         };
         if (flow.folderId) {
           observables$.folder = this.folderService.get(flow.folderId);

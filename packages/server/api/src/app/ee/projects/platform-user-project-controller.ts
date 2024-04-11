@@ -5,6 +5,7 @@ import {
 import { StatusCodes } from 'http-status-codes'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { platformService } from '../../platform/platform.service'
+import { projectService } from '../../project/project-service'
 import { platformProjectService } from './platform-project-service'
 import {
     ActivepiecesError,
@@ -21,6 +22,11 @@ export const usersProjectController: FastifyPluginCallbackTypebox = (
     _opts,
     done,
 ) => {
+
+    fastify.get('/:id', async (request) => {
+        return platformProjectService.getWithPlanAndUsageOrThrow(request.principal.projectId)
+    })
+
     fastify.get('/', ListProjectRequestForUser, async (request) => {
         return platformProjectService.getAll({
             ownerId: request.principal.id,
