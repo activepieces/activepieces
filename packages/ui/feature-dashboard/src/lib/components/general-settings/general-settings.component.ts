@@ -1,9 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import {
-  AuthenticationService,
-  ProjectService,
-  UiCommonModule,
-} from '@activepieces/ui/common';
+import { ProjectService, UiCommonModule } from '@activepieces/ui/common';
 import { AsyncPipe } from '@angular/common';
 import {
   FormBuilder,
@@ -28,6 +24,7 @@ import {
 } from '@activepieces/shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute } from '@angular/router';
+import { ProjectMemberService } from '@activepieces/ee/project-members';
 
 interface UpdateProjectForm {
   displayName: FormControl<string>;
@@ -56,15 +53,13 @@ export class GeneralSettingsComponent {
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private projectService: ProjectService,
-    private authenticationService: AuthenticationService,
-    private matSnackbar: MatSnackBar
+    private matSnackbar: MatSnackBar,
+    private projectMemberService: ProjectMemberService
   ) {
     this.projectLimitsEnabled =
       this.route.snapshot.data['flags'][ApFlagId.PROJECT_LIMITS_ENABLED];
 
-    this.canSave$ = this.authenticationService.currentUserSubject.pipe(
-      map((user) => user?.projectRole === ProjectMemberRole.ADMIN)
-    );
+    this.canSave$ = this.projectMemberService.isRole(ProjectMemberRole.ADMIN);
     const projectLimitsForm = {
       tasks: this.fb.control(
         {
