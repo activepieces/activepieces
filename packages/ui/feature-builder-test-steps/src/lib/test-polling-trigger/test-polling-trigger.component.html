@@ -49,8 +49,8 @@
                 <div class="ap-typography-caption ap-text-description ap-my-2" i18n>
                     This sample data can be used in the next steps
                 </div>
-                <ap-yaml-viewer class="json-viewer" title="Output" 
-                    [content]="selectedDataControl.value"></ap-yaml-viewer>
+                <ap-json-viewer class="json-viewer" title="Output" 
+                    [content]="selectedDataControl.value"></ap-json-viewer>
             </ng-container>
             <ng-container *ngIf="currentResults.length === 0  && hasBeenTested">
                 <div class="ap-flex ap-items-center">

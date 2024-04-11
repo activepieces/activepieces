@@ -1,5 +1,4 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import * as YAML from 'yaml';
 @Pipe({ name: 'outputLog', pure: true })
 export class OutputLogPipe implements PipeTransform {
   transform(value: any, truncate = true): string {
@@ -9,15 +8,10 @@ export class OutputLogPipe implements PipeTransform {
 
 export function outputLog(value: any, truncate = true): string {
   let result = '';
-  const doc = new YAML.Document();
   if (typeof value === 'object') {
-    if (Object.keys(value).length > 0) {
-      doc.contents = value;
-      result = doc.toString();
-    }
+    result = JSON.stringify(value, null, 2);
   } else if (isJsonString(value)) {
-    doc.contents = JSON.parse(value);
-    result = doc.toString();
+    result = JSON.stringify(JSON.parse(value), null, 2);
   } else {
     result = repr(value);
   }
@@ -27,7 +21,6 @@ export function outputLog(value: any, truncate = true): string {
         ? result.substring(0, 8092) + ' (truncated)'
         : result;
   }
-
   return result;
 }
 

@@ -47,6 +47,7 @@ export interface ActivepiecesVendorInit {
     initialRoute: string;
     hideSidebar: boolean;
     hideLogoInBuilder?: boolean;
+    hideFlowNameInBuilder?: boolean;
     disableNavigationInBuilder: boolean;
     hideFolders?: boolean;
   };
@@ -60,6 +61,7 @@ class ActivepiecesEmbedded {
   _hideSidebar = false;
   _hideFolders = false;
   _hideLogoInBuilder = false;
+  _hideFlowNameInBuilder = false;
   _disableNavigationInBuilder = true;
   _connectionsIframeInitialized = false;
   _resolveNewConnectionDialogClosed?: (result: ActivepiecesNewConnectionDialogClosed['data']) => void;
@@ -83,6 +85,7 @@ class ActivepiecesEmbedded {
       builder?: {
         disableNavigation: boolean
         hideLogo?: boolean;
+        hideFlowName?: boolean;
       },
       dashboard?: {
         hideSidebar?: boolean;
@@ -98,6 +101,7 @@ class ActivepiecesEmbedded {
     this._disableNavigationInBuilder = embedding?.builder?.disableNavigation ?? false;
     this._hideFolders = embedding?.hideFolders ?? false;
     this._hideLogoInBuilder = embedding?.builder?.hideLogo ?? false;
+    this._hideFlowNameInBuilder = embedding?.builder?.hideFlowName ?? false;
     if (embedding?.containerId) {
       this._initializeBuilderAndDashboardIframe({
         containerSelector: `#${embedding.containerId}`,
@@ -113,38 +117,37 @@ class ActivepiecesEmbedded {
       containerSelector: string,
       jwtToken: string
     }) => {
-      this._addGracePeriodBeforeMethod({
-        condition: () => {
-          return !!document.querySelector(containerSelector);
-        },
-        method: () => {
-          const iframeContainer = document.querySelector(containerSelector);
-          if(iframeContainer)
-          {
-            const iframeWindow = this.connectToEmbed({ jwtToken, iframeContainer }).contentWindow;
-            this._checkForVendorRouteChanges(iframeWindow);
-            this._checkForClientRouteChanges(iframeWindow);
-          }
-        },
-        errorMessage: 'container not found'
-      })
+    this._addGracePeriodBeforeMethod({
+      condition: () => {
+        return !!document.querySelector(containerSelector);
+      },
+      method: () => {
+        const iframeContainer = document.querySelector(containerSelector);
+        if (iframeContainer) {
+          const iframeWindow = this.connectToEmbed({ jwtToken, iframeContainer }).contentWindow;
+          this._checkForVendorRouteChanges(iframeWindow);
+          this._checkForClientRouteChanges(iframeWindow);
+        }
+      },
+      errorMessage: 'container not found'
+    })
 
   };
 
 
   private _initializeConnectionsIframe = ({ jwtToken }: { jwtToken: string }) => {
 
-   return this._addGracePeriodBeforeMethod({
-      condition: ()=>{
+    return this._addGracePeriodBeforeMethod({
+      condition: () => {
         return !!document.body;
       },
-      method:()=>{
-      this._connectionsIframe = this.connectToEmbed({ jwtToken, iframeContainer: document.body, callbackAfterAuthentication: () => { this._connectionsIframeInitialized = true } });
-      const connectionsIframeStyle = ['display:none', 'position:fixed', 'top:0', 'left:0', 'width:100%', 'height:100%', 'border:none'].join(';');
-      this._connectionsIframe.style.cssText = connectionsIframeStyle;
-      this._checkIfNewConnectionDialogClosed();
+      method: () => {
+        this._connectionsIframe = this.connectToEmbed({ jwtToken, iframeContainer: document.body, callbackAfterAuthentication: () => { this._connectionsIframeInitialized = true } });
+        const connectionsIframeStyle = ['display:none', 'position:fixed', 'top:0', 'left:0', 'width:100%', 'height:100%', 'border:none'].join(';');
+        this._connectionsIframe.style.cssText = connectionsIframeStyle;
+        this._checkIfNewConnectionDialogClosed();
       },
-      errorMessage:'document body not found while trying to add connections iframe'
+      errorMessage: 'document body not found while trying to add connections iframe'
     });
 
   }
@@ -179,7 +182,8 @@ class ActivepiecesEmbedded {
                   hideSidebar: this._hideSidebar,
                   disableNavigationInBuilder: this._disableNavigationInBuilder,
                   hideFolders: this._hideFolders,
-                  hideLogoInBuilder: this._hideLogoInBuilder
+                  hideLogoInBuilder: this._hideLogoInBuilder,
+                  hideFlowNameInBuilder: this._hideFlowNameInBuilder
                 },
               };
               iframeWindow.postMessage(apEvent, '*');
@@ -203,9 +207,9 @@ class ActivepiecesEmbedded {
   async connect({ pieceName }: { pieceName: string }) {
 
     return this._addGracePeriodBeforeMethod({
-      errorMessage:'connections iframe not initialized',
-      condition:()=>this._connectionsIframeInitialized,
-      method:()=>{
+      errorMessage: 'connections iframe not initialized',
+      condition: () => this._connectionsIframeInitialized,
+      method: () => {
         if (!this._connectionsIframe || !this._doesFrameHaveWindow(this._connectionsIframe)) {
           console.error('Activepieces: connections iframe not found, please make sure you enabled embedded dialiogs in the configure method');
           return;
@@ -224,7 +228,7 @@ class ActivepiecesEmbedded {
         });
       }
     });
-      
+
   }
 
 
@@ -311,41 +315,39 @@ class ActivepiecesEmbedded {
   private _removeTrailingSlashes(str: string) {
     return str.endsWith('/') ? str.slice(0, -1) : str;
   }
- /**Adds a grace period before executing the method depending on the condition */
-  private _addGracePeriodBeforeMethod( 
-    { method, 
+  /**Adds a grace period before executing the method depending on the condition */
+  private _addGracePeriodBeforeMethod(
+    { method,
       condition,
-      errorMessage } :
-    { method:()=>void, 
-      condition: ()=>boolean,
-     /**Error message to show when grace period passes */
-     errorMessage:string }
-    )
-  {
-    return new Promise((resolve, reject) => {
-      let checkCounter= 0;
-      if(condition())
+      errorMessage }:
       {
+        method: () => void,
+        condition: () => boolean,
+        /**Error message to show when grace period passes */
+        errorMessage: string
+      }
+  ) {
+    return new Promise((resolve, reject) => {
+      let checkCounter = 0;
+      if (condition()) {
         resolve(method());
         return;
       }
-     const checker= setInterval(()=>{
-        if(checkCounter>=this.MAX_CONTAINER_CHECK_COUNT)
-        {
+      const checker = setInterval(() => {
+        if (checkCounter >= this.MAX_CONTAINER_CHECK_COUNT) {
           console.error(`Activepieces: ${errorMessage}`);
           reject(`Activepieces: ${errorMessage}`);
           return;
         }
         checkCounter++;
-        if(condition())
-        {
+        if (condition()) {
           console
           clearInterval(checker);
           resolve(method());
         }
       }, this.HUNDRED_MILLISECONDS);
     },);
-   
+
   }
 
 }

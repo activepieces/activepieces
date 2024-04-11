@@ -928,6 +928,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "cr0fters",
+      "name": "cr0fters",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1754858?v=4",
+      "profile": "https://github.com/cr0fters",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "commitType": "docs"

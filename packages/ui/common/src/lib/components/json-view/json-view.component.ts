@@ -5,24 +5,22 @@ import {
   Input,
 } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { YamlViewDialogComponent } from './yaml-view-dialog/yaml-view-dialog.component';
+import { JsonViewDialogComponent } from './json-view-dialog/json-view-dialog.component';
 import { copyText } from '../../utils/tables.utils';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { downloadYaml, yamlEditorOptionsMonaco } from '../../utils/consts';
+import { downloadJson, jsonEditorOptionsMonaco } from '../../utils/consts';
 import { FormControl } from '@angular/forms';
 import { outputLog } from '../../pipe/output-log.pipe';
 import { Observable } from 'rxjs';
 
 @Component({
-  selector: 'ap-yaml-viewer',
-  templateUrl: './yaml-view.component.html',
+  selector: 'ap-json-viewer',
+  templateUrl: './json-view.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class YamlViewComponent {
-  readonly yamlEditorOptionsMonaco = {
-    ...yamlEditorOptionsMonaco,
-  };
-  yamlFormControl = new FormControl('');
+export class JsonViewComponent {
+  readonly jsonEditorOptionsMonaco = jsonEditorOptionsMonaco;
+  jsonFormController = new FormControl('');
   _content = '';
   containerWidthChange$?: Observable<number>;
   readonly containerMaxHeight = 600;
@@ -34,7 +32,7 @@ export class YamlViewComponent {
     const formattedOutput = outputLog(value, false);
     if (formattedOutput !== this._content) {
       this._content = formattedOutput;
-      this.yamlFormControl.setValue(this._content || '');
+      this.jsonFormController.setValue(this._content || '');
       if (this.editor) {
         setTimeout(() => {
           this.resizeEditorToContent(this.editor);
@@ -50,7 +48,7 @@ export class YamlViewComponent {
   ) {}
 
   openModal() {
-    this.dialogService.open(YamlViewDialogComponent, {
+    this.dialogService.open(JsonViewDialogComponent, {
       data: { title: this.title, content: this._content },
     });
   }
@@ -60,7 +58,7 @@ export class YamlViewComponent {
   }
 
   downloadContent() {
-    downloadYaml(this._content, this.title);
+    downloadJson(this._content, this.title);
   }
   resizeEditorToContent(editor: any) {
     this.editor = editor;

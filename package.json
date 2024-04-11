@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
-  "version": "0.22.0",
-  "rcVersion": "0.23.0-rc.2",
+  "version": "0.23.0",
+  "rcVersion": "0.24.0-rc.1",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve ui-core",
@@ -136,7 +136,6 @@
     "mime": "4.0.1",
     "mime-types": "2.1.35",
     "monaco-editor": "0.34.1",
-    "monaco-yaml": "5.1.1",
     "monday-sdk-js": "0.5.2",
     "mustache": "4.2.0",
     "nanoid": "3.3.6",
