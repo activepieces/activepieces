@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
+  AppConnectionsService,
   FlagService,
   PieceConnectionDropdownItem,
   PieceMetadataModel,
   UiCommonModule,
-  appConnectionsSelectors,
 } from '@activepieces/ui/common';
 import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-builder-form-controls';
 import { Store } from '@ngrx/store';
@@ -137,6 +137,7 @@ export class PieceInputFormComponent extends InputFormCore {
     store: Store,
     pieceService: PieceMetadataService,
     private pieceMetaDataService: PieceMetadataService,
+    private appConnectionService: AppConnectionsService,
     private flagService: FlagService,
     private fb: UntypedFormBuilder
   ) {
@@ -285,7 +286,7 @@ export class PieceInputFormComponent extends InputFormCore {
     );
   }
 
-  getAllConnectionsForPiece() {
+  getAllConnectionsForPiece(): Observable<PieceConnectionDropdownItem[]> {
     const currentStep$ = this.store.select(BuilderSelectors.selectCurrentStep);
     return currentStep$.pipe(
       switchMap((step) => {
@@ -294,11 +295,19 @@ export class PieceInputFormComponent extends InputFormCore {
           (step.type !== ActionType.PIECE && step.type !== TriggerType.PIECE)
         )
           return of([]);
-        return this.store.select(
-          appConnectionsSelectors.selectAllConnectionsForPiece(
-            step.settings.pieceName
-          )
-        );
+        return this.appConnectionService
+          .getAllForPieceSubject(step.settings.pieceName)
+          .pipe(
+            map((res) => {
+              return res.map((c) => {
+                const result: PieceConnectionDropdownItem = {
+                  label: c.name,
+                  value: `{{connections['${c.name}']}}`,
+                };
+                return result;
+              });
+            })
+          );
       })
     );
   }

@@ -1,9 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import {
   AuthenticationService,
-  PlatformProjectService,
-  ProjectActions,
-  ProjectSelectors,
+  ProjectService,
   UiCommonModule,
 } from '@activepieces/ui/common';
 import { AsyncPipe } from '@angular/common';
@@ -23,7 +21,6 @@ import {
   take,
   tap,
 } from 'rxjs';
-import { Store } from '@ngrx/store';
 import {
   ApFlagId,
   ProjectMemberRole,
@@ -57,9 +54,8 @@ export class GeneralSettingsComponent {
 
   constructor(
     private fb: FormBuilder,
-    private store: Store,
     private route: ActivatedRoute,
-    private projectService: PlatformProjectService,
+    private projectService: ProjectService,
     private authenticationService: AuthenticationService,
     private matSnackbar: MatSnackBar
   ) {
@@ -104,7 +100,9 @@ export class GeneralSettingsComponent {
       ),
       ...(this.projectLimitsEnabled ? projectLimitsForm : {}),
     });
-    this.project$ = this.store.select(ProjectSelectors.selectCurrentProject);
+    this.project$ = this.projectService.currentProject$.pipe(
+      map((project) => project!)
+    );
     this.updateForm$ = this.project$.pipe(
       tap((project) => {
         this.formGroup.patchValue({
@@ -144,11 +142,8 @@ export class GeneralSettingsComponent {
                 },
           });
         }),
-        tap((updatedProject) => {
+        tap(() => {
           this.matSnackbar.open($localize`Saved successfully`);
-          this.store.dispatch(
-            ProjectActions.updateProject({ project: updatedProject })
-          );
           this.loading$.next(false);
         }),
         catchError((error) => {

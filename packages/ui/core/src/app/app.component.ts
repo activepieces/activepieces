@@ -8,7 +8,6 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
-import { Store } from '@ngrx/store';
 import {
   NavigationCancel,
   NavigationEnd,
@@ -21,7 +20,6 @@ import { DomSanitizer } from '@angular/platform-browser';
 
 import {
   FlagService,
-  CommonActions,
   AppearanceService,
   environment,
   PlatformService,
@@ -70,7 +68,6 @@ export class AppComponent implements OnInit {
   toggleLoading$: Observable<boolean>;
   constructor(
     public dialog: MatDialog,
-    private store: Store,
     private appearanceService: AppearanceService,
     private authenticationService: AuthenticationService,
     private flagService: FlagService,
@@ -131,7 +128,6 @@ export class AppComponent implements OnInit {
           Object.keys(user).length == 0 ||
           !decodedToken
         ) {
-          this.store.dispatch(CommonActions.clearState());
           return;
         }
         this.telemetryService.init(user);

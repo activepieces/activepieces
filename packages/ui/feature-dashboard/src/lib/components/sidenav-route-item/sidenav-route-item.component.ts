@@ -17,7 +17,6 @@ type SideNavRoute = {
   imports: [CommonModule, UiCommonModule, RouterModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    @if(sideNavRoute.showInSideNav$ | async) {
     <div
       class="ap-w-full ap-flex-col ap-flex ap-border-transparent ap-justify-center ap-items-center ap-cursor-pointer"
       [routerLink]="sideNavRoute.route ? ['/' + sideNavRoute.route] : undefined"
@@ -52,7 +51,6 @@ type SideNavRoute = {
         {{ sideNavRoute.caption }}
       </div>
     </div>
-    }
   `,
 })
 export class SidenavRouteItemComponent {

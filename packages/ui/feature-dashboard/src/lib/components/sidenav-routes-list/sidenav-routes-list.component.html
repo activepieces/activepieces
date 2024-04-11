@@ -5,21 +5,17 @@
     extraClasses="ap-fill-primary" (auxclick)="redirectHome(true)"></ap-icon-button>
 
 
-    @for( route of (sideNavRoutes$ | async); track route.route) {
-        <app-sidenav-route-item
-          [sideNavRoute]="route">
-        </app-sidenav-route-item>
-   
-    }
+  @for( route of (sideNavRoutes$ | async); track route.route) {
+  @if(route.showInSideNav$ | async){
+  <app-sidenav-route-item [sideNavRoute]="route">
+  </app-sidenav-route-item>
+  }
+
+  }
   <div class="ap-flex-grow"></div>
-    <div (click)="openSupport()" matTooltip="Ask the Community" i18n-matTooltip
-    matTooltipPosition="right">
-    <app-sidenav-route-item
-    [sideNavRoute]="supportRoute"
-    ></app-sidenav-route-item>
+  <div (click)="openSupport()" matTooltip="Ask the Community" i18n-matTooltip matTooltipPosition="right">
+    <app-sidenav-route-item [sideNavRoute]="supportRoute"></app-sidenav-route-item>
   </div>
-    
-  <app-sidenav-route-item
-    [sideNavRoute]="docsRoute"
-  ></app-sidenav-route-item>
+
+  <app-sidenav-route-item [sideNavRoute]="docsRoute"></app-sidenav-route-item>
 </div>

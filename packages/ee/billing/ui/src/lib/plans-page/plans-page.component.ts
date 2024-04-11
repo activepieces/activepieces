@@ -2,18 +2,17 @@ import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Observable, map, tap } from 'rxjs';
 import {
   MAXIMUM_ALLOWED_TASKS,
-  ProjectBillingRespone,
+  ProjectBillingResponse,
 } from '@activepieces/ee-shared';
-import { ProjectActions, ProjectSelectors } from '@activepieces/ui/common';
 import { ProjectWithLimits } from '@activepieces/shared';
 import { BillingService } from '../service/billing.service';
-import { Store } from '@ngrx/store';
 import {
   FormBuilder,
   FormControl,
   FormGroup,
   Validators,
 } from '@angular/forms';
+import { AuthenticationService, ProjectService } from '@activepieces/ui/common';
 
 interface BillingLimits {
   tasks: FormControl<number>;
@@ -35,13 +34,15 @@ export class PlansPageComponent implements OnInit {
   billingForm: FormGroup<BillingLimits>;
   loadInitialValue$: Observable<void> | undefined;
   project$: Observable<ProjectWithLimits> | undefined;
-  billingInformation$: Observable<ProjectBillingRespone> | undefined;
+  billingInformation$: Observable<ProjectBillingResponse> | undefined;
   openPortal$: Observable<void> | undefined;
   disableOrEnable$: Observable<void>;
+  updateProject$: Observable<unknown> | undefined;
   constructor(
     private billingService: BillingService,
+    private authenticationService: AuthenticationService,
     private fb: FormBuilder,
-    private store: Store
+    private projectService: ProjectService
   ) {
     this.billingForm = this.fb.group({
       tasks: this.fb.control(15000, {
@@ -64,17 +65,17 @@ export class PlansPageComponent implements OnInit {
         }
       })
     );
-    this.project$ = this.store.select(ProjectSelectors.selectCurrentProject);
-    this.loadInitialValue$ = this.store
-      .select(ProjectSelectors.selectCurrentProject)
-      .pipe(
-        tap((project) => {
-          this.billingForm.patchValue({
-            tasks: project.plan.tasks,
-          });
-        }),
-        map(() => void 0)
-      );
+    this.project$ = this.projectService.currentProject$.pipe(
+      map((project) => project!)
+    );
+    this.loadInitialValue$ = this.project$.pipe(
+      tap((project) => {
+        this.billingForm.patchValue({
+          tasks: project.plan.tasks,
+        });
+      }),
+      map(() => void 0)
+    );
   }
 
   ngOnInit(): void {
@@ -115,12 +116,13 @@ export class PlansPageComponent implements OnInit {
       return;
     }
     const limit = this.billingForm.value.tasks;
-    this.store.dispatch(
-      ProjectActions.updateLimits({
-        limits: {
+    this.updateProject$ = this.projectService.update(
+      this.authenticationService.getProjectId()!,
+      {
+        plan: {
           tasks: limit!,
         },
-      })
+      }
     );
   }
 }

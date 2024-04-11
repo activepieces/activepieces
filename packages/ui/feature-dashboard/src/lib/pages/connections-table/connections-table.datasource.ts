@@ -16,13 +16,10 @@ import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 import {
   AppConnectionsService,
   ApPaginatorComponent,
-  ProjectSelectors,
   DEFAULT_PAGE_SIZE,
   LIMIT_QUERY_PARAM,
   CURSOR_QUERY_PARAM,
-  AuthenticationService,
 } from '@activepieces/ui/common';
-import { Store } from '@ngrx/store';
 import { Params } from '@angular/router';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 
@@ -37,11 +34,8 @@ export class ConnectionsTableDataSource extends DataSource<any> {
   constructor(
     private queryParams$: Observable<Params>,
     private paginator: ApPaginatorComponent,
-    private store: Store,
     private pieceMetadataService: PieceMetadataService,
-    private authenticationService: AuthenticationService,
-    private connectionsService: AppConnectionsService,
-    private refresh$: Observable<boolean>
+    private connectionsService: AppConnectionsService
   ) {
     super();
   }
@@ -54,20 +48,13 @@ export class ConnectionsTableDataSource extends DataSource<any> {
   connect(): Observable<any[]> {
     return combineLatest({
       queryParams: this.queryParams$,
-      project: this.store
-        .select(ProjectSelectors.selectCurrentProject)
-        .pipe(take(1)),
-      refresh: merge(
-        this.refresh$,
-        this.connectionsService.newConnectionCreated$
-      ),
+      refresh: merge(this.connectionsService.refreshCacheSubject),
     }).pipe(
       tap(() => {
         this.isLoading$.next(true);
       }),
       switchMap((res) => {
         return this.connectionsService.list({
-          projectId: this.authenticationService.getProjectId(),
           limit: res.queryParams[LIMIT_QUERY_PARAM] || DEFAULT_PAGE_SIZE,
           cursor: res.queryParams[CURSOR_QUERY_PARAM],
         });
