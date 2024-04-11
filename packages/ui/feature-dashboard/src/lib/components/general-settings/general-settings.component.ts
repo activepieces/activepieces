@@ -43,12 +43,12 @@ interface UpdateProjectForm {
   imports: [AsyncPipe, UiCommonModule],
 })
 export class GeneralSettingsComponent {
-  readonly permissionMessage = $localize` 'You don\'t have permissions to edit project settings'`;
+  readonly permissionMessage = $localize`You don\'t have permissions to edit project settings`;
   formGroup: FormGroup<UpdateProjectForm>;
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   saving$: Observable<void>;
   project$: Observable<ProjectWithLimits>;
-  updateForm$: Observable<void>;
+  initForm$: Observable<boolean>;
   projectLimitsEnabled: boolean;
   canSave$: Observable<boolean>;
 
@@ -103,7 +103,7 @@ export class GeneralSettingsComponent {
     this.project$ = this.projectService.currentProject$.pipe(
       map((project) => project!)
     );
-    this.updateForm$ = this.project$.pipe(
+    this.initForm$ = this.project$.pipe(
       tap((project) => {
         this.formGroup.patchValue({
           displayName: project.displayName,
@@ -120,7 +120,7 @@ export class GeneralSettingsComponent {
         }
       }),
       map(() => {
-        return void 0;
+        return true;
       })
     );
   }
