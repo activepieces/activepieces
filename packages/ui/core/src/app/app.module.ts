@@ -82,7 +82,10 @@ export function playerFactory() {
       config: {
         tokenGetter,
         allowedDomains: [extractHostname(environment.apiUrl)],
-        disallowedRoutes: [`${environment.apiUrl}/flags`],
+        disallowedRoutes: [
+          `${environment.apiUrl}/flags`,
+          `${environment.apiUrl}/managed-authn/external-token`,
+        ],
       },
     }),
     UiFeaturePiecesModule,
