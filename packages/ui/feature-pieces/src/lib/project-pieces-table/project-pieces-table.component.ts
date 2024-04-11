@@ -12,9 +12,9 @@ import { ProjectPiecesDataSource } from './project-pieces-table.datasource';
 import { InstallCommunityPieceModalComponent } from '../install-community-piece/install-community-piece-modal.component';
 import { ApFlagId, PieceScope, PieceType, ProjectMemberRole, isNil } from '@activepieces/shared';
 import { PieceMetadataService } from '../services/piece.service';
-import { AuthenticationService, DeleteEntityDialogComponent, DeleteEntityDialogData, FlagService, GenericSnackbarTemplateComponent, PieceMetadataModelSummary } from '@activepieces/ui/common';
+import { AuthenticationService, DeleteEntityDialogComponent, DeleteEntityDialogData, FlagService, GenericSnackbarTemplateComponent } from '@activepieces/ui/common';
 import { ManagePiecesDialogComponent } from '../manage-pieces-dialog/manage-pieces-dialog.component';
-import { PieceMetadataSummary } from '@activepieces/pieces-framework';
+import { PieceMetadataModelSummary, PieceMetadataSummary } from '@activepieces/pieces-framework';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({

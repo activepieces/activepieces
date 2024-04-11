@@ -15,7 +15,6 @@ import {
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
-  PieceMetadataModelSummary,
 } from '@activepieces/ui/common';
 import { ConnectionsTableDataSource } from './connections-table.datasource';
 import { ApPaginatorComponent } from '@activepieces/ui/common';
@@ -23,6 +22,7 @@ import { AppConnectionsService } from '@activepieces/ui/common';
 import { PieceMetadataService } from '@activepieces/ui/feature-pieces';
 import { NewConnectionDialogComponent } from '../../components/dialogs/new-connection-dialog/new-connection-dialog.component';
 import { AddEditConnectionButtonComponent } from '@activepieces/ui/feature-connections';
+import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 
 @Component({
   templateUrl: './connections-table.component.html',

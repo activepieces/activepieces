@@ -37,6 +37,7 @@ import { AddAuthorsToPieces1710098009544 } from './migration/sqlite/171009800954
 import { AddDeletedToProjectSqlite1710248182409 } from './migration/sqlite/1710248182409-add-deleted-to-project-sqlite'
 import { AddMissingInputUiInfoSqlite1711412511624 } from './migration/sqlite/1711412511624-AddMissingInputUiInfoSqlite'
 import { AddProjectUsageColumnToPieceSqlite1711768479150 } from './migration/sqlite/1711768479150-AddProjectUsageColumnToPieceSqlite'
+import { AddTagsToPiecesSqlite1712180673961 } from './migration/sqlite/1712180673961-AddTagsToPiecesSqlite'
 import { system, SystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
 
@@ -96,6 +97,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddDeletedToProjectSqlite1710248182409,
         AddMissingInputUiInfoSqlite1711412511624,
         AddProjectUsageColumnToPieceSqlite1711768479150,
+        AddTagsToPiecesSqlite1712180673961,
     ]
     const edition = getEdition()
     if (edition !== ApEdition.COMMUNITY) {

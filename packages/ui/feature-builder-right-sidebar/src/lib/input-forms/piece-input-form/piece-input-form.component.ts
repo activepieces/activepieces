@@ -4,7 +4,6 @@ import {
   AppConnectionsService,
   FlagService,
   PieceConnectionDropdownItem,
-  PieceMetadataModel,
   UiCommonModule,
 } from '@activepieces/ui/common';
 import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-builder-form-controls';
@@ -39,6 +38,7 @@ import {
 } from '@activepieces/shared';
 import {
   ActionBase,
+  PieceMetadataModel,
   PiecePropertyMap,
   PropertyType,
   TriggerBase,

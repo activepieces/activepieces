@@ -6,12 +6,15 @@ import { databaseConnection } from '../../../../src/app/database/database-connec
 import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
 import { generateMockExternalToken } from '../../../helpers/auth'
 import {
+    createMockPieceMetadata,
+    createMockPieceTag,
     createMockPlatform,
     createMockProject,
     createMockSigningKey,
+    createMockTag,
     createMockUser,
 } from '../../../helpers/mocks'
-import { apId } from '@activepieces/shared'
+import { apId, PiecesFilterType, PieceType, ProjectMemberRole } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
@@ -49,10 +52,10 @@ describe('Managed Authentication API', () => {
                 .save(mockSigningKey)
 
             const { mockExternalToken, mockExternalTokenPayload } =
-        generateMockExternalToken({
-            platformId: mockPlatform.id,
-            signingKeyId: mockSigningKey.id,
-        })
+                generateMockExternalToken({
+                    platformId: mockPlatform.id,
+                    signingKeyId: mockSigningKey.id,
+                })
 
             // act
             const response = await app?.inject({
@@ -100,10 +103,10 @@ describe('Managed Authentication API', () => {
                 .save(mockSigningKey)
 
             const { mockExternalToken, mockExternalTokenPayload } =
-        generateMockExternalToken({
-            platformId: mockPlatform.id,
-            signingKeyId: mockSigningKey.id,
-        })
+                generateMockExternalToken({
+                    platformId: mockPlatform.id,
+                    signingKeyId: mockSigningKey.id,
+                })
 
             // act
             const response = await app?.inject({
@@ -135,6 +138,88 @@ describe('Managed Authentication API', () => {
             )
         })
 
+        it('Sync Pieces when exchanging external token', async () => {
+            // arrange
+            const mockUser = createMockUser()
+            await databaseConnection.getRepository('user').save(mockUser)
+
+            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
+
+            const mockPieceMetadata1 = createMockPieceMetadata({
+                name: '@ap/a',
+                version: '0.0.1',
+                pieceType: PieceType.OFFICIAL,
+            })
+            await databaseConnection
+                .getRepository('piece_metadata')
+                .save(mockPieceMetadata1)
+
+            const mockTag = createMockTag({
+                id: apId(),
+                platformId: mockPlatform.id,
+                name: 'free',
+            })
+
+            await databaseConnection
+                .getRepository('tag')
+                .save(mockTag)
+
+
+            const mockPieceTag = createMockPieceTag({
+                platformId: mockPlatform.id,
+                tagId: mockTag.id,
+                pieceName: '@ap/a',
+            })
+
+            await databaseConnection
+                .getRepository('piece_tag')
+                .save(mockPieceTag)
+
+
+            const mockSigningKey = createMockSigningKey({
+                platformId: mockPlatform.id,
+            })
+            await databaseConnection
+                .getRepository('signing_key')
+                .save(mockSigningKey)
+
+
+
+            const mockedEmail = faker.internet.email()
+            const { mockExternalToken } = generateMockExternalToken({
+                platformId: mockPlatform.id,
+                externalEmail: mockedEmail,
+                signingKeyId: mockSigningKey.id,
+                pieces: {
+                    filterType: PiecesFilterType.ALLOWED,
+                    tags: ['free'],
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/managed-authn/external-token',
+                body: {
+                    externalAccessToken: mockExternalToken,
+                },
+            })
+
+            // assert
+            const responseBody = response?.json()
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+
+            const generatedProject = await databaseConnection
+                .getRepository('project_plan')
+                .findOneBy({ projectId: responseBody?.projectId })
+
+            expect(generatedProject?.piecesFilterType).toBe('ALLOWED')
+            expect(generatedProject?.pieces).toStrictEqual(['@ap/a'])
+        })
+
         it('Adds new user as a member in new project', async () => {
             // arrange
             const mockUser = createMockUser()
@@ -155,6 +240,7 @@ describe('Managed Authentication API', () => {
                 platformId: mockPlatform.id,
                 externalEmail: mockedEmail,
                 signingKeyId: mockSigningKey.id,
+                role: ProjectMemberRole.VIEWER,
             })
 
             // act
@@ -182,7 +268,7 @@ describe('Managed Authentication API', () => {
             expect(generatedProjectMember?.projectId).toBe(responseBody?.projectId)
             expect(generatedProjectMember?.email).toBe(mockedEmail)
             expect(generatedProjectMember?.platformId).toBe(mockPlatform.id)
-            expect(generatedProjectMember?.role).toBe('EDITOR')
+            expect(generatedProjectMember?.role).toBe('VIEWER')
             expect(generatedProjectMember?.status).toBe('ACTIVE')
         })
 
@@ -250,10 +336,10 @@ describe('Managed Authentication API', () => {
                 .save(mockSigningKey)
 
             const { mockExternalToken, mockExternalTokenPayload } =
-        generateMockExternalToken({
-            platformId: mockPlatform.id,
-            signingKeyId: mockSigningKey.id,
-        })
+                generateMockExternalToken({
+                    platformId: mockPlatform.id,
+                    signingKeyId: mockSigningKey.id,
+                })
 
             const mockUser = createMockUser({
                 externalId: mockExternalTokenPayload.externalUserId,

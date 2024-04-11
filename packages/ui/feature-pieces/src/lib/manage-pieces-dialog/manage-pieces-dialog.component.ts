@@ -7,13 +7,13 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { BehaviorSubject, Observable, map, tap } from 'rxjs';
 import {
   AuthenticationService,
-  DropdownSearchControlComponent,
-  PieceMetadataModelSummary, ProjectService, SelectAllDirective, UiCommonModule,
+  DropdownSearchControlComponent, ProjectService, SelectAllDirective, UiCommonModule,
 } from '@activepieces/ui/common';
 import { CommonModule } from '@angular/common';
 import { PieceMetadataService } from '../services/piece.service';
 import { PiecesFilterType } from '@activepieces/shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 
 @Component({
   templateUrl: './manage-pieces-dialog.component.html',
