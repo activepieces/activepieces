@@ -1,9 +1,9 @@
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
+import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { pieceTagService } from './pieces/piece-tag.service'
 import { tagService } from './tag-service'
 import { assertNotNullOrUndefined, EndpointScope, ListTagsRequest, PrincipalType, SeekPage, SetPieceTagsRequest, Tag, UpsertTagRequest } from '@activepieces/shared'
-import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 
 
 export const tagsModule: FastifyPluginAsyncTypebox = async (app) => {
