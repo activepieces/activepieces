@@ -1,15 +1,13 @@
 import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogContent, MatDialogActions, MatDialogClose } from '@angular/material/dialog';
-import { Store } from '@ngrx/store';
 import { GitBranchType, GitRepo } from '@activepieces/ee-shared';
-import { ProjectSelectors } from '@activepieces/ui/common';
 import { FormBuilder, FormControl, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Observable, switchMap, tap } from 'rxjs';
 import { SyncProjectService } from '../../../services/sync-project.service';
 import { AsyncPipe } from '@angular/common';
 import { MatInput } from '@angular/material/input';
 import { MatFormField, MatLabel, MatError, MatHint } from '@angular/material/form-field';
-import { UiCommonModule } from '@activepieces/ui/common';
+import { ProjectService, UiCommonModule } from '@activepieces/ui/common';
 
 type ConfigureRepoDialogData = {
   repo?: GitRepo;
@@ -43,11 +41,10 @@ type ConfigureRepoDialogForm = {
 export class ConfigureRepoDialogComponent {
   GitBranchType = GitBranchType
   title = $localize`Configure Repo`;
-  projectIds$ = this.store.select(ProjectSelectors.selectCurrentProject);
   configureRepoForm: FormGroup<ConfigureRepoDialogForm>;
   configureRepo$?: Observable<GitRepo>;
   constructor(
-    private store: Store,
+    private projectService: ProjectService,
     private syncProjectService: SyncProjectService,
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<ConfigureRepoDialogComponent>,
@@ -88,14 +85,13 @@ export class ConfigureRepoDialogComponent {
   submit() {
     this.configureRepoForm.markAllAsTouched();
     if (this.configureRepoForm.valid && !this.configureRepo$) {
-      this.configureRepo$ = this.store
-        .select(ProjectSelectors.selectCurrentProject)
+      this.configureRepo$ = this.projectService.currentProject$
         .pipe(
           switchMap((project) => {
             return this.syncProjectService
               .configure({
                 ...this.configureRepoForm.getRawValue(),
-                projectId: project.id,
+                projectId: project!.id,
               })
               .pipe(
                 tap((res) => {

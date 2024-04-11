@@ -5,13 +5,7 @@ import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpClientModule } from '@angular/common/http';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import {
-  ProjectEffects,
-  UiCommonModule,
-  appConnectionsReducer,
-  environment,
-  projectReducer,
-} from '@activepieces/ui/common';
+import { UiCommonModule, environment } from '@activepieces/ui/common';
 import { JwtModule } from '@auth0/angular-jwt';
 import { NotFoundComponent } from './modules/not-found/not-found.component';
 import { RedirectUrlComponent } from './modules/redirect-url/redirect-url.component';
@@ -72,11 +66,7 @@ export function playerFactory() {
     CommonModule,
     BrowserModule,
     UiFeatureAuthenticationModule,
-    StoreModule.forFeature('commonState', {
-      projectsState: projectReducer,
-      appConnectionsState: appConnectionsReducer,
-    }),
-    EffectsModule.forFeature([ProjectEffects]),
+    EffectsModule.forFeature([]),
     AppRoutingModule,
     BrowserAnimationsModule,
     StoreModule.forRoot({}),

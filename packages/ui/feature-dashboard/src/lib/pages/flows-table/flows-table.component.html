@@ -1,4 +1,4 @@
-<div class="ap-h-[calc(100% - 6.5625rem)] ap-mx-7.5" [class.ap-hidden]="(areThereFlows$|async)===false">
+<div class="ap-h-[calc(100% - 6.5625rem)] ap-px-7.5" [class.ap-hidden]="(areThereFlows$|async)===false">
   <div class="ap-flex ap-h-full ">
     <div class=" ap-min-w-[274px] ap-max-w-[274px]" *ngIf="(hideFolders$ | async) === undefined ||(hideFolders$ | async) === false " #foldersSection>
       <div class="ap-typography-headline-5 !ap-font-semibold ap-mb-7.5 ap-mt-20" i18n>My Flows</div>
@@ -135,7 +135,7 @@
       </div>
     </div>
   </div>
-
+ <ng-container *ngTemplateOutlet="rewards"></ng-container>
 </div>
 
 <ng-container *ngIf="(areThereFlows$|async)===false">
@@ -155,3 +155,18 @@
 <ng-container *ngIf="duplicateFlow$ | async"></ng-container>
 <ng-container *ngIf="downloadTemplate$ | async"></ng-container>
 <ng-container *ngIf="renameFlow$ | async"></ng-container>
+
+<ng-template #rewards>
+@if(showRewards$ | async)
+  {
+    <div (click)="openRewardsDialog()"   class="ap-border ap-border-solid ap-border-dividers ap-top-[180px] ap-drop-shadow -ap-right-[85px] ap-transition-all ap-cursor-pointer hover:-ap-right-[14px] ap-py-2 ap-absolute ap-rounded-full ap-overflow-hidden ap-bg-white ap-px-4 ap-text-primary ap-flex ap-items-center ap-gap-2"> 
+      <div class="ap-relative">
+          <div class="ap-p-0.5 ap-bg-[red] ap-rounded-full -ap-right-[2.5px] ap-top-0 ap-absolute">
+          </div>
+          <svg-icon class="ap-fill-primary" [svgStyle]="{ width: '20px', height: '20px' }" src="assets/img/custom/rewards/rewards.svg"></svg-icon>
+
+      </div>
+      <div class="ap-typography-body-1">Rewards</div>
+  </div>
+  }
+</ng-template>

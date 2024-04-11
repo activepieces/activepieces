@@ -157,8 +157,10 @@ select {
 }
 
 //clipboard-container
-div[style="position: absolute; top: 0.5em; right: 0.5em; opacity: 0; transition: opacity 250ms ease-out 0s;"]{
+div[style*="position: absolute;"] {
   opacity: 1 !important;
+  right: -0.1em !important;
+  top: 0em !important;
 }
 
 }

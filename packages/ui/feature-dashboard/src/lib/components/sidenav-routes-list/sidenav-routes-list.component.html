@@ -5,54 +5,17 @@
     extraClasses="ap-fill-primary" (auxclick)="redirectHome(true)"></ap-icon-button>
 
 
-  <ng-container *ngFor="let r of (sideNavRoutes$ | async)">
-    <div *ngIf="r.showInSideNav$ | async"
-      class="ap-w-full ap-flex-col ap-flex ap-border-transparent ap-justify-center ap-items-center ap-cursor-pointer"
-      [routerLink]="['/' + r.route]">
-      <div
-        routerLinkActive="ap-bg-primary-light   ap-transition ap-ease-out ap-rounded-[8px] hover:!ap-bg-primary-light !ap-fill-primary "
-        class="hover:ap-bg-[#f5f5f5] ap-relative ap-p-3 ap-fill-title " [routerLink]="['/' + r.route]">
+  @for( route of (sideNavRoutes$ | async); track route.route) {
+  @if(route.showInSideNav$ | async){
+  <app-sidenav-route-item [sideNavRoute]="route">
+  </app-sidenav-route-item>
+  }
 
-
-        <svg-icon [applyClass]="true" class="ap-fill-inherit" [svgStyle]="{ width: '21px', height: '21px' }"
-          [src]="r.icon" (click)="r.effect ? r.effect() : null">
-        </svg-icon>
-
-        <svg-icon *ngIf="r.showLock$ | async" [applyClass]="true"
-          class="ap-fill-disable ap-bottom-[1px] ap-right-[1px] ap-absolute"
-          [svgStyle]="{ width: '14px', height: '14px' }" src="assets/img/custom/lock.svg">
-        </svg-icon>
-
-      </div>
-
-      <div class="ap-font-medium ap-text-[10px] ap-text-center">
-        {{ r.caption }}
-      </div>
-
-    </div>
-  </ng-container>
-
-
+  }
   <div class="ap-flex-grow"></div>
-  <app-billing-sidenav-item *ngIf="showBilling$ | async"></app-billing-sidenav-item>
-  <div *ngIf="showSupport$ | async" (click)="openSupport()" matTooltip="Ask the Community" i18n-matTooltip
-    matTooltipPosition="right"
-    class="ap-w-full ap-flex-col ap-flex ap-border-transparent ap-justify-center ap-items-center ap-cursor-pointer ap-mb-3">
-    <div class="ap-p-3">
-      <svg-icon [class]="'ap-fill-title'" [svgStyle]="{ width: '21px', height: '21px' }"
-        src="assets/img/custom/support.svg" [applyClass]="true">
-      </svg-icon>
-    </div>
-    <div class="ap-font-medium ap-text-[10px] ap-text-center" i18n>Support</div>
+  <div (click)="openSupport()" matTooltip="Ask the Community" i18n-matTooltip matTooltipPosition="right">
+    <app-sidenav-route-item [sideNavRoute]="supportRoute"></app-sidenav-route-item>
   </div>
-  <div *ngIf="showDocs$ | async" (click)="openDocs()" matTooltip="Documentation" i18n-matTooltip
-    [matTooltipPosition]="'right'"
-    class="ap-w-full ap-flex-col ap-flex ap-border-transparent ap-justify-center ap-items-center ap-cursor-pointer">
-    <div class="ap-p-3">
-      <svg-icon [class]="'ap-fill-title'" [svgStyle]="{ width: '21px', height: '21px' }"
-        src="assets/img/custom/dashboard/documentation.svg" [applyClass]="true">
-      </svg-icon>
-    </div>
-    <div class="ap-font-medium ap-text-[10px] ap-text-center" i18n>Docs</div>
-  </div>
+
+  <app-sidenav-route-item [sideNavRoute]="docsRoute"></app-sidenav-route-item>
 </div>

@@ -22,9 +22,9 @@
       <span i18n>Duration:</span>
       <span class="description"> {{ (selectedStepResult.duration || 1) | number: '1.0-1'  }} ms </span>
     </div>
-    <ap-yaml-viewer class="json-viewer" title="Input"  [content]="selectedStepResult.input"
-      [isInput]="true"></ap-yaml-viewer>
-    <ap-yaml-viewer title="Output" i18n-title
-      [content]="selectedStepResult.errorMessage ?? selectedStepResult.output"></ap-yaml-viewer>
+    <ap-json-viewer class="json-viewer" title="Input"  [content]="selectedStepResult.input"
+      [isInput]="true"></ap-json-viewer>
+    <ap-json-viewer title="Output" i18n-title
+      [content]="selectedStepResult.errorMessage ?? selectedStepResult.output"></ap-json-viewer>
   </div>
 </div>

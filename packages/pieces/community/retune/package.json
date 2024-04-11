@@ -4,7 +4,7 @@
   "dependencies": {
     "@activepieces/pieces-common": "0.2.12",
     "@activepieces/pieces-framework": "0.7.28",
-    "@activepieces/shared": "0.10.99",
+    "@activepieces/shared": "0.10.100",
     "tslib": "2.6.2"
   }
 }

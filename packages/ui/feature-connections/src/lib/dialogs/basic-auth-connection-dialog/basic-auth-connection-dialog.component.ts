@@ -12,15 +12,12 @@ import {
   Validators,
 } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { Store } from '@ngrx/store';
-import { catchError, Observable, of, take, tap } from 'rxjs';
+import { catchError, Observable, of, tap } from 'rxjs';
 import { ConnectionValidator } from '../../validators/connectionNameValidator';
 import { BasicAuthProperty } from '@activepieces/pieces-framework';
 import {
   AppConnectionsService,
   AuthenticationService,
-  appConnectionsSelectors,
-  appConnectionsActions,
 } from '@activepieces/ui/common';
 import { connectionNameRegex } from '../utils';
 
@@ -49,7 +46,6 @@ export class BasicAuthConnectionDialogComponent {
     'The ID of this connection definition. You will need to select this key whenever you want to reuse this connection.';
   constructor(
     private formBuilder: FormBuilder,
-    private store: Store,
     private authenticationService: AuthenticationService,
     private appConnectionsService: AppConnectionsService,
     private dialogRef: MatDialogRef<BasicAuthConnectionDialogComponent>,
@@ -77,9 +73,7 @@ export class BasicAuthConnectionDialogComponent {
           ],
           asyncValidators: [
             ConnectionValidator.createValidator(
-              this.store
-                .select(appConnectionsSelectors.selectAllAppConnections)
-                .pipe(take(1)),
+              this.appConnectionsService.getAllOnce(),
               undefined
             ),
           ],
@@ -118,9 +112,6 @@ export class BasicAuthConnectionDialogComponent {
         }),
         tap((connection) => {
           if (connection) {
-            this.store.dispatch(
-              appConnectionsActions.upsert({ connection: connection })
-            );
             this.dialogRef.close(connection);
           }
           this.loading = false;

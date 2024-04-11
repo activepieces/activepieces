@@ -5,7 +5,7 @@
       </div>
       @if (installPieceEnabled$| async) {
       <ap-button [disabled]="(isAdmin$ | async) === false"
-        [tooltipText]="(isAdmin$ | async) === false ? 'You don\'t have permission to add piece' : ''" btnColor="primary"
+        [tooltipText]="(isAdmin$ | async) === false ? permissionMessage : ''" btnColor="primary"
         btnSize='medium' (click)="installPiece()" i18n>
         <mat-icon fontIcon="add"></mat-icon>
         <span>
@@ -15,7 +15,7 @@
       }
       @if (managePiecesEnabled$| async) {
       <ap-button [disabled]="(isAdmin$ | async) === false"
-        [tooltipText]="(isAdmin$ | async) === false ? 'You don\'t have permission to add piece' : ''" btnColor="primary"
+        [tooltipText]="(isAdmin$ | async) === false ? permissionMessage : ''" btnColor="primary"
         btnSize='medium' (click)="managePieces()">
         <span>
           Manage Pieces

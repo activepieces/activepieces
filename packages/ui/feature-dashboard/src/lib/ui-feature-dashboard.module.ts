@@ -34,11 +34,13 @@ import {
   PushFlowToGitButtonComponent,
   SyncProjectComponent,
 } from '@activepieces/ui-feature-git-sync';
+import { RewardsDialogComponent } from './components/dialogs/rewards-dialog/rewards-dialog.component';
 
 @NgModule({
   imports: [
     CommonModule,
     UiCommonModule,
+    SidenavRoutesListComponent,
     EeBillingUiModule,
     RouterModule.forChild(DashboardLayoutRouting),
     UiFeatureFoldersStoreModule,
@@ -54,10 +56,10 @@ import {
     UiFeatureConnectionsModule,
     FormsModule,
     SyncProjectComponent,
+    RewardsDialogComponent,
   ],
   declarations: [
     DashboardContainerComponent,
-    SidenavRoutesListComponent,
     RunsTableComponent,
     FlowsTableComponent,
     EmptyFlowsTableComponent,

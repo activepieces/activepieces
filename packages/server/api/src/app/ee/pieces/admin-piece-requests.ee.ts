@@ -3,6 +3,7 @@ import {
     ErrorHandlingOptionsParam,
     TriggerStrategy,
     WebhookHandshakeConfiguration,
+    WebhookRenewConfiguration,
 } from '@activepieces/pieces-framework'
 import {
     ExactVersionType,
@@ -23,6 +24,7 @@ const Action = Type.Object({
 const Trigger = Type.Composite([
     Type.Omit(Action, ['requireAuth']),
     Type.Object({
+        renewConfiguration: Type.Optional(WebhookRenewConfiguration),
         handshakeConfiguration: WebhookHandshakeConfiguration,
         sampleData: Type.Optional(Type.Unknown()),
         type: Type.Enum(TriggerStrategy),

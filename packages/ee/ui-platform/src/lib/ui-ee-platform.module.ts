@@ -6,7 +6,6 @@ import { UiCommonModule } from '@activepieces/ui/common';
 import { PlatformDashboardContainerComponent } from './pages/platform-dashboard-container/platform-dashboard-container.component';
 import { ProjectsTableComponent } from './pages/projects-table/projects-table.component';
 import { CreateProjectDialogComponent } from './pages/projects-table/create-project-dialog/create-project-dialog.component';
-import { UpdateProjectDialogComponent } from './pages/projects-table/update-project-dialog/update-project-dialog.component';
 import { PlatformAppearanceComponent } from './pages/platform-appearance/platform-appearance.component';
 import { PlatformSettingsComponent } from './pages/platform-settings/platform-settings.component';
 import { PiecesTableComponent } from './pages/pieces-table/pieces-table.component';
@@ -42,7 +41,6 @@ import { ApplyTagsComponent } from 'ui-feature-tags';
     PlatformDashboardContainerComponent,
     ProjectsTableComponent,
     CreateProjectDialogComponent,
-    UpdateProjectDialogComponent,
     PlatformAppearanceComponent,
     PlatformSettingsComponent,
     ApiKeysTableComponent,

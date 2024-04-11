@@ -6,18 +6,21 @@ import {
   AuthenticationService,
   EmbeddingService,
   NavigationService,
+  UiCommonModule,
 } from '@activepieces/ui/common';
 import { Observable, forkJoin, map, of, take } from 'rxjs';
 import { ApFlagId, ProjectMemberRole, supportUrl } from '@activepieces/shared';
 import { DashboardService, FlagService } from '@activepieces/ui/common';
+import { SidenavRouteItemComponent } from '../sidenav-route-item/sidenav-route-item.component';
+import { CommonModule } from '@angular/common';
 
 type SideNavRoute = {
   icon: string;
   caption: string;
-  route: string;
+  route: string | undefined;
   effect?: () => void;
   showInSideNav$: Observable<boolean>;
-  showLock$: Observable<boolean>;
+  showLock$?: Observable<boolean>;
 };
 
 @Component({
@@ -25,17 +28,37 @@ type SideNavRoute = {
   templateUrl: './sidenav-routes-list.component.html',
   styleUrls: ['./sidenav-routes-list.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: true,
+  imports: [SidenavRouteItemComponent, CommonModule, UiCommonModule],
 })
 export class SidenavRoutesListComponent implements OnInit {
   logoUrl$: Observable<string>;
-  showSupport$: Observable<boolean>;
-  showDocs$: Observable<boolean>;
-  showBilling$: Observable<boolean>;
   sideNavRoutes$: Observable<SideNavRoute[]>;
   mainDashboardRoutes: SideNavRoute[] = [];
   demoPlatform$: Observable<boolean> = this.flagService.isFlagEnabled(
     ApFlagId.SHOW_PLATFORM_DEMO
   );
+
+  readonly supportRoute: SideNavRoute = {
+    caption: 'Support',
+    icon: 'assets/img/custom/support.svg',
+    route: undefined,
+    showInSideNav$: this.flagServices.isFlagEnabled(ApFlagId.SHOW_COMMUNITY),
+    showLock$: of(false),
+    effect: () => {
+      this.openSupport();
+    },
+  };
+  readonly docsRoute: SideNavRoute = {
+    caption: 'Docs',
+    icon: 'assets/img/custom/dashboard/documentation.svg',
+    route: undefined,
+    showInSideNav$: this.flagServices.isFlagEnabled(ApFlagId.SHOW_DOCS),
+    showLock$: of(false),
+    effect: () => {
+      this.openDocs();
+    },
+  };
   platformDashboardRoutes: SideNavRoute[] = [
     {
       icon: 'assets/img/custom/dashboard/projects.svg',
@@ -154,11 +177,6 @@ export class SidenavRoutesListComponent implements OnInit {
     ];
   }
   ngOnInit(): void {
-    this.showDocs$ = this.flagServices.isFlagEnabled(ApFlagId.SHOW_DOCS);
-    this.showSupport$ = this.flagServices.isFlagEnabled(
-      ApFlagId.SHOW_COMMUNITY
-    );
-    this.showBilling$ = this.flagServices.isFlagEnabled(ApFlagId.SHOW_BILLING);
     this.sideNavRoutes$ = this.dashboardService.getIsInPlatformRoute().pipe(
       map((isInPlatformDashboard) => {
         if (!isInPlatformDashboard) {
@@ -208,11 +226,12 @@ export class SidenavRoutesListComponent implements OnInit {
 
   private isRouteAllowedForRole(
     role: ProjectMemberRole | null | undefined,
-    route: string
+    route?: string
   ) {
-    if (role === undefined || role === null) {
+    if (role === undefined || role === null || route === undefined) {
       return of(true);
     }
+
     switch (role) {
       case ProjectMemberRole.ADMIN:
       case ProjectMemberRole.EDITOR:

@@ -7,8 +7,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { BehaviorSubject, Observable, map, tap } from 'rxjs';
 import {
   AuthenticationService,
-  DropdownSearchControlComponent,
-  PlatformProjectService, SelectAllDirective, UiCommonModule,
+  DropdownSearchControlComponent, ProjectService, SelectAllDirective, UiCommonModule,
 } from '@activepieces/ui/common';
 import { CommonModule } from '@angular/common';
 import { PieceMetadataService } from '../services/piece.service';
@@ -41,7 +40,7 @@ export class ManagePiecesDialogComponent {
     private dialogRef: MatDialogRef<ManagePiecesDialogComponent>,
     private pieceMetadataService: PieceMetadataService,
     private matSnackbar: MatSnackBar,
-    private projectService: PlatformProjectService,
+    private projectService: ProjectService,
     private authenticationService: AuthenticationService
   ) {
     this.form = new FormGroup({

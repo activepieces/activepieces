@@ -14,7 +14,6 @@ import { FlowRunStatus, FlowRun } from '@activepieces/shared';
 import {
   InstanceRunService,
   ApPaginatorComponent,
-  ProjectSelectors,
   DEFAULT_PAGE_SIZE,
   LIMIT_QUERY_PARAM,
   CURSOR_QUERY_PARAM,
@@ -22,8 +21,8 @@ import {
   FLOW_QUERY_PARAM,
   DATE_RANGE_START_QUERY_PARAM,
   DATE_RANGE_END_QUERY_PARAM,
+  ProjectService,
 } from '@activepieces/ui/common';
-import { Store } from '@ngrx/store';
 import { Params } from '@angular/router';
 const REFRESH_TABLE_DELAY = 10000;
 /**
@@ -41,7 +40,7 @@ export class RunsTableDataSource extends DataSource<FlowRun> {
   constructor(
     private queryParams$: Observable<Params>,
     private paginator: ApPaginatorComponent,
-    private store: Store,
+    private projectService: ProjectService,
     private instanceRunService: InstanceRunService,
     private refreshForReruns$: Observable<boolean>
   ) {
@@ -56,9 +55,7 @@ export class RunsTableDataSource extends DataSource<FlowRun> {
   connect(): Observable<FlowRun[]> {
     return combineLatest({
       queryParams: this.queryParams$,
-      project: this.store
-        .select(ProjectSelectors.selectCurrentProject)
-        .pipe(take(1)),
+      project: this.projectService.currentProject$.pipe(take(1)),
       refresh: this.refreshForExecutingRuns$.asObservable(),
       refreshForReruns: this.refreshForReruns$,
     }).pipe(
@@ -66,7 +63,7 @@ export class RunsTableDataSource extends DataSource<FlowRun> {
         this.isLoading$.next(true);
       }),
       switchMap((res) => {
-        return this.instanceRunService.list(res.project.id, {
+        return this.instanceRunService.list(res.project!.id, {
           status: res.queryParams[STATUS_QUERY_PARAM],
           limit: res.queryParams[LIMIT_QUERY_PARAM] || DEFAULT_PAGE_SIZE,
           cursor: res.queryParams[CURSOR_QUERY_PARAM],

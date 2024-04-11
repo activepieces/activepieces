@@ -9,7 +9,6 @@ import { RouterModule } from '@angular/router';
 import { TasksProgressComponent } from './tasks-progress/tasks-progress.component';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { PlanNamePipe } from './plan-name.pipe';
-import { BillingSidenavItemComponent } from './billing-sidenav-item/billing-sidenav-item.component';
 
 export function playerFactory() {
   return player;
@@ -28,13 +27,7 @@ export function playerFactory() {
     UpgradeDialogComponent,
     TasksProgressComponent,
     PlanNamePipe,
-    BillingSidenavItemComponent,
   ],
-  exports: [
-    PlansPageComponent,
-    TasksProgressComponent,
-    UpgradeDialogComponent,
-    BillingSidenavItemComponent,
-  ],
+  exports: [PlansPageComponent, TasksProgressComponent, UpgradeDialogComponent],
 })
 export class EeBillingUiModule {}

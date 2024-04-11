@@ -7,8 +7,11 @@ import {
 import { assertNotNullOrUndefined } from '@activepieces/shared';
 
 const message = `
-Copy the following URL:
-**{{webhookUrl}}**
+URL:
+
+\`\`\`text
+{{webhookUrl}}
+\`\`\`
 
 If you are expecting a reply from this webhook, append **/sync** to the URL.
 

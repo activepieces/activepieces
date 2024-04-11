@@ -4,23 +4,17 @@ import {
   Component,
   ViewChild,
 } from '@angular/core';
-import { Observable, Subject, tap } from 'rxjs';
+import { Observable, Subject, map, tap } from 'rxjs';
 import { ProjectsDataSource } from './projects-table.datasource';
 import { Project, ProjectWithLimits } from '@activepieces/shared';
 import { MatDialog } from '@angular/material/dialog';
 import { CreateProjectDialogComponent } from './create-project-dialog/create-project-dialog.component';
 import {
-  UpdateProjectDialogComponent,
-  UpdateProjectDialogData,
-} from './update-project-dialog/update-project-dialog.component';
-import { Store } from '@ngrx/store';
-import {
   ApPaginatorComponent,
   AuthenticationService,
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
-  PlatformProjectService,
-  ProjectActions,
+  ProjectService,
   featureDisabledTooltip,
 } from '@activepieces/ui/common';
 import { ActivatedRoute } from '@angular/router';
@@ -62,11 +56,10 @@ export class ProjectsTableComponent implements AfterViewInit {
   isDemo = false;
 
   constructor(
-    private projectsService: PlatformProjectService,
+    private projectsService: ProjectService,
     private matDialog: MatDialog,
     private authenticationService: AuthenticationService,
     private activatedRoute: ActivatedRoute,
-    private store: Store,
     private route: ActivatedRoute
   ) {
     this.isDemo = this.route.snapshot.data[PLATFORM_DEMO_RESOLVER_KEY];
@@ -92,34 +85,30 @@ export class ProjectsTableComponent implements AfterViewInit {
         tap((project: ProjectWithLimits | undefined) => {
           if (project) {
             this.refreshTable$.next(true);
-            this.store.dispatch(ProjectActions.addProject({ project }));
           }
         })
       );
   }
   openProject(project: Project) {
-    this.switchProject$ = this.projectsService.switchProject(project.id, true);
+    this.switchProject$ = this.authenticationService.switchProject({
+      projectId: project.id,
+      refresh: true,
+      redirectHome: true,
+    });
   }
 
   updateProject(project: ProjectWithLimits) {
-    if (this.isDemo) {
-      return;
-    }
-    const data: UpdateProjectDialogData = { project };
-    this.updateProject$ = this.matDialog
-      .open(UpdateProjectDialogComponent, {
-        data,
+    this.updateProject$ = this.authenticationService
+      .switchProject({
+        projectId: project.id,
+        refresh: false,
+        redirectHome: false,
       })
-      .afterClosed()
       .pipe(
-        tap((updatedProject) => {
-          if (updatedProject) {
-            this.refreshTable$.next(true);
-            this.store.dispatch(
-              ProjectActions.updateProject({ project: updatedProject })
-            );
-          }
-        })
+        tap(() => {
+          window.location.href = 'settings';
+        }),
+        map(() => project)
       );
   }
 

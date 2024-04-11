@@ -20,7 +20,6 @@ import {
   CodeArtifactControlFullscreenData,
 } from './code-artifact-control-fullscreen/code-artifact-control-fullscreen.component';
 import { MatTooltip } from '@angular/material/tooltip';
-import { CodemirrorComponent } from '@ctrl/ngx-codemirror';
 import { SourceCode } from '@activepieces/shared';
 
 export interface CodeArtifactForm {
@@ -43,7 +42,6 @@ export class CodeArtifactFormControlComponent
   implements ControlValueAccessor, OnInit, AfterViewInit
 {
   updateComponentValue$: Observable<Partial<SourceCode>>;
-  @ViewChild('codeMirror') codeMirror: CodemirrorComponent;
   @ViewChild('tooltip') tooltip: MatTooltip;
   @Output() openCodeWriterDialog = new EventEmitter<boolean>();
   hideDelayForFullscreenTooltip = 2000;

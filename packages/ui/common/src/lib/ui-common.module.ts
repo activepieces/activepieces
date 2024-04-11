@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MarkdownComponent } from './components/markdown/markdown.component';
 import { MarkdownModule, MarkedOptions, MarkedRenderer } from 'ngx-markdown';
 import { EditableTextComponent } from './components/editable-text/editable-text.component';
 import {
@@ -37,8 +36,8 @@ import { DefaultFalsePipe } from './pipe/default-false.pipe';
 import { DefaultTruePipe } from './pipe/default-true.pipe';
 import { CenterMatMenuDirective } from './directives/center-mat-menu.directive';
 import { SidebarHeaderComponent } from './components/sidebar-header/sidebar-header.component';
-import { YamlViewComponent } from './components/yaml-view/yaml-view.component';
-import { YamlViewDialogComponent } from './components/yaml-view/yaml-view-dialog/yaml-view-dialog.component';
+import { JsonViewComponent } from './components/json-view/json-view.component';
+import { JsonViewDialogComponent } from './components/json-view/json-view-dialog/json-view-dialog.component';
 import { HorizontalSidebarSeparatorComponent } from './components/horizontal-sidebar-separator/horizontal-sidebar-separator.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { TrackFocusDirective } from './directives/track-focus.directive';
@@ -77,6 +76,7 @@ import { MatPseudoCheckboxModule } from '@angular/material/core';
 import { ControlDescriptionComponent } from './components/control-description/control-description.component';
 import { MatChipsModule } from '@angular/material/chips';
 import { ApChipsListComponent } from './components/ap-chips-list/ap-chips-list.component';
+import { ApMarkdownComponent } from './components';
 
 const exportedImports = [
   CommonModule,
@@ -114,7 +114,7 @@ const exportedImports = [
 const exportedDeclarations = [
   UploadFileControlComponent,
   ElementDirective,
-  MarkdownComponent,
+  ApMarkdownComponent,
   EditableTextComponent,
   ApButtonComponent,
   WarningBoxComponent,
@@ -131,8 +131,8 @@ const exportedDeclarations = [
   DefaultTruePipe,
   CenterMatMenuDirective,
   SidebarHeaderComponent,
-  YamlViewComponent,
-  YamlViewDialogComponent,
+  JsonViewComponent,
+  JsonViewDialogComponent,
   HorizontalSidebarSeparatorComponent,
   TrackFocusDirective,
   ObjectToArrayPipe,

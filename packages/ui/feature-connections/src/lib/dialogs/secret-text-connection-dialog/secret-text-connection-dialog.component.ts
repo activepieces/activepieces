@@ -11,15 +11,12 @@ import {
   Validators,
 } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { Store } from '@ngrx/store';
-import { catchError, Observable, of, take, tap } from 'rxjs';
+import { catchError, Observable, of, tap } from 'rxjs';
 import { ConnectionValidator } from '../../validators/connectionNameValidator';
 
 import {
   AppConnectionsService,
   AuthenticationService,
-  appConnectionsActions,
-  appConnectionsSelectors,
 } from '@activepieces/ui/common';
 import { connectionNameRegex } from '../utils';
 
@@ -50,7 +47,6 @@ export class SecretTextConnectionDialogComponent {
     @Inject(MAT_DIALOG_DATA)
     public dialogData: SecretTextConnectionDialogData,
     private fb: FormBuilder,
-    private store: Store,
     private authenticatiionService: AuthenticationService,
     private appConnectionsService: AppConnectionsService,
     public dialogRef: MatDialogRef<SecretTextConnectionDialogComponent>
@@ -72,9 +68,7 @@ export class SecretTextConnectionDialogComponent {
           ],
           asyncValidators: [
             ConnectionValidator.createValidator(
-              this.store
-                .select(appConnectionsSelectors.selectAllAppConnections)
-                .pipe(take(1)),
+              this.appConnectionsService.getAllOnce(),
               undefined
             ),
           ],
@@ -113,9 +107,6 @@ export class SecretTextConnectionDialogComponent {
           }),
           tap((connection) => {
             if (connection) {
-              this.store.dispatch(
-                appConnectionsActions.upsert({ connection: connection })
-              );
               this.dialogRef.close(connection);
             }
             this.loading = false;

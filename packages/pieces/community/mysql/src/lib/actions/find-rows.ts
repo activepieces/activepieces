@@ -33,7 +33,7 @@ export default createAction({
       .map((c) => sanitizeColumnName(c))
       .join(',');
 
-    const qs = `SELECT ${qsColumns} FROM \`${sanitizeColumnName(context.propsValue.table)}\` WHERE ${context.propsValue.condition};`;
+    const qs = `SELECT ${qsColumns} FROM ${sanitizeColumnName(context.propsValue.table)} WHERE ${context.propsValue.condition};`;
 
     const conn = await mysqlConnect(context.auth, context.propsValue);
 
